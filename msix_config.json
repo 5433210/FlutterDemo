@@ -1,0 +1,14 @@
+{
+  "identityName": "Your.Company.DemoApp",
+  "publisher": "CN=Your Company Name",
+  "publisherId": "YourCompany",
+  "version": "1.0.0.0",
+  "appName": "Demo App",
+  "appDescription": "A demo Flutter application.",
+  "architecture": "x64",
+  "msixVersion": "1.0",
+  "logoPath": "assets/images/app_icon.png",
+  "outputName": "DemoAppInstaller",
+  "capabilities": "internetClient, location",
+  "createDesktopShortcut": true
+}
