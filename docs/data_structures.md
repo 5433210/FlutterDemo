@@ -147,8 +147,7 @@
     "remarks": "string"       // 备注
   },
   "usage": [{                 // 使用记录
-    "practiceId": "string",   // 字帖ID 
-    "templateId": "string",   // 模板ID
+    "practiceId": "string",   // 字帖ID     
     "useTime": "datetime"     // 使用时间
   }]
 }
@@ -159,11 +158,10 @@
 ```json
 {
   "id": "string",            // UUID
-  "title": "string",        // 字帖标题
-  "templateId": "string",   // 使用的模板ID
+  "title": "string",        // 字帖标题  
   "status": "string",      // draft/completed
   "pages": [{
-    "index": "number",    // 对应模板页面
+    "index": "number",    // 页面序号
     "layers": [{             // 图层列表
       "index": "number",      // 图层序号
       "name": "string",      // 图层名称 
@@ -254,14 +252,12 @@
 
 - 作品索引: id, name, author, style, tool, createTime
 - 集字索引: id, workId, simplified, style, tool
-- 模板索引: id, name, type, tags
 - 字帖索引: id, title, templateId, status, createTime
 
 ### 4.2 关联关系
 
 - 作品 -> 集字: 一对多
 - 集字 -> 字帖: 多对多
-- 模板 -> 字帖: 一对多
 
 ## 5. 数据验证规则
 
@@ -269,15 +265,12 @@
 
 - 作品名称: 1-50字符
 - 集字简体: 必须是单个汉字
-- 模板名称: 1-30字符
 - 字帖标题: 1-100字符
 
 ### 5.2 业务规则
 
 - 集字必须关联到有效的作品
-- 字帖必须使用有效的模板
 - 删除作品时必须处理关联的集字
-- 删除模板时必须确认没有关联的字帖
 
 ## 6. 性能考虑
 
