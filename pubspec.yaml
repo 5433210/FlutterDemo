@@ -12,6 +12,11 @@ dependencies:
   bitsdojo_window: ^0.1.6
   flutter_riverpod: ^2.4.9
   cupertino_icons: ^1.0.2
+  file_picker: ^9.0.0
+  flutter_localizations:
+    sdk: flutter
+  intl: 0.19.0
+  shared_preferences: ^2.5.2
 
 dev_dependencies:
   flutter_test:
@@ -20,3 +25,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true # 启用代码生成
+
+

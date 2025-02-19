@@ -1,0 +1,33 @@
+{
+  "@@locale": "en",
+  
+  "appName": "Calligraphy Collection",
+
+  "works": "Works",
+  "characters": "Characters",
+  "practices": "Practices",
+  "settings": "Settings",
+
+  "generalSettings": "General Settings",
+  "storageSettings": "Storage Settings",
+  "about": "About",
+
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "save": "Save",
+  "edit": "Edit",
+  "delete": "Delete",
+  "export": "Export",
+  "import": "Import",
+  "print": "Print",
+
+  "themeMode": "Theme Mode",
+  "themeModeSystem": "System",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+
+  "language": "Language",
+  "languageSystem": "System",
+  "languageZh": "简体中文",
+  "languageEn": "English"
+}

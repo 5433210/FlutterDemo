@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'work_detail_page.dart';
+import '../../dialogs/work_import_dialog.dart';
 
 class WorkListPage extends StatefulWidget {
   const WorkListPage({super.key});
@@ -10,6 +11,13 @@ class WorkListPage extends StatefulWidget {
 
 class _WorkListPageState extends State<WorkListPage> {
   bool _isGridView = true;
+
+  void _showImportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const WorkImportDialog(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +32,7 @@ class _WorkListPageState extends State<WorkListPage> {
             child: Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {/* 导入作品对话框 */},
+                  onPressed: _showImportDialog,
                   icon: const Icon(Icons.add),
                   label: const Text('导入作品'),
                 ),
@@ -39,10 +47,10 @@ class _WorkListPageState extends State<WorkListPage> {
                   tooltip: _isGridView ? '列表视图' : '网格视图',
                 ),
                 const Spacer(),
-                SizedBox(
+                const SizedBox(
                   width: 200,
                   child: TextField(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: '搜索作品',
                       border: OutlineInputBorder(),
                       isDense: true,
@@ -70,7 +78,12 @@ class _WorkListPageState extends State<WorkListPage> {
                   return Card(
                     child: InkWell(
                       onTap: () {
-                        // 点击进入作品详情页（占位）
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WorkDetailPage(workId: index),
+                          ),
+                        );
                       },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +127,12 @@ class _WorkListPageState extends State<WorkListPage> {
                       subtitle: const Text('作者名称'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
-                        // 点击进入作品详情页（占位）
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WorkDetailPage(workId: index),
+                          ),
+                        );
                       },
                     ),
                   );

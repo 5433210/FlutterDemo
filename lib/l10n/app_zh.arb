@@ -1,0 +1,36 @@
+{
+  "@@locale": "zh",
+  
+  "appName": "书法集字",
+  "@appName": {
+    "description": "应用名称"
+  },
+
+  "works": "作品",
+  "characters": "集字",
+  "practices": "字帖",
+  "settings": "设置",
+
+  "generalSettings": "常规设置",
+  "storageSettings": "存储设置",
+  "about": "关于",
+
+  "cancel": "取消",
+  "confirm": "确定",
+  "save": "保存",
+  "edit": "编辑",
+  "delete": "删除",
+  "export": "导出",
+  "import": "导入",
+  "print": "打印",
+
+  "themeMode": "主题模式",
+  "themeModeSystem": "跟随系统",
+  "themeModeLight": "明亮模式",
+  "themeModeDark": "暗黑模式",
+
+  "language": "语言",
+  "languageSystem": "跟随系统",
+  "languageZh": "简体中文",
+  "languageEn": "English"
+}
