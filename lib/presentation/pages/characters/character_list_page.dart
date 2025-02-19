@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../dialogs/character_edit_dialog.dart';
 import '../works/work_detail_page.dart';
+import '../../widgets/character/character_detail_view.dart';
 
 class CharacterListPage extends StatefulWidget {
   const CharacterListPage({Key? key}) : super(key: key);
@@ -11,7 +12,7 @@ class CharacterListPage extends StatefulWidget {
 
 class _CharacterListPageState extends State<CharacterListPage> {
   bool isGrid = true;
-  String? selectedCharId;
+  String? _selectedCharId;  // 只保留一个状态变量
 
   Widget _buildListArea() {
     return Column(
@@ -129,13 +130,13 @@ class _CharacterListPageState extends State<CharacterListPage> {
       itemCount: 20,
       itemBuilder: (context, index) {
         final charId = 'char_$index';
-        final isSelected = charId == selectedCharId;
+        final isSelected = charId == _selectedCharId;  // 使用 _selectedCharId
         
         return Card(
           elevation: isSelected ? 4 : 1,
           color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
           child: InkWell(
-            onTap: () => setState(() => selectedCharId = charId),
+            onTap: () => setState(() => _selectedCharId = charId),  // 更新 _selectedCharId
             child: Column(
               children: [
                 Expanded(
@@ -162,7 +163,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
       itemCount: 20,
       itemBuilder: (context, index) {
         final charId = 'char_$index';
-        final isSelected = charId == selectedCharId;
+        final isSelected = charId == _selectedCharId;  // 使用 _selectedCharId
         
         return Card(
           elevation: isSelected ? 4 : 1,
@@ -177,7 +178,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
             subtitle: const Text('来自：作品X'),
             trailing: const Icon(Icons.chevron_right),
             selected: isSelected,
-            onTap: () => setState(() => selectedCharId = charId),
+            onTap: () => setState(() => _selectedCharId = charId),  // 更新 _selectedCharId
           ),
         );
       },
@@ -185,7 +186,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
   }
 
   Widget _buildDetailArea() {
-    if (selectedCharId == null) {
+    if (_selectedCharId == null) {
       return const Center(child: Text('请选择一个集字查看详情'));
     }
 
@@ -205,7 +206,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                   showDialog(
                     context: context,
                     builder: (context) => CharacterEditDialog(
-                      charId: selectedCharId!,
+                      charId: _selectedCharId!,
                     ),
                   );
                 },
@@ -224,10 +225,7 @@ class _CharacterListPageState extends State<CharacterListPage> {
                         workId: workId,
                       ),
                     ),
-                  ).then((_) {
-                    // 返回后可以刷新当前集字详情
-                    setState(() {});
-                  });
+                  );
                 },
                 icon: const Icon(Icons.visibility),
                 label: const Text('查看原作'),
@@ -235,106 +233,14 @@ class _CharacterListPageState extends State<CharacterListPage> {
             ],
           ),
         ),
-        // 内容区
+        // 下方详情区域
         Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 预览区域
-                Center(
-                  child: Container(
-                    width: 300,
-                    height: 300,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          spreadRadius: 2,
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Center(child: Text('字', style: Theme.of(context).textTheme.displayLarge)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                // 信息卡片
-                _buildInfoSection(),
-              ],
-            ),
+          child: CharacterDetailView(
+            charId: _selectedCharId!,
+            showSourceButton: false, // 不显示按钮，因为已经在工具栏中了
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildInfoSection() {
-    return Column(
-      children: [
-        _buildInfoCard('基础信息', [
-          _buildInfoRow('简体字', '示例'),
-          _buildInfoRow('繁体字', '示例'),
-          _buildInfoRow('风格', '楷书'),
-          _buildInfoRow('工具', '毛笔'),
-        ]),
-        const SizedBox(height: 16),
-        _buildInfoCard('来源信息', [
-          _buildInfoRow('作品', '示例作品'),
-          _buildInfoRow('位置', '第1页'),
-          _buildInfoRow('采集时间', '2024-01-01'),
-        ]),
-        const SizedBox(height: 16),
-        _buildInfoCard('使用记录', [
-          _buildInfoRow('使用次数', '3'),
-          _buildInfoRow('最近使用', '2024-01-01'),
-          const SizedBox(height: 8),
-          const Text('关联字帖：'),
-          ListTile(
-            title: const Text('示例字帖1'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-          ListTile(
-            title: const Text('示例字帖2'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        ]),
-      ],
-    );
-  }
-
-  Widget _buildInfoCard(String title, List<Widget> children) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ...children,
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Text('$label：', style: const TextStyle(fontWeight: FontWeight.w500)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(value)),
-        ],
-      ),
     );
   }
 
@@ -342,14 +248,14 @@ class _CharacterListPageState extends State<CharacterListPage> {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // 左侧列表区 (40%宽度)
+        // 左侧列表区域 (40%宽度)
         Expanded(
           flex: 4,
           child: _buildListArea(),
         ),
         // 分隔线
         const VerticalDivider(width: 1),
-        // 右侧详情区 (60%宽度)
+        // 右侧详情区域 (60%宽度)
         Expanded(
           flex: 6,
           child: _buildDetailArea(),
