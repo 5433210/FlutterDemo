@@ -27,9 +27,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"demo", origin, size)) {
+  if (!window.Create(L"书法集字", origin, size)) {
     return EXIT_FAILURE;
   }
+  window.Show();
+  // 添加以下代码
+  HWND hwnd = window.GetHandle();
+  SetWindowLong(hwnd, GWL_STYLE,
+                GetWindowLong(hwnd, GWL_STYLE) & ~WS_CAPTION & ~WS_THICKFRAME);
   window.SetQuitOnClose(true);
 
   ::MSG msg;
