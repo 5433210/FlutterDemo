@@ -1,25 +1,37 @@
 import 'package:demo/presentation/pages/settings/settings_page.dart';
 import 'package:flutter/material.dart';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/works/work_list_page.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 
-void main() {
-  runApp(const ProviderScope(child: MyApp()));
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
 
-  doWhenWindowReady(() {
-    const initialSize = Size(1280, 720);
-    appWindow.minSize = initialSize;
-    appWindow.size = initialSize;
-    appWindow.alignment = Alignment.center;
-    appWindow.show();
-  });
+  WindowOptions windowOptions = const WindowOptions(
+    minimumSize: Size(800, 600),
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,  // 是否在任务栏隐藏
+    titleBarStyle: TitleBarStyle.hidden,
+    windowButtonVisibility: true,
+    center: true,      // 窗口居中
+    title: '书法集字',
+    // 添加以下设置
+    fullScreen: false,
+    alwaysOnTop: false,
+  );
+  
+  await windowManager.waitUntilReadyToShow(windowOptions);
+  await windowManager.show();
+  await windowManager.focus();
+
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -27,8 +39,7 @@ class MyApp extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CHAR',
+    return MaterialApp(      
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -59,7 +70,7 @@ class MyApp extends StatelessWidget {
       ),
       // 添加本地化支持
       localizationsDelegates: const [
-        AppLocalizations.delegate,
+        // AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

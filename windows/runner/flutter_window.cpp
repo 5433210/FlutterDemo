@@ -28,7 +28,8 @@ bool FlutterWindow::OnCreate() {
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    // 注释掉这行，阻止窗口自动显示
+    // this->Show();
   });
 
   // Flutter can complete the first frame before the "show window" callback is
