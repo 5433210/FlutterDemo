@@ -9,6 +9,7 @@ import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/works/work_list_page.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
+import 'infrastructure/persistence/sqlite/sqlite_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,8 @@ void main() async {
   await windowManager.waitUntilReadyToShow(windowOptions);
   await windowManager.show();
   await windowManager.focus();
+
+  await SqliteDatabase.initializePlatform();
 
   runApp(const ProviderScope(child: MyApp()));
 }

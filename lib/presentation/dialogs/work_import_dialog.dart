@@ -1,83 +1,149 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class WorkImportDialog extends StatefulWidget {
-  const WorkImportDialog({Key? key}) : super(key: key);
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as path;
+
+import '../providers/work_import_provider.dart';
+import '../viewmodels/states/work_import_state.dart';
+
+class WorkImportDialog extends ConsumerStatefulWidget {
+  const WorkImportDialog({super.key});
 
   @override
-  State<WorkImportDialog> createState() => _WorkImportDialogState();
+  ConsumerState<WorkImportDialog> createState() => _WorkImportDialogState();
 }
 
-class _WorkImportDialogState extends State<WorkImportDialog> {
-  final List<String> _images = []; // 临时，实际应该是图片文件列表
-  int _selectedImageIndex = 0;
-
-  Widget _buildImageList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 工具栏
-        Container(
-          height: 48,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-          ),
-          child: Row(
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  // TODO: 实现添加图片
-                },
-                icon: const Icon(Icons.add_photo_alternate),
-                label: const Text('添加图片'),
+class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
+ @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(workImportProvider);
+    final viewModel = ref.read(workImportProvider.notifier);
+    return AlertDialog(
+      title: const Text('导入书法作品'),
+      content: SizedBox(
+        width: 1200,
+        height: 800,        
+        child: Column(
+          children: [
+            // 标题栏
+            Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
               ),
-              const SizedBox(width: 8),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() => _images.clear());
-                },
-                icon: const Icon(Icons.clear_all),
-                label: const Text('清空'),
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: state.isLoading ? null : () => _selectImages(context),
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: const Text('添加图片'),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            // 内容区
+            Expanded(
+              child: Row(
+                children: [
+                  // 左侧图片列表 (30%)
+                  SizedBox(
+                    width: 300,
+                    child: _buildImageList(state),
+                  ),
+                  const VerticalDivider(width: 1),
+                  // 中部预览区 (40%)
+                  Expanded(
+                    flex: 4,
+                    child: _buildPreviewArea(),
+                  ),
+                  const VerticalDivider(width: 1),
+                  // 右侧信息面板 (30%)
+                  SizedBox(
+                    width: 300,
+                    child: _buildInfoPanel(),
+                  ),
+                ],
+              ),
+            ),
+            // 底部按钮
+            Container(
+              height: 64,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.grey[300]!)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('取消'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: state.images.isEmpty ? null : () {
+                      // TODO: 处理导入逻辑
+                    },
+                    child: const Text('导入'),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        // 图片列表
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.all(8),
-            itemCount: _images.isEmpty ? 1 : _images.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, index) {
-              if (_images.isEmpty) {
-                return const Center(
-                  child: Text('拖放图片到此处或点击"添加图片"按钮'),
-                );
-              }
-              
-              final isSelected = index == _selectedImageIndex;
-              return ListTile(
-                leading: Container(
-                  width: 48,
-                  height: 48,
-                  color: Colors.grey[200],
-                  child: Center(child: Text('图片 ${index + 1}')),
-                ),
-                title: Text('图片 ${index + 1}'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    setState(() => _images.removeAt(index));
-                  },
-                ),
-                selected: isSelected,
-                onTap: () => setState(() => _selectedImageIndex = index),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+   Widget _buildImageList(WorkImportState state) {
+    if (state.images.isEmpty) {
+      return const Center(
+        child: Text('请添加图片'),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: state.images.length,
+      itemBuilder: (context, index) {
+        return _ImageListItem(
+          file: state.images[index],
+          isSelected: index == state.selectedImageIndex,
+          onTap: () => ref.read(workImportProvider.notifier).selectImage(index),
+          onRemove: () => ref.read(workImportProvider.notifier).removeImage(index),
+        );
+      },
+    );
+  }
+
+  Future<void> _selectImages(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: true,
+        withData: false,
+        allowedExtensions: ['jpg', 'jpeg', 'png'],
+      );
+
+      if (result != null) {
+        final files = result.paths
+            .where((path) => path != null)
+            .map((path) => File(path!))
+            .toList();
+
+        if (files.isNotEmpty) {
+          await ref.read(workImportProvider.notifier).addImages(files);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('选择图片失败: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Widget _buildPreviewArea() {
@@ -231,79 +297,63 @@ class _WorkImportDialogState extends State<WorkImportDialog> {
       ),
     );
   }
+ 
+}
+
+class _ImageListItem extends StatelessWidget {
+  final File file;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  const _ImageListItem({
+    required this.file,
+    required this.isSelected,
+    required this.onTap,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: SizedBox(
-        width: 1200,
-        height: 800,
-        child: Column(
+    return Card(
+      color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
           children: [
-            // 标题栏
-            Container(
-              height: 48,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
-              ),
+            SizedBox(
+              height: 100,
               child: Row(
                 children: [
-                  const Text('导入书法作品', style: TextStyle(fontSize: 16)),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-            ),
-            // 内容区
-            Expanded(
-              child: Row(
-                children: [
-                  // 左侧图片列表 (30%)
+                  // Thumbnail
                   SizedBox(
-                    width: 300,
-                    child: _buildImageList(),
-                  ),
-                  const VerticalDivider(width: 1),
-                  // 中部预览区 (40%)
-                  Expanded(
-                    flex: 4,
-                    child: _buildPreviewArea(),
-                  ),
-                  const VerticalDivider(width: 1),
-                  // 右侧信息面板 (30%)
-                  SizedBox(
-                    width: 300,
-                    child: _buildInfoPanel(),
-                  ),
-                ],
-              ),
-            ),
-            // 底部按钮
-            Container(
-              height: 64,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey[300]!)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('取消'),
+                    width: 100,
+                    child: Image.file(
+                      file,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                    ),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _images.isEmpty ? null : () {
-                      // TODO: 处理导入逻辑
-                    },
-                    child: const Text('导入'),
+                  // File name
+                  Expanded(
+                    child: Text(
+                      path.basename(file.path),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
+              ),
+            ),
+            // Remove button
+            Positioned(
+              top: 4,
+              right: 4,
+              child: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: onRemove,
+                tooltip: '移除图片',
               ),
             ),
           ],

@@ -2,12 +2,21 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:convert';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../database_interface.dart';
 
 class SqliteDatabase implements DatabaseInterface {
   static const String dbName = 'shufa_jizi.db';
   Database? _database;
+
+  // Add static initialization
+  static Future<void> initializePlatform() async {
+    // Initialize FFI
+    sqfliteFfiInit();
+    // Set global factory
+    databaseFactory = databaseFactoryFfi;
+  }
 
   Future<Database> get database async {
     if (_database != null) {

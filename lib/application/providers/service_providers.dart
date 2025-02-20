@@ -5,6 +5,8 @@ import '../services/work_service.dart';
 import '../services/character_service.dart';
 import '../services/practice_service.dart';
 import '../services/settings_service.dart';
+import '../services/image_service.dart';
+import '../config/app_config.dart';
 
 final workServiceProvider = Provider<WorkService>((ref) {
   final repository = ref.watch(workRepositoryProvider);
@@ -26,4 +28,8 @@ final practiceServiceProvider = Provider<PracticeService>((ref) {
 final settingsServiceProvider = Provider<SettingsService>((ref) {
   final database = ref.watch(databaseProvider);
   return SettingsService(database);
+});
+
+final imageServiceProvider = Provider<ImageService>((ref) {
+  return ImageService(basePath: AppConfig.dataPath);
 });
