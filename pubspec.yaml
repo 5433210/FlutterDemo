@@ -19,6 +19,10 @@ dependencies:
   shared_preferences: ^2.5.2
   window_manager: ^0.4.3  # 添加这一行，使用最新版本
   flutter_gen: ^5.9.0
+  sqflite: any
+  path: any
+  path_provider: ^2.1.5
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

@@ -71,13 +71,18 @@
 
 ```json
 {
-  "id": "string",               // UUID
+  "id": "string",              // UUID
+  "createTime": "datetime",    //ISO 8601格式
+  "updateTime": "datetime",    //ISO 8601格式
   "name": "string",            // 作品名称(必填)
   "author": "string",          // 作者
   "style": "string",           // 书法风格
   "tool": "string",            // 书写工具
+  "imageCount": "number",      // 图片总数  
   "creationDate": "datetime",  // 创作时间
+  "remark":"string",          // 备注
   "images":[ {
+    "index":"number",       // 序号
     "original": {
       "path": "string",        // 原图路径
       "width": "number",       // 原始宽度
@@ -101,6 +106,7 @@
   "collectedChars": [{         // 已采集汉字列表
     "id": "string",            // 集字ID
     "region": {                // 在原图中的位置
+      "index": "number",      //作品页号
       "x": "number",
       "y": "number", 
       "width": "number",
@@ -109,9 +115,7 @@
     "createTime": "datetime"   // 采集时间
   }],
   "metadata": {
-    "createTime": "datetime",  // 记录创建时间
-    "updateTime": "datetime",  // 最后修改时间
-    "remarks": "string"        // 备注说明
+    "tags": ["string"],                    // 可选，标签数组
   }
 }
 ```
@@ -121,6 +125,8 @@
 ```json
 {
   "id": "string",              // UUID
+  "createTime": "datetime",
+  "updateTime": "datetime",
   "workId": "string",         // 所属作品ID
   "char": {
     "simplified": "string",    // 简体字(必填)
@@ -144,14 +150,11 @@
     }
   },
   "metadata": {
-    "createTime": "datetime",
-    "updateTime": "datetime",
-    "remarks": "string"       // 备注
+    "tags": ["string"],                    // 可选，标签数组
   },
   "usage": [{                 // 使用记录
-    "practiceId": "string",   // 字帖ID     
-    "useTime": "datetime"     // 使用时间
-  }]
+    "practiceId": "string",   // 字帖ID      
+  }],
 }
 ```
 
@@ -160,10 +163,19 @@
 ```json
 {
   "id": "string",            // UUID
+  "createTime": "datetime",
+  "updateTime": "datetime",
   "title": "string",        // 字帖标题  
   "status": "string",      // draft/completed
   "pages": [{
     "index": "number",    // 页面序号
+    "size": {                   // 页面尺寸
+      "unit":"string",            // 尺寸单位
+      "resUnit":"string",        // 分辨率单位
+      "resUnitValue":"number",     // 分辨率单位值
+      "width": "number",           // 毫米
+      "height": "number",           // A4纸张
+    }, 
     "layers": [{             // 图层列表
       "index": "number",      // 图层序号
       "name": "string",      // 图层名称 
@@ -181,6 +193,10 @@
             "height": "number",
             "rotation": "number"
           },
+          "style": {         // 样式属性
+            "opacity": "number",  // 不透明度
+            "visible": "boolean"  // 是否可见
+          },
           "content": {
           // 当type为chars时
             "chars": [{
@@ -195,28 +211,29 @@
                     "rotation": "number"
                 },
                 "style": {
-                "color": "string"
-                }
+                    "color": "string",
+                    "opacity": "number",
+                },
             }],
           
             // 当type为text时
             "text": {
-                "text":"string"
-            }
+                "content": "string",
+                "fontFamily": "string",
+                "fontSize": "number",
+                "color": "string",
+                "alignment": "string",
+            },
             
             // 当type为image时
             "image": {
-                "path":"path"
+                "path":"path",
             }
           }
         }]
     }]
   }],
   "metadata": {
-    "createTime": "datetime",
-    "updateTime": "datetime",
-    "description": "string",
-    "printCount": "number",
     "tags": ["string"]
   }
 }
@@ -226,7 +243,7 @@
 
 ### 3.1 文件存储
 
-```
+```p
 /storage
   /works                    // 作品存储
     /{workId}/      
@@ -257,14 +274,12 @@
 - works
 - characters
 - practices
-- tags
 - settings
 
 各表之间通过外键建立关联：
 
 - 一个作品 (works) 可对应多个集字 (characters)
 - 一个集字 (characters) 可多次被字帖 (practices) 使用（通过引用使用记录）
-- 标签 (tags) 与作品、字帖等关联（可选、扩展字段）
 
 #### 3.2.1 表：works
 
@@ -277,8 +292,10 @@
 | author           | TEXT        | 作者                                  |
 | style            | TEXT        | 书法风格                              |
 | tool             | TEXT        | 书写工具                              |
-| creationDate     | DATETIME    | 创作时间                              |
-| metadata         | TEXT        | JSON文本，包含创建时间、修改时间、备注等|
+| creationDate     | DATETIME    | 创作日期                              |
+| createTime      | INTEGER    | 创建时间                              |
+| updateTime      | INTEGER    | 修改时间                              |
+| metadata         | TEXT        | JSON文本 |
 
 #### 3.2.2 表：characters
 
@@ -294,7 +311,10 @@
 | tool             | TEXT         | 书写工具（可继承或覆盖作品工具）                    |
 | sourceRegion     | TEXT         | JSON对象，包含 index, x, y, width, height          |
 | image            | TEXT         | JSON对象，包含处理后图片路径、缩略图路径及尺寸信息    |
-| metadata         | TEXT         | JSON文本，包含创建、修改时间及备注                  |
+| usage     | TEXT         | JSON对象，包含使用了该集字的字帖集合          |
+| createTime      | INTEGER    | 创建时间                              |
+| updateTime      | INTEGER    | 修改时间                              |
+| metadata         | TEXT         | JSON文本                 |
 
 #### 3.2.3 表：practices
 
@@ -305,17 +325,10 @@
 | id               | TEXT (PK)   | 字帖唯一标识（UUID）                               |
 | title            | TEXT         | 字帖标题（必填，1-100字符）                        |
 | status           | TEXT         | 字帖状态（例如："draft" 或 "completed"）          |
-| pages            | TEXT         | JSON数组，描述各页面内容（不涉及多页模板，只有一页，多层结构存储） |
-| metadata         | TEXT         | JSON文本，包含创建、修改时间、打印次数、描述等      |
-
-#### 3.2.4 表：tags
-
-用于存储标签信息（扩展功能）
-
-| 字段名称 | 类型        | 描述                                 |
-|----------|-------------|--------------------------------------|
-| id       | TEXT (PK) | 标签唯一标识                           |
-| name     | TEXT       | 标签名称                               |
+| pages            | TEXT         | JSON数组，描述各页面内容 |
+| createTime      | INTEGER    | 创建时间                              |
+| updateTime      | INTEGER    | 修改时间                              |
+| metadata         | TEXT         | JSON文本      |
 
 #### 3.2.5 表：settings
 
@@ -332,7 +345,6 @@
 
 - **作品与集字**：一对多，works.id → characters.workId
 - **集字与字帖**：多对多关系，字帖中通过 JSON 数组引用集字 id
-- **标签关联**：标签通过 metadata 的 JSON 数组进行关联
 
 ### 4.2 索引设计
 
@@ -369,3 +381,124 @@
 - 批量导入: 限制单次最多100张
 - 批量导出: 限制单次最多1000个
 - 列表加载: 分页加载，每页20条
+
+## 7. JSON 结构规范
+
+### 7.1 公共结构
+
+#### metadata 字段结构
+
+```json
+{
+  "createTime": "2024-02-20T10:00:00Z",  // ISO 8601格式
+  "updateTime": "2024-02-20T10:30:00Z",  
+  "tags": ["string"],                    // 可选，标签数组
+}
+```
+
+### 7.1 作品表 (works)
+
+### 7.2 集字表 (characters)
+
+#### sourceRegion 字段结构
+
+```json
+{
+  "index": 0,           // 图片序号，对应works/{workId}/pictures/{index}
+  "x": 100,            // 左上角x坐标
+  "y": 100,            // 左上角y坐标
+  "width": 200,        // 区域宽度
+  "height": 200,       // 区域高度
+}
+```
+
+#### image 字段结构
+
+```json
+{
+  "path": "chars/{workId}/{charId}/char.png",    // 相对路径
+  "thumbnail": "chars/{workId}/{charId}/thumbnail.jpg",
+  "size": {
+    "width": 200,      // 像素宽度
+    "height": 200      // 像素高度
+  },  
+}
+```
+
+#### usage 字段结构
+
+```json
+{
+  [{                 // 使用记录
+    "practiceId": "string",   // 字帖ID      
+  }]
+}
+```
+
+### 7.3 字帖表 (practices)
+
+#### pages 字段结构
+
+```json
+[{
+  "index": 0,                // 页面序号
+  "size": {                   // 页面尺寸
+    "unit":"mm",            // 尺寸单位
+    "resUnit":"ppi",        // 分辨率单位
+    "resUnitValue":300,     // 分辨率单位值
+    "width": 210,           // 毫米
+    "height": 297           // A4纸张
+  }, 
+  "layers": [{              // 图层数组
+    "index": 0,            // 图层序号
+    "name": "背景",        // 图层名称
+    "type": "background",  // background/content
+    "visible": true,       // 是否可见
+    "locked": false,       // 是否锁定
+    "opacity": 1.0,        // 不透明度(0-1)
+    "elements": [{         // 元素数组
+      "id": "uuid",       // 元素唯一标识
+      "type": "chars",    // chars/text/image
+      "geometry": {       // 位置和尺寸
+        "x": 50,         // 左上角x坐标(mm)
+        "y": 50,         // 左上角y坐标(mm)
+        "width": 100,    // 宽度(mm)
+        "height": 100,   // 高度(mm)
+        "rotation": 0    // 旋转角度
+      },
+      "style": {         // 样式属性
+        "opacity": 1.0,  // 不透明度
+        "visible": true  // 是否可见
+      },
+      "content": {       // 内容(根据type不同而不同)
+        "chars": [{      // type=chars时的结构
+          "charId": "uuid",
+          "position": {
+            "offsetX": 0,
+            "offsetY": 0
+          },
+          "transform": {
+            "scaleX": 1.0,
+            "scaleY": 1.0,
+            "rotation": 0
+          },
+          "style": {
+            "color": "#000000",
+            "opacity": 1.0
+          }
+        }],
+        "text": {        // type=text时的结构
+          "content": "string",
+          "fontFamily": "string",
+          "fontSize": 12,
+          "color": "#000000",
+          "alignment": "left",
+        },
+        "image": {       // type=image时的结构
+          "path": "string",
+          }
+        }
+    }]
+  }]
+}]
+```

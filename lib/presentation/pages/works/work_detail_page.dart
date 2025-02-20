@@ -1,10 +1,9 @@
-import 'package:demo/presentation/dialogs/work_edit_dialog.dart';
-import 'package:demo/presentation/widgets/character/character_detail_view.dart';
-import 'package:demo/presentation/widgets/character/character_extraction_panel.dart';
-import 'package:demo/presentation/widgets/window/title_bar.dart';
 import 'package:flutter/material.dart';
 import '../../dialogs/export_dialog.dart';
 import '../../dialogs/delete_confirmation_dialog.dart';
+import '../../dialogs/work_edit_dialog.dart';
+import '../../widgets/character/character_extraction_panel.dart';
+import '../../widgets/window/title_bar.dart';
 import '../practices/practice_detail_page.dart';
 import '../../dialogs/character_detail_dialog.dart';
 

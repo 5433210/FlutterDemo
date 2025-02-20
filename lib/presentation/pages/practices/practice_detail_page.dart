@@ -213,9 +213,9 @@ class _PracticeDetailPageState extends State<PracticeDetailPage> {
     // TODO: 实现导出功能
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('导出'),
-        content: const Column(
+      builder: (context) => const AlertDialog(
+        title: Text('导出'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(

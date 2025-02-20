@@ -28,7 +28,7 @@ class TitleBar extends StatelessWidget with WindowListener {
               ),
               const Spacer(),
               // 窗口控制按钮组
-              WindowButtons(),
+              const WindowButtons(),
             ],
           ),
         ),
@@ -42,7 +42,7 @@ class WindowButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = Colors.white;
+    const buttonColor = Colors.white;
     final hoverColor = Colors.white.withOpacity(0.1);
 
     return Row(

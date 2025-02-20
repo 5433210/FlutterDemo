@@ -135,16 +135,16 @@ class _WorkImportDialogState extends State<WorkImportDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 基本信息表单
-          TextField(
-            decoration: const InputDecoration(
+          const TextField(
+            decoration: InputDecoration(
               labelText: '作品名称 *',
               hintText: '请输入作品名称',
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
-            decoration: const InputDecoration(
+          const TextField(
+            decoration: InputDecoration(
               labelText: '创作者',
               hintText: '请输入创作者姓名',
               border: OutlineInputBorder(),
@@ -162,14 +162,14 @@ class _WorkImportDialogState extends State<WorkImportDialog> {
               );
               // TODO: 处理选择的日期
             },
-            child: InputDecorator(
-              decoration: const InputDecoration(
+            child: const InputDecorator(
+              decoration: InputDecoration(
                 labelText: '创作时间',
                 border: OutlineInputBorder(),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
+                children: [
                   Text('选择日期'),
                   Icon(Icons.calendar_today),
                 ],
@@ -205,9 +205,9 @@ class _WorkImportDialogState extends State<WorkImportDialog> {
           ),
           const SizedBox(height: 16),
           // 备注
-          TextField(
+          const TextField(
             maxLines: 3,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: '备注',
               hintText: '请输入备注信息',
               border: OutlineInputBorder(),

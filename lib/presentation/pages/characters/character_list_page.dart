@@ -32,9 +32,9 @@ class _CharacterListPageState extends State<CharacterListPage> {
               child: Row(
                 children: [
                   // 搜索框
-                  Expanded(
+                  const Expanded(
                     child: TextField(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: '搜索简体字/作品名称',
                         prefixIcon: Icon(Icons.search),
                         border: OutlineInputBorder(),
@@ -217,11 +217,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
               TextButton.icon(
                 onPressed: () {
                   // TODO: 获取实际的workId
-                  final workId = 1;
+                  const workId = 1;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => WorkDetailPage(
+                      builder: (context) => const WorkDetailPage(
                         workId: workId,
                       ),
                     ),

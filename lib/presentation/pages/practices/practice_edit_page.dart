@@ -18,7 +18,6 @@ class PracticeEditPage extends StatefulWidget {
 
 class _PracticeEditPageState extends State<PracticeEditPage> {
   bool _hasUnsavedChanges = false;
-  String _selectedTool = '';
   List<Map<String, dynamic>> _layers = [];
   Map<String, dynamic>? _selectedElement;
 
@@ -46,7 +45,6 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
 
   void _handleToolSelected(String tool) {
     setState(() {
-      _selectedTool = tool;
       _hasUnsavedChanges = true;
     });
   }
