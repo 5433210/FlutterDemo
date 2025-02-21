@@ -201,7 +201,7 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
                           width: 595, // A4纸宽度
                           height: 842, // A4纸高度
                           color: Colors.white,
-                          child: Stack(
+                          child: const Stack(
                             children: [
                               // TODO: 实现画布和编辑功能
                             ],

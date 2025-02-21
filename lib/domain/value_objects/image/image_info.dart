@@ -1,7 +1,7 @@
 import 'image_size.dart';
 
 class ImageInfo {
-  final String id;
+  //final String id;
   final String path;
   final String thumbnail;
   final ImageSize size;
@@ -10,7 +10,7 @@ class ImageInfo {
   final String? original;
 
   const ImageInfo({
-    required this.id,
+    //required this.id,
     required this.path,
     required this.thumbnail,
     required this.size,
@@ -20,7 +20,7 @@ class ImageInfo {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
+    //'id': id,
     'path': path,
     'thumbnail': thumbnail,
     'size': size.toJson(),
@@ -30,7 +30,7 @@ class ImageInfo {
   }..removeWhere((_, value) => value == null);
 
   factory ImageInfo.fromJson(Map<String, dynamic> json) => ImageInfo(
-    id: json['id'] as String,
+    //id: json['id'] as String,
     path: json['path'] as String,
     thumbnail: json['thumbnail'] as String,
     size: ImageSize.fromJson(json['size'] as Map<String, dynamic>),
@@ -40,7 +40,7 @@ class ImageInfo {
   );
 
   ImageInfo copyWith({
-    String? id,
+    //String? id,
     String? path,
     String? thumbnail,
     ImageSize? size,
@@ -49,7 +49,7 @@ class ImageInfo {
     String? original,
   }) {
     return ImageInfo(
-      id: id ?? this.id,
+      //id: id ?? this.id,
       path: path ?? this.path,
       thumbnail: thumbnail ?? this.thumbnail,
       size: size ?? this.size,

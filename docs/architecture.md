@@ -113,11 +113,11 @@ SQLite数据库:
   /storage
     /works            // 作品存储
       /{workId}/
-        metadata.json
         thumbnail.jpg
         pictures/{index}/
           original.{ext}
           imported.png
+          thumbnail.png
     /chars            // 集字图片
     /practices        // 字帖资源
     /temp            // 临时文件

@@ -1,16 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/repository_providers.dart';
+import '../../infrastructure/providers/storage_providers.dart';
 import '../services/work_service.dart';
 import '../services/character_service.dart';
 import '../services/practice_service.dart';
 import '../services/settings_service.dart';
 import '../services/image_service.dart';
-import '../config/app_config.dart';
 
 final workServiceProvider = Provider<WorkService>((ref) {
   final repository = ref.watch(workRepositoryProvider);
-  return WorkService(repository);
+  final imageService = ref.watch(imageServiceProvider);
+  final paths = ref.watch(storagePathsProvider);
+  return WorkService(repository, imageService, paths);
 });
 
 final characterServiceProvider = Provider<CharacterService>((ref) {
@@ -31,5 +33,6 @@ final settingsServiceProvider = Provider<SettingsService>((ref) {
 });
 
 final imageServiceProvider = Provider<ImageService>((ref) {
-  return ImageService(basePath: AppConfig.dataPath);
+  final paths = ref.watch(storagePathsProvider);
+  return ImageService(paths);
 });

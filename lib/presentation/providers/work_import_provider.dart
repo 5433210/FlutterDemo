@@ -3,9 +3,13 @@ import '../viewmodels/work_import_view_model.dart';
 import '../viewmodels/states/work_import_state.dart';
 import '../../application/providers/service_providers.dart';
 
-final workImportProvider = StateNotifierProvider.autoDispose<WorkImportViewModel, WorkImportState>((ref) {
+final workImportProvider =
+    StateNotifierProvider.autoDispose<WorkImportViewModel, WorkImportState>(
+        (ref) {
+  final workService = ref.watch(workServiceProvider);
+  final imageService = ref.watch(imageServiceProvider);
   return WorkImportViewModel(
-    ref.watch(workServiceProvider),
-    ref.watch(imageServiceProvider),
+    workService,
+    imageService,
   );
 });

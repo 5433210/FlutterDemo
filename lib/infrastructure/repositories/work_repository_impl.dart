@@ -1,4 +1,5 @@
 import 'package:demo/infrastructure/persistence/database_interface.dart';
+import 'package:flutter/material.dart';
 
 import '../../domain/entities/character.dart';
 import '../../domain/entities/work.dart';
@@ -22,34 +23,21 @@ class WorkRepositoryImpl implements WorkRepository {
   }
 
   @override
-  Future<List<Work>> getWorks({
-    String? style,
-    String? author,
-    List<String>? tags,
-    DateTime? fromDate,
-    DateTime? toDate,
-    int? limit,
-    int? offset,
-    String? sortBy,
+  Future<List<Map<String, dynamic>>> getWorks({
+    DateTimeRange? dateRange,
     bool descending = true,
+    String? orderBy,
+    String? query,
+    List<String>? styles,
+    List<String>? tools,
   }) async {
-    final maps = await _db.getWorks(
-      style: style,
-      author: author,
-      tags: tags, // Add missing tags parameter
-      fromDate: fromDate,
-      toDate: toDate,
-      limit: limit,
-      offset: offset,
-      sortBy: sortBy,
-      descending: descending,
-    );
-    return maps.map((map) => Work.fromMap(map)).toList();
+    final maps = await _db.getWorks();
+    return maps;
   }
 
   @override
   Future<void> updateWork(Work work) async {
-    await _db.updateWork(work.id, work.toMap());
+    await _db.updateWork(work.id!, work.toMap());
   }
 
   @override

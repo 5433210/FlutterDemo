@@ -52,9 +52,9 @@ abstract class DatabaseInterface {
 }
 
 abstract class DatabaseTransaction {
-  Future<void> insertWork(Map<String, dynamic> work);
-  Future<void> insertCharacter(Map<String, dynamic> character);
-  Future<void> insertPractice(Map<String, dynamic> practice);
+  Future<String> insertWork(Map<String, dynamic> work);
+  Future<String> insertCharacter(Map<String, dynamic> character);
+  Future<String> insertPractice(Map<String, dynamic> practice);
   Future<void> updateWork(String id, Map<String, dynamic> work);
   Future<void> deleteWork(String id);
 }

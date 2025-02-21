@@ -17,8 +17,8 @@ class ExportDialog extends StatelessWidget {
           children: [
             const Text('导出作品', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            TextField(
-              decoration: const InputDecoration(
+            const TextField(
+              decoration: InputDecoration(
                 labelText: '文件名',
                 border: OutlineInputBorder(),
               ),

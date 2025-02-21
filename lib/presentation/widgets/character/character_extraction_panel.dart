@@ -20,7 +20,7 @@ class _CharacterExtractionPanelState extends State<CharacterExtractionPanel> {
   double _binarization = 0.5;
   double _grayScale = 0.5;
   String _selectedTool = 'select'; // select, rect, lasso
-  List<Rect> _selectedRegions = [];
+  final List<Rect> _selectedRegions = [];
   final PageController _pageController = PageController();
   int _currentPage = 0;
   List<String> _pages = []; // 存储所有页面的图片路径
@@ -324,8 +324,8 @@ class _CharacterExtractionPanelState extends State<CharacterExtractionPanel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  decoration: const InputDecoration(
+                const TextField(
+                  decoration: InputDecoration(
                     labelText: '简体字 *',
                     border: OutlineInputBorder(),
                   ),

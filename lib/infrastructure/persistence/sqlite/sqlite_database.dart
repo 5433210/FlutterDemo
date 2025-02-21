@@ -48,7 +48,8 @@ class SqliteDatabase implements DatabaseInterface {
         creation_date INTEGER,
         create_time INTEGER NOT NULL,
         update_time INTEGER NOT NULL,
-        metadata TEXT
+        metadata TEXT,
+        image_count INTEGER DEFAULT 0
       )
     ''');
 
@@ -119,9 +120,8 @@ class SqliteDatabase implements DatabaseInterface {
     final workId = const Uuid().v4();
     work['id'] = workId;
     
-    if (!work.containsKey('create_time')) {
-      work['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    }
+    work['create_time'] = DateTime.now().millisecondsSinceEpoch;
+    
     work['update_time'] = DateTime.now().millisecondsSinceEpoch;
     
     if (work.containsKey('metadata')) {
@@ -262,13 +262,15 @@ class SqliteDatabase implements DatabaseInterface {
     );
     
     return maps.map((map) {
-      if (map['metadata'] != null) {
-        map['metadata'] = jsonDecode(map['metadata']);
+       final newMap = Map<String, dynamic>.from(map); // Create a new map
+    if (newMap['metadata'] != null) {
+      newMap['metadata'] = jsonDecode(newMap['metadata']);
       }
       return map;
     }).toList();
   }
 
+  @override
   Future<int> getWorksCount({
     String? style,
     String? author,
@@ -308,6 +310,7 @@ class SqliteDatabase implements DatabaseInterface {
     return result ?? 0;
   }
 
+  @override
   Future<bool> workExists(String id) async {
     final db = await database;
     final result = Sqflite.firstIntValue(await db.query(
@@ -325,10 +328,7 @@ class SqliteDatabase implements DatabaseInterface {
     final db = await database;
     final charId = const Uuid().v4();
     character['id'] = charId;
-    
-    if (!character.containsKey('create_time')) {
-      character['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    }
+    character['create_time'] = DateTime.now().millisecondsSinceEpoch;
     character['update_time'] = DateTime.now().millisecondsSinceEpoch;
     
     if (character.containsKey('metadata')) {
@@ -419,16 +419,14 @@ class SqliteDatabase implements DatabaseInterface {
   Future<String> insertPractice(Map<String, dynamic> practice) async {
     final db = await database;
     final practiceId = const Uuid().v4();
-    practice['id'] = practiceId;
-    
-    if (!practice.containsKey('create_time')) {
-      practice['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    }
+    practice['id'] = practiceId;    
+    practice['create_time'] = DateTime.now().millisecondsSinceEpoch;    
     practice['update_time'] = DateTime.now().millisecondsSinceEpoch;
     
     if (practice.containsKey('metadata')) {
       practice['metadata'] = jsonEncode(practice['metadata']);
     }
+
     if (practice.containsKey('pages')) {
       practice['pages'] = jsonEncode(practice['pages']);
     }
@@ -603,13 +601,33 @@ class _SqliteTransaction implements DatabaseTransaction {
   _SqliteTransaction(this._txn);
 
   @override
-  Future<void> insertWork(Map<String, dynamic> work) async {
+  Future<String> insertWork(Map<String, dynamic> work) async {
+    final workId = const Uuid().v4();
+    work['id'] = workId;    
+    work['create_time'] = DateTime.now().millisecondsSinceEpoch;    
+    work['update_time'] = DateTime.now().millisecondsSinceEpoch;    
+    if (work.containsKey('metadata')) {
+      work['metadata'] = jsonEncode(work['metadata']);
+    }
     await _txn.insert('works', work);
+    return workId;
   }
 
   @override
-  Future<void> insertCharacter(Map<String, dynamic> character) async {
+  Future<String> insertCharacter(Map<String, dynamic> character) async {
+    final charId = const Uuid().v4();
+    character['id'] = charId;
+    character['create_time'] = DateTime.now().millisecondsSinceEpoch;
+    character['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    
+    if (character.containsKey('metadata')) {
+      character['metadata'] = jsonEncode(character['metadata']);
+    }
+    if (character.containsKey('source_region')) {
+      character['source_region'] = jsonEncode(character['source_region']);
+    }
     await _txn.insert('characters', character);
+    return charId;
   }
 
   @override
@@ -632,7 +650,20 @@ class _SqliteTransaction implements DatabaseTransaction {
   }
   
   @override
-  Future<void> insertPractice(Map<String, dynamic> practice) async {
+  Future<String> insertPractice(Map<String, dynamic> practice) async {
+    final practiceId = const Uuid().v4();
+    practice['id'] = practiceId;    
+    practice['create_time'] = DateTime.now().millisecondsSinceEpoch;    
+    practice['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    
+    if (practice.containsKey('metadata')) {
+      practice['metadata'] = jsonEncode(practice['metadata']);
+    }
+    
+    if (practice.containsKey('pages')) {
+      practice['pages'] = jsonEncode(practice['pages']);
+    }
     await _txn.insert('practices', practice);
+    return practiceId;
   }
 }

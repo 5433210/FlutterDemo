@@ -1,5 +1,5 @@
-import 'dart:convert';
 import 'dart:io';
+import 'package:demo/domain/value_objects/work/work_info.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
@@ -139,25 +139,16 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
     try {
       state = state.copyWith(isLoading: true, error: null);
-
-      // Process images
-      final processedImages = await _imageService.processWorkImages(
-        state.images,
-        optimize: state.optimizeImages,
-        keepOriginals: state.keepOriginals,
-      );
-
       // Create work
-      final workData = {
-        'name': state.name,
-        'author': state.author,
-        'style': state.style,
-        'tool': state.tool,
-        'creationDate': state.creationDate?.toIso8601String(),
-        'remarks': state.remarks,
-        'images': processedImages,
-      };
-      await _workService.createWork(jsonEncode(workData));
+      final workInfo = WorkInfo(id: "", 
+                                name: state.name, 
+                                author: state.author,
+                                style: state.style,
+                                tool: state.tool,
+                                creationDate: state.creationDate,
+                                remarks: state.remarks,
+                                );
+      await _workService.importWork(state.images, workInfo);
 
       return true;
     } catch (e) {

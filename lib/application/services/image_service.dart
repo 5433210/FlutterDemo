@@ -1,92 +1,68 @@
 import 'dart:io';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
-import 'package:uuid/uuid.dart';
 import '../../domain/value_objects/image/image_info.dart';
 import '../../domain/value_objects/image/image_size.dart';
+import '../../infrastructure/config/storage_paths.dart';
 import '../config/app_config.dart';
 
 class ImageService {
-  final String _basePath;
-  
-  ImageService({required String basePath}) : _basePath = basePath;
+  final StoragePaths _paths;
+
+  ImageService(this._paths);
 
   Future<List<ImageInfo>> processWorkImages(
-    List<File> images, {
-    bool optimize = true,
-    bool keepOriginals = true,
-  }) async {
+      String workId, List<File> images) async {
     final processedImages = <ImageInfo>[];
 
     for (var i = 0; i < images.length; i++) {
       final file = images[i];
       final bytes = await file.readAsBytes();
       final image = img.decodeImage(bytes);
-      
+
       if (image == null) {
         throw Exception('无法解码图片：${path.basename(file.path)}');
       }
 
-      final id = const Uuid().v4();
-      final ext = path.extension(file.path).toLowerCase();
-      
-      // Create directory structure
-      final workImagesDir = path.join(_basePath, 'works', id);
-      await Directory(workImagesDir).create(recursive: true);
+      // Create work picture directory
+      final picturePath = _paths.getWorkPicturePath(workId, i);
+      await _paths.ensureDirectoryExists(picturePath);
 
-      ImageInfo imageInfo;
-      if (optimize) {
-        // Process and save optimized version
-        final processed = _processImage(image);
-        final optimizedPath = path.join(workImagesDir, 'optimized$ext');
-        await File(optimizedPath).writeAsBytes(
-          ext == '.png' ? img.encodePng(processed) : img.encodeJpg(processed, quality: 85)
-        );
+      // Save original if requested
+      String? originalPath;
 
-        // Create thumbnail
-        final thumbnail = _createThumbnail(processed);
-        final thumbnailPath = path.join(workImagesDir, 'thumbnail.jpg');
-        await File(thumbnailPath).writeAsBytes(img.encodeJpg(thumbnail, quality: 80));
+      originalPath = _paths.getWorkOriginalPicturePath(
+          workId, i, path.extension(file.path));
+      await file.copy(originalPath);
 
-        // Save original if requested
-        final String? originalPath;
-        if (keepOriginals) {
-          originalPath = path.join(workImagesDir, 'original$ext');
-          await file.copy(originalPath);
-        } else {
-          originalPath = null;
-        }
+      // Process and save imported image
+      final processed = _processImage(image);
+      final importedPath = _paths.getWorkImportedPicturePath(workId, i);
+      await File(importedPath).writeAsBytes(img.encodePng(processed));
 
-        imageInfo = ImageInfo(
-          id: id,
-          path: optimizedPath,
+      // Create thumbnail for this image
+      final thumbnail = _createThumbnail(processed);
+      final thumbnailPath = _paths.getWorkImportedThumbnailPath(workId, i);
+      await File(thumbnailPath)
+          .writeAsBytes(img.encodeJpg(thumbnail, quality: 80));
+
+      // Add image info
+      processedImages.add(ImageInfo(
+          fileSize: bytes.length,
+          format: path.extension(file.path).replaceAll('.', ''),
+          path: importedPath,
           size: ImageSize(width: processed.width, height: processed.height),
-          fileSize: await File(optimizedPath).length(),
-          format: ext.replaceAll('.', ''),
           thumbnail: thumbnailPath,
-          original: keepOriginals ? originalPath : null
-        );
-      } else {
-        // Use original file directly
-        final imagePath = path.join(workImagesDir, 'image$ext');
-        await file.copy(imagePath);
+          original: originalPath));
+    }
 
-        // Still create thumbnail
-        final thumbnail = _createThumbnail(image);
-        final thumbnailPath = path.join(workImagesDir, 'thumbnail.jpg');
-        await File(thumbnailPath).writeAsBytes(img.encodeJpg(thumbnail, quality: 80));
-
-        imageInfo = ImageInfo(
-          id: id,
-          path: imagePath,
-          size: ImageSize(width: image.width, height: image.height),
-          fileSize: await File(imagePath).length(),
-          format: ext.replaceAll('.', ''),
-          thumbnail: thumbnailPath,
-        );
-      }
-
-      processedImages.add(imageInfo);
+    // Create work thumbnail if images exist
+    if (processedImages.isNotEmpty) {
+      final workThumbnail = _createThumbnail(
+          img.decodeImage(await File(processedImages[0].path).readAsBytes())!);
+      final workThumbnailPath = _paths.getWorkThumbnailPath(workId);
+      await File(workThumbnailPath)
+          .writeAsBytes(img.encodeJpg(workThumbnail, quality: 80));
     }
 
     return processedImages;
@@ -94,7 +70,7 @@ class ImageService {
 
   img.Image _processImage(img.Image image) {
     // Resize if needed
-    if (image.width > AppConfig.maxImageWidth || 
+    if (image.width > AppConfig.maxImageWidth ||
         image.height > AppConfig.maxImageHeight) {
       final aspectRatio = image.width / image.height;
       int newWidth = image.width;

@@ -270,7 +270,7 @@ class _WorkDetailPageState extends State<WorkDetailPage> {
     return Scaffold(
       body: Column(
         children: [
-          TitleBar(),
+          const TitleBar(),
           AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),

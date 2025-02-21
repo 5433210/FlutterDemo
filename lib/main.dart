@@ -4,6 +4,7 @@ import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/works/work_list_page.dart';
@@ -100,7 +101,7 @@ class _MainWindowState extends State<MainWindow> {
   Widget _buildContent() {
     switch (_selectedIndex) {
       case 0:
-        return const WorkListPage();
+        return const WorkBrowsePage();
       case 1:
         return const CharacterListPage();
       case 2:
