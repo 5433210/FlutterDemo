@@ -45,26 +45,26 @@ class SqliteDatabase implements DatabaseInterface {
         author TEXT,
         style TEXT,
         tool TEXT,
-        creation_date INTEGER,
-        create_time INTEGER NOT NULL,
-        update_time INTEGER NOT NULL,
+        creationDate INTEGER,
+        createTime INTEGER NOT NULL,
+        updateTime INTEGER NOT NULL,
         metadata TEXT,
-        image_count INTEGER DEFAULT 0
+        imageCount INTEGER DEFAULT 0
       )
     ''');
 
     await db.execute('''
       CREATE TABLE characters (
         id TEXT PRIMARY KEY,
-        work_id TEXT NOT NULL,
+        workId TEXT NOT NULL,
         char TEXT NOT NULL,
         pinyin TEXT,
-        source_region TEXT NOT NULL,
+        sourceRegion TEXT NOT NULL,
         image TEXT NOT NULL,
         metadata TEXT,
-        create_time INTEGER NOT NULL,
-        update_time INTEGER NOT NULL,
-        FOREIGN KEY (work_id) REFERENCES works (id) ON DELETE CASCADE
+        createTime INTEGER NOT NULL,
+        updateTime INTEGER NOT NULL,
+        FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
       )
     ''');
 
@@ -74,8 +74,8 @@ class SqliteDatabase implements DatabaseInterface {
         title TEXT NOT NULL,
         pages TEXT NOT NULL,
         metadata TEXT,
-        create_time INTEGER NOT NULL,
-        update_time INTEGER NOT NULL
+        createTime INTEGER NOT NULL,
+        updateTime INTEGER NOT NULL
       )
     ''');
 
@@ -90,12 +90,12 @@ class SqliteDatabase implements DatabaseInterface {
       CREATE TABLE settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,
-        update_time INTEGER NOT NULL
+        updateTime INTEGER NOT NULL
       )
     ''');
 
     // Create indices
-    await db.execute('CREATE INDEX idx_characters_work_id ON characters(work_id)');
+    await db.execute('CREATE INDEX idx_characters_workId ON characters(workId)');
     await db.execute('CREATE INDEX idx_characters_char ON characters(char)');
   }
 
@@ -120,9 +120,9 @@ class SqliteDatabase implements DatabaseInterface {
     final workId = const Uuid().v4();
     work['id'] = workId;
     
-    work['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    
-    work['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    work['creationDate'] = DateTime.parse(work['creationDate']).microsecondsSinceEpoch;
+    work['createTime'] = DateTime.now().millisecondsSinceEpoch;
+    work['updateTime'] = DateTime.now().millisecondsSinceEpoch;    
     
     if (work.containsKey('metadata')) {
       work['metadata'] = jsonEncode(work['metadata']);
@@ -153,7 +153,9 @@ class SqliteDatabase implements DatabaseInterface {
   @override
   Future<void> updateWork(String id, Map<String, dynamic> work) async {
     final db = await database;
-    work['update_time'] = DateTime.now().millisecondsSinceEpoch;
+
+    work['creationDate'] = DateTime.parse(work['creationDate']).millisecondsSinceEpoch;
+    work['updateTime'] = DateTime.now().millisecondsSinceEpoch;
     
     if (work.containsKey('metadata')) {
       work['metadata'] = jsonEncode(work['metadata']);
@@ -174,7 +176,7 @@ class SqliteDatabase implements DatabaseInterface {
       // Delete associated characters first (cascade should handle this, but being explicit)
       await txn.delete(
         'characters',
-        where: 'work_id = ?',
+        where: 'workId = ?',
         whereArgs: [id],
       );
       
@@ -228,15 +230,15 @@ class SqliteDatabase implements DatabaseInterface {
 
     // 日期范围筛选
     _addDateRange(whereConditions, whereArgs, {
-      'create_time': {
+      'createTime': {
         'start': fromDateImport,
         'end': toDateImport,
       },
-      'creation_date': {
+      'creationDate': {
         'start': fromDateCreation,
         'end': toDateCreation,
       },
-      'update_time': {
+      'updateTime': {
         'start': fromDateUpdate,
         'end': toDateUpdate,
       },
@@ -294,15 +296,15 @@ class SqliteDatabase implements DatabaseInterface {
 
     // 日期范围筛选
     _addDateRange(whereConditions, whereArgs, {
-      'create_time': {
+      'createTime': {
         'start': fromDateImport,
         'end': toDateImport,
       },
-      'creation_date': {
+      'creationDate': {
         'start': fromDateCreation,
         'end': toDateCreation,
       },
-      'update_time': {
+      'updateTime': {
         'start': fromDateUpdate,
         'end': toDateUpdate,
       },
@@ -339,14 +341,14 @@ class SqliteDatabase implements DatabaseInterface {
     final db = await database;
     final charId = const Uuid().v4();
     character['id'] = charId;
-    character['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    character['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    character['createTime'] = DateTime.now().millisecondsSinceEpoch;
+    character['updateTime'] = DateTime.now().millisecondsSinceEpoch;
     
     if (character.containsKey('metadata')) {
       character['metadata'] = jsonEncode(character['metadata']);
     }
-    if (character.containsKey('source_region')) {
-      character['source_region'] = jsonEncode(character['source_region']);
+    if (character.containsKey('sourceRegion')) {
+      character['sourceRegion'] = jsonEncode(character['sourceRegion']);
     }
     
     await db.insert('characters', character);
@@ -368,8 +370,8 @@ class SqliteDatabase implements DatabaseInterface {
     if (character['metadata'] != null) {
       character['metadata'] = jsonDecode(character['metadata']);
     }
-    if (character['source_region'] != null) {
-      character['source_region'] = jsonDecode(character['source_region']);
+    if (character['sourceRegion'] != null) {
+      character['sourceRegion'] = jsonDecode(character['sourceRegion']);
     }
     return character;
   }
@@ -379,17 +381,17 @@ class SqliteDatabase implements DatabaseInterface {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'characters',
-      where: 'work_id = ?',
+      where: 'workId = ?',
       whereArgs: [workId],
-      orderBy: 'create_time ASC',
+      orderBy: 'createTime ASC',
     );
     
     return maps.map((character) {
       if (character['metadata'] != null) {
         character['metadata'] = jsonDecode(character['metadata']);
       }
-      if (character['source_region'] != null) {
-        character['source_region'] = jsonDecode(character['source_region']);
+      if (character['sourceRegion'] != null) {
+        character['sourceRegion'] = jsonDecode(character['sourceRegion']);
       }
       return character;
     }).toList();
@@ -398,13 +400,13 @@ class SqliteDatabase implements DatabaseInterface {
   @override
   Future<void> updateCharacter(String id, Map<String, dynamic> character) async {
     final db = await database;
-    character['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    character['updateTime'] = DateTime.now().millisecondsSinceEpoch;
     
     if (character.containsKey('metadata')) {
       character['metadata'] = jsonEncode(character['metadata']);
     }
-    if (character.containsKey('source_region')) {
-      character['source_region'] = jsonEncode(character['source_region']);
+    if (character.containsKey('sourceRegion')) {
+      character['sourceRegion'] = jsonEncode(character['sourceRegion']);
     }
     
     await db.update(
@@ -431,8 +433,8 @@ class SqliteDatabase implements DatabaseInterface {
     final db = await database;
     final practiceId = const Uuid().v4();
     practice['id'] = practiceId;    
-    practice['create_time'] = DateTime.now().millisecondsSinceEpoch;    
-    practice['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    practice['createTime'] = DateTime.now().millisecondsSinceEpoch;    
+    practice['updateTime'] = DateTime.now().millisecondsSinceEpoch;
     
     if (practice.containsKey('metadata')) {
       practice['metadata'] = jsonEncode(practice['metadata']);
@@ -490,7 +492,7 @@ class SqliteDatabase implements DatabaseInterface {
       'practices',
       where: where,
       whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: 'create_time DESC',
+      orderBy: 'createTime DESC',
       limit: limit,
       offset: offset,
     );
@@ -509,7 +511,7 @@ class SqliteDatabase implements DatabaseInterface {
   @override
   Future<void> updatePractice(String id, Map<String, dynamic> practice) async {
     final db = await database;
-    practice['update_time'] = DateTime.now().millisecondsSinceEpoch;
+    practice['updateTime'] = DateTime.now().millisecondsSinceEpoch;
     
     if (practice.containsKey('metadata')) {
       practice['metadata'] = jsonEncode(practice['metadata']);
@@ -578,7 +580,7 @@ class SqliteDatabase implements DatabaseInterface {
       {
         'key': key,
         'value': value,
-        'update_time': DateTime.now().millisecondsSinceEpoch,
+        'updateTime': DateTime.now().millisecondsSinceEpoch,
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
@@ -641,9 +643,9 @@ class SqliteDatabase implements DatabaseInterface {
     final field = switch(sortBy) {
       'name' => 'name',
       'author' => 'author',
-      'creationDate' => 'creation_date',
-      'updateTime' => 'update_time',
-      'importTime' => 'create_time',
+      'creationDate' => 'creationDate',
+      'updateTime' => 'updateTime',
+      'importTime' => 'createTime',
       _ => sortBy
     };
     return '$field ${descending ? 'DESC' : 'ASC'}';
@@ -694,7 +696,7 @@ class SqliteDatabase implements DatabaseInterface {
   // 2. 提取元数据解码方法
   Map<String, dynamic> _decodeMetadata(Map<String, dynamic> map) {
     final result = Map<String, dynamic>.from(map);
-    for (final field in ['metadata', 'source_region', 'pages']) {
+    for (final field in ['metadata', 'sourceRegion', 'pages']) {
       if (result[field] != null) {
         try {
           result[field] = jsonDecode(result[field] as String);

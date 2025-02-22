@@ -115,4 +115,95 @@ class ImageService {
       interpolation: img.Interpolation.linear,
     );
   }
+
+  Future<File> rotateImage(File file, int angle) async {
+    final bytes = await file.readAsBytes();
+    var image = img.decodeImage(bytes);
+    if (image == null) throw Exception('无法解码图片');
+
+    // Rotate image
+    image = img.copyRotate(image, angle: angle);
+
+    // Create temp file with unique name
+    final dir = path.dirname(file.path);
+    final ext = path.extension(file.path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final rotatedPath = path.join(dir, 'rotated_${timestamp}$ext');
+    
+    // Save rotated image
+    final rotatedFile = File(rotatedPath);
+    await rotatedFile.writeAsBytes(img.encodeJpg(image));
+    
+    // Delete original file if it's a temp file
+    if (file.path.contains('temp_')) {
+      await file.delete();
+    }
+    
+    return rotatedFile;
+  }
+
+  Future<File> optimizeImage(
+    File file, {
+    required int maxWidth,
+    required int maxHeight,
+    required int quality,
+  }) async {
+    final bytes = await file.readAsBytes();
+    var image = img.decodeImage(bytes);
+    if (image == null) throw Exception('无法解码图片');
+
+    // Calculate new dimensions maintaining aspect ratio
+    double ratio = image.width / image.height;
+    int newWidth = image.width;
+    int newHeight = image.height;
+
+    if (newWidth > maxWidth) {
+      newWidth = maxWidth;
+      newHeight = (newWidth / ratio).round();
+    }
+
+    if (newHeight > maxHeight) {
+      newHeight = maxHeight;
+      newWidth = (newHeight * ratio).round();
+    }
+
+    // Resize if needed
+    if (newWidth != image.width || newHeight != image.height) {
+      image = img.copyResize(
+        image,
+        width: newWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.linear,
+      );
+    }
+
+    // Create optimized file
+    final dir = path.dirname(file.path);
+    final ext = path.extension(file.path);
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final optimizedPath = path.join(dir, 'optimized_${timestamp}$ext');
+    
+    // Save optimized image
+    final optimizedFile = File(optimizedPath);
+    await optimizedFile.writeAsBytes(img.encodeJpg(image, quality: quality));
+    
+    return optimizedFile;
+  }
+
+  Future<void> backupOriginal(File file) async {
+    final backupDir = Directory(path.join(
+      AppConfig.workspacePath,
+      'originals',
+    ));
+    
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final filename = path.basename(file.path);
+    final backupPath = path.join(backupDir.path, '${timestamp}_$filename');
+
+    await file.copy(backupPath);
+  }
 }

@@ -24,8 +24,8 @@ class WorkService implements IWorkService {
     work = Work(
       name: data.name,
       author: data.author,
-      style: data.style,
-      tool: data.tool,
+      style: data.style?.name,
+      tool: data.tool?.name,
       creationDate: data.creationDate,
       imageCount: files.length, // Initial count
     );

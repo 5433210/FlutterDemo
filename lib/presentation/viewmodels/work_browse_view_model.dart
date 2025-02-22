@@ -94,8 +94,8 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
             result = (a.creationDate ?? DateTime.now()).compareTo(b.creationDate ?? DateTime.now());
             break;
           case SortField.importDate:
-            result = (a.importDate ?? DateTime.now())
-                .compareTo(b.importDate ?? DateTime.now());
+            result = (a.createTime ?? DateTime.now())
+                .compareTo(b.createTime ?? DateTime.now());
             break;
           case SortField.none:
             result = 0;
@@ -122,6 +122,21 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
       await loadWorks(); // 重新加载数据
     } catch (e) {
       state = state.copyWith(error: e.toString());
+    }
+  }
+
+   // 添加搜索方法
+  Future<void> searchWorks(String query) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final works = await _workService.queryWorks(searchQuery: state.searchQuery,
+        filter: state.filter, sortOption: state.sortOption);
+      state = state.copyWith(works: works, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
     }
   }
 }

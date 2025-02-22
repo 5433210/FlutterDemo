@@ -22,6 +22,7 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   bool _batchMode = false;
   final Set<String> _selectedWorks = {};
+  String _searchQuery = ''; // 添加搜索查询状态
 
   @override
   void initState() {
@@ -34,36 +35,37 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
-    
+
     return MainLayout(
       navigationInfo: const Text('书法作品'),
       actions: [
-        SizedBox(
-          width: 320,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.m,
-              vertical: AppSizes.s,
-            ),
-            child: SearchBar(
-              hintText: '搜索作品...',
-              onChanged: (value) {
-                ref.read(workBrowseProvider.notifier).updateSearch(value);
-              },
-            ),
-          ),
+        // 搜索按钮
+        IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: '搜索',
+          onPressed: () {
+            _showSearchDialog(context); // 显示搜索对话框
+          },
         ),
         IconButton(
-          icon: Icon(state.viewMode == ViewMode.grid 
-            ? Icons.grid_view 
-            : Icons.view_list),
+          icon: Icon(state.viewMode == ViewMode.grid
+              ? Icons.grid_view
+              : Icons.view_list),
           tooltip: state.viewMode == ViewMode.grid ? '网格视图' : '列表视图',
           onPressed: () {
             ref.read(workBrowseProvider.notifier).updateViewMode(
-              state.viewMode == ViewMode.grid 
-                ? ViewMode.list 
-                : ViewMode.grid,
-            );
+                state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid);
+          },
+        ),
+        // Batch mode toggle button
+        IconButton(
+          icon: Icon(_batchMode ? Icons.close : Icons.select_all),
+          tooltip: _batchMode ? '退出批量选择' : '批量选择',
+          onPressed: () {
+            setState(() {
+              _batchMode = !_batchMode;
+              _selectedWorks.clear();
+            });
           },
         ),
       ],
@@ -77,6 +79,42 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
       body: _buildMainContent(state),
       footer: _buildStatusBar(state),
     );
+  }
+
+  // 添加搜索对话框
+  Future<void> _showSearchDialog(BuildContext context) async {
+    final query = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('搜索作品'),
+        content: TextField(
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: '请输入作品名称或作者',
+          ),
+          onChanged: (text) {
+            _searchQuery = text;
+          },
+        ),
+        actions: [
+          TextButton(
+            child: const Text('取消'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: const Text('搜索'),
+            onPressed: () => Navigator.of(context).pop(_searchQuery),
+          ),
+        ],
+      ),
+    );
+
+    if (query != null) {
+      setState(() {
+        _searchQuery = query;
+      });
+      ref.read(workBrowseProvider.notifier).searchWorks(query); // 调用搜索方法
+    }
   }
 
   Widget _buildMainContent(WorkBrowseState state) {
@@ -174,43 +212,18 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
       ),
       child: Row(
         children: [
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                value: false,
-                icon: Icon(Icons.grid_view),
-                label: Text('常规'),
-              ),
-              ButtonSegment(
-                value: true,
-                icon: Icon(Icons.check_box_outlined),
-                label: Text('批量操作'),
-              ),
-            ],
-            selected: {_batchMode},
-            onSelectionChanged: (value) {
-              setState(() {
-                _batchMode = value.first;
-                if (!_batchMode) {
-                  _selectedWorks.clear();
-                }
-              });
-            },
-          ),
-          const SizedBox(width: AppSizes.m),
-          FilledButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('导入作品'),
-            onPressed: () => _showImportDialog(context),
-          ),
-          if (_batchMode && _selectedWorks.isNotEmpty) ...[
-            const SizedBox(width: AppSizes.m),
+          if (!_batchMode)
+            FilledButton.icon(
+              icon: const Icon(Icons.add),
+              label: const Text('导入作品'),
+              onPressed: () => _showImportDialog(context),
+            ),
+          if (_batchMode)
             FilledButton.tonalIcon(
               icon: const Icon(Icons.delete),
               label: Text('删除${_selectedWorks.length}项'),
               onPressed: _deleteSelected,
             ),
-          ],
           const Spacer(),
           if (_batchMode)
             Text(
@@ -355,11 +368,13 @@ class _WorkCard extends ConsumerWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.pushNamed(
-          context,
-          '/work_detail',
-          arguments: work.id,
-        ),
+        onTap: selectable
+            ? null
+            : () => Navigator.pushNamed(
+                  context,
+                  '/work_detail',
+                  arguments: work.id,
+                ),
         // 移除固定高度，使用内容自适应
         child: Column(
           mainAxisSize: MainAxisSize.min, // 确保高度自适应内容
@@ -403,8 +418,7 @@ class _WorkCard extends ConsumerWidget {
 
   Widget _buildCoverImage(WidgetRef ref) {
     return FutureBuilder<String?>(
-      future: ref.read(workBrowseProvider.notifier)
-          .getWorkThumbnail(work.id!),
+      future: ref.read(workBrowseProvider.notifier).getWorkThumbnail(work.id!),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return _buildPlaceholder(isLoading: true);

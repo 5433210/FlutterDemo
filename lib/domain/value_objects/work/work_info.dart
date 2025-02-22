@@ -1,10 +1,13 @@
+import 'package:demo/domain/enums/work_style.dart';
+import 'package:demo/domain/enums/work_tool.dart';
+
 import 'image_info.dart';
 
 class WorkInfo {
   String? id;
    String? author;
-   String? style;
-   String? tool;
+   WorkStyle? style;
+   WorkTool? tool;
    DateTime? creationDate;
    DateTime? createTime;
    DateTime? updateTime;
@@ -51,8 +54,8 @@ class WorkInfo {
     id: json['id'] as String,
     name: json['name'] as String,
     author: json['author'] as String?,
-    style: json['style'] as String?,
-    tool: json['tool'] as String?,
+    style: json['style'] != null ? WorkStyle.values.firstWhere((e) => e.toString() == 'WorkStyle.${json['style']}') : null,
+    tool: json['tool'] != null ? WorkTool.values.firstWhere((e) => e.toString() == 'WorkTool.${json['tool']}') : null,
     creationDate: json['creationDate'] != null 
         ? DateTime.parse(json['creationDate'] as String)
         : null,
@@ -73,8 +76,8 @@ class WorkInfo {
     String? id,
     String? name,
     String? author,
-    String? style,
-    String? tool,
+    WorkStyle? style,
+    WorkTool? tool,
     DateTime? creationDate,
     DateTime? createTime,
     DateTime? updateTime,
