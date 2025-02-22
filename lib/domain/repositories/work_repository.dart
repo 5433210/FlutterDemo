@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../infrastructure/persistence/database_interface.dart';
 import '../entities/character.dart';
 import '../entities/work.dart';
 

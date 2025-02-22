@@ -66,92 +66,55 @@ class SortOption {
 }
 
 class WorkFilter {
-  final String? style;
-  final String? tool;
-  final DateRangeType? dateRangeType;
-  final DateTime? customStartDate;
-  final DateTime? customEndDate;
-    final SortOption sortOption;
-  final String selectedStyle;
-  final String selectedTool;
-  final String? sortBy;
-  final bool descending;
+  final String? selectedStyle;
+  final String? selectedTool;
   final DateRangeFilter? dateFilter;
+  final SortOption sortOption;
 
   const WorkFilter({
-    this.style,
-    this.tool,
-    this.dateRangeType,
-    this.customStartDate,
-    this.customEndDate,
-    this.selectedStyle  = '',
-    this.selectedTool = '',
+    this.selectedStyle,
+    this.selectedTool,
+    this.dateFilter,
     this.sortOption = const SortOption(),
-    this.sortBy,
-    this.descending = true,
-    this.dateFilter
   });
-
-WorkFilter copyWith({
-    SortOption? sortOption,
-    String? Function()? selectedStyle,
-    String? Function()? selectedTool,
-    DateRangeFilter? Function()? dateFilter,
-  }) {
-    return WorkFilter(
-      sortOption: sortOption ?? this.sortOption,
-      selectedStyle: selectedStyle != null ? selectedStyle() ?? '' : this.selectedStyle,
-      selectedTool: selectedTool != null ? selectedTool() ?? '' : this.selectedTool,
-      dateFilter: dateFilter != null ? dateFilter() : this.dateFilter,
-    );
-  }
 
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
     
-    if (style?.isNotEmpty ?? false) {
-      params['selectedStyle'] = style;
+    if (selectedStyle?.isNotEmpty ?? false) {
+      params['style'] = selectedStyle;
     }
     
-    if (tool?.isNotEmpty ?? false) {
-      params['selectedTool'] = tool;
+    if (selectedTool?.isNotEmpty ?? false) {
+      params['tool'] = selectedTool;
     }
 
     // 处理日期范围
-    if (dateRangeType != null) {
-      final now = DateTime.now();
-      DateTime? start;
-      DateTime? end = now;
-
-      switch (dateRangeType) {
-        case DateRangeType.lastWeek:
-          start = now.subtract(const Duration(days: 7));
-          break;
-        case DateRangeType.lastMonth:
-          start = DateTime(now.year, now.month - 1, now.day);
-          break;
-        case DateRangeType.lastYear:
-          start = DateTime(now.year - 1, now.month, now.day);
-          break;
-        case DateRangeType.custom:
-          start = customStartDate;
-          end = customEndDate ?? now;
-          break;
-        case null:
-          // TODO: Handle this case.
-          throw UnimplementedError();
-      }
-
-      if (start != null) {
-        params['dateFilter'] = DateTimeRange(start: start, end: end);
+    if (dateFilter != null) {
+      final dateRange = dateFilter!.effectiveRange;
+      if (dateRange != null) {
+        params['fromDate'] = dateRange.start;
+        params['toDate'] = dateRange.end;
       }
     }
 
-    if (sortBy?.isNotEmpty ?? false) {
-      params['orderBy'] = sortBy;
-      params['descending'] = descending;
-    }
+    // 处理排序
+    params.addAll(sortOption.toQueryParams());
 
     return params;
+  }
+
+  WorkFilter copyWith({
+    String? Function()? selectedStyle,
+    String? Function()? selectedTool,
+    DateRangeFilter? Function()? dateFilter,
+    SortOption? sortOption,
+  }) {
+    return WorkFilter(
+      selectedStyle: selectedStyle?.call() ?? this.selectedStyle,
+      selectedTool: selectedTool?.call() ?? this.selectedTool,
+      dateFilter: dateFilter?.call() ?? this.dateFilter,
+      sortOption: sortOption ?? this.sortOption,
+    );
   }
 }

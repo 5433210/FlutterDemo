@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../models/date_range_filter.dart';
 import '../../models/work_filter.dart';
 import '../../theme/app_sizes.dart';
 import 'date_range_filter_section.dart';
@@ -34,7 +36,7 @@ class WorkFilterPanel extends StatelessWidget {
             const Divider(),
             _buildToolFilter(context),
             const Divider(),
-            _buildDateFilter(context),
+            _buildDateRangeFilter(context),
           ],
         ),
       ),
@@ -57,7 +59,10 @@ class WorkFilterPanel extends StatelessWidget {
                 selected: filter.sortOption.field == option.value,
                 onSelected: (selected) {
                   onFilterChanged(filter.copyWith(
-                    sortOption: selected ? SortOption(field: option.value, descending: true) : null,
+                    sortOption: SortOption(
+                      field: selected ? option.value : SortField.none,
+                      descending: filter.sortOption.descending,
+                    ),
                   ));
                 },
               ),
@@ -73,7 +78,9 @@ class WorkFilterPanel extends StatelessWidget {
             selected: {filter.sortOption.descending},
             onSelectionChanged: (value) {
               onFilterChanged(filter.copyWith(
-                sortOption: SortOption(field: SortField.none, descending: value.first)
+                sortOption: filter.sortOption.copyWith(
+                  descending: value.first,
+                ),
               ));
             },
           ),
@@ -82,19 +89,148 @@ class WorkFilterPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDateFilter(BuildContext context) {
+  Widget _buildDateRangeFilter(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('时间筛选', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSizes.s),
-        DateRangeFilterSection(
-          filter: filter.dateFilter,
-          onChanged: (dateFilter) {
-            onFilterChanged(filter.copyWith(
-              dateFilter: () => dateFilter,
-            ));
-          },
+        SizedBox(
+          height: 300, // 固定高度避免溢出
+          child: DefaultTabController(
+            length: 2,
+            child: Column(
+              children: [
+                // Tab 标签栏
+                TabBar(
+                  tabs: const [
+                    Tab(text: '快捷选择'),
+                    Tab(text: '自定义范围'),
+                  ],
+                  labelColor: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(height: AppSizes.m),
+                
+                // Tab 内容区
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _buildQuickDatePresets(),
+                      _buildCustomDateRange(context),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickDatePresets() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.s),
+      child: Wrap(
+        spacing: AppSizes.s,
+        runSpacing: AppSizes.s,
+        children: [
+          for (final preset in DateRangePreset.values)
+            FilterChip(
+              label: Text(preset.label),
+              selected: filter.dateFilter?.preset == preset,
+              onSelected: (selected) {
+                onFilterChanged(filter.copyWith(
+                  dateFilter: () => selected 
+                    ? DateRangeFilter.preset(preset)
+                    : null,
+                ));
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomDateRange(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.s),
+      child: Column(
+        children: [
+          // 开始日期
+          _buildDateField(
+            context,
+            label: '开始日期',
+            date: filter.dateFilter?.startDate,
+            onDateSelected: (date) {
+              onFilterChanged(filter.copyWith(
+                dateFilter: () => DateRangeFilter(
+                  startDate: date,
+                  endDate: filter.dateFilter?.endDate,
+                ),
+              ));
+            },
+          ),
+          const SizedBox(height: AppSizes.m),
+          // 结束日期
+          _buildDateField(
+            context,
+            label: '结束日期',
+            date: filter.dateFilter?.endDate,
+            onDateSelected: (date) {
+              onFilterChanged(filter.copyWith(
+                dateFilter: () => DateRangeFilter(
+                  startDate: filter.dateFilter?.startDate,
+                  endDate: date,
+                ),
+              ));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateField(
+    BuildContext context, {
+    required String label,
+    required DateTime? date,
+    required ValueChanged<DateTime?> onDateSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
+        const SizedBox(height: AppSizes.xs),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.calendar_today, size: 18),
+                label: Text(
+                  date != null 
+                      ? DateFormat('yyyy-MM-dd').format(date)
+                      : '点击选择日期',
+                ),
+                onPressed: () async {
+                  final selected = await showDatePicker(
+                    context: context,
+                    initialDate: date ?? DateTime.now(),
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                  );
+                  if (selected != null) {
+                    onDateSelected(selected);
+                  }
+                },
+              ),
+            ),
+            if (date != null)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () => onDateSelected(null),
+              ),
+          ],
         ),
       ],
     );

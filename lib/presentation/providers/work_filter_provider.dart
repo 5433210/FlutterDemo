@@ -6,13 +6,13 @@ final workFilterProvider = StateNotifierProvider<WorkFilterNotifier, WorkFilter>
 });
 
 class WorkFilterNotifier extends StateNotifier<WorkFilter> {
-  WorkFilterNotifier() : super( WorkFilter());
+  WorkFilterNotifier() : super( const WorkFilter());
 
   void updateFilter(WorkFilter newFilter) {
     state = newFilter;
   }
 
   void resetFilter() {
-    state =  WorkFilter();
+    state =  const WorkFilter();
   }
 }

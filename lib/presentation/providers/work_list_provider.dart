@@ -13,10 +13,10 @@ final workListProvider = FutureProvider.autoDispose<List<Work>>((ref) async {
   
   // 应用筛选
   var filteredWorks = works.where((work) {
-    if (filter.selectedStyle != null && work.style != filter.selectedStyle) {
+    if (work.style != filter.selectedStyle) {
       return false;
     }
-    if (filter.selectedTool != null && work.tool != filter.selectedTool) {
+    if (work.tool != filter.selectedTool) {
       return false;
     }
     // ...更多筛选条件

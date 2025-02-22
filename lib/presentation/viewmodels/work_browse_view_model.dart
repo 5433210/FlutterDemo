@@ -65,15 +65,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
 
     // 应用风格筛选
-    if (filter.selectedStyle != null) {
-      filtered = filtered.where((w) => w.style == filter.selectedStyle).toList();
-    }
-
+    filtered = filtered.where((w) => w.style == filter.selectedStyle).toList();
+  
     // 应用工具筛选
-    if (filter.selectedTool != null) {
-      filtered = filtered.where((w) => w.tool == filter.selectedTool).toList();
-    }
-
+    filtered = filtered.where((w) => w.tool == filter.selectedTool).toList();
+  
     // 应用日期筛选
     if (filter.dateFilter != null) {
       filtered = filtered.where((w) {

@@ -25,6 +25,10 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   @override
   void initState() {
     super.initState();
+    // 初始化日期和标签页
+    _startDate = widget.initialValue?.startDate;
+    _endDate = widget.initialValue?.endDate;
+    _currentTabIndex = widget.initialValue?.preset != null ? 0 : 1;
   }
 
   @override
@@ -82,20 +86,29 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   }
 
   Widget _buildPresetPage() {
-    return ListView(
+    return ListView.separated(
       padding: const EdgeInsets.all(AppSizes.m),
-      children: [
-        for (final preset in DateRangePreset.values)
-          ListTile(
-            title: Text(preset.label),
-            selected: widget.initialValue?.preset == preset,
-            onTap: () => Navigator.of(context).pop(
-              DateRangeFilter(                
-                preset: preset,
-              ),
-            ),
+      itemCount: DateRangePreset.values.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final preset = DateRangePreset.values[index];
+        final isSelected = widget.initialValue?.preset == preset;
+        final dateRange = preset.getRange();
+        
+        return ListTile(
+          title: Text(preset.label),
+          subtitle: Text(
+            '${DateFormat('MM/dd').format(dateRange.start)} - '
+            '${DateFormat('MM/dd').format(dateRange.end)}',
+            style: Theme.of(context).textTheme.bodySmall,
           ),
-      ],
+          selected: isSelected,
+          trailing: isSelected ? const Icon(Icons.check) : null,
+          onTap: () => Navigator.of(context).pop(
+            DateRangeFilter.preset(preset),
+          ),
+        );
+      },
     );
   }
 
@@ -152,7 +165,7 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
           const SizedBox(height: AppSizes.l),
           _buildRangePreview(),
           const Divider(height: 32),
-          ButtonBar(
+          OverflowBar(
             children: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
@@ -248,14 +261,14 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   Widget _buildRangePreview() {
     if (!_isValid) return const SizedBox.shrink();
     
-    final StringBuffer buffer = StringBuffer();
+    String rangeText;
     if (_startDate != null && _endDate != null) {
-      buffer.write('从 ${DateFormat('yyyy年MM月dd日').format(_startDate!)} ');
-      buffer.write('到 ${DateFormat('yyyy年MM月dd日').format(_endDate!)}');
+      final days = _endDate!.difference(_startDate!).inDays + 1;
+      rangeText = '已选择 $days 天';
     } else if (_startDate != null) {
-      buffer.write('从 ${DateFormat('yyyy年MM月dd日').format(_startDate!)} 开始');
-    } else if (_endDate != null) {
-      buffer.write('截至 ${DateFormat('yyyy年MM月dd日').format(_endDate!)}');
+      rangeText = '从选定日期至今';
+    } else {
+      rangeText = '截至选定日期';
     }
 
     return Card(
@@ -264,18 +277,27 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
         padding: const EdgeInsets.all(AppSizes.m),
         child: Row(
           children: [
-            Icon(Icons.info_outline, 
+            Icon(
+              Icons.date_range,
               color: Theme.of(context).colorScheme.onPrimaryContainer,
             ),
             const SizedBox(width: AppSizes.s),
-            Expanded(
-              child: Text(
-                buffer.toString(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            Text(
+              rangeText,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+            ),
+            if (_startDate != null && _endDate != null) ...[
+              const Spacer(),
+              Text(
+                '${DateFormat('MM/dd').format(_startDate!)} - '
+                '${DateFormat('MM/dd').format(_endDate!)}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -287,9 +309,68 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   void _handleConfirm() {
     Navigator.of(context).pop(DateRangeFilter(
       preset: null,
-      start: _startDate,
-      end: _endDate,
+      startDate: _startDate,  // Changed from start to startDate
+      endDate: _endDate,      // Changed from end to endDate
     ));
+  }
+
+  Future<void> _showDatePicker({
+    required bool isStartDate,
+    DateTime? initialDate,
+    DateTime? minDate,
+    DateTime? maxDate,
+  }) async {
+    final theme = Theme.of(context);
+    
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: minDate ?? DateTime(1900),
+      lastDate: maxDate ?? DateTime.now(),
+      locale: const Locale('zh'),
+      builder: (context, child) {
+        return Theme(
+          data: theme.copyWith(
+            datePickerTheme: DatePickerThemeData(
+              headerBackgroundColor: theme.colorScheme.primary,
+              headerForegroundColor: theme.colorScheme.onPrimary,
+              dayForegroundColor: MaterialStateProperty.resolveWith((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return theme.colorScheme.onPrimary;
+                }
+                return null;
+              }),
+              todayForegroundColor: MaterialStateProperty.all(
+                theme.colorScheme.primary,
+              ),
+              yearForegroundColor: MaterialStateProperty.resolveWith((states) {
+                if (states.contains(MaterialState.selected)) {
+                  return theme.colorScheme.onPrimary;
+                }
+                return null;
+              }),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (date != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = date;
+          if (_endDate != null && date.isAfter(_endDate!)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = date;
+          if (_startDate != null && date.isBefore(_startDate!)) {
+            _startDate = null;
+          }
+        }
+      });
+    }
   }
 }
 
@@ -308,7 +389,7 @@ Future<DateTimeRange?> showCustomDateRangePicker({
           maxHeight: 600,
         ),
         child: Padding(
-          padding: EdgeInsets.all(AppSizes.m),
+          padding: const EdgeInsets.all(AppSizes.m),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -335,7 +416,7 @@ Future<DateTimeRange?> showCustomDateRangePicker({
                   },
                 ),
               ),
-              ButtonBar(
+              OverflowBar(
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
