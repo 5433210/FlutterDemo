@@ -4,9 +4,9 @@ class PracticeToolPanel extends StatelessWidget {
   final Function(String) onToolSelected;
 
   const PracticeToolPanel({
-    Key? key,
+    super.key,
     required this.onToolSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -4,9 +4,9 @@ class WorkEditDialog extends StatefulWidget {
   final int workId;
 
   const WorkEditDialog({
-    Key? key,
+    super.key,
     required this.workId,
-  }) : super(key: key);
+  });
 
   @override
   State<WorkEditDialog> createState() => _WorkEditDialogState();

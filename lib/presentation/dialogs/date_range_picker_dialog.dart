@@ -334,17 +334,17 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
             datePickerTheme: DatePickerThemeData(
               headerBackgroundColor: theme.colorScheme.primary,
               headerForegroundColor: theme.colorScheme.onPrimary,
-              dayForegroundColor: MaterialStateProperty.resolveWith((states) {
-                if (states.contains(MaterialState.selected)) {
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
                   return theme.colorScheme.onPrimary;
                 }
                 return null;
               }),
-              todayForegroundColor: MaterialStateProperty.all(
+              todayForegroundColor: WidgetStateProperty.all(
                 theme.colorScheme.primary,
               ),
-              yearForegroundColor: MaterialStateProperty.resolveWith((states) {
-                if (states.contains(MaterialState.selected)) {
+              yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
                   return theme.colorScheme.onPrimary;
                 }
                 return null;

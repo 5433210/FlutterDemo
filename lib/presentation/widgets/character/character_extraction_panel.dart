@@ -5,10 +5,10 @@ class CharacterExtractionPanel extends StatefulWidget {
   final int imageIndex;
   
   const CharacterExtractionPanel({
-    Key? key,
+    super.key,
     required this.workId,
     required this.imageIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<CharacterExtractionPanel> createState() => _CharacterExtractionPanelState();

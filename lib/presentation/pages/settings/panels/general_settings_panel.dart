@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GeneralSettingsPanel extends ConsumerWidget {
-  const GeneralSettingsPanel({Key? key}) : super(key: key);
+  const GeneralSettingsPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

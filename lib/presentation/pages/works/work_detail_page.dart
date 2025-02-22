@@ -9,7 +9,7 @@ import '../../dialogs/character_detail_dialog.dart';
 
 class WorkDetailPage extends StatefulWidget {
   final int workId;
-  const WorkDetailPage({Key? key, required this.workId}) : super(key: key);
+  const WorkDetailPage({super.key, required this.workId});
 
   @override
   State<WorkDetailPage> createState() => _WorkDetailPageState();
@@ -356,7 +356,7 @@ class CharacterDetailPage extends StatelessWidget {
   final String charId;
   final VoidCallback onBack;
 
-  const CharacterDetailPage({Key? key, required this.charId, required this.onBack}) : super(key: key);
+  const CharacterDetailPage({super.key, required this.charId, required this.onBack});
 
   @override
   Widget build(BuildContext context) {

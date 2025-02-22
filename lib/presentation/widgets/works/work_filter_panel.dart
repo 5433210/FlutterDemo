@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../models/date_range_filter.dart';
 import '../../models/work_filter.dart';
 import '../../theme/app_sizes.dart';
-import 'date_range_filter_section.dart';
 
 class WorkFilterPanel extends StatelessWidget {
   final WorkFilter filter;

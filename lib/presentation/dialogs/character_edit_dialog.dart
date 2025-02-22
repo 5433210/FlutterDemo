@@ -4,9 +4,9 @@ class CharacterEditDialog extends StatefulWidget {
   final String charId;
 
   const CharacterEditDialog({
-    Key? key,
+    super.key,
     required this.charId,
-  }) : super(key: key);
+  });
 
   @override
   State<CharacterEditDialog> createState() => _CharacterEditDialogState();

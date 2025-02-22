@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
 class TitleBar extends StatelessWidget with WindowListener {
-  const TitleBar({Key? key}) : super(key: key);
+  const TitleBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class TitleBar extends StatelessWidget with WindowListener {
 }
 
 class WindowButtons extends StatelessWidget {
-  const WindowButtons({Key? key}) : super(key: key);
+  const WindowButtons({super.key});
 
   @override
   Widget build(BuildContext context) {

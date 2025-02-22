@@ -5,10 +5,10 @@ class PracticePropertyPanel extends StatelessWidget {
   final Function(Map<String, dynamic>) onPropertyChanged;
 
   const PracticePropertyPanel({
-    Key? key,
+    super.key,
     this.selectedElement,
     required this.onPropertyChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

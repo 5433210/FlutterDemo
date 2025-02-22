@@ -4,7 +4,7 @@ import '../works/work_detail_page.dart';
 import '../../widgets/character/character_detail_view.dart';
 
 class CharacterListPage extends StatefulWidget {
-  const CharacterListPage({Key? key}) : super(key: key);
+  const CharacterListPage({super.key});
 
   @override
   State<CharacterListPage> createState() => _CharacterListPageState();

@@ -7,9 +7,9 @@ class PracticeDetailPage extends StatefulWidget {
   final String practiceId;
 
   const PracticeDetailPage({
-    Key? key,
+    super.key,
     required this.practiceId,
-  }) : super(key: key);
+  });
 
   @override
   State<PracticeDetailPage> createState() => _PracticeDetailPageState();

@@ -5,9 +5,9 @@ class CharacterDetailDialog extends StatelessWidget {
   final String charId;
 
   const CharacterDetailDialog({
-    Key? key,
+    super.key,
     required this.charId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

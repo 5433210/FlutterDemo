@@ -8,9 +8,9 @@ class PracticeEditPage extends StatefulWidget {
   final String? practiceId; // 可选ID，如果为null则表示新建
 
   const PracticeEditPage({
-    Key? key, 
+    super.key, 
     this.practiceId,
-  }) : super(key: key);
+  });
 
   @override
   State<PracticeEditPage> createState() => _PracticeEditPageState();

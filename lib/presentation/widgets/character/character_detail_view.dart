@@ -5,10 +5,10 @@ class CharacterDetailView extends StatelessWidget {
   final bool showSourceButton;
 
   const CharacterDetailView({
-    Key? key,
+    super.key,
     required this.charId,
     this.showSourceButton = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

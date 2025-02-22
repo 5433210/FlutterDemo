@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ExportDialog extends StatelessWidget {
   final int workId;
 
-  const ExportDialog({Key? key, required this.workId}) : super(key: key);
+  const ExportDialog({super.key, required this.workId});
 
   @override
   Widget build(BuildContext context) {

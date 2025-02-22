@@ -5,10 +5,10 @@ class PracticePreview extends StatefulWidget {
   final int pageIndex;
 
   const PracticePreview({
-    Key? key,
+    super.key,
     required this.practiceId,
     required this.pageIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<PracticePreview> createState() => _PracticePreviewState();

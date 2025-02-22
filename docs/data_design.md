@@ -8,7 +8,7 @@
 
 ```json
 {
-  "theme": {
+  "theme": { 
     "mode": "enum",              // 主题模式: light/dark/system
     "color": "string",           // 主题颜色值
     "scale": "number"            // 界面缩放比例(0.75-1.5)

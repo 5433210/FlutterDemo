@@ -9,14 +9,14 @@ class PracticeLayerPanel extends StatefulWidget {
   final Function(int, int) onLayerReordered;
 
   const PracticeLayerPanel({
-    Key? key,
+    super.key,
     required this.layers,
     required this.onLayerSelected,
     required this.onLayerVisibilityChanged,
     required this.onLayerLockChanged,
     required this.onLayerDeleted,
     required this.onLayerReordered,
-  }) : super(key: key);
+  });
 
   @override
   State<PracticeLayerPanel> createState() => _PracticeLayerPanelState();

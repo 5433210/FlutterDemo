@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class StorageSettingsPanel extends ConsumerWidget {
-  const StorageSettingsPanel({Key? key}) : super(key: key);
+  const StorageSettingsPanel({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
