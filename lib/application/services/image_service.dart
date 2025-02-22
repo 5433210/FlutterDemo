@@ -128,7 +128,7 @@ class ImageService {
     final dir = path.dirname(file.path);
     final ext = path.extension(file.path);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final rotatedPath = path.join(dir, 'rotated_${timestamp}$ext');
+    final rotatedPath = path.join(dir, 'rotated_$timestamp$ext');
     
     // Save rotated image
     final rotatedFile = File(rotatedPath);
@@ -181,7 +181,7 @@ class ImageService {
     final dir = path.dirname(file.path);
     final ext = path.extension(file.path);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final optimizedPath = path.join(dir, 'optimized_${timestamp}$ext');
+    final optimizedPath = path.join(dir, 'optimized_$timestamp$ext');
     
     // Save optimized image
     final optimizedFile = File(optimizedPath);

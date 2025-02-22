@@ -1,14 +1,16 @@
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
-import '../../dialogs/work_import_dialog.dart';
+import '../../../utils/date_formatter.dart';
+import '../../../utils/path_helper.dart';
+import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/main_layout.dart';
-import '../../widgets/responsive_builder.dart';
 import '../../theme/app_sizes.dart';
 import '../../widgets/works/work_filter_panel.dart';
 
@@ -236,54 +238,16 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildGrid(List<Work> works) {
-    return ResponsiveBuilder(
-      builder: (context, breakpoint) {
-        final crossAxisCount = switch (breakpoint) {
-          ResponsiveBreakpoint.lg => 4,
-          ResponsiveBreakpoint.md => 3,
-          ResponsiveBreakpoint.sm => 2,
-          ResponsiveBreakpoint.xs => 1,
-        };
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(AppSizes.m),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: AppSizes.m,
-            crossAxisSpacing: AppSizes.m,
-            // 移除固定宽高比，使用自动高度
-            mainAxisExtent: 240, // 设置主轴（垂直方向）的估计高度
-          ),
-          itemCount: works.length,
-          itemBuilder: (context, index) => _WorkCard(
-            work: works[index],
-            selected: _selectedWorks.contains(works[index].id),
-            selectable: _batchMode,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  _selectedWorks.add(works[index].id!);
-                } else {
-                  _selectedWorks.remove(works[index].id!);
-                }
-              });
-            },
-            onDelete: () async {
-              await ref.read(workBrowseProvider.notifier)
-                  .deleteWork(works[index].id!);
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildList(List<Work> works) {
-    return ListView.separated(
+    return GridView.builder(
       padding: const EdgeInsets.all(AppSizes.m),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: AppSizes.gridCrossAxisCount,
+        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
+        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
+        mainAxisExtent: AppSizes.gridItemTotalHeight,
+      ),
       itemCount: works.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSizes.s),
-      itemBuilder: (context, index) => _WorkCard(
+      itemBuilder: (context, index) => WorkGridItem(
         work: works[index],
         selected: _selectedWorks.contains(works[index].id),
         selectable: _batchMode,
@@ -296,7 +260,45 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             }
           });
         },
-        onDelete: () async {
+        onTap: _batchMode ? null : () => Navigator.pushNamed(
+          context,
+          '/work_detail',
+          arguments: works[index].id,
+        ),
+        onDelete: _batchMode ? null : () async {
+          await ref.read(workBrowseProvider.notifier)
+              .deleteWork(works[index].id!);
+        },
+      ),
+    );
+  }
+
+  Widget _buildList(List<Work> works) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSizes.m),
+      itemCount: works.length,
+      separatorBuilder: (context, index) => const SizedBox(height: AppSizes.s),
+      itemBuilder: (context, index) => WorkListItem(
+        work: works[index],
+        selected: _selectedWorks.contains(works[index].id),
+        onSelected: _batchMode ? (selected) {
+          setState(() {
+            if (selected) {
+              _selectedWorks.add(works[index].id!);
+            } else {
+              _selectedWorks.remove(works[index].id!);
+            }
+          });
+        } : null,
+        onTap: _batchMode ? null : () => Navigator.pushNamed(
+          context,
+          '/work_detail',
+          arguments: works[index].id,
+        ),
+        onEdit: _batchMode ? null : () {
+          // Handle edit action
+        },
+        onDelete: _batchMode ? null : () async {
           await ref.read(workBrowseProvider.notifier)
               .deleteWork(works[index].id!);
         },
@@ -343,170 +345,415 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
 
     if (result == true) {
       // Refresh work list after successful import
-      ref.read(workBrowseProvider.notifier).loadWorks();
+      //ref.read(workBrowseProvider.notifier).loadWorks();
     }
   }
 }
 
-class _WorkCard extends ConsumerWidget {
+class WorkListItem extends StatelessWidget {
   final Work work;
-  final VoidCallback onDelete;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool selected;
+  final ValueChanged<bool>? onSelected;
+
+  const WorkListItem({
+    super.key,
+    required this.work,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+    this.selected = false,
+    this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 1,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onSelected != null ? () => onSelected!(!selected) : onTap,
+        child: SizedBox(
+          height: AppSizes.listItemHeight,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.m),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Stack(
+                  children: [
+                    _buildThumbnail(context),
+                    if (onSelected != null || selected)
+                      _buildSelectionOverlay(context),
+                  ],
+                ),
+                const SizedBox(width: AppSizes.m),
+                Expanded(child: _buildContent(context)),
+                if (onSelected == null && (onEdit != null || onDelete != null))
+                  _buildActions(context),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnailSection(BuildContext context) {
+    return Stack(
+      children: [
+        _buildThumbnail(context),
+        if (onSelected != null)
+          _buildSelectionOverlay(context),
+      ],
+    );
+  }
+
+  Widget _buildThumbnail(BuildContext context) {
+    return SizedBox(
+      width: AppSizes.thumbnailSize,
+      height: AppSizes.thumbnailSize,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.xs),
+        child: FutureBuilder<String>(
+          future: PathHelper.getWorkThumbnailPath(work.id!),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              final file = File(snapshot.data!);
+              if (file.existsSync()) {
+                return Image.file(
+                  file,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+                );
+              }
+            }
+            return _buildPlaceholder(context);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title section with fixed height
+        SizedBox(
+          height: 48,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                work.name ?? '',
+                style: textTheme.titleMedium,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (work.author?.isNotEmpty ?? false) ...[
+                const SizedBox(height: AppSizes.xxs),
+                Text(
+                  work.author!,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Tags section with single line
+        SizedBox(
+          height: 24,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              if (work.style?.isNotEmpty ?? false)
+                _buildTag(context, work.style!),
+              if (work.tool?.isNotEmpty ?? false)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSizes.xs),
+                  child: _buildTag(context, work.tool!),
+                ),
+              if (work.imageCount != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSizes.xs),
+                  child: _buildTag(context, '${work.imageCount}张'),
+                ),
+            ],
+          ),
+        ),
+
+        const Spacer(),
+
+        // Metadata section
+        DefaultTextStyle(
+          style: textTheme.bodySmall!.copyWith(
+            color: colorScheme.outline,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 14,
+                color: colorScheme.outline,
+              ),
+              const SizedBox(width: AppSizes.xs),
+              Text(DateFormatter.formatCompact(
+                work.creationDate ?? work.createTime ?? DateTime.now()
+              )),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTag(BuildContext context, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.s,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppSizes.xs),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActions(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        if (onEdit != null)
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            visualDensity: VisualDensity.compact,
+            onPressed: onEdit,
+          ),
+        if (onDelete != null)
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            visualDensity: VisualDensity.compact,
+            onPressed: onDelete,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 32,
+          color: Theme.of(context).colorScheme.outline,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionOverlay(BuildContext context) {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: selected 
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+              : Colors.transparent,
+        ),
+        child: Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.xs),
+            child: Checkbox(
+              value: selected,
+              onChanged: (value) => onSelected?.call(value ?? false),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class WorkGridItem extends StatelessWidget {
+  final Work work;
+  final VoidCallback? onTap;
+  final VoidCallback? onDelete;
   final bool selectable;
   final bool selected;
   final ValueChanged<bool>? onSelected;
 
-  const _WorkCard({
+  const WorkGridItem({
+    super.key,
     required this.work,
-    required this.onDelete,
+    this.onTap,
+    this.onDelete,
     this.selectable = false,
     this.selected = false,
     this.onSelected,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: selectable
-            ? null
-            : () => Navigator.pushNamed(
-                  context,
-                  '/work_detail',
-                  arguments: work.id,
-                ),
-        // 移除固定高度，使用内容自适应
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // 确保高度自适应内容
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 封面图片
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildCoverImage(ref),
-                  if (selectable)
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Checkbox(
-                        value: selected,
-                        onChanged: (value) => onSelected?.call(value ?? false),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // 信息区域使用 ConstrainedBox 限制最大高度
-            ConstrainedBox(
-              constraints: const BoxConstraints(
-                minHeight: 80,
-                maxHeight: 120,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: _buildInfoSection(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoverImage(WidgetRef ref) {
-    return FutureBuilder<String?>(
-      future: ref.read(workBrowseProvider.notifier).getWorkThumbnail(work.id!),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildPlaceholder(isLoading: true);
-        }
-
-        if (snapshot.hasData && snapshot.data != null) {
-          return Image.file(
-            File(snapshot.data!),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              debugPrint('Error loading image: $error');
-              return _buildPlaceholder();
-            },
-          );
-        }
-
-        return _buildPlaceholder();
-      },
-    );
-  }
-
-  Widget _buildPlaceholder({bool isLoading = false}) {
-    return Container(
-      color: Colors.grey[200],
-      child: Center(
-        child: isLoading
-            ? const CircularProgressIndicator()
-            : const Icon(Icons.image_outlined, size: 48, color: Colors.grey),
-      ),
-    );
-  }
-
-  Widget _buildInfoSection(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // 使用最小所需空间
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 标题
-        Text(
-          work.name ?? '未命名',
-          style: Theme.of(context).textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        // 作者（如果存在）
-        if (work.author?.isNotEmpty ?? false) ...[
-          Text(
-            work.author!,
-            style: Theme.of(context).textTheme.bodySmall,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-        ],
-        // 底部信息行
-        Expanded(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end, // 确保底部对齐
+        onTap: selectable ? () => onSelected?.call(!selected) : onTap,
+        child: SizedBox(
+          width: AppSizes.gridItemWidth,
+          height: AppSizes.gridItemTotalHeight,
+          child: Column(
             children: [
-              if (work.style?.isNotEmpty ?? false)
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      work.style!,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+              SizedBox(
+                height: AppSizes.gridItemImageHeight,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildThumbnail(context),
+                    if (selectable || selected)
+                      _buildSelectionOverlay(context),
+                  ],
                 ),
-              const SizedBox(width: 8),
-              Text(
-                '${work.imageCount}图',
-                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.m),
+                  child: _buildContent(context),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Title
+        Text(
+          work.name ?? '',
+          style: textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (work.author?.isNotEmpty ?? false) ...[
+          const SizedBox(height: AppSizes.xxs),
+          Text(
+            work.author!,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.primary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const Spacer(),
+        // Bottom metadata
+        Row(
+          children: [
+            Icon(
+              Icons.photo_outlined,
+              size: 16,
+              color: colorScheme.outline,
+            ),
+            const SizedBox(width: AppSizes.xs),
+            Text(
+              '${work.imageCount ?? 0}张',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.outline,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              DateFormatter.formatCompact(
+                work.creationDate ?? work.createTime ?? DateTime.now(),
+              ),
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
       ],
+    );
+  }
+
+  Widget _buildThumbnail(BuildContext context) {
+    return FutureBuilder<String>(
+      future: PathHelper.getWorkThumbnailPath(work.id!),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final file = File(snapshot.data!);
+          if (file.existsSync()) {
+            return Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+            );
+          }
+        }
+        return _buildPlaceholder(context);
+      },
+    );
+  }
+
+  Widget _buildSelectionOverlay(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: selected 
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+            : Colors.transparent,
+      ),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.xs),
+          child: Checkbox(
+            value: selected,
+            onChanged: (value) => onSelected?.call(value ?? false),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 32,
+          color: Theme.of(context).colorScheme.outline,
+        ),
+      ),
     );
   }
 }

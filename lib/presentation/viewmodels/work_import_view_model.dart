@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:demo/domain/value_objects/work/work_info.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import '../../application/config/app_config.dart';
@@ -277,7 +276,6 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     return processedImages;
   }
 
-  @override
   Future<bool> importWork() async {
     if (!state.isValid) {
       state = state.copyWith(error: '请填写作品名称并至少添加一张图片');
@@ -303,6 +301,10 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
       // Import work with processed images
       await _workService.importWork(finalImages, workInfo);
+      
+      // Clear state after successful import
+      reset();
+      
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -338,20 +340,16 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     );
   }
 
-  // void rotateSelectedImage(bool clockwise) {
-  //   if (state.selectedImageIndex < 0 || state.selectedImageIndex >= state.images.length) {
-  //     return;
-  //   }
+  void reorderImages(int oldIndex, int newIndex) {
+    final updatedImages = List<File>.from(state.images);
+    final item = updatedImages.removeAt(oldIndex);
+    updatedImages.insert(newIndex, item);
 
-  //   final selectedFile = state.images[state.selectedImageIndex];
-  //   final currentRotation = state.getRotation(selectedFile.path);
-  //   final newRotation = (currentRotation + (clockwise ? 90.0 : -90.0)) % 360.0;
-
-  //   final updatedRotations = Map<String, double>.from(state.imageRotations);
-  //   updatedRotations[selectedFile.path] = newRotation;
-
-  //   state = state.copyWith(imageRotations: updatedRotations);
-  // }
+    state = state.copyWith(
+      images: updatedImages,
+      selectedImageIndex: newIndex,
+    );
+  }
 
   void updateScale(double scale) {
     state = state.copyWith(scale: scale);
@@ -360,5 +358,9 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   void setScale(double scale) {
     if (scale < 0.5 || scale > 5.0) return;
     state = state.copyWith(scale: scale);
+  }
+
+  void reset() {
+    state = WorkImportState();
   }
 }
