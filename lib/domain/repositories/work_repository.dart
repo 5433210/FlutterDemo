@@ -8,21 +8,23 @@ abstract class WorkRepository {
   Future<Work?> getWork(String id);
   Future<List<Map<String, dynamic>>> getWorks({
     String? query,
-    List<String>? styles,
-    List<String>? tools,
-    DateTimeRange? dateRange,
+    String? style,
+    String? tool,
+    DateTimeRange? importDateRange,
+    DateTimeRange? creationDateRange,
     String? orderBy,
     bool descending = true,
   });
   Future<void> updateWork(Work work);
   Future<void> deleteWork(String id);
-  Future<bool> workExists(String id);
+  Future<bool> workExists(String id);    
   Future<int> getWorksCount({
+   String? query,
     String? style,
-    String? author,
-    List<String>? tags,
+    String? tool,
+    DateTimeRange? importDateRange,
+    DateTimeRange? creationDateRange,
   });
   Future<List<Character>> getCharactersByWorkId(String workId);
-  Future<T> transaction<T>(Future<T> Function(DatabaseTransaction) action);
 }
 

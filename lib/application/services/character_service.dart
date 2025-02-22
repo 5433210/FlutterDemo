@@ -2,6 +2,7 @@ import '../../domain/entities/character.dart';
 import '../../domain/repositories/character_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 
+
 class CharacterService {
   final CharacterRepository _characterRepository;
   final WorkRepository _workRepository;

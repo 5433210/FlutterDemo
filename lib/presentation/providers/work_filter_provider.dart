@@ -1,0 +1,18 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/work_filter.dart';
+
+final workFilterProvider = StateNotifierProvider<WorkFilterNotifier, WorkFilter>((ref) {
+  return WorkFilterNotifier();
+});
+
+class WorkFilterNotifier extends StateNotifier<WorkFilter> {
+  WorkFilterNotifier() : super( WorkFilter());
+
+  void updateFilter(WorkFilter newFilter) {
+    state = newFilter;
+  }
+
+  void resetFilter() {
+    state =  WorkFilter();
+  }
+}

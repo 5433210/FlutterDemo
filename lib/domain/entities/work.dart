@@ -1,5 +1,6 @@
-import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
+@immutable
 class Work {
   final String? id;
   final String? name;
@@ -7,79 +8,60 @@ class Work {
   final String? style;
   final String? tool;
   final DateTime? creationDate;
-  final DateTime? createTime;
-  final DateTime? updateTime;
-  final Map<String, dynamic>? metadata;
-  final int imageCount;
+  final DateTime? importDate;
+  final int? imageCount;
+  final DateTime? createTime;    // 数据创建时间
+  final DateTime? updateTime;    // 数据更新时间
 
-  Work({
+  const Work({
     this.id,
     this.name,
     this.author,
     this.style,
     this.tool,
     this.creationDate,
+    this.importDate,
+    this.imageCount = 0,
     this.createTime,
     this.updateTime,
-    this.metadata,
-    this.imageCount = 0,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'author': author,
-      'style': style,
-      'tool': tool,
-      'creation_date': creationDate?.millisecondsSinceEpoch,
-      'create_time': createTime?.millisecondsSinceEpoch,
-      'update_time': updateTime?.millisecondsSinceEpoch,
-      'metadata': metadata != null ? jsonEncode(metadata) : null,
-      'image_count': imageCount,
-    };
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'author': author,
+    'style': style,
+    'tool': tool,
+    'creation_date': creationDate?.toIso8601String(),
+    'import_date': importDate?.toIso8601String(),
+    'image_count': imageCount,
+    'create_time': createTime?.toIso8601String(),
+    'update_time': updateTime?.toIso8601String(),
+  };
+
+  factory Work.fromJson(Map<String, dynamic> json) => Work(
+    id: json['id'] as String?,
+    name: json['name'] as String?,
+    author: json['author'] as String?,
+    style: json['style'] as String?,
+    tool: json['tool'] as String?,
+    creationDate: _parseDateTime(json['creation_date']),
+    importDate: _parseDateTime(json['import_date']),
+    imageCount: json['image_count'] as int? ?? 0,
+    createTime: _parseDateTime(json['create_time']) ?? DateTime.now(),
+    updateTime: _parseDateTime(json['update_time']) ?? DateTime.now(),
+  );
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    try {
+      return DateTime.parse(value.toString());
+    } catch (e) {
+      return null;
+    }
   }
 
-  static Work fromMap(Map<String, dynamic> map) {
-    return Work(
-      id: map['id'],
-      name: map['name'],
-      author: map['author'],
-      style: map['style'],
-      tool: map['tool'],
-      creationDate: map['creation_date'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(map['creation_date'])
-          : null,
-      createTime: DateTime.fromMillisecondsSinceEpoch(map['create_time']),
-      updateTime: DateTime.fromMillisecondsSinceEpoch(map['update_time']),
-      metadata: map['metadata'] != null ? jsonDecode(map['metadata']) : null,
-      imageCount: map['image_count'] as int? ?? 0,
-    );
-  }
-
-  Work copyWith({
-    String? id,
-    String? name,
-    String? author,
-    String? style,
-    String? tool,
-    DateTime? creationDate,
-    DateTime? createTime,
-    DateTime? updateTime,
-    Map<String, dynamic>? metadata,
-    int? imageCount,
-  }) {
-    return Work(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      author: author ?? this.author,
-      style: style ?? this.style,
-      tool: tool ?? this.tool,
-      creationDate: creationDate ?? this.creationDate,
-      createTime: createTime ?? this.createTime,
-      updateTime: updateTime ?? this.updateTime,
-      metadata: metadata ?? this.metadata,
-      imageCount: imageCount ?? this.imageCount,
-    );
-  }
+  // Alias for JSON methods
+  Map<String, dynamic> toMap() => toJson();
+  factory Work.fromMap(Map<String, dynamic> map) => Work.fromJson(map);
 }

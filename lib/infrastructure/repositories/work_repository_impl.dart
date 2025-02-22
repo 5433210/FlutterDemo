@@ -24,15 +24,26 @@ class WorkRepositoryImpl implements WorkRepository {
 
   @override
   Future<List<Map<String, dynamic>>> getWorks({
-    DateTimeRange? dateRange,
-    bool descending = true,
-    String? orderBy,
     String? query,
-    List<String>? styles,
-    List<String>? tools,
+    String? style,
+    String? tool,
+    DateTimeRange? importDateRange,
+    DateTimeRange? creationDateRange,
+    String? orderBy,
+    bool descending = true,
   }) async {
-    final maps = await _db.getWorks();
-    return maps;
+    return _db.getWorks(
+      name: query, // 查询同时搜索作品名称
+      author: query, // 和作者
+      style: style,
+      tool: tool,
+      fromDateImport: importDateRange?.start,
+      toDateImport: importDateRange?.end,
+      fromDateCreation: creationDateRange?.start,
+      toDateCreation: creationDateRange?.end,
+      sortBy: orderBy,
+      descending: descending,
+    );
   }
 
   @override
@@ -52,14 +63,21 @@ class WorkRepositoryImpl implements WorkRepository {
 
   @override
   Future<int> getWorksCount({
+    String? query,
     String? style,
-    String? author,
-    List<String>? tags,
+    String? tool,
+    DateTimeRange? importDateRange,
+    DateTimeRange? creationDateRange,
   }) async {
     return await _db.getWorksCount(
+      name: query,
+      author: query,
       style: style,
-      author: author,
-      tags: tags, // Add missing tags parameter
+      tool: tool,
+      fromDateImport: importDateRange?.start,
+      toDateImport: importDateRange?.end,
+      fromDateCreation: creationDateRange?.start,
+      toDateCreation: creationDateRange?.end,
     );
   }
 
@@ -67,10 +85,5 @@ class WorkRepositoryImpl implements WorkRepository {
   Future<List<Character>> getCharactersByWorkId(String workId) async {
     final maps = await _db.getCharactersByWorkId(workId);
     return maps.map((map) => Character.fromMap(map)).toList();
-  }
-
-  @override
-  Future<T> transaction<T>(Future<T> Function(DatabaseTransaction) action) async {
-    return await _db.transaction(action);
   }
 }

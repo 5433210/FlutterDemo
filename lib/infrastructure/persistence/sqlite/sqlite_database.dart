@@ -191,123 +191,134 @@ class SqliteDatabase implements DatabaseInterface {
   Future<List<Map<String, dynamic>>> getWorks({
     String? style,
     String? author,
+    String? name,
+    String? tool,        // 添加工具参数
     List<String>? tags,
-    DateTime? fromDate,
-    DateTime? toDate,
+    DateTime? fromDateImport,
+    DateTime? toDateImport,
+    DateTime? fromDateCreation,
+    DateTime? toDateCreation,
+    DateTime? fromDateUpdate,
+    DateTime? toDateUpdate,
     int? limit,
     int? offset,
     String? sortBy,
     bool descending = true,
   }) async {
-    final db = await database;
-    
     final whereConditions = <String>[];
     final whereArgs = <dynamic>[];
+
+    // 文本搜索
+    _addTextSearch(whereConditions, whereArgs, name, author);
     
+    // 风格筛选
     if (style != null) {
       whereConditions.add('style = ?');
       whereArgs.add(style);
     }
     
-    if (author != null) {
-      whereConditions.add('author = ?');
-      whereArgs.add(author);
-    }
-
-    if (fromDate != null) {
-      whereConditions.add('creation_date >= ?');
-      whereArgs.add(fromDate.millisecondsSinceEpoch);
-    }
-
-    if (toDate != null) {
-      whereConditions.add('creation_date <= ?');
-      whereArgs.add(toDate.millisecondsSinceEpoch);
-    }
-
-    if (tags != null && tags.isNotEmpty) {
-      whereConditions.add('metadata LIKE ?');
-      whereArgs.add('%"tags":${jsonEncode(tags)}%');
+    // 工具筛选
+    if (tool != null) {
+      whereConditions.add('tool = ?');
+      whereArgs.add(tool);
     }
     
-    final where = whereConditions.isEmpty 
-        ? null 
-        : whereConditions.join(' AND ');
+    // 标签筛选
+    _addTagSearch(whereConditions, whereArgs, tags);
 
-    String orderByClause;
-    switch (sortBy) {
-      case 'name':
-        orderByClause = 'name';
-        break;
-      case 'author':
-        orderByClause = 'author';
-        break;
-      case 'creationDate':
-        orderByClause = 'creation_date';
-        break;
-      case 'updateTime':
-        orderByClause = 'update_time';
-        break;
-      default:
-        orderByClause = 'creation_date';
-    }
-    orderByClause += descending ? ' DESC' : ' ASC';
+    // 日期范围筛选
+    _addDateRange(whereConditions, whereArgs, {
+      'create_time': {
+        'start': fromDateImport,
+        'end': toDateImport,
+      },
+      'creation_date': {
+        'start': fromDateCreation,
+        'end': toDateCreation,
+      },
+      'update_time': {
+        'start': fromDateUpdate,
+        'end': toDateUpdate,
+      },
+    });
 
-    final List<Map<String, dynamic>> maps = await db.query(
-      'works',
+    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
+    final orderBy = _buildOrderByClause(sortBy, descending);
+
+    final maps = await _executeQuery(
+      table: 'works',
       where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: orderByClause,
+      whereArgs: whereArgs,
+      orderBy: orderBy,
       limit: limit,
       offset: offset,
     );
-    
-    return maps.map((map) {
-       final newMap = Map<String, dynamic>.from(map); // Create a new map
-    if (newMap['metadata'] != null) {
-      newMap['metadata'] = jsonDecode(newMap['metadata']);
-      }
-      return map;
-    }).toList();
+
+    return maps.map(_decodeMetadata).toList();
   }
 
   @override
   Future<int> getWorksCount({
     String? style,
     String? author,
+    String? name,
+    String? tool,        // Add tool parameter
     List<String>? tags,
+    DateTime? fromDateImport,
+    DateTime? toDateImport,
+    DateTime? fromDateCreation,
+    DateTime? toDateCreation,
+    DateTime? fromDateUpdate,
+    DateTime? toDateUpdate
   }) async {
-    final db = await database;
-    
     final whereConditions = <String>[];
     final whereArgs = <dynamic>[];
+
+    // 文本搜索
+    _addTextSearch(whereConditions, whereArgs, name, author);
     
+    // 风格筛选
     if (style != null) {
       whereConditions.add('style = ?');
       whereArgs.add(style);
     }
     
-    if (author != null) {
-      whereConditions.add('author = ?');
-      whereArgs.add(author);
-    }
-
-    if (tags != null && tags.isNotEmpty) {
-      whereConditions.add('metadata LIKE ?');
-      whereArgs.add('%"tags":${jsonEncode(tags)}%');
+    // 工具筛选
+    if (tool != null) {
+      whereConditions.add('tool = ?');
+      whereArgs.add(tool);
     }
     
-    final where = whereConditions.isEmpty 
-        ? null 
-        : whereConditions.join(' AND ');
+    // 标签筛选
+    _addTagSearch(whereConditions, whereArgs, tags);
 
-    final result = Sqflite.firstIntValue(await db.query(
-      'works',
-      columns: ['COUNT(*)'],
+    // 日期范围筛选
+    _addDateRange(whereConditions, whereArgs, {
+      'create_time': {
+        'start': fromDateImport,
+        'end': toDateImport,
+      },
+      'creation_date': {
+        'start': fromDateCreation,
+        'end': toDateCreation,
+      },
+      'update_time': {
+        'start': fromDateUpdate,
+        'end': toDateUpdate,
+      },
+    });
+
+    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
+
+    // 使用 _executeQuery 来执行计数查询
+    final result = await _executeQuery(
+      table: 'works',
+      columns: ['COUNT(*) as count'],
       where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-    ));
-    
-    return result ?? 0;
+      whereArgs: whereArgs,
+    );
+
+    return result.first['count'] as int;
   }
 
   @override
@@ -575,7 +586,7 @@ class SqliteDatabase implements DatabaseInterface {
 
   @override
   Future<String?> getSetting(String key) async {
-    final db = await database;
+    final db = await database;    
     final List<Map<String, dynamic>> maps = await db.query(
       'settings',
       where: 'key = ?',
@@ -586,84 +597,112 @@ class SqliteDatabase implements DatabaseInterface {
     return maps.first['value'] as String;
   }
 
-  @override
-  Future<T> transaction<T>(Future<T> Function(DatabaseTransaction) action) async {
+  void _addTextSearch(
+    List<String> conditions,
+    List<dynamic> args,
+    String? name,
+    String? author,
+  ) {
+    if (name != null || author != null) {
+      final searchConditions = <String>[];
+      if (name != null) {
+        searchConditions.add('name LIKE ?');
+        args.add('%$name%');
+      }
+      if (author != null) {
+        searchConditions.add('author LIKE ?');
+        args.add('%$author%');
+      }
+      if (searchConditions.isNotEmpty) {
+        conditions.add('(${searchConditions.join(' OR ')})');
+      }
+    }
+  }
+
+  void _addTagSearch(
+    List<String> conditions,
+    List<dynamic> args,
+    List<String>? tags,
+  ) {
+    if (tags != null && tags.isNotEmpty) {
+      final tagQueries = tags.map((tag) => 
+        '(metadata LIKE ?)'
+      ).join(' OR ');
+      conditions.add('($tagQueries)');
+      for (final tag in tags) {
+        args.addAll([tag, '%"$tag"%']);
+      }
+    }
+  }
+
+  String? _buildOrderByClause(String? sortBy, bool descending) {
+    if (sortBy == null) return null;
+    
+    final field = switch(sortBy) {
+      'name' => 'name',
+      'author' => 'author',
+      'creationDate' => 'creation_date',
+      'updateTime' => 'update_time',
+      'importTime' => 'create_time',
+      _ => sortBy
+    };
+    return '$field ${descending ? 'DESC' : 'ASC'}';
+  }
+
+  Future<List<Map<String, dynamic>>> _executeQuery({
+    required String table,
+    List<String>? columns,
+    String? where,
+    List<dynamic>? whereArgs,
+    String? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
     final db = await database;
-    return await db.transaction((txn) {
-      return action(_SqliteTransaction(txn));
+    return db.query(
+      table,
+      columns: columns,
+      where: where,
+      whereArgs: whereArgs?.isEmpty == true ? null : whereArgs,
+      orderBy: orderBy,
+      limit: limit,
+      offset: offset,
+    );
+  }
+
+  // 1. 提取日期范围处理方法
+  void _addDateRange(
+    List<String> conditions,
+    List<dynamic> args,
+    Map<String, Map<String, DateTime?>> dateRanges,
+  ) {
+    dateRanges.forEach((field, range) {
+      final start = range['start'];
+      final end = range['end'];
+      
+      if (start != null) {
+        conditions.add('$field >= ?');
+        args.add(start.millisecondsSinceEpoch);
+      }
+      if (end != null) {
+        conditions.add('$field <= ?');
+        args.add(end.millisecondsSinceEpoch);
+      }
     });
   }
-}
 
-class _SqliteTransaction implements DatabaseTransaction {
-  final Transaction _txn;
-  
-  _SqliteTransaction(this._txn);
-
-  @override
-  Future<String> insertWork(Map<String, dynamic> work) async {
-    final workId = const Uuid().v4();
-    work['id'] = workId;    
-    work['create_time'] = DateTime.now().millisecondsSinceEpoch;    
-    work['update_time'] = DateTime.now().millisecondsSinceEpoch;    
-    if (work.containsKey('metadata')) {
-      work['metadata'] = jsonEncode(work['metadata']);
+  // 2. 提取元数据解码方法
+  Map<String, dynamic> _decodeMetadata(Map<String, dynamic> map) {
+    final result = Map<String, dynamic>.from(map);
+    for (final field in ['metadata', 'source_region', 'pages']) {
+      if (result[field] != null) {
+        try {
+          result[field] = jsonDecode(result[field] as String);
+        } catch (e) {
+          print('Failed to decode $field: ${e.toString()}');
+        }
+      }
     }
-    await _txn.insert('works', work);
-    return workId;
-  }
-
-  @override
-  Future<String> insertCharacter(Map<String, dynamic> character) async {
-    final charId = const Uuid().v4();
-    character['id'] = charId;
-    character['create_time'] = DateTime.now().millisecondsSinceEpoch;
-    character['update_time'] = DateTime.now().millisecondsSinceEpoch;
-    
-    if (character.containsKey('metadata')) {
-      character['metadata'] = jsonEncode(character['metadata']);
-    }
-    if (character.containsKey('source_region')) {
-      character['source_region'] = jsonEncode(character['source_region']);
-    }
-    await _txn.insert('characters', character);
-    return charId;
-  }
-
-  @override
-  Future<void> updateWork(String id, Map<String, dynamic> work) async {
-    await _txn.update(
-      'works',
-      work,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  @override
-  Future<void> deleteWork(String id) async {
-    await _txn.delete(
-      'works',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-  
-  @override
-  Future<String> insertPractice(Map<String, dynamic> practice) async {
-    final practiceId = const Uuid().v4();
-    practice['id'] = practiceId;    
-    practice['create_time'] = DateTime.now().millisecondsSinceEpoch;    
-    practice['update_time'] = DateTime.now().millisecondsSinceEpoch;
-    
-    if (practice.containsKey('metadata')) {
-      practice['metadata'] = jsonEncode(practice['metadata']);
-    }
-    
-    if (practice.containsKey('pages')) {
-      practice['pages'] = jsonEncode(practice['pages']);
-    }
-    await _txn.insert('practices', practice);
-    return practiceId;
+    return result;
   }
 }

@@ -1,64 +1,48 @@
-import 'package:flutter/material.dart';
-
 import '../../../domain/entities/work.dart';
+import '../../models/work_filter.dart';
+
+enum ViewMode { grid, list }
 
 class WorkBrowseState {
-  final List<Work> works;
   final bool isLoading;
   final String? error;
-  final SortOption sortOption;
+  final List<Work> works;
+  final List<Work> allWorks; // 添加 allWorks 字段
   final String? searchQuery;
+  final ViewMode viewMode;
+  final SortOption sortOption;
   final WorkFilter filter;
 
   const WorkBrowseState({
-    this.works = const [],
     this.isLoading = false,
     this.error,
-    this.sortOption = const SortOption(),
+    this.works = const [],
+    this.allWorks = const [], // 初始化 allWorks
     this.searchQuery,
+    this.viewMode = ViewMode.grid,
+    this.sortOption = const SortOption(),
     this.filter = const WorkFilter(),
   });
 
   WorkBrowseState copyWith({
-    List<Work>? works,
     bool? isLoading,
     String? error,
-    SortOption? sortOption,
+    List<Work>? works,
+    List<Work>? allWorks, // 添加 allWorks
     String? searchQuery,
+    ViewMode? viewMode,
+    SortOption? sortOption,
     WorkFilter? filter,
-  }) => WorkBrowseState(
-    works: works ?? this.works,
-    isLoading: isLoading ?? this.isLoading,
-    error: error,
-    sortOption: sortOption ?? this.sortOption,
-    searchQuery: searchQuery ?? this.searchQuery,
-    filter: filter ?? this.filter,
-  );
-}
-
-class SortOption {
-  final SortField field;
-  final SortOrder order;
-
-  const SortOption({
-    this.field = SortField.updateTime,
-    this.order = SortOrder.descending,
-  });
-}
-
-enum SortField { name, author, createTime, updateTime }
-enum SortOrder { ascending, descending }
-
-class WorkFilter {
-  final List<String> styles;
-  final List<String> tools;
-  final DateTimeRange? dateRange;
-
-  const WorkFilter({
-    this.styles = const [],
-    this.tools = const [],
-    this.dateRange,
-  });
-
-  bool get isEmpty => styles.isEmpty && tools.isEmpty && dateRange == null;
+  }) {
+    return WorkBrowseState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+      works: works ?? this.works,
+      allWorks: allWorks ?? this.allWorks, // 复制 allWorks
+      searchQuery: searchQuery ?? this.searchQuery,
+      viewMode: viewMode ?? this.viewMode,
+      sortOption: sortOption ?? this.sortOption,
+      filter: filter ?? this.filter,
+    );
+  }
 }

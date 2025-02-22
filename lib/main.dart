@@ -7,10 +7,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
-import 'presentation/pages/works/work_list_page.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
+import 'presentation/theme/app_colors.dart';
+import 'presentation/theme/app_text_styles.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,30 +48,22 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        // 定义统一的文字样式
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-          titleLarge: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-          titleMedium: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
-          ),
-          bodyLarge: TextStyle(
-            fontSize: 16,
-            height: 1.5,
-          ),
-          bodyMedium: TextStyle(
-            fontSize: 14,
-            height: 1.5,
-          ),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.primaryLight,
+          error: AppColors.error,
+          background: AppColors.background,
+          surface: AppColors.surface,
         ),
+        textTheme: const TextTheme(
+          displayLarge: AppTextStyles.h1,
+          titleLarge: AppTextStyles.h2,
+          titleMedium: AppTextStyles.h3,
+          bodyLarge: AppTextStyles.body1,
+          bodyMedium: AppTextStyles.body2,
+        ),
+        dividerColor: AppColors.border,
       ),
       // 添加本地化支持
       localizationsDelegates: const [

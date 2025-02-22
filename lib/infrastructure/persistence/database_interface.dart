@@ -8,13 +8,19 @@ abstract class DatabaseInterface {
   Future<List<Map<String, dynamic>>> getWorks({
     String? style,
     String? author,
+    String? name,      
+    String? tool,        // Add tool parameter
     List<String>? tags,
-    DateTime? fromDate,
-    DateTime? toDate,
+    DateTime? fromDateImport,
+    DateTime? toDateImport,
+    DateTime? fromDateCreation,
+    DateTime? toDateCreation,
+    DateTime? fromDateUpdate,
+    DateTime? toDateUpdate,
     int? limit,
     int? offset,
     String? sortBy,
-    bool descending,
+    bool descending = true,
   });
   Future<void> updateWork(String id, Map<String, dynamic> work);
   Future<void> deleteWork(String id);
@@ -22,7 +28,15 @@ abstract class DatabaseInterface {
   Future<int> getWorksCount({
     String? style,
     String? author,
+    String? name,
+    String? tool,        // Add tool parameter
     List<String>? tags,
+    DateTime? fromDateImport,
+    DateTime? toDateImport,
+    DateTime? fromDateCreation,
+    DateTime? toDateCreation,
+    DateTime? fromDateUpdate,    
+    DateTime? toDateUpdate 
   });
   
   // Character operations
@@ -47,14 +61,4 @@ abstract class DatabaseInterface {
   // Settings operations
   Future<void> setSetting(String key, String value);
   Future<String?> getSetting(String key);
-
-  Future<T> transaction<T>(Future<T> Function(DatabaseTransaction) action);
-}
-
-abstract class DatabaseTransaction {
-  Future<String> insertWork(Map<String, dynamic> work);
-  Future<String> insertCharacter(Map<String, dynamic> character);
-  Future<String> insertPractice(Map<String, dynamic> practice);
-  Future<void> updateWork(String id, Map<String, dynamic> work);
-  Future<void> deleteWork(String id);
 }

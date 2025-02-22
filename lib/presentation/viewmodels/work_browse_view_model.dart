@@ -1,28 +1,30 @@
-import 'dart:io';
-
 import 'package:demo/domain/entities/work.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../application/services/work_service.dart';
+import '../../domain/interfaces/i_work_service.dart';
 import '../../infrastructure/config/storage_paths.dart';
+import '../models/work_filter.dart';
 import 'states/work_browse_state.dart';
 
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
-  final WorkService _workService;
+  final IWorkService _workService;  // 使用接口而不是具体实现
   final StoragePaths _paths;
 
   WorkBrowseViewModel(this._workService, this._paths) 
       : super(const WorkBrowseState());
 
   Future<void> loadWorks() async {
+    state = state.copyWith(isLoading: true, error: null);
     try {
-      state = state.copyWith(isLoading: true, error: null);
-      final works = await _workService.getWorks(
-        query: state.searchQuery,
+      final works = await _workService.queryWorks(
+        searchQuery: state.searchQuery,
         filter: state.filter,
       );
-      _sortWorks(works);
-      state = state.copyWith(works: works, isLoading: false);
+      
+      state = state.copyWith(
+        isLoading: false,
+        allWorks: works,
+        works: works,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -31,86 +33,99 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  void updateSearch(String? query) {
-    state = state.copyWith(searchQuery: query);
-    loadWorks();
-  }
-
   void updateFilter(WorkFilter filter) {
-    state = state.copyWith(filter: filter);
-    loadWorks();
+    state = state.copyWith(
+      filter: filter,
+      works: _applyFilter(state.allWorks, filter),
+    );
   }
 
-  void setSortOption(SortOption option) {
-    state = state.copyWith(sortOption: option);
-    _sortWorks(state.works);
+  void updateSearch(String query) {
+    state = state.copyWith(
+      searchQuery: query,
+      works: _applyFilter(state.allWorks, state.filter),
+    );
   }
 
-  Future<void> deleteWork(String workId) async {
-    try {
-      state = state.copyWith(isLoading: true, error: null);
+  void updateViewMode(ViewMode mode) {
+    state = state.copyWith(viewMode: mode);
+  }
 
-      // Delete work and related data
-      await _workService.deleteWork(workId);
+  List<Work> _applyFilter(List<Work> works, WorkFilter filter) {
+    var filtered = List<Work>.from(works);
 
-      // Remove from local state
-      final updatedWorks = state.works.where((w) => w.id != workId).toList();
-      
-      state = state.copyWith(
-        works: updatedWorks,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '删除失败: ${e.toString()}',
-      );
-      // Re-throw to let UI handle error display
-      rethrow;
+    // 应用搜索
+    if (state.searchQuery?.isNotEmpty ?? false) {
+      final query = state.searchQuery!.toLowerCase();
+      filtered = filtered.where((work) {
+        return (work.name?.toLowerCase().contains(query) ?? false) ||
+               (work.author?.toLowerCase().contains(query) ?? false) ||
+               (work.style?.toLowerCase().contains(query) ?? false);
+      }).toList();
     }
-  }
 
-  void _sortWorks(List<Work> works) {
-    final sortOption = state.sortOption;
+    // 应用风格筛选
+    if (filter.selectedStyle != null) {
+      filtered = filtered.where((w) => w.style == filter.selectedStyle).toList();
+    }
 
-    // Create a mutable copy of the list
-    final List<Work> mutableWorks = List.from(works);
+    // 应用工具筛选
+    if (filter.selectedTool != null) {
+      filtered = filtered.where((w) => w.tool == filter.selectedTool).toList();
+    }
 
-    mutableWorks.sort((a, b) {
-      int comparison;
-      switch (sortOption.field) {
-        case SortField.name:
-          comparison = (a.name ?? '').compareTo(b.name ?? '');
-          break;
-        case SortField.author:
-          comparison = (a.author ?? '').compareTo(b.author ?? '');
-          break;
-        case SortField.createTime:
-          comparison = (a.creationDate ?? DateTime(1900)).compareTo(b.creationDate ?? DateTime(1900));
-          break;
-        case SortField.updateTime:
-          comparison = (a.updateTime ??DateTime(1900) ).compareTo(b.updateTime ?? DateTime(1900));
-          break;
-      }
-      return sortOption.order == SortOrder.ascending ? comparison : -comparison;
-    });
-    state = state.copyWith(works: mutableWorks);
+    // 应用日期筛选
+    if (filter.dateFilter != null) {
+      filtered = filtered.where((w) {
+        final date = DateTime.tryParse(w.creationDate as String? ?? DateTime.now().toIso8601String());
+        if (date == null) return false;
+        return filter.dateFilter!.contains(date);
+      }).toList();
+    }
+
+    // 修改排序逻辑，使用 sortOption
+    if (!filter.sortOption.isEmpty) {
+      filtered.sort((a, b) {
+        int result;
+        switch (filter.sortOption.field) {
+          case SortField.name:
+            result = (a.name ?? '').compareTo(b.name ?? '');
+            break;
+          case SortField.author:
+            result = (a.author ?? '').compareTo(b.author ?? '');
+            break;
+          case SortField.creationDate:
+            result = (a.creationDate ?? DateTime.now()).compareTo(b.creationDate ?? DateTime.now());
+            break;
+          case SortField.importDate:
+            result = (a.importDate ?? DateTime.now())
+                .compareTo(b.importDate ?? DateTime.now());
+            break;
+          case SortField.none:
+            result = 0;
+            break;
+        }
+        return filter.sortOption.descending ? -result : result;
+      });
+    }
+
+    return filtered;
   }
 
   Future<String?> getWorkThumbnail(String workId) async {
     try {
-      final thumbnailPath = _paths.getWorkThumbnailPath(workId);
-      final file = File(thumbnailPath);
-      
-      if (await file.exists()) {
-        return thumbnailPath;
-      }
-      
-      debugPrint('Thumbnail not found: $thumbnailPath');
-      return null;
+      return await _workService.getWorkThumbnail(workId);
     } catch (e) {
-      debugPrint('Error getting thumbnail: $e');
       return null;
+    }
+  }
+
+  Future<void> deleteWork(String workId) async {
+    try {
+      await _workService.deleteWork(workId);
+      await loadWorks(); // 重新加载数据
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
     }
   }
 }
