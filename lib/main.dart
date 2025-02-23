@@ -10,8 +10,7 @@ import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
-import 'presentation/theme/app_colors.dart';
-import 'presentation/theme/app_text_styles.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,26 +44,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(      
+      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          secondary: AppColors.primaryLight,
-          error: AppColors.error,
-          background: AppColors.background,
-          surface: AppColors.surface,
-        ),
-        textTheme: const TextTheme(
-          displayLarge: AppTextStyles.h1,
-          titleLarge: AppTextStyles.h2,
-          titleMedium: AppTextStyles.h3,
-          bodyLarge: AppTextStyles.body1,
-          bodyMedium: AppTextStyles.body2,
-        ),
-        dividerColor: AppColors.border,
-      ),
+      theme: AppTheme.lightTheme,
       // 添加本地化支持
       localizationsDelegates: const [
         // AppLocalizations.delegate,

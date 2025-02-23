@@ -1,49 +1,51 @@
 import 'package:flutter/material.dart';
-import 'panels/general_settings_panel.dart';
-import 'panels/storage_settings_panel.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  int _selectedIndex = 0;
-
-  final _panels = [
-    const GeneralSettingsPanel(),
-    const StorageSettingsPanel(),
-  ];
-
-  @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // 左侧导航栏
-        NavigationRail(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) {
-            setState(() => _selectedIndex = index);
-          },
-          labelType: NavigationRailLabelType.all,
-          destinations: const [
-            NavigationRailDestination(
-              icon: Icon(Icons.settings),
-              label: Text('常规设置'),
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '设置',
+              style: theme.textTheme.headlineMedium,
             ),
-            NavigationRailDestination(
-              icon: Icon(Icons.storage),
-              label: Text('存储设置'),
+            const SizedBox(height: 24),
+            Card(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    leading: Icon(Icons.language, color: theme.primaryColor),
+                    title: Text('语言设置', style: theme.textTheme.titleMedium),
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.backup, color: theme.primaryColor),
+                    title: Text('数据备份', style: theme.textTheme.titleMedium),
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: Icon(Icons.info, color: theme.primaryColor),
+                    title: Text('关于', style: theme.textTheme.titleMedium),
+                    trailing: const Icon(Icons.chevron_right),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
-        // 右侧内容区
-        Expanded(
-          child: _panels[_selectedIndex],
-        ),
-      ],
+      ),
     );
   }
 }

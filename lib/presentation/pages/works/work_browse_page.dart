@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,7 +9,7 @@ import '../../../utils/date_formatter.dart';
 import '../../../utils/path_helper.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../viewmodels/states/work_browse_state.dart';
-import '../../widgets/main_layout.dart';
+import '../../widgets/page_layout.dart';
 import '../../theme/app_sizes.dart';
 import '../../widgets/works/work_filter_panel.dart';
 
@@ -38,7 +37,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
 
-    return MainLayout(
+    return PageLayout(
       navigationInfo: const Text('书法作品'),
       actions: [
         // 搜索按钮

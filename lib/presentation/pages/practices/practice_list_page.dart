@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'practice_detail_page.dart';  // 添加导入
-import 'practice_edit_page.dart';
+import '../../widgets/page_layout.dart';
+import '../../widgets/page_toolbar.dart';
+import '../../widgets/search/search_box.dart';  // 添加
+import '../../../theme/app_sizes.dart';
+import 'practice_detail_page.dart';
+import 'practice_edit_page.dart';  // 添加
 
 class PracticeListPage extends StatefulWidget {
   const PracticeListPage({super.key});
@@ -32,11 +36,11 @@ class _PracticeListPageState extends State<PracticeListPage> {
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),  // 更新
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
+        crossAxisCount: AppSizes.gridCrossAxisCount,  // 使用常量
+        mainAxisSpacing: AppSizes.gridMainAxisSpacing,  // 使用常量
+        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,  // 使用常量
         childAspectRatio: 1,
       ),
       itemCount: 20,
@@ -87,7 +91,7 @@ class _PracticeListPageState extends State<PracticeListPage> {
 
   Widget _buildListView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),  // 更新
       itemCount: 20,
       itemBuilder: (context, index) {
         return Card(
@@ -111,52 +115,36 @@ class _PracticeListPageState extends State<PracticeListPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // 顶部工具栏
-        Material(
-          elevation: 2,
-          child: Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => _navigateToEditPage(), // 新建字帖
-                  icon: const Icon(Icons.add),
-                  label: const Text('新建字帖'),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isGridView = !_isGridView;
-                    });
-                  },
-                  icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
-                  tooltip: _isGridView ? '列表视图' : '网格视图',
-                ),
-                const Spacer(),
-                const SizedBox(
-                  width: 200,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: '搜索字帖',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                      contentPadding: EdgeInsets.all(8),
-                    ),
-                  ),
-                ),
-              ],
+    return PageLayout(
+      navigationInfo: const Text('练习记录'),
+      toolbar: PageToolbar(
+        leading: [
+          FilledButton.icon(
+            onPressed: () => _navigateToEditPage(),
+            icon: const Icon(Icons.add),
+            label: const Text('新建练习'),
+          ),
+          const SizedBox(width: AppSizes.spacingMedium),
+          IconButton(
+            onPressed: () => setState(() => _isGridView = !_isGridView),
+            icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
+            tooltip: _isGridView ? '列表视图' : '网格视图',
+          ),
+        ],
+        trailing: [
+          SizedBox(
+            width: 240,
+            child: SearchBar(
+              hintText: '搜索练习...',
+              leading: const Icon(Icons.search),
+              padding: const MaterialStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+              ),
             ),
           ),
-        ),
-        // 内容区域
-        Expanded(
-          child: _isGridView ? _buildGridView() : _buildListView(),
-        ),
-      ],
+        ],
+      ),
+      body: _isGridView ? _buildGridView() : _buildListView(),
     );
   }
 }

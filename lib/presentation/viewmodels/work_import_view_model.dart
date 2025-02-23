@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:demo/domain/value_objects/work/work_info.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import '../../application/config/app_config.dart';
@@ -13,57 +15,62 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
   final ImageService _imageService;
 
-  void setName(String name) {
-    state = state.copyWith(name: name);
-  }
-
-  void setAuthor(String author) {
-    state = state.copyWith(author: author);
-  }
-
-  void setStyle(String style) {
-    state = state.copyWith(
-      style: WorkStyle.values.firstWhere((e) => e.toString() == 'WorkStyle.$style')
-    );
-  } 
-
-  void setTool(String tool) {
-    state = state.copyWith(
-      tool: WorkTool.values.firstWhere((e) => e.toString() == 'WorkTool.$tool')
-    );
-  } 
-
-  void setCreationDate(DateTime? date) {
-    state = state.copyWith(creationDate: date);
-  }
-
-  void setRemarks(String remarks) {
-    state = state.copyWith(remarks: remarks);
-  }
-
   WorkImportViewModel(this._workService, this._imageService) 
       : super(const WorkImportState());
 
+  // 基础信息设置
+  void setName(String name) => state = state.copyWith(name: name.trim());
+  void setAuthor(String author) => state = state.copyWith(author: author.trim());
+  void setRemarks(String remarks) => state = state.copyWith(remarks: remarks.trim());
+  void setCreationDate(DateTime? date) => state = state.copyWith(creationDate: date);
+
+  // 枚举值设置
+  void setTool(String? value) {
+    if (value?.isEmpty ?? true) return;
+    
+    try {
+      final enumValue = value!.trim();
+      final tool = WorkTool.values.firstWhere(
+        (e) => e.toString().split('.').last.toLowerCase() == enumValue.toLowerCase(),
+        orElse: () => throw Exception('未知的书写工具: $value'),
+      );
+      state = state.copyWith(tool: tool);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      debugPrint('Error setting tool: $e');
+    }
+  }
+
+  void setStyle(String? value) {
+    if (value?.isEmpty ?? true) return;
+    
+    try {
+      final enumValue = value!.trim();
+      final style = WorkStyle.values.firstWhere(
+        (e) => e.toString().split('.').last.toLowerCase() == enumValue.toLowerCase(),
+        orElse: () => throw Exception('未知的书法风格: $value'),
+      );
+      state = state.copyWith(style: style);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+      debugPrint('Error setting style: $e');
+    }
+  }
+
+  // 图片操作
   Future<void> addImages(List<File> files) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
-      
-      // 验证文件类型
-      for (final file in files) {
-        final ext = path.extension(file.path).toLowerCase();
-        if (!['.jpg', '.jpeg', '.png', '.webp'].contains(ext)) {
-          throw Exception('不支持的文件类型: $ext');
-        }
-      }
 
-      // 添加到现有图片列表
+      await _validateImages(files);
       final updatedImages = List<File>.from(state.images)..addAll(files);
       
       state = state.copyWith(
         images: updatedImages,
-        selectedImageIndex: state.images.isEmpty ? 0 : state.selectedImageIndex,
+        selectedImageIndex: state.selectedImageIndex < 0 ? 0 : state.selectedImageIndex,
         isLoading: false,
       );
+      HapticFeedback.mediumImpact();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -72,175 +79,74 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     }
   }
 
+  Future<void> _validateImages(List<File> files) async {
+    if (files.isEmpty) {
+      throw Exception('请选择需要导入的图片');
+    }
+
+    for (final file in files) {
+      final ext = path.extension(file.path).toLowerCase();
+      if (!['.jpg', '.jpeg', '.png', '.webp'].contains(ext)) {
+        throw Exception('不支持的文件类型: $ext\n支持的格式：jpg、jpeg、png、webp');
+      }
+      
+      final size = await file.length();
+      if (size > AppConfig.maxImageSize) {
+        throw Exception(
+          '文件过大：${path.basename(file.path)}\n'
+          '大小：${(size / 1024 / 1024).toStringAsFixed(1)}MB\n'
+          '限制：${(AppConfig.maxImageSize / 1024 / 1024).toStringAsFixed(0)}MB'
+        );
+      }
+    }
+  }
+
   void removeImage(int index) {
-    if (index < 0 || index >= state.images.length) return;
+    if (!_isValidIndex(index)) return;
 
     final updatedImages = List<File>.from(state.images)..removeAt(index);
-    final newSelectedIndex = updatedImages.isEmpty 
-        ? -1 
-        : index >= updatedImages.length 
-            ? updatedImages.length - 1 
-            : index;
+    final updatedRotations = Map<String, double>.from(state.imageRotations)
+      ..remove(state.images[index].path);
+
+    final newSelectedIndex = _calculateNewSelectedIndex(index, updatedImages.length);
 
     state = state.copyWith(
       images: updatedImages,
       selectedImageIndex: newSelectedIndex,
+      imageRotations: updatedRotations,
+      error: null,
     );
+    HapticFeedback.lightImpact();
   }
 
-  void clearImages() {
-    state = state.copyWith(
-      images: [],
-      selectedImageIndex: 0,
-    );
-  }
+  bool _isValidIndex(int index) => index >= 0 && index < state.images.length;
 
   void selectImage(int index) {
-    if (index < 0 || index >= state.images.length) return;
-    
-    state = state.copyWith(selectedImageIndex: index);
-  }
-
-  void updateName(String name) {
-    state = state.copyWith(name: name);
-  }
-
-  void updateAuthor(String? author) {
-    state = state.copyWith(author: author);
-  }
-
-  void updateCreationDate(DateTime? date) {
-    state = state.copyWith(creationDate: date);
-  }
-
-  void updateTool(WorkTool? value) {
-    state = state.copyWith(tool: value);
-  } 
-
-  void updateStyle(WorkStyle? value) {
-    state = state.copyWith(style: value);
-  }
-
-
-  void updateRemarks(String? remarks) {
-    state = state.copyWith(remarks: remarks);
-  }
-
-  void toggleOptimizeImages() {
-    state = state.copyWith(optimizeImages: !state.optimizeImages);
-  }
-
-  void toggleKeepOriginals() {
-    state = state.copyWith(keepOriginals: !state.keepOriginals);
-  }
-
-  void updateZoom(double level) {
-    state = state.copyWith(zoomLevel: level.clamp(0.1, 5.0));
-  }
-
-  void updateRotation(double angle) {
-    state = state.copyWith(rotation: angle % 360);
+    if (index >= 0 && index < state.images.length) {
+      state = state.copyWith(selectedImageIndex: index);
+    }
   }
 
   Future<void> rotateImage(bool clockwise) async {
-    if (state.selectedImageIndex < 0 || state.selectedImageIndex >= state.images.length) {
-      return;
-    }
+    if (state.selectedImageIndex < 0) return;
 
     try {
       state = state.copyWith(isLoading: true, error: null);
       
-      final angle = clockwise ? 90.0 : -90.0;
+      final angle = clockwise ? 90 : -90;
       final selectedFile = state.images[state.selectedImageIndex];
-      
-      // Process image rotation
-      final rotatedImage = await _imageService.rotateImage(
-        selectedFile,
-        angle.toInt(),
-      );
-      
-      // Update image list with rotated image
-      final updatedImages = List<File>.from(state.images);
-      updatedImages[state.selectedImageIndex] = rotatedImage;
-      
-      state = state.copyWith(
-        images: updatedImages,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '图片旋转失败: ${e.toString()}',
-      );
-    }
-  }
-
-  Future<void> processImages() async {
-    if (!state.optimizeImages || state.images.isEmpty) return;
-
-    try {
-      state = state.copyWith(isLoading: true, error: null);
-
-      final processedImages = <File>[];
-      for (var i = 0; i < state.images.length; i++) {
-        final file = state.images[i];
-        
-        // Backup original if needed
-        if (state.keepOriginals) {
-          await _imageService.backupOriginal(file);
-        }
-
-        // Optimize image
-        final optimized = await _imageService.optimizeImage(
-          file,
-          maxWidth: AppConfig.optimizedImageWidth,
-          maxHeight: AppConfig.optimizedImageHeight,
-          quality: AppConfig.optimizedImageQuality,
-        );
-        
-        processedImages.add(optimized);
-      }
-
-      state = state.copyWith(
-        images: processedImages,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '图片处理失败: ${e.toString()}',
-      );
-    }
-  }
-
-  void resetZoom() {
-    state = state.copyWith(zoomLevel: 1.0);
-  }
-
-  void resetRotation() {
-    state = state.copyWith(rotation: 0.0);
-  }
-
-  Future<void> rotateSelectedImage(bool clockwise) async {
-    if (state.selectedImageIndex < 0 || state.selectedImageIndex >= state.images.length) {
-      return;
-    }
-
-    try {
-      state = state.copyWith(isLoading: true, error: null);
-      
-      final angle = clockwise ? 90.0 : -90.0;
-      final selectedFile = state.images[state.selectedImageIndex];
-      final rotatedFile = await _imageService.rotateImage(
-        selectedFile,
-        angle.toInt(),
-      );
+      final rotatedFile = await _imageService.rotateImage(selectedFile, angle);
       
       final updatedImages = List<File>.from(state.images);
       updatedImages[state.selectedImageIndex] = rotatedFile;
-      
+
+      final updatedRotations = Map<String, double>.from(state.imageRotations);
+      updatedRotations[rotatedFile.path] = 
+          ((updatedRotations[selectedFile.path] ?? 0 + angle) % 360).toDouble();
+
       state = state.copyWith(
         images: updatedImages,
+        imageRotations: updatedRotations,
         isLoading: false,
       );
     } catch (e) {
@@ -251,116 +157,126 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     }
   }
 
+  void reorderImages(int oldIndex, int newIndex) {
+    if (!_isValidIndex(oldIndex) || !_isValidIndex(newIndex)) return;
+
+    HapticFeedback.selectionClick();
+
+    if (oldIndex < newIndex) newIndex--;
+
+    final updatedImages = List<File>.from(state.images);
+    final item = updatedImages.removeAt(oldIndex);
+    updatedImages.insert(newIndex, item);
+
+    final newSelectedIndex = _calculateNewSelectedIndex(oldIndex, newIndex);
+
+    state = state.copyWith(
+      images: updatedImages,
+      selectedImageIndex: newSelectedIndex,
+      imageRotations: state.imageRotations,
+      error: null,
+    );
+  }
+
+  int _calculateNewSelectedIndex(int oldIndex, int newIndex) {
+    if (state.selectedImageIndex == oldIndex) {
+      return newIndex;
+    }
+    if (state.selectedImageIndex > oldIndex && state.selectedImageIndex <= newIndex) {
+      return state.selectedImageIndex - 1;
+    }
+    if (state.selectedImageIndex < oldIndex && state.selectedImageIndex >= newIndex) {
+      return state.selectedImageIndex + 1;
+    }
+    return state.selectedImageIndex;
+  }
+
+  // 视图控制
+  void setScale(double scale) {
+    if (scale >= 0.5 && scale <= 5.0) {
+      state = state.copyWith(scale: scale);
+    }
+  }
+
+  void resetView() {
+    state = state.copyWith(scale: 1.0, rotation: 0.0);
+  }
+
+  // 优化选项
+  void toggleOptimizeImages() {
+    state = state.copyWith(optimizeImages: !state.optimizeImages);
+  }
+
+  void toggleKeepOriginals() {
+    state = state.copyWith(keepOriginals: !state.keepOriginals);
+  }
+
   Future<List<File>> _processImages() async {
     if (!state.optimizeImages || state.images.isEmpty) {
       return state.images;
     }
 
-    final processedImages = <File>[];
-    
-    for (final file in state.images) {
-      if (state.keepOriginals) {
-        await _imageService.backupOriginal(file);
+    try {
+      final processedImages = <File>[];
+      
+      for (final file in state.images) {
+        if (state.keepOriginals) {
+          await _imageService.backupOriginal(file);
+        }
+
+        final optimized = await _imageService.optimizeImage(
+          file,
+          maxWidth: AppConfig.optimizedImageWidth,
+          maxHeight: AppConfig.optimizedImageHeight,
+          quality: AppConfig.optimizedImageQuality,
+        );
+        
+        processedImages.add(optimized);
       }
 
-      final optimized = await _imageService.optimizeImage(
-        file,
-        maxWidth: AppConfig.optimizedImageWidth,
-        maxHeight: AppConfig.optimizedImageHeight,
-        quality: AppConfig.optimizedImageQuality,
-      );
-      
-      processedImages.add(optimized);
+      return processedImages;
+    } catch (e) {
+      throw Exception('图片处理失败: ${e.toString()}');
     }
-
-    return processedImages;
   }
 
+  // 导入功能
   Future<bool> importWork() async {
-    if (!state.isValid) {
-      state = state.copyWith(error: '请填写作品名称并至少添加一张图片');
+    if (state.images.isEmpty ||
+        state.name.isEmpty ||
+        state.author?.isEmpty != false ||
+        state.style == null ||
+        state.tool == null ||
+        state.creationDate == null) {
+      state = state.copyWith(error: '请填写所有必填字段');
       return false;
     }
 
+    state = state.copyWith(isLoading: true, error: null);
     try {
-      state = state.copyWith(isLoading: true, error: null);
-
-      // Process images if needed
-      final finalImages = await _processImages();
-
-      // Create work info
-      final workInfo = WorkInfo(
-        id: "",
-        name: state.name,
-        author: state.author,
-        style: state.style,  // 直接使用，已经是 WorkStyle 类型
-        tool: state.tool,    // 直接使用，已经是 WorkTool 类型
-        creationDate: state.creationDate,
-        remarks: state.remarks,
+      final processedImages = await _processImages();
+      
+      await _workService.importWork(
+        processedImages,
+        WorkInfo(
+          name: state.name,
+          author: state.author,
+          style: state.style!,
+          tool: state.tool!,
+          creationDate: state.creationDate!,
+          remarks: state.remarks,
+        ),
       );
-
-      // Import work with processed images
-      await _workService.importWork(finalImages, workInfo);
-      
-      // Clear state after successful import
-      reset();
-      
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '导入失败: ${e.toString()}',
-      );
+      state = state.copyWith(error: e.toString());
       return false;
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
-  }
-
-  void resetView() {
-    state = state.copyWith(
-      scale: 1.0,
-      rotation: 0.0,
-    );
-  }
-
-  void moveImage(int oldIndex, int newIndex) {
-    if (oldIndex < 0 || 
-        oldIndex >= state.images.length ||
-        newIndex < 0 || 
-        newIndex >= state.images.length) {
-      return;
-    }
-
-    final updatedImages = List<File>.from(state.images);
-    final image = updatedImages.removeAt(oldIndex);
-    updatedImages.insert(newIndex, image);
-
-    state = state.copyWith(
-      images: updatedImages,
-      selectedImageIndex: newIndex,
-    );
-  }
-
-  void reorderImages(int oldIndex, int newIndex) {
-    final updatedImages = List<File>.from(state.images);
-    final item = updatedImages.removeAt(oldIndex);
-    updatedImages.insert(newIndex, item);
-
-    state = state.copyWith(
-      images: updatedImages,
-      selectedImageIndex: newIndex,
-    );
-  }
-
-  void updateScale(double scale) {
-    state = state.copyWith(scale: scale);
-  }
-
-  void setScale(double scale) {
-    if (scale < 0.5 || scale > 5.0) return;
-    state = state.copyWith(scale: scale);
   }
 
   void reset() {
-    state = WorkImportState();
+    state = const WorkImportState();
   }
 }

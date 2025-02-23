@@ -84,6 +84,11 @@ class AppSizes {
   static const double iconSize = 24.0;
   static const double tooltipHeight = 24.0;
 
+  static const double iconLarge = 24.0;
+  static const double iconMedium = 18.0;  
+  static const double iconSmall = 12.0;
+  static const double iconXSmall = 8.0;
+ 
   // Prevent instantiation
   const AppSizes._();
 }

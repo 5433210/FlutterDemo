@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../theme/app_sizes.dart';
+import '../../theme/app_sizes.dart';
+import 'page_bar.dart';
 
-class MainLayout extends StatefulWidget {
+class PageLayout extends StatefulWidget {
   final Widget? navigationInfo;
   final List<Widget>? actions;
   final Widget? toolbar;
@@ -9,7 +10,7 @@ class MainLayout extends StatefulWidget {
   final Widget? sidebar;
   final Widget? footer;
 
-  const MainLayout({
+  const PageLayout({
     super.key,
     this.navigationInfo,
     this.actions,
@@ -20,19 +21,19 @@ class MainLayout extends StatefulWidget {
   });
 
   @override
-  State<MainLayout> createState() => _MainLayoutState();
+  State<PageLayout> createState() => _PageLayoutState();
 }
 
-class _MainLayoutState extends State<MainLayout> {
+class _PageLayoutState extends State<PageLayout> {
   static const double _sidebarWidth = 320.0;  // 固定宽度
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: PageBar(
         title: widget.navigationInfo,
         actions: widget.actions,
-        toolbarHeight: AppSizes.appBarHeight,
+        toolbarHeight: 50,  // 更新常量名
       ),
       body: Row(
         children: [
@@ -51,7 +52,7 @@ class _MainLayoutState extends State<MainLayout> {
               children: [
                 if (widget.toolbar != null)
                   Container(
-                    height: AppSizes.appBarHeight,
+                    height: AppSizes.pageToolbarHeight,  // 更新常量名
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Theme.of(context).dividerColor),

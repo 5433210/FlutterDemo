@@ -32,8 +32,7 @@ class CharacterDetailDialog extends StatelessWidget {
             // 移除 SingleChildScrollView，直接使用 Expanded
             Expanded(
               child: CharacterDetailView(
-                charId: charId,
-                showSourceButton: true,
+                charId: charId,                
               ),
             ),
           ],

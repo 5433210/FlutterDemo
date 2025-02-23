@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../theme/app_sizes.dart';
 
 class SideNavigation extends StatelessWidget {
   final int selectedIndex;
@@ -12,9 +13,21 @@ class SideNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      minWidth: AppSizes.navigationRailWidth,
+      selectedIconTheme: IconThemeData(
+        size: AppSizes.iconMedium,
+        color: theme.primaryColor,
+      ),
+      unselectedIconTheme: IconThemeData(
+        size: AppSizes.iconMedium,
+        color: theme.unselectedWidgetColor,
+      ),
       labelType: NavigationRailLabelType.all,
       destinations: const [
         NavigationRailDestination(

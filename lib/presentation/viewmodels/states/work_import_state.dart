@@ -39,6 +39,8 @@ class WorkImportState {
     this.rotation = 0.0,
   });
 
+  bool get isDirty => images.isNotEmpty || name.isNotEmpty;
+
   bool get isValid => name.isNotEmpty && images.isNotEmpty;
 
   double getRotation(String imagePath) => imageRotations[imagePath] ?? 0.0;

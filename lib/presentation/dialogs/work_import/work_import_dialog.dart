@@ -1,14 +1,12 @@
+import 'dart:io';
+import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
-import 'dart:io';
-import 'package:flutter/widgets.dart';
+import '../../../presentation/viewmodels/states/work_import_state.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
-import '../../theme/app_sizes.dart';
-import 'components/dialog_header.dart';
-import 'components/dialog_footer.dart';
-import 'components/preview/preview_toolbar.dart';
-import 'components/preview/thumbnail_strip.dart';
 import 'components/preview/work_import_preview.dart';
 import 'components/form/work_import_form.dart';
 
@@ -26,7 +24,6 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   @override
   void initState() {
     super.initState();
-    // 使用 addPostFrameCallback 确保在构建完成后重置状态
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(workImportProvider.notifier).reset();
     });
@@ -34,15 +31,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
   @override
   void dispose() {
-    //_clearState();
     super.dispose();
-  }
-
-  void _clearState() {
-    // 使用 addPostFrameCallback 确保在构建完成后重置状态
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier).reset();
-    });    
   }
 
   Future<void> _pickImages(BuildContext context) async {
@@ -51,38 +40,90 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
         type: FileType.custom,
         allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
         allowMultiple: true,
+        withData: false,
+        lockParentWindow: true,
       );
 
-      if (result != null && mounted) {
+      if (!mounted) return;
+
+      if (result != null) {
         final files = result.paths
-            .where((path) => path != null)
-            .map((path) => File(path!))
+            .whereType<String>()
+            .map((path) => File(path))
             .toList();
         
         if (files.isNotEmpty) {
-          ref.read(workImportProvider.notifier).addImages(files);
+          await ref.read(workImportProvider.notifier).addImages(files);
+          HapticFeedback.mediumImpact();
         }
       }
     } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar(context, '选择图片失败: ${e.toString()}');
-      }
+      if (!mounted) return;
+      _showErrorSnackBar(
+        context, 
+        '选择图片失败: ${e.toString().replaceAll('Exception: ', '')}',
+      );
     }
   }
 
-  Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) return;
+  // Future<void> _handleDrop(DropEventDetails details) async {
+  //   if (!mounted || details.files.isEmpty) return;
     
+  //   try {
+  //     final files = details.files
+  //       .where((xFile) {
+  //         final ext = path.extension(xFile.name).toLowerCase();
+  //         return ['.jpg', '.jpeg', '.png', '.webp'].contains(ext);
+  //       })
+  //       .map((xFile) => File(xFile.path))
+  //       .toList();
+
+  //     if (files.isEmpty) {
+  //       _showErrorSnackBar(context, '仅支持jpg、jpeg、png、webp格式的图片');
+  //       return;
+  //     }
+
+  //     await ref.read(workImportProvider.notifier).addImages(files);
+  //     HapticFeedback.mediumImpact();
+  //   } catch (e) {
+  //     if (!mounted) return;
+  //     _showErrorSnackBar(
+  //       context,
+  //       '添加图片失败：${e.toString().replaceAll('Exception: ', '')}',
+  //     );
+  //   }
+  // }
+
+  Future<void> _handleSubmit() async {
+    if (_formKey.currentState?.validate() != true) {
+      _showErrorSnackBar(context, '请填写所有必填项');
+      return;
+    }
+
+    if (!ref.read(workImportProvider).images.isNotEmpty) {
+      _showErrorSnackBar(context, '请至少添加一张图片');
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       final success = await ref.read(workImportProvider.notifier).importWork();
-      if (mounted && success) {
-        Navigator.of(context).pop(true);
+      if (!mounted) return;
+
+      if (success) {
+        _showSuccessSnackBar(context, '导入成功');
+        // 延迟关闭对话框，让用户看到成功提示
+        await Future.delayed(const Duration(milliseconds: 800));
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
       }
     } catch (e) {
-      if (mounted) {
-        _showErrorSnackBar(context, e.toString());
-      }
+      if (!mounted) return;
+      _showErrorSnackBar(
+        context,
+        '导入失败：${e.toString().replaceAll('Exception: ', '')}',
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -90,80 +131,181 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     }
   }
 
+  void _showFeedback({
+    required BuildContext context,
+    required String message,
+    required bool isError,
+  }) {
+    final theme = Theme.of(context);
+    
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  isError ? Icons.error_outline : Icons.check_circle_outline,
+                  key: ValueKey(isError),
+                  color: isError 
+                    ? theme.colorScheme.onError
+                    : theme.colorScheme.onSecondaryContainer,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: AppSizes.s),
+              Expanded(
+                child: Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isError 
+                      ? theme.colorScheme.onError
+                      : theme.colorScheme.onSecondaryContainer,
+                    height: 1.2,
+                  ),
+                  maxLines: isError ? 3 : 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: isError 
+            ? theme.colorScheme.error
+            : theme.colorScheme.secondaryContainer,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(AppSizes.m),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.m,
+            vertical: AppSizes.s,
+          ),
+          dismissDirection: DismissDirection.horizontal,
+          duration: Duration(seconds: isError ? 4 : 2),
+          showCloseIcon: isError,
+          closeIconColor: isError 
+            ? theme.colorScheme.onError
+            : null,
+          animation: const AlwaysStoppedAnimation(1.0),
+        ),
+      );
+  }
+
   void _showErrorSnackBar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
+    _showFeedback(
+      context: context,
+      message: message,
+      isError: true,
+    );
+  }
+
+  void _showSuccessSnackBar(BuildContext context, String message) {
+    _showFeedback(
+      context: context,
+      message: message,
+      isError: false,
+    );
+  }
+
+  void _showValidationError() {
+    _showErrorSnackBar(context, '请填写所有必填项');
+  }
+
+  Future<bool> _handleExit() async {
+    final isDirty = ref.read(workImportProvider).isDirty;
+    if (!isDirty) {
+      Navigator.of(context).pop(false);
+      return true;
+    }
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,  // 防止点击背景关闭
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Theme.of(context).colorScheme.error,
+              size: 24,
+            ),
+            const SizedBox(width: AppSizes.s),
+            const Text('确认退出'),
+          ],
+        ),
+        content: const Text('当前有未保存的更改，退出后更改将会丢失。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              '继续编辑',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('放弃更改'),
+          ),
+        ],
       ),
     );
+
+    if (confirmed == true && mounted) {
+      Navigator.of(context).pop(false);
+    }
+    return confirmed ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(workImportProvider);
+    final isDirty = state.isDirty;
 
     return WillPopScope(
-      onWillPop: () async {
-            final confirmed = await showDialog<bool>(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('确认退出'),
-              content: const Text('当前有未保存的更改，确定要退出吗？'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('取消'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text('确定'),
-                ),
-              ],
-            ),
-          );
-          return confirmed ?? false;
-
-        return true;
-      },
+      onWillPop: _handleExit,
       child: Dialog(
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: theme.dividerColor, width: 1),
-        ),
-        child: SizedBox(
-          width: 1280,
-          height: 768,
+        shape: const RoundedRectangleBorder(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 1120,
+            maxHeight: 720,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DialogHeader(
-                title: '导入作品',
-                onClose: () => Navigator.of(context).pop(),
-              ),
+              // 标题栏
+              _buildTitleBar(theme),
 
-              // Content Area - 双栏布局 (70:30)
+              // 内容区域
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Left Preview Area (70%)
+                    // 左侧预览区 (70%)
                     Expanded(
                       flex: 7,
                       child: WorkImportPreview(
                         state: state,
                         viewModel: ref.read(workImportProvider.notifier),
-                        //onAddImages: () => _pickImages(context),
+                        onAddImages: () => _pickImages(context),
                       ),
                     ),
 
-                    // Divider
-                    VerticalDivider(width: 1, color: theme.dividerColor),
+                    // 分割线
+                    VerticalDivider(
+                      thickness: 1,
+                      width: 1,
+                      color: theme.dividerColor,
+                    ),
 
-                    // Right Form Area (30%)
+                    // 右侧表单区 (30%)
                     Expanded(
                       flex: 3,
                       child: Form(
@@ -178,38 +320,129 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
                 ),
               ),
 
-              // Footer
-              DialogFooter(
-                error: state.error,
-                isLoading: _isLoading,
-                onCancel: () async {                  
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('确认退出'),
-                        content: const Text('当前有未保存的更改，确定要退出吗？'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(context).pop(false),
-                            child: const Text('取消'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.of(context).pop(true),
-                            child: const Text('确定'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirmed != true) return;
-                  
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                onSubmit: _handleSubmit,
-              ),
+              // 底部按钮区
+              _buildBottomBar(theme, state, isDirty),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitleBar(ThemeData theme) {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: theme.dividerColor),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            '导入作品',
+            style: theme.textTheme.titleLarge,
+          ),
+          const Spacer(),
+          IconButton(
+            onPressed: _handleExit,
+            icon: const Icon(Icons.close),
+            tooltip: '关闭',
+            style: IconButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface,
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomBar(ThemeData theme, WorkImportState state, bool isDirty) {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.l,
+        vertical: AppSizes.m,
+      ),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: theme.dividerColor),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: _isLoading ? null : _handleExit,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(88, 36),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
+            ),
+            child: const Text('取消'),
+          ),
+          const SizedBox(width: AppSizes.m),
+          FilledButton(
+            onPressed: _isLoading || !isDirty ? null : _handleSubmit,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(88, 36),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.l),
+            ),
+            child: _isLoading 
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text('导入'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHintText(ThemeData theme) {
+    return Positioned(
+      left: AppSizes.l,
+      bottom: AppSizes.l + 120, // 调整位置到缩略图条上方
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.s,
+          vertical: AppSizes.xs,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(AppSizes.xxs),
+          border: Border.all(
+            color: theme.colorScheme.outline.withOpacity(0.2),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.shadow.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: AppSizes.xs),
+            Text(
+              '点击图片可以预览，拖动可以调整顺序',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
     );
