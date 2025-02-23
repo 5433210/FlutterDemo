@@ -344,7 +344,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
 
     if (result == true) {
       // Refresh work list after successful import
-      //ref.read(workBrowseProvider.notifier).loadWorks();
+      ref.invalidate(workBrowseProvider);
     }
   }
 }

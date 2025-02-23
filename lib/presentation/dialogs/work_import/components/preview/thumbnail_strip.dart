@@ -96,38 +96,62 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
             top: BorderSide(color: theme.dividerColor),
           ),
         ),
-        child: ReorderableListView.builder(
-          scrollController: _scrollController,
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.m,
-            vertical: AppSizes.s,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false, // 使用自定义滚动条
           ),
-          buildDefaultDragHandles: false,
-          proxyDecorator: _proxyDecorator,
-          onReorderStart: (index) {
-            setState(() => _isDragging = true);
-            HapticFeedback.selectionClick();
-            SystemSound.play(SystemSoundType.click);
-          },
-          onReorderEnd: (_) {
-            setState(() => _isDragging = false);
-            _scrollToSelected();
-          },
-          onReorder: _handleReorder,
-          itemCount: widget.images.length,
-          itemBuilder: (context, index) => MouseRegion(
-            key: ValueKey(widget.images[index].path),
-            cursor: _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
-            child: ReorderableDragStartListener(
-              index: index,
-              child: _ThumbnailItem(
-                image: widget.images[index],
-                isSelected: index == widget.selectedIndex,
-                onTap: () => widget.onSelect(index),
-                onRemove: () => widget.onRemove(index),
-                index: index + 1,
+          child: Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: true,
+            trackVisibility: true,
+            child: ReorderableListView.builder(
+              scrollController: _scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.m,
+                vertical: AppSizes.s,
               ),
+              buildDefaultDragHandles: false,
+              proxyDecorator: _proxyDecorator,
+              onReorderStart: (index) {
+                setState(() => _isDragging = true);
+                HapticFeedback.selectionClick();
+                SystemSound.play(SystemSoundType.click);
+              },
+              onReorderEnd: (_) {
+                setState(() => _isDragging = false);
+                _scrollToSelected();
+              },
+              onReorder: (oldIndex, newIndex) {
+                // 延迟处理重排序，避免布局冲突
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _handleReorder(oldIndex, newIndex);
+                });
+              },
+              itemCount: widget.images.length,
+              itemBuilder: (context, index) {
+                final image = widget.images[index];
+                return RepaintBoundary( // 添加重绘边界
+                  key: ValueKey(image.path),
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: MouseRegion(
+                      cursor: _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
+                      child: ReorderableDragStartListener(
+                        index: index,
+                        child: _ThumbnailItem(
+                          image: image,
+                          isSelected: index == widget.selectedIndex,
+                          onTap: () => widget.onSelect(index),
+                          onRemove: () => widget.onRemove(index),
+                          index: index + 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -145,32 +169,20 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
     });
   }
 
+  // 改进代理装饰器
   Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        final elevation = Tween(begin: 0.0, end: 8.0)
-            .chain(CurveTween(curve: Curves.easeOutCubic))
-            .evaluate(animation);
-        final scale = Tween(begin: 1.0, end: 1.05)
-            .chain(CurveTween(curve: Curves.easeOutCubic))
-            .evaluate(animation);
-
-        return Transform.scale(
-          scale: scale,
-          child: Material(
-            elevation: elevation,
-            color: Colors.transparent,
-            shadowColor: Colors.black38,
-            borderRadius: BorderRadius.circular(AppSizes.xs),
-            child: Opacity(
-              opacity: 0.9,
-              child: child,
-            ),
-          ),
-        );
-      },
-      child: child,
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.0, end: 0.9).animate(animation),
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 1.0, end: 1.05).animate(animation),
+        child: Material(
+          elevation: animation.value * 8.0,
+          color: Colors.transparent,
+          shadowColor: Colors.black38,
+          borderRadius: BorderRadius.circular(AppSizes.xs),
+          child: child,
+        ),
+      ),
     );
   }
 }

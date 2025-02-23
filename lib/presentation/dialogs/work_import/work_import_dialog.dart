@@ -20,6 +20,8 @@ class WorkImportDialog extends ConsumerStatefulWidget {
 class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  // 用于记录已加载文件路径
+  final Set<String> _loadedFilePaths = <String>{};
 
   @override
   void initState() {
@@ -31,6 +33,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
   @override
   void dispose() {
+    _loadedFilePaths.clear();
     super.dispose();
   }
 
@@ -47,61 +50,52 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       if (!mounted) return;
 
       if (result != null) {
-        final files = result.paths
+        final newFiles = result.paths
             .whereType<String>()
+            .where((path) => !_loadedFilePaths.contains(path)) // 过滤已加载的文件
             .map((path) => File(path))
             .toList();
         
-        if (files.isNotEmpty) {
-          await ref.read(workImportProvider.notifier).addImages(files);
-          HapticFeedback.mediumImpact();
+        if (newFiles.isEmpty) {
+          _showWarning(context, '选中的图片已全部添加过');
+          return;
         }
+
+        // 记录新添加的文件路径 
+        _loadedFilePaths.addAll(newFiles.map((file) => file.path));
+        
+        await ref.read(workImportProvider.notifier).addImages(newFiles);
+        HapticFeedback.mediumImpact();
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorSnackBar(
-        context, 
-        '选择图片失败: ${e.toString().replaceAll('Exception: ', '')}',
-      );
+      _showErrorSnackBar(context, '选择图片失败: ${e.toString()}');
     }
   }
 
-  // Future<void> _handleDrop(DropEventDetails details) async {
-  //   if (!mounted || details.files.isEmpty) return;
-    
-  //   try {
-  //     final files = details.files
-  //       .where((xFile) {
-  //         final ext = path.extension(xFile.name).toLowerCase();
-  //         return ['.jpg', '.jpeg', '.png', '.webp'].contains(ext);
-  //       })
-  //       .map((xFile) => File(xFile.path))
-  //       .toList();
-
-  //     if (files.isEmpty) {
-  //       _showErrorSnackBar(context, '仅支持jpg、jpeg、png、webp格式的图片');
-  //       return;
-  //     }
-
-  //     await ref.read(workImportProvider.notifier).addImages(files);
-  //     HapticFeedback.mediumImpact();
-  //   } catch (e) {
-  //     if (!mounted) return;
-  //     _showErrorSnackBar(
-  //       context,
-  //       '添加图片失败：${e.toString().replaceAll('Exception: ', '')}',
-  //     );
-  //   }
-  // }
+  // 显示警告提示
+  void _showWarning(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
   Future<void> _handleSubmit() async {
     if (_formKey.currentState?.validate() != true) {
-      _showErrorSnackBar(context, '请填写所有必填项');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请填写所有必填项')),
+      );
       return;
     }
 
     if (!ref.read(workImportProvider).images.isNotEmpty) {
-      _showErrorSnackBar(context, '请至少添加一张图片');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请至少添加一张图片')),
+      );
       return;
     }
 
@@ -111,7 +105,9 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       if (!mounted) return;
 
       if (success) {
-        _showSuccessSnackBar(context, '导入成功');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('导入成功')),
+        );
         // 延迟关闭对话框，让用户看到成功提示
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) {
@@ -120,9 +116,8 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorSnackBar(
-        context,
-        '导入失败：${e.toString().replaceAll('Exception: ', '')}',
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('导入失败：${e.toString()}')),
       );
     } finally {
       if (mounted) {
@@ -264,7 +259,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(workImportProvider);
-    final isDirty = state.isDirty;
+    final isDirty = state.images.isNotEmpty;
 
     return WillPopScope(
       onWillPop: _handleExit,

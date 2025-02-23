@@ -6,16 +6,14 @@ class ImageViewer extends StatelessWidget {
   final File image;
   final double rotation;
   final double scale;
-  final VoidCallback onResetView;
-  final ValueChanged<double> onScaleChanged;
+  final ValueChanged<double>? onScaleChanged;
 
   const ImageViewer({
     super.key,
     required this.image,
     required this.rotation,
-    required this.scale,
-    required this.onResetView,
-    required this.onScaleChanged,
+    this.scale = 1.0,
+    this.onScaleChanged,
   });
 
   @override
@@ -31,7 +29,7 @@ class ImageViewer extends StatelessWidget {
           maxScale: 4.0,
           onInteractionUpdate: (details) {
             if (details.pointerCount > 0 && details.scale != scale) {
-              onScaleChanged(details.scale);
+              onScaleChanged?.call(details.scale);
             }
           },
           child: Center(
@@ -63,17 +61,6 @@ class ImageViewer extends StatelessWidget {
                 },
               ),
             ),
-          ),
-        ),
-
-        // 重置视图按钮
-        Positioned(
-          right: AppSizes.m,
-          bottom: AppSizes.m,
-          child: FloatingActionButton.small(
-            onPressed: onResetView,
-            tooltip: '重置视图',
-            child: const Icon(Icons.zoom_out_map),
           ),
         ),
       ],

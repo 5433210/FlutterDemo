@@ -31,16 +31,17 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
   bool _isProcessing = false;
   final GlobalKey _dropTargetKey = GlobalKey();
 
-  void _showError(String message) {
-    if (!mounted) return;
-    
+  void _showMessage(BuildContext context, String message, {bool isError = false}) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             Icon(
-              Icons.error_outline,
-              color: Theme.of(context).colorScheme.onError,
+              isError ? Icons.error_outline : Icons.info_outline,
+              color: isError 
+                ? theme.colorScheme.onError
+                : theme.colorScheme.onSurfaceVariant,
               size: 20,
             ),
             const SizedBox(width: AppSizes.s),
@@ -49,16 +50,17 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
             ),
           ],
         ),
-        backgroundColor: Theme.of(context).colorScheme.error,
+        backgroundColor: isError 
+          ? theme.colorScheme.error
+          : theme.colorScheme.surfaceVariant,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(AppSizes.m),
-        duration: const Duration(seconds: 4),
       ),
     );
   }
 
   Future<void> _handleDropDone(DropDoneDetails details) async {
-    if (_isProcessing) return;
+    if (_isProcessing || !mounted) return;
 
     setState(() {
       _isDragging = false;
@@ -66,23 +68,32 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
     });
 
     try {
-      final files = details.files
-          .where((file) {
-            final ext = path.extension(file.path).toLowerCase();
-            return ['.jpg', '.jpeg', '.png', '.webp'].contains(ext);
+      // 获取当前已加载的文件路径
+      final existingPaths = Set<String>.from(
+        widget.state.images.map((file) => file.path)
+      );
+
+      // 过滤重复文件和检查文件类型
+      final newFiles = details.files
+          .where((xFile) {
+            final ext = path.extension(xFile.path).toLowerCase();
+            final isValidType = ['.jpg', '.jpeg', '.png', '.webp'].contains(ext);
+            final isNew = !existingPaths.contains(xFile.path);
+            return isValidType && isNew;
           })
-          .map((file) => File(file.path))
+          .map((xFile) => File(xFile.path))
           .toList();
 
-      if (files.isEmpty) {
-        _showError('仅支持 jpg、jpeg、png、webp 格式的图片');
+      if (newFiles.isEmpty) {
+        _showMessage(context, '拖放的图片已全部添加过或格式不支持');
         return;
       }
 
-      await widget.viewModel.addImages(files);
+      await widget.viewModel.addImages(newFiles);
       HapticFeedback.mediumImpact();
     } catch (e) {
-      _showError('添加图片失败：${e.toString()}');
+      if (!mounted) return;
+      _showMessage(context, '添加图片失败：${e.toString()}', isError: true);
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -99,22 +110,20 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 工具栏
         PreviewToolbar(
           hasImages: hasImages,
-          hasSelection: hasSelection,
-          onAddImages: widget.onAddImages,
-          onRotateLeft: () => widget.viewModel.rotateImage(false),
-          onRotateRight: () => widget.viewModel.rotateImage(true),
-          onDelete: () => widget.viewModel.removeImage(widget.state.selectedImageIndex),
+          hasSelection: hasSelection,          
+          onAddImages: widget.onAddImages,    // 添加
+          onRotateLeft: hasSelection ? () => widget.viewModel.rotateImage(false) : null,
+          onRotateRight: hasSelection ? () => widget.viewModel.rotateImage(true) : null,
+          onDelete: hasSelection ? () => widget.viewModel.removeImage(widget.state.selectedImageIndex) : null,
+          onDeleteAll: hasImages ? _handleDeleteAll : null, // 新增全部删除功能
         ),
 
-        // 预览区域
         Expanded(
           child: _buildDropTarget(),
         ),
 
-        // 缩略图区域
         if (hasImages)
           Container(
             height: 120,
@@ -135,6 +144,35 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
     );
   }
 
+  Future<void> _handleDeleteAll() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: const Text('是否删除所有图片？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onError,
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      widget.viewModel.removeAllImages();
+      HapticFeedback.mediumImpact();
+    }
+  }
+
   Widget _buildDropTarget() {
     final theme = Theme.of(context);
     final hasImages = widget.state.images.isNotEmpty;
@@ -146,39 +184,32 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
       onDragEntered: (_) => setState(() => _isDragging = true),
       onDragExited: (_) => setState(() => _isDragging = false),
       onDragDone: _handleDropDone,
-      child: MouseRegion(
-        cursor: _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: widget.onAddImages,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // 背景
-              Container(
-                color: theme.colorScheme.surface,
-                child: hasImages && hasSelection
-                    ? ImageViewer(
-                        image: widget.state.images[widget.state.selectedImageIndex],
-                        rotation: widget.state.getRotation(
-                          widget.state.images[widget.state.selectedImageIndex].path,
-                        ),
-                        scale: widget.state.scale,
-                        onResetView: widget.viewModel.resetView,
-                        onScaleChanged: widget.viewModel.setScale,
-                      )
-                    : _buildPlaceholder(theme, hasImages),
-              ),
-
-              // 拖放遮罩
-              if (_isDragging)
-                _buildDragOverlay(theme),
-
-              // 处理中指示器
-              if (_isProcessing)
-                _buildProcessingOverlay(theme),
-            ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 背景
+          Container(
+            color: theme.colorScheme.surface,
+            child: hasImages && hasSelection
+                ? ImageViewer(
+                    image: widget.state.images[widget.state.selectedImageIndex],
+                    rotation: widget.state.getRotation(
+                      widget.state.images[widget.state.selectedImageIndex].path,
+                    ),
+                    scale: widget.state.scale,
+                    onScaleChanged: widget.viewModel.setScale,
+                  )
+                : _buildPlaceholder(theme, hasImages),
           ),
-        ),
+
+          // 拖放遮罩
+          if (_isDragging)
+            _buildDragOverlay(theme),
+
+          // 处理中指示器
+          if (_isProcessing)
+            _buildProcessingOverlay(theme),
+        ],
       ),
     );
   }
@@ -195,7 +226,7 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
           ),
           const SizedBox(height: AppSizes.m),
           Text(
-            hasImages ? '请选择要预览的图片' : '点击或拖放图片到此处',
+            hasImages ? '请选择要预览的图片' : '拖放图片到此处',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurface,
             ),

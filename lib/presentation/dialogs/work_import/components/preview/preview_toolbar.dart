@@ -4,88 +4,64 @@ import '../../../../../theme/app_sizes.dart';
 class PreviewToolbar extends StatelessWidget {
   final bool hasImages;
   final bool hasSelection;
-  final VoidCallback onAddImages;
-  final VoidCallback onRotateLeft;
-  final VoidCallback onRotateRight;
-  final VoidCallback onDelete;
+  final VoidCallback? onAddImages;    // 添加
+  final VoidCallback? onRotateLeft;
+  final VoidCallback? onRotateRight;
+  final VoidCallback? onDelete;
+  final VoidCallback? onDeleteAll;
 
   const PreviewToolbar({
     super.key,
-    required this.hasImages,
-    required this.hasSelection,
-    required this.onAddImages,
-    required this.onRotateLeft,
-    required this.onRotateRight,
-    required this.onDelete,
+    this.hasImages = false,
+    this.hasSelection = false,
+    this.onAddImages,              // 添加
+    this.onRotateLeft,
+    this.onRotateRight,
+    this.onDelete,
+    this.onDeleteAll,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Container(
-      height: 48, // 固定高度
+      height: 48,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
       child: Row(
         children: [
-          FilledButton.icon(
+          // 添加图片
+          _ToolbarIconButton(
+            icon: Icons.add_photo_alternate_outlined,
+            tooltip: '添加图片',
             onPressed: onAddImages,
-            icon: const Icon(Icons.add_photo_alternate),
-            label: const Text('添加图片'),
           ),
-          if (hasImages) ...[
-            const SizedBox(width: AppSizes.l),
-            Container(
-              padding: const EdgeInsets.all(AppSizes.xs),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppSizes.xs),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _ToolbarIconButton(
-                    icon: Icons.rotate_left,
-                    tooltip: '向左旋转',
-                    onPressed: hasSelection ? onRotateLeft : null,
-                  ),
-                  _ToolbarIconButton(
-                    icon: Icons.rotate_right,
-                    tooltip: '向右旋转',
-                    onPressed: hasSelection ? onRotateRight : null,
-                  ),
-                  _ToolbarIconButton(
-                    icon: Icons.delete_outline,
-                    tooltip: '删除',
-                    onPressed: hasSelection ? onDelete : null,
-                    isDestructive: true,
-                  ),
-                ],
-              ),
-            ),
-            const Spacer(),
-            // 重新设计提示信息
-            MouseRegion(
-              cursor: SystemMouseCursors.help,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: theme.colorScheme.outline,
-                  ),
-                  const SizedBox(width: AppSizes.xs),
-                  Text(
-                    '拖动排序',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          const SizedBox(width: AppSizes.m),
+          // 向左旋转
+          _ToolbarIconButton(
+            icon: Icons.rotate_left,
+            tooltip: '向左旋转',
+            onPressed: hasSelection ? onRotateLeft : null,
+          ),
+          // 向右旋转
+          _ToolbarIconButton(
+            icon: Icons.rotate_right,
+            tooltip: '向右旋转',
+            onPressed: hasSelection ? onRotateRight : null,
+          ),
+          const Spacer(),
+          // 删除选中
+          _ToolbarIconButton(
+            icon: Icons.delete_outline,
+            tooltip: '删除选中',
+            onPressed: hasSelection ? onDelete : null,
+            isDestructive: true,
+          ),
+          // 全部删除
+          _ToolbarIconButton(
+            icon: Icons.delete_sweep_outlined,
+            tooltip: '全部删除',
+            onPressed: hasImages ? onDeleteAll : null,
+            isDestructive: true,
+          ),
         ],
       ),
     );
@@ -108,16 +84,32 @@ class _ToolbarIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bool isEnabled = onPressed != null;
 
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 20),
+      icon: Icon(
+        icon,
+        size: 20,
+        color: isEnabled
+            ? (isDestructive 
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurfaceVariant)
+            : theme.colorScheme.onSurfaceVariant.withOpacity(0.38),
+      ),
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
       style: IconButton.styleFrom(
         foregroundColor: isDestructive 
             ? theme.colorScheme.error
             : theme.colorScheme.onSurfaceVariant,
+        backgroundColor: Colors.transparent,
+        hoverColor: (isDestructive 
+            ? theme.colorScheme.error
+            : theme.colorScheme.onSurfaceVariant
+        ).withOpacity(0.08),
+        disabledBackgroundColor: Colors.transparent,
+        disabledForegroundColor: theme.colorScheme.onSurfaceVariant.withOpacity(0.38),
       ),
     );
   }

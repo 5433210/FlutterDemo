@@ -279,4 +279,11 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   void reset() {
     state = const WorkImportState();
   }
+
+  void removeAllImages() {
+    state = state.copyWith(
+      images: const [],
+      selectedImageIndex: -1,      
+    );
+  }
 }
