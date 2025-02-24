@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
+
 abstract class DatabaseInterface {
   Future<void> initialize();
   Future<void> close();
@@ -5,23 +8,16 @@ abstract class DatabaseInterface {
   // Work operations
   Future<String> insertWork(Map<String, dynamic> work);
   Future<Map<String, dynamic>?> getWork(String id);
+
   Future<List<Map<String, dynamic>>> getWorks({
+   String? query,  // 添加查询参数
     String? style,
-    String? author,
-    String? name,      
-    String? tool,        // Add tool parameter
-    List<String>? tags,
-    DateTime? fromDateImport,
-    DateTime? toDateImport,
-    DateTime? fromDateCreation,
-    DateTime? toDateCreation,
-    DateTime? fromDateUpdate,
-    DateTime? toDateUpdate,
-    int? limit,
-    int? offset,
-    String? sortBy,
+    String? tool,
+    DateTimeRange? creationDateRange,
+    String? orderBy,
     bool descending = true,
   });
+
   Future<void> updateWork(String id, Map<String, dynamic> work);
   Future<void> deleteWork(String id);
   Future<bool> workExists(String id);

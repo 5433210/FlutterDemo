@@ -15,12 +15,16 @@ class DateRangeFilterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 只有当有实际的筛选条件时才显示"不限"标签
+    final bool showResetChip = filter != null && 
+        (filter!.preset != null || filter!.start != null || filter!.end != null);
+
     return DefaultTabController(
       length: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (filter != null)
+          if (showResetChip)  // 修改这里的条件
             Padding(
               padding: const EdgeInsets.only(bottom: AppSizes.s),
               child: Wrap(
@@ -127,25 +131,14 @@ class DateRangeFilterSection extends StatelessWidget {
       children: [
         Text(label, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSizes.xs),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.calendar_today, size: 18),
-                label: Text(value != null ? _formatDate(value) : '点击选择日期'),
-                onPressed: onPressed,
-                style: error != null ? 
-                  OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                  ) : null,
-              ),
-            ),
-            if (value != null)
-              IconButton(
-                icon: const Icon(Icons.clear, size: 18),
-                onPressed: onClear,
-              ),
-          ],
+        OutlinedButton.icon(
+          icon: const Icon(Icons.calendar_today, size: 18),
+          label: Text(value != null ? _formatDate(value) : '点击选择日期'),
+          onPressed: onPressed,
+          style: error != null ? 
+            OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ) : null,
         ),
         if (error != null)
           Padding(
@@ -189,10 +182,16 @@ class DateRangeFilterSection extends StatelessWidget {
   }
 
   void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
-    onChanged(DateRangeFilter(
-      start: startDate,
-      end: endDate,
-    ));
+    // 只更新提供的日期，保持另一个日期不变
+    final newFilter = DateRangeFilter(
+      start: startDate ?? filter?.start,  // 如果没有提供新的开始日期，保持原来的值
+      end: endDate ?? filter?.end,        // 如果没有提供新的结束日期，保持原来的值
+    );
+    
+    // 只有当新的过滤器有变化时才触发更新
+    if (newFilter != filter) {
+      onChanged(newFilter);
+    }
   }
 
   String _formatDate(DateTime date) {

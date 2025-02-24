@@ -73,31 +73,32 @@ class Work {
 
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
+    if (value is int) {
+      // 确保使用正确的时间戳单位
+      return DateTime.fromMillisecondsSinceEpoch(value);  // 使用毫秒
+    }
     try {
-      if (value is int) {
-        // Handle microseconds since epoch
-        return DateTime.fromMicrosecondsSinceEpoch(value);
-      }
       return DateTime.parse(value.toString());
     } catch (e) {
+      debugPrint('Failed to parse date: $value');
       return null;
     }
   }
 
   factory Work.fromMap(Map<String, dynamic> map) {
     return Work(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      author: map['author'],
-      style: map['style'],
-      tool: map['tool'],
+      id: map['id'] as String?,
+      name: map['name'] as String?,
+      author: map['author'] as String?,
+      style: map['style'] as String?,
+      tool: map['tool'] as String?,
       creationDate: _parseDateTime(map['creationDate']),
-      imageCount: map['imageCount'] ?? 0,
-      createTime: _parseDateTime(map['createTime']),
-      updateTime: _parseDateTime(map['updateTime']),
+      imageCount: map['imageCount'] as int? ?? 0,
+      createTime: _parseDateTime(map['createTime']) ?? DateTime.now(),
+      updateTime: _parseDateTime(map['updateTime']) ?? DateTime.now(),
       metadata: map['metadata'] != null 
-          ? jsonDecode(map['metadata'] as String) as Map<String, dynamic>
-          : null,  // Deserialize metadata
+          ? jsonDecode(map['metadata'] as String) as Map<String, dynamic>?
+          : null,
     );
   }
 

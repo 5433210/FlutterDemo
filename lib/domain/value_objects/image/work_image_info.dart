@@ -1,15 +1,15 @@
-import 'image_size.dart';
+import 'work_image_size.dart';
 
-class ImageInfo {
+class WorkImageInfo {
   //final String id;
   final String path;
   final String thumbnail;
-  final ImageSize size;
+  final WorkImageSize size;
   final int fileSize;
   final String format;
   final String? original;
 
-  const ImageInfo({
+  const WorkImageInfo({
     //required this.id,
     required this.path,
     required this.thumbnail,
@@ -29,26 +29,26 @@ class ImageInfo {
     'original': original,
   }..removeWhere((_, value) => value == null);
 
-  factory ImageInfo.fromJson(Map<String, dynamic> json) => ImageInfo(
+  factory WorkImageInfo.fromJson(Map<String, dynamic> json) => WorkImageInfo(
     //id: json['id'] as String,
     path: json['path'] as String,
     thumbnail: json['thumbnail'] as String,
-    size: ImageSize.fromJson(json['size'] as Map<String, dynamic>),
+    size: WorkImageSize.fromJson(json['size'] as Map<String, dynamic>),
     fileSize: json['fileSize'] as int,
     format: json['format'] as String,
     original: json['original'] as String?,
   );
 
-  ImageInfo copyWith({
+  WorkImageInfo copyWith({
     //String? id,
     String? path,
     String? thumbnail,
-    ImageSize? size,
+    WorkImageSize? size,
     int? fileSize,
     String? format,
     String? original,
   }) {
-    return ImageInfo(
+    return WorkImageInfo(
       //id: id ?? this.id,
       path: path ?? this.path,
       thumbnail: thumbnail ?? this.thumbnail,

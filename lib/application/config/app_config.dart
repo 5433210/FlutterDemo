@@ -1,3 +1,5 @@
+import 'package:path/path.dart' as path;
+
 class AppConfig {
   // Image related settings
   static const maxImagesPerWork = 10;
@@ -24,7 +26,16 @@ class AppConfig {
     '.jpg', '.jpeg', '.png', '.webp'
   ];
 
-  static var dataPath="data";
+  // 更新路径配置
+  static const String appDataFolder = 'data';
+  static const String storageFolder = 'storage';
+  static const String worksFolder = 'works';
+  static const String thumbnailFile = 'thumbnail.jpg';
+
+  // 修改 dataPath getter
+  static String get dataPath {
+    return path.join('C:\\Users\\wailik\\Documents', appDataFolder);
+  }
 
   const AppConfig._();
 }

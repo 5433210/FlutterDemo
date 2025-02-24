@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../theme/app_sizes.dart';
+
 class SidebarToggle extends StatelessWidget {
   final bool isOpen;
   final VoidCallback onToggle;
@@ -14,24 +16,32 @@ class SidebarToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onToggle,
-        child: Container(
-          width: 16,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            border: Border(
-              left: BorderSide(color: theme.dividerColor),
-              right: BorderSide(color: theme.dividerColor),
-            ),
+    return Container(
+      width: 24,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          left: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
           ),
-          child: Center(
+          right: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: onToggle,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(AppSizes.xxs),
+            ),
             child: Icon(
               isOpen ? Icons.chevron_left : Icons.chevron_right,
-              size: 16,
+              size: 20,
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),

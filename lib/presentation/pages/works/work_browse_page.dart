@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -14,7 +15,6 @@ import '../../theme/app_sizes.dart';
 import '../../widgets/works/work_filter_panel.dart';
 import '../work_browser/components/sidebar_toggle.dart';
 
-
 class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
 
@@ -27,13 +27,24 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   bool _batchMode = false;
   final Set<String> _selectedWorks = {};
   String _searchQuery = ''; // 添加搜索查询状态
+  late final TextEditingController _searchController;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
+    // 确保页面初始化时加载数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(workBrowseProvider.notifier).loadWorks();
     });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -42,44 +53,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
 
     return PageLayout(
       navigationInfo: const Text('作品浏览'),
-      actions: [
-        // Batch mode toggle
-        IconButton(
-          icon: Icon(_batchMode ? Icons.check_box : Icons.check_box_outline_blank),
-          tooltip: _batchMode ? '退出选择' : '批量选择',
-          onPressed: () {
-            setState(() {
-              _batchMode = !_batchMode;
-              if (!_batchMode) {
-                _selectedWorks.clear();
-              }
-            });
-          },
-        ),
-        // Search action
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () => _showSearchDialog(context),
-        ),
-        // View mode toggle
-        IconButton(
-          icon: Icon(state.viewMode == ViewMode.grid 
-              ? Icons.view_list 
-              : Icons.grid_view),
-          onPressed: () {
-            ref.read(workBrowseProvider.notifier).toggleViewMode();
-          },
-        ),
-        // Sort direction toggle
-        IconButton(
-          icon: Icon(state.sortOption.descending 
-              ? Icons.arrow_downward 
-              : Icons.arrow_upward),
-          onPressed: () {
-            ref.read(workBrowseProvider.notifier).toggleSortDirection();
-          },
-        ),
-      ],
       toolbar: _buildToolbar(),      
       body: Row(
         children: [
@@ -88,9 +61,14 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             curve: Curves.easeInOut,
             width: state.isSidebarOpen ? sidebarWidth : 0,
             child: state.isSidebarOpen
-                ? WorkFilterPanel(
-                    filter: state.filter,
-                    onFilterChanged: ref.read(workBrowseProvider.notifier).updateFilter,
+                ? SingleChildScrollView( // 添加滚动视图包装
+                    child: Padding( // 添加内边距
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
+                      child: WorkFilterPanel(
+                        filter: state.filter,
+                        onFilterChanged: ref.read(workBrowseProvider.notifier).updateFilter,
+                      ),
+                    ),
                   )
                 : null,
           ),
@@ -99,16 +77,22 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             onToggle: ref.read(workBrowseProvider.notifier).toggleSidebar,
           ),
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SizedBox(
-                  height: constraints.maxHeight,
-                  child: state.viewMode == ViewMode.grid
-                      ? _buildGrid(state.works)
-                      : _buildList(state.works),
-                );
-              },
-            ),
+            child: state.isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : state.error != null 
+                    ? Center(child: Text(state.error!))
+                    : state.works.isEmpty
+                        ? const Center(child: Text('暂无作品'))
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SizedBox(
+                                height: constraints.maxHeight,
+                                child: state.viewMode == ViewMode.grid
+                                    ? _buildGrid(state.works)
+                                    : _buildList(state.works),
+                              );
+                            },
+                          ),
           ),
         ],
       ),
@@ -189,37 +173,128 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildToolbar() {
-    return Row(
-      children: [
-        if (!_batchMode)
-          FilledButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('导入作品'),
-            onPressed: () => _showImportDialog(context),
+    final theme = Theme.of(context);
+    final state = ref.watch(workBrowseProvider);
+
+    return Container(
+      height: kToolbarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
           ),
-        if (_batchMode) ...[
-          FilledButton.tonalIcon(
-            icon: const Icon(Icons.delete),
-            label: Text('删除${_selectedWorks.length}项'),
-            onPressed: _selectedWorks.isEmpty ? null : _deleteSelected,
-          ),
-          const SizedBox(width: AppSizes.m),
-          FilledButton.tonalIcon(
-            icon: const Icon(Icons.close),
-            label: const Text('退出选择'),
-            onPressed: () => setState(() {
-              _batchMode = false;
-              _selectedWorks.clear();
-            }),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
           ),
         ],
-        const Spacer(),
-        if (_batchMode)
-          Text(
-            '已选择 ${_selectedWorks.length} 项',
-            style: Theme.of(context).textTheme.bodySmall,
+      ),
+      child: Row(
+        children: [
+          // 左侧按钮组
+          Wrap(
+            spacing: AppSizes.s,
+            children: [
+              FilledButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('导入作品'),
+                onPressed: () => _showImportDialog(context),
+              ),
+              OutlinedButton.icon(
+                icon: Icon(_batchMode ? Icons.close : Icons.checklist),
+                label: Text(_batchMode ? '完成' : '批量处理'),
+                onPressed: () => setState(() => _batchMode = !_batchMode),
+              ),
+            ],
           ),
-      ],
+
+          const Spacer(),
+
+          // 右侧控制组
+          Row(
+            children: [
+              // 视图切换按钮
+              IconButton(
+                icon: Icon(
+                  state.viewMode == ViewMode.grid 
+                      ? Icons.view_list 
+                      : Icons.grid_view,
+                  color: theme.colorScheme.primary,
+                ),
+                style: IconButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.s),
+                  ),
+                ),
+                onPressed: () => ref.read(workBrowseProvider.notifier).toggleViewMode(),
+                tooltip: state.viewMode == ViewMode.grid ? '列表视图' : '网格视图',
+              ),
+              const SizedBox(width: AppSizes.s),
+              
+              // 搜索框
+              SizedBox(
+                width: 240,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: '搜索作品...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    isDense: true,
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.s,
+                      vertical: AppSizes.xs,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.m),
+                      borderSide: BorderSide.none,
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 16),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(workBrowseProvider.notifier).searchWorks('');
+                            },
+                          )
+                        : null,
+                  ),
+                  onChanged: (value) {
+                    if (_debounce?.isActive ?? false) _debounce?.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 500), () {
+                      ref.read(workBrowseProvider.notifier).searchWorks(value);
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          // 批量操作状态
+          if (_batchMode) ...[
+            const SizedBox(width: AppSizes.m),
+            Text(
+              '已选择 ${_selectedWorks.length} 项',
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (_selectedWorks.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: AppSizes.s),
+                child: FilledButton.tonalIcon(
+                  icon: const Icon(Icons.delete),
+                  label: Text('删除${_selectedWorks.length}项'),
+                  onPressed: _deleteSelected,
+                ),
+              ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -637,18 +712,23 @@ class WorkGridItem extends StatelessWidget {
   }
 
   Widget _buildThumbnail(BuildContext context) {
-    return FutureBuilder<String>(
+    if (work.id == null) return _buildPlaceholder(context);
+    
+    return FutureBuilder<String?>(
       future: PathHelper.getWorkThumbnailPath(work.id!),
       builder: (context, snapshot) {
+        debugPrint('Thumbnail path for ${work.id}: ${snapshot.data}');
+        
         if (snapshot.hasData) {
           final file = File(snapshot.data!);
-          if (file.existsSync()) {
-            return Image.file(
-              file,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-            );
-          }
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (ctx, error, stack) {
+              debugPrint('Error loading thumbnail: $error');
+              return _buildPlaceholder(context);
+            },
+          );
         }
         return _buildPlaceholder(context);
       },

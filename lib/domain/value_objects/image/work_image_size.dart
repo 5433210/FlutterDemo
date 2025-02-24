@@ -1,8 +1,8 @@
-class ImageSize {
+class WorkImageSize {
   final int width;
   final int height;
 
-  ImageSize({
+  WorkImageSize({
     required this.width,
     required this.height,
   }) {
@@ -16,18 +16,18 @@ class ImageSize {
     'height': height,
   };
 
-  factory ImageSize.fromJson(Map<String, dynamic> json) => ImageSize(
+  factory WorkImageSize.fromJson(Map<String, dynamic> json) => WorkImageSize(
     width: json['width'] as int,
     height: json['height'] as int,
   );
 
   double get aspectRatio => width / height;
 
-  ImageSize copyWith({
+  WorkImageSize copyWith({
     int? width,
     int? height,
   }) {
-    return ImageSize(
+    return WorkImageSize(
       width: width ?? this.width,
       height: height ?? this.height,
     );

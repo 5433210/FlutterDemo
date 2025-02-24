@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
+
+import '../../application/config/app_config.dart';
 
 class StoragePaths {
   final String basePath;
@@ -8,10 +11,25 @@ class StoragePaths {
   const StoragePaths(this.basePath);
 
   // Work related paths
-  String get worksPath => path.join(basePath, 'works');
-  String getWorkPath(String workId) => path.join(worksPath, workId);
-  String getWorkThumbnailPath(String workId) => 
-      path.join(getWorkPath(workId), 'thumbnail.jpg');
+  String get worksPath => path.join(basePath, AppConfig.worksFolder);
+  
+  String getWorkPath(String workId) {
+    // 删除额外的 storage 文件夹引用
+    final workPath = path.join(
+      AppConfig.dataPath,  // 这已经是完整路径
+      AppConfig.storageFolder,
+      AppConfig.worksFolder, 
+      workId
+    );
+    debugPrint('Getting work path: $workPath');
+    return workPath;
+  }
+
+  String getWorkThumbnailPath(String workId) {
+    final thumbnailPath = path.join(getWorkPath(workId), AppConfig.thumbnailFile);
+    debugPrint('Getting work thumbnail path: $thumbnailPath');
+    return thumbnailPath;
+  }
   
   String getWorkPicturePath(String workId, int index) => 
       path.join(getWorkPath(workId), 'pictures', index.toString());
@@ -24,6 +42,17 @@ class StoragePaths {
 
   String getWorkImportedThumbnailPath(String workId, int index) =>
       path.join(getWorkPicturePath(workId, index), 'thumbnail.jpg');
+
+  Future<void> ensureWorkDirectoryExists(String workId) async {
+    final workPath = getWorkPath(workId);
+    final thumbnailPath = path.join(workPath, AppConfig.thumbnailFile);
+    
+    debugPrint('Ensuring directories exist:');
+    debugPrint('Work path: $workPath');
+    debugPrint('Thumbnail path: $thumbnailPath');
+    
+    await ensureDirectoryExists(path.dirname(thumbnailPath));
+  }
 
   // Character related paths
   String get charsPath => path.join(basePath, 'chars');

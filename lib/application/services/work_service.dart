@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:demo/domain/interfaces/i_work_service.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -69,24 +71,43 @@ class WorkService implements IWorkService {
   Future<List<Work>> queryWorks({
     String? searchQuery,
     WorkFilter? filter,
-    SortOption? sortOption, // 保留参数但不使用它
+    SortOption? sortOption,
   }) async {
-    // 构建查询参数
-    final queryParams = <String, dynamic>{};
+    try {
+      final List<Map<String, dynamic>> results = await _workRepository.getWorks(
+        query: searchQuery?.trim(),
+        style: filter?.style?.value,
+        tool: filter?.tool?.value,
+        creationDateRange: filter?.dateRange != null 
+            ? DateTimeRange(
+                start: filter!.dateRange!.start,
+                end: filter.dateRange!.end,
+              )
+            : null,
+        // 确保使用正确的列名
+        orderBy: _mapSortFieldToColumnName(filter?.sortOption.field),
+        descending: filter?.sortOption.descending ?? true,
+      );
 
-    // 添加搜索条件
-    if (searchQuery?.isNotEmpty ?? false) {
-      queryParams['search'] = searchQuery;
+      return results.map((data) => Work.fromMap(Map<String, dynamic>.from(data))).toList();
+    } catch (e) {
+      debugPrint('Query works failed: $e');
+      rethrow;
     }
+  }
 
-    // 添加筛选和排序条件
-    if (filter != null) {
-      queryParams.addAll(filter.toQueryParams());
-    }
-
-    // 执行查询
-    final works = await _workRepository.getWorks();
-    return works.map((workData) => Work.fromMap(workData)).toList();
+  // 添加排序字段映射方法
+  String? _mapSortFieldToColumnName(SortField? field) {
+    if (field == null) return null;
+    
+    return switch(field) {
+      SortField.name => 'name',
+      SortField.author => 'author',
+      SortField.creationDate => 'creationDate',
+      SortField.importDate => 'createTime',
+      SortField.updateDate => 'updateTime',
+      SortField.none => null,
+    };
   }
 
   @override
@@ -101,11 +122,26 @@ class WorkService implements IWorkService {
 
   @override
   Future<String?> getWorkThumbnail(String workId) async {
-    final thumbnailPath = _paths.getWorkThumbnailPath(workId);
-    final file = File(thumbnailPath);
-    if (await file.exists()) {
-      return thumbnailPath;
+    try {
+      final thumbnailPath = _paths.getWorkThumbnailPath(workId);
+      final file = File(thumbnailPath);
+      
+      // 确保目录存在
+      final directory = Directory(path.dirname(thumbnailPath));
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      
+      if (await file.exists()) {
+        debugPrint('Found thumbnail at: $thumbnailPath');
+        return thumbnailPath;
+      } else {
+        debugPrint('Thumbnail not found at: $thumbnailPath');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error getting thumbnail: $e');
+      return null;
     }
-    return null;
   }
 }

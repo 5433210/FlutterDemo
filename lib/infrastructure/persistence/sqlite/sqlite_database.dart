@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
@@ -120,7 +121,8 @@ class SqliteDatabase implements DatabaseInterface {
     final workId = const Uuid().v4();
     work['id'] = workId;
     
-    work['creationDate'] = DateTime.parse(work['creationDate']).microsecondsSinceEpoch;
+    // 修复时间戳单位
+    work['creationDate'] = DateTime.parse(work['creationDate']).millisecondsSinceEpoch;  // 改用毫秒
     work['createTime'] = DateTime.now().millisecondsSinceEpoch;
     work['updateTime'] = DateTime.now().millisecondsSinceEpoch;    
     
@@ -191,27 +193,22 @@ class SqliteDatabase implements DatabaseInterface {
 
   @override
   Future<List<Map<String, dynamic>>> getWorks({
+    String? query,
     String? style,
-    String? author,
-    String? name,
-    String? tool,        // 添加工具参数
-    List<String>? tags,
-    DateTime? fromDateImport,
-    DateTime? toDateImport,
-    DateTime? fromDateCreation,
-    DateTime? toDateCreation,
-    DateTime? fromDateUpdate,
-    DateTime? toDateUpdate,
-    int? limit,
-    int? offset,
-    String? sortBy,
+    String? tool,
+    DateTimeRange? creationDateRange,
+    String? orderBy,
     bool descending = true,
   }) async {
     final whereConditions = <String>[];
     final whereArgs = <dynamic>[];
 
     // 文本搜索
-    _addTextSearch(whereConditions, whereArgs, name, author);
+    if (query?.isNotEmpty ?? false) {
+      whereConditions.add('(name LIKE ? OR author LIKE ?)');
+      whereArgs.add('%$query%');
+      whereArgs.add('%$query%');
+    }
     
     // 风格筛选
     if (style != null) {
@@ -224,39 +221,26 @@ class SqliteDatabase implements DatabaseInterface {
       whereConditions.add('tool = ?');
       whereArgs.add(tool);
     }
-    
-    // 标签筛选
-    _addTagSearch(whereConditions, whereArgs, tags);
 
-    // 日期范围筛选
-    _addDateRange(whereConditions, whereArgs, {
-      'createTime': {
-        'start': fromDateImport,
-        'end': toDateImport,
-      },
-      'creationDate': {
-        'start': fromDateCreation,
-        'end': toDateCreation,
-      },
-      'updateTime': {
-        'start': fromDateUpdate,
-        'end': toDateUpdate,
-      },
-    });
+    // 修复创作日期范围筛选的时间戳单位
+    if (creationDateRange != null) {
+      whereConditions.add('creationDate BETWEEN ? AND ?');
+      whereArgs.add(creationDateRange.start.millisecondsSinceEpoch);  // 改用毫秒
+      whereArgs.add(creationDateRange.end.millisecondsSinceEpoch);    // 改用毫秒
+    }
 
     final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-    final orderBy = _buildOrderByClause(sortBy, descending);
+    final order = orderBy != null 
+        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
+        : 'createTime DESC'; // 默认按创建时间倒序
 
-    final maps = await _executeQuery(
-      table: 'works',
+    final db = await database;
+    return await db.query(
+      'works',
       where: where,
       whereArgs: whereArgs,
-      orderBy: orderBy,
-      limit: limit,
-      offset: offset,
+      orderBy: order,
     );
-
-    return maps.map(_decodeMetadata).toList();
   }
 
   @override

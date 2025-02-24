@@ -31,7 +31,7 @@ class WorkBrowseState {
     String? error,
     List<Work>? works,
     List<Work>? allWorks, // 添加 allWorks
-    String? searchQuery,
+    String? searchQuery,  // 添加 searchQuery
     ViewMode? viewMode,
     SortOption? sortOption,
     WorkFilter? filter,
@@ -42,7 +42,7 @@ class WorkBrowseState {
       error: error ?? this.error,
       works: works ?? this.works,
       allWorks: allWorks ?? this.allWorks, // 复制 allWorks
-      searchQuery: searchQuery ?? this.searchQuery,
+      searchQuery: searchQuery ?? this.searchQuery,  // 保持搜索条件
       viewMode: viewMode ?? this.viewMode,
       sortOption: sortOption ?? this.sortOption,
       filter: filter ?? this.filter,

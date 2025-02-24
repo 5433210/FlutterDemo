@@ -10,6 +10,7 @@ enum SortField {
   author,
   creationDate,
   importDate,
+  updateDate  // 添加更新时间选项
 }
 
 extension SortFieldX on SortField {
@@ -19,6 +20,7 @@ extension SortFieldX on SortField {
     SortField.author => '作者',
     SortField.creationDate => '创作时间',
     SortField.importDate => '导入时间',
+    SortField.updateDate => '更新时间',
   };
 
   String? get fieldName => switch(this) {
@@ -27,14 +29,9 @@ extension SortFieldX on SortField {
     SortField.author => 'author',
     SortField.creationDate => 'date',
     SortField.importDate => 'import_date',
+    // TODO: Handle this case.
+    SortField.updateDate =>'update_date',
   };
-}
-
-enum DateRangeType {
-  lastWeek,
-  lastMonth,
-  lastYear,
-  custom
 }
 
 class SortOption {
@@ -42,8 +39,8 @@ class SortOption {
   final bool descending;
 
   const SortOption({
-    this.field = SortField.none,
-    this.descending = true,
+    this.field = SortField.creationDate,  // 默认按创作时间
+    this.descending = true,  // 默认降序
   });
 
   bool get isEmpty => field == SortField.none;
@@ -71,9 +68,9 @@ class SortOption {
 class WorkFilter {
   final WorkStyle? style;
   final WorkTool? tool;
-  final DateRangePreset? datePreset;
-  final DateTimeRange? dateRange;
-  final SortOption sortOption;
+  final DateRangePreset? datePreset;  // 新增：快捷日期预设
+  final DateTimeRange? dateRange;      // 新增：自定义日期范围
+  final SortOption sortOption;         // 新增：排序选项
 
   const WorkFilter({
     this.style,
@@ -83,60 +80,68 @@ class WorkFilter {
     this.sortOption = const SortOption(),
   });
 
-  bool get isEmpty => style == null && tool == null && dateRange == null;
+  bool get isEmpty => 
+    style == null && 
+    tool == null && 
+    datePreset == null &&
+    dateRange == null &&
+    sortOption.field == SortField.none;
 
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
     
     if (style != null) {
-      params['style'] = style;
+      params['style'] = style!.value;
     }
     
     if (tool != null) {
-      params['tool'] = tool;
+      params['tool'] = tool!.value;
     }
 
-    // 处理日期范围
-    if (datePreset != null) {
-      final range = datePreset?.getRange();
-      if (range != null) {
-        params['fromDate'] = range.start;
-        params['toDate'] = range.end;
-      }      
-    } else if (dateRange != null) {
-      params['fromDate'] = dateRange?.start;
-      params['toDate'] = dateRange?.end;
+    if (dateRange != null) {
+      params['date_from'] = dateRange!.start.toIso8601String();
+      params['date_to'] = dateRange!.end.toIso8601String();
     }
 
-    // 处理排序
-    params.addAll(sortOption.toQueryParams());
+    if (!sortOption.isEmpty) {
+      params.addAll(sortOption.toQueryParams());
+    }
 
     return params;
   }
 
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is WorkFilter &&
-           other.style == style &&
-           other.tool == tool &&
-           other.dateRange == dateRange;
-  }
-
-  @override
-  int get hashCode => Object.hash(style, tool, dateRange);
-
   WorkFilter copyWith({
-    WorkStyle? style,
-    WorkTool? tool,
-    DateTimeRange? dateRange,
+    WorkStyle? Function()? style,
+    WorkTool? Function()? tool,
+    DateRangePreset? Function()? datePreset,
+    DateTimeRange? Function()? dateRange,
     SortOption? sortOption,
   }) {
     return WorkFilter(
-      style: style ?? this.style,
-      tool: tool ?? this.tool,
-      dateRange: dateRange ?? this.dateRange,
+      style: style != null ? style() : this.style,
+      tool: tool != null ? tool() : this.tool,
+      datePreset: datePreset != null ? datePreset() : this.datePreset,
+      dateRange: dateRange != null ? dateRange() : this.dateRange,
       sortOption: sortOption ?? this.sortOption,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is WorkFilter &&
+    style == other.style &&
+    tool == other.tool &&
+    datePreset == other.datePreset &&
+    dateRange == other.dateRange &&
+    sortOption == other.sortOption;
+
+  @override
+  int get hashCode => Object.hash(
+    style, 
+    tool, 
+    datePreset,
+    dateRange,
+    sortOption,
+  );
 }

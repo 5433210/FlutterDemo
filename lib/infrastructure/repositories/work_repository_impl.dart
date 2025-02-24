@@ -27,23 +27,24 @@ class WorkRepositoryImpl implements WorkRepository {
     String? query,
     String? style,
     String? tool,
-    DateTimeRange? importDateRange,
-    DateTimeRange? creationDateRange,
+    DateTimeRange? creationDateRange,    
     String? orderBy,
     bool descending = true,
   }) async {
-    return _db.getWorks(
-      name: query, // 查询同时搜索作品名称
-      author: query, // 和作者
-      style: style,
-      tool: tool,
-      fromDateImport: importDateRange?.start,
-      toDateImport: importDateRange?.end,
-      fromDateCreation: creationDateRange?.start,
-      toDateCreation: creationDateRange?.end,
-      sortBy: orderBy,
-      descending: descending,
-    );
+    try {
+      final results = await _db.getWorks(
+        query: query,
+        style: style,
+        tool: tool,
+        creationDateRange: creationDateRange,      
+        orderBy: orderBy,
+        descending: descending,
+      );
+      return results;
+    } catch (e) {
+      debugPrint('Error getting works: $e');
+      rethrow;
+    }
   }
 
   @override

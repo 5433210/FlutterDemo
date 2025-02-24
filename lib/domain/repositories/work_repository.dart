@@ -8,8 +8,7 @@ abstract class WorkRepository {
   Future<List<Map<String, dynamic>>> getWorks({
     String? query,
     String? style,
-    String? tool,
-    DateTimeRange? importDateRange,
+    String? tool,    
     DateTimeRange? creationDateRange,
     String? orderBy,
     bool descending = true,
@@ -21,7 +20,6 @@ abstract class WorkRepository {
    String? query,
     String? style,
     String? tool,
-    DateTimeRange? importDateRange,
     DateTimeRange? creationDateRange,
   });
   Future<List<Character>> getCharactersByWorkId(String workId);
