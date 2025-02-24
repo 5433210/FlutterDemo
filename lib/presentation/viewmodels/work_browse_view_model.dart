@@ -1,5 +1,8 @@
 import 'package:demo/domain/entities/work.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/enums/work_style.dart';
+import '../../domain/enums/work_tool.dart';
 import '../../domain/interfaces/i_work_service.dart';
 import '../models/work_filter.dart';
 import 'states/work_browse_state.dart';
@@ -41,18 +44,20 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  void updateFilter(WorkFilter newFilter) {
-    // 如果点击已选中的筛选条件，则清除该条件
-    if (state.filter == newFilter) {
+  Future<void> _loadWorks() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final works = await _workService.getAllWorks();
+      final filtered = _applyFilter(works, state.filter);
       state = state.copyWith(
-        filter: const WorkFilter(),
-        works: _applySortToWorks(state.allWorks),
+        works: _applySortToWorks(filtered),
+        allWorks: works,
+        isLoading: false,
       );
-    } else {
-      final filteredWorks = _applyFilter(state.allWorks, newFilter);
+    } catch (e) {
       state = state.copyWith(
-        filter: newFilter,
-        works: _applySortToWorks(filteredWorks),
+        error: e.toString(),
+        isLoading: false,
       );
     }
   }
@@ -79,30 +84,26 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   List<Work> _applyFilter(List<Work> works, WorkFilter filter) {
+    if (filter.isEmpty) {
+      return works;
+    }
+
     var filtered = List<Work>.from(works);
 
-    if (state.searchQuery?.isNotEmpty ?? false) {
-      final query = state.searchQuery!.toLowerCase();
-      filtered = filtered.where((work) {
-        return (work.name?.toLowerCase().contains(query) ?? false) ||
-               (work.author?.toLowerCase().contains(query) ?? false) ||
-               (work.style?.toLowerCase().contains(query) ?? false);
-      }).toList();
-    }
-
-    if (filter.selectedStyle != null) {
-      filtered = filtered.where((w) => w.style == filter.selectedStyle).toList();
+    if (filter.style != null) {
+      filtered = filtered.where((w) => w.style == filter.style).toList();
     }
   
-    if (filter.selectedTool != null) {
-      filtered = filtered.where((w) => w.tool == filter.selectedTool).toList();
+    if (filter.tool != null) {
+      filtered = filtered.where((w) => w.tool == filter.tool).toList();
     }
   
-    if (filter.dateFilter != null) {
+    if (filter.dateRange != null) {
       filtered = filtered.where((w) {
-        final date = w.creationDate;
+        final date = w.creationDate ?? w.createTime;
         if (date == null) return false;
-        return filter.dateFilter!.contains(date);
+        return date.isAfter(filter.dateRange!.start) && 
+               date.isBefore(filter.dateRange!.end.add(const Duration(days: 1)));
       }).toList();
     }
 
@@ -149,5 +150,49 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   Future<void> refreshAfterImport() async {
     await loadWorks();
+  }
+
+  void updateFilter(WorkFilter filter) {
+    if (filter == state.filter) {
+      // If clicking the same filter, clear it
+      state = state.copyWith(
+        filter: const WorkFilter(),
+        isLoading: true,
+      );
+    } else {
+      state = state.copyWith(
+        filter: filter,
+        isLoading: true,
+      );
+    }
+    _loadWorks();
+  }
+
+  void toggleStyle(WorkStyle? style) {
+    final currentStyle = state.filter.style;
+    final newFilter = state.filter.copyWith(
+      style: currentStyle == style ? null : style,
+    );
+    updateFilter(newFilter);
+  }
+
+  void toggleTool(WorkTool? tool) {
+    final currentTool = state.filter.tool;
+    final newFilter = state.filter.copyWith(
+      tool: currentTool == tool ? null : tool,
+    );
+    updateFilter(newFilter);
+  }
+
+  void toggleDateRange(DateTimeRange? dateRange) {
+    final currentRange = state.filter.dateRange;
+    final isEqual = currentRange != null && dateRange != null &&
+        currentRange.start == dateRange.start && 
+        currentRange.end == dateRange.end;
+        
+    final newFilter = state.filter.copyWith(
+      dateRange: isEqual ? null : dateRange,
+    );
+    updateFilter(newFilter);
   }
 }

@@ -86,22 +86,15 @@ extension DateRangePresetX on DateRangePreset {
   }
 }
 
-enum DateRangeType {
-  preset, // 预设快捷选项
-  beforeDate, // 某日期之前
-  afterDate, // 某日期之后
-  between // 日期范围之间
-}
-
 class DateRangeFilter {
   final DateRangePreset? preset;
-  final DateTime? startDate;  // Match these parameter names
-  final DateTime? endDate;    // with the ones used in constructor
+  final DateTime? start;  // Match these parameter names
+  final DateTime? end;    // with the ones used in constructor
 
   const DateRangeFilter({
     this.preset,
-    this.startDate,
-    this.endDate,
+    this.start,
+    this.end,
   });
 
   factory DateRangeFilter.preset(DateRangePreset preset) {
@@ -113,17 +106,17 @@ class DateRangeFilter {
       return preset!.getRange();
     }
     
-    if (startDate != null || endDate != null) {
+    if (start != null || end != null) {
       return DateTimeRange(
-        start: startDate ?? DateTime(1900),
-        end: endDate ?? DateTime.now(),
+        start: start ?? DateTime(1900),
+        end: end ?? DateTime.now(),
       );
     }
     
     return null;
   }
 
-  bool get isEmpty => startDate == null && endDate == null && preset == null;
+  bool get isEmpty => start == null && end == null && preset == null;
 
   bool contains(DateTime date) {
     final range = effectiveRange;
@@ -132,15 +125,15 @@ class DateRangeFilter {
   }
 
   Map<String, dynamic> toJson() => {
-    'start': startDate?.toIso8601String(),
-    'end': endDate?.toIso8601String(),
+    'start': start?.toIso8601String(),
+    'end': end?.toIso8601String(),
     'preset': preset?.name,
   };
 
   factory DateRangeFilter.fromJson(Map<String, dynamic> json) {
     return DateRangeFilter(
-      startDate: json['start'] != null ? DateTime.parse(json['start']) : null,
-      endDate: json['end'] != null ? DateTime.parse(json['end']) : null,
+      start: json['start'] != null ? DateTime.parse(json['start']) : null,
+      end: json['end'] != null ? DateTime.parse(json['end']) : null,
       preset: json['preset'] != null 
           ? DateRangePreset.values.byName(json['preset']) 
           : null,
@@ -153,8 +146,8 @@ class DateRangeFilter {
     DateRangePreset? Function()? preset,
   }) {
     return DateRangeFilter(
-      startDate: startDate != null ? startDate() : this.startDate,
-      endDate: endDate != null ? endDate() : this.endDate,
+      start: startDate != null ? startDate() : this.start,
+      end: endDate != null ? endDate() : this.end,
       preset: preset != null ? preset() : this.preset,
     );
   }
@@ -165,12 +158,12 @@ class DateRangeFilter {
       return preset!.label;
     }
     
-    if (startDate != null && endDate != null) {
-      return '${_formatDate(startDate!)} 至 ${_formatDate(endDate!)}';
-    } else if (startDate != null) {
-      return '${_formatDate(startDate!)} 之后';
-    } else if (endDate != null) {
-      return '${_formatDate(endDate!)} 之前';
+    if (start != null && end != null) {
+      return '${_formatDate(start!)} 至 ${_formatDate(end!)}';
+    } else if (start != null) {
+      return '${_formatDate(start!)} 之后';
+    } else if (end != null) {
+      return '${_formatDate(end!)} 之前';
     }
     
     return '全部时间';
@@ -179,8 +172,8 @@ class DateRangeFilter {
   // 添加日期校验
   bool get isValid {
     if (preset != null) return true;
-    if (startDate != null && endDate != null) {
-      return !startDate!.isAfter(endDate!);
+    if (start != null && end != null) {
+      return !start!.isAfter(end!);
     }
     return true;
   }
@@ -198,12 +191,12 @@ class DateRangeFilter {
     if (identical(this, other)) return true;
     return other is DateRangeFilter &&
         other.preset == preset &&
-        other.startDate == startDate &&
-        other.endDate == endDate;
+        other.start == start &&
+        other.end == end;
   }
 
   @override
-  int get hashCode => Object.hash(preset, startDate, endDate);
+  int get hashCode => Object.hash(preset, start, end);
 
   // 辅助方法：格式化日期
   String _formatDate(DateTime date) {
@@ -216,11 +209,11 @@ class DateRangeFilter {
 
   // 创建一个"截止到今天"的工厂方法
   factory DateRangeFilter.untilToday() {
-    return DateRangeFilter(endDate: DateTime.now());
+    return DateRangeFilter(end: DateTime.now());
   }
 
   // 创建一个"从某天开始"的工厂方法
   factory DateRangeFilter.fromDate(DateTime startDate) {
-    return DateRangeFilter(startDate: startDate);
+    return DateRangeFilter(start: startDate);
   }
 }

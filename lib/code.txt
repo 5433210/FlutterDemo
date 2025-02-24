@@ -223,16 +223,15 @@ final thumbnailProvider = FutureProvider.family<String?, String>((ref, workId) a
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\application\providers\work_browse_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../infrastructure/providers/storage_providers.dart';
 import '../../presentation/viewmodels/states/work_browse_state.dart';
 import '../../presentation/viewmodels/work_browse_view_model.dart';
 import 'service_providers.dart';
 
 final workBrowseProvider = StateNotifierProvider<WorkBrowseViewModel, WorkBrowseState>((ref) {
-  final workService = ref.read(workServiceProvider);
-  final paths = ref.watch(storagePathsProvider);
-  return WorkBrowseViewModel(workService, paths);
+  final workService = ref.watch(workServiceProvider);
+  return WorkBrowseViewModel(workService);
 });
+
 ``n
 # FILE:character_service.dart CONTEXT
 `dart
@@ -732,6 +731,7 @@ class SettingsService {
 import 'dart:io';
 
 import 'package:demo/domain/interfaces/i_work_service.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -748,32 +748,45 @@ class WorkService implements IWorkService {
   WorkService(this._workRepository, this._imageService, this._paths);
 
   @override
-  Future<void> importWork(List<File> files, WorkInfo data) async {
-    Work? work;
+  Future<void> importWork(List<File> files, Work data) async {
+    try {
+      Work? work;
 
-    // Create work info first
-    work = Work(
-      name: data.name,
-      author: data.author,
-      style: data.style?.name,
-      tool: data.tool?.name,
-      creationDate: data.creationDate,
-      imageCount: files.length, // Initial count
-    );
+      // Create work info first
+      work = Work(
+        name: data.name,
+        author: data.author,
+        style: data.style,
+        tool: data.tool,
+        creationDate: data.creationDate,
+        imageCount: files.length, // Initial count
+      );
 
-    // Insert work into database within transaction
-    final workId = await _workRepository.insertWork(work);
+      // Insert work into database within transaction
+      final workId = await _workRepository.insertWork(work);
 
-    data.id = workId;
+      data = Work(
+        id: workId,
+        name: data.name,
+        author: data.author,
+        style: data.style,
+        tool: data.tool,
+        creationDate: data.creationDate,
+        imageCount: files.length,
+      );
 
-    // Create work directory
-    await _paths.ensureDirectoryExists(_paths.getWorkPath(workId));
+      // Create work directory
+      await _paths.ensureDirectoryExists(_paths.getWorkPath(workId));
 
-    // Process images
-    await _imageService.processWorkImages(
-      workId,
-      files,
-    );
+      // Process images
+      await _imageService.processWorkImages(
+        workId,
+        files,
+      );
+    } catch (e,stackTrace) {
+      debugPrint('Import failed in service: $e\n$stackTrace');
+      rethrow;
+    }
   }
 
   @override
@@ -813,7 +826,7 @@ class WorkService implements IWorkService {
 
   @override
   Future<Work?> getWork(String id) async {
-    return await _workRepository.getWork(id);    
+    return await _workRepository.getWork(id);
   }
 
   @override
@@ -1108,29 +1121,6 @@ class Work {
   }
 }
 ``n
-# FILE:calligraphy_style.dart CONTEXT
-`dart
-// filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\domain\enums\calligraphy_style.dart
-import 'package:collection/collection.dart';
-
-enum WorkStyle {
-  regular('楷书'),
-  running('行书'),
-  cursive('草书'),
-  clerical('隶书'),
-  seal('篆书');
-
-  final String label;
-  const WorkStyle(this.label);
-
-  static WorkStyle? fromString(String? value) {
-    if (value == null) return null;
-    return WorkStyle.values.firstWhereOrNull(
-      (style) => style.toString() == 'CalligraphyStyle.$value'
-    );
-  }
-}
-``n
 # FILE:work_style.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\domain\enums\work_style.dart
@@ -1160,7 +1150,7 @@ enum WorkStyle {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\domain\enums\work_tool.dart
 enum WorkTool {
   brush('毛笔', 'brush'),
-  hardPen('硬笔', 'hard_pen'),
+  pen('硬笔', 'pen'),
   other('其他', 'other');
 
   final String label;
@@ -1182,7 +1172,6 @@ enum WorkTool {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\domain\interfaces\i_work_service.dart
 import 'dart:io';
 import '../entities/work.dart';
-import '../value_objects/work/work_info.dart';
 import '../../presentation/models/work_filter.dart';
 
 abstract class IWorkService {
@@ -1190,7 +1179,7 @@ abstract class IWorkService {
   Future<Work?> getWork(String id);
   Future<String?> getWorkThumbnail(String workId);
   Future<void> deleteWork(String workId);
-  Future<void> importWork(List<File> files, WorkInfo info);
+  Future<void> importWork(List<File> files, Work work);
   Future<List<Work>> queryWorks({
     String? searchQuery,
     WorkFilter? filter,
@@ -3728,8 +3717,8 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   void initState() {
     super.initState();
     // 初始化日期和标签页
-    _startDate = widget.initialValue?.startDate;
-    _endDate = widget.initialValue?.endDate;
+    _startDate = widget.initialValue?.start;
+    _endDate = widget.initialValue?.end;
     _currentTabIndex = widget.initialValue?.preset != null ? 0 : 1;
   }
 
@@ -4011,8 +4000,8 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   void _handleConfirm() {
     Navigator.of(context).pop(DateRangeFilter(
       preset: null,
-      startDate: _startDate,  // Changed from start to startDate
-      endDate: _endDate,      // Changed from end to endDate
+      start: _startDate,  // Changed from start to startDate
+      end: _endDate,      // Changed from end to endDate
     ));
   }
 
@@ -4312,11 +4301,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../domain/entities/work.dart';
+import '../../../domain/interfaces/i_work_service.dart';
 import '../../../presentation/viewmodels/states/work_import_state.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
 import 'components/preview/work_import_preview.dart';
 import 'components/form/work_import_form.dart';
+
+class ImportResult {
+  final bool isSuccess;
+  final String? error;
+
+  const ImportResult({
+    this.isSuccess = false,
+    this.error,
+  });
+
+  static ImportResult success() => const ImportResult(isSuccess: true);
+  static ImportResult failure(String error) => ImportResult(error: error);
+}
 
 class WorkImportDialog extends ConsumerStatefulWidget {
   const WorkImportDialog({super.key});
@@ -4334,8 +4338,27 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   @override
   void initState() {
     super.initState();
+    // Move the reset call to initState
+    _resetDialog();
+  }
+
+  void _resetDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier).reset();
+      ref.read(workImportProvider.notifier)
+        ..reset()
+        ..setName('')  // Explicitly reset name
+        ..setAuthor('') // Explicitly reset author
+        ..setStyle(null) // Explicitly reset style
+        ..setTool(null) // Explicitly reset tool
+        ..setRemarks('') // Explicitly reset remarks
+        ..setCreationDate(null);// Explicitly reset creation date
+        
+      _loadedFilePaths.clear();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
   }
 
@@ -4386,21 +4409,21 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
   Future<void> _handleSubmit() async {
-    if (_formKey.currentState?.validate() != true) {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写所有必填项')),
+        const SnackBar(content: Text('请填写必填字段')),
       );
       return;
     }
 
-    if (!ref.read(workImportProvider).images.isNotEmpty) {
+    if (ref.read(workImportProvider).images.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请至少添加一张图片')),
       );
@@ -4408,24 +4431,38 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     }
 
     setState(() => _isLoading = true);
+
     try {
-      final success = await ref.read(workImportProvider.notifier).importWork();
+      _formKey.currentState!.save();
+      
+      final result = await ref.read(workImportProvider.notifier).importWork();
+      
       if (!mounted) return;
 
-      if (success) {
+      if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );
-        // 延迟关闭对话框，让用户看到成功提示
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) {
           Navigator.of(context).pop(true);
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('导入失败：${ref.read(workImportProvider).error}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Import failed: $e\n$stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('导入失败：${e.toString()}')),
+        SnackBar(
+          content: Text('导入失败：${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     } finally {
       if (mounted) {
@@ -4517,6 +4554,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   Future<bool> _handleExit() async {
     final isDirty = ref.read(workImportProvider).isDirty;
     if (!isDirty) {
+      _resetDialog(); // Reset state before exit
       Navigator.of(context).pop(false);
       return true;
     }
@@ -4558,6 +4596,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     );
 
     if (confirmed == true && mounted) {
+      _resetDialog(); // Reset state before exit
       Navigator.of(context).pop(false);
     }
     return confirmed ?? false;
@@ -4751,6 +4790,68 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     );
   }
 }
+
+class WorkImportProvider extends StateNotifier<WorkImportState> {
+  final IWorkService _workService;
+
+  WorkImportProvider(this._workService) : super(const WorkImportState(
+    name: '',
+    author: '',
+    style: null,
+    tool: null,
+    remarks: '',
+    images: [],
+    selectedImageIndex: -1,
+    isLoading: false,
+  ));
+
+  void reset() {
+    state = const WorkImportState(
+      name: '',
+      author: '',
+      style: null,
+      tool: null,
+      remarks: '',
+      images: [],
+      selectedImageIndex: -1,
+      isLoading: false,
+    );
+  }
+
+  Future<ImportResult> importWork() async {
+    state = state.copyWith(isLoading: true);
+    
+    try {
+      if (state.name.isEmpty) {
+        return ImportResult.failure('作品名称不能为空');
+      }
+
+      if (state.images.isEmpty) {
+        return ImportResult.failure('至少需要一张图片');
+      }
+
+      final work = Work(
+        name: state.name,
+        author: state.author,
+        style: state.style?.name,
+        tool: state.tool?.label,       
+        creationDate: state.creationDate,        
+        imageCount: state.images.length,        
+      );
+
+      await _workService.importWork(state.images,work);
+      
+      return ImportResult.success();
+    } catch (e, stackTrace) {
+      debugPrint('Import failed in provider: $e\n$stackTrace');
+      return ImportResult.failure(e.toString());
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  // ... existing code ...
+}
 ``n
 # FILE:dialog_footer.dart CONTEXT
 `dart
@@ -4896,6 +4997,9 @@ class WorkImportForm extends StatelessWidget {
             child: TextFormField(
               initialValue: state.name,
               onChanged: viewModel.setName,
+              onSaved: (value) {
+                viewModel.setName(value ?? '');
+              },
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '请输入作品名称'),
               validator: (value) {
@@ -4916,6 +5020,9 @@ class WorkImportForm extends StatelessWidget {
             child: TextFormField(
               initialValue: state.author,
               onChanged: viewModel.setAuthor,
+              onSaved: (value) {
+                viewModel.setAuthor(value ?? '');
+              },
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '请输入作者姓名'),
               validator: (value) {
@@ -5041,7 +5148,7 @@ class WorkImportForm extends StatelessWidget {
         color: theme.colorScheme.outline,
       ),
       filled: true,
-      fillColor: theme.colorScheme.surfaceVariant,
+      fillColor: theme.colorScheme.surfaceContainerHighest,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.xs),
         borderSide: BorderSide.none,
@@ -5080,13 +5187,13 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     final theme = Theme.of(context);
 
     return DragTarget<List<String>>(
-      onWillAccept: (data) {
+      onWillAcceptWithDetails: (data) {
         setState(() => _isDragging = true);
-        return data != null && data.isNotEmpty;
+        return data.data != null && data.data!.isNotEmpty;
       },
-      onAccept: (paths) {
+      onAcceptWithDetails: (details) {
         setState(() => _isDragging = false);
-        final files = paths.map((path) => File(path)).toList();
+        final files = details.data.map((path) => File(path)).toList();
         widget.onFilesDropped(files);
       },
       onLeave: (_) {
@@ -5181,8 +5288,8 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     final theme = Theme.of(context);
     
     return DragTarget<List<String>>(
-      onWillAccept: (data) {
-        final hasValidFiles = data?.any((path) {
+      onWillAcceptWithDetails: (data) {
+        final hasValidFiles = data.data.any((path) {
           final ext = path.toLowerCase();
           return ext.endsWith('.jpg') || 
                  ext.endsWith('.jpeg') || 
@@ -5193,9 +5300,9 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
         setState(() => _isDragging = hasValidFiles);
         return hasValidFiles;
       },
-      onAccept: (data) {
+      onAcceptWithDetails: (data) {
         setState(() => _isDragging = false);
-        final files = data
+        final files = data.data
             .map((path) => File(path))
             .where((file) => file.existsSync())
             .toList();
@@ -5351,46 +5458,51 @@ class PreviewToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
-      child: Row(
-        children: [
-          // 添加图片
-          _ToolbarIconButton(
-            icon: Icons.add_photo_alternate_outlined,
-            tooltip: '添加图片',
-            onPressed: onAddImages,
-          ),
-          const SizedBox(width: AppSizes.m),
-          // 向左旋转
-          _ToolbarIconButton(
-            icon: Icons.rotate_left,
-            tooltip: '向左旋转',
-            onPressed: hasSelection ? onRotateLeft : null,
-          ),
-          // 向右旋转
-          _ToolbarIconButton(
-            icon: Icons.rotate_right,
-            tooltip: '向右旋转',
-            onPressed: hasSelection ? onRotateRight : null,
-          ),
-          const Spacer(),
-          // 删除选中
-          _ToolbarIconButton(
-            icon: Icons.delete_outline,
-            tooltip: '删除选中',
-            onPressed: hasSelection ? onDelete : null,
-            isDestructive: true,
-          ),
-          // 全部删除
-          _ToolbarIconButton(
-            icon: Icons.delete_sweep_outlined,
-            tooltip: '全部删除',
-            onPressed: hasImages ? onDeleteAll : null,
-            isDestructive: true,
-          ),
-        ],
+    return SizedBox(
+      height: 48,  // 固定工具栏高度
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.m,
+          vertical: AppSizes.s,
+        ),
+        child: Row(
+          children: [
+            // 添加图片
+            _ToolbarIconButton(
+              icon: Icons.add_photo_alternate_outlined,
+              tooltip: '添加图片',
+              onPressed: onAddImages,
+            ),
+            const SizedBox(width: AppSizes.m),
+            // 向左旋转
+            _ToolbarIconButton(
+              icon: Icons.rotate_left,
+              tooltip: '向左旋转',
+              onPressed: hasSelection ? onRotateLeft : null,
+            ),
+            // 向右旋转
+            _ToolbarIconButton(
+              icon: Icons.rotate_right,
+              tooltip: '向右旋转',
+              onPressed: hasSelection ? onRotateRight : null,
+            ),
+            const Spacer(),
+            // 删除选中
+            _ToolbarIconButton(
+              icon: Icons.delete_outline,
+              tooltip: '删除选中',
+              onPressed: hasSelection ? onDelete : null,
+              isDestructive: true,
+            ),
+            // 全部删除
+            _ToolbarIconButton(
+              icon: Icons.delete_sweep_outlined,
+              tooltip: '全部删除',
+              onPressed: hasImages ? onDeleteAll : null,
+              isDestructive: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -5643,7 +5755,6 @@ class _ThumbnailItem extends StatelessWidget {
   final int index;
 
   const _ThumbnailItem({
-    super.key,
     required this.image,
     required this.isSelected,
     required this.onTap,
@@ -5860,7 +5971,7 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
         ),
         backgroundColor: isError 
           ? theme.colorScheme.error
-          : theme.colorScheme.surfaceVariant,
+          : theme.colorScheme.surfaceContainerHighest,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(AppSizes.m),
       ),
@@ -6209,22 +6320,15 @@ extension DateRangePresetX on DateRangePreset {
   }
 }
 
-enum DateRangeType {
-  preset, // 预设快捷选项
-  beforeDate, // 某日期之前
-  afterDate, // 某日期之后
-  between // 日期范围之间
-}
-
 class DateRangeFilter {
   final DateRangePreset? preset;
-  final DateTime? startDate;  // Match these parameter names
-  final DateTime? endDate;    // with the ones used in constructor
+  final DateTime? start;  // Match these parameter names
+  final DateTime? end;    // with the ones used in constructor
 
   const DateRangeFilter({
     this.preset,
-    this.startDate,
-    this.endDate,
+    this.start,
+    this.end,
   });
 
   factory DateRangeFilter.preset(DateRangePreset preset) {
@@ -6236,17 +6340,17 @@ class DateRangeFilter {
       return preset!.getRange();
     }
     
-    if (startDate != null || endDate != null) {
+    if (start != null || end != null) {
       return DateTimeRange(
-        start: startDate ?? DateTime(1900),
-        end: endDate ?? DateTime.now(),
+        start: start ?? DateTime(1900),
+        end: end ?? DateTime.now(),
       );
     }
     
     return null;
   }
 
-  bool get isEmpty => startDate == null && endDate == null && preset == null;
+  bool get isEmpty => start == null && end == null && preset == null;
 
   bool contains(DateTime date) {
     final range = effectiveRange;
@@ -6255,15 +6359,15 @@ class DateRangeFilter {
   }
 
   Map<String, dynamic> toJson() => {
-    'start': startDate?.toIso8601String(),
-    'end': endDate?.toIso8601String(),
+    'start': start?.toIso8601String(),
+    'end': end?.toIso8601String(),
     'preset': preset?.name,
   };
 
   factory DateRangeFilter.fromJson(Map<String, dynamic> json) {
     return DateRangeFilter(
-      startDate: json['start'] != null ? DateTime.parse(json['start']) : null,
-      endDate: json['end'] != null ? DateTime.parse(json['end']) : null,
+      start: json['start'] != null ? DateTime.parse(json['start']) : null,
+      end: json['end'] != null ? DateTime.parse(json['end']) : null,
       preset: json['preset'] != null 
           ? DateRangePreset.values.byName(json['preset']) 
           : null,
@@ -6276,8 +6380,8 @@ class DateRangeFilter {
     DateRangePreset? Function()? preset,
   }) {
     return DateRangeFilter(
-      startDate: startDate != null ? startDate() : this.startDate,
-      endDate: endDate != null ? endDate() : this.endDate,
+      start: startDate != null ? startDate() : this.start,
+      end: endDate != null ? endDate() : this.end,
       preset: preset != null ? preset() : this.preset,
     );
   }
@@ -6288,12 +6392,12 @@ class DateRangeFilter {
       return preset!.label;
     }
     
-    if (startDate != null && endDate != null) {
-      return '${_formatDate(startDate!)} 至 ${_formatDate(endDate!)}';
-    } else if (startDate != null) {
-      return '${_formatDate(startDate!)} 之后';
-    } else if (endDate != null) {
-      return '${_formatDate(endDate!)} 之前';
+    if (start != null && end != null) {
+      return '${_formatDate(start!)} 至 ${_formatDate(end!)}';
+    } else if (start != null) {
+      return '${_formatDate(start!)} 之后';
+    } else if (end != null) {
+      return '${_formatDate(end!)} 之前';
     }
     
     return '全部时间';
@@ -6302,8 +6406,8 @@ class DateRangeFilter {
   // 添加日期校验
   bool get isValid {
     if (preset != null) return true;
-    if (startDate != null && endDate != null) {
-      return !startDate!.isAfter(endDate!);
+    if (start != null && end != null) {
+      return !start!.isAfter(end!);
     }
     return true;
   }
@@ -6321,12 +6425,12 @@ class DateRangeFilter {
     if (identical(this, other)) return true;
     return other is DateRangeFilter &&
         other.preset == preset &&
-        other.startDate == startDate &&
-        other.endDate == endDate;
+        other.start == start &&
+        other.end == end;
   }
 
   @override
-  int get hashCode => Object.hash(preset, startDate, endDate);
+  int get hashCode => Object.hash(preset, start, end);
 
   // 辅助方法：格式化日期
   String _formatDate(DateTime date) {
@@ -6339,12 +6443,12 @@ class DateRangeFilter {
 
   // 创建一个"截止到今天"的工厂方法
   factory DateRangeFilter.untilToday() {
-    return DateRangeFilter(endDate: DateTime.now());
+    return DateRangeFilter(end: DateTime.now());
   }
 
   // 创建一个"从某天开始"的工厂方法
   factory DateRangeFilter.fromDate(DateTime startDate) {
-    return DateRangeFilter(startDate: startDate);
+    return DateRangeFilter(start: startDate);
   }
 }
 
@@ -6353,6 +6457,10 @@ class DateRangeFilter {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\models\work_filter.dart
 import 'package:demo/presentation/models/date_range_filter.dart';
+import 'package:flutter/material.dart';
+
+import '../../domain/enums/work_style.dart';
+import '../../domain/enums/work_tool.dart';
 
 enum SortField { 
   none,
@@ -6419,36 +6527,43 @@ class SortOption {
 }
 
 class WorkFilter {
-  final String? selectedStyle;
-  final String? selectedTool;
-  final DateRangeFilter? dateFilter;
+  final WorkStyle? style;
+  final WorkTool? tool;
+  final DateRangePreset? datePreset;
+  final DateTimeRange? dateRange;
   final SortOption sortOption;
 
   const WorkFilter({
-    this.selectedStyle,
-    this.selectedTool,
-    this.dateFilter,
+    this.style,
+    this.tool,
+    this.datePreset,
+    this.dateRange,
     this.sortOption = const SortOption(),
   });
+
+  bool get isEmpty => style == null && tool == null && dateRange == null;
 
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
     
-    if (selectedStyle?.isNotEmpty ?? false) {
-      params['style'] = selectedStyle;
+    if (style != null) {
+      params['style'] = style;
     }
     
-    if (selectedTool?.isNotEmpty ?? false) {
-      params['tool'] = selectedTool;
+    if (tool != null) {
+      params['tool'] = tool;
     }
 
     // 处理日期范围
-    if (dateFilter != null) {
-      final dateRange = dateFilter!.effectiveRange;
-      if (dateRange != null) {
-        params['fromDate'] = dateRange.start;
-        params['toDate'] = dateRange.end;
-      }
+    if (datePreset != null) {
+      final range = datePreset?.getRange();
+      if (range != null) {
+        params['fromDate'] = range.start;
+        params['toDate'] = range.end;
+      }      
+    } else if (dateRange != null) {
+      params['fromDate'] = dateRange?.start;
+      params['toDate'] = dateRange?.end;
     }
 
     // 处理排序
@@ -6457,16 +6572,28 @@ class WorkFilter {
     return params;
   }
 
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is WorkFilter &&
+           other.style == style &&
+           other.tool == tool &&
+           other.dateRange == dateRange;
+  }
+
+  @override
+  int get hashCode => Object.hash(style, tool, dateRange);
+
   WorkFilter copyWith({
-    String? Function()? selectedStyle,
-    String? Function()? selectedTool,
-    DateRangeFilter? Function()? dateFilter,
+    WorkStyle? style,
+    WorkTool? tool,
+    DateTimeRange? dateRange,
     SortOption? sortOption,
   }) {
     return WorkFilter(
-      selectedStyle: selectedStyle?.call() ?? this.selectedStyle,
-      selectedTool: selectedTool?.call() ?? this.selectedTool,
-      dateFilter: dateFilter?.call() ?? this.dateFilter,
+      style: style ?? this.style,
+      tool: tool ?? this.tool,
+      dateRange: dateRange ?? this.dateRange,
       sortOption: sortOption ?? this.sortOption,
     );
   }
@@ -6623,7 +6750,6 @@ class _CharacterListPageState extends State<CharacterListPage> {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\practices\practice_detail_page.dart
 import 'package:flutter/material.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/page_toolbar.dart';
 import '../../widgets/section_header.dart';
 import '../../../theme/app_sizes.dart';
 
@@ -7123,7 +7249,7 @@ class _PracticeListPageState extends State<PracticeListPage> {
             child: SearchBar(
               hintText: '搜索练习...',
               leading: const Icon(Icons.search),
-              padding: const MaterialStatePropertyAll(
+              padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
               ),
             ),
@@ -7634,6 +7760,8 @@ import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/page_layout.dart';
 import '../../theme/app_sizes.dart';
 import '../../widgets/works/work_filter_panel.dart';
+import '../work_browser/components/sidebar_toggle.dart';
+
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
@@ -7643,6 +7771,7 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 }
 
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
+  static const double sidebarWidth = 280.0;
   bool _batchMode = false;
   final Set<String> _selectedWorks = {};
   String _searchQuery = ''; // 添加搜索查询状态
@@ -7660,48 +7789,82 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     final state = ref.watch(workBrowseProvider);
 
     return PageLayout(
-      navigationInfo: const Text('书法作品'),
+      navigationInfo: const Text('作品浏览'),
       actions: [
-        // 搜索按钮
+        // Batch mode toggle
         IconButton(
-          icon: const Icon(Icons.search),
-          tooltip: '搜索',
-          onPressed: () {
-            _showSearchDialog(context); // 显示搜索对话框
-          },
-        ),
-        IconButton(
-          icon: Icon(state.viewMode == ViewMode.grid
-              ? Icons.grid_view
-              : Icons.view_list),
-          tooltip: state.viewMode == ViewMode.grid ? '网格视图' : '列表视图',
-          onPressed: () {
-            ref.read(workBrowseProvider.notifier).updateViewMode(
-                state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid);
-          },
-        ),
-        // Batch mode toggle button
-        IconButton(
-          icon: Icon(_batchMode ? Icons.close : Icons.select_all),
-          tooltip: _batchMode ? '退出批量选择' : '批量选择',
+          icon: Icon(_batchMode ? Icons.check_box : Icons.check_box_outline_blank),
+          tooltip: _batchMode ? '退出选择' : '批量选择',
           onPressed: () {
             setState(() {
               _batchMode = !_batchMode;
-              _selectedWorks.clear();
+              if (!_batchMode) {
+                _selectedWorks.clear();
+              }
             });
           },
         ),
+        // Search action
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () => _showSearchDialog(context),
+        ),
+        // View mode toggle
+        IconButton(
+          icon: Icon(state.viewMode == ViewMode.grid 
+              ? Icons.view_list 
+              : Icons.grid_view),
+          onPressed: () {
+            ref.read(workBrowseProvider.notifier).toggleViewMode();
+          },
+        ),
+        // Sort direction toggle
+        IconButton(
+          icon: Icon(state.sortOption.descending 
+              ? Icons.arrow_downward 
+              : Icons.arrow_upward),
+          onPressed: () {
+            ref.read(workBrowseProvider.notifier).toggleSortDirection();
+          },
+        ),
       ],
-      sidebar: WorkFilterPanel(
-        filter: state.filter,
-        onFilterChanged: (filter) {
-          ref.read(workBrowseProvider.notifier).updateFilter(filter);
-        },
+      toolbar: _buildToolbar(),      
+      body: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            width: state.isSidebarOpen ? sidebarWidth : 0,
+            child: state.isSidebarOpen
+                ? WorkFilterPanel(
+                    filter: state.filter,
+                    onFilterChanged: ref.read(workBrowseProvider.notifier).updateFilter,
+                  )
+                : null,
+          ),
+          SidebarToggle(
+            isOpen: state.isSidebarOpen,
+            onToggle: ref.read(workBrowseProvider.notifier).toggleSidebar,
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SizedBox(
+                  height: constraints.maxHeight,
+                  child: state.viewMode == ViewMode.grid
+                      ? _buildGrid(state.works)
+                      : _buildList(state.works),
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      toolbar: _buildToolbar(),
-      body: _buildMainContent(state),
-      footer: _buildStatusBar(state),
     );
+  }
+
+  void _handleWorkSelected(BuildContext context, String workId) {
+    // ...existing work selection handler...
   }
 
   // 添加搜索对话框
@@ -7741,71 +7904,17 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildMainContent(WorkBrowseState state) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: AppSizes.m),
-            Text(
-              '加载失败',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSizes.s),
-            Text(
-              state.error!,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: AppSizes.m),
-            FilledButton.icon(
-              icon: const Icon(Icons.refresh),
-              label: const Text('重试'),
-              onPressed: () {
-                ref.read(workBrowseProvider.notifier).loadWorks();
-              },
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (state.works.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 64,
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-            const SizedBox(height: AppSizes.m),
-            Text(
-              '暂无作品',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSizes.s),
-            Text(
-              '点击"导入作品"按钮添加新作品',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return state.viewMode == ViewMode.grid
-        ? _buildGrid(state.works)
-        : _buildList(state.works);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final works = state.works;
+        return SizedBox(  // 添加固定高度约束
+          height: constraints.maxHeight,
+          child: state.viewMode == ViewMode.grid
+              ? _buildGrid(works)
+              : _buildList(works),
+        );
+      },
+    );
   }
 
   Widget _buildStatusBar(WorkBrowseState state) {
@@ -7828,69 +7937,85 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildToolbar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.m,
-        vertical: AppSizes.s,
-      ),
-      child: Row(
-        children: [
-          if (!_batchMode)
-            FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('导入作品'),
-              onPressed: () => _showImportDialog(context),
-            ),
-          if (_batchMode)
-            FilledButton.tonalIcon(
-              icon: const Icon(Icons.delete),
-              label: Text('删除${_selectedWorks.length}项'),
-              onPressed: _deleteSelected,
-            ),
-          const Spacer(),
-          if (_batchMode)
-            Text(
-              '已选择 ${_selectedWorks.length} 项',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+    return Row(
+      children: [
+        if (!_batchMode)
+          FilledButton.icon(
+            icon: const Icon(Icons.add),
+            label: const Text('导入作品'),
+            onPressed: () => _showImportDialog(context),
+          ),
+        if (_batchMode) ...[
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.delete),
+            label: Text('删除${_selectedWorks.length}项'),
+            onPressed: _selectedWorks.isEmpty ? null : _deleteSelected,
+          ),
+          const SizedBox(width: AppSizes.m),
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.close),
+            label: const Text('退出选择'),
+            onPressed: () => setState(() {
+              _batchMode = false;
+              _selectedWorks.clear();
+            }),
+          ),
         ],
-      ),
+        const Spacer(),
+        if (_batchMode)
+          Text(
+            '已选择 ${_selectedWorks.length} 项',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+      ],
     );
   }
 
   Widget _buildGrid(List<Work> works) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.m),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        mainAxisExtent: AppSizes.gridItemTotalHeight,
-      ),
-      itemCount: works.length,
-      itemBuilder: (context, index) => WorkGridItem(
-        work: works[index],
-        selected: _selectedWorks.contains(works[index].id),
-        selectable: _batchMode,
-        onSelected: (selected) {
-          setState(() {
-            if (selected) {
-              _selectedWorks.add(works[index].id!);
-            } else {
-              _selectedWorks.remove(works[index].id!);
-            }
-          });
-        },
-        onTap: _batchMode ? null : () => Navigator.pushNamed(
-          context,
-          '/work_detail',
-          arguments: works[index].id,
-        ),
-        onDelete: _batchMode ? null : () async {
-          await ref.read(workBrowseProvider.notifier)
-              .deleteWork(works[index].id!);
-        },
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算合适的网格列数
+        final width = constraints.maxWidth - (AppSizes.m * 2); // 减去内边距
+        final itemWidth = 280.0; // 理想的单项宽度
+        final columns = (width / itemWidth).floor();
+        final crossAxisCount = columns < 2 ? 2 : columns; // 最少2列
+
+        // 计算实际的宽高比
+        final spacing = AppSizes.m;
+        final availableWidth = (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+        // 根据可用宽度计算合适的高度，确保内容不会溢出
+        final aspectRatio = availableWidth / (availableWidth * 1.4); // 1.4是高宽比
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(AppSizes.m),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
+          ),
+          itemCount: works.length,
+          itemBuilder: (context, index) => WorkGridItem(
+            work: works[index],
+            selected: _selectedWorks.contains(works[index].id),
+            selectable: _batchMode,
+            onSelected: (selected) {
+              setState(() {
+                if (selected) {
+                  _selectedWorks.add(works[index].id!);
+                } else {
+                  _selectedWorks.remove(works[index].id!);
+                }
+              });
+            },
+            onTap: _batchMode ? null : () => Navigator.pushNamed(
+              context,
+              '/work_detail',
+              arguments: works[index].id,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -7901,8 +8026,9 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
       separatorBuilder: (context, index) => const SizedBox(height: AppSizes.s),
       itemBuilder: (context, index) => WorkListItem(
         work: works[index],
-        selected: _selectedWorks.contains(works[index].id),
-        onSelected: _batchMode ? (selected) {
+        isSelected: _selectedWorks.contains(works[index].id),
+        isSelectionMode: _batchMode,  // 添加这个参数
+        onSelectionChanged: _batchMode ? (selected) {
           setState(() {
             if (selected) {
               _selectedWorks.add(works[index].id!);
@@ -7916,13 +8042,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
           '/work_detail',
           arguments: works[index].id,
         ),
-        onEdit: _batchMode ? null : () {
-          // Handle edit action
-        },
-        onDelete: _batchMode ? null : () async {
-          await ref.read(workBrowseProvider.notifier)
-              .deleteWork(works[index].id!);
-        },
       ),
     );
   }
@@ -7960,13 +8079,32 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   Future<void> _showImportDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const WorkImportDialog(),
+      barrierDismissible: false,  // 防止点击外部关闭
+      builder: (context) => WorkImportDialog(), // Remove const to allow state changes
     );
 
     if (result == true) {
-      // Refresh work list after successful import
-      ref.invalidate(workBrowseProvider);
+      try {
+        // Show loading indicator
+        await ref.read(workBrowseProvider.notifier).loadWorks();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('作品导入成功'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('刷新列表失败: ${e.toString()}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
     }
   }
 }
@@ -7974,47 +8112,42 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
 class WorkListItem extends StatelessWidget {
   final Work work;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final bool selected;
-  final ValueChanged<bool>? onSelected;
+  final ValueChanged<bool>? onSelectionChanged;
+  final bool isSelected;
+  final bool isSelectionMode;  // 添加这个字段
 
   const WorkListItem({
     super.key,
     required this.work,
     this.onTap,
-    this.onEdit,
-    this.onDelete,
-    this.selected = false,
-    this.onSelected,
+    this.onSelectionChanged,
+    this.isSelected = false,
+    this.isSelectionMode = false,  // 初始化
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 1,
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onSelected != null ? () => onSelected!(!selected) : onTap,
-        child: SizedBox(
-          height: AppSizes.listItemHeight,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.m),
+        onTap: isSelectionMode ? null : onTap,  // 现在可以使用了
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.m),
+          child: SizedBox(  // Add fixed height container
+            height: AppSizes.listItemHeight,  // Add this constant
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,  // Align to top
               children: [
-                Stack(
-                  children: [
-                    _buildThumbnail(context),
-                    if (onSelected != null || selected)
-                      _buildSelectionOverlay(context),
-                  ],
-                ),
+                if (isSelectionMode)  // 现在可以使用了
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSizes.m),
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (value) => onSelectionChanged?.call(value ?? false),
+                    ),
+                  ),
+                _buildThumbnail(context), // 修改这里，添加 context 参数
                 const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)),
-                if (onSelected == null && (onEdit != null || onDelete != null))
-                  _buildActions(context),
+                Expanded(child: _buildContent(context)), // 修改这里，添加 context 参数
               ],
             ),
           ),
@@ -8023,17 +8156,7 @@ class WorkListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnailSection(BuildContext context) {
-    return Stack(
-      children: [
-        _buildThumbnail(context),
-        if (onSelected != null)
-          _buildSelectionOverlay(context),
-      ],
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
+  Widget _buildThumbnail(BuildContext context) {  // 更新方法签名
     return SizedBox(
       width: AppSizes.thumbnailSize,
       height: AppSizes.thumbnailSize,
@@ -8064,36 +8187,28 @@ class WorkListItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,  // Add this
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title section with fixed height
-        SizedBox(
-          height: 48,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                work.name ?? '',
-                style: textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (work.author?.isNotEmpty ?? false) ...[
-                const SizedBox(height: AppSizes.xxs),
-                Text(
-                  work.author!,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
+        Text(
+          work.name ?? '',
+          style: textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-
-        // Tags section with single line
+        if (work.author?.isNotEmpty ?? false) ...[
+          const SizedBox(height: AppSizes.xxs),
+          Text(
+            work.author!,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.primary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: AppSizes.s),  // Replace Spacer
+        // Tags section
         SizedBox(
           height: 24,
           child: ListView(
@@ -8114,9 +8229,7 @@ class WorkListItem extends StatelessWidget {
             ],
           ),
         ),
-
-        const Spacer(),
-
+        const SizedBox(height: AppSizes.s),  // Add fixed spacing
         // Metadata section
         DefaultTextStyle(
           style: textTheme.bodySmall!.copyWith(
@@ -8159,26 +8272,6 @@ class WorkListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        if (onEdit != null)
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            visualDensity: VisualDensity.compact,
-            onPressed: onEdit,
-          ),
-        if (onDelete != null)
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            visualDensity: VisualDensity.compact,
-            onPressed: onDelete,
-          ),
-      ],
-    );
-  }
-
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -8191,34 +8284,11 @@ class WorkListItem extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildSelectionOverlay(BuildContext context) {
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: selected 
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-              : Colors.transparent,
-        ),
-        child: Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.xs),
-            child: Checkbox(
-              value: selected,
-              onChanged: (value) => onSelected?.call(value ?? false),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class WorkGridItem extends StatelessWidget {
   final Work work;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
   final bool selectable;
   final bool selected;
   final ValueChanged<bool>? onSelected;
@@ -8227,7 +8297,6 @@ class WorkGridItem extends StatelessWidget {
     super.key,
     required this.work,
     this.onTap,
-    this.onDelete,
     this.selectable = false,
     this.selected = false,
     this.onSelected,
@@ -8239,90 +8308,79 @@ class WorkGridItem extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: selectable ? () => onSelected?.call(!selected) : onTap,
-        child: SizedBox(
-          width: AppSizes.gridItemWidth,
-          height: AppSizes.gridItemTotalHeight,
-          child: Column(
-            children: [
-              SizedBox(
-                height: AppSizes.gridItemImageHeight,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildThumbnail(context),
-                    if (selectable || selected)
-                      _buildSelectionOverlay(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 图片区域固定宽高比
+            AspectRatio(
+              aspectRatio: 1,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildThumbnail(context),
+                  if (selectable || selected)
+                    _buildSelectionOverlay(context),
+                ],
+              ),
+            ),
+            // 内容区域自适应高度
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.m),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    work.name ?? '',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (work.author?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: AppSizes.xxs),
+                    Text(
+                      work.author!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
-                ),
+                  const SizedBox(height: AppSizes.s),
+                  _buildMetadata(context),
+                ],
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.m),
-                  child: _buildContent(context),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildMetadata(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Title
-        Text(
-          work.name ?? '',
-          style: textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (work.author?.isNotEmpty ?? false) ...[
-          const SizedBox(height: AppSizes.xxs),
-          Text(
-            work.author!,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return DefaultTextStyle(
+      style: textTheme.bodySmall!.copyWith(
+        color: colorScheme.outline,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.photo_outlined,
+            size: 16,
+            color: colorScheme.outline,
           ),
+          const SizedBox(width: AppSizes.xs),
+          Text('${work.imageCount ?? 0}张'),
+          const Spacer(),
+          Text(DateFormatter.formatCompact(
+            work.creationDate ?? work.createTime ?? DateTime.now(),
+          )),
         ],
-        const Spacer(),
-        // Bottom metadata
-        Row(
-          children: [
-            Icon(
-              Icons.photo_outlined,
-              size: 16,
-              color: colorScheme.outline,
-            ),
-            const SizedBox(width: AppSizes.xs),
-            Text(
-              '${work.imageCount ?? 0}张',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.outline,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              DateFormatter.formatCompact(
-                work.creationDate ?? work.createTime ?? DateTime.now(),
-              ),
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.outline,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 
@@ -8385,16 +8443,8 @@ class WorkGridItem extends StatelessWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\work_detail_page.dart
 import 'package:flutter/material.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/page_toolbar.dart';
 import '../../widgets/section_header.dart';
 import '../../../theme/app_sizes.dart';
-import '../../dialogs/export_dialog.dart';
-import '../../dialogs/delete_confirmation_dialog.dart';
-import '../../dialogs/work_edit_dialog.dart';
-import '../../widgets/character/character_extraction_panel.dart';
-import '../../widgets/window/title_bar.dart';
-import '../practices/practice_detail_page.dart';
-import '../../dialogs/character_detail_dialog.dart';
 
 class WorkDetailPage extends StatelessWidget {
   final String workId;
@@ -8547,6 +8597,52 @@ class CharacterDetailPage extends StatelessWidget {
 }
 
 ``n
+# FILE:sidebar_toggle.dart CONTEXT
+`dart
+// filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\work_browser\components\sidebar_toggle.dart
+import 'package:flutter/material.dart';
+
+class SidebarToggle extends StatelessWidget {
+  final bool isOpen;
+  final VoidCallback onToggle;
+
+  const SidebarToggle({
+    super.key,
+    required this.isOpen,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onToggle,
+        child: Container(
+          width: 16,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            border: Border(
+              left: BorderSide(color: theme.dividerColor),
+              right: BorderSide(color: theme.dividerColor),
+            ),
+          ),
+          child: Center(
+            child: Icon(
+              isOpen ? Icons.chevron_left : Icons.chevron_right,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+``n
 # FILE:work_filter_provider.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\providers\work_filter_provider.dart
@@ -8604,12 +8700,12 @@ final workListProvider = FutureProvider.autoDispose<List<Work>>((ref) async {
   
   // 应用筛选
   var filteredWorks = works.where((work) {
-    if (work.style != filter.selectedStyle) {
-      return false;
-    }
-    if (work.tool != filter.selectedTool) {
-      return false;
-    }
+    // if (work.style != filter.selectedStyle) {
+    //   return false;
+    // }
+    // if (work.tool != filter.selectedTool) {
+    //   return false;
+    // }
     // ...更多筛选条件
     return true;
   }).toList();
@@ -8932,31 +9028,129 @@ class AppTheme {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\viewmodels\work_browse_view_model.dart
 import 'package:demo/domain/entities/work.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/enums/work_style.dart';
+import '../../domain/enums/work_tool.dart';
 import '../../domain/interfaces/i_work_service.dart';
-import '../../infrastructure/config/storage_paths.dart';
 import '../models/work_filter.dart';
 import 'states/work_browse_state.dart';
 
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
-  final IWorkService _workService;  // 使用接口而不是具体实现
-  final StoragePaths _paths;
+  final IWorkService _workService;
 
-  WorkBrowseViewModel(this._workService, this._paths) 
+  WorkBrowseViewModel(this._workService) 
       : super(const WorkBrowseState());
 
+  void toggleSidebar() {
+    state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
+  }
+
+   void toggleViewMode() {
+    state = state.copyWith(
+      viewMode: state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid,
+    );
+   }
+
   Future<void> loadWorks() async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
     try {
-      final works = await _workService.queryWorks(
-        searchQuery: state.searchQuery,
-        filter: state.filter,
-      );
+      final works = await _workService.getAllWorks();
+      // 默认按创建时间降序排序
+      works.sort((a, b) => (b.createTime ?? DateTime.now())
+          .compareTo(a.createTime ?? DateTime.now()));
       
       state = state.copyWith(
-        isLoading: false,
-        allWorks: works,
         works: works,
+        allWorks: works,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+    }
+  }
+
+  Future<void> _loadWorks() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final works = await _workService.getAllWorks();
+      final filtered = _applyFilter(works, state.filter);
+      state = state.copyWith(
+        works: _applySortToWorks(filtered),
+        allWorks: works,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+    }
+  }
+
+  void toggleSortDirection() {
+    final newSortOption = state.sortOption.copyWith(
+      descending: !state.sortOption.descending,
+    );
+    state = state.copyWith(
+      sortOption: newSortOption,
+      works: _applySortToWorks(state.works),
+    );
+  }
+
+  List<Work> _applySortToWorks(List<Work> works) {
+    final sorted = List<Work>.from(works);
+    sorted.sort((a, b) {
+      // 始终使用 createTime 作为默认排序字段
+      final result = (a.createTime ?? DateTime.now())
+          .compareTo(b.createTime ?? DateTime.now());
+      return state.sortOption.descending ? -result : result;
+    });
+    return sorted;
+  }
+
+  List<Work> _applyFilter(List<Work> works, WorkFilter filter) {
+    if (filter.isEmpty) {
+      return works;
+    }
+
+    var filtered = List<Work>.from(works);
+
+    if (filter.style != null) {
+      filtered = filtered.where((w) => w.style == filter.style).toList();
+    }
+  
+    if (filter.tool != null) {
+      filtered = filtered.where((w) => w.tool == filter.tool).toList();
+    }
+  
+    if (filter.dateRange != null) {
+      filtered = filtered.where((w) {
+        final date = w.creationDate ?? w.createTime;
+        if (date == null) return false;
+        return date.isAfter(filter.dateRange!.start) && 
+               date.isBefore(filter.dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+    }
+
+    return filtered;
+  }
+
+  Future<void> searchWorks(String query) async {
+    state = state.copyWith(
+      searchQuery: query,
+      isLoading: true,
+      error: null
+    );
+    
+    try {
+      final filtered = _applyFilter(state.allWorks, state.filter);
+      state = state.copyWith(
+        works: _applySortToWorks(filtered),
+        isLoading: false
       );
     } catch (e) {
       state = state.copyWith(
@@ -8964,81 +9158,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         error: e.toString(),
       );
     }
-  }
-
-  void updateFilter(WorkFilter filter) {
-    state = state.copyWith(
-      filter: filter,
-      works: _applyFilter(state.allWorks, filter),
-    );
-  }
-
-  void updateSearch(String query) {
-    state = state.copyWith(
-      searchQuery: query,
-      works: _applyFilter(state.allWorks, state.filter),
-    );
-  }
-
-  void updateViewMode(ViewMode mode) {
-    state = state.copyWith(viewMode: mode);
-  }
-
-  List<Work> _applyFilter(List<Work> works, WorkFilter filter) {
-    var filtered = List<Work>.from(works);
-
-    // 应用搜索
-    if (state.searchQuery?.isNotEmpty ?? false) {
-      final query = state.searchQuery!.toLowerCase();
-      filtered = filtered.where((work) {
-        return (work.name?.toLowerCase().contains(query) ?? false) ||
-               (work.author?.toLowerCase().contains(query) ?? false) ||
-               (work.style?.toLowerCase().contains(query) ?? false);
-      }).toList();
-    }
-
-    // 应用风格筛选
-    filtered = filtered.where((w) => w.style == filter.selectedStyle).toList();
-  
-    // 应用工具筛选
-    filtered = filtered.where((w) => w.tool == filter.selectedTool).toList();
-  
-    // 应用日期筛选
-    if (filter.dateFilter != null) {
-      filtered = filtered.where((w) {
-        final date = DateTime.tryParse(w.creationDate as String? ?? DateTime.now().toIso8601String());
-        if (date == null) return false;
-        return filter.dateFilter!.contains(date);
-      }).toList();
-    }
-
-    // 修改排序逻辑，使用 sortOption
-    if (!filter.sortOption.isEmpty) {
-      filtered.sort((a, b) {
-        int result;
-        switch (filter.sortOption.field) {
-          case SortField.name:
-            result = (a.name ?? '').compareTo(b.name ?? '');
-            break;
-          case SortField.author:
-            result = (a.author ?? '').compareTo(b.author ?? '');
-            break;
-          case SortField.creationDate:
-            result = (a.creationDate ?? DateTime.now()).compareTo(b.creationDate ?? DateTime.now());
-            break;
-          case SortField.importDate:
-            result = (a.createTime ?? DateTime.now())
-                .compareTo(b.createTime ?? DateTime.now());
-            break;
-          case SortField.none:
-            result = 0;
-            break;
-        }
-        return filter.sortOption.descending ? -result : result;
-      });
-    }
-
-    return filtered;
   }
 
   Future<String?> getWorkThumbnail(String workId) async {
@@ -9052,25 +9171,58 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   Future<void> deleteWork(String workId) async {
     try {
       await _workService.deleteWork(workId);
-      await loadWorks(); // 重新加载数据
+      await loadWorks();
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
   }
 
-   // 添加搜索方法
-  Future<void> searchWorks(String query) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final works = await _workService.queryWorks(searchQuery: state.searchQuery,
-        filter: state.filter, sortOption: state.sortOption);
-      state = state.copyWith(works: works, isLoading: false);
-    } catch (e) {
+  Future<void> refreshAfterImport() async {
+    await loadWorks();
+  }
+
+  void updateFilter(WorkFilter filter) {
+    if (filter == state.filter) {
+      // If clicking the same filter, clear it
       state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
+        filter: const WorkFilter(),
+        isLoading: true,
+      );
+    } else {
+      state = state.copyWith(
+        filter: filter,
+        isLoading: true,
       );
     }
+    _loadWorks();
+  }
+
+  void toggleStyle(WorkStyle? style) {
+    final currentStyle = state.filter.style;
+    final newFilter = state.filter.copyWith(
+      style: currentStyle == style ? null : style,
+    );
+    updateFilter(newFilter);
+  }
+
+  void toggleTool(WorkTool? tool) {
+    final currentTool = state.filter.tool;
+    final newFilter = state.filter.copyWith(
+      tool: currentTool == tool ? null : tool,
+    );
+    updateFilter(newFilter);
+  }
+
+  void toggleDateRange(DateTimeRange? dateRange) {
+    final currentRange = state.filter.dateRange;
+    final isEqual = currentRange != null && dateRange != null &&
+        currentRange.start == dateRange.start && 
+        currentRange.end == dateRange.end;
+        
+    final newFilter = state.filter.copyWith(
+      dateRange: isEqual ? null : dateRange,
+    );
+    updateFilter(newFilter);
   }
 }
 ``n
@@ -9086,6 +9238,7 @@ import 'package:path/path.dart' as path;
 import '../../application/config/app_config.dart';
 import '../../application/services/work_service.dart';
 import '../../application/services/image_service.dart';
+import '../../domain/entities/work.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import 'states/work_import_state.dart';
@@ -9337,13 +9490,13 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       
       await _workService.importWork(
         processedImages,
-        WorkInfo(
+        Work(
           name: state.name,
           author: state.author,
-          style: state.style!,
-          tool: state.tool!,
-          creationDate: state.creationDate!,
-          remarks: state.remarks,
+          style: state.style?.value,
+          tool: state.tool?.value,
+          creationDate: state.creationDate!,               
+          imageCount: state.images.length,      
         ),
       );
       return true;
@@ -9379,21 +9532,23 @@ class WorkBrowseState {
   final bool isLoading;
   final String? error;
   final List<Work> works;
-  //final List<Work> allWorks; // 添加 allWorks 字段
+  final List<Work> allWorks; // 添加 allWorks 字段
   final String? searchQuery;
   final ViewMode viewMode;
   final SortOption sortOption;
   final WorkFilter filter;
+  final bool isSidebarOpen;  // 新增字段
 
   const WorkBrowseState({
     this.isLoading = false,
     this.error,
     this.works = const [],
-    //this.allWorks = const [], // 初始化 allWorks
+    this.allWorks = const [], // 初始化 allWorks
     this.searchQuery,
     this.viewMode = ViewMode.grid,
     this.sortOption = const SortOption(),
     this.filter = const WorkFilter(),
+    this.isSidebarOpen = true,  // 默认展开
   });
 
   WorkBrowseState copyWith({
@@ -9405,16 +9560,18 @@ class WorkBrowseState {
     ViewMode? viewMode,
     SortOption? sortOption,
     WorkFilter? filter,
+    bool? isSidebarOpen,  // 新增字段
   }) {
     return WorkBrowseState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       works: works ?? this.works,
-      //allWorks: allWorks ?? this.allWorks, // 复制 allWorks
+      allWorks: allWorks ?? this.allWorks, // 复制 allWorks
       searchQuery: searchQuery ?? this.searchQuery,
       viewMode: viewMode ?? this.viewMode,
       sortOption: sortOption ?? this.sortOption,
       filter: filter ?? this.filter,
+      isSidebarOpen: isSidebarOpen ?? this.isSidebarOpen,  // 复制 isSidebarOpen
     );
   }
 }
@@ -11137,49 +11294,41 @@ class EmptyPlaceholder extends StatelessWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\widgets\filter\filter_panel.dart
 import 'package:flutter/material.dart';
 import '../../../theme/app_sizes.dart';
-import '../section_header.dart';
 
 class FilterPanel extends StatelessWidget {
-  final List<FilterSection> sections;
-  final VoidCallback? onReset;
+  final String title;
+  final List<dynamic> items;
+  final dynamic selectedValue;
+  final ValueChanged<dynamic> onSelected;
 
   const FilterPanel({
     super.key,
-    required this.sections,
-    this.onReset,
+    required this.title,
+    required this.items,
+    required this.selectedValue,
+    required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Material(
-      color: theme.cardColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionHeader(
-            title: '筛选',
-            actions: [
-              if (onReset != null)
-                TextButton.icon(
-                  onPressed: onReset,
-                  icon: const Icon(Icons.refresh, size: AppSizes.iconSmall),
-                  label: const Text('重置'),
-                ),
-            ],
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: sections.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) => sections[index],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSizes.s),
+        Wrap(
+          spacing: AppSizes.s,
+          runSpacing: AppSizes.xs,
+          children: items.map((item) {
+            final bool isSelected = item == selectedValue;
+            return FilterChip(
+              label: Text(item.label),
+              selected: isSelected,
+              onSelected: (_) => onSelected(item),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }
@@ -11508,7 +11657,7 @@ class GroupedListView<T> extends StatelessWidget {
           return headerBuilder?.call(context, groupInfo.group!) ?? 
               _defaultHeaderBuilder(context, groupInfo.group!);
         }
-        return itemBuilder(context, groupInfo.item!);
+        return itemBuilder(context, groupInfo.item as T);
       },
     );
   }
@@ -11516,7 +11665,7 @@ class GroupedListView<T> extends StatelessWidget {
   Widget _defaultHeaderBuilder(BuildContext context, ListGroup<T> group) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Text(
         group.header,
         style: Theme.of(context).textTheme.titleSmall,
@@ -11719,7 +11868,7 @@ class DataLoader<T> extends StatelessWidget {
       );
     }
 
-    return builder(data!);
+    return builder(data as T);
   }
 }
 
@@ -12247,7 +12396,7 @@ class ImagePreview extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: ClipRRect(
@@ -12454,7 +12603,7 @@ class SearchBox extends StatelessWidget {
         controller: controller,
         hintText: hintText,
         leading: const Icon(Icons.search),
-        padding: const MaterialStatePropertyAll(
+        padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(
             horizontal: AppSizes.spacingMedium,
           ),
@@ -12885,9 +13034,9 @@ class DateRangeFilterSection extends StatelessWidget {
   }
 
   Widget _buildCustomRange(BuildContext context) {
-    final isStartDateError = filter?.startDate != null && 
-                           filter?.endDate != null && 
-                           filter!.startDate!.isAfter(filter!.endDate!);
+    final isStartDateError = filter?.start != null && 
+                           filter?.end != null && 
+                           filter!.start!.isAfter(filter!.end!);
                            
     return Padding(
       padding: const EdgeInsets.all(AppSizes.s),
@@ -12897,13 +13046,13 @@ class DateRangeFilterSection extends StatelessWidget {
           _buildDateField(
             context: context,
             label: '开始日期',
-            value: filter?.startDate,
+            value: filter?.start,
             error: isStartDateError ? '开始日期不能晚于结束日期' : null,
             onPressed: () => _selectDate(
               context,
-              initialDate: filter?.startDate,
+              initialDate: filter?.start,
               isStartDate: true,
-              maxDate: filter?.endDate,
+              maxDate: filter?.end,
             ),
             onClear: () => _updateDateRange(startDate: null),
           ),
@@ -12911,12 +13060,12 @@ class DateRangeFilterSection extends StatelessWidget {
           _buildDateField(
             context: context,
             label: '结束日期',
-            value: filter?.endDate,
+            value: filter?.end,
             onPressed: () => _selectDate(
               context,
-              initialDate: filter?.endDate,
+              initialDate: filter?.end,
               isStartDate: false,
-              minDate: filter?.startDate,
+              minDate: filter?.start,
             ),
             onClear: () => _updateDateRange(endDate: null),
           ),
@@ -12993,16 +13142,16 @@ class DateRangeFilterSection extends StatelessWidget {
 
     if (result != null) {
       _updateDateRange(
-        startDate: isStartDate ? result : filter?.startDate,
-        endDate: isStartDate ? filter?.endDate : result,
+        startDate: isStartDate ? result : filter?.start,
+        endDate: isStartDate ? filter?.end : result,
       );
     }
   }
 
   void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
     onChanged(DateRangeFilter(
-      startDate: startDate,
-      endDate: endDate,
+      start: startDate,
+      end: endDate,
     ));
   }
 
@@ -13013,8 +13162,8 @@ class DateRangeFilterSection extends StatelessWidget {
   String _formatFilterText() {
     if (filter == null) return '不限';
     if (filter!.preset != null) return filter!.preset!.label;
-    final start = filter!.startDate != null ? _formatDate(filter!.startDate!) : '不限';
-    final end = filter!.endDate != null ? _formatDate(filter!.endDate!) : '不限';
+    final start = filter!.start != null ? _formatDate(filter!.start!) : '不限';
+    final end = filter!.end != null ? _formatDate(filter!.end!) : '不限';
     return '$start - $end';
   }
 }
@@ -13023,23 +13172,18 @@ class DateRangeFilterSection extends StatelessWidget {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\widgets\works\work_filter_panel.dart
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../models/date_range_filter.dart';
 import '../../models/work_filter.dart';
-import '../../theme/app_sizes.dart';
+import '../filter/filter_panel.dart';
+import 'date_range_filter_section.dart';
+import '../../../domain/enums/work_style.dart';
+import '../../../domain/enums/work_tool.dart';
 
 class WorkFilterPanel extends StatelessWidget {
   final WorkFilter filter;
   final ValueChanged<WorkFilter> onFilterChanged;
 
-  final List<({String label, SortField value})> _sortOptions = [
-    (label: '名称', value: SortField.name),
-    (label: '作者', value: SortField.author),
-    (label: '创作时间', value: SortField.creationDate),
-    (label: '导入时间', value: SortField.importDate),
-  ];
-
-  WorkFilterPanel({
+  const WorkFilterPanel({
     super.key,
     required this.filter,
     required this.onFilterChanged,
@@ -13047,274 +13191,49 @@ class WorkFilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView( // 添加滚动支持
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.m),
-        child: Column(  // 将 ListView 改为 Column
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSortSection(context),
-            const Divider(),
-            _buildStyleFilter(context),
-            const Divider(),
-            _buildToolFilter(context),
-            const Divider(),
-            _buildDateRangeFilter(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSortSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('排序方式', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppSizes.s),
-        Wrap(
-          spacing: AppSizes.xs,
-          runSpacing: AppSizes.xs,
-          children: [
-            for (final option in _sortOptions)
-              FilterChip(
-                label: Text(option.label),
-                selected: filter.sortOption.field == option.value,
-                onSelected: (selected) {
-                  onFilterChanged(filter.copyWith(
-                    sortOption: SortOption(
-                      field: selected ? option.value : SortField.none,
-                      descending: filter.sortOption.descending,
-                    ),
-                  ));
-                },
-              ),
-          ],
+        FilterPanel(
+          title: '书法风格',
+          items: WorkStyle.values,
+          selectedValue: filter.style,
+          onSelected: (value) {
+            final currentStyle = filter.style;
+            onFilterChanged(filter.copyWith(
+              style: currentStyle == value ? null : value as WorkStyle,
+            ));
+          },
         ),
-        if (filter.sortOption.field != SortField.none) ...[
-          const SizedBox(height: AppSizes.s),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(value: false, label: Text('升序')),
-              ButtonSegment(value: true, label: Text('降序')),
-            ],
-            selected: {filter.sortOption.descending},
-            onSelectionChanged: (value) {
-              onFilterChanged(filter.copyWith(
-                sortOption: filter.sortOption.copyWith(
-                  descending: value.first,
-                ),
-              ));
-            },
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDateRangeFilter(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('时间筛选', style: Theme.of(context).textTheme.titleSmall),
-        const SizedBox(height: AppSizes.s),
-        SizedBox(
-          height: 300, // 固定高度避免溢出
-          child: DefaultTabController(
-            length: 2,
-            child: Column(
-              children: [
-                // Tab 标签栏
-                TabBar(
-                  tabs: const [
-                    Tab(text: '快捷选择'),
-                    Tab(text: '自定义范围'),
-                  ],
-                  labelColor: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: AppSizes.m),
-                
-                // Tab 内容区
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _buildQuickDatePresets(),
-                      _buildCustomDateRange(context),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+        FilterPanel(
+          title: '书写工具',
+          items: WorkTool.values,
+          selectedValue: filter.tool,
+          onSelected: (value) {
+            final currentTool = filter.tool;
+            onFilterChanged(filter.copyWith(
+              tool: currentTool == value ? null : value as WorkTool,
+            ));
+          },
         ),
-      ],
-    );
-  }
-
-  Widget _buildQuickDatePresets() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.s),
-      child: Wrap(
-        spacing: AppSizes.s,
-        runSpacing: AppSizes.s,
-        children: [
-          for (final preset in DateRangePreset.values)
-            FilterChip(
-              label: Text(preset.label),
-              selected: filter.dateFilter?.preset == preset,
-              onSelected: (selected) {
-                onFilterChanged(filter.copyWith(
-                  dateFilter: () => selected 
-                    ? DateRangeFilter.preset(preset)
-                    : null,
-                ));
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomDateRange(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.s),
-      child: Column(
-        children: [
-          // 开始日期
-          _buildDateField(
-            context,
-            label: '开始日期',
-            date: filter.dateFilter?.startDate,
-            onDateSelected: (date) {
-              onFilterChanged(filter.copyWith(
-                dateFilter: () => DateRangeFilter(
-                  startDate: date,
-                  endDate: filter.dateFilter?.endDate,
-                ),
-              ));
-            },
-          ),
-          const SizedBox(height: AppSizes.m),
-          // 结束日期
-          _buildDateField(
-            context,
-            label: '结束日期',
-            date: filter.dateFilter?.endDate,
-            onDateSelected: (date) {
-              onFilterChanged(filter.copyWith(
-                dateFilter: () => DateRangeFilter(
-                  startDate: filter.dateFilter?.startDate,
-                  endDate: date,
-                ),
-              ));
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateField(
-    BuildContext context, {
-    required String label,
-    required DateTime? date,
-    required ValueChanged<DateTime?> onDateSelected,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall),
-        const SizedBox(height: AppSizes.xs),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.calendar_today, size: 18),
-                label: Text(
-                  date != null 
-                      ? DateFormat('yyyy-MM-dd').format(date)
-                      : '点击选择日期',
-                ),
-                onPressed: () async {
-                  final selected = await showDatePicker(
-                    context: context,
-                    initialDate: date ?? DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (selected != null) {
-                    onDateSelected(selected);
-                  }
-                },
-              ),
-            ),
-            if (date != null)
-              IconButton(
-                icon: const Icon(Icons.clear),
-                onPressed: () => onDateSelected(null),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStyleFilter(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('书法风格', style: theme.textTheme.titleSmall),
-        const SizedBox(height: AppSizes.xs),
-        Wrap(
-          spacing: AppSizes.xs,
-          runSpacing: AppSizes.xs,
-          children: [
-            for (final style in ['楷书', '行书', '草书', '隶书'])
-              FilterChip(
-                label: Text(style),
-                selected: filter.selectedStyle == style,
-                onSelected: (selected) {
-                  onFilterChanged(filter.copyWith(
-                    selectedStyle: () => selected ? style : null,
-                  ));
-                },
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildToolFilter(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('书写工具', style: theme.textTheme.titleSmall),
-        const SizedBox(height: AppSizes.xs),
-        Wrap(
-          spacing: AppSizes.xs,
-          runSpacing: AppSizes.xs,
-          children: [
-            for (final tool in ['毛笔', '硬笔'])
-              FilterChip(
-                label: Text(tool),
-                selected: filter.selectedTool == tool,
-                onSelected: (selected) {
-                  onFilterChanged(filter.copyWith(
-                    selectedTool: () => selected ? tool : null,
-                  ));
-                },
-              ),
-          ],
+        DateRangeFilterSection(
+          key: ValueKey(filter.dateRange),
+          filter: DateRangeFilter(
+              preset: filter.datePreset,
+              end: filter.dateRange?.end,
+              start: filter.dateRange?.start),
+          onChanged: (range) {
+            onFilterChanged(filter.copyWith(
+                dateRange: DateTimeRange(
+                    start: filter.dateRange?.start ?? DateTime.now(),
+                    end: filter.dateRange?.end ?? DateTime.now())));
+          },
         ),
       ],
     );
   }
 }
+
 ``n
 # FILE:work_import_preview.dart CONTEXT
 `dart
@@ -13407,32 +13326,35 @@ class AppSizes {
   static const double cardElevationSelected = 4.0;
 
   // 列表和网格
-  static const double gridItemWidth = 200.0;
+  static const double gridItemWidth = 240.0;
   static const double gridItemHeight = 200.0;
-  static const double listItemHeight = 72.0;
-  static const double thumbnailSize = 64.0;
+  static const double listItemHeight = 120.0;
+  static const double thumbnailSize = 80.0;
 
   // 网格布局
   static const int gridCrossAxisCount = 4;
   static const double gridMainAxisSpacing = 16.0;
   static const double gridCrossAxisSpacing = 16.0;
-  static const double gridItemTotalHeight = 280.0;
+  static const double gridItemTotalHeight = 320.0;
   static const double gridItemImageHeight = 200.0;
 
   // 表单尺寸常量
-  static const double xxs = 1.0  ;   // 超小间距
-  static const double xs = 2.0  ;   // 小小间距
-  static const double s = 4.0;    // 小间距
-  static const double m = 8.0;    // 中间距
-  static const double l = 16.0;   // 大间距
-  static const double xl = 24.0;  // 大大间距
-  static const double xxl = 32.0; // 超大间距
+  static const double xxs = 2.0;   // 超小间距
+  static const double xs = 4.0;   // 小小间距
+  static const double s = 8.0;    // 小间距
+  static const double m = 16.0;    // 中间距
+  static const double l = 24.0;   // 大间距
+  static const double xl = 32.0;  // 大大间距
+  static const double xxl = 48.0; // 超大间距
 
   // 容器尺寸
   static const double dialogWidth = 400.0;
   static const double dialogWidthWide = 600.0;
   static const double dialogHeight = 600.0;
   static const double dialogHeightTall = 800.0;
+
+  // List layout
+  // static const double listItemHeight = 120.0;  // Add this
 }
 
 ``n

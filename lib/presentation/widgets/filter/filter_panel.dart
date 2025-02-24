@@ -1,48 +1,40 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_sizes.dart';
-import '../section_header.dart';
 
 class FilterPanel extends StatelessWidget {
-  final List<FilterSection> sections;
-  final VoidCallback? onReset;
+  final String title;
+  final List<dynamic> items;
+  final dynamic selectedValue;
+  final ValueChanged<dynamic> onSelected;
 
   const FilterPanel({
     super.key,
-    required this.sections,
-    this.onReset,
+    required this.title,
+    required this.items,
+    required this.selectedValue,
+    required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Material(
-      color: theme.cardColor,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SectionHeader(
-            title: '筛选',
-            actions: [
-              if (onReset != null)
-                TextButton.icon(
-                  onPressed: onReset,
-                  icon: const Icon(Icons.refresh, size: AppSizes.iconSmall),
-                  label: const Text('重置'),
-                ),
-            ],
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: sections.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (context, index) => sections[index],
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSizes.s),
+        Wrap(
+          spacing: AppSizes.s,
+          runSpacing: AppSizes.xs,
+          children: items.map((item) {
+            final bool isSelected = item == selectedValue;
+            return FilterChip(
+              label: Text(item.label),
+              selected: isSelected,
+              onSelected: (_) => onSelected(item),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }

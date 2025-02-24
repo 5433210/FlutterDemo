@@ -74,9 +74,9 @@ class DateRangeFilterSection extends StatelessWidget {
   }
 
   Widget _buildCustomRange(BuildContext context) {
-    final isStartDateError = filter?.startDate != null && 
-                           filter?.endDate != null && 
-                           filter!.startDate!.isAfter(filter!.endDate!);
+    final isStartDateError = filter?.start != null && 
+                           filter?.end != null && 
+                           filter!.start!.isAfter(filter!.end!);
                            
     return Padding(
       padding: const EdgeInsets.all(AppSizes.s),
@@ -86,13 +86,13 @@ class DateRangeFilterSection extends StatelessWidget {
           _buildDateField(
             context: context,
             label: '开始日期',
-            value: filter?.startDate,
+            value: filter?.start,
             error: isStartDateError ? '开始日期不能晚于结束日期' : null,
             onPressed: () => _selectDate(
               context,
-              initialDate: filter?.startDate,
+              initialDate: filter?.start,
               isStartDate: true,
-              maxDate: filter?.endDate,
+              maxDate: filter?.end,
             ),
             onClear: () => _updateDateRange(startDate: null),
           ),
@@ -100,12 +100,12 @@ class DateRangeFilterSection extends StatelessWidget {
           _buildDateField(
             context: context,
             label: '结束日期',
-            value: filter?.endDate,
+            value: filter?.end,
             onPressed: () => _selectDate(
               context,
-              initialDate: filter?.endDate,
+              initialDate: filter?.end,
               isStartDate: false,
-              minDate: filter?.startDate,
+              minDate: filter?.start,
             ),
             onClear: () => _updateDateRange(endDate: null),
           ),
@@ -182,16 +182,16 @@ class DateRangeFilterSection extends StatelessWidget {
 
     if (result != null) {
       _updateDateRange(
-        startDate: isStartDate ? result : filter?.startDate,
-        endDate: isStartDate ? filter?.endDate : result,
+        startDate: isStartDate ? result : filter?.start,
+        endDate: isStartDate ? filter?.end : result,
       );
     }
   }
 
   void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
     onChanged(DateRangeFilter(
-      startDate: startDate,
-      endDate: endDate,
+      start: startDate,
+      end: endDate,
     ));
   }
 
@@ -202,8 +202,8 @@ class DateRangeFilterSection extends StatelessWidget {
   String _formatFilterText() {
     if (filter == null) return '不限';
     if (filter!.preset != null) return filter!.preset!.label;
-    final start = filter!.startDate != null ? _formatDate(filter!.startDate!) : '不限';
-    final end = filter!.endDate != null ? _formatDate(filter!.endDate!) : '不限';
+    final start = filter!.start != null ? _formatDate(filter!.start!) : '不限';
+    final end = filter!.end != null ? _formatDate(filter!.end!) : '不限';
     return '$start - $end';
   }
 }

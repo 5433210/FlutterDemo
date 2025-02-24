@@ -26,8 +26,8 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   void initState() {
     super.initState();
     // 初始化日期和标签页
-    _startDate = widget.initialValue?.startDate;
-    _endDate = widget.initialValue?.endDate;
+    _startDate = widget.initialValue?.start;
+    _endDate = widget.initialValue?.end;
     _currentTabIndex = widget.initialValue?.preset != null ? 0 : 1;
   }
 
@@ -309,8 +309,8 @@ class _DateRangePickerDialogState extends State<DateRangePickerDialog> {
   void _handleConfirm() {
     Navigator.of(context).pop(DateRangeFilter(
       preset: null,
-      startDate: _startDate,  // Changed from start to startDate
-      endDate: _endDate,      // Changed from end to endDate
+      start: _startDate,  // Changed from start to startDate
+      end: _endDate,      // Changed from end to endDate
     ));
   }
 

@@ -1,4 +1,8 @@
 import 'package:demo/presentation/models/date_range_filter.dart';
+import 'package:flutter/material.dart';
+
+import '../../domain/enums/work_style.dart';
+import '../../domain/enums/work_tool.dart';
 
 enum SortField { 
   none,
@@ -65,36 +69,43 @@ class SortOption {
 }
 
 class WorkFilter {
-  final String? selectedStyle;
-  final String? selectedTool;
-  final DateRangeFilter? dateFilter;
+  final WorkStyle? style;
+  final WorkTool? tool;
+  final DateRangePreset? datePreset;
+  final DateTimeRange? dateRange;
   final SortOption sortOption;
 
   const WorkFilter({
-    this.selectedStyle,
-    this.selectedTool,
-    this.dateFilter,
+    this.style,
+    this.tool,
+    this.datePreset,
+    this.dateRange,
     this.sortOption = const SortOption(),
   });
+
+  bool get isEmpty => style == null && tool == null && dateRange == null;
 
   Map<String, dynamic> toQueryParams() {
     final params = <String, dynamic>{};
     
-    if (selectedStyle?.isNotEmpty ?? false) {
-      params['style'] = selectedStyle;
+    if (style != null) {
+      params['style'] = style;
     }
     
-    if (selectedTool?.isNotEmpty ?? false) {
-      params['tool'] = selectedTool;
+    if (tool != null) {
+      params['tool'] = tool;
     }
 
     // 处理日期范围
-    if (dateFilter != null) {
-      final dateRange = dateFilter!.effectiveRange;
-      if (dateRange != null) {
-        params['fromDate'] = dateRange.start;
-        params['toDate'] = dateRange.end;
-      }
+    if (datePreset != null) {
+      final range = datePreset?.getRange();
+      if (range != null) {
+        params['fromDate'] = range.start;
+        params['toDate'] = range.end;
+      }      
+    } else if (dateRange != null) {
+      params['fromDate'] = dateRange?.start;
+      params['toDate'] = dateRange?.end;
     }
 
     // 处理排序
@@ -103,16 +114,28 @@ class WorkFilter {
     return params;
   }
 
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is WorkFilter &&
+           other.style == style &&
+           other.tool == tool &&
+           other.dateRange == dateRange;
+  }
+
+  @override
+  int get hashCode => Object.hash(style, tool, dateRange);
+
   WorkFilter copyWith({
-    String? Function()? selectedStyle,
-    String? Function()? selectedTool,
-    DateRangeFilter? Function()? dateFilter,
+    WorkStyle? style,
+    WorkTool? tool,
+    DateTimeRange? dateRange,
     SortOption? sortOption,
   }) {
     return WorkFilter(
-      selectedStyle: selectedStyle?.call() ?? this.selectedStyle,
-      selectedTool: selectedTool?.call() ?? this.selectedTool,
-      dateFilter: dateFilter?.call() ?? this.dateFilter,
+      style: style ?? this.style,
+      tool: tool ?? this.tool,
+      dateRange: dateRange ?? this.dateRange,
       sortOption: sortOption ?? this.sortOption,
     );
   }
