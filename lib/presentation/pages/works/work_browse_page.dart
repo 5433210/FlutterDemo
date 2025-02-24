@@ -224,35 +224,50 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildGrid(List<Work> works) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.m),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: AppSizes.m,
-        crossAxisSpacing: AppSizes.m,
-        // 调整为更大的比例以适应内容
-        childAspectRatio: 0.7,  // 修改这个值
-      ),
-      itemCount: works.length,
-      itemBuilder: (context, index) => WorkGridItem(
-        work: works[index],
-        selected: _selectedWorks.contains(works[index].id),
-        selectable: _batchMode,
-        onSelected: (selected) {
-          setState(() {
-            if (selected) {
-              _selectedWorks.add(works[index].id!);
-            } else {
-              _selectedWorks.remove(works[index].id!);
-            }
-          });
-        },
-        onTap: _batchMode ? null : () => Navigator.pushNamed(
-          context,
-          '/work_detail',
-          arguments: works[index].id,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算合适的网格列数
+        final width = constraints.maxWidth - (AppSizes.m * 2); // 减去内边距
+        final itemWidth = 280.0; // 理想的单项宽度
+        final columns = (width / itemWidth).floor();
+        final crossAxisCount = columns < 2 ? 2 : columns; // 最少2列
+
+        // 计算实际的宽高比
+        final spacing = AppSizes.m;
+        final availableWidth = (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+        // 根据可用宽度计算合适的高度，确保内容不会溢出
+        final aspectRatio = availableWidth / (availableWidth * 1.4); // 1.4是高宽比
+
+        return GridView.builder(
+          padding: const EdgeInsets.all(AppSizes.m),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
+          ),
+          itemCount: works.length,
+          itemBuilder: (context, index) => WorkGridItem(
+            work: works[index],
+            selected: _selectedWorks.contains(works[index].id),
+            selectable: _batchMode,
+            onSelected: (selected) {
+              setState(() {
+                if (selected) {
+                  _selectedWorks.add(works[index].id!);
+                } else {
+                  _selectedWorks.remove(works[index].id!);
+                }
+              });
+            },
+            onTap: _batchMode ? null : () => Navigator.pushNamed(
+              context,
+              '/work_detail',
+              arguments: works[index].id,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -546,10 +561,11 @@ class WorkGridItem extends StatelessWidget {
       child: InkWell(
         onTap: selectable ? () => onSelected?.call(!selected) : onTap,
         child: Column(
-          mainAxisSize: MainAxisSize.min,  // 添加这行
+          mainAxisSize: MainAxisSize.min,
           children: [
+            // 图片区域固定宽高比
             AspectRatio(
-              aspectRatio: 1,  // 1:1 ratio for thumbnail
+              aspectRatio: 1,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -559,34 +575,33 @@ class WorkGridItem extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(  // 包装在 Expanded 中
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.m),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            // 内容区域自适应高度
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.m),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    work.name ?? '',
+                    style: Theme.of(context).textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (work.author?.isNotEmpty ?? false) ...[
+                    const SizedBox(height: AppSizes.xxs),
                     Text(
-                      work.name ?? '',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      work.author!,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (work.author?.isNotEmpty ?? false) ...[
-                      const SizedBox(height: AppSizes.xxs),
-                      Text(
-                        work.author!,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const Spacer(),  // 添加这行
-                    _buildMetadata(context),
                   ],
-                ),
+                  const SizedBox(height: AppSizes.s),
+                  _buildMetadata(context),
+                ],
               ),
             ),
           ],

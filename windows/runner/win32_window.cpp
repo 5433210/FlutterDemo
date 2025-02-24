@@ -1,4 +1,4 @@
-#include "win32_window.h"
+﻿#include "win32_window.h"
 
 #include <dwmapi.h>
 #include <flutter_windows.h>
@@ -122,22 +122,35 @@ Win32Window::~Win32Window() {
 
 bool Win32Window::Create(const std::wstring& title,
                          const Point& origin,
-                         const Size& size) {
+                         const Size& target_size) {
   Destroy();
 
   const wchar_t* window_class =
       WindowClassRegistrar::GetInstance()->GetWindowClass();
 
   const POINT target_point = {static_cast<LONG>(origin.x),
-                              static_cast<LONG>(origin.y)};
+                             static_cast<LONG>(origin.y)};
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
 
+  // 首先计算所需的窗口尺寸以获得目标客户区大小
+  RECT window_rect = {0, 0, 
+    static_cast<LONG>(target_size.width),
+    static_cast<LONG>(target_size.height)};
+  
+  // 计算包含边框和标题栏的完整窗口尺寸
+  if (!AdjustWindowRect(&window_rect, WS_OVERLAPPEDWINDOW, FALSE)) {
+    return false;
+  }
+
+  // 使用调整后的尺寸创建窗口
   HWND window = CreateWindow(
       window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
-      Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
+      Scale(origin.x, scale_factor), 
+      Scale(origin.y, scale_factor),
+      Scale(window_rect.right - window_rect.left, scale_factor),
+      Scale(window_rect.bottom - window_rect.top, scale_factor),
       nullptr, nullptr, GetModuleHandle(nullptr), this);
 
   if (!window) {
