@@ -23,46 +23,51 @@ class PreviewToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
-      child: Row(
-        children: [
-          // 添加图片
-          _ToolbarIconButton(
-            icon: Icons.add_photo_alternate_outlined,
-            tooltip: '添加图片',
-            onPressed: onAddImages,
-          ),
-          const SizedBox(width: AppSizes.m),
-          // 向左旋转
-          _ToolbarIconButton(
-            icon: Icons.rotate_left,
-            tooltip: '向左旋转',
-            onPressed: hasSelection ? onRotateLeft : null,
-          ),
-          // 向右旋转
-          _ToolbarIconButton(
-            icon: Icons.rotate_right,
-            tooltip: '向右旋转',
-            onPressed: hasSelection ? onRotateRight : null,
-          ),
-          const Spacer(),
-          // 删除选中
-          _ToolbarIconButton(
-            icon: Icons.delete_outline,
-            tooltip: '删除选中',
-            onPressed: hasSelection ? onDelete : null,
-            isDestructive: true,
-          ),
-          // 全部删除
-          _ToolbarIconButton(
-            icon: Icons.delete_sweep_outlined,
-            tooltip: '全部删除',
-            onPressed: hasImages ? onDeleteAll : null,
-            isDestructive: true,
-          ),
-        ],
+    return SizedBox(
+      height: 48,  // 固定工具栏高度
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.m,
+          vertical: AppSizes.s,
+        ),
+        child: Row(
+          children: [
+            // 添加图片
+            _ToolbarIconButton(
+              icon: Icons.add_photo_alternate_outlined,
+              tooltip: '添加图片',
+              onPressed: onAddImages,
+            ),
+            const SizedBox(width: AppSizes.m),
+            // 向左旋转
+            _ToolbarIconButton(
+              icon: Icons.rotate_left,
+              tooltip: '向左旋转',
+              onPressed: hasSelection ? onRotateLeft : null,
+            ),
+            // 向右旋转
+            _ToolbarIconButton(
+              icon: Icons.rotate_right,
+              tooltip: '向右旋转',
+              onPressed: hasSelection ? onRotateRight : null,
+            ),
+            const Spacer(),
+            // 删除选中
+            _ToolbarIconButton(
+              icon: Icons.delete_outline,
+              tooltip: '删除选中',
+              onPressed: hasSelection ? onDelete : null,
+              isDestructive: true,
+            ),
+            // 全部删除
+            _ToolbarIconButton(
+              icon: Icons.delete_sweep_outlined,
+              tooltip: '全部删除',
+              onPressed: hasImages ? onDeleteAll : null,
+              isDestructive: true,
+            ),
+          ],
+        ),
       ),
     );
   }

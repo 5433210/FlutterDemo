@@ -30,7 +30,7 @@ class ImagePreview extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: ClipRRect(

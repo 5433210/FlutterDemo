@@ -12,6 +12,7 @@ class WorkBrowseState {
   final ViewMode viewMode;
   final SortOption sortOption;
   final WorkFilter filter;
+  final bool isSidebarOpen;  // 新增字段
 
   const WorkBrowseState({
     this.isLoading = false,
@@ -22,6 +23,7 @@ class WorkBrowseState {
     this.viewMode = ViewMode.grid,
     this.sortOption = const SortOption(),
     this.filter = const WorkFilter(),
+    this.isSidebarOpen = true,  // 默认展开
   });
 
   WorkBrowseState copyWith({
@@ -33,6 +35,7 @@ class WorkBrowseState {
     ViewMode? viewMode,
     SortOption? sortOption,
     WorkFilter? filter,
+    bool? isSidebarOpen,  // 新增字段
   }) {
     return WorkBrowseState(
       isLoading: isLoading ?? this.isLoading,
@@ -43,6 +46,7 @@ class WorkBrowseState {
       viewMode: viewMode ?? this.viewMode,
       sortOption: sortOption ?? this.sortOption,
       filter: filter ?? this.filter,
+      isSidebarOpen: isSidebarOpen ?? this.isSidebarOpen,  // 复制 isSidebarOpen
     );
   }
 }

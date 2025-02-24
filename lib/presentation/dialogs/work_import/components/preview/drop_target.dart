@@ -24,13 +24,13 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     final theme = Theme.of(context);
 
     return DragTarget<List<String>>(
-      onWillAccept: (data) {
+      onWillAcceptWithDetails: (data) {
         setState(() => _isDragging = true);
-        return data != null && data.isNotEmpty;
+        return data.data != null && data.data!.isNotEmpty;
       },
-      onAccept: (paths) {
+      onAcceptWithDetails: (details) {
         setState(() => _isDragging = false);
-        final files = paths.map((path) => File(path)).toList();
+        final files = details.data.map((path) => File(path)).toList();
         widget.onFilesDropped(files);
       },
       onLeave: (_) {

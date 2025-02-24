@@ -52,6 +52,6 @@ class DataLoader<T> extends StatelessWidget {
       );
     }
 
-    return builder(data!);
+    return builder(data as T);
   }
 }

@@ -52,7 +52,7 @@ class _WorkImportPreviewState extends State<WorkImportPreview> {
         ),
         backgroundColor: isError 
           ? theme.colorScheme.error
-          : theme.colorScheme.surfaceVariant,
+          : theme.colorScheme.surfaceContainerHighest,
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(AppSizes.m),
       ),

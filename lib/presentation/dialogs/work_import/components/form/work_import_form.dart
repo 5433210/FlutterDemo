@@ -36,6 +36,9 @@ class WorkImportForm extends StatelessWidget {
             child: TextFormField(
               initialValue: state.name,
               onChanged: viewModel.setName,
+              onSaved: (value) {
+                viewModel.setName(value ?? '');
+              },
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '请输入作品名称'),
               validator: (value) {
@@ -56,6 +59,9 @@ class WorkImportForm extends StatelessWidget {
             child: TextFormField(
               initialValue: state.author,
               onChanged: viewModel.setAuthor,
+              onSaved: (value) {
+                viewModel.setAuthor(value ?? '');
+              },
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '请输入作者姓名'),
               validator: (value) {
@@ -181,7 +187,7 @@ class WorkImportForm extends StatelessWidget {
         color: theme.colorScheme.outline,
       ),
       filled: true,
-      fillColor: theme.colorScheme.surfaceVariant,
+      fillColor: theme.colorScheme.surfaceContainerHighest,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.xs),
         borderSide: BorderSide.none,

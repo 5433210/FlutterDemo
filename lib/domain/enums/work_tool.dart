@@ -1,6 +1,6 @@
 enum WorkTool {
   brush('毛笔', 'brush'),
-  hardPen('硬笔', 'hard_pen'),
+  pen('硬笔', 'pen'),
   other('其他', 'other');
 
   final String label;

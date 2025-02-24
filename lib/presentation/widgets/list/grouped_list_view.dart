@@ -31,7 +31,7 @@ class GroupedListView<T> extends StatelessWidget {
           return headerBuilder?.call(context, groupInfo.group!) ?? 
               _defaultHeaderBuilder(context, groupInfo.group!);
         }
-        return itemBuilder(context, groupInfo.item!);
+        return itemBuilder(context, groupInfo.item as T);
       },
     );
   }
@@ -39,7 +39,7 @@ class GroupedListView<T> extends StatelessWidget {
   Widget _defaultHeaderBuilder(BuildContext context, ListGroup<T> group) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Text(
         group.header,
         style: Theme.of(context).textTheme.titleSmall,

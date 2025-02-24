@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:demo/domain/interfaces/i_work_service.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -17,32 +18,45 @@ class WorkService implements IWorkService {
   WorkService(this._workRepository, this._imageService, this._paths);
 
   @override
-  Future<void> importWork(List<File> files, WorkInfo data) async {
-    Work? work;
+  Future<void> importWork(List<File> files, Work data) async {
+    try {
+      Work? work;
 
-    // Create work info first
-    work = Work(
-      name: data.name,
-      author: data.author,
-      style: data.style?.name,
-      tool: data.tool?.name,
-      creationDate: data.creationDate,
-      imageCount: files.length, // Initial count
-    );
+      // Create work info first
+      work = Work(
+        name: data.name,
+        author: data.author,
+        style: data.style,
+        tool: data.tool,
+        creationDate: data.creationDate,
+        imageCount: files.length, // Initial count
+      );
 
-    // Insert work into database within transaction
-    final workId = await _workRepository.insertWork(work);
+      // Insert work into database within transaction
+      final workId = await _workRepository.insertWork(work);
 
-    data.id = workId;
+      data = Work(
+        id: workId,
+        name: data.name,
+        author: data.author,
+        style: data.style,
+        tool: data.tool,
+        creationDate: data.creationDate,
+        imageCount: files.length,
+      );
 
-    // Create work directory
-    await _paths.ensureDirectoryExists(_paths.getWorkPath(workId));
+      // Create work directory
+      await _paths.ensureDirectoryExists(_paths.getWorkPath(workId));
 
-    // Process images
-    await _imageService.processWorkImages(
-      workId,
-      files,
-    );
+      // Process images
+      await _imageService.processWorkImages(
+        workId,
+        files,
+      );
+    } catch (e,stackTrace) {
+      debugPrint('Import failed in service: $e\n$stackTrace');
+      rethrow;
+    }
   }
 
   @override
@@ -82,7 +96,7 @@ class WorkService implements IWorkService {
 
   @override
   Future<Work?> getWork(String id) async {
-    return await _workRepository.getWork(id);    
+    return await _workRepository.getWork(id);
   }
 
   @override

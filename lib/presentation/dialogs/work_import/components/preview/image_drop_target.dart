@@ -25,8 +25,8 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     final theme = Theme.of(context);
     
     return DragTarget<List<String>>(
-      onWillAccept: (data) {
-        final hasValidFiles = data?.any((path) {
+      onWillAcceptWithDetails: (data) {
+        final hasValidFiles = data.data.any((path) {
           final ext = path.toLowerCase();
           return ext.endsWith('.jpg') || 
                  ext.endsWith('.jpeg') || 
@@ -37,9 +37,9 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
         setState(() => _isDragging = hasValidFiles);
         return hasValidFiles;
       },
-      onAccept: (data) {
+      onAcceptWithDetails: (data) {
         setState(() => _isDragging = false);
-        final files = data
+        final files = data.data
             .map((path) => File(path))
             .where((file) => file.existsSync())
             .toList();

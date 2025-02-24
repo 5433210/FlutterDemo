@@ -1,6 +1,5 @@
 import 'dart:io';
 import '../entities/work.dart';
-import '../value_objects/work/work_info.dart';
 import '../../presentation/models/work_filter.dart';
 
 abstract class IWorkService {
@@ -8,7 +7,7 @@ abstract class IWorkService {
   Future<Work?> getWork(String id);
   Future<String?> getWorkThumbnail(String workId);
   Future<void> deleteWork(String workId);
-  Future<void> importWork(List<File> files, WorkInfo info);
+  Future<void> importWork(List<File> files, Work work);
   Future<List<Work>> queryWorks({
     String? searchQuery,
     WorkFilter? filter,

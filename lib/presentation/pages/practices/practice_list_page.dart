@@ -137,7 +137,7 @@ class _PracticeListPageState extends State<PracticeListPage> {
             child: SearchBar(
               hintText: '搜索练习...',
               leading: const Icon(Icons.search),
-              padding: const MaterialStatePropertyAll(
+              padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
               ),
             ),

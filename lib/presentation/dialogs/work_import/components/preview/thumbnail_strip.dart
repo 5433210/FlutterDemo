@@ -195,7 +195,6 @@ class _ThumbnailItem extends StatelessWidget {
   final int index;
 
   const _ThumbnailItem({
-    super.key,
     required this.image,
     required this.isSelected,
     required this.onTap,

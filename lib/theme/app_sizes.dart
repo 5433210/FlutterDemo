@@ -44,30 +44,33 @@ class AppSizes {
   static const double cardElevationSelected = 4.0;
 
   // 列表和网格
-  static const double gridItemWidth = 200.0;
+  static const double gridItemWidth = 240.0;
   static const double gridItemHeight = 200.0;
-  static const double listItemHeight = 72.0;
-  static const double thumbnailSize = 64.0;
+  static const double listItemHeight = 120.0;
+  static const double thumbnailSize = 80.0;
 
   // 网格布局
   static const int gridCrossAxisCount = 4;
   static const double gridMainAxisSpacing = 16.0;
   static const double gridCrossAxisSpacing = 16.0;
-  static const double gridItemTotalHeight = 280.0;
+  static const double gridItemTotalHeight = 320.0;
   static const double gridItemImageHeight = 200.0;
 
   // 表单尺寸常量
-  static const double xxs = 1.0  ;   // 超小间距
-  static const double xs = 2.0  ;   // 小小间距
-  static const double s = 4.0;    // 小间距
-  static const double m = 8.0;    // 中间距
-  static const double l = 16.0;   // 大间距
-  static const double xl = 24.0;  // 大大间距
-  static const double xxl = 32.0; // 超大间距
+  static const double xxs = 2.0;   // 超小间距
+  static const double xs = 4.0;   // 小小间距
+  static const double s = 8.0;    // 小间距
+  static const double m = 16.0;    // 中间距
+  static const double l = 24.0;   // 大间距
+  static const double xl = 32.0;  // 大大间距
+  static const double xxl = 48.0; // 超大间距
 
   // 容器尺寸
   static const double dialogWidth = 400.0;
   static const double dialogWidthWide = 600.0;
   static const double dialogHeight = 600.0;
   static const double dialogHeightTall = 800.0;
+
+  // List layout
+  // static const double listItemHeight = 120.0;  // Add this
 }

@@ -12,6 +12,8 @@ import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/page_layout.dart';
 import '../../theme/app_sizes.dart';
 import '../../widgets/works/work_filter_panel.dart';
+import '../work_browser/components/sidebar_toggle.dart';
+
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
@@ -21,6 +23,7 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 }
 
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
+  static const double sidebarWidth = 280.0;
   bool _batchMode = false;
   final Set<String> _selectedWorks = {};
   String _searchQuery = ''; // 添加搜索查询状态
@@ -38,48 +41,82 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     final state = ref.watch(workBrowseProvider);
 
     return PageLayout(
-      navigationInfo: const Text('书法作品'),
+      navigationInfo: const Text('作品浏览'),
       actions: [
-        // 搜索按钮
+        // Batch mode toggle
         IconButton(
-          icon: const Icon(Icons.search),
-          tooltip: '搜索',
-          onPressed: () {
-            _showSearchDialog(context); // 显示搜索对话框
-          },
-        ),
-        IconButton(
-          icon: Icon(state.viewMode == ViewMode.grid
-              ? Icons.grid_view
-              : Icons.view_list),
-          tooltip: state.viewMode == ViewMode.grid ? '网格视图' : '列表视图',
-          onPressed: () {
-            ref.read(workBrowseProvider.notifier).updateViewMode(
-                state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid);
-          },
-        ),
-        // Batch mode toggle button
-        IconButton(
-          icon: Icon(_batchMode ? Icons.close : Icons.select_all),
-          tooltip: _batchMode ? '退出批量选择' : '批量选择',
+          icon: Icon(_batchMode ? Icons.check_box : Icons.check_box_outline_blank),
+          tooltip: _batchMode ? '退出选择' : '批量选择',
           onPressed: () {
             setState(() {
               _batchMode = !_batchMode;
-              _selectedWorks.clear();
+              if (!_batchMode) {
+                _selectedWorks.clear();
+              }
             });
           },
         ),
+        // Search action
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () => _showSearchDialog(context),
+        ),
+        // View mode toggle
+        IconButton(
+          icon: Icon(state.viewMode == ViewMode.grid 
+              ? Icons.view_list 
+              : Icons.grid_view),
+          onPressed: () {
+            ref.read(workBrowseProvider.notifier).toggleViewMode();
+          },
+        ),
+        // Sort direction toggle
+        IconButton(
+          icon: Icon(state.sortOption.descending 
+              ? Icons.arrow_downward 
+              : Icons.arrow_upward),
+          onPressed: () {
+            ref.read(workBrowseProvider.notifier).toggleSortDirection();
+          },
+        ),
       ],
-      sidebar: WorkFilterPanel(
-        filter: state.filter,
-        onFilterChanged: (filter) {
-          ref.read(workBrowseProvider.notifier).updateFilter(filter);
-        },
+      toolbar: _buildToolbar(),      
+      body: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            width: state.isSidebarOpen ? sidebarWidth : 0,
+            child: state.isSidebarOpen
+                ? WorkFilterPanel(
+                    filter: state.filter,
+                    onFilterChanged: ref.read(workBrowseProvider.notifier).updateFilter,
+                  )
+                : null,
+          ),
+          SidebarToggle(
+            isOpen: state.isSidebarOpen,
+            onToggle: ref.read(workBrowseProvider.notifier).toggleSidebar,
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SizedBox(
+                  height: constraints.maxHeight,
+                  child: state.viewMode == ViewMode.grid
+                      ? _buildGrid(state.works)
+                      : _buildList(state.works),
+                );
+              },
+            ),
+          ),
+        ],
       ),
-      toolbar: _buildToolbar(),
-      body: _buildMainContent(state),
-      footer: _buildStatusBar(state),
     );
+  }
+
+  void _handleWorkSelected(BuildContext context, String workId) {
+    // ...existing work selection handler...
   }
 
   // 添加搜索对话框
@@ -119,71 +156,17 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildMainContent(WorkBrowseState state) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: AppSizes.m),
-            Text(
-              '加载失败',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSizes.s),
-            Text(
-              state.error!,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: AppSizes.m),
-            FilledButton.icon(
-              icon: const Icon(Icons.refresh),
-              label: const Text('重试'),
-              onPressed: () {
-                ref.read(workBrowseProvider.notifier).loadWorks();
-              },
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (state.works.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_outlined,
-              size: 64,
-              color: Theme.of(context).textTheme.bodySmall?.color,
-            ),
-            const SizedBox(height: AppSizes.m),
-            Text(
-              '暂无作品',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: AppSizes.s),
-            Text(
-              '点击"导入作品"按钮添加新作品',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return state.viewMode == ViewMode.grid
-        ? _buildGrid(state.works)
-        : _buildList(state.works);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final works = state.works;
+        return SizedBox(  // 添加固定高度约束
+          height: constraints.maxHeight,
+          child: state.viewMode == ViewMode.grid
+              ? _buildGrid(works)
+              : _buildList(works),
+        );
+      },
+    );
   }
 
   Widget _buildStatusBar(WorkBrowseState state) {
@@ -206,33 +189,37 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   }
 
   Widget _buildToolbar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.m,
-        vertical: AppSizes.s,
-      ),
-      child: Row(
-        children: [
-          if (!_batchMode)
-            FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('导入作品'),
-              onPressed: () => _showImportDialog(context),
-            ),
-          if (_batchMode)
-            FilledButton.tonalIcon(
-              icon: const Icon(Icons.delete),
-              label: Text('删除${_selectedWorks.length}项'),
-              onPressed: _deleteSelected,
-            ),
-          const Spacer(),
-          if (_batchMode)
-            Text(
-              '已选择 ${_selectedWorks.length} 项',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+    return Row(
+      children: [
+        if (!_batchMode)
+          FilledButton.icon(
+            icon: const Icon(Icons.add),
+            label: const Text('导入作品'),
+            onPressed: () => _showImportDialog(context),
+          ),
+        if (_batchMode) ...[
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.delete),
+            label: Text('删除${_selectedWorks.length}项'),
+            onPressed: _selectedWorks.isEmpty ? null : _deleteSelected,
+          ),
+          const SizedBox(width: AppSizes.m),
+          FilledButton.tonalIcon(
+            icon: const Icon(Icons.close),
+            label: const Text('退出选择'),
+            onPressed: () => setState(() {
+              _batchMode = false;
+              _selectedWorks.clear();
+            }),
+          ),
         ],
-      ),
+        const Spacer(),
+        if (_batchMode)
+          Text(
+            '已选择 ${_selectedWorks.length} 项',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+      ],
     );
   }
 
@@ -240,10 +227,11 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     return GridView.builder(
       padding: const EdgeInsets.all(AppSizes.m),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        mainAxisExtent: AppSizes.gridItemTotalHeight,
+        crossAxisCount: 4,
+        mainAxisSpacing: AppSizes.m,
+        crossAxisSpacing: AppSizes.m,
+        // 调整为更大的比例以适应内容
+        childAspectRatio: 0.7,  // 修改这个值
       ),
       itemCount: works.length,
       itemBuilder: (context, index) => WorkGridItem(
@@ -264,10 +252,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
           '/work_detail',
           arguments: works[index].id,
         ),
-        onDelete: _batchMode ? null : () async {
-          await ref.read(workBrowseProvider.notifier)
-              .deleteWork(works[index].id!);
-        },
       ),
     );
   }
@@ -279,8 +263,9 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
       separatorBuilder: (context, index) => const SizedBox(height: AppSizes.s),
       itemBuilder: (context, index) => WorkListItem(
         work: works[index],
-        selected: _selectedWorks.contains(works[index].id),
-        onSelected: _batchMode ? (selected) {
+        isSelected: _selectedWorks.contains(works[index].id),
+        isSelectionMode: _batchMode,  // 添加这个参数
+        onSelectionChanged: _batchMode ? (selected) {
           setState(() {
             if (selected) {
               _selectedWorks.add(works[index].id!);
@@ -294,13 +279,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
           '/work_detail',
           arguments: works[index].id,
         ),
-        onEdit: _batchMode ? null : () {
-          // Handle edit action
-        },
-        onDelete: _batchMode ? null : () async {
-          await ref.read(workBrowseProvider.notifier)
-              .deleteWork(works[index].id!);
-        },
       ),
     );
   }
@@ -338,13 +316,32 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   Future<void> _showImportDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
-      builder: (context) => const WorkImportDialog(),
+      barrierDismissible: false,  // 防止点击外部关闭
+      builder: (context) => WorkImportDialog(), // Remove const to allow state changes
     );
 
     if (result == true) {
-      // Refresh work list after successful import
-      ref.invalidate(workBrowseProvider);
+      try {
+        // Show loading indicator
+        await ref.read(workBrowseProvider.notifier).loadWorks();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('作品导入成功'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('刷新列表失败: ${e.toString()}'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
     }
   }
 }
@@ -352,47 +349,42 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
 class WorkListItem extends StatelessWidget {
   final Work work;
   final VoidCallback? onTap;
-  final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
-  final bool selected;
-  final ValueChanged<bool>? onSelected;
+  final ValueChanged<bool>? onSelectionChanged;
+  final bool isSelected;
+  final bool isSelectionMode;  // 添加这个字段
 
   const WorkListItem({
     super.key,
     required this.work,
     this.onTap,
-    this.onEdit,
-    this.onDelete,
-    this.selected = false,
-    this.onSelected,
+    this.onSelectionChanged,
+    this.isSelected = false,
+    this.isSelectionMode = false,  // 初始化
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 1,
-      margin: EdgeInsets.zero,
-      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onSelected != null ? () => onSelected!(!selected) : onTap,
-        child: SizedBox(
-          height: AppSizes.listItemHeight,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.m),
+        onTap: isSelectionMode ? null : onTap,  // 现在可以使用了
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.m),
+          child: SizedBox(  // Add fixed height container
+            height: AppSizes.listItemHeight,  // Add this constant
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,  // Align to top
               children: [
-                Stack(
-                  children: [
-                    _buildThumbnail(context),
-                    if (onSelected != null || selected)
-                      _buildSelectionOverlay(context),
-                  ],
-                ),
+                if (isSelectionMode)  // 现在可以使用了
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSizes.m),
+                    child: Checkbox(
+                      value: isSelected,
+                      onChanged: (value) => onSelectionChanged?.call(value ?? false),
+                    ),
+                  ),
+                _buildThumbnail(context), // 修改这里，添加 context 参数
                 const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)),
-                if (onSelected == null && (onEdit != null || onDelete != null))
-                  _buildActions(context),
+                Expanded(child: _buildContent(context)), // 修改这里，添加 context 参数
               ],
             ),
           ),
@@ -401,17 +393,7 @@ class WorkListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnailSection(BuildContext context) {
-    return Stack(
-      children: [
-        _buildThumbnail(context),
-        if (onSelected != null)
-          _buildSelectionOverlay(context),
-      ],
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
+  Widget _buildThumbnail(BuildContext context) {  // 更新方法签名
     return SizedBox(
       width: AppSizes.thumbnailSize,
       height: AppSizes.thumbnailSize,
@@ -442,36 +424,28 @@ class WorkListItem extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
+      mainAxisSize: MainAxisSize.min,  // Add this
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Title section with fixed height
-        SizedBox(
-          height: 48,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                work.name ?? '',
-                style: textTheme.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (work.author?.isNotEmpty ?? false) ...[
-                const SizedBox(height: AppSizes.xxs),
-                Text(
-                  work.author!,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
+        Text(
+          work.name ?? '',
+          style: textTheme.titleMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
-
-        // Tags section with single line
+        if (work.author?.isNotEmpty ?? false) ...[
+          const SizedBox(height: AppSizes.xxs),
+          Text(
+            work.author!,
+            style: textTheme.bodyMedium?.copyWith(
+              color: colorScheme.primary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+        const SizedBox(height: AppSizes.s),  // Replace Spacer
+        // Tags section
         SizedBox(
           height: 24,
           child: ListView(
@@ -492,9 +466,7 @@ class WorkListItem extends StatelessWidget {
             ],
           ),
         ),
-
-        const Spacer(),
-
+        const SizedBox(height: AppSizes.s),  // Add fixed spacing
         // Metadata section
         DefaultTextStyle(
           style: textTheme.bodySmall!.copyWith(
@@ -537,26 +509,6 @@ class WorkListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        if (onEdit != null)
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            visualDensity: VisualDensity.compact,
-            onPressed: onEdit,
-          ),
-        if (onDelete != null)
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            visualDensity: VisualDensity.compact,
-            onPressed: onDelete,
-          ),
-      ],
-    );
-  }
-
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -569,34 +521,11 @@ class WorkListItem extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildSelectionOverlay(BuildContext context) {
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: selected 
-              ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-              : Colors.transparent,
-        ),
-        child: Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.xs),
-            child: Checkbox(
-              value: selected,
-              onChanged: (value) => onSelected?.call(value ?? false),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class WorkGridItem extends StatelessWidget {
   final Work work;
   final VoidCallback? onTap;
-  final VoidCallback? onDelete;
   final bool selectable;
   final bool selected;
   final ValueChanged<bool>? onSelected;
@@ -605,7 +534,6 @@ class WorkGridItem extends StatelessWidget {
     super.key,
     required this.work,
     this.onTap,
-    this.onDelete,
     this.selectable = false,
     this.selected = false,
     this.onSelected,
@@ -617,90 +545,79 @@ class WorkGridItem extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: selectable ? () => onSelected?.call(!selected) : onTap,
-        child: SizedBox(
-          width: AppSizes.gridItemWidth,
-          height: AppSizes.gridItemTotalHeight,
-          child: Column(
-            children: [
-              SizedBox(
-                height: AppSizes.gridItemImageHeight,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,  // 添加这行
+          children: [
+            AspectRatio(
+              aspectRatio: 1,  // 1:1 ratio for thumbnail
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildThumbnail(context),
+                  if (selectable || selected)
+                    _buildSelectionOverlay(context),
+                ],
+              ),
+            ),
+            Expanded(  // 包装在 Expanded 中
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.m),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildThumbnail(context),
-                    if (selectable || selected)
-                      _buildSelectionOverlay(context),
+                    Text(
+                      work.name ?? '',
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (work.author?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: AppSizes.xxs),
+                      Text(
+                        work.author!,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const Spacer(),  // 添加这行
+                    _buildMetadata(context),
                   ],
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.m),
-                  child: _buildContent(context),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+  Widget _buildMetadata(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Title
-        Text(
-          work.name ?? '',
-          style: textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (work.author?.isNotEmpty ?? false) ...[
-          const SizedBox(height: AppSizes.xxs),
-          Text(
-            work.author!,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    return DefaultTextStyle(
+      style: textTheme.bodySmall!.copyWith(
+        color: colorScheme.outline,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.photo_outlined,
+            size: 16,
+            color: colorScheme.outline,
           ),
+          const SizedBox(width: AppSizes.xs),
+          Text('${work.imageCount ?? 0}张'),
+          const Spacer(),
+          Text(DateFormatter.formatCompact(
+            work.creationDate ?? work.createTime ?? DateTime.now(),
+          )),
         ],
-        const Spacer(),
-        // Bottom metadata
-        Row(
-          children: [
-            Icon(
-              Icons.photo_outlined,
-              size: 16,
-              color: colorScheme.outline,
-            ),
-            const SizedBox(width: AppSizes.xs),
-            Text(
-              '${work.imageCount ?? 0}张',
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.outline,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              DateFormatter.formatCompact(
-                work.creationDate ?? work.createTime ?? DateTime.now(),
-              ),
-              style: textTheme.bodySmall?.copyWith(
-                color: colorScheme.outline,
-              ),
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 

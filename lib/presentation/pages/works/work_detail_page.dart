@@ -1,15 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/page_toolbar.dart';
 import '../../widgets/section_header.dart';
 import '../../../theme/app_sizes.dart';
-import '../../dialogs/export_dialog.dart';
-import '../../dialogs/delete_confirmation_dialog.dart';
-import '../../dialogs/work_edit_dialog.dart';
-import '../../widgets/character/character_extraction_panel.dart';
-import '../../widgets/window/title_bar.dart';
-import '../practices/practice_detail_page.dart';
-import '../../dialogs/character_detail_dialog.dart';
 
 class WorkDetailPage extends StatelessWidget {
   final String workId;

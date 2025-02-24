@@ -4,11 +4,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../domain/entities/work.dart';
+import '../../../domain/interfaces/i_work_service.dart';
 import '../../../presentation/viewmodels/states/work_import_state.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
 import 'components/preview/work_import_preview.dart';
 import 'components/form/work_import_form.dart';
+
+class ImportResult {
+  final bool isSuccess;
+  final String? error;
+
+  const ImportResult({
+    this.isSuccess = false,
+    this.error,
+  });
+
+  static ImportResult success() => const ImportResult(isSuccess: true);
+  static ImportResult failure(String error) => ImportResult(error: error);
+}
 
 class WorkImportDialog extends ConsumerStatefulWidget {
   const WorkImportDialog({super.key});
@@ -26,8 +41,27 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   @override
   void initState() {
     super.initState();
+    // Move the reset call to initState
+    _resetDialog();
+  }
+
+  void _resetDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier).reset();
+      ref.read(workImportProvider.notifier)
+        ..reset()
+        ..setName('')  // Explicitly reset name
+        ..setAuthor('') // Explicitly reset author
+        ..setStyle(null) // Explicitly reset style
+        ..setTool(null) // Explicitly reset tool
+        ..setRemarks('') // Explicitly reset remarks
+        ..setCreationDate(null);// Explicitly reset creation date
+        
+      _loadedFilePaths.clear();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     });
   }
 
@@ -78,21 +112,21 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
   Future<void> _handleSubmit() async {
-    if (_formKey.currentState?.validate() != true) {
+    if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请填写所有必填项')),
+        const SnackBar(content: Text('请填写必填字段')),
       );
       return;
     }
 
-    if (!ref.read(workImportProvider).images.isNotEmpty) {
+    if (ref.read(workImportProvider).images.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('请至少添加一张图片')),
       );
@@ -100,24 +134,38 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     }
 
     setState(() => _isLoading = true);
+
     try {
-      final success = await ref.read(workImportProvider.notifier).importWork();
+      _formKey.currentState!.save();
+      
+      final result = await ref.read(workImportProvider.notifier).importWork();
+      
       if (!mounted) return;
 
-      if (success) {
+      if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );
-        // 延迟关闭对话框，让用户看到成功提示
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) {
           Navigator.of(context).pop(true);
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('导入失败：${ref.read(workImportProvider).error}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Import failed: $e\n$stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('导入失败：${e.toString()}')),
+        SnackBar(
+          content: Text('导入失败：${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     } finally {
       if (mounted) {
@@ -209,6 +257,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   Future<bool> _handleExit() async {
     final isDirty = ref.read(workImportProvider).isDirty;
     if (!isDirty) {
+      _resetDialog(); // Reset state before exit
       Navigator.of(context).pop(false);
       return true;
     }
@@ -250,6 +299,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     );
 
     if (confirmed == true && mounted) {
+      _resetDialog(); // Reset state before exit
       Navigator.of(context).pop(false);
     }
     return confirmed ?? false;
@@ -442,4 +492,66 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       ),
     );
   }
+}
+
+class WorkImportProvider extends StateNotifier<WorkImportState> {
+  final IWorkService _workService;
+
+  WorkImportProvider(this._workService) : super(const WorkImportState(
+    name: '',
+    author: '',
+    style: null,
+    tool: null,
+    remarks: '',
+    images: [],
+    selectedImageIndex: -1,
+    isLoading: false,
+  ));
+
+  void reset() {
+    state = const WorkImportState(
+      name: '',
+      author: '',
+      style: null,
+      tool: null,
+      remarks: '',
+      images: [],
+      selectedImageIndex: -1,
+      isLoading: false,
+    );
+  }
+
+  Future<ImportResult> importWork() async {
+    state = state.copyWith(isLoading: true);
+    
+    try {
+      if (state.name.isEmpty) {
+        return ImportResult.failure('作品名称不能为空');
+      }
+
+      if (state.images.isEmpty) {
+        return ImportResult.failure('至少需要一张图片');
+      }
+
+      final work = Work(
+        name: state.name,
+        author: state.author,
+        style: state.style?.name,
+        tool: state.tool?.label,       
+        creationDate: state.creationDate,        
+        imageCount: state.images.length,        
+      );
+
+      await _workService.importWork(state.images,work);
+      
+      return ImportResult.success();
+    } catch (e, stackTrace) {
+      debugPrint('Import failed in provider: $e\n$stackTrace');
+      return ImportResult.failure(e.toString());
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  // ... existing code ...
 }

@@ -25,7 +25,7 @@ class SearchBox extends StatelessWidget {
         controller: controller,
         hintText: hintText,
         leading: const Icon(Icons.search),
-        padding: const MaterialStatePropertyAll(
+        padding: const WidgetStatePropertyAll(
           EdgeInsets.symmetric(
             horizontal: AppSizes.spacingMedium,
           ),

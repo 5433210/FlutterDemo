@@ -7,6 +7,7 @@ import 'package:path/path.dart' as path;
 import '../../application/config/app_config.dart';
 import '../../application/services/work_service.dart';
 import '../../application/services/image_service.dart';
+import '../../domain/entities/work.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import 'states/work_import_state.dart';
@@ -258,13 +259,13 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       
       await _workService.importWork(
         processedImages,
-        WorkInfo(
+        Work(
           name: state.name,
           author: state.author,
-          style: state.style!,
-          tool: state.tool!,
-          creationDate: state.creationDate!,
-          remarks: state.remarks,
+          style: state.style?.value,
+          tool: state.tool?.value,
+          creationDate: state.creationDate!,               
+          imageCount: state.images.length,      
         ),
       );
       return true;
