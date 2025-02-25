@@ -1,6 +1,7 @@
+import 'dart:convert';
+
 import 'package:demo/presentation/models/date_range_filter.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -28,10 +29,9 @@ extension SortFieldX on SortField {
     SortField.none => null,
     SortField.name => 'name',
     SortField.author => 'author',
-    SortField.creationDate => 'date',
-    SortField.importDate => 'import_date',
-    // TODO: Handle this case.
-    SortField.updateDate =>'update_date',
+    SortField.creationDate => 'creationDate',  // 修正字段名
+    SortField.importDate => 'createTime',      // 修正字段名
+    SortField.updateDate => 'updateTime',      // 修正字段名
   };
 }
 
@@ -152,12 +152,8 @@ class WorkFilter {
 
   factory WorkFilter.fromJson(Map<String, dynamic> json) {
     return WorkFilter(
-      style: json['style'] != null ? WorkStyle.values.firstWhere(
-        (e) => e.value == json['style'],
-      ) : null,
-      tool: json['tool'] != null ? WorkTool.values.firstWhere(
-        (e) => e.value == json['tool'],
-      ) : null,
+      style: json['style'] != null ? WorkStyle.fromValue(json['style'] as String) : null,
+      tool: json['tool'] != null ? WorkTool.fromValue(json['tool'] as String) : null,
       datePreset: json['datePreset'] != null ? 
         DateRangePreset.values[json['datePreset'] as int] : null,
       dateRange: json['dateRange'] != null ? DateTimeRange(
@@ -171,7 +167,6 @@ class WorkFilter {
 
   // 添加字符串转换方法，方便存储和调试
   String toJsonString() => jsonEncode(toJson());
-  
   factory WorkFilter.fromJsonString(String jsonString) =>
       WorkFilter.fromJson(jsonDecode(jsonString));
 

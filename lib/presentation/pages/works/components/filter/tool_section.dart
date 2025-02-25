@@ -25,14 +25,15 @@ class ToolSection extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: WorkTool.values.map((tool) {
-        final selected = state.filter.tool == tool;
+        final selected = state.filter.tool?.value == tool.value;  // 修改这里，比较value
         return FilterChip(
           label: Text(tool.label),
           selected: selected,
-          onSelected: (value) => 
-              viewModel.updateFilter(state.filter.copyWith(
-                tool:()=> value ? tool : null,
-              )),
+          onSelected: (value) => viewModel.updateFilter(
+            state.filter.copyWith(
+              tool: () => value ? WorkTool.fromValue(tool.value) : null,  // 使用value创建枚举
+            ),
+          ),
         );
       }).toList(),
     );

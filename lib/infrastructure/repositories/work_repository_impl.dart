@@ -25,26 +25,24 @@ class WorkRepositoryImpl implements WorkRepository {
   @override
   Future<List<Map<String, dynamic>>> getWorks({
     String? query,
-    String? style,
+    String? style,  // 注意这里的参数
     String? tool,
     DateTimeRange? creationDateRange,    
     String? orderBy,
     bool descending = true,
   }) async {
-    try {
-      final results = await _db.getWorks(
-        query: query,
-        style: style,
-        tool: tool,
-        creationDateRange: creationDateRange,      
-        orderBy: orderBy,
-        descending: descending,
-      );
-      return results;
-    } catch (e) {
-      debugPrint('Error getting works: $e');
-      rethrow;
-    }
+    debugPrint('Repository - querying works:'); // 添加日志
+    debugPrint('- style: $style'); // 添加日志
+    debugPrint('- tool: $tool'); // 添加日志
+    
+    return await _db.getWorks(
+      query: query,
+      style: style,  // 确保这些参数正确传递给数据库
+      tool: tool,
+      creationDateRange: creationDateRange,      
+      orderBy: orderBy,
+      descending: descending,
+    );
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/entities/work.dart';
@@ -52,6 +53,30 @@ class WorkBrowseState {
     this.isLoadingMore = false,
   }) : searchController = searchController ?? TextEditingController();
 
+@override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is WorkBrowseState &&
+        listEquals(works, other.works) &&  // 使用 listEquals 比较列表
+        filter == other.filter &&
+        viewMode == other.viewMode &&
+        isLoading == other.isLoading &&
+        error == other.error &&
+        batchMode == other.batchMode &&
+        setEquals(selectedWorks, other.selectedWorks);  // 使用 setEquals 比较集合
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll(works),
+        filter,
+        viewMode,
+        isLoading,
+        error,
+        batchMode,
+        Object.hashAll(selectedWorks),
+      );
+      
   WorkBrowseState copyWith({
     bool? isLoading,
     String? error,
@@ -69,6 +94,9 @@ class WorkBrowseState {
     bool? hasMore,
     bool? isLoadingMore,
   }) {
+    // Add debug print to verify state updates
+    debugPrint('WorkBrowseState.copyWith - new works count: ${works?.length ?? this.works.length}');
+
     return WorkBrowseState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,

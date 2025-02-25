@@ -23,13 +23,16 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
+    debugPrint('WorkBrowsePage build started');
+    
+    // 移除不必要的重复监听
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
-    
+
     return Scaffold(
       body: Column(
         children: [
-          WorkToolbar(  // 添加工具栏
+          WorkToolbar(
             viewMode: state.viewMode,
             onViewModeChanged: (mode) => viewModel.setViewMode(mode),
             onImport: () => _showImportDialog(context),
@@ -41,8 +44,9 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
           ),
           Expanded(
             child: WorkLayout(
-              filterPanel: const WorkFilterPanel(),
-              child: _buildMainContent(state),
+              // 移除 const，传入必要的属性
+              filterPanel: WorkFilterPanel(              ),
+              child: _buildMainContent(),  // 移除不必要的参数传递
             ),
           ),
         ],
@@ -50,7 +54,11 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     );
   }
 
-  Widget _buildMainContent(WorkBrowseState state) {
+  Widget _buildMainContent() {
+    // 在这里监听状态变化
+    final state = ref.watch(workBrowseProvider);
+    debugPrint('_buildMainContent rebuild - works count: ${state.works.length}');
+
     return Column(
       children: [
         Expanded(
@@ -63,11 +71,9 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
                           works: state.works,
                           batchMode: state.batchMode,
                           selectedWorks: state.selectedWorks,
-                          onSelectionChanged: (workId, selected) => ref
-                              .read(workBrowseProvider.notifier)
-                              .toggleSelection(workId),
-                          onItemTap: (workId) =>
-                              _handleWorkSelected(context, workId),
+                          onSelectionChanged: (workId, selected) => 
+                              ref.read(workBrowseProvider.notifier).toggleSelection(workId),
+                          onItemTap: (workId) => _handleWorkSelected(context, workId),
                         )
                       : WorkListView(
                           works: state.works,

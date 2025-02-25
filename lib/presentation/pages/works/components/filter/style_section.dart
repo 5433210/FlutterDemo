@@ -29,10 +29,12 @@ class StyleSection extends ConsumerWidget {
         return FilterChip(
           label: Text(style.label),
           selected: selected,
-          onSelected: (value) => 
-              viewModel.updateFilter(state.filter.copyWith(
-                style: () => value ? style : null,
-              )),
+          onSelected: (value) {
+            debugPrint('StyleSection - style selected: $style, value: $value'); // 添加日志
+            viewModel.updateFilter(state.filter.copyWith(
+              style: () => value ? style : null,
+            ));
+          },
         );
       }).toList(),
     );

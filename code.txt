@@ -238,39 +238,57 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/pages/works/work_browse_page.dart';
+import 'presentation/pages/works/work_detail_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
 import 'theme/app_theme.dart';
+import 'presentation/pages/practices/practice_detail_page.dart';
+import 'presentation/pages/practices/practice_edit_page.dart';
+import 'routes/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. 先初始化 SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  
+  // 2. 初始化窗口管理器
   await windowManager.ensureInitialized();
 
+  // 3. 配置窗口选项
   WindowOptions windowOptions = const WindowOptions(
-    minimumSize: Size(800, 600),
+    size: Size(1280, 800),          // 设置初始窗口大小
+    minimumSize: Size(800, 600),    // 设置最小窗口大小
+    center: true,                   // 窗口居中显示
     backgroundColor: Colors.transparent,
-    skipTaskbar: false,  // 是否在任务栏隐藏
+    skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    windowButtonVisibility: true,
-    center: true,      // 窗口居中
-    title: '书法集字',
-    // 添加以下设置
-    fullScreen: false,
-    alwaysOnTop: false,
   );
-  
-  await windowManager.waitUntilReadyToShow(windowOptions);
-  await windowManager.show();
-  await windowManager.focus();
 
+  // 4. 应用窗口配置
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+  // 5. 初始化其他服务
   await SqliteDatabase.initializePlatform();
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -279,9 +297,81 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(      
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
+      title: '书法集字',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      home: const MainWindow(),
+      onGenerateRoute: (settings) {
+        final args = settings.arguments;
+        
+        switch (settings.name) {
+          case AppRoutes.home:
+            return MaterialPageRoute(
+              builder: (context) => const MainWindow(),
+            );
+            
+          case AppRoutes.workBrowse:
+            return MaterialPageRoute(
+              builder: (context) => const WorkBrowsePage(),
+            );
+            
+          case AppRoutes.workDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => WorkDetailPage(workId: args),
+              );
+            }
+            break;
+            
+          case AppRoutes.characterList:
+            return MaterialPageRoute(
+              builder: (context) => const CharacterListPage(),
+            );
+            
+          case AppRoutes.characterDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => CharacterDetailPage(
+                  charId: args,
+                  onBack: () => Navigator.of(context).pop(),
+                ),
+              );
+            }
+            break;
+            
+          case AppRoutes.practiceList:
+            return MaterialPageRoute(
+              builder: (context) => const PracticeListPage(),
+            );
+            
+          case AppRoutes.practiceEdit:
+            return MaterialPageRoute(
+              builder: (context) => PracticeEditPage(
+                practiceId: args as String?,
+              ),
+            );
+            
+          case AppRoutes.practiceDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => PracticeDetailPage(
+                  practiceId: args,
+                ),
+              );
+            }
+            break;
+            
+          case AppRoutes.settings:
+            return MaterialPageRoute(
+              builder: (context) => const SettingsPage(),
+            );
+        }
+        
+        // 未知路由返回首页
+        return MaterialPageRoute(
+          builder: (context) => const MainWindow(),
+        );
+      },
       // 添加本地化支持
       localizationsDelegates: const [
         // AppLocalizations.delegate,
@@ -293,7 +383,6 @@ class MyApp extends StatelessWidget {
         Locale('zh'),
         Locale('en'),
       ],
-      home: const MainWindow(),
     );
   }
 }
@@ -3532,6 +3621,21 @@ class SqliteDatabase implements DatabaseInterface {
     }
     return result;
   }
+
+  // 添加临时调试方法
+  Future<void> debugPrintAllWorks() async {
+    final db = await database;
+    final results = await db.query('works', columns: ['id', 'name', 'style']);
+    
+    debugPrint('\n数据库中的所有作品:');
+    debugPrint('----------------------------------------');
+    for (var row in results) {
+      debugPrint('ID: ${row['id']}');
+      debugPrint('Name: ${row['name']}');
+      debugPrint('Style: ${row['style']}');
+      debugPrint('----------------------------------------');
+    }
+  }
 }
 
 ``n
@@ -3814,26 +3918,24 @@ class WorkRepositoryImpl implements WorkRepository {
   @override
   Future<List<Map<String, dynamic>>> getWorks({
     String? query,
-    String? style,
+    String? style,  // 注意这里的参数
     String? tool,
     DateTimeRange? creationDateRange,    
     String? orderBy,
     bool descending = true,
   }) async {
-    try {
-      final results = await _db.getWorks(
-        query: query,
-        style: style,
-        tool: tool,
-        creationDateRange: creationDateRange,      
-        orderBy: orderBy,
-        descending: descending,
-      );
-      return results;
-    } catch (e) {
-      debugPrint('Error getting works: $e');
-      rethrow;
-    }
+    debugPrint('Repository - querying works:'); // 添加日志
+    debugPrint('- style: $style'); // 添加日志
+    debugPrint('- tool: $tool'); // 添加日志
+    
+    return await _db.getWorks(
+      query: query,
+      style: style,  // 确保这些参数正确传递给数据库
+      tool: tool,
+      creationDateRange: creationDateRange,      
+      orderBy: orderBy,
+      descending: descending,
+    );
   }
 
   @override
@@ -3904,8 +4006,7 @@ class StateRestorationService {
         'viewMode': state.viewMode.index,
         'isSidebarOpen': state.isSidebarOpen,
         'filter': state.filter.toJson(),
-        'searchQuery': state.searchQuery,
-        'pageSize': state.pageSize,
+        'searchQuery': state.searchQuery,        
       };
       await _prefs.setString(workBrowseKey, jsonEncode(stateMap));
     } catch (e) {
@@ -3925,8 +4026,7 @@ class StateRestorationService {
         viewMode: ViewMode.values[stateMap['viewMode'] as int],
         isSidebarOpen: stateMap['isSidebarOpen'] as bool,
         filter: WorkFilter.fromJson(stateMap['filter'] as Map<String, dynamic>),
-        searchQuery: (stateMap['searchQuery'] as String?) ?? '',
-        pageSize: stateMap['pageSize'] as int? ?? 20,
+        searchQuery: (stateMap['searchQuery'] as String?) ?? '',        
       );
     } catch (e) {
       debugPrint('Error restoring work browse state: $e');
@@ -4815,38 +4915,34 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   bool _isLoading = false;
   // 用于记录已加载文件路径
   final Set<String> _loadedFilePaths = <String>{};
+  late final TextEditingController _nameController;
+  late final TextEditingController _authorController;
 
   @override
   void initState() {
     super.initState();
-    // Move the reset call to initState
+    _nameController = TextEditingController();
+    _authorController = TextEditingController();
     _resetDialog();
-  }
-
-  void _resetDialog() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier)
-        ..reset()
-        ..setName('')  // Explicitly reset name
-        ..setAuthor('') // Explicitly reset author
-        ..setStyle(null) // Explicitly reset style
-        ..setTool(null) // Explicitly reset tool
-        ..setRemarks('') // Explicitly reset remarks
-        ..setCreationDate(null);// Explicitly reset creation date
-        
-      _loadedFilePaths.clear();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _authorController.dispose();
     _loadedFilePaths.clear();
     super.dispose();
+  }
+
+  void _resetDialog() {
+    // 清空控制器的值
+    _nameController.clear();
+    _authorController.clear();
+    
+    // 重置 provider 状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(workImportProvider.notifier).reset();
+    });
   }
 
   Future<void> _pickImages(BuildContext context) async {
@@ -4915,12 +5011,13 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
     try {
       _formKey.currentState!.save();
-      
       final result = await ref.read(workImportProvider.notifier).importWork();
       
       if (!mounted) return;
 
       if (result) {
+        // 导入成功后清空状态
+        _resetDialog();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );
@@ -5446,6 +5543,7 @@ import '../../../../../domain/enums/work_tool.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../viewmodels/states/work_import_state.dart';
 import '../../../../viewmodels/work_import_view_model.dart';
+import '../../../../widgets/form/form_section.dart';
 import '../../../../widgets/forms/form_field_wrapper.dart';
 
 class WorkImportForm extends StatelessWidget {
@@ -6936,9 +7034,10 @@ class DateRangeFilter {
 # FILE:work_filter.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\models\work_filter.dart
+import 'dart:convert';
+
 import 'package:demo/presentation/models/date_range_filter.dart';
 import 'package:flutter/material.dart';
-import 'dart:convert';
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -6966,10 +7065,9 @@ extension SortFieldX on SortField {
     SortField.none => null,
     SortField.name => 'name',
     SortField.author => 'author',
-    SortField.creationDate => 'date',
-    SortField.importDate => 'import_date',
-    // TODO: Handle this case.
-    SortField.updateDate =>'update_date',
+    SortField.creationDate => 'creationDate',  // 修正字段名
+    SortField.importDate => 'createTime',      // 修正字段名
+    SortField.updateDate => 'updateTime',      // 修正字段名
   };
 }
 
@@ -7090,12 +7188,8 @@ class WorkFilter {
 
   factory WorkFilter.fromJson(Map<String, dynamic> json) {
     return WorkFilter(
-      style: json['style'] != null ? WorkStyle.values.firstWhere(
-        (e) => e.value == json['style'],
-      ) : null,
-      tool: json['tool'] != null ? WorkTool.values.firstWhere(
-        (e) => e.value == json['tool'],
-      ) : null,
+      style: json['style'] != null ? WorkStyle.fromValue(json['style'] as String) : null,
+      tool: json['tool'] != null ? WorkTool.fromValue(json['tool'] as String) : null,
       datePreset: json['datePreset'] != null ? 
         DateRangePreset.values[json['datePreset'] as int] : null,
       dateRange: json['dateRange'] != null ? DateTimeRange(
@@ -7109,7 +7203,6 @@ class WorkFilter {
 
   // 添加字符串转换方法，方便存储和调试
   String toJsonString() => jsonEncode(toJson());
-  
   factory WorkFilter.fromJsonString(String jsonString) =>
       WorkFilter.fromJson(jsonDecode(jsonString));
 
@@ -8285,15 +8378,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
-import '../../theme/app_sizes.dart';
 import '../../viewmodels/states/work_browse_state.dart';
-import 'components/content/items/work_grid_item.dart';
-import 'components/content/items/work_list_item.dart';
+import 'components/content/work_grid_view.dart';
+import 'components/content/work_list_view.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/layout/work_layout.dart';
+import 'components/work_toolbar.dart';
 // 添加这个导入
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
@@ -8306,16 +8398,30 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(workBrowseProvider);
+    debugPrint('WorkBrowsePage build started');
     
+    // 移除不必要的重复监听
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+
     return Scaffold(
       body: Column(
         children: [
-          // ...existing toolbar code...
+          WorkToolbar(
+            viewMode: state.viewMode,
+            onViewModeChanged: (mode) => viewModel.setViewMode(mode),
+            onImport: () => _showImportDialog(context),
+            onSearch: viewModel.setSearchQuery,
+            batchMode: state.batchMode,
+            onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
+            selectedCount: state.selectedWorks.length,
+            onDeleteSelected: () => ref.read(workBrowseProvider.notifier).deleteSelected(),
+          ),
           Expanded(
             child: WorkLayout(
-              filterPanel: const WorkFilterPanel(),
-              child: _buildMainContent(state),
+              // 移除 const，传入必要的属性
+              filterPanel: WorkFilterPanel(              ),
+              child: _buildMainContent(),  // 移除不必要的参数传递
             ),
           ),
         ],
@@ -8323,55 +8429,39 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     );
   }
 
-  Widget _buildMainContent(WorkBrowseState state) {
+  Widget _buildMainContent() {
+    // 在这里监听状态变化
+    final state = ref.watch(workBrowseProvider);
+    debugPrint('_buildMainContent rebuild - works count: ${state.works.length}');
+
     return Column(
       children: [
-        // ...existing toolbar code...
         Expanded(
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : state.works.isEmpty
                   ? const Center(child: Text('没有作品'))
                   : state.viewMode == ViewMode.grid
-                      ? _buildGrid(state.works)
-                      : _buildList(state.works),
+                      ? WorkGridView(
+                          works: state.works,
+                          batchMode: state.batchMode,
+                          selectedWorks: state.selectedWorks,
+                          onSelectionChanged: (workId, selected) => 
+                              ref.read(workBrowseProvider.notifier).toggleSelection(workId),
+                          onItemTap: (workId) => _handleWorkSelected(context, workId),
+                        )
+                      : WorkListView(
+                          works: state.works,
+                          batchMode: state.batchMode,
+                          selectedWorks: state.selectedWorks,
+                          onSelectionChanged: (workId, selected) => ref
+                              .read(workBrowseProvider.notifier)
+                              .toggleSelection(workId),
+                          onItemTap: (workId) =>
+                              _handleWorkSelected(context, workId),
+                        ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGrid(List<Work> works) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.m),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        childAspectRatio: AppSizes.gridItemWidth / AppSizes.gridItemTotalHeight,
-      ),
-      itemCount: works.length,
-      itemBuilder: (context, index) {
-        final work = works[index];
-        return WorkGridItem(
-          work: work,
-          onTap: () => _handleWorkSelected(context, work.id!),
-        );
-      },
-    );
-  }
-
-  Widget _buildList(List<Work> works) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.m),
-      itemCount: works.length,
-      separatorBuilder: (context, index) => const Divider(),
-      itemBuilder: (context, index) {
-        final work = works[index];
-        return WorkListItem(
-          work: work,
-          onTap: () => _handleWorkSelected(context, work.id!),
-        );
-      },
     );
   }
 
@@ -8594,146 +8684,37 @@ class LoadingState extends StatelessWidget {
 }
 
 ``n
-# FILE:work_content.dart CONTEXT
-`dart
-// filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\work_content.dart
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../providers/work_browse_provider.dart';
-import '../../../theme/app_sizes.dart';
-import '../../../viewmodels/states/work_browse_state.dart';
-import 'content/empty_state.dart';
-import 'content/items/work_grid_item.dart';
-import 'content/items/work_list_item.dart';
-
-class WorkContent extends ConsumerWidget {
-  const WorkContent({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-
-    // 错误状态
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: Theme.of(context).colorScheme.error),
-            const SizedBox(height: AppSizes.m),
-            Text(state.error!),
-            const SizedBox(height: AppSizes.m),
-            FilledButton.icon(
-              onPressed: () => viewModel.loadWorks(),
-              icon: const Icon(Icons.refresh),
-              label: const Text('重试'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 加载状态
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    // 空状态
-    if (state.works.isEmpty) {
-      return WorkEmptyState(
-        onImport: () => _showImportDialog(context, ref),
-      );
-    }
-
-    // 内容展示
-    return state.viewMode == ViewMode.grid 
-        ? _buildGrid(state, ref)
-        : _buildList(state, ref);
-  }
-
-  Widget _buildGrid(WorkBrowseState state, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.m),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        childAspectRatio: AppSizes.gridItemWidth / AppSizes.gridItemTotalHeight,
-      ),
-      itemCount: state.works.length,
-      itemBuilder: (context, index) {
-        final work = state.works[index];
-        return WorkGridItem(
-          work: work,
-          selectable: state.batchMode,
-          selected: state.selectedWorks.contains(work.id),
-          onSelected: work.id != null 
-              ? (selected) => viewModel.toggleSelection(work.id!)
-              : null,
-          onTap: work.id != null 
-              ? () => _handleWorkTap(context, work.id!)
-              : null,
-        );
-      },
-    );
-  }
-
-  Widget _buildList(WorkBrowseState state, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.m),
-      itemCount: state.works.length,
-      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.m),
-      itemBuilder: (context, index) {
-        final work = state.works[index];
-        return WorkListItem(
-          work: work,
-          isSelectionMode: state.batchMode,
-          isSelected: state.selectedWorks.contains(work.id),
-          onSelectionChanged: work.id != null 
-              ? (selected) => viewModel.toggleSelection(work.id!)
-              : null,
-          onTap: work.id != null 
-              ? () => _handleWorkTap(context, work.id!)
-              : null,
-        );
-      },
-    );
-  }
-
-  void _handleWorkTap(BuildContext context, String workId) {
-    Navigator.pushNamed(context, '/work/detail', arguments: workId);
-  }
-
-  Future<void> _showImportDialog(BuildContext context, WidgetRef ref) async {
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    final success = await viewModel.showImportDialog(context);
-    await viewModel.handleImportResult(success);
-  }
-}
-
-``n
 # FILE:work_toolbar.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\work_toolbar.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../providers/work_browse_provider.dart';
 import '../../../theme/app_sizes.dart';
-import 'toolbar/batch_mode_button.dart';
-import 'toolbar/import_button.dart';
-import 'toolbar/search_field.dart';
-import 'toolbar/view_mode_toggle.dart';
+import '../../../viewmodels/states/work_browse_state.dart';
 
-class WorkToolbar extends ConsumerWidget {
-  const WorkToolbar({super.key});
+class WorkToolbar extends StatelessWidget {
+  final ViewMode viewMode;
+  final ValueChanged<ViewMode> onViewModeChanged;
+  final VoidCallback onImport;
+  final ValueChanged<String> onSearch;
+  final bool batchMode;
+  final ValueChanged<bool> onBatchModeChanged;
+  final int selectedCount;
+  final VoidCallback onDeleteSelected;
+
+  const WorkToolbar({
+    super.key,
+    required this.viewMode,
+    required this.onViewModeChanged,
+    required this.onImport,
+    required this.onSearch,
+    required this.batchMode,
+    required this.onBatchModeChanged,
+    required this.selectedCount,
+    required this.onDeleteSelected,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
@@ -8742,35 +8723,101 @@ class WorkToolbar extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor,
-          ),
+          bottom: BorderSide(color: theme.dividerColor),
         ),
       ),
       child: Row(
         children: [
-          const ImportButton(),
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: onImport,
+            tooltip: '导入作品',
+          ),
           const SizedBox(width: AppSizes.s),
-          const BatchModeButton(),
+          IconButton(
+            icon: Icon(batchMode ? Icons.check_box : Icons.check_box_outline_blank),
+            onPressed: () => onBatchModeChanged(!batchMode),
+            tooltip: batchMode ? '退出批量选择' : '批量选择',
+          ),
           const Spacer(),
-          const SearchField(),
-          const SizedBox(width: AppSizes.m),
-          const ViewModeToggle(),
-          if (state.batchMode) ...[
-            const SizedBox(width: AppSizes.m),
-            if (state.selectedWorks.isNotEmpty) ...[
-              Text('已选择 ${state.selectedWorks.length} 项'),
-              const SizedBox(width: AppSizes.s),
-              FilledButton.tonalIcon(
-                onPressed: viewModel.deleteSelected,
-                icon: const Icon(Icons.delete),
-                label: Text('删除${state.selectedWorks.length}项'),
+          SizedBox(
+            width: 200,
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: '搜索...',
+                prefixIcon: Icon(Icons.search),
+                isDense: true,
               ),
-            ],
+              onChanged: onSearch,
+            ),
+          ),
+          const SizedBox(width: AppSizes.m),
+          IconButton(
+            icon: Icon(viewMode == ViewMode.grid ? Icons.grid_view : Icons.list),
+            onPressed: () => onViewModeChanged(
+              viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid,
+            ),
+            tooltip: viewMode == ViewMode.grid ? '切换到列表视图' : '切换到网格视图',
+          ),
+          if (batchMode && selectedCount > 0) ...[
+            const SizedBox(width: AppSizes.m),
+            Text('已选择 $selectedCount 项'),
+            const SizedBox(width: AppSizes.s),
+            FilledButton.tonalIcon(
+              icon: const Icon(Icons.delete),
+              label: Text('删除$selectedCount项'),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('确认删除'),
+                    content: Text('确定要删除选中的 $selectedCount 个作品吗？此操作不可恢复。'),
+                    actions: [
+                      TextButton(
+                        child: const Text('取消'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('删除'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  onDeleteSelected();
+                }
+              },
+            ),
           ],
         ],
       ),
     );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定要删除选中的 $selectedCount 个作品吗？此操作不可恢复。'),
+        actions: [
+          TextButton(
+            child: const Text('取消'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          FilledButton(
+            child: const Text('删除'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onDeleteSelected();
+    }
   }
 }
 
@@ -8823,6 +8870,7 @@ class WorkGridView extends StatelessWidget {
   final bool batchMode;
   final Set<String> selectedWorks;
   final Function(String, bool) onSelectionChanged;
+  final Function(String)? onItemTap;
 
   const WorkGridView({
     super.key,
@@ -8830,6 +8878,7 @@ class WorkGridView extends StatelessWidget {
     required this.batchMode,
     required this.selectedWorks,
     required this.onSelectionChanged,
+    this.onItemTap,
   });
 
   @override
@@ -8839,9 +8888,10 @@ class WorkGridView extends StatelessWidget {
         final width = constraints.maxWidth - (AppSizes.m * 2);
         final columns = (width / 280.0).floor();
         final crossAxisCount = columns < 2 ? 2 : columns;
-        
+
         final spacing = AppSizes.m;
-        final availableWidth = (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+        final availableWidth =
+            (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
         final aspectRatio = availableWidth / (availableWidth * 1.4);
 
         return GridView.builder(
@@ -8857,9 +8907,11 @@ class WorkGridView extends StatelessWidget {
             final work = works[index];
             return WorkGridItem(
               work: work,
-              selectable: batchMode,
-              selected: selectedWorks.contains(work.id),
-              onSelected: (selected) => onSelectionChanged(work.id!, selected),
+              isSelected: selectedWorks.contains(work.id),
+              isSelectionMode: batchMode,
+              onTap: () => batchMode 
+                  ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
+                  : onItemTap?.call(work.id!),
             );
           },
         );
@@ -8882,6 +8934,7 @@ class WorkListView extends StatelessWidget {
   final bool batchMode;
   final Set<String> selectedWorks;
   final void Function(String workId, bool selected) onSelectionChanged;
+  final Function(String)? onItemTap;
 
   const WorkListView({
     super.key,
@@ -8889,6 +8942,7 @@ class WorkListView extends StatelessWidget {
     required this.batchMode,
     required this.selectedWorks,
     required this.onSelectionChanged,
+    this.onItemTap,
   });
 
   @override
@@ -8903,8 +8957,9 @@ class WorkListView extends StatelessWidget {
           work: work,
           isSelected: selectedWorks.contains(work.id),
           isSelectionMode: batchMode,
-          onSelectionChanged: (selected) => 
-              onSelectionChanged(work.id!, selected),
+          onTap: () => batchMode 
+              ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
+              : onItemTap?.call(work.id!),
         );
       },
     );
@@ -8917,50 +8972,56 @@ class WorkListView extends StatelessWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\content\items\work_grid_item.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../domain/entities/work.dart';
+import '../../../../../providers/work_browse_provider.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
 class WorkGridItem extends StatelessWidget {
   final Work work;
-  final bool selected;
-  final bool selectable;
-  final ValueChanged<bool>? onSelected;
+  final bool isSelected;
+  final bool isSelectionMode;
+  final VoidCallback onTap;  // 修改为必需参数
 
   const WorkGridItem({
     super.key,
     required this.work,
-    this.selected = false,
-    this.selectable = false,
-    this.onSelected, void Function()? onTap,
+    required this.onTap,
+    this.isSelected = false,
+    this.isSelectionMode = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: selectable ? () => onSelected?.call(!selected) : null,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        onTap: onTap,
+        child: Stack(
           children: [
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildThumbnail(context),
-                  if (selectable || selected) _buildSelectionOverlay(context),
-                ],
+            Column(
+              children: [
+                _buildThumbnail(context),
+                _buildMetadata(context),
+              ],
+            ),
+            if (isSelectionMode)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onTap(),
+                  ),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.m),
-              child: _buildMetadata(context),
-            ),
           ],
         ),
       ),
@@ -9019,17 +9080,15 @@ class WorkGridItem extends StatelessWidget {
   Widget _buildSelectionOverlay(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: selected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-            : Colors.transparent,
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
       ),
       child: Align(
         alignment: Alignment.topRight,
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.xs),
-          child: Checkbox(
-            value: selected,
-            onChanged: (value) => onSelected?.call(value ?? false),
+          child: Icon(
+            Icons.check_circle,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ),
@@ -9064,25 +9123,21 @@ class WorkListItem extends StatelessWidget {
   final Work work;
   final bool isSelected;
   final bool isSelectionMode;
-  final ValueChanged<bool>? onSelectionChanged;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;  // 修改为必需参数
 
   const WorkListItem({
     super.key,
     required this.work,
-    this.isSelected = false,
-    this.isSelectionMode = false,
-    this.onSelectionChanged,
-    this.onTap,
+    required this.isSelected,
+    required this.isSelectionMode,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Card(
       child: InkWell(
-        onTap: !isSelectionMode ? onTap : () => onSelectionChanged?.call(!isSelected),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.m),
           child: SizedBox(
@@ -9095,13 +9150,40 @@ class WorkListItem extends StatelessWidget {
                     padding: const EdgeInsets.only(right: AppSizes.m),
                     child: Checkbox(
                       value: isSelected,
-                      onChanged: (value) => 
-                          onSelectionChanged?.call(value ?? false),
+                      onChanged: (_) => onTap(),
                     ),
                   ),
                 _buildThumbnail(context),
                 const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        work.name ?? '',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (work.author != null) ...[
+                        const SizedBox(height: AppSizes.xs),
+                        Text(
+                          work.author!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                      const Spacer(),
+                      Row(
+                        children: [
+                          if (work.style != null) _buildTag(context, work.style!),
+                          if (work.tool != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: AppSizes.s),
+                              child: _buildTag(context, work.tool!),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -10020,10 +10102,12 @@ class StyleSection extends ConsumerWidget {
         return FilterChip(
           label: Text(style.label),
           selected: selected,
-          onSelected: (value) => 
-              viewModel.updateFilter(state.filter.copyWith(
-                style: () => value ? style : null,
-              )),
+          onSelected: (value) {
+            debugPrint('StyleSection - style selected: $style, value: $value'); // 添加日志
+            viewModel.updateFilter(state.filter.copyWith(
+              style: () => value ? style : null,
+            ));
+          },
         );
       }).toList(),
     );
@@ -10061,14 +10145,15 @@ class ToolSection extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: WorkTool.values.map((tool) {
-        final selected = state.filter.tool == tool;
+        final selected = state.filter.tool?.value == tool.value;  // 修改这里，比较value
         return FilterChip(
           label: Text(tool.label),
           selected: selected,
-          onSelected: (value) => 
-              viewModel.updateFilter(state.filter.copyWith(
-                tool:()=> value ? tool : null,
-              )),
+          onSelected: (value) => viewModel.updateFilter(
+            state.filter.copyWith(
+              tool: () => value ? WorkTool.fromValue(tool.value) : null,  // 使用value创建枚举
+            ),
+          ),
         );
       }).toList(),
     );
@@ -10097,6 +10182,8 @@ class WorkFilterPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
+    
+    debugPrint('FilterPanel - current filter: ${state.filter}'); // 添加日志
 
     return Material(
       color: theme.colorScheme.surface,
@@ -11295,8 +11382,39 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void updateFilter(WorkFilter filter) {
-    state = state.copyWith(filter: filter);
-    _loadFilteredWorks();
+    debugPrint('ViewModel - updateFilter: $filter');
+    _loadFilteredWorksWithFilter(filter);
+  }
+
+  Future<void> _loadFilteredWorksWithFilter(WorkFilter filter) async {
+    debugPrint('ViewModel - _loadFilteredWorksWithFilter started');
+    
+    state = state.copyWith(
+      filter: filter,
+      isLoading: true,
+    );
+    
+    try {
+      debugPrint('ViewModel - current filter: ${state.filter}');
+      final works = await _workService.queryWorks(
+        searchQuery: state.searchQuery,
+        filter: filter,  // Use the new filter directly
+        sortOption: filter.sortOption,
+      );
+      debugPrint('ViewModel - got ${works.length} works');
+      
+      state = state.copyWith(
+        works: works,
+        isLoading: false,
+      );
+      debugPrint('State updated, current works count: ${state.works.length}');
+    } catch (e) {
+      debugPrint('ViewModel - error: $e');
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+    }
   }
 
   void toggleSortDirection() {
@@ -11324,18 +11442,16 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(selectedWorks: newSelection);
   }
 
-  Future<void> deleteSelected() async {
+  Future<void> deleteSelected() async {  // 移除 BuildContext 参数
     if (state.selectedWorks.isEmpty) return;
 
     state = state.copyWith(isLoading: true);
     try {
-      for (final workId in state.selectedWorks) {
-        await _workService.deleteWork(workId);
-      }
-      // 重新加载数据
+      await Future.wait(
+        state.selectedWorks.map((id) => _workService.deleteWork(id))
+      );
       await loadWorks();
-      // 退出批量模式
-      toggleBatchMode();
+      toggleBatchMode(); // 删除完成后退出批量模式
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -11359,18 +11475,30 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   Future<void> _loadFilteredWorks() async {
+    debugPrint('ViewModel - _loadFilteredWorks started');
+    debugPrint('Current state works count: ${state.works.length}');  // 添加当前状态记录
+    
     state = state.copyWith(isLoading: true);
     try {
+      debugPrint('ViewModel - current filter: ${state.filter}');
       final works = await _workService.queryWorks(
         searchQuery: state.searchQuery,
         filter: state.filter,
         sortOption: state.filter.sortOption,
       );
-      state = state.copyWith(
+      debugPrint('ViewModel - got ${works.length} works');
+      
+      // 添加更详细的状态更新日志
+      final newState = state.copyWith(
         works: works,
         isLoading: false,
       );
+      debugPrint('New state works count: ${newState.works.length}');
+      
+      state = newState;
+      debugPrint('State updated, current works count: ${state.works.length}');
     } catch (e) {
+      debugPrint('ViewModel - error: $e');
       state = state.copyWith(
         error: e.toString(),
         isLoading: false,
@@ -11570,6 +11698,12 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   void setSidebarState(bool sidebarOpen) {
     state = state.copyWith(isSidebarOpen: sidebarOpen);
+    // 保存状态
+    _stateRestorationService.saveWorkBrowseState(state);
+  }
+
+  void setViewMode(ViewMode viewMode) {
+    state = state.copyWith(viewMode: viewMode);
     // 保存状态
     _stateRestorationService.saveWorkBrowseState(state);
   }
@@ -11873,6 +12007,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\viewmodels\states\work_browse_state.dart
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/entities/work.dart';
@@ -11925,6 +12060,30 @@ class WorkBrowseState {
     this.isLoadingMore = false,
   }) : searchController = searchController ?? TextEditingController();
 
+@override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is WorkBrowseState &&
+        listEquals(works, other.works) &&  // 使用 listEquals 比较列表
+        filter == other.filter &&
+        viewMode == other.viewMode &&
+        isLoading == other.isLoading &&
+        error == other.error &&
+        batchMode == other.batchMode &&
+        setEquals(selectedWorks, other.selectedWorks);  // 使用 setEquals 比较集合
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        Object.hashAll(works),
+        filter,
+        viewMode,
+        isLoading,
+        error,
+        batchMode,
+        Object.hashAll(selectedWorks),
+      );
+      
   WorkBrowseState copyWith({
     bool? isLoading,
     String? error,
@@ -11942,6 +12101,9 @@ class WorkBrowseState {
     bool? hasMore,
     bool? isLoadingMore,
   }) {
+    // Add debug print to verify state updates
+    debugPrint('WorkBrowseState.copyWith - new works count: ${works?.length ?? this.works.length}');
+
     return WorkBrowseState(
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,

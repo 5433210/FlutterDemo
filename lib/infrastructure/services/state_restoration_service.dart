@@ -20,8 +20,7 @@ class StateRestorationService {
         'viewMode': state.viewMode.index,
         'isSidebarOpen': state.isSidebarOpen,
         'filter': state.filter.toJson(),
-        'searchQuery': state.searchQuery,
-        'pageSize': state.pageSize,
+        'searchQuery': state.searchQuery,        
       };
       await _prefs.setString(workBrowseKey, jsonEncode(stateMap));
     } catch (e) {
@@ -41,8 +40,7 @@ class StateRestorationService {
         viewMode: ViewMode.values[stateMap['viewMode'] as int],
         isSidebarOpen: stateMap['isSidebarOpen'] as bool,
         filter: WorkFilter.fromJson(stateMap['filter'] as Map<String, dynamic>),
-        searchQuery: (stateMap['searchQuery'] as String?) ?? '',
-        pageSize: stateMap['pageSize'] as int? ?? 20,
+        searchQuery: (stateMap['searchQuery'] as String?) ?? '',        
       );
     } catch (e) {
       debugPrint('Error restoring work browse state: $e');

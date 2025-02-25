@@ -133,8 +133,39 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void updateFilter(WorkFilter filter) {
-    state = state.copyWith(filter: filter);
-    _loadFilteredWorks();
+    debugPrint('ViewModel - updateFilter: $filter');
+    _loadFilteredWorksWithFilter(filter);
+  }
+
+  Future<void> _loadFilteredWorksWithFilter(WorkFilter filter) async {
+    debugPrint('ViewModel - _loadFilteredWorksWithFilter started');
+    
+    state = state.copyWith(
+      filter: filter,
+      isLoading: true,
+    );
+    
+    try {
+      debugPrint('ViewModel - current filter: ${state.filter}');
+      final works = await _workService.queryWorks(
+        searchQuery: state.searchQuery,
+        filter: filter,  // Use the new filter directly
+        sortOption: filter.sortOption,
+      );
+      debugPrint('ViewModel - got ${works.length} works');
+      
+      state = state.copyWith(
+        works: works,
+        isLoading: false,
+      );
+      debugPrint('State updated, current works count: ${state.works.length}');
+    } catch (e) {
+      debugPrint('ViewModel - error: $e');
+      state = state.copyWith(
+        error: e.toString(),
+        isLoading: false,
+      );
+    }
   }
 
   void toggleSortDirection() {
@@ -195,18 +226,30 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   Future<void> _loadFilteredWorks() async {
+    debugPrint('ViewModel - _loadFilteredWorks started');
+    debugPrint('Current state works count: ${state.works.length}');  // 添加当前状态记录
+    
     state = state.copyWith(isLoading: true);
     try {
+      debugPrint('ViewModel - current filter: ${state.filter}');
       final works = await _workService.queryWorks(
         searchQuery: state.searchQuery,
         filter: state.filter,
         sortOption: state.filter.sortOption,
       );
-      state = state.copyWith(
+      debugPrint('ViewModel - got ${works.length} works');
+      
+      // 添加更详细的状态更新日志
+      final newState = state.copyWith(
         works: works,
         isLoading: false,
       );
+      debugPrint('New state works count: ${newState.works.length}');
+      
+      state = newState;
+      debugPrint('State updated, current works count: ${state.works.length}');
     } catch (e) {
+      debugPrint('ViewModel - error: $e');
       state = state.copyWith(
         error: e.toString(),
         isLoading: false,

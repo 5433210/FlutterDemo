@@ -16,6 +16,8 @@ class WorkFilterPanel extends ConsumerWidget {
     final theme = Theme.of(context);
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
+    
+    debugPrint('FilterPanel - current filter: ${state.filter}'); // 添加日志
 
     return Material(
       color: theme.colorScheme.surface,

@@ -691,4 +691,19 @@ class SqliteDatabase implements DatabaseInterface {
     }
     return result;
   }
+
+  // 添加临时调试方法
+  Future<void> debugPrintAllWorks() async {
+    final db = await database;
+    final results = await db.query('works', columns: ['id', 'name', 'style']);
+    
+    debugPrint('\n数据库中的所有作品:');
+    debugPrint('----------------------------------------');
+    for (var row in results) {
+      debugPrint('ID: ${row['id']}');
+      debugPrint('Name: ${row['name']}');
+      debugPrint('Style: ${row['style']}');
+      debugPrint('----------------------------------------');
+    }
+  }
 }
