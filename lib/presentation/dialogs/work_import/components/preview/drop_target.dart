@@ -26,7 +26,7 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     return DragTarget<List<String>>(
       onWillAcceptWithDetails: (data) {
         setState(() => _isDragging = true);
-        return data.data != null && data.data!.isNotEmpty;
+        return data.data.isNotEmpty;
       },
       onAcceptWithDetails: (details) {
         setState(() => _isDragging = false);

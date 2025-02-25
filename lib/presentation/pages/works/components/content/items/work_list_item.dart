@@ -124,7 +124,7 @@ class WorkListItem extends StatelessWidget {
     return Container(
       width: AppSizes.thumbnailSize,
       height: AppSizes.thumbnailSize,
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Icon(
         Icons.image_outlined,
         size: 32,

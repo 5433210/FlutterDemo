@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../widgets/page_layout.dart';
-import '../../widgets/section_header.dart';
 import '../../../theme/app_sizes.dart';
 
 class WorkDetailPage extends StatelessWidget {

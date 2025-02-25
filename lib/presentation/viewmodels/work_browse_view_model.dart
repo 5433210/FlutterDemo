@@ -44,7 +44,9 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void toggleSidebar() {
-    state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
+    state = state.copyWith(
+      isSidebarOpen: !state.isSidebarOpen,
+    );
   }
 
   void toggleViewMode() {
@@ -406,6 +408,12 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   void setSidebarState(bool sidebarOpen) {
     state = state.copyWith(isSidebarOpen: sidebarOpen);
+    // 保存状态
+    _stateRestorationService.saveWorkBrowseState(state);
+  }
+
+  void setViewMode(ViewMode viewMode) {
+    state = state.copyWith(viewMode: viewMode);
     // 保存状态
     _stateRestorationService.saveWorkBrowseState(state);
   }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_sizes.dart';
 
 class SidebarToggleButton extends StatelessWidget {
   final bool isExpanded;

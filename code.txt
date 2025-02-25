@@ -238,57 +238,39 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'infrastructure/providers/shared_preferences_provider.dart';
+// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'presentation/pages/works/work_browse_page.dart';
-import 'presentation/pages/works/work_detail_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
 import 'theme/app_theme.dart';
-import 'presentation/pages/practices/practice_detail_page.dart';
-import 'presentation/pages/practices/practice_edit_page.dart';
-import 'routes/app_routes.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // 1. 先初始化 SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
-  
-  // 2. 初始化窗口管理器
   await windowManager.ensureInitialized();
 
-  // 3. 配置窗口选项
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(1280, 800),          // 设置初始窗口大小
-    minimumSize: Size(800, 600),    // 设置最小窗口大小
-    center: true,                   // 窗口居中显示
+    minimumSize: Size(800, 600),
     backgroundColor: Colors.transparent,
-    skipTaskbar: false,
+    skipTaskbar: false,  // 是否在任务栏隐藏
     titleBarStyle: TitleBarStyle.hidden,
+    windowButtonVisibility: true,
+    center: true,      // 窗口居中
+    title: '书法集字',
+    // 添加以下设置
+    fullScreen: false,
+    alwaysOnTop: false,
   );
+  
+  await windowManager.waitUntilReadyToShow(windowOptions);
+  await windowManager.show();
+  await windowManager.focus();
 
-  // 4. 应用窗口配置
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
-
-  // 5. 初始化其他服务
   await SqliteDatabase.initializePlatform();
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -297,81 +279,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(      
-      title: '书法集字',
-      theme: AppTheme.lightTheme,
+      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      home: const MainWindow(),
-      onGenerateRoute: (settings) {
-        final args = settings.arguments;
-        
-        switch (settings.name) {
-          case AppRoutes.home:
-            return MaterialPageRoute(
-              builder: (context) => const MainWindow(),
-            );
-            
-          case AppRoutes.workBrowse:
-            return MaterialPageRoute(
-              builder: (context) => const WorkBrowsePage(),
-            );
-            
-          case AppRoutes.workDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => WorkDetailPage(workId: args),
-              );
-            }
-            break;
-            
-          case AppRoutes.characterList:
-            return MaterialPageRoute(
-              builder: (context) => const CharacterListPage(),
-            );
-            
-          case AppRoutes.characterDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => CharacterDetailPage(
-                  charId: args,
-                  onBack: () => Navigator.of(context).pop(),
-                ),
-              );
-            }
-            break;
-            
-          case AppRoutes.practiceList:
-            return MaterialPageRoute(
-              builder: (context) => const PracticeListPage(),
-            );
-            
-          case AppRoutes.practiceEdit:
-            return MaterialPageRoute(
-              builder: (context) => PracticeEditPage(
-                practiceId: args as String?,
-              ),
-            );
-            
-          case AppRoutes.practiceDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => PracticeDetailPage(
-                  practiceId: args,
-                ),
-              );
-            }
-            break;
-            
-          case AppRoutes.settings:
-            return MaterialPageRoute(
-              builder: (context) => const SettingsPage(),
-            );
-        }
-        
-        // 未知路由返回首页
-        return MaterialPageRoute(
-          builder: (context) => const MainWindow(),
-        );
-      },
+      theme: AppTheme.lightTheme,
       // 添加本地化支持
       localizationsDelegates: const [
         // AppLocalizations.delegate,
@@ -383,6 +293,7 @@ class MyApp extends StatelessWidget {
         Locale('zh'),
         Locale('en'),
       ],
+      home: const MainWindow(),
     );
   }
 }
@@ -1088,13 +999,11 @@ class SettingsService {
 import 'dart:io';
 
 import 'package:demo/domain/interfaces/i_work_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
-import '../../domain/value_objects/work/work_info.dart';
 import '../../infrastructure/config/storage_paths.dart';
 import '../../presentation/models/work_filter.dart';
 import 'image_service.dart';
@@ -4869,7 +4778,6 @@ class WorkEditDialog extends StatelessWidget {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\dialogs\work_import\work_import_dialog.dart
 import 'dart:io';
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5538,7 +5446,6 @@ import '../../../../../domain/enums/work_tool.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../viewmodels/states/work_import_state.dart';
 import '../../../../viewmodels/work_import_view_model.dart';
-import '../../../../widgets/form/form_section.dart';
 import '../../../../widgets/forms/form_field_wrapper.dart';
 
 class WorkImportForm extends StatelessWidget {
@@ -5762,7 +5669,7 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
     return DragTarget<List<String>>(
       onWillAcceptWithDetails: (data) {
         setState(() => _isDragging = true);
-        return data.data != null && data.data!.isNotEmpty;
+        return data.data.isNotEmpty;
       },
       onAcceptWithDetails: (details) {
         setState(() => _isDragging = false);
@@ -6953,8 +6860,8 @@ class DateRangeFilter {
     DateRangePreset? Function()? preset,
   }) {
     return DateRangeFilter(
-      start: startDate != null ? startDate() : this.start,
-      end: endDate != null ? endDate() : this.end,
+      start: startDate != null ? startDate() : start,
+      end: endDate != null ? endDate() : end,
       preset: preset != null ? preset() : this.preset,
     );
   }
@@ -7740,7 +7647,7 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
 import 'package:flutter/material.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/page_toolbar.dart';
-import '../../widgets/search/search_box.dart';  // 添加
+// 添加
 import '../../../theme/app_sizes.dart';
 import 'practice_detail_page.dart';
 import 'practice_edit_page.dart';  // 添加
@@ -8374,378 +8281,125 @@ class StorageSettingsPanel extends ConsumerWidget {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\work_browse_page.dart
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
-import '../../../utils/date_formatter.dart';
-import '../../../utils/path_helper.dart';
+import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../theme/app_sizes.dart';
+import '../../viewmodels/states/work_browse_state.dart';
+import 'components/content/items/work_grid_item.dart';
+import 'components/content/items/work_list_item.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/layout/work_layout.dart';
-import 'components/work_content.dart';
-import 'components/work_toolbar.dart';
 // 添加这个导入
 
-class WorkBrowsePage extends ConsumerWidget {
+class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-
-    return WorkLayout(
-      // 工具栏
-      toolbar: const WorkToolbar(), // 简化为不需要传参
-      // 侧边栏
-      sidebar: state.isSidebarOpen ? WorkFilterPanel() : null,
-      // 主内容区
-      body: WorkContent(),
-    );
-  }
+  ConsumerState<WorkBrowsePage> createState() => _WorkBrowsePageState();
 }
 
-class WorkListItem extends StatelessWidget {
-  final Work work;
-  final VoidCallback? onTap;
-  final ValueChanged<bool>? onSelectionChanged;
-  final bool isSelected;
-  final bool isSelectionMode; // 添加这个字段
-
-  const WorkListItem({
-    super.key,
-    required this.work,
-    this.onTap,
-    this.onSelectionChanged,
-    this.isSelected = false,
-    this.isSelectionMode = false, // 初始化
-  });
-
+class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: isSelectionMode ? null : onTap, // 现在可以使用了
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.m),
-          child: SizedBox(
-            // Add fixed height container
-            height: AppSizes.listItemHeight, // Add this constant
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start, // Align to top
-              children: [
-                if (isSelectionMode) // 现在可以使用了
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSizes.m),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) =>
-                          onSelectionChanged?.call(value ?? false),
-                    ),
-                  ),
-                _buildThumbnail(context), // 修改这里，添加 context 参数
-                const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)), // 修改这里，添加 context 参数
-              ],
+    final state = ref.watch(workBrowseProvider);
+    
+    return Scaffold(
+      body: Column(
+        children: [
+          // ...existing toolbar code...
+          Expanded(
+            child: WorkLayout(
+              filterPanel: const WorkFilterPanel(),
+              child: _buildMainContent(state),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
-    // 更新方法签名
-    return SizedBox(
-      width: AppSizes.thumbnailSize,
-      child: FutureBuilder<String>(
-        future: PathHelper.getWorkThumbnailPath(work.id!),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final file = File(snapshot.data!);
-            if (file.existsSync()) {
-              return Image.file(
-                file,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-              );
-            }
-          }
-          return _buildPlaceholder(context);
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Add this
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          work.name ?? '',
-          style: textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (work.author?.isNotEmpty ?? false) ...[
-          const SizedBox(height: AppSizes.xxs),
-          Text(
-            work.author!,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
-        const SizedBox(height: AppSizes.s), // Replace Spacer
-        // Tags section
-        SizedBox(
-          height: 24,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              if (work.style?.isNotEmpty ?? false)
-                _buildTag(context, work.style!),
-              if (work.tool?.isNotEmpty ?? false)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.xs),
-                  child: _buildTag(context, work.tool!),
-                ),
-              if (work.imageCount != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.xs),
-                  child: _buildTag(context, '${work.imageCount}张'),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSizes.s), // Add fixed spacing
-        // Metadata section
-        DefaultTextStyle(
-          style: textTheme.bodySmall!.copyWith(
-            color: colorScheme.outline,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 14,
-                color: colorScheme.outline,
-              ),
-              const SizedBox(width: AppSizes.xs),
-              Text(DateFormatter.formatCompact(
-                  work.creationDate ?? work.createTime ?? DateTime.now())),
-            ],
-          ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(WorkBrowseState state) {
+    return Column(
+      children: [
+        // ...existing toolbar code...
+        Expanded(
+          child: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : state.works.isEmpty
+                  ? const Center(child: Text('没有作品'))
+                  : state.viewMode == ViewMode.grid
+                      ? _buildGrid(state.works)
+                      : _buildList(state.works),
         ),
       ],
     );
   }
 
-  Widget _buildTag(BuildContext context, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.s,
-        vertical: 2,
+  Widget _buildGrid(List<Work> works) {
+    return GridView.builder(
+      padding: const EdgeInsets.all(AppSizes.m),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: AppSizes.gridCrossAxisCount,
+        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
+        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
+        childAspectRatio: AppSizes.gridItemWidth / AppSizes.gridItemTotalHeight,
       ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(AppSizes.xs),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 32,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      ),
-    );
-  }
-}
-
-class WorkGridItem extends StatelessWidget {
-  final Work work;
-  final VoidCallback? onTap;
-  final bool selectable;
-  final bool selected;
-  final ValueChanged<bool>? onSelected;
-
-  const WorkGridItem({
-    super.key,
-    required this.work,
-    this.onTap,
-    this.selectable = false,
-    this.selected = false,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: selectable ? () => onSelected?.call(!selected) : onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 图片区域固定宽高比
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildThumbnail(context),
-                  if (selectable || selected) _buildSelectionOverlay(context),
-                ],
-              ),
-            ),
-            // 内容区域自适应高度
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.m),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    work.name ?? '',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (work.author?.isNotEmpty ?? false) ...[
-                    const SizedBox(height: AppSizes.xxs),
-                    Text(
-                      work.author!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: AppSizes.s),
-                  _buildMetadata(context),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetadata(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return DefaultTextStyle(
-      style: textTheme.bodySmall!.copyWith(
-        color: colorScheme.outline,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.photo_outlined,
-            size: 16,
-            color: colorScheme.outline,
-          ),
-          const SizedBox(width: AppSizes.xs),
-          Text('${work.imageCount ?? 0}张'),
-          const Spacer(),
-          Text(DateFormatter.formatCompact(
-            work.creationDate ?? work.createTime ?? DateTime.now(),
-          )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
-    if (work.id == null) return _buildPlaceholder(context);
-
-    return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id!),
-      builder: (context, snapshot) {
-        debugPrint('Thumbnail path for ${work.id}: ${snapshot.data}');
-
-        if (snapshot.hasData) {
-          final file = File(snapshot.data!);
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (ctx, error, stack) {
-              debugPrint('Error loading thumbnail: $error');
-              return _buildPlaceholder(context);
-            },
-          );
-        }
-        return _buildPlaceholder(context);
+      itemCount: works.length,
+      itemBuilder: (context, index) {
+        final work = works[index];
+        return WorkGridItem(
+          work: work,
+          onTap: () => _handleWorkSelected(context, work.id!),
+        );
       },
     );
   }
 
-  Widget _buildSelectionOverlay(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: selected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-            : Colors.transparent,
-      ),
-      child: Align(
-        alignment: Alignment.topRight,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xs),
-          child: Checkbox(
-            value: selected,
-            onChanged: (value) => onSelected?.call(value ?? false),
-          ),
-        ),
-      ),
+  Widget _buildList(List<Work> works) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSizes.m),
+      itemCount: works.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final work = works[index];
+        return WorkListItem(
+          work: work,
+          onTap: () => _handleWorkSelected(context, work.id!),
+        );
+      },
     );
   }
 
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 32,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      ),
+  void _handleWorkSelected(BuildContext context, String workId) {
+    Navigator.pushNamed(
+      context,
+      '/work_detail',
+      arguments: workId,
     );
+  }
+
+  Future<void> _showImportDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const WorkImportDialog(),
+    );
+    
+    if (result == true) {
+      ref.read(workBrowseProvider.notifier).loadWorks();
+    }
   }
 }
-
 ``n
 # FILE:work_detail_page.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\work_detail_page.dart
 import 'package:flutter/material.dart';
-import '../../widgets/page_layout.dart';
-import '../../widgets/section_header.dart';
 import '../../../theme/app_sizes.dart';
 
 class WorkDetailPage extends StatelessWidget {
@@ -9384,7 +9038,7 @@ class WorkGridItem extends StatelessWidget {
 
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(
           Icons.image_outlined,
@@ -9526,7 +9180,7 @@ class WorkListItem extends StatelessWidget {
     return Container(
       width: AppSizes.thumbnailSize,
       height: AppSizes.thumbnailSize,
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Icon(
         Icons.image_outlined,
         size: 32,
@@ -9537,75 +9191,479 @@ class WorkListItem extends StatelessWidget {
 }
 
 ``n
+# FILE:date_range_filter_section.dart CONTEXT
+`dart
+// filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\date_range_filter_section.dart
+import 'package:flutter/material.dart';
+import '../../../../models/date_range_filter.dart';
+import '../../../../theme/app_sizes.dart';
+import 'package:intl/intl.dart';
+
+class DateRangeFilterSection extends StatefulWidget {  // 改为 StatefulWidget
+  final DateRangeFilter? filter;
+  final ValueChanged<DateRangeFilter?> onChanged;
+
+  const DateRangeFilterSection({
+    super.key,
+    this.filter,
+    required this.onChanged,
+  });
+
+  @override
+  State<DateRangeFilterSection> createState() => _DateRangeFilterSectionState();
+}
+
+class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    // 默认显示预设标签页，不再根据过滤器状态决定
+    _tabController.index = 0;
+  }
+
+  @override
+  void didUpdateWidget(covariant DateRangeFilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 只在选择预设时切换到预设标签页
+    if (oldWidget.filter?.preset != widget.filter?.preset && 
+        widget.filter?.preset != null) {
+      _tabController.animateTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bool showResetChip = widget.filter != null && 
+        (widget.filter!.preset != null || widget.filter!.start != null || widget.filter!.end != null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 当前筛选条件显示
+        if (showResetChip)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.s),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Chip(
+                    label: Text(_formatFilterText()),
+                    onDeleted: () {
+                      widget.onChanged(null);
+                      // 重置时默认切换到预设标签页
+                      _tabController.animateTo(0);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: '预设'),
+            Tab(text: '自定义'),
+          ],
+          // 移除 onTap 处理器，让用户可以自由切换标签页
+        ),
+        const SizedBox(height: AppSizes.m),
+        SizedBox(
+          height: 240,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildPresets(theme),
+              _buildCustomRange(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _clearPreset() {
+    if (widget.filter?.preset != null) {
+      widget.onChanged(DateRangeFilter(
+        start: widget.filter?.start,
+        end: widget.filter?.end,
+      ));
+    }
+  }
+
+  void _clearCustomRange() {
+    if (widget.filter?.start != null || widget.filter?.end != null) {
+      if (widget.filter?.preset != null) {
+        widget.onChanged(DateRangeFilter.preset(widget.filter!.preset!));
+      } else {
+        widget.onChanged(null);
+      }
+    }
+  }
+
+  Widget _buildPresets(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.s),
+      child: Column(  // 改用 Column 以获得更好的布局控制
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: AppSizes.xs,
+            runSpacing: AppSizes.xs,
+            children: [
+              for (final preset in DateRangePreset.values)
+                FilterChip(
+                  label: Text(preset.label),
+                  selected: widget.filter?.preset == preset,
+                  onSelected: (selected) {
+                    widget.onChanged(selected ? DateRangeFilter.preset(preset) : null);
+                  },
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primaryContainer,
+                ),
+            ],
+          ),
+          if (widget.filter?.preset != null) ...[
+            const SizedBox(height: AppSizes.m),
+            Text(
+              _getPresetDateRange(widget.filter!.preset!),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _getPresetDateRange(DateRangePreset preset) {
+    final range = preset.getRange();
+    return '${_formatDate(range.start)} - ${_formatDate(range.end)}';
+  }
+
+  Widget _buildCustomRange(BuildContext context) {
+    final isStartDateError = widget.filter?.start != null && 
+                           widget.filter?.end != null && 
+                           widget.filter!.start!.isAfter(widget.filter!.end!);
+                           
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildDateField(
+          context: context,
+          label: '开始日期',
+          value: widget.filter?.start,
+          error: isStartDateError ? '开始日期不能晚于结束日期' : null,
+          onPressed: () => _selectDate(context, true),
+          onClear: () => _updateDateRange(startDate: null),
+        ),
+        const SizedBox(height: AppSizes.m),
+        _buildDateField(
+          context: context,
+          label: '结束日期',
+          value: widget.filter?.end,
+          onPressed: () => _selectDate(context, false),
+          onClear: () => _updateDateRange(endDate: null),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateField({
+    required BuildContext context,
+    required String label,
+    required DateTime? value,
+    required VoidCallback onPressed,
+    required VoidCallback onClear,
+    String? error,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: AppSizes.xs),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.calendar_today, size: 18),
+          label: Text(value != null ? _formatDate(value) : '点击选择日期'),
+          onPressed: onPressed,
+          style: error != null ? 
+            OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ) : null,
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSizes.xs),
+            child: Text(
+              error,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final initialDate = isStartDate ? widget.filter?.start : widget.filter?.end;
+    final minDate = isStartDate ? null : widget.filter?.start;
+    final maxDate = isStartDate ? widget.filter?.end : null;
+
+    final result = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      selectableDayPredicate: (date) {
+        if (minDate != null && date.isBefore(minDate)) return false;
+        if (maxDate != null && date.isAfter(maxDate)) return false;
+        return true;
+      },
+    );
+
+    if (result != null) {
+      _updateDateRange(
+        startDate: isStartDate ? result : widget.filter?.start,
+        endDate: isStartDate ? widget.filter?.end : result,
+      );
+    }
+  }
+
+  void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
+    final newFilter = DateRangeFilter(
+      start: startDate ?? widget.filter?.start,
+      end: endDate ?? widget.filter?.end,
+    );
+    
+    if (newFilter != widget.filter) {
+      widget.onChanged(newFilter);
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat.yMd().format(date);
+  }
+
+  String _formatFilterText() {
+    if (widget.filter == null) return '不限';
+    if (widget.filter!.preset != null) {
+      return widget.filter!.preset!.label;
+    }
+    
+    final DateTimeRange? range = widget.filter!.effectiveRange;
+    if (range == null) return '不限';
+    
+    final start = _formatDate(range.start);
+    final end = _formatDate(range.end);
+    if (start == end) return start;
+    return '$start - $end';
+  }
+}
+
+``n
 # FILE:date_range_section.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\date_range_section.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../models/date_range_filter.dart';
-import '../../../../providers/work_browse_provider.dart';
-import '../../../../viewmodels/states/work_browse_state.dart';
-import '../../../../viewmodels/work_browse_view_model.dart';
-import 'work_filter_section.dart';
+import '../../../../theme/app_sizes.dart';
+import 'package:intl/intl.dart';
 
-class DateRangeSection extends ConsumerWidget {
-  const DateRangeSection({super.key});
+class DateRangeSection extends StatefulWidget {
+  final DateTimeRange? initialValue;
+  final ValueChanged<DateTimeRange?> onChanged;
+
+  const DateRangeSection({
+    super.key,
+    this.initialValue,
+    required this.onChanged,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    final state = ref.watch(workBrowseProvider);
+  State<DateRangeSection> createState() => _DateRangeSectionState();
+}
 
-    return WorkFilterSection(
-      title: '创作时间',
-      child: Column(
-        children: [
-          _buildPresets(state, viewModel),
-          const SizedBox(height: 8),
-          _buildCustomDateRange(context, state, viewModel),
-        ],
-      ),  
-    );
+class _DateRangeSectionState extends State<DateRangeSection> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialValue?.start;
+    _endDate = widget.initialValue?.end;
   }
 
-  Widget _buildPresets(WorkBrowseState state, WorkBrowseViewModel viewModel) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: DateRangePreset.values.map((preset) => 
-        FilterChip(
-          label: Text(preset.label),
-          selected: state.filter.datePreset == preset,
-          onSelected: (value) => viewModel.updateDatePreset(value ? preset : null),
+  @override
+  Widget build(BuildContext context) {
+    final isStartDateError = _startDate != null && 
+                           _endDate != null && 
+                           _startDate!.isAfter(_endDate!);
+                           
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _buildDateField(
+          context: context,
+          label: '开始日期',
+          value: _startDate,
+          error: isStartDateError ? '开始日期不能晚于结束日期' : null,
+          onPressed: () => _selectDate(
+            context: context,
+            initialDate: _startDate,
+            isStartDate: true,
+            maxDate: _endDate,
+          ),
+          onClear: () => _updateDateRange(startDate: null),
         ),
-      ).toList(),
+        const SizedBox(height: AppSizes.m),
+        _buildDateField(
+          context: context,
+          label: '结束日期',
+          value: _endDate,
+          onPressed: () => _selectDate(
+            context: context,
+            initialDate: _endDate,
+            isStartDate: false,
+            minDate: _startDate,
+          ),
+          onClear: () => _updateDateRange(endDate: null),
+        ),
+        // 添加应用和清除按钮
+        if (_hasValidRange || _hasSelection) ...[
+          const SizedBox(height: AppSizes.m),
+          Row(
+            children: [
+              if (_hasValidRange)
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _applyDateRange,
+                    child: const Text('应用'),
+                  ),
+                ),
+              if (_hasSelection) ...[
+                if (_hasValidRange)
+                  const SizedBox(width: AppSizes.s),
+                Expanded(
+                  child: TextButton(
+                    onPressed: _clearDateRange,
+                    child: const Text('清除'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildCustomDateRange(
-    BuildContext context,
-    WorkBrowseState state,
-    WorkBrowseViewModel viewModel,
-  ) {
-    return OutlinedButton(
-      child: Text(state.filter.dateRange?.toString() ?? '自定义日期范围'),
-      onPressed: () => _showDateRangePicker(context, viewModel),
-    );
-  }
+  bool get _hasValidRange => 
+    _startDate != null && _endDate != null && _startDate!.isBefore(_endDate!);
 
-  Future<void> _showDateRangePicker(
-    BuildContext context,
-    WorkBrowseViewModel viewModel,  
-  ) async {
-    final dateRange = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
+  bool get _hasSelection => _startDate != null || _endDate != null;
 
-    if (dateRange != null) {
-      viewModel.updateDateRange(dateRange);
+  void _applyDateRange() {
+    if (_hasValidRange) {
+      widget.onChanged(DateTimeRange(
+        start: _startDate!,
+        end: _endDate!,
+      ));
     }
+  }
+
+  void _clearDateRange() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+      widget.onChanged(null);
+    });
+  }
+
+  Widget _buildDateField({
+    required BuildContext context,
+    required String label,
+    required DateTime? value,
+    required VoidCallback onPressed,
+    required VoidCallback onClear,
+    String? error,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: AppSizes.xs),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.calendar_today, size: 18),
+          label: Text(value != null ? _formatDate(value) : '点击选择日期'),
+          onPressed: onPressed,
+          style: error != null ? 
+            OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ) : null,
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSizes.xs),
+            child: Text(
+              error,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Future<void> _selectDate({
+    required BuildContext context,
+    DateTime? initialDate,
+    DateTime? minDate,
+    DateTime? maxDate,
+    required bool isStartDate,
+  }) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: maxDate ?? DateTime.now(),
+    );
+
+    if (date != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = date;
+        } else {
+          _endDate = date;
+        }
+        _updateDateRange();
+      });
+    }
+  }
+
+  void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
+    setState(() {
+      _startDate = startDate ?? _startDate;
+      _endDate = endDate ?? _endDate;
+      widget.onChanged(_startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null);
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 }
 
@@ -9615,150 +9673,93 @@ class DateRangeSection extends ConsumerWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\date_section.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../models/date_range_filter.dart';
 import '../../../../providers/work_browse_provider.dart';
-import '../../../../viewmodels/states/work_browse_state.dart';
-import '../../../../viewmodels/work_browse_view_model.dart';
-import 'work_filter_section.dart';
+import 'date_range_filter_section.dart';
+import 'date_range_section.dart';
 
-class DateSection extends ConsumerWidget {
+class DateSection extends ConsumerWidget {  // 改为普通 ConsumerWidget
   const DateSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
     final state = ref.watch(workBrowseProvider);
-
-    return WorkFilterSection(
-      title: '创作时间',
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    
+    return DefaultTabController(  // 使用 DefaultTabController 替代手动管理
+      length: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildDatePresets(state, viewModel),
-          const SizedBox(height: AppSizes.m),
-          _buildDateRangePicker(context, state, viewModel),
+          Text('创作时间', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: AppSizes.s),
+          DateRangeFilterSection(
+            filter: DateRangeFilter(
+              preset: state.filter.datePreset,
+              start: state.filter.dateRange?.start,
+              end: state.filter.dateRange?.end,
+            ),
+            onChanged: (filter) {
+              viewModel.updateFilter(state.filter.copyWith(
+                datePreset: () => filter?.preset,
+                dateRange: () => filter?.effectiveRange,
+              ));
+            },
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildDatePresets(WorkBrowseState state, WorkBrowseViewModel viewModel) {
-    return Wrap(
-      spacing: AppSizes.s,
-      runSpacing: AppSizes.s,
-      children: DateRangePreset.values.map((preset) {
-        final selected = state.filter.datePreset == preset;
-        return FilterChip(
+class _PresetTab extends ConsumerWidget {
+  const _PresetTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.s),
+      child: Wrap(
+        spacing: AppSizes.xs,
+        runSpacing: AppSizes.xs,
+        children: DateRangePreset.values.map((preset) => FilterChip(
           label: Text(preset.label),
-          selected: selected,
-          onSelected: (value) {
-            if (value) {
-              viewModel.updateFilter(state.filter.copyWith(
-                datePreset: () => preset,
-                dateRange: null, // 清除自定义日期范围
-              ));
-            } else {
-              viewModel.updateFilter(state.filter.copyWith(
-                datePreset: null,
-              ));
-            }
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildDateRangePicker(
-    BuildContext context, 
-    WorkBrowseState state, 
-    WorkBrowseViewModel viewModel
-  ) {
-    final dateRange = state.filter.dateRange;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _DatePickerField(
-            label: '开始日期',
-            date: dateRange?.start,
-            onChanged: (date) {
-              if (date != null) {
-                final newRange = DateTimeRange(
-                  start: date,
-                  end: dateRange?.end ?? DateTime.now(),
-                );
-                viewModel.updateFilter(state.filter.copyWith(
-                  dateRange: () => newRange,
-                  datePreset: null, // 清除预设
-                ));
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: AppSizes.m),
-        Expanded(
-          child: _DatePickerField(
-            label: '结束日期',
-            date: dateRange?.end,
-            minDate: dateRange?.start,
-            onChanged: (date) {
-              if (date != null && dateRange?.start != null) {
-                final newRange = DateTimeRange(
-                  start: dateRange!.start,
-                  end: date,
-                );
-                viewModel.updateFilter(state.filter.copyWith(
-                  dateRange: () => newRange,
-                  datePreset: null,
-                ));
-              }
-            },
-          ),
-        ),
-      ],
+          selected: state.filter.datePreset == preset,
+          onSelected: (selected) => viewModel.updateDatePreset(selected ? preset : null),
+          visualDensity: VisualDensity.compact,
+        )).toList(),
+      ),
     );
   }
 }
 
-class _DatePickerField extends StatelessWidget {
-  final String label;
-  final DateTime? date;
-  final DateTime? minDate;
-  final ValueChanged<DateTime?> onChanged;
-
-  const _DatePickerField({
-    required this.label,
-    required this.onChanged,
-    this.date,
-    this.minDate,
-  });
+class _CustomTab extends ConsumerWidget {
+  const _CustomTab();
 
   @override
-  Widget build(BuildContext context) {
-    return TextField(
-      readOnly: true,
-      controller: TextEditingController(
-        text: date != null 
-            ? DateFormat('yyyy/MM/dd').format(date!)
-            : '',
+  Widget build(BuildContext context, WidgetRef ref) {   
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.s),
+        child: DateRangeSection(
+          initialValue: state.filter.dateRange,
+          onChanged: (range) {
+            if (range != null) {
+              viewModel.updateDateRange(range);
+            } else {
+              viewModel.clearDateFilter();
+            }
+          },
+        ),
       ),
-      decoration: InputDecoration(
-        labelText: label,
-        suffixIcon: const Icon(Icons.calendar_today),
-      ),
-      onTap: () async {
-        final selected = await showDatePicker(
-          context: context,
-          initialDate: date ?? DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-        );
-        if (selected != null) {
-          onChanged(selected);
-        }
-      },
     );
   }
 }
@@ -9807,6 +9808,62 @@ class FilterChipGroup extends StatelessWidget {
 }
 
 ``n
+# FILE:sidebar_toggle.dart CONTEXT
+`dart
+// filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\sidebar_toggle.dart
+import 'package:flutter/material.dart';
+import '../../../../theme/app_sizes.dart';
+
+class SidebarToggle extends StatelessWidget {
+  final bool isOpen;
+  final VoidCallback onToggle;
+
+  const SidebarToggle({
+    super.key,
+    required this.isOpen,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      width: 24,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          left: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          ),
+          right: BorderSide(
+            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: onToggle,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(AppSizes.xxs),
+            ),
+            child: Icon(
+              isOpen ? Icons.chevron_left : Icons.chevron_right,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+``n
 # FILE:sort_section.dart CONTEXT
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\sort_section.dart
@@ -9814,42 +9871,115 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/work_filter.dart';
 import '../../../../providers/work_browse_provider.dart';
-import 'work_filter_section.dart';
+import '../../../../theme/app_sizes.dart';
+import '../../../../viewmodels/states/work_browse_state.dart';
+import '../../../../viewmodels/work_browse_view_model.dart';
 
 class SortSection extends ConsumerWidget {
   const SortSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
     final state = ref.watch(workBrowseProvider);
-
-    return WorkFilterSection(
-      title: '排序',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          DropdownButton<SortField>(
-            value: state.filter.sortOption.field,
-            items: SortField.values.map((field) {
-              return DropdownMenuItem(
-                value: field,
-                child: Text(field.label),
-              );
-            }).toList(),
-            onChanged: (SortField? value) {
-              if (value != null) viewModel.updateSortField(value);
-            },
-          ),
-          IconButton(
-            icon: Icon(
-              state.filter.sortOption.descending 
-                ? Icons.arrow_downward 
-                : Icons.arrow_upward
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    final theme = Theme.of(context);
+    final isDescending = state.filter.sortOption.descending;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('排序', style: theme.textTheme.titleMedium),
+            const SizedBox(width: AppSizes.s),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.s,
+                vertical: AppSizes.xs,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(AppSizes.s),
+              ),
+              child: InkWell(
+                onTap: () => viewModel.toggleSortDirection(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isDescending ? '降序' : '升序',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.sort,
+                      size: 18,
+                      textDirection: isDescending ? TextDirection.rtl : TextDirection.ltr,
+                      color: theme.colorScheme.onSecondaryContainer,
+                    ),
+                  ],
+                ),
+              ),
             ),
-            onPressed: viewModel.toggleSortDirection,
+          ],
+        ),
+        const SizedBox(height: AppSizes.s),
+        ...SortField.values
+            .where((field) => field != SortField.none)
+            .map((field) => _buildSortItem(field, field.label, state, viewModel, theme)),
+      ],
+    );
+  }
+
+  Widget _buildSortItem(
+    SortField field, 
+    String label, 
+    WorkBrowseState state,
+    WorkBrowseViewModel viewModel,
+    ThemeData theme,
+  ) {
+    final bool selected = state.filter.sortOption.field == field;
+
+    return Material(
+      color: selected ? theme.colorScheme.secondaryContainer : Colors.transparent,
+      borderRadius: BorderRadius.circular(AppSizes.s),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppSizes.s),
+        onTap: () => viewModel.updateSortField(field),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.m,
+            vertical: AppSizes.s,
           ),
-        ],
+          child: Row(
+            children: [
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: Radio<SortField>(
+                  value: field,
+                  groupValue: selected ? field : null,
+                  onChanged: (_) => viewModel.updateSortField(field),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              const SizedBox(width: AppSizes.s),
+              Expanded(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: selected 
+                        ? theme.colorScheme.onSecondaryContainer
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -9951,6 +10081,9 @@ class ToolSection extends ConsumerWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\filter\work_filter_panel.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../providers/work_browse_provider.dart';
+import '../../../../theme/app_sizes.dart';
+import '../../../work_browser/components/sidebar_toggle.dart';
 import 'sort_section.dart';
 import 'style_section.dart';
 import 'tool_section.dart';
@@ -9961,17 +10094,51 @@ class WorkFilterPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const SortSection(),
-        const SizedBox(height: 24),
-        const StyleSection(),
-        const SizedBox(height: 24),
-        const ToolSection(),
-        const SizedBox(height: 24),
-        const DateSection(),
-      ],
+    final theme = Theme.of(context);
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+
+    return Material(
+      color: theme.colorScheme.surface,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (state.isSidebarOpen)
+            Container(
+              width: 280,
+              padding: const EdgeInsets.all(AppSizes.m),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(
+                    color: theme.dividerColor,
+                  ),
+                ),
+              ),
+              child: CustomScrollView(  // 使用 CustomScrollView 替代 SingleChildScrollView
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SortSection(),
+                        Divider(height: AppSizes.l),
+                        StyleSection(),
+                        Divider(height: AppSizes.l),
+                        ToolSection(),
+                        Divider(height: AppSizes.l),
+                        DateSection(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          SidebarToggle(
+            isOpen: state.isSidebarOpen,
+            onToggle: viewModel.toggleSidebar,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -10027,39 +10194,24 @@ class WorkFilterSection extends StatelessWidget {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\layout\work_layout.dart
 import 'package:flutter/material.dart';
-import '../../../../theme/app_sizes.dart';
 
 class WorkLayout extends StatelessWidget {
-  final Widget toolbar;
-  final Widget body;
-  final Widget? sidebar;
+  final Widget child;
+  final Widget filterPanel;
 
   const WorkLayout({
     super.key,
-    required this.toolbar,
-    required this.body,
-    this.sidebar,
+    required this.child,
+    required this.filterPanel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        toolbar,
-        Expanded(
-          child: Row(
-            children: [
-              if (sidebar != null) ...[
-                SizedBox(
-                  width: AppSizes.sidebarWidth,
-                  child: sidebar!,
-                ),
-                const VerticalDivider(width: 1),
-              ],
-              Expanded(child: body),
-            ],
-          ),
-        ),
+        Expanded(child: child),
+        filterPanel,
       ],
     );
   }
@@ -10070,7 +10222,6 @@ class WorkLayout extends StatelessWidget {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\pages\works\components\sidebar\sidebar_toggle_button.dart
 import 'package:flutter/material.dart';
-import '../../../../theme/app_sizes.dart';
 
 class SidebarToggleButton extends StatelessWidget {
   final bool isExpanded;
@@ -10121,7 +10272,7 @@ class WorkSidebar extends ConsumerWidget {
     return Row(
       children: [
         if (state.isSidebarOpen) ...[
-          Container(
+          SizedBox(
             width: AppSizes.sidebarWidth,
             child: WorkFilterPanel(),
           ),
@@ -10435,7 +10586,7 @@ class SidebarToggle extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(AppSizes.xxs),
             ),
             child: Icon(
@@ -10467,7 +10618,7 @@ class ErrorBoundary {
   ) async {
     try {
       return await operation();
-    } catch (e, stack) {
+    } catch (e) {
       // 错误边界处理
       _showErrorDialog(context, e.toString());
       rethrow;
@@ -11055,7 +11206,9 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void toggleSidebar() {
-    state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
+    state = state.copyWith(
+      isSidebarOpen: !state.isSidebarOpen,
+    );
   }
 
   void toggleViewMode() {
@@ -11426,7 +11579,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 `dart
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\viewmodels\work_import_view_model.dart
 import 'dart:io';
-import 'package:demo/domain/value_objects/work/work_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14100,7 +14252,6 @@ class SelectableListItem extends StatelessWidget {
 // filepath: C:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\widgets\loading\data_loader.dart
 import 'package:flutter/material.dart';
 import '../empty/empty_placeholder.dart';
-import '../../../theme/app_sizes.dart';
 
 class DataLoader<T> extends StatelessWidget {
   final bool isLoading;

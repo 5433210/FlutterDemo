@@ -68,9 +68,9 @@ class WorkContent extends ConsumerWidget {
         final work = state.works[index];
         return WorkGridItem(
           work: work,
-          selectable: state.batchMode,
-          selected: state.selectedWorks.contains(work.id),
-          onSelected: work.id != null 
+          isSelectionMode: state.batchMode,
+          isSelected: state.selectedWorks.contains(work.id),
+          onSelectionChanged: work.id != null 
               ? (selected) => viewModel.toggleSelection(work.id!)
               : null,
           onTap: work.id != null 

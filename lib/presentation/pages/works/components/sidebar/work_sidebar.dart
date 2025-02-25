@@ -16,7 +16,7 @@ class WorkSidebar extends ConsumerWidget {
     return Row(
       children: [
         if (state.isSidebarOpen) ...[
-          Container(
+          SizedBox(
             width: AppSizes.sidebarWidth,
             child: WorkFilterPanel(),
           ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../empty/empty_placeholder.dart';
-import '../../../theme/app_sizes.dart';
 
 class DataLoader<T> extends StatelessWidget {
   final bool isLoading;

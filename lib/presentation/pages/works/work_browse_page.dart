@@ -1,365 +1,142 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
-import '../../../utils/date_formatter.dart';
-import '../../../utils/path_helper.dart';
+import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../theme/app_sizes.dart';
+import '../../viewmodels/states/work_browse_state.dart';
+import 'components/content/items/work_grid_item.dart';
+import 'components/content/items/work_list_item.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/layout/work_layout.dart';
-import 'components/work_content.dart';
 import 'components/work_toolbar.dart';
 // 添加这个导入
 
-class WorkBrowsePage extends ConsumerWidget {
+class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-
-    return WorkLayout(
-      // 工具栏
-      toolbar: const WorkToolbar(), // 简化为不需要传参
-      // 侧边栏
-      sidebar: state.isSidebarOpen ? WorkFilterPanel() : null,
-      // 主内容区
-      body: WorkContent(),
-    );
-  }
+  ConsumerState<WorkBrowsePage> createState() => _WorkBrowsePageState();
 }
 
-class WorkListItem extends StatelessWidget {
-  final Work work;
-  final VoidCallback? onTap;
-  final ValueChanged<bool>? onSelectionChanged;
-  final bool isSelected;
-  final bool isSelectionMode; // 添加这个字段
-
-  const WorkListItem({
-    super.key,
-    required this.work,
-    this.onTap,
-    this.onSelectionChanged,
-    this.isSelected = false,
-    this.isSelectionMode = false, // 初始化
-  });
-
+class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: isSelectionMode ? null : onTap, // 现在可以使用了
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.m),
-          child: SizedBox(
-            // Add fixed height container
-            height: AppSizes.listItemHeight, // Add this constant
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start, // Align to top
-              children: [
-                if (isSelectionMode) // 现在可以使用了
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSizes.m),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) =>
-                          onSelectionChanged?.call(value ?? false),
-                    ),
-                  ),
-                _buildThumbnail(context), // 修改这里，添加 context 参数
-                const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)), // 修改这里，添加 context 参数
-              ],
-            ),
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+    
+    return Scaffold(
+      body: Column(
+        children: [
+          WorkToolbar(  // 添加工具栏
+            viewMode: state.viewMode,
+            onViewModeChanged: (mode) => viewModel.setViewMode(mode),
+            onImport: () => _showImportDialog(context),
+            onSearch: viewModel.setSearchQuery,
+            batchMode: state.batchMode,
+            onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
+            selectedCount: state.selectedWorks.length,
+            onDeleteSelected: viewModel.deleteSelected,
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
-    // 更新方法签名
-    return SizedBox(
-      width: AppSizes.thumbnailSize,
-      child: FutureBuilder<String>(
-        future: PathHelper.getWorkThumbnailPath(work.id!),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            final file = File(snapshot.data!);
-            if (file.existsSync()) {
-              return Image.file(
-                file,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-              );
-            }
-          }
-          return _buildPlaceholder(context);
-        },
-      ),
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Add this
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          work.name ?? '',
-          style: textTheme.titleMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (work.author?.isNotEmpty ?? false) ...[
-          const SizedBox(height: AppSizes.xxs),
-          Text(
-            work.author!,
-            style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.primary,
+          Expanded(
+            child: WorkLayout(
+              filterPanel: const WorkFilterPanel(),
+              child: _buildMainContent(state),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
-        const SizedBox(height: AppSizes.s), // Replace Spacer
-        // Tags section
-        SizedBox(
-          height: 24,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              if (work.style?.isNotEmpty ?? false)
-                _buildTag(context, work.style!),
-              if (work.tool?.isNotEmpty ?? false)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.xs),
-                  child: _buildTag(context, work.tool!),
-                ),
-              if (work.imageCount != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.xs),
-                  child: _buildTag(context, '${work.imageCount}张'),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSizes.s), // Add fixed spacing
-        // Metadata section
-        DefaultTextStyle(
-          style: textTheme.bodySmall!.copyWith(
-            color: colorScheme.outline,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 14,
-                color: colorScheme.outline,
-              ),
-              const SizedBox(width: AppSizes.xs),
-              Text(DateFormatter.formatCompact(
-                  work.creationDate ?? work.createTime ?? DateTime.now())),
-            ],
-          ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent(WorkBrowseState state) {
+    return Column(
+      children: [
+        // ...existing toolbar code...
+        Expanded(
+          child: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : state.works.isEmpty
+                  ? const Center(child: Text('没有作品'))
+                  : state.viewMode == ViewMode.grid
+                      ? _buildGrid(state.works)
+                      : _buildList(state.works),
         ),
       ],
     );
   }
 
-  Widget _buildTag(BuildContext context, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.s,
-        vertical: 2,
+  Widget _buildGrid(List<Work> works) {
+    final state = ref.watch(workBrowseProvider);
+    
+    return GridView.builder(
+      padding: const EdgeInsets.all(AppSizes.m),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: AppSizes.gridCrossAxisCount,
+        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
+        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
+        childAspectRatio: AppSizes.gridItemWidth / AppSizes.gridItemTotalHeight,
       ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(AppSizes.xs),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSecondaryContainer,
-            ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 32,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      ),
-    );
-  }
-}
-
-class WorkGridItem extends StatelessWidget {
-  final Work work;
-  final VoidCallback? onTap;
-  final bool selectable;
-  final bool selected;
-  final ValueChanged<bool>? onSelected;
-
-  const WorkGridItem({
-    super.key,
-    required this.work,
-    this.onTap,
-    this.selectable = false,
-    this.selected = false,
-    this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: selectable ? () => onSelected?.call(!selected) : onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 图片区域固定宽高比
-            AspectRatio(
-              aspectRatio: 1,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildThumbnail(context),
-                  if (selectable || selected) _buildSelectionOverlay(context),
-                ],
-              ),
-            ),
-            // 内容区域自适应高度
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.m),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    work.name ?? '',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (work.author?.isNotEmpty ?? false) ...[
-                    const SizedBox(height: AppSizes.xxs),
-                    Text(
-                      work.author!,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  const SizedBox(height: AppSizes.s),
-                  _buildMetadata(context),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetadata(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return DefaultTextStyle(
-      style: textTheme.bodySmall!.copyWith(
-        color: colorScheme.outline,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.photo_outlined,
-            size: 16,
-            color: colorScheme.outline,
-          ),
-          const SizedBox(width: AppSizes.xs),
-          Text('${work.imageCount ?? 0}张'),
-          const Spacer(),
-          Text(DateFormatter.formatCompact(
-            work.creationDate ?? work.createTime ?? DateTime.now(),
-          )),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(BuildContext context) {
-    if (work.id == null) return _buildPlaceholder(context);
-
-    return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id!),
-      builder: (context, snapshot) {
-        debugPrint('Thumbnail path for ${work.id}: ${snapshot.data}');
-
-        if (snapshot.hasData) {
-          final file = File(snapshot.data!);
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (ctx, error, stack) {
-              debugPrint('Error loading thumbnail: $error');
-              return _buildPlaceholder(context);
-            },
-          );
-        }
-        return _buildPlaceholder(context);
+      itemCount: works.length,
+      itemBuilder: (context, index) {
+        final work = works[index];
+        return WorkGridItem(
+          work: work,
+          onTap: () {
+            if (state.batchMode) {
+              ref.read(workBrowseProvider.notifier).toggleSelection(work.id!);
+            } else {
+              _handleWorkSelected(context, work.id!);
+            }
+          },
+        );
       },
     );
   }
 
-  Widget _buildSelectionOverlay(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: selected
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-            : Colors.transparent,
-      ),
-      child: Align(
-        alignment: Alignment.topRight,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xs),
-          child: Checkbox(
-            value: selected,
-            onChanged: (value) => onSelected?.call(value ?? false),
-          ),
-        ),
-      ),
+  Widget _buildList(List<Work> works) {
+    final state = ref.watch(workBrowseProvider);
+    
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSizes.m),
+      itemCount: works.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final work = works[index];
+        return WorkListItem(
+          work: work,
+          onTap: () {
+            if (state.batchMode) {
+              ref.read(workBrowseProvider.notifier).toggleSelection(work.id!);
+            } else {
+              _handleWorkSelected(context, work.id!);
+            }
+          },
+        );
+      },
     );
   }
 
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 32,
-          color: Theme.of(context).colorScheme.outline,
-        ),
-      ),
+  void _handleWorkSelected(BuildContext context, String workId) {
+    Navigator.pushNamed(
+      context,
+      '/work_detail',
+      arguments: workId,
     );
+  }
+
+  Future<void> _showImportDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const WorkImportDialog(),
+    );
+    
+    if (result == true) {
+      ref.read(workBrowseProvider.notifier).loadWorks();
+    }
   }
 }

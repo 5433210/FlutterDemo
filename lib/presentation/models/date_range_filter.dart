@@ -146,8 +146,8 @@ class DateRangeFilter {
     DateRangePreset? Function()? preset,
   }) {
     return DateRangeFilter(
-      start: startDate != null ? startDate() : this.start,
-      end: endDate != null ? endDate() : this.end,
+      start: startDate != null ? startDate() : start,
+      end: endDate != null ? endDate() : end,
       preset: preset != null ? preset() : this.preset,
     );
   }

@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../providers/work_browse_provider.dart';
 import '../../../theme/app_sizes.dart';
-import 'toolbar/batch_mode_button.dart';
-import 'toolbar/import_button.dart';
-import 'toolbar/search_field.dart';
-import 'toolbar/view_mode_toggle.dart';
+import '../../../viewmodels/states/work_browse_state.dart';
 
-class WorkToolbar extends ConsumerWidget {
-  const WorkToolbar({super.key});
+class WorkToolbar extends StatelessWidget {
+  final ViewMode viewMode;
+  final ValueChanged<ViewMode> onViewModeChanged;
+  final VoidCallback onImport;
+  final ValueChanged<String> onSearch;
+  final bool batchMode;
+  final ValueChanged<bool> onBatchModeChanged;
+  final int selectedCount;
+  final VoidCallback onDeleteSelected;
+
+  const WorkToolbar({
+    super.key,
+    required this.viewMode,
+    required this.onViewModeChanged,
+    required this.onImport,
+    required this.onSearch,
+    required this.batchMode,
+    required this.onBatchModeChanged,
+    required this.selectedCount,
+    required this.onDeleteSelected,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
@@ -22,31 +34,51 @@ class WorkToolbar extends ConsumerWidget {
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor,
-          ),
+          bottom: BorderSide(color: theme.dividerColor),
         ),
       ),
       child: Row(
         children: [
-          const ImportButton(),
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: onImport,
+            tooltip: '导入作品',
+          ),
           const SizedBox(width: AppSizes.s),
-          const BatchModeButton(),
+          IconButton(
+            icon: Icon(batchMode ? Icons.check_box : Icons.check_box_outline_blank),
+            onPressed: () => onBatchModeChanged(!batchMode),
+            tooltip: batchMode ? '退出批量选择' : '批量选择',
+          ),
           const Spacer(),
-          const SearchField(),
-          const SizedBox(width: AppSizes.m),
-          const ViewModeToggle(),
-          if (state.batchMode) ...[
-            const SizedBox(width: AppSizes.m),
-            if (state.selectedWorks.isNotEmpty) ...[
-              Text('已选择 ${state.selectedWorks.length} 项'),
-              const SizedBox(width: AppSizes.s),
-              FilledButton.tonalIcon(
-                onPressed: viewModel.deleteSelected,
-                icon: const Icon(Icons.delete),
-                label: Text('删除${state.selectedWorks.length}项'),
+          SizedBox(
+            width: 200,
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: '搜索...',
+                prefixIcon: Icon(Icons.search),
+                isDense: true,
               ),
-            ],
+              onChanged: onSearch,
+            ),
+          ),
+          const SizedBox(width: AppSizes.m),
+          IconButton(
+            icon: Icon(viewMode == ViewMode.grid ? Icons.grid_view : Icons.list),
+            onPressed: () => onViewModeChanged(
+              viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid,
+            ),
+            tooltip: viewMode == ViewMode.grid ? '切换到列表视图' : '切换到网格视图',
+          ),
+          if (batchMode && selectedCount > 0) ...[
+            const SizedBox(width: AppSizes.m),
+            Text('已选择 $selectedCount 项'),
+            const SizedBox(width: AppSizes.s),
+            FilledButton.tonalIcon(
+              onPressed: onDeleteSelected,
+              icon: const Icon(Icons.delete),
+              label: Text('删除$selectedCount项'),
+            ),
           ],
         ],
       ),

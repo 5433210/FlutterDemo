@@ -24,9 +24,10 @@ class WorkGridView extends StatelessWidget {
         final width = constraints.maxWidth - (AppSizes.m * 2);
         final columns = (width / 280.0).floor();
         final crossAxisCount = columns < 2 ? 2 : columns;
-        
+
         final spacing = AppSizes.m;
-        final availableWidth = (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+        final availableWidth =
+            (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
         final aspectRatio = availableWidth / (availableWidth * 1.4);
 
         return GridView.builder(
@@ -42,9 +43,10 @@ class WorkGridView extends StatelessWidget {
             final work = works[index];
             return WorkGridItem(
               work: work,
-              selectable: batchMode,
-              selected: selectedWorks.contains(work.id),
-              onSelected: (selected) => onSelectionChanged(work.id!, selected),
+              isSelected: selectedWorks.contains(work.id),
+              isSelectionMode: batchMode,
+              onSelectionChanged: (selected) =>
+                  onSelectionChanged(work.id!, selected),
             );
           },
         );

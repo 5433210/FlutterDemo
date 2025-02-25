@@ -12,7 +12,7 @@ class ErrorBoundary {
   ) async {
     try {
       return await operation();
-    } catch (e, stack) {
+    } catch (e) {
       // 错误边界处理
       _showErrorDialog(context, e.toString());
       rethrow;

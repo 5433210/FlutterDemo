@@ -1,13 +1,11 @@
 import 'dart:io';
 
 import 'package:demo/domain/interfaces/i_work_service.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
-import '../../domain/value_objects/work/work_info.dart';
 import '../../infrastructure/config/storage_paths.dart';
 import '../../presentation/models/work_filter.dart';
 import 'image_service.dart';
