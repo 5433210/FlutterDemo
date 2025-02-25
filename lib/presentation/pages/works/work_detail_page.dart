@@ -13,55 +13,26 @@ class WorkDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PageLayout(
-      navigationInfo: const Text('作品详情'),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          tooltip: '编辑',
-          onPressed: () {},
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        IconButton(
-          icon: const Icon(Icons.delete),
-          tooltip: '删除',
-          onPressed: () {},
-        ),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSizes.spacingMedium),
-        child: Row(
+        title: const Text('作品详情'),
+      ),
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    return Builder(
+      builder: (context) => SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 左侧预览区域
-            Expanded(
-              flex: 2,
-              child: Card(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionHeader(title: '作品内容'),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: _buildPreviewSection(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSizes.spacingMedium),
-            // 右侧信息区域
-            Expanded(
-              child: Card(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionHeader(title: '基本信息'),
-                    Expanded(
-                      child: _buildInfoSection(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            _buildPreviewSection(),
+            _buildInfoSection(context),
           ],
         ),
       ),

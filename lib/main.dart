@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'presentation/pages/works/work_browse_page.dart';
+import 'presentation/pages/works/work_detail_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_list_page.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
 import 'theme/app_theme.dart';
+import 'presentation/pages/practices/practice_detail_page.dart';
+import 'presentation/pages/practices/practice_edit_page.dart';
+import 'routes/app_routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,9 +47,81 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(      
-      title: 'Flutter Demo',
-      debugShowCheckedModeBanner: false,
+      title: '书法集字',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: false,
+      home: const MainWindow(),
+      onGenerateRoute: (settings) {
+        final args = settings.arguments;
+        
+        switch (settings.name) {
+          case AppRoutes.home:
+            return MaterialPageRoute(
+              builder: (context) => const MainWindow(),
+            );
+            
+          case AppRoutes.workBrowse:
+            return MaterialPageRoute(
+              builder: (context) => const WorkBrowsePage(),
+            );
+            
+          case AppRoutes.workDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => WorkDetailPage(workId: args),
+              );
+            }
+            break;
+            
+          case AppRoutes.characterList:
+            return MaterialPageRoute(
+              builder: (context) => const CharacterListPage(),
+            );
+            
+          case AppRoutes.characterDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => CharacterDetailPage(
+                  charId: args,
+                  onBack: () => Navigator.of(context).pop(),
+                ),
+              );
+            }
+            break;
+            
+          case AppRoutes.practiceList:
+            return MaterialPageRoute(
+              builder: (context) => const PracticeListPage(),
+            );
+            
+          case AppRoutes.practiceEdit:
+            return MaterialPageRoute(
+              builder: (context) => PracticeEditPage(
+                practiceId: args as String?,
+              ),
+            );
+            
+          case AppRoutes.practiceDetail:
+            if (args is String) {
+              return MaterialPageRoute(
+                builder: (context) => PracticeDetailPage(
+                  practiceId: args,
+                ),
+              );
+            }
+            break;
+            
+          case AppRoutes.settings:
+            return MaterialPageRoute(
+              builder: (context) => const SettingsPage(),
+            );
+        }
+        
+        // 未知路由返回首页
+        return MaterialPageRoute(
+          builder: (context) => const MainWindow(),
+        );
+      },
       // 添加本地化支持
       localizationsDelegates: const [
         // AppLocalizations.delegate,
@@ -58,7 +133,6 @@ class MyApp extends StatelessWidget {
         Locale('zh'),
         Locale('en'),
       ],
-      home: const MainWindow(),
     );
   }
 }
