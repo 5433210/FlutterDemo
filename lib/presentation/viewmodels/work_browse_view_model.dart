@@ -1,22 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 import '../../domain/interfaces/i_work_service.dart';
 import '../models/work_filter.dart';
 import 'states/work_browse_state.dart';
 
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   final IWorkService _workService;
+  Timer? _searchDebounce;
 
-  WorkBrowseViewModel(this._workService) : super(WorkBrowseState(
-    isLoading: false,
-    error: null,
-    works: [],
-    allWorks: [],
-    searchQuery: null,
-    viewMode: ViewMode.grid,
-    filter: const WorkFilter(),
-    sortOption: const SortOption(),
-    isSidebarOpen: true,
-  ));
+  WorkBrowseViewModel(this._workService) : super(const WorkBrowseState()) {
+    loadWorks();
+  }
 
   Future<void> loadWorks() async {
     state = state.copyWith(isLoading: true, error: null);
@@ -46,30 +40,27 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     );
   }
 
-
   Future<void> searchWorks(String query) async {
-    state = state.copyWith(
-      searchQuery: query,
-      isLoading: true,
-    );
-
-    try {
-      // 搜索时带上现有的过滤条件
-      final works = await _workService.queryWorks(
-        searchQuery: query,
-        filter: state.filter,
-      );
-
-      state = state.copyWith(
-        isLoading: false,
-        works: works,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-    }
+    if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () async {
+      state = state.copyWith(isLoading: true);
+      try {
+        final works = await _workService.queryWorks(
+          searchQuery: query,
+          filter: state.filter,
+        );
+        state = state.copyWith(
+          works: works,
+          searchQuery: query,
+          isLoading: false,
+        );
+      } catch (e) {
+        state = state.copyWith(
+          error: e.toString(),
+          isLoading: false,
+        );
+      }
+    });
   }
 
   Future<String?> getWorkThumbnail(String workId) async {
@@ -126,37 +117,78 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  void updateFilter(WorkFilter filter) async {
-    state = state.copyWith(
-      filter: filter,
-      isLoading: true,
+  void updateFilter(WorkFilter filter) {
+    state = state.copyWith(filter: filter);
+    _loadFilteredWorks();
+  }
+
+  void toggleSortDirection() {
+    final newSortOption = state.filter.sortOption.copyWith(
+      descending: !state.filter.sortOption.descending,
     );
+    updateFilter(state.filter.copyWith(sortOption: newSortOption));
+  }
+
+  // 批量操作方法
+  void toggleBatchMode() {
+    state = state.copyWith(
+      batchMode: !state.batchMode,
+      selectedWorks: {},  // 退出批量模式时清空选择
+    );
+  }
+
+  void toggleSelection(String workId) {
+    final newSelection = Set<String>.from(state.selectedWorks);
+    if (newSelection.contains(workId)) {
+      newSelection.remove(workId);
+    } else {
+      newSelection.add(workId);
+    }
+    state = state.copyWith(selectedWorks: newSelection);
+  }
+
+  Future<void> deleteSelected() async {
+    // ...现有删除逻辑
+  }
+
+  void setSearchQuery(String query) {
+    if (_searchDebounce?.isActive ?? false) {
+      _searchDebounce?.cancel();
+    }
     
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      state = state.copyWith(
+        searchQuery: query,
+        isLoading: true,
+      );
+      _loadFilteredWorks();
+    });
+  }
+
+  Future<void> _loadFilteredWorks() async {
+    state = state.copyWith(isLoading: true);
     try {
-      // 保持当前搜索条件,使用新的过滤条件查询
       final works = await _workService.queryWorks(
         searchQuery: state.searchQuery,
-        filter: filter,
+        filter: state.filter,
+        sortOption: state.filter.sortOption,
       );
-      
       state = state.copyWith(
-        isLoading: false,
         works: works,
+        isLoading: false,
       );
     } catch (e) {
       state = state.copyWith(
-        isLoading: false,
         error: e.toString(),
+        isLoading: false,
       );
     }
   }
 
-  void toggleSortDirection() {
-    final currentSort = state.filter.sortOption;
-    updateFilter(state.filter.copyWith(
-      sortOption: currentSort.copyWith(
-        descending: !currentSort.descending,  
-      ),
-    ));
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    state.dispose();
+    super.dispose();
   }
 }

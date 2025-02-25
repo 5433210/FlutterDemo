@@ -25,7 +25,7 @@ class PageLayout extends StatefulWidget {
 }
 
 class _PageLayoutState extends State<PageLayout> {
-  static const double _sidebarWidth = 320.0;  // 固定宽度
+  static const double _sidebarWidth = 320.0;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class _PageLayoutState extends State<PageLayout> {
       appBar: PageBar(
         title: widget.navigationInfo,
         actions: widget.actions,
-        toolbarHeight: 50,  // 更新常量名
+        toolbarHeight: 50,
       ),
       body: Row(
         children: [
@@ -52,7 +52,7 @@ class _PageLayoutState extends State<PageLayout> {
               children: [
                 if (widget.toolbar != null)
                   Container(
-                    height: AppSizes.pageToolbarHeight,  // 更新常量名
+                    height: AppSizes.pageToolbarHeight,
                     decoration: BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Theme.of(context).dividerColor),

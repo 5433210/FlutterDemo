@@ -25,17 +25,14 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   static const double sidebarWidth = 280.0;
-  bool _batchMode = false;
   final Set<String> _selectedWorks = {};
-  String _searchQuery = ''; // 添加搜索查询状态
-  late final TextEditingController _searchController;
+  bool _batchMode = false;
   Timer? _debounce;
+  final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
-    // 确保页面初始化时加载数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(workBrowseProvider.notifier).loadWorks();
     });
@@ -51,340 +48,41 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
-
+    
     return PageLayout(
       navigationInfo: const Text('作品浏览'),
-      toolbar: _buildToolbar(),
-      body: Row(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            width: state.isSidebarOpen ? sidebarWidth : 0,
-            child: state.isSidebarOpen
-                ? SingleChildScrollView(
-                    // 添加滚动视图包装
-                    child: Padding(
-                      // 添加内边距
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
-                      child: WorkFilterPanel(
-                        filter: state.filter,
-                        onFilterChanged:
-                            ref.read(workBrowseProvider.notifier).updateFilter,
-                      ),
-                    ),
-                  )
-                : null,
-          ),
-          SidebarToggle(
-            isOpen: state.isSidebarOpen,
-            onToggle: ref.read(workBrowseProvider.notifier).toggleSidebar,
-          ),
-          Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : state.error != null
-                    ? Center(child: Text(state.error!))
-                    : state.works.isEmpty
-                        ? const Center(child: Text('暂无作品'))
-                        : LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SizedBox(
-                                height: constraints.maxHeight,
-                                child: state.viewMode == ViewMode.grid
-                                    ? _buildGrid(state.works)
-                                    : _buildList(state.works),
-                              );
-                            },
-                          ),
-          ),
-        ],
+      toolbar: WorkToolbar(
+        batchMode: state.batchMode, // 从状态获取
+        selectedCount: state.selectedWorks.length,
+        onBatchModeChanged: (_) => 
+            ref.read(workBrowseProvider.notifier).toggleBatchMode(),
+        onDeleteSelected: () =>
+            ref.read(workBrowseProvider.notifier).deleteSelected(),
+      ),
+      body: WorkContent(
+        state: state,
+        selectedWorks: state.selectedWorks,
+        onSelectionChanged: (workId, selected) =>
+            ref.read(workBrowseProvider.notifier).toggleSelection(workId),
       ),
     );
   }
 
-  void _handleWorkSelected(BuildContext context, String workId) {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.workDetail,
-      arguments: workId,
-    );
+  void _handleSelection(String workId, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedWorks.add(workId);
+      } else {
+        _selectedWorks.remove(workId);
+      }
+    });
   }
 
-  // 添加搜索对话框
-  Future<void> _showSearchDialog(BuildContext context) async {
-    final query = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('搜索作品'),
-        content: TextField(
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: '请输入作品名称或作者',
-          ),
-          onChanged: (text) {
-            _searchQuery = text;
-          },
-        ),
-        actions: [
-          TextButton(
-            child: const Text('取消'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: const Text('搜索'),
-            onPressed: () => Navigator.of(context).pop(_searchQuery),
-          ),
-        ],
-      ),
-    );
-
-    if (query != null) {
-      setState(() {
-        _searchQuery = query;
-      });
-      ref.read(workBrowseProvider.notifier).searchWorks(query); // 调用搜索方法
-    }
-  }
-
-  Widget _buildMainContent(WorkBrowseState state) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final works = state.works;
-        return SizedBox(
-          // 添加固定高度约束
-          height: constraints.maxHeight,
-          child: state.viewMode == ViewMode.grid
-              ? _buildGrid(works)
-              : _buildList(works),
-        );
-      },
-    );
-  }
-
-  Widget _buildStatusBar(WorkBrowseState state) {
-    if (state.works.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.m,
-        vertical: AppSizes.xs,
-      ),
-      child: Row(
-        children: [
-          Text(
-            '共 ${state.works.length} 个作品',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildToolbar() {
-    final theme = Theme.of(context);
-    final state = ref.watch(workBrowseProvider);
-
-    return Container(
-      height: kToolbarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 1,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 左侧按钮组
-          Wrap(
-            spacing: AppSizes.s,
-            children: [
-              FilledButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('导入作品'),
-                onPressed: () => _showImportDialog(context),
-              ),
-              OutlinedButton.icon(
-                icon: Icon(_batchMode ? Icons.close : Icons.checklist),
-                label: Text(_batchMode ? '完成' : '批量处理'),
-                onPressed: () => setState(() => _batchMode = !_batchMode),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // 右侧控制组
-          Row(
-            children: [
-              // 视图切换按钮
-              IconButton(
-                icon: Icon(
-                  state.viewMode == ViewMode.grid
-                      ? Icons.view_list
-                      : Icons.grid_view,
-                  color: theme.colorScheme.primary,
-                ),
-                style: IconButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.s),
-                  ),
-                ),
-                onPressed: () =>
-                    ref.read(workBrowseProvider.notifier).toggleViewMode(),
-                tooltip: state.viewMode == ViewMode.grid ? '列表视图' : '网格视图',
-              ),
-              const SizedBox(width: AppSizes.s),
-
-              // 搜索框
-              SizedBox(
-                width: 240,
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: '搜索作品...',
-                    prefixIcon: const Icon(Icons.search, size: 20),
-                    isDense: true,
-                    filled: true,
-                    fillColor:
-                        theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.s,
-                      vertical: AppSizes.xs,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppSizes.m),
-                      borderSide: BorderSide.none,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear, size: 16),
-                            onPressed: () {
-                              _searchController.clear();
-                              ref
-                                  .read(workBrowseProvider.notifier)
-                                  .searchWorks('');
-                            },
-                          )
-                        : null,
-                  ),
-                  onChanged: (value) {
-                    if (_debounce?.isActive ?? false) _debounce?.cancel();
-                    _debounce = Timer(const Duration(milliseconds: 500), () {
-                      ref.read(workBrowseProvider.notifier).searchWorks(value);
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-
-          // 批量操作状态
-          if (_batchMode) ...[
-            const SizedBox(width: AppSizes.m),
-            Text(
-              '已选择 ${_selectedWorks.length} 项',
-              style: theme.textTheme.bodyMedium,
-            ),
-            if (_selectedWorks.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(left: AppSizes.s),
-                child: FilledButton.tonalIcon(
-                  icon: const Icon(Icons.delete),
-                  label: Text('删除${_selectedWorks.length}项'),
-                  onPressed: _deleteSelected,
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGrid(List<Work> works) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 计算合适的网格列数
-        final width = constraints.maxWidth - (AppSizes.m * 2); // 减去内边距
-        final itemWidth = 280.0; // 理想的单项宽度
-        final columns = (width / itemWidth).floor();
-        final crossAxisCount = columns < 2 ? 2 : columns; // 最少2列
-
-        // 计算实际的宽高比
-        final spacing = AppSizes.m;
-        final availableWidth =
-            (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
-        // 根据可用宽度计算合适的高度，确保内容不会溢出
-        final aspectRatio = availableWidth / (availableWidth * 1.4); // 1.4是高宽比
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(AppSizes.m),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            mainAxisSpacing: spacing,
-            crossAxisSpacing: spacing,
-            childAspectRatio: aspectRatio,
-          ),
-          itemCount: works.length,
-          itemBuilder: (context, index) {
-            final work = works[index];
-            return WorkGridItem(
-              work: work,
-              onTap: () => _handleWorkSelected(context, work.id!),
-              selectable: _batchMode,
-              selected: _selectedWorks.contains(work.id),
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    _selectedWorks.add(work.id!);
-                  } else {
-                    _selectedWorks.remove(work.id!);
-                  }
-                });
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildList(List<Work> works) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.m),
-      itemCount: works.length,
-      separatorBuilder: (context, index) => const SizedBox(height: AppSizes.s),
-      itemBuilder: (context, index) {
-        final work = works[index];
-        return WorkListItem(
-          work: work,
-          isSelected: _selectedWorks.contains(work.id),
-          isSelectionMode: _batchMode, // 添加这个参数
-          onSelectionChanged: _batchMode
-              ? (selected) {
-                  setState(() {
-                    if (selected) {
-                      _selectedWorks.add(work.id!);
-                    } else {
-                      _selectedWorks.remove(work.id!);
-                    }
-                  });
-                }
-              : null,
-          onTap:
-              _batchMode ? null : () => _handleWorkSelected(context, work.id!),
-        );
-      },
+  void _handleSearch(String value) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () => ref.read(workBrowseProvider.notifier).searchWorks(value),
     );
   }
 
@@ -415,39 +113,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
         _selectedWorks.clear();
         _batchMode = false;
       });
-    }
-  }
-
-  Future<void> _showImportDialog(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false, // 防止点击外部关闭
-      builder: (context) =>
-          WorkImportDialog(), // Remove const to allow state changes
-    );
-
-    if (result == true) {
-      try {
-        // Show loading indicator
-        await ref.read(workBrowseProvider.notifier).loadWorks();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('作品导入成功'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('刷新列表失败: ${e.toString()}'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
-      }
     }
   }
 }

@@ -1,0 +1,38 @@
+import 'package:flutter/material.dart';
+import '../../../../../domain/entities/work.dart';
+import '../../../../theme/app_sizes.dart';
+import 'items/work_list_item.dart';
+
+class WorkListView extends StatelessWidget {
+  final List<Work> works;
+  final bool batchMode;
+  final Set<String> selectedWorks;
+  final void Function(String workId, bool selected) onSelectionChanged;
+
+  const WorkListView({
+    super.key,
+    required this.works,
+    required this.batchMode,
+    required this.selectedWorks,
+    required this.onSelectionChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSizes.m),
+      itemCount: works.length,
+      separatorBuilder: (_, __) => const SizedBox(height: AppSizes.s),
+      itemBuilder: (context, index) {
+        final work = works[index];
+        return WorkListItem(
+          work: work,
+          isSelected: selectedWorks.contains(work.id),
+          isSelectionMode: batchMode,
+          onSelectionChanged: (selected) => 
+              onSelectionChanged(work.id!, selected),
+        );
+      },
+    );
+  }
+}
