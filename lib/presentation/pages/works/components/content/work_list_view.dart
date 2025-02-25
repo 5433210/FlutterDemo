@@ -8,6 +8,7 @@ class WorkListView extends StatelessWidget {
   final bool batchMode;
   final Set<String> selectedWorks;
   final void Function(String workId, bool selected) onSelectionChanged;
+  final Function(String)? onItemTap;
 
   const WorkListView({
     super.key,
@@ -15,6 +16,7 @@ class WorkListView extends StatelessWidget {
     required this.batchMode,
     required this.selectedWorks,
     required this.onSelectionChanged,
+    this.onItemTap,
   });
 
   @override
@@ -29,8 +31,9 @@ class WorkListView extends StatelessWidget {
           work: work,
           isSelected: selectedWorks.contains(work.id),
           isSelectionMode: batchMode,
-          onSelectionChanged: (selected) => 
-              onSelectionChanged(work.id!, selected),
+          onTap: () => batchMode 
+              ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
+              : onItemTap?.call(work.id!),
         );
       },
     );

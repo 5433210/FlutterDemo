@@ -75,13 +75,59 @@ class WorkToolbar extends StatelessWidget {
             Text('已选择 $selectedCount 项'),
             const SizedBox(width: AppSizes.s),
             FilledButton.tonalIcon(
-              onPressed: onDeleteSelected,
               icon: const Icon(Icons.delete),
               label: Text('删除$selectedCount项'),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('确认删除'),
+                    content: Text('确定要删除选中的 $selectedCount 个作品吗？此操作不可恢复。'),
+                    actions: [
+                      TextButton(
+                        child: const Text('取消'),
+                        onPressed: () => Navigator.pop(context, false),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('删除'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true) {
+                  onDeleteSelected();
+                }
+              },
             ),
           ],
         ],
       ),
     );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: Text('确定要删除选中的 $selectedCount 个作品吗？此操作不可恢复。'),
+        actions: [
+          TextButton(
+            child: const Text('取消'),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          FilledButton(
+            child: const Text('删除'),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      onDeleteSelected();
+    }
   }
 }

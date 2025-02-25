@@ -162,18 +162,16 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(selectedWorks: newSelection);
   }
 
-  Future<void> deleteSelected() async {
+  Future<void> deleteSelected() async {  // 移除 BuildContext 参数
     if (state.selectedWorks.isEmpty) return;
 
     state = state.copyWith(isLoading: true);
     try {
-      for (final workId in state.selectedWorks) {
-        await _workService.deleteWork(workId);
-      }
-      // 重新加载数据
+      await Future.wait(
+        state.selectedWorks.map((id) => _workService.deleteWork(id))
+      );
       await loadWorks();
-      // 退出批量模式
-      toggleBatchMode();
+      toggleBatchMode(); // 删除完成后退出批量模式
     } catch (e) {
       state = state.copyWith(
         isLoading: false,

@@ -3,13 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
-import '../../theme/app_sizes.dart';
 import '../../viewmodels/states/work_browse_state.dart';
-import 'components/content/items/work_grid_item.dart';
-import 'components/content/items/work_list_item.dart';
+import 'components/content/work_grid_view.dart';
+import 'components/content/work_list_view.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/layout/work_layout.dart';
 import 'components/work_toolbar.dart';
@@ -39,7 +37,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             batchMode: state.batchMode,
             onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
             selectedCount: state.selectedWorks.length,
-            onDeleteSelected: viewModel.deleteSelected,
+            onDeleteSelected: () => ref.read(workBrowseProvider.notifier).deleteSelected(),
           ),
           Expanded(
             child: WorkLayout(
@@ -55,68 +53,34 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   Widget _buildMainContent(WorkBrowseState state) {
     return Column(
       children: [
-        // ...existing toolbar code...
         Expanded(
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : state.works.isEmpty
                   ? const Center(child: Text('没有作品'))
                   : state.viewMode == ViewMode.grid
-                      ? _buildGrid(state.works)
-                      : _buildList(state.works),
+                      ? WorkGridView(
+                          works: state.works,
+                          batchMode: state.batchMode,
+                          selectedWorks: state.selectedWorks,
+                          onSelectionChanged: (workId, selected) => ref
+                              .read(workBrowseProvider.notifier)
+                              .toggleSelection(workId),
+                          onItemTap: (workId) =>
+                              _handleWorkSelected(context, workId),
+                        )
+                      : WorkListView(
+                          works: state.works,
+                          batchMode: state.batchMode,
+                          selectedWorks: state.selectedWorks,
+                          onSelectionChanged: (workId, selected) => ref
+                              .read(workBrowseProvider.notifier)
+                              .toggleSelection(workId),
+                          onItemTap: (workId) =>
+                              _handleWorkSelected(context, workId),
+                        ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGrid(List<Work> works) {
-    final state = ref.watch(workBrowseProvider);
-    
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.m),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        childAspectRatio: AppSizes.gridItemWidth / AppSizes.gridItemTotalHeight,
-      ),
-      itemCount: works.length,
-      itemBuilder: (context, index) {
-        final work = works[index];
-        return WorkGridItem(
-          work: work,
-          onTap: () {
-            if (state.batchMode) {
-              ref.read(workBrowseProvider.notifier).toggleSelection(work.id!);
-            } else {
-              _handleWorkSelected(context, work.id!);
-            }
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildList(List<Work> works) {
-    final state = ref.watch(workBrowseProvider);
-    
-    return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.m),
-      itemCount: works.length,
-      separatorBuilder: (context, index) => const Divider(),
-      itemBuilder: (context, index) {
-        final work = works[index];
-        return WorkListItem(
-          work: work,
-          onTap: () {
-            if (state.batchMode) {
-              ref.read(workBrowseProvider.notifier).toggleSelection(work.id!);
-            } else {
-              _handleWorkSelected(context, work.id!);
-            }
-          },
-        );
-      },
     );
   }
 

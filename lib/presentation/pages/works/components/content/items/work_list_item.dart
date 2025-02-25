@@ -8,25 +8,21 @@ class WorkListItem extends StatelessWidget {
   final Work work;
   final bool isSelected;
   final bool isSelectionMode;
-  final ValueChanged<bool>? onSelectionChanged;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;  // 修改为必需参数
 
   const WorkListItem({
     super.key,
     required this.work,
-    this.isSelected = false,
-    this.isSelectionMode = false,
-    this.onSelectionChanged,
-    this.onTap,
+    required this.isSelected,
+    required this.isSelectionMode,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Card(
       child: InkWell(
-        onTap: !isSelectionMode ? onTap : () => onSelectionChanged?.call(!isSelected),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.m),
           child: SizedBox(
@@ -39,13 +35,40 @@ class WorkListItem extends StatelessWidget {
                     padding: const EdgeInsets.only(right: AppSizes.m),
                     child: Checkbox(
                       value: isSelected,
-                      onChanged: (value) => 
-                          onSelectionChanged?.call(value ?? false),
+                      onChanged: (_) => onTap(),
                     ),
                   ),
                 _buildThumbnail(context),
                 const SizedBox(width: AppSizes.m),
-                Expanded(child: _buildContent(context)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        work.name ?? '',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (work.author != null) ...[
+                        const SizedBox(height: AppSizes.xs),
+                        Text(
+                          work.author!,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                      const Spacer(),
+                      Row(
+                        children: [
+                          if (work.style != null) _buildTag(context, work.style!),
+                          if (work.tool != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: AppSizes.s),
+                              child: _buildTag(context, work.tool!),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

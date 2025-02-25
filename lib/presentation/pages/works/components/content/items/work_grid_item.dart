@@ -7,65 +7,52 @@ import '../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
-class WorkGridItem extends ConsumerWidget {
+class WorkGridItem extends StatelessWidget {
   final Work work;
   final bool isSelected;
   final bool isSelectionMode;
-  final ValueChanged<bool>? onSelectionChanged;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;  // 修改为必需参数
 
   const WorkGridItem({
     super.key,
     required this.work,
+    required this.onTap,
     this.isSelected = false,
     this.isSelectionMode = false,
-    this.onSelectionChanged,
-    this.onTap,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    final isSelected = state.selectedWorks.contains(work.id);
-
-    return Stack(
-      children: [
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onTap,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Stack(
+          children: [
+            Column(
               children: [
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildThumbnail(context),
-                      if (isSelected) _buildSelectionOverlay(context),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(AppSizes.m),
-                  child: _buildMetadata(context),
-                ),
+                _buildThumbnail(context),
+                _buildMetadata(context),
               ],
             ),
-          ),
+            if (isSelectionMode)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onTap(),
+                  ),
+                ),
+              ),
+          ],
         ),
-        if (state.batchMode)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Checkbox(
-              value: isSelected,
-              onChanged: (_) => viewModel.toggleSelection(work.id!),
-            ),
-          ),
-      ],
+      ),
     );
   }
 

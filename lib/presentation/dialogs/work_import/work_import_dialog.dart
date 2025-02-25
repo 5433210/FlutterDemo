@@ -36,38 +36,34 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   bool _isLoading = false;
   // 用于记录已加载文件路径
   final Set<String> _loadedFilePaths = <String>{};
+  late final TextEditingController _nameController;
+  late final TextEditingController _authorController;
 
   @override
   void initState() {
     super.initState();
-    // Move the reset call to initState
+    _nameController = TextEditingController();
+    _authorController = TextEditingController();
     _resetDialog();
-  }
-
-  void _resetDialog() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier)
-        ..reset()
-        ..setName('')  // Explicitly reset name
-        ..setAuthor('') // Explicitly reset author
-        ..setStyle(null) // Explicitly reset style
-        ..setTool(null) // Explicitly reset tool
-        ..setRemarks('') // Explicitly reset remarks
-        ..setCreationDate(null);// Explicitly reset creation date
-        
-      _loadedFilePaths.clear();
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
+    _authorController.dispose();
     _loadedFilePaths.clear();
     super.dispose();
+  }
+
+  void _resetDialog() {
+    // 清空控制器的值
+    _nameController.clear();
+    _authorController.clear();
+    
+    // 重置 provider 状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(workImportProvider.notifier).reset();
+    });
   }
 
   Future<void> _pickImages(BuildContext context) async {
@@ -136,12 +132,13 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
     try {
       _formKey.currentState!.save();
-      
       final result = await ref.read(workImportProvider.notifier).importWork();
       
       if (!mounted) return;
 
       if (result) {
+        // 导入成功后清空状态
+        _resetDialog();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );

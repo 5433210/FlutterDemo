@@ -8,6 +8,7 @@ class WorkGridView extends StatelessWidget {
   final bool batchMode;
   final Set<String> selectedWorks;
   final Function(String, bool) onSelectionChanged;
+  final Function(String)? onItemTap;
 
   const WorkGridView({
     super.key,
@@ -15,6 +16,7 @@ class WorkGridView extends StatelessWidget {
     required this.batchMode,
     required this.selectedWorks,
     required this.onSelectionChanged,
+    this.onItemTap,
   });
 
   @override
@@ -45,8 +47,9 @@ class WorkGridView extends StatelessWidget {
               work: work,
               isSelected: selectedWorks.contains(work.id),
               isSelectionMode: batchMode,
-              onSelectionChanged: (selected) =>
-                  onSelectionChanged(work.id!, selected),
+              onTap: () => batchMode 
+                  ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
+                  : onItemTap?.call(work.id!),
             );
           },
         );
