@@ -1,5 +1,6 @@
 import 'package:demo/presentation/models/date_range_filter.dart';
 import 'package:flutter/material.dart';
+import 'dart:convert';
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -61,6 +62,18 @@ class SortOption {
     return SortOption(
       field: field ?? this.field,
       descending: descending ?? this.descending,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'field': field.index,
+    'descending': descending,
+  };
+
+  factory SortOption.fromJson(Map<String, dynamic> json) {
+    return SortOption(
+      field: SortField.values[json['field'] as int],
+      descending: json['descending'] as bool,
     );
   }
 }
@@ -125,6 +138,42 @@ class WorkFilter {
       sortOption: sortOption ?? this.sortOption,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'style': style?.value,
+    'tool': tool?.value,
+    'datePreset': datePreset?.index,
+    'dateRange': dateRange != null ? {
+      'start': dateRange!.start.toIso8601String(),
+      'end': dateRange!.end.toIso8601String(),
+    } : null,
+    'sortOption': sortOption.toJson(),
+  };
+
+  factory WorkFilter.fromJson(Map<String, dynamic> json) {
+    return WorkFilter(
+      style: json['style'] != null ? WorkStyle.values.firstWhere(
+        (e) => e.value == json['style'],
+      ) : null,
+      tool: json['tool'] != null ? WorkTool.values.firstWhere(
+        (e) => e.value == json['tool'],
+      ) : null,
+      datePreset: json['datePreset'] != null ? 
+        DateRangePreset.values[json['datePreset'] as int] : null,
+      dateRange: json['dateRange'] != null ? DateTimeRange(
+        start: DateTime.parse(json['dateRange']['start']),
+        end: DateTime.parse(json['dateRange']['end']),
+      ) : null,
+      sortOption: json['sortOption'] != null ? 
+        SortOption.fromJson(json['sortOption']) : const SortOption(),
+    );
+  }
+
+  // 添加字符串转换方法，方便存储和调试
+  String toJsonString() => jsonEncode(toJson());
+  
+  factory WorkFilter.fromJsonString(String jsonString) =>
+      WorkFilter.fromJson(jsonDecode(jsonString));
 
   @override
   bool operator ==(Object other) =>

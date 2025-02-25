@@ -16,7 +16,7 @@ class WorkGridItem extends StatelessWidget {
     required this.work,
     this.selected = false,
     this.selectable = false,
-    this.onSelected,
+    this.onSelected, void Function()? onTap,
   });
 
   @override
@@ -50,8 +50,85 @@ class WorkGridItem extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail(BuildContext context) => // ...existing thumbnail code...
-  Widget _buildMetadata(BuildContext context) => // ...existing metadata code...
-  Widget _buildSelectionOverlay(BuildContext context) => // ...existing overlay code...
-  Widget _buildPlaceholder(BuildContext context) => // ...existing placeholder code...
+  Widget _buildThumbnail(BuildContext context) {
+    if (work.id == null) return _buildPlaceholder(context);
+
+    return FutureBuilder<String?>(
+      future: PathHelper.getWorkThumbnailPath(work.id!),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final file = File(snapshot.data!);
+          if (file.existsSync()) {
+            return Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+            );
+          }
+        }
+        return _buildPlaceholder(context);
+      },
+    );
+  }
+
+  Widget _buildMetadata(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          work.name ?? '',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Icon(Icons.calendar_today, size: 16),
+            const SizedBox(width: 4),
+            Text(
+              DateFormatter.formatCompact(
+                work.creationDate ?? work.createTime ?? DateTime.now(),
+              ),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectionOverlay(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: selected
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
+            : Colors.transparent,
+      ),
+      child: Align(
+        alignment: Alignment.topRight,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.xs),
+          child: Checkbox(
+            value: selected,
+            onChanged: (value) => onSelected?.call(value ?? false),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceVariant,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 32,
+          color: Theme.of(context).colorScheme.outline,
+        ),
+      ),
+    );
+  }
 }

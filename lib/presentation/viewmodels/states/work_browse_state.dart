@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../domain/entities/work.dart';
 import '../../models/work_filter.dart';
 import 'package:flutter/material.dart';
@@ -30,7 +34,7 @@ class WorkBrowseState {
   final bool hasMore;
   final bool isLoadingMore;
 
-  const WorkBrowseState({
+  WorkBrowseState({
     this.isLoading = false,
     this.error,
     this.works = const [],
@@ -84,9 +88,48 @@ class WorkBrowseState {
     );
   }
 
-  @override
   void dispose() {
     searchController.dispose();
-    super.dispose();
+  }
+
+  static restore() {}
+}
+
+extension WorkBrowseStatePersistence on WorkBrowseState {
+  static const String _keyViewMode = 'work_browse_view_mode';
+  static const String _keySidebarOpen = 'work_browse_sidebar_open';
+  static const String _keyFilter = 'work_browse_filter';
+  
+  Future<void> persist() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyViewMode, viewMode.toString());
+    await prefs.setBool(_keySidebarOpen, isSidebarOpen);
+    await prefs.setString(_keyFilter, filter.toJson().toString());
+  }
+
+  static Future<WorkBrowseState> restore() async {
+    final prefs = await SharedPreferences.getInstance();
+    return WorkBrowseState(
+      viewMode: _parseViewMode(prefs.getString(_keyViewMode)),
+      isSidebarOpen: prefs.getBool(_keySidebarOpen) ?? true,
+      filter: _parseFilter(prefs.getString(_keyFilter)),
+    );
+  }
+
+  static ViewMode _parseViewMode(String? value) {
+    if (value == null) return ViewMode.grid;
+    return ViewMode.values.firstWhere(
+      (e) => e.toString() == value,
+      orElse: () => ViewMode.grid,
+    );
+  }
+
+  static WorkFilter _parseFilter(String? value) {
+    if (value == null) return const WorkFilter();
+    try {
+      return WorkFilter.fromJson(jsonDecode(value));
+    } catch (e) {
+      return const WorkFilter();
+    }
   }
 }

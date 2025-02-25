@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../providers/work_browse_provider.dart';
 
 class BatchModeSection extends ConsumerWidget {
+  const BatchModeSection({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.read(workBrowseProvider.notifier);

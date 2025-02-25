@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../domain/enums/work_style.dart';
-import '../../../../../domain/enums/work_tool.dart';
-import '../../../../models/work_filter.dart';
 
 class WorkFilterSection extends StatelessWidget {
   final String title;

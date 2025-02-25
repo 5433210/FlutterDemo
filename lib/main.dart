@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/pages/works/work_detail_page.dart';
 import 'presentation/widgets/window/title_bar.dart';
@@ -14,31 +15,45 @@ import 'theme/app_theme.dart';
 import 'presentation/pages/practices/practice_detail_page.dart';
 import 'presentation/pages/practices/practice_edit_page.dart';
 import 'routes/app_routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. 先初始化 SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  
+  // 2. 初始化窗口管理器
   await windowManager.ensureInitialized();
 
+  // 3. 配置窗口选项
   WindowOptions windowOptions = const WindowOptions(
-    minimumSize: Size(800, 600),
+    size: Size(1280, 800),          // 设置初始窗口大小
+    minimumSize: Size(800, 600),    // 设置最小窗口大小
+    center: true,                   // 窗口居中显示
     backgroundColor: Colors.transparent,
-    skipTaskbar: false,  // 是否在任务栏隐藏
+    skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
-    windowButtonVisibility: true,
-    center: true,      // 窗口居中
-    title: '书法集字',
-    // 添加以下设置
-    fullScreen: false,
-    alwaysOnTop: false,
   );
-  
-  await windowManager.waitUntilReadyToShow(windowOptions);
-  await windowManager.show();
-  await windowManager.focus();
 
+  // 4. 应用窗口配置
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
+  // 5. 初始化其他服务
   await SqliteDatabase.initializePlatform();
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

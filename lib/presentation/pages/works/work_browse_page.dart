@@ -8,112 +8,29 @@ import '../../../domain/entities/work.dart';
 import '../../../application/providers/work_browse_provider.dart';
 import '../../../utils/date_formatter.dart';
 import '../../../utils/path_helper.dart';
-import '../../dialogs/work_import/work_import_dialog.dart';
-import '../../viewmodels/states/work_browse_state.dart';
-import '../../widgets/page_layout.dart';
 import '../../theme/app_sizes.dart';
-import '../../widgets/works/work_filter_panel.dart';
-import '../work_browser/components/sidebar_toggle.dart';
-import '../../../routes/app_routes.dart'; // 添加这个导入
+import 'components/filter/work_filter_panel.dart';
+import 'components/layout/work_layout.dart';
+import 'components/work_content.dart';
+import 'components/work_toolbar.dart';
+// 添加这个导入
 
-class WorkBrowsePage extends ConsumerStatefulWidget {
+class WorkBrowsePage extends ConsumerWidget {
   const WorkBrowsePage({super.key});
 
   @override
-  ConsumerState<WorkBrowsePage> createState() => _WorkBrowsePageState();
-}
-
-class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
-  static const double sidebarWidth = 280.0;
-  final Set<String> _selectedWorks = {};
-  bool _batchMode = false;
-  Timer? _debounce;
-  final _searchController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workBrowseProvider.notifier).loadWorks();
-    });
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(workBrowseProvider);
-    
-    return PageLayout(
-      navigationInfo: const Text('作品浏览'),
-      toolbar: WorkToolbar(
-        batchMode: state.batchMode, // 从状态获取
-        selectedCount: state.selectedWorks.length,
-        onBatchModeChanged: (_) => 
-            ref.read(workBrowseProvider.notifier).toggleBatchMode(),
-        onDeleteSelected: () =>
-            ref.read(workBrowseProvider.notifier).deleteSelected(),
-      ),
-      body: WorkContent(
-        state: state,
-        selectedWorks: state.selectedWorks,
-        onSelectionChanged: (workId, selected) =>
-            ref.read(workBrowseProvider.notifier).toggleSelection(workId),
-      ),
+    final viewModel = ref.read(workBrowseProvider.notifier);
+
+    return WorkLayout(
+      // 工具栏
+      toolbar: const WorkToolbar(), // 简化为不需要传参
+      // 侧边栏
+      sidebar: state.isSidebarOpen ? WorkFilterPanel() : null,
+      // 主内容区
+      body: WorkContent(),
     );
-  }
-
-  void _handleSelection(String workId, bool selected) {
-    setState(() {
-      if (selected) {
-        _selectedWorks.add(workId);
-      } else {
-        _selectedWorks.remove(workId);
-      }
-    });
-  }
-
-  void _handleSearch(String value) {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(
-      const Duration(milliseconds: 500),
-      () => ref.read(workBrowseProvider.notifier).searchWorks(value),
-    );
-  }
-
-  Future<void> _deleteSelected() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认删除'),
-        content: Text('确定要删除选中的 ${_selectedWorks.length} 个作品吗？'),
-        actions: [
-          TextButton(
-            child: const Text('取消'),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-          FilledButton(
-            child: const Text('删除'),
-            onPressed: () => Navigator.of(context).pop(true),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      for (final workId in _selectedWorks) {
-        await ref.read(workBrowseProvider.notifier).deleteWork(workId);
-      }
-      setState(() {
-        _selectedWorks.clear();
-        _batchMode = false;
-      });
-    }
   }
 }
 

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../providers/work_browse_provider.dart';
 import '../../../../theme/app_sizes.dart';
 import '../filter/work_filter_panel.dart';
 import 'sidebar_toggle_button.dart';
 
 class WorkSidebar extends ConsumerWidget {
+  const WorkSidebar({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.read(workBrowseProvider.notifier);

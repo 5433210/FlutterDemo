@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../../../domain/entities/work.dart';
 import '../../../../../theme/app_sizes.dart';
-import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
 class WorkListItem extends StatelessWidget {
@@ -10,6 +9,7 @@ class WorkListItem extends StatelessWidget {
   final bool isSelected;
   final bool isSelectionMode;
   final ValueChanged<bool>? onSelectionChanged;
+  final VoidCallback? onTap;
 
   const WorkListItem({
     super.key,
@@ -17,6 +17,7 @@ class WorkListItem extends StatelessWidget {
     this.isSelected = false,
     this.isSelectionMode = false,
     this.onSelectionChanged,
+    this.onTap,
   });
 
   @override
@@ -25,9 +26,7 @@ class WorkListItem extends StatelessWidget {
     
     return Card(
       child: InkWell(
-        onTap: isSelectionMode 
-            ? () => onSelectionChanged?.call(!isSelected)
-            : null,
+        onTap: !isSelectionMode ? onTap : () => onSelectionChanged?.call(!isSelected),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.m),
           child: SizedBox(
@@ -55,8 +54,82 @@ class WorkListItem extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail(BuildContext context) => // ...existing thumbnail code...
-  Widget _buildContent(BuildContext context) => // ...existing content code...
-  Widget _buildTag(BuildContext context, String label) => // ...existing tag code...
-  Widget _buildPlaceholder(BuildContext context) => // ...existing placeholder code...
+  Widget _buildThumbnail(BuildContext context) {
+    if (work.id == null) return _buildPlaceholder(context);
+    
+    return FutureBuilder<String?>(
+      future: PathHelper.getWorkThumbnailPath(work.id!),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final file = File(snapshot.data!);
+          return Image.file(
+            file,
+            width: AppSizes.thumbnailSize,
+            height: AppSizes.thumbnailSize,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+          );
+        }
+        return _buildPlaceholder(context);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(work.name ?? '', style: theme.textTheme.titleMedium),
+        if (work.author != null) ...[
+          const SizedBox(height: 4),
+          Text(work.author!, style: theme.textTheme.bodyMedium),
+        ],
+        const Spacer(),
+        Row(
+          children: [
+            if (work.style != null) _buildTag(context, work.style!),
+            if (work.tool != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: _buildTag(context, work.tool!),
+              ),
+          ],
+        )
+      ],
+    );
+  }
+
+  Widget _buildTag(BuildContext context, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.s,
+        vertical: AppSizes.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppSizes.xs),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      width: AppSizes.thumbnailSize,
+      height: AppSizes.thumbnailSize,
+      color: Theme.of(context).colorScheme.surfaceVariant,
+      child: Icon(
+        Icons.image_outlined,
+        size: 32,
+        color: Theme.of(context).colorScheme.outline,
+      ),
+    );
+  }
 }
