@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class SelectableListItem extends StatelessWidget {
@@ -26,19 +27,15 @@ class SelectableListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
-          onTap: onSelected != null 
-              ? () => onSelected!(!selected)
-              : onTap,
+          onTap: onSelected != null ? () => onSelected!(!selected) : onTap,
           child: Container(
             padding: const EdgeInsets.all(AppSizes.spacingMedium),
-            color: selected 
-                ? theme.colorScheme.primary.withOpacity(0.1)
-                : null,
+            color: selected ? theme.colorScheme.primary.withOpacity(0.1) : null,
             child: Row(
               children: [
                 if (onSelected != null)

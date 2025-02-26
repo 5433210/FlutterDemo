@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_sizes.dart';
 import 'package:intl/intl.dart';
+
+import '../../../../theme/app_sizes.dart';
 
 class DateRangeSection extends StatefulWidget {
   final DateTimeRange? initialValue;
@@ -20,19 +21,17 @@ class _DateRangeSectionState extends State<DateRangeSection> {
   DateTime? _startDate;
   DateTime? _endDate;
 
-  @override
-  void initState() {
-    super.initState();
-    _startDate = widget.initialValue?.start;
-    _endDate = widget.initialValue?.end;
-  }
+  bool get _hasSelection => _startDate != null || _endDate != null;
+
+  bool get _hasValidRange =>
+      _startDate != null && _endDate != null && _startDate!.isBefore(_endDate!);
 
   @override
   Widget build(BuildContext context) {
-    final isStartDateError = _startDate != null && 
-                           _endDate != null && 
-                           _startDate!.isAfter(_endDate!);
-                           
+    final isStartDateError = _startDate != null &&
+        _endDate != null &&
+        _startDate!.isAfter(_endDate!);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,8 +75,7 @@ class _DateRangeSectionState extends State<DateRangeSection> {
                   ),
                 ),
               if (_hasSelection) ...[
-                if (_hasValidRange)
-                  const SizedBox(width: AppSizes.s),
+                if (_hasValidRange) const SizedBox(width: AppSizes.s),
                 Expanded(
                   child: TextButton(
                     onPressed: _clearDateRange,
@@ -92,10 +90,12 @@ class _DateRangeSectionState extends State<DateRangeSection> {
     );
   }
 
-  bool get _hasValidRange => 
-    _startDate != null && _endDate != null && _startDate!.isBefore(_endDate!);
-
-  bool get _hasSelection => _startDate != null || _endDate != null;
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialValue?.start;
+    _endDate = widget.initialValue?.end;
+  }
 
   void _applyDateRange() {
     if (_hasValidRange) {
@@ -104,14 +104,6 @@ class _DateRangeSectionState extends State<DateRangeSection> {
         end: _endDate!,
       ));
     }
-  }
-
-  void _clearDateRange() {
-    setState(() {
-      _startDate = null;
-      _endDate = null;
-      widget.onChanged(null);
-    });
   }
 
   Widget _buildDateField({
@@ -131,10 +123,11 @@ class _DateRangeSectionState extends State<DateRangeSection> {
           icon: const Icon(Icons.calendar_today, size: 18),
           label: Text(value != null ? _formatDate(value) : '点击选择日期'),
           onPressed: onPressed,
-          style: error != null ? 
-            OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ) : null,
+          style: error != null
+              ? OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                )
+              : null,
         ),
         if (error != null)
           Padding(
@@ -148,6 +141,18 @@ class _DateRangeSectionState extends State<DateRangeSection> {
           ),
       ],
     );
+  }
+
+  void _clearDateRange() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+      widget.onChanged(null);
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 
   Future<void> _selectDate({
@@ -184,9 +189,5 @@ class _DateRangeSectionState extends State<DateRangeSection> {
           ? DateTimeRange(start: _startDate!, end: _endDate!)
           : null);
     });
-  }
-
-  String _formatDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd').format(date);
   }
 }

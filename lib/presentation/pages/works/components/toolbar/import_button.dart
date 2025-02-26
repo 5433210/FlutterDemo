@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../application/providers/work_browse_provider.dart';
 import '../../../../dialogs/work_import/work_import_dialog.dart';
 import '../../../../viewmodels/work_browse_view_model.dart';
@@ -18,7 +19,8 @@ class ImportButton extends ConsumerWidget {
     );
   }
 
-  Future<void> _showImportDialog(BuildContext context, WorkBrowseViewModel viewModel) async {
+  Future<void> _showImportDialog(
+      BuildContext context, WorkBrowseViewModel viewModel) async {
     try {
       // 显示导入对话框
       final result = await showDialog<bool>(
@@ -37,7 +39,7 @@ class ImportButton extends ConsumerWidget {
 
         // 刷新列表
         await viewModel.loadWorks();
-        
+
         // 显示成功提示
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

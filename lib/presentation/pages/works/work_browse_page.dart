@@ -10,7 +10,6 @@ import 'components/content/work_grid_view.dart';
 import 'components/content/work_list_view.dart';
 import 'components/filter/sidebar_toggle.dart';
 import 'components/filter/work_filter_panel.dart';
-import 'components/layout/work_layout.dart';
 import 'components/work_toolbar.dart';
 // 添加这个导入
 
@@ -39,7 +38,8 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             batchMode: state.batchMode,
             onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
             selectedCount: state.selectedWorks.length,
-            onDeleteSelected: () => ref.read(workBrowseProvider.notifier).deleteSelected(),
+            onDeleteSelected: () =>
+                ref.read(workBrowseProvider.notifier).deleteSelected(),
           ),
           Expanded(
             child: Row(
@@ -67,7 +67,8 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   Widget _buildMainContent() {
     // 在这里监听状态变化
     final state = ref.watch(workBrowseProvider);
-    debugPrint('_buildMainContent rebuild - works count: ${state.works.length}');
+    debugPrint(
+        '_buildMainContent rebuild - works count: ${state.works.length}');
 
     return Column(
       children: [
@@ -81,9 +82,11 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
                           works: state.works,
                           batchMode: state.batchMode,
                           selectedWorks: state.selectedWorks,
-                          onSelectionChanged: (workId, selected) => 
-                              ref.read(workBrowseProvider.notifier).toggleSelection(workId),
-                          onItemTap: (workId) => _handleWorkSelected(context, workId),
+                          onSelectionChanged: (workId, selected) => ref
+                              .read(workBrowseProvider.notifier)
+                              .toggleSelection(workId),
+                          onItemTap: (workId) =>
+                              _handleWorkSelected(context, workId),
                         )
                       : WorkListView(
                           works: state.works,
@@ -114,7 +117,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
       barrierDismissible: false,
       builder: (context) => const WorkImportDialog(),
     );
-    
+
     if (result == true) {
       ref.read(workBrowseProvider.notifier).loadWorks();
     }

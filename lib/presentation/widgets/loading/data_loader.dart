@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../empty/empty_placeholder.dart';
 
 class DataLoader<T> extends StatelessWidget {
@@ -30,25 +31,29 @@ class DataLoader<T> extends StatelessWidget {
     }
 
     if (error != null) {
-      return errorBuilder?.call(error!) ?? EmptyPlaceholder(
-        icon: Icons.error_outline,
-        message: '加载失败',
-        subMessage: error,
-        actions: onRetry != null ? [
-          FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: const Text('重试'),
-          ),
-        ] : null,
-      );
+      return errorBuilder?.call(error!) ??
+          EmptyPlaceholder(
+            icon: Icons.error_outline,
+            message: '加载失败',
+            subMessage: error,
+            actions: onRetry != null
+                ? [
+                    FilledButton.icon(
+                      onPressed: onRetry,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('重试'),
+                    ),
+                  ]
+                : null,
+          );
     }
 
     if (data == null) {
-      return emptyBuilder?.call() ?? const EmptyPlaceholder(
-        icon: Icons.inbox_outlined,
-        message: '暂无数据',
-      );
+      return emptyBuilder?.call() ??
+          const EmptyPlaceholder(
+            icon: Icons.inbox_outlined,
+            message: '暂无数据',
+          );
     }
 
     return builder(data as T);

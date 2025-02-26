@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../models/date_range_filter.dart';
 import '../theme/app_sizes.dart';
 
@@ -25,12 +26,7 @@ class _DateRangePickerState extends State<DateRangePicker> {
   late DateTime _endDate;
   DateTime? _selectedDate;
 
-  @override
-  void initState() {
-    super.initState();
-    _startDate = widget.initialDateRange?.start ?? widget.lastDate;
-    _endDate = widget.initialDateRange?.end ?? widget.lastDate;
-  }
+  bool get _isSelectingStart => _selectedDate == null;
 
   @override
   Widget build(BuildContext context) {
@@ -60,31 +56,11 @@ class _DateRangePickerState extends State<DateRangePicker> {
     );
   }
 
-  Widget _buildDateHeader() {
-    final theme = Theme.of(context);
-    
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.m),
-      child: Row(
-        children: [
-          _buildDateButton(
-            label: '开始日期',
-            date: _startDate,
-            isSelected: _selectedDate == null || _isSelectingStart,
-            onPressed: () => _handleModeChange(true),
-          ),
-          const SizedBox(width: AppSizes.m),
-          Text('至', style: theme.textTheme.bodyMedium),
-          const SizedBox(width: AppSizes.m),
-          _buildDateButton(
-            label: '结束日期',
-            date: _endDate,
-            isSelected: _selectedDate != null && !_isSelectingStart,
-            onPressed: () => _handleModeChange(false),
-          ),
-        ],
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _startDate = widget.initialDateRange?.start ?? widget.lastDate;
+    _endDate = widget.initialDateRange?.end ?? widget.lastDate;
   }
 
   Widget _buildDateButton({
@@ -94,7 +70,7 @@ class _DateRangePickerState extends State<DateRangePicker> {
     required VoidCallback onPressed,
   }) {
     final theme = Theme.of(context);
-    
+
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(4),
@@ -124,25 +100,30 @@ class _DateRangePickerState extends State<DateRangePicker> {
     );
   }
 
-  Widget _buildQuickSelections() {
-    return ListView(
+  Widget _buildDateHeader() {
+    final theme = Theme.of(context);
+
+    return Padding(
       padding: const EdgeInsets.all(AppSizes.m),
-      children: [
-        Text(
-          '快捷选择',
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: AppSizes.m),
-        _buildDateTypeSection(),
-        const Divider(),
-        ...DateRangePreset.values.map((preset) => 
-          ListTile(
-            dense: true,
-            title: Text(_getPresetLabel(preset)),
-            onTap: () => _handlePresetSelected(preset),
+      child: Row(
+        children: [
+          _buildDateButton(
+            label: '开始日期',
+            date: _startDate,
+            isSelected: _selectedDate == null || _isSelectingStart,
+            onPressed: () => _handleModeChange(true),
           ),
-        ),
-      ],
+          const SizedBox(width: AppSizes.m),
+          Text('至', style: theme.textTheme.bodyMedium),
+          const SizedBox(width: AppSizes.m),
+          _buildDateButton(
+            label: '结束日期',
+            date: _endDate,
+            isSelected: _selectedDate != null && !_isSelectingStart,
+            onPressed: () => _handleModeChange(false),
+          ),
+        ],
+      ),
     );
   }
 
@@ -188,6 +169,71 @@ class _DateRangePickerState extends State<DateRangePicker> {
         ),
       ],
     );
+  }
+
+  Widget _buildQuickSelections() {
+    return ListView(
+      padding: const EdgeInsets.all(AppSizes.m),
+      children: [
+        Text(
+          '快捷选择',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: AppSizes.m),
+        _buildDateTypeSection(),
+        const Divider(),
+        ...DateRangePreset.values.map(
+          (preset) => ListTile(
+            dense: true,
+            title: Text(_getPresetLabel(preset)),
+            onTap: () => _handlePresetSelected(preset),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getPresetLabel(DateRangePreset preset) {
+    // Convert the preset enum value to a readable label.
+    return preset.toString().split('.').last;
+  }
+
+  void _handleDateSelected(DateTime date) {
+    if (_isSelectingStart) {
+      setState(() {
+        _startDate = date;
+        _selectedDate = date;
+      });
+    } else {
+      setState(() {
+        _endDate = date;
+        _selectedDate = null;
+        widget.onDateRangeChanged(DateTimeRange(
+          start: _startDate,
+          end: _endDate,
+        ));
+      });
+    }
+  }
+
+  void _handleModeChange(bool selectingStart) {
+    setState(() {
+      _selectedDate = selectingStart ? null : _startDate;
+    });
+  }
+
+  void _handlePresetSelected(DateRangePreset preset) {
+    final range = preset.getRange();
+    setState(() {
+      _startDate = range.start;
+      _endDate = range.end;
+      _selectedDate = null;
+      widget.onDateRangeChanged(range);
+    });
   }
 
   Future<void> _showSingleDatePicker({
@@ -239,50 +285,5 @@ class _DateRangePickerState extends State<DateRangePicker> {
     if (date != null) {
       onDateSelected(date);
     }
-  }
-
-  bool get _isSelectingStart => _selectedDate == null;
-
-  void _handleDateSelected(DateTime date) {
-    if (_isSelectingStart) {
-      setState(() {
-        _startDate = date;
-        _selectedDate = date;
-      });
-    } else {
-      setState(() {
-        _endDate = date;
-        _selectedDate = null;
-        widget.onDateRangeChanged(DateTimeRange(
-          start: _startDate,
-          end: _endDate,
-        ));
-      });
-    }
-  }
-
-  void _handleModeChange(bool selectingStart) {
-    setState(() {
-      _selectedDate = selectingStart ? null : _startDate;
-    });
-  }
-
-  void _handlePresetSelected(DateRangePreset preset) {
-    final range = preset.getRange();
-    setState(() {
-      _startDate = range.start;
-      _endDate = range.end;
-      _selectedDate = null;
-      widget.onDateRangeChanged(range);
-    });
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _getPresetLabel(DateRangePreset preset) {
-    // Convert the preset enum value to a readable label.
-    return preset.toString().split('.').last;
   }
 }

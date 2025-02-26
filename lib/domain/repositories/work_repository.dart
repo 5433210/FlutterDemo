@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
+
 import '../entities/character.dart';
 import '../entities/work.dart';
 
 abstract class WorkRepository {
-  Future<String> insertWork(Work work);
+  Future<void> deleteWork(String id);
+  Future<List<Character>> getCharactersByWorkId(String workId);
   Future<Work?> getWork(String id);
   Future<List<Map<String, dynamic>>> getWorks({
     String? query,
     String? style,
-    String? tool,    
+    String? tool,
     DateTimeRange? creationDateRange,
     String? orderBy,
     bool descending = true,
   });
-  Future<void> updateWork(Work work);
-  Future<void> deleteWork(String id);
-  Future<bool> workExists(String id);    
   Future<int> getWorksCount({
-   String? query,
+    String? query,
     String? style,
     String? tool,
     DateTimeRange? creationDateRange,
   });
-  Future<List<Character>> getCharactersByWorkId(String workId);
+  Future<String> insertWork(Work work);
+  Future<void> updateWork(Work work);
+  Future<bool> workExists(String id);
 }
-

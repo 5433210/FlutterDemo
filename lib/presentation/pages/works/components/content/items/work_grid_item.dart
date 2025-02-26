@@ -1,6 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../../domain/entities/work.dart';
 import '../../../../../../domain/enums/work_style.dart';
 import '../../../../../../domain/enums/work_tool.dart';
@@ -25,16 +26,19 @@ class WorkGridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.all(0), // 移除默认边距
-      elevation: isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
+      elevation:
+          isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        side: isSelected ? BorderSide(
-          color: theme.colorScheme.primary,
-          width: 2,
-        ) : BorderSide.none,
+        side: isSelected
+            ? BorderSide(
+                color: theme.colorScheme.primary,
+                width: 2,
+              )
+            : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -45,7 +49,7 @@ class WorkGridItem extends StatelessWidget {
           children: [
             // 图片容器 - 固定比例
             AspectRatio(
-              aspectRatio: 4/3,  // 保持4:3的图片比例
+              aspectRatio: 4 / 3, // 保持4:3的图片比例
               child: _buildThumbnail(context),
             ),
             // 信息容器 - 紧凑但可读的布局
@@ -53,7 +57,7 @@ class WorkGridItem extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(
                 AppSizes.s, // 左边距
                 AppSizes.xs, // 上边距
-                AppSizes.s, // 右边距 
+                AppSizes.s, // 右边距
                 AppSizes.xs, // 底部边距减小
               ),
               child: Column(
@@ -73,7 +77,7 @@ class WorkGridItem extends StatelessWidget {
                   // 作者和时间 - 单行截断
                   Row(
                     children: [
-                      if (work.author != null) 
+                      if (work.author != null)
                         Expanded(
                           child: Text(
                             work.author!,
@@ -86,8 +90,7 @@ class WorkGridItem extends StatelessWidget {
                         ),
                       Text(
                         DateFormatter.formatCompact(
-                          work.creationDate ?? work.createTime!
-                        ),
+                            work.creationDate ?? work.createTime!),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 12, // 日期字体大小
                           color: theme.colorScheme.outline,
@@ -104,10 +107,16 @@ class WorkGridItem extends StatelessWidget {
                       child: Row(
                         children: [
                           if (work.style != null)
-                            _buildTag(context, WorkStyle.fromValue(work.style!)?.label ?? work.style!),
+                            _buildTag(
+                                context,
+                                WorkStyle.fromValue(work.style!)?.label ??
+                                    work.style!),
                           if (work.tool != null) ...[
                             const SizedBox(width: AppSizes.xs),
-                            _buildTag(context, WorkTool.fromValue(work.tool!)?.label ?? work.tool!),
+                            _buildTag(
+                                context,
+                                WorkTool.fromValue(work.tool!)?.label ??
+                                    work.tool!),
                           ],
                         ],
                       ),
@@ -122,28 +131,9 @@ class WorkGridItem extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail(BuildContext context) {
-    if (work.id == null) return _buildPlaceholder(context);
-
-    return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id!),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final file = File(snapshot.data!);
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-          );
-        }
-        return _buildPlaceholder(context);
-      },
-    );
-  }
-
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(
           Icons.image_outlined,
@@ -172,6 +162,25 @@ class WorkGridItem extends StatelessWidget {
           color: theme.colorScheme.onSecondaryContainer,
         ),
       ),
+    );
+  }
+
+  Widget _buildThumbnail(BuildContext context) {
+    if (work.id == null) return _buildPlaceholder(context);
+
+    return FutureBuilder<String?>(
+      future: PathHelper.getWorkThumbnailPath(work.id!),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final file = File(snapshot.data!);
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+          );
+        }
+        return _buildPlaceholder(context);
+      },
     );
   }
 }

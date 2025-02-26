@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_sizes.dart';
 import 'page_bar.dart';
 
@@ -55,7 +56,8 @@ class _PageLayoutState extends State<PageLayout> {
                     height: AppSizes.pageToolbarHeight,
                     decoration: BoxDecoration(
                       border: Border(
-                        bottom: BorderSide(color: Theme.of(context).dividerColor),
+                        bottom:
+                            BorderSide(color: Theme.of(context).dividerColor),
                       ),
                     ),
                     child: widget.toolbar!,

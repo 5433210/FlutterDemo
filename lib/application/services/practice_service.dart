@@ -1,6 +1,6 @@
 import '../../domain/entities/practice.dart';
-import '../../domain/repositories/practice_repository.dart';
 import '../../domain/repositories/character_repository.dart';
+import '../../domain/repositories/practice_repository.dart';
 
 class PracticeService {
   final PracticeRepository _practiceRepository;
@@ -8,24 +8,8 @@ class PracticeService {
 
   PracticeService(this._practiceRepository, this._characterRepository);
 
-  Future<String> createPractice(String title, List<Map<String, dynamic>> pages) async {
-    final practice = Practice(
-      id: '',
-      title: title,
-      pages: pages,
-      createTime: DateTime.now(),
-      updateTime: DateTime.now(),
-      metadata: {
-        'version': '1.0',
-        'lastPrintTime': null,
-        'printCount': 0,
-      },
-    );
-    
-    return await _practiceRepository.insertPractice(practice);
-  }
-
-  Future<void> addCharacterToPractice(String practiceId, String charId, Map<String, dynamic> position) async {
+  Future<void> addCharacterToPractice(
+      String practiceId, String charId, Map<String, dynamic> position) async {
     final practice = await _practiceRepository.getPractice(practiceId);
     if (practice == null) throw Exception('Practice not found');
 
@@ -55,35 +39,26 @@ class PracticeService {
     await _practiceRepository.updatePractice(updatedPractice);
   }
 
-  Future<List<Practice>> getRecentPractices({int limit = 10}) async {
-    return await _practiceRepository.getPractices(
-      limit: limit,
-    );
-  }
-
-  Future<List<Practice>> searchPractices(String query) async {
-    return await _practiceRepository.getPractices(
-      title: query,
-    );
-  }
-
-  Future<void> updatePracticePages(String id, List<Map<String, dynamic>> pages) async {
-    final practice = await _practiceRepository.getPractice(id);
-    if (practice == null) throw Exception('Practice not found');
-
-    final updatedPractice = Practice(
-      id: practice.id,
-      title: practice.title,
+  Future<String> createPractice(
+      String title, List<Map<String, dynamic>> pages) async {
+    final practice = Practice(
+      id: '',
+      title: title,
       pages: pages,
-      metadata: practice.metadata,
-      createTime: practice.createTime,
+      createTime: DateTime.now(),
       updateTime: DateTime.now(),
+      metadata: {
+        'version': '1.0',
+        'lastPrintTime': null,
+        'printCount': 0,
+      },
     );
 
-    await _practiceRepository.updatePractice(updatedPractice);
+    return await _practiceRepository.insertPractice(practice);
   }
 
-  Future<List<Practice>> getPracticesByCharacters(List<String> characterIds) async {
+  Future<List<Practice>> getPracticesByCharacters(
+      List<String> characterIds) async {
     if (characterIds.isEmpty) {
       return [];
     }
@@ -99,4 +74,32 @@ class PracticeService {
     return practices;
   }
 
+  Future<List<Practice>> getRecentPractices({int limit = 10}) async {
+    return await _practiceRepository.getPractices(
+      limit: limit,
+    );
+  }
+
+  Future<List<Practice>> searchPractices(String query) async {
+    return await _practiceRepository.getPractices(
+      title: query,
+    );
+  }
+
+  Future<void> updatePracticePages(
+      String id, List<Map<String, dynamic>> pages) async {
+    final practice = await _practiceRepository.getPractice(id);
+    if (practice == null) throw Exception('Practice not found');
+
+    final updatedPractice = Practice(
+      id: practice.id,
+      title: practice.title,
+      pages: pages,
+      metadata: practice.metadata,
+      createTime: practice.createTime,
+      updateTime: DateTime.now(),
+    );
+
+    await _practiceRepository.updatePractice(updatedPractice);
+  }
 }

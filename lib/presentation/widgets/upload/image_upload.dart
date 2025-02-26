@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 import '../preview/image_preview.dart';
 
@@ -26,7 +28,7 @@ class ImageUpload extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: width,
       height: height,
@@ -63,7 +65,7 @@ class ImageUpload extends StatelessWidget {
 
   Widget _buildUploadButton(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return InkWell(
       onTap: onUpload,
       borderRadius: BorderRadius.circular(AppSizes.radiusMedium),

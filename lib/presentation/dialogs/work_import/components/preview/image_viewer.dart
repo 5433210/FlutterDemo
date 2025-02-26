@@ -1,5 +1,7 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
+
 import '../../../../../theme/app_sizes.dart';
 
 class ImageViewer extends StatelessWidget {
@@ -19,7 +21,7 @@ class ImageViewer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Stack(
       fit: StackFit.expand,
       children: [

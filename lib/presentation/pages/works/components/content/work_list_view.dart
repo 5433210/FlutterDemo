@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../domain/entities/work.dart';
 import '../../../../theme/app_sizes.dart';
 import 'items/work_list_item.dart';
@@ -31,7 +32,7 @@ class WorkListView extends StatelessWidget {
           work: work,
           isSelected: selectedWorks.contains(work.id),
           isSelectionMode: batchMode,
-          onTap: () => batchMode 
+          onTap: () => batchMode
               ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
               : onItemTap?.call(work.id!),
         );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../domain/enums/work_style.dart';
 import '../../../../../domain/enums/work_tool.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../viewmodels/states/work_import_state.dart';
 import '../../../../viewmodels/work_import_view_model.dart';
-import '../../../../widgets/form/form_section.dart';
 import '../../../../widgets/forms/form_field_wrapper.dart';
 
 class WorkImportForm extends StatelessWidget {
@@ -20,7 +20,7 @@ class WorkImportForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.l,
@@ -138,7 +138,7 @@ class WorkImportForm extends StatelessWidget {
               readOnly: true,
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(
-                theme, 
+                theme,
                 '请选择创作日期',
                 suffix: const Icon(Icons.calendar_today),
               ),
@@ -180,7 +180,8 @@ class WorkImportForm extends StatelessWidget {
     );
   }
 
-  InputDecoration _getInputDecoration(ThemeData theme, String hint, {Widget? suffix}) {
+  InputDecoration _getInputDecoration(ThemeData theme, String hint,
+      {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: theme.textTheme.bodyMedium?.copyWith(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_sizes.dart';
 
 class PageBar extends StatelessWidget implements PreferredSizeWidget {
@@ -18,14 +19,13 @@ class PageBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(
-    toolbarHeight ?? AppSizes.pageToolbarHeight
-  );
+  Size get preferredSize =>
+      Size.fromHeight(toolbarHeight ?? AppSizes.pageToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       height: preferredSize.height,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
@@ -48,8 +48,7 @@ class PageBar extends StatelessWidget implements PreferredSizeWidget {
               child: title!,
             ),
           const Spacer(),
-          if (actions != null) 
-            Row(children: actions!),
+          if (actions != null) Row(children: actions!),
         ],
       ),
     );

@@ -1,6 +1,8 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../presentation/models/work_filter.dart';
 import '../../presentation/viewmodels/states/work_browse_state.dart';
 import '../../presentation/viewmodels/work_browse_view_model.dart';
@@ -11,26 +13,19 @@ class StateRestorationService {
   final SharedPreferences _prefs;
 
   StateRestorationService(this._prefs);
-  
 
-  // 保存工作浏览状态
-  Future<void> saveWorkBrowseState(WorkBrowseState state) async {
-    try {
-      final stateMap = {
-        'viewMode': state.viewMode.index,
-        'isSidebarOpen': state.isSidebarOpen,
-        'filter': state.filter.toJson(),
-        'searchQuery': state.searchQuery,        
-      };
-      await _prefs.setString(workBrowseKey, jsonEncode(stateMap));
-    } catch (e) {
-      debugPrint('Error saving work browse state: $e');
+  // 清除所有状态
+  Future<void> clearAllStates() async {
+    final keys = _prefs.getKeys().where((key) => key.startsWith(keyPrefix));
+    for (final key in keys) {
+      await _prefs.remove(key);
     }
   }
 
   // 恢复工作浏览状态
-  
-  Future<WorkBrowseState?> restoreWorkBrowseState(WorkBrowseViewModel viewModel) async {
+
+  Future<WorkBrowseState?> restoreWorkBrowseState(
+      WorkBrowseViewModel viewModel) async {
     try {
       final json = _prefs.getString(workBrowseKey);
       if (json == null) return null;
@@ -40,7 +35,7 @@ class StateRestorationService {
         viewMode: ViewMode.values[stateMap['viewMode'] as int],
         isSidebarOpen: stateMap['isSidebarOpen'] as bool,
         filter: WorkFilter.fromJson(stateMap['filter'] as Map<String, dynamic>),
-        searchQuery: (stateMap['searchQuery'] as String?) ?? '',        
+        searchQuery: (stateMap['searchQuery'] as String?) ?? '',
       );
     } catch (e) {
       debugPrint('Error restoring work browse state: $e');
@@ -48,11 +43,18 @@ class StateRestorationService {
     }
   }
 
-  // 清除所有状态
-  Future<void> clearAllStates() async {
-    final keys = _prefs.getKeys().where((key) => key.startsWith(keyPrefix));
-    for (final key in keys) {
-      await _prefs.remove(key);
+  // 保存工作浏览状态
+  Future<void> saveWorkBrowseState(WorkBrowseState state) async {
+    try {
+      final stateMap = {
+        'viewMode': state.viewMode.index,
+        'isSidebarOpen': state.isSidebarOpen,
+        'filter': state.filter.toJson(),
+        'searchQuery': state.searchQuery,
+      };
+      await _prefs.setString(workBrowseKey, jsonEncode(stateMap));
+    } catch (e) {
+      debugPrint('Error saving work browse state: $e');
     }
   }
 }

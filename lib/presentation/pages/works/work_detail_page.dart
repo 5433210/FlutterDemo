@@ -1,5 +1,40 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
+
+class CharacterDetailPage extends StatelessWidget {
+  final String charId;
+  final VoidCallback onBack;
+
+  const CharacterDetailPage(
+      {super.key, required this.charId, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: onBack,
+        ),
+        title: const Text('字帖详情', style: TextStyle(fontSize: 20)),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('字帖 $charId'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('返回'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class WorkDetailPage extends StatelessWidget {
   final String workId;
@@ -37,13 +72,29 @@ class WorkDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPreviewSection() {
-    return const Center(child: Text('图片预览区域'));
+  Widget _buildInfoItem(String label, String value, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.spacingMedium),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSizes.spacingTiny),
+          Text(
+            value,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildInfoSection(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       child: Column(
@@ -68,56 +119,7 @@ class WorkDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoItem(String label, String value, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.spacingMedium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSizes.spacingTiny),
-          Text(
-            value,
-            style: theme.textTheme.bodyLarge,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class CharacterDetailPage extends StatelessWidget {
-  final String charId;
-  final VoidCallback onBack;
-
-  const CharacterDetailPage({super.key, required this.charId, required this.onBack});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: onBack,
-        ),
-        title: const Text('字帖详情', style: TextStyle(fontSize: 20)),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('字帖 $charId'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('返回'),
-            ),
-          ],
-        ),
-      ),
-    );
+  Widget _buildPreviewSection() {
+    return const Center(child: Text('图片预览区域'));
   }
 }

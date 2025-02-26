@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../../../models/work_filter.dart';
 import '../../../../theme/app_sizes.dart';
+import 'date_section.dart';
 import 'sort_section.dart';
 import 'style_section.dart';
 import 'tool_section.dart';
-import 'date_section.dart';
 
 class WorkFilterPanel extends StatelessWidget {
   final WorkFilter filter;
@@ -23,13 +24,14 @@ class WorkFilterPanel extends StatelessWidget {
       child: Container(
         width: 280,
         padding: const EdgeInsets.all(AppSizes.m),
-        decoration: BoxDecoration(
-          border: Border(
-            left: BorderSide(
-              color: Theme.of(context).dividerColor,
-            ),
-          ),
-        ),
+        // 移除所有边框线
+        // decoration: BoxDecoration(
+        //   border: Border(
+        //     right: BorderSide(
+        //       color: Theme.of(context).dividerColor,
+        //     ),
+        //   ),
+        // ),
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(

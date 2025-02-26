@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 import '../../../viewmodels/states/work_browse_state.dart';
 
-class WorkToolbar extends StatefulWidget {  // 改为 StatefulWidget
+class WorkToolbar extends StatefulWidget {
+  // 改为 StatefulWidget
   final ViewMode viewMode;
   final ValueChanged<ViewMode> onViewModeChanged;
   final VoidCallback onImport;
@@ -32,21 +34,9 @@ class _WorkToolbarState extends State<WorkToolbar> {
   late final TextEditingController _searchController;
 
   @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       height: kToolbarHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
@@ -97,7 +87,7 @@ class _WorkToolbarState extends State<WorkToolbar> {
           SizedBox(
             width: 240,
             child: TextField(
-              controller: _searchController,  // 使用控制器
+              controller: _searchController, // 使用控制器
               onChanged: widget.onSearch,
               decoration: InputDecoration(
                 hintText: '搜索作品...',
@@ -107,7 +97,7 @@ class _WorkToolbarState extends State<WorkToolbar> {
                   color: theme.colorScheme.outline,
                 ),
                 suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,  // 监听控制器
+                  valueListenable: _searchController, // 监听控制器
                   builder: (context, value, child) {
                     return AnimatedOpacity(
                       opacity: value.text.isNotEmpty ? 1.0 : 0.0,
@@ -119,8 +109,8 @@ class _WorkToolbarState extends State<WorkToolbar> {
                           color: theme.colorScheme.outline,
                         ),
                         onPressed: () {
-                          _searchController.clear();  // 清除文本
-                          widget.onSearch('');  // 触发搜索
+                          _searchController.clear(); // 清除文本
+                          widget.onSearch(''); // 触发搜索
                         },
                       ),
                     );
@@ -128,7 +118,8 @@ class _WorkToolbarState extends State<WorkToolbar> {
                 ),
                 isDense: true,
                 filled: true,
-                fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                fillColor:
+                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.s,
                   vertical: AppSizes.xs,
@@ -144,16 +135,19 @@ class _WorkToolbarState extends State<WorkToolbar> {
                     width: 1.5,
                   ),
                 ),
-                hoverColor: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                hoverColor:
+                    theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
               ),
             ),
           ),
           const SizedBox(width: AppSizes.m),
-          
+
           // 视图切换按钮
           IconButton(
             icon: Icon(
-              widget.viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view,
+              widget.viewMode == ViewMode.grid
+                  ? Icons.view_list
+                  : Icons.grid_view,
               color: theme.colorScheme.primary,
             ),
             style: IconButton.styleFrom(
@@ -162,13 +156,26 @@ class _WorkToolbarState extends State<WorkToolbar> {
               ),
             ),
             onPressed: () => widget.onViewModeChanged(
-              widget.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid
-            ),
+                widget.viewMode == ViewMode.grid
+                    ? ViewMode.list
+                    : ViewMode.grid),
             tooltip: widget.viewMode == ViewMode.grid ? '列表视图' : '网格视图',
           ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
   }
 
   void _showDeleteConfirmation(BuildContext context) async {

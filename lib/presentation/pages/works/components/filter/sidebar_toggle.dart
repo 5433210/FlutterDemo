@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../theme/app_sizes.dart';
+
+import '../../../../theme/app_sizes.dart'; // 添加这个导入
 
 class SidebarToggle extends StatelessWidget {
   final bool isOpen;
@@ -14,37 +15,33 @@ class SidebarToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
-      width: 24,
+      // 使用match_parent高度以填充父容器高度
       height: double.infinity,
+      width: 48,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
+        // 根据打开/关闭状态控制边框样式
         border: Border(
-          left: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-          ),
+          // 仅在打开状态时显示左边框
+          left: isOpen
+              ? BorderSide(
+                  color: theme.dividerColor, width: AppSizes.dividerThickness)
+              : BorderSide.none,
+          // 无论开关状态都显示右边框
           right: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
-          ),
+              color: theme.dividerColor, width: AppSizes.dividerThickness),
         ),
       ),
-      child: InkWell(
-        onTap: onToggle,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.m),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(AppSizes.xxs),
-            ),
-            child: Icon(
-              isOpen ? Icons.chevron_left : Icons.chevron_right,
-              size: 20,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+      alignment: Alignment.center,
+      child: IconButton(
+        icon: Icon(
+          isOpen ? Icons.chevron_left : Icons.chevron_right,
+          color: theme.colorScheme.onSurface,
         ),
+        tooltip: isOpen ? '收起侧边栏' : '展开侧边栏',
+        onPressed: onToggle,
       ),
     );
   }

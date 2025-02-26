@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../../theme/app_sizes.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/section_header.dart';
-import '../../../theme/app_sizes.dart';
 
 class PracticeDetailPage extends StatelessWidget {
   final String practiceId;
@@ -59,34 +60,9 @@ class PracticeDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPreviewArea(BuildContext context) {
-    // TODO: 实现预览区域
-    return const Center(child: Text('练习图片预览'));
-  }
-
-  Widget _buildInfoPanel(BuildContext context) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionHeader(
-            title: '练习信息',
-            padding: EdgeInsets.all(AppSizes.spacingMedium),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSizes.spacingMedium),
-              child: _buildInfoContent(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInfoContent(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -118,5 +94,30 @@ class PracticeDetailPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildInfoPanel(BuildContext context) {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: '练习信息',
+            padding: EdgeInsets.all(AppSizes.spacingMedium),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.spacingMedium),
+              child: _buildInfoContent(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewArea(BuildContext context) {
+    // TODO: 实现预览区域
+    return const Center(child: Text('练习图片预览'));
   }
 }

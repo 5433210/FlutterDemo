@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:demo/domain/interfaces/i_work_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
+import '../../domain/interfaces/i_work_service.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../infrastructure/config/storage_paths.dart';
 import '../../presentation/models/work_filter.dart';
@@ -16,6 +16,47 @@ class WorkService implements IWorkService {
   final StoragePaths _paths;
 
   WorkService(this._workRepository, this._imageService, this._paths);
+
+  @override
+  Future<void> deleteWork(String workId) async {
+    await _workRepository.deleteWork(workId);
+  }
+
+  @override
+  Future<List<Work>> getAllWorks() async {
+    final works = await _workRepository.getWorks();
+    return works.map((workData) => Work.fromMap(workData)).toList();
+  }
+
+  @override
+  Future<Work?> getWork(String id) async {
+    return await _workRepository.getWork(id);
+  }
+
+  @override
+  Future<String?> getWorkThumbnail(String workId) async {
+    try {
+      final thumbnailPath = _paths.getWorkThumbnailPath(workId);
+      final file = File(thumbnailPath);
+
+      // 确保目录存在
+      final directory = Directory(path.dirname(thumbnailPath));
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+
+      if (await file.exists()) {
+        debugPrint('Found thumbnail at: $thumbnailPath');
+        return thumbnailPath;
+      } else {
+        debugPrint('Thumbnail not found at: $thumbnailPath');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Error getting thumbnail: $e');
+      return null;
+    }
+  }
 
   @override
   Future<void> importWork(List<File> files, Work data) async {
@@ -53,16 +94,10 @@ class WorkService implements IWorkService {
         workId,
         files,
       );
-    } catch (e,stackTrace) {
+    } catch (e, stackTrace) {
       debugPrint('Import failed in service: $e\n$stackTrace');
       rethrow;
     }
-  }
-
-  @override
-  Future<List<Work>> getAllWorks() async {
-    final works = await _workRepository.getWorks();
-    return works.map((workData) => Work.fromMap(workData)).toList();
   }
 
   @override
@@ -76,7 +111,7 @@ class WorkService implements IWorkService {
         query: searchQuery?.trim(),
         style: filter?.style?.value,
         tool: filter?.tool?.value,
-        creationDateRange: filter?.dateRange != null 
+        creationDateRange: filter?.dateRange != null
             ? DateTimeRange(
                 start: filter!.dateRange!.start,
                 end: filter.dateRange!.end,
@@ -87,7 +122,9 @@ class WorkService implements IWorkService {
         descending: filter?.sortOption.descending ?? true,
       );
 
-      return results.map((data) => Work.fromMap(Map<String, dynamic>.from(data))).toList();
+      return results
+          .map((data) => Work.fromMap(Map<String, dynamic>.from(data)))
+          .toList();
     } catch (e) {
       debugPrint('Query works failed: $e');
       rethrow;
@@ -97,8 +134,8 @@ class WorkService implements IWorkService {
   // 添加排序字段映射方法
   String? _mapSortFieldToColumnName(SortField? field) {
     if (field == null) return null;
-    
-    return switch(field) {
+
+    return switch (field) {
       SortField.name => 'name',
       SortField.author => 'author',
       SortField.creationDate => 'creationDate',
@@ -106,40 +143,5 @@ class WorkService implements IWorkService {
       SortField.updateDate => 'updateTime',
       SortField.none => null,
     };
-  }
-
-  @override
-  Future<void> deleteWork(String workId) async {
-    await _workRepository.deleteWork(workId);
-  }
-
-  @override
-  Future<Work?> getWork(String id) async {
-    return await _workRepository.getWork(id);
-  }
-
-  @override
-  Future<String?> getWorkThumbnail(String workId) async {
-    try {
-      final thumbnailPath = _paths.getWorkThumbnailPath(workId);
-      final file = File(thumbnailPath);
-      
-      // 确保目录存在
-      final directory = Directory(path.dirname(thumbnailPath));
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-      
-      if (await file.exists()) {
-        debugPrint('Found thumbnail at: $thumbnailPath');
-        return thumbnailPath;
-      } else {
-        debugPrint('Thumbnail not found at: $thumbnailPath');
-        return null;
-      }
-    } catch (e) {
-      debugPrint('Error getting thumbnail: $e');
-      return null;
-    }
   }
 }

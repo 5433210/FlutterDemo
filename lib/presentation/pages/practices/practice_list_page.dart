@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../widgets/page_layout.dart';
-import '../../widgets/page_toolbar.dart';
+
 // 添加
 import '../../../theme/app_sizes.dart';
+import '../../widgets/page_layout.dart';
+import '../../widgets/page_toolbar.dart';
 import 'practice_detail_page.dart';
-import 'practice_edit_page.dart';  // 添加
+import 'practice_edit_page.dart'; // 添加
 
 class PracticeListPage extends StatefulWidget {
   const PracticeListPage({super.key});
@@ -16,31 +17,48 @@ class PracticeListPage extends StatefulWidget {
 class _PracticeListPageState extends State<PracticeListPage> {
   bool _isGridView = true;
 
-  void _navigateToPracticeDetail(BuildContext context, String practiceId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PracticeDetailPage(practiceId: practiceId),
+  @override
+  Widget build(BuildContext context) {
+    return PageLayout(
+      navigationInfo: const Text('练习记录'),
+      toolbar: PageToolbar(
+        leading: [
+          FilledButton.icon(
+            onPressed: () => _navigateToEditPage(),
+            icon: const Icon(Icons.add),
+            label: const Text('新建练习'),
+          ),
+          const SizedBox(width: AppSizes.spacingMedium),
+          IconButton(
+            onPressed: () => setState(() => _isGridView = !_isGridView),
+            icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
+            tooltip: _isGridView ? '列表视图' : '网格视图',
+          ),
+        ],
+        trailing: [
+          SizedBox(
+            width: 240,
+            child: SearchBar(
+              hintText: '搜索练习...',
+              leading: const Icon(Icons.search),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
-
-  void _navigateToEditPage([String? practiceId]) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PracticeEditPage(practiceId: practiceId),
-      ),
+      body: _isGridView ? _buildGridView() : _buildListView(),
     );
   }
 
   Widget _buildGridView() {
     return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),  // 更新
+      padding: const EdgeInsets.all(AppSizes.spacingMedium), // 更新
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: AppSizes.gridCrossAxisCount,  // 使用常量
-        mainAxisSpacing: AppSizes.gridMainAxisSpacing,  // 使用常量
-        crossAxisSpacing: AppSizes.gridCrossAxisSpacing,  // 使用常量
+        crossAxisCount: AppSizes.gridCrossAxisCount, // 使用常量
+        mainAxisSpacing: AppSizes.gridMainAxisSpacing, // 使用常量
+        crossAxisSpacing: AppSizes.gridCrossAxisSpacing, // 使用常量
         childAspectRatio: 1,
       ),
       itemCount: 20,
@@ -76,8 +94,10 @@ class _PracticeListPageState extends State<PracticeListPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('字帖标题 $index', style: Theme.of(context).textTheme.titleMedium),
-                      Text('创建时间: 2024-01-01', style: Theme.of(context).textTheme.bodySmall),
+                      Text('字帖标题 $index',
+                          style: Theme.of(context).textTheme.titleMedium),
+                      Text('创建时间: 2024-01-01',
+                          style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -91,7 +111,7 @@ class _PracticeListPageState extends State<PracticeListPage> {
 
   Widget _buildListView() {
     return ListView.builder(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),  // 更新
+      padding: const EdgeInsets.all(AppSizes.spacingMedium), // 更新
       itemCount: 20,
       itemBuilder: (context, index) {
         return Card(
@@ -113,38 +133,21 @@ class _PracticeListPageState extends State<PracticeListPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return PageLayout(
-      navigationInfo: const Text('练习记录'),
-      toolbar: PageToolbar(
-        leading: [
-          FilledButton.icon(
-            onPressed: () => _navigateToEditPage(),
-            icon: const Icon(Icons.add),
-            label: const Text('新建练习'),
-          ),
-          const SizedBox(width: AppSizes.spacingMedium),
-          IconButton(
-            onPressed: () => setState(() => _isGridView = !_isGridView),
-            icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
-            tooltip: _isGridView ? '列表视图' : '网格视图',
-          ),
-        ],
-        trailing: [
-          SizedBox(
-            width: 240,
-            child: SearchBar(
-              hintText: '搜索练习...',
-              leading: const Icon(Icons.search),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-              ),
-            ),
-          ),
-        ],
+  void _navigateToEditPage([String? practiceId]) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PracticeEditPage(practiceId: practiceId),
       ),
-      body: _isGridView ? _buildGridView() : _buildListView(),
+    );
+  }
+
+  void _navigateToPracticeDetail(BuildContext context, String practiceId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PracticeDetailPage(practiceId: practiceId),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 import 'app_sizes.dart';
 
@@ -9,10 +10,9 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: AppColors.primaryColor,
         secondary: AppColors.secondaryColor,
-        background: AppColors.backgroundColor,
-        onBackground: AppColors.textColor,
+        surface: AppColors.backgroundColor,
+        onSurface: AppColors.textColor,
       ),
-      
       textTheme: const TextTheme(
         bodyLarge: TextStyle(
           color: AppColors.textColor,
@@ -23,7 +23,6 @@ class AppTheme {
           fontSize: 14,
         ),
       ),
-
       cardTheme: CardTheme(
         elevation: AppSizes.cardElevation,
         shape: RoundedRectangleBorder(
@@ -31,7 +30,6 @@ class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
-
       scaffoldBackgroundColor: AppColors.backgroundColor,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryColor,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class FormSection extends StatelessWidget {
@@ -18,7 +19,7 @@ class FormSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

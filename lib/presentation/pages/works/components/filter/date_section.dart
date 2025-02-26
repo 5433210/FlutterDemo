@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../theme/app_sizes.dart';
 import '../../../../models/date_range_filter.dart';
 import '../../../../models/work_filter.dart';
@@ -42,38 +43,14 @@ class DateSection extends StatelessWidget {
   }
 }
 
-class _PresetTab extends ConsumerWidget {
-  const _PresetTab();
+class _CustomTab extends ConsumerWidget {
+  const _CustomTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.s),
-      child: Wrap(
-        spacing: AppSizes.xs,
-        runSpacing: AppSizes.xs,
-        children: DateRangePreset.values.map((preset) => FilterChip(
-          label: Text(preset.label),
-          selected: state.filter.datePreset == preset,
-          onSelected: (selected) => viewModel.updateDatePreset(selected ? preset : null),
-          visualDensity: VisualDensity.compact,
-        )).toList(),
-      ),
-    );
-  }
-}
-
-class _CustomTab extends ConsumerWidget {
-  const _CustomTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {   
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -88,6 +65,33 @@ class _CustomTab extends ConsumerWidget {
             }
           },
         ),
+      ),
+    );
+  }
+}
+
+class _PresetTab extends ConsumerWidget {
+  const _PresetTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(workBrowseProvider);
+    final viewModel = ref.read(workBrowseProvider.notifier);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.s),
+      child: Wrap(
+        spacing: AppSizes.xs,
+        runSpacing: AppSizes.xs,
+        children: DateRangePreset.values
+            .map((preset) => FilterChip(
+                  label: Text(preset.label),
+                  selected: state.filter.datePreset == preset,
+                  onSelected: (selected) =>
+                      viewModel.updateDatePreset(selected ? preset : null),
+                  visualDensity: VisualDensity.compact,
+                ))
+            .toList(),
       ),
     );
   }

@@ -1,11 +1,19 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final errorHandlerProvider = Provider<ErrorHandler>((ref) {
   return ErrorHandler();
 });
 
 class ErrorHandler {
+  String getErrorMessage(Object error) {
+    // 添加错误消息转换逻辑
+    if (error is Exception) {
+      return error.toString().replaceAll('Exception:', '');
+    }
+    return error.toString();
+  }
+
   void handleError(Object error, StackTrace? stackTrace) {
     // 错误处理逻辑
   }
@@ -37,13 +45,5 @@ class ErrorHandler {
         backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
-  }
-
-  String getErrorMessage(Object error) {
-    // 添加错误消息转换逻辑
-    if (error is Exception) {
-      return error.toString().replaceAll('Exception:', '');
-    }
-    return error.toString();
   }
 }

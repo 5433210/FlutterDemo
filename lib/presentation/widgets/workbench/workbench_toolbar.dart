@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class WorkbenchToolbar extends StatelessWidget {
@@ -23,8 +24,7 @@ class WorkbenchToolbar extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(AppSizes.spacingMedium),
       child: Row(
         children: [
-          if (title != null)
-            Text(title!, style: theme.textTheme.titleMedium),
+          if (title != null) Text(title!, style: theme.textTheme.titleMedium),
           if (tools != null) ...[
             const SizedBox(width: AppSizes.spacingMedium),
             ...tools!,

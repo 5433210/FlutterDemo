@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../domain/enums/work_tool.dart';
 import '../../../../models/work_filter.dart';
-import '../../../../providers/work_browse_provider.dart';
-import '../../../../viewmodels/states/work_browse_state.dart';
-import '../../../../viewmodels/work_browse_view_model.dart';
 import 'work_filter_section.dart';
 
 class ToolSection extends StatelessWidget {

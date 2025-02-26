@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class EmptyPlaceholder extends StatelessWidget {
@@ -18,7 +19,7 @@ class EmptyPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

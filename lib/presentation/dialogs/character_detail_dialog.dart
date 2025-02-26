@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../widgets/character/character_detail_view.dart';
 
 class CharacterDetailDialog extends StatelessWidget {
@@ -20,7 +21,9 @@ class CharacterDetailDialog extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text('集字详情', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text('集字详情',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -32,7 +35,7 @@ class CharacterDetailDialog extends StatelessWidget {
             // 移除 SingleChildScrollView，直接使用 Expanded
             Expanded(
               child: CharacterDetailView(
-                charId: charId,                
+                charId: charId,
               ),
             ),
           ],

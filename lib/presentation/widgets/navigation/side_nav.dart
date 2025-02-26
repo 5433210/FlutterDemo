@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class SideNavigation extends StatelessWidget {
@@ -14,7 +15,7 @@ class SideNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return NavigationRail(
       selectedIndex: selectedIndex,
       onDestinationSelected: onDestinationSelected,

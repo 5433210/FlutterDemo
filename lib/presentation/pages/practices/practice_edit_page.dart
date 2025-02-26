@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../widgets/window/title_bar.dart';
-import '../../widgets/practice/practice_tool_panel.dart';
+
 import '../../widgets/practice/practice_layer_panel.dart';
 import '../../widgets/practice/practice_property_panel.dart';
+import '../../widgets/practice/practice_tool_panel.dart';
+import '../../widgets/window/title_bar.dart';
 
 class PracticeEditPage extends StatefulWidget {
   final String? practiceId; // 可选ID，如果为null则表示新建
 
   const PracticeEditPage({
-    super.key, 
+    super.key,
     this.practiceId,
   });
 
@@ -20,110 +21,6 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
   bool _hasUnsavedChanges = false;
   List<Map<String, dynamic>> _layers = [];
   Map<String, dynamic>? _selectedElement;
-
-  @override
-  void initState() {
-    super.initState();
-    // TODO: 加载字帖数据
-    _layers = [
-      {
-        'id': '1',
-        'name': '背景层',
-        'visible': true,
-        'locked': false,
-        'selected': false,
-      },
-      {
-        'id': '2',
-        'name': '内容层',
-        'visible': true,
-        'locked': false,
-        'selected': true,
-      },
-    ];
-  }
-
-  void _handleToolSelected(String tool) {
-    setState(() {
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  void _handleLayerSelected(int index) {
-    setState(() {
-      for (var i = 0; i < _layers.length; i++) {
-        _layers[i]['selected'] = i == index;
-      }
-    });
-  }
-
-  void _handleLayerVisibilityChanged(int index, bool visible) {
-    setState(() {
-      _layers[index]['visible'] = visible;
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  void _handleLayerLockChanged(int index, bool locked) {
-    setState(() {
-      _layers[index]['locked'] = locked;
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  void _handleLayerDeleted(int index) {
-    setState(() {
-      _layers.removeAt(index);
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  void _handleLayerReordered(int oldIndex, int newIndex) {
-    setState(() {
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
-      final item = _layers.removeAt(oldIndex);
-      _layers.insert(newIndex, item);
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  void _handlePropertyChanged(Map<String, dynamic> updatedElement) {
-    setState(() {
-      _selectedElement = updatedElement;
-      _hasUnsavedChanges = true;
-    });
-  }
-
-  Future<void> _handleSave() async {
-    // TODO: 实现保存逻辑
-    setState(() => _hasUnsavedChanges = false);
-  }
-
-  Future<bool> _onWillPop() async {
-    if (!_hasUnsavedChanges) return true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认退出'),
-        content: const Text('有未保存的更改，确定要退出吗？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('确定'),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +79,8 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
                           child: PracticeLayerPanel(
                             layers: _layers,
                             onLayerSelected: _handleLayerSelected,
-                            onLayerVisibilityChanged: _handleLayerVisibilityChanged,
+                            onLayerVisibilityChanged:
+                                _handleLayerVisibilityChanged,
                             onLayerLockChanged: _handleLayerLockChanged,
                             onLayerDeleted: _handleLayerDeleted,
                             onLayerReordered: _handleLayerReordered,
@@ -226,5 +124,109 @@ class _PracticeEditPageState extends State<PracticeEditPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO: 加载字帖数据
+    _layers = [
+      {
+        'id': '1',
+        'name': '背景层',
+        'visible': true,
+        'locked': false,
+        'selected': false,
+      },
+      {
+        'id': '2',
+        'name': '内容层',
+        'visible': true,
+        'locked': false,
+        'selected': true,
+      },
+    ];
+  }
+
+  void _handleLayerDeleted(int index) {
+    setState(() {
+      _layers.removeAt(index);
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _handleLayerLockChanged(int index, bool locked) {
+    setState(() {
+      _layers[index]['locked'] = locked;
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _handleLayerReordered(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final item = _layers.removeAt(oldIndex);
+      _layers.insert(newIndex, item);
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _handleLayerSelected(int index) {
+    setState(() {
+      for (var i = 0; i < _layers.length; i++) {
+        _layers[i]['selected'] = i == index;
+      }
+    });
+  }
+
+  void _handleLayerVisibilityChanged(int index, bool visible) {
+    setState(() {
+      _layers[index]['visible'] = visible;
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _handlePropertyChanged(Map<String, dynamic> updatedElement) {
+    setState(() {
+      _selectedElement = updatedElement;
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  Future<void> _handleSave() async {
+    // TODO: 实现保存逻辑
+    setState(() => _hasUnsavedChanges = false);
+  }
+
+  void _handleToolSelected(String tool) {
+    setState(() {
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  Future<bool> _onWillPop() async {
+    if (!_hasUnsavedChanges) return true;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认退出'),
+        content: const Text('有未保存的更改，确定要退出吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 }

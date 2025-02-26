@@ -1,7 +1,6 @@
-import 'package:demo/infrastructure/persistence/database_interface.dart';
-
 import '../../domain/entities/practice.dart';
 import '../../domain/repositories/practice_repository.dart';
+import '../persistence/database_interface.dart';
 
 class PracticeRepositoryImpl implements PracticeRepository {
   final DatabaseInterface _db;
@@ -9,8 +8,8 @@ class PracticeRepositoryImpl implements PracticeRepository {
   PracticeRepositoryImpl(this._db);
 
   @override
-  Future<String> insertPractice(Practice practice) async {
-    return await _db.insertPractice(practice.toMap());
+  Future<void> deletePractice(String id) async {
+    await _db.deletePractice(id);
   }
 
   @override
@@ -37,12 +36,12 @@ class PracticeRepositoryImpl implements PracticeRepository {
   }
 
   @override
-  Future<void> updatePractice(Practice practice) async {
-    await _db.updatePractice(practice.id, practice.toMap());
+  Future<String> insertPractice(Practice practice) async {
+    return await _db.insertPractice(practice.toMap());
   }
 
   @override
-  Future<void> deletePractice(String id) async {
-    await _db.deletePractice(id);
+  Future<void> updatePractice(Practice practice) async {
+    await _db.updatePractice(practice.id, practice.toMap());
   }
 }

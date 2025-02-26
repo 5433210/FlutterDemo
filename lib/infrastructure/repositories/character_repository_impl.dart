@@ -1,7 +1,6 @@
-import 'package:demo/infrastructure/persistence/database_interface.dart';
-
 import '../../domain/entities/character.dart';
 import '../../domain/repositories/character_repository.dart';
+import '../persistence/database_interface.dart';
 
 class CharacterRepositoryImpl implements CharacterRepository {
   final DatabaseInterface _db;
@@ -9,8 +8,8 @@ class CharacterRepositoryImpl implements CharacterRepository {
   CharacterRepositoryImpl(this._db);
 
   @override
-  Future<String> insertCharacter(Character character) async {
-    return await _db.insertCharacter(character.toMap());
+  Future<void> deleteCharacter(String id) async {
+    await _db.deleteCharacter(id);
   }
 
   @override
@@ -27,12 +26,12 @@ class CharacterRepositoryImpl implements CharacterRepository {
   }
 
   @override
-  Future<void> updateCharacter(Character character) async {
-    await _db.updateCharacter(character.id, character.toMap());
+  Future<String> insertCharacter(Character character) async {
+    return await _db.insertCharacter(character.toMap());
   }
 
   @override
-  Future<void> deleteCharacter(String id) async {
-    await _db.deleteCharacter(id);
+  Future<void> updateCharacter(Character character) async {
+    await _db.updateCharacter(character.id, character.toMap());
   }
 }

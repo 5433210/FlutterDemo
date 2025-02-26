@@ -1,6 +1,8 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../../../../../theme/app_sizes.dart';
 
 class ImageDropTarget extends StatefulWidget {
@@ -23,17 +25,18 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return DragTarget<List<String>>(
       onWillAcceptWithDetails: (data) {
         final hasValidFiles = data.data.any((path) {
-          final ext = path.toLowerCase();
-          return ext.endsWith('.jpg') || 
-                 ext.endsWith('.jpeg') || 
-                 ext.endsWith('.png') || 
-                 ext.endsWith('.webp');
-        }) ?? false;
-        
+              final ext = path.toLowerCase();
+              return ext.endsWith('.jpg') ||
+                  ext.endsWith('.jpeg') ||
+                  ext.endsWith('.png') ||
+                  ext.endsWith('.webp');
+            }) ??
+            false;
+
         setState(() => _isDragging = hasValidFiles);
         return hasValidFiles;
       },
@@ -43,7 +46,7 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
             .map((path) => File(path))
             .where((file) => file.existsSync())
             .toList();
-            
+
         if (files.isNotEmpty) {
           HapticFeedback.selectionClick();
           widget.onFilesDropped(files);

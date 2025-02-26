@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
 
 class ImageDropTarget extends StatefulWidget {
   final Widget child;
@@ -41,9 +41,8 @@ class _ImageDropTargetState extends State<ImageDropTarget> {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _isDragging 
-                  ? theme.colorScheme.primary 
-                  : Colors.transparent,
+              color:
+                  _isDragging ? theme.colorScheme.primary : Colors.transparent,
               width: 2,
             ),
           ),

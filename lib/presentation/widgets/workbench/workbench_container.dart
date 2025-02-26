@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class WorkbenchContainer extends StatelessWidget {
@@ -36,7 +37,8 @@ class WorkbenchContainer extends StatelessWidget {
             children: [
               Expanded(child: body),
               if (sidebar != null) ...[
-                VerticalDivider(width: 1, color: Theme.of(context).dividerColor),
+                VerticalDivider(
+                    width: 1, color: Theme.of(context).dividerColor),
                 SizedBox(
                   width: sidebarWidth,
                   child: sidebar!,

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_sizes.dart';
+
+enum ResponsiveBreakpoint { xs, sm, md, lg }
 
 class ResponsiveBuilder extends StatelessWidget {
   final Widget Function(BuildContext, ResponsiveBreakpoint) builder;
@@ -26,5 +29,3 @@ class ResponsiveBuilder extends StatelessWidget {
     return ResponsiveBreakpoint.lg;
   }
 }
-
-enum ResponsiveBreakpoint { xs, sm, md, lg }

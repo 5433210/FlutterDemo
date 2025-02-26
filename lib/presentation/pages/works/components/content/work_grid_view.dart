@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../../../domain/entities/work.dart';
 import '../../../../theme/app_sizes.dart';
 import 'items/work_grid_item.dart';
@@ -47,8 +48,9 @@ class WorkGridView extends StatelessWidget {
               work: work,
               isSelected: selectedWorks.contains(work.id),
               isSelectionMode: batchMode,
-              onTap: () => batchMode 
-                  ? onSelectionChanged(work.id!, !selectedWorks.contains(work.id))
+              onTap: () => batchMode
+                  ? onSelectionChanged(
+                      work.id!, !selectedWorks.contains(work.id))
                   : onItemTap?.call(work.id!),
             );
           },

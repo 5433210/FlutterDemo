@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../models/date_range_filter.dart';
-import '../../../../theme/app_sizes.dart';
 import 'package:intl/intl.dart';
 
-class DateRangeFilterSection extends StatefulWidget {  // 改为 StatefulWidget
+import '../../../../models/date_range_filter.dart';
+import '../../../../theme/app_sizes.dart';
+
+class DateRangeFilterSection extends StatefulWidget {
+  // 改为 StatefulWidget
   final DateRangeFilter? filter;
   final ValueChanged<DateRangeFilter?> onChanged;
 
@@ -17,38 +19,17 @@ class DateRangeFilterSection extends StatefulWidget {  // 改为 StatefulWidget
   State<DateRangeFilterSection> createState() => _DateRangeFilterSectionState();
 }
 
-class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with SingleTickerProviderStateMixin {
+class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    // 默认显示预设标签页，不再根据过滤器状态决定
-    _tabController.index = 0;
-  }
-
-  @override
-  void didUpdateWidget(covariant DateRangeFilterSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 只在选择预设时切换到预设标签页
-    if (oldWidget.filter?.preset != widget.filter?.preset && 
-        widget.filter?.preset != null) {
-      _tabController.animateTo(0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool showResetChip = widget.filter != null && 
-        (widget.filter!.preset != null || widget.filter!.start != null || widget.filter!.end != null);
+    final bool showResetChip = widget.filter != null &&
+        (widget.filter!.preset != null ||
+            widget.filter!.start != null ||
+            widget.filter!.end != null);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,69 +76,35 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with Si
     );
   }
 
-  void _clearPreset() {
-    if (widget.filter?.preset != null) {
-      widget.onChanged(DateRangeFilter(
-        start: widget.filter?.start,
-        end: widget.filter?.end,
-      ));
+  @override
+  void didUpdateWidget(covariant DateRangeFilterSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 只在选择预设时切换到预设标签页
+    if (oldWidget.filter?.preset != widget.filter?.preset &&
+        widget.filter?.preset != null) {
+      _tabController.animateTo(0);
     }
   }
 
-  void _clearCustomRange() {
-    if (widget.filter?.start != null || widget.filter?.end != null) {
-      if (widget.filter?.preset != null) {
-        widget.onChanged(DateRangeFilter.preset(widget.filter!.preset!));
-      } else {
-        widget.onChanged(null);
-      }
-    }
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
-  Widget _buildPresets(ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.s),
-      child: Column(  // 改用 Column 以获得更好的布局控制
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Wrap(
-            spacing: AppSizes.xs,
-            runSpacing: AppSizes.xs,
-            children: [
-              for (final preset in DateRangePreset.values)
-                FilterChip(
-                  label: Text(preset.label),
-                  selected: widget.filter?.preset == preset,
-                  onSelected: (selected) {
-                    widget.onChanged(selected ? DateRangeFilter.preset(preset) : null);
-                  },
-                  showCheckmark: false,
-                  selectedColor: theme.colorScheme.primaryContainer,
-                ),
-            ],
-          ),
-          if (widget.filter?.preset != null) ...[
-            const SizedBox(height: AppSizes.m),
-            Text(
-              _getPresetDateRange(widget.filter!.preset!),
-              style: theme.textTheme.bodySmall,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  String _getPresetDateRange(DateRangePreset preset) {
-    final range = preset.getRange();
-    return '${_formatDate(range.start)} - ${_formatDate(range.end)}';
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    // 默认显示预设标签页，不再根据过滤器状态决定
+    _tabController.index = 0;
   }
 
   Widget _buildCustomRange(BuildContext context) {
-    final isStartDateError = widget.filter?.start != null && 
-                           widget.filter?.end != null && 
-                           widget.filter!.start!.isAfter(widget.filter!.end!);
-                           
+    final isStartDateError = widget.filter?.start != null &&
+        widget.filter?.end != null &&
+        widget.filter!.start!.isAfter(widget.filter!.end!);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -199,10 +146,11 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with Si
           icon: const Icon(Icons.calendar_today, size: 18),
           label: Text(value != null ? _formatDate(value) : '点击选择日期'),
           onPressed: onPressed,
-          style: error != null ? 
-            OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ) : null,
+          style: error != null
+              ? OutlinedButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                )
+              : null,
         ),
         if (error != null)
           Padding(
@@ -216,6 +164,85 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with Si
           ),
       ],
     );
+  }
+
+  Widget _buildPresets(ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSizes.s),
+      child: Column(
+        // 改用 Column 以获得更好的布局控制
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: AppSizes.xs,
+            runSpacing: AppSizes.xs,
+            children: [
+              for (final preset in DateRangePreset.values)
+                FilterChip(
+                  label: Text(preset.label),
+                  selected: widget.filter?.preset == preset,
+                  onSelected: (selected) {
+                    widget.onChanged(
+                        selected ? DateRangeFilter.preset(preset) : null);
+                  },
+                  showCheckmark: false,
+                  selectedColor: theme.colorScheme.primaryContainer,
+                ),
+            ],
+          ),
+          if (widget.filter?.preset != null) ...[
+            const SizedBox(height: AppSizes.m),
+            Text(
+              _getPresetDateRange(widget.filter!.preset!),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _clearCustomRange() {
+    if (widget.filter?.start != null || widget.filter?.end != null) {
+      if (widget.filter?.preset != null) {
+        widget.onChanged(DateRangeFilter.preset(widget.filter!.preset!));
+      } else {
+        widget.onChanged(null);
+      }
+    }
+  }
+
+  void _clearPreset() {
+    if (widget.filter?.preset != null) {
+      widget.onChanged(DateRangeFilter(
+        start: widget.filter?.start,
+        end: widget.filter?.end,
+      ));
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return DateFormat.yMd().format(date);
+  }
+
+  String _formatFilterText() {
+    if (widget.filter == null) return '不限';
+    if (widget.filter!.preset != null) {
+      return widget.filter!.preset!.label;
+    }
+
+    final DateTimeRange? range = widget.filter!.effectiveRange;
+    if (range == null) return '不限';
+
+    final start = _formatDate(range.start);
+    final end = _formatDate(range.end);
+    if (start == end) return start;
+    return '$start - $end';
+  }
+
+  String _getPresetDateRange(DateRangePreset preset) {
+    final range = preset.getRange();
+    return '${_formatDate(range.start)} - ${_formatDate(range.end)}';
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
@@ -248,28 +275,9 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection> with Si
       start: startDate ?? widget.filter?.start,
       end: endDate ?? widget.filter?.end,
     );
-    
+
     if (newFilter != widget.filter) {
       widget.onChanged(newFilter);
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return DateFormat.yMd().format(date);
-  }
-
-  String _formatFilterText() {
-    if (widget.filter == null) return '不限';
-    if (widget.filter!.preset != null) {
-      return widget.filter!.preset!.label;
-    }
-    
-    final DateTimeRange? range = widget.filter!.effectiveRange;
-    if (range == null) return '不限';
-    
-    final start = _formatDate(range.start);
-    final end = _formatDate(range.end);
-    if (start == end) return start;
-    return '$start - $end';
   }
 }

@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
-import '../../../theme/app_sizes.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
+
+import '../../../theme/app_sizes.dart';
 
 class ImagePreview extends StatelessWidget {
   final File? file;
@@ -25,7 +27,7 @@ class ImagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: width,
       height: height,
@@ -40,6 +42,16 @@ class ImagePreview extends StatelessWidget {
     );
   }
 
+  Widget _buildError(ThemeData theme) {
+    return errorWidget ??
+        Center(
+          child: Icon(
+            Icons.broken_image_outlined,
+            color: theme.colorScheme.error,
+          ),
+        );
+  }
+
   Widget _buildImage(ThemeData theme) {
     if (file != null) {
       return Image.file(
@@ -48,7 +60,7 @@ class ImagePreview extends StatelessWidget {
         errorBuilder: (_, __, ___) => _buildError(theme),
       );
     }
-    
+
     if (networkUrl != null) {
       return Image.network(
         networkUrl!,
@@ -65,19 +77,11 @@ class ImagePreview extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(ThemeData theme) {
-    return placeholder ?? Center(
-      child: CircularProgressIndicator(
-        color: theme.primaryColor,
-      ),
-    );
-  }
-
-  Widget _buildError(ThemeData theme) {
-    return errorWidget ?? Center(
-      child: Icon(
-        Icons.broken_image_outlined,
-        color: theme.colorScheme.error,
-      ),
-    );
+    return placeholder ??
+        Center(
+          child: CircularProgressIndicator(
+            color: theme.primaryColor,
+          ),
+        );
   }
 }

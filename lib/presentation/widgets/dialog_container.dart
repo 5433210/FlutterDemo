@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_sizes.dart';
 
 class DialogContainer extends StatelessWidget {
@@ -24,7 +25,7 @@ class DialogContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Dialog(
       child: Container(
         width: width,

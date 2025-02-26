@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+
+import '../../../theme/app_sizes.dart';
+import '../../dialogs/character_edit_dialog.dart';
+import '../../widgets/character/character_detail_view.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/page_toolbar.dart';
 import '../../widgets/search/search_box.dart';
 import '../../widgets/section_header.dart';
-import '../../dialogs/character_edit_dialog.dart';
-import '../../widgets/character/character_detail_view.dart';
-import '../../../theme/app_sizes.dart';
 
 class CharacterListPage extends StatefulWidget {
   const CharacterListPage({super.key});
@@ -71,6 +72,12 @@ class _CharacterListPageState extends State<CharacterListPage> {
     );
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Widget _buildCharacterGrid() {
     return GridView.builder(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
@@ -89,12 +96,11 @@ class _CharacterListPageState extends State<CharacterListPage> {
     final theme = Theme.of(context);
     final charId = 'char_$index';
     final isSelected = charId == _selectedCharId;
-    
+
     return Card(
-      elevation: isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
-      color: isSelected 
-          ? theme.primaryColor.withOpacity(0.1) 
-          : null,
+      elevation:
+          isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
+      color: isSelected ? theme.primaryColor.withOpacity(0.1) : null,
       child: InkWell(
         onTap: () => setState(() => _selectedCharId = charId),
         child: Column(
@@ -122,20 +128,16 @@ class _CharacterListPageState extends State<CharacterListPage> {
     );
   }
 
-  void _showAddCharacterDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const CharacterEditDialog(charId: '',),
-    );
-  }
-
   void _handleSearch() {
     // 实现搜索逻辑
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void _showAddCharacterDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const CharacterEditDialog(
+        charId: '',
+      ),
+    );
   }
 }

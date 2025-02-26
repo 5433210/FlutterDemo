@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../theme/app_sizes.dart';
 
 class MessageBar extends StatelessWidget {
@@ -20,7 +21,7 @@ class MessageBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Material(
       color: backgroundColor ?? theme.colorScheme.secondary,
       child: Padding(
