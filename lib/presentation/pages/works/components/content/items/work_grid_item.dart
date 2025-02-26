@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../domain/entities/work.dart';
+import '../../../../../../domain/enums/work_style.dart';
+import '../../../../../../domain/enums/work_tool.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
@@ -9,7 +12,7 @@ class WorkGridItem extends StatelessWidget {
   final Work work;
   final bool isSelected;
   final bool isSelectionMode;
-  final VoidCallback onTap;  // 修改为必需参数
+  final VoidCallback onTap;
 
   const WorkGridItem({
     super.key,
@@ -24,9 +27,10 @@ class WorkGridItem extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Card(
+      margin: const EdgeInsets.all(0), // 移除默认边距
       elevation: isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         side: isSelected ? BorderSide(
           color: theme.colorScheme.primary,
           width: 2,
@@ -37,64 +41,77 @@ class WorkGridItem extends StatelessWidget {
         onTap: onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // 使整个卡片尽可能小
           children: [
-            // 图片容器
+            // 图片容器 - 固定比例
             AspectRatio(
-              aspectRatio: 4/3, // 固定图片比例
+              aspectRatio: 4/3,  // 保持4:3的图片比例
               child: _buildThumbnail(context),
             ),
-            // 信息区域
+            // 信息容器 - 紧凑但可读的布局
             Padding(
-              padding: const EdgeInsets.all(AppSizes.s),
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.s, // 左边距
+                AppSizes.xs, // 上边距
+                AppSizes.s, // 右边距 
+                AppSizes.xs, // 底部边距减小
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 标题行
+                  // 标题 - 单行截断
                   Text(
                     work.name ?? '未命名作品',
-                    style: theme.textTheme.titleMedium,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontSize: 15, // 调整为更舒适的标题大小
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.xs),
-                  // 作者和时间行
-                  DefaultTextStyle(
-                    style: theme.textTheme.bodySmall ?? const TextStyle(),
-                    child: Row(
-                      children: [
-                        if (work.author != null) ...[
-                          Text(work.author!),
-                          const SizedBox(width: AppSizes.xs),
-                          Container(
-                            width: 4,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: theme.colorScheme.outline,
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.xs),
-                        ],
+                  const SizedBox(height: AppSizes.xs), // 适当的间距
+                  // 作者和时间 - 单行截断
+                  Row(
+                    children: [
+                      if (work.author != null) 
                         Expanded(
                           child: Text(
-                            DateFormatter.formatCompact(work.creationDate ?? work.createTime!),
+                            work.author!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: 13, // 稍微增大作者字体
+                            ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.xs),
-                  // 标签行
-                  Row(
-                    children: [
-                      if (work.style != null)
-                        _buildTag(context, work.style!),
-                      if (work.tool != null) ...[
-                        const SizedBox(width: AppSizes.xs),
-                        _buildTag(context, work.tool!),
-                      ],
+                      Text(
+                        DateFormatter.formatCompact(
+                          work.creationDate ?? work.createTime!
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 12, // 日期字体大小
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: AppSizes.xxs),
+                  // 标签 - 紧凑但可读的标签
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4), // 底部减少留白
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          if (work.style != null)
+                            _buildTag(context, WorkStyle.fromValue(work.style!)?.label ?? work.style!),
+                          if (work.tool != null) ...[
+                            const SizedBox(width: AppSizes.xs),
+                            _buildTag(context, WorkTool.fromValue(work.tool!)?.label ?? work.tool!),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -113,68 +130,20 @@ class WorkGridItem extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           final file = File(snapshot.data!);
-          if (file.existsSync()) {
-            return Image.file(
-              file,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-            );
-          }
+          return Image.file(
+            file,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+          );
         }
         return _buildPlaceholder(context);
       },
     );
   }
 
-  Widget _buildMetadata(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          work.name ?? '',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Icon(Icons.calendar_today, size: 16),
-            const SizedBox(width: 4),
-            Text(
-              DateFormatter.formatCompact(
-                work.creationDate ?? work.createTime ?? DateTime.now(),
-              ),
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSelectionOverlay(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-      ),
-      child: Align(
-        alignment: Alignment.topRight,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.xs),
-          child: Icon(
-            Icons.check_circle,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
-      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      color: Theme.of(context).colorScheme.surfaceVariant,
       child: Center(
         child: Icon(
           Icons.image_outlined,
@@ -190,7 +159,7 @@ class WorkGridItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.xs,
-        vertical: AppSizes.xxs,
+        vertical: 2, // 增加垂直内边距使标签更可读
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.secondaryContainer,
@@ -199,6 +168,7 @@ class WorkGridItem extends StatelessWidget {
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
+          fontSize: 11, // 增加字体大小
           color: theme.colorScheme.onSecondaryContainer,
         ),
       ),

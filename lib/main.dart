@@ -17,7 +17,6 @@ import 'presentation/pages/practices/practice_edit_page.dart';
 import 'routes/app_routes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -63,7 +62,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(      
       title: '书法集字',
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       home: const MainWindow(),
       onGenerateRoute: (settings) {
