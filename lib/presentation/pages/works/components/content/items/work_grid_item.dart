@@ -1,9 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../domain/entities/work.dart';
-import '../../../../../providers/work_browse_provider.dart';
-import '../../../../../theme/app_sizes.dart';
+import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
@@ -23,33 +21,84 @@ class WorkGridItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Card(
+      elevation: isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        side: isSelected ? BorderSide(
+          color: theme.colorScheme.primary,
+          width: 2,
+        ) : BorderSide.none,
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              children: [
-                _buildThumbnail(context),
-                _buildMetadata(context),
-              ],
+            // 图片容器
+            AspectRatio(
+              aspectRatio: 4/3, // 固定图片比例
+              child: _buildThumbnail(context),
             ),
-            if (isSelectionMode)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    shape: BoxShape.circle,
+            // 信息区域
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.s),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 标题行
+                  Text(
+                    work.name ?? '未命名作品',
+                    style: theme.textTheme.titleMedium,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Checkbox(
-                    value: isSelected,
-                    onChanged: (_) => onTap(),
+                  const SizedBox(height: AppSizes.xs),
+                  // 作者和时间行
+                  DefaultTextStyle(
+                    style: theme.textTheme.bodySmall ?? const TextStyle(),
+                    child: Row(
+                      children: [
+                        if (work.author != null) ...[
+                          Text(work.author!),
+                          const SizedBox(width: AppSizes.xs),
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.xs),
+                        ],
+                        Expanded(
+                          child: Text(
+                            DateFormatter.formatCompact(work.creationDate ?? work.createTime!),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: AppSizes.xs),
+                  // 标签行
+                  Row(
+                    children: [
+                      if (work.style != null)
+                        _buildTag(context, work.style!),
+                      if (work.tool != null) ...[
+                        const SizedBox(width: AppSizes.xs),
+                        _buildTag(context, work.tool!),
+                      ],
+                    ],
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -131,6 +180,26 @@ class WorkGridItem extends StatelessWidget {
           Icons.image_outlined,
           size: 32,
           color: Theme.of(context).colorScheme.outline,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTag(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.xs,
+        vertical: AppSizes.xxs,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSecondaryContainer,
         ),
       ),
     );

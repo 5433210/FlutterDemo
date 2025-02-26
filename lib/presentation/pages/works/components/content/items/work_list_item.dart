@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../../../domain/entities/work.dart';
-import '../../../../../theme/app_sizes.dart';
+import '../../../../../../theme/app_sizes.dart';
+import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
 class WorkListItem extends StatelessWidget {
@@ -20,57 +21,83 @@ class WorkListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Card(
+      elevation: isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        side: isSelected ? BorderSide(
+          color: theme.colorScheme.primary,
+          width: 2,
+        ) : BorderSide.none,
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.m),
-          child: SizedBox(
-            height: AppSizes.listItemHeight,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: AppSizes.m),
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (_) => onTap(),
-                    ),
-                  ),
-                _buildThumbnail(context),
-                const SizedBox(width: AppSizes.m),
-                Expanded(
+        child: SizedBox(
+          height: AppSizes.listItemHeight,
+          child: Row(
+            children: [
+              // 缩略图区域
+              AspectRatio(
+                aspectRatio: 1,
+                child: _buildThumbnail(context),
+              ),
+              // 信息区域
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.s),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // 标题行
                       Text(
-                        work.name ?? '',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        work.name ?? '未命名作品',
+                        style: theme.textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (work.author != null) ...[
-                        const SizedBox(height: AppSizes.xs),
+                      const SizedBox(height: AppSizes.xs),
+                      // 作者行
+                      if (work.author != null)
                         Text(
                           work.author!,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          style: theme.textTheme.bodyMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ],
                       const Spacer(),
+                      // 底部信息行
                       Row(
                         children: [
-                          if (work.style != null) _buildTag(context, work.style!),
-                          if (work.tool != null)
-                            Padding(
-                              padding: const EdgeInsets.only(left: AppSizes.s),
-                              child: _buildTag(context, work.tool!),
+                          // 标签组
+                          Expanded(
+                            child: Row(
+                              children: [
+                                if (work.style != null)
+                                  _buildTag(context, work.style!),
+                                if (work.tool != null) ...[
+                                  const SizedBox(width: AppSizes.xs),
+                                  _buildTag(context, work.tool!),
+                                ],
+                              ],
                             ),
+                          ),
+                          // 时间
+                          Text(
+                            DateFormatter.formatCompact(work.creationDate ?? work.createTime!),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
