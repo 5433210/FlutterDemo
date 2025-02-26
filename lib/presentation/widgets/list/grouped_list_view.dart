@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../../theme/app_sizes.dart';
 
 class GroupedListView<T> extends StatelessWidget {
@@ -28,12 +29,16 @@ class GroupedListView<T> extends StatelessWidget {
       itemBuilder: (context, index) {
         final groupInfo = _getItemForIndex(index);
         if (groupInfo.isHeader) {
-          return headerBuilder?.call(context, groupInfo.group!) ?? 
+          return headerBuilder?.call(context, groupInfo.group!) ??
               _defaultHeaderBuilder(context, groupInfo.group!);
         }
         return itemBuilder(context, groupInfo.item as T);
       },
     );
+  }
+
+  int _calculateItemCount() {
+    return groups.fold(0, (sum, group) => sum + group.items.length + 1);
   }
 
   Widget _defaultHeaderBuilder(BuildContext context, ListGroup<T> group) {
@@ -45,10 +50,6 @@ class GroupedListView<T> extends StatelessWidget {
         style: Theme.of(context).textTheme.titleSmall,
       ),
     );
-  }
-
-  int _calculateItemCount() {
-    return groups.fold(0, (sum, group) => sum + group.items.length + 1);
   }
 
   _GroupedItemInfo<T> _getItemForIndex(int index) {

@@ -1,7 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../presentation/models/work_filter.dart';
-import 'dart:convert';
 
 final persistenceProvider = Provider<PersistenceService>((ref) {
   return PersistenceService();
@@ -15,20 +17,10 @@ class PersistenceService {
 
   late SharedPreferences _sharedPreferences;
 
-  Future<void> init() async {
-    _sharedPreferences = await SharedPreferences.getInstance();
-  }
-
   SharedPreferences get sharedPreferences => _sharedPreferences;
 
-  Future<void> saveViewMode(String mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(viewModeKey, mode);
-  }
-
-  Future<void> saveFilter(WorkFilter filter) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(filterKey, jsonEncode(filter.toJson()));
+  Future<void> init() async {
+    _sharedPreferences = await SharedPreferences.getInstance();
   }
 
   Future<WorkFilter?> loadFilter() async {
@@ -38,14 +30,24 @@ class PersistenceService {
     return WorkFilter.fromJson(jsonDecode(data));
   }
 
+  Future<bool> loadSidebarState() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(sidebarKey) ?? true;
+  }
+
+  Future<void> saveFilter(WorkFilter filter) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(filterKey, jsonEncode(filter.toJson()));
+  }
+
   Future<void> saveSidebarState(bool isOpen) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(sidebarKey, isOpen);
   }
 
-  Future<bool> loadSidebarState() async {
+  Future<void> saveViewMode(String mode) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(sidebarKey) ?? true;
+    await prefs.setString(viewModeKey, mode);
   }
 
   // ...其他持久化方法

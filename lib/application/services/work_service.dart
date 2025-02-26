@@ -7,6 +7,7 @@ import '../../domain/entities/work.dart';
 import '../../domain/interfaces/i_work_service.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../infrastructure/config/storage_paths.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../presentation/models/work_filter.dart';
 import 'image_service.dart';
 
@@ -19,23 +20,68 @@ class WorkService implements IWorkService {
 
   @override
   Future<void> deleteWork(String workId) async {
-    await _workRepository.deleteWork(workId);
+    try {
+      AppLogger.info('Deleting work',
+          tag: 'WorkService', data: {'workId': workId});
+      await _workRepository.deleteWork(workId);
+      AppLogger.info('Work deleted successfully',
+          tag: 'WorkService', data: {'workId': workId});
+    } catch (e, stack) {
+      AppLogger.error(
+        'Failed to delete work',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': workId},
+      );
+      rethrow;
+    }
   }
 
   @override
   Future<List<Work>> getAllWorks() async {
-    final works = await _workRepository.getWorks();
-    return works.map((workData) => Work.fromMap(workData)).toList();
+    try {
+      AppLogger.debug('Fetching all works', tag: 'WorkService');
+      final works = await _workRepository.getWorks();
+      AppLogger.debug('Fetched all works successfully', tag: 'WorkService');
+      return works.map((workData) => Work.fromMap(workData)).toList();
+    } catch (e, stack) {
+      AppLogger.error(
+        'Failed to fetch all works',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stack,
+      );
+      rethrow;
+    }
   }
 
   @override
   Future<Work?> getWork(String id) async {
-    return await _workRepository.getWork(id);
+    try {
+      AppLogger.debug('Fetching work details',
+          tag: 'WorkService', data: {'workId': id});
+      final work = await _workRepository.getWork(id);
+      AppLogger.debug('Fetched work details successfully',
+          tag: 'WorkService', data: {'workId': id});
+      return work;
+    } catch (e, stack) {
+      AppLogger.error(
+        'Failed to get work',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': id},
+      );
+      rethrow;
+    }
   }
 
   @override
   Future<String?> getWorkThumbnail(String workId) async {
     try {
+      AppLogger.debug('Fetching work thumbnail',
+          tag: 'WorkService', data: {'workId': workId});
       final thumbnailPath = _paths.getWorkThumbnailPath(workId);
       final file = File(thumbnailPath);
 
@@ -46,14 +92,22 @@ class WorkService implements IWorkService {
       }
 
       if (await file.exists()) {
-        debugPrint('Found thumbnail at: $thumbnailPath');
+        AppLogger.debug('Found thumbnail at: $thumbnailPath',
+            tag: 'WorkService', data: {'workId': workId});
         return thumbnailPath;
       } else {
-        debugPrint('Thumbnail not found at: $thumbnailPath');
+        AppLogger.debug('Thumbnail not found at: $thumbnailPath',
+            tag: 'WorkService', data: {'workId': workId});
         return null;
       }
-    } catch (e) {
-      debugPrint('Error getting thumbnail: $e');
+    } catch (e, stack) {
+      AppLogger.error(
+        'Error getting thumbnail',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': workId},
+      );
       return null;
     }
   }
@@ -61,6 +115,8 @@ class WorkService implements IWorkService {
   @override
   Future<void> importWork(List<File> files, Work data) async {
     try {
+      AppLogger.info('Importing work',
+          tag: 'WorkService', data: {'work': data});
       Work? work;
 
       // Create work info first
@@ -94,8 +150,16 @@ class WorkService implements IWorkService {
         workId,
         files,
       );
+      AppLogger.info('Imported work successfully',
+          tag: 'WorkService', data: {'workId': workId});
     } catch (e, stackTrace) {
-      debugPrint('Import failed in service: $e\n$stackTrace');
+      AppLogger.error(
+        'Import failed in service',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stackTrace,
+        data: {'work': data},
+      );
       rethrow;
     }
   }
@@ -107,6 +171,11 @@ class WorkService implements IWorkService {
     SortOption? sortOption,
   }) async {
     try {
+      AppLogger.debug('Querying works', tag: 'WorkService', data: {
+        'searchQuery': searchQuery,
+        'filter': filter,
+        'sortOption': sortOption,
+      });
       final List<Map<String, dynamic>> results = await _workRepository.getWorks(
         query: searchQuery?.trim(),
         style: filter?.style?.value,
@@ -122,11 +191,22 @@ class WorkService implements IWorkService {
         descending: filter?.sortOption.descending ?? true,
       );
 
+      AppLogger.debug('Queried works successfully', tag: 'WorkService');
       return results
           .map((data) => Work.fromMap(Map<String, dynamic>.from(data)))
           .toList();
-    } catch (e) {
-      debugPrint('Query works failed: $e');
+    } catch (e, stack) {
+      AppLogger.error(
+        'Query works failed',
+        tag: 'WorkService',
+        error: e,
+        stackTrace: stack,
+        data: {
+          'searchQuery': searchQuery,
+          'filter': filter,
+          'sortOption': sortOption,
+        },
+      );
       rethrow;
     }
   }

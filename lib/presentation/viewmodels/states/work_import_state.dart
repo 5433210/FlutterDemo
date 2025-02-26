@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
 
@@ -39,24 +40,14 @@ class WorkImportState {
     this.rotation = 0.0,
   });
 
+  // 添加初始状态工厂方法
+  factory WorkImportState.initial() {
+    return const WorkImportState();
+  }
+
   bool get isDirty => images.isNotEmpty || name.isNotEmpty;
 
   bool get isValid => name.isNotEmpty && images.isNotEmpty;
-
-  double getRotation(String imagePath) => imageRotations[imagePath] ?? 0.0;
-
-  // 添加验证方法
-  bool validateImage(File file) {
-    try {
-      final path = file.path.toLowerCase();
-      return path.endsWith('.jpg') || 
-             path.endsWith('.jpeg') || 
-             path.endsWith('.png') || 
-             path.endsWith('.webp');
-    } catch (e) {
-      return false;
-    }
-  }
 
   WorkImportState copyWith({
     List<File>? images,
@@ -96,8 +87,18 @@ class WorkImportState {
     );
   }
 
-  // 添加初始状态工厂方法
-  factory WorkImportState.initial() {
-    return const WorkImportState();
+  double getRotation(String imagePath) => imageRotations[imagePath] ?? 0.0;
+
+  // 添加验证方法
+  bool validateImage(File file) {
+    try {
+      final path = file.path.toLowerCase();
+      return path.endsWith('.jpg') ||
+          path.endsWith('.jpeg') ||
+          path.endsWith('.png') ||
+          path.endsWith('.webp');
+    } catch (e) {
+      return false;
+    }
   }
 }

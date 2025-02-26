@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/work_browse_provider.dart';
+import '../../../routes/app_routes.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import 'components/content/work_grid_view.dart';
@@ -106,7 +107,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   void _handleWorkSelected(BuildContext context, String workId) {
     Navigator.pushNamed(
       context,
-      '/work_detail',
+      AppRoutes.workDetail,
       arguments: workId,
     );
   }
