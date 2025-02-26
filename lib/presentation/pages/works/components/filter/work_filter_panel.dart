@@ -1,64 +1,65 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../providers/work_browse_provider.dart';
+import '../../../../models/work_filter.dart';
 import '../../../../theme/app_sizes.dart';
-import '../../../work_browser/components/sidebar_toggle.dart';
 import 'sort_section.dart';
 import 'style_section.dart';
 import 'tool_section.dart';
 import 'date_section.dart';
 
-class WorkFilterPanel extends ConsumerWidget {
-  const WorkFilterPanel({super.key});
+class WorkFilterPanel extends StatelessWidget {
+  final WorkFilter filter;
+  final ValueChanged<WorkFilter> onFilterChanged;
+
+  const WorkFilterPanel({
+    super.key,
+    required this.filter,
+    required this.onFilterChanged,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    
-    debugPrint('FilterPanel - current filter: ${state.filter}'); // 添加日志
-
+  Widget build(BuildContext context) {
     return Material(
-      color: theme.colorScheme.surface,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (state.isSidebarOpen)
-            Container(
-              width: 280,
-              padding: const EdgeInsets.all(AppSizes.m),
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(
-                    color: theme.dividerColor,
+      color: Theme.of(context).colorScheme.surface,
+      child: Container(
+        width: 280,
+        padding: const EdgeInsets.all(AppSizes.m),
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              color: Theme.of(context).dividerColor,
+            ),
+          ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SortSection(
+                    filter: filter,
+                    onFilterChanged: onFilterChanged,
                   ),
-                ),
-              ),
-              child: CustomScrollView(  // 使用 CustomScrollView 替代 SingleChildScrollView
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        SortSection(),
-                        Divider(height: AppSizes.l),
-                        StyleSection(),
-                        Divider(height: AppSizes.l),
-                        ToolSection(),
-                        Divider(height: AppSizes.l),
-                        DateSection(),
-                      ],
-                    ),
+                  const Divider(height: AppSizes.l),
+                  StyleSection(
+                    filter: filter,
+                    onFilterChanged: onFilterChanged,
+                  ),
+                  const Divider(height: AppSizes.l),
+                  ToolSection(
+                    filter: filter,
+                    onFilterChanged: onFilterChanged,
+                  ),
+                  const Divider(height: AppSizes.l),
+                  DateSection(
+                    filter: filter,
+                    onFilterChanged: onFilterChanged,
                   ),
                 ],
               ),
             ),
-          SidebarToggle(
-            isOpen: state.isSidebarOpen,
-            onToggle: viewModel.toggleSidebar,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

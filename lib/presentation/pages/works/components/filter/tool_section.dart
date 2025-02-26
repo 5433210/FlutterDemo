@@ -1,37 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../domain/enums/work_tool.dart';
+import '../../../../models/work_filter.dart';
 import '../../../../providers/work_browse_provider.dart';
 import '../../../../viewmodels/states/work_browse_state.dart';
 import '../../../../viewmodels/work_browse_view_model.dart';
 import 'work_filter_section.dart';
 
-class ToolSection extends ConsumerWidget {
-  const ToolSection({super.key});
+class ToolSection extends StatelessWidget {
+  final WorkFilter filter;
+  final ValueChanged<WorkFilter> onFilterChanged;
+
+  const ToolSection({
+    super.key,
+    required this.filter,
+    required this.onFilterChanged,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewModel = ref.read(workBrowseProvider.notifier);
-    final state = ref.watch(workBrowseProvider);
-
+  Widget build(BuildContext context) {
     return WorkFilterSection(
       title: '书写工具',
-      child: _buildToolChips(state, viewModel),
+      child: _buildToolChips(context),
     );
   }
 
-  Widget _buildToolChips(WorkBrowseState state, WorkBrowseViewModel viewModel) {
+  Widget _buildToolChips(BuildContext context) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: WorkTool.values.map((tool) {
-        final selected = state.filter.tool?.value == tool.value;  // 修改这里，比较value
+        final selected = filter.tool?.value == tool.value;
         return FilterChip(
           label: Text(tool.label),
           selected: selected,
-          onSelected: (value) => viewModel.updateFilter(
-            state.filter.copyWith(
-              tool: () => value ? WorkTool.fromValue(tool.value) : null,  // 使用value创建枚举
+          onSelected: (value) => onFilterChanged(
+            filter.copyWith(
+              tool: () => value ? WorkTool.fromValue(tool.value) : null,
             ),
           ),
         );

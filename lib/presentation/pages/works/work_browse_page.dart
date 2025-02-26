@@ -8,6 +8,7 @@ import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import 'components/content/work_grid_view.dart';
 import 'components/content/work_list_view.dart';
+import 'components/filter/sidebar_toggle.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/layout/work_layout.dart';
 import 'components/work_toolbar.dart';
@@ -23,11 +24,9 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
   @override
   Widget build(BuildContext context) {
-    debugPrint('WorkBrowsePage build started');
-    
-    // 移除不必要的重复监听
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
+    debugPrint('WorkBrowsePage rebuild - filter: ${state.filter}');
 
     return Scaffold(
       body: Column(
@@ -43,10 +42,21 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             onDeleteSelected: () => ref.read(workBrowseProvider.notifier).deleteSelected(),
           ),
           Expanded(
-            child: WorkLayout(
-              // 移除 const，传入必要的属性
-              filterPanel: WorkFilterPanel(              ),
-              child: _buildMainContent(),  // 移除不必要的参数传递
+            child: Row(
+              children: [
+                if (state.isSidebarOpen)
+                  WorkFilterPanel(
+                    filter: state.filter,
+                    onFilterChanged: viewModel.updateFilter,
+                  ),
+                SidebarToggle(
+                  isOpen: state.isSidebarOpen,
+                  onToggle: () => viewModel.toggleSidebar(),
+                ),
+                Expanded(
+                  child: _buildMainContent(),
+                ),
+              ],
             ),
           ),
         ],

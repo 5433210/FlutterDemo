@@ -6,16 +6,19 @@ import '../../../../theme/app_sizes.dart';
 import '../../../../viewmodels/states/work_browse_state.dart';
 import '../../../../viewmodels/work_browse_view_model.dart';
 
-class SortSection extends ConsumerWidget {
-  const SortSection({super.key});
+class SortSection extends StatelessWidget {
+  final WorkFilter filter;
+  final ValueChanged<WorkFilter> onFilterChanged;
+
+  const SortSection({
+    super.key,
+    required this.filter,
+    required this.onFilterChanged,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDescending = state.filter.sortOption.descending;
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,12 +36,18 @@ class SortSection extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppSizes.s),
               ),
               child: InkWell(
-                onTap: () => viewModel.toggleSortDirection(),
+                onTap: () => onFilterChanged(
+                  filter.copyWith(
+                    sortOption: filter.sortOption.copyWith(
+                      descending: !filter.sortOption.descending
+                    )
+                  )
+                ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isDescending ? '降序' : '升序',
+                      filter.sortOption.descending ? '降序' : '升序',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSecondaryContainer,
                       ),
@@ -47,7 +56,7 @@ class SortSection extends ConsumerWidget {
                     Icon(
                       Icons.sort,
                       size: 18,
-                      textDirection: isDescending ? TextDirection.rtl : TextDirection.ltr,
+                      textDirection: filter.sortOption.descending ? TextDirection.rtl : TextDirection.ltr,
                       color: theme.colorScheme.onSecondaryContainer,
                     ),
                   ],
@@ -59,7 +68,7 @@ class SortSection extends ConsumerWidget {
         const SizedBox(height: AppSizes.s),
         ...SortField.values
             .where((field) => field != SortField.none)
-            .map((field) => _buildSortItem(field, field.label, state, viewModel, theme)),
+            .map((field) => _buildSortItem(field, field.label, theme)),
       ],
     );
   }
@@ -67,18 +76,20 @@ class SortSection extends ConsumerWidget {
   Widget _buildSortItem(
     SortField field, 
     String label, 
-    WorkBrowseState state,
-    WorkBrowseViewModel viewModel,
     ThemeData theme,
   ) {
-    final bool selected = state.filter.sortOption.field == field;
+    final bool selected = filter.sortOption.field == field;
 
     return Material(
       color: selected ? theme.colorScheme.secondaryContainer : Colors.transparent,
       borderRadius: BorderRadius.circular(AppSizes.s),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSizes.s),
-        onTap: () => viewModel.updateSortField(field),
+        onTap: () => onFilterChanged(
+          filter.copyWith(
+            sortOption: filter.sortOption.copyWith(field: field)
+          )
+        ),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(
@@ -93,7 +104,11 @@ class SortSection extends ConsumerWidget {
                 child: Radio<SortField>(
                   value: field,
                   groupValue: selected ? field : null,
-                  onChanged: (_) => viewModel.updateSortField(field),
+                  onChanged: (_) => onFilterChanged(
+                    filter.copyWith(
+                      sortOption: filter.sortOption.copyWith(field: field)
+                    )
+                  ),
                   visualDensity: VisualDensity.compact,
                 ),
               ),

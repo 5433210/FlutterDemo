@@ -83,7 +83,7 @@ class WorkFilter {
   final WorkTool? tool;
   final DateRangePreset? datePreset;  // 新增：快捷日期预设
   final DateTimeRange? dateRange;      // 新增：自定义日期范围
-  final SortOption sortOption;         // 新增：排序选项
+  final SortOption sortOption;
 
   const WorkFilter({
     this.style,
