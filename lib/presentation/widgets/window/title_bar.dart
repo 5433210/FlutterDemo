@@ -1,36 +1,120 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
+import '../../../theme/app_sizes.dart';
 
-class TitleBar extends StatelessWidget with WindowListener {
-  const TitleBar({super.key});
+class TitleBar extends StatefulWidget {
+  final String? title;
+  
+  const TitleBar({super.key, this.title});
+
+  @override
+  State<TitleBar> createState() => _TitleBarState();
+}
+
+class _TitleBarState extends State<TitleBar> with WindowListener {
+  bool _isMaximized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _init();
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  void _init() async {
+    _isMaximized = await windowManager.isMaximized();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void onWindowMaximize() {
+    setState(() {
+      _isMaximized = true;
+    });
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    setState(() {
+      _isMaximized = false;
+    });
+  }
+
+  @override
+  void onWindowRestore() {
+    setState(() {
+      _isMaximized = false;
+    });
+  }
+
+  Future<void> _handleDoubleClick() async {
+    if (_isMaximized) {
+      await windowManager.unmaximize();
+    } else {
+      await windowManager.maximize();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 32,
-      width: double.infinity, // 确保宽度填满
-      color: Theme.of(context).colorScheme.primary,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onPanStart: (details) async {
-          await windowManager.startDragging();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          color: Theme.of(context).colorScheme.primary,
-          child: Row(
-            children: [
-              const Icon(Icons.brush, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                '书法集字',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
-              ),
-              const Spacer(),
-              // 窗口控制按钮组
-              const WindowButtons(),
-            ],
+    final theme = Theme.of(context);
+    
+    return GestureDetector(
+      onDoubleTap: _handleDoubleClick,
+      child: Container(
+        height: AppSizes.appBarHeight,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerColor,
+              width: AppSizes.dividerThickness,
+            ),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withOpacity(0.05),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 应用图标
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
+              child: Icon(
+                Icons.brush_outlined,
+                color: theme.colorScheme.primary,
+                size: AppSizes.iconMedium,
+              ),
+            ),
+            // 标题拖动区域
+            Expanded(
+              child: DragToMoveArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
+                  child: Text(
+                    widget.title ?? '书法集字',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+            // 窗口按钮
+            const WindowButtons(),
+          ],
         ),
       ),
     );
@@ -42,44 +126,39 @@ class WindowButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const buttonColor = Colors.white;
-    final hoverColor = Colors.white.withOpacity(0.1);
-
     return Row(
       children: [
-        // 最小化按钮
         _WindowButton(
           icon: Icons.remove,
-          color: buttonColor,
-          hoverColor: hoverColor,
+          tooltip: '最小化',
           onPressed: () async {
             await windowManager.minimize();
           },
-          tooltip: '最小化',
         ),
-        // 最大化/还原按钮
-        _WindowButton(
-          icon: Icons.crop_square,
-          color: buttonColor,
-          hoverColor: hoverColor,
-          onPressed: () async {
-            if (await windowManager.isMaximized()) {
-              await windowManager.restore();
-            } else {
-              await windowManager.maximize();
-            }
-          },
-          tooltip: '最大化',
+        FutureBuilder<bool>(
+          future: windowManager.isMaximized(),
+          builder: (context, snapshot) {
+            final isMaximized = snapshot.data ?? false;
+            return _WindowButton(
+              icon: isMaximized ? Icons.filter_none : Icons.crop_square,
+              tooltip: isMaximized ? '还原' : '最大化',
+              onPressed: () async {
+                if (isMaximized) {
+                  await windowManager.unmaximize();
+                } else {
+                  await windowManager.maximize();
+                }
+              },
+            );
+          }
         ),
-        // 关闭按钮
         _WindowButton(
           icon: Icons.close,
-          color: buttonColor,
-          hoverColor: Colors.red,
+          tooltip: '关闭',
+          isClose: true,
           onPressed: () async {
             await windowManager.close();
           },
-          tooltip: '关闭',
         ),
       ],
     );
@@ -88,35 +167,40 @@ class WindowButtons extends StatelessWidget {
 
 class _WindowButton extends StatelessWidget {
   final IconData icon;
-  final Color color;
-  final Color hoverColor;
-  final VoidCallback onPressed;
   final String tooltip;
+  final VoidCallback onPressed;
+  final bool isClose;
 
   const _WindowButton({
     required this.icon,
-    required this.color,
-    required this.hoverColor,
-    required this.onPressed,
     required this.tooltip,
+    required this.onPressed,
+    this.isClose = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          hoverColor: hoverColor,
-          child: SizedBox(
-            width: 40,
-            height: 40,
+      preferBelow: false,
+      child: SizedBox(
+        height: AppSizes.appBarHeight,
+        width: 46,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            hoverColor: isClose 
+                ? theme.colorScheme.error.withOpacity(0.1)
+                : theme.colorScheme.onSurface.withOpacity(0.05),
             child: Icon(
-              icon,
-              color: color,
-              size: 20,
+              icon, 
+              size: AppSizes.iconSmall,
+              color: isClose 
+                ? theme.colorScheme.error
+                : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
