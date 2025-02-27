@@ -29,7 +29,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   @override
   Widget build(BuildContext context) {
     return PageLayout(
-      navigationInfo: _buildNavigationInfo(),
+      toolbar: _buildToolbar(),
       actions: _buildActions(),
       body: _buildBody(),
     );
@@ -79,7 +79,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     return _buildWorkContent(_work!);
   }
 
-  Widget _buildNavigationInfo() {
+  Widget _buildToolbar() {
     return Row(
       children: [
         Text(_work?.name ?? '作品详情'),

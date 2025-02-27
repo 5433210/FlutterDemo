@@ -32,6 +32,6 @@ class CharacterRepositoryImpl implements CharacterRepository {
 
   @override
   Future<void> updateCharacter(Character character) async {
-    await _db.updateCharacter(character.id, character.toMap());
+    await _db.updateCharacter(character.id!, character.toMap());
   }
 }

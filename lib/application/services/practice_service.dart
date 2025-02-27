@@ -1,105 +1,138 @@
 import '../../domain/entities/practice.dart';
-import '../../domain/repositories/character_repository.dart';
 import '../../domain/repositories/practice_repository.dart';
+import '../../infrastructure/logging/logger.dart';
 
+/// Service for managing practices
 class PracticeService {
-  final PracticeRepository _practiceRepository;
-  final CharacterRepository _characterRepository;
+  final PracticeRepository _repository;
 
-  PracticeService(this._practiceRepository, this._characterRepository);
+  PracticeService(this._repository);
 
-  Future<void> addCharacterToPractice(
-      String practiceId, String charId, Map<String, dynamic> position) async {
-    final practice = await _practiceRepository.getPractice(practiceId);
-    if (practice == null) throw Exception('Practice not found');
+  /// Create a new practice
+  Future<String> createPractice(Practice practice) async {
+    try {
+      AppLogger.info('Creating new practice',
+          tag: 'PracticeService', data: {'title': practice.title});
 
-    final character = await _characterRepository.getCharacter(charId);
-    if (character == null) throw Exception('Character not found');
+      final id = await _repository.createPractice(practice.toJson());
 
-    // Update practice metadata to track character usage
-    final metadata = practice.metadata ?? {};
-    final usedChars = (metadata['usedCharacters'] as List<dynamic>?) ?? [];
-    usedChars.add({
-      'charId': charId,
-      'useTime': DateTime.now().toIso8601String(),
-      'position': position,
-    });
-    metadata['usedCharacters'] = usedChars;
+      AppLogger.info('Practice created successfully',
+          tag: 'PracticeService', data: {'id': id, 'title': practice.title});
 
-    // Update practice
-    final updatedPractice = Practice(
-      id: practice.id,
-      title: practice.title,
-      pages: practice.pages,
-      metadata: metadata,
-      createTime: practice.createTime,
-      updateTime: DateTime.now(),
-    );
-
-    await _practiceRepository.updatePractice(updatedPractice);
-  }
-
-  Future<String> createPractice(
-      String title, List<Map<String, dynamic>> pages) async {
-    final practice = Practice(
-      id: '',
-      title: title,
-      pages: pages,
-      createTime: DateTime.now(),
-      updateTime: DateTime.now(),
-      metadata: {
-        'version': '1.0',
-        'lastPrintTime': null,
-        'printCount': 0,
-      },
-    );
-
-    return await _practiceRepository.insertPractice(practice);
-  }
-
-  Future<List<Practice>> getPracticesByCharacters(
-      List<String> characterIds) async {
-    if (characterIds.isEmpty) {
-      return [];
+      return id;
+    } catch (e, stack) {
+      AppLogger.error('Failed to create practice',
+          tag: 'PracticeService',
+          error: e,
+          stackTrace: stack,
+          data: {'practice': practice.title});
+      rethrow;
     }
-
-    // Get practices that contain any of the specified characters
-    final practices = await _practiceRepository.getPractices(
-      characterIds: characterIds,
-    );
-
-    // Sort by updateTime descending (most recent first)
-    practices.sort((a, b) => b.updateTime.compareTo(a.updateTime));
-
-    return practices;
   }
 
-  Future<List<Practice>> getRecentPractices({int limit = 10}) async {
-    return await _practiceRepository.getPractices(
-      limit: limit,
-    );
+  /// Delete a practice by ID
+  Future<bool> deletePractice(String id) async {
+    try {
+      AppLogger.info('Deleting practice',
+          tag: 'PracticeService', data: {'id': id});
+
+      final result = await _repository.deletePractice(id);
+
+      AppLogger.info('Practice deleted successfully',
+          tag: 'PracticeService', data: {'id': id, 'success': result});
+
+      return result;
+    } catch (e, stack) {
+      AppLogger.error('Failed to delete practice',
+          tag: 'PracticeService',
+          error: e,
+          stackTrace: stack,
+          data: {'id': id});
+      rethrow;
+    }
   }
 
-  Future<List<Practice>> searchPractices(String query) async {
-    return await _practiceRepository.getPractices(
-      title: query,
-    );
+  /// Get practice by ID
+  Future<Practice?> getPractice(String id) async {
+    try {
+      AppLogger.debug('Getting practice by id',
+          tag: 'PracticeService', data: {'id': id});
+
+      final practice = await _repository.getPractice(id);
+      if (practice == null) {
+        AppLogger.debug('Practice not found',
+            tag: 'PracticeService', data: {'id': id});
+        return null;
+      }
+
+      AppLogger.debug('Practice found',
+          tag: 'PracticeService', data: {'id': id, 'title': practice['title']});
+
+      return Practice.fromJson(practice);
+    } catch (e, stack) {
+      AppLogger.error('Failed to get practice',
+          tag: 'PracticeService',
+          error: e,
+          stackTrace: stack,
+          data: {'id': id});
+      rethrow;
+    }
   }
 
-  Future<void> updatePracticePages(
-      String id, List<Map<String, dynamic>> pages) async {
-    final practice = await _practiceRepository.getPractice(id);
-    if (practice == null) throw Exception('Practice not found');
+  /// Get all practices with optional filtering
+  Future<List<Practice>> getPractices({
+    String? title,
+    int? limit,
+    int? offset,
+  }) async {
+    try {
+      AppLogger.debug('Getting practices',
+          tag: 'PracticeService',
+          data: {'title': title, 'limit': limit, 'offset': offset});
 
-    final updatedPractice = Practice(
-      id: practice.id,
-      title: practice.title,
-      pages: pages,
-      metadata: practice.metadata,
-      createTime: practice.createTime,
-      updateTime: DateTime.now(),
-    );
+      final practices = await _repository.getPractices(
+        title: title,
+        limit: limit,
+        offset: offset,
+      );
 
-    await _practiceRepository.updatePractice(updatedPractice);
+      final result = practices
+          .map((practiceData) => Practice.fromJson(practiceData))
+          .toList();
+
+      AppLogger.debug('Got ${result.length} practices', tag: 'PracticeService');
+
+      return result;
+    } catch (e, stack) {
+      AppLogger.error('Failed to get practices',
+          tag: 'PracticeService', error: e, stackTrace: stack);
+      rethrow;
+    }
+  }
+
+  /// Update a practice
+  Future<void> updatePractice(Practice practice) async {
+    try {
+      if (practice.id == null) {
+        throw ArgumentError('Practice ID cannot be null when updating');
+      }
+
+      AppLogger.info('Updating practice',
+          tag: 'PracticeService',
+          data: {'id': practice.id, 'title': practice.title});
+
+      await _repository.updatePractice(practice.id!, practice.toJson());
+
+      AppLogger.info('Practice updated successfully',
+          tag: 'PracticeService',
+          data: {'id': practice.id, 'title': practice.title});
+    } catch (e, stack) {
+      AppLogger.error('Failed to update practice',
+          tag: 'PracticeService',
+          error: e,
+          stackTrace: stack,
+          data: {'id': practice.id, 'title': practice.title});
+      rethrow;
+    }
   }
 }

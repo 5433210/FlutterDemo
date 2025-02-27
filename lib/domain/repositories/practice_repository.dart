@@ -1,15 +1,24 @@
-import '../entities/practice.dart';
-
+/// Repository interface for managing practices
 abstract class PracticeRepository {
-  Future<String> insertPractice(Practice practice);
-  Future<Practice?> getPractice(String id);
-  Future<List<Practice>> getPractices({
+  /// Create a new practice
+  Future<String> createPractice(Map<String, dynamic> practiceData);
+
+  /// Delete a practice by ID
+  Future<bool> deletePractice(String id);
+
+  /// Get a practice by ID
+  Future<Map<String, dynamic>?> getPractice(String id);
+
+  /// Get practices with optional filters
+  Future<List<Map<String, dynamic>>> getPractices({
     String? title,
-    List<String>? characterIds,
     int? limit,
     int? offset,
   });
-  Future<void> updatePractice(Practice practice);
-  Future<void> deletePractice(String id);
-}
 
+  /// Get the total count of practices
+  Future<int> getPracticesCount();
+
+  /// Update a practice
+  Future<void> updatePractice(String id, Map<String, dynamic> practiceData);
+}

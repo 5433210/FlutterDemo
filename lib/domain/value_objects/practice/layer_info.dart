@@ -1,15 +1,15 @@
 import 'element_info.dart';
 
-class LayerInfo {
+class PracticeLayerInfo {
   final int index;
   final String name;
-  final String type;  // background/content
+  final String type; // background/content
   final bool visible;
   final bool locked;
   final double opacity;
-  final List<ElementInfo> elements;
+  final List<PracticeElementInfo> elements;
 
-  LayerInfo({
+  PracticeLayerInfo({
     required this.index,
     required this.name,
     required this.type,
@@ -26,25 +26,28 @@ class LayerInfo {
     }
   }
 
-  Map<String, dynamic> toJson() => {
-    'index': index,
-    'name': name,
-    'type': type,
-    'visible': visible,
-    'locked': locked,
-    'opacity': opacity,
-    'elements': elements.map((e) => e.toJson()).toList(),
-  };
+  factory PracticeLayerInfo.fromJson(Map<String, dynamic> json) =>
+      PracticeLayerInfo(
+        index: json['index'] as int,
+        name: json['name'] as String,
+        type: json['type'] as String,
+        visible: json['visible'] as bool? ?? true,
+        locked: json['locked'] as bool? ?? false,
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+        elements: (json['elements'] as List?)
+                ?.map((e) =>
+                    PracticeElementInfo.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+      );
 
-  factory LayerInfo.fromJson(Map<String, dynamic> json) => LayerInfo(
-    index: json['index'] as int,
-    name: json['name'] as String,
-    type: json['type'] as String,
-    visible: json['visible'] as bool? ?? true,
-    locked: json['locked'] as bool? ?? false,
-    opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
-    elements: (json['elements'] as List?)
-        ?.map((e) => ElementInfo.fromJson(e as Map<String, dynamic>))
-        .toList() ?? const [],
-  );
+  Map<String, dynamic> toJson() => {
+        'index': index,
+        'name': name,
+        'type': type,
+        'visible': visible,
+        'locked': locked,
+        'opacity': opacity,
+        'elements': elements.map((e) => e.toJson()).toList(),
+      };
 }

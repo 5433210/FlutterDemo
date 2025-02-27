@@ -20,7 +20,6 @@ class _PracticeListPageState extends State<PracticeListPage> {
   @override
   Widget build(BuildContext context) {
     return PageLayout(
-      navigationInfo: const Text('练习记录'),
       toolbar: PageToolbar(
         leading: [
           FilledButton.icon(
@@ -36,12 +35,12 @@ class _PracticeListPageState extends State<PracticeListPage> {
           ),
         ],
         trailing: [
-          SizedBox(
+          const SizedBox(
             width: 240,
             child: SearchBar(
               hintText: '搜索练习...',
-              leading: const Icon(Icons.search),
-              padding: const WidgetStatePropertyAll(
+              leading: Icon(Icons.search),
+              padding: WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
               ),
             ),

@@ -1,93 +1,179 @@
-abstract class ElementContent {
-  Map<String, dynamic> toJson();
+import 'dart:convert';
 
-  static fromJson(Map<String, dynamic> json, String json2) {}
-}
+class CharacterElementContent extends PracticeElementContent {
+  final String char;
+  final String? characterId;
 
-class ElementContentFactory {
-  static ElementContent fromJson(Map<String, dynamic> json, String type) {
-    switch (type) {
-      case 'chars':
-        return CharsContent.fromJson(json['chars'] as List);
-      case 'text':
-        return TextContent.fromJson(json['text'] as Map<String, dynamic>);
-      case 'image':
-        return ImageContent.fromJson(json['image'] as Map<String, dynamic>);
-      default:
-        throw ArgumentError('Unknown element type: $type');
-    }
+  CharacterElementContent({
+    required this.char,
+    this.characterId,
+  }) : super(type: 'chars');
+
+  factory CharacterElementContent.fromJson(Map<String, dynamic> json) {
+    return CharacterElementContent(
+      char: json['char'] as String,
+      characterId: json['characterId'] as String?,
+    );
   }
-}
 
-class CharsContent implements ElementContent {
-  final List<CharInfo> chars;
-
-  const CharsContent({required this.chars});
+  /// Create an instance from a JSON string
+  factory CharacterElementContent.fromJsonString(String jsonString) {
+    return CharacterElementContent.fromJson(
+      json.decode(jsonString) as Map<String, dynamic>,
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => {
-    'chars': chars.map((c) => c.toJson()).toList(),
-  };
+        'type': type,
+        'char': char,
+        'characterId': characterId,
+      };
 
-  factory CharsContent.fromJson(List<dynamic> json) => CharsContent(
-    chars: json.map((e) => CharInfo.fromJson(e as Map<String, dynamic>)).toList(),
-  );
+  /// Convert to a JSON string
+  @override
+  String toJsonString() => json.encode(toJson());
 }
 
-class CharInfo {
-  final String charId;
-  final CharPosition position;
-  final CharTransform transform;
-  final CharStyle style;
+class ImageElementContent extends PracticeElementContent {
+  final String path;
 
-  const CharInfo({
+  ImageElementContent({
+    required this.path,
+  }) : super(type: 'image');
+
+  factory ImageElementContent.fromJson(Map<String, dynamic> json) {
+    return ImageElementContent(
+      path: json['path'] as String,
+    );
+  }
+
+  /// Create an instance from a JSON string
+  factory ImageElementContent.fromJsonString(String jsonString) {
+    return ImageElementContent.fromJson(
+      json.decode(jsonString) as Map<String, dynamic>,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'type': type,
+        'path': path,
+      };
+
+  /// Convert to a JSON string
+  @override
+  String toJsonString() => json.encode(toJson());
+}
+
+class PracticeCharInfo {
+  final String charId;
+  final PracticeCharPosition position;
+  final PracticeCharTransform transform;
+  final PracticeCharStyle style;
+
+  const PracticeCharInfo({
     required this.charId,
     required this.position,
     required this.transform,
     required this.style,
   });
 
-  Map<String, dynamic> toJson() => {
-    'charId': charId,
-    'position': position.toJson(),
-    'transform': transform.toJson(),
-    'style': style.toJson(),
-  };
+  factory PracticeCharInfo.fromJson(Map<String, dynamic> json) =>
+      PracticeCharInfo(
+        charId: json['charId'] as String,
+        position: PracticeCharPosition.fromJson(
+            json['position'] as Map<String, dynamic>),
+        transform: PracticeCharTransform.fromJson(
+            json['transform'] as Map<String, dynamic>),
+        style:
+            PracticeCharStyle.fromJson(json['style'] as Map<String, dynamic>),
+      );
 
-  factory CharInfo.fromJson(Map<String, dynamic> json) => CharInfo(
-    charId: json['charId'] as String,
-    position: CharPosition.fromJson(json['position'] as Map<String, dynamic>),
-    transform: CharTransform.fromJson(json['transform'] as Map<String, dynamic>),
-    style: CharStyle.fromJson(json['style'] as Map<String, dynamic>),
-  );
+  Map<String, dynamic> toJson() => {
+        'charId': charId,
+        'position': position.toJson(),
+        'transform': transform.toJson(),
+        'style': style.toJson(),
+      };
 }
 
-class CharPosition {
+class PracticeCharPosition {
   final double offsetX;
   final double offsetY;
 
-  const CharPosition({
+  const PracticeCharPosition({
     required this.offsetX,
     required this.offsetY,
   });
 
-  Map<String, dynamic> toJson() => {
-    'offsetX': offsetX,
-    'offsetY': offsetY,
-  };
+  factory PracticeCharPosition.fromJson(Map<String, dynamic> json) =>
+      PracticeCharPosition(
+        offsetX: (json['offsetX'] as num).toDouble(),
+        offsetY: (json['offsetY'] as num).toDouble(),
+      );
 
-  factory CharPosition.fromJson(Map<String, dynamic> json) => CharPosition(
-    offsetX: (json['offsetX'] as num).toDouble(),
-    offsetY: (json['offsetY'] as num).toDouble(),
-  );
+  Map<String, dynamic> toJson() => {
+        'offsetX': offsetX,
+        'offsetY': offsetY,
+      };
 }
 
-class CharTransform {
+class PracticeCharsContent implements PracticeElementContent {
+  final List<PracticeCharInfo> chars;
+
+  const PracticeCharsContent({required this.chars});
+
+  factory PracticeCharsContent.fromJson(List<dynamic> json) =>
+      PracticeCharsContent(
+        chars: json
+            .map((e) => PracticeCharInfo.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+
+  @override
+  String get type => 'chars';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'chars': chars.map((c) => c.toJson()).toList(),
+      };
+
+  @override
+  String toJsonString() => json.encode(toJson());
+}
+
+class PracticeCharStyle {
+  final String color;
+  final double opacity;
+
+  PracticeCharStyle({
+    this.color = '#000000',
+    this.opacity = 1.0,
+  }) {
+    if (opacity < 0 || opacity > 1) {
+      throw ArgumentError('Opacity must be between 0 and 1');
+    }
+  }
+
+  factory PracticeCharStyle.fromJson(Map<String, dynamic> json) =>
+      PracticeCharStyle(
+        color: json['color'] as String? ?? '#000000',
+        opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'color': color,
+        'opacity': opacity,
+      };
+}
+
+class PracticeCharTransform {
   final double scaleX;
   final double scaleY;
   final double rotation;
 
-  CharTransform({
+  PracticeCharTransform({
     this.scaleX = 1.0,
     this.scaleY = 1.0,
     this.rotation = 0.0,
@@ -97,51 +183,103 @@ class CharTransform {
     }
   }
 
-  Map<String, dynamic> toJson() => {
-    'scaleX': scaleX,
-    'scaleY': scaleY,
-    'rotation': rotation,
-  };
+  factory PracticeCharTransform.fromJson(Map<String, dynamic> json) =>
+      PracticeCharTransform(
+        scaleX: (json['scaleX'] as num?)?.toDouble() ?? 1.0,
+        scaleY: (json['scaleY'] as num?)?.toDouble() ?? 1.0,
+        rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+      );
 
-  factory CharTransform.fromJson(Map<String, dynamic> json) => CharTransform(
-    scaleX: (json['scaleX'] as num?)?.toDouble() ?? 1.0,
-    scaleY: (json['scaleY'] as num?)?.toDouble() ?? 1.0,
-    rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
-  );
+  Map<String, dynamic> toJson() => {
+        'scaleX': scaleX,
+        'scaleY': scaleY,
+        'rotation': rotation,
+      };
 }
 
-class CharStyle {
-  final String color;
-  final double opacity;
+/// Base class for practice element content
+abstract class PracticeElementContent {
+  /// Type of content (e.g., 'chars', 'text', 'image')
+  final String type;
 
-  CharStyle({
-    this.color = '#000000',
-    this.opacity = 1.0,
-  }) {
-    if (opacity < 0 || opacity > 1) {
-      throw ArgumentError('Opacity must be between 0 and 1');
+  PracticeElementContent({required this.type});
+
+  /// Create the appropriate content type based on the type string
+  factory PracticeElementContent.fromJson(
+      Map<String, dynamic> json, String type) {
+    switch (type) {
+      case 'chars':
+        return CharacterElementContent.fromJson(json);
+      case 'text':
+        return TextElementContent.fromJson(json);
+      case 'image':
+        return ImageElementContent.fromJson(json);
+      default:
+        throw ArgumentError('Unknown content type: $type');
     }
   }
 
-  Map<String, dynamic> toJson() => {
-    'color': color,
-    'opacity': opacity,
-  };
+  /// Create an instance from a JSON string
+  factory PracticeElementContent.fromJsonString(String jsonString) {
+    final map = json.decode(jsonString) as Map<String, dynamic>;
+    return PracticeElementContent.fromJson(map, map['type'] as String);
+  }
 
-  factory CharStyle.fromJson(Map<String, dynamic> json) => CharStyle(
-    color: json['color'] as String? ?? '#000000',
-    opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
-  );
+  /// Convert to a JSON map
+  Map<String, dynamic> toJson();
+
+  /// Convert to a JSON string
+  String toJsonString() => json.encode(toJson());
 }
 
-class TextContent implements ElementContent {
+class PracticeElementContentFactory {
+  static PracticeElementContent fromJson(
+      Map<String, dynamic> json, String type) {
+    switch (type) {
+      case 'chars':
+        return PracticeCharsContent.fromJson(json['chars'] as List);
+      case 'text':
+        return PracticeTextContent.fromJson(
+            json['text'] as Map<String, dynamic>);
+      case 'image':
+        return PracticeImageContent.fromJson(
+            json['image'] as Map<String, dynamic>);
+      default:
+        throw ArgumentError('Unknown element type: $type');
+    }
+  }
+}
+
+class PracticeImageContent implements PracticeElementContent {
+  final String path;
+
+  const PracticeImageContent({required this.path});
+
+  factory PracticeImageContent.fromJson(Map<String, dynamic> json) =>
+      PracticeImageContent(
+        path: json['path'] as String,
+      );
+
+  @override
+  String get type => 'image';
+
+  @override
+  Map<String, dynamic> toJson() => {
+        'image': {'path': path},
+      };
+
+  @override
+  String toJsonString() => json.encode(toJson());
+}
+
+class PracticeTextContent implements PracticeElementContent {
   final String content;
   final String fontFamily;
   final double fontSize;
   final String color;
   final String alignment;
 
-  const TextContent({
+  const PracticeTextContent({
     required this.content,
     required this.fontFamily,
     required this.fontSize,
@@ -149,37 +287,60 @@ class TextContent implements ElementContent {
     this.alignment = 'left',
   });
 
+  factory PracticeTextContent.fromJson(Map<String, dynamic> json) =>
+      PracticeTextContent(
+        content: json['content'] as String,
+        fontFamily: json['fontFamily'] as String,
+        fontSize: (json['fontSize'] as num).toDouble(),
+        color: json['color'] as String? ?? '#000000',
+        alignment: json['alignment'] as String? ?? 'left',
+      );
+
+  @override
+  String get type => 'text';
+
   @override
   Map<String, dynamic> toJson() => {
-    'text': {
-      'content': content,
-      'fontFamily': fontFamily,
-      'fontSize': fontSize,
-      'color': color,
-      'alignment': alignment,
-    },
-  };
+        'text': {
+          'content': content,
+          'fontFamily': fontFamily,
+          'fontSize': fontSize,
+          'color': color,
+          'alignment': alignment,
+        },
+      };
 
-  factory TextContent.fromJson(Map<String, dynamic> json) => TextContent(
-    content: json['content'] as String,
-    fontFamily: json['fontFamily'] as String,
-    fontSize: (json['fontSize'] as num).toDouble(),
-    color: json['color'] as String? ?? '#000000',
-    alignment: json['alignment'] as String? ?? 'left',
-  );
+  @override
+  String toJsonString() => json.encode(toJson());
 }
 
-class ImageContent implements ElementContent {
-  final String path;
+class TextElementContent extends PracticeElementContent {
+  final String text;
 
-  const ImageContent({required this.path});
+  TextElementContent({
+    required this.text,
+  }) : super(type: 'text');
+
+  factory TextElementContent.fromJson(Map<String, dynamic> json) {
+    return TextElementContent(
+      text: json['text'] as String,
+    );
+  }
+
+  /// Create an instance from a JSON string
+  factory TextElementContent.fromJsonString(String jsonString) {
+    return TextElementContent.fromJson(
+      json.decode(jsonString) as Map<String, dynamic>,
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() => {
-    'image': {'path': path},
-  };
+        'type': type,
+        'text': text,
+      };
 
-  factory ImageContent.fromJson(Map<String, dynamic> json) => ImageContent(
-    path: json['path'] as String,
-  );
+  /// Convert to a JSON string
+  @override
+  String toJsonString() => json.encode(toJson());
 }

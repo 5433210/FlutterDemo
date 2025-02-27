@@ -1,66 +1,75 @@
-import 'layer_info.dart';
+import 'dart:convert';
 
-class PageInfo {
-  final int index;
-  final PageSize size;
-  final List<LayerInfo> layers;
+import 'package:equatable/equatable.dart';
 
-  const PageInfo({
-    required this.index,
-    required this.size,
-    required this.layers,
+import 'practice_item.dart';
+
+/// A page in a practice session
+class PracticePageInfo extends Equatable {
+  final String id;
+  final String title;
+  final List<PracticeItem> items;
+  final DateTime createdAt;
+
+  const PracticePageInfo({
+    required this.id,
+    required this.title,
+    required this.items,
+    required this.createdAt,
   });
 
-  Map<String, dynamic> toJson() => {
-    'index': index,
-    'size': size.toJson(),
-    'layers': layers.map((l) => l.toJson()).toList(),
-  };
+  /// Create from JSON map (alias for fromMap for JSON deserialization)
+  factory PracticePageInfo.fromJson(Map<String, dynamic> json) =>
+      PracticePageInfo.fromMap(json);
 
-  factory PageInfo.fromJson(Map<String, dynamic> json) => PageInfo(
-    index: json['index'] as int,
-    size: PageSize.fromJson(json['size'] as Map<String, dynamic>),
-    layers: (json['layers'] as List)
-        .map((e) => LayerInfo.fromJson(e as Map<String, dynamic>))
-        .toList(),
-  );
-}
-
-class PageSize {
-  final String unit;
-  final String resUnit;
-  final int resUnitValue;
-  final double width;
-  final double height;
-
-  PageSize({
-    required this.unit,
-    required this.resUnit,
-    required this.resUnitValue,
-    required this.width,
-    required this.height,
-  }) {
-    if (width <= 0 || height <= 0) {
-      throw ArgumentError('Width and height must be positive');
-    }
-    if (resUnitValue <= 0) {
-      throw ArgumentError('Resolution unit value must be positive');
-    }
+  /// Create an instance from a JSON string
+  factory PracticePageInfo.fromJsonString(String jsonString) {
+    return PracticePageInfo.fromMap(
+        json.decode(jsonString) as Map<String, dynamic>);
   }
 
-  Map<String, dynamic> toJson() => {
-    'unit': unit,
-    'resUnit': resUnit,
-    'resUnitValue': resUnitValue,
-    'width': width,
-    'height': height,
-  };
+  /// Create an instance from a map
+  factory PracticePageInfo.fromMap(Map<String, dynamic> map) {
+    return PracticePageInfo(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      items: (map['items'] as List)
+          .map((item) => PracticeItem.fromMap(item as Map<String, dynamic>))
+          .toList(),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+    );
+  }
 
-  factory PageSize.fromJson(Map<String, dynamic> json) => PageSize(
-    unit: json['unit'] as String,
-    resUnit: json['resUnit'] as String,
-    resUnitValue: json['resUnitValue'] as int,
-    width: (json['width'] as num).toDouble(),
-    height: (json['height'] as num).toDouble(),
-  );
+  @override
+  List<Object?> get props => [id, title, items, createdAt];
+
+  PracticePageInfo copyWith({
+    String? id,
+    String? title,
+    List<PracticeItem>? items,
+    DateTime? createdAt,
+  }) {
+    return PracticePageInfo(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      items: items ?? this.items,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  /// Convert to JSON map (alias for toMap for JSON serialization)
+  Map<String, dynamic> toJson() => toMap();
+
+  /// Convert to a JSON string
+  String toJsonString() => json.encode(toMap());
+
+  /// Convert to a map for persistence
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'items': items.map((item) => item.toMap()).toList(),
+      'createdAt': createdAt.millisecondsSinceEpoch,
+    };
+  }
 }

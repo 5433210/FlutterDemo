@@ -9,6 +9,25 @@ class CharacterService {
 
   CharacterService(this._characterRepository, this._workRepository);
 
+  Future<String> createCharacter(Character character) async {
+    return '';
+  }
+
+  Future<bool> deleteCharacter(String id) async {
+    AppLogger.info('Deleting character',
+        tag: 'CharacterService', data: {'characterId': id});
+
+    final character = await _characterRepository.getCharacter(id);
+    if (character == null) {
+      AppLogger.debug('Character not found',
+          tag: 'CharacterService', data: {'characterId': id});
+      return false;
+    }
+
+    await _characterRepository.deleteCharacter(id);
+    return true;
+  }
+
   Future<String> extractCharacter({
     required String workId,
     required String char,
@@ -18,34 +37,33 @@ class CharacterService {
     String? tool,
     Map<String, dynamic>? metadata,
   }) async {
+    return '';
+  }
+
+  Future<List<Character>> getAll() async {
+    return [];
+  }
+
+  Future<Character?> getCharacter(String id) async {
     try {
-      AppLogger.info('Extracting character from work',
-          tag: 'CharacterService', data: {'workId': workId, 'char': char});
-
-      final character = Character(
-        id: '',
-        workId: workId,
-        char: char,
-        sourceRegion: sourceRegion,
-        image: image,
-        metadata: metadata,
-        createTime: DateTime.now(),
-        updateTime: DateTime.now(),
-      );
-
-      final id = await _characterRepository.insertCharacter(character);
-
-      AppLogger.info('Character extracted successfully',
+      AppLogger.debug('Fetching character',
+          tag: 'CharacterService', data: {'characterId': id});
+      final character = await _characterRepository.getCharacter(id);
+      if (character == null) {
+        AppLogger.debug('Character not found',
+            tag: 'CharacterService', data: {'characterId': id});
+        return null;
+      }
+      AppLogger.debug('Character found',
           tag: 'CharacterService',
-          data: {'characterId': id, 'workId': workId, 'char': char});
-
-      return id;
+          data: {'characterId': id, 'character': character.char});
+      return character;
     } catch (e, stack) {
-      AppLogger.error('Failed to extract character',
+      AppLogger.error('Failed to get character',
           tag: 'CharacterService',
           error: e,
           stackTrace: stack,
-          data: {'workId': workId, 'char': char});
+          data: {'characterId': id});
       rethrow;
     }
   }
@@ -73,6 +91,24 @@ class CharacterService {
     }
   }
 
+  Future<List<Character>> getCharactersByWorkId(String workId) async {
+    try {
+      AppLogger.debug('Fetching characters by workId',
+          tag: 'CharacterService', data: {'workId': workId});
+      final list = await _characterRepository.getCharactersByWorkId(workId);
+      AppLogger.debug('Fetched ${list.length} characters for workId $workId',
+          tag: 'CharacterService');
+      return list;
+    } catch (e, stack) {
+      AppLogger.error('Failed to get characters by workId',
+          tag: 'CharacterService',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId});
+      rethrow;
+    }
+  }
+
   Future<List<Character>> searchCharacters(String char) async {
     try {
       AppLogger.debug('Searching for characters',
@@ -91,6 +127,10 @@ class CharacterService {
           data: {'searchQuery': char});
       rethrow;
     }
+  }
+
+  Future<void> updateCharacter(String id, Character character) async {
+    return;
   }
 
   Future<void> updateCharacterMetadata(

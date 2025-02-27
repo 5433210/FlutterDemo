@@ -54,9 +54,9 @@ class SqliteDatabase implements DatabaseInterface {
   }
 
   @override
-  Future<void> deletePractice(String id) async {
+  Future<int> deletePractice(String id) async {
     final db = await database;
-    await db.delete(
+    return await db.delete(
       'practices',
       where: 'id = ?',
       whereArgs: [id],

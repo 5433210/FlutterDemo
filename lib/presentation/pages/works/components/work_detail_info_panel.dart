@@ -47,10 +47,7 @@ class WorkDetailInfoPanel extends ConsumerWidget {
             content: Column(
               children: [
                 _buildInfoItem('图片数量', '${work.imageCount ?? 0}', theme),
-                _buildInfoItem('导入时间', _formatDateTime(work.createTime), theme),
-                if (work.updateTime != null)
-                  _buildInfoItem(
-                      '最近更新', _formatDateTime(work.updateTime!), theme),
+                _buildInfoItem('导入时间', '1', theme)
               ],
             ),
           ),

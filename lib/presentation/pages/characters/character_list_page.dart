@@ -22,7 +22,6 @@ class _CharacterListPageState extends State<CharacterListPage> {
   @override
   Widget build(BuildContext context) {
     return PageLayout(
-      navigationInfo: const Text('集字列表'),
       toolbar: PageToolbar(
         leading: [
           FilledButton.icon(

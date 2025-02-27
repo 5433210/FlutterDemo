@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/character_service.dart';
 import '../../application/services/image_service.dart';
+import '../../application/services/practice_service.dart';
 import '../../application/services/work_service.dart';
 import '../../infrastructure/providers/repository_providers.dart';
 
@@ -14,6 +15,11 @@ final characterServiceProvider = Provider<CharacterService>((ref) {
 // 服务 Providers
 final imageServiceProvider = Provider<ImageService>((ref) {
   return ImageService();
+});
+
+final practiceServiceProvider = Provider<PracticeService>((ref) {
+  final practiceRepository = ref.watch(practiceRepositoryProvider);
+  return PracticeService(practiceRepository);
 });
 
 final workServiceProvider = Provider<WorkService>((ref) {

@@ -1,74 +1,49 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_sizes.dart';
-import 'page_bar.dart';
 
-class PageLayout extends StatefulWidget {
-  final Widget? navigationInfo;
-  final List<Widget>? actions;
+/// A standard page layout with consistent structure
+class PageLayout extends StatelessWidget {
+  final String? title;
   final Widget? toolbar;
+  final List<Widget>? actions;
   final Widget body;
-  final Widget? sidebar;
-  final Widget? footer;
+  final Widget? floatingActionButton;
+  final bool showBackButton;
+  final VoidCallback? onBackPressed;
 
   const PageLayout({
     super.key,
-    this.navigationInfo,
-    this.actions,
+    this.title,
     this.toolbar,
+    this.actions,
     required this.body,
-    this.sidebar,
-    this.footer,
+    this.floatingActionButton,
+    this.showBackButton = false,
+    this.onBackPressed,
   });
-
-  @override
-  State<PageLayout> createState() => _PageLayoutState();
-}
-
-class _PageLayoutState extends State<PageLayout> {
-  static const double _sidebarWidth = 320.0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PageBar(
-        title: widget.navigationInfo,
-        actions: widget.actions,
-        toolbarHeight: 50,
+      appBar: AppBar(
+        automaticallyImplyLeading: showBackButton,
+        leading: showBackButton ? _buildBackButton(context) : null,
+        title: toolbar ?? (title != null ? Text(title!) : null),
+        actions: actions,
       ),
-      body: Row(
-        children: [
-          if (widget.sidebar != null)
-            Container(
-              width: _sidebarWidth,
-              decoration: BoxDecoration(
-                border: Border(
-                  right: BorderSide(color: Theme.of(context).dividerColor),
-                ),
-              ),
-              child: widget.sidebar,
-            ),
-          Expanded(
-            child: Column(
-              children: [
-                if (widget.toolbar != null)
-                  Container(
-                    height: AppSizes.pageToolbarHeight,
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom:
-                            BorderSide(color: Theme.of(context).dividerColor),
-                      ),
-                    ),
-                    child: widget.toolbar!,
-                  ),
-                Expanded(child: widget.body),
-                if (widget.footer != null) widget.footer!,
-              ],
-            ),
-          ),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(AppSizes.spacingMedium),
+        child: body,
       ),
+      floatingActionButton: floatingActionButton,
+    );
+  }
+
+  Widget? _buildBackButton(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
     );
   }
 }
