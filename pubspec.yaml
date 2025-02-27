@@ -37,5 +37,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true # 启用代码生成
+  
+  assets:
+    - assets/images/
 
 

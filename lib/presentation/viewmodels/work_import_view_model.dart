@@ -261,9 +261,9 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       final processedImages = <File>[];
 
       for (final file in state.images) {
-        if (state.keepOriginals) {
-          await _imageService.backupOriginal(file);
-        }
+        // if (state.keepOriginals) {
+        //   await _imageService.backupOriginal(file);
+        // }
 
         final optimized = await _imageService.optimizeImage(
           file,

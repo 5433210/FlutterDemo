@@ -5,17 +5,16 @@ import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
-import '../../infrastructure/config/storage_paths.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/models/work_filter.dart';
+import '../../utils/path_helper.dart';
 import 'image_service.dart';
 
 class WorkService {
   final WorkRepository _workRepository;
   final ImageService _imageService;
-  final StoragePaths _paths;
 
-  WorkService(this._workRepository, this._imageService, this._paths);
+  WorkService(this._workRepository, this._imageService);
 
   Future<void> deleteWork(String workId) async {
     try {
@@ -77,22 +76,37 @@ class WorkService {
     try {
       AppLogger.debug('Fetching work thumbnail',
           tag: 'WorkService', data: {'workId': workId});
-      final thumbnailPath = _paths.getWorkThumbnailPath(workId);
+
+      final thumbnailPath = await PathHelper.getWorkCoverThumbnailPath(workId);
+
+      // 检查缩略图是否存在
       final file = File(thumbnailPath);
-
-      // 确保目录存在
-      final directory = Directory(path.dirname(thumbnailPath));
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
-
       if (await file.exists()) {
         AppLogger.debug('Found thumbnail at: $thumbnailPath',
             tag: 'WorkService', data: {'workId': workId});
+
+        // 检查文件是否为空或者无效
+        if (await file.length() == 0) {
+          AppLogger.warning('Thumbnail exists but is empty',
+              tag: 'WorkService', data: {'workId': workId});
+
+          // 创建占位图替代空文件
+          await PathHelper.createPlaceholderImage(thumbnailPath);
+        }
+
         return thumbnailPath;
       } else {
         AppLogger.debug('Thumbnail not found at: $thumbnailPath',
             tag: 'WorkService', data: {'workId': workId});
+
+        // 如果文件不存在，但目录结构存在，创建一个占位图
+        if (Directory(path.dirname(thumbnailPath)).existsSync()) {
+          await PathHelper.createPlaceholderImage(thumbnailPath);
+          AppLogger.debug('Created placeholder thumbnail',
+              tag: 'WorkService', data: {'workId': workId});
+          return thumbnailPath;
+        }
+
         return null;
       }
     } catch (e, stack) {
@@ -136,14 +150,15 @@ class WorkService {
         imageCount: files.length,
       );
 
-      // Create work directory
-      await _paths.ensureDirectoryExists(_paths.getWorkPath(workId));
+      // 确保工作目录结构存在
+      await PathHelper.ensureWorkDirectoryExists(workId);
 
       // Process images
       await _imageService.processWorkImages(
         workId,
         files,
       );
+
       AppLogger.info('Imported work successfully',
           tag: 'WorkService', data: {'workId': workId});
     } catch (e, stackTrace) {

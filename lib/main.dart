@@ -247,17 +247,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               builder: (context) => const CharacterListPage(),
             );
 
-          case AppRoutes.characterDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => CharacterDetailPage(
-                  charId: args,
-                  onBack: () => Navigator.of(context).pop(),
-                ),
-              );
-            }
-            break;
-
           case AppRoutes.practiceList:
             return MaterialPageRoute(
               builder: (context) => const PracticeListPage(),

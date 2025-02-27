@@ -1,35 +1,46 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
 
 import '../../domain/value_objects/image/work_image_info.dart';
 import '../../domain/value_objects/image/work_image_size.dart';
-import '../../infrastructure/config/storage_paths.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../utils/path_helper.dart';
 import '../config/app_config.dart';
 
 class ImageService {
-  final StoragePaths _paths;
+  ImageService();
 
-  ImageService(this._paths);
+  // Future<void> backupOriginal(File file) async {
+  //   try {
+  //     AppLogger.info('备份原始图片文件',
+  //         tag: 'ImageService', data: {'path': file.path});
 
-  Future<void> backupOriginal(File file) async {
-    final backupDir = Directory(path.join(
-      AppConfig.workspacePath,
-      'originals',
-    ));
+  //     final backupDir = PathHelper.getWorkPath()
 
-    if (!await backupDir.exists()) {
-      await backupDir.create(recursive: true);
-    }
+  //     if (!await backupDir.exists()) {
+  //       await backupDir.create(recursive: true);
+  //     }
 
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final filename = path.basename(file.path);
-    final backupPath = path.join(backupDir.path, '${timestamp}_$filename');
+  //     final timestamp = DateTime.now().millisecondsSinceEpoch;
+  //     final filename = path.basename(file.path);
+  //     final backupPath = path.join(backupDir.path, '${timestamp}_$filename');
 
-    await file.copy(backupPath);
-  }
+  //     await file.copy(backupPath);
+
+  //     AppLogger.info('原始图片备份成功',
+  //         tag: 'ImageService',
+  //         data: {'originalPath': file.path, 'backupPath': backupPath});
+  //   } catch (e, stack) {
+  //     AppLogger.error('备份原始图片失败',
+  //         tag: 'ImageService',
+  //         error: e,
+  //         stackTrace: stack,
+  //         data: {'path': file.path});
+  //     rethrow;
+  //   }
+  // }
 
   Future<File> optimizeImage(
     File file, {
@@ -82,42 +93,125 @@ class ImageService {
   Future<List<WorkImageInfo>> processWorkImages(
       String workId, List<File> images) async {
     try {
-      // 首先确保工作目录存在
-      await _paths.ensureWorkDirectoryExists(workId);
-      debugPrint('Processing ${images.length} images for work: $workId');
+      AppLogger.info('开始处理作品图片',
+          tag: 'ImageService',
+          data: {'workId': workId, 'imageCount': images.length});
+
+      PathHelper.ensureDirectoryExists(await PathHelper.getWorkPath(workId));
 
       final processedImages = <WorkImageInfo>[];
 
       for (var i = 0; i < images.length; i++) {
         final file = images[i];
+        AppLogger.debug('处理图片 ${i + 1}/${images.length}',
+            tag: 'ImageService',
+            data: {'workId': workId, 'filePath': file.path});
+
+        // 检查文件
+        try {
+          final fileSize = await file.length();
+          if (fileSize == 0) {
+            AppLogger.warning('图片文件为空',
+                tag: 'ImageService',
+                data: {'workId': workId, 'filePath': file.path});
+            continue;
+          }
+        } catch (e) {
+          AppLogger.error('检查图片文件失败',
+              tag: 'ImageService',
+              error: e,
+              data: {'workId': workId, 'filePath': file.path});
+          continue;
+        }
+
         final bytes = await file.readAsBytes();
+
+        AppLogger.debug('读取图片字节', tag: 'ImageService', data: {
+          'workId': workId,
+          'filePath': file.path,
+          'fileSize': bytes.length
+        });
+
         final image = img.decodeImage(bytes);
 
         if (image == null) {
+          AppLogger.error('无法解码图片',
+              tag: 'ImageService',
+              data: {'workId': workId, 'filePath': file.path});
           throw Exception('无法解码图片：${path.basename(file.path)}');
         }
 
+        AppLogger.debug('图片解码成功', tag: 'ImageService', data: {
+          'workId': workId,
+          'filePath': file.path,
+          'width': image.width,
+          'height': image.height,
+          'format': path.extension(file.path)
+        });
+
         // Create work picture directory
-        final picturePath = _paths.getWorkPicturePath(workId, i);
-        await _paths.ensureDirectoryExists(picturePath);
+        final picturePath = await PathHelper.getWorkImagePath(workId, i);
+        PathHelper.ensureDirectoryExists(picturePath!);
+        AppLogger.debug('创建图片目录',
+            tag: 'ImageService',
+            data: {'workId': workId, 'picturePath': picturePath});
 
         // Save original if requested
         String? originalPath;
 
-        originalPath = _paths.getWorkOriginalPicturePath(
+        originalPath = await PathHelper.getOriginalWorkPath(
             workId, i, path.extension(file.path));
+
+        AppLogger.debug('复制原始图片', tag: 'ImageService', data: {
+          'workId': workId,
+          'sourceFile': file.path,
+          'targetPath': originalPath
+        });
+
         await file.copy(originalPath);
 
         // Process and save imported image
+        AppLogger.debug('处理图片',
+            tag: 'ImageService', data: {'workId': workId, 'index': i});
+
         final processed = _processImage(image);
-        final importedPath = _paths.getWorkImportedPicturePath(workId, i);
-        await File(importedPath).writeAsBytes(img.encodePng(processed));
+
+        AppLogger.debug('处理完成', tag: 'ImageService', data: {
+          'workId': workId,
+          'index': i,
+          'originalSize': '${image.width}x${image.height}',
+          'processedSize': '${processed.width}x${processed.height}'
+        });
+
+        final importedPath = await PathHelper.getWorkImagePath(workId, i);
+
+        AppLogger.debug('保存处理后的图片',
+            tag: 'ImageService',
+            data: {'workId': workId, 'index': i, 'path': importedPath});
+
+        final pngBytes = img.encodePng(processed);
+        await File(importedPath!).writeAsBytes(pngBytes);
 
         // Create thumbnail for this image
+        AppLogger.debug('创建缩略图',
+            tag: 'ImageService', data: {'workId': workId, 'index': i});
+
         final thumbnail = _createThumbnail(processed);
-        final thumbnailPath = _paths.getWorkImportedThumbnailPath(workId, i);
-        await File(thumbnailPath)
-            .writeAsBytes(img.encodeJpg(thumbnail, quality: 80));
+
+        AppLogger.debug('缩略图创建成功', tag: 'ImageService', data: {
+          'workId': workId,
+          'index': i,
+          'size': '${thumbnail.width}x${thumbnail.height}'
+        });
+
+        final thumbnailPath = await PathHelper.getWorkThumbnailPath(workId, i);
+
+        AppLogger.debug('保存缩略图',
+            tag: 'ImageService',
+            data: {'workId': workId, 'index': i, 'path': thumbnailPath});
+
+        final jpgBytes = img.encodeJpg(thumbnail, quality: 80);
+        await File(thumbnailPath!).writeAsBytes(jpgBytes);
 
         // Add image info
         processedImages.add(WorkImageInfo(
@@ -128,28 +222,77 @@ class ImageService {
                 WorkImageSize(width: processed.width, height: processed.height),
             thumbnail: thumbnailPath,
             original: originalPath));
+
+        AppLogger.debug('图片 ${i + 1}/${images.length} 处理完成',
+            tag: 'ImageService',
+            data: {
+              'workId': workId,
+              'format': path.extension(file.path).replaceAll('.', ''),
+              'size': '${processed.width}x${processed.height}',
+              'fileSize': bytes.length
+            });
       }
 
       // 创建作品缩略图
       if (processedImages.isNotEmpty) {
-        final workThumbnailPath = _paths.getWorkThumbnailPath(workId);
-        debugPrint('Creating work thumbnail at: $workThumbnailPath');
+        final workThumbnailPath =
+            await PathHelper.getWorkCoverThumbnailPath(workId);
+        AppLogger.debug('创建作品缩略图',
+            tag: 'ImageService',
+            data: {'workId': workId, 'path': workThumbnailPath});
 
-        final firstImage =
-            img.decodeImage(await File(processedImages[0].path).readAsBytes());
+        try {
+          final firstImageFile = File(processedImages[0].path);
+          final firstImageBytes = await firstImageFile.readAsBytes();
+          final firstImage = img.decodeImage(firstImageBytes);
 
-        if (firstImage != null) {
-          final workThumbnail = _createThumbnail(firstImage);
-          final thumbnailFile = File(workThumbnailPath);
-          await thumbnailFile
-              .writeAsBytes(img.encodeJpg(workThumbnail, quality: 85));
-          debugPrint('Work thumbnail created successfully');
+          if (firstImage != null) {
+            final workThumbnail = _createThumbnail(firstImage);
+
+            AppLogger.debug('作品缩略图创建成功', tag: 'ImageService', data: {
+              'workId': workId,
+              'size': '${workThumbnail.width}x${workThumbnail.height}'
+            });
+
+            final thumbnailFile = File(workThumbnailPath);
+            final thumbnailParentDir =
+                Directory(path.dirname(workThumbnailPath));
+            if (!await thumbnailParentDir.exists()) {
+              await thumbnailParentDir.create(recursive: true);
+            }
+
+            final thumbnailBytes = img.encodeJpg(workThumbnail, quality: 85);
+            await thumbnailFile.writeAsBytes(thumbnailBytes);
+
+            AppLogger.debug('作品缩略图保存成功', tag: 'ImageService', data: {
+              'workId': workId,
+              'path': workThumbnailPath,
+              'size': thumbnailBytes.length
+            });
+          }
+        } catch (e, stack) {
+          AppLogger.error('创建作品缩略图失败',
+              tag: 'ImageService',
+              error: e,
+              stackTrace: stack,
+              data: {'workId': workId});
+          // 继续执行，即使缩略图创建失败
         }
       }
 
+      AppLogger.info('作品图片处理完成', tag: 'ImageService', data: {
+        'workId': workId,
+        'processedCount': processedImages.length,
+        'totalOriginalCount': images.length
+      });
+
       return processedImages;
-    } catch (e) {
-      debugPrint('Error processing images: $e');
+    } catch (e, stack) {
+      AppLogger.error('处理作品图片失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId});
       rethrow;
     }
   }

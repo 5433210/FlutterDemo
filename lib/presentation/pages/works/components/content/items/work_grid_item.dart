@@ -167,19 +167,24 @@ class WorkGridItem extends StatelessWidget {
 
   Widget _buildThumbnail(BuildContext context) {
     if (work.id == null) return _buildPlaceholder(context);
-
     return FutureBuilder<String?>(
       future: PathHelper.getWorkThumbnailPath(work.id!),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final file = File(snapshot.data!);
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-          );
-        }
-        return _buildPlaceholder(context);
+      builder: (context, pathSnapshot) {
+        if (!pathSnapshot.hasData) return _buildPlaceholder(context);
+        return FutureBuilder<bool>(
+          future: PathHelper.isFileExists(pathSnapshot.data!),
+          builder: (context, existsSnapshot) {
+            if (!existsSnapshot.hasData || !existsSnapshot.data!) {
+              return _buildPlaceholder(context);
+            }
+            final file = File(pathSnapshot.data!);
+            return Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+            );
+          },
+        );
       },
     );
   }

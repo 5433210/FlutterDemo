@@ -11,7 +11,7 @@ import 'components/content/work_grid_view.dart';
 import 'components/content/work_list_view.dart';
 import 'components/filter/sidebar_toggle.dart';
 import 'components/filter/work_filter_panel.dart';
-import 'components/work_toolbar.dart';
+import 'components/work_browse_toolbar.dart';
 // 添加这个导入
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
@@ -31,7 +31,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     return Scaffold(
       body: Column(
         children: [
-          WorkToolbar(
+          WorkBrowseToolbar(
             viewMode: state.viewMode,
             onViewModeChanged: (mode) => viewModel.setViewMode(mode),
             onImport: () => _showImportDialog(context),

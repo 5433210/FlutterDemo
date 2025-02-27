@@ -134,11 +134,11 @@ class WorkListItem extends StatelessWidget {
                           // 创作日期
                           if (work.creationDate != null)
                             _buildInfoItem(context, Icons.palette_outlined,
-                                "创作于 ${DateFormatter.formatFull(work.creationDate!)}"),
+                                '创作于 ${DateFormatter.formatFull(work.creationDate!)}'),
 
                           // 导入日期
                           _buildInfoItem(context, Icons.add_circle_outline,
-                              "导入于 ${DateFormatter.formatFull(work.createTime!)}"),
+                              '导入于 ${DateFormatter.formatFull(work.createTime!)}'),
                         ],
                       ),
                     ],
@@ -215,16 +215,22 @@ class WorkListItem extends StatelessWidget {
 
     return FutureBuilder<String?>(
       future: PathHelper.getWorkThumbnailPath(work.id!),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          final file = File(snapshot.data!);
-          return Image.file(
-            file,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-          );
-        }
-        return _buildPlaceholder(context);
+      builder: (context, pathSnapshot) {
+        if (!pathSnapshot.hasData) return _buildPlaceholder(context);
+        return FutureBuilder<bool>(
+          future: PathHelper.isFileExists(pathSnapshot.data!),
+          builder: (context, existsSnapshot) {
+            if (!existsSnapshot.hasData || !existsSnapshot.data!) {
+              return _buildPlaceholder(context);
+            }
+            final file = File(pathSnapshot.data!);
+            return Image.file(
+              file,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+            );
+          },
+        );
       },
     );
   }
