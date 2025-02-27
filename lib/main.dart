@@ -28,7 +28,26 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // 初始化日志系统
+    // Initialize window manager first
+    await windowManager.ensureInitialized();
+
+    // Configure window options
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 800),
+      minimumSize: Size(800, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+    );
+
+    // Set up window
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
+    // Initialize logger system
     final appDocDir = await getApplicationDocumentsDirectory();
     final logDir = Directory('${appDocDir.path}/logs');
     if (!await logDir.exists()) {
@@ -44,27 +63,26 @@ void main() async {
       maxFiles: 10,
     );
 
-    // 设置全局异常处理
+    // Set up global error handling
     AppErrorHandler.initialize();
 
     AppLogger.info('Application starting', tag: 'App');
 
-    // 初始化依赖
-    await initializeDependencies();
+    // Get shared preferences
+    final prefs = await SharedPreferences.getInstance();
 
-    // 启动应用
+    // Launch app with Riverpod
     runApp(
       ProviderScope(
         observers: kReleaseMode ? [] : [ProviderLogger()],
         overrides: [
-          sharedPreferencesProvider
-              .overrideWithValue(await SharedPreferences.getInstance()),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: const MyApp(),
       ),
     );
   } catch (e, stack) {
-    // 确保即使在初始化过程中出现异常也能记录日志
+    // Ensure error is logged even during initialization
     if (AppLogger.hasHandlers) {
       AppLogger.fatal(
         'Failed to start application',
@@ -73,12 +91,12 @@ void main() async {
         tag: 'App',
       );
     } else {
-      // 日志系统尚未初始化的备用方案
+      // Fallback if logger not initialized
       debugPrint('FATAL ERROR: Failed to start application: $e');
       debugPrint('$stack');
     }
 
-    // 显示一个基本的错误屏幕
+    // Show a basic error screen
     runApp(MaterialApp(
       home: Scaffold(
         body: Center(
@@ -89,46 +107,11 @@ void main() async {
   }
 }
 
-Future<void> initializeDependencies() async {
-  try {
-    AppLogger.debug('Starting dependency initialization', tag: 'Setup');
-
-    // 1. 先初始化 SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    AppLogger.debug('SharedPreferences initialized', tag: 'Setup');
-
-    // 2. 初始化窗口管理器
-    await windowManager.ensureInitialized();
-    AppLogger.debug('Window manager initialized', tag: 'Setup');
-
-    // 3. 配置窗口选项
-    WindowOptions windowOptions = const WindowOptions(
-      size: Size(1280, 800), // 设置初始窗口大小
-      minimumSize: Size(800, 600), // 设置最小窗口大小
-      center: true, // 窗口居中显示
-      backgroundColor: Colors.transparent,
-      skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.hidden,
-    );
-
-    // 4. 应用窗口配置
-    await windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
-    AppLogger.debug('Window configured and shown', tag: 'Setup');
-
-    // 5. 初始化数据库
-    await SqliteDatabase.initializePlatform();
-    AppLogger.debug('Database platform initialized', tag: 'Setup');
-
-    AppLogger.info('All dependencies initialized successfully', tag: 'Setup');
-  } catch (e, stack) {
-    AppLogger.error('Failed to initialize dependencies',
-        tag: 'Setup', error: e, stackTrace: stack);
-    rethrow;
-  }
-}
+// Create providers that will be initialized once the app starts
+final _initializedProvider = FutureProvider<void>((ref) async {
+  // This contains all initialization that might interact with providers
+  await SqliteDatabase.initializePlatform();
+});
 
 class MainWindow extends StatefulWidget {
   const MainWindow({super.key});
@@ -137,14 +120,152 @@ class MainWindow extends StatefulWidget {
   State<MainWindow> createState() => _MainWindowState();
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Listen to initialization provider to ensure everything is set up
+    final initialization = ref.watch(_initializedProvider);
+
+    return initialization.when(
+      loading: () => const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      ),
+      error: (error, stack) => MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('初始化失败: $error'),
+          ),
+        ),
+      ),
+      data: (_) => MaterialApp(
+        title: '书法集字',
+        theme: AppTheme.light,
+        debugShowCheckedModeBanner: false,
+        home: const MainWindow(),
+        onGenerateRoute: _generateRoute,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('zh'),
+          Locale('en'),
+        ],
+      ),
+    );
+  }
+
+  Route<dynamic>? _generateRoute(RouteSettings settings) {
+    final args = settings.arguments;
+
+    switch (settings.name) {
+      case AppRoutes.home:
+        return MaterialPageRoute(
+          builder: (context) => const MainWindow(),
+        );
+
+      case AppRoutes.workBrowse:
+        return MaterialPageRoute(
+          builder: (context) => const WorkBrowsePage(),
+        );
+
+      case AppRoutes.workDetail:
+        if (args is String) {
+          return MaterialPageRoute(
+            builder: (context) => WorkDetailPage(workId: args),
+          );
+        }
+        break;
+
+      case AppRoutes.characterList:
+        return MaterialPageRoute(
+          builder: (context) => const CharacterListPage(),
+        );
+
+      case AppRoutes.practiceList:
+        return MaterialPageRoute(
+          builder: (context) => const PracticeListPage(),
+        );
+
+      case AppRoutes.practiceEdit:
+        return MaterialPageRoute(
+          builder: (context) => PracticeEditPage(
+            practiceId: args as String?,
+          ),
+        );
+
+      case AppRoutes.practiceDetail:
+        if (args is String) {
+          return MaterialPageRoute(
+            builder: (context) => PracticeDetailPage(
+              practiceId: args,
+            ),
+          );
+        }
+        break;
+
+      case AppRoutes.settings:
+        return MaterialPageRoute(
+          builder: (context) => const SettingsPage(),
+        );
+    }
+
+    // Unknown routes return to home
+    return MaterialPageRoute(
+      builder: (context) => const MainWindow(),
+    );
+  }
 }
 
-class _MainWindowState extends State<MainWindow> {
+/// Riverpod logger for debug mode
+class ProviderLogger extends ProviderObserver {
+  @override
+  void didAddProvider(
+    ProviderBase<dynamic> provider,
+    Object? value,
+    ProviderContainer container,
+  ) {
+    AppLogger.debug(
+      'Provider $provider was initialized with $value',
+      tag: 'Riverpod',
+    );
+  }
+
+  @override
+  void didDisposeProvider(
+    ProviderBase<dynamic> provider,
+    ProviderContainer container,
+  ) {
+    AppLogger.debug(
+      'Provider $provider was disposed',
+      tag: 'Riverpod',
+    );
+  }
+
+  @override
+  void didUpdateProvider(
+    ProviderBase<dynamic> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    if (previousValue != newValue) {
+      AppLogger.debug(
+        'Provider $provider updated from $previousValue to $newValue',
+        tag: 'Riverpod',
+      );
+    }
+  }
+}
+
+class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
   int _selectedIndex = 0;
 
   @override
@@ -152,14 +273,14 @@ class _MainWindowState extends State<MainWindow> {
     return Scaffold(
       body: Column(
         children: [
-          // 标题栏 - 这里保留不变
+          // Title bar - unchanged
           const TitleBar(),
 
-          // 内容区域 - 包括侧边导航栏和右侧内容
+          // Content area - including side navigation bar and right content
           Expanded(
             child: Row(
               children: [
-                // 侧边导航栏 - 始终显示
+                // Side navigation - always shown
                 SideNavigation(
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: (index) {
@@ -169,7 +290,7 @@ class _MainWindowState extends State<MainWindow> {
                   },
                 ),
 
-                // 内容区域 - 动态变化的部分
+                // Content area - dynamically changing part
                 Expanded(
                   child: _buildContent(),
                 ),
@@ -181,125 +302,14 @@ class _MainWindowState extends State<MainWindow> {
     );
   }
 
-  Widget _buildContent() {
-    // 这里根据选中的标签页返回不同的内容
-    switch (_selectedIndex) {
-      case 0:
-        return Navigator(
-          onGenerateRoute: (settings) {
-            if (settings.name == AppRoutes.workDetail &&
-                settings.arguments != null) {
-              final workId = settings.arguments as String;
-              return MaterialPageRoute(
-                builder: (context) => WorkDetailPage(workId: workId),
-              );
-            }
-            // 默认返回作品浏览页
-            return MaterialPageRoute(
-              builder: (context) => const WorkBrowsePage(),
-            );
-          },
-        );
-      case 1:
-        return const CharacterListPage();
-      case 2:
-        return const PracticeListPage();
-      case 3:
-        return const SettingsPage();
-      default:
-        return const Center(child: Text('页面未实现'));
-    }
-  }
-}
-
-class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: '书法集字',
-      theme: AppTheme.light,
-      debugShowCheckedModeBanner: false,
-      home: const MainWindow(),
-      onGenerateRoute: (settings) {
-        final args = settings.arguments;
-
-        switch (settings.name) {
-          case AppRoutes.home:
-            return MaterialPageRoute(
-              builder: (context) => const MainWindow(),
-            );
-
-          case AppRoutes.workBrowse:
-            return MaterialPageRoute(
-              builder: (context) => const WorkBrowsePage(),
-            );
-
-          case AppRoutes.workDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => WorkDetailPage(workId: args),
-              );
-            }
-            break;
-
-          case AppRoutes.characterList:
-            return MaterialPageRoute(
-              builder: (context) => const CharacterListPage(),
-            );
-
-          case AppRoutes.practiceList:
-            return MaterialPageRoute(
-              builder: (context) => const PracticeListPage(),
-            );
-
-          case AppRoutes.practiceEdit:
-            return MaterialPageRoute(
-              builder: (context) => PracticeEditPage(
-                practiceId: args as String?,
-              ),
-            );
-
-          case AppRoutes.practiceDetail:
-            if (args is String) {
-              return MaterialPageRoute(
-                builder: (context) => PracticeDetailPage(
-                  practiceId: args,
-                ),
-              );
-            }
-            break;
-
-          case AppRoutes.settings:
-            return MaterialPageRoute(
-              builder: (context) => const SettingsPage(),
-            );
-        }
-
-        // 未知路由返回首页
-        return MaterialPageRoute(
-          builder: (context) => const MainWindow(),
-        );
-      },
-      // 添加本地化支持
-      localizationsDelegates: const [
-        // AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('zh'),
-        Locale('en'),
-      ],
-    );
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Use a post-frame callback to avoid setState during build
     if (state == AppLifecycleState.resumed) {
-      // Riverpod 2.0+ 语法
-      final container = ProviderScope.containerOf(context);
-      container.read(workBrowseProvider.notifier).loadWorks();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final container = ProviderScope.containerOf(context);
+        container.read(workBrowseProvider.notifier).loadWorks();
+      });
     }
   }
 
@@ -313,5 +323,36 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  Widget _buildContent() {
+    // Build different content based on selected tab
+    switch (_selectedIndex) {
+      case 0:
+        return Navigator(
+          key: ValueKey('work_navigator_$_selectedIndex'),
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.workDetail &&
+                settings.arguments != null) {
+              final workId = settings.arguments as String;
+              return MaterialPageRoute(
+                builder: (context) => WorkDetailPage(workId: workId),
+              );
+            }
+            // Default to work browse page
+            return MaterialPageRoute(
+              builder: (context) => const WorkBrowsePage(),
+            );
+          },
+        );
+      case 1:
+        return const CharacterListPage();
+      case 2:
+        return const PracticeListPage();
+      case 3:
+        return const SettingsPage();
+      default:
+        return const Center(child: Text('Page not implemented'));
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
@@ -8,7 +9,7 @@ import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/page_layout.dart';
 import 'components/error_view.dart';
 import 'components/work_detail_info_panel.dart';
-import 'components/work_detail_providers.dart';
+import 'components/work_image_preview.dart';
 import 'components/work_toolbar.dart';
 
 class WorkDetailPage extends ConsumerStatefulWidget {
@@ -21,7 +22,7 @@ class WorkDetailPage extends ConsumerStatefulWidget {
 }
 
 class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
-  bool _isLoading = false;
+  bool _isLoading = true;
   Work? _work;
   String? _error;
 
@@ -37,7 +38,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   @override
   void initState() {
     super.initState();
-    _loadWork();
+    // Use a post-frame callback to avoid modifying providers during build
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _loadWork();
+    });
   }
 
   List<Widget> _buildActions() {
@@ -58,7 +62,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     if (_error != null) {
       return ErrorView(
         error: _error!,
-        onRetry: _loadWork,
+        onRetry: () {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _loadWork();
+          });
+        },
       );
     }
 
@@ -87,26 +95,21 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   }
 
   Widget _buildWorkContent(Work work) {
-    return ProviderScope(
-      overrides: [
-        currentWorkProvider.overrideWithValue(work),
-      ],
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 左侧图片预览区域 (70%)
-          const Expanded(
-            flex: 7,
-            child: Text('TODO: 图片预览区域'),
-          ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 左侧图片预览区域 (70%)
+        Expanded(
+          flex: 7,
+          child: WorkImagePreview(work: work),
+        ),
 
-          // 右侧信息面板 (30%)
-          Expanded(
-            flex: 3,
-            child: WorkDetailInfoPanel(work: work),
-          ),
-        ],
-      ),
+        // 右侧信息面板 (30%)
+        Expanded(
+          flex: 3,
+          child: WorkDetailInfoPanel(work: work),
+        ),
+      ],
     );
   }
 
@@ -117,12 +120,20 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     });
 
     try {
+      // Use the fetch method that doesn't update state directly
       final work =
-          await ref.read(workDetailProvider.notifier).getWork(widget.workId);
+          await ref.read(workDetailProvider.notifier).fetchWork(widget.workId);
+
+      // Update our local state
       if (mounted) {
         setState(() {
           _work = work;
           _isLoading = false;
+        });
+
+        // Now update the provider after UI is ready
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          ref.read(workDetailProvider.notifier).loadWork(widget.workId);
         });
       }
     } catch (e, stack) {

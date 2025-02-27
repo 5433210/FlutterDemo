@@ -97,8 +97,7 @@ class ImageService {
           tag: 'ImageService',
           data: {'workId': workId, 'imageCount': images.length});
 
-      PathHelper.ensureDirectoryExists(await PathHelper.getWorkPath(workId));
-
+      await PathHelper.ensureWorkDirectoryExists(workId);
       final processedImages = <WorkImageInfo>[];
 
       for (var i = 0; i < images.length; i++) {
@@ -149,17 +148,17 @@ class ImageService {
           'format': path.extension(file.path)
         });
 
-        // Create work picture directory
-        final picturePath = await PathHelper.getWorkImagePath(workId, i);
-        PathHelper.ensureDirectoryExists(picturePath!);
+        // 确保所有相关目录存在
+        final pictureDirPath =
+            path.dirname(await PathHelper.getWorkImagePath(workId, i) ?? '');
+        await PathHelper.ensureDirectoryExists(pictureDirPath);
+
         AppLogger.debug('创建图片目录',
             tag: 'ImageService',
-            data: {'workId': workId, 'picturePath': picturePath});
+            data: {'workId': workId, 'picturePath': pictureDirPath});
 
-        // Save original if requested
-        String? originalPath;
-
-        originalPath = await PathHelper.getOriginalWorkPath(
+        // 保存原始图片 - 使用copyFile而不是直接copy
+        String? originalPath = await PathHelper.getOriginalWorkPath(
             workId, i, path.extension(file.path));
 
         AppLogger.debug('复制原始图片', tag: 'ImageService', data: {
@@ -168,9 +167,9 @@ class ImageService {
           'targetPath': originalPath
         });
 
-        await file.copy(originalPath);
+        await _safelyCopyFile(file, originalPath);
 
-        // Process and save imported image
+        // 处理图片并保存
         AppLogger.debug('处理图片',
             tag: 'ImageService', data: {'workId': workId, 'index': i});
 
@@ -190,9 +189,9 @@ class ImageService {
             data: {'workId': workId, 'index': i, 'path': importedPath});
 
         final pngBytes = img.encodePng(processed);
-        await File(importedPath!).writeAsBytes(pngBytes);
+        await _safelyWriteBytes(importedPath!, pngBytes);
 
-        // Create thumbnail for this image
+        // 创建缩略图
         AppLogger.debug('创建缩略图',
             tag: 'ImageService', data: {'workId': workId, 'index': i});
 
@@ -211,9 +210,9 @@ class ImageService {
             data: {'workId': workId, 'index': i, 'path': thumbnailPath});
 
         final jpgBytes = img.encodeJpg(thumbnail, quality: 80);
-        await File(thumbnailPath!).writeAsBytes(jpgBytes);
+        await _safelyWriteBytes(thumbnailPath!, jpgBytes);
 
-        // Add image info
+        // 添加图片信息到结果列表
         processedImages.add(WorkImageInfo(
             fileSize: bytes.length,
             format: path.extension(file.path).replaceAll('.', ''),
@@ -233,51 +232,9 @@ class ImageService {
             });
       }
 
-      // 创建作品缩略图
+      // 创建作品封面缩略图
       if (processedImages.isNotEmpty) {
-        final workThumbnailPath =
-            await PathHelper.getWorkCoverThumbnailPath(workId);
-        AppLogger.debug('创建作品缩略图',
-            tag: 'ImageService',
-            data: {'workId': workId, 'path': workThumbnailPath});
-
-        try {
-          final firstImageFile = File(processedImages[0].path);
-          final firstImageBytes = await firstImageFile.readAsBytes();
-          final firstImage = img.decodeImage(firstImageBytes);
-
-          if (firstImage != null) {
-            final workThumbnail = _createThumbnail(firstImage);
-
-            AppLogger.debug('作品缩略图创建成功', tag: 'ImageService', data: {
-              'workId': workId,
-              'size': '${workThumbnail.width}x${workThumbnail.height}'
-            });
-
-            final thumbnailFile = File(workThumbnailPath);
-            final thumbnailParentDir =
-                Directory(path.dirname(workThumbnailPath));
-            if (!await thumbnailParentDir.exists()) {
-              await thumbnailParentDir.create(recursive: true);
-            }
-
-            final thumbnailBytes = img.encodeJpg(workThumbnail, quality: 85);
-            await thumbnailFile.writeAsBytes(thumbnailBytes);
-
-            AppLogger.debug('作品缩略图保存成功', tag: 'ImageService', data: {
-              'workId': workId,
-              'path': workThumbnailPath,
-              'size': thumbnailBytes.length
-            });
-          }
-        } catch (e, stack) {
-          AppLogger.error('创建作品缩略图失败',
-              tag: 'ImageService',
-              error: e,
-              stackTrace: stack,
-              data: {'workId': workId});
-          // 继续执行，即使缩略图创建失败
-        }
+        await _createCoverThumbnail(workId, processedImages);
       }
 
       AppLogger.info('作品图片处理完成', tag: 'ImageService', data: {
@@ -321,6 +278,58 @@ class ImageService {
     }
 
     return rotatedFile;
+  }
+
+  // 新增方法: 创建封面缩略图
+  Future<void> _createCoverThumbnail(
+      String workId, List<WorkImageInfo> images) async {
+    final workThumbnailPath =
+        await PathHelper.getWorkCoverThumbnailPath(workId);
+    AppLogger.debug('创建作品缩略图',
+        tag: 'ImageService',
+        data: {'workId': workId, 'path': workThumbnailPath});
+
+    try {
+      final firstImageFile = File(images[0].path);
+
+      if (!await firstImageFile.exists()) {
+        AppLogger.warning('封面源图片不存在，无法创建封面缩略图',
+            tag: 'ImageService',
+            data: {'workId': workId, 'imagePath': images[0].path});
+        return;
+      }
+
+      final firstImageBytes = await firstImageFile.readAsBytes();
+      final firstImage = img.decodeImage(firstImageBytes);
+
+      if (firstImage != null) {
+        final workThumbnail = _createThumbnail(firstImage);
+
+        AppLogger.debug('作品缩略图创建成功', tag: 'ImageService', data: {
+          'workId': workId,
+          'size': '${workThumbnail.width}x${workThumbnail.height}'
+        });
+
+        // 确保缩略图目录存在
+        await PathHelper.ensureDirectoryExists(path.dirname(workThumbnailPath));
+
+        final thumbnailBytes = img.encodeJpg(workThumbnail, quality: 85);
+        await _safelyWriteBytes(workThumbnailPath, thumbnailBytes);
+
+        AppLogger.debug('作品缩略图保存成功', tag: 'ImageService', data: {
+          'workId': workId,
+          'path': workThumbnailPath,
+          'size': thumbnailBytes.length
+        });
+      }
+    } catch (e, stack) {
+      AppLogger.error('创建作品缩略图失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId});
+      // 继续执行，即使缩略图创建失败
+    }
   }
 
   img.Image _createThumbnail(img.Image image) {
@@ -369,5 +378,55 @@ class ImageService {
     }
 
     return image;
+  }
+
+  // 新增方法: 安全复制文件
+  Future<void> _safelyCopyFile(File source, String destinationPath) async {
+    try {
+      final destinationFile = File(destinationPath);
+
+      // 如果目标文件已存在，先删除
+      if (await destinationFile.exists()) {
+        await destinationFile.delete();
+      }
+
+      // 确保目标目录存在
+      await PathHelper.ensureDirectoryExists(path.dirname(destinationPath));
+
+      // 复制文件
+      await source.copy(destinationPath);
+    } catch (e, stack) {
+      AppLogger.error('复制文件失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'source': source.path, 'destination': destinationPath});
+      rethrow;
+    }
+  }
+
+  // 新增方法: 安全写入文件
+  Future<void> _safelyWriteBytes(String filePath, List<int> bytes) async {
+    try {
+      final file = File(filePath);
+
+      // 如果文件已存在，先删除
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      // 确保父目录存在
+      await PathHelper.ensureDirectoryExists(path.dirname(filePath));
+
+      // 写入文件
+      await file.writeAsBytes(bytes);
+    } catch (e, stack) {
+      AppLogger.error('写入文件失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'path': filePath, 'size': bytes.length});
+      rethrow;
+    }
   }
 }

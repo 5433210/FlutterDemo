@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
@@ -89,6 +88,16 @@ class PathHelper {
     try {
       final file = File(filePath);
 
+      // 如果文件已经存在就不做任何操作
+      if (await file.exists()) {
+        // 检查文件大小，如果为0则需要替换
+        if (await file.length() == 0) {
+          await file.delete();
+        } else {
+          return; // 文件存在且有效
+        }
+      }
+
       // 确保父目录存在
       final directory = Directory(path.dirname(filePath));
       if (!await directory.exists()) {
@@ -120,6 +129,15 @@ class PathHelper {
             tag: 'PathHelper', data: {'path': directoryPath});
       }
     } catch (e, stack) {
+      // 特别处理目录已存在的情况
+      if (e is FileSystemException && e.osError?.errorCode == 183) {
+        // 183 表示 "当文件已存在时，无法创建该文件"
+        // 这是正常的情况，目录可能在并发情况下被创建
+        AppLogger.debug('目录已存在',
+            tag: 'PathHelper', data: {'path': directoryPath});
+        return;
+      }
+
       AppLogger.error('确保目录存在失败',
           tag: 'PathHelper',
           error: e,
@@ -138,9 +156,20 @@ class PathHelper {
         final parentDir = path.dirname(filePath);
         await ensureDirectoryExists(parentDir);
 
-        // 创建空文件
-        await file.create();
-        AppLogger.debug('文件创建成功', tag: 'PathHelper', data: {'path': filePath});
+        try {
+          // 创建空文件
+          await file.create();
+          AppLogger.debug('文件创建成功',
+              tag: 'PathHelper', data: {'path': filePath});
+        } catch (e) {
+          // 检查文件是否已经被创建（可能是并发请求导致）
+          if (await file.exists()) {
+            AppLogger.debug('文件已存在',
+                tag: 'PathHelper', data: {'path': filePath});
+            return;
+          }
+          rethrow;
+        }
       }
     } catch (e, stack) {
       AppLogger.error('确保文件存在失败',
@@ -155,6 +184,9 @@ class PathHelper {
   /// 确保作品目录结构存在
   static Future<void> ensureWorkDirectoryExists(String workId) async {
     try {
+      AppLogger.debug('确保作品目录结构存在',
+          tag: 'PathHelper', data: {'workId': workId});
+
       final workPath = await getWorkPath(workId);
       await ensureDirectoryExists(workPath);
 
@@ -162,12 +194,36 @@ class PathHelper {
       await ensureDirectoryExists(path.join(workPath, 'pictures'));
       await ensureDirectoryExists(path.join(workPath, 'thumbnails'));
 
+      // 在开发模式下，如果没有图片，创建一个测试用的占位图片
+      if (kDebugMode) {
+        final initialPictureDirPath = path.join(workPath, 'pictures', '0');
+        await ensureDirectoryExists(initialPictureDirPath);
+
+        final importedPath = path.join(initialPictureDirPath, 'imported.png');
+        final thumbnailPath = path.join(initialPictureDirPath, 'thumbnail.jpg');
+
+        // 检查文件是否存在，不存在则创建占位图
+        if (!await File(importedPath).exists()) {
+          await createPlaceholderImage(importedPath);
+        }
+
+        if (!await File(thumbnailPath).exists()) {
+          await createPlaceholderImage(thumbnailPath);
+        }
+
+        // 创建作品缩略图
+        final coverPath = path.join(workPath, 'cover.jpg');
+        if (!await File(coverPath).exists()) {
+          await createPlaceholderImage(coverPath);
+        }
+
+        AppLogger.debug('在开发模式下创建了占位图',
+            tag: 'PathHelper', data: {'workId': workId});
+      }
+
       // 确保封面目录存在
       final thumbnailPath = await getWorkCoverThumbnailPath(workId);
       await ensureDirectoryExists(path.dirname(thumbnailPath));
-
-      AppLogger.debug('作品目录结构创建成功',
-          tag: 'PathHelper', data: {'workId': workId, 'path': workPath});
     } catch (e, stack) {
       AppLogger.error('确保作品目录结构存在失败',
           tag: 'PathHelper',
@@ -223,38 +279,92 @@ class PathHelper {
 
   // 获取作品首页缩略图路径 (列表展示用)
   static Future<String> getWorkCoverThumbnailPath(String workId) async {
-    final workDir = await getWorkPath(workId);
-    final thumbnailPath = path.join(workDir, 'cover.jpg');
+    try {
+      final workDir = await getWorkPath(workId);
+      final thumbnailPath = path.join(workDir, 'cover.jpg');
 
-    // 确保父目录存在
-    await ensureDirectoryExists(path.dirname(thumbnailPath));
+      // 确保父目录存在
+      final directory = Directory(path.dirname(thumbnailPath));
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
 
-    return thumbnailPath;
+      // 如果文件不存在且是开发模式，创建一个占位图
+      final file = File(thumbnailPath);
+      if (kDebugMode && !await file.exists()) {
+        await createPlaceholderImage(thumbnailPath);
+      }
+
+      return thumbnailPath;
+    } catch (e, stack) {
+      AppLogger.error('获取作品封面路径失败',
+          tag: 'PathHelper',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId});
+      rethrow;
+    }
   }
 
   // 获取作品图片路径 (原始或导入后的图片)
   static Future<String?> getWorkImagePath(String workId, int index) async {
-    final workDir = await getWorkPath(workId);
-    final imagePath =
-        path.join(workDir, 'pictures', index.toString(), 'imported.png');
+    try {
+      final workDir = await getWorkPath(workId);
+      final imageDirPath = path.join(workDir, 'pictures', index.toString());
+      final imagePath = path.join(imageDirPath, 'imported.png');
 
-    // 确保目录存在
-    await ensureDirectoryExists(path.dirname(imagePath));
+      // 确保目录存在
+      final directory = Directory(imageDirPath);
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
 
-    return imagePath;
+      // 如果文件不存在且是开发模式，创建一个占位图
+      final file = File(imagePath);
+      if (kDebugMode && !await file.exists()) {
+        await createPlaceholderImage(imagePath);
+      }
+
+      return imagePath;
+    } catch (e, stack) {
+      AppLogger.error('获取图片路径失败',
+          tag: 'PathHelper',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId, 'index': index});
+      rethrow;
+    }
   }
 
   // 获取作品内特定图片的缩略图路径
   static Future<String?> getWorkImageThumbnailPath(
       String workId, int index) async {
-    final workDir = await getWorkPath(workId);
-    final thumbnailPath =
-        path.join(workDir, 'pictures', index.toString(), 'thumbnail.jpg');
+    try {
+      final workDir = await getWorkPath(workId);
+      final thumbnailDirPath = path.join(workDir, 'pictures', index.toString());
+      final thumbnailPath = path.join(thumbnailDirPath, 'thumbnail.jpg');
 
-    // 确保目录存在
-    await ensureDirectoryExists(path.dirname(thumbnailPath));
+      // 确保目录存在
+      final directory = Directory(thumbnailDirPath);
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
 
-    return thumbnailPath;
+      // 如果文件不存在且是开发模式，创建一个占位图
+      final file = File(thumbnailPath);
+      if (kDebugMode && !await file.exists()) {
+        await createPlaceholderImage(thumbnailPath);
+      }
+
+      return thumbnailPath;
+    } catch (e, stack) {
+      AppLogger.error('获取缩略图路径失败',
+          tag: 'PathHelper',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': workId, 'index': index});
+      rethrow;
+    }
   }
 
   // 获取作品目录路径
