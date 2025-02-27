@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:demo/application/services/work_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/interfaces/i_work_service.dart';
+import '../../domain/entities/work.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/services/state_restoration_service.dart';
 import '../dialogs/work_import/work_import_dialog.dart';
 import '../models/date_range_filter.dart';
@@ -11,7 +13,7 @@ import '../models/work_filter.dart';
 import 'states/work_browse_state.dart';
 
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
-  final IWorkService _workService;
+  final WorkService _workService;
   final StateRestorationService _stateRestorationService;
   Timer? _searchDebounce;
 
@@ -177,15 +179,29 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
+      state = state.copyWith(isLoading: true, error: null);
+      AppLogger.debug('Loading works', tag: 'WorkBrowseViewModel');
+
       final works = await _workService.getAllWorks();
+
+      // 使用 List.of 创建可修改副本
+      final worksCopy = List<Work>.of(works);
+
       state = state.copyWith(
         isLoading: false,
-        works: works,
+        works: worksCopy,
       );
-    } catch (e) {
+
+      AppLogger.info('Works loaded successfully',
+          tag: 'WorkBrowseViewModel', data: {'count': works.length});
+    } catch (e, stack) {
+      AppLogger.error('Failed to load works',
+          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
+        works: [],
       );
     }
   }
@@ -198,29 +214,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
       works: [],
     );
     await loadWorks();
-  }
-
-  // 添加状态恢复功能
-  Future<void> restorePersistedState() async {
-    try {
-      final persistedState = await WorkBrowseState.restore();
-      state = state.copyWith(
-        viewMode: persistedState.viewMode,
-        isSidebarOpen: persistedState.isSidebarOpen,
-        filter: persistedState.filter,
-      );
-
-      // 使用恢复的过滤器重新加载数据
-      await loadWorks();
-    } catch (e) {
-      debugPrint('Failed to restore state: $e');
-      // 恢复失败时使用默认状态
-      await loadWorks();
-    }
-  }
-
-  Future<void> restoreState() async {
-    state = await WorkBrowseState.restore();
   }
 
   Future<void> searchWorks(String query) async {

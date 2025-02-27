@@ -23,6 +23,9 @@ class Character {
     required this.updateTime,
   });
 
+  void copyWith(
+      {required Map<String, dynamic> metadata, required DateTime updateTime}) {}
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -43,18 +46,12 @@ class Character {
       workId: map['work_id'],
       char: map['char'],
       pinyin: map['pinyin'],
-      sourceRegion: map['source_region'] != null 
-          ? jsonDecode(map['source_region']) 
-          : {},
-      image: map['image'] != null 
-          ? jsonDecode(map['image']) 
-          : {},
-      metadata: map['metadata'] != null 
-          ? jsonDecode(map['metadata']) 
-          : null,
+      sourceRegion:
+          map['source_region'] != null ? jsonDecode(map['source_region']) : {},
+      image: map['image'] != null ? jsonDecode(map['image']) : {},
+      metadata: map['metadata'] != null ? jsonDecode(map['metadata']) : null,
       createTime: DateTime.fromMillisecondsSinceEpoch(map['create_time']),
       updateTime: DateTime.fromMillisecondsSinceEpoch(map['update_time']),
     );
   }
 }
-

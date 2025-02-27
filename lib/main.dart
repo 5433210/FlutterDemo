@@ -18,6 +18,7 @@ import 'presentation/pages/practices/practice_list_page.dart';
 import 'presentation/pages/settings/settings_page.dart';
 import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/pages/works/work_detail_page.dart';
+import 'presentation/providers/work_browse_provider.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'routes/app_routes.dart';
@@ -64,7 +65,7 @@ void main() async {
     );
   } catch (e, stack) {
     // 确保即使在初始化过程中出现异常也能记录日志
-    if (AppLogger._handlers.isNotEmpty) {
+    if (AppLogger.hasHandlers) {
       AppLogger.fatal(
         'Failed to start application',
         error: e,
@@ -89,32 +90,44 @@ void main() async {
 }
 
 Future<void> initializeDependencies() async {
-  // 1. 先初始化 SharedPreferences
-  final prefs = await SharedPreferences.getInstance();
+  try {
+    AppLogger.debug('Starting dependency initialization', tag: 'Setup');
 
-  // 2. 初始化窗口管理器
-  await windowManager.ensureInitialized();
+    // 1. 先初始化 SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    AppLogger.debug('SharedPreferences initialized', tag: 'Setup');
 
-  // 3. 配置窗口选项
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1280, 800), // 设置初始窗口大小
-    minimumSize: Size(800, 600), // 设置最小窗口大小
-    center: true, // 窗口居中显示
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-  );
+    // 2. 初始化窗口管理器
+    await windowManager.ensureInitialized();
+    AppLogger.debug('Window manager initialized', tag: 'Setup');
 
-  // 4. 应用窗口配置
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+    // 3. 配置窗口选项
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 800), // 设置初始窗口大小
+      minimumSize: Size(800, 600), // 设置最小窗口大小
+      center: true, // 窗口居中显示
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+    );
 
-  // 5. 初始化数据库
-  await SqliteDatabase.initializePlatform();
+    // 4. 应用窗口配置
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+    AppLogger.debug('Window configured and shown', tag: 'Setup');
 
-  AppLogger.info('Dependencies initialized successfully', tag: 'App');
+    // 5. 初始化数据库
+    await SqliteDatabase.initializePlatform();
+    AppLogger.debug('Database platform initialized', tag: 'Setup');
+
+    AppLogger.info('All dependencies initialized successfully', tag: 'Setup');
+  } catch (e, stack) {
+    AppLogger.error('Failed to initialize dependencies',
+        tag: 'Setup', error: e, stackTrace: stack);
+    rethrow;
+  }
 }
 
 class MainWindow extends StatefulWidget {
@@ -124,9 +137,82 @@ class MainWindow extends StatefulWidget {
   State<MainWindow> createState() => _MainWindowState();
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MainWindowState extends State<MainWindow> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          // 标题栏 - 这里保留不变
+          const TitleBar(),
+
+          // 内容区域 - 包括侧边导航栏和右侧内容
+          Expanded(
+            child: Row(
+              children: [
+                // 侧边导航栏 - 始终显示
+                SideNavigation(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                ),
+
+                // 内容区域 - 动态变化的部分
+                Expanded(
+                  child: _buildContent(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    // 这里根据选中的标签页返回不同的内容
+    switch (_selectedIndex) {
+      case 0:
+        return Navigator(
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.workDetail &&
+                settings.arguments != null) {
+              final workId = settings.arguments as String;
+              return MaterialPageRoute(
+                builder: (context) => WorkDetailPage(workId: workId),
+              );
+            }
+            // 默认返回作品浏览页
+            return MaterialPageRoute(
+              builder: (context) => const WorkBrowsePage(),
+            );
+          },
+        );
+      case 1:
+        return const CharacterListPage();
+      case 2:
+        return const PracticeListPage();
+      case 3:
+        return const SettingsPage();
+      default:
+        return const Center(child: Text('页面未实现'));
+    }
+  }
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -218,72 +304,25 @@ class MyApp extends StatelessWidget {
       ],
     );
   }
-}
-
-class _MainWindowState extends State<MainWindow> {
-  int _selectedIndex = 0;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // 标题栏 - 这里保留不变
-          const TitleBar(),
-
-          // 内容区域 - 包括侧边导航栏和右侧内容
-          Expanded(
-            child: Row(
-              children: [
-                // 侧边导航栏 - 始终显示
-                SideNavigation(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  },
-                ),
-
-                // 内容区域 - 动态变化的部分
-                Expanded(
-                  child: _buildContent(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Riverpod 2.0+ 语法
+      final container = ProviderScope.containerOf(context);
+      container.read(workBrowseProvider.notifier).loadWorks();
+    }
   }
 
-  Widget _buildContent() {
-    // 这里根据选中的标签页返回不同的内容
-    switch (_selectedIndex) {
-      case 0:
-        return Navigator(
-          onGenerateRoute: (settings) {
-            if (settings.name == AppRoutes.workDetail &&
-                settings.arguments != null) {
-              final workId = settings.arguments as String;
-              return MaterialPageRoute(
-                builder: (context) => WorkDetailPage(workId: workId),
-              );
-            }
-            // 默认返回作品浏览页
-            return MaterialPageRoute(
-              builder: (context) => const WorkBrowsePage(),
-            );
-          },
-        );
-      case 1:
-        return const CharacterListPage();
-      case 2:
-        return const PracticeListPage();
-      case 3:
-        return const SettingsPage();
-      default:
-        return const Center(child: Text('页面未实现'));
-    }
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 }

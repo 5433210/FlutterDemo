@@ -4,21 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../domain/entities/work.dart';
-import '../../domain/interfaces/i_work_service.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../infrastructure/config/storage_paths.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/models/work_filter.dart';
 import 'image_service.dart';
 
-class WorkService implements IWorkService {
+class WorkService {
   final WorkRepository _workRepository;
   final ImageService _imageService;
   final StoragePaths _paths;
 
   WorkService(this._workRepository, this._imageService, this._paths);
 
-  @override
   Future<void> deleteWork(String workId) async {
     try {
       AppLogger.info('Deleting work',
@@ -38,7 +36,6 @@ class WorkService implements IWorkService {
     }
   }
 
-  @override
   Future<List<Work>> getAllWorks() async {
     try {
       AppLogger.debug('Fetching all works', tag: 'WorkService');
@@ -56,7 +53,6 @@ class WorkService implements IWorkService {
     }
   }
 
-  @override
   Future<Work?> getWork(String id) async {
     try {
       AppLogger.debug('Fetching work details',
@@ -77,7 +73,6 @@ class WorkService implements IWorkService {
     }
   }
 
-  @override
   Future<String?> getWorkThumbnail(String workId) async {
     try {
       AppLogger.debug('Fetching work thumbnail',
@@ -112,7 +107,6 @@ class WorkService implements IWorkService {
     }
   }
 
-  @override
   Future<void> importWork(List<File> files, Work data) async {
     try {
       AppLogger.info('Importing work',
@@ -164,7 +158,6 @@ class WorkService implements IWorkService {
     }
   }
 
-  @override
   Future<List<Work>> queryWorks({
     String? searchQuery,
     WorkFilter? filter,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/character.dart';
 import '../../domain/entities/work.dart';
 import '../../domain/repositories/work_repository.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../persistence/database_interface.dart';
 
 class WorkRepositoryImpl implements WorkRepository {
@@ -73,7 +74,17 @@ class WorkRepositoryImpl implements WorkRepository {
 
   @override
   Future<String> insertWork(Work work) async {
-    return await _db.insertWork(work.toMap());
+    try {
+      AppLogger.debug('Inserting work', tag: 'WorkRepository');
+      final id = await _db.insertWork(work.toMap());
+      AppLogger.info('Work inserted successfully',
+          tag: 'WorkRepository', data: {'workId': id});
+      return id;
+    } catch (e, stack) {
+      AppLogger.error('Failed to insert work',
+          tag: 'WorkRepository', error: e, stackTrace: stack);
+      rethrow;
+    }
   }
 
   @override

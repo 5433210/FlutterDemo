@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 import 'handlers/console_handler.dart';
 import 'handlers/file_handler.dart';
 import 'handlers/log_handler.dart';
@@ -9,7 +7,7 @@ import 'log_level.dart';
 class AppLogger {
   static LogLevel _minLevel = LogLevel.debug;
   static final List<LogHandler> _handlers = [];
-
+  static bool get hasHandlers => _handlers.isNotEmpty;
   // 便利方法
   static void debug(dynamic message,
       {String? tag, Map<String, dynamic>? data}) {

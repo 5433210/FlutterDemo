@@ -7,6 +7,7 @@ import '../../../application/providers/service_providers.dart';
 import '../../../domain/entities/work.dart';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../theme/app_sizes.dart';
 import '../../../utils/date_formatter.dart';
 import '../../../utils/path_helper.dart';
@@ -46,6 +47,21 @@ class CharacterDetailPage extends StatelessWidget {
   }
 }
 
+// Error boundary widget
+class ErrorBoundary extends StatefulWidget {
+  final Widget child;
+  final Widget Function(Object error, StackTrace stackTrace) onError;
+
+  const ErrorBoundary({
+    super.key,
+    required this.child,
+    required this.onError,
+  });
+
+  @override
+  State<ErrorBoundary> createState() => _ErrorBoundaryState();
+}
+
 class WorkDetailPage extends ConsumerStatefulWidget {
   final String workId;
 
@@ -56,6 +72,32 @@ class WorkDetailPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<WorkDetailPage> createState() => _WorkDetailPageState();
+}
+
+class _ErrorBoundaryState extends State<ErrorBoundary> {
+  Object? _error;
+  StackTrace? _stackTrace;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_error != null && _stackTrace != null) {
+      return widget.onError(_error!, _stackTrace!);
+    }
+
+    ErrorWidget.builder = (details) {
+      _error = details.exception;
+      _stackTrace = details.stack ?? StackTrace.current;
+      return widget.onError(
+          details.exception, details.stack ?? StackTrace.current);
+    };
+
+    return widget.child;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
 }
 
 class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
@@ -85,6 +127,18 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     );
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
   Widget _buildContent() {
     final workService = ref.watch(workServiceProvider);
 
@@ -108,18 +162,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
         return _buildWorkDetail(context, work);
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
   }
 
   // 修改工具栏为详情特定的工具栏，保留操作按钮
@@ -618,45 +660,5 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('集字功能待实现')),
     );
-  }
-}
-
-// Error boundary widget
-class ErrorBoundary extends StatefulWidget {
-  final Widget child;
-  final Widget Function(Object error, StackTrace stackTrace) onError;
-
-  const ErrorBoundary({
-    super.key, 
-    required this.child,
-    required this.onError,
-  });
-
-  @override
-  State<ErrorBoundary> createState() => _ErrorBoundaryState();
-}
-
-class _ErrorBoundaryState extends State<ErrorBoundary> {
-  Object? _error;
-  StackTrace? _stackTrace;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      return widget.onError(_error!, _stackTrace!);
-    }
-
-    return ErrorWidget.builder = (details) {
-      _error = details.exception;
-      _stackTrace = details.stack;
-      return widget.onError(details.exception, details.stack);
-    }
-    
-    return widget.child;
   }
 }

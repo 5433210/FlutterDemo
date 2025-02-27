@@ -1,60 +1,77 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../presentation/models/work_filter.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../presentation/viewmodels/states/work_browse_state.dart';
 import '../../presentation/viewmodels/work_browse_view_model.dart';
 
+/// 负责保存和恢复应用的状态
 class StateRestorationService {
-  static const String keyPrefix = 'app_state_';
-  static const String workBrowseKey = '${keyPrefix}work_browse';
+  static const _workBrowseStateKey = 'work_browse_state';
+
   final SharedPreferences _prefs;
 
   StateRestorationService(this._prefs);
 
-  // 清除所有状态
-  Future<void> clearAllStates() async {
-    final keys = _prefs.getKeys().where((key) => key.startsWith(keyPrefix));
-    for (final key in keys) {
-      await _prefs.remove(key);
+  /// 清除所有保存的状态
+  Future<void> clearAllState() async {
+    try {
+      AppLogger.info('Clearing all saved states',
+          tag: 'StateRestorationService');
+
+      await _prefs.remove(_workBrowseStateKey);
+
+      AppLogger.info('All saved states cleared',
+          tag: 'StateRestorationService');
+    } catch (e, stack) {
+      AppLogger.error('Failed to clear saved states',
+          tag: 'StateRestorationService', error: e, stackTrace: stack);
     }
   }
 
-  // 恢复工作浏览状态
-
+  /// 恢复作品浏览状态
   Future<WorkBrowseState?> restoreWorkBrowseState(
       WorkBrowseViewModel viewModel) async {
     try {
-      final json = _prefs.getString(workBrowseKey);
-      if (json == null) return null;
+      AppLogger.debug('Restoring work browse state',
+          tag: 'StateRestorationService');
 
-      final stateMap = jsonDecode(json) as Map<String, dynamic>;
-      return WorkBrowseState(
-        viewMode: ViewMode.values[stateMap['viewMode'] as int],
-        isSidebarOpen: stateMap['isSidebarOpen'] as bool,
-        filter: WorkFilter.fromJson(stateMap['filter'] as Map<String, dynamic>),
-        searchQuery: (stateMap['searchQuery'] as String?) ?? '',
-      );
-    } catch (e) {
-      debugPrint('Error restoring work browse state: $e');
+      final stateJson = _prefs.getString(_workBrowseStateKey);
+      if (stateJson == null) {
+        AppLogger.debug('No saved state found', tag: 'StateRestorationService');
+        return null;
+      }
+
+      final stateMap = jsonDecode(stateJson) as Map<String, dynamic>;
+      final state = WorkBrowseState.fromJson(stateMap); // 使用静态方法 fromJson 创建状态
+
+      AppLogger.debug('Work browse state restored',
+          tag: 'StateRestorationService',
+          data: {'viewMode': state.viewMode.toString()});
+
+      return state;
+    } catch (e, stack) {
+      AppLogger.error('Failed to restore work browse state',
+          tag: 'StateRestorationService', error: e, stackTrace: stack);
       return null;
     }
   }
 
-  // 保存工作浏览状态
+  /// 保存作品浏览状态
   Future<void> saveWorkBrowseState(WorkBrowseState state) async {
     try {
-      final stateMap = {
-        'viewMode': state.viewMode.index,
-        'isSidebarOpen': state.isSidebarOpen,
-        'filter': state.filter.toJson(),
-        'searchQuery': state.searchQuery,
-      };
-      await _prefs.setString(workBrowseKey, jsonEncode(stateMap));
-    } catch (e) {
-      debugPrint('Error saving work browse state: $e');
+      AppLogger.debug('Saving work browse state',
+          tag: 'StateRestorationService');
+
+      final stateJson = state.toJson();
+      await _prefs.setString(_workBrowseStateKey, jsonEncode(stateJson));
+
+      AppLogger.debug('Work browse state saved',
+          tag: 'StateRestorationService');
+    } catch (e, stack) {
+      AppLogger.error('Failed to save work browse state',
+          tag: 'StateRestorationService', error: e, stackTrace: stack);
     }
   }
 }

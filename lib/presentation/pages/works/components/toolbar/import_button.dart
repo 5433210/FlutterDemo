@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../application/providers/work_browse_provider.dart';
 import '../../../../dialogs/work_import/work_import_dialog.dart';
+import '../../../../providers/work_browse_provider.dart';
 import '../../../../viewmodels/work_browse_view_model.dart';
 
 class ImportButton extends ConsumerWidget {

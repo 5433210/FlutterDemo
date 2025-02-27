@@ -1,12 +1,12 @@
 import 'dart:io';
 
+import 'package:demo/application/services/work_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
-import '../../../domain/interfaces/i_work_service.dart';
 import '../../../presentation/viewmodels/states/work_import_state.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
@@ -34,7 +34,7 @@ class WorkImportDialog extends ConsumerStatefulWidget {
 }
 
 class WorkImportProvider extends StateNotifier<WorkImportState> {
-  final IWorkService _workService;
+  final WorkService _workService;
 
   WorkImportProvider(this._workService)
       : super(const WorkImportState(

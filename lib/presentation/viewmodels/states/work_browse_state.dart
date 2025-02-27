@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/entities/work.dart';
+import '../../../infrastructure/logging/logger.dart'; // 添加日志导入
 import '../../models/work_filter.dart';
 
 enum ViewMode { grid, list }
@@ -121,44 +122,123 @@ class WorkBrowseState {
     searchController.dispose();
   }
 
-  static restore() {}
+  // 添加 toJson 方法，用于序列化
+  Map<String, dynamic> toJson() {
+    AppLogger.debug('Serializing WorkBrowseState', tag: 'State');
+
+    final result = {
+      'viewMode': viewMode.index,
+      'isSidebarOpen': isSidebarOpen,
+      'searchQuery': searchQuery,
+      'filter': filter.toJson(),
+      'sortOption': sortOption.toJson(),
+      'page': page,
+      'pageSize': pageSize,
+      'hasMore': hasMore,
+      // 不序列化状态数据如 isLoading、works、error 等
+      // 不序列化 TextEditingController
+      // 不序列化 batchMode 和 selectedWorks，因为这些是临时选择状态
+    };
+
+    AppLogger.debug('WorkBrowseState serialized successfully', tag: 'State');
+    return result;
+  }
+
+  // 添加 fromJson 静态方法，用于反序列化
+  static WorkBrowseState fromJson(Map<String, dynamic> json) {
+    try {
+      AppLogger.debug('Deserializing WorkBrowseState',
+          tag: 'State', data: {'json': json});
+
+      final result = WorkBrowseState(
+        viewMode: json['viewMode'] != null
+            ? ViewMode.values[json['viewMode'] as int]
+            : ViewMode.grid,
+        isSidebarOpen: json['isSidebarOpen'] as bool? ?? true,
+        searchQuery: json['searchQuery'] as String? ?? '',
+        filter: json['filter'] != null
+            ? WorkFilter.fromJson(json['filter'] as Map<String, dynamic>)
+            : const WorkFilter(),
+        sortOption: json['sortOption'] != null
+            ? SortOption.fromJson(json['sortOption'] as Map<String, dynamic>)
+            : const SortOption(),
+        page: json['page'] as int? ?? 1,
+        pageSize: json['pageSize'] as int? ?? 20,
+        hasMore: json['hasMore'] as bool? ?? true,
+        // 默认值
+        isLoading: false,
+        works: const [],
+        selectedWorks: const {},
+      );
+
+      AppLogger.debug('WorkBrowseState deserialized successfully',
+          tag: 'State',
+          data: {
+            'viewMode': result.viewMode.toString(),
+            'isSidebarOpen': result.isSidebarOpen,
+          });
+
+      return result;
+    } catch (e, stack) {
+      AppLogger.error(
+        'Error deserializing WorkBrowseState',
+        tag: 'State',
+        error: e,
+        stackTrace: stack,
+        data: {'json': json},
+      );
+
+      // 出错时返回默认状态
+      return WorkBrowseState();
+    }
+  }
 }
 
 extension WorkBrowseStatePersistence on WorkBrowseState {
-  static const String _keyViewMode = 'work_browse_view_mode';
-  static const String _keySidebarOpen = 'work_browse_sidebar_open';
-  static const String _keyFilter = 'work_browse_filter';
+  static const String _keyWorkBrowseState = 'work_browse_state';
 
   Future<void> persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyViewMode, viewMode.toString());
-    await prefs.setBool(_keySidebarOpen, isSidebarOpen);
-    await prefs.setString(_keyFilter, filter.toJson().toString());
-  }
-
-  static Future<WorkBrowseState> restore() async {
-    final prefs = await SharedPreferences.getInstance();
-    return WorkBrowseState(
-      viewMode: _parseViewMode(prefs.getString(_keyViewMode)),
-      isSidebarOpen: prefs.getBool(_keySidebarOpen) ?? true,
-      filter: _parseFilter(prefs.getString(_keyFilter)),
-    );
-  }
-
-  static WorkFilter _parseFilter(String? value) {
-    if (value == null) return const WorkFilter();
     try {
-      return WorkFilter.fromJson(jsonDecode(value));
-    } catch (e) {
-      return const WorkFilter();
+      AppLogger.debug('Persisting WorkBrowseState', tag: 'State');
+
+      final prefs = await SharedPreferences.getInstance();
+      final jsonData = toJson();
+      final jsonString = jsonEncode(jsonData);
+      await prefs.setString(_keyWorkBrowseState, jsonString);
+
+      AppLogger.debug('WorkBrowseState persisted successfully', tag: 'State');
+    } catch (e, stack) {
+      AppLogger.error('Failed to persist WorkBrowseState',
+          tag: 'State', error: e, stackTrace: stack);
     }
   }
 
-  static ViewMode _parseViewMode(String? value) {
-    if (value == null) return ViewMode.grid;
-    return ViewMode.values.firstWhere(
-      (e) => e.toString() == value,
-      orElse: () => ViewMode.grid,
-    );
+  static Future<WorkBrowseState> restore() async {
+    try {
+      AppLogger.debug('Restoring WorkBrowseState', tag: 'State');
+
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_keyWorkBrowseState);
+
+      if (jsonString == null) {
+        AppLogger.debug('No saved WorkBrowseState found, using defaults',
+            tag: 'State');
+        return WorkBrowseState();
+      }
+
+      final jsonData = jsonDecode(jsonString) as Map<String, dynamic>;
+      final state = WorkBrowseState.fromJson(jsonData);
+
+      AppLogger.debug('WorkBrowseState restored successfully',
+          tag: 'State', data: {'viewMode': state.viewMode.toString()});
+
+      return state;
+    } catch (e, stack) {
+      AppLogger.error('Failed to restore WorkBrowseState',
+          tag: 'State', error: e, stackTrace: stack);
+      return WorkBrowseState();
+    }
   }
+
+  // 删除旧方法，我们现在使用更强大的JSON序列化方法
 }
