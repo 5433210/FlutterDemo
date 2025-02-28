@@ -8,7 +8,7 @@ import '../../../../domain/value_objects/practice/practice_element.dart';
 import '../../../../domain/value_objects/practice/practice_layer.dart';
 import '../../../../domain/value_objects/practice/practice_page.dart';
 import '../../../../theme/app_colors.dart';
-import '../../../dialogs/work_import/components/preview/empty_state.dart';
+import '../../../widgets/common/empty_state.dart';
 
 /// 字帖页面预览组件
 class PracticePageViewer extends StatefulWidget {

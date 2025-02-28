@@ -9,6 +9,7 @@ import '../../dialogs/delete_dialog.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
@@ -26,6 +27,8 @@ class WorkDetailPage extends ConsumerStatefulWidget {
 }
 
 class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
+  bool _isPanelOpen = true;
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workDetailProvider);
@@ -93,16 +96,28 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
 
           // 标题
           Text(
-            work?.name ?? '作品详情',
+            '作品详情',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w500,
             ),
           ),
+
+          if (work != null && work.name.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Text(
+              '- ${work.name}',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.normal,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
 
           const SizedBox(width: AppSizes.spacingMedium),
 
@@ -175,17 +190,29 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 左侧图片预览区域 (70%)
+        // 左侧图片预览区域
         Expanded(
           flex: 7,
           child: WorkImagePreview(work: work),
         ),
 
-        // 右侧信息面板 (30%)
-        Expanded(
-          flex: 3,
-          child: WorkDetailInfoPanel(work: work),
+        // 使用通用侧边栏切换按钮，设置alignRight=true
+        SidebarToggle(
+          isOpen: _isPanelOpen,
+          onToggle: () {
+            setState(() {
+              _isPanelOpen = !_isPanelOpen;
+            });
+          },
+          alignRight: true, // 设置为右对齐模式
         ),
+
+        // 右侧信息面板 - 根据状态显示或隐藏
+        if (_isPanelOpen)
+          SizedBox(
+            width: 350, // 固定宽度
+            child: WorkDetailInfoPanel(work: work),
+          ),
       ],
     );
   }

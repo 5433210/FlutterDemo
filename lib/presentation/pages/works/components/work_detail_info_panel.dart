@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/value_objects/work/work_entity.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../widgets/common/tab_bar_theme_wrapper.dart';
 
-class WorkDetailInfoPanel extends ConsumerWidget {
+class WorkDetailInfoPanel extends ConsumerStatefulWidget {
   final WorkEntity work;
 
   const WorkDetailInfoPanel({
@@ -15,31 +16,69 @@ class WorkDetailInfoPanel extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WorkDetailInfoPanel> createState() =>
+      _WorkDetailInfoPanelState();
+}
+
+class _WorkDetailInfoPanelState extends ConsumerState<WorkDetailInfoPanel>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       margin: const EdgeInsets.only(
         top: AppSizes.spacingMedium,
         right: AppSizes.spacingMedium,
         bottom: AppSizes.spacingMedium,
       ),
-      child: ListView(
-        padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
         children: [
-          // 基本信息卡片
-          _buildBasicInfoSection(context),
+          // Tab 标签栏
+          TabBarThemeWrapper(
+            child: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(text: '基本信息'),
+                Tab(text: '集字信息'),
+              ],
+              labelStyle: theme.textTheme.titleSmall,
+              unselectedLabelStyle: theme.textTheme.bodyMedium,
+              indicatorSize: TabBarIndicatorSize.tab,
+            ),
+          ),
 
-          const SizedBox(height: AppSizes.spacingLarge),
+          // 内容区域
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // 基本信息 Tab
+                _buildBasicInfoTab(context),
 
-          // 字形集合卡片
-          _buildCharactersSection(context),
-
-          const SizedBox(height: AppSizes.spacingLarge),
-
-          // 元数据卡片
-          _buildMetadataSection(context),
+                // 集字信息 Tab
+                _buildCharactersTab(context),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   Widget _buildBasicInfoSection(BuildContext context) {
@@ -48,27 +87,16 @@ class WorkDetailInfoPanel extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 标题行
-        Row(
-          children: [
-            Icon(Icons.info_outline,
-                size: 20, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text('基本信息', style: theme.textTheme.titleMedium),
-          ],
-        ),
-        const Divider(),
-
-        _buildInfoRow(context, '作品名称', work.name),
-        _buildInfoRow(context, '作者', work.author ?? '未知'),
-        _buildInfoRow(context, '风格', work.style!.label),
-        _buildInfoRow(context, '工具', work.tool!.label),
-        _buildInfoRow(context, '创作时间', _formatDate(work.creationDate)),
-        _buildInfoRow(context, '图片数量', (work.imageCount ?? 0).toString()),
-        _buildInfoRow(context, '创建时间', _formatDateTime(work.createTime)),
-        _buildInfoRow(context, '修改时间', _formatDateTime(work.updateTime)),
-
-        if (work.remark != null && work.remark!.isNotEmpty)
+        _buildInfoRow(context, '作品名称', widget.work.name),
+        _buildInfoRow(context, '作者', widget.work.author ?? '未知'),
+        _buildInfoRow(context, '风格', widget.work.style!.label),
+        _buildInfoRow(context, '工具', widget.work.tool!.label),
+        _buildInfoRow(context, '创作时间', _formatDate(widget.work.creationDate)),
+        _buildInfoRow(
+            context, '图片数量', (widget.work.imageCount ?? 0).toString()),
+        _buildInfoRow(context, '创建时间', _formatDateTime(widget.work.createTime)),
+        _buildInfoRow(context, '修改时间', _formatDateTime(widget.work.updateTime)),
+        if (widget.work.remark != null && widget.work.remark!.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Column(
@@ -86,11 +114,22 @@ class WorkDetailInfoPanel extends ConsumerWidget {
                         .withOpacity(0.3),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(work.remark!),
+                  child: Text(widget.work.remark!),
                 ),
               ],
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildBasicInfoTab(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      children: [
+        _buildBasicInfoSection(context),
+        const SizedBox(height: AppSizes.spacingLarge),
+        _buildMetadataSection(context),
       ],
     );
   }
@@ -109,7 +148,7 @@ class WorkDetailInfoPanel extends ConsumerWidget {
 
   Widget _buildCharactersSection(BuildContext context) {
     final theme = Theme.of(context);
-    final charCount = work.collectedChars.length ?? 0;
+    final charCount = widget.work.collectedChars.length ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,14 +156,9 @@ class WorkDetailInfoPanel extends ConsumerWidget {
         // 标题行
         Row(
           children: [
-            Icon(Icons.text_fields, size: 20, color: theme.colorScheme.primary),
-            const SizedBox(width: 8),
-            Text('集字信息', style: theme.textTheme.titleMedium),
-            const Spacer(),
             Text('$charCount 个', style: theme.textTheme.bodySmall),
           ],
         ),
-        const Divider(),
 
         if (charCount == 0)
           const Padding(
@@ -141,7 +175,7 @@ class WorkDetailInfoPanel extends ConsumerWidget {
               Math.min(charCount, 20), // 最多显示20个
               (index) => _buildCharacterChip(
                 context,
-                work.collectedChars[index],
+                widget.work.collectedChars[index],
               ),
             ),
           ),
@@ -155,6 +189,15 @@ class WorkDetailInfoPanel extends ConsumerWidget {
               child: const Text('查看全部'),
             ),
           ),
+      ],
+    );
+  }
+
+  Widget _buildCharactersTab(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      children: [
+        _buildCharactersSection(context),
       ],
     );
   }
@@ -185,8 +228,8 @@ class WorkDetailInfoPanel extends ConsumerWidget {
 
   Widget _buildMetadataSection(BuildContext context) {
     final theme = Theme.of(context);
-    final hasTags =
-        work.metadata?.tags != null && work.metadata!.tags.isNotEmpty;
+    final hasTags = widget.work.metadata?.tags != null &&
+        widget.work.metadata!.tags.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,7 +256,7 @@ class WorkDetailInfoPanel extends ConsumerWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: work.metadata!.tags
+            children: widget.work.metadata!.tags
                 .map((tag) => Chip(
                       label: Text(tag),
                       backgroundColor:

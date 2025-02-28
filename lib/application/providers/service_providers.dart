@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/services/character_service.dart';
 import '../../application/services/image_service.dart';
-import '../../application/services/practice_service.dart';
-import '../../application/services/work_service.dart';
 import '../../infrastructure/providers/repository_providers.dart';
+import '../services/character/character_service.dart';
+import '../services/practice/practice_service.dart';
+import '../services/work/work_service.dart';
 
 final characterServiceProvider = Provider<CharacterService>((ref) {
   final characterRepository = ref.watch(characterRepositoryProvider);

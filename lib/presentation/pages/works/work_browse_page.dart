@@ -7,12 +7,11 @@ import '../../../routes/app_routes.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../viewmodels/states/work_browse_state.dart';
+import '../../widgets/common/sidebar_toggle.dart';
 import 'components/content/work_grid_view.dart';
 import 'components/content/work_list_view.dart';
-import 'components/filter/sidebar_toggle.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/work_browse_toolbar.dart';
-// 添加这个导入
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
@@ -46,6 +45,13 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
           Expanded(
             child: Row(
               children: [
+                Expanded(
+                  child: _buildMainContent(),
+                ),
+                SidebarToggle(
+                  isOpen: state.isSidebarOpen,
+                  onToggle: () => viewModel.toggleSidebar(),
+                ),
                 if (state.isSidebarOpen)
                   SizedBox(
                     width: 300,
@@ -54,13 +60,6 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
                       onFilterChanged: viewModel.updateFilter,
                     ),
                   ),
-                SidebarToggle(
-                  isOpen: state.isSidebarOpen,
-                  onToggle: () => viewModel.toggleSidebar(),
-                ),
-                Expanded(
-                  child: _buildMainContent(),
-                ),
               ],
             ),
           ),

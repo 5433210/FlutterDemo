@@ -7,7 +7,7 @@ import 'package:path/path.dart' as path;
 
 import '../../application/config/app_config.dart';
 import '../../application/services/image_service.dart';
-import '../../application/services/work_service.dart';
+import '../../application/services/work/work_service.dart';
 import '../../domain/entities/work.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
