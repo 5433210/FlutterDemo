@@ -1,34 +1,41 @@
-import 'dart:convert';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/repositories/practice_repository.dart';
-import '../logging/logger.dart';
-import '../persistence/sqlite/sqlite_database.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../infrastructure/persistence/database_interface.dart';
 
-/// Implementation of the PracticeRepository interface using SQLite
 class PracticeRepositoryImpl implements PracticeRepository {
-  final SqliteDatabase _db;
+  // 字帖表名定义为常量，便于维护
+  static const String _tableName = 'practices';
+  final DatabaseInterface _db;
+
+  final _uuid = const Uuid();
 
   PracticeRepositoryImpl(this._db);
 
   @override
-  Future<String> createPractice(Map<String, dynamic> practiceData) async {
+  Future<String> createPractice(Map<String, dynamic> data) async {
     try {
-      AppLogger.debug('Creating practice in repository',
-          tag: 'PracticeRepositoryImpl',
-          data: {'title': practiceData['title']});
+      // 生成唯一ID
+      final id = _uuid.v4();
+      data['id'] = id;
 
-      final id = await _db.insertPractice(practiceData);
+      // 设置创建和更新时间
+      final now = DateTime.now().toIso8601String();
+      data['createTime'] = now;
+      data['updateTime'] = now;
 
-      AppLogger.debug('Practice created in repository',
-          tag: 'PracticeRepositoryImpl',
-          data: {'id': id, 'title': practiceData['title']});
+      // 使用DatabaseInterface的insertPractice方法，而不是直接insert
+      await _db.insertPractice(data);
+
       return id;
     } catch (e, stack) {
-      AppLogger.error('Failed to create practice in repository',
-          tag: 'PracticeRepositoryImpl',
-          error: e,
-          stackTrace: stack,
-          data: {'practiceData': practiceData});
+      AppLogger.error(
+        'Failed to create practice',
+        tag: 'PracticeRepositoryImpl',
+        error: e,
+        stackTrace: stack,
+      );
       rethrow;
     }
   }
@@ -36,22 +43,17 @@ class PracticeRepositoryImpl implements PracticeRepository {
   @override
   Future<bool> deletePractice(String id) async {
     try {
-      AppLogger.debug('Deleting practice in repository',
-          tag: 'PracticeRepositoryImpl', data: {'id': id});
-
-      final count = await _db.deletePractice(id);
-      final success = count > 0;
-
-      AppLogger.debug('Practice deleted from repository',
-          tag: 'PracticeRepositoryImpl', data: {'id': id, 'success': success});
-
-      return success;
+      // 使用DatabaseInterface的deletePractice方法
+      await _db.deletePractice(id);
+      return true;
     } catch (e, stack) {
-      AppLogger.error('Failed to delete practice from repository',
-          tag: 'PracticeRepositoryImpl',
-          error: e,
-          stackTrace: stack,
-          data: {'id': id});
+      AppLogger.error(
+        'Failed to delete practice',
+        tag: 'PracticeRepositoryImpl',
+        error: e,
+        stackTrace: stack,
+        data: {'id': id},
+      );
       rethrow;
     }
   }
@@ -59,29 +61,16 @@ class PracticeRepositoryImpl implements PracticeRepository {
   @override
   Future<Map<String, dynamic>?> getPractice(String id) async {
     try {
-      AppLogger.debug('Getting practice from repository',
-          tag: 'PracticeRepositoryImpl', data: {'id': id});
-
-      final practice = await _db.getPractice(id);
-
-      if (practice != null) {
-        AppLogger.debug('Got practice from repository',
-            tag: 'PracticeRepositoryImpl',
-            data: {'id': id, 'title': practice['title']});
-
-        return _normalizePracticeData(practice);
-      }
-
-      AppLogger.debug('Practice not found in repository',
-          tag: 'PracticeRepositoryImpl', data: {'id': id});
-
-      return null;
+      // 使用DatabaseInterface的getPractice方法
+      return await _db.getPractice(id);
     } catch (e, stack) {
-      AppLogger.error('Failed to get practice from repository',
-          tag: 'PracticeRepositoryImpl',
-          error: e,
-          stackTrace: stack,
-          data: {'id': id});
+      AppLogger.error(
+        'Failed to get practice',
+        tag: 'PracticeRepositoryImpl',
+        error: e,
+        stackTrace: stack,
+        data: {'id': id},
+      );
       rethrow;
     }
   }
@@ -93,95 +82,44 @@ class PracticeRepositoryImpl implements PracticeRepository {
     int? offset,
   }) async {
     try {
-      AppLogger.debug('Getting practices from repository',
-          tag: 'PracticeRepositoryImpl',
-          data: {'title': title, 'limit': limit, 'offset': offset});
-
-      final practices = await _db.getPractices(
+      // 使用DatabaseInterface的getPractices方法
+      return await _db.getPractices(
         title: title,
         limit: limit,
         offset: offset,
       );
-
-      final result = practices.map(_normalizePracticeData).toList();
-
-      AppLogger.debug('Got practices from repository',
-          tag: 'PracticeRepositoryImpl', data: {'count': result.length});
-
-      return result;
     } catch (e, stack) {
-      AppLogger.error('Failed to get practices from repository',
-          tag: 'PracticeRepositoryImpl', error: e, stackTrace: stack);
+      AppLogger.error(
+        'Failed to get practices',
+        tag: 'PracticeRepositoryImpl',
+        error: e,
+        stackTrace: stack,
+      );
       rethrow;
     }
   }
 
   @override
-  Future<int> getPracticesCount() async {
+  Future<bool> updatePractice(String id, Map<String, dynamic> data) async {
     try {
-      final count = await _db.getPracticesCount();
-      return count;
+      // 更新修改时间
+      data['updateTime'] = DateTime.now().toIso8601String();
+
+      // 删除ID，防止意外修改ID
+      data.remove('id');
+
+      // 使用DatabaseInterface的updatePractice方法
+      await _db.updatePractice(id, data);
+      return true;
     } catch (e, stack) {
-      AppLogger.error('Failed to get practices count',
-          tag: 'PracticeRepositoryImpl', error: e, stackTrace: stack);
+      AppLogger.error(
+        'Failed to update practice',
+        tag: 'PracticeRepositoryImpl',
+        error: e,
+        stackTrace: stack,
+        data: {'id': id},
+      );
       rethrow;
     }
-  }
-
-  @override
-  Future<void> updatePractice(
-      String id, Map<String, dynamic> practiceData) async {
-    try {
-      AppLogger.debug('Updating practice in repository',
-          tag: 'PracticeRepositoryImpl',
-          data: {'id': id, 'title': practiceData['title']});
-
-      await _db.updatePractice(id, practiceData);
-
-      AppLogger.debug('Practice updated in repository',
-          tag: 'PracticeRepositoryImpl',
-          data: {'id': id, 'title': practiceData['title']});
-    } catch (e, stack) {
-      AppLogger.error('Failed to update practice in repository',
-          tag: 'PracticeRepositoryImpl',
-          error: e,
-          stackTrace: stack,
-          data: {'id': id, 'practiceData': practiceData});
-      rethrow;
-    }
-  }
-
-  /// Decode metadata from storage format
-  Map<String, dynamic>? _decodeMetadata(String? metadataJson) {
-    if (metadataJson == null || metadataJson.isEmpty) return null;
-    return jsonDecode(metadataJson) as Map<String, dynamic>;
-  }
-
-  /// Decode pages from storage format
-  List<dynamic> _decodePracticePages(String? pagesJson) {
-    if (pagesJson == null || pagesJson.isEmpty) return [];
-    return jsonDecode(pagesJson) as List<dynamic>;
-  }
-
-  /// Encode metadata to storage format
-  String _encodeMetadata(Map<String, dynamic> metadata) {
-    return jsonEncode(metadata);
-  }
-
-  /// Encode pages to storage format
-  String _encodePages(List<dynamic> pages) {
-    return jsonEncode(pages);
-  }
-
-  /// Normalize practice data from database
-  Map<String, dynamic> _normalizePracticeData(Map<String, dynamic> data) {
-    return {
-      'id': data['id'],
-      'title': data['title'],
-      'pages': _decodePracticePages(data['pages']),
-      'createTime': data['createTime'],
-      'updateTime': data['updateTime'],
-      'metadata': _decodeMetadata(data['metadata']),
-    };
   }
 }

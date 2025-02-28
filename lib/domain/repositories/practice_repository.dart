@@ -1,24 +1,21 @@
-/// Repository interface for managing practices
+/// 字帖仓库接口
 abstract class PracticeRepository {
-  /// Create a new practice
-  Future<String> createPractice(Map<String, dynamic> practiceData);
+  /// 创建新的字帖
+  Future<String> createPractice(Map<String, dynamic> data);
 
-  /// Delete a practice by ID
+  /// 删除字帖
   Future<bool> deletePractice(String id);
 
-  /// Get a practice by ID
+  /// 获取单个字帖
   Future<Map<String, dynamic>?> getPractice(String id);
 
-  /// Get practices with optional filters
+  /// 获取多个字帖
   Future<List<Map<String, dynamic>>> getPractices({
     String? title,
     int? limit,
     int? offset,
   });
 
-  /// Get the total count of practices
-  Future<int> getPracticesCount();
-
-  /// Update a practice
-  Future<void> updatePractice(String id, Map<String, dynamic> practiceData);
+  /// 更新字帖
+  Future<bool> updatePractice(String id, Map<String, dynamic> data);
 }

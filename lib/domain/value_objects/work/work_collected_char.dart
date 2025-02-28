@@ -54,3 +54,46 @@ class SourceRegion extends Equatable {
     };
   }
 }
+
+class WorkCollectedChar extends Equatable {
+  final String id;
+  final SourceRegion region;
+  final DateTime createTime;
+
+  const WorkCollectedChar({
+    required this.id,
+    required this.region,
+    required this.createTime,
+  });
+
+  factory WorkCollectedChar.fromJson(Map<String, dynamic> json) {
+    return WorkCollectedChar(
+      id: json['id'] as String,
+      region: SourceRegion.fromJson(json['region'] as Map<String, dynamic>),
+      createTime: DateTime.parse(json['createTime'] as String),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, region, createTime];
+
+  WorkCollectedChar copyWith({
+    String? id,
+    SourceRegion? region,
+    DateTime? createTime,
+  }) {
+    return WorkCollectedChar(
+      id: id ?? this.id,
+      region: region ?? this.region,
+      createTime: createTime ?? this.createTime,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'region': region.toJson(),
+      'createTime': createTime.toIso8601String(),
+    };
+  }
+}

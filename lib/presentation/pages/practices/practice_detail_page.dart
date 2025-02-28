@@ -1,14 +1,13 @@
-import 'package:demo/domain/value_objects/practice/page_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/practice.dart';
+import '../../../domain/value_objects/practice/practice_entity.dart';
+import '../../../domain/value_objects/practice/practice_layer.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../routes/app_routes.dart';
 import '../../providers/practice_detail_provider.dart';
 import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
 import 'components/practice_page_viewer.dart';
 
@@ -22,68 +21,39 @@ class PracticeDetailPage extends ConsumerStatefulWidget {
 }
 
 class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
-  late final PracticeDetailNotifier _notifier;
-  bool _isLoading = true;
-  Practice? _practice;
-  String? _errorMessage;
   int _currentPageIndex = 0;
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(practiceDetailProvider);
+
     return PageLayout(
-      toolbar: _buildToolbar(),
-      body: _buildBody(),
+      toolbar: _buildToolbar(state.practice),
+      body: _buildBody(state),
     );
   }
 
   @override
   void initState() {
     super.initState();
-    _notifier = ref.read(practiceDetailProvider.notifier);
     _loadPractice();
   }
 
-  List<Widget> _buildActions() {
-    if (_practice == null) return [];
-
-    return [
-      ToolbarActionButton(
-        tooltip: '编辑练习',
-        onPressed: _navigateToEdit,
-        child: const Icon(Icons.edit),
-      ),
-      PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert),
-        onSelected: (value) {
-          if (value == 'delete') {
-            _confirmDelete();
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'delete',
-            child: Text('删除练习'),
-          ),
-        ],
-      ),
-    ];
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
+  Widget _buildBody(PracticeDetailState state) {
+    if (state.isLoading) {
       return const Center(
         child: LoadingIndicator(message: '加载练习中...'),
       );
     }
 
-    if (_errorMessage != null) {
+    if (state.error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
-            Text(_errorMessage!, style: const TextStyle(fontSize: 16)),
+            Text(state.error!, style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _loadPractice,
@@ -94,16 +64,18 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       );
     }
 
-    if (_practice == null) {
+    if (state.practice == null) {
       return const Center(
         child: Text('练习不存在或已被删除'),
       );
     }
 
-    return _buildPracticeContent(_practice!);
+    return _buildPracticeContent(state.practice!);
   }
 
-  Widget _buildPageSelector(List<PracticePageInfo> pages) {
+  Widget _buildPageSelector(PracticeEntity practice) {
+    final pages = practice.pages;
+
     return SizedBox(
       height: 50,
       child: ListView.builder(
@@ -113,7 +85,7 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
             child: ChoiceChip(
-              label: Text(pages[index].title),
+              label: Text('第${index + 1}页'),
               selected: index == _currentPageIndex,
               onSelected: (selected) {
                 if (selected) {
@@ -129,7 +101,7 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
     );
   }
 
-  Widget _buildPracticeContent(Practice practice) {
+  Widget _buildPracticeContent(PracticeEntity practice) {
     final pages = practice.pages;
     if (pages.isEmpty) {
       return const Center(
@@ -139,28 +111,27 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
 
     return Column(
       children: [
-        // Page selector
-        if (pages.length > 1) _buildPageSelector(pages),
+        // 页面选择器（如果有多页）
+        if (pages.length > 1) _buildPageSelector(practice),
 
-        // Practice page content
+        // 页面内容查看器
         Expanded(
           child: PracticePageViewer(
-            page: pages[_currentPageIndex],
+            page:
+                pages[_currentPageIndex < pages.length ? _currentPageIndex : 0],
             readOnly: true,
+            onLayerToggle: _handleLayerToggle,
           ),
         ),
-
-        // Practice metadata
-        _buildPracticeMetadata(practice),
       ],
     );
   }
 
-  Widget _buildPracticeMetadata(Practice practice) {
+  Widget _buildPracticeMetadata(PracticeEntity practice) {
     final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
+      margin: const EdgeInsets.all(8.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -187,23 +158,33 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
                 Text('更新时间: ${_formatDateTime(practice.updateTime)}'),
               ],
             ),
+            if (practice.metadata != null && practice.metadata!.tags.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Wrap(
+                  spacing: 8,
+                  children: practice.metadata!.tags
+                      .map((tag) => Chip(label: Text(tag)))
+                      .toList(),
+                ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildToolbar() {
+  Widget _buildToolbar(PracticeEntity? practice) {
     return DetailToolbar(
-      title: _practice?.title ?? '练习详情',
+      title: practice?.title ?? '练习详情',
       leadingIcon: Icons.auto_stories,
-      subtitle: _practice != null
-          ? '创建于 ${_formatDateShort(_practice!.createTime)}'
+      subtitle: practice != null
+          ? '创建于 ${_formatDateShort(practice.createTime)}'
           : null,
-      badge: _practice != null && _practice!.pages.isNotEmpty
-          ? DetailBadge(text: '${_practice!.pages.length}页')
+      badge: practice != null && practice.pages.isNotEmpty
+          ? DetailBadge(text: '${practice.pages.length}页')
           : null,
-      actions: _practice != null
+      actions: practice != null
           ? [
               DetailToolbarAction(
                 icon: Icons.edit,
@@ -249,7 +230,8 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除练习'),
-        content: Text('确定要删除练习"${_practice!.title}"吗？此操作不可撤销。'),
+        content: Text(
+            '确定要删除练习"${ref.read(practiceDetailProvider).practice?.title}"吗？此操作不可撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -274,19 +256,16 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
 
   Future<void> _deletePractice() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      final success = await _notifier.deletePractice(widget.practiceId);
+      final success = await ref
+          .read(practiceDetailProvider.notifier)
+          .deletePractice(widget.practiceId);
 
       if (success && mounted) {
-        Navigator.of(context).pop(); // Return to previous screen
+        Navigator.of(context).pop(); // 返回上一页
       } else if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = '删除失败';
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('删除失败')),
+        );
       }
     } catch (e, stack) {
       AppLogger.error(
@@ -298,11 +277,6 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       );
 
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = '删除失败: ${e.toString()}';
-        });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('删除失败: ${e.toString()}')),
         );
@@ -310,11 +284,14 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
     }
   }
 
-  String _formatDateShort(DateTime date) {
+  String _formatDateShort(DateTime? date) {
+    if (date == null) return '未知';
     return '${date.year}/${date.month}/${date.day}';
   }
 
-  String _formatDateTime(DateTime dateTime) {
+  String _formatDateTime(DateTime? dateTime) {
+    if (dateTime == null) return '未知';
+
     return '${dateTime.year}-'
         '${dateTime.month.toString().padLeft(2, '0')}-'
         '${dateTime.day.toString().padLeft(2, '0')} '
@@ -322,38 +299,14 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
         '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
+  void _handleLayerToggle(PracticeLayer layer) {
+    ref.read(practiceDetailProvider.notifier).updateLayer(layer);
+  }
+
   Future<void> _loadPractice() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final practice = await _notifier.getPractice(widget.practiceId);
-
-      if (mounted) {
-        setState(() {
-          _practice = practice;
-          _isLoading = false;
-          _currentPageIndex = 0;
-        });
-      }
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to load practice',
-        tag: 'PracticeDetailPage',
-        error: e,
-        stackTrace: stack,
-        data: {'id': widget.practiceId},
-      );
-
-      if (mounted) {
-        setState(() {
-          _errorMessage = '无法加载练习: ${e.toString()}';
-          _isLoading = false;
-        });
-      }
-    }
+    await ref
+        .read(practiceDetailProvider.notifier)
+        .getPractice(widget.practiceId);
   }
 
   void _navigateToEdit() {
@@ -361,6 +314,6 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       context,
       AppRoutes.practiceEdit,
       arguments: widget.practiceId,
-    ).then((_) => _loadPractice()); // Refresh after edit
+    ).then((_) => _loadPractice()); // 编辑后刷新
   }
 }

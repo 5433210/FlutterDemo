@@ -197,39 +197,7 @@
             "opacity": "number",  // 不透明度
             "visible": "boolean"  // 是否可见
           },
-          "content": {
-          // 当type为chars时
-            "chars": [{
-                "charId": "string",
-                "position": {      // 相对位置                
-                    "offsetX": "number", // 相对偏移量
-                    "offsetY": "number"
-                },
-                "transform": {
-                    "scaleX": "number",
-                    "scaleY": "number",
-                    "rotation": "number"
-                },
-                "style": {
-                    "color": "string",
-                    "opacity": "number",
-                },
-            }],
-          
-            // 当type为text时
-            "text": {
-                "content": "string",
-                "fontFamily": "string",
-                "fontSize": "number",
-                "color": "string",
-                "alignment": "string",
-            },
-            
-            // 当type为image时
-            "image": {
-                "path":"path",
-            }
-          }
+          "content": {object} //类型的不同，object为不同的形式
         }]
     }]
   }],
@@ -237,6 +205,39 @@
     "tags": ["string"]
   }
 }
+
+// 当type为chars时,object
+{
+    "charId": "string",
+    "position": {      // 相对位置                
+        "offsetX": "number", // 相对偏移量
+        "offsetY": "number"
+    },
+    "transform": {
+        "scaleX": "number",
+        "scaleY": "number",
+        "rotation": "number"
+    },
+    "style": {
+        "color": "string",
+        "opacity": "number",
+    },
+}
+          
+// 当type为text时
+{
+  "text": "string",
+  "fontFamily": "string",
+  "fontSize": "number",
+  "color": "string",
+  "alignment": "string",
+}
+  
+  // 当type为image时
+{
+  "path":"path",
+}
+
 ```
 
 ## 3. 存储方案
