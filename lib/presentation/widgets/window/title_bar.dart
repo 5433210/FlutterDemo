@@ -12,47 +12,11 @@ class TitleBar extends StatefulWidget {
   State<TitleBar> createState() => _TitleBarState();
 }
 
-class WindowButtons extends StatelessWidget {
+class WindowButtons extends StatefulWidget {
   const WindowButtons({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _WindowButton(
-          icon: Icons.remove,
-          tooltip: '最小化',
-          onPressed: () async {
-            await windowManager.minimize();
-          },
-        ),
-        FutureBuilder<bool>(
-            future: windowManager.isMaximized(),
-            builder: (context, snapshot) {
-              final isMaximized = snapshot.data ?? false;
-              return _WindowButton(
-                icon: isMaximized ? Icons.filter_none : Icons.crop_square,
-                tooltip: isMaximized ? '还原' : '最大化',
-                onPressed: () async {
-                  if (isMaximized) {
-                    await windowManager.unmaximize();
-                  } else {
-                    await windowManager.maximize();
-                  }
-                },
-              );
-            }),
-        _WindowButton(
-          icon: Icons.close,
-          tooltip: '关闭',
-          isClose: true,
-          onPressed: () async {
-            await windowManager.close();
-          },
-        ),
-      ],
-    );
-  }
+  State<WindowButtons> createState() => _WindowButtonsState();
 }
 
 class _TitleBarState extends State<TitleBar> with WindowListener {
@@ -206,5 +170,76 @@ class _WindowButton extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _WindowButtonsState extends State<WindowButtons> with WindowListener {
+  bool _isMaximized = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _WindowButton(
+          icon: Icons.remove,
+          tooltip: '最小化',
+          onPressed: () async {
+            await windowManager.minimize();
+          },
+        ),
+        _WindowButton(
+          icon: _isMaximized ? Icons.filter_none : Icons.crop_square,
+          tooltip: _isMaximized ? '还原' : '最大化',
+          onPressed: () async {
+            if (_isMaximized) {
+              await windowManager.unmaximize();
+            } else {
+              await windowManager.maximize();
+            }
+          },
+        ),
+        _WindowButton(
+          icon: Icons.close,
+          tooltip: '关闭',
+          isClose: true,
+          onPressed: () async {
+            await windowManager.close();
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _init();
+  }
+
+  @override
+  void onWindowMaximize() {
+    setState(() => _isMaximized = true);
+  }
+
+  @override
+  void onWindowRestore() {
+    setState(() => _isMaximized = false);
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    setState(() => _isMaximized = false);
+  }
+
+  Future<void> _init() async {
+    _isMaximized = await windowManager.isMaximized();
+    if (mounted) setState(() {});
   }
 }
