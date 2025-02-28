@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,6 +27,9 @@ class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
   final TransformationController _transformController =
       TransformationController();
   int _currentImageIndex = 0;
+  final ScrollController _thumbnailScrollController = ScrollController();
+  final bool _isDragging = false;
+  final double _dragStartOffset = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +62,7 @@ class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
   @override
   void dispose() {
     _transformController.dispose();
+    _thumbnailScrollController.dispose();
     super.dispose();
   }
 
@@ -189,67 +194,138 @@ class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: InkWell(
         onTap: () => _changePage(index),
-        child: Container(
-          width: 60,
-          decoration: BoxDecoration(
-            border: Border.all(
-              color:
-                  isSelected ? theme.colorScheme.primary : Colors.transparent,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: thumbnailPath != null
-                ? Image.file(
-                    File(thumbnailPath),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+        child: Stack(
+          children: [
+            // 缩略图容器
+            Container(
+              width: 64, // 稍微宽一些以容纳索引号
+              height: 64,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : Colors.transparent,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: thumbnailPath != null
+                    ? Image.file(
+                        File(thumbnailPath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                size: 24,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : Container(
                         color: theme.colorScheme.surfaceContainerHighest,
                         child: Center(
-                          child: Icon(
-                            Icons.image_not_supported,
-                            size: 24,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                          child: Text('${index + 1}',
+                              style: theme.textTheme.bodySmall),
                         ),
-                      );
-                    },
-                  )
-                : Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: Center(
-                      child: Text('${index + 1}',
-                          style: theme.textTheme.bodySmall),
-                    ),
+                      ),
+              ),
+            ),
+
+            // 索引号标签 - 右上角小标签
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surfaceContainerHighest
+                          .withOpacity(0.8),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(4),
                   ),
-          ),
+                ),
+                child: Text(
+                  '${index + 1}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isSelected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurfaceVariant,
+                    fontSize: 10,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 添加新的缩略图导航条
   Widget _buildThumbnailStrip(int totalImages) {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.5),
+    final theme = Theme.of(context);
+
+    // 使用Scrollbar包裹ListView，实现可视化滚动条
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: 92, // 增高一点以容纳滚动条
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border(
+              top: BorderSide(
+                color: theme.dividerColor.withOpacity(0.5),
+              ),
+            ),
+          ),
+          child: Scrollbar(
+            controller: _thumbnailScrollController,
+            thumbVisibility: true, // 始终显示滚动条
+            thickness: 8.0, // 滚动条厚度
+            radius: const Radius.circular(4.0),
+            child: Listener(
+              // 保留鼠标滚轮事件处理
+              onPointerSignal: (pointerSignal) {
+                if (pointerSignal is PointerScrollEvent) {
+                  final offset = _thumbnailScrollController.offset +
+                      pointerSignal.scrollDelta.dy;
+                  _thumbnailScrollController.animateTo(
+                    offset.clamp(0.0,
+                        _thumbnailScrollController.position.maxScrollExtent),
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                  );
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0), // 为滚动条留出空间
+                child: ListView.builder(
+                  controller: _thumbnailScrollController,
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  physics: const AlwaysScrollableScrollPhysics(), // 确保始终可以滚动
+                  itemCount: totalImages,
+                  itemBuilder: (context, index) => _buildThumbnailItem(index),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        itemCount: totalImages,
-        itemBuilder: (context, index) => _buildThumbnailItem(index),
-      ),
+      ],
     );
   }
 
@@ -258,6 +334,23 @@ class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
 
     // 切换图片时重置缩放
     _resetZoom();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_thumbnailScrollController.hasClients) {
+        final itemWidth = 60 + 8;
+        final screenWidth = MediaQuery.of(context).size.width;
+
+        final targetScroll =
+            (newIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
+
+        _thumbnailScrollController.animateTo(
+          targetScroll.clamp(
+              0.0, _thumbnailScrollController.position.maxScrollExtent),
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
   }
 
   WorkImage? _getCurrentImage() {
