@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/work.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
 import 'components/error_view.dart';
 import 'components/work_detail_info_panel.dart';
@@ -31,7 +31,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     return PageLayout(
       toolbar: _buildToolbar(),
       body: _buildBody(),
-      toolbarHeight: 56,
     );
   }
 
@@ -74,63 +73,91 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   Widget _buildToolbar() {
     final theme = Theme.of(context);
 
-    return Row(
-      children: [
-        // Title area with breadcrumb style
-        Expanded(
-          child: Row(
-            children: [
-              Text(
-                _work?.name ?? '作品详情',
-                style: theme.textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (_work != null) ...[
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    '${_work!.style ?? ""} ${_work!.author ?? ""}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ],
+    return Container(
+      height: kToolbarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.5),
+            width: 1,
           ),
         ),
+      ),
+      child: Row(
+        children: [
+          // 左侧返回按钮
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+            tooltip: '返回',
+            onPressed: () => Navigator.of(context).pop(),
+          ),
 
-        // Actions area
-        if (_work != null) ...[
-          ToolbarActionButton(
-            tooltip: '编辑作品',
+          // 标题
+          Text(
+            '作品详情',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const SizedBox(width: AppSizes.spacingMedium),
+
+          // 编辑按钮
+          FilledButton.icon(
             onPressed: () {
-              // Edit functionality
+              // 编辑功能
             },
-            child: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit, size: 18),
+            label: const Text('编辑'),
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
           ),
-          ToolbarActionButton(
-            tooltip: '导出作品',
+
+          const SizedBox(width: AppSizes.spacingSmall),
+
+          // 提取字形按钮
+          FilledButton.tonal(
             onPressed: () {
-              // Export functionality
+              // 提取字形功能
             },
-            child: const Icon(Icons.ios_share),
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: const Text('提取字形'),
           ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              // Handle menu selection
+
+          const SizedBox(width: AppSizes.spacingSmall),
+
+          // 删除按钮
+          OutlinedButton.icon(
+            onPressed: () {
+              _confirmDelete();
             },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('删除作品'),
-              ),
-            ],
+            icon: Icon(
+              Icons.delete_outline,
+              size: 18,
+              color: theme.colorScheme.error,
+            ),
+            label: Text(
+              '删除',
+              style: TextStyle(color: theme.colorScheme.error),
+            ),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              side: BorderSide(color: theme.colorScheme.error.withOpacity(0.5)),
+            ),
           ),
+
+          // 右侧空间占位
+          const Spacer(),
         ],
-      ],
+      ),
     );
   }
 
@@ -151,6 +178,67 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('删除作品'),
+        content: Text('确定要删除作品"${_work?.name ?? ""}"吗？此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteWork();
+    }
+  }
+
+  Future<void> _deleteWork() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      //await ref.read(workDetailProvider.notifier).deleteWork(_work!.id!);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (e, stack) {
+      AppLogger.error(
+        'Failed to delete work',
+        tag: 'WorkDetailPage',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': _work?.id},
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _error = '删除作品失败: ${e.toString()}';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('删除失败: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   Future<void> _loadWork() async {

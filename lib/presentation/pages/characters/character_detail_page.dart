@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/entities/character.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character_detail_provider.dart';
+import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
@@ -252,70 +253,51 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
   }
 
   Widget _buildToolbar() {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        // Title area
-        Expanded(
-          child: _character != null
-              ? Row(
-                  children: [
-                    Text(
-                      '字形详情',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        _character!.char,
-                        style: TextStyle(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : Text('字形详情', style: theme.textTheme.titleLarge),
-        ),
-
-        // Actions
-        if (_character != null) ...[
-          ToolbarActionButton(
-            tooltip: '编辑字形',
-            onPressed: () {
-              // Todo: 实现编辑字形功能
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('编辑功能尚未实现')),
-              );
-            },
-            child: const Icon(Icons.edit),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'delete') {
-                _confirmDelete();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('删除字形'),
+    return DetailToolbar(
+      title: '字形详情',
+      leadingIcon: Icons.text_fields,
+      badge: _character != null
+          ? DetailBadge(
+              text: _character!.char,
+              color: Theme.of(context).colorScheme.primaryContainer,
+            )
+          : null,
+      actions: _character != null
+          ? [
+              DetailToolbarAction(
+                icon: Icons.edit,
+                tooltip: '编辑字形',
+                onPressed: () {
+                  // 编辑功能
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('编辑功能尚未实现')),
+                  );
+                },
               ),
-            ],
-          ),
-        ],
-      ],
+              DetailToolbarAction(
+                icon: Icons.image,
+                tooltip: '查看原图',
+                onPressed: () {
+                  // 查看原图功能
+                },
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                tooltip: '更多选项',
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('删除字形'),
+                  ),
+                ],
+              ),
+            ]
+          : [],
     );
   }
 

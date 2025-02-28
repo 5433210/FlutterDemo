@@ -6,6 +6,7 @@ import '../../../domain/entities/practice.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../routes/app_routes.dart';
 import '../../providers/practice_detail_provider.dart';
+import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
@@ -193,69 +194,53 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
   }
 
   Widget _buildToolbar() {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        // Title area
-        Expanded(
-          child: _practice != null
-              ? Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        _practice!.title,
-                        style: theme.textTheme.titleLarge,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (_practice!.pages.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(left: 12),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '${_practice!.pages.length}页',
-                          style: TextStyle(
-                            color: theme.colorScheme.onSecondaryContainer,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                  ],
-                )
-              : Text('练习详情', style: theme.textTheme.titleLarge),
-        ),
-
-        // Actions
-        if (_practice != null) ...[
-          ToolbarActionButton(
-            tooltip: '编辑练习',
-            onPressed: _navigateToEdit,
-            child: const Icon(Icons.edit),
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'delete') {
-                _confirmDelete();
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'delete',
-                child: Text('删除练习'),
+    return DetailToolbar(
+      title: _practice?.title ?? '练习详情',
+      leadingIcon: Icons.auto_stories,
+      subtitle: _practice != null
+          ? '创建于 ${_formatDateShort(_practice!.createTime)}'
+          : null,
+      badge: _practice != null && _practice!.pages.isNotEmpty
+          ? DetailBadge(text: '${_practice!.pages.length}页')
+          : null,
+      actions: _practice != null
+          ? [
+              DetailToolbarAction(
+                icon: Icons.edit,
+                tooltip: '编辑练习',
+                onPressed: _navigateToEdit,
+                primary: true,
               ),
-            ],
-          ),
-        ],
-      ],
+              DetailToolbarAction(
+                icon: Icons.add_photo_alternate_outlined,
+                tooltip: '添加页面',
+                onPressed: () {
+                  // 添加页面功能
+                },
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                tooltip: '更多选项',
+                onSelected: (value) {
+                  if (value == 'delete') {
+                    _confirmDelete();
+                  } else if (value == 'export') {
+                    // 导出功能
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'export',
+                    child: Text('导出练习'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('删除练习'),
+                  ),
+                ],
+              ),
+            ]
+          : [],
     );
   }
 
@@ -323,6 +308,10 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
         );
       }
     }
+  }
+
+  String _formatDateShort(DateTime date) {
+    return '${date.year}/${date.month}/${date.day}';
   }
 
   String _formatDateTime(DateTime dateTime) {
