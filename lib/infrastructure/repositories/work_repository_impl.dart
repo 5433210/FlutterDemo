@@ -76,6 +76,7 @@ class WorkRepositoryImpl implements WorkRepository {
   Future<String> insertWork(Work work) async {
     try {
       AppLogger.debug('Inserting work', tag: 'WorkRepository');
+
       final id = await _db.insertWork(work.toMap());
       AppLogger.info('Work inserted successfully',
           tag: 'WorkRepository', data: {'workId': id});

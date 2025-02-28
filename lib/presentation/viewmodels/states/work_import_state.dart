@@ -13,7 +13,7 @@ class WorkImportState {
   final WorkStyle? style;
   final WorkTool? tool;
   final DateTime? creationDate;
-  final String? remarks;
+  final String? remark;
   final bool optimizeImages;
   final bool keepOriginals;
   final bool isLoading;
@@ -31,7 +31,7 @@ class WorkImportState {
     this.style,
     this.tool,
     this.creationDate,
-    this.remarks,
+    this.remark,
     this.optimizeImages = true,
     this.keepOriginals = false,
     this.isLoading = false,
@@ -59,7 +59,7 @@ class WorkImportState {
     WorkStyle? style,
     WorkTool? tool,
     DateTime? creationDate,
-    String? remarks,
+    String? remark,
     bool? optimizeImages,
     bool? keepOriginals,
     bool? isLoading,
@@ -77,7 +77,7 @@ class WorkImportState {
       style: style ?? this.style,
       tool: tool ?? this.tool,
       creationDate: creationDate ?? this.creationDate,
-      remarks: remarks ?? this.remarks,
+      remark: remark ?? this.remark,
       optimizeImages: optimizeImages ?? this.optimizeImages,
       keepOriginals: keepOriginals ?? this.keepOriginals,
       isLoading: isLoading ?? this.isLoading,

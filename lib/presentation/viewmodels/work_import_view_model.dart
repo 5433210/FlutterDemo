@@ -68,6 +68,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
           tool: state.tool?.value,
           creationDate: state.creationDate!,
           imageCount: state.images.length,
+          remark: state.remark,
         ),
       );
       return true;
@@ -179,8 +180,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   // 基础信息设置
   void setName(String name) => state = state.copyWith(name: name.trim());
 
-  void setRemarks(String remarks) =>
-      state = state.copyWith(remarks: remarks.trim());
+  void setRemark(String remark) =>
+      state = state.copyWith(remark: remark.trim());
 
   // 视图控制
   void setScale(double scale) {

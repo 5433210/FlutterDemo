@@ -1,77 +1,79 @@
+import 'package:demo/domain/value_objects/work/work_entity.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/work.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
+import '../../dialogs/delete_dialog.dart';
 import '../../providers/work_detail_provider.dart';
+import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/page_layout.dart';
-import 'components/error_view.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
 
 class WorkDetailPage extends ConsumerStatefulWidget {
   final String workId;
 
-  const WorkDetailPage({super.key, required this.workId});
+  const WorkDetailPage({
+    super.key,
+    required this.workId,
+  });
 
   @override
   ConsumerState<WorkDetailPage> createState() => _WorkDetailPageState();
 }
 
 class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
-  bool _isLoading = true;
-  Work? _work;
-  String? _error;
-
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(workDetailProvider);
+
     return PageLayout(
-      toolbar: _buildToolbar(),
-      body: _buildBody(),
+      toolbar: _buildToolbar(context, state),
+      body: _buildBody(context, state),
     );
   }
 
   @override
   void initState() {
     super.initState();
-    // Use a post-frame callback to avoid modifying providers during build
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      _loadWork();
+    // 使用 addPostFrameCallback 确保在构建完成后再加载数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadWorkDetails();
     });
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
+  Widget _buildBody(BuildContext context, WorkDetailState state) {
+    if (state.isLoading) {
       return const Center(
-        child: LoadingIndicator(message: '加载作品中...'),
+        child: LoadingIndicator(message: '加载作品详情中...'),
       );
     }
 
-    if (_error != null) {
-      return ErrorView(
-        error: _error!,
-        onRetry: () {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _loadWork();
-          });
-        },
+    if (state.error != null) {
+      return Center(
+        child: ErrorDisplay(
+          error: state.error!,
+          onRetry: _loadWorkDetails,
+        ),
       );
     }
 
-    if (_work == null) {
+    final work = state.work;
+    if (work == null) {
       return const Center(
         child: Text('作品不存在或已被删除'),
       );
     }
 
-    return _buildWorkContent(_work!);
+    return _buildWorkContent(work);
   }
 
-  Widget _buildToolbar() {
+  Widget _buildToolbar(BuildContext context, WorkDetailState state) {
     final theme = Theme.of(context);
+    final work = state.work;
 
     return Container(
       height: kToolbarHeight,
@@ -96,7 +98,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 标题
           Text(
-            '作品详情',
+            work?.name ?? '作品详情',
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w500,
             ),
@@ -106,9 +108,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 编辑按钮
           FilledButton.icon(
-            onPressed: () {
-              // 编辑功能
-            },
+            onPressed: work != null ? () => _navigateToEdit(work.id!) : null,
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('编辑'),
             style: FilledButton.styleFrom(
@@ -121,9 +121,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 提取字形按钮
           FilledButton.tonal(
-            onPressed: () {
-              // 提取字形功能
-            },
+            onPressed: work != null ? () => _navigateToExtract(work.id!) : null,
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -135,9 +133,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 删除按钮
           OutlinedButton.icon(
-            onPressed: () {
-              _confirmDelete();
-            },
+            onPressed: work != null ? () => _confirmDelete(context) : null,
             icon: Icon(
               Icons.delete_outline,
               size: 18,
@@ -156,12 +152,26 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 右侧空间占位
           const Spacer(),
+
+          // 右侧选项：导出、分享
+          IconButton(
+            onPressed: work != null ? () => _exportWork(work) : null,
+            icon:
+                Icon(Icons.download_outlined, color: theme.colorScheme.primary),
+            tooltip: '导出',
+          ),
+
+          IconButton(
+            onPressed: work != null ? () => _shareWork(work) : null,
+            icon: const Icon(Icons.share_outlined),
+            tooltip: '分享',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildWorkContent(Work work) {
+  Widget _buildWorkContent(WorkEntity work) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -180,103 +190,77 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     );
   }
 
-  Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('删除作品'),
-        content: Text('确定要删除作品"${_work?.name ?? ""}"吗？此操作不可撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
+  Future<void> _confirmDelete(BuildContext context) async {
+    final work = ref.read(workDetailProvider).work;
+    if (work == null) return;
+
+    final confirmed = await DeleteDialog.show(
+      context,
+      title: '删除作品',
+      message: '确定要删除作品 "${work.name}" 吗？此操作不可撤销。',
+      deleteButtonLabel: '删除',
+      cancelButtonLabel: '取消',
     );
 
-    if (confirmed == true) {
-      await _deleteWork();
-    }
-  }
+    if (confirmed == true && mounted) {
+      try {
+        final success =
+            await ref.read(workDetailProvider.notifier).deleteWork();
 
-  Future<void> _deleteWork() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      //await ref.read(workDetailProvider.notifier).deleteWork(_work!.id!);
-
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to delete work',
-        tag: 'WorkDetailPage',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': _work?.id},
-      );
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = '删除作品失败: ${e.toString()}';
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('删除失败: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadWork() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      // Use the fetch method that doesn't update state directly
-      final work =
-          await ref.read(workDetailProvider.notifier).fetchWork(widget.workId);
-
-      // Update our local state
-      if (mounted) {
-        setState(() {
-          _work = work;
-          _isLoading = false;
-        });
-
-        // Now update the provider after UI is ready
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          ref.read(workDetailProvider.notifier).loadWork(widget.workId);
-        });
-      }
-    } catch (e, stack) {
-      AppLogger.error('加载作品详情失败',
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('作品已删除')),
+          );
+          Navigator.of(context).pop(); // 返回上一页
+        }
+      } catch (e, stack) {
+        AppLogger.error(
+          'Delete work failed in UI',
           tag: 'WorkDetailPage',
           error: e,
           stackTrace: stack,
-          data: {'workId': widget.workId});
+        );
 
-      if (mounted) {
-        setState(() {
-          _error = '无法加载作品: ${e.toString()}';
-          _isLoading = false;
-        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('删除失败: ${e.toString()}')),
+          );
+        }
       }
     }
+  }
+
+  void _exportWork(WorkEntity work) {
+    // 实现导出功能
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('导出功能即将上线')),
+    );
+  }
+
+  Future<void> _loadWorkDetails() async {
+    await ref.read(workDetailProvider.notifier).loadWorkDetails(widget.workId);
+  }
+
+  void _navigateToEdit(String workId) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.workEdit,
+      arguments: workId,
+    ).then((_) => _loadWorkDetails()); // 编辑后刷新
+  }
+
+  void _navigateToExtract(String workId) {
+    Navigator.pushNamed(
+      context,
+      AppRoutes.workExtract,
+      arguments: workId,
+    ).then((_) => _loadWorkDetails()); // 提取后刷新
+  }
+
+  void _shareWork(WorkEntity work) {
+    // 实现分享功能
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('分享功能即将上线')),
+    );
   }
 }

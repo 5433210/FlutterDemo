@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../../theme/app_sizes.dart';
 import '../../../../models/work_filter.dart';
-import '../../../../providers/work_browse_provider.dart';
-import '../../../../theme/app_sizes.dart';
-import '../../../../viewmodels/states/work_browse_state.dart';
-import '../../../../viewmodels/work_browse_view_model.dart';
 
 class SortSection extends StatelessWidget {
   final WorkFilter filter;
@@ -36,13 +33,9 @@ class SortSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.s),
               ),
               child: InkWell(
-                onTap: () => onFilterChanged(
-                  filter.copyWith(
-                    sortOption: filter.sortOption.copyWith(
-                      descending: !filter.sortOption.descending
-                    )
-                  )
-                ),
+                onTap: () => onFilterChanged(filter.copyWith(
+                    sortOption: filter.sortOption
+                        .copyWith(descending: !filter.sortOption.descending))),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -56,7 +49,9 @@ class SortSection extends StatelessWidget {
                     Icon(
                       Icons.sort,
                       size: 18,
-                      textDirection: filter.sortOption.descending ? TextDirection.rtl : TextDirection.ltr,
+                      textDirection: filter.sortOption.descending
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
                       color: theme.colorScheme.onSecondaryContainer,
                     ),
                   ],
@@ -74,22 +69,20 @@ class SortSection extends StatelessWidget {
   }
 
   Widget _buildSortItem(
-    SortField field, 
-    String label, 
+    SortField field,
+    String label,
     ThemeData theme,
   ) {
     final bool selected = filter.sortOption.field == field;
 
     return Material(
-      color: selected ? theme.colorScheme.secondaryContainer : Colors.transparent,
+      color:
+          selected ? theme.colorScheme.secondaryContainer : Colors.transparent,
       borderRadius: BorderRadius.circular(AppSizes.s),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSizes.s),
-        onTap: () => onFilterChanged(
-          filter.copyWith(
-            sortOption: filter.sortOption.copyWith(field: field)
-          )
-        ),
+        onTap: () => onFilterChanged(filter.copyWith(
+            sortOption: filter.sortOption.copyWith(field: field))),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(
@@ -104,11 +97,8 @@ class SortSection extends StatelessWidget {
                 child: Radio<SortField>(
                   value: field,
                   groupValue: selected ? field : null,
-                  onChanged: (_) => onFilterChanged(
-                    filter.copyWith(
-                      sortOption: filter.sortOption.copyWith(field: field)
-                    )
-                  ),
+                  onChanged: (_) => onFilterChanged(filter.copyWith(
+                      sortOption: filter.sortOption.copyWith(field: field))),
                   visualDensity: VisualDensity.compact,
                 ),
               ),
@@ -117,7 +107,7 @@ class SortSection extends StatelessWidget {
                 child: Text(
                   label,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: selected 
+                    color: selected
                         ? theme.colorScheme.onSecondaryContainer
                         : theme.colorScheme.onSurface,
                   ),

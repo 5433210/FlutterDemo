@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_sizes.dart';
+
+import '../../../../theme/app_sizes.dart';
 import '../../../widgets/buttons/loading_button.dart';
 
 class DialogFooter extends StatelessWidget {
@@ -19,7 +20,7 @@ class DialogFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       height: 56,
       padding: const EdgeInsets.all(AppSizes.m),

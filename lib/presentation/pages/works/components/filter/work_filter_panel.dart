@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../theme/app_sizes.dart';
 import '../../../../models/work_filter.dart';
-import '../../../../theme/app_sizes.dart';
 import 'date_section.dart';
 import 'sort_section.dart';
 import 'style_section.dart';

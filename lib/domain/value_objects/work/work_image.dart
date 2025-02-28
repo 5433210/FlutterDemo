@@ -100,15 +100,15 @@ class ImageThumbnail extends Equatable {
 
 class WorkImage extends Equatable {
   final int index;
-  final ImageDetail original;
-  final ImageDetail imported;
-  final ImageThumbnail thumbnail;
+  final ImageDetail? original;
+  final ImageDetail? imported;
+  final ImageThumbnail? thumbnail;
 
   const WorkImage({
     required this.index,
-    required this.original,
-    required this.imported,
-    required this.thumbnail,
+    this.original,
+    this.imported,
+    this.thumbnail,
   });
 
   factory WorkImage.fromJson(Map<String, dynamic> json) {
@@ -141,9 +141,9 @@ class WorkImage extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'index': index,
-      'original': original.toJson(),
-      'imported': imported.toJson(),
-      'thumbnail': thumbnail.toJson(),
+      'original': original!.toJson(),
+      'imported': imported!.toJson(),
+      'thumbnail': thumbnail!.toJson(),
     };
   }
 }

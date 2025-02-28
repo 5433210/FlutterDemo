@@ -237,23 +237,7 @@ class WorkListItem extends StatelessWidget {
 
   String _getMetadataPreview() {
     if (!_hasMetadata()) return '';
-
-    // 尝试提取备注或其他重要信息
-    final remarks = work.metadata?['remarks'] as String?;
-    final description = work.metadata?['description'] as String?;
-
-    if (remarks != null && remarks.isNotEmpty) {
-      return remarks;
-    } else if (description != null && description.isNotEmpty) {
-      return description;
-    } else {
-      // 如果没有特定字段，显示前几个键值对
-      final entries = work.metadata!.entries
-          .take(2)
-          .map((e) => '${e.key}: ${e.value}')
-          .join(', ');
-      return entries;
-    }
+    return '包含 ${work.metadata!.length} 项元数据';
   }
 
   bool _hasMetadata() {

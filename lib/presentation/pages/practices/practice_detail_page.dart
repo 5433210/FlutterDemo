@@ -199,26 +199,11 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
                   // 添加页面功能
                 },
               ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
-                tooltip: '更多选项',
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    _confirmDelete();
-                  } else if (value == 'export') {
-                    // 导出功能
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'export',
-                    child: Text('导出练习'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('删除练习'),
-                  ),
-                ],
+              DetailToolbarAction(
+                icon: Icons.delete,
+                tooltip: '删除练习',
+                onPressed: _confirmDelete,
+                primary: false,
               ),
             ]
           : [],

@@ -10,4 +10,6 @@ class AppRoutes {
   static const practiceDetail = '/practice_detail';
   static const practiceEdit = '/practice_edit';
   static const settings = '/settings';
+  static const String workEdit = '/work/edit';
+  static const String workExtract = '/work/extract';
 }

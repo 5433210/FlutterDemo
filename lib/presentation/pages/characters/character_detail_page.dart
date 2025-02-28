@@ -259,7 +259,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
       badge: _character != null
           ? DetailBadge(
               text: _character!.char,
-              color: Theme.of(context).colorScheme.primaryContainer,
             )
           : null,
       actions: _character != null
@@ -280,21 +279,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                 onPressed: () {
                   // 查看原图功能
                 },
-              ),
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
-                tooltip: '更多选项',
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    _confirmDelete();
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Text('删除字形'),
-                  ),
-                ],
               ),
             ]
           : [],

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
-import '../../domain/entities/work.dart';
+import '../../domain/value_objects/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 
 /// Provider for the current image index in a work
@@ -9,55 +9,104 @@ final currentWorkImageIndexProvider = StateProvider<int>((ref) {
   return 0;
 });
 
-/// Provider for the work detail
 final workDetailProvider =
-    StateNotifierProvider<WorkDetailNotifier, AsyncValue<Work?>>((ref) {
-  return WorkDetailNotifier(ref);
-});
+    StateNotifierProvider.autoDispose<WorkDetailNotifier, WorkDetailState>(
+  (ref) => WorkDetailNotifier(ref),
+);
 
-/// Work detail view model
-class WorkDetailNotifier extends StateNotifier<AsyncValue<Work?>> {
-  final Ref ref;
+class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
+  final Ref _ref;
 
-  WorkDetailNotifier(this.ref) : super(const AsyncValue.loading());
+  WorkDetailNotifier(this._ref) : super(WorkDetailState());
 
-  /// Get work by ID - without immediately updating state
-  Future<Work?> fetchWork(String workId) async {
+  Future<bool> deleteWork() async {
+    if (state.work?.id == null) return false;
+
     try {
-      return await ref.read(workServiceProvider).getWork(workId);
-    } catch (e, stackTrace) {
+      state = state.copyWith(isDeleting: true);
+
+      final workService = _ref.read(workServiceProvider);
+      await workService.deleteWork(state.work!.id!);
+
+      state = state.copyWith(isDeleting: false);
+      return true;
+    } catch (e, stack) {
       AppLogger.error(
-        'Failed to fetch work',
+        'Failed to delete work',
         tag: 'WorkDetailNotifier',
         error: e,
-        stackTrace: stackTrace,
-        data: {'workId': workId},
+        stackTrace: stack,
+        data: {'workId': state.work?.id},
       );
-      rethrow;
+
+      state = state.copyWith(
+        isDeleting: false,
+        error: '删除作品失败: ${e.toString()}',
+      );
+      return false;
     }
   }
 
-  /// Load work by ID - updates the provider state
-  Future<void> loadWork(String workId) async {
+  Future<void> loadWorkDetails(String workId) async {
+    // 如果已经在加载，防止重复触发
+    if (state.isLoading) return;
+
     try {
-      // Update state to loading
-      state = const AsyncValue.loading();
+      state = state.copyWith(isLoading: true, error: null);
 
-      // Get work details from service
-      final work = await ref.read(workServiceProvider).getWork(workId);
+      final workService = _ref.read(workServiceProvider);
+      final work = await workService.getWorkEntity(workId);
 
-      // Update state on success
-      state = AsyncValue.data(work);
-    } catch (e, stackTrace) {
-      // Handle error state
-      state = AsyncValue.error(e, stackTrace);
+      if (work == null) {
+        state = state.copyWith(isLoading: false, error: '作品未找到');
+        return;
+      }
+
+      state = state.copyWith(
+        isLoading: false,
+        work: work,
+      );
+    } catch (e, stack) {
       AppLogger.error(
-        'Failed to load work',
+        'Failed to load work details',
         tag: 'WorkDetailNotifier',
         error: e,
-        stackTrace: stackTrace,
+        stackTrace: stack,
         data: {'workId': workId},
       );
+
+      state = state.copyWith(
+        isLoading: false,
+        error: '加载作品详情失败: ${e.toString()}',
+      );
     }
+  }
+}
+
+class WorkDetailState {
+  final bool isLoading;
+  final WorkEntity? work;
+  final String? error;
+  final bool isDeleting;
+
+  WorkDetailState({
+    this.isLoading = false,
+    this.work,
+    this.error,
+    this.isDeleting = false,
+  });
+
+  WorkDetailState copyWith({
+    bool? isLoading,
+    WorkEntity? work,
+    String? error,
+    bool? isDeleting,
+  }) {
+    return WorkDetailState(
+      isLoading: isLoading ?? this.isLoading,
+      work: work ?? this.work,
+      error: error ?? this.error,
+      isDeleting: isDeleting ?? this.isDeleting,
+    );
   }
 }

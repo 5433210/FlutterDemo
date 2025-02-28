@@ -168,11 +168,11 @@ class WorkImportForm extends StatelessWidget {
           FormFieldWrapper(
             label: '备注',
             child: TextFormField(
-              initialValue: state.remarks,
+              initialValue: state.remark,
               maxLines: 3,
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '可选'),
-              onChanged: viewModel.setRemarks,
+              onChanged: viewModel.setRemark,
             ),
           ),
         ],

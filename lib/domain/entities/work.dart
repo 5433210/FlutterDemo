@@ -2,20 +2,20 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 
-@immutable
 class Work {
-  final String? id;
-  final String? name;
-  final String? author;
-  final String? style;
-  final String? tool;
-  final DateTime? creationDate;
-  final int? imageCount;
-  final DateTime? createTime;
-  final DateTime? updateTime;
-  final Map<String, dynamic>? metadata; // Added metadata field
+  String? id;
+  String? name;
+  String? author;
+  String? style;
+  String? tool;
+  DateTime? creationDate;
+  int? imageCount;
+  DateTime? createTime;
+  DateTime? updateTime;
+  String? remark; // 添加备注字段
+  Map<String, dynamic>? metadata;
 
-  const Work({
+  Work({
     this.id,
     this.name,
     this.author,
@@ -25,7 +25,8 @@ class Work {
     this.imageCount = 0,
     this.createTime,
     this.updateTime,
-    this.metadata, // Added to constructor
+    this.remark, // 添加到构造函数
+    this.metadata,
   });
 
   factory Work.fromJson(Map<String, dynamic> json) => Work(
@@ -38,9 +39,10 @@ class Work {
         imageCount: json['imageCount'] as int? ?? 0,
         createTime: _parseDateTime(json['createTime']) ?? DateTime.now(),
         updateTime: _parseDateTime(json['updateTime']) ?? DateTime.now(),
+        remark: json['remark'] as String?, // 从 JSON 解析
         metadata: json['metadata'] != null
             ? jsonDecode(json['metadata'] as String) as Map<String, dynamic>
-            : null, // Deserialize metadata
+            : null,
       );
 
   factory Work.fromMap(Map<String, dynamic> map) {
@@ -54,13 +56,13 @@ class Work {
       imageCount: map['imageCount'] as int? ?? 0,
       createTime: _parseDateTime(map['createTime']) ?? DateTime.now(),
       updateTime: _parseDateTime(map['updateTime']) ?? DateTime.now(),
+      remark: map['remark'] as String?, // 从 map 解析
       metadata: map['metadata'] != null
           ? jsonDecode(map['metadata'] as String) as Map<String, dynamic>?
           : null,
     );
   }
 
-  // Add copyWith method to support metadata updates
   Work copyWith({
     String? id,
     String? name,
@@ -71,6 +73,7 @@ class Work {
     int? imageCount,
     DateTime? createTime,
     DateTime? updateTime,
+    String? remark, // 添加到 copyWith
     Map<String, dynamic>? metadata,
   }) {
     return Work(
@@ -83,6 +86,7 @@ class Work {
       imageCount: imageCount ?? this.imageCount,
       createTime: createTime ?? this.createTime,
       updateTime: updateTime ?? this.updateTime,
+      remark: remark ?? this.remark, // 处理 remark 字段
       metadata: metadata ?? this.metadata,
     );
   }
@@ -97,12 +101,12 @@ class Work {
         'imageCount': imageCount,
         'createTime': createTime?.toIso8601String(),
         'updateTime': updateTime?.toIso8601String(),
+        'remark': remark, // 加入 JSON 输出
         'metadata': metadata != null
             ? jsonEncode(metadata)
             : null, // Serialize metadata
       };
 
-  // Alias for JSON methods
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -114,8 +118,8 @@ class Work {
       'imageCount': imageCount,
       'createTime': createTime?.toIso8601String(),
       'updateTime': updateTime?.toIso8601String(),
-      'metadata':
-          metadata != null ? jsonEncode(metadata) : null, // Serialize metadata
+      'remark': remark, // 加入 map 输出
+      'metadata': metadata != null ? jsonEncode(metadata) : null,
     };
   }
 

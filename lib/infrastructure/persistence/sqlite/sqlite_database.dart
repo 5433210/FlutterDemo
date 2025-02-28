@@ -666,6 +666,7 @@ class SqliteDatabase implements DatabaseInterface {
         author TEXT,
         style TEXT,
         tool TEXT,
+        remark TEXT,
         creationDate INTEGER,
         createTime INTEGER NOT NULL,
         updateTime INTEGER NOT NULL,

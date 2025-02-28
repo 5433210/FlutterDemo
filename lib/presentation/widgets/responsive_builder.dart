@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_sizes.dart';
+import '../../theme/app_sizes.dart';
 
 enum ResponsiveBreakpoint { xs, sm, md, lg }
 

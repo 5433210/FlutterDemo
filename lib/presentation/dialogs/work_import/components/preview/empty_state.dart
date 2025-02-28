@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../theme/app_sizes.dart';
+import '../../../../../theme/app_sizes.dart';
 
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key});
@@ -8,7 +8,7 @@ class EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

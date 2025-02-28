@@ -1,13 +1,13 @@
+import 'dart:math' as Math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
-import '../../../../domain/entities/work.dart';
+import '../../../../domain/value_objects/work/work_entity.dart';
 import '../../../../theme/app_sizes.dart';
-import '../../../widgets/info_card.dart';
 
 class WorkDetailInfoPanel extends ConsumerWidget {
-  final Work work;
+  final WorkEntity work;
 
   const WorkDetailInfoPanel({
     super.key,
@@ -16,94 +16,152 @@ class WorkDetailInfoPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Card(
+      margin: const EdgeInsets.only(
+        top: AppSizes.spacingMedium,
+        right: AppSizes.spacingMedium,
+        bottom: AppSizes.spacingMedium,
+      ),
+      child: ListView(
+        padding: const EdgeInsets.all(AppSizes.spacingMedium),
         children: [
           // 基本信息卡片
-          InfoCard(
-            title: '基本信息',
-            icon: Icons.info_outline,
-            content: Column(
-              children: [
-                _buildInfoItem('作品名称', work.name ?? '未命名作品', theme),
-                _buildInfoItem('作者', work.author ?? '未知', theme),
-                _buildInfoItem('风格', work.style ?? '未分类', theme),
-                _buildInfoItem('工具', work.tool ?? '未知', theme),
-                _buildInfoItem('年代', _formatDate(work.creationDate), theme),
-              ],
-            ),
-          ),
+          _buildBasicInfoSection(context),
 
-          const SizedBox(height: AppSizes.spacingMedium),
+          const SizedBox(height: AppSizes.spacingLarge),
 
-          // 图片信息卡片
-          InfoCard(
-            title: '图片信息',
-            icon: Icons.image_outlined,
-            content: Column(
-              children: [
-                _buildInfoItem('图片数量', '${work.imageCount ?? 0}', theme),
-                _buildInfoItem('导入时间', '1', theme)
-              ],
-            ),
-          ),
+          // 字形集合卡片
+          _buildCharactersSection(context),
 
-          const SizedBox(height: AppSizes.spacingMedium),
+          const SizedBox(height: AppSizes.spacingLarge),
 
-          // 操作按钮区域
-          InfoCard(
-            title: '操作',
-            icon: Icons.settings_outlined,
-            content: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // 提取字形按钮
-                FilledButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.text_format),
-                  label: const Text('提取字形'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-
-                const SizedBox(height: AppSizes.spacingSmall),
-
-                // 导出按钮
-                OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.download),
-                  label: const Text('导出作品'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Spacer(),
-
-          // 元数据显示
-          if (work.metadata != null && (work.metadata as Map).isNotEmpty)
-            InfoCard(
-              title: '其他信息',
-              icon: Icons.more_horiz,
-              initiallyExpanded: false,
-              content: _buildMetadataSection(work.metadata as Map, theme),
-            ),
+          // 元数据卡片
+          _buildMetadataSection(context),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value, ThemeData theme) {
+  Widget _buildBasicInfoSection(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 标题行
+        Row(
+          children: [
+            Icon(Icons.info_outline,
+                size: 20, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('基本信息', style: theme.textTheme.titleMedium),
+          ],
+        ),
+        const Divider(),
+
+        _buildInfoRow(context, '作品名称', work.name),
+        _buildInfoRow(context, '作者', work.author ?? '未知'),
+        _buildInfoRow(context, '风格', work.style!.label),
+        _buildInfoRow(context, '工具', work.tool!.label),
+        _buildInfoRow(context, '创作时间', _formatDate(work.creationDate)),
+        _buildInfoRow(context, '图片数量', (work.imageCount ?? 0).toString()),
+        _buildInfoRow(context, '创建时间', _formatDateTime(work.createTime)),
+        _buildInfoRow(context, '修改时间', _formatDateTime(work.updateTime)),
+
+        if (work.remark != null && work.remark!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('备注:',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(work.remark!),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCharacterChip(BuildContext context, dynamic charInfo) {
+    // 这里应该显示提取的字形缩略图或字符
+    // 简化处理，实际项目中应当基于已提取的字形数据构建
+    return Chip(
+      avatar: const CircleAvatar(
+        child: Icon(Icons.text_fields, size: 14),
+      ),
+      label: const Text('字'),
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+    );
+  }
+
+  Widget _buildCharactersSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final charCount = work.collectedChars.length ?? 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 标题行
+        Row(
+          children: [
+            Icon(Icons.text_fields, size: 20, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('集字信息', style: theme.textTheme.titleMedium),
+            const Spacer(),
+            Text('$charCount 个', style: theme.textTheme.bodySmall),
+          ],
+        ),
+        const Divider(),
+
+        if (charCount == 0)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: Text('尚未从此作品中提取字形'),
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(
+              Math.min(charCount, 20), // 最多显示20个
+              (index) => _buildCharacterChip(
+                context,
+                work.collectedChars[index],
+              ),
+            ),
+          ),
+
+        if (charCount > 20)
+          Center(
+            child: TextButton(
+              onPressed: () {
+                // 导航到字形列表页
+              },
+              child: const Text('查看全部'),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.spacingSmall),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -111,39 +169,70 @@ class WorkDetailInfoPanel extends ConsumerWidget {
             width: 80,
             child: Text(
               label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-            ),
+            child: Text(value),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMetadataSection(Map metadata, ThemeData theme) {
+  Widget _buildMetadataSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasTags =
+        work.metadata?.tags != null && work.metadata!.tags.isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: metadata.entries.map((entry) {
-        return _buildInfoItem(
-            entry.key.toString(), entry.value.toString(), theme);
-      }).toList(),
+      children: [
+        // 标题行
+        Row(
+          children: [
+            Icon(Icons.label_outline,
+                size: 20, color: theme.colorScheme.primary),
+            const SizedBox(width: 8),
+            Text('标签', style: theme.textTheme.titleMedium),
+          ],
+        ),
+        const Divider(),
+
+        if (!hasTags)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(
+              child: Text('没有标签'),
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: work.metadata!.tags
+                .map((tag) => Chip(
+                      label: Text(tag),
+                      backgroundColor:
+                          theme.colorScheme.surfaceContainerHighest,
+                    ))
+                .toList(),
+          ),
+      ],
     );
   }
 
   String _formatDate(DateTime? date) {
     if (date == null) return '未知';
-    return DateFormat.yMd().format(date);
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  String _formatDateTime(DateTime? dateTime) {
-    if (dateTime == null) return '未知';
-    return DateFormat.yMd().add_Hm().format(dateTime);
+  String _formatDateTime(DateTime? date) {
+    if (date == null) return '未知';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+        '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
