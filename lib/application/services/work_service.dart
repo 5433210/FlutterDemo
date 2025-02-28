@@ -26,7 +26,37 @@ class WorkService {
     try {
       AppLogger.info('Deleting work',
           tag: 'WorkService', data: {'workId': workId});
+
+      // 1. 获取作品路径，用于后续删除文件
+      final workPath = await PathHelper.getWorkPath(workId);
+      final workDir = Directory(workPath);
+
+      // 2. 删除数据库中的作品记录
       await _workRepository.deleteWork(workId);
+
+      // 3. 删除文件系统中的所有相关文件
+      if (await workDir.exists()) {
+        try {
+          await workDir.delete(recursive: true);
+          AppLogger.info('Deleted work files',
+              tag: 'WorkService', data: {'workPath': workPath});
+        } catch (e, stack) {
+          // 即使删除文件失败，也不应影响整个操作，但应记录错误
+          AppLogger.warning(
+            'Failed to delete work files, but database record was removed',
+            tag: 'WorkService',
+            error: e,
+            stackTrace: stack,
+            data: {'workId': workId, 'workPath': workPath},
+          );
+        }
+      } else {
+        AppLogger.warning(
+            'Work directory does not exist, skipping file deletion',
+            tag: 'WorkService',
+            data: {'workId': workId, 'workPath': workPath});
+      }
+
       AppLogger.info('Work deleted successfully',
           tag: 'WorkService', data: {'workId': workId});
     } catch (e, stack) {

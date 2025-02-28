@@ -4,7 +4,6 @@ import 'package:demo/application/services/work_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/entities/work.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/services/state_restoration_service.dart';
 import '../dialogs/work_import/work_import_dialog.dart';
@@ -20,6 +19,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   WorkBrowseViewModel(this._workService, this._stateRestorationService)
       : super(WorkBrowseState()) {
     _restoreState();
+    loadWorks();
   }
 
   void clearDateFilter() {
@@ -45,6 +45,8 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     try {
       await Future.wait(
           state.selectedWorks.map((id) => _workService.deleteWork(id)));
+      // 这里调用的是 WorkService.deleteWork()，它会删除文件
+
       await loadWorks();
       toggleBatchMode(); // 删除完成后退出批量模式
     } catch (e) {
@@ -85,6 +87,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
       // 批量删除
       for (final workId in workIds) {
         await _workService.deleteWork(workId);
+        // 这里也调用了 WorkService.deleteWork()，它会删除文件
       }
 
       // 使用现有的搜索和筛选条件重新查询
@@ -109,7 +112,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   void dispose() {
     _searchDebounce?.cancel();
     // 保存状态
-    _stateRestorationService.saveWorkBrowseState(state);
+    _saveState();
     super.dispose();
   }
 
@@ -175,33 +178,43 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  Future<void> loadWorks() async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> loadWorks({bool forceRefresh = false}) async {
+    // 如果正在加载且不是强制刷新，则直接返回
+    if (state.isLoading && !forceRefresh) return;
 
     try {
-      state = state.copyWith(isLoading: true, error: null);
-      AppLogger.debug('Loading works', tag: 'WorkBrowseViewModel');
+      // 只有在强制刷新或首次加载时才显示加载状态
+      if (forceRefresh || state.works.isEmpty) {
+        state = state.copyWith(isLoading: true, error: null);
+      }
 
-      final works = await _workService.getAllWorks();
+      final filter = state.filter;
+      final query = state.searchQuery;
 
-      // 使用 List.of 创建可修改副本
-      final worksCopy = List<Work>.of(works);
-
-      state = state.copyWith(
-        isLoading: false,
-        works: worksCopy,
+      final results = await _workService.queryWorks(
+        searchQuery: query,
+        filter: filter,
       );
 
-      AppLogger.info('Works loaded successfully',
-          tag: 'WorkBrowseViewModel', data: {'count': works.length});
+      state = state.copyWith(
+        isLoading: false,
+        works: results,
+        totalCount: results.length,
+        error: null,
+      );
+
+      _saveState();
     } catch (e, stack) {
-      AppLogger.error('Failed to load works',
-          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+      AppLogger.error(
+        'Failed to load works',
+        tag: 'WorkBrowseViewModel',
+        error: e,
+        stackTrace: stack,
+      );
 
       state = state.copyWith(
         isLoading: false,
-        error: e.toString(),
-        works: [],
+        error: '加载作品失败: ${e.toString()}',
       );
     }
   }
@@ -267,14 +280,12 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   void setSidebarState(bool sidebarOpen) {
     state = state.copyWith(isSidebarOpen: sidebarOpen);
-    // 保存状态
-    _stateRestorationService.saveWorkBrowseState(state);
+    _saveState(); // 保存状态
   }
 
   void setViewMode(ViewMode viewMode) {
     state = state.copyWith(viewMode: viewMode);
-    // 保存状态
-    _stateRestorationService.saveWorkBrowseState(state);
+    _saveState(); // 保存状态
   }
 
   // 添加导入对话框功能
@@ -324,6 +335,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(
       isSidebarOpen: !state.isSidebarOpen,
     );
+    _saveState(); // 保存状态
   }
 
   void toggleSortDirection() {
@@ -366,6 +378,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   void updateFilter(WorkFilter filter) {
     debugPrint('ViewModel - updateFilter: $filter');
     _loadFilteredWorksWithFilter(filter);
+    // 在数据加载完成后的回调中保存状态
   }
 
   // 完善排序功能
@@ -437,6 +450,9 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         isLoading: false,
       );
       debugPrint('State updated, current works count: ${state.works.length}');
+
+      // 添加保存状态的调用
+      _saveState();
     } catch (e) {
       debugPrint('ViewModel - error: $e');
       state = state.copyWith(
@@ -453,5 +469,33 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
       state = restoredState;
     }
     await loadWorks();
+  }
+
+  // 添加 _saveState 方法来持久化当前状态
+  void _saveState() {
+    try {
+      // 记录保存状态的日志
+      AppLogger.debug(
+        'Saving work browse state',
+        tag: 'WorkBrowseViewModel',
+        data: {
+          'viewMode': state.viewMode.toString(),
+          'isSidebarOpen': state.isSidebarOpen,
+          'filter': state.filter.toString(),
+          'searchQuery': state.searchQuery,
+        },
+      );
+
+      // 调用状态恢复服务保存当前状态
+      _stateRestorationService.saveWorkBrowseState(state);
+    } catch (e, stack) {
+      // 记录保存状态失败的错误
+      AppLogger.error(
+        'Failed to save work browse state',
+        tag: 'WorkBrowseViewModel',
+        error: e,
+        stackTrace: stack,
+      );
+    }
   }
 }

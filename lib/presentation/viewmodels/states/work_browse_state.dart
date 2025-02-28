@@ -94,6 +94,7 @@ class WorkBrowseState {
     int? pageSize,
     bool? hasMore,
     bool? isLoadingMore,
+    int? totalCount,
   }) {
     // Add debug print to verify state updates
     debugPrint(

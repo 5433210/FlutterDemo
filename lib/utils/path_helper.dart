@@ -369,8 +369,8 @@ class PathHelper {
 
   // 获取作品目录路径
   static Future<String> getWorkPath(String workId) async {
-    final worksDir = await getWorksPath();
-    return path.join(worksDir, workId);
+    final appDir = await getApplicationDocumentsDirectory();
+    return path.join(appDir.path, 'works', workId);
   }
 
   static Future<String> getWorksPath() async {

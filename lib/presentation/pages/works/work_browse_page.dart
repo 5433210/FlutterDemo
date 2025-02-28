@@ -21,7 +21,8 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
   ConsumerState<WorkBrowsePage> createState() => _WorkBrowsePageState();
 }
 
-class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
+class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
+    with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
@@ -68,6 +69,27 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     );
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 当应用从后台恢复时，刷新列表以确保数据最新
+    if (state == AppLifecycleState.resumed) {
+      _loadWorks();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadWorks();
+  }
+
   Widget _buildMainContent() {
     // 在这里监听状态变化
     final state = ref.watch(workBrowseProvider);
@@ -107,12 +129,22 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
     );
   }
 
-  void _handleWorkSelected(BuildContext context, String workId) {
-    Navigator.pushNamed(
+  void _handleWorkSelected(BuildContext context, String workId) async {
+    // 导航到详情页并等待结果
+    final result = await Navigator.pushNamed(
       context,
       AppRoutes.workDetail,
       arguments: workId,
     );
+
+    // 如果返回值为true（表示作品已删除），则刷新列表
+    if (result == true && mounted) {
+      ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
+    }
+  }
+
+  Future<void> _loadWorks() async {
+    await ref.read(workBrowseProvider.notifier).loadWorks();
   }
 
   Future<void> _showImportDialog(BuildContext context) async {

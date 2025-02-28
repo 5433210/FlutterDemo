@@ -211,7 +211,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('作品已删除')),
           );
-          Navigator.of(context).pop(); // 返回上一页
+          // 返回true表示已删除作品，需要刷新列表
+          Navigator.of(context).pop(true);
         }
       } catch (e, stack) {
         AppLogger.error(

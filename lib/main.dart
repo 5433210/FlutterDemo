@@ -335,7 +335,8 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
             if (settings.name == AppRoutes.workDetail &&
                 settings.arguments != null) {
               final workId = settings.arguments as String;
-              return MaterialPageRoute(
+              return MaterialPageRoute<bool>(
+                // 指定返回值类型为bool
                 builder: (context) => WorkDetailPage(workId: workId),
               );
             }
@@ -343,6 +344,15 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
             return MaterialPageRoute(
               builder: (context) => const WorkBrowsePage(),
             );
+          },
+          onPopPage: (route, result) {
+            // 处理从详情页返回的情况
+            if (route.settings.name == AppRoutes.workDetail && result == true) {
+              // 如果result为true，表示作品已被删除，刷新作品列表
+              final container = ProviderScope.containerOf(context);
+              container.read(workBrowseProvider.notifier).loadWorks();
+            }
+            return route.didPop(result);
           },
         );
       case 1:
