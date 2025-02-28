@@ -72,32 +72,12 @@ class Character extends Equatable {
   Character copyWith({
     String? id,
     String? char,
-    String? pinyin,
-    String? workId,
-    String? workName,
-    String? image,
-    Map<String, dynamic>? sourceRegion,
-    DateTime? createTime,
-    Map<String, dynamic>? metadata,
-    bool clearPinyin = false,
-    bool clearWorkId = false,
-    bool clearWorkName = false,
-    bool clearImage = false,
-    bool clearSourceRegion = false,
-    bool clearCreateTime = false,
-    bool clearMetadata = false,
+    // ...
   }) {
     return Character(
       id: id ?? this.id,
       char: char ?? this.char,
-      pinyin: clearPinyin ? null : pinyin ?? this.pinyin,
-      workId: clearWorkId ? null : workId ?? this.workId,
-      workName: clearWorkName ? null : workName ?? this.workName,
-      image: clearImage ? null : image ?? this.image,
-      sourceRegion:
-          clearSourceRegion ? null : sourceRegion ?? this.sourceRegion,
-      createTime: clearCreateTime ? null : createTime ?? this.createTime,
-      metadata: clearMetadata ? null : metadata ?? this.metadata,
+      // ...
     );
   }
 

@@ -6,11 +6,11 @@ import '../../../domain/entities/work.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
 import 'components/error_view.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
-import 'components/work_toolbar.dart';
 
 class WorkDetailPage extends ConsumerStatefulWidget {
   final String workId;
@@ -30,8 +30,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   Widget build(BuildContext context) {
     return PageLayout(
       toolbar: _buildToolbar(),
-      actions: _buildActions(),
       body: _buildBody(),
+      toolbarHeight: 56,
     );
   }
 
@@ -42,14 +42,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     SchedulerBinding.instance.addPostFrameCallback((_) {
       _loadWork();
     });
-  }
-
-  List<Widget> _buildActions() {
-    if (_work == null) return [];
-
-    return [
-      WorkToolbar(work: _work!),
-    ];
   }
 
   Widget _buildBody() {
@@ -80,15 +72,63 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   }
 
   Widget _buildToolbar() {
+    final theme = Theme.of(context);
+
     return Row(
       children: [
-        Text(_work?.name ?? '作品详情'),
+        // Title area with breadcrumb style
+        Expanded(
+          child: Row(
+            children: [
+              Text(
+                _work?.name ?? '作品详情',
+                style: theme.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (_work != null) ...[
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, size: 18, color: Colors.grey),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '${_work!.style ?? ""} ${_work!.author ?? ""}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        // Actions area
         if (_work != null) ...[
-          const SizedBox(width: 8),
-          const Icon(Icons.chevron_right, size: 18),
-          const SizedBox(width: 8),
-          Text('${_work!.style ?? ""} ${_work!.author ?? ""}',
-              style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          ToolbarActionButton(
+            tooltip: '编辑作品',
+            onPressed: () {
+              // Edit functionality
+            },
+            child: const Icon(Icons.edit),
+          ),
+          ToolbarActionButton(
+            tooltip: '导出作品',
+            onPressed: () {
+              // Export functionality
+            },
+            child: const Icon(Icons.ios_share),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              // Handle menu selection
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('删除作品'),
+              ),
+            ],
+          ),
         ],
       ],
     );

@@ -7,6 +7,7 @@ import '../../../domain/entities/character.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character_detail_provider.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
 
 class CharacterDetailPage extends ConsumerStatefulWidget {
@@ -33,12 +34,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
   @override
   Widget build(BuildContext context) {
     return PageLayout(
-      showBackButton: true,
-      onBackPressed: widget.onBack,
-      toolbar: _character != null
-          ? Text('字形详情: ${_character!.char}')
-          : const Text('字形详情'),
-      actions: _buildActions(),
+      toolbar: _buildToolbar(),
       body: _buildBody(),
     );
   }
@@ -54,8 +50,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     if (_character == null) return [];
 
     return [
-      IconButton(
-        icon: const Icon(Icons.edit),
+      ToolbarActionButton(
         tooltip: '编辑字形',
         onPressed: () {
           // Todo: 实现编辑字形功能
@@ -63,6 +58,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
             const SnackBar(content: Text('编辑功能尚未实现')),
           );
         },
+        child: const Icon(Icons.edit),
       ),
       PopupMenuButton<String>(
         icon: const Icon(Icons.more_vert),
@@ -252,6 +248,74 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        // Title area
+        Expanded(
+          child: _character != null
+              ? Row(
+                  children: [
+                    Text(
+                      '字形详情',
+                      style: theme.textTheme.titleLarge,
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        _character!.char,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Text('字形详情', style: theme.textTheme.titleLarge),
+        ),
+
+        // Actions
+        if (_character != null) ...[
+          ToolbarActionButton(
+            tooltip: '编辑字形',
+            onPressed: () {
+              // Todo: 实现编辑字形功能
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('编辑功能尚未实现')),
+              );
+            },
+            child: const Icon(Icons.edit),
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'delete') {
+                _confirmDelete();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('删除字形'),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 

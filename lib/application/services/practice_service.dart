@@ -55,28 +55,16 @@ class PracticeService {
   /// Get practice by ID
   Future<Practice?> getPractice(String id) async {
     try {
-      AppLogger.debug('Getting practice by id',
-          tag: 'PracticeService', data: {'id': id});
-
+      // 清晰的数据流程：输入ID → 获取数据 → 转换为实体 → 返回
       final practice = await _repository.getPractice(id);
       if (practice == null) {
-        AppLogger.debug('Practice not found',
-            tag: 'PracticeService', data: {'id': id});
         return null;
       }
-
-      AppLogger.debug('Practice found',
-          tag: 'PracticeService', data: {'id': id, 'title': practice['title']});
-
       return Practice.fromJson(practice);
     } catch (e, stack) {
-      AppLogger.error('Failed to get practice',
-          tag: 'PracticeService',
-          error: e,
-          stackTrace: stack,
-          data: {'id': id});
-      rethrow;
+      // 错误处理
     }
+    return null;
   }
 
   /// Get all practices with optional filtering

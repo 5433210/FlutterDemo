@@ -46,9 +46,12 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage> {
             child: Row(
               children: [
                 if (state.isSidebarOpen)
-                  WorkFilterPanel(
-                    filter: state.filter,
-                    onFilterChanged: viewModel.updateFilter,
+                  SizedBox(
+                    width: 300,
+                    child: WorkFilterPanel(
+                      filter: state.filter,
+                      onFilterChanged: viewModel.updateFilter,
+                    ),
                   ),
                 SidebarToggle(
                   isOpen: state.isSidebarOpen,
