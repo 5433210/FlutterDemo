@@ -8,8 +8,6 @@ import '../../../domain/enums/work_tool.dart';
 import '../../../domain/value_objects/work/work_entity.dart';
 import '../../../presentation/providers/work_detail_provider.dart';
 import '../../../theme/app_sizes.dart';
-import '../../widgets/inputs/date_input_field.dart';
-import '../../widgets/inputs/dropdown_field.dart';
 import '../common/section_title.dart';
 
 class WorkDetailEditForm extends ConsumerStatefulWidget {
@@ -59,74 +57,57 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
             const SectionTitle(title: '基本信息'),
             const SizedBox(height: AppSizes.spacingMedium),
 
-            // 作品名称（必填）
-            TextFormField(
+            // 简约风格的作品名称输入
+            _buildSimpleFormField(
+              label: '作品名称',
               controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: '作品名称',
-                hintText: '请输入作品名称',
-              ),
-              textInputAction: TextInputAction.next,
               validator: _validateName,
-              onChanged: (_) => _formModified = true,
+              hintText: '请输入作品名称',
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
+            const SizedBox(height: AppSizes.spacingSmall),
 
-            // 作者
-            TextFormField(
+            // 简约风格的作者输入
+            _buildSimpleFormField(
+              label: '作者',
               controller: _authorController,
-              decoration: const InputDecoration(
-                labelText: '作者',
-                hintText: '请输入作者名称',
-              ),
-              textInputAction: TextInputAction.next,
-              onChanged: (_) => _formModified = true,
+              hintText: '请输入作者名称',
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
+            const SizedBox(height: AppSizes.spacingSmall),
 
-            // 风格下拉菜单
-            DropdownField<WorkStyle>(
+            // 简约风格的风格选择
+            _buildSimpleDropdownField(
               label: '作品风格',
               value: _selectedStyle,
-              items: WorkStyle.values
-                  .map((style) => DropdownMenuItem(
-                        value: style,
-                        child: Text(style.label),
-                      ))
-                  .toList(),
-              onChanged: (style) {
+              items: WorkStyle.values,
+              getLabel: (style) => style.label,
+              onChanged: (value) {
                 setState(() {
-                  _selectedStyle = style;
+                  _selectedStyle = value;
                   _formModified = true;
                 });
               },
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
+            const SizedBox(height: AppSizes.spacingSmall),
 
-            // 工具下拉菜单
-            DropdownField<WorkTool>(
+            // 简约风格的工具选择
+            _buildSimpleDropdownField(
               label: '使用工具',
               value: _selectedTool,
-              items: WorkTool.values
-                  .map((tool) => DropdownMenuItem(
-                        value: tool,
-                        child: Text(tool.label),
-                      ))
-                  .toList(),
-              onChanged: (tool) {
+              items: WorkTool.values,
+              getLabel: (tool) => tool.label,
+              onChanged: (value) {
                 setState(() {
-                  _selectedTool = tool;
+                  _selectedTool = value;
                   _formModified = true;
                 });
               },
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
+            const SizedBox(height: AppSizes.spacingSmall),
 
-            // 创建日期
-            DateInputField(
+            // 简约风格的日期选择
+            _buildSimpleDateField(
               label: '创作日期',
               value: _selectedDate,
-              format: DateFormat('yyyy-MM-dd'),
               onChanged: (date) {
                 setState(() {
                   _selectedDate = date;
@@ -134,19 +115,14 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
                 });
               },
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
+            const SizedBox(height: AppSizes.spacingSmall),
 
-            // 备注（多行文本）
-            TextFormField(
+            // 简约风格的备注输入
+            _buildSimpleFormField(
+              label: '备注',
               controller: _remarkController,
-              decoration: const InputDecoration(
-                labelText: '备注',
-                hintText: '可选的备注信息',
-                alignLabelWithHint: true,
-              ),
+              hintText: '可选的备注信息',
               maxLines: 3,
-              textInputAction: TextInputAction.newline,
-              onChanged: (_) => _formModified = true,
             ),
 
             const SizedBox(height: AppSizes.spacingLarge),
@@ -192,6 +168,154 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
   void initState() {
     super.initState();
     _initFormValues();
+  }
+
+  // 简约日期选择
+  Widget _buildSimpleDateField({
+    required String label,
+    required DateTime? value,
+    required ValueChanged<DateTime?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        InkWell(
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: value ?? DateTime.now(),
+              firstDate: DateTime(1500),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              onChanged(date);
+            }
+          },
+          child: InputDecorator(
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(4),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(4),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              suffixIcon: const Icon(Icons.calendar_today, size: 18),
+            ),
+            child: Text(
+              value != null ? DateFormat('yyyy-MM-dd').format(value) : '未设置',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 简约下拉选择
+  Widget _buildSimpleDropdownField<T>({
+    required String label,
+    required T? value,
+    required List<T> items,
+    required String Function(T) getLabel,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        DropdownButtonFormField<T>(
+          value: value,
+          items: items
+              .map((item) => DropdownMenuItem<T>(
+                    value: item,
+                    child: Text(getLabel(item)),
+                  ))
+              .toList(),
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 简约表单字段
+  Widget _buildSimpleFormField({
+    required String label,
+    required TextEditingController controller,
+    String? hintText,
+    FormFieldValidator<String>? validator,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hintText,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(4),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+          onChanged: (_) => _formModified = true,
+        ),
+      ],
+    );
   }
 
   // 初始化表单值

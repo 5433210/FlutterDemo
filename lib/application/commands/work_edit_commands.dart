@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
+
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/value_objects/work/work_entity.dart';
 import '../../domain/value_objects/work/work_image.dart';
-import '../services/work/work_image_service.dart';
+import '../services/image_service.dart';
 
 /// 命令：添加图片
 class AddImageCommand implements WorkEditCommand {
@@ -162,11 +164,16 @@ class ReorderImagesCommand implements WorkEditCommand {
 class RotateImageCommand implements WorkEditCommand {
   final int imageIndex;
   final int angle; // 角度，通常是90的倍数
-  final WorkImageService imageService; // 添加图片服务依赖
+  final ImageService imageService; // 添加图片服务依赖
 
   // 保存原始和旋转后的文件信息，用于撤销
   String? _originalPath;
   String? _rotatedPath;
+
+  // 保存旧图片和新图片用于执行和撤销
+  WorkImage? _oldImage;
+
+  WorkImage? _newImage;
 
   RotateImageCommand({
     required this.imageIndex,
@@ -179,75 +186,90 @@ class RotateImageCommand implements WorkEditCommand {
 
   @override
   Future<WorkEntity> execute(WorkEntity work) async {
-    final List<WorkImage> updatedImages = List.from(work.images);
-
-    if (imageIndex < 0 || imageIndex >= updatedImages.length) {
-      return work; // 索引无效，不做更改
+    // 确保imageIndex有效
+    if (imageIndex < 0 || imageIndex >= work.images.length) {
+      throw ArgumentError('无效的图片索引: $imageIndex');
     }
 
-    // 获取当前图片
-    final currentImage = updatedImages[imageIndex];
-    final importedPath = currentImage.imported?.path;
+    // 保存旧图片信息用于撤销
+    _oldImage = work.images[imageIndex];
 
-    if (importedPath == null) {
-      return work; // 没有图片路径，不做更改
+    // 确保图片和服务都不为空
+    if (_oldImage?.imported?.path == null) {
+      throw StateError('图片路径无效');
     }
 
-    // 保存原始路径，用于撤销
-    _originalPath = importedPath;
+    try {
+      // 1. 获取原始图片的文件
+      final originalFile = File(_oldImage!.imported!.path);
+      if (!await originalFile.exists()) {
+        throw FileSystemException('原始图片不存在', _oldImage!.imported!.path);
+      }
 
-    // 执行实际的旋转操作
-    final rotatedFile = await imageService.rotateImage(
-      File(importedPath),
-      angle,
-    );
+      // 2. 旋转图片
+      final rotatedFile = await imageService.rotateImage(originalFile, angle,
+          preserveSize: true);
 
-    // 保存旋转后的路径
-    _rotatedPath = rotatedFile.path;
+      // 3. 确保旋转后的图片被写入到原路径 (覆盖原文件)
+      await rotatedFile.copy(_oldImage!.imported!.path);
 
-    // 更新图片信息
-    final updatedImage = currentImage.copyWith(
-      imported: ImageDetail(
-        path: rotatedFile.path,
-        width: currentImage.imported?.height ?? 0, // 旋转90度时宽高互换
-        height: currentImage.imported?.width ?? 0,
-        format: currentImage.imported?.format ?? '',
-        size: currentImage.imported?.size ?? 0,
-      ),
-    );
+      // 4. 重新生成缩略图
+      final thumbnailFile = await imageService.createTempThumbnail(
+        rotatedFile,
+        width: 120,
+        height: 120,
+      );
 
-    updatedImages[imageIndex] = updatedImage;
+      if (_oldImage!.thumbnail != null) {
+        // 覆盖原有缩略图
+        await thumbnailFile.copy(_oldImage!.thumbnail!.path);
+      }
 
-    // 返回更新后的 WorkEntity
-    return work.copyWith(
-      images: updatedImages,
-      updateTime: DateTime.now(),
-    );
+      // Get image dimensions from service instead of using decodeImageFromList directly
+      final imageDimensions =
+          await imageService.getImageDimensions(rotatedFile);
+
+      // 6. 创建新的 WorkImage 对象
+      _newImage = WorkImage(
+        index: _oldImage!.index,
+        imported: ImageDetail(
+          path: _oldImage!.imported!.path, // 保持原路径
+          width: imageDimensions.width,
+          height: imageDimensions.height,
+          size: await rotatedFile.length(),
+          format: _oldImage!.imported!.format, // 添加必需的format参数
+        ),
+        thumbnail: _oldImage!.thumbnail, // 保持原缩略图路径
+        original: _oldImage!.original,
+      );
+
+      // 7. 更新图片列表
+      final updatedImages = List<WorkImage>.from(work.images);
+      updatedImages[imageIndex] = _newImage!;
+      return work.copyWith(
+        images: updatedImages,
+        updateTime: DateTime.now(),
+      );
+    } catch (e, stack) {
+      // Import logger if needed: import '../../utils/app_logger.dart';
+      debugPrint('旋转图片失败: $e\n$stack');
+      throw Exception('旋转图片失败: $e');
+    }
   }
 
   @override
   Future<WorkEntity> undo(WorkEntity work) async {
     final List<WorkImage> updatedImages = List.from(work.images);
-
     if (imageIndex < 0 ||
         imageIndex >= updatedImages.length ||
-        _originalPath == null) {
-      return work; // 索引无效或无原始路径，不做更改
+        _oldImage == null) {
+      return work; // 索引无效或无原始图片，不做更改
     }
 
     // 获取当前图片
     final currentImage = updatedImages[imageIndex];
-
     // 恢复原始图片
-    final updatedImage = currentImage.copyWith(
-      imported: ImageDetail(
-        path: _originalPath!,
-        width: currentImage.imported?.height ?? 0, // 反向旋转，宽高再次互换
-        height: currentImage.imported?.width ?? 0,
-        format: currentImage.imported?.format ?? '',
-        size: currentImage.imported?.size ?? 0,
-      ),
-    );
+    final updatedImage = _oldImage!;
 
     updatedImages[imageIndex] = updatedImage;
 

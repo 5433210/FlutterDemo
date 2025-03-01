@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/commands/work_tag_commands.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../domain/value_objects/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -13,8 +15,9 @@ import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/dialogs/command_history_dialog.dart'; // 确保添加此导入
-import '../../widgets/forms/work_detail_edit_form.dart';
+import '../../widgets/forms/work_detail_edit_form.dart' as forms;
 import '../../widgets/page_layout.dart';
+import '../../widgets/tag_editor.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
 import 'components/work_tabs.dart';
@@ -147,6 +150,40 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         : _buildViewModeContent(context, work);
   }
 
+  // 字形标注面板
+  Widget _buildCharAnnotationPanel(WorkEntity work) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('集字信息', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 16),
+
+        // 显示已提取字形的统计
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '已提取字形: ${work.collectedChars.length}个',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                if (work.collectedChars.isEmpty)
+                  const Text('暂无提取的字形，可点击上方"提取字形"按钮进行提取')
+                else
+                  const Text('点击上方"提取字形"按钮查看详情'),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 字形标注标签页
   Widget _buildCharAnnotationTab(WorkEntity work) {
     // 这里实现字形标注标签页
@@ -156,37 +193,59 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   /// 构建编辑模式的内容
   Widget _buildEditModeContent(
       BuildContext context, WorkDetailState state, WorkEntity work) {
-    // 在编辑模式下，总是显示标签页
-    final tabIndex = ref.watch(workDetailTabIndexProvider);
-
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 标签页选择器
-        WorkTabs(
-          selectedIndex: tabIndex,
-          onTabSelected: (index) {
-            ref.read(workDetailTabIndexProvider.notifier).state = index;
-          },
+        // 左侧图片预览 - 占据较大空间
+        Expanded(
+          flex: 7,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.spacingMedium),
+            child: WorkImagePreview(
+              work: work,
+              isEditing: true,
+            ),
+          ),
         ),
 
-        // 标签页内容
-        Expanded(
-          child: IndexedStack(
-            index: tabIndex,
+        // 右侧面板 - 包含标签页和表单
+        SizedBox(
+          width: 350, // 保持固定宽度
+          child: Column(
             children: [
-              // 基本信息页面 - 使用编辑表单
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.spacingMedium),
-                  child: WorkDetailEditForm(work: work),
-                ),
+              // 标签选择器 - 移到右侧面板顶部
+              WorkTabs(
+                selectedIndex: ref.watch(workDetailTabIndexProvider),
+                onTabSelected: (index) {
+                  ref.read(workDetailTabIndexProvider.notifier).state = index;
+                },
               ),
 
-              // 图片管理页面
-              _buildImageManagementTab(work),
+              // 内容区域 - 根据选中的标签显示不同内容
+              Expanded(
+                child: IndexedStack(
+                  index: ref.watch(workDetailTabIndexProvider),
+                  children: [
+                    // 基本信息编辑表单
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                      child: forms.WorkDetailEditForm(work: work),
+                    ),
 
-              // 字形标注页面
-              _buildCharAnnotationTab(work),
+                    // 标签编辑面板
+                    Padding(
+                      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                      child: _buildTagsEditPanel(context, state, work),
+                    ),
+
+                    // 字形标注面板
+                    Padding(
+                      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                      child: _buildCharAnnotationPanel(work),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -294,6 +353,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           ),
 
+          // 添加命令历史按钮
+          if (state.commandHistory != null && state.commandHistory!.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.history),
+              tooltip: '查看命令历史',
+              onPressed: () => _showCommandHistoryDialog(state),
+            ),
+
           const SizedBox(width: 8),
           const VerticalDivider(width: 1),
           const SizedBox(width: 8),
@@ -326,6 +393,51 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     return Center(child: Text('图片管理（编辑模式）- ${work.images.length} 张图片'));
   }
 
+  // 实现标签管理面板
+  Widget _buildTagsEditPanel(
+      BuildContext context, WorkDetailState state, WorkEntity work) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('标签管理', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 16),
+        TagEditor(
+          tags: work.metadata?.tags ?? [],
+          suggestedTags: const ['行书', '楷书', '隶书', '草书', '真迹', '拓片', '碑帖', '字帖'],
+          onTagsChanged: (updatedTags) {
+            // 找出新添加的标签
+            for (final tag in updatedTags) {
+              if (!(work.metadata?.tags ?? []).contains(tag)) {
+                ref
+                    .read(workDetailProvider.notifier)
+                    .executeCommand(AddTagCommand(tag));
+              }
+            }
+
+            // 找出删除的标签
+            for (final tag in work.metadata?.tags ?? []) {
+              if (!updatedTags.contains(tag)) {
+                ref
+                    .read(workDetailProvider.notifier)
+                    .executeCommand(RemoveTagCommand(tag));
+              }
+            }
+          },
+          chipColor: theme.colorScheme.primaryContainer,
+          textColor: theme.colorScheme.onPrimaryContainer,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          '提示: 标签可用于快速筛选和归类作品',
+          style: TextStyle(
+              fontSize: 12, fontStyle: FontStyle.italic, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
   /// 构建查看模式的内容
   Widget _buildViewModeContent(BuildContext context, WorkEntity work) {
     return Row(
@@ -334,7 +446,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         // 左侧图片预览区域
         Expanded(
           flex: 7,
-          child: WorkImagePreview(work: work),
+          child: WorkImagePreview(
+            work: work,
+            isEditing: false, // 标记为非编辑模式
+          ),
         ),
 
         // 使用通用侧边栏切换按钮，设置alignRight=true
@@ -658,7 +773,28 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   }
 
   /// 处理键盘快捷键
-  void _handleKeyboardShortcuts(KeyEvent event, WorkDetailState state) {}
+  void _handleKeyboardShortcuts(KeyEvent event, WorkDetailState state) {
+    // 实现键盘快捷键处理
+    // 例如: Ctrl+Z 撤销，Ctrl+Y 重做等
+    if (state.isEditing) {
+      // 检测常见的快捷键组合
+      final isCtrlPressed = HardwareKeyboard.instance.isControlPressed ||
+          HardwareKeyboard.instance.isMetaPressed;
+
+      if (isCtrlPressed) {
+        if (event.logicalKey.keyLabel == 'z' ||
+            event.logicalKey.keyLabel == 'Z') {
+          _handleUndo(state);
+        } else if (event.logicalKey.keyLabel == 'y' ||
+            event.logicalKey.keyLabel == 'Y') {
+          _handleRedo(state);
+        } else if (event.logicalKey.keyLabel == 's' ||
+            event.logicalKey.keyLabel == 'S') {
+          _handleSave(state);
+        }
+      }
+    }
+  }
 
   /// 处理重做操作
   void _handleRedo(WorkDetailState state) {

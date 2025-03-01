@@ -16,21 +16,15 @@ class WorkTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        border: Border(
-          bottom: BorderSide(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
-            width: 1.0,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          _buildTab(context, 0, '基本信息', Icons.info_outline),
-          _buildTab(context, 1, '图片管理', Icons.image),
-          _buildTab(context, 2, '字形标注', Icons.text_fields),
+    return DefaultTabController(
+      length: 3,
+      initialIndex: selectedIndex,
+      child: TabBar(
+        onTap: onTabSelected,
+        tabs: const [
+          Tab(text: '基本信息'),
+          Tab(text: '标签管理'), // 原为"图片管理"
+          Tab(text: '集字信息'), // 原为"字形标注"
         ],
       ),
     );

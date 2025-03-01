@@ -6,6 +6,8 @@ import '../../infrastructure/providers/repository_providers.dart';
 import '../../infrastructure/services/state_restoration_service.dart';
 import '../services/character/character_service.dart';
 import '../services/practice/practice_service.dart';
+import '../services/work/work_image_service.dart';
+import '../services/work/work_image_service_impl.dart';
 import '../services/work/work_service.dart';
 
 final characterServiceProvider = Provider<CharacterService>((ref) {
@@ -34,6 +36,12 @@ final stateRestorationServiceProvider =
     Provider<StateRestorationService>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return StateRestorationService(prefs);
+});
+
+// 添加 WorkImageService 提供器
+final workImageServiceProvider = Provider<WorkImageService>((ref) {
+  final imageService = ref.watch(imageServiceProvider);
+  return WorkImageServiceImpl(imageService);
 });
 
 final workServiceProvider = Provider<WorkService>((ref) {

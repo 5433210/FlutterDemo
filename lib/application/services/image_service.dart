@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:crypto/crypto.dart' as crypto;
+import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
@@ -11,12 +14,18 @@ import '../../infrastructure/logging/logger.dart';
 import '../../utils/path_helper.dart';
 import '../config/app_config.dart';
 
+class ImageDimension {
+  final int width;
+  final int height;
+
+  ImageDimension({required this.width, required this.height});
+}
+
 class ImageService {
   static const String _tempImageDir = 'temp_images';
 
   static const String _backupImageDir = 'backup_images';
   ImageService();
-
   Future<void> backupOriginal(File file) async {
     try {
       AppLogger.info('备份原始图片文件',
@@ -120,29 +129,69 @@ class ImageService {
     }
   }
 
-  Future<File> createTempThumbnail(File imageFile) async {
+  Future<File> createTempThumbnail(File imageFile,
+      {int width = 120, int height = 120}) async {
     try {
-      // 读取图片
-      final bytes = await imageFile.readAsBytes();
-      final image = img.decodeImage(bytes);
-      if (image == null) {
-        throw Exception('无法解码图片');
-      }
+      // 创建一个临时文件
+      final thumbnailPath = await getTemporaryFilePath(imageFile.path,
+          suffix: 'thumbnail', extension: '.png');
+      final thumbnailFile = File(thumbnailPath);
 
-      // 创建缩略图
-      final thumbnail = _createThumbnail(image);
+      // 读取原始图片并调整大小
+      final img = await decodeImageFromList(await imageFile.readAsBytes());
+      final thumbnail = await _resizeImage(img, width, height);
 
-      // 保存到临时文件
-      final thumbBytes = img.encodeJpg(thumbnail, quality: 80);
-      final thumbnailFile = await createTempFileFromBytes(thumbBytes, 'jpg');
-
+      // 将缩略图写入文件
+      await thumbnailFile.writeAsBytes(thumbnail);
       return thumbnailFile;
     } catch (e, stack) {
-      AppLogger.error('创建临时缩略图失败',
+      AppLogger.error('创建缩略图失败',
+          tag: 'ImageService', error: e, stackTrace: stack);
+      throw Exception('创建缩略图失败: $e');
+    }
+  }
+
+  /// Gets the dimensions of an image file
+  Future<ImageDimension> getImageDimensions(File imageFile) async {
+    final bytes = await imageFile.readAsBytes();
+    final image = await decodeImageFromList(bytes);
+    return ImageDimension(width: image.width, height: image.height);
+  }
+
+  Future<String> getTemporaryFilePath(
+    String originalPath, {
+    String? suffix,
+    String? extension,
+  }) async {
+    try {
+      // 获取临时目录
+      final tempDir = await _getTempImageDir();
+
+      // 生成唯一文件名
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final randomId = const Uuid().v4().substring(0, 8);
+      final fileExtension = extension ?? path.extension(originalPath);
+      final baseName = path.basenameWithoutExtension(originalPath);
+
+      // 构建文件名
+      String fileName = '${baseName}_${timestamp}_$randomId';
+      if (suffix != null && suffix.isNotEmpty) {
+        fileName += '_$suffix';
+      }
+      fileName += fileExtension;
+
+      final filePath = path.join(tempDir.path, fileName);
+
+      // 确保目录存在
+      await PathHelper.ensureDirectoryExists(path.dirname(filePath));
+
+      return filePath;
+    } catch (e, stack) {
+      AppLogger.error('生成临时文件路径失败',
           tag: 'ImageService',
           error: e,
           stackTrace: stack,
-          data: {'imagePath': imageFile.path});
+          data: {'originalPath': originalPath});
       rethrow;
     }
   }
@@ -667,6 +716,41 @@ class ImageService {
     }
 
     return image;
+  }
+
+  Future<Uint8List> _resizeImage(
+      ui.Image image, int targetWidth, int targetHeight) async {
+    // 计算调整后的尺寸，保持原始宽高比
+    final double aspectRatio = image.width / image.height;
+    int width = targetWidth;
+    int height = targetHeight;
+
+    if (aspectRatio > 1) {
+      // 宽度大于高度的图片
+      height = (width / aspectRatio).round();
+    } else {
+      // 高度大于宽度的图片
+      width = (height * aspectRatio).round();
+    }
+
+    // 创建一个画布并绘制调整大小后的图像
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(recorder);
+    final Paint paint = Paint()..filterQuality = FilterQuality.medium;
+
+    canvas.drawImageRect(
+      image,
+      Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
+      Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()),
+      paint,
+    );
+
+    final ui.Picture picture = recorder.endRecording();
+    final ui.Image resized = await picture.toImage(width, height);
+    final ByteData? byteData =
+        await resized.toByteData(format: ui.ImageByteFormat.png);
+
+    return byteData?.buffer.asUint8List() ?? Uint8List(0);
   }
 
   Future<void> _safelyCopyFile(File source, String destinationPath) async {

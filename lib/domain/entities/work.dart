@@ -13,7 +13,7 @@ class Work {
   DateTime? createTime;
   DateTime? updateTime;
   String? remark; // 添加备注字段
-  Map<String, dynamic>? metadata;
+  dynamic metadata; // 修改 metadata 定义为任意类型
 
   Work({
     this.id,
@@ -40,9 +40,7 @@ class Work {
         createTime: _parseDateTime(json['createTime']) ?? DateTime.now(),
         updateTime: _parseDateTime(json['updateTime']) ?? DateTime.now(),
         remark: json['remark'] as String?, // 从 JSON 解析
-        metadata: json['metadata'] != null
-            ? jsonDecode(json['metadata'] as String) as Map<String, dynamic>
-            : null,
+        metadata: json['metadata'], // 不做类型转换
       );
 
   factory Work.fromMap(Map<String, dynamic> map) {
@@ -57,9 +55,7 @@ class Work {
       createTime: _parseDateTime(map['createTime']) ?? DateTime.now(),
       updateTime: _parseDateTime(map['updateTime']) ?? DateTime.now(),
       remark: map['remark'] as String?, // 从 map 解析
-      metadata: map['metadata'] != null
-          ? jsonDecode(map['metadata'] as String) as Map<String, dynamic>?
-          : null,
+      metadata: map['metadata'], // 不做类型转换
     );
   }
 
@@ -74,7 +70,7 @@ class Work {
     DateTime? createTime,
     DateTime? updateTime,
     String? remark, // 添加到 copyWith
-    Map<String, dynamic>? metadata,
+    dynamic metadata,
   }) {
     return Work(
       id: id ?? this.id,
@@ -102,9 +98,7 @@ class Work {
         'createTime': createTime?.toIso8601String(),
         'updateTime': updateTime?.toIso8601String(),
         'remark': remark, // 加入 JSON 输出
-        'metadata': metadata != null
-            ? jsonEncode(metadata)
-            : null, // Serialize metadata
+        'metadata': metadata, // 直接使用原始值
       };
 
   Map<String, dynamic> toMap() {
@@ -119,7 +113,7 @@ class Work {
       'createTime': createTime?.toIso8601String(),
       'updateTime': updateTime?.toIso8601String(),
       'remark': remark, // 加入 map 输出
-      'metadata': metadata != null ? jsonEncode(metadata) : null,
+      'metadata': metadata, // 直接使用原始值
     };
   }
 
@@ -135,5 +129,29 @@ class Work {
       debugPrint('Failed to parse date: $value');
       return null;
     }
+  }
+
+  // 添加安全解析元数据的静态方法
+  static Map<String, dynamic>? _parseMetadata(dynamic value) {
+    if (value == null) return null;
+
+    try {
+      if (value is String) {
+        // 字符串情况：尝试解析 JSON
+        try {
+          return jsonDecode(value) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('Failed to parse metadata string: $e');
+          return {}; // 返回空 Map 而不是 null
+        }
+      } else if (value is Map) {
+        // 已经是 Map 的情况
+        return Map<String, dynamic>.from(value);
+      }
+    } catch (e) {
+      debugPrint('Error handling metadata: $e');
+    }
+
+    return {}; // 返回空 Map 作为默认值
   }
 }

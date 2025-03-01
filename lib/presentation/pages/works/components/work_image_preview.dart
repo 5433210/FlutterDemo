@@ -1,182 +1,494 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/commands/work_edit_commands.dart';
+import '../../../../application/providers/service_providers.dart';
 import '../../../../domain/value_objects/work/work_entity.dart';
 import '../../../../domain/value_objects/work/work_image.dart';
-import '../../../../infrastructure/logging/logger.dart';
-import '../../../../theme/app_sizes.dart';
 import '../../../providers/work_detail_provider.dart';
 
-class WorkImagePreview extends ConsumerStatefulWidget {
+// 创建一个图片索引提供者
+final selectedImageIndexProvider = StateProvider<int>((ref) => 0);
+
+// 普通的图片列表组件
+class ImageList extends StatelessWidget {
+  final List<WorkImage> images;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  const ImageList({
+    super.key,
+    required this.images,
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ScrollController scrollController = ScrollController();
+
+    return SizedBox(
+      height: 120, // 高度保持不变
+      child: Listener(
+        // 使用 Listener 监听鼠标事件，这比 NotificationListener 更直接
+        onPointerSignal: (signal) {
+          if (signal is PointerScrollEvent) {
+            // 将垂直滚动转换为水平滚动
+            if (scrollController.hasClients) {
+              final double scrollAmount = signal.scrollDelta.dy;
+              final double target =
+                  scrollController.offset + (scrollAmount * 3.0);
+
+              // 使用 animateTo 平滑滚动，比 jumpTo 体验更好
+              scrollController.animateTo(
+                target.clamp(0.0, scrollController.position.maxScrollExtent),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+              );
+            }
+          }
+        },
+        child: ListView.builder(
+          controller: scrollController, // 使用我们创建的控制器
+          scrollDirection: Axis.horizontal,
+          itemCount: images.length,
+          itemBuilder: (context, index) {
+            final image = images[index];
+            final isSelected = index == selectedIndex;
+
+            // 计算图片宽高比
+            final double aspectRatio = image.imported != null
+                ? image.imported!.width / image.imported!.height
+                : 1.0; // 默认为1:1
+
+            // 固定高度，根据比例计算宽度
+            final double fixedHeight = 100.0;
+            final double calculatedWidth = fixedHeight * aspectRatio;
+
+            // 限制宽度范围，避免过宽或过窄
+            final double constrainedWidth =
+                calculatedWidth.clamp(fixedHeight * 0.5, fixedHeight * 2.0);
+
+            return Stack(
+              children: [
+                // 缩略图容器 - 使用计算的宽度
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  width: constrainedWidth, // 使用计算后的宽度
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: InkWell(
+                    onTap: () => onSelect(index),
+                    child:
+                        image.thumbnail != null && image.thumbnail?.path != null
+                            ? Image.file(
+                                File(image.thumbnail!.path),
+                                width: constrainedWidth,
+                                height: fixedHeight,
+                                fit: BoxFit.contain, // 使用contain而非cover，保持原图比例
+                                // 添加缓存打破参数，确保当路径相同但内容不同时能刷新显示
+                                cacheWidth: (constrainedWidth * 1.5).toInt(),
+                                cacheHeight: (fixedHeight * 1.5).toInt(),
+                                // 确保每次刷新时都重新加载图片，避免缓存问题
+                                key: ValueKey(
+                                    '${image.thumbnail!.path}?v=${DateTime.now().millisecondsSinceEpoch}'),
+                                errorBuilder: (context, error, stackTrace) {
+                                  // 处理图片加载错误
+                                  debugPrint('图片 $index 加载失败: $error');
+                                  return Container(
+                                    width: constrainedWidth,
+                                    height: fixedHeight,
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(Icons.broken_image,
+                                        color: Colors.red),
+                                  );
+                                },
+                              )
+                            : Container(
+                                width: constrainedWidth,
+                                height: fixedHeight,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.image_not_supported),
+                              ),
+                  ),
+                ),
+                // 添加序号标记
+                Positioned(
+                  left: 4,
+                  top: 4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// 修改ReorderableImageList类以确保拖拽功能正常工作
+class ReorderableImageList extends StatefulWidget {
+  // 保持现有参数不变
+  final List<WorkImage> images;
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+  final Function(int oldIndex, int newIndex) onReorder;
+
+  const ReorderableImageList({
+    super.key,
+    required this.images,
+    required this.selectedIndex,
+    required this.onSelect,
+    required this.onReorder,
+  });
+
+  @override
+  State<ReorderableImageList> createState() => _ReorderableImageListState();
+}
+
+class WorkImagePreview extends ConsumerWidget {
   final WorkEntity work;
+  final bool isEditing;
+  final bool fullscreen; // 新增参数，用于区分全屏模式和嵌入模式
 
   const WorkImagePreview({
     super.key,
     required this.work,
+    this.isEditing = false,
+    this.fullscreen = false,
   });
 
   @override
-  ConsumerState<WorkImagePreview> createState() => _WorkImagePreviewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(selectedImageIndexProvider);
+    final validImages =
+        work.images.where((img) => img.imported != null).toList();
 
-class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
-  double _scale = 1.0;
-  final TransformationController _transformController =
-      TransformationController();
-  int _currentImageIndex = 0;
-  final ScrollController _thumbnailScrollController = ScrollController();
-  final bool _isDragging = false;
-  final double _dragStartOffset = 0.0;
+    // 获取当前选中图片
+    final selectedImage = selectedIndex < validImages.length
+        ? validImages[selectedIndex]
+        : validImages.isNotEmpty
+            ? validImages[0]
+            : null;
 
-  @override
-  Widget build(BuildContext context) {
-    final imageCount = widget.work.images.length;
+    // 是否启用图片编辑功能 - 临时设置为false来屏蔽这些功能
+    const bool enableImageEditing = false;
 
-    // 监听当前图片索引
-    _currentImageIndex = ref.watch(currentWorkImageIndexProvider);
+    return Column(
+      children: [
+        // 主图片预览区域
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Stack(
+              fit: StackFit.expand, // 确保Stack填满容器
+              children: [
+                // 图片显示区域
+                if (selectedImage != null && selectedImage.imported != null)
+                  Positioned.fill(
+                    // 使用Positioned.fill占满整个空间
+                    child: InteractiveViewer(
+                      boundaryMargin: const EdgeInsets.all(20.0),
+                      minScale: 0.1,
+                      maxScale: 4.0,
+                      child: Center(
+                        // 保留Center以确保图片居中
+                        child: Image.file(
+                          File(selectedImage.imported!.path),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            debugPrint('主图片加载失败: $error');
+                            return const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.broken_image,
+                                      size: 64, color: Colors.red),
+                                  SizedBox(height: 16),
+                                  Text('图片加载失败',
+                                      style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const Center(child: Text('没有图片')),
 
-    return Card(
-      margin: const EdgeInsets.all(AppSizes.spacingMedium),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 图片预览区域
-          Expanded(
-            child: _buildImagePreview(),
-          ),
+                // 编辑模式下显示操作工具栏 - 只在enableImageEditing为true时显示
+                if (isEditing && selectedImage != null && enableImageEditing)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Card(
+                      elevation: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 添加图片按钮
+                            IconButton(
+                              icon: const Icon(Icons.add_photo_alternate),
+                              tooltip: '添加图片',
+                              onPressed: () => _addImage(context, ref),
+                            ),
 
-          // 页面导航区 - 缩略图行
-          if (imageCount > 0) _buildThumbnailStrip(imageCount),
+                            // 旋转图片按钮
+                            IconButton(
+                              icon: const Icon(Icons.rotate_90_degrees_cw),
+                              tooltip: '旋转图片',
+                              onPressed: selectedImage != null
+                                  ? () => _rotateImage(
+                                      ref, selectedImage, selectedIndex)
+                                  : null,
+                            ),
 
-          // 底部控制栏
-          if (imageCount > 0) _buildBottomControls(imageCount),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _transformController.dispose();
-    _thumbnailScrollController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _transformController.value = Matrix4.identity();
-  }
-
-  Widget _buildBottomControls(int totalImages) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.dividerColor.withOpacity(0.5),
+                            // 删除图片按钮
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: '删除图片',
+                              onPressed: selectedImage != null
+                                  ? () => _deleteImage(
+                                      ref, selectedImage, selectedIndex)
+                                  : null,
+                              color: Colors.red,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          // 缩放控制
-          Text('缩放: ${(_scale * 100).toInt()}%'),
-          const Spacer(),
 
-          // 重置缩放按钮
-          IconButton(
-            icon: const Icon(Icons.center_focus_strong, size: 20),
-            tooltip: '重置缩放',
-            onPressed: _resetZoom,
-          ),
+        const SizedBox(height: 16),
 
-          // 当前页码/总页数指示器
-          Text('${_currentImageIndex + 1} / $totalImages'),
-          const SizedBox(width: AppSizes.spacingMedium),
-
-          // 翻页按钮
-          IconButton(
-            icon: const Icon(Icons.navigate_before),
-            onPressed: _currentImageIndex > 0
-                ? () => _changePage(_currentImageIndex - 1)
-                : null,
-            tooltip: '上一页',
-          ),
-          IconButton(
-            icon: const Icon(Icons.navigate_next),
-            onPressed: _currentImageIndex < totalImages - 1
-                ? () => _changePage(_currentImageIndex + 1)
-                : null,
-            tooltip: '下一页',
-          ),
-        ],
-      ),
+        // 缩略图列表 - 无论编辑模式都使用普通ImageList
+        if (validImages.isNotEmpty)
+          ImageList(
+            images: validImages,
+            selectedIndex: selectedIndex,
+            onSelect: (index) {
+              ref.read(selectedImageIndexProvider.state).state = index;
+            },
+          )
+      ],
     );
   }
 
-  Widget _buildImagePreview() {
-    final currentImage = _getCurrentImage();
+  // 添加图片方法
+  Future<void> _addImage(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
 
-    if (currentImage == null) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    if (result != null &&
+        result.files.isNotEmpty &&
+        result.files.first.path != null) {
+      final file = File(result.files.first.path!);
+
+      // 获取图片服务
+      final imageService = ref.read(workImageServiceProvider);
+
+      // 显示加载状态
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const SimpleDialog(
+          title: Text('添加图片'),
           children: [
-            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('没有可预览的图片', style: TextStyle(color: Colors.grey)),
+            Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在处理图片...'),
+                ],
+              ),
+            ),
           ],
         ),
       );
-    }
 
-    // 获取图片路径
-    final imagePath =
-        currentImage.imported?.path ?? currentImage.original?.path;
-    if (imagePath == null) {
-      return const Center(child: Text('图片路径无效'));
-    }
+      try {
+        // 处理图片
+        final imageInfo = await imageService.addImageToWork(
+          work.id!,
+          file,
+          work.images.length, // 添加到最后
+        );
 
-    return InteractiveViewer(
-      transformationController: _transformController,
-      minScale: 0.5,
-      maxScale: 4.0,
-      // 确保支持鼠标拖拽平移
-      panEnabled: true,
-      boundaryMargin: const EdgeInsets.all(80),
-      onInteractionEnd: (details) {
-        setState(() {
-          _scale = _transformController.value.getMaxScaleOnAxis();
-        });
-      },
-      child: Center(
-        child: Image.file(
-          File(imagePath),
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            AppLogger.warning(
-              'Failed to load image',
-              tag: 'WorkImagePreview',
-              error: error,
-              data: {'path': imagePath},
+        // 转换为 WorkImage
+        final newImage = WorkImage(
+          index: work.images.length,
+          imported: ImageDetail(
+            path: imageInfo.path,
+            width: imageInfo.size.width,
+            height: imageInfo.size.height,
+            format: imageInfo.format,
+            size: imageInfo.fileSize,
+          ),
+          thumbnail: imageInfo.thumbnail != null
+              ? ImageThumbnail(
+                  path: imageInfo.thumbnail,
+                  width: 120,
+                  height: 120,
+                )
+              : null,
+        );
+
+        // 使用命令添加图片
+        if (context.mounted) {
+          Navigator.pop(context); // 关闭加载对话框
+
+          ref.read(workDetailProvider.notifier).executeCommand(
+                AddImageCommand(
+                  newImage: newImage,
+                  position: work.images.length,
+                ),
+              );
+
+          // 选中新添加的图片
+          ref.read(selectedImageIndexProvider.state).state = work.images.length;
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.pop(context); // 关闭加载对话框
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('添加图片失败: ${e.toString()}')),
+          );
+        }
+      }
+    }
+  }
+
+  // 删除图片方法
+  void _deleteImage(WidgetRef ref, WorkImage image, int index) {
+    // 使用命令删除图片
+    ref.read(workDetailProvider.notifier).executeCommand(
+          RemoveImageCommand(
+            removedImage: image,
+            position: index,
+          ),
+        );
+
+    // 调整选中索引
+    if (index >= work.images.length - 1) {
+      ref.read(selectedImageIndexProvider.state).state = work.images.length - 2;
+    }
+  }
+
+  // 旋转图片方法
+  Future<void> _rotateImage(WidgetRef ref, WorkImage image, int index) async {
+    if (image.imported == null) return;
+
+    // 获取图片服务
+    final imageService = ref.read(imageServiceProvider);
+
+    // 使用命令旋转图片
+    ref.read(workDetailProvider.notifier).executeCommand(
+          RotateImageCommand(
+            imageIndex: index,
+            angle: 90, // 默认旋转90度
+            imageService: imageService,
+          ),
+        );
+  }
+}
+
+class _ReorderableImageListState extends State<ReorderableImageList> {
+  late ScrollController _scrollController;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 120,
+      child: Listener(
+        onPointerSignal: (signal) {
+          if (signal is PointerScrollEvent && _scrollController.hasClients) {
+            // 获取滚动事件的方向和大小
+            double scrollDelta = signal.scrollDelta.dy;
+
+            // 调整滚动敏感度
+            final scrollFactor = 3.0;
+            final double target =
+                _scrollController.offset + (scrollDelta * scrollFactor);
+
+            // 使用带有惯性的动画效果进行滚动
+            _scrollController.animateTo(
+              target.clamp(0.0, _scrollController.position.maxScrollExtent),
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
             );
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.broken_image, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('图片加载失败', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+          }
+        },
+        child: ReorderableListView.builder(
+          scrollController: _scrollController,
+          scrollDirection: Axis.horizontal,
+          itemCount: widget.images.length,
+          itemBuilder: (context, index) =>
+              _buildThumbnail(index, widget.images[index], context),
+          // 处理拖拽排序逻辑 - 简化直接调用回调
+          onReorder: (oldIndex, newIndex) {
+            // ReorderableListView在移动过程中已经考虑了元素的移除和插入，
+            // 但我们需要考虑实际的逻辑索引
+            if (oldIndex < newIndex) {
+              newIndex -= 1; // 这是因为移除oldIndex后，newIndex的位置会减1
+            }
+            widget.onReorder(oldIndex, newIndex);
+          },
+          // 自定义拖动时的样式
+          proxyDecorator: (child, index, animation) {
+            return AnimatedBuilder(
+              animation: animation,
+              builder: (context, child) {
+                return Material(
+                  elevation: 4.0,
+                  color: Colors.transparent,
+                  shadowColor:
+                      Theme.of(context).colorScheme.shadow.withOpacity(0.5),
+                  child: child,
+                );
+              },
+              child: child,
             );
           },
         ),
@@ -184,191 +496,103 @@ class _WorkImagePreviewState extends ConsumerState<WorkImagePreview> {
     );
   }
 
-  Widget _buildThumbnailItem(int index) {
-    final isSelected = index == _currentImageIndex;
-    final image = widget.work.images[index];
-    final thumbnailPath = image.thumbnail?.path ?? image.imported?.path;
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: InkWell(
-        onTap: () => _changePage(index),
-        child: Stack(
-          children: [
-            // 缩略图容器
-            Container(
-              width: 64, // 稍微宽一些以容纳索引号
-              height: 64,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(2),
-                child: thumbnailPath != null
-                    ? Image.file(
-                        File(thumbnailPath),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            child: Center(
-                              child: Icon(
-                                Icons.image_not_supported,
-                                size: 24,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : Container(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        child: Center(
-                          child: Text('${index + 1}',
-                              style: theme.textTheme.bodySmall),
-                        ),
-                      ),
-              ),
-            ),
-
-            // 索引号标签 - 右上角小标签
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.surfaceContainerHighest
-                          .withOpacity(0.8),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(4),
-                  ),
-                ),
-                child: Text(
-                  '${index + 1}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isSelected
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurfaceVariant,
-                    fontSize: 10,
-                    fontWeight:
-                        isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
-  Widget _buildThumbnailStrip(int totalImages) {
-    final theme = Theme.of(context);
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
 
-    // 使用Scrollbar包裹ListView，实现可视化滚动条
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+  // 构建缩略图项 - 与原来保持一致
+  Widget _buildThumbnail(int index, WorkImage image, BuildContext context) {
+    final isSelected = index == widget.selectedIndex;
+
+    // 计算图片宽高比
+    final double aspectRatio = image.imported != null
+        ? image.imported!.width / image.imported!.height
+        : 1.0; // 默认为1:1
+
+    // 固定高度，根据比例计算宽度
+    final double fixedHeight = 100.0;
+    final double calculatedWidth = fixedHeight * aspectRatio;
+
+    // 限制宽度范围，避免过宽或过窄
+    final double constrainedWidth =
+        calculatedWidth.clamp(fixedHeight * 0.5, fixedHeight * 2.0);
+
+    return Stack(
+      key: ValueKey('image-$index'),
       children: [
         Container(
-          height: 92, // 增高一点以容纳滚动条
+          margin: const EdgeInsets.only(right: 8),
+          width: constrainedWidth, // 使用计算后的宽度
           decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            border: Border(
-              top: BorderSide(
-                color: theme.dividerColor.withOpacity(0.5),
-              ),
+            border: Border.all(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.grey.shade300,
+              width: isSelected ? 2 : 1,
             ),
+            borderRadius: BorderRadius.circular(4),
           ),
-          child: Scrollbar(
-            controller: _thumbnailScrollController,
-            thumbVisibility: true, // 始终显示滚动条
-            thickness: 8.0, // 滚动条厚度
-            radius: const Radius.circular(4.0),
-            child: Listener(
-              // 保留鼠标滚轮事件处理
-              onPointerSignal: (pointerSignal) {
-                if (pointerSignal is PointerScrollEvent) {
-                  final offset = _thumbnailScrollController.offset +
-                      pointerSignal.scrollDelta.dy;
-                  _thumbnailScrollController.animateTo(
-                    offset.clamp(0.0,
-                        _thumbnailScrollController.position.maxScrollExtent),
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutCubic,
-                  );
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8.0), // 为滚动条留出空间
-                child: ListView.builder(
-                  controller: _thumbnailScrollController,
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+          child: InkWell(
+            onTap: () => widget.onSelect(index),
+            child: image.thumbnail != null && image.thumbnail?.path != null
+                ? Image.file(
+                    File(image.thumbnail!.path),
+                    width: constrainedWidth,
+                    height: fixedHeight,
+                    fit: BoxFit.contain, // 使用contain以保持原图比例
+                    cacheWidth: (constrainedWidth * 1.5).toInt(),
+                    cacheHeight: (fixedHeight * 1.5).toInt(),
+                    key: ValueKey(
+                        '${image.thumbnail!.path}?v=${DateTime.now().millisecondsSinceEpoch}'),
+                    errorBuilder: (context, error, stackTrace) {
+                      // 处理图片加载错误
+                      debugPrint('图片 $index 加载失败: $error');
+                      return Container(
+                        width: constrainedWidth,
+                        height: fixedHeight,
+                        color: Colors.grey.shade200,
+                        child:
+                            const Icon(Icons.broken_image, color: Colors.red),
+                      );
+                    },
+                  )
+                : Container(
+                    width: constrainedWidth,
+                    height: fixedHeight,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.image_not_supported),
                   ),
-                  physics: const AlwaysScrollableScrollPhysics(), // 确保始终可以滚动
-                  itemCount: totalImages,
-                  itemBuilder: (context, index) => _buildThumbnailItem(index),
-                ),
+          ),
+        ),
+        // 添加序号标记
+        Positioned(
+          left: 4,
+          top: 4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '${index + 1}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
         ),
       ],
     );
-  }
-
-  void _changePage(int newIndex) {
-    ref.read(currentWorkImageIndexProvider.notifier).state = newIndex;
-
-    // 切换图片时重置缩放
-    _resetZoom();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_thumbnailScrollController.hasClients) {
-        final itemWidth = 60 + 8;
-        final screenWidth = MediaQuery.of(context).size.width;
-
-        final targetScroll =
-            (newIndex * itemWidth) - (screenWidth / 2) + (itemWidth / 2);
-
-        _thumbnailScrollController.animateTo(
-          targetScroll.clamp(
-              0.0, _thumbnailScrollController.position.maxScrollExtent),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-        );
-      }
-    });
-  }
-
-  WorkImage? _getCurrentImage() {
-    if (widget.work.images.isEmpty) {
-      return null;
-    }
-
-    if (_currentImageIndex >= widget.work.images.length) {
-      return widget.work.images[0];
-    }
-
-    return widget.work.images[_currentImageIndex];
-  }
-
-  void _resetZoom() {
-    setState(() {
-      _transformController.value = Matrix4.identity();
-      _scale = 1.0;
-    });
   }
 }

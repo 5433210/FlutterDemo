@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
@@ -94,8 +97,7 @@ class WorkEntity extends Equatable {
 
     WorkMetadata? metadata;
     if (json.containsKey('metadata') && json['metadata'] != null) {
-      metadata =
-          WorkMetadata.fromJson(json['metadata'] as Map<String, dynamic>);
+      metadata = WorkMetadata.fromMap(json['metadata'] as Map<String, dynamic>);
     }
 
     WorkStyle? style;
@@ -156,6 +158,16 @@ class WorkEntity extends Equatable {
         collectedChars,
         metadata,
       ];
+
+  // 添加安全的 getter 方法
+  List<String> get tags {
+    try {
+      return metadata?.tags ?? [];
+    } catch (e) {
+      debugPrint('获取标签失败: $e');
+      return [];
+    }
+  }
 
   WorkEntity copyWith({
     String? id,
@@ -228,33 +240,57 @@ class WorkEntity extends Equatable {
   }
 }
 
-class WorkMetadata extends Equatable {
+class WorkMetadata {
   final List<String> tags;
 
-  const WorkMetadata({
-    this.tags = const [],
-  });
+  const WorkMetadata({this.tags = const []});
 
-  factory WorkMetadata.fromJson(Map<String, dynamic> json) {
-    return WorkMetadata(
-      tags: List<String>.from(json['tags'] ?? []),
-    );
+  factory WorkMetadata.fromJson(String source) {
+    try {
+      final map = jsonDecode(source) as Map<String, dynamic>;
+      return WorkMetadata.fromMap(map);
+    } catch (e) {
+      debugPrint('WorkMetadata fromJson 错误: $e');
+      return const WorkMetadata(tags: []);
+    }
   }
 
-  @override
-  List<Object?> get props => [tags];
+  factory WorkMetadata.fromMap(Map<String, dynamic> map) {
+    try {
+      final tagsData = map['tags'];
+      List<String> tags = [];
 
-  WorkMetadata copyWith({
-    List<String>? tags,
-  }) {
-    return WorkMetadata(
-      tags: tags ?? this.tags,
-    );
+      if (tagsData != null) {
+        if (tagsData is List) {
+          tags = List<String>.from(tagsData.map((t) => t.toString()));
+        }
+      }
+
+      return WorkMetadata(tags: tags);
+    } catch (e) {
+      debugPrint('WorkMetadata fromMap 错误: $e');
+      return const WorkMetadata(tags: []);
+    }
   }
 
-  Map<String, dynamic> toJson() {
+  String toJson() {
+    try {
+      return jsonEncode(toMap());
+    } catch (e) {
+      debugPrint('WorkMetadata toJson 错误: $e');
+      return '{"tags":[]}'; // 返回有效的JSON字符串
+    }
+  }
+
+  // 添加更健壮的序列化与反序列化方法
+  Map<String, dynamic> toMap() {
     return {
       'tags': tags,
     };
+  }
+
+  @override
+  String toString() {
+    return 'WorkMetadata{tags: $tags}';
   }
 }

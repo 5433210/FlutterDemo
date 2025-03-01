@@ -9,21 +9,36 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  bitsdojo_window: ^0.1.6
-  flutter_riverpod: ^2.4.9
-  cupertino_icons: ^1.0.2
-  file_picker: ^9.0.0
   flutter_localizations:
     sdk: flutter
+  
+  # 状态管理
+  flutter_riverpod: ^2.4.9
+  
+  # 数据库
+  sqlite3: ^2.0.0
+  sqlite3_flutter_libs: ^0.5.0
+  
+  # 工具
+  crypto: ^3.0.3
   intl: 0.19.0
-  shared_preferences: ^2.5.2
-  window_manager: ^0.4.3  # 添加这一行，使用最新版本
-  flutter_gen: ^5.9.0
-  sqflite: any
   path: any
   path_provider: ^2.1.5
   uuid: ^4.5.1
+  
+  # UI 相关
+  file_picker: ^9.0.0
   image: ^4.5.2
+  
+  # 窗口管理 (桌面应用)
+  window_manager: ^0.4.3
+  
+  # 本地存储
+  shared_preferences: ^2.5.2
+  bitsdojo_window: ^0.1.6
+  cupertino_icons: ^1.0.2
+  flutter_gen: ^5.9.0
+  sqflite: any
   sqflite_common_ffi: ^2.3.5
   collection: ^1.19.1
   desktop_drop: ^0.5.0
