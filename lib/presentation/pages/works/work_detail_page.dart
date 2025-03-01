@@ -8,6 +8,7 @@ import '../../../domain/value_objects/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
+import '../../providers/works_providers.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/sidebar_toggle.dart';
@@ -367,11 +368,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
       child: Row(
         children: [
-          // 左侧返回按钮
+          // 左侧返回按钮 - 修改为使用自定义处理
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: _handleBackButton, // 更改为自定义处理方法
           ),
 
           // 标题
@@ -610,6 +611,15 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     return state.commandHistory![index].description;
   }
 
+  // 处理返回按钮，确保返回时刷新作品列表
+  void _handleBackButton() {
+    // 返回时通知列表页面需要刷新数据
+    if (ref.read(workDetailProvider).work != null) {
+      ref.read(worksNeedsRefreshProvider.notifier).state = true;
+    }
+    Navigator.of(context).pop(true); // 返回true表示数据可能已更改
+  }
+
   /// 处理未保存更改警告并处理返回导航
   Future<bool> _handleBackNavigation() async {
     final state = ref.read(workDetailProvider);
@@ -732,11 +742,13 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     // 创建一个标志，用于处理异步操作期间的组件卸载情况
     bool isDialogActive = true;
 
-    // 显示保存进度对话框
+    // 显示保存进度对话框 - 使用context.mounted检查而非mounted
+    if (!context.mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => WillPopScope(
+      builder: (dialogContext) => WillPopScope(
         onWillPop: () async => false, // 防止后退键关闭对话框
         child: const AlertDialog(
           content: Row(
@@ -754,28 +766,58 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
       // 添加日志，调试保存流程
       AppLogger.debug('开始保存作品', tag: 'WorkDetailPage');
 
-      // 设置超时保护
-      final result = await Future.any([
-        ref.read(workDetailProvider.notifier).saveChanges(),
-        Future.delayed(const Duration(seconds: 10), () {
+      // 设置超时保护，但不使用Future.any，避免竞态条件
+      final completer = Completer<bool>();
+
+      // 设置超时定时器
+      final timer = Timer(const Duration(seconds: 10), () {
+        if (!completer.isCompleted) {
           AppLogger.warning('保存操作超时', tag: 'WorkDetailPage');
-          throw TimeoutException('保存操作超时，请重试');
-        }),
-      ]);
+          completer.completeError(TimeoutException('保存操作超时，请重试'));
+        }
+      });
+
+      // 执行保存操作
+      ref.read(workDetailProvider.notifier).saveChanges().then((result) {
+        if (!completer.isCompleted) completer.complete(result);
+      }).catchError((error) {
+        if (!completer.isCompleted) completer.completeError(error);
+      });
+
+      // 等待结果
+      final result = await completer.future;
+      timer.cancel(); // 取消定时器
 
       AppLogger.debug('保存操作完成',
           tag: 'WorkDetailPage', data: {'result': result});
 
-      // 确保弹窗仍在活动状态，则关闭它
-      if (mounted && isDialogActive) {
-        Navigator.of(context).pop(); // 关闭进度对话框
+      // 关闭对话框前先检查context是否仍然有效
+      if (context.mounted && isDialogActive) {
+        // 使用 Navigator.of(context, rootNavigator: true) 确保关闭顶层对话框
+        Navigator.of(context, rootNavigator: true).pop();
         isDialogActive = false;
 
         if (result) {
+          // 显示成功消息
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('保存成功')),
+            const SnackBar(
+              content: Text('保存成功'),
+              duration: Duration(seconds: 1),
+            ),
           );
+
+          // 延迟一下再完成编辑模式，确保UI更新顺序正确
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          // 在显示反馈后再完成编辑模式
+          if (context.mounted) {
+            ref.read(workDetailProvider.notifier).completeEditing();
+
+            // 标记数据已更改，需要刷新作品列表
+            ref.read(worksNeedsRefreshProvider.notifier).state = true;
+          }
         } else {
+          // 显示失败消息
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('保存失败，请重试')),
           );

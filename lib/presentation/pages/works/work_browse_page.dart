@@ -3,15 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../infrastructure/logging/logger.dart';
 import '../../../routes/app_routes.dart';
 import '../../dialogs/work_import/work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
+import '../../providers/works_providers.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import 'components/content/work_grid_view.dart';
 import 'components/content/work_list_view.dart';
 import 'components/filter/work_filter_panel.dart';
 import 'components/work_browse_toolbar.dart';
+// 添加这个导入
 
 class WorkBrowsePage extends ConsumerStatefulWidget {
   const WorkBrowsePage({super.key});
@@ -22,11 +25,28 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
     with WidgetsBindingObserver {
+  // 添加状态跟踪变量
+  bool _initialLoadAttempted = false;
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
     debugPrint('WorkBrowsePage rebuild - filter: ${state.filter}');
+
+    // 监听刷新标志
+    ref.listen(worksNeedsRefreshProvider, (previous, current) {
+      if (current == true) {
+        // 如果需要刷新，则执行刷新并重置标志
+        viewModel.loadWorks(forceRefresh: true);
+        ref.read(worksNeedsRefreshProvider.notifier).state = false;
+      }
+    });
+
+    // 首次构建完成后立即检查加载状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndLoadData();
+    });
 
     return Scaffold(
       body: Column(
@@ -65,6 +85,18 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
           ),
         ],
       ),
+      floatingActionButton: state.isLoading && state.works.isEmpty
+          ? FloatingActionButton(
+              onPressed: () {
+                // 手动触发刷新
+                ref
+                    .read(workBrowseProvider.notifier)
+                    .loadWorks(forceRefresh: true);
+              },
+              tooltip: '重新加载',
+              child: const Icon(Icons.refresh),
+            )
+          : null,
     );
   }
 
@@ -86,7 +118,19 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadWorks();
+
+    // 允许延迟初始加载，避免状态冲突
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initialLoad();
+    });
+
+    // 在初始化时检查是否需要刷新
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(worksNeedsRefreshProvider)) {
+        ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
+        ref.read(worksNeedsRefreshProvider.notifier).state = false;
+      }
+    });
   }
 
   Widget _buildMainContent() {
@@ -95,13 +139,58 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
     debugPrint(
         '_buildMainContent rebuild - works count: ${state.works.length}');
 
+    // 添加详细日志，追踪状态变化
+    AppLogger.debug('构建浏览页主体内容', tag: 'WorkBrowsePage', data: {
+      'isLoading': state.isLoading,
+      'hasError': state.error != null,
+      'worksCount': state.works.length
+    });
+
+    // 处理错误状态
+    if (state.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline,
+                size: 48, color: Theme.of(context).colorScheme.error),
+            const SizedBox(height: 16),
+            Text('发生错误: ${state.error}',
+                style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => _loadWorks(force: true),
+              child: const Text('重新加载'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: [
         Expanded(
           child: state.isLoading
               ? const Center(child: CircularProgressIndicator())
               : state.works.isEmpty
-                  ? const Center(child: Text('没有作品'))
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.inbox, size: 64, color: Colors.grey),
+                          const SizedBox(height: 16),
+                          const Text('没有找到作品', style: TextStyle(fontSize: 18)),
+                          const SizedBox(height: 8),
+                          const Text('尝试导入新作品或修改筛选条件',
+                              style: TextStyle(color: Colors.grey)),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => _showImportDialog(context),
+                            child: const Text('导入作品'),
+                          ),
+                        ],
+                      ),
+                    )
                   : state.viewMode == ViewMode.grid
                       ? WorkGridView(
                           works: state.works,
@@ -128,6 +217,19 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
     );
   }
 
+  // 检查并加载数据的方法
+  void _checkAndLoadData() {
+    final currentState = ref.read(workBrowseProvider);
+
+    // 如果当前没有数据且不是正在加载状态，尝试加载
+    if (currentState.works.isEmpty &&
+        !currentState.isLoading &&
+        currentState.error == null) {
+      AppLogger.debug('浏览页面需要加载数据', tag: 'WorkBrowsePage');
+      _loadWorks(force: true);
+    }
+  }
+
   void _handleWorkSelected(BuildContext context, String workId) async {
     // 导航到详情页并等待结果
     final result = await Navigator.pushNamed(
@@ -136,14 +238,62 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
       arguments: workId,
     );
 
-    // 如果返回值为true（表示作品已删除），则刷新列表
-    if (result == true && mounted) {
-      ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
+    // 检查返回值，但现在不仅检查是否为true，还检查refreshProvider
+    if (mounted) {
+      if (result == true || ref.read(worksNeedsRefreshProvider)) {
+        // 如果返回值为true或刷新标志为true，刷新列表
+        ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
+        // 重置刷新标志
+        if (ref.read(worksNeedsRefreshProvider)) {
+          ref.read(worksNeedsRefreshProvider.notifier).state = false;
+        }
+      }
     }
   }
 
-  Future<void> _loadWorks() async {
-    await ref.read(workBrowseProvider.notifier).loadWorks();
+  // 初始加载方法
+  Future<void> _initialLoad() async {
+    if (_initialLoadAttempted) return;
+    _initialLoadAttempted = true;
+
+    try {
+      AppLogger.info('初始加载浏览页数据', tag: 'WorkBrowsePage');
+      await ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
+    } catch (e) {
+      AppLogger.error('初始加载失败', tag: 'WorkBrowsePage', error: e);
+
+      if (mounted) {
+        // 显示错误提示
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('加载失败: $e'),
+            action: SnackBarAction(
+              label: '重试',
+              onPressed: () => _loadWorks(force: true),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  // 增强错误处理的加载方法
+  Future<void> _loadWorks({bool force = false}) async {
+    try {
+      AppLogger.debug('触发作品加载', tag: 'WorkBrowsePage', data: {'force': force});
+
+      await ref
+          .read(workBrowseProvider.notifier)
+          .loadWorks(forceRefresh: force);
+    } catch (e) {
+      AppLogger.error('加载作品失败', tag: 'WorkBrowsePage', error: e);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载失败: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _showImportDialog(BuildContext context) async {

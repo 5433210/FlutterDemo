@@ -19,6 +19,7 @@ import 'presentation/pages/settings/settings_page.dart';
 import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/pages/works/work_detail_page.dart';
 import 'presentation/providers/work_browse_provider.dart';
+import 'presentation/providers/works_providers.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'routes/app_routes.dart';
@@ -347,10 +348,22 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
           },
           onPopPage: (route, result) {
             // 处理从详情页返回的情况
-            if (route.settings.name == AppRoutes.workDetail && result == true) {
-              // 如果result为true，表示作品已被删除，刷新作品列表
+            if (route.settings.name == AppRoutes.workDetail) {
               final container = ProviderScope.containerOf(context);
-              container.read(workBrowseProvider.notifier).loadWorks();
+
+              // 检查返回结果或刷新标志
+              if (result == true || container.read(worksNeedsRefreshProvider)) {
+                // 如果需要刷新，则刷新列表
+                container
+                    .read(workBrowseProvider.notifier)
+                    .loadWorks(forceRefresh: true);
+
+                // 重置刷新标志
+                if (container.read(worksNeedsRefreshProvider)) {
+                  container.read(worksNeedsRefreshProvider.notifier).state =
+                      false;
+                }
+              }
             }
             return route.didPop(result);
           },

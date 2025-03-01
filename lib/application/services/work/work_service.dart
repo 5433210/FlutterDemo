@@ -270,7 +270,6 @@ class WorkService {
     }
   }
 
-  /// 更新作品基本信息
   Future<void> updateWork(Work work) async {
     try {
       // 检查 ID 是否为空

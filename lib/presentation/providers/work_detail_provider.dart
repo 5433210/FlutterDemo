@@ -69,6 +69,20 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
+  /// 完成编辑模式 - 新增此方法，由UI层在保存完成并显示反馈后调用
+  void completeEditing() {
+    if (state.isEditing && !state.hasChanges) {
+      state = state.copyWith(
+        isEditing: false,
+        editingWork: null,
+        commandHistory: null,
+        historyIndex: -1,
+      );
+
+      AppLogger.debug('完成编辑模式', tag: 'WorkDetailProvider');
+    }
+  }
+
   /// 删除作品
   Future<bool> deleteWork() async {
     if (state.work?.id == null) return false;
@@ -292,42 +306,37 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       // 将状态设置为保存中
       state = state.copyWith(isSaving: true);
 
-      // 确保编辑中的作品有 ID
-      final workId = state.editingWork!.id;
-      if (workId == null) {
-        AppLogger.error('保存失败：作品ID为空', tag: 'WorkDetailProvider');
-        throw Exception('作品ID为空');
-      }
-
-      AppLogger.debug('准备保存编辑后的作品', tag: 'WorkDetailProvider', data: {
-        'workId': workId,
-        'createTime':
-            state.editingWork!.createTime?.toIso8601String() ?? 'null',
-        'hasChanges': state.hasChanges,
-      });
+      // 日志 - 开始保存
+      AppLogger.debug('开始保存编辑后的作品',
+          tag: 'WorkDetailProvider', data: {'workId': state.editingWork!.id});
 
       // 获取服务
       final workService = _ref.read(workServiceProvider);
 
-      // 保存更改 - 直接使用 updateWorkEntity 而不是额外创建 Work 对象
+      // 保存更改 - 直接使用 updateWorkEntity
       await workService.updateWorkEntity(state.editingWork!);
 
-      // 清除编辑状态
+      // 清除编辑状态 - 保存成功后
       await _clearEditState(state.editingWork!.id);
 
-      // 更新状态
+      // 保留当前编辑模式状态，避免立即设置为false导致页面切换
+      // 将返回false的逻辑移到UI层处理
+      final savedWork = state.editingWork;
+
+      // 更新状态，但保持编辑模式，让UI层控制退出编辑模式的时机
       state = state.copyWith(
-        isEditing: false,
-        work: state.editingWork, // 更新主作品为已编辑的版本
-        editingWork: null,
+        work: savedWork, // 更新主作品为已编辑的版本
         hasChanges: false,
         isSaving: false,
-        commandHistory: null,
-        historyIndex: -1,
+        // 不立即重置这些状态，由UI层控制
+        // isEditing: false,
+        // editingWork: null,
+        // commandHistory: null,
+        // historyIndex: -1,
       );
 
-      AppLogger.info('编辑更改已保存',
-          tag: 'WorkDetailProvider', data: {'workId': workId});
+      AppLogger.info('编辑更改已保存，等待UI反馈',
+          tag: 'WorkDetailProvider', data: {'workId': savedWork!.id});
 
       return true;
     } catch (e, stack) {

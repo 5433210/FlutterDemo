@@ -16,10 +16,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   final StateRestorationService _stateRestorationService;
   Timer? _searchDebounce;
 
+  // 修改构造函数，确保初始化时不会立即触发加载
   WorkBrowseViewModel(this._workService, this._stateRestorationService)
-      : super(WorkBrowseState()) {
-    _restoreState();
-    loadWorks();
+      : super(WorkBrowseState(isLoading: false)) {
+    // 延迟初始化，确保在状态读取后调用
+    Future.microtask(() => _initializeData());
   }
 
   void clearDateFilter() {
@@ -179,42 +180,64 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   Future<void> loadWorks({bool forceRefresh = false}) async {
-    // 如果正在加载且不是强制刷新，则直接返回
-    if (state.isLoading && !forceRefresh) return;
+    // 如果已经在加载过程中且不强制刷新，则直接返回
+    if (state.isLoading && !forceRefresh) {
+      AppLogger.debug('已在加载中，跳过重复加载', tag: 'WorkBrowseViewModel');
+      return;
+    }
 
     try {
-      // 只有在强制刷新或首次加载时才显示加载状态
-      if (forceRefresh || state.works.isEmpty) {
-        state = state.copyWith(isLoading: true, error: null);
+      AppLogger.info('开始加载作品列表',
+          tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
+
+      // 确保设置加载状态
+      state = state.copyWith(isLoading: true, error: null);
+
+      // 获取筛选条件
+      final filter = state.filter;
+
+      // 清空批量选择
+      if (state.batchMode) {
+        state = state.copyWith(batchMode: false, selectedWorks: {});
       }
 
-      final filter = state.filter;
-      final query = state.searchQuery;
+      // 添加详细日志以跟踪查询过程
+      AppLogger.debug('执行作品查询',
+          tag: 'WorkBrowseViewModel', data: {'filter': filter.toString()});
 
-      final results = await _workService.queryWorks(
-        searchQuery: query,
-        filter: filter,
+      // 使用带有超时保护的查询
+      final works = await _executeWithTimeout(
+        () => _workService.queryWorks(
+          filter: filter,
+          searchQuery: state.searchQuery,
+          sortOption: filter.sortOption,
+        ),
+        timeout: const Duration(seconds: 5),
+        operationName: '查询作品',
       );
 
-      state = state.copyWith(
-        isLoading: false,
-        works: results,
-        totalCount: results.length,
-        error: null,
-      );
+      AppLogger.info('作品列表加载完成',
+          tag: 'WorkBrowseViewModel', data: {'count': works.length});
 
-      _saveState();
+      // 确保只有在组件还挂载时更新状态
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          works: works,
+          error: null,
+        );
+
+        // 保存状态
+        _saveState();
+      }
     } catch (e, stack) {
-      AppLogger.error(
-        'Failed to load works',
-        tag: 'WorkBrowseViewModel',
-        error: e,
-        stackTrace: stack,
-      );
+      AppLogger.error('加载作品列表失败',
+          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
 
+      // 确保即使出错也会关闭加载状态
       state = state.copyWith(
         isLoading: false,
-        error: '加载作品失败: ${e.toString()}',
+        error: e.toString(),
       );
     }
   }
@@ -393,6 +416,57 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         descending: true,
       );
       updateFilter(state.filter.copyWith(sortOption: newSortOption));
+    }
+  }
+
+  /// 使用超时保护执行操作
+  Future<T> _executeWithTimeout<T>(
+    Future<T> Function() operation, {
+    required Duration timeout,
+    required String operationName,
+  }) async {
+    try {
+      return await operation().timeout(timeout, onTimeout: () {
+        throw TimeoutException('$operationName 操作超时');
+      });
+    } catch (e) {
+      AppLogger.warning('$operationName 操作失败',
+          tag: 'WorkBrowseViewModel', error: e);
+      rethrow;
+    }
+  }
+
+  /// 初始化数据
+  Future<void> _initializeData() async {
+    try {
+      AppLogger.info('初始化作品浏览页数据', tag: 'WorkBrowseViewModel');
+
+      // 尝试恢复之前的状态
+      final savedState =
+          await _stateRestorationService.restoreWorkBrowseState();
+      if (savedState != null) {
+        AppLogger.debug('恢复之前的浏览状态',
+            tag: 'WorkBrowseViewModel',
+            data: {'viewMode': savedState.viewMode.toString()});
+
+        // 设置保存的状态，但将 isLoading 设为 true
+        state = savedState.copyWith(isLoading: true, error: null);
+      } else {
+        // 如果没有保存的状态，则设置默认加载状态
+        state = state.copyWith(isLoading: true, error: null);
+      }
+
+      // 立即触发loadWorks加载数据
+      await loadWorks(forceRefresh: true);
+    } catch (e, stack) {
+      AppLogger.error('初始化数据失败',
+          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
+      // 设置错误状态，但确保isLoading为false
+      state = state.copyWith(
+        isLoading: false,
+        error: '加载初始数据失败: ${e.toString()}',
+      );
     }
   }
 
