@@ -464,7 +464,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   Future<void> _restoreState() async {
     final restoredState =
-        await _stateRestorationService.restoreWorkBrowseState(this);
+        await _stateRestorationService.restoreWorkBrowseState();
     if (restoredState != null) {
       state = restoredState;
     }

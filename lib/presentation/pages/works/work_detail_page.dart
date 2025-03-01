@@ -1,18 +1,56 @@
-import 'package:demo/domain/value_objects/work/work_entity.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/service_providers.dart';
+import '../../../domain/value_objects/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
-import '../../dialogs/delete_dialog.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/dialogs/command_history_dialog.dart'; // 确保添加此导入
+import '../../widgets/forms/work_detail_edit_form.dart';
 import '../../widgets/page_layout.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
+import 'components/work_tabs.dart';
+
+class CharacterDetailPage extends StatelessWidget {
+  final String charId;
+  final VoidCallback onBack;
+
+  const CharacterDetailPage(
+      {super.key, required this.charId, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: onBack,
+        ),
+        title: const Text('字帖详情', style: TextStyle(fontSize: 20)),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('字帖 $charId'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('返回'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class WorkDetailPage extends ConsumerStatefulWidget {
   final String workId;
@@ -26,26 +64,57 @@ class WorkDetailPage extends ConsumerStatefulWidget {
   ConsumerState<WorkDetailPage> createState() => _WorkDetailPageState();
 }
 
-class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
+class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
+    with WidgetsBindingObserver {
+  // 添加 WidgetsBindingObserver mixin 以正确处理生命周期方法
+
   bool _isPanelOpen = true;
+  bool _hasCheckedStateRestoration = false;
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(workDetailProvider);
 
-    return PageLayout(
-      toolbar: _buildToolbar(context, state),
-      body: _buildBody(context, state),
+    // 根据编辑状态选择显示的工具栏
+    final toolbar = state.isEditing
+        ? _buildEditModeToolbar(context, state)
+        : _buildViewModeToolbar(context, state);
+
+    // 添加键盘快捷键支持
+    return KeyboardListener(
+      focusNode: FocusNode(skipTraversal: true),
+      onKeyEvent: (keyEvent) => _handleKeyboardShortcuts(keyEvent, state),
+      child: PageLayout(
+        toolbar: toolbar,
+        body: _buildBody(context, state),
+      ),
     );
+  }
+
+  // 实现 WidgetsBindingObserver 的 didPopRoute 方法
+  @override
+  Future<bool> didPopRoute() async {
+    return await _handleBackNavigation() || await super.didPopRoute();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this); // 移除观察者
+    super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    // 使用 addPostFrameCallback 确保在构建完成后再加载数据
+    WidgetsBinding.instance.addObserver(this); // 添加观察者
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadWorkDetails();
     });
+  }
+
+  // 修复此方法，将其作为 State 对象的方法而非 Widget 的方法
+  Future<bool> onWillPop() async {
+    return _handleBackNavigation();
   }
 
   Widget _buildBody(BuildContext context, WorkDetailState state) {
@@ -64,32 +133,238 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
       );
     }
 
-    final work = state.work;
+    // 根据编辑状态选择要显示的实际内容
+    final work = state.isEditing ? state.editingWork : state.work;
     if (work == null) {
       return const Center(
         child: Text('作品不存在或已被删除'),
       );
     }
 
-    return _buildWorkContent(work);
+    return state.isEditing
+        ? _buildEditModeContent(context, state, work)
+        : _buildViewModeContent(context, work);
   }
 
-  Widget _buildToolbar(BuildContext context, WorkDetailState state) {
+  /// 字形标注标签页
+  Widget _buildCharAnnotationTab(WorkEntity work) {
+    // 这里实现字形标注标签页
+    return Center(child: Text('字形标注（编辑模式）- ${work.collectedChars.length} 个字形'));
+  }
+
+  /// 构建编辑模式的内容
+  Widget _buildEditModeContent(
+      BuildContext context, WorkDetailState state, WorkEntity work) {
+    // 在编辑模式下，总是显示标签页
+    final tabIndex = ref.watch(workDetailTabIndexProvider);
+
+    return Column(
+      children: [
+        // 标签页选择器
+        WorkTabs(
+          selectedIndex: tabIndex,
+          onTabSelected: (index) {
+            ref.read(workDetailTabIndexProvider.notifier).state = index;
+          },
+        ),
+
+        // 标签页内容
+        Expanded(
+          child: IndexedStack(
+            index: tabIndex,
+            children: [
+              // 基本信息页面 - 使用编辑表单
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                  child: WorkDetailEditForm(work: work),
+                ),
+              ),
+
+              // 图片管理页面
+              _buildImageManagementTab(work),
+
+              // 字形标注页面
+              _buildCharAnnotationTab(work),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建编辑模式的工具栏
+  Widget _buildEditModeToolbar(BuildContext context, WorkDetailState state) {
+    final theme = Theme.of(context);
+
+    // 修复：更严格地检查索引边界条件
+    final hasCommandHistory =
+        state.commandHistory != null && state.commandHistory!.isNotEmpty;
+
+    // 只有当历史记录存在且索引有效时才尝试获取命令描述
+    final lastUndoCommand = state.canUndo &&
+            hasCommandHistory &&
+            state.historyIndex >= 0 &&
+            state.historyIndex < state.commandHistory!.length
+        ? state.commandHistory![state.historyIndex].description
+        : null;
+
+    // 同样严格检查重做命令索引
+    final lastRedoCommand = state.canRedo &&
+            hasCommandHistory &&
+            state.historyIndex + 1 < state.commandHistory!.length
+        ? state.commandHistory![state.historyIndex + 1].description
+        : null;
+
+    return Container(
+      height: kToolbarHeight,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+      child: Row(
+        children: [
+          // 标题部分
+          Text(
+            '编辑作品',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          if (state.work?.name != null && state.work!.name.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Text(
+              '- ${state.work!.name}',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.normal,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+
+          const Spacer(),
+
+          // 撤销按钮，增强了提示
+          Tooltip(
+            message: lastUndoCommand != null
+                ? '撤销：$lastUndoCommand (Ctrl+Z)'
+                : '撤销 (Ctrl+Z)',
+            child: IconButton(
+              icon: const Icon(Icons.undo),
+              onPressed: state.canUndo
+                  ? () {
+                      ref.read(workDetailProvider.notifier).undo();
+                      _showOperationFeedback('撤销：$lastUndoCommand');
+                    }
+                  : null,
+              style: IconButton.styleFrom(
+                // 为方便显示反馈，添加视觉样式
+                backgroundColor: state.canUndo
+                    ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+                    : null,
+              ),
+            ),
+          ),
+
+          // 显示历史记录位置
+          if (state.commandHistory != null && state.commandHistory!.isNotEmpty)
+            Text(
+              '${state.historyIndex + 1}/${state.commandHistory!.length}',
+              style: theme.textTheme.bodySmall,
+            ),
+
+          // 重做按钮，增强了提示
+          Tooltip(
+            message: lastRedoCommand != null
+                ? '重做：$lastRedoCommand (Ctrl+Y)'
+                : '重做 (Ctrl+Y)',
+            child: IconButton(
+              icon: const Icon(Icons.redo),
+              onPressed: state.canRedo
+                  ? () {
+                      ref.read(workDetailProvider.notifier).redo();
+                      _showOperationFeedback('重做：$lastRedoCommand');
+                    }
+                  : null,
+              style: IconButton.styleFrom(
+                backgroundColor: state.canRedo
+                    ? theme.colorScheme.primaryContainer.withOpacity(0.3)
+                    : null,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+          const VerticalDivider(width: 1),
+          const SizedBox(width: 8),
+
+          // 保存按钮
+          FilledButton.icon(
+            icon: const Icon(Icons.save),
+            label: const Text('保存'),
+            onPressed: state.hasChanges && !state.isSaving
+                ? () => _saveChanges()
+                : null,
+          ),
+
+          const SizedBox(width: 8),
+
+          // 取消按钮
+          OutlinedButton(
+            child: const Text('取消'),
+            onPressed: () => _cancelEditing(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 图片管理标签页
+  Widget _buildImageManagementTab(WorkEntity work) {
+    // 这里实现图片管理标签页，支持图片编辑功能
+    // 在正式实现中，会有更完整的图片管理组件
+    return Center(child: Text('图片管理（编辑模式）- ${work.images.length} 张图片'));
+  }
+
+  /// 构建查看模式的内容
+  Widget _buildViewModeContent(BuildContext context, WorkEntity work) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 左侧图片预览区域
+        Expanded(
+          flex: 7,
+          child: WorkImagePreview(work: work),
+        ),
+
+        // 使用通用侧边栏切换按钮，设置alignRight=true
+        SidebarToggle(
+          isOpen: _isPanelOpen,
+          onToggle: () {
+            setState(() {
+              _isPanelOpen = !_isPanelOpen;
+            });
+          },
+          alignRight: true, // 设置为右对齐模式
+        ),
+
+        // 右侧信息面板 - 根据状态显示或隐藏
+        if (_isPanelOpen)
+          SizedBox(
+            width: 350, // 固定宽度
+            child: WorkDetailInfoPanel(work: work),
+          ),
+      ],
+    );
+  }
+
+  /// 构建查看模式的工具栏
+  Widget _buildViewModeToolbar(BuildContext context, WorkDetailState state) {
     final theme = Theme.of(context);
     final work = state.work;
 
     return Container(
       height: kToolbarHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.5),
-            width: 1,
-          ),
-        ),
-      ),
       child: Row(
         children: [
           // 左侧返回按钮
@@ -123,7 +398,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
           // 编辑按钮
           FilledButton.icon(
-            onPressed: work != null ? () => _navigateToEdit(work.id!) : null,
+            onPressed: work != null ? _enterEditMode : null,
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('编辑'),
             style: FilledButton.styleFrom(
@@ -186,109 +461,389 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
     );
   }
 
-  Widget _buildWorkContent(WorkEntity work) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 左侧图片预览区域
-        Expanded(
-          flex: 7,
-          child: WorkImagePreview(work: work),
-        ),
+  /// 取消编辑模式
+  void _cancelEditing() {
+    final hasChanges = ref.read(workDetailProvider).hasChanges;
 
-        // 使用通用侧边栏切换按钮，设置alignRight=true
-        SidebarToggle(
-          isOpen: _isPanelOpen,
-          onToggle: () {
-            setState(() {
-              _isPanelOpen = !_isPanelOpen;
-            });
-          },
-          alignRight: true, // 设置为右对齐模式
+    if (hasChanges) {
+      // 如果有更改，显示确认对话框
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('放弃更改？'),
+          content: const Text('你有未保存的更改，确定要放弃吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                ref.read(workDetailProvider.notifier).cancelEditing();
+              },
+              child: const Text('放弃更改'),
+            ),
+          ],
         ),
-
-        // 右侧信息面板 - 根据状态显示或隐藏
-        if (_isPanelOpen)
-          SizedBox(
-            width: 350, // 固定宽度
-            child: WorkDetailInfoPanel(work: work),
-          ),
-      ],
-    );
+      );
+    } else {
+      // 如果没有更改，直接退出编辑模式
+      ref.read(workDetailProvider.notifier).cancelEditing();
+    }
   }
 
-  Future<void> _confirmDelete(BuildContext context) async {
-    final work = ref.read(workDetailProvider).work;
-    if (work == null) return;
+  /// 检查是否有未完成的编辑会话
+  Future<void> _checkForUnfinishedEditSession() async {
+    // 避免重复检查
+    if (_hasCheckedStateRestoration) return;
+    _hasCheckedStateRestoration = true;
 
-    final confirmed = await DeleteDialog.show(
-      context,
-      title: '删除作品',
-      message: '确定要删除作品 "${work.name}" 吗？此操作不可撤销。',
-      deleteButtonLabel: '删除',
-      cancelButtonLabel: '取消',
-    );
+    // 检查是否有未完成的编辑状态
+    final stateRestorationService = ref.read(stateRestorationServiceProvider);
+    final hasUnfinishedSession =
+        await stateRestorationService.hasUnfinishedEditSession(widget.workId);
 
-    if (confirmed == true && mounted) {
-      try {
-        final success =
-            await ref.read(workDetailProvider.notifier).deleteWork();
+    if (hasUnfinishedSession && mounted) {
+      // 显示恢复对话框
+      final shouldRestore = await showDialog<bool>(
+            context: context,
+            barrierDismissible: false, // 用户必须做出选择
+            builder: (context) => AlertDialog(
+              title: const Text('恢复未完成的编辑'),
+              content: const Text('检测到上次有未保存的编辑内容。是否恢复?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('放弃'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('恢复'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
 
-        if (success && mounted) {
+      if (shouldRestore && mounted) {
+        // 恢复编辑状态
+        await ref
+            .read(workDetailProvider.notifier)
+            .tryRestoreEditState(widget.workId);
+
+        // 如果恢复成功，显示提示
+        if (ref.read(workDetailProvider).isEditing) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('作品已删除')),
-          );
-          // 返回true表示已删除作品，需要刷新列表
-          Navigator.of(context).pop(true);
-        }
-      } catch (e, stack) {
-        AppLogger.error(
-          'Delete work failed in UI',
-          tag: 'WorkDetailPage',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: ${e.toString()}')),
+            const SnackBar(
+              content: Text('已恢复上次的编辑状态'),
+              duration: Duration(seconds: 2),
+            ),
           );
         }
+      } else if (mounted) {
+        // 清除保存的编辑状态
+        await stateRestorationService.clearWorkEditState(widget.workId);
       }
     }
   }
 
+  /// 确认删除对话框
+  Future<void> _confirmDelete(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除'),
+        content: const Text('确定要删除这个作品吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final result = await ref.read(workDetailProvider.notifier).deleteWork();
+      if (result && mounted) {
+        Navigator.of(context).pop(true); // 返回true表示删除成功，触发列表刷新
+      }
+    }
+  }
+
+  /// 进入编辑模式
+  void _enterEditMode() {
+    ref.read(workDetailProvider.notifier).enterEditMode();
+
+    // 在进入编辑模式时，重置标签页到基本信息页（索引0）
+    ref.read(workDetailTabIndexProvider.notifier).state = 0;
+  }
+
+  /// 导出作品
   void _exportWork(WorkEntity work) {
-    // 实现导出功能
+    // 导出作品的实现
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('导出功能即将上线')),
+      SnackBar(content: Text('正在导出作品: ${work.name}')),
     );
   }
 
+  /// 获取最后一个命令的描述
+  String _getLastCommandDescription(WorkDetailState state,
+      {required bool undo}) {
+    if (state.commandHistory == null || state.commandHistory!.isEmpty) {
+      return '操作';
+    }
+
+    final index = undo ? state.historyIndex : state.historyIndex + 1;
+    if (index < 0 || index >= state.commandHistory!.length) {
+      return '操作';
+    }
+
+    return state.commandHistory![index].description;
+  }
+
+  /// 处理未保存更改警告并处理返回导航
+  Future<bool> _handleBackNavigation() async {
+    final state = ref.read(workDetailProvider);
+    if (state.isEditing && state.hasChanges) {
+      // 如果在编辑模式且有未保存的更改，显示警告对话框
+      final shouldProceed = await showDialog<bool>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('放弃更改?'),
+              content: const Text('你有未保存的更改。如果你离开，这些更改将会丢失。'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('取消'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: const Text('放弃更改'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+
+      if (shouldProceed) {
+        // 用户确认放弃更改
+        await ref.read(workDetailProvider.notifier).cancelEditing();
+        return true;
+      } else {
+        // 用户取消操作
+        return false;
+      }
+    }
+    // 没有未保存的更改，可以直接返回
+    return true;
+  }
+
+  /// 处理键盘快捷键
+  void _handleKeyboardShortcuts(KeyEvent event, WorkDetailState state) {}
+
+  /// 处理重做操作
+  void _handleRedo(WorkDetailState state) {
+    if (!state.canRedo) return;
+
+    try {
+      ref.read(workDetailProvider.notifier).redo();
+
+      // 安全地获取命令描述
+      String cmdDescription = '操作';
+      if (state.commandHistory != null &&
+          state.historyIndex + 1 >= 0 &&
+          state.historyIndex + 1 < state.commandHistory!.length) {
+        cmdDescription =
+            state.commandHistory![state.historyIndex + 1].description;
+      }
+
+      _showOperationFeedback('重做：$cmdDescription');
+    } catch (e) {
+      AppLogger.error(
+        '执行重做操作失败',
+        tag: 'WorkDetailPage',
+        error: e,
+      );
+      _showOperationFeedback('重做操作失败');
+    }
+  }
+
+  /// 处理保存操作
+  void _handleSave(WorkDetailState state) {
+    if (!state.hasChanges || state.isSaving) return;
+
+    _saveChanges();
+  }
+
+  /// 处理撤销操作
+  void _handleUndo(WorkDetailState state) {
+    if (!state.canUndo) return;
+
+    try {
+      ref.read(workDetailProvider.notifier).undo();
+
+      // 安全地获取命令描述
+      String cmdDescription = '操作';
+      if (state.commandHistory != null &&
+          state.historyIndex >= 0 &&
+          state.historyIndex < state.commandHistory!.length) {
+        cmdDescription = state.commandHistory![state.historyIndex].description;
+      }
+
+      _showOperationFeedback('撤销：$cmdDescription');
+    } catch (e) {
+      AppLogger.error(
+        '执行撤销操作失败',
+        tag: 'WorkDetailPage',
+        error: e,
+      );
+      _showOperationFeedback('撤销操作失败');
+    }
+  }
+
+  /// 加载作品详情
   Future<void> _loadWorkDetails() async {
-    await ref.read(workDetailProvider.notifier).loadWorkDetails(widget.workId);
+    final notifier = ref.read(workDetailProvider.notifier);
+    await notifier.loadWorkDetails(widget.workId);
+
+    // 加载完成后检查未完成的编辑状态
+    _checkForUnfinishedEditSession();
   }
 
-  void _navigateToEdit(String workId) {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.workEdit,
-      arguments: workId,
-    ).then((_) => _loadWorkDetails()); // 编辑后刷新
-  }
-
+  /// 导航到字形提取页面
   void _navigateToExtract(String workId) {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.workExtract,
-      arguments: workId,
-    ).then((_) => _loadWorkDetails()); // 提取后刷新
+    // 导航到字形提取页面的实现
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('导航到字形提取: $workId')),
+    );
   }
 
-  void _shareWork(WorkEntity work) {
-    // 实现分享功能
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('分享功能即将上线')),
+  /// 保存更改
+  Future<void> _saveChanges() async {
+    // 创建一个标志，用于处理异步操作期间的组件卸载情况
+    bool isDialogActive = true;
+
+    // 显示保存进度对话框
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false, // 防止后退键关闭对话框
+        child: const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('正在保存...'),
+            ],
+          ),
+        ),
+      ),
     );
+
+    try {
+      // 添加日志，调试保存流程
+      AppLogger.debug('开始保存作品', tag: 'WorkDetailPage');
+
+      // 设置超时保护
+      final result = await Future.any([
+        ref.read(workDetailProvider.notifier).saveChanges(),
+        Future.delayed(const Duration(seconds: 10), () {
+          AppLogger.warning('保存操作超时', tag: 'WorkDetailPage');
+          throw TimeoutException('保存操作超时，请重试');
+        }),
+      ]);
+
+      AppLogger.debug('保存操作完成',
+          tag: 'WorkDetailPage', data: {'result': result});
+
+      // 确保弹窗仍在活动状态，则关闭它
+      if (mounted && isDialogActive) {
+        Navigator.of(context).pop(); // 关闭进度对话框
+        isDialogActive = false;
+
+        if (result) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存成功')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存失败，请重试')),
+          );
+        }
+      }
+    } catch (e, stack) {
+      AppLogger.error(
+        '保存出错',
+        tag: 'WorkDetailPage',
+        error: e,
+        stackTrace: stack,
+      );
+
+      // 确保弹窗仍在活动状态，则关闭它
+      if (mounted && isDialogActive) {
+        Navigator.of(context).pop(); // 关闭进度对话框
+        isDialogActive = false;
+
+        // 显示错误消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存出错: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  /// 分享作品
+  void _shareWork(WorkEntity work) {
+    // 分享作品的实现
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('正在分享作品: ${work.name}')),
+    );
+  }
+
+  /// 显示命令历史对话框 - 添加此方法以便在需要时显示历史记录
+  void _showCommandHistoryDialog(WorkDetailState state) {
+    if (state.commandHistory == null || state.commandHistory!.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => CommandHistoryDialog(
+        commands: state.commandHistory!,
+        currentIndex: state.historyIndex,
+      ),
+    );
+  }
+
+  /// 显示操作反馈，增加错误处理逻辑
+  void _showOperationFeedback(String message) {
+    try {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      // 如果 context 不再有效或其他原因导致显示失败，记录但不抛出异常
+      AppLogger.warning(
+        '无法显示操作反馈',
+        tag: 'WorkDetailPage',
+        error: e,
+        data: {'message': message},
+      );
+    }
   }
 }

@@ -270,16 +270,76 @@ class WorkService {
     }
   }
 
+  /// 更新作品基本信息
   Future<void> updateWork(Work work) async {
-    final workData = {
-      'name': work.name,
-      'author': work.author,
-      'style': work.style,
-      'tool': work.tool,
-      'creationDate': work.creationDate?.toIso8601String() ??
-          DateTime.now().toIso8601String(),
-      'remark': work.remark,
-    };
+    try {
+      // 检查 ID 是否为空
+      if (work.id == null) {
+        throw ArgumentError('无法更新没有ID的作品');
+      }
+
+      AppLogger.info('更新作品信息', tag: 'WorkService', data: {'workId': work.id});
+
+      // 调用仓库的方法执行实际更新
+      await _workRepository.updateWork(work);
+
+      AppLogger.info('作品信息更新成功', tag: 'WorkService', data: {'workId': work.id});
+    } catch (e, stack) {
+      AppLogger.error('更新作品信息失败',
+          tag: 'WorkService',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': work.id});
+      rethrow;
+    }
+  }
+
+  /// 更新作品实体信息及相关文件
+  Future<void> updateWorkEntity(WorkEntity work) async {
+    if (work.id == null) {
+      throw ArgumentError('无法更新没有ID的作品');
+    }
+
+    try {
+      AppLogger.info('开始更新作品实体', tag: 'WorkService', data: {'workId': work.id});
+
+      // 1. 转换为数据库需要的 Work 对象 - 确保包含 createTime
+      final workData = Work(
+        id: work.id,
+        name: work.name,
+        author: work.author,
+        style: work.style?.value,
+        tool: work.tool?.value,
+        creationDate: work.creationDate,
+        remark: work.remark,
+        imageCount: work.images.length,
+        updateTime: DateTime.now(),
+        createTime: work.createTime, // 确保保留原始创建时间
+      );
+
+      // 2. 处理元数据
+      if (work.metadata != null) {
+        workData.metadata = work.metadata!.toJson();
+      }
+
+      AppLogger.debug('更新作品基本信息',
+          tag: 'WorkService', data: {'workId': work.id, 'name': work.name});
+
+      // 3. 更新数据库记录
+      await _workRepository.updateWork(workData);
+
+      // 4. 更新文件系统中的图片（如果需要）
+      // 这一部分可以根据实际需求实现，例如处理图片排序、删除和添加
+
+      AppLogger.info('作品实体更新成功', tag: 'WorkService', data: {'workId': work.id});
+    } catch (e, stack) {
+      AppLogger.error('更新作品实体失败',
+          tag: 'WorkService',
+          error: e,
+          stackTrace: stack,
+          data: {'workId': work.id});
+      rethrow;
+    }
   }
 
   /// 构建 WorkEntity 对象

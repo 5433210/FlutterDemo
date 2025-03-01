@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
+import 'package:uuid/uuid.dart';
 
 import '../../domain/value_objects/image/work_image_info.dart';
 import '../../domain/value_objects/image/work_image_size.dart';
@@ -10,37 +12,198 @@ import '../../utils/path_helper.dart';
 import '../config/app_config.dart';
 
 class ImageService {
+  static const String _tempImageDir = 'temp_images';
+
+  static const String _backupImageDir = 'backup_images';
   ImageService();
 
-  // Future<void> backupOriginal(File file) async {
-  //   try {
-  //     AppLogger.info('备份原始图片文件',
-  //         tag: 'ImageService', data: {'path': file.path});
+  Future<void> backupOriginal(File file) async {
+    try {
+      AppLogger.info('备份原始图片文件',
+          tag: 'ImageService', data: {'path': file.path});
 
-  //     final backupDir = PathHelper.getWorkPath()
+      final appDir = await PathHelper.getAppDataPath();
+      final backupDirPath = path.join(appDir, _backupImageDir);
+      final backupDir = Directory(backupDirPath);
 
-  //     if (!await backupDir.exists()) {
-  //       await backupDir.create(recursive: true);
-  //     }
+      if (!await backupDir.exists()) {
+        await backupDir.create(recursive: true);
+      }
 
-  //     final timestamp = DateTime.now().millisecondsSinceEpoch;
-  //     final filename = path.basename(file.path);
-  //     final backupPath = path.join(backupDir.path, '${timestamp}_$filename');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filename = path.basename(file.path);
+      final backupPath = path.join(backupDir.path, '${timestamp}_$filename');
 
-  //     await file.copy(backupPath);
+      await file.copy(backupPath);
 
-  //     AppLogger.info('原始图片备份成功',
-  //         tag: 'ImageService',
-  //         data: {'originalPath': file.path, 'backupPath': backupPath});
-  //   } catch (e, stack) {
-  //     AppLogger.error('备份原始图片失败',
-  //         tag: 'ImageService',
-  //         error: e,
-  //         stackTrace: stack,
-  //         data: {'path': file.path});
-  //     rethrow;
-  //   }
-  // }
+      AppLogger.info('原始图片备份成功',
+          tag: 'ImageService',
+          data: {'originalPath': file.path, 'backupPath': backupPath});
+    } catch (e, stack) {
+      AppLogger.error('备份原始图片失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'path': file.path});
+    }
+  }
+
+  Future<void> cleanupTempImages({int maxAgeInHours = 24}) async {
+    try {
+      AppLogger.info('开始清理临时图片文件',
+          tag: 'ImageService', data: {'maxAgeInHours': maxAgeInHours});
+
+      // 获取临时目录
+      final tempDir = await _getTempImageDir();
+      if (!await tempDir.exists()) {
+        AppLogger.debug('临时目录不存在，无需清理', tag: 'ImageService');
+        return;
+      }
+
+      final cutoffTime = DateTime.now()
+          .subtract(Duration(hours: maxAgeInHours))
+          .millisecondsSinceEpoch;
+
+      int removedCount = 0;
+      int failedCount = 0;
+
+      // 列出所有文件
+      await for (final entity in tempDir.list()) {
+        if (entity is File) {
+          try {
+            final stats = await entity.stat();
+            if (stats.modified.millisecondsSinceEpoch < cutoffTime) {
+              await entity.delete();
+              removedCount++;
+            }
+          } catch (e) {
+            failedCount++;
+            AppLogger.warning('删除临时文件失败',
+                tag: 'ImageService', error: e, data: {'path': entity.path});
+          }
+        }
+      }
+
+      AppLogger.info('清理临时图片文件完成',
+          tag: 'ImageService',
+          data: {'removedCount': removedCount, 'failedCount': failedCount});
+    } catch (e, stack) {
+      AppLogger.error('清理临时图片文件失败',
+          tag: 'ImageService', error: e, stackTrace: stack);
+    }
+  }
+
+  Future<File> createTempFileFromBytes(
+      List<int> bytes, String extension) async {
+    try {
+      // 计算字节数据的哈希值
+      final hash = crypto.md5.convert(bytes).toString().substring(0, 8);
+
+      // 获取临时文件路径
+      final tempDir = await _getTempImageDir();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filePath =
+          path.join(tempDir.path, 'temp_${timestamp}_$hash.$extension');
+
+      // 写入文件
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      return file;
+    } catch (e, stack) {
+      AppLogger.error('创建临时文件失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'extension': extension});
+      rethrow;
+    }
+  }
+
+  Future<File> createTempThumbnail(File imageFile) async {
+    try {
+      // 读取图片
+      final bytes = await imageFile.readAsBytes();
+      final image = img.decodeImage(bytes);
+      if (image == null) {
+        throw Exception('无法解码图片');
+      }
+
+      // 创建缩略图
+      final thumbnail = _createThumbnail(image);
+
+      // 保存到临时文件
+      final thumbBytes = img.encodeJpg(thumbnail, quality: 80);
+      final thumbnailFile = await createTempFileFromBytes(thumbBytes, 'jpg');
+
+      return thumbnailFile;
+    } catch (e, stack) {
+      AppLogger.error('创建临时缩略图失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'imagePath': imageFile.path});
+      rethrow;
+    }
+  }
+
+  Future<String> moveToPermStorage(File tempFile, String workId, int imageIndex,
+      {bool isThumbnail = false}) async {
+    try {
+      AppLogger.debug('移动临时文件到永久位置', tag: 'ImageService', data: {
+        'tempPath': tempFile.path,
+        'workId': workId,
+        'imageIndex': imageIndex,
+        'isThumbnail': isThumbnail
+      });
+
+      // 确定目标路径
+      String? destPath;
+      if (isThumbnail) {
+        destPath = await PathHelper.getWorkThumbnailPath(workId, imageIndex);
+      } else {
+        destPath = await PathHelper.getWorkImagePath(workId, imageIndex);
+      }
+
+      if (destPath == null) {
+        throw Exception('无法获取目标路径');
+      }
+
+      // 确保目标目录存在
+      await PathHelper.ensureDirectoryExists(path.dirname(destPath));
+
+      // 复制文件
+      final destFile = File(destPath);
+      if (await destFile.exists()) {
+        await destFile.delete();
+      }
+      await tempFile.copy(destPath);
+
+      // 删除临时文件（可选）
+      try {
+        await tempFile.delete();
+      } catch (e) {
+        AppLogger.warning('删除临时文件失败',
+            tag: 'ImageService', error: e, data: {'path': tempFile.path});
+      }
+
+      AppLogger.debug('文件移动成功',
+          tag: 'ImageService', data: {'from': tempFile.path, 'to': destPath});
+
+      return destPath;
+    } catch (e, stack) {
+      AppLogger.error('移动文件失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {
+            'tempPath': tempFile.path,
+            'workId': workId,
+            'imageIndex': imageIndex
+          });
+      rethrow;
+    }
+  }
 
   Future<File> optimizeImage(
     File file, {
@@ -254,33 +417,110 @@ class ImageService {
     }
   }
 
-  Future<File> rotateImage(File file, int angle) async {
-    final bytes = await file.readAsBytes();
-    var image = img.decodeImage(bytes);
-    if (image == null) throw Exception('无法解码图片');
+  Future<File> rotateImage(File file, int angle,
+      {bool preserveSize = false}) async {
+    try {
+      AppLogger.debug('开始旋转图片',
+          tag: 'ImageService', data: {'path': file.path, 'angle': angle});
 
-    // Rotate image
-    image = img.copyRotate(image, angle: angle);
+      // 读取图片
+      final bytes = await file.readAsBytes();
+      var image = img.decodeImage(bytes);
+      if (image == null) {
+        throw Exception('无法解码图片: ${file.path}');
+      }
 
-    // Create temp file with unique name
-    final dir = path.dirname(file.path);
-    final ext = path.extension(file.path);
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final rotatedPath = path.join(dir, 'rotated_$timestamp$ext');
+      // 使用标准化角度 (0-359)
+      final normalizedAngle = angle % 360;
+      if (normalizedAngle == 0) {
+        // 无需旋转
+        return file;
+      }
 
-    // Save rotated image
-    final rotatedFile = File(rotatedPath);
-    await rotatedFile.writeAsBytes(img.encodeJpg(image));
+      // 执行旋转，根据不同角度处理
+      img.Image rotated;
+      if (normalizedAngle == 90 || normalizedAngle == 270) {
+        // 对于90度和270度，宽高会交换
+        rotated = img.copyRotate(image, angle: normalizedAngle);
+      } else if (normalizedAngle == 180) {
+        // 180度不会改变尺寸
+        rotated = img.copyRotate(image, angle: normalizedAngle);
+      } else {
+        // 对于其他角度，如果需要保持尺寸，则使用填充背景的方式
+        if (preserveSize) {
+          // 创建一个与原图同尺寸的空白图像
+          rotated = img.Image(
+            width: image.width,
+            height: image.height,
+            numChannels: image.numChannels,
+          );
 
-    // Delete original file if it's a temp file
-    if (file.path.contains('temp_')) {
-      await file.delete();
+          // 计算旋转中心点
+          final centerX = image.width / 2;
+          final centerY = image.height / 2;
+
+          // 旋转并填充
+          img.compositeImage(
+            rotated,
+            img.copyRotate(image, angle: normalizedAngle),
+            dstX: (image.width - rotated.width) ~/ 2,
+            dstY: (image.height - rotated.height) ~/ 2,
+          );
+        } else {
+          // 如果不需要保持尺寸，直接旋转
+          rotated = img.copyRotate(image, angle: normalizedAngle);
+        }
+      }
+
+      // 创建输出文件（使用临时文件目录）
+      final outputFile = await _createTempImageFile(
+        originalPath: file.path,
+        suffix: 'rotated_$normalizedAngle',
+      );
+
+      // 根据原始文件格式编码输出
+      List<int> outputBytes;
+      final extension = path.extension(file.path).toLowerCase();
+      switch (extension) {
+        case '.jpg':
+        case '.jpeg':
+          outputBytes = img.encodeJpg(rotated, quality: 90);
+          break;
+        case '.png':
+          outputBytes = img.encodePng(rotated);
+          break;
+        case '.gif':
+          outputBytes = img.encodeGif(rotated);
+          break;
+        case '.bmp':
+          outputBytes = img.encodeBmp(rotated);
+          break;
+        default:
+          // 默认使用 PNG 格式
+          outputBytes = img.encodePng(rotated);
+      }
+
+      // 写入文件
+      await outputFile.writeAsBytes(outputBytes);
+
+      AppLogger.debug('图片旋转成功', tag: 'ImageService', data: {
+        'originalPath': file.path,
+        'outputPath': outputFile.path,
+        'originalSize': '${image.width}x${image.height}',
+        'rotatedSize': '${rotated.width}x${rotated.height}',
+      });
+
+      return outputFile;
+    } catch (e, stack) {
+      AppLogger.error('图片旋转失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'path': file.path, 'angle': angle});
+      rethrow;
     }
-
-    return rotatedFile;
   }
 
-  // 新增方法: 创建封面缩略图
   Future<void> _createCoverThumbnail(
       String workId, List<WorkImageInfo> images) async {
     final workThumbnailPath =
@@ -332,6 +572,42 @@ class ImageService {
     }
   }
 
+  Future<File> _createTempImageFile({
+    required String originalPath,
+    String prefix = 'temp_',
+    String suffix = '',
+  }) async {
+    try {
+      // 获取临时目录
+      final tempDir = await _getTempImageDir();
+
+      // 生成唯一文件名
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final randomId = const Uuid().v4().substring(0, 8);
+      final extension = path.extension(originalPath);
+
+      // 构建文件名: prefix_timestamp_randomId_suffix.ext
+      String fileName = '$prefix$timestamp';
+      if (suffix.isNotEmpty) fileName += '_$suffix';
+      fileName += '_$randomId$extension';
+
+      final filePath = path.join(tempDir.path, fileName);
+
+      // 确保目录存在
+      await PathHelper.ensureDirectoryExists(path.dirname(filePath));
+
+      // 创建并返回文件
+      return File(filePath);
+    } catch (e, stack) {
+      AppLogger.error('创建临时图片文件失败',
+          tag: 'ImageService',
+          error: e,
+          stackTrace: stack,
+          data: {'originalPath': originalPath});
+      rethrow;
+    }
+  }
+
   img.Image _createThumbnail(img.Image image) {
     final aspectRatio = image.width / image.height;
     int thumbWidth = AppConfig.thumbnailSize;
@@ -349,6 +625,19 @@ class ImageService {
       height: thumbHeight,
       interpolation: img.Interpolation.linear,
     );
+  }
+
+  Future<Directory> _getTempImageDir() async {
+    final appDir = await PathHelper.getAppDataPath();
+    final tempDirPath = path.join(appDir, _tempImageDir);
+    final tempDir = Directory(tempDirPath);
+
+    // 确保目录存在
+    if (!await tempDir.exists()) {
+      await tempDir.create(recursive: true);
+    }
+
+    return tempDir;
   }
 
   img.Image _processImage(img.Image image) {
@@ -380,7 +669,6 @@ class ImageService {
     return image;
   }
 
-  // 新增方法: 安全复制文件
   Future<void> _safelyCopyFile(File source, String destinationPath) async {
     try {
       final destinationFile = File(destinationPath);
@@ -405,7 +693,6 @@ class ImageService {
     }
   }
 
-  // 新增方法: 安全写入文件
   Future<void> _safelyWriteBytes(String filePath, List<int> bytes) async {
     try {
       final file = File(filePath);

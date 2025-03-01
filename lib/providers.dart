@@ -4,8 +4,6 @@
 export 'application/providers/service_providers.dart';
 // 基础设施层 providers
 export 'infrastructure/providers/repository_providers.dart';
-export 'infrastructure/providers/shared_preferences_provider.dart';
-export 'infrastructure/providers/state_restoration_provider.dart';
 // 表现层 providers
 export 'presentation/providers/error_boundary_provider.dart';
 // 衍生 providers

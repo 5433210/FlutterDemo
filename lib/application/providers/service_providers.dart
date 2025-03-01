@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../application/services/image_service.dart';
 import '../../infrastructure/providers/repository_providers.dart';
+import '../../infrastructure/services/state_restoration_service.dart';
 import '../services/character/character_service.dart';
 import '../services/practice/practice_service.dart';
 import '../services/work/work_service.dart';
@@ -20,6 +22,18 @@ final imageServiceProvider = Provider<ImageService>((ref) {
 final practiceServiceProvider = Provider<PracticeService>((ref) {
   final practiceRepository = ref.watch(practiceRepositoryProvider);
   return PracticeService(practiceRepository);
+});
+
+/// 共享首选项提供器
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('需要在 ProviderScope 的 overrides 中重写这个 provider');
+});
+
+// 新增：状态恢复服务提供器
+final stateRestorationServiceProvider =
+    Provider<StateRestorationService>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return StateRestorationService(prefs);
 });
 
 final workServiceProvider = Provider<WorkService>((ref) {

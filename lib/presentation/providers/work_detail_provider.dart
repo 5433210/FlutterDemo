@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/commands/work_edit_commands.dart';
 import '../../application/providers/service_providers.dart';
 import '../../domain/value_objects/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -14,11 +18,58 @@ final workDetailProvider =
   (ref) => WorkDetailNotifier(ref),
 );
 
+/// Provider for the current tab index in work detail page
+final workDetailTabIndexProvider = StateProvider<int>((ref) {
+  return 0; // 默认显示基本信息标签页
+});
+
 class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   final Ref _ref;
 
-  WorkDetailNotifier(this._ref) : super(WorkDetailState());
+  // 自动保存计时器
+  Timer? _autoSaveTimer;
 
+  WorkDetailNotifier(this._ref) : super(WorkDetailState()) {
+    // 在创建时尝试恢复编辑状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupAutoSave();
+    });
+  }
+
+  /// 取消编辑模式，放弃所有更改
+  Future<void> cancelEditing() async {
+    if (state.isEditing) {
+      try {
+        // 清除编辑状态
+        await _clearEditState(state.work?.id);
+
+        // 重置状态
+        state = state.copyWith(
+          isEditing: false,
+          editingWork: null,
+          commandHistory: null,
+          historyIndex: -1,
+          hasChanges: false,
+        );
+
+        // 如果需要，可以在这里添加其他清理工作
+
+        // 重置标签页到基本信息页
+        _ref.read(workDetailTabIndexProvider.notifier).state = 0;
+
+        AppLogger.info('已取消编辑模式', tag: 'WorkDetailNotifier');
+      } catch (e, stack) {
+        AppLogger.error(
+          '取消编辑模式失败',
+          tag: 'WorkDetailNotifier',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    }
+  }
+
+  /// 删除作品
   Future<bool> deleteWork() async {
     if (state.work?.id == null) return false;
 
@@ -27,6 +78,9 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
       final workService = _ref.read(workServiceProvider);
       await workService.deleteWork(state.work!.id!);
+
+      // 确保清除任何编辑状态
+      await _clearEditState(state.work!.id!);
 
       state = state.copyWith(isDeleting: false);
       return true;
@@ -47,6 +101,107 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    super.dispose();
+  }
+
+  /// 进入编辑模式
+  Future<void> enterEditMode() async {
+    if (state.isEditing || state.work == null) return;
+
+    try {
+      AppLogger.info('进入编辑模式',
+          tag: 'WorkDetailNotifier', data: {'workId': state.work!.id});
+
+      // 将当前作品复制一份作为编辑副本
+      final editingWork = state.work;
+
+      // 重置标签页到基本信息页
+      _ref.read(workDetailTabIndexProvider.notifier).state = 0;
+
+      // 更新状态为编辑模式
+      state = state.copyWith(
+        isEditing: true,
+        editingWork: editingWork,
+        commandHistory: [],
+        historyIndex: -1, // 初始时没有历史记录
+        hasChanges: false,
+      );
+
+      AppLogger.info('已进入编辑模式', tag: 'WorkDetailNotifier');
+    } catch (e, stack) {
+      AppLogger.error(
+        '进入编辑模式失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': state.work?.id},
+      );
+
+      // 还原状态
+      cancelEditing();
+    }
+  }
+
+  /// 执行编辑命令
+  Future<void> executeCommand(WorkEditCommand command) async {
+    if (!state.isEditing || state.editingWork == null) return;
+
+    try {
+      AppLogger.info('执行编辑命令',
+          tag: 'WorkDetailNotifier', data: {'command': command.description});
+
+      // 执行命令
+      final updatedWork = await command.execute(state.editingWork!);
+
+      // 当执行新命令时，需要丢弃当前位置之后的所有命令
+      List<WorkEditCommand> newHistory;
+      if (state.historyIndex < 0) {
+        // 没有历史记录，创建新列表
+        newHistory = [command];
+      } else {
+        // 有历史记录，保留当前位置之前的命令
+        newHistory = List<WorkEditCommand>.from(
+            state.commandHistory!.sublist(0, state.historyIndex + 1));
+        newHistory.add(command);
+      }
+
+      // 更新状态
+      state = state.copyWith(
+        editingWork: updatedWork,
+        hasChanges: true,
+        commandHistory: newHistory,
+        historyIndex: newHistory.length - 1,
+      );
+
+      // 保存编辑状态
+      await _saveEditState();
+
+      AppLogger.info('命令执行完成',
+          tag: 'WorkDetailNotifier', data: {'command': command.description});
+    } catch (e, stack) {
+      AppLogger.error(
+        '执行编辑命令失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+        data: {'command': command.description},
+      );
+
+      // 可以考虑在这里添加失败的视觉反馈
+    }
+  }
+
+  /// 获取命令历史副本
+  List<WorkEditCommand>? getCommandHistory() {
+    return state.commandHistory != null
+        ? List.from(state.commandHistory!)
+        : null;
+  }
+
+  /// 加载作品详情
   Future<void> loadWorkDetails(String workId) async {
     // 如果已经在加载，防止重复触发
     if (state.isLoading) return;
@@ -66,6 +221,9 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         isLoading: false,
         work: work,
       );
+
+      // 加载后尝试恢复编辑状态
+      await tryRestoreEditState(workId);
     } catch (e, stack) {
       AppLogger.error(
         'Failed to load work details',
@@ -81,6 +239,257 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       );
     }
   }
+
+  /// 重做操作
+  Future<void> redo() async {
+    if (!state.canRedo) return;
+
+    try {
+      AppLogger.info('执行重做操作', tag: 'WorkDetailNotifier');
+
+      // 添加额外检查，确保索引有效
+      if (state.commandHistory == null ||
+          state.commandHistory!.isEmpty ||
+          state.historyIndex + 1 >= state.commandHistory!.length) {
+        AppLogger.warning('无效的重做操作：命令历史为空或索引无效', tag: 'WorkDetailNotifier');
+        return;
+      }
+
+      // 获取要重做的命令
+      final command = state.commandHistory![state.historyIndex + 1];
+
+      // 执行命令
+      final updatedWork = await command.execute(state.editingWork!);
+
+      // 更新状态
+      state = state.copyWith(
+        editingWork: updatedWork,
+        historyIndex: state.historyIndex + 1,
+      );
+
+      // 保存编辑状态
+      await _saveEditState();
+
+      AppLogger.info('重做操作完成',
+          tag: 'WorkDetailNotifier', data: {'command': command.description});
+    } catch (e, stack) {
+      AppLogger.error(
+        '重做操作失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+  }
+
+  /// 保存更改
+  Future<bool> saveChanges() async {
+    if (!state.isEditing || !state.hasChanges || state.editingWork == null) {
+      return false;
+    }
+
+    try {
+      // 将状态设置为保存中
+      state = state.copyWith(isSaving: true);
+
+      // 确保编辑中的作品有 ID
+      final workId = state.editingWork!.id;
+      if (workId == null) {
+        AppLogger.error('保存失败：作品ID为空', tag: 'WorkDetailProvider');
+        throw Exception('作品ID为空');
+      }
+
+      AppLogger.debug('准备保存编辑后的作品', tag: 'WorkDetailProvider', data: {
+        'workId': workId,
+        'createTime':
+            state.editingWork!.createTime?.toIso8601String() ?? 'null',
+        'hasChanges': state.hasChanges,
+      });
+
+      // 获取服务
+      final workService = _ref.read(workServiceProvider);
+
+      // 保存更改 - 直接使用 updateWorkEntity 而不是额外创建 Work 对象
+      await workService.updateWorkEntity(state.editingWork!);
+
+      // 清除编辑状态
+      await _clearEditState(state.editingWork!.id);
+
+      // 更新状态
+      state = state.copyWith(
+        isEditing: false,
+        work: state.editingWork, // 更新主作品为已编辑的版本
+        editingWork: null,
+        hasChanges: false,
+        isSaving: false,
+        commandHistory: null,
+        historyIndex: -1,
+      );
+
+      AppLogger.info('编辑更改已保存',
+          tag: 'WorkDetailProvider', data: {'workId': workId});
+
+      return true;
+    } catch (e, stack) {
+      AppLogger.error(
+        '保存编辑更改失败',
+        tag: 'WorkDetailProvider',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': state.editingWork?.id},
+      );
+
+      // 即使失败也要重置保存中状态
+      state = state.copyWith(
+        isSaving: false,
+        error: '保存更改失败: ${e.toString()}',
+      );
+
+      return false;
+    }
+  }
+
+  /// 尝试恢复编辑状态
+  Future<bool> tryRestoreEditState(String workId) async {
+    try {
+      final stateRestorationService =
+          _ref.read(stateRestorationServiceProvider);
+
+      // 检查是否有未完成的编辑会话
+      final hasUnfinishedSession =
+          await stateRestorationService.hasUnfinishedEditSession(workId);
+
+      if (!hasUnfinishedSession) {
+        return false;
+      }
+
+      AppLogger.info('检测到未完成的编辑会话',
+          tag: 'WorkDetailNotifier', data: {'workId': workId});
+
+      // 加载保存的编辑状态
+      final savedState =
+          await stateRestorationService.restoreWorkEditState(workId);
+
+      if (savedState != null && savedState.editingWork != null) {
+        // 更新状态
+        state = state.copyWith(
+          isEditing: savedState.isEditing,
+          editingWork: savedState.editingWork,
+          hasChanges: savedState.hasChanges,
+          historyIndex: savedState.historyIndex,
+          // 命令历史无法从持久化存储中恢复，因为命令包含服务依赖
+          commandHistory: [], // 创建新的空命令历史
+        );
+
+        // 重置标签页到基本信息页
+        _ref.read(workDetailTabIndexProvider.notifier).state = 0;
+
+        AppLogger.info('已恢复编辑状态',
+            tag: 'WorkDetailNotifier', data: {'workId': workId});
+
+        return true;
+      }
+    } catch (e, stack) {
+      AppLogger.error(
+        '恢复编辑状态失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': workId},
+      );
+    }
+
+    return false;
+  }
+
+  /// 撤销操作
+  Future<void> undo() async {
+    if (!state.canUndo) return;
+
+    try {
+      AppLogger.info('执行撤销操作', tag: 'WorkDetailNotifier');
+
+      // 获取要撤销的命令
+      final command = state.commandHistory![state.historyIndex];
+
+      // 撤销命令
+      final updatedWork = await command.undo(state.editingWork!);
+
+      // 更新状态
+      state = state.copyWith(
+        editingWork: updatedWork,
+        historyIndex: state.historyIndex - 1,
+      );
+
+      // 保存编辑状态
+      await _saveEditState();
+
+      AppLogger.info('撤销操作完成',
+          tag: 'WorkDetailNotifier', data: {'command': command.description});
+    } catch (e, stack) {
+      AppLogger.error(
+        '撤销操作失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+  }
+
+  /// 清除编辑状态
+  Future<void> _clearEditState(String? workId) async {
+    if (workId == null) return;
+
+    try {
+      final stateRestorationService =
+          _ref.read(stateRestorationServiceProvider);
+      await stateRestorationService.clearWorkEditState(workId);
+
+      AppLogger.debug('编辑状态已清除',
+          tag: 'WorkDetailNotifier', data: {'workId': workId});
+    } catch (e, stack) {
+      AppLogger.error(
+        '清除编辑状态失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': workId},
+      );
+    }
+  }
+
+  /// 保存编辑状态
+  Future<void> _saveEditState() async {
+    if (!state.isEditing || state.editingWork?.id == null) return;
+
+    try {
+      final stateRestorationService =
+          _ref.read(stateRestorationServiceProvider);
+      await stateRestorationService.saveWorkEditState(
+          state.editingWork!.id!, state);
+
+      AppLogger.debug('编辑状态已保存',
+          tag: 'WorkDetailNotifier', data: {'workId': state.editingWork!.id});
+    } catch (e, stack) {
+      AppLogger.error(
+        '保存编辑状态失败',
+        tag: 'WorkDetailNotifier',
+        error: e,
+        stackTrace: stack,
+        data: {'workId': state.editingWork?.id},
+      );
+    }
+  }
+
+  /// 设置自动保存计时器
+  void _setupAutoSave() {
+    // 每30秒自动保存一次
+    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (state.isEditing && state.hasChanges && !state.isSaving) {
+        _saveEditState();
+      }
+    });
+  }
 }
 
 class WorkDetailState {
@@ -89,24 +498,65 @@ class WorkDetailState {
   final String? error;
   final bool isDeleting;
 
+  // 编辑模式相关字段
+  final bool isEditing;
+  final WorkEntity? editingWork;
+  final bool hasChanges;
+  final List<WorkEditCommand>? commandHistory;
+  final int historyIndex;
+  final bool isSaving; // 添加保存中状态
+
   WorkDetailState({
     this.isLoading = false,
     this.work,
     this.error,
     this.isDeleting = false,
+    this.isEditing = false,
+    this.editingWork,
+    this.hasChanges = false,
+    this.commandHistory,
+    this.historyIndex = -1,
+    this.isSaving = false,
   });
+
+  // 检查是否可以重做操作 - 添加更严格的检查
+  bool get canRedo =>
+      isEditing &&
+      commandHistory != null &&
+      commandHistory!.isNotEmpty && // 确保命令历史不为空
+      historyIndex >= -1 && // 确保索引有效
+      historyIndex < commandHistory!.length - 1; // 确保有更多命令可重做
+
+  // 检查是否可以撤销操作 - 添加更严格的检查
+  bool get canUndo =>
+      isEditing &&
+      commandHistory != null &&
+      commandHistory!.isNotEmpty && // 确保命令历史不为空
+      historyIndex >= 0; // 确保有命令可撤销
 
   WorkDetailState copyWith({
     bool? isLoading,
     WorkEntity? work,
     String? error,
     bool? isDeleting,
+    bool? isEditing,
+    WorkEntity? editingWork,
+    bool? hasChanges,
+    List<WorkEditCommand>? commandHistory,
+    int? historyIndex,
+    bool? isSaving,
   }) {
     return WorkDetailState(
       isLoading: isLoading ?? this.isLoading,
       work: work ?? this.work,
       error: error ?? this.error,
       isDeleting: isDeleting ?? this.isDeleting,
+      isEditing: isEditing ?? this.isEditing,
+      editingWork: editingWork ?? this.editingWork,
+      hasChanges: hasChanges ?? this.hasChanges,
+      commandHistory: commandHistory ?? this.commandHistory,
+      historyIndex: historyIndex ?? this.historyIndex,
+      isSaving: isSaving ?? this.isSaving,
     );
   }
 }

@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // 确保导入 shared_preferences
 import 'package:window_manager/window_manager.dart';
 
+import 'application/providers/service_providers.dart'; // 导入 service_providers
 import 'infrastructure/logging/logging.dart';
 import 'infrastructure/persistence/sqlite/sqlite_database.dart';
-import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/pages/characters/character_list_page.dart';
 import 'presentation/pages/practices/practice_detail_page.dart';
 import 'presentation/pages/practices/practice_edit_page.dart';
@@ -28,10 +28,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // Initialize window manager first
+    // 初始化窗口管理器
     await windowManager.ensureInitialized();
 
-    // Configure window options
     WindowOptions windowOptions = const WindowOptions(
       size: Size(1280, 800),
       minimumSize: Size(800, 600),
@@ -41,13 +40,13 @@ void main() async {
       titleBarStyle: TitleBarStyle.hidden,
     );
 
-    // Set up window
+    // 设置窗口
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
       await windowManager.show();
       await windowManager.focus();
     });
 
-    // Initialize logger system
+    // 初始化日志系统
     final appDocDir = await getApplicationDocumentsDirectory();
     final logDir = Directory('${appDocDir.path}/logs');
     if (!await logDir.exists()) {
@@ -63,19 +62,20 @@ void main() async {
       maxFiles: 10,
     );
 
-    // Set up global error handling
+    // 设置全局错误处理
     AppErrorHandler.initialize();
 
     AppLogger.info('Application starting', tag: 'App');
 
-    // Get shared preferences
+    // 初始化 SharedPreferences (关键步骤)
     final prefs = await SharedPreferences.getInstance();
 
-    // Launch app with Riverpod
+    // 启动应用，提供 SharedPreferences 实例
     runApp(
       ProviderScope(
         observers: kReleaseMode ? [] : [ProviderLogger()],
         overrides: [
+          // 覆盖 sharedPreferencesProvider
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: const MyApp(),

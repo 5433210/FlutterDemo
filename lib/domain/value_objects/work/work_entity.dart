@@ -37,50 +37,106 @@ class WorkEntity extends Equatable {
   });
 
   factory WorkEntity.fromJson(Map<String, dynamic> json) {
+    List<WorkImage> images = [];
+    if (json.containsKey('images') && json['images'] is List) {
+      images = (json['images'] as List).map((img) {
+        final imgMap = img as Map<String, dynamic>;
+        return WorkImage(
+          index: imgMap['index'] as int,
+          original: imgMap.containsKey('originalPath')
+              ? ImageDetail(
+                  path: imgMap['originalPath'] as String,
+                  width: 0, // 简化处理，这些值实际应用时会再次加载
+                  height: 0,
+                  format: '',
+                  size: 0,
+                )
+              : null,
+          imported: imgMap.containsKey('importedPath')
+              ? ImageDetail(
+                  path: imgMap['importedPath'] as String,
+                  width: 0, // 简化处理
+                  height: 0,
+                  format: '',
+                  size: 0,
+                )
+              : null,
+          thumbnail: imgMap.containsKey('thumbnailPath')
+              ? ImageThumbnail(
+                  path: imgMap['thumbnailPath'] as String,
+                  width: 0, // 简化处理
+                  height: 0,
+                )
+              : null,
+        );
+      }).toList();
+    }
+
+    List<WorkCollectedChar> collectedChars = [];
+    if (json.containsKey('collectedChars') && json['collectedChars'] is List) {
+      collectedChars = (json['collectedChars'] as List).map((char) {
+        final charMap = char as Map<String, dynamic>;
+        final regionMap = charMap['region'] as Map<String, dynamic>;
+        return WorkCollectedChar(
+          id: charMap['id'] as String? ?? '',
+          createTime:
+              DateTime.fromMillisecondsSinceEpoch(charMap['createTime'] as int),
+          region: SourceRegion(
+            index: regionMap['index'] as int,
+            x: (regionMap['x'] as num).toInt(),
+            y: (regionMap['y'] as num).toInt(),
+            width: (regionMap['width'] as num).toInt(),
+            height: (regionMap['height'] as num).toInt(),
+          ),
+        );
+      }).toList();
+    }
+
+    WorkMetadata? metadata;
+    if (json.containsKey('metadata') && json['metadata'] != null) {
+      metadata =
+          WorkMetadata.fromJson(json['metadata'] as Map<String, dynamic>);
+    }
+
+    WorkStyle? style;
+    if (json.containsKey('style') && json['style'] != null) {
+      final styleValue = json['style'] as String;
+      style = WorkStyle.values.firstWhere(
+        (s) => s.value == styleValue,
+        orElse: () => WorkStyle.regular,
+      );
+    }
+
+    WorkTool? tool;
+    if (json.containsKey('tool') && json['tool'] != null) {
+      final toolValue = json['tool'] as String;
+      tool = WorkTool.values.firstWhere(
+        (t) => t.value == toolValue,
+        orElse: () => WorkTool.brush,
+      );
+    }
+
     return WorkEntity(
       id: json['id'] as String?,
-      createTime: json['createTime'] != null
-          ? DateTime.parse(json['createTime'] as String)
-          : null,
-      updateTime: json['updateTime'] != null
-          ? DateTime.parse(json['updateTime'] as String)
-          : null,
-      name: json['name'] as String,
+      name: json['name'] as String? ?? '',
       author: json['author'] as String?,
-      style: json['style'] != null
-          ? WorkStyle.values.firstWhere(
-              (style) => style.value == json['style'],
-              orElse: () => WorkStyle.regular,
-            )
-          : null,
-      tool: json['tool'] != null
-          ? WorkTool.values.firstWhere(
-              (tool) => tool.value == json['tool'],
-              orElse: () => WorkTool.brush,
-            )
-          : null,
+      style: style,
+      tool: tool,
       imageCount: json['imageCount'] as int? ?? 0,
-      creationDate: json['creationDate'] != null
-          ? DateTime.parse(json['creationDate'] as String)
+      creationDate:
+          json.containsKey('creationDate') && json['creationDate'] != null
+              ? DateTime.fromMillisecondsSinceEpoch(json['creationDate'] as int)
+              : null,
+      createTime: json.containsKey('createTime') && json['createTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['createTime'] as int)
+          : null,
+      updateTime: json.containsKey('updateTime') && json['updateTime'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['updateTime'] as int)
           : null,
       remark: json['remark'] as String?,
-      images: json['images'] != null
-          ? List<WorkImage>.from(
-              (json['images'] as List).map(
-                (x) => WorkImage.fromJson(x as Map<String, dynamic>),
-              ),
-            )
-          : [],
-      collectedChars: json['collectedChars'] != null
-          ? List<WorkCollectedChar>.from(
-              (json['collectedChars'] as List).map(
-                (x) => WorkCollectedChar.fromJson(x as Map<String, dynamic>),
-              ),
-            )
-          : [],
-      metadata: json['metadata'] != null
-          ? WorkMetadata.fromJson(json['metadata'] as Map<String, dynamic>)
-          : null,
+      images: images,
+      collectedChars: collectedChars,
+      metadata: metadata,
     );
   }
 
@@ -136,17 +192,37 @@ class WorkEntity extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'createTime': createTime?.toIso8601String(),
-      'updateTime': updateTime?.toIso8601String(),
       'name': name,
       'author': author,
       'style': style?.value,
       'tool': tool?.value,
       'imageCount': imageCount,
-      'creationDate': creationDate?.toIso8601String(),
+      'creationDate': creationDate?.millisecondsSinceEpoch,
+      'createTime': createTime?.millisecondsSinceEpoch,
+      'updateTime': updateTime?.millisecondsSinceEpoch,
       'remark': remark,
-      'images': images.map((image) => image.toJson()).toList(),
-      'collectedChars': collectedChars.map((char) => char.toJson()).toList(),
+      // 图片和字形引用可能很复杂，可以保存简单引用或ID列表
+      'images': images
+          .map((img) => {
+                'index': img.index,
+                'originalPath': img.original?.path,
+                'importedPath': img.imported?.path,
+                'thumbnailPath': img.thumbnail?.path,
+              })
+          .toList(),
+      'collectedChars': collectedChars
+          .map((char) => {
+                'id': char.id,
+                'createTime': char.createTime.millisecondsSinceEpoch,
+                'region': {
+                  'index': char.region.index,
+                  'x': char.region.x,
+                  'y': char.region.y,
+                  'width': char.region.width,
+                  'height': char.region.height,
+                }
+              })
+          .toList(),
       'metadata': metadata?.toJson(),
     };
   }

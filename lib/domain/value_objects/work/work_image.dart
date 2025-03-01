@@ -114,10 +114,15 @@ class WorkImage extends Equatable {
   factory WorkImage.fromJson(Map<String, dynamic> json) {
     return WorkImage(
       index: json['index'] as int,
-      original: ImageDetail.fromJson(json['original'] as Map<String, dynamic>),
-      imported: ImageDetail.fromJson(json['imported'] as Map<String, dynamic>),
-      thumbnail:
-          ImageThumbnail.fromJson(json['thumbnail'] as Map<String, dynamic>),
+      original: json['original'] != null
+          ? ImageDetail.fromJson(json['original'] as Map<String, dynamic>)
+          : null,
+      imported: json['imported'] != null
+          ? ImageDetail.fromJson(json['imported'] as Map<String, dynamic>)
+          : null,
+      thumbnail: json['thumbnail'] != null
+          ? ImageThumbnail.fromJson(json['thumbnail'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -141,9 +146,9 @@ class WorkImage extends Equatable {
   Map<String, dynamic> toJson() {
     return {
       'index': index,
-      'original': original!.toJson(),
-      'imported': imported!.toJson(),
-      'thumbnail': thumbnail!.toJson(),
+      'original': original?.toJson(),
+      'imported': imported?.toJson(),
+      'thumbnail': thumbnail?.toJson(),
     };
   }
 }

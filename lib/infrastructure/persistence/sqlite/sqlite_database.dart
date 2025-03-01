@@ -479,7 +479,7 @@ class SqliteDatabase implements DatabaseInterface {
     if (character.containsKey('sourceRegion')) {
       character['sourceRegion'] = jsonEncode(character['sourceRegion']);
     }
-
+    character.remove('createTime'); // Remove createTime field
     await db.update(
       'characters',
       character,
@@ -499,6 +499,7 @@ class SqliteDatabase implements DatabaseInterface {
     if (practice.containsKey('pages')) {
       practice['pages'] = jsonEncode(practice['pages']);
     }
+    practice.remove('createTime'); // Remove createTime field
 
     await db.update(
       'practices',
@@ -515,6 +516,8 @@ class SqliteDatabase implements DatabaseInterface {
     work['creationDate'] =
         DateTime.parse(work['creationDate']).millisecondsSinceEpoch;
     work['updateTime'] = DateTime.now().millisecondsSinceEpoch;
+
+    work.remove('createTime'); // Remove createTime field
 
     if (work.containsKey('metadata')) {
       work['metadata'] = jsonEncode(work['metadata']);
