@@ -25,7 +25,8 @@ class WorkBrowsePage extends ConsumerStatefulWidget {
 
 class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
     with WidgetsBindingObserver {
-  // 添加状态跟踪变量
+  // 使用一个简单标记
+  bool _initialized = false;
   bool _initialLoadAttempted = false;
 
   @override
@@ -118,17 +119,12 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    // 允许延迟初始加载，避免状态冲突
+    // 统一初始化点
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initialLoad();
-    });
-
-    // 在初始化时检查是否需要刷新
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (ref.read(worksNeedsRefreshProvider)) {
-        ref.read(workBrowseProvider.notifier).loadWorks(forceRefresh: true);
-        ref.read(worksNeedsRefreshProvider.notifier).state = false;
+      if (!_initialized) {
+        _initialized = true;
+        // 只在这里触发一次初始加载
+        ref.read(workBrowseProvider.notifier).loadWorks();
       }
     });
   }
@@ -226,7 +222,7 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
         !currentState.isLoading &&
         currentState.error == null) {
       AppLogger.debug('浏览页面需要加载数据', tag: 'WorkBrowsePage');
-      _loadWorks(force: true);
+      //_loadWorks(force: true);
     }
   }
 

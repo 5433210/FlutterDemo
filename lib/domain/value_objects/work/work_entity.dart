@@ -262,7 +262,8 @@ class WorkMetadata {
 
       if (tagsData != null) {
         if (tagsData is List) {
-          tags = List<String>.from(tagsData.map((t) => t.toString()));
+          // 明确转换每个元素为 String 类型
+          tags = tagsData.map<String>((item) => item.toString()).toList();
         }
       }
 

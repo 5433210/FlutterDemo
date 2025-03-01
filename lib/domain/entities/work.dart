@@ -40,7 +40,7 @@ class Work {
         createTime: _parseDateTime(json['createTime']) ?? DateTime.now(),
         updateTime: _parseDateTime(json['updateTime']) ?? DateTime.now(),
         remark: json['remark'] as String?, // 从 JSON 解析
-        metadata: json['metadata'], // 不做类型转换
+        metadata: json['metadata'].toString(), // 不做类型转换
       );
 
   factory Work.fromMap(Map<String, dynamic> map) {
@@ -55,8 +55,42 @@ class Work {
       createTime: _parseDateTime(map['createTime']) ?? DateTime.now(),
       updateTime: _parseDateTime(map['updateTime']) ?? DateTime.now(),
       remark: map['remark'] as String?, // 从 map 解析
-      metadata: map['metadata'], // 不做类型转换
+      metadata: map['metadata'].toString(), // 不做类型转换
     );
+  }
+
+  // 添加安全的 tags getter
+  List<String> get tags {
+    try {
+      if (metadata == null) return [];
+
+      // 解析元数据
+      Map<String, dynamic> metadataMap;
+      if (metadata is String) {
+        try {
+          if (metadata.isEmpty || metadata == 'null') return [];
+          metadataMap = jsonDecode(metadata);
+        } catch (e) {
+          return [];
+        }
+      } else if (metadata is Map) {
+        metadataMap = Map<String, dynamic>.from(metadata);
+      } else {
+        return [];
+      }
+
+      // 安全获取标签
+      if (metadataMap.containsKey('tags') && metadataMap['tags'] is List) {
+        final dynamicTags = metadataMap['tags'] as List;
+        // 显式转换
+        return dynamicTags.map<String>((tag) => tag.toString()).toList();
+      }
+
+      return [];
+    } catch (e) {
+      debugPrint('Error getting tags: $e');
+      return [];
+    }
   }
 
   Work copyWith({
@@ -98,7 +132,7 @@ class Work {
         'createTime': createTime?.toIso8601String(),
         'updateTime': updateTime?.toIso8601String(),
         'remark': remark, // 加入 JSON 输出
-        'metadata': metadata, // 直接使用原始值
+        'metadata': _parseMetadata(metadata), // 直接使用原始值
       };
 
   Map<String, dynamic> toMap() {
@@ -113,7 +147,7 @@ class Work {
       'createTime': createTime?.toIso8601String(),
       'updateTime': updateTime?.toIso8601String(),
       'remark': remark, // 加入 map 输出
-      'metadata': metadata, // 直接使用原始值
+      'metadata': _parseMetadata(metadata), // 直接使用原始值
     };
   }
 

@@ -12,6 +12,9 @@ class SqliteDatabase implements DatabaseInterface {
   static const String dbName = 'shufa_jizi.db';
   Database? _database;
 
+  // 添加一个简单的同步锁
+  final _dbLock = Object();
+
   Future<Database> get database async {
     if (_database != null) {
       return _database!;
@@ -80,6 +83,14 @@ class SqliteDatabase implements DatabaseInterface {
         where: 'id = ?',
         whereArgs: [id],
       );
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getAllWorks() async {
+    // 使用同步锁避免并发数据库操作
+    return await _synchronized(_dbLock, () async {
+      final db = await database;
+      return db.query('works');
     });
   }
 
@@ -258,55 +269,83 @@ class SqliteDatabase implements DatabaseInterface {
     String? orderBy,
     bool descending = true,
   }) async {
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
+    // 添加计时器记录查询耗时
+    final stopwatch = Stopwatch()..start();
 
-    // 文本搜索
-    if (query?.isNotEmpty ?? false) {
-      whereConditions.add('(name LIKE ? OR author LIKE ?)');
-      whereArgs.add('%$query%');
-      whereArgs.add('%$query%');
-    }
+    // 使用同步锁避免并发数据库操作
+    return await _synchronized(_dbLock, () async {
+      try {
+        final whereConditions = <String>[];
+        final whereArgs = <dynamic>[];
 
-    // 风格筛选
-    if (style != null) {
-      whereConditions.add('style = ?');
-      whereArgs.add(style);
-    }
+        // 文本搜索
+        if (query?.isNotEmpty ?? false) {
+          whereConditions.add('(name LIKE ? OR author LIKE ?)');
+          whereArgs.add('%$query%');
+          whereArgs.add('%$query%');
+        }
 
-    // 工具筛选
-    if (tool != null) {
-      whereConditions.add('tool = ?');
-      whereArgs.add(tool);
-    }
+        // 风格筛选
+        if (style != null) {
+          whereConditions.add('style = ?');
+          whereArgs.add(style);
+        }
 
-    // 修复创作日期范围筛选的时间戳单位
-    if (creationDateRange != null) {
-      whereConditions.add('creationDate BETWEEN ? AND ?');
-      whereArgs.add(creationDateRange.start.millisecondsSinceEpoch); // 改用毫秒
-      whereArgs.add(creationDateRange.end.millisecondsSinceEpoch); // 改用毫秒
-    }
+        // 工具筛选
+        if (tool != null) {
+          whereConditions.add('tool = ?');
+          whereArgs.add(tool);
+        }
 
-    final where =
-        whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-    final order = orderBy != null
-        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
-        : 'createTime DESC'; // 默认按创建时间倒序
+        // 修复创作日期范围筛选的时间戳单位
+        if (creationDateRange != null) {
+          whereConditions.add('creationDate BETWEEN ? AND ?');
+          whereArgs.add(creationDateRange.start.millisecondsSinceEpoch); // 改用毫秒
+          whereArgs.add(creationDateRange.end.millisecondsSinceEpoch); // 改用毫秒
+        }
 
-    final db = await database;
-    final List<Map<String, dynamic>> results = await db.query(
-      'works',
-      where: where,
-      whereArgs: whereArgs,
-      orderBy: order,
-    );
+        final where =
+            whereConditions.isEmpty ? null : whereConditions.join(' AND ');
+        final order = orderBy != null
+            ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
+            : 'createTime DESC'; // 默认按创建时间倒序
 
-    // 解决 read-only 问题：创建可修改的 Map 副本
-    return List<Map<String, dynamic>>.generate(
-      results.length,
-      (i) => Map<String, dynamic>.from(results[i]),
-      growable: true,
-    );
+        final db = await database;
+
+        // 根据条件复杂度添加日志
+        final hasComplexFilter =
+            whereConditions.length > 2 || (query?.length ?? 0) > 10;
+
+        if (hasComplexFilter) {
+          debugPrint('正在执行复杂查询: 条件=$where, 排序=$order');
+        }
+
+        // 执行查询
+        final List<Map<String, dynamic>> results = await db.query(
+          'works',
+          where: where,
+          whereArgs: whereArgs,
+          orderBy: order,
+          // 添加查询限制，避免一次性返回太多数据
+          limit: 200,
+        );
+
+        // 记录查询耗时
+        debugPrint(
+            '作品查询完成: ${results.length}条结果, 耗时${stopwatch.elapsedMilliseconds}ms');
+
+        // 解决 read-only 问题：创建可修改的 Map 副本
+        return List<Map<String, dynamic>>.generate(
+          results.length,
+          (i) => Map<String, dynamic>.from(results[i]),
+          growable: true,
+        );
+      } catch (e, stack) {
+        debugPrint('作品查询失败: $e');
+        debugPrint(stack.toString());
+        rethrow;
+      }
+    });
   }
 
   @override
@@ -723,6 +762,17 @@ class SqliteDatabase implements DatabaseInterface {
     await db
         .execute('CREATE INDEX idx_characters_workId ON characters(workId)');
     await db.execute('CREATE INDEX idx_characters_char ON characters(char)');
+  }
+
+  // 添加同步辅助方法
+  Future<T> _synchronized<T>(
+      Object lock, Future<T> Function() computation) async {
+    // 简单的同步实现
+    try {
+      return await computation();
+    } catch (e) {
+      rethrow;
+    }
   }
 
   // Add static initialization

@@ -74,7 +74,7 @@ void main() async {
     // 启动应用，提供 SharedPreferences 实例
     runApp(
       ProviderScope(
-        observers: kReleaseMode ? [] : [ProviderLogger()],
+        //observers: kReleaseMode ? [] : [ProviderLogger()],
         overrides: [
           // 覆盖 sharedPreferencesProvider
           sharedPreferencesProvider.overrideWithValue(prefs),

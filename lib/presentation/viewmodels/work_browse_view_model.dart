@@ -15,6 +15,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   final WorkService _workService;
   final StateRestorationService _stateRestorationService;
   Timer? _searchDebounce;
+  bool _isLoading = false;
 
   // 修改构造函数，确保初始化时不会立即触发加载
   WorkBrowseViewModel(this._workService, this._stateRestorationService)
@@ -180,65 +181,91 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   Future<void> loadWorks({bool forceRefresh = false}) async {
-    // 如果已经在加载过程中且不强制刷新，则直接返回
-    if (state.isLoading && !forceRefresh) {
-      AppLogger.debug('已在加载中，跳过重复加载', tag: 'WorkBrowseViewModel');
+    // 简单而有效的防重入保护
+    if (_isLoading) {
+      AppLogger.debug('已有加载操作进行中，跳过', tag: 'WorkBrowseViewModel');
       return;
     }
 
     try {
-      AppLogger.info('开始加载作品列表',
-          tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
+      _isLoading = true;
+      state = state.copyWith(isLoading: true);
 
-      // 确保设置加载状态
-      state = state.copyWith(isLoading: true, error: null);
-
-      // 获取筛选条件
-      final filter = state.filter;
-
-      // 清空批量选择
-      if (state.batchMode) {
-        state = state.copyWith(batchMode: false, selectedWorks: {});
+      // 如果已经在加载过程中且不强制刷新，则直接返回
+      if (state.isLoading && !forceRefresh) {
+        AppLogger.debug('已在加载中，跳过重复加载', tag: 'WorkBrowseViewModel');
+        return;
       }
 
-      // 添加详细日志以跟踪查询过程
-      AppLogger.debug('执行作品查询',
-          tag: 'WorkBrowseViewModel', data: {'filter': filter.toString()});
+      try {
+        AppLogger.info('开始加载作品列表',
+            tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
 
-      // 使用带有超时保护的查询
-      final works = await _executeWithTimeout(
-        () => _workService.queryWorks(
-          filter: filter,
-          searchQuery: state.searchQuery,
-          sortOption: filter.sortOption,
-        ),
-        timeout: const Duration(seconds: 5),
-        operationName: '查询作品',
-      );
+        // 确保设置加载状态
+        state = state.copyWith(isLoading: true, error: null);
 
-      AppLogger.info('作品列表加载完成',
-          tag: 'WorkBrowseViewModel', data: {'count': works.length});
+        // 获取筛选条件
+        final filter = state.filter;
 
-      // 确保只有在组件还挂载时更新状态
-      if (mounted) {
-        state = state.copyWith(
-          isLoading: false,
-          works: works,
-          error: null,
+        // 清空批量选择
+        if (state.batchMode) {
+          state = state.copyWith(batchMode: false, selectedWorks: {});
+        }
+
+        // 添加详细日志以跟踪查询过程
+        AppLogger.debug('执行作品查询',
+            tag: 'WorkBrowseViewModel', data: {'filter': filter.toString()});
+
+        // 使用带有超时保护的查询 - 将超时时间增加到更合理的值
+        final works = await _executeWithTimeout(
+          () => _workService.queryWorks(
+            filter: filter,
+            searchQuery: state.searchQuery,
+            sortOption: filter.sortOption,
+          ),
+          timeout: const Duration(seconds: 20), // 增加超时时间从5秒到20秒
+          operationName: '查询作品',
         );
 
-        // 保存状态
-        _saveState();
-      }
-    } catch (e, stack) {
-      AppLogger.error('加载作品列表失败',
-          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+        AppLogger.info('作品列表加载完成',
+            tag: 'WorkBrowseViewModel', data: {'count': works.length});
 
-      // 确保即使出错也会关闭加载状态
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+        // 确保只有在组件还挂载时更新状态
+        if (mounted) {
+          state = state.copyWith(
+            isLoading: false,
+            works: works,
+            error: null,
+          );
+
+          // 保存状态
+          _saveState();
+        }
+      } catch (e, stack) {
+        // 改进错误处理，特别处理超时异常
+        if (e is TimeoutException) {
+          AppLogger.error('查询作品超时',
+              tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
+          state = state.copyWith(
+            isLoading: false,
+            error: '数据加载超时，可能是由于数据量过大。请尝试精简筛选条件或稍后重试。',
+          );
+        } else {
+          AppLogger.error('加载作品列表失败',
+              tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
+          state = state.copyWith(
+            isLoading: false,
+            error: e.toString(),
+          );
+        }
+      }
+    } finally {
+      _isLoading = false;
+      if (mounted) {
+        state = state.copyWith(isLoading: false);
+      }
     }
   }
 
@@ -426,8 +453,12 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     required String operationName,
   }) async {
     try {
+      // 添加数据库优化提示日志
+      AppLogger.debug('开始执行操作: $operationName',
+          tag: 'WorkBrowseViewModel', data: {'timeout': timeout.inSeconds});
+
       return await operation().timeout(timeout, onTimeout: () {
-        throw TimeoutException('$operationName 操作超时');
+        throw TimeoutException('$operationName 操作超时，可能需要优化数据库查询或增加超时时间');
       });
     } catch (e) {
       AppLogger.warning('$operationName 操作失败',
