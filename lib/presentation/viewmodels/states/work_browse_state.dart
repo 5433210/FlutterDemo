@@ -8,6 +8,12 @@ import '../../../domain/entities/work.dart';
 import '../../../infrastructure/logging/logger.dart'; // 添加日志导入
 import '../../models/work_filter.dart';
 
+enum LoadRequestStatus {
+  idle, // 空闲
+  throttled, // 节流中（已请求但等待执行）
+  loading, // 加载中
+}
+
 enum ViewMode { grid, list }
 
 class WorkBrowseState {
@@ -36,6 +42,9 @@ class WorkBrowseState {
   final bool hasMore;
   final bool isLoadingMore;
 
+  // 添加一个字段表示请求状态
+  final LoadRequestStatus requestStatus;
+
   WorkBrowseState({
     this.isLoading = false,
     this.error,
@@ -52,6 +61,7 @@ class WorkBrowseState {
     this.pageSize = 20,
     this.hasMore = true,
     this.isLoadingMore = false,
+    this.requestStatus = LoadRequestStatus.idle,
   }) : searchController = searchController ?? TextEditingController();
 
   @override
@@ -95,6 +105,7 @@ class WorkBrowseState {
     bool? hasMore,
     bool? isLoadingMore,
     int? totalCount,
+    LoadRequestStatus? requestStatus,
   }) {
     // Add debug print to verify state updates
     debugPrint(
@@ -116,6 +127,7 @@ class WorkBrowseState {
       pageSize: pageSize ?? this.pageSize,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      requestStatus: requestStatus ?? this.requestStatus,
     );
   }
 

@@ -690,7 +690,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     if (confirm == true) {
       final result = await ref.read(workDetailProvider.notifier).deleteWork();
       if (result && mounted) {
-        Navigator.of(context).pop(true); // 返回true表示删除成功，触发列表刷新
+        ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
+          reason: '作品数据删除立即刷新',
+          force: true, // 数据变更应立即刷新
+        );
+        Navigator.of(context).pop(); // 简化返回逻辑
       }
     }
   }
@@ -728,10 +732,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
   // 处理返回按钮，确保返回时刷新作品列表
   void _handleBackButton() {
-    // 返回时通知列表页面需要刷新数据
-    if (ref.read(workDetailProvider).work != null) {
-      ref.read(worksNeedsRefreshProvider.notifier).state = true;
-    }
     Navigator.of(context).pop(true); // 返回true表示数据可能已更改
   }
 
@@ -950,7 +950,12 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ref.read(workDetailProvider.notifier).completeEditing();
 
             // 标记数据已更改，需要刷新作品列表
-            ref.read(worksNeedsRefreshProvider.notifier).state = true;
+            ref.read(worksNeedsRefreshProvider.notifier).state =
+                const RefreshInfo(
+              reason: '作品数据已更改立即更新',
+              force: true, // 数据变更应立即刷新
+            );
+            Navigator.of(context).pop(); // 简化返回逻辑
           }
         } else {
           // 显示失败消息

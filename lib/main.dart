@@ -18,8 +18,6 @@ import 'presentation/pages/practices/practice_list_page.dart';
 import 'presentation/pages/settings/settings_page.dart';
 import 'presentation/pages/works/work_browse_page.dart';
 import 'presentation/pages/works/work_detail_page.dart';
-import 'presentation/providers/work_browse_provider.dart';
-import 'presentation/providers/works_providers.dart';
 import 'presentation/widgets/navigation/side_nav.dart';
 import 'presentation/widgets/window/title_bar.dart';
 import 'routes/app_routes.dart';
@@ -304,17 +302,6 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Use a post-frame callback to avoid setState during build
-    if (state == AppLifecycleState.resumed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final container = ProviderScope.containerOf(context);
-        container.read(workBrowseProvider.notifier).loadWorks();
-      });
-    }
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -345,27 +332,6 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
             return MaterialPageRoute(
               builder: (context) => const WorkBrowsePage(),
             );
-          },
-          onPopPage: (route, result) {
-            // 处理从详情页返回的情况
-            if (route.settings.name == AppRoutes.workDetail) {
-              final container = ProviderScope.containerOf(context);
-
-              // 检查返回结果或刷新标志
-              if (result == true || container.read(worksNeedsRefreshProvider)) {
-                // 如果需要刷新，则刷新列表
-                container
-                    .read(workBrowseProvider.notifier)
-                    .loadWorks(forceRefresh: true);
-
-                // 重置刷新标志
-                if (container.read(worksNeedsRefreshProvider)) {
-                  container.read(worksNeedsRefreshProvider.notifier).state =
-                      false;
-                }
-              }
-            }
-            return route.didPop(result);
           },
         );
       case 1:

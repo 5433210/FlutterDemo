@@ -1,15 +1,14 @@
 import 'dart:io';
 
-import 'package:demo/application/services/work/work_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/work.dart';
 import '../../../presentation/viewmodels/states/work_import_state.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
+import '../../providers/works_providers.dart';
 import 'components/form/work_import_form.dart';
 import 'components/preview/work_import_preview.dart';
 
@@ -31,69 +30,6 @@ class WorkImportDialog extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<WorkImportDialog> createState() => _WorkImportDialogState();
-}
-
-class WorkImportProvider extends StateNotifier<WorkImportState> {
-  final WorkService _workService;
-
-  WorkImportProvider(this._workService)
-      : super(const WorkImportState(
-          name: '',
-          author: '',
-          style: null,
-          tool: null,
-          remark: '',
-          images: [],
-          selectedImageIndex: -1,
-          isLoading: false,
-        ));
-
-  Future<ImportResult> importWork() async {
-    state = state.copyWith(isLoading: true);
-
-    try {
-      if (state.name.isEmpty) {
-        return ImportResult.failure('作品名称不能为空');
-      }
-
-      if (state.images.isEmpty) {
-        return ImportResult.failure('至少需要一张图片');
-      }
-
-      final work = Work(
-        name: state.name,
-        author: state.author,
-        style: state.style?.name,
-        tool: state.tool?.label,
-        creationDate: state.creationDate,
-        imageCount: state.images.length,
-      );
-
-      await _workService.importWork(state.images, work);
-
-      return ImportResult.success();
-    } catch (e, stackTrace) {
-      debugPrint('Import failed in provider: $e\n$stackTrace');
-      return ImportResult.failure(e.toString());
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
-  }
-
-  void reset() {
-    state = const WorkImportState(
-      name: '',
-      author: '',
-      style: null,
-      tool: null,
-      remark: '',
-      images: [],
-      selectedImageIndex: -1,
-      isLoading: false,
-    );
-  }
-
-  // ... existing code ...
 }
 
 class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
@@ -385,6 +321,8 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       if (result) {
         // 导入成功后清空状态
         _resetDialog();
+        ref.read(worksNeedsRefreshProvider.notifier).state =
+            RefreshInfo.importCompleted();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );
