@@ -85,6 +85,12 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
                   _selectedStyle = value;
                   _formModified = true;
                 });
+
+                // 添加通知
+                ref.read(workDetailProvider.notifier).updateWorkBasicInfo(
+                      style: value,
+                    );
+                ref.read(workDetailProvider.notifier).markAsChanged();
               },
             ),
             const SizedBox(height: AppSizes.spacingSmall),
@@ -100,6 +106,12 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
                   _selectedTool = value;
                   _formModified = true;
                 });
+
+                // 添加通知
+                ref.read(workDetailProvider.notifier).updateWorkBasicInfo(
+                      tool: value,
+                    );
+                ref.read(workDetailProvider.notifier).markAsChanged();
               },
             ),
             const SizedBox(height: AppSizes.spacingSmall),
@@ -113,6 +125,12 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
                   _selectedDate = date;
                   _formModified = true;
                 });
+
+                // 添加通知
+                ref.read(workDetailProvider.notifier).updateWorkBasicInfo(
+                      creationDate: date,
+                    );
+                ref.read(workDetailProvider.notifier).markAsChanged();
               },
             ),
             const SizedBox(height: AppSizes.spacingSmall),
@@ -126,22 +144,6 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
             ),
 
             const SizedBox(height: AppSizes.spacingLarge),
-
-            // 操作按钮
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: _formModified ? _resetForm : null,
-                  child: const Text('重置'),
-                ),
-                const SizedBox(width: AppSizes.spacingSmall),
-                FilledButton(
-                  onPressed: _formModified ? _submitForm : null,
-                  child: const Text('应用更改'),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -273,7 +275,7 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
     );
   }
 
-  // 简约表单字段
+  // 简约表单字段 - 修改为确保每次变化都触发状态更新
   Widget _buildSimpleFormField({
     required String label,
     required TextEditingController controller,
@@ -312,7 +314,29 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
               borderSide: BorderSide(color: Colors.grey.shade300),
             ),
           ),
-          onChanged: (_) => _formModified = true,
+          onChanged: (value) {
+            setState(() {
+              _formModified = true;
+            });
+
+            // 确定当前是哪个字段，调用对应的更新方法
+            if (controller == _nameController) {
+              ref
+                  .read(workDetailProvider.notifier)
+                  .updateWorkBasicInfo(name: value);
+            } else if (controller == _authorController) {
+              ref
+                  .read(workDetailProvider.notifier)
+                  .updateWorkBasicInfo(author: value);
+            } else if (controller == _remarkController) {
+              ref
+                  .read(workDetailProvider.notifier)
+                  .updateWorkBasicInfo(remark: value);
+            }
+
+            // 标记已更改状态
+            ref.read(workDetailProvider.notifier).markAsChanged();
+          },
         ),
       ],
     );
@@ -322,6 +346,7 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
   void _initFormValues() {
     final work = widget.work;
 
+    // 初始化控制器，但不添加监听器
     _nameController = TextEditingController(text: work?.name ?? '');
     _authorController = TextEditingController(text: work?.author ?? '');
     _remarkController = TextEditingController(text: work?.remark ?? '');

@@ -320,8 +320,19 @@ class WorkService {
       if (work.metadata != null) {
         try {
           // 将 WorkMetadata 转换为字符串
-          final metadataString = jsonEncode(work.metadata!.toMap());
+          final metadataMap = work.metadata!.toMap();
+          final metadataString = jsonEncode(metadataMap);
           workData.metadata = metadataString; // 存储为字符串
+          // 添加验证，确保生成的是有效JSON
+          try {
+            // 尝试解析回来，验证格式正确
+            final decoded = jsonDecode(metadataString);
+            AppLogger.debug('元数据JSON格式正确',
+                tag: 'WorkService',
+                data: {'json': metadataString, 'tags': decoded['tags']});
+          } catch (e) {
+            AppLogger.error('验证元数据JSON失败', tag: 'WorkService', error: e);
+          }
         } catch (e, stack) {
           AppLogger.error('处理元数据失败',
               tag: 'WorkService', error: e, stackTrace: stack);
@@ -373,64 +384,31 @@ class WorkService {
       );
     }
 
-    // 解析元数据和标签 - 修复此处逻辑
+    // 解析元数据和标签
     WorkMetadata? metadata;
     if (workMap['metadata'] != null) {
-      try {
-        dynamic metadataValue = workMap['metadata'];
-        Map<String, dynamic> metadataMap;
+      dynamic metadataValue = workMap['metadata'];
+      Map<String, dynamic> metadataMap;
 
-        if (metadataValue is String) {
-          // 如果是字符串，尝试解析成 JSON
-          try {
-            metadataMap = jsonDecode(metadataValue);
-          } catch (e) {
-            // 解析失败，创建一个空的元数据对象
-            AppLogger.warning('元数据JSON解析失败',
-                tag: 'WorkService',
-                error: e,
-                data: {'rawMetadata': metadataValue});
-            metadataMap = {};
+      if (metadataValue is String) {
+        try {
+          metadataMap = jsonDecode(metadataValue);
+          List<String> tags = [];
+          if (metadataMap.containsKey('tags') && metadataMap['tags'] is List) {
+            tags = List<String>.from(metadataMap['tags']);
           }
-        } else if (metadataValue is Map) {
-          // 如果已经是 Map，直接使用
-          metadataMap = Map<String, dynamic>.from(metadataValue);
-        } else {
-          // 其他类型，创建空的元数据对象
-          AppLogger.warning('元数据格式不正确',
-              tag: 'WorkService',
-              data: {'metadataType': metadataValue.runtimeType.toString()});
-          metadataMap = {};
+          metadata = WorkMetadata(tags: tags);
+        } catch (e) {
+          AppLogger.warning('Failed to parse metadata',
+              tag: 'WorkService', error: e);
         }
-
-        // 解析标签
+      } else if (metadataValue is Map) {
+        metadataMap = Map<String, dynamic>.from(metadataValue);
         List<String> tags = [];
-        if (metadataMap.containsKey('tags')) {
-          final tagsValue = metadataMap['tags'];
-          if (tagsValue is List) {
-            tags = List<String>.from(tagsValue.map((t) => t.toString()));
-          } else if (tagsValue is String) {
-            // 如果标签是以字符串形式存储的，可能需要额外解析
-            try {
-              final decoded = jsonDecode(tagsValue);
-              if (decoded is List) {
-                tags = List<String>.from(decoded.map((t) => t.toString()));
-              }
-            } catch (e) {
-              AppLogger.warning('标签解析失败',
-                  tag: 'WorkService',
-                  error: e,
-                  data: {'tagsString': tagsValue});
-            }
-          }
+        if (metadataMap.containsKey('tags') && metadataMap['tags'] is List) {
+          tags = List<String>.from(metadataMap['tags']);
         }
-
         metadata = WorkMetadata(tags: tags);
-      } catch (e, stack) {
-        AppLogger.error('处理元数据失败',
-            tag: 'WorkService', error: e, stackTrace: stack);
-        // 创建一个空的元数据对象
-        metadata = const WorkMetadata(tags: []);
       }
     }
 

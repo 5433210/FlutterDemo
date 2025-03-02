@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'work_collected_char.dart';
 import 'work_image.dart';
 
@@ -238,6 +239,15 @@ class WorkEntity extends Equatable {
       'metadata': metadata?.toJson(),
     };
   }
+
+  // 确保 WorkEntity 的 toString 方法包含标签信息，便于调试
+  @override
+  String toString() {
+    return '''WorkEntity(id: $id, 
+      name: $name, 
+      tags: ${metadata?.tags}, 
+      imagesCount: ${images.length})''';
+  }
 }
 
 class WorkMetadata {
@@ -250,8 +260,19 @@ class WorkMetadata {
       final map = jsonDecode(source) as Map<String, dynamic>;
       return WorkMetadata.fromMap(map);
     } catch (e) {
-      debugPrint('WorkMetadata fromJson 错误: $e');
-      return const WorkMetadata(tags: []);
+      // 尝试修复非标准JSON字符串
+      try {
+        // 将 Dart Map 字面量格式转为标准JSON
+        // 例如: {tags: ["草书"]} → {"tags": ["草书"]}
+        String fixedJson =
+            source.replaceAll(RegExp(r'([{,])\s*([a-zA-Z0-9_]+):'), r'$1"$2":');
+        final map = jsonDecode(fixedJson) as Map<String, dynamic>;
+        AppLogger.debug('修复了非标准JSON格式', tag: 'WorkMetadata');
+        return WorkMetadata.fromMap(map);
+      } catch (e2) {
+        AppLogger.error('解析元数据失败', tag: 'WorkMetadata', error: e);
+        return const WorkMetadata(tags: []);
+      }
     }
   }
 

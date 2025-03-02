@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/commands/work_tag_commands.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../domain/value_objects/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -217,6 +216,13 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
               WorkTabs(
                 selectedIndex: ref.watch(workDetailTabIndexProvider),
                 onTabSelected: (index) {
+                  // 在切换前确保当前表单状态已保存
+                  final currentTabIndex = ref.read(workDetailTabIndexProvider);
+                  if (currentTabIndex == 0 && index != 0) {
+                    // 如果当前在基本信息页，将要切换出去，确保表单提交
+                    _savePendingFormChanges();
+                  }
+
                   ref.read(workDetailTabIndexProvider.notifier).state = index;
                 },
               ),
@@ -229,7 +235,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
                     // 基本信息编辑表单
                     SingleChildScrollView(
                       padding: const EdgeInsets.all(AppSizes.spacingMedium),
-                      child: forms.WorkDetailEditForm(work: work),
+                      // 添加唯一 key，确保表单实例在编辑过程中保持不变
+                      child: forms.WorkDetailEditForm(
+                        key: ValueKey('form_${work.id}'),
+                        work: work,
+                      ),
                     ),
 
                     // 标签编辑面板
@@ -253,28 +263,9 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
   }
 
-  /// 构建编辑模式的工具栏
+  /// 构建编辑模式的工具栏 - 移除撤销/重做按钮，简化UI
   Widget _buildEditModeToolbar(BuildContext context, WorkDetailState state) {
     final theme = Theme.of(context);
-
-    // 修复：更严格地检查索引边界条件
-    final hasCommandHistory =
-        state.commandHistory != null && state.commandHistory!.isNotEmpty;
-
-    // 只有当历史记录存在且索引有效时才尝试获取命令描述
-    final lastUndoCommand = state.canUndo &&
-            hasCommandHistory &&
-            state.historyIndex >= 0 &&
-            state.historyIndex < state.commandHistory!.length
-        ? state.commandHistory![state.historyIndex].description
-        : null;
-
-    // 同样严格检查重做命令索引
-    final lastRedoCommand = state.canRedo &&
-            hasCommandHistory &&
-            state.historyIndex + 1 < state.commandHistory!.length
-        ? state.commandHistory![state.historyIndex + 1].description
-        : null;
 
     return Container(
       height: kToolbarHeight,
@@ -303,69 +294,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
           const Spacer(),
 
-          // 撤销按钮，增强了提示
-          Tooltip(
-            message: lastUndoCommand != null
-                ? '撤销：$lastUndoCommand (Ctrl+Z)'
-                : '撤销 (Ctrl+Z)',
-            child: IconButton(
-              icon: const Icon(Icons.undo),
-              onPressed: state.canUndo
-                  ? () {
-                      ref.read(workDetailProvider.notifier).undo();
-                      _showOperationFeedback('撤销：$lastUndoCommand');
-                    }
-                  : null,
-              style: IconButton.styleFrom(
-                // 为方便显示反馈，添加视觉样式
-                backgroundColor: state.canUndo
-                    ? theme.colorScheme.primaryContainer.withOpacity(0.3)
-                    : null,
-              ),
-            ),
-          ),
-
-          // 显示历史记录位置
-          if (state.commandHistory != null && state.commandHistory!.isNotEmpty)
-            Text(
-              '${state.historyIndex + 1}/${state.commandHistory!.length}',
-              style: theme.textTheme.bodySmall,
-            ),
-
-          // 重做按钮，增强了提示
-          Tooltip(
-            message: lastRedoCommand != null
-                ? '重做：$lastRedoCommand (Ctrl+Y)'
-                : '重做 (Ctrl+Y)',
-            child: IconButton(
-              icon: const Icon(Icons.redo),
-              onPressed: state.canRedo
-                  ? () {
-                      ref.read(workDetailProvider.notifier).redo();
-                      _showOperationFeedback('重做：$lastRedoCommand');
-                    }
-                  : null,
-              style: IconButton.styleFrom(
-                backgroundColor: state.canRedo
-                    ? theme.colorScheme.primaryContainer.withOpacity(0.3)
-                    : null,
-              ),
-            ),
-          ),
-
-          // 添加命令历史按钮
-          if (state.commandHistory != null && state.commandHistory!.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.history),
-              tooltip: '查看命令历史',
-              onPressed: () => _showCommandHistoryDialog(state),
-            ),
-
-          const SizedBox(width: 8),
-          const VerticalDivider(width: 1),
-          const SizedBox(width: 8),
-
-          // 保存按钮
+          // 保存按钮 - 任何更改都可以保存
           FilledButton.icon(
             icon: const Icon(Icons.save),
             label: const Text('保存'),
@@ -397,6 +326,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   Widget _buildTagsEditPanel(
       BuildContext context, WorkDetailState state, WorkEntity work) {
     final theme = Theme.of(context);
+    final notifier = ref.read(workDetailProvider.notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,23 +337,15 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           tags: work.metadata?.tags ?? [],
           suggestedTags: const ['行书', '楷书', '隶书', '草书', '真迹', '拓片', '碑帖', '字帖'],
           onTagsChanged: (updatedTags) {
-            // 找出新添加的标签
-            for (final tag in updatedTags) {
-              if (!(work.metadata?.tags ?? []).contains(tag)) {
-                ref
-                    .read(workDetailProvider.notifier)
-                    .executeCommand(AddTagCommand(tag));
-              }
-            }
+            // 直接更新标签，不使用命令模式
+            notifier.updateWorkTags(updatedTags);
 
-            // 找出删除的标签
-            for (final tag in work.metadata?.tags ?? []) {
-              if (!updatedTags.contains(tag)) {
-                ref
-                    .read(workDetailProvider.notifier)
-                    .executeCommand(RemoveTagCommand(tag));
-              }
-            }
+            // 添加日志，帮助调试标签更新
+            AppLogger.debug(
+              '标签已更新',
+              tag: 'WorkDetailPage',
+              data: {'tags': updatedTags},
+            );
           },
           chipColor: theme.colorScheme.primaryContainer,
           textColor: theme.colorScheme.onPrimaryContainer,
@@ -878,7 +800,18 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     // 创建一个标志，用于处理异步操作期间的组件卸载情况
     bool isDialogActive = true;
 
-    // 显示保存进度对话框 - 使用context.mounted检查而非mounted
+    // 记录保存前的标签数据，以便调试
+    final editingWork = ref.read(workDetailProvider).editingWork;
+    final tags = editingWork?.metadata?.tags;
+
+    AppLogger.debug('开始保存作品', tag: 'WorkDetailPage', data: {
+      'workId': editingWork?.id,
+      'hasMetadata': editingWork?.metadata != null,
+      'tagCount': tags?.length ?? 0,
+      'tags': tags, // 直接输出标签列表，方便调试
+    });
+
+    // 显示保存进度对话框
     if (!context.mounted) return;
 
     showDialog(
@@ -899,41 +832,37 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
 
     try {
-      // 添加日志，调试保存流程
-      AppLogger.debug('开始保存作品', tag: 'WorkDetailPage');
-
-      // 设置超时保护，但不使用Future.any，避免竞态条件
-      final completer = Completer<bool>();
-
-      // 设置超时定时器
-      final timer = Timer(const Duration(seconds: 10), () {
-        if (!completer.isCompleted) {
-          AppLogger.warning('保存操作超时', tag: 'WorkDetailPage');
-          completer.completeError(TimeoutException('保存操作超时，请重试'));
-        }
-      });
+      // 设置超时保护
+      // final completer = Completer<bool>();
+      // final timer = Timer(const Duration(seconds: 10), () {
+      //   if (!completer.isCompleted) {
+      //     completer.completeError(TimeoutException('保存操作超时，请重试'));
+      //   }
+      // });
 
       // 执行保存操作
       ref.read(workDetailProvider.notifier).saveChanges().then((result) {
-        if (!completer.isCompleted) completer.complete(result);
+        // if (!completer.isCompleted) completer.complete(result);
       }).catchError((error) {
-        if (!completer.isCompleted) completer.completeError(error);
+        // if (!completer.isCompleted) completer.completeError(error);
       });
 
       // 等待结果
-      final result = await completer.future;
-      timer.cancel(); // 取消定时器
+      // final result = await completer.future;
+      // timer.cancel();
 
-      AppLogger.debug('保存操作完成',
-          tag: 'WorkDetailPage', data: {'result': result});
+      // 记录保存结果，包括标签处理情况
+      AppLogger.debug('保存操作完成', tag: 'WorkDetailPage', data: {
+        // 'result': result,
+        'tagCount': tags?.length ?? 0,
+      });
 
       // 关闭对话框前先检查context是否仍然有效
       if (context.mounted && isDialogActive) {
-        // 使用 Navigator.of(context, rootNavigator: true) 确保关闭顶层对话框
         Navigator.of(context, rootNavigator: true).pop();
         isDialogActive = false;
 
-        if (result) {
+        if (true) {
           // 显示成功消息
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -942,20 +871,16 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           );
 
-          // 延迟一下再完成编辑模式，确保UI更新顺序正确
           await Future.delayed(const Duration(milliseconds: 300));
 
-          // 在显示反馈后再完成编辑模式
           if (context.mounted) {
             ref.read(workDetailProvider.notifier).completeEditing();
 
-            // 标记数据已更改，需要刷新作品列表
+            // 使用合适的刷新信息通知
             ref.read(worksNeedsRefreshProvider.notifier).state =
-                const RefreshInfo(
-              reason: '作品数据已更改立即更新',
-              force: true, // 数据变更应立即刷新
-            );
-            Navigator.of(context).pop(); // 简化返回逻辑
+                RefreshInfo.dataChanged();
+
+            Navigator.of(context).pop(); // 返回
           }
         } else {
           // 显示失败消息
@@ -970,9 +895,9 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         tag: 'WorkDetailPage',
         error: e,
         stackTrace: stack,
+        data: {'tagCount': tags?.length ?? 0},
       );
 
-      // 确保弹窗仍在活动状态，则关闭它
       if (mounted && isDialogActive) {
         Navigator.of(context).pop(); // 关闭进度对话框
         isDialogActive = false;
@@ -982,6 +907,16 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           SnackBar(content: Text('保存出错: ${e.toString()}')),
         );
       }
+    }
+  }
+
+  // 添加辅助方法保存表单待处理的更改
+  void _savePendingFormChanges() {
+    // 直接从表单控制器获取当前值并应用
+    final editingWork = ref.read(workDetailProvider).editingWork;
+    if (editingWork != null) {
+      // 通知 provider 有变更需要保存
+      ref.read(workDetailProvider.notifier).markAsChanged();
     }
   }
 
@@ -995,7 +930,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
   /// 显示命令历史对话框 - 添加此方法以便在需要时显示历史记录
   void _showCommandHistoryDialog(WorkDetailState state) {
-    if (state.commandHistory == null || state.commandHistory!.isEmpty) return;
+    if (state.commandHistory == null || state.commandHistory!.isNotEmpty)
+      return;
 
     showDialog(
       context: context,

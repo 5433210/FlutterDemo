@@ -40,7 +40,7 @@ class Work {
         createTime: _parseDateTime(json['createTime']) ?? DateTime.now(),
         updateTime: _parseDateTime(json['updateTime']) ?? DateTime.now(),
         remark: json['remark'] as String?, // 从 JSON 解析
-        metadata: json['metadata'].toString(), // 不做类型转换
+        metadata: json['metadata'], // 不做类型转换
       );
 
   factory Work.fromMap(Map<String, dynamic> map) {
@@ -55,7 +55,7 @@ class Work {
       createTime: _parseDateTime(map['createTime']) ?? DateTime.now(),
       updateTime: _parseDateTime(map['updateTime']) ?? DateTime.now(),
       remark: map['remark'] as String?, // 从 map 解析
-      metadata: map['metadata'].toString(), // 不做类型转换
+      metadata: map['metadata'], // 不做类型转换
     );
   }
 

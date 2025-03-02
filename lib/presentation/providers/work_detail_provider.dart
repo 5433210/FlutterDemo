@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/commands/work_edit_commands.dart';
 import '../../application/providers/service_providers.dart';
+import '../../domain/enums/work_style.dart';
+import '../../domain/enums/work_tool.dart';
 import '../../domain/value_objects/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 
@@ -254,6 +256,15 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
+  /// 标记状态已更改
+  void markAsChanged() {
+    if (state.isEditing && state.editingWork != null && !state.hasChanges) {
+      state = state.copyWith(hasChanges: true);
+
+      AppLogger.debug('表单状态已标记为已更改', tag: 'WorkDetailProvider');
+    }
+  }
+
   /// 重做操作
   Future<void> redo() async {
     if (!state.canRedo) return;
@@ -443,6 +454,71 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         stackTrace: stack,
       );
     }
+  }
+
+  // 在 WorkDetailNotifier 类中添加方法，实时更新基本信息
+  void updateWorkBasicInfo({
+    String? name,
+    String? author,
+    WorkStyle? style,
+    WorkTool? tool,
+    DateTime? creationDate,
+    String? remark,
+  }) {
+    if (state.editingWork == null) return;
+
+    final currentWork = state.editingWork!;
+
+    // 只更新提供的字段
+    final updatedWork = currentWork.copyWith(
+      name: name ?? currentWork.name,
+      author: author ?? currentWork.author,
+      style: style ?? currentWork.style,
+      tool: tool ?? currentWork.tool,
+      creationDate: creationDate ?? currentWork.creationDate,
+      remark: remark ?? currentWork.remark,
+    );
+
+    // 检查是否有实际变化
+    final hasChanged = updatedWork != currentWork;
+
+    if (hasChanged) {
+      state = state.copyWith(
+        editingWork: updatedWork,
+        hasChanges: true,
+      );
+
+      AppLogger.debug('基本信息已更新',
+          tag: 'WorkDetailProvider', data: {'field': 'basicInfo'});
+    }
+  }
+
+  /// 直接更新标签，不使用命令模式
+  void updateWorkTags(List<String> updatedTags) {
+    if (state.editingWork == null) return;
+
+    final currentWork = state.editingWork!;
+
+    // 创建新的元数据对象，确保tags数组被深拷贝
+    final updatedMetadata = WorkMetadata(
+      tags: List<String>.from(updatedTags), // 确保深拷贝
+    );
+
+    // 记录详细日志，显示更新前后的标签
+    AppLogger.debug('更新作品标签', tag: 'WorkDetailProvider', data: {
+      'oldTags': currentWork.metadata?.tags,
+      'newTags': updatedTags,
+      'workId': currentWork.id,
+    });
+
+    // 创建带有更新后元数据的新作品对象
+    final updatedWork = currentWork.copyWith(metadata: updatedMetadata);
+
+    // 更新状态
+    state = state.copyWith(
+      editingWork: updatedWork,
+      hasChanges: true, // 标记有更改
+    );
   }
 
   /// 清除编辑状态
