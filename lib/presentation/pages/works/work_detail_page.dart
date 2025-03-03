@@ -17,6 +17,7 @@ import '../../widgets/dialogs/command_history_dialog.dart'; // 确保添加此�
 import '../../widgets/forms/work_detail_edit_form.dart' as forms;
 import '../../widgets/page_layout.dart';
 import '../../widgets/tag_editor.dart';
+import './character_collection_page.dart';
 import 'components/work_detail_info_panel.dart';
 import 'components/work_image_preview.dart';
 import 'components/work_tabs.dart';
@@ -789,10 +790,21 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
   /// 导航到字形提取页面
   void _navigateToExtract(String workId) {
-    // 导航到字形提取页面的实现
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('导航到字形提取: $workId')),
-    );
+    final work = ref.read(workDetailProvider).work;
+    if (work != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => CharacterCollectionPage(
+            imageId: workId,
+            workTitle: work.name,
+            images: work.images
+                .where((img) => img.imported?.path != null)
+                .map((img) => img.imported!.path.replaceAll('\\', '/'))
+                .toList(),
+          ),
+        ),
+      );
+    }
   }
 
   /// 保存更改

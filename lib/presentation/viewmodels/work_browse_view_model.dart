@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../infrastructure/services/state_restoration_service.dart';
 import '../../utils/throttle_helper.dart';
+import '../dialogs/character_collection_dialog.dart';
 import '../dialogs/work_import/work_import_dialog.dart';
 import '../models/date_range_filter.dart';
 import '../models/work_filter.dart';
@@ -289,6 +290,15 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   // 添加导入对话框功能
+  Future<void> showCollectionDialog(
+      BuildContext context, String workId, String workTitle) async {
+    showCharacterCollectionDialog(
+      context,
+      imageId: workId,
+      workTitle: workTitle,
+    );
+  }
+
   Future<bool> showImportDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
