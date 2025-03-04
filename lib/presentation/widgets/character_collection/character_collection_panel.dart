@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../theme/app_colors.dart';
 import './collection_preview.dart';
-import './collection_result.dart';
 import './collection_toolbar.dart';
 import './collection_tools.dart';
 
@@ -84,17 +83,13 @@ class _CharacterCollectionPanelState extends State<CharacterCollectionPanel> {
                     // Handle tool selection
                   },
                 ),
-                // Center preview area
+                // Preview area with built-in result panel
                 Expanded(
                   flex: 3,
                   child: CollectionPreview(
                     workId: widget.imageId,
                     images: widget.images,
                   ),
-                ),
-                // Right result panel
-                const Expanded(
-                  child: CollectionResult(),
                 ),
               ],
             ),
