@@ -3,43 +3,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 
-// 定义字符区域数据结构
-class CharacterRegion {
-  final String id;
-  final int pageIndex;
-  Rect rect;
-  double rotation;
-  bool isSelected;
-  bool isSaved;
-  final DateTime createTime;
-
-  CharacterRegion({
-    String? id,
-    required this.pageIndex,
-    required this.rect,
-    this.rotation = 0.0,
-    this.isSelected = false,
-    this.isSaved = false,
-    DateTime? createTime,
-  })  : id = id ?? const Uuid().v4(),
-        createTime = createTime ?? DateTime.now();
-
-  // 转换为数据库格式的 JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'index': pageIndex,
-      'x': rect.left,
-      'y': rect.top,
-      'width': rect.width,
-      'height': rect.height,
-      'rotation': rotation,
-      'createTime': createTime.toIso8601String(),
-    };
-  }
-}
+import '../../../domain/models/character_region.dart';
+import 'region_painter.dart';
 
 class ImagePreview extends StatefulWidget {
   final List<String> imagePaths;
@@ -73,39 +39,7 @@ class ImagePreview extends StatefulWidget {
   State<ImagePreview> createState() => _ImagePreviewState();
 }
 
-class SelectionPainter extends CustomPainter {
-  final Offset start;
-  final Offset end;
-  final Color color;
-
-  SelectionPainter({
-    required this.start,
-    required this.end,
-    required this.color,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final rect = Rect.fromPoints(start, end);
-    canvas.drawRect(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(SelectionPainter oldDelegate) {
-    return start != oldDelegate.start ||
-        end != oldDelegate.end ||
-        color != oldDelegate.color;
-  }
-}
-
 class _ImagePreviewState extends State<ImagePreview> {
-  // 用于调整大小的句柄区域
-  static const double _handleSize = 8.0;
   late int _currentIndex;
   final TransformationController _transformationController =
       TransformationController();
@@ -114,9 +48,16 @@ class _ImagePreviewState extends State<ImagePreview> {
   bool _isBoxSelectionMode = false;
   Offset? _selectionStart;
   Offset? _selectionCurrent;
-  final List<CharacterRegion> _selectedRegions = [];
+  CharacterRegion? _selectedRegion;
 
-  CharacterRegion? _resizingRegion;
+  int? _resizeHandleIndex;
+  bool _isRotating = false;
+  double _rotationStartAngle = 0;
+  Offset? _rotationCenter;
+
+  // 拖动相关变量
+  Offset? _dragStartOffset;
+  Rect? _dragStartRect;
 
   @override
   Widget build(BuildContext context) {
@@ -144,15 +85,15 @@ class _ImagePreviewState extends State<ImagePreview> {
                 },
                 tooltip: '框选工具',
               ),
-              if (_selectedRegions.isNotEmpty) ...[
+              if (_selectedRegion != null) ...[
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () {
                     if (widget.onRegionsDeleted != null) {
-                      widget.onRegionsDeleted!(_selectedRegions);
+                      widget.onRegionsDeleted!([_selectedRegion!]);
                     }
                     setState(() {
-                      _selectedRegions.clear();
+                      _selectedRegion = null;
                     });
                   },
                   tooltip: '删除选中区域',
@@ -170,63 +111,82 @@ class _ImagePreviewState extends State<ImagePreview> {
                     borderRadius: BorderRadius.circular(4),
                   ),
               child: widget.imagePaths.isNotEmpty
-                  ? GestureDetector(
-                      onPanStart: _isBoxSelectionMode ? _handlePanStart : null,
-                      onPanUpdate:
-                          _isBoxSelectionMode ? _handlePanUpdate : null,
-                      onPanEnd: _isBoxSelectionMode ? _handlePanEnd : null,
-                      onSecondaryTapDown: (_) {
-                        setState(() {
-                          _isBoxSelectionMode = false;
-                          _clearSelection();
-                        });
-                      },
-                      child: InteractiveViewer(
-                        transformationController: _transformationController,
-                        boundaryMargin: const EdgeInsets.all(20.0),
-                        minScale: 0.1,
-                        maxScale: 10.0, // 最大放大10倍
-                        constrained: widget.enableZoom,
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: Image.file(
-                                File(widget.imagePaths[_currentIndex]),
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.broken_image,
-                                            size: 64, color: Colors.red),
-                                        SizedBox(height: 16),
-                                        Text('图片加载失败',
-                                            style:
-                                                TextStyle(color: Colors.red)),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            // 已收集的字符区域
-                            if (widget.collectedRegions != null)
-                              ...widget.collectedRegions!
-                                  .where((region) =>
-                                      region.pageIndex == _currentIndex)
-                                  .map((region) => _buildRegionBox(region)),
-                            // 当前选择框
-                            if (_selectionStart != null &&
-                                _selectionCurrent != null)
-                              CustomPaint(
-                                painter: SelectionPainter(
-                                  start: _selectionStart!,
-                                  end: _selectionCurrent!,
-                                  color: Colors.blue,
+                  ? MouseRegion(
+                      cursor: _getCursor(),
+                      child: GestureDetector(
+                        onTapDown: _handleTapDown,
+                        onTapUp: _handleTapUp,
+                        onPanStart: _isBoxSelectionMode
+                            ? _handlePanStart
+                            : _handleRegionStart,
+                        onPanUpdate: _isBoxSelectionMode
+                            ? _handlePanUpdate
+                            : _handleRegionUpdate,
+                        onPanEnd: _isBoxSelectionMode
+                            ? _handlePanEnd
+                            : _handleRegionEnd,
+                        onSecondaryTapDown: (_) {
+                          setState(() {
+                            _isBoxSelectionMode = false;
+                            _clearSelection();
+                          });
+                        },
+                        child: InteractiveViewer(
+                          transformationController: _transformationController,
+                          boundaryMargin: const EdgeInsets.all(20.0),
+                          minScale: 0.1,
+                          maxScale: 10.0,
+                          constrained: widget.enableZoom,
+                          child: Stack(
+                            children: [
+                              // 主图片
+                              Center(
+                                child: Image.file(
+                                  File(widget.imagePaths[_currentIndex]),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.broken_image,
+                                              size: 64, color: Colors.red),
+                                          SizedBox(height: 16),
+                                          Text('图片加载失败',
+                                              style:
+                                                  TextStyle(color: Colors.red)),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                          ],
+
+                              // 已收集的字符区域
+                              if (widget.collectedRegions != null)
+                                ...widget.collectedRegions!
+                                    .where((region) =>
+                                        region.pageIndex == _currentIndex)
+                                    .map((region) => CustomPaint(
+                                          painter: RegionPainter(
+                                            region: region,
+                                            isSelected:
+                                                region == _selectedRegion,
+                                          ),
+                                        )),
+
+                              // 当前选择框
+                              if (_selectionStart != null &&
+                                  _selectionCurrent != null)
+                                CustomPaint(
+                                  painter: RegionPainter(
+                                    selectionStart: _selectionStart,
+                                    selectionEnd: _selectionCurrent,
+                                    isSelecting: true,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     )
@@ -362,101 +322,32 @@ class _ImagePreviewState extends State<ImagePreview> {
     _currentIndex = widget.initialIndex;
   }
 
-  Widget _buildRegionBox(CharacterRegion region) {
-    final isSelected = _selectedRegions.contains(region);
-    return Positioned.fromRect(
-      rect: region.rect,
-      child: Transform.rotate(
-        angle: region.rotation,
-        child: GestureDetector(
-          onTap: () {
-            if (_isBoxSelectionMode) return;
-            setState(() {
-              if (isSelected) {
-                _selectedRegions.remove(region);
-              } else {
-                _selectedRegions.add(region);
-                if (widget.onRegionSelected != null) {
-                  widget.onRegionSelected!(region);
-                }
-              }
-            });
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Colors.blue
-                    : region.isSaved
-                        ? Colors.green
-                        : Colors.blue,
-                width: 2,
-              ),
-            ),
-            child: Stack(
-              children: [
-                if (isSelected) ...[
-                  // 调整大小的句柄
-                  ...List.generate(8, (index) {
-                    final isHorizontal = index % 2 == 0;
-                    final isVertical = index % 2 == 1;
-                    return Positioned(
-                      left: index < 4 ? 0 : null,
-                      top: index < 2 || index > 5 ? 0 : null,
-                      right: index >= 4 ? 0 : null,
-                      bottom: index >= 2 && index <= 5 ? 0 : null,
-                      child: GestureDetector(
-                        onPanUpdate: (details) =>
-                            _handleResize(details, index, region),
-                        child: Container(
-                          width: _handleSize,
-                          height: _handleSize,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(color: Colors.blue),
-                          ),
-                          child: MouseRegion(
-                            cursor: isHorizontal
-                                ? SystemMouseCursors.resizeLeftRight
-                                : isVertical
-                                    ? SystemMouseCursors.resizeUpDown
-                                    : SystemMouseCursors.resizeUpLeftDownRight,
-                            child: Container(),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-                  // 旋转句柄
-                  Positioned(
-                    top: -20,
-                    right: -20,
-                    child: GestureDetector(
-                      onPanUpdate: (details) => _handleRotate(details, region),
-                      child: Container(
-                        width: _handleSize,
-                        height: _handleSize,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _clearSelection() {
     setState(() {
       _selectionStart = null;
       _selectionCurrent = null;
     });
+  }
+
+  MouseCursor _getCursor() {
+    if (_isBoxSelectionMode) {
+      return SystemMouseCursors.precise;
+    }
+
+    if (_selectedRegion != null) {
+      if (_resizeHandleIndex != null) {
+        final isHorizontal = _resizeHandleIndex! % 2 == 0;
+        final isVertical = _resizeHandleIndex! % 2 == 1;
+        if (isHorizontal) return SystemMouseCursors.resizeLeftRight;
+        if (isVertical) return SystemMouseCursors.resizeUpDown;
+        return SystemMouseCursors.resizeUpLeftDownRight;
+      }
+      if (_isRotating) return SystemMouseCursors.grab;
+      if (_dragStartOffset != null) return SystemMouseCursors.move;
+      return SystemMouseCursors.click;
+    }
+
+    return SystemMouseCursors.basic;
   }
 
   void _handlePanEnd(DragEndDetails details) {
@@ -466,6 +357,7 @@ class _ImagePreviewState extends State<ImagePreview> {
         final region = CharacterRegion(
           pageIndex: _currentIndex,
           rect: rect,
+          imagePath: widget.imagePaths[_currentIndex],
         );
         if (widget.onRegionCreated != null) {
           widget.onRegionCreated!(region);
@@ -488,66 +380,144 @@ class _ImagePreviewState extends State<ImagePreview> {
     });
   }
 
-  void _handleResize(
-      DragUpdateDetails details, int handleIndex, CharacterRegion region) {
+  void _handleRegionEnd(DragEndDetails details) {
+    _resizeHandleIndex = null;
+    _isRotating = false;
+    _rotationStartAngle = 0;
+    _rotationCenter = null;
+    _dragStartOffset = null;
+    _dragStartRect = null;
+  }
+
+  void _handleRegionStart(DragStartDetails details) {
+    if (_selectedRegion == null) return;
+
+    final painter = RegionPainter(region: _selectedRegion, isSelected: true);
+    final handleIndex = painter.getHandleAtPoint(
+      details.localPosition,
+      _selectedRegion!.rect,
+    );
+
+    if (handleIndex != null) {
+      _resizeHandleIndex = handleIndex;
+    } else if (painter.isRotationHandle(
+        details.localPosition, _selectedRegion!.rect)) {
+      _isRotating = true;
+      _rotationStartAngle = _selectedRegion!.rotation;
+      _rotationCenter = _selectedRegion!.rect.center;
+    } else if (_selectedRegion!.rect.contains(details.localPosition)) {
+      _dragStartOffset = details.localPosition;
+      _dragStartRect = _selectedRegion!.rect;
+    }
+  }
+
+  void _handleRegionUpdate(DragUpdateDetails details) {
+    if (_selectedRegion == null) return;
     setState(() {
-      final delta = details.delta;
-      double newLeft = region.rect.left;
-      double newTop = region.rect.top;
-      double newWidth = region.rect.width;
-      double newHeight = region.rect.height;
-
-      switch (handleIndex) {
-        case 0: // 左上
-          newLeft += delta.dx;
-          newTop += delta.dy;
-          newWidth -= delta.dx;
-          newHeight -= delta.dy;
-          break;
-        case 1: // 上
-          newTop += delta.dy;
-          newHeight -= delta.dy;
-          break;
-        case 2: // 右上
-          newWidth += delta.dx;
-          newTop += delta.dy;
-          newHeight -= delta.dy;
-          break;
-        case 3: // 右
-          newWidth += delta.dx;
-          break;
-        case 4: // 右下
-          newWidth += delta.dx;
-          newHeight += delta.dy;
-          break;
-        case 5: // 下
-          newHeight += delta.dy;
-          break;
-        case 6: // 左下
-          newLeft += delta.dx;
-          newWidth -= delta.dx;
-          newHeight += delta.dy;
-          break;
-        case 7: // 左
-          newLeft += delta.dx;
-          newWidth -= delta.dx;
-          break;
-      }
-
-      if (newWidth > 20 && newHeight > 20) {
-        region.rect = Rect.fromLTWH(newLeft, newTop, newWidth, newHeight);
+      if (_resizeHandleIndex != null) {
+        _handleResize(details, _resizeHandleIndex!, _selectedRegion!);
+      } else if (_isRotating) {
+        _handleRotate(details, _selectedRegion!);
+      } else if (_dragStartOffset != null && _dragStartRect != null) {
+        final delta = details.localPosition - _dragStartOffset!;
+        _selectedRegion!.rect = _dragStartRect!.translate(delta.dx, delta.dy);
       }
     });
   }
 
+  void _handleResize(
+      DragUpdateDetails details, int handleIndex, CharacterRegion region) {
+    final delta = details.delta;
+    double newLeft = region.rect.left;
+    double newTop = region.rect.top;
+    double newWidth = region.rect.width;
+    double newHeight = region.rect.height;
+
+    switch (handleIndex) {
+      case 0: // 左上
+        newLeft += delta.dx;
+        newTop += delta.dy;
+        newWidth -= delta.dx;
+        newHeight -= delta.dy;
+        break;
+      case 1: // 上
+        newTop += delta.dy;
+        newHeight -= delta.dy;
+        break;
+      case 2: // 右上
+        newWidth += delta.dx;
+        newTop += delta.dy;
+        newHeight -= delta.dy;
+        break;
+      case 3: // 右
+        newWidth += delta.dx;
+        break;
+      case 4: // 右下
+        newWidth += delta.dx;
+        newHeight += delta.dy;
+        break;
+      case 5: // 下
+        newHeight += delta.dy;
+        break;
+      case 6: // 左下
+        newLeft += delta.dx;
+        newWidth -= delta.dx;
+        newHeight += delta.dy;
+        break;
+      case 7: // 左
+        newLeft += delta.dx;
+        newWidth -= delta.dx;
+        break;
+    }
+
+    if (newWidth > 20 && newHeight > 20) {
+      region.rect = Rect.fromLTWH(newLeft, newTop, newWidth, newHeight);
+    }
+  }
+
   void _handleRotate(DragUpdateDetails details, CharacterRegion region) {
+    if (_rotationCenter == null) return;
+
+    final angle = math.atan2(
+      details.localPosition.dy - _rotationCenter!.dy,
+      details.localPosition.dx - _rotationCenter!.dx,
+    );
+    region.rotation = angle;
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (_isBoxSelectionMode) return;
+
+    final tappedRegions = widget.collectedRegions
+        ?.where((region) =>
+            region.pageIndex == _currentIndex &&
+            region.rect.contains(details.localPosition))
+        .toList();
+
+    final tappedRegion =
+        tappedRegions?.isNotEmpty == true ? tappedRegions!.first : null;
+
     setState(() {
-      final center = region.rect.center;
-      final angle = math.atan2(
-        details.localPosition.dy - center.dy,
-        details.localPosition.dx - center.dx,
-      );
-      region.rotation = angle;
+      _selectedRegion = tappedRegion;
+      if (tappedRegion != null && widget.onRegionSelected != null) {
+        widget.onRegionSelected!(tappedRegion);
+      }
     });
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (_isBoxSelectionMode) return;
+
+    final tappedRegions = widget.collectedRegions
+        ?.where((region) =>
+            region.pageIndex == _currentIndex &&
+            region.rect.contains(details.localPosition))
+        .toList();
+
+    if (tappedRegions?.isEmpty ?? true) {
+      setState(() {
+        _selectedRegion = null;
+      });
+    }
   }
 }
