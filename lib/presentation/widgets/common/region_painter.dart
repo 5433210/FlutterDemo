@@ -1,146 +1,208 @@
 import 'package:flutter/material.dart';
 
-import '../../../domain/models/character_region.dart';
+import '../../../domain/models/character/character_region.dart';
 
 class RegionPainter extends CustomPainter {
   static const double handleSize = 8.0;
+  static const double rotationHandleOffset = 24.0;
+  static const double labelFontSize = 12.0;
+
+  static const Color savedColor = Colors.green;
+  static const Color unsavedColor = Colors.blue;
+  static const Color selectedColor = Colors.blue;
+
   final CharacterRegion? region;
+  final bool isSelected;
+  final bool isSelecting;
   final Offset? selectionStart;
   final Offset? selectionEnd;
-  final bool isSelecting;
-  final bool isSelected;
 
   RegionPainter({
     this.region,
+    this.isSelected = false,
+    this.isSelecting = false,
     this.selectionStart,
     this.selectionEnd,
-    this.isSelecting = false,
-    this.isSelected = false,
   });
 
-  // 判断点击是否在控制点上
+  Color get _fillColor => _regionColor.withOpacity(0.2);
+
+  Color get _regionColor {
+    if (isSelecting) return selectedColor;
+    if (region == null) return unsavedColor;
+    if (isSelected) return selectedColor;
+    return region!.isSaved ? savedColor : unsavedColor;
+  }
+
   int? getHandleAtPoint(Offset point, Rect rect) {
-    final handles = <Offset>[
+    final points = [
       rect.topLeft,
-      Offset(rect.left + rect.width / 2, rect.top),
+      Offset(rect.center.dx, rect.top),
       rect.topRight,
-      Offset(rect.right, rect.top + rect.height / 2),
+      Offset(rect.right, rect.center.dy),
       rect.bottomRight,
-      Offset(rect.left + rect.width / 2, rect.bottom),
+      Offset(rect.center.dx, rect.bottom),
       rect.bottomLeft,
-      Offset(rect.left, rect.top + rect.height / 2),
+      Offset(rect.left, rect.center.dy),
     ];
 
-    for (int i = 0; i < handles.length; i++) {
-      final handleRect = Rect.fromCenter(
-        center: handles[i],
-        width: handleSize,
-        height: handleSize,
-      );
-      if (handleRect.contains(point)) {
+    for (int i = 0; i < points.length; i++) {
+      if ((point - points[i]).distance <= handleSize) {
         return i;
       }
     }
     return null;
   }
 
-  // 判断点击是否在旋转控制点上
   bool isRotationHandle(Offset point, Rect rect) {
-    final center = Offset(rect.right, rect.top - 20);
-    final handleRect = Rect.fromCircle(center: center, radius: handleSize / 2);
-    return handleRect.contains(point);
+    final center = Offset(rect.center.dx, rect.top - rotationHandleOffset);
+    return (point - center).distance <= handleSize;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    // 绘制选择框
     if (isSelecting && selectionStart != null && selectionEnd != null) {
-      paint.color = Colors.blue.withOpacity(0.8);
-      final rect = Rect.fromPoints(selectionStart!, selectionEnd!);
-      canvas.drawRect(rect, paint);
+      _drawSelectionBox(canvas, selectionStart!, selectionEnd!);
     }
 
-    // 绘制已有区域
     if (region != null) {
-      // 保存当前画布状态
-      canvas.save();
-
-      // 如果有旋转，先移动到中心点再旋转
-      if (region!.rotation != 0.0) {
-        final center = region!.rect.center;
-        canvas.translate(center.dx, center.dy);
-        canvas.rotate(region!.rotation);
-        canvas.translate(-center.dx, -center.dy);
-      }
-
-      // 绘制区域边框
-      paint.color = region!.isSaved
-          ? Colors.green
-          : (isSelected ? Colors.blue : Colors.blue.withOpacity(0.8));
-      canvas.drawRect(region!.rect, paint);
-
-      // 如果被选中，绘制控制点
-      if (isSelected) {
-        paint
-          ..style = PaintingStyle.fill
-          ..color = Colors.white;
-        final strokePaint = Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0
-          ..color = Colors.blue;
-
-        // 绘制8个调整大小的控制点
-        _drawResizeHandles(canvas, region!.rect, paint, strokePaint);
-
-        // 绘制旋转控制点
-        _drawRotationHandle(canvas, region!.rect, paint);
-      }
-
-      // 恢复画布状态
-      canvas.restore();
+      _drawRegion(canvas, region!);
     }
   }
 
   @override
   bool shouldRepaint(RegionPainter oldDelegate) {
-    return region != oldDelegate.region ||
-        selectionStart != oldDelegate.selectionStart ||
-        selectionEnd != oldDelegate.selectionEnd ||
-        isSelecting != oldDelegate.isSelecting ||
-        isSelected != oldDelegate.isSelected;
+    return oldDelegate.region != region ||
+        oldDelegate.isSelected != isSelected ||
+        oldDelegate.isSelecting != isSelecting ||
+        oldDelegate.selectionStart != selectionStart ||
+        oldDelegate.selectionEnd != selectionEnd;
   }
 
-  void _drawResizeHandles(
-      Canvas canvas, Rect rect, Paint fillPaint, Paint strokePaint) {
-    final handles = <Offset>[
+  void _drawHandles(Canvas canvas, Rect rect) {
+    final points = [
       rect.topLeft,
-      Offset(rect.left + rect.width / 2, rect.top),
+      Offset(rect.center.dx, rect.top),
       rect.topRight,
-      Offset(rect.right, rect.top + rect.height / 2),
+      Offset(rect.right, rect.center.dy),
       rect.bottomRight,
-      Offset(rect.left + rect.width / 2, rect.bottom),
+      Offset(rect.center.dx, rect.bottom),
       rect.bottomLeft,
-      Offset(rect.left, rect.top + rect.height / 2),
+      Offset(rect.left, rect.center.dy),
     ];
 
-    for (final point in handles) {
-      final handleRect = Rect.fromCenter(
-        center: point,
-        width: handleSize,
-        height: handleSize,
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = _regionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    for (final point in points) {
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: point,
+          width: handleSize,
+          height: handleSize,
+        ),
+        paint,
       );
-      canvas.drawRect(handleRect, fillPaint);
-      canvas.drawRect(handleRect, strokePaint);
+      canvas.drawRect(
+        Rect.fromCenter(
+          center: point,
+          width: handleSize,
+          height: handleSize,
+        ),
+        borderPaint,
+      );
     }
   }
 
-  void _drawRotationHandle(Canvas canvas, Rect rect, Paint paint) {
-    final center = Offset(rect.right, rect.top - 20);
-    paint.color = Colors.blue;
+  void _drawLabel(Canvas canvas, Rect rect, String label) {
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: labelFontSize,
+          backgroundColor: Colors.black54,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        rect.left,
+        rect.top - textPainter.height - 4,
+      ),
+    );
+  }
+
+  void _drawRegion(Canvas canvas, CharacterRegion region) {
+    final rect = region.rect;
+    final paint = Paint()
+      ..color = _fillColor
+      ..style = PaintingStyle.fill;
+
+    canvas.save();
+    canvas.translate(rect.center.dx, rect.center.dy);
+    canvas.rotate(region.rotation);
+    canvas.translate(-rect.center.dx, -rect.center.dy);
+
+    canvas.drawRect(rect, paint);
+
+    paint
+      ..color = _regionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isSelected ? 2 : 1;
+    canvas.drawRect(rect, paint);
+
+    if (isSelected) {
+      _drawHandles(canvas, rect);
+      _drawRotationHandle(canvas, rect);
+    }
+
+    if (region.label != null) {
+      _drawLabel(canvas, rect, region.label!);
+    }
+
+    canvas.restore();
+  }
+
+  void _drawRotationHandle(Canvas canvas, Rect rect) {
+    final center = Offset(rect.center.dx, rect.top - rotationHandleOffset);
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    final borderPaint = Paint()
+      ..color = _regionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
     canvas.drawCircle(center, handleSize / 2, paint);
+    canvas.drawCircle(center, handleSize / 2, borderPaint);
+    canvas.drawLine(
+      Offset(rect.center.dx, rect.top),
+      center,
+      borderPaint,
+    );
+  }
+
+  void _drawSelectionBox(Canvas canvas, Offset start, Offset end) {
+    final rect = Rect.fromPoints(start, end);
+    final paint = Paint()
+      ..color = _fillColor
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, paint);
+
+    paint
+      ..color = _regionColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawRect(rect, paint);
   }
 }

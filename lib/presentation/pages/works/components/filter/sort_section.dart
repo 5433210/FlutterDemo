@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../domain/models/character/work_filter.dart';
 import '../../../../../theme/app_sizes.dart';
-import '../../../../models/work_filter.dart';
 
 class SortSection extends StatelessWidget {
   final WorkFilter filter;

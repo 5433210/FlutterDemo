@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../application/commands/work_edit_commands.dart';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
-import '../../../domain/value_objects/work/work_entity.dart';
+import '../../../domain/models/work/work_entity.dart';
 import '../../../presentation/providers/work_detail_provider.dart';
 import '../../../theme/app_sizes.dart';
 import '../common/section_title.dart';

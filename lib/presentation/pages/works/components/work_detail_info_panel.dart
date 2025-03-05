@@ -3,7 +3,7 @@ import 'dart:math' as Math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/value_objects/work/work_entity.dart';
+import '../../../../domain/models/work/work_entity.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../widgets/common/tab_bar_theme_wrapper.dart';
 

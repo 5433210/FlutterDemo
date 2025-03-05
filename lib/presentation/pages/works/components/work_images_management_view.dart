@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/value_objects/work/work_entity.dart';
+import '../../../../domain/models/work/work_entity.dart';
 import '../../../../theme/app_sizes.dart';
 import 'work_image_preview.dart';
 

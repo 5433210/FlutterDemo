@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../domain/models/character/work_filter.dart';
+import '../../../../../domain/models/date_range_filter.dart';
 import '../../../../../theme/app_sizes.dart';
-import '../../../../models/date_range_filter.dart';
-import '../../../../models/work_filter.dart';
 import '../../../../providers/work_browse_provider.dart';
 import 'date_range_filter_section.dart';
 import 'date_range_section.dart';

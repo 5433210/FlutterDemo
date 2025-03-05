@@ -3,10 +3,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../../../../domain/value_objects/practice/element_content.dart';
-import '../../../../domain/value_objects/practice/practice_element.dart';
-import '../../../../domain/value_objects/practice/practice_layer.dart';
-import '../../../../domain/value_objects/practice/practice_page.dart';
+import '../../../../domain/models/practice/element_content.dart';
+import '../../../../domain/models/practice/practice_element.dart';
+import '../../../../domain/models/practice/practice_layer.dart';
+import '../../../../domain/models/practice/practice_page.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../widgets/common/empty_state.dart';
 

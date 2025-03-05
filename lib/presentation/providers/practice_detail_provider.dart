@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
-import '../../domain/value_objects/practice/practice_entity.dart';
-import '../../domain/value_objects/practice/practice_layer.dart';
+import '../../domain/models/practice/practice_entity.dart';
+import '../../domain/models/practice/practice_layer.dart';
 import '../../infrastructure/logging/logger.dart';
 
 final practiceDetailProvider =

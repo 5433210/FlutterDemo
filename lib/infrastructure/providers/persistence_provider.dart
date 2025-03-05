@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../presentation/models/work_filter.dart';
+import '../../domain/models/character/work_filter.dart';
 
 final persistenceProvider = Provider<PersistenceService>((ref) {
   return PersistenceService();

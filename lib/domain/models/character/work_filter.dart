@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../../domain/enums/work_style.dart';
-import '../../domain/enums/work_tool.dart';
-import 'date_range_filter.dart';
+import '../../enums/work_style.dart';
+import '../../enums/work_tool.dart';
+import '../date_range_filter.dart';
 
 enum SortField {
   none,

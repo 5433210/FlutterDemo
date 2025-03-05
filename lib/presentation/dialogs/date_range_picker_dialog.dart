@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../domain/models/date_range_filter.dart';
 import '../../theme/app_sizes.dart';
-import '../models/date_range_filter.dart';
 import '../widgets/date_range_picker.dart';
 
 Future<DateTimeRange?> showCustomDateRangePicker({

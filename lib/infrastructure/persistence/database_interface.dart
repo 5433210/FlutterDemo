@@ -23,33 +23,48 @@ abstract class DatabaseInterface {
 
   Future<Map<String, dynamic>?> getWork(String id);
   Future<List<Map<String, dynamic>>> getWorks({
-    String? query, // 添加查询参数
+    String? query,
     String? style,
     String? tool,
     DateTimeRange? creationDateRange,
     String? orderBy,
     bool descending = true,
   });
-  Future<int> getWorksCount(
-      {String? style,
-      String? author,
-      String? name,
-      String? tool, // Add tool parameter
-      List<String>? tags,
-      DateTime? fromDateImport,
-      DateTime? toDateImport,
-      DateTime? fromDateCreation,
-      DateTime? toDateCreation,
-      DateTime? fromDateUpdate,
-      DateTime? toDateUpdate});
+
+  Future<int> getWorksCount({
+    String? style,
+    String? author,
+    String? name,
+    String? tool,
+    List<String>? tags,
+    DateTime? fromDateImport,
+    DateTime? toDateImport,
+    DateTime? fromDateCreation,
+    DateTime? toDateCreation,
+    DateTime? fromDateUpdate,
+    DateTime? toDateUpdate,
+  });
+
   Future<void> initialize();
+
   // Character operations
   Future<String> insertCharacter(Map<String, dynamic> character);
 
   // Practice operations
   Future<String> insertPractice(Map<String, dynamic> practice);
+
   // Work operations
   Future<String> insertWork(Map<String, dynamic> work);
+
+  // 新增: 字符查询方法
+  Future<List<Map<String, dynamic>>> queryCharacters({
+    Map<String, dynamic>? conditions,
+    String? orderBy,
+    bool descending = true,
+    int? limit,
+    int? offset,
+  });
+
   // Settings operations
   Future<void> setSetting(String key, String value);
   Future<void> updateCharacter(String id, Map<String, dynamic> character);

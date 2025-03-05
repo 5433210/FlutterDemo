@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../domain/value_objects/work/work_entity.dart';
+import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/work_detail_provider.dart';
 import '../../presentation/viewmodels/states/work_browse_state.dart';

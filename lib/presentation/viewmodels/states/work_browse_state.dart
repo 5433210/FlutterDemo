@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/entities/work.dart';
+import '../../../domain/models/character/work_filter.dart';
 import '../../../infrastructure/logging/logger.dart'; // 添加日志导入
-import '../../models/work_filter.dart';
 
 enum LoadRequestStatus {
   idle, // 空闲

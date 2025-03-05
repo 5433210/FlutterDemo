@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/models/app_theme_mode.dart';
+import '../../domain/enums/app_theme_mode.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 
 /// Provider for application settings

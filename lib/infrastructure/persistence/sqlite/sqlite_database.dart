@@ -24,6 +24,73 @@ class SqliteDatabase implements DatabaseInterface {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> queryCharacters({
+    Map<String, dynamic>? conditions,
+    String? orderBy,
+    bool descending = true,
+    int? limit,
+    int? offset,
+  }) async {
+    final whereConditions = <String>[];
+    final whereArgs = <dynamic>[];
+
+    if (conditions != null) {
+      if (conditions['search'] != null) {
+        whereConditions.add('char LIKE ?');
+        whereArgs.add('%${conditions['search']}%');
+      }
+
+      if (conditions['styles'] != null) {
+        final styles = conditions['styles'] as List<String>;
+        if (styles.isNotEmpty) {
+          final placeholders = List.filled(styles.length, '?').join(',');
+          whereConditions.add(
+            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.style\') IN ($placeholders))',
+          );
+          whereArgs.addAll(styles);
+        }
+      }
+
+      if (conditions['tools'] != null) {
+        final tools = conditions['tools'] as List<String>;
+        if (tools.isNotEmpty) {
+          final placeholders = List.filled(tools.length, '?').join(',');
+          whereConditions.add(
+            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.tool\') IN ($placeholders))',
+          );
+          whereArgs.addAll(tools);
+        }
+      }
+    }
+
+    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
+    final order = orderBy != null
+        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
+        : 'createTime DESC';
+
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'characters',
+      where: where,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: order,
+      limit: limit,
+      offset: offset,
+    );
+
+    return results.map((character) {
+      final characterCopy = Map<String, dynamic>.from(character);
+      if (characterCopy['metadata'] != null) {
+        characterCopy['metadata'] = jsonDecode(characterCopy['metadata']);
+      }
+      if (characterCopy['sourceRegion'] != null) {
+        characterCopy['sourceRegion'] = jsonDecode(characterCopy['sourceRegion']);
+      }
+      return characterCopy;
+    }).toList();
+  }
+
+  @override
   Future<void> close() async {
     if (_database != null) {
       await _database!.close();
@@ -92,6 +159,73 @@ class SqliteDatabase implements DatabaseInterface {
       final db = await database;
       return db.query('works');
     });
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> queryCharacters({
+    Map<String, dynamic>? conditions,
+    String? orderBy,
+    bool descending = true,
+    int? limit,
+    int? offset,
+  }) async {
+    final whereConditions = <String>[];
+    final whereArgs = <dynamic>[];
+
+    if (conditions != null) {
+      if (conditions['search'] != null) {
+        whereConditions.add('char LIKE ?');
+        whereArgs.add('%${conditions['search']}%');
+      }
+
+      if (conditions['styles'] != null) {
+        final styles = conditions['styles'] as List<String>;
+        if (styles.isNotEmpty) {
+          final placeholders = List.filled(styles.length, '?').join(',');
+          whereConditions.add(
+            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.style\') IN ($placeholders))',
+          );
+          whereArgs.addAll(styles);
+        }
+      }
+
+      if (conditions['tools'] != null) {
+        final tools = conditions['tools'] as List<String>;
+        if (tools.isNotEmpty) {
+          final placeholders = List.filled(tools.length, '?').join(',');
+          whereConditions.add(
+            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.tool\') IN ($placeholders))',
+          );
+          whereArgs.addAll(tools);
+        }
+      }
+    }
+
+    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
+    final order = orderBy != null
+        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
+        : 'createTime DESC';
+
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'characters',
+      where: where,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: order,
+      limit: limit,
+      offset: offset,
+    );
+
+    return results.map((character) {
+      final characterCopy = Map<String, dynamic>.from(character);
+      if (characterCopy['metadata'] != null) {
+        characterCopy['metadata'] = jsonDecode(characterCopy['metadata']);
+      }
+      if (characterCopy['sourceRegion'] != null) {
+        characterCopy['sourceRegion'] = jsonDecode(characterCopy['sourceRegion']);
+      }
+      return characterCopy;
+    }).toList();
   }
 
   @override

@@ -1,5 +1,5 @@
+import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/repositories/practice_repository.dart';
-import '../../../domain/value_objects/practice/practice_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 
 /// 字帖服务类，处理字帖相关业务逻辑

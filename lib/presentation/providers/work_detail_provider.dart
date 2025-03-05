@@ -7,7 +7,7 @@ import '../../application/commands/work_edit_commands.dart';
 import '../../application/providers/service_providers.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
-import '../../domain/value_objects/work/work_entity.dart';
+import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 
 /// Provider for the current image index in a work

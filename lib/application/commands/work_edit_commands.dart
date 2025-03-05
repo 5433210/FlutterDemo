@@ -4,8 +4,8 @@ import 'package:flutter/widgets.dart';
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
-import '../../domain/value_objects/work/work_entity.dart';
-import '../../domain/value_objects/work/work_image.dart';
+import '../../domain/models/work/work_entity.dart';
+import '../../domain/models/work/work_image.dart';
 import '../services/image_service.dart';
 
 /// 命令：添加图片

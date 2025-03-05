@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../application/commands/work_edit_commands.dart';
 import '../../../../application/providers/service_providers.dart';
-import '../../../../domain/value_objects/work/work_entity.dart';
-import '../../../../domain/value_objects/work/work_image.dart';
+import '../../../../domain/models/work/work_entity.dart';
+import '../../../../domain/models/work/work_image.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../widgets/common/image_preview.dart';
 

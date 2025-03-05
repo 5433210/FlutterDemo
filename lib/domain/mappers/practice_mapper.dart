@@ -1,6 +1,6 @@
 import '../entities/practice.dart';
-import '../value_objects/practice/practice_entity.dart';
-import '../value_objects/practice/practice_page.dart';
+import '../models/practice/practice_entity.dart';
+import '../models/practice/practice_page.dart';
 
 /// 负责在 Practice 实体和 PracticeEntity 值对象之间进行映射
 class PracticeMapper {

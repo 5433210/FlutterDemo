@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
-import '../../../domain/value_objects/work/work_entity.dart';
+import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';

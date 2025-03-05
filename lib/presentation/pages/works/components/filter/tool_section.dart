@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/enums/work_tool.dart';
-import '../../../../models/work_filter.dart';
+import '../../../../../domain/models/character/work_filter.dart';
 import 'work_filter_section.dart';
 
 class ToolSection extends StatelessWidget {

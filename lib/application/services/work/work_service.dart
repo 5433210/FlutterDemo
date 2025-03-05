@@ -1,18 +1,18 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:demo/domain/value_objects/work/work_entity.dart';
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 
 import '../../../domain/entities/work.dart';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
+import '../../../domain/models/character/work_filter.dart';
+import '../../../domain/models/work/work_collected_char.dart';
+import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_repository.dart';
-import '../../../domain/value_objects/work/work_collected_char.dart';
-import '../../../domain/value_objects/work/work_image.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../presentation/models/work_filter.dart';
 import '../../../utils/path_helper.dart';
 import '../image_service.dart';
 

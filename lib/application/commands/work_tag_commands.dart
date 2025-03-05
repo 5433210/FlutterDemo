@@ -1,4 +1,4 @@
-import '../../domain/value_objects/work/work_entity.dart';
+import '../../domain/models/work/work_entity.dart';
 import 'work_edit_commands.dart';
 
 /// 命令：添加标签

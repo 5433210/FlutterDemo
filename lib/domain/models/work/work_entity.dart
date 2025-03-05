@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../enums/work_style.dart';
+import '../../enums/work_tool.dart';
 import 'work_collected_char.dart';
 import 'work_image.dart';
 

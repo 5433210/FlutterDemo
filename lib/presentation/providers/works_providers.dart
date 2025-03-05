@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
 import '../../domain/entities/work.dart';
+import '../../domain/models/character/work_filter.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../models/work_filter.dart';
 
 // 默认刷新信息
 final defaultRefreshInfo = const RefreshInfo(reason: 'unknown');

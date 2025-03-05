@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/models/date_range_filter.dart';
 import '../../theme/app_sizes.dart';
-import '../models/date_range_filter.dart';
 
 class DateRangePicker extends StatefulWidget {
   final DateTimeRange? initialDateRange;

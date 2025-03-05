@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/value_objects/practice/practice_entity.dart';
-import '../../../domain/value_objects/practice/practice_layer.dart';
+import '../../../domain/models/practice/practice_entity.dart';
+import '../../../domain/models/practice/practice_layer.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../routes/app_routes.dart';
 import '../../providers/practice_detail_provider.dart';

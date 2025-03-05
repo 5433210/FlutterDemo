@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import '../../../domain/value_objects/image/work_image_info.dart';
+import '../../../domain/models/image/work_image_info.dart';
 
 /// 作品图片处理服务接口
 abstract class WorkImageService {

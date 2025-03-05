@@ -8,8 +8,8 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-import '../../domain/value_objects/image/work_image_info.dart';
-import '../../domain/value_objects/image/work_image_size.dart';
+import '../../domain/models/image/work_image_info.dart';
+import '../../domain/models/image/work_image_size.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../utils/path_helper.dart';
 import '../config/app_config.dart';
