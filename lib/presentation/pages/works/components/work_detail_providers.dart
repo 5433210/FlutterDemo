@@ -1,6 +1,5 @@
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../domain/entities/work.dart';
 
 /// Provider for the current image index in a work
 final currentImageIndexProvider = StateProvider<int>((ref) {
@@ -8,6 +7,6 @@ final currentImageIndexProvider = StateProvider<int>((ref) {
 });
 
 /// Provider to make the currently loaded work available to child widgets
-final currentWorkProvider = Provider<Work>((ref) {
+final currentWorkProvider = Provider<WorkEntity>((ref) {
   throw UnimplementedError('currentWorkProvider must be overridden');
 });

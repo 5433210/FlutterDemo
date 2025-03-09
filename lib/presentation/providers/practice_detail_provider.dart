@@ -1,130 +1,177 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/providers/service_providers.dart';
+import '../../application/services/practice/practice_service.dart';
 import '../../domain/models/practice/practice_entity.dart';
 import '../../domain/models/practice/practice_layer.dart';
-import '../../infrastructure/logging/logger.dart';
+import '../../domain/models/practice/practice_page.dart';
+import '../../infrastructure/providers/repository_providers.dart';
 
-final practiceDetailProvider =
-    StateNotifierProvider<PracticeDetailNotifier, PracticeDetailState>(
-  (ref) => PracticeDetailNotifier(ref),
+/// 练习详情Provider
+final practiceDetailProvider = StateNotifierProvider.family<
+    PracticeDetailNotifier, PracticeDetailState, String>(
+  (ref, id) {
+    final service =
+        PracticeService(repository: ref.watch(practiceRepositoryProvider));
+    return PracticeDetailNotifier(service: service)..loadPractice(id);
+  },
 );
 
+/// 练习详情Notifier
 class PracticeDetailNotifier extends StateNotifier<PracticeDetailState> {
-  final Ref _ref;
+  final PracticeService _service;
+  String? _currentId;
 
-  PracticeDetailNotifier(this._ref) : super(PracticeDetailState());
+  PracticeDetailNotifier({
+    required PracticeService service,
+  })  : _service = service,
+        super(const PracticeDetailState());
 
-  /// 删除字帖
-  Future<bool> deletePractice(String id) async {
+  /// 添加图层
+  Future<void> addLayer(int pageIndex, PracticeLayer layer) async {
+    if (state.practice == null) return;
     try {
-      state = state.copyWith(isLoading: true);
-
-      final service = _ref.read(practiceServiceProvider);
-      final result = await service.deletePractice(id);
-
-      state = state.copyWith(isLoading: false);
-      return result;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to delete practice',
-        tag: 'PracticeDetailNotifier',
-        error: e,
-        stackTrace: stack,
-      );
-
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return false;
+      final page =
+          state.practice!.pages.firstWhere((p) => p.index == pageIndex);
+      final updatedPage = page.addLayer(layer);
+      final updated = state.practice!.updatePage(updatedPage);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '添加图层失败: $e');
     }
   }
 
-  /// 获取字帖
-  Future<PracticeEntity?> getPractice(String id) async {
-    try {
-      state = state.copyWith(isLoading: true, error: null);
-
-      final service = _ref.read(practiceServiceProvider);
-      final practice = await service.getPractice(id);
-
-      state = state.copyWith(
-        isLoading: false,
-        practice: practice,
-      );
-      return practice;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to get practice',
-        tag: 'PracticeDetailNotifier',
-        error: e,
-        stackTrace: stack,
-      );
-
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
-      return null;
-    }
-  }
-
-  /// 更新图层状态
-  void updateLayer(PracticeLayer layer) {
+  /// 添加页面
+  Future<void> addPage(PracticePage page) async {
     if (state.practice == null) return;
 
-    final currentPractice = state.practice!;
-    final pageIndex = 0; // 简化示例，假设只操作第一页
+    try {
+      final updated = state.practice!.addPage(page);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '添加页面失败: $e');
+    }
+  }
 
-    // 获取当前页面
-    final currentPages = currentPractice.pages;
-    if (pageIndex >= currentPages.length) return;
+  Future<void> deletePractice(String id) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      await _service.deletePractice(id);
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
 
-    final currentPage = currentPages[pageIndex];
+  /// 加载练习
+  Future<void> loadPractice(String id) async {
+    if (id == _currentId && state.practice != null) return;
 
-    // 更新该页面的图层
-    final updatedLayers = currentPage.layers.map((l) {
-      if (l.index == layer.index) {
-        return layer; // 使用新的图层替换
+    state = state.copyWith(isLoading: true, error: null);
+    _currentId = id;
+
+    try {
+      final practice = await _service.getPractice(id);
+      if (practice == null) {
+        state = state.copyWith(
+          isLoading: false,
+          error: '练习不存在',
+        );
+        return;
       }
-      return l;
-    }).toList();
 
-    // 创建更新后的页面
-    final updatedPage = currentPage.copyWith(layers: updatedLayers);
+      state = state.copyWith(
+        practice: practice,
+        isLoading: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '加载练习失败: $e',
+      );
+    }
+  }
 
-    // 创建更新后的页面列表
-    final updatedPages = currentPages.toList();
-    updatedPages[pageIndex] = updatedPage;
+  /// 删除图层
+  Future<void> removeLayer(int pageIndex, String layerId) async {
+    if (state.practice == null) return;
+    try {
+      final page =
+          state.practice!.pages.firstWhere((p) => p.index == pageIndex);
+      final updatedPage = page.removeLayer(layerId);
+      final updated = state.practice!.updatePage(updatedPage);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '删除图层失败: $e');
+    }
+  }
 
-    // 更新状态
-    state = state.copyWith(
-      practice: currentPractice.copyWith(pages: updatedPages),
-    );
+  /// 删除页面
+  Future<void> removePage(int index) async {
+    if (state.practice == null) return;
+
+    try {
+      final updated = state.practice!.removePage(index);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '删除页面失败: $e');
+    }
+  }
+
+  /// 更新图层
+  Future<void> updateLayer(int pageIndex, PracticeLayer layer) async {
+    if (state.practice == null) return;
+    try {
+      final page =
+          state.practice!.pages.firstWhere((p) => p.index == pageIndex);
+      final updatedPage = page.updateLayer(layer);
+      final updated = state.practice!.updatePage(updatedPage);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '更新图层失败: $e');
+    }
+  }
+
+  /// 更新页面
+  Future<void> updatePage(PracticePage page) async {
+    if (state.practice == null) return;
+
+    try {
+      final updated = state.practice!.updatePage(page);
+      await _service.updatePractice(updated);
+      state = state.copyWith(practice: updated);
+    } catch (e) {
+      state = state.copyWith(error: '更新页面失败: $e');
+    }
   }
 }
 
+/// 练习详情状态
 class PracticeDetailState {
-  final bool isLoading;
   final PracticeEntity? practice;
+  final bool isLoading;
   final String? error;
 
-  PracticeDetailState({
-    this.isLoading = false,
+  const PracticeDetailState({
     this.practice,
+    this.isLoading = false,
     this.error,
   });
 
   PracticeDetailState copyWith({
-    bool? isLoading,
     PracticeEntity? practice,
+    bool? isLoading,
     String? error,
   }) {
     return PracticeDetailState(
-      isLoading: isLoading ?? this.isLoading,
       practice: practice ?? this.practice,
-      error: error ?? this.error,
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
     );
   }
 }

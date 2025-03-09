@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
-import '../../../domain/entities/character.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../../infrastructure/image/character_image_processor.dart';
@@ -410,7 +409,7 @@ class _ImagePreviewState extends State<ImagePreview>
 
     _showProcessingIndicator();
     try {
-      await _repository.deleteCharacters(
+      await _repository.deleteMany(
           _selectedRegions.map((region) => region.label ?? '').toList());
 
       _preserveAndUpdateState(() {
@@ -461,7 +460,10 @@ class _ImagePreviewState extends State<ImagePreview>
       if (rect.width >= _minRegionSize && rect.height >= _minRegionSize) {
         final region = CharacterRegion(
           pageIndex: _state.currentIndex,
-          rect: rect,
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
           imagePath: widget.imagePaths[_state.currentIndex],
         );
 
@@ -571,8 +573,12 @@ class _ImagePreviewState extends State<ImagePreview>
       } else if (_state.dragStartOffset != null &&
           _state.dragStartRect != null) {
         final delta = details.localPosition - _state.dragStartOffset!;
+        final rect = _state.dragStartRect!.translate(delta.dx, delta.dy);
         _state.selectedRegion = _state.selectedRegion!.copyWith(
-          rect: _state.dragStartRect!.translate(delta.dx, delta.dy),
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
         );
       }
     });
@@ -626,7 +632,10 @@ class _ImagePreviewState extends State<ImagePreview>
 
     if (newWidth >= _minRegionSize && newHeight >= _minRegionSize) {
       _state.selectedRegion = region.copyWith(
-        rect: Rect.fromLTWH(newLeft, newTop, newWidth, newHeight),
+        left: newLeft,
+        top: newTop,
+        width: newWidth,
+        height: newHeight,
       );
     }
   }
@@ -763,7 +772,7 @@ class _ImagePreviewState extends State<ImagePreview>
 
               // 处理图片
               final processor = CharacterImageProcessor();
-              final outputDir = '';
+              const outputDir = '';
               final charId = label ?? DateTime.now().toIso8601String();
 
               final paths = await processor.processCharacterImage(
@@ -774,25 +783,6 @@ class _ImagePreviewState extends State<ImagePreview>
                 rotation: region.rotation,
                 erasePoints: _state.erasePoints,
               );
-
-              // 保存到数据库
-              await _repository.insertCharacter(Character(
-                char: charId,
-                workId: widget.workId,
-                workName: '',
-                image: paths['image']!,
-                sourceRegion: {
-                  'x': region.rect.left,
-                  'y': region.rect.top,
-                  'width': region.rect.width,
-                  'height': region.rect.height,
-                },
-                createTime: DateTime.now(),
-                metadata: {
-                  'style': '',
-                  'tool': '',
-                },
-              ));
 
               _preserveAndUpdateState(() {
                 _state.selectedRegion = region.copyWith(

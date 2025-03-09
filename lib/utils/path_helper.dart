@@ -2,8 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
+import '../application/config/app_config.dart';
 import '../infrastructure/logging/logger.dart';
 
 class PathHelper {
@@ -81,6 +82,22 @@ class PathHelper {
       0x60,
       0x82
     ]);
+  }
+
+  /// 清理临时目录
+  static Future<void> cleanupTempDirectory(
+      {Duration maxAge = const Duration(hours: 24)}) async {
+    final tempDir = await getTempDirectory();
+    final cutoff = DateTime.now().subtract(maxAge);
+
+    await for (final entity in tempDir.list()) {
+      if (entity is File) {
+        final stat = await entity.stat();
+        if (stat.modified.isBefore(cutoff)) {
+          await entity.delete();
+        }
+      }
+    }
   }
 
   /// 创建有效的占位图像文件
@@ -234,22 +251,18 @@ class PathHelper {
     }
   }
 
+  /// 生成唯一文件名
+  static String generateUniqueFileName(
+      {String? prefix, required String extension}) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final uuid = const Uuid().v4().substring(0, 8);
+    return '${prefix ?? 'file'}_${timestamp}_$uuid.$extension';
+  }
+
   // 获取应用数据路径
   static Future<String> getAppDataPath() async {
     try {
-      // 检查是否有环境变量配置
-      final String? envPath = Platform.environment['APP_DATA_PATH'];
-      if (envPath != null && envPath.isNotEmpty) {
-        final dir = Directory(envPath);
-        if (!await dir.exists()) {
-          await dir.create(recursive: true);
-        }
-        return envPath;
-      }
-
-      // 使用应用文档目录
-      final Directory appDir = await getApplicationDocumentsDirectory();
-      final String dataPath = path.join(appDir.path, 'data');
+      final dataPath = AppConfig.dataPath;
 
       // 确保目录存在
       final dataDir = Directory(dataPath);
@@ -275,6 +288,16 @@ class PathHelper {
     await ensureDirectoryExists(path.dirname(imagePath));
 
     return imagePath;
+  }
+
+  /// 获取临时目录路径
+  static Future<Directory> getTempDirectory() async {
+    final appDir = await getAppDataPath();
+    final tempDir = Directory(path.join(appDir, 'temp'));
+    if (!await tempDir.exists()) {
+      await tempDir.create(recursive: true);
+    }
+    return tempDir;
   }
 
   // 获取作品首页缩略图路径 (列表展示用)
@@ -304,6 +327,12 @@ class PathHelper {
           data: {'workId': workId});
       rethrow;
     }
+  }
+
+  /// 获取作品图片存储目录
+  static Future<String> getWorkImageDirectory(String workId, int index) async {
+    final basePath = await _getWorkBasePath(workId);
+    return path.join(basePath, 'images', index.toString());
   }
 
   // 获取作品图片路径 (原始或导入后的图片)
@@ -369,13 +398,15 @@ class PathHelper {
 
   // 获取作品目录路径
   static Future<String> getWorkPath(String workId) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    return path.join(appDir.path, 'works', workId);
+    final appDataPath = await getAppDataPath();
+    return path.join(
+        appDataPath, AppConfig.storageFolder, AppConfig.worksFolder, workId);
   }
 
   static Future<String> getWorksPath() async {
     final appDataPath = await getAppDataPath();
-    return path.join(appDataPath, 'works');
+    return path.join(
+        appDataPath, AppConfig.storageFolder, AppConfig.worksFolder);
   }
 
   // 较短的别名方法，保持向后兼容
@@ -401,6 +432,13 @@ class PathHelper {
     }
   }
 
+  /// 验证文件路径安全性
+  static void validatePathSafety(String filePath) {
+    if (filePath.contains('..')) {
+      throw const FormatException('路径包含非法字符序列');
+    }
+  }
+
   /// 检查作品首页缩略图是否存在
   static Future<bool> workCoverThumbnailExists(String workId) async {
     try {
@@ -412,5 +450,12 @@ class PathHelper {
           tag: 'PathHelper', error: e, data: {'workId': workId});
       return false;
     }
+  }
+
+  /// 获取工作目录路径（基础方法）
+  static Future<String> _getWorkBasePath(String workId) async {
+    final appDataPath = await getAppDataPath();
+    return path.join(
+        appDataPath, AppConfig.storageFolder, AppConfig.worksFolder, workId);
   }
 }

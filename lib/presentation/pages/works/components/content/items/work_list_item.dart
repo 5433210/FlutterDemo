@@ -1,17 +1,14 @@
 import 'dart:io';
 
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../../domain/entities/work.dart';
-import '../../../../../../domain/enums/work_style.dart';
-import '../../../../../../domain/enums/work_tool.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
-import '../../../../../../utils/safe_metadata_helper.dart';
 
 class WorkListItem extends StatelessWidget {
-  final Work work;
+  final WorkEntity work;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
@@ -69,7 +66,7 @@ class WorkListItem extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              work.name ?? '未命名作品',
+                              work.title,
                               style: theme.textTheme.titleMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -82,9 +79,9 @@ class WorkListItem extends StatelessWidget {
                       const SizedBox(height: AppSizes.xxs),
 
                       // 作者行
-                      if (work.author != null) ...[
+                      ...[
                         Text(
-                          work.author!,
+                          work.author,
                           style: theme.textTheme.bodyLarge,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -95,21 +92,17 @@ class WorkListItem extends StatelessWidget {
                       // 风格和工具
                       Row(
                         children: [
-                          if (work.style != null)
-                            _buildInfoChip(
-                              context,
-                              Icons.brush_outlined,
-                              WorkStyle.fromValue(work.style!)?.label ??
-                                  work.style!,
-                            ),
+                          _buildInfoChip(
+                            context,
+                            Icons.brush_outlined,
+                            work.style.label,
+                          ),
                           const SizedBox(width: AppSizes.s),
-                          if (work.tool != null)
-                            _buildInfoChip(
-                              context,
-                              Icons.construction_outlined,
-                              WorkTool.fromValue(work.tool!)?.label ??
-                                  work.tool!,
-                            ),
+                          _buildInfoChip(
+                            context,
+                            Icons.construction_outlined,
+                            work.tool.label,
+                          ),
                         ],
                       ),
                       const SizedBox(height: AppSizes.xs),
@@ -126,20 +119,18 @@ class WorkListItem extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // 创作日期
-                          if (work.creationDate != null)
-                            _buildInfoItem(
-                              context,
-                              Icons.palette_outlined,
-                              '创作于 ${DateFormatter.formatCompact(work.creationDate!)}',
-                            ),
+                          _buildInfoItem(
+                            context,
+                            Icons.palette_outlined,
+                            '创作于 ${DateFormatter.formatCompact(work.creationDate)}',
+                          ),
 
                           // 导入日期
-                          if (work.createTime != null)
-                            _buildInfoItem(
-                              context,
-                              Icons.add_circle_outline,
-                              '导入于 ${DateFormatter.formatCompact(work.createTime!)}',
-                            ),
+                          _buildInfoItem(
+                            context,
+                            Icons.add_circle_outline,
+                            '导入于 ${DateFormatter.formatCompact(work.createTime)}',
+                          ),
                         ],
                       ),
                     ],
@@ -231,7 +222,7 @@ class WorkListItem extends StatelessWidget {
   // 构建元数据预览
   Widget _buildMetadataPreview(BuildContext context) {
     final theme = Theme.of(context);
-    final tags = SafeMetadataHelper.getTags(work.metadata);
+    final tags = work.tags;
 
     if (tags.isEmpty) {
       return const SizedBox.shrink();
@@ -286,10 +277,8 @@ class WorkListItem extends StatelessWidget {
 
   // 构建缩略图
   Widget _buildThumbnail(BuildContext context) {
-    if (work.id == null) return _buildPlaceholder(context);
-
     return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id!),
+      future: PathHelper.getWorkThumbnailPath(work.id),
       builder: (context, pathSnapshot) {
         if (!pathSnapshot.hasData) return _buildPlaceholder(context);
 

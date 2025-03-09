@@ -3,10 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  bitsdojo_window_linux
   desktop_drop
-  screen_retriever_linux
-  sqlite3_flutter_libs
+  screen_retriever
   window_manager
 )
 

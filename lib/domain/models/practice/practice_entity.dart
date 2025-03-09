@@ -1,145 +1,92 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'practice_page.dart';
 
-/// 字帖实体类，表示一个完整的字帖
-class PracticeEntity extends Equatable {
-  /// 字帖唯一标识符
-  final String? id;
+part 'practice_entity.freezed.dart';
+part 'practice_entity.g.dart';
 
-  /// 创建时间
-  final DateTime? createTime;
+/// 字帖练习实体
+@freezed
+class PracticeEntity with _$PracticeEntity {
+  /// 创建实例
+  const factory PracticeEntity({
+    /// ID
+    required String id,
 
-  /// 更新时间
-  final DateTime? updateTime;
+    /// 标题
+    required String title,
 
-  /// 字帖标题
-  final String title;
+    /// 页面列表
+    @Default([]) List<PracticePage> pages,
 
-  /// 字帖状态 (draft/completed)
-  final String status;
+    /// 标签列表
+    @Default([]) List<String> tags,
 
-  /// 字帖页面列表
-  final List<PracticePage> pages;
+    /// 状态
+    @Default('active') String status,
 
-  /// 元数据
-  final PracticeMetadata? metadata;
+    /// 创建时间
+    @JsonKey(name: 'create_time') required DateTime createTime,
 
-  const PracticeEntity({
-    this.id,
-    this.createTime,
-    this.updateTime,
-    required this.title,
-    required this.status,
-    required this.pages,
-    this.metadata,
-  });
+    /// 更新时间
+    @JsonKey(name: 'update_time') required DateTime updateTime,
+  }) = _PracticeEntity;
 
-  /// 从JSON数据创建字帖实体
-  factory PracticeEntity.fromJson(Map<String, dynamic> json) {
-    return PracticeEntity(
-      id: json['id'] as String?,
-      createTime: json['createTime'] != null
-          ? DateTime.parse(json['createTime'] as String)
-          : null,
-      updateTime: json['updateTime'] != null
-          ? DateTime.parse(json['updateTime'] as String)
-          : null,
-      title: json['title'] as String,
-      status: json['status'] as String,
-      pages: json['pages'] != null
-          ? List<PracticePage>.from(
-              (json['pages'] as List).map(
-                (x) => PracticePage.fromJson(x as Map<String, dynamic>),
-              ),
-            )
-          : [],
-      metadata: json['metadata'] != null
-          ? PracticeMetadata.fromJson(json['metadata'] as Map<String, dynamic>)
-          : null,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        id,
-        createTime,
-        updateTime,
-        title,
-        status,
-        pages,
-        metadata,
-      ];
-
-  /// 创建一个带有更新属性的新实例
-  PracticeEntity copyWith({
-    String? id,
-    DateTime? createTime,
-    DateTime? updateTime,
-    String? title,
-    String? status,
-    List<PracticePage>? pages,
-    PracticeMetadata? metadata,
+  /// 新建练习，自动生成ID和时间戳
+  factory PracticeEntity.create({
+    required String title,
+    List<String> tags = const [],
+    String status = 'active',
   }) {
+    final now = DateTime.now();
     return PracticeEntity(
-      id: id ?? this.id,
-      createTime: createTime ?? this.createTime,
-      updateTime: updateTime ?? this.updateTime,
-      title: title ?? this.title,
-      status: status ?? this.status,
-      pages: pages ?? this.pages,
-      metadata: metadata ?? this.metadata,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      tags: tags,
+      status: status,
+      createTime: now,
+      updateTime: now,
     );
   }
 
-  /// 将字帖实体转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'createTime': createTime?.toIso8601String(),
-      'updateTime': updateTime?.toIso8601String(),
-      'title': title,
-      'status': status,
-      'pages': pages.map((page) => page.toJson()).toList(),
-      'metadata': metadata?.toJson(),
-    };
-  }
-}
+  /// 从JSON创建实例
+  factory PracticeEntity.fromJson(Map<String, dynamic> json) =>
+      _$PracticeEntityFromJson(json);
 
-/// 字帖元数据
-class PracticeMetadata extends Equatable {
-  /// 标签列表
-  final List<String> tags;
+  /// 私有构造函数
+  const PracticeEntity._();
 
-  const PracticeMetadata({
-    this.tags = const [],
-  });
+  /// 获取下一个可用的页面索引
+  int get nextPageIndex => pages.isEmpty ? 0 : pages.last.index + 1;
 
-  /// 从JSON数据创建元数据
-  factory PracticeMetadata.fromJson(Map<String, dynamic> json) {
-    return PracticeMetadata(
-      tags: json['tags'] != null
-          ? List<String>.from(json['tags'] as List)
-          : const [],
+  /// 获取页面数量
+  int get pageCount => pages.length;
+
+  /// 添加页面
+  PracticeEntity addPage(PracticePage page) {
+    return copyWith(
+      pages: [...pages, page],
+      updateTime: DateTime.now(),
     );
   }
 
+  /// 删除页面
+  PracticeEntity removePage(int index) {
+    return copyWith(
+      pages: pages.where((p) => p.index != index).toList(),
+      updateTime: DateTime.now(),
+    );
+  }
+
+  /// 用于显示的文本描述
   @override
-  List<Object?> get props => [tags];
+  String toString() => 'PracticeEntity(id: $id, title: $title)';
 
-  /// 创建一个带有更新属性的新实例
-  PracticeMetadata copyWith({
-    List<String>? tags,
-  }) {
-    return PracticeMetadata(
-      tags: tags ?? this.tags,
+  /// 更新页面
+  PracticeEntity updatePage(PracticePage page) {
+    return copyWith(
+      pages: pages.map((p) => p.index == page.index ? page : p).toList(),
+      updateTime: DateTime.now(),
     );
-  }
-
-  /// 将元数据转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'tags': tags,
-    };
   }
 }

@@ -31,15 +31,30 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
     final viewModel = ref.read(workBrowseProvider.notifier);
     debugPrint('WorkBrowsePage rebuild - filter: ${state.filter}');
 
-    // 修复这个监听器，添加 null 检查
-    ref.listen(worksNeedsRefreshProvider, (previous, current) {
-      // 增加 null 检查，避免空值断言错误
-      if (current != null && current.force) {
-        viewModel.loadWorks(forceRefresh: true);
-      }
+    // 改进刷新监听器
+    ref.listen(worksNeedsRefreshProvider, (previous, current) async {
+      if (current == null) return;
 
-      // 无论如何都重置状态为 null
-      ref.read(worksNeedsRefreshProvider.notifier).state = null;
+      try {
+        AppLogger.debug(
+          '收到刷新请求',
+          tag: 'WorkBrowsePage',
+          data: {
+            'reason': current.reason,
+            'priority': current.priority,
+            'force': current.force,
+          },
+        );
+
+        await viewModel.loadWorks(forceRefresh: current.force);
+      } catch (e) {
+        AppLogger.error('刷新失败', tag: 'WorkBrowsePage', error: e);
+      } finally {
+        // 刷新完成后重置状态
+        if (mounted) {
+          ref.read(worksNeedsRefreshProvider.notifier).state = null;
+        }
+      }
     });
 
     return Scaffold(
@@ -216,19 +231,28 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
   // 增强错误处理的加载方法
   Future<void> _loadWorks({bool force = false}) async {
     try {
+      if (!mounted) return;
+
       AppLogger.debug('出错后用户手动触发作品加载',
           tag: 'WorkBrowsePage', data: {'force': force});
 
-      ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
+      const refreshInfo = RefreshInfo(
         reason: '出错后用户手动刷新',
         force: true,
         priority: 10, // 高优先级
       );
+
+      if (!mounted) return;
+      ref.read(worksNeedsRefreshProvider.notifier).state = refreshInfo;
     } catch (e) {
       AppLogger.error('加载作品失败', tag: 'WorkBrowsePage', error: e);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        // 先移除所有已有的SnackBar
+        scaffoldMessenger.clearSnackBars();
+        // 显示新的错误提示
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('加载失败: $e')),
         );
       }
@@ -242,5 +266,16 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
       barrierDismissible: false,
       builder: (context) => const WorkImportDialog(),
     );
+
+    if (result == true) {
+      AppLogger.debug('导入完成，准备刷新列表', tag: 'WorkBrowsePage');
+      if (!mounted) return;
+
+      ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
+        reason: '导入完成后刷新',
+        force: true,
+        priority: 9,
+      );
+    }
   }
 }

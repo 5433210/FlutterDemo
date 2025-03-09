@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/enums/work_style.dart';
-import '../../../../../domain/models/character/work_filter.dart';
+import '../../../../../domain/models/work/work_filter.dart';
 import 'work_filter_section.dart';
 
 class StyleSection extends StatelessWidget {
@@ -33,7 +33,7 @@ class StyleSection extends StatelessWidget {
           selected: selected,
           onSelected: (value) => onFilterChanged(
             filter.copyWith(
-              style: () => value ? WorkStyle.fromValue(style.value) : null,
+              style: WorkStyle.fromValue(style.value),
             ),
           ),
         );

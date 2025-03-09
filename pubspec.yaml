@@ -1,7 +1,7 @@
 name: demo
-description: A calligraphy character collection app.
+description: A calligraphy learning and practicing app.
 publish_to: 'none'
-version: 1.0.0+1
+version: 0.1.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -12,49 +12,51 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   
-  # 状态管理
+  # State Management
+  riverpod: ^2.4.9
   flutter_riverpod: ^2.4.9
-  
-  # 数据库
-  sqlite3: ^2.0.0
-  sqlite3_flutter_libs: ^0.5.0
-  
-  # 工具
-  crypto: ^3.0.3
-  intl: 0.19.0
-  path: any
-  path_provider: ^2.1.5
-  uuid: ^4.5.1
-  
-  # UI 相关
-  file_picker: ^9.0.0
-  image: ^4.5.2
-  
-  # 窗口管理 (桌面应用)
-  window_manager: ^0.4.3
-  
-  # 本地存储
-  shared_preferences: ^2.5.2
-  bitsdojo_window: ^0.1.6
-  cupertino_icons: ^1.0.2
-  flutter_gen: ^5.9.0
-  sqflite: any
-  sqflite_common_ffi: ^2.3.5
-  collection: ^1.19.1
-  desktop_drop: ^0.5.0
-  equatable: ^2.0.7
+  riverpod_annotation: ^2.3.3
 
+  # Storage
+  shared_preferences: ^2.2.2
+  sqflite: ^2.3.0
+  sqflite_common_ffi: ^2.3.1
+  path: ^1.8.3
+  path_provider: ^2.1.2
+
+  # UI
+  flutter_hooks: ^0.20.3
+  hooks_riverpod: ^2.4.9
+  go_router: ^13.0.0
+  window_manager: ^0.3.7
+  file_picker: ^9.0.2
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.0
+
+  # Image Processing
+  image: ^4.1.3
+
+  # Utils
+  uuid: ^4.2.2
+  equatable: ^2.0.5
+  freezed_annotation: ^2.4.1
+  json_annotation: 4.9.0
+  intl: 0.19.0
+  collection: ^1.18.0
+  logger: ^2.0.2+1
+  desktop_drop: ^0.5.0
+  crypto: ^3.0.6
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
-  flutter_gen_runner: ^5.3.2
+  flutter_lints: ^2.0.0
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+  freezed: ^2.4.5
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true
-  generate: true # 启用代码生成
+  generate: true
   
-  assets:
-    - assets/images/
-
-

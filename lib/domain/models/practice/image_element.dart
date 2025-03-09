@@ -1,78 +1,61 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-/// 图像元素内容
-class ImageElement extends Equatable {
-  /// 图像文件路径
-  final String path;
+part 'image_element.freezed.dart';
+part 'image_element.g.dart';
 
-  const ImageElement({
-    required this.path,
-  });
+/// 图片元素
+@freezed
+class ImageElement with _$ImageElement {
+  const factory ImageElement({
+    /// 图片ID
+    required String imageId,
 
-  /// 从JSON数据创建图像元素
-  factory ImageElement.fromJson(Map<String, dynamic> json) {
-    return ImageElement(
-      path: json['path'] as String,
-    );
+    /// 图片URL
+    required String url,
+
+    /// 图片原始宽度
+    required int width,
+
+    /// 图片原始高度
+    required int height,
+
+    /// 图片MIME类型
+    @Default('image/jpeg') String mimeType,
+
+    /// 不透明度
+    @Default(1.0) double opacity,
+
+    /// 自定义属性
+    @Default({}) Map<String, dynamic> customProps,
+  }) = _ImageElement;
+
+  /// 从JSON创建实例
+  factory ImageElement.fromJson(Map<String, dynamic> json) =>
+      _$ImageElementFromJson(json);
+
+  const ImageElement._();
+
+  /// 获取宽高比
+  double get aspectRatio => width / height;
+
+  /// 获取自定义属性
+  T? getCustomProp<T>(String key) => customProps[key] as T?;
+
+  /// 移除自定义属性
+  ImageElement removeCustomProp(String key) {
+    final newProps = Map<String, dynamic>.from(customProps);
+    newProps.remove(key);
+    return copyWith(customProps: newProps);
   }
 
-  /// 从路径中提取文件扩展名
-  String? get fileExtension {
-    final name = fileName;
-    final dotIndex = name.lastIndexOf('.');
-    if (dotIndex != -1 && dotIndex < name.length - 1) {
-      return name.substring(dotIndex + 1).toLowerCase();
-    }
-    return null;
+  /// 设置自定义属性
+  ImageElement setCustomProp(String key, dynamic value) {
+    final newProps = Map<String, dynamic>.from(customProps);
+    newProps[key] = value;
+    return copyWith(customProps: newProps);
   }
 
-  /// 从路径中提取文件名
-  String get fileName {
-    final parts = path.split(isRemoteUrl ? '/' : RegExp(r'[/\\]'));
-    return parts.last;
-  }
-
-  /// 检查图像路径是否为绝对路径
-  bool get isAbsolutePath {
-    return path.startsWith('/') ||
-        // Windows路径
-        (path.length > 1 && path[1] == ':');
-  }
-
-  /// 检查图像路径是否为有效的远程URL
-  bool get isRemoteUrl {
-    return path.startsWith('http://') || path.startsWith('https://');
-  }
-
-  /// 检查是否为支持的图像格式
-  bool get isSupportedFormat {
-    final ext = fileExtension;
-    if (ext == null) return false;
-
-    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext);
-  }
-
-  @override
-  List<Object?> get props => [path];
-
-  /// 更改图像路径
-  ImageElement changePath(String newPath) {
-    return copyWith(path: newPath);
-  }
-
-  /// 创建一个带有更新路径的新实例
-  ImageElement copyWith({
-    String? path,
-  }) {
-    return ImageElement(
-      path: path ?? this.path,
-    );
-  }
-
-  /// 将图像元素转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'path': path,
-    };
-  }
+  /// 设置不透明度
+  ImageElement withOpacity(double value) =>
+      copyWith(opacity: value.clamp(0.0, 1.0));
 }

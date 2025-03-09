@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../domain/models/character/work_filter.dart';
+import '../../../../../domain/enums/sort_field.dart';
+import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class SortSection extends StatelessWidget {

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/entities/work.dart';
+import '../../../../domain/models/work/work_entity.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../utils/path_helper.dart';
 
@@ -23,7 +23,7 @@ final workThumbnailProvider =
 });
 
 class WorkCard extends ConsumerWidget {
-  final Work work;
+  final WorkEntity work;
   final VoidCallback onTap;
 
   const WorkCard({
@@ -68,7 +68,7 @@ class WorkCard extends ConsumerWidget {
                 children: [
                   // Title
                   Text(
-                    work.name ?? '未命名作品',
+                    work.title,
                     style: theme.textTheme.titleSmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -77,10 +77,10 @@ class WorkCard extends ConsumerWidget {
                   // Author and style
                   Row(
                     children: [
-                      if (work.author != null) ...[
+                      ...[
                         Expanded(
                           child: Text(
-                            work.author ?? '',
+                            work.author,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -89,7 +89,7 @@ class WorkCard extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      if (work.style != null) ...[
+                      ...[
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
@@ -98,7 +98,7 @@ class WorkCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            work.style ?? '',
+                            work.style.label,
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSecondaryContainer,
                             ),

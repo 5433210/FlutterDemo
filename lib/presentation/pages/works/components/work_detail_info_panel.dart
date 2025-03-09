@@ -87,10 +87,10 @@ class _WorkDetailInfoPanelState extends ConsumerState<WorkDetailInfoPanel>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow(context, '作品名称', widget.work.name),
-        _buildInfoRow(context, '作者', widget.work.author ?? '未知'),
-        _buildInfoRow(context, '风格', widget.work.style!.label),
-        _buildInfoRow(context, '工具', widget.work.tool!.label),
+        _buildInfoRow(context, '标题', widget.work.title),
+        _buildInfoRow(context, '作者', widget.work.author),
+        _buildInfoRow(context, '风格', widget.work.style.label),
+        _buildInfoRow(context, '工具', widget.work.tool.label),
         _buildInfoRow(context, '创作时间', _formatDate(widget.work.creationDate)),
         _buildInfoRow(
             context, '图片数量', (widget.work.imageCount ?? 0).toString()),
@@ -228,8 +228,7 @@ class _WorkDetailInfoPanelState extends ConsumerState<WorkDetailInfoPanel>
 
   Widget _buildMetadataSection(BuildContext context) {
     final theme = Theme.of(context);
-    final hasTags = widget.work.metadata?.tags != null &&
-        widget.work.metadata!.tags.isNotEmpty;
+    final hasTags = widget.work.tags.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +255,7 @@ class _WorkDetailInfoPanelState extends ConsumerState<WorkDetailInfoPanel>
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: widget.work.metadata!.tags
+            children: widget.work.tags
                 .map((tag) => Chip(
                       label: Text(tag),
                       backgroundColor:

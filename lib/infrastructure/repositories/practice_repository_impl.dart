@@ -1,125 +1,164 @@
-import 'package:uuid/uuid.dart';
-
+import '../../domain/models/practice/practice_entity.dart';
+import '../../domain/models/practice/practice_filter.dart';
 import '../../domain/repositories/practice_repository.dart';
-import '../../infrastructure/logging/logger.dart';
-import '../../infrastructure/persistence/database_interface.dart';
+import '../persistence/database_interface.dart';
 
+/// 字帖练习仓库实现
 class PracticeRepositoryImpl implements PracticeRepository {
-  // 字帖表名定义为常量，便于维护
-  static const String _tableName = 'practices';
+  static const _table = 'practices';
   final DatabaseInterface _db;
-
-  final _uuid = const Uuid();
 
   PracticeRepositoryImpl(this._db);
 
   @override
-  Future<String> createPractice(Map<String, dynamic> data) async {
-    try {
-      // 生成唯一ID
-      final id = _uuid.v4();
-      data['id'] = id;
+  Future<void> close() => _db.close();
 
-      // 设置创建和更新时间
-      final now = DateTime.now().toIso8601String();
-      data['createTime'] = now;
-      data['updateTime'] = now;
-
-      // 使用DatabaseInterface的insertPractice方法，而不是直接insert
-      await _db.insertPractice(data);
-
-      return id;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to create practice',
-        tag: 'PracticeRepositoryImpl',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
+  @override
+  Future<int> count(PracticeFilter? filter) async {
+    if (filter == null) {
+      return _db.count(_table);
     }
+    final query = _buildQuery(filter);
+    return _db.count(_table, query);
   }
 
   @override
-  Future<bool> deletePractice(String id) async {
-    try {
-      // 使用DatabaseInterface的deletePractice方法
-      await _db.deletePractice(id);
-      return true;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to delete practice',
-        tag: 'PracticeRepositoryImpl',
-        error: e,
-        stackTrace: stack,
-        data: {'id': id},
-      );
-      rethrow;
-    }
+  Future<PracticeEntity> create(PracticeEntity practice) async {
+    await _db.save(_table, practice.id, practice.toJson());
+    return practice;
   }
 
   @override
-  Future<Map<String, dynamic>?> getPractice(String id) async {
-    try {
-      // 使用DatabaseInterface的getPractice方法
-      return await _db.getPractice(id);
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to get practice',
-        tag: 'PracticeRepositoryImpl',
-        error: e,
-        stackTrace: stack,
-        data: {'id': id},
-      );
-      rethrow;
+  Future<void> delete(String id) => _db.delete(_table, id);
+
+  @override
+  Future<void> deleteMany(List<String> ids) => _db.deleteMany(_table, ids);
+
+  @override
+  Future<PracticeEntity> duplicate(String id, {String? newId}) async {
+    final practice = await get(id);
+    if (practice == null) {
+      throw ArgumentError('练习不存在');
     }
+
+    final now = DateTime.now();
+    final copy = practice.copyWith(
+      id: newId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      title: '${practice.title} (副本)',
+      createTime: now,
+      updateTime: now,
+    );
+
+    await create(copy);
+    return copy;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getPractices({
-    String? title,
-    int? limit,
-    int? offset,
-  }) async {
-    try {
-      // 使用DatabaseInterface的getPractices方法
-      return await _db.getPractices(
-        title: title,
-        limit: limit,
-        offset: offset,
-      );
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to get practices',
-        tag: 'PracticeRepositoryImpl',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
-    }
+  Future<PracticeEntity?> get(String id) async {
+    final data = await _db.get(_table, id);
+    if (data == null) return null;
+    return PracticeEntity.fromJson(data);
   }
 
   @override
-  Future<bool> updatePractice(String id, Map<String, dynamic> data) async {
-    try {
-      // 更新修改时间
-      data['updateTime'] = DateTime.now().toIso8601String();
+  Future<List<PracticeEntity>> getAll() async {
+    final list = await _db.getAll(_table);
+    return list.map((e) => PracticeEntity.fromJson(e)).toList();
+  }
 
-      // 删除ID，防止意外修改ID
-      data.remove('id');
-
-      // 使用DatabaseInterface的updatePractice方法
-      await _db.updatePractice(id, data);
-      return true;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to update practice',
-        tag: 'PracticeRepositoryImpl',
-        error: e,
-        stackTrace: stack,
-        data: {'id': id},
-      );
-      rethrow;
+  @override
+  Future<Set<String>> getAllTags() async {
+    final list = await _db.getAll(_table);
+    final tags = <String>{};
+    for (final item in list) {
+      final practice = PracticeEntity.fromJson(item);
+      tags.addAll(practice.tags);
     }
+    return tags;
+  }
+
+  @override
+  Future<List<PracticeEntity>> getByTags(Set<String> tags) async {
+    if (tags.isEmpty) return [];
+
+    final filter = PracticeFilter(tags: tags.toList());
+    return query(filter);
+  }
+
+  @override
+  Future<List<PracticeEntity>> query(PracticeFilter filter) async {
+    final query = _buildQuery(filter);
+    final list = await _db.query(_table, query);
+    return list.map((e) => PracticeEntity.fromJson(e)).toList();
+  }
+
+  @override
+  Future<PracticeEntity> save(PracticeEntity practice) async {
+    await _db.save(_table, practice.id, practice.toJson());
+    return practice;
+  }
+
+  @override
+  Future<List<PracticeEntity>> saveMany(List<PracticeEntity> practices) async {
+    final map = {
+      for (var p in practices) p.id: p.toJson(),
+    };
+    await _db.saveMany(_table, map);
+    return practices;
+  }
+
+  @override
+  Future<List<PracticeEntity>> search(String query, {int? limit}) async {
+    final filter = PracticeFilter(
+      keyword: query,
+      limit: limit ?? 20,
+    );
+    return this.query(filter);
+  }
+
+  @override
+  Future<List<String>> suggestTags(String prefix, {int limit = 10}) async {
+    final allTags = await getAllTags();
+    return allTags
+        .where((tag) => tag.toLowerCase().startsWith(prefix.toLowerCase()))
+        .take(limit)
+        .toList();
+  }
+
+  /// 构建查询条件
+  Map<String, dynamic> _buildQuery(PracticeFilter filter) {
+    final query = <String, dynamic>{};
+
+    if (filter.keyword?.isNotEmpty == true) {
+      query['title'] = {'contains': filter.keyword};
+    }
+
+    if (filter.tags.isNotEmpty) {
+      query['tags'] = {'contains': filter.tags};
+    }
+
+    if (filter.status?.isNotEmpty == true) {
+      query['status'] = filter.status;
+    }
+
+    if (filter.startTime != null) {
+      query['create_time'] = {
+        'gte': filter.startTime!.toIso8601String(),
+      };
+    }
+
+    if (filter.endTime != null) {
+      query['create_time'] ??= {};
+      query['create_time']['lte'] = filter.endTime!.toIso8601String();
+    }
+
+    query['sort'] = {
+      filter.sortField: filter.sortOrder,
+    };
+
+    query['limit'] = filter.limit;
+    query['offset'] = filter.offset;
+
+    return query;
   }
 }

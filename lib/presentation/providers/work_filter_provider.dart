@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/models/character/work_filter.dart';
+import '../../domain/models/work/work_filter.dart';
 
 final workFilterProvider =
     StateNotifierProvider<WorkFilterNotifier, WorkFilter>((ref) {

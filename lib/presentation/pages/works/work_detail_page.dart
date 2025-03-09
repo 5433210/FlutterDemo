@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/services/state_restoration_service.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../providers/works_providers.dart';
@@ -281,10 +281,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           ),
 
-          if (state.work?.name != null && state.work!.name.isNotEmpty) ...[
+          if (state.work?.title != null) ...[
             const SizedBox(width: 8),
             Text(
-              '- ${state.work!.name}',
+              '- ${state.work!.title}',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.normal,
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -335,7 +335,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         Text('标签管理', style: theme.textTheme.titleMedium),
         const SizedBox(height: 16),
         TagEditor(
-          tags: work.metadata?.tags ?? [],
+          tags: work.tags,
           suggestedTags: const ['行书', '楷书', '隶书', '草书', '真迹', '拓片', '碑帖', '字帖'],
           onTagsChanged: (updatedTags) {
             // 直接更新标签，不使用命令模式
@@ -421,10 +421,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           ),
 
-          if (work != null && work.name.isNotEmpty) ...[
+          if (work != null && work.title.isNotEmpty) ...[
             const SizedBox(width: 8),
             Text(
-              '- ${work.name}',
+              '- ${work.title}',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.normal,
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -450,7 +450,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
           // 提取字形按钮
           FilledButton.tonal(
-            onPressed: work != null ? () => _navigateToExtract(work.id!) : null,
+            onPressed: work != null ? () => _navigateToExtract(work.id) : null,
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -582,7 +582,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         }
       } else if (mounted) {
         // 清除保存的编辑状态
-        await stateRestorationService.clearWorkEditState(widget.workId);
+        stateRestorationService.clearWorkEditState(
+          // 调用清除编辑状态方法
+          widget.workId,
+        );
       }
     }
   }
@@ -634,7 +637,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   void _exportWork(WorkEntity work) {
     // 导出作品的实现
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('正在导出作品: ${work.name}')),
+      SnackBar(content: Text('正在导出作品: ${work.title}')),
     );
   }
 
@@ -796,10 +799,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         MaterialPageRoute(
           builder: (context) => CharacterCollectionPage(
             imageId: workId,
-            workTitle: work.name,
+            workTitle: work.title,
             images: work.images
-                .where((img) => img.imported?.path != null)
-                .map((img) => img.imported!.path.replaceAll('\\', '/'))
+                .where((img) => img.path != null)
+                .map((img) => img.path.replaceAll('\\', '/'))
                 .toList(),
           ),
         ),
@@ -814,11 +817,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
     // 记录保存前的标签数据，以便调试
     final editingWork = ref.read(workDetailProvider).editingWork;
-    final tags = editingWork?.metadata?.tags;
+    final tags = editingWork?.tags;
 
     AppLogger.debug('开始保存作品', tag: 'WorkDetailPage', data: {
       'workId': editingWork?.id,
-      'hasMetadata': editingWork?.metadata != null,
       'tagCount': tags?.length ?? 0,
       'tags': tags, // 直接输出标签列表，方便调试
     });
@@ -936,7 +938,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   void _shareWork(WorkEntity work) {
     // 分享作品的实现
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('正在分享作品: ${work.name}')),
+      SnackBar(content: Text('正在分享作品: ${work.title}')),
     );
   }
 

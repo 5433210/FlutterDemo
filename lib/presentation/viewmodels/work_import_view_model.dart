@@ -1,21 +1,22 @@
 import 'dart:io';
 
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
+import 'package:uuid/uuid.dart';
 
 import '../../application/config/app_config.dart';
-import '../../application/services/image_service.dart';
+import '../../application/services/work/work_image_service.dart';
 import '../../application/services/work/work_service.dart';
-import '../../domain/entities/work.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import 'states/work_import_state.dart';
 
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
-  final ImageService _imageService;
+  final WorkImageService _imageService;
 
   WorkImportViewModel(this._workService, this._imageService)
       : super(const WorkImportState());
@@ -46,7 +47,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   // 导入功能
   Future<bool> importWork() async {
     if (state.images.isEmpty ||
-        state.name.isEmpty ||
+        state.title.isEmpty ||
         state.author?.isEmpty != false ||
         state.style == null ||
         state.tool == null ||
@@ -61,11 +62,14 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
       await _workService.importWork(
         processedImages,
-        Work(
-          name: state.name,
-          author: state.author,
-          style: state.style?.value,
-          tool: state.tool?.value,
+        WorkEntity(
+          id: const Uuid().v4(),
+          title: state.title,
+          author: state.author!,
+          style: state.style!,
+          tool: state.tool!,
+          createTime: DateTime.now(),
+          updateTime: DateTime.now(),
           creationDate: state.creationDate!,
           imageCount: state.images.length,
           remark: state.remark,

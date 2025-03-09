@@ -1,11 +1,12 @@
 import 'dart:convert';
 
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../domain/entities/work.dart';
-import '../../../domain/models/character/work_filter.dart';
+import '../../../domain/models/common/sort_option.dart';
+import '../../../domain/models/work/work_filter.dart';
 import '../../../infrastructure/logging/logger.dart'; // 添加日志导入
 
 enum LoadRequestStatus {
@@ -32,7 +33,7 @@ class WorkBrowseState {
 
   // 数据状态
   final bool isLoading;
-  final List<Work> works;
+  final List<WorkEntity> works;
   final String? error;
   final TextEditingController searchController;
 
@@ -91,7 +92,7 @@ class WorkBrowseState {
   WorkBrowseState copyWith({
     bool? isLoading,
     String? error,
-    List<Work>? works,
+    List<WorkEntity>? works,
     String? searchQuery, // 添加 searchQuery
     ViewMode? viewMode,
     SortOption? sortOption,

@@ -1,12 +1,12 @@
 import 'dart:io';
 
+import 'package:demo/application/services/work/work_image_service.dart';
 import 'package:flutter/widgets.dart';
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
-import '../services/image_service.dart';
 
 /// 命令：添加图片
 class AddImageCommand implements WorkEditCommand {
@@ -164,7 +164,7 @@ class ReorderImagesCommand implements WorkEditCommand {
 class RotateImageCommand implements WorkEditCommand {
   final int imageIndex;
   final int angle; // 角度，通常是90的倍数
-  final ImageService imageService; // 添加图片服务依赖
+  final WorkImageService imageService; // 添加图片服务依赖
 
   // 保存原始和旋转后的文件信息，用于撤销
   String? _originalPath;
@@ -195,15 +195,15 @@ class RotateImageCommand implements WorkEditCommand {
     _oldImage = work.images[imageIndex];
 
     // 确保图片和服务都不为空
-    if (_oldImage?.imported?.path == null) {
+    if (_oldImage?.path == null) {
       throw StateError('图片路径无效');
     }
 
     try {
       // 1. 获取原始图片的文件
-      final originalFile = File(_oldImage!.imported!.path);
+      final originalFile = File(_oldImage!.path);
       if (!await originalFile.exists()) {
-        throw FileSystemException('原始图片不存在', _oldImage!.imported!.path);
+        throw FileSystemException('原始图片不存在', _oldImage!.path);
       }
 
       // 2. 旋转图片
@@ -211,36 +211,19 @@ class RotateImageCommand implements WorkEditCommand {
           preserveSize: true);
 
       // 3. 确保旋转后的图片被写入到原路径 (覆盖原文件)
-      await rotatedFile.copy(_oldImage!.imported!.path);
+      await rotatedFile.copy(_oldImage!.path);
 
       // 4. 重新生成缩略图
-      final thumbnailFile = await imageService.createTempThumbnail(
-        rotatedFile,
-        width: 120,
-        height: 120,
-      );
+      final thumbnailFile = await imageService.createThumbnail(rotatedFile);
 
-      if (_oldImage!.thumbnail != null) {
-        // 覆盖原有缩略图
-        await thumbnailFile.copy(_oldImage!.thumbnail!.path);
-      }
-
-      // Get image dimensions from service instead of using decodeImageFromList directly
-      final imageDimensions =
-          await imageService.getImageDimensions(rotatedFile);
+      // 覆盖原有缩略图
+      await thumbnailFile.copy(_oldImage!.thumbnailPath);
 
       // 6. 创建新的 WorkImage 对象
       _newImage = WorkImage(
         index: _oldImage!.index,
-        imported: ImageDetail(
-          path: _oldImage!.imported!.path, // 保持原路径
-          width: imageDimensions.width,
-          height: imageDimensions.height,
-          size: await rotatedFile.length(),
-          format: _oldImage!.imported!.format, // 添加必需的format参数
-        ),
-        thumbnail: _oldImage!.thumbnail, // 保持原缩略图路径
-        original: _oldImage!.original,
+        path: _oldImage!.path,
+        thumbnailPath: _oldImage!.thumbnailPath,
       );
 
       // 7. 更新图片列表
@@ -321,7 +304,7 @@ class UpdateInfoCommand implements WorkEditCommand {
     // 确保 ID 被保留
     return work.copyWith(
       id: work.id, // 明确保留原有 ID
-      name: newName ?? work.name,
+      title: newName ?? work.title,
       author: newAuthor ?? work.author,
       style: newStyle ?? work.style,
       tool: newTool ?? work.tool,
@@ -335,7 +318,7 @@ class UpdateInfoCommand implements WorkEditCommand {
   Future<WorkEntity> undo(WorkEntity work) async {
     // 返回恢复后的 WorkEntity
     return work.copyWith(
-      name: oldName ?? work.name,
+      title: oldName ?? work.title,
       author: oldAuthor ?? work.author,
       style: oldStyle ?? work.style,
       tool: oldTool ?? work.tool,

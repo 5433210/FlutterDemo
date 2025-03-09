@@ -1,919 +1,325 @@
-import 'dart:convert';
-
-import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:uuid/uuid.dart';
 
+import '../../logging/logger.dart';
 import '../database_interface.dart';
+import '../models/database_query.dart';
 
-class SqliteDatabase implements DatabaseInterface {
-  static const String dbName = 'shufa_jizi.db';
-  Database? _database;
+/// SQLite数据库实现
+class SQLiteDatabase implements DatabaseInterface {
+  final Database _db;
 
-  // 添加一个简单的同步锁
-  final _dbLock = Object();
-
-  Future<Database> get database async {
-    if (_database != null) {
-      return _database!;
-    }
-    _database = await _initializeDatabase();
-    return _database!;
-  }
+  const SQLiteDatabase._(this._db);
 
   @override
-  Future<List<Map<String, dynamic>>> queryCharacters({
-    Map<String, dynamic>? conditions,
-    String? orderBy,
-    bool descending = true,
-    int? limit,
-    int? offset,
-  }) async {
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
-
-    if (conditions != null) {
-      if (conditions['search'] != null) {
-        whereConditions.add('char LIKE ?');
-        whereArgs.add('%${conditions['search']}%');
-      }
-
-      if (conditions['styles'] != null) {
-        final styles = conditions['styles'] as List<String>;
-        if (styles.isNotEmpty) {
-          final placeholders = List.filled(styles.length, '?').join(',');
-          whereConditions.add(
-            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.style\') IN ($placeholders))',
-          );
-          whereArgs.addAll(styles);
-        }
-      }
-
-      if (conditions['tools'] != null) {
-        final tools = conditions['tools'] as List<String>;
-        if (tools.isNotEmpty) {
-          final placeholders = List.filled(tools.length, '?').join(',');
-          whereConditions.add(
-            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.tool\') IN ($placeholders))',
-          );
-          whereArgs.addAll(tools);
-        }
-      }
-    }
-
-    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-    final order = orderBy != null
-        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
-        : 'createTime DESC';
-
-    final db = await database;
-    final List<Map<String, dynamic>> results = await db.query(
-      'characters',
-      where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: order,
-      limit: limit,
-      offset: offset,
-    );
-
-    return results.map((character) {
-      final characterCopy = Map<String, dynamic>.from(character);
-      if (characterCopy['metadata'] != null) {
-        characterCopy['metadata'] = jsonDecode(characterCopy['metadata']);
-      }
-      if (characterCopy['sourceRegion'] != null) {
-        characterCopy['sourceRegion'] = jsonDecode(characterCopy['sourceRegion']);
-      }
-      return characterCopy;
-    }).toList();
+  Future<void> clear(String table) async {
+    await _db.delete(table);
   }
 
   @override
   Future<void> close() async {
-    if (_database != null) {
-      await _database!.close();
-      _database = null;
-    }
-  }
-
-  // 添加临时调试方法
-  Future<void> debugPrintAllWorks() async {
-    final db = await database;
-    final results = await db.query('works', columns: ['id', 'name', 'style']);
-
-    debugPrint('\n数据库中的所有作品:');
-    debugPrint('----------------------------------------');
-    for (var row in results) {
-      debugPrint('ID: ${row['id']}');
-      debugPrint('Name: ${row['name']}');
-      debugPrint('Style: ${row['style']}');
-      debugPrint('----------------------------------------');
-    }
+    await _db.close();
   }
 
   @override
-  Future<void> deleteCharacter(String id) async {
-    final db = await database;
-    await db.delete(
-      'characters',
+  Future<int> count(String table, [Map<String, dynamic>? filter]) async {
+    if (filter == null || filter.isEmpty) {
+      final result = await _db.rawQuery('SELECT COUNT(*) as count FROM $table');
+      return Sqflite.firstIntValue(result) ?? 0;
+    }
+
+    final query = DatabaseQuery.fromJson(filter);
+    final queryResult = _buildCountSql(table, query);
+
+    final result = await _db.rawQuery(queryResult.sql, queryResult.args);
+    AppLogger.debug(
+      '统计查询完成',
+      tag: 'SQLiteDatabase',
+    );
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  @override
+  Future<void> delete(String table, String id) async {
+    await _db.delete(
+      table,
       where: 'id = ?',
       whereArgs: [id],
     );
   }
 
   @override
-  Future<int> deletePractice(String id) async {
-    final db = await database;
-    return await db.delete(
-      'practices',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  @override
-  Future<void> deleteWork(String id) async {
-    final db = await database;
-    await db.transaction((txn) async {
-      // Delete associated characters first (cascade should handle this, but being explicit)
-      await txn.delete(
-        'characters',
-        where: 'workId = ?',
-        whereArgs: [id],
-      );
-
-      // Then delete the work
-      await txn.delete(
-        'works',
+  Future<void> deleteMany(String table, List<String> ids) async {
+    final batch = _db.batch();
+    for (final id in ids) {
+      batch.delete(
+        table,
         where: 'id = ?',
         whereArgs: [id],
       );
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> getAllWorks() async {
-    // 使用同步锁避免并发数据库操作
-    return await _synchronized(_dbLock, () async {
-      final db = await database;
-      return db.query('works');
-    });
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> queryCharacters({
-    Map<String, dynamic>? conditions,
-    String? orderBy,
-    bool descending = true,
-    int? limit,
-    int? offset,
-  }) async {
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
-
-    if (conditions != null) {
-      if (conditions['search'] != null) {
-        whereConditions.add('char LIKE ?');
-        whereArgs.add('%${conditions['search']}%');
-      }
-
-      if (conditions['styles'] != null) {
-        final styles = conditions['styles'] as List<String>;
-        if (styles.isNotEmpty) {
-          final placeholders = List.filled(styles.length, '?').join(',');
-          whereConditions.add(
-            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.style\') IN ($placeholders))',
-          );
-          whereArgs.addAll(styles);
-        }
-      }
-
-      if (conditions['tools'] != null) {
-        final tools = conditions['tools'] as List<String>;
-        if (tools.isNotEmpty) {
-          final placeholders = List.filled(tools.length, '?').join(',');
-          whereConditions.add(
-            'EXISTS (SELECT 1 FROM json_each(metadata) WHERE json_extract(metadata, \'$.tool\') IN ($placeholders))',
-          );
-          whereArgs.addAll(tools);
-        }
-      }
     }
-
-    final where = whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-    final order = orderBy != null
-        ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
-        : 'createTime DESC';
-
-    final db = await database;
-    final List<Map<String, dynamic>> results = await db.query(
-      'characters',
-      where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: order,
-      limit: limit,
-      offset: offset,
-    );
-
-    return results.map((character) {
-      final characterCopy = Map<String, dynamic>.from(character);
-      if (characterCopy['metadata'] != null) {
-        characterCopy['metadata'] = jsonDecode(characterCopy['metadata']);
-      }
-      if (characterCopy['sourceRegion'] != null) {
-        characterCopy['sourceRegion'] = jsonDecode(characterCopy['sourceRegion']);
-      }
-      return characterCopy;
-    }).toList();
+    await batch.commit(noResult: true);
   }
 
   @override
-  Future<Map<String, dynamic>?> getCharacter(String id) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'characters',
+  Future<Map<String, dynamic>?> get(String table, String id) async {
+    final results = await _db.query(
+      table,
       where: 'id = ?',
       whereArgs: [id],
+      limit: 1,
     );
-
-    if (maps.isEmpty) return null;
-
-    // 创建可修改的 Map 副本
-    final character = Map<String, dynamic>.from(maps.first);
-    if (character['metadata'] != null) {
-      character['metadata'] = jsonDecode(character['metadata']);
-    }
-    if (character['sourceRegion'] != null) {
-      character['sourceRegion'] = jsonDecode(character['sourceRegion']);
-    }
-    return character;
+    return results.isEmpty ? null : results.first;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getCharactersByWorkId(
-      String workId) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'characters',
-      where: 'workId = ?',
-      whereArgs: [workId],
-      orderBy: 'createTime ASC',
-    );
-
-    // 创建可修改的 Map 副本列表
-    return maps.map((character) {
-      final characterCopy = Map<String, dynamic>.from(character);
-      if (characterCopy['metadata'] != null) {
-        characterCopy['metadata'] = jsonDecode(characterCopy['metadata']);
-      }
-      if (characterCopy['sourceRegion'] != null) {
-        characterCopy['sourceRegion'] =
-            jsonDecode(characterCopy['sourceRegion']);
-      }
-      return characterCopy;
-    }).toList();
-  }
-
-  @override
-  Future<Map<String, dynamic>?> getPractice(String id) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'practices',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    if (maps.isEmpty) return null;
-
-    // 创建可修改的 Map 副本
-    final practice = Map<String, dynamic>.from(maps.first);
-    if (practice['metadata'] != null) {
-      practice['metadata'] = jsonDecode(practice['metadata']);
-    }
-    if (practice['pages'] != null) {
-      practice['pages'] = jsonDecode(practice['pages']);
-    }
-    return practice;
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> getPractices({
-    List<String>? characterIds, // Not used in this implementation
-    String? title,
-    int? limit,
-    int? offset,
-  }) async {
-    final db = await database;
-
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
-
-    if (title != null) {
-      whereConditions.add('title LIKE ?');
-      whereArgs.add('%$title%');
-    }
-
-    final where =
-        whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-
-    final List<Map<String, dynamic>> maps = await db.query(
-      'practices',
-      where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-      orderBy: 'createTime DESC',
-      limit: limit,
-      offset: offset,
-    );
-
-    // 创建可修改的 Map 副本列表
-    return maps.map((practice) {
-      final practiceCopy = Map<String, dynamic>.from(practice);
-      if (practiceCopy['metadata'] != null) {
-        practiceCopy['metadata'] = jsonDecode(practiceCopy['metadata']);
-      }
-      if (practiceCopy['pages'] != null) {
-        practiceCopy['pages'] = jsonDecode(practiceCopy['pages']);
-      }
-      return practiceCopy;
-    }).toList();
-  }
-
-  Future<int> getPracticesCount({String? title}) async {
-    final db = await database;
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
-
-    if (title != null) {
-      whereConditions.add('title LIKE ?');
-      whereArgs.add('%$title%');
-    }
-
-    final where =
-        whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-
-    final result = Sqflite.firstIntValue(await db.query(
-      'practices',
-      columns: ['COUNT(*)'],
-      where: where,
-      whereArgs: whereArgs.isEmpty ? null : whereArgs,
-    ));
-
-    return result ?? 0;
-  }
-
-  @override
-  Future<String?> getSetting(String key) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'settings',
-      where: 'key = ?',
-      whereArgs: [key],
-    );
-
-    if (maps.isEmpty) return null;
-    return maps.first['value'] as String;
-  }
-
-  @override
-  Future<Map<String, dynamic>?> getWork(String id) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'works',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    if (maps.isEmpty) return null;
-
-    // 创建可修改的 Map 副本
-    final work = Map<String, dynamic>.from(maps.first);
-    if (work['metadata'] != null) {
-      work['metadata'] = jsonDecode(work['metadata']);
-    }
-    return work;
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> getWorks({
-    String? query,
-    String? style,
-    String? tool,
-    DateTimeRange? creationDateRange,
-    String? orderBy,
-    bool descending = true,
-  }) async {
-    // 添加计时器记录查询耗时
-    final stopwatch = Stopwatch()..start();
-
-    // 使用同步锁避免并发数据库操作
-    return await _synchronized(_dbLock, () async {
-      try {
-        final whereConditions = <String>[];
-        final whereArgs = <dynamic>[];
-
-        // 文本搜索
-        if (query?.isNotEmpty ?? false) {
-          whereConditions.add('(name LIKE ? OR author LIKE ?)');
-          whereArgs.add('%$query%');
-          whereArgs.add('%$query%');
-        }
-
-        // 风格筛选
-        if (style != null) {
-          whereConditions.add('style = ?');
-          whereArgs.add(style);
-        }
-
-        // 工具筛选
-        if (tool != null) {
-          whereConditions.add('tool = ?');
-          whereArgs.add(tool);
-        }
-
-        // 修复创作日期范围筛选的时间戳单位
-        if (creationDateRange != null) {
-          whereConditions.add('creationDate BETWEEN ? AND ?');
-          whereArgs.add(creationDateRange.start.millisecondsSinceEpoch); // 改用毫秒
-          whereArgs.add(creationDateRange.end.millisecondsSinceEpoch); // 改用毫秒
-        }
-
-        final where =
-            whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-        final order = orderBy != null
-            ? '$orderBy ${descending ? 'DESC' : 'ASC'}'
-            : 'createTime DESC'; // 默认按创建时间倒序
-
-        final db = await database;
-
-        // 根据条件复杂度添加日志
-        final hasComplexFilter =
-            whereConditions.length > 2 || (query?.length ?? 0) > 10;
-
-        if (hasComplexFilter) {
-          debugPrint('正在执行复杂查询: 条件=$where, 排序=$order');
-        }
-
-        // 执行查询
-        final List<Map<String, dynamic>> results = await db.query(
-          'works',
-          where: where,
-          whereArgs: whereArgs,
-          orderBy: order,
-          // 添加查询限制，避免一次性返回太多数据
-          limit: 200,
-        );
-
-        // 记录查询耗时
-        debugPrint(
-            '作品查询完成: ${results.length}条结果, 耗时${stopwatch.elapsedMilliseconds}ms');
-
-        // 解决 read-only 问题：创建可修改的 Map 副本
-        return List<Map<String, dynamic>>.generate(
-          results.length,
-          (i) => Map<String, dynamic>.from(results[i]),
-          growable: true,
-        );
-      } catch (e, stack) {
-        debugPrint('作品查询失败: $e');
-        debugPrint(stack.toString());
-        rethrow;
-      }
-    });
-  }
-
-  @override
-  Future<int> getWorksCount(
-      {String? style,
-      String? author,
-      String? name,
-      String? tool, // Add tool parameter
-      List<String>? tags,
-      DateTime? fromDateImport,
-      DateTime? toDateImport,
-      DateTime? fromDateCreation,
-      DateTime? toDateCreation,
-      DateTime? fromDateUpdate,
-      DateTime? toDateUpdate}) async {
-    final whereConditions = <String>[];
-    final whereArgs = <dynamic>[];
-
-    // 文本搜索
-    _addTextSearch(whereConditions, whereArgs, name, author);
-
-    // 风格筛选
-    if (style != null) {
-      whereConditions.add('style = ?');
-      whereArgs.add(style);
-    }
-
-    // 工具筛选
-    if (tool != null) {
-      whereConditions.add('tool = ?');
-      whereArgs.add(tool);
-    }
-
-    // 标签筛选
-    _addTagSearch(whereConditions, whereArgs, tags);
-
-    // 日期范围筛选
-    _addDateRange(whereConditions, whereArgs, {
-      'createTime': {
-        'start': fromDateImport,
-        'end': toDateImport,
-      },
-      'creationDate': {
-        'start': fromDateCreation,
-        'end': toDateCreation,
-      },
-      'updateTime': {
-        'start': fromDateUpdate,
-        'end': toDateUpdate,
-      },
-    });
-
-    final where =
-        whereConditions.isEmpty ? null : whereConditions.join(' AND ');
-
-    // 使用 _executeQuery 来执行计数查询
-    final result = await _executeQuery(
-      table: 'works',
-      columns: ['COUNT(*) as count'],
-      where: where,
-      whereArgs: whereArgs,
-    );
-
-    return result.first['count'] as int;
+  Future<List<Map<String, dynamic>>> getAll(String table) async {
+    return _db.query(table);
   }
 
   @override
   Future<void> initialize() async {
-    if (_database != null) return;
-    _database = await _initializeDatabase();
+    // 数据库已在构造时初始化
   }
 
-  // Character CRUD methods
   @override
-  Future<String> insertCharacter(Map<String, dynamic> character) async {
-    final db = await database;
-    final charId = const Uuid().v4();
-    character['id'] = charId;
-    character['createTime'] = DateTime.now().millisecondsSinceEpoch;
-    character['updateTime'] = DateTime.now().millisecondsSinceEpoch;
+  Future<List<Map<String, dynamic>>> query(
+    String table,
+    Map<String, dynamic> filter,
+  ) async {
+    AppLogger.debug(
+      '执行数据库查询',
+      tag: 'SQLiteDatabase',
+      data: {
+        'table': table,
+        'filter': filter,
+      },
+    );
 
-    if (character.containsKey('metadata')) {
-      character['metadata'] = jsonEncode(character['metadata']);
-    }
-    if (character.containsKey('sourceRegion')) {
-      character['sourceRegion'] = jsonEncode(character['sourceRegion']);
-    }
+    final query = DatabaseQuery.fromJson(filter);
+    final queryResult = _buildQuerySql(table, query);
 
-    await db.insert('characters', character);
-    return charId;
+    AppLogger.debug(
+      '生成SQL查询语句',
+      tag: 'SQLiteDatabase',
+      data: {
+        'sql': queryResult.sql,
+        'args': queryResult.args,
+      },
+    );
+
+    final results = await _db.rawQuery(queryResult.sql, queryResult.args);
+
+    AppLogger.debug(
+      '查询完成',
+      tag: 'SQLiteDatabase',
+      data: {
+        'resultCount': results.length,
+      },
+    );
+
+    return results;
   }
 
-  // Practice CRUD methods
   @override
-  Future<String> insertPractice(Map<String, dynamic> practice) async {
-    final db = await database;
-    final practiceId = const Uuid().v4();
-    practice['id'] = practiceId;
-    practice['createTime'] = DateTime.now().millisecondsSinceEpoch;
-    practice['updateTime'] = DateTime.now().millisecondsSinceEpoch;
-
-    if (practice.containsKey('metadata')) {
-      practice['metadata'] = jsonEncode(practice['metadata']);
-    }
-
-    if (practice.containsKey('pages')) {
-      practice['pages'] = jsonEncode(practice['pages']);
-    }
-
-    await db.insert('practices', practice);
-    return practiceId;
+  Future<List<Map<String, dynamic>>> rawQuery(
+    String sql, [
+    List<Object?>? args,
+  ]) async {
+    return _db.rawQuery(sql, args);
   }
 
-  // Update CRUD methods
   @override
-  Future<String> insertWork(Map<String, dynamic> work) async {
-    final db = await database;
-    final workId = const Uuid().v4();
-    work['id'] = workId;
-
-    // 修复时间戳单位
-    work['creationDate'] =
-        DateTime.parse(work['creationDate']).millisecondsSinceEpoch; // 改用毫秒
-    work['createTime'] = DateTime.now().millisecondsSinceEpoch;
-    work['updateTime'] = DateTime.now().millisecondsSinceEpoch;
-
-    if (work.containsKey('metadata')) {
-      work['metadata'] = jsonEncode(work['metadata']);
-    }
-
-    await db.insert('works', work);
-    return workId;
+  Future<int> rawUpdate(String sql, [List<Object?>? args]) async {
+    return _db.rawUpdate(sql, args);
   }
 
-  Future<bool> practiceExists(String id) async {
-    final db = await database;
-    final result = Sqflite.firstIntValue(await db.query(
-      'practices',
-      columns: ['COUNT(*)'],
+  @override
+  Future<void> save(String table, String id, Map<String, dynamic> data) async {
+    await _db.update(
+      table,
+      data,
       where: 'id = ?',
       whereArgs: [id],
-    ));
-    return (result ?? 0) > 0;
+    );
   }
 
-  // Settings methods
   @override
-  Future<void> setSetting(String key, String value) async {
-    final db = await database;
-    await db.insert(
-      'settings',
-      {
-        'key': key,
-        'value': value,
-        'updateTime': DateTime.now().millisecondsSinceEpoch,
-      },
+  Future<void> saveMany(
+    String table,
+    Map<String, Map<String, dynamic>> data,
+  ) async {
+    final batch = _db.batch();
+    for (final entry in data.entries) {
+      batch.update(
+        table,
+        entry.value,
+        where: 'id = ?',
+        whereArgs: [entry.key],
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  @override
+  Future<void> set(String table, String id, Map<String, dynamic> data) async {
+    await _db.insert(
+      table,
+      {'id': id, ...data},
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
   @override
-  Future<void> updateCharacter(
-      String id, Map<String, dynamic> character) async {
-    final db = await database;
-    character['updateTime'] = DateTime.now().millisecondsSinceEpoch;
-
-    if (character.containsKey('metadata')) {
-      character['metadata'] = jsonEncode(character['metadata']);
+  Future<void> setMany(
+    String table,
+    Map<String, Map<String, dynamic>> data,
+  ) async {
+    final batch = _db.batch();
+    for (final entry in data.entries) {
+      batch.insert(
+        table,
+        {'id': entry.key, ...entry.value},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
     }
-    if (character.containsKey('sourceRegion')) {
-      character['sourceRegion'] = jsonEncode(character['sourceRegion']);
-    }
-    character.remove('createTime'); // Remove createTime field
-    await db.update(
-      'characters',
-      character,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await batch.commit(noResult: true);
   }
 
-  @override
-  Future<void> updatePractice(String id, Map<String, dynamic> practice) async {
-    final db = await database;
-    practice['updateTime'] = DateTime.now().millisecondsSinceEpoch;
+  /// 构建COUNT查询SQL
+  ({String sql, List<Object?> args}) _buildCountSql(
+      String table, DatabaseQuery query) {
+    final where = <String>[];
+    final whereArgs = <dynamic>[];
 
-    if (practice.containsKey('metadata')) {
-      practice['metadata'] = jsonEncode(practice['metadata']);
-    }
-    if (practice.containsKey('pages')) {
-      practice['pages'] = jsonEncode(practice['pages']);
-    }
-    practice.remove('createTime'); // Remove createTime field
-
-    await db.update(
-      'practices',
-      practice,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  @override
-  Future<void> updateWork(String id, Map<String, dynamic> work) async {
-    final db = await database;
-
-    work['creationDate'] =
-        DateTime.parse(work['creationDate']).millisecondsSinceEpoch;
-    work['updateTime'] = DateTime.now().millisecondsSinceEpoch;
-
-    work.remove('createTime'); // Remove createTime field
-
-    if (work.containsKey('metadata')) {
-      work['metadata'] = jsonEncode(work['metadata']);
+    // 处理普通条件
+    for (final condition in query.conditions) {
+      where.add('${condition.field} ${condition.operator} ?');
+      whereArgs.add(condition.value);
     }
 
-    await db.update(
-      'works',
-      work,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  @override
-  Future<bool> workExists(String id) async {
-    final db = await database;
-    final result = Sqflite.firstIntValue(await db.query(
-      'works',
-      columns: ['COUNT(*)'],
-      where: 'id = ?',
-      whereArgs: [id],
-    ));
-    return (result ?? 0) > 0;
-  }
-
-  // 1. 提取日期范围处理方法
-  void _addDateRange(
-    List<String> conditions,
-    List<dynamic> args,
-    Map<String, Map<String, DateTime?>> dateRanges,
-  ) {
-    dateRanges.forEach((field, range) {
-      final start = range['start'];
-      final end = range['end'];
-
-      if (start != null) {
-        conditions.add('$field >= ?');
-        args.add(start.millisecondsSinceEpoch);
-      }
-      if (end != null) {
-        conditions.add('$field <= ?');
-        args.add(end.millisecondsSinceEpoch);
-      }
-    });
-  }
-
-  void _addTagSearch(
-    List<String> conditions,
-    List<dynamic> args,
-    List<String>? tags,
-  ) {
-    if (tags != null && tags.isNotEmpty) {
-      final tagQueries = tags.map((tag) => '(metadata LIKE ?)').join(' OR ');
-      conditions.add('($tagQueries)');
-      for (final tag in tags) {
-        args.addAll([tag, '%"$tag"%']);
-      }
-    }
-  }
-
-  void _addTextSearch(
-    List<String> conditions,
-    List<dynamic> args,
-    String? name,
-    String? author,
-  ) {
-    if (name != null || author != null) {
-      final searchConditions = <String>[];
-      if (name != null) {
-        searchConditions.add('name LIKE ?');
-        args.add('%$name%');
-      }
-      if (author != null) {
-        searchConditions.add('author LIKE ?');
-        args.add('%$author%');
-      }
-      if (searchConditions.isNotEmpty) {
-        conditions.add('(${searchConditions.join(' OR ')})');
-      }
-    }
-  }
-
-  String? _buildOrderByClause(String? sortBy, bool descending) {
-    if (sortBy == null) return null;
-
-    final field = switch (sortBy) {
-      'name' => 'name',
-      'author' => 'author',
-      'creationDate' => 'creationDate',
-      'updateTime' => 'updateTime',
-      'importTime' => 'createTime',
-      _ => sortBy
-    };
-    return '$field ${descending ? 'DESC' : 'ASC'}';
-  }
-
-  // 2. 提取元数据解码方法
-  Map<String, dynamic> _decodeMetadata(Map<String, dynamic> map) {
-    final result = Map<String, dynamic>.from(map);
-    for (final field in ['metadata', 'sourceRegion', 'pages']) {
-      if (result[field] != null) {
-        try {
-          result[field] = jsonDecode(result[field] as String);
-        } catch (e) {
-          print('Failed to decode $field: ${e.toString()}');
+    // 处理条件组
+    if (query.groups?.isNotEmpty == true) {
+      for (final group in query.groups!) {
+        final groupWheres = <String>[];
+        for (final condition in group.conditions) {
+          groupWheres.add('${condition.field} ${condition.operator} ?');
+          whereArgs.add(condition.value);
+        }
+        if (groupWheres.isNotEmpty) {
+          final groupOperator = group.type == 'AND' ? ' AND ' : ' OR ';
+          where.add('(${groupWheres.join(groupOperator)})');
         }
       }
     }
-    return result;
-  }
 
-  Future<List<Map<String, dynamic>>> _executeQuery({
-    required String table,
-    List<String>? columns,
-    String? where,
-    List<dynamic>? whereArgs,
-    String? orderBy,
-    int? limit,
-    int? offset,
-  }) async {
-    final db = await database;
-    return db.query(
-      table,
-      columns: columns,
-      where: where,
-      whereArgs: whereArgs?.isEmpty == true ? null : whereArgs,
-      orderBy: orderBy,
-      limit: limit,
-      offset: offset,
+    final whereClause = where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}';
+    return (
+      sql: 'SELECT COUNT(*) as count FROM $table $whereClause',
+      args: whereArgs
     );
   }
 
-  Future<Database> _initializeDatabase() async {
-    final databasesPath = await getDatabasesPath();
-    final path = join(databasesPath, dbName);
+  /// 构建查询SQL
+  ({String sql, List<Object?> args}) _buildQuerySql(
+      String table, DatabaseQuery query) {
+    final where = <String>[];
+    final whereArgs = <dynamic>[];
 
-    return openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
-  }
-
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE works (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        author TEXT,
-        style TEXT,
-        tool TEXT,
-        remark TEXT,
-        creationDate INTEGER,
-        createTime INTEGER NOT NULL,
-        updateTime INTEGER NOT NULL,
-        metadata TEXT,
-        imageCount INTEGER DEFAULT 0
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE characters (
-        id TEXT PRIMARY KEY,
-        workId TEXT NOT NULL,
-        char TEXT NOT NULL,
-        pinyin TEXT,
-        sourceRegion TEXT NOT NULL,
-        image TEXT NOT NULL,
-        metadata TEXT,
-        createTime INTEGER NOT NULL,
-        updateTime INTEGER NOT NULL,
-        FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE practices (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        pages TEXT NOT NULL,
-        metadata TEXT,
-        createTime INTEGER NOT NULL,
-        updateTime INTEGER NOT NULL
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE tags (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE settings (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        updateTime INTEGER NOT NULL
-      )
-    ''');
-
-    // Create indices
-    await db
-        .execute('CREATE INDEX idx_characters_workId ON characters(workId)');
-    await db.execute('CREATE INDEX idx_characters_char ON characters(char)');
-  }
-
-  // 添加同步辅助方法
-  Future<T> _synchronized<T>(
-      Object lock, Future<T> Function() computation) async {
-    // 简单的同步实现
-    try {
-      return await computation();
-    } catch (e) {
-      rethrow;
+    // 处理普通条件
+    for (final condition in query.conditions) {
+      where.add('${condition.field} ${condition.operator} ?');
+      whereArgs.add(condition.value);
     }
+
+    // 处理条件组
+    if (query.groups?.isNotEmpty == true) {
+      for (final group in query.groups!) {
+        final groupWheres = <String>[];
+        for (final condition in group.conditions) {
+          groupWheres.add('${condition.field} ${condition.operator} ?');
+          whereArgs.add(condition.value);
+        }
+        if (groupWheres.isNotEmpty) {
+          final groupOperator = group.type == 'AND' ? ' AND ' : ' OR ';
+          where.add('(${groupWheres.join(groupOperator)})');
+        }
+      }
+    }
+
+    final whereClause = where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}';
+    final orderClause =
+        query.orderBy == null ? '' : 'ORDER BY ${query.orderBy}';
+    final limitClause = query.limit == null ? '' : 'LIMIT ${query.limit}';
+    final offsetClause = query.offset == null ? '' : 'OFFSET ${query.offset}';
+
+    return (
+      sql:
+          'SELECT * FROM $table $whereClause $orderClause $limitClause $offsetClause',
+      args: whereArgs
+    );
   }
 
-  // Add static initialization
-  static Future<void> initializePlatform() async {
-    // Initialize FFI
-    sqfliteFfiInit();
-    // Set global factory
-    databaseFactory = databaseFactoryFfi;
+  /// 创建SQLite数据库实例
+  static Future<SQLiteDatabase> create({
+    required String name,
+    required String directory,
+    List<String> migrations = const [],
+  }) async {
+    final path = join(directory, name);
+
+    AppLogger.info(
+      '数据库配置信息:\n'
+      '  - 数据库类型: SQLite3\n'
+      '  - 数据库名称: $name\n'
+      '  - 数据库目录: $directory\n'
+      '  - 完整路径: $path\n'
+      '  - 数据库版本: ${migrations.length}\n'
+      '  - 迁移脚本数量: ${migrations.length}',
+      tag: 'Database',
+    );
+
+    final db = await openDatabase(
+      path,
+      version: migrations.length,
+      onCreate: (db, version) async {
+        AppLogger.info(
+          '首次创建数据库，执行初始化...\n'
+          '执行迁移脚本:\n',
+          tag: 'Database',
+        );
+        for (final sql in migrations) {
+          AppLogger.info(
+            '执行SQL:\n$sql',
+            tag: 'Database',
+          );
+          await db.execute(sql);
+        }
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        AppLogger.info(
+          '升级数据库:\n'
+          '  - 当前版本: v$oldVersion\n'
+          '  - 目标版本: v$newVersion',
+          tag: 'Database',
+        );
+        for (var i = oldVersion; i < newVersion; i++) {
+          AppLogger.debug(
+            '执行迁移脚本 ${i + 1}:\n${migrations[i]}',
+            tag: 'Database',
+          );
+          await db.execute(migrations[i]);
+        }
+      },
+      onConfigure: (db) async {
+        await db.execute('PRAGMA foreign_keys = ON');
+        AppLogger.debug(
+          'SQLite配置完成: 已启用外键约束',
+          tag: 'Database',
+        );
+      },
+    );
+    return SQLiteDatabase._(db);
   }
 }

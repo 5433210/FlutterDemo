@@ -1,140 +1,98 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'practice_layer.dart';
 
+part 'practice_page.freezed.dart';
+part 'practice_page.g.dart';
+
 /// 页面尺寸
-class PageSize extends Equatable {
-  /// 尺寸单位 (例如: 'mm')
-  final String unit;
+@freezed
+class PageSize with _$PageSize {
+  const factory PageSize({
+    /// 尺寸单位 (例如: 'mm')
+    @Default('mm') String unit,
 
-  /// 分辨率单位 (例如: 'dpi')
-  final String resUnit;
+    /// 分辨率单位 (例如: 'dpi')
+    @Default('dpi') String resUnit,
 
-  /// 分辨率单位值
-  final int resUnitValue;
+    /// 分辨率单位值
+    @Default(300) int resUnitValue,
 
-  /// 宽度
-  final double width;
+    /// 宽度 (默认A4宽度210mm)
+    @Default(210.0) double width,
 
-  /// 高度
-  final double height;
+    /// 高度 (默认A4高度297mm)
+    @Default(297.0) double height,
+  }) = _PageSize;
 
-  const PageSize({
-    required this.unit,
-    required this.resUnit,
-    required this.resUnitValue,
-    required this.width,
-    required this.height,
-  });
+  /// 从JSON创建实例
+  factory PageSize.fromJson(Map<String, dynamic> json) =>
+      _$PageSizeFromJson(json);
 
-  /// 创建一个A4尺寸的页面 (210mm x 297mm, 300dpi)
-  factory PageSize.a4() {
-    return const PageSize(
-      unit: 'mm',
-      resUnit: 'dpi',
-      resUnitValue: 300,
-      width: 210,
-      height: 297,
-    );
-  }
-
-  /// 从JSON数据创建页面尺寸
-  factory PageSize.fromJson(Map<String, dynamic> json) {
-    return PageSize(
-      unit: json['unit'] as String,
-      resUnit: json['resUnit'] as String,
-      resUnitValue: json['resUnitValue'] as int,
-      width: (json['width'] as num).toDouble(),
-      height: (json['height'] as num).toDouble(),
-    );
-  }
-
-  @override
-  List<Object?> get props => [unit, resUnit, resUnitValue, width, height];
-
-  /// 创建一个带有更新属性的新实例
-  PageSize copyWith({
-    String? unit,
-    String? resUnit,
-    int? resUnitValue,
-    double? width,
-    double? height,
-  }) {
-    return PageSize(
-      unit: unit ?? this.unit,
-      resUnit: resUnit ?? this.resUnit,
-      resUnitValue: resUnitValue ?? this.resUnitValue,
-      width: width ?? this.width,
-      height: height ?? this.height,
-    );
-  }
-
-  /// 将页面尺寸转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'unit': unit,
-      'resUnit': resUnit,
-      'resUnitValue': resUnitValue,
-      'width': width,
-      'height': height,
-    };
-  }
+  const PageSize._();
 }
 
 /// 字帖页面信息
-class PracticePage extends Equatable {
-  /// 页面序号
-  final int index;
+@freezed
+class PracticePage with _$PracticePage {
+  const factory PracticePage({
+    /// 页面序号
+    required int index,
 
-  /// 页面尺寸
-  final PageSize size;
+    /// 页面尺寸
+    @Default(PageSize()) PageSize size,
 
-  /// 页面图层列表
-  final List<PracticeLayer> layers;
+    /// 页面图层列表
+    @Default([]) List<PracticeLayer> layers,
 
-  const PracticePage({
-    required this.index,
-    required this.size,
-    this.layers = const [],
-  });
+    /// 创建时间
+    @JsonKey(name: 'create_time') required DateTime createTime,
 
-  /// 从JSON数据创建页面对象
-  factory PracticePage.fromJson(Map<String, dynamic> json) {
+    /// 更新时间
+    @JsonKey(name: 'update_time') required DateTime updateTime,
+  }) = _PracticePage;
+
+  /// 创建新页面
+  factory PracticePage.create(int index, {PageSize? size}) {
+    final now = DateTime.now();
     return PracticePage(
-      index: json['index'] as int,
-      size: PageSize.fromJson(json['size'] as Map<String, dynamic>),
-      layers: json['layers'] != null
-          ? List<PracticeLayer>.from(
-              (json['layers'] as List).map(
-                (x) => PracticeLayer.fromJson(x as Map<String, dynamic>),
-              ),
-            )
-          : [],
+      index: index,
+      size: size ?? const PageSize(),
+      createTime: now,
+      updateTime: now,
     );
   }
 
-  @override
-  List<Object?> get props => [index, size, layers];
+  /// 从JSON创建实例
+  factory PracticePage.fromJson(Map<String, dynamic> json) =>
+      _$PracticePageFromJson(json);
 
-  /// 创建一个带有更新属性的新实例
-  PracticePage copyWith({
-    int? index,
-    PageSize? size,
-    List<PracticeLayer>? layers,
-  }) {
-    return PracticePage(
-      index: index ?? this.index,
-      size: size ?? this.size,
-      layers: layers ?? this.layers,
+  const PracticePage._();
+
+  /// 获取图层数量
+  int get layerCount => layers.length;
+
+  /// 添加图层
+  PracticePage addLayer(PracticeLayer layer) {
+    return copyWith(
+      layers: [...layers, layer],
+      updateTime: DateTime.now(),
     );
   }
 
-  /// 将页面对象转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'index': index,
-      'size': size.toJson(),
-      'layers': layers.map((layer) => layer.toJson()).toList(),
-    };
+  /// 删除图层
+  PracticePage removeLayer(String layerId) {
+    return copyWith(
+      layers: layers.where((l) => l.id != layerId).toList(),
+      updateTime: DateTime.now(),
+    );
+  }
+
+  /// 更新图层
+  PracticePage updateLayer(PracticeLayer layer) {
+    return copyWith(
+      layers: layers.map((l) => l.id == layer.id ? layer : l).toList(),
+      updateTime: DateTime.now(),
+    );
   }
 }

@@ -9,6 +9,7 @@ import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
+import '../../infrastructure/services/state_restoration_service.dart';
 
 /// Provider for the current image index in a work
 final currentWorkImageIndexProvider = StateProvider<int>((ref) {
@@ -93,10 +94,10 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       state = state.copyWith(isDeleting: true);
 
       final workService = _ref.read(workServiceProvider);
-      await workService.deleteWork(state.work!.id!);
+      await workService.deleteWork(state.work!.id);
 
       // 确保清除任何编辑状态
-      await _clearEditState(state.work!.id!);
+      await _clearEditState(state.work!.id);
 
       state = state.copyWith(isDeleting: false);
       return true;
@@ -471,7 +472,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
     // 只更新提供的字段
     final updatedWork = currentWork.copyWith(
-      name: name ?? currentWork.name,
+      title: name ?? currentWork.title,
       author: author ?? currentWork.author,
       style: style ?? currentWork.style,
       tool: tool ?? currentWork.tool,
@@ -499,20 +500,15 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
     final currentWork = state.editingWork!;
 
-    // 创建新的元数据对象，确保tags数组被深拷贝
-    final updatedMetadata = WorkMetadata(
-      tags: List<String>.from(updatedTags), // 确保深拷贝
-    );
-
     // 记录详细日志，显示更新前后的标签
     AppLogger.debug('更新作品标签', tag: 'WorkDetailProvider', data: {
-      'oldTags': currentWork.metadata?.tags,
+      'oldTags': currentWork.tags,
       'newTags': updatedTags,
       'workId': currentWork.id,
     });
 
     // 创建带有更新后元数据的新作品对象
-    final updatedWork = currentWork.copyWith(metadata: updatedMetadata);
+    final updatedWork = currentWork.copyWith(tags: updatedTags);
 
     // 更新状态
     state = state.copyWith(
@@ -551,7 +547,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       final stateRestorationService =
           _ref.read(stateRestorationServiceProvider);
       await stateRestorationService.saveWorkEditState(
-          state.editingWork!.id!, state);
+          state.editingWork!.id, state);
 
       AppLogger.debug('编辑状态已保存',
           tag: 'WorkDetailNotifier', data: {'workId': state.editingWork!.id});

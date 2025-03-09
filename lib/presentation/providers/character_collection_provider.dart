@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/character/character_filter.dart';
 import '../../domain/repositories/character_repository.dart';
-import '../../infrastructure/repositories/character_repository_impl.dart';
+import '../../infrastructure/providers/repository_providers.dart';
 import '../viewmodels/states/character_collection_state.dart';
 
-// 提供CharacterCollectionState状态管理
+/// 提供CharacterCollectionState状态管理
 final characterCollectionProvider = StateNotifierProvider<
     CharacterCollectionNotifier, CharacterCollectionState>(
   (ref) => CharacterCollectionNotifier(
@@ -13,10 +13,7 @@ final characterCollectionProvider = StateNotifierProvider<
   ),
 );
 
-// 提供CharacterRepository实例
-final characterRepositoryProvider = Provider<CharacterRepository>((ref) {
-  return CharacterRepositoryImpl();
-});
+/// 提供CharacterRepository实例
 
 class CharacterCollectionNotifier
     extends StateNotifier<CharacterCollectionState> {
@@ -33,7 +30,7 @@ class CharacterCollectionNotifier
     try {
       state = state.copyWith(isLoading: true, error: null);
 
-      await _characterRepository.deleteCharacters(
+      await _characterRepository.deleteMany(
         state.selectedCharacters.toList(),
       );
 
@@ -56,9 +53,8 @@ class CharacterCollectionNotifier
     try {
       state = state.copyWith(isLoading: true, error: null);
 
-      final characters = await _characterRepository.getCharacters(
-        filter: state.filter,
-        forceRefresh: forceRefresh,
+      final characters = await _characterRepository.query(
+        state.filter,
       );
 
       state = state.copyWith(
@@ -72,6 +68,8 @@ class CharacterCollectionNotifier
       );
     }
   }
+
+  Future<void> loadStats() async {}
 
   void selectCharacter(String? characterId) {
     if (!state.batchMode) {

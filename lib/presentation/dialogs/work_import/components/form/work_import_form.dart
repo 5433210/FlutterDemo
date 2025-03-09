@@ -34,7 +34,7 @@ class WorkImportForm extends StatelessWidget {
             label: '作品名称',
             required: true,
             child: TextFormField(
-              initialValue: state.name,
+              initialValue: state.title,
               onChanged: viewModel.setName,
               onSaved: (value) {
                 viewModel.setName(value ?? '');

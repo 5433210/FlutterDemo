@@ -1,12 +1,12 @@
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../domain/entities/work.dart';
 import '../../../widgets/common/grid_placeholder.dart';
 import 'work_card.dart';
 
 class WorkGrid extends StatelessWidget {
-  final List<Work> works;
-  final Function(Work) onWorkTap;
+  final List<WorkEntity> works;
+  final Function(WorkEntity) onWorkTap;
   final bool isLoading;
 
   const WorkGrid({

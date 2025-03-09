@@ -1,43 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
-import '../../domain/entities/work.dart';
-import '../../domain/models/character/work_filter.dart';
+import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
-
-// 默认刷新信息
-final defaultRefreshInfo = const RefreshInfo(reason: 'unknown');
-
-// 筛选后的作品列表提供器
-final filteredWorksProvider = FutureProvider.autoDispose
-    .family<List<Work>, WorkFilter>((ref, filter) async {
-  AppLogger.debug('加载筛选后的作品列表', tag: 'WorksProvider', data: {'filter': filter});
-
-  // 监听刷新标记
-  ref.listen(worksNeedsRefreshProvider, (_, needsRefresh) {
-    if (needsRefresh!.force) {
-      ref.invalidateSelf();
-    }
-  });
-
-  final workService = ref.watch(workServiceProvider);
-  return await workService.queryWorks(filter: filter);
-});
 
 // 修改为刷新信息提供器
 final worksNeedsRefreshProvider = StateProvider<RefreshInfo?>((ref) => null);
 
 // 作品列表提供器
-final worksProvider = FutureProvider.autoDispose<List<Work>>((ref) async {
+final worksProvider = FutureProvider.autoDispose<List<WorkEntity>>((ref) async {
   AppLogger.debug('加载作品列表', tag: 'WorksProvider');
-
-  // 监听刷新标记，当标记变化时，自动重新获取数据
-  ref.listen(worksNeedsRefreshProvider, (_, needsRefresh) {
-    if (needsRefresh!.force) {
-      // 如果需要刷新，则重载数据并重置标记
-      ref.invalidateSelf();
-    }
-  });
 
   // 设置缓存策略，使列表能够在返回时保留
   ref.keepAlive();

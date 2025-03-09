@@ -1,11 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/work_detail_provider.dart';
 import '../../presentation/viewmodels/states/work_browse_state.dart';
+import '../providers/shared_preferences_provider.dart';
+
+final stateRestorationServiceProvider = Provider<StateRestorationService>(
+  (ref) => StateRestorationService(ref.watch(sharedPreferencesProvider)),
+);
 
 /// 负责保存和恢复应用状态
 class StateRestorationService {
@@ -22,7 +30,22 @@ class StateRestorationService {
 
   final SharedPreferences _prefs;
 
-  StateRestorationService(this._prefs);
+  StateRestorationService(this._prefs) {
+    _checkFirstRun();
+  }
+
+  /// 检查编辑会话状态
+  Future<String> checkEditSessions() async {
+    try {
+      final keys = _prefs.getKeys();
+      final editStateKeys =
+          keys.where((key) => key.startsWith('work_edit_state_'));
+      return '${editStateKeys.length}个活动编辑会话';
+    } catch (e) {
+      AppLogger.error('检查编辑会话失败', tag: 'StateRestorationService', error: e);
+      return '未知';
+    }
+  }
 
   /// 清除产品浏览页状态
   Future<void> clearWorkBrowseState() async {
@@ -60,6 +83,64 @@ class StateRestorationService {
         stackTrace: stack,
         data: {'workId': workId},
       );
+    }
+  }
+
+  /// 获取SharedPreferences中的条目数
+  Future<String> getPreferencesEntryCount() async {
+    try {
+      final keys = _prefs.getKeys();
+      return keys.length.toString();
+    } catch (e) {
+      AppLogger.error(
+        '获取Preferences条目数失败',
+        tag: 'StateRestorationService',
+        error: e,
+      );
+    }
+    return '未知';
+  }
+
+  /// 获取SharedPreferences文件的大小
+  Future<String> getPreferencesFileSize() async {
+    try {
+      final path = await getPreferencesPath();
+      final file = File(path);
+      if (await file.exists()) {
+        final size = await file.length();
+        return '${(size / 1024).toStringAsFixed(2)} KB';
+      }
+    } catch (e) {
+      AppLogger.error(
+        '获取Preferences文件大小失败',
+        tag: 'StateRestorationService',
+        error: e,
+      );
+    }
+    return '未知';
+  }
+
+  /// 获取SharedPreferences文件的路径
+  Future<String> getPreferencesPath() async {
+    final appDataDir = Platform.isWindows
+        ? Platform.environment['LOCALAPPDATA']
+        : Platform.environment['HOME'];
+
+    if (appDataDir == null) {
+      return '未知';
+    }
+
+    return '$appDataDir/SharedPreferences.json';
+  }
+
+  /// 获取状态存储位置
+  Future<String> getStorageLocation() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      return appDir.path;
+    } catch (e) {
+      AppLogger.error('获取存储位置失败', tag: 'StateRestorationService', error: e);
+      return '未知';
     }
   }
 
@@ -127,14 +208,56 @@ class StateRestorationService {
   Future<WorkBrowseState?> restoreWorkBrowseState() async {
     try {
       // 获取保存的状态
+      AppLogger.debug(
+        '尝试恢复WorkBrowseState',
+        tag: 'StateRestorationService',
+      );
+
       final stateJson = _prefs.getString(_workBrowseStateKey);
-      if (stateJson == null) return null;
+      if (stateJson == null) {
+        AppLogger.debug(
+          '没有找到已保存的状态，返回null',
+          tag: 'StateRestorationService',
+        );
+        return null;
+      }
 
       // 解析状态
-      final stateMap = jsonDecode(stateJson) as Map<String, dynamic>;
+      AppLogger.debug(
+        '开始解析状态JSON',
+        tag: 'StateRestorationService',
+        data: {'stateJson': stateJson},
+      );
 
-      // 创建状态对象
-      return WorkBrowseState.fromJson(stateMap);
+      try {
+        final stateMap = jsonDecode(stateJson) as Map<String, dynamic>;
+
+        // 创建状态对象
+        final restoredState = WorkBrowseState.fromJson(stateMap);
+
+        AppLogger.debug(
+          '状态恢复成功',
+          tag: 'StateRestorationService',
+          data: {
+            'filter': {
+              'style': restoredState.filter.style?.name,
+              'tool': restoredState.filter.tool?.name,
+            }
+          },
+        );
+
+        return restoredState;
+      } catch (parseError) {
+        AppLogger.error(
+          'JSON解析失败',
+          tag: 'StateRestorationService',
+          error: parseError,
+          data: {'stateJson': stateJson},
+        );
+        // 如果JSON解析失败，清除存储的状态并返回null
+        await clearWorkBrowseState();
+        return null;
+      }
     } catch (e, stack) {
       AppLogger.error(
         '恢复浏览页状态失败',
@@ -203,6 +326,17 @@ class StateRestorationService {
     try {
       // 转换状态为 JSON
       final stateMap = state.toJson();
+      AppLogger.debug(
+        '准备保存状态',
+        tag: 'StateRestorationService',
+        data: {
+          'filter': {
+            'style': state.filter.style?.name,
+            'tool': state.filter.tool?.name,
+          }
+        },
+      );
+
       final stateJson = jsonEncode(stateMap);
 
       // 保存状态和时间戳
@@ -210,9 +344,10 @@ class StateRestorationService {
       await _prefs.setInt(
           _workBrowseTimestampKey, DateTime.now().millisecondsSinceEpoch);
 
-      AppLogger.debug('已保存浏览页状态', tag: 'StateRestorationService', data: {
-        'sortOption': state.sortOption.toJson,
-      });
+      AppLogger.debug(
+        '状态保存成功',
+        tag: 'StateRestorationService',
+      );
     } catch (e, stack) {
       AppLogger.error(
         '保存浏览页状态失败',
@@ -264,6 +399,20 @@ class StateRestorationService {
         error: e,
         stackTrace: stack,
         data: {'workId': workId},
+      );
+    }
+  }
+
+  /// 检查是否首次运行，如果是则清除所有状态
+  void _checkFirstRun() {
+    final firstRun = _prefs.getBool('first_run') ?? true;
+    if (firstRun) {
+      _prefs.remove(_workBrowseStateKey);
+      _prefs.remove(_workBrowseTimestampKey);
+      _prefs.setBool('first_run', false);
+      AppLogger.info(
+        '首次运行，已清除所有已保存状态',
+        tag: 'StateRestorationService',
       );
     }
   }

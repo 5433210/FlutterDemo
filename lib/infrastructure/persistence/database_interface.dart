@@ -1,75 +1,49 @@
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-
+/// 数据库接口
 abstract class DatabaseInterface {
+  /// 清空表
+  Future<void> clear(String table);
+
+  /// 关闭数据库
   Future<void> close();
-  Future<void> deleteCharacter(String id);
 
-  Future<void> deletePractice(String id);
-  Future<void> deleteWork(String id);
+  /// 获取记录数
+  Future<int> count(String table, [Map<String, dynamic>? filter]);
 
-  Future<Map<String, dynamic>?> getCharacter(String id);
+  /// 删除记录
+  Future<void> delete(String table, String id);
 
-  Future<List<Map<String, dynamic>>> getCharactersByWorkId(String workId);
-  Future<Map<String, dynamic>?> getPractice(String id);
-  Future<List<Map<String, dynamic>>> getPractices({
-    List<String>? characterIds,
-    String? title,
-    int? limit,
-    int? offset,
-  });
-  Future<String?> getSetting(String key);
+  /// 批量删除记录
+  Future<void> deleteMany(String table, List<String> ids);
 
-  Future<Map<String, dynamic>?> getWork(String id);
-  Future<List<Map<String, dynamic>>> getWorks({
-    String? query,
-    String? style,
-    String? tool,
-    DateTimeRange? creationDateRange,
-    String? orderBy,
-    bool descending = true,
-  });
+  /// 获取单个记录
+  Future<Map<String, dynamic>?> get(String table, String id);
 
-  Future<int> getWorksCount({
-    String? style,
-    String? author,
-    String? name,
-    String? tool,
-    List<String>? tags,
-    DateTime? fromDateImport,
-    DateTime? toDateImport,
-    DateTime? fromDateCreation,
-    DateTime? toDateCreation,
-    DateTime? fromDateUpdate,
-    DateTime? toDateUpdate,
-  });
+  /// 获取多个记录
+  Future<List<Map<String, dynamic>>> getAll(String table);
 
+  /// 执行初始化
   Future<void> initialize();
 
-  // Character operations
-  Future<String> insertCharacter(Map<String, dynamic> character);
+  /// 结构化查询
+  Future<List<Map<String, dynamic>>> query(
+      String table, Map<String, dynamic> filter);
 
-  // Practice operations
-  Future<String> insertPractice(Map<String, dynamic> practice);
+  /// 执行原生查询
+  Future<List<Map<String, dynamic>>> rawQuery(String sql,
+      [List<Object?>? args]);
 
-  // Work operations
-  Future<String> insertWork(Map<String, dynamic> work);
+  /// 执行原生更新
+  Future<int> rawUpdate(String sql, [List<Object?>? args]);
 
-  // 新增: 字符查询方法
-  Future<List<Map<String, dynamic>>> queryCharacters({
-    Map<String, dynamic>? conditions,
-    String? orderBy,
-    bool descending = true,
-    int? limit,
-    int? offset,
-  });
+  /// 保存/更新记录
+  Future<void> save(String table, String id, Map<String, dynamic> data);
 
-  // Settings operations
-  Future<void> setSetting(String key, String value);
-  Future<void> updateCharacter(String id, Map<String, dynamic> character);
-  Future<void> updatePractice(String id, Map<String, dynamic> practice);
+  /// 批量保存/更新记录
+  Future<void> saveMany(String table, Map<String, Map<String, dynamic>> data);
 
-  Future<void> updateWork(String id, Map<String, dynamic> work);
-  Future<bool> workExists(String id);
+  /// 设置记录(覆盖)
+  Future<void> set(String table, String id, Map<String, dynamic> data);
+
+  /// 批量设置记录(覆盖)
+  Future<void> setMany(String table, Map<String, Map<String, dynamic>> data);
 }

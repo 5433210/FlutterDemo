@@ -91,7 +91,7 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
             '字符: ${charElement.charId}',
             style: TextStyle(
               color: Color(int.parse(
-                    charElement.style.color?.substring(1) ?? 'FF000000',
+                    charElement.style.color.substring(1) ?? 'FF000000',
                     radix: 16,
                   ) |
                   0xFF000000),
@@ -171,7 +171,7 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
     Widget? contentWidget;
 
     // 根据元素类型创建内容
-    switch (element.type) {
+    switch (element.elementType) {
       case 'chars':
         // 处理字符类型元素
         if (element.content is CharsContent) {
@@ -252,7 +252,7 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
 
   /// 构建图像元素
   Widget _buildImageElement(PracticeElement element) {
-    final imagePath = (element.content as ImageContent).image.path;
+    final imagePath = (element.content as ImageContent).image.url;
 
     try {
       // 尝试加载图像
@@ -309,7 +309,7 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
     final visibleLayers = widget.page.layers
         .where((layer) => layer.visible)
         .toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
+      ..sort((a, b) => a.order.compareTo(b.order));
 
     for (final layer in visibleLayers) {
       for (final element in layer.elements) {
@@ -331,7 +331,7 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
   Widget _buildLayerItem(PracticeLayer layer) {
     return ListTile(
       title: Text(
-        layer.name,
+        layer.name!,
         style: TextStyle(
           fontWeight: layer.locked ? FontWeight.normal : FontWeight.bold,
           color: !layer.visible
@@ -529,26 +529,12 @@ class _PracticePageViewerState extends State<PracticePageViewer> {
     final textContent = (element.content as TextContent).text;
 
     // 设置对齐方式
-    TextAlign textAlign = TextAlign.left;
-    switch (textContent.alignment) {
-      case 'center':
-        textAlign = TextAlign.center;
-        break;
-      case 'right':
-        textAlign = TextAlign.right;
-        break;
-      case 'justify':
-        textAlign = TextAlign.justify;
-        break;
-      default:
-        textAlign = TextAlign.left;
-        break;
-    }
+    TextAlign textAlign = textContent.textAlign;
 
     return Container(
       padding: const EdgeInsets.all(4),
       child: Text(
-        textContent.content,
+        textContent.text,
         style: TextStyle(
           fontFamily: textContent.fontFamily,
           fontSize: textContent.fontSize * _scale,

@@ -1,16 +1,14 @@
 import 'dart:io';
 
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../../domain/entities/work.dart';
-import '../../../../../../domain/enums/work_style.dart';
-import '../../../../../../domain/enums/work_tool.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../../utils/path_helper.dart';
 
 class WorkGridItem extends StatelessWidget {
-  final Work work;
+  final WorkEntity work;
   final bool isSelected;
   final bool isSelectionMode;
   final VoidCallback onTap;
@@ -66,7 +64,7 @@ class WorkGridItem extends StatelessWidget {
                 children: [
                   // 标题 - 单行截断
                   Text(
-                    work.name ?? '未命名作品',
+                    work.title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontSize: 15, // 调整为更舒适的标题大小
                     ),
@@ -77,20 +75,18 @@ class WorkGridItem extends StatelessWidget {
                   // 作者和时间 - 单行截断
                   Row(
                     children: [
-                      if (work.author != null)
-                        Expanded(
-                          child: Text(
-                            work.author!,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: 13, // 稍微增大作者字体
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      Expanded(
+                        child: Text(
+                          work.author,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: 13, // 稍微增大作者字体
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
                       Text(
-                        DateFormatter.formatCompact(
-                            work.creationDate ?? work.createTime!),
+                        DateFormatter.formatCompact(work.creationDate),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 12, // 日期字体大小
                           color: theme.colorScheme.outline,
@@ -106,17 +102,10 @@ class WorkGridItem extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          if (work.style != null)
-                            _buildTag(
-                                context,
-                                WorkStyle.fromValue(work.style!)?.label ??
-                                    work.style!),
-                          if (work.tool != null) ...[
+                          _buildTag(context, work.style.label),
+                          ...[
                             const SizedBox(width: AppSizes.xs),
-                            _buildTag(
-                                context,
-                                WorkTool.fromValue(work.tool!)?.label ??
-                                    work.tool!),
+                            _buildTag(context, work.tool.label),
                           ],
                         ],
                       ),
@@ -166,9 +155,8 @@ class WorkGridItem extends StatelessWidget {
   }
 
   Widget _buildThumbnail(BuildContext context) {
-    if (work.id == null) return _buildPlaceholder(context);
     return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id!),
+      future: PathHelper.getWorkThumbnailPath(work.id),
       builder: (context, pathSnapshot) {
         if (!pathSnapshot.hasData) return _buildPlaceholder(context);
         return FutureBuilder<bool>(

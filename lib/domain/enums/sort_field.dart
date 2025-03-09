@@ -1,12 +1,25 @@
+/// 排序字段类型
 enum SortField {
-  name('名称', 'name'),
-  author('作者', 'author'),
-  creationDate('创作日期', 'creation_date'),
-  importDate('导入日期', 'create_time'),
-  updateDate('更新日期', 'update_time');
+  title('title', '标题'),
+  author('author', '作者'),
+  creationDate('creation_date', '创作日期'),
+  createTime('create_time', '创建时间'),
+  updateTime('update_time', '更新时间'),
+  tool('tool', '工具'),
+  style('style', '风格'),
+  none('none', '无');
 
+  final String value;
   final String label;
-  final String field;
 
-  const SortField(this.label, this.field);
+  const SortField(this.value, this.label);
+}
+
+extension SortFieldParsing on SortField {
+  static SortField fromString(String value) {
+    return SortField.values.firstWhere(
+      (e) => e.value == value,
+      orElse: () => SortField.createTime,
+    );
+  }
 }

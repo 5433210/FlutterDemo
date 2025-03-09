@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:path/path.dart' as path;
 
 class AppConfig {
@@ -23,7 +25,10 @@ class AppConfig {
 
   // Supported file types
   static const List<String> supportedImageTypes = [
-    '.jpg', '.jpeg', '.png', '.webp'
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.webp'
   ];
 
   // 更新路径配置
@@ -32,10 +37,25 @@ class AppConfig {
   static const String worksFolder = 'works';
   static const String thumbnailFile = 'thumbnail.jpg';
 
-  // 修改 dataPath getter
+  // 获取应用数据根目录
   static String get dataPath {
-    return path.join('C:\\Users\\wailik\\Documents', appDataFolder);
+    final envPath = Platform.environment['APP_DATA_PATH'];
+    if (envPath != null && envPath.isNotEmpty) {
+      return envPath;
+    }
+
+    // 默认使用文档目录下的 data 文件夹
+    return path.join(defaultDocsPath, appDataFolder);
   }
+
+  // 默认的文档目录路径
+  static String get defaultDocsPath => Platform.isWindows
+      ? path.join(Platform.environment['USERPROFILE'] ?? '', 'Documents')
+      : Platform.isMacOS
+          ? path.join(Platform.environment['HOME'] ?? '', 'Documents')
+          : Platform.isLinux
+              ? path.join(Platform.environment['HOME'] ?? '', 'Documents')
+              : '';
 
   const AppConfig._();
 }

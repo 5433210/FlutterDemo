@@ -25,7 +25,7 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(practiceDetailProvider);
+    final state = ref.watch(practiceDetailProvider(widget.practiceId));
 
     return PageLayout(
       toolbar: _buildToolbar(state.practice),
@@ -117,8 +117,7 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
         // 页面内容查看器
         Expanded(
           child: PracticePageViewer(
-            page:
-                pages[_currentPageIndex < pages.length ? _currentPageIndex : 0],
+            page: pages[_currentPageIndex], // 当前页
             readOnly: true,
             onLayerToggle: _handleLayerToggle,
           ),
@@ -158,12 +157,12 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
                 Text('更新时间: ${_formatDateTime(practice.updateTime)}'),
               ],
             ),
-            if (practice.metadata != null && practice.metadata!.tags.isNotEmpty)
+            if (practice.tags.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Wrap(
                   spacing: 8,
-                  children: practice.metadata!.tags
+                  children: practice.tags
                       .map((tag) => Chip(label: Text(tag)))
                       .toList(),
                 ),
@@ -216,7 +215,7 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       builder: (context) => AlertDialog(
         title: const Text('删除练习'),
         content: Text(
-            '确定要删除练习"${ref.read(practiceDetailProvider).practice?.title}"吗？此操作不可撤销。'),
+            '确定要删除练习"${ref.read(practiceDetailProvider(widget.practiceId)).practice?.title}"吗？此操作不可撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -241,11 +240,11 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
 
   Future<void> _deletePractice() async {
     try {
-      final success = await ref
-          .read(practiceDetailProvider.notifier)
+      await ref
+          .read(practiceDetailProvider(widget.practiceId).notifier)
           .deletePractice(widget.practiceId);
 
-      if (success && mounted) {
+      if (mounted) {
         Navigator.of(context).pop(); // 返回上一页
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -285,19 +284,21 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
   }
 
   void _handleLayerToggle(PracticeLayer layer) {
-    ref.read(practiceDetailProvider.notifier).updateLayer(layer);
+    ref
+        .read(practiceDetailProvider(widget.practiceId).notifier)
+        .updateLayer(layer.order, layer);
   }
 
   Future<void> _loadPractice() async {
     await ref
-        .read(practiceDetailProvider.notifier)
-        .getPractice(widget.practiceId);
+        .read(practiceDetailProvider(widget.practiceId).notifier)
+        .loadPractice(widget.practiceId);
   }
 
   void _navigateToEdit() {
     Navigator.pushNamed(
       context,
-      AppRoutes.practiceEdit,
+      AppRoutes.practiceDetail,
       arguments: widget.practiceId,
     ).then((_) => _loadPractice()); // 编辑后刷新
   }

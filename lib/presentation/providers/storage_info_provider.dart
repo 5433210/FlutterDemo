@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:demo/domain/models/work/work_filter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
@@ -64,9 +65,10 @@ class StorageInfoNotifier extends StateNotifier<StorageInfo> {
   Future<void> refresh() async {
     try {
       // Get work, character, and practice counts from repositories
-      final workCount = await ref.read(workRepositoryProvider).getWorksCount();
-      final characterCount = 0;
-      final practiceCount =
+      final workCount =
+          await ref.read(workRepositoryProvider).count(const WorkFilter());
+      const characterCount = 0;
+      const practiceCount =
           0; // await ref.read(practiceRepositoryProvider).getPracticesCount();
 
       // Calculate storage sizes

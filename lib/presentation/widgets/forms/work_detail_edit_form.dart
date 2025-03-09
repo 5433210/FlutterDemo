@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../application/commands/work_edit_commands.dart';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
 import '../../../domain/models/work/work_entity.dart';
@@ -347,7 +346,7 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
     final work = widget.work;
 
     // 初始化控制器，但不添加监听器
-    _nameController = TextEditingController(text: work?.name ?? '');
+    _nameController = TextEditingController(text: work?.title ?? '');
     _authorController = TextEditingController(text: work?.author ?? '');
     _remarkController = TextEditingController(text: work?.remark ?? '');
 
@@ -356,50 +355,6 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
     _selectedDate = work?.creationDate;
 
     _formModified = false;
-  }
-
-  // 重置表单
-  void _resetForm() {
-    _initFormValues();
-    setState(() {});
-  }
-
-  // 提交表单
-  void _submitForm() {
-    if (_formKey.currentState?.validate() != true) {
-      return;
-    }
-
-    // 获取当前作品以用于比较
-    final oldWork = widget.work;
-    if (oldWork == null) return;
-
-    // 创建更新命令
-    final command = UpdateInfoCommand(
-      // 新值
-      newName: _nameController.text,
-      newAuthor: _authorController.text,
-      newStyle: _selectedStyle,
-      newTool: _selectedTool,
-      newCreationDate: _selectedDate,
-      newRemark: _remarkController.text,
-
-      // 旧值（用于撤销）
-      oldName: oldWork.name,
-      oldAuthor: oldWork.author,
-      oldStyle: oldWork.style,
-      oldTool: oldWork.tool,
-      oldCreationDate: oldWork.creationDate,
-      oldRemark: oldWork.remark,
-    );
-
-    // 执行命令
-    ref.read(workDetailProvider.notifier).executeCommand(command);
-
-    // 重置表单修改状态（但保留当前值）
-    setState(() {
-      _formModified = false;
-    });
   }
 
   // 验证作品名称

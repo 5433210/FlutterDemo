@@ -1,9 +1,7 @@
-import 'dart:io';
-
+import 'package:demo/domain/models/character/character_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../domain/entities/character.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character_detail_provider.dart';
 import '../../widgets/common/detail_toolbar.dart';
@@ -29,7 +27,7 @@ class CharacterDetailPage extends ConsumerStatefulWidget {
 class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
   late final CharacterDetailNotifier _notifier;
   bool _isLoading = true;
-  Character? _character;
+  CharacterEntity? _character;
   String? _errorMessage;
 
   @override
@@ -112,29 +110,19 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     return _buildCharacterInfo(_character!);
   }
 
-  Widget _buildCharacterInfo(Character character) {
+  Widget _buildCharacterInfo(CharacterEntity character) {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Character Image
-          AspectRatio(
+          const AspectRatio(
             aspectRatio: 1.0,
             child: Card(
               clipBehavior: Clip.antiAlias,
-              child: character.image != null
-                  ? Image.file(
-                      File(character.image!),
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.broken_image, size: 64),
-                        );
-                      },
-                    )
-                  : const Center(
-                      child: Icon(Icons.image_not_supported, size: 64),
-                    ),
+              child: Center(
+                child: Icon(Icons.image_not_supported, size: 64),
+              ),
             ),
           ),
 
@@ -153,8 +141,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                   ),
                   const Divider(),
                   _buildInfoRow('汉字', character.char),
-                  _buildInfoRow('拼音', character.pinyin ?? '无'),
-                  _buildInfoRow('所属作品', character.workName ?? '未知'),
                   _buildInfoRow('创建时间', _formatDateTime(character.createTime)),
                 ],
               ),
@@ -164,7 +150,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
           const SizedBox(height: 16),
 
           // Source Region
-          if (character.sourceRegion != null)
+          if (character.region != null)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -183,10 +169,10 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                     ),
                     const Divider(),
                     Text(
-                      '左: ${character.sourceRegion?['left']}, '
-                      '上: ${character.sourceRegion?['top']}, '
-                      '宽: ${character.sourceRegion?['width']}, '
-                      '高: ${character.sourceRegion?['height']}',
+                      '左: ${character.region?.rect.left}, '
+                      '上: ${character.region?.rect.top}, '
+                      '宽: ${character.region?.rect.width}, '
+                      '高: ${character.region?.rect.height}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -195,34 +181,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
             ),
 
           const SizedBox(height: 16),
-
-          // Metadata
-          if (character.metadata != null &&
-              (character.metadata as Map).isNotEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.data_array, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          '元数据',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ],
-                    ),
-                    const Divider(),
-                    for (var entry in (character.metadata as Map).entries)
-                      _buildInfoRow(
-                          entry.key.toString(), entry.value.toString()),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -321,9 +279,9 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
         _isLoading = true;
       });
 
-      final success = await _notifier.deleteCharacter(widget.charId);
+      await _notifier.deleteCharacter(widget.charId);
 
-      if (success && mounted) {
+      if (mounted) {
         if (widget.onBack != null) {
           widget.onBack!(); // Call custom back function if provided
         } else {

@@ -1,659 +1,200 @@
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:demo/domain/models/work/work_entity.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
-import '../../../domain/entities/work.dart';
-import '../../../domain/enums/work_style.dart';
-import '../../../domain/enums/work_tool.dart';
-import '../../../domain/models/character/work_filter.dart';
-import '../../../domain/models/work/work_collected_char.dart';
-import '../../../domain/models/work/work_image.dart';
+import '../../../domain/models/work/work_entity.dart';
+import '../../../domain/models/work/work_filter.dart';
 import '../../../domain/repositories/work_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/repository_providers.dart';
 import '../../../utils/path_helper.dart';
-import '../image_service.dart';
+import './service_errors.dart';
+import './work_image_service.dart';
 
-class WorkService {
-  final WorkRepository _workRepository;
-  final ImageService _imageService;
+/// Work Service Provider
+final workServiceProvider = Provider<WorkService>((ref) {
+  return WorkService(
+    repository: ref.watch(workRepositoryProvider),
+    imageService: ref.watch(workImageServiceProvider),
+  );
+});
 
-  WorkService(this._workRepository, this._imageService);
+/// Work Service Implementation
+class WorkService with WorkServiceErrorHandler {
+  final WorkRepository _repository;
+  final WorkImageService _imageService;
 
-  Future<void> deleteWork(String workId) async {
-    try {
-      AppLogger.info('Deleting work',
-          tag: 'WorkService', data: {'workId': workId});
+  WorkService({
+    required WorkRepository repository,
+    required WorkImageService imageService,
+  })  : _repository = repository,
+        _imageService = imageService;
 
-      // 1. 获取作品路径，用于后续删除文件
-      final workPath = await PathHelper.getWorkPath(workId);
-      final workDir = Directory(workPath);
-
-      // 2. 删除数据库中的作品记录
-      await _workRepository.deleteWork(workId);
-
-      // 3. 删除文件系统中的所有相关文件
-      if (await workDir.exists()) {
-        try {
-          await workDir.delete(recursive: true);
-          AppLogger.info('Deleted work files',
-              tag: 'WorkService', data: {'workPath': workPath});
-        } catch (e, stack) {
-          // 即使删除文件失败，也不应影响整个操作，但应记录错误
-          AppLogger.warning(
-            'Failed to delete work files, but database record was removed',
-            tag: 'WorkService',
-            error: e,
-            stackTrace: stack,
-            data: {'workId': workId, 'workPath': workPath},
-          );
-        }
-      } else {
-        AppLogger.warning(
-            'Work directory does not exist, skipping file deletion',
-            tag: 'WorkService',
-            data: {'workId': workId, 'workPath': workPath});
-      }
-
-      AppLogger.info('Work deleted successfully',
-          tag: 'WorkService', data: {'workId': workId});
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to delete work',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': workId},
-      );
-      rethrow;
-    }
-  }
-
-  Future<List<Work>> getAllWorks() async {
-    try {
-      AppLogger.debug('Fetching all works', tag: 'WorkService');
-      final works = await _workRepository.getWorks();
-      AppLogger.debug('Fetched all works successfully', tag: 'WorkService');
-      return works.map((workData) => Work.fromMap(workData)).toList();
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to fetch all works',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
-    }
-  }
-
-  Future<Work?> getWork(String id) async {
-    try {
-      AppLogger.debug('Fetching work details',
-          tag: 'WorkService', data: {'workId': id});
-      final work = await _workRepository.getWork(id);
-      AppLogger.debug('Fetched work details successfully',
-          tag: 'WorkService', data: {'workId': id});
-      return work;
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to get work',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': id},
-      );
-      rethrow;
-    }
-  }
-
-  Future<WorkEntity?> getWorkEntity(String id) async {
-    try {
-      AppLogger.debug('Fetching work entity details',
-          tag: 'WorkService', data: {'workId': id});
-
-      // 1. 从数据库获取作品基本信息
-      final work = await _workRepository.getWork(id);
-      if (work == null) {
-        AppLogger.warning('Work not found',
-            tag: 'WorkService', data: {'workId': id});
-        return null;
-      }
-
-      // 2. 获取该作品关联的所有字符
-      final characters = await _workRepository.getCharactersByWorkId(id);
-
-      // 3. 获取作品所有图片信息
-      final images = await _loadWorkImages(id);
-
-      // 4. 构建并返回 WorkEntity 对象
-      return _buildWorkEntity(
-          work.toMap(), characters.map((c) => c.toMap()).toList(), images);
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to get work entity',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': id},
-      );
-      return null;
-    }
-  }
-
-  Future<String?> getWorkThumbnail(String workId) async {
-    try {
-      AppLogger.debug('Fetching work thumbnail',
-          tag: 'WorkService', data: {'workId': workId});
-
-      final thumbnailPath = await PathHelper.getWorkCoverThumbnailPath(workId);
-
-      // 检查缩略图是否存在
-      final file = File(thumbnailPath);
-      if (await file.exists()) {
-        AppLogger.debug('Found thumbnail at: $thumbnailPath',
-            tag: 'WorkService', data: {'workId': workId});
-
-        // 检查文件是否为空或者无效
-        if (await file.length() == 0) {
-          AppLogger.warning('Thumbnail exists but is empty',
-              tag: 'WorkService', data: {'workId': workId});
-
-          // 创建占位图替代空文件
-          await PathHelper.createPlaceholderImage(thumbnailPath);
-        }
-
-        return thumbnailPath;
-      } else {
-        AppLogger.debug('Thumbnail not found at: $thumbnailPath',
-            tag: 'WorkService', data: {'workId': workId});
-
-        // 如果文件不存在，但目录结构存在，创建一个占位图
-        if (Directory(path.dirname(thumbnailPath)).existsSync()) {
-          await PathHelper.createPlaceholderImage(thumbnailPath);
-          AppLogger.debug('Created placeholder thumbnail',
-              tag: 'WorkService', data: {'workId': workId});
-          return thumbnailPath;
-        }
-
-        return null;
-      }
-    } catch (e, stack) {
-      AppLogger.error(
-        'Error getting thumbnail',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': workId},
-      );
-      return null;
-    }
-  }
-
-  Future<void> importWork(List<File> files, Work data) async {
-    try {
-      AppLogger.info('Importing work',
-          tag: 'WorkService', data: {'work': data});
-
-      // Insert work into database within transaction
-      final workId = await _workRepository.insertWork(data);
-
-      data.id = workId;
-
-      // 确保工作目录结构存在
-      await PathHelper.ensureWorkDirectoryExists(workId);
-
-      // Process images
-      await _imageService.processWorkImages(
-        workId,
-        files,
-      );
-
-      AppLogger.info('Imported work successfully',
-          tag: 'WorkService', data: {'workId': workId});
-    } catch (e, stackTrace) {
-      AppLogger.error(
-        'Import failed in service',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stackTrace,
-        data: {'work': data},
-      );
-      rethrow;
-    }
-  }
-
-  Future<List<Work>> queryWorks({
-    String? searchQuery,
-    WorkFilter? filter,
-    SortOption? sortOption,
-  }) async {
-    try {
-      AppLogger.debug('Querying works', tag: 'WorkService', data: {
-        'searchQuery': searchQuery,
-        'filter': filter,
-        'sortOption': sortOption,
-      });
-      final List<Map<String, dynamic>> results = await _workRepository.getWorks(
-        query: searchQuery?.trim(),
-        style: filter?.style?.value,
-        tool: filter?.tool?.value,
-        creationDateRange: filter?.dateRange != null
-            ? DateTimeRange(
-                start: filter!.dateRange!.start,
-                end: filter.dateRange!.end,
-              )
-            : null,
-        // 确保使用正确的列名
-        orderBy: _mapSortFieldToColumnName(filter?.sortOption.field),
-        descending: filter?.sortOption.descending ?? true,
-      );
-
-      AppLogger.debug('Queried works successfully', tag: 'WorkService');
-      return results
-          .map((data) => Work.fromMap(Map<String, dynamic>.from(data)))
-          .toList();
-    } catch (e, stack) {
-      AppLogger.error(
-        'Query works failed',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {
-          'searchQuery': searchQuery,
-          'filter': filter,
-          'sortOption': sortOption,
-        },
-      );
-      rethrow;
-    }
-  }
-
-  Future<void> updateWork(Work work) async {
-    try {
-      // 检查 ID 是否为空
-      if (work.id == null) {
-        throw ArgumentError('无法更新没有ID的作品');
-      }
-
-      AppLogger.info('更新作品信息', tag: 'WorkService', data: {'workId': work.id});
-
-      // 调用仓库的方法执行实际更新
-      await _workRepository.updateWork(work);
-
-      AppLogger.info('作品信息更新成功', tag: 'WorkService', data: {'workId': work.id});
-    } catch (e, stack) {
-      AppLogger.error('更新作品信息失败',
-          tag: 'WorkService',
-          error: e,
-          stackTrace: stack,
-          data: {'workId': work.id});
-      rethrow;
-    }
-  }
-
-  /// 更新作品实体信息及相关文件
-  Future<void> updateWorkEntity(WorkEntity work) async {
-    if (work.id == null) {
-      throw ArgumentError('无法更新没有ID的作品');
-    }
-
-    try {
-      AppLogger.info('开始更新作品实体', tag: 'WorkService', data: {'workId': work.id});
-
-      // 1. 转换为数据库需要的 Work 对象 - 确保包含 createTime
-      final workData = Work(
-        id: work.id,
-        name: work.name,
-        author: work.author,
-        style: work.style?.value,
-        tool: work.tool?.value,
-        creationDate: work.creationDate,
-        remark: work.remark,
-        imageCount: work.images.length,
-        updateTime: DateTime.now(),
-        createTime: work.createTime, // 确保保留原始创建时间
-      );
-
-      // 2. 处理元数据 - 使用安全的方式处理
-      if (work.metadata != null) {
-        try {
-          // 将 WorkMetadata 转换为字符串
-          final metadataMap = work.metadata!.toMap();
-          final metadataString = jsonEncode(metadataMap);
-          workData.metadata = metadataString; // 存储为字符串
-          // 添加验证，确保生成的是有效JSON
-          try {
-            // 尝试解析回来，验证格式正确
-            final decoded = jsonDecode(metadataString);
-            AppLogger.debug('元数据JSON格式正确',
-                tag: 'WorkService',
-                data: {'json': metadataString, 'tags': decoded['tags']});
-          } catch (e) {
-            AppLogger.error('验证元数据JSON失败', tag: 'WorkService', error: e);
-          }
-        } catch (e, stack) {
-          AppLogger.error('处理元数据失败',
-              tag: 'WorkService', error: e, stackTrace: stack);
-          // 设置空JSON字符串
-          workData.metadata = '{}';
-        }
-      } else {
-        // 确保 metadata 字段是一个有效的JSON字符串
-        workData.metadata = '{}';
-      }
-
-      AppLogger.debug('更新作品基本信息',
-          tag: 'WorkService', data: {'workId': work.id, 'name': work.name});
-
-      // 3. 更新数据库记录
-      await _workRepository.updateWork(workData);
-
-      // 4. 更新文件系统中的图片（如果需要）
-      // 这一部分可以根据实际需求实现，例如处理图片排序、删除和添加
-
-      AppLogger.info('作品实体更新成功', tag: 'WorkService', data: {'workId': work.id});
-    } catch (e, stack) {
-      AppLogger.error('更新作品实体失败',
-          tag: 'WorkService',
-          error: e,
-          stackTrace: stack,
-          data: {'workId': work.id});
-      rethrow;
-    }
-  }
-
-  /// 构建 WorkEntity 对象
-  WorkEntity _buildWorkEntity(Map<String, dynamic> workMap,
-      List<Map<String, dynamic>> characters, List<WorkImage> images) {
-    // 解析枚举值
-    WorkStyle? style;
-    if (workMap['style'] != null) {
-      style = WorkStyle.values.firstWhere(
-        (s) => s.value == workMap['style'],
-        orElse: () => WorkStyle.regular,
-      );
-    }
-
-    WorkTool? tool;
-    if (workMap['tool'] != null) {
-      tool = WorkTool.values.firstWhere(
-        (t) => t.value == workMap['tool'],
-        orElse: () => WorkTool.brush,
-      );
-    }
-
-    // 解析元数据和标签
-    WorkMetadata? metadata;
-    if (workMap['metadata'] != null) {
-      dynamic metadataValue = workMap['metadata'];
-      Map<String, dynamic> metadataMap;
-
-      if (metadataValue is String) {
-        try {
-          metadataMap = jsonDecode(metadataValue);
-          List<String> tags = [];
-          if (metadataMap.containsKey('tags') && metadataMap['tags'] is List) {
-            tags = List<String>.from(metadataMap['tags']);
-          }
-          metadata = WorkMetadata(tags: tags);
-        } catch (e) {
-          AppLogger.warning('Failed to parse metadata',
-              tag: 'WorkService', error: e);
-        }
-      } else if (metadataValue is Map) {
-        metadataMap = Map<String, dynamic>.from(metadataValue);
-        List<String> tags = [];
-        if (metadataMap.containsKey('tags') && metadataMap['tags'] is List) {
-          tags = List<String>.from(metadataMap['tags']);
-        }
-        metadata = WorkMetadata(tags: tags);
-      }
-    }
-
-    // 处理日期字段
-    DateTime? createTime, updateTime, creationDate;
-    if (workMap['createTime'] != null) {
-      createTime = _parseDateTime(workMap['createTime']);
-    }
-
-    if (workMap['updateTime'] != null) {
-      updateTime = _parseDateTime(workMap['updateTime']);
-    }
-
-    if (workMap['creationDate'] != null) {
-      creationDate = _parseDateTime(workMap['creationDate']);
-    }
-
-    // 构建收集的字符列表
-    List<WorkCollectedChar> collectedChars = [];
-    for (var charMap in characters) {
-      try {
-        // 解析区域信息
-        Map<String, dynamic> regionData = {};
-        if (charMap['sourceRegion'] != null) {
-          if (charMap['sourceRegion'] is String) {
-            regionData = jsonDecode(charMap['sourceRegion']);
-          } else if (charMap['sourceRegion'] is Map) {
-            regionData = Map<String, dynamic>.from(charMap['sourceRegion']);
-          }
-        }
-
-        // 创建字符对象
-        collectedChars.add(
-          WorkCollectedChar(
-            id: charMap['id'],
-            createTime: _parseDateTime(charMap['createTime']) ?? DateTime.now(),
-            region: SourceRegion(
-              index: regionData['index'] ?? 0,
-              x: (regionData['x'] ?? 0).toDouble(),
-              y: (regionData['y'] ?? 0).toDouble(),
-              width: (regionData['width'] ?? 0).toDouble(),
-              height: (regionData['height'] ?? 0).toDouble(),
-            ),
-          ),
-        );
-      } catch (e) {
-        AppLogger.warning('Failed to parse character data',
-            tag: 'WorkService', error: e);
-      }
-    }
-
-    // 创建并返回完整的 WorkEntity
-    return WorkEntity(
-      id: workMap['id'],
-      name: workMap['name'] ?? '',
-      author: workMap['author'],
-      style: style,
-      tool: tool,
-      imageCount: workMap['imageCount'] ?? images.length,
-      creationDate: creationDate,
-      remark: workMap['remark'],
-      createTime: createTime,
-      updateTime: updateTime,
-      images: images,
-      collectedChars: collectedChars,
-      metadata: metadata,
+  /// Count works
+  Future<int> count(WorkFilter? filter) async {
+    return handleOperation(
+      'count',
+      () => _repository.count(filter),
+      data: {'filter': filter?.toString()},
     );
   }
 
-  /// 查找带有特定前缀的文件
-  Future<File?> _findFileWithPrefix(Directory dir, String prefix) async {
-    try {
-      final files = await dir
-          .list()
-          .where((e) => e is File && path.basename(e.path).startsWith(prefix))
-          .toList();
-
-      if (files.isNotEmpty) {
-        return files.first as File;
-      }
-    } catch (e) {
-      AppLogger.warning(
-        'Failed to find file with prefix',
-        tag: 'WorkService',
-        error: e,
-        data: {'directory': dir.path, 'prefix': prefix},
-      );
-    }
-    return null;
+  /// Delete work and its images
+  Future<void> deleteWork(String workId) async {
+    return handleOperation(
+      'deleteWork',
+      () async {
+        await _repository.delete(workId);
+        await _imageService.cleanupWorkImages(workId);
+      },
+      data: {'workId': workId},
+    );
   }
 
-  /// 获取图片文件信息
-  Future<ImageDetail?> _getImageFileInfo(File file) async {
-    try {
-      final fileStat = await file.stat();
+  /// Get all works
+  Future<List<WorkEntity>> getAllWorks() async {
+    return handleOperation(
+      'getAllWorks',
+      () => _repository.getAll(),
+    );
+  }
 
-      // 获取图片尺寸
-      int width = 0;
-      int height = 0;
+  /// Get work entity with all related data
+  Future<WorkEntity?> getWorkEntity(String id) async {
+    return handleOperation(
+      'getWorkEntity',
+      () => _repository.get(id),
+      data: {'workId': id},
+    );
+  }
 
-      try {
-        final bytes = await file.readAsBytes();
-        final image = await decodeImageFromList(bytes);
-        width = image.width;
-        height = image.height;
-      } catch (e) {
-        AppLogger.warning(
-          'Failed to decode image dimensions',
-          tag: 'WorkService',
-          error: e,
-          data: {'path': file.path},
+  /// Get works by tags
+  Future<List<WorkEntity>> getWorksByTags(Set<String> tags) async {
+    return handleOperation(
+      'getWorksByTags',
+      () => _repository.getByTags(tags),
+      data: {'tags': tags.toList()},
+    );
+  }
+
+  /// Get work thumbnail path
+  Future<String?> getWorkThumbnail(String workId) async {
+    return handleOperation(
+      'getWorkThumbnail',
+      () async {
+        final thumbnailPath =
+            await PathHelper.getWorkCoverThumbnailPath(workId);
+
+        // 检查缩略图是否存在
+        final file = File(thumbnailPath);
+        if (await file.exists()) {
+          // 检查文件是否为空
+          if (await file.length() == 0) {
+            await PathHelper.createPlaceholderImage(thumbnailPath);
+          }
+          return thumbnailPath;
+        } else {
+          // 如果文件不存在但目录存在，创建占位图
+          final dir = Directory(path.dirname(thumbnailPath));
+          if (await dir.exists()) {
+            await PathHelper.createPlaceholderImage(thumbnailPath);
+            return thumbnailPath;
+          }
+        }
+        return null;
+      },
+      data: {'workId': workId},
+    );
+  }
+
+  /// Import work with images
+  Future<WorkEntity> importWork(List<File> files, WorkEntity work) async {
+    return handleOperation(
+      'importWork',
+      () async {
+        // 验证输入
+        if (files.isEmpty) throw ArgumentError('图片文件不能为空');
+
+        // 处理图片
+        final images = await _imageService.processImagesInBatches(
+          work.id,
+          files,
         );
-      }
 
-      return ImageDetail(
-        path: file.path,
-        width: width,
-        height: height,
-        format: path.extension(file.path).replaceFirst('.', ''),
-        size: fileStat.size,
-      );
-    } catch (e) {
-      AppLogger.warning(
-        'Failed to get image file info',
-        tag: 'WorkService',
-        error: e,
-        data: {'path': file.path},
-      );
-    }
-    return null;
+        // 更新作品信息
+        final updatedWork = work.copyWith(
+          imageCount: images.length,
+          updateTime: DateTime.now(),
+        );
+
+        // 保存到数据库
+        return await _repository.create(updatedWork);
+      },
+      data: {'workId': work.id, 'fileCount': files.length},
+    );
   }
 
-  /// 加载作品图片信息
-  Future<List<WorkImage>> _loadWorkImages(String workId) async {
-    final images = <WorkImage>[];
+  /// Query works with filter
+  Future<List<WorkEntity>> queryWorks(WorkFilter filter) async {
+    return handleOperation(
+      'queryWorks',
+      () async {
+        AppLogger.debug(
+          '开始查询作品',
+          tag: 'WorkService',
+          data: {
+            'filter': {
+              'style': filter.style?.name,
+              'tool': filter.tool?.name,
+              'keyword': filter.keyword,
+              'tags': filter.tags.toList(),
+              'sortOption': {
+                'field': filter.sortOption.field.name,
+                'descending': filter.sortOption.descending,
+              },
+            },
+          },
+        );
 
-    try {
-      final workDir = await PathHelper.getWorkPath(workId);
-      final picturesDir = Directory(path.join(workDir, 'pictures'));
+        final results = await _repository.query(filter);
 
-      if (!await picturesDir.exists()) {
-        return images;
-      }
+        AppLogger.debug(
+          '查询作品完成',
+          tag: 'WorkService',
+          data: {
+            'resultCount': results.length,
+          },
+        );
 
-      // 获取所有图片目录
-      final List<FileSystemEntity> entities = await picturesDir.list().toList();
-      final List<Directory> indexDirs = [];
-
-      for (var entity in entities) {
-        if (entity is Directory) {
-          indexDirs.add(entity);
-        }
-      }
-
-      // 按索引排序
-      indexDirs.sort((a, b) {
-        final indexA = int.tryParse(path.basename(a.path)) ?? 0;
-        final indexB = int.tryParse(path.basename(b.path)) ?? 0;
-        return indexA.compareTo(indexB);
-      });
-
-      // 处理每个索引目录中的图片
-      for (int i = 0; i < indexDirs.length; i++) {
-        final indexDir = indexDirs[i];
-        final index = int.tryParse(path.basename(indexDir.path)) ?? i;
-
-        // 找原始图片
-        final originalFile = await _findFileWithPrefix(indexDir, 'original');
-        final originalInfo =
-            originalFile != null ? await _getImageFileInfo(originalFile) : null;
-
-        // 找导入图片
-        final importedFile = await _findFileWithPrefix(indexDir, 'imported');
-        final importedInfo =
-            importedFile != null ? await _getImageFileInfo(importedFile) : null;
-
-        // 找缩略图
-        final thumbnailFile = await _findFileWithPrefix(indexDir, 'thumbnail');
-        final thumbnailInfo = thumbnailFile != null
-            ? await _getImageFileInfo(thumbnailFile)
-            : null;
-
-        // 将 ImageDetail 转换为 ImageThumbnail
-        final thumbnailData = thumbnailInfo != null
-            ? ImageThumbnail(
-                path: thumbnailInfo.path,
-                width: thumbnailInfo.width,
-                height: thumbnailInfo.height)
-            : null;
-
-        // 只有至少有原图或导入图时才添加
-        if (originalInfo != null || importedInfo != null) {
-          images.add(WorkImage(
-            index: index,
-            original: originalInfo,
-            imported: importedInfo,
-            thumbnail: thumbnailData,
-          ));
-        }
-      }
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to load work images',
-        tag: 'WorkService',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': workId},
-      );
-    }
-
-    return images;
+        return results;
+      },
+      data: {'filter': filter.toString()},
+    );
   }
 
-  // 添加排序字段映射方法
-  String? _mapSortFieldToColumnName(SortField? field) {
-    if (field == null) return null;
-
-    return switch (field) {
-      SortField.name => 'name',
-      SortField.author => 'author',
-      SortField.creationDate => 'creationDate',
-      SortField.importDate => 'createTime',
-      SortField.updateDate => 'updateTime',
-      SortField.none => null,
-    };
+  /// Search works
+  Future<List<WorkEntity>> searchWorks(String query, {int? limit}) async {
+    return handleOperation(
+      'searchWorks',
+      () => _repository.search(query, limit: limit),
+      data: {'query': query, 'limit': limit},
+    );
   }
 
-  /// 解析日期时间
-  DateTime? _parseDateTime(dynamic value) {
-    if (value == null) return null;
+  /// Update complete work entity
+  Future<WorkEntity> updateWorkEntity(WorkEntity work) async {
+    return handleOperation(
+      'updateWorkEntity',
+      () async {
+        final now = DateTime.now();
+        final updatedWork = work.copyWith(
+          updateTime: now,
+        );
 
-    try {
-      if (value is int) {
-        return DateTime.fromMillisecondsSinceEpoch(value);
-      } else if (value is String) {
-        return DateTime.parse(value);
-      }
-    } catch (e) {
-      AppLogger.warning(
-        'Failed to parse date time',
-        tag: 'WorkService',
-        error: e,
-        data: {'value': value},
-      );
-    }
-    return null;
+        return await _repository.save(updatedWork);
+      },
+      data: {'workId': work.id},
+    );
   }
 }

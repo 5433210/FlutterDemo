@@ -8,7 +8,7 @@ class WorkImportState {
   final int selectedImageIndex;
   final Map<String, double> imageRotations;
   final double scale;
-  final String name;
+  final String title;
   final String? author;
   final WorkStyle? style;
   final WorkTool? tool;
@@ -26,7 +26,7 @@ class WorkImportState {
     this.selectedImageIndex = -1,
     this.imageRotations = const {},
     this.scale = 1.0,
-    this.name = '',
+    this.title = '',
     this.author,
     this.style,
     this.tool,
@@ -45,9 +45,9 @@ class WorkImportState {
     return const WorkImportState();
   }
 
-  bool get isDirty => images.isNotEmpty || name.isNotEmpty;
+  bool get isDirty => images.isNotEmpty || title.isNotEmpty;
 
-  bool get isValid => name.isNotEmpty && images.isNotEmpty;
+  bool get isValid => title.isNotEmpty && images.isNotEmpty;
 
   WorkImportState copyWith({
     List<File>? images,
@@ -72,7 +72,7 @@ class WorkImportState {
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       imageRotations: imageRotations ?? this.imageRotations,
       scale: scale ?? this.scale,
-      name: name ?? this.name,
+      title: name ?? title,
       author: author ?? this.author,
       style: style ?? this.style,
       tool: tool ?? this.tool,

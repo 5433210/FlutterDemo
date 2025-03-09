@@ -1,84 +1,110 @@
-import '../../domain/entities/character.dart';
+import '../../domain/models/character/character_entity.dart';
 import '../../domain/models/character/character_filter.dart';
-import '../../domain/models/collected_character.dart';
 import '../../domain/repositories/character_repository.dart';
 import '../persistence/database_interface.dart';
 
 class CharacterRepositoryImpl implements CharacterRepository {
-  final DatabaseInterface _db;
+  final DatabaseInterface _database;
 
-  CharacterRepositoryImpl(this._db);
+  CharacterRepositoryImpl(this._database);
 
   @override
-  Future<void> deleteCharacter(String id) async {
-    await _db.deleteCharacter(id);
+  Future<void> close() => _database.close();
+
+  @override
+  Future<int> count(CharacterFilter? filter) async {
+    return _database.count('characters', filter?.toJson() ?? {});
   }
 
   @override
-  Future<void> deleteCharacters(List<String> ids) async {
-    // 批量删除字符
-    for (final id in ids) {
-      await _db.deleteCharacter(id);
-    }
+  Future<CharacterEntity> create(CharacterEntity character) async {
+    await _database.save('characters', character.id!, character.toJson());
+    return character;
   }
 
   @override
-  Future<Character?> getCharacter(String id) async {
-    final map = await _db.getCharacter(id);
-    if (map == null) return null;
-    return Character.fromMap(map);
+  Future<void> delete(String id) => _database.delete('characters', id);
+
+  @override
+  Future<void> deleteMany(List<String> ids) =>
+      _database.deleteMany('characters', ids);
+
+  @override
+  Future<CharacterEntity> duplicate(String id, {String? newId}) async {
+    final character = await get(id);
+    if (character == null) throw Exception('Character not found: $id');
+
+    return create(character.copyWith(
+      id: newId,
+      createTime: DateTime.now(),
+      updateTime: DateTime.now(),
+    ));
   }
 
   @override
-  Future<List<CollectedCharacter>> getCharacters({
-    CharacterFilter? filter,
-    bool forceRefresh = false,
-  }) async {
-    // 构建查询条件
-    final conditions = <String, dynamic>{};
-    if (filter != null) {
-      if (filter.searchQuery?.isNotEmpty == true) {
-        conditions['search'] = filter.searchQuery;
-      }
-      if (filter.styles.isNotEmpty) {
-        conditions['styles'] = filter.styles;
-      }
-      if (filter.tools.isNotEmpty) {
-        conditions['tools'] = filter.tools;
-      }
-    }
-
-    // 添加排序条件
-    final sortField =
-        filter?.sortOption == SortOption.character ? 'char' : 'create_time';
-
-    // 从数据库获取数据
-    final maps = await _db.queryCharacters(
-      conditions: conditions,
-      orderBy: '$sortField DESC',
-    );
-
-    // 转换为领域模型
-    return maps
-        .map((map) => CollectedCharacter.fromCharacter(
-              Character.fromMap(map),
-            ))
-        .toList();
+  Future<CharacterEntity?> get(String id) async {
+    final json = await _database.get('characters', id);
+    if (json == null) return null;
+    return CharacterEntity.fromJson(json);
   }
 
   @override
-  Future<List<Character>> getCharactersByWorkId(String workId) async {
-    final maps = await _db.getCharactersByWorkId(workId);
-    return maps.map((map) => Character.fromMap(map)).toList();
+  Future<List<CharacterEntity>> getAll() async {
+    final items = await _database.getAll('characters');
+    return items.map((e) => CharacterEntity.fromJson(e)).toList();
   }
 
   @override
-  Future<String> insertCharacter(Character character) async {
-    return await _db.insertCharacter(character.toMap());
+  Future<Set<String>> getAllTags() async {
+    final items = await _database.getAll('characters');
+    return items
+        .map((e) => CharacterEntity.fromJson(e))
+        .expand((e) => e.tags)
+        .toSet();
   }
 
   @override
-  Future<void> updateCharacter(Character character) async {
-    await _db.updateCharacter(character.id!, character.toMap());
+  Future<List<CharacterEntity>> getByTags(Set<String> tags) async {
+    const filter = CharacterFilter();
+    return query(filter);
+  }
+
+  @override
+  Future<List<CharacterEntity>> getByWorkId(String workId) async {
+    const filter = CharacterFilter();
+    return query(filter);
+  }
+
+  @override
+  Future<List<CharacterEntity>> query(CharacterFilter filter) async {
+    final items = await _database.query('characters', filter.toJson());
+    return items.map((e) => CharacterEntity.fromJson(e)).toList();
+  }
+
+  @override
+  Future<CharacterEntity> save(CharacterEntity character) async {
+    await _database.save('characters', character.id!, character.toJson());
+    return character;
+  }
+
+  @override
+  Future<List<CharacterEntity>> saveMany(
+      List<CharacterEntity> characters) async {
+    final data =
+        Map.fromEntries(characters.map((e) => MapEntry(e.id!, e.toJson())));
+    await _database.saveMany('characters', data);
+    return characters;
+  }
+
+  @override
+  Future<List<CharacterEntity>> search(String query, {int? limit}) async {
+    const filter = CharacterFilter();
+    return this.query(filter);
+  }
+
+  @override
+  Future<List<String>> suggestTags(String prefix, {int limit = 10}) async {
+    final allTags = await getAllTags();
+    return allTags.where((tag) => tag.startsWith(prefix)).take(limit).toList();
   }
 }

@@ -1,12 +1,12 @@
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../domain/entities/work.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../widgets/dialogs/confirmation_dialog.dart';
 
 class WorkToolbar extends ConsumerWidget {
-  final Work work;
+  final WorkEntity work;
 
   const WorkToolbar({
     super.key,
@@ -78,7 +78,7 @@ class WorkToolbar extends ConsumerWidget {
       context: context,
       builder: (context) => ConfirmationDialog(
         title: '删除作品',
-        message: '确定要删除作品《${work.name}》吗？此操作不可撤销。',
+        message: '确定要删除作品《${work.title}》吗？此操作不可撤销。',
         confirmText: '删除',
         cancelText: '取消',
         isDestructive: true,

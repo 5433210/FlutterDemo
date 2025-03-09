@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../domain/enums/work_tool.dart';
-import '../../../../../domain/models/character/work_filter.dart';
+import '../../../../../domain/models/work/work_filter.dart';
 import 'work_filter_section.dart';
 
 class ToolSection extends StatelessWidget {
@@ -33,7 +33,7 @@ class ToolSection extends StatelessWidget {
           selected: selected,
           onSelected: (value) => onFilterChanged(
             filter.copyWith(
-              tool: () => value ? WorkTool.fromValue(tool.value) : null,
+              tool: WorkTool.fromValue(tool.value),
             ),
           ),
         );

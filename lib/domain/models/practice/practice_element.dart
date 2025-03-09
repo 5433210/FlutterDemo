@@ -1,154 +1,126 @@
-import 'package:equatable/equatable.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'element_content.dart';
 import 'element_geometry.dart';
 import 'element_style.dart';
 
-/// 字帖元素
-class PracticeElement extends Equatable {
-  /// 元素ID
-  final String id;
+part 'practice_element.freezed.dart';
+part 'practice_element.g.dart';
 
-  /// 元素类型: 'chars', 'text', 'image'
-  final String type;
+/// 练习元素
+@freezed
+class PracticeElement with _$PracticeElement {
+  const factory PracticeElement({
+    /// 元素ID
+    required String id,
 
-  /// 元素几何属性（位置和尺寸）
-  final ElementGeometry geometry;
+    /// 元素类型
+    @JsonKey(name: 'type') required String elementType,
 
-  /// 元素样式属性
-  final ElementStyle style;
+    /// 元素几何属性
+    required ElementGeometry geometry,
 
-  /// 元素内容
-  final ElementContent content;
+    /// 元素样式
+    required ElementStyle style,
 
-  const PracticeElement({
-    required this.id,
-    required this.type,
-    required this.geometry,
-    required this.style,
-    required this.content,
-  });
+    /// 元素内容
+    required ElementContent content,
+
+    /// 创建时间
+    @Default(0) int createTime,
+
+    /// 更新时间
+    @Default(0) int updateTime,
+  }) = _PracticeElement;
 
   /// 创建字符元素
   factory PracticeElement.chars({
     required String id,
-    required ElementGeometry geometry,
-    required CharsContent content,
+    required ElementContent content,
+    ElementGeometry? geometry,
     ElementStyle? style,
   }) {
     return PracticeElement(
       id: id,
-      type: 'chars',
-      geometry: geometry,
+      elementType: 'chars',
+      geometry: geometry ?? const ElementGeometry(),
       style: style ?? const ElementStyle(),
       content: content,
+      createTime: DateTime.now().millisecondsSinceEpoch,
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
-  /// 从JSON数据创建元素
-  factory PracticeElement.fromJson(Map<String, dynamic> json) {
-    final type = json['type'] as String;
+  /// 从JSON创建实例
+  factory PracticeElement.fromJson(Map<String, dynamic> json) =>
+      _$PracticeElementFromJson(json);
 
-    return PracticeElement(
-      id: json['id'] as String,
-      type: type,
-      geometry:
-          ElementGeometry.fromJson(json['geometry'] as Map<String, dynamic>),
-      style: ElementStyle.fromJson(json['style'] as Map<String, dynamic>),
-      content: ElementContent.fromJson(
-          type, json['content'] as Map<String, dynamic>),
-    );
-  }
-
-  /// 创建图像元素
+  /// 创建图片元素
   factory PracticeElement.image({
     required String id,
-    required ElementGeometry geometry,
-    required ImageContent content,
+    required ElementContent content,
+    ElementGeometry? geometry,
     ElementStyle? style,
   }) {
     return PracticeElement(
       id: id,
-      type: 'image',
-      geometry: geometry,
+      elementType: 'image',
+      geometry: geometry ?? const ElementGeometry(),
       style: style ?? const ElementStyle(),
       content: content,
+      createTime: DateTime.now().millisecondsSinceEpoch,
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
   /// 创建文本元素
   factory PracticeElement.text({
     required String id,
-    required ElementGeometry geometry,
-    required TextContent content,
+    required ElementContent content,
+    ElementGeometry? geometry,
     ElementStyle? style,
   }) {
     return PracticeElement(
       id: id,
-      type: 'text',
-      geometry: geometry,
+      elementType: 'text',
+      geometry: geometry ?? const ElementGeometry(),
       style: style ?? const ElementStyle(),
       content: content,
+      createTime: DateTime.now().millisecondsSinceEpoch,
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
-  @override
-  List<Object?> get props => [id, type, geometry, style, content];
-
-  /// 创建一个带有更新属性的新实例
-  PracticeElement copyWith({
-    String? id,
-    String? type,
-    ElementGeometry? geometry,
-    ElementStyle? style,
-    ElementContent? content,
-  }) {
-    return PracticeElement(
-      id: id ?? this.id,
-      type: type ?? this.type,
-      geometry: geometry ?? this.geometry,
-      style: style ?? this.style,
-      content: content ?? this.content,
-    );
-  }
+  const PracticeElement._();
 
   /// 移动元素
   PracticeElement move(double dx, double dy) {
     return copyWith(
-      geometry: geometry.copyWith(
-        x: geometry.x + dx,
-        y: geometry.y + dy,
-      ),
+      geometry: geometry.move(dx, dy),
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
-  /// 调整元素大小
+  /// 调整大小
   PracticeElement resize(double width, double height) {
     return copyWith(
-      geometry: geometry.copyWith(
-        width: width,
-        height: height,
-      ),
+      geometry: geometry.resize(width, height),
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
-  /// 旋转元素
+  /// 旋转
   PracticeElement rotate(double angle) {
     return copyWith(
-      geometry: geometry.copyWith(
-        rotation: geometry.rotation + angle,
-      ),
+      geometry: geometry.rotate(angle),
+      updateTime: DateTime.now().millisecondsSinceEpoch,
     );
   }
 
-  /// 将元素转换为JSON数据
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'type': type,
-      'geometry': geometry.toJson(),
-      'style': style.toJson(),
-      'content': content.toJson(),
-    };
+  /// 更新时间戳
+  PracticeElement touch() {
+    return copyWith(
+      updateTime: DateTime.now().millisecondsSinceEpoch,
+    );
   }
 }

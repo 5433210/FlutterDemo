@@ -1,43 +1,54 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-class CharacterRegion {
-  final int pageIndex;
-  Rect rect;
-  String imagePath;
-  String? label;
-  Color? color;
-  double rotation;
-  bool isSaved; // Add this field to track saved state
+part 'character_region.freezed.dart';
+part 'character_region.g.dart';
 
-  CharacterRegion({
-    required this.pageIndex,
-    required this.rect,
-    required this.imagePath,
-    this.label,
-    this.color,
-    this.rotation = 0,
-    this.isSaved = false, // Default to false
-  });
+/// 字形区域信息
+@freezed
+class CharacterRegion with _$CharacterRegion {
+  const factory CharacterRegion({
+    /// X坐标
+    required double left,
 
-  CharacterRegion copyWith({
-    int? pageIndex,
-    Rect? rect,
-    String? imagePath,
+    /// Y坐标
+    required double top,
+
+    /// 宽度
+    required double width,
+
+    /// 高度
+    required double height,
+
+    /// 旋转角度
+    @Default(0.0) double rotation,
+
+    /// 页码索引
+    required int pageIndex,
+
+    /// 是否已保存
+    @Default(false) bool isSaved,
+
+    /// 标签
     String? label,
-    Color? color,
-    double? rotation,
-    bool? isSaved,
-  }) {
-    return CharacterRegion(
-      pageIndex: pageIndex ?? this.pageIndex,
-      rect: rect ?? this.rect,
-      imagePath: imagePath ?? this.imagePath,
-      label: label ?? this.label,
-      color: color ?? this.color,
-      rotation: rotation ?? this.rotation,
-      isSaved: isSaved ?? this.isSaved,
-    );
-  }
 
-  void toMap() {}
+    /// 图片路径
+    required String imagePath,
+
+    /// 区域颜色
+    @JsonKey(ignore: true) Color? color,
+  }) = _CharacterRegion;
+
+  /// 从JSON创建实例
+  factory CharacterRegion.fromJson(Map<String, dynamic> json) =>
+      _$CharacterRegionFromJson(json);
+
+  const CharacterRegion._();
+
+  /// 矩形区域
+  Rect get rect => Rect.fromLTWH(left, top, width, height);
+
+  /// 用于显示的文本描述
+  @override
+  String toString() => 'CharacterRegion($left,$top,$width,$height)';
 }

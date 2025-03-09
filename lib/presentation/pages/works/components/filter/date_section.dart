@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../domain/models/character/work_filter.dart';
-import '../../../../../domain/models/date_range_filter.dart';
+import '../../../../../domain/models/common/date_range_filter.dart';
+import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../theme/app_sizes.dart';
 import '../../../../providers/work_browse_provider.dart';
 import 'date_range_filter_section.dart';
@@ -33,8 +33,8 @@ class DateSection extends StatelessWidget {
           ),
           onChanged: (dateFilter) {
             onFilterChanged(filter.copyWith(
-              datePreset: () => dateFilter?.preset,
-              dateRange: () => dateFilter?.effectiveRange,
+              datePreset: dateFilter?.preset ?? filter.datePreset,
+              dateRange: dateFilter?.effectiveRange,
             ));
           },
         ),

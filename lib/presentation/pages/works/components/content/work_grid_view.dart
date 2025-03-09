@@ -1,11 +1,11 @@
+import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../domain/entities/work.dart';
 import '../../../../../theme/app_sizes.dart';
 import 'items/work_grid_item.dart';
 
 class WorkGridView extends StatelessWidget {
-  final List<Work> works;
+  final List<WorkEntity> works;
   final bool batchMode;
   final Set<String> selectedWorks;
   final Function(String, bool) onSelectionChanged;
@@ -28,7 +28,7 @@ class WorkGridView extends StatelessWidget {
         final columns = (width / 280.0).floor();
         final crossAxisCount = columns < 2 ? 2 : columns;
 
-        final spacing = AppSizes.m;
+        const spacing = AppSizes.m;
         final availableWidth =
             (width - (spacing * (crossAxisCount - 1))) / crossAxisCount;
         final aspectRatio = availableWidth / (availableWidth * 1.4);
@@ -50,8 +50,8 @@ class WorkGridView extends StatelessWidget {
               isSelectionMode: batchMode,
               onTap: () => batchMode
                   ? onSelectionChanged(
-                      work.id!, !selectedWorks.contains(work.id))
-                  : onItemTap?.call(work.id!),
+                      work.id, !selectedWorks.contains(work.id))
+                  : onItemTap?.call(work.id),
             );
           },
         );

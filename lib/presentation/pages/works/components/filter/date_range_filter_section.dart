@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../domain/models/date_range_filter.dart';
+import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class DateRangeFilterSection extends StatefulWidget {

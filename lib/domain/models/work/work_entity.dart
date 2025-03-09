@@ -1,318 +1,105 @@
-import 'dart:convert';
+import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
-
-import '../../../infrastructure/logging/logger.dart';
+import '../../enums/work_status.dart';
 import '../../enums/work_style.dart';
 import '../../enums/work_tool.dart';
-import 'work_collected_char.dart';
+import '../character/character_entity.dart';
 import 'work_image.dart';
 
-class WorkEntity extends Equatable {
-  final String? id;
-  final DateTime? createTime;
-  final DateTime? updateTime;
-  final String name;
-  final String? author;
-  final WorkStyle? style;
-  final WorkTool? tool;
-  final int imageCount;
-  final DateTime? creationDate;
-  final String? remark;
-  final List<WorkImage> images;
-  final List<WorkCollectedChar> collectedChars;
-  final WorkMetadata? metadata;
+part 'work_entity.freezed.dart';
+part 'work_entity.g.dart';
 
-  const WorkEntity({
-    this.id,
-    this.createTime,
-    this.updateTime,
-    required this.name,
-    this.author,
-    this.style,
-    this.tool,
-    this.imageCount = 0,
-    this.creationDate,
-    this.remark,
-    this.images = const [],
-    this.collectedChars = const [],
-    this.metadata,
-  });
+WorkStyle _workStyleFromJson(dynamic value) => WorkStyle.fromValue(value);
 
-  factory WorkEntity.fromJson(Map<String, dynamic> json) {
-    List<WorkImage> images = [];
-    if (json.containsKey('images') && json['images'] is List) {
-      images = (json['images'] as List).map((img) {
-        final imgMap = img as Map<String, dynamic>;
-        return WorkImage(
-          index: imgMap['index'] as int,
-          original: imgMap.containsKey('originalPath')
-              ? ImageDetail(
-                  path: imgMap['originalPath'] as String,
-                  width: 0, // 简化处理，这些值实际应用时会再次加载
-                  height: 0,
-                  format: '',
-                  size: 0,
-                )
-              : null,
-          imported: imgMap.containsKey('importedPath')
-              ? ImageDetail(
-                  path: imgMap['importedPath'] as String,
-                  width: 0, // 简化处理
-                  height: 0,
-                  format: '',
-                  size: 0,
-                )
-              : null,
-          thumbnail: imgMap.containsKey('thumbnailPath')
-              ? ImageThumbnail(
-                  path: imgMap['thumbnailPath'] as String,
-                  width: 0, // 简化处理
-                  height: 0,
-                )
-              : null,
-        );
-      }).toList();
-    }
+/// 枚举序列化辅助方法
+String _workStyleToJson(WorkStyle style) => style.value;
+WorkTool _workToolFromJson(dynamic value) => WorkTool.fromValue(value);
+String _workToolToJson(WorkTool tool) => tool.value;
 
-    List<WorkCollectedChar> collectedChars = [];
-    if (json.containsKey('collectedChars') && json['collectedChars'] is List) {
-      collectedChars = (json['collectedChars'] as List).map((char) {
-        final charMap = char as Map<String, dynamic>;
-        final regionMap = charMap['region'] as Map<String, dynamic>;
-        return WorkCollectedChar(
-          id: charMap['id'] as String? ?? '',
-          createTime:
-              DateTime.fromMillisecondsSinceEpoch(charMap['createTime'] as int),
-          region: SourceRegion(
-            index: regionMap['index'] as int,
-            x: (regionMap['x'] as num).toInt(),
-            y: (regionMap['y'] as num).toInt(),
-            width: (regionMap['width'] as num).toInt(),
-            height: (regionMap['height'] as num).toInt(),
-          ),
-        );
-      }).toList();
-    }
+/// 作品实体
+@freezed
+class WorkEntity with _$WorkEntity {
+  const factory WorkEntity({
+    /// ID
+    required String id,
 
-    WorkMetadata? metadata;
-    if (json.containsKey('metadata') && json['metadata'] != null) {
-      metadata = WorkMetadata.fromMap(json['metadata'] as Map<String, dynamic>);
-    }
+    /// 标题
+    required String title,
 
-    WorkStyle? style;
-    if (json.containsKey('style') && json['style'] != null) {
-      final styleValue = json['style'] as String;
-      style = WorkStyle.values.firstWhere(
-        (s) => s.value == styleValue,
-        orElse: () => WorkStyle.regular,
-      );
-    }
+    /// 作者
+    required String author,
 
-    WorkTool? tool;
-    if (json.containsKey('tool') && json['tool'] != null) {
-      final toolValue = json['tool'] as String;
-      tool = WorkTool.values.firstWhere(
-        (t) => t.value == toolValue,
-        orElse: () => WorkTool.brush,
-      );
-    }
-
-    return WorkEntity(
-      id: json['id'] as String?,
-      name: json['name'] as String? ?? '',
-      author: json['author'] as String?,
-      style: style,
-      tool: tool,
-      imageCount: json['imageCount'] as int? ?? 0,
-      creationDate:
-          json.containsKey('creationDate') && json['creationDate'] != null
-              ? DateTime.fromMillisecondsSinceEpoch(json['creationDate'] as int)
-              : null,
-      createTime: json.containsKey('createTime') && json['createTime'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['createTime'] as int)
-          : null,
-      updateTime: json.containsKey('updateTime') && json['updateTime'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['updateTime'] as int)
-          : null,
-      remark: json['remark'] as String?,
-      images: images,
-      collectedChars: collectedChars,
-      metadata: metadata,
-    );
-  }
-
-  @override
-  List<Object?> get props => [
-        id,
-        createTime,
-        updateTime,
-        name,
-        author,
-        style,
-        tool,
-        imageCount,
-        creationDate,
-        remark,
-        images,
-        collectedChars,
-        metadata,
-      ];
-
-  // 添加安全的 getter 方法
-  List<String> get tags {
-    try {
-      return metadata?.tags ?? [];
-    } catch (e) {
-      debugPrint('获取标签失败: $e');
-      return [];
-    }
-  }
-
-  WorkEntity copyWith({
-    String? id,
-    DateTime? createTime,
-    DateTime? updateTime,
-    String? name,
-    String? author,
-    WorkStyle? style,
-    WorkTool? tool,
-    int? imageCount,
-    DateTime? creationDate,
+    /// 备注
     String? remark,
-    List<WorkImage>? images,
-    List<WorkCollectedChar>? collectedChars,
-    WorkMetadata? metadata,
-  }) {
-    return WorkEntity(
-      id: id ?? this.id,
-      createTime: createTime ?? this.createTime,
-      updateTime: updateTime ?? this.updateTime,
-      name: name ?? this.name,
-      author: author ?? this.author,
-      style: style ?? this.style,
-      tool: tool ?? this.tool,
-      imageCount: imageCount ?? this.imageCount,
-      creationDate: creationDate ?? this.creationDate,
-      remark: remark ?? this.remark,
-      images: images ?? this.images,
-      collectedChars: collectedChars ?? this.collectedChars,
-      metadata: metadata ?? this.metadata,
-    );
+
+    /// 字体
+    @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
+    required WorkStyle style,
+
+    /// 工具
+    @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
+    required WorkTool tool,
+
+    /// 创作日期
+    @JsonKey(name: 'creation_date') required DateTime creationDate,
+
+    /// 创建时间
+    @JsonKey(name: 'create_time') required DateTime createTime,
+
+    /// 修改时间
+    @JsonKey(name: 'update_time') required DateTime updateTime,
+
+    /// 状态
+    @Default(WorkStatus.draft) WorkStatus status,
+
+    /// 图片列表
+    @Default([]) List<WorkImage> images,
+
+    /// 关联字符列表
+    @JsonKey(name: 'collected_chars')
+    @Default([])
+    List<CharacterEntity> collectedChars,
+
+    /// 标签列表
+    @Default([]) List<String> tags,
+
+    /// 图片数量
+    int? imageCount,
+  }) = _WorkEntity;
+
+  factory WorkEntity.fromJson(Map<String, dynamic> json) =>
+      _$WorkEntityFromJson(json);
+
+  const WorkEntity._();
+
+  /// 获取图片数量
+  int get totalImages => images.length;
+
+  /// 添加关联字
+  WorkEntity addCollectedChar(CharacterEntity char) {
+    if (collectedChars.contains(char)) return this;
+    return copyWith(collectedChars: [...collectedChars, char]);
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'author': author,
-      'style': style?.value,
-      'tool': tool?.value,
-      'imageCount': imageCount,
-      'creationDate': creationDate?.millisecondsSinceEpoch,
-      'createTime': createTime?.millisecondsSinceEpoch,
-      'updateTime': updateTime?.millisecondsSinceEpoch,
-      'remark': remark,
-      // 图片和字形引用可能很复杂，可以保存简单引用或ID列表
-      'images': images
-          .map((img) => {
-                'index': img.index,
-                'originalPath': img.original?.path,
-                'importedPath': img.imported?.path,
-                'thumbnailPath': img.thumbnail?.path,
-              })
-          .toList(),
-      'collectedChars': collectedChars
-          .map((char) => {
-                'id': char.id,
-                'createTime': char.createTime.millisecondsSinceEpoch,
-                'region': {
-                  'index': char.region.index,
-                  'x': char.region.x,
-                  'y': char.region.y,
-                  'width': char.region.width,
-                  'height': char.region.height,
-                }
-              })
-          .toList(),
-      'metadata': metadata?.toJson(),
-    };
+  /// 添加标签
+  WorkEntity addTag(String tag) {
+    if (tags.contains(tag)) return this;
+    return copyWith(tags: [...tags, tag]);
   }
 
-  // 确保 WorkEntity 的 toString 方法包含标签信息，便于调试
-  @override
-  String toString() {
-    return '''WorkEntity(id: $id, 
-      name: $name, 
-      tags: ${metadata?.tags}, 
-      imagesCount: ${images.length})''';
-  }
-}
-
-class WorkMetadata {
-  final List<String> tags;
-
-  const WorkMetadata({this.tags = const []});
-
-  factory WorkMetadata.fromJson(String source) {
-    try {
-      final map = jsonDecode(source) as Map<String, dynamic>;
-      return WorkMetadata.fromMap(map);
-    } catch (e) {
-      // 尝试修复非标准JSON字符串
-      try {
-        // 将 Dart Map 字面量格式转为标准JSON
-        // 例如: {tags: ["草书"]} → {"tags": ["草书"]}
-        String fixedJson =
-            source.replaceAll(RegExp(r'([{,])\s*([a-zA-Z0-9_]+):'), r'$1"$2":');
-        final map = jsonDecode(fixedJson) as Map<String, dynamic>;
-        AppLogger.debug('修复了非标准JSON格式', tag: 'WorkMetadata');
-        return WorkMetadata.fromMap(map);
-      } catch (e2) {
-        AppLogger.error('解析元数据失败', tag: 'WorkMetadata', error: e);
-        return const WorkMetadata(tags: []);
-      }
-    }
+  /// 移除关联字
+  WorkEntity removeCollectedChar(CharacterEntity char) {
+    return copyWith(
+        collectedChars: collectedChars.where((c) => c != char).toList());
   }
 
-  factory WorkMetadata.fromMap(Map<String, dynamic> map) {
-    try {
-      final tagsData = map['tags'];
-      List<String> tags = [];
-
-      if (tagsData != null) {
-        if (tagsData is List) {
-          // 明确转换每个元素为 String 类型
-          tags = tagsData.map<String>((item) => item.toString()).toList();
-        }
-      }
-
-      return WorkMetadata(tags: tags);
-    } catch (e) {
-      debugPrint('WorkMetadata fromMap 错误: $e');
-      return const WorkMetadata(tags: []);
-    }
+  /// 移除标签
+  WorkEntity removeTag(String tag) {
+    return copyWith(tags: tags.where((t) => t != tag).toList());
   }
 
-  String toJson() {
-    try {
-      return jsonEncode(toMap());
-    } catch (e) {
-      debugPrint('WorkMetadata toJson 错误: $e');
-      return '{"tags":[]}'; // 返回有效的JSON字符串
-    }
-  }
-
-  // 添加更健壮的序列化与反序列化方法
-  Map<String, dynamic> toMap() {
-    return {
-      'tags': tags,
-    };
-  }
-
-  @override
-  String toString() {
-    return 'WorkMetadata{tags: $tags}';
+  /// 更新标签
+  WorkEntity updateTags(List<String> newTags) {
+    return copyWith(tags: newTags);
   }
 }
