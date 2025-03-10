@@ -57,10 +57,8 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(char);
   ''',
 
-  // 版本 2: 添加作品图片管理
-  '''
-  -- 创建作品图片表
-  CREATE TABLE IF NOT EXISTS work_images (
+  // 版本 2: 添加作品图片管理 - 表和索引
+  '''CREATE TABLE IF NOT EXISTS work_images (
     id TEXT PRIMARY KEY,
     workId TEXT NOT NULL,
     indexInWork INTEGER NOT NULL,
@@ -73,44 +71,82 @@ const migrations = [
     createTime INTEGER NOT NULL,
     updateTime INTEGER NOT NULL,
     FOREIGN KEY (workId) REFERENCES works (id) ON DELETE CASCADE
-  );
+  )''',
 
-  -- 创建索引
-  CREATE INDEX IF NOT EXISTS idx_work_images_workId ON work_images(workId);
-  CREATE INDEX IF NOT EXISTS idx_work_images_index ON work_images(workId, indexInWork);
+  '''CREATE INDEX IF NOT EXISTS idx_work_images_workId ON work_images(workId)''',
 
-  -- 添加首图ID和最后更新时间字段
-  ALTER TABLE works 
-  ADD COLUMN firstImageId TEXT REFERENCES work_images(id),
-  ADD COLUMN lastImageUpdateTime INTEGER;
+  '''CREATE INDEX IF NOT EXISTS idx_work_images_index ON work_images(workId, indexInWork)''',
 
-  -- 创建触发器：更新imageCount
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count
-  AFTER INSERT OR DELETE ON work_images
+  // 版本 2: 添加作品图片管理 - ALTER TABLE
+  '''ALTER TABLE works 
+  ADD COLUMN firstImageId TEXT REFERENCES work_images(id)''',
+
+  '''ALTER TABLE works 
+  ADD COLUMN lastImageUpdateTime INTEGER''',
+
+  // 版本 2: 添加作品图片管理 - 触发器
+  '''CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert 
+  AFTER INSERT ON work_images
   BEGIN
     UPDATE works 
     SET imageCount = (
       SELECT COUNT(*) 
       FROM work_images 
-      WHERE workId = new.workId
+      WHERE workId = NEW.workId
     )
-    WHERE id = new.workId;
-  END;
+    WHERE id = NEW.workId;
+  END''',
 
-  -- 创建触发器：更新firstImageId
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image
-  AFTER INSERT OR DELETE OR UPDATE OF indexInWork ON work_images
+  '''CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete 
+  AFTER DELETE ON work_images
+  BEGIN
+    UPDATE works 
+    SET imageCount = (
+      SELECT COUNT(*) 
+      FROM work_images 
+      WHERE workId = OLD.workId
+    )
+    WHERE id = OLD.workId;
+  END''',
+
+  '''CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert 
+  AFTER INSERT ON work_images
   BEGIN
     UPDATE works 
     SET firstImageId = (
       SELECT id
       FROM work_images
-      WHERE workId = new.workId
+      WHERE workId = NEW.workId
       ORDER BY indexInWork ASC
       LIMIT 1
     ),
     lastImageUpdateTime = strftime('%s', 'now') * 1000
-    WHERE id = new.workId;
-  END;
-  ''',
+    WHERE id = NEW.workId;
+  END''',
+
+  '''CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update 
+  AFTER UPDATE OF indexInWork ON work_images
+  BEGIN
+    UPDATE works 
+    SET firstImageId = (
+      SELECT id
+      FROM work_images
+      WHERE workId = NEW.workId
+      ORDER BY indexInWork ASC
+      LIMIT 1
+    ),
+    lastImageUpdateTime = strftime('%s', 'now') * 1000
+    WHERE id = NEW.workId;
+  END''',
+
+  '''CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete 
+  AFTER DELETE ON work_images
+  BEGIN
+    UPDATE works 
+    SET firstImageId = (
+      SELECT id FROM work_images WHERE workId = OLD.workId ORDER BY indexInWork ASC LIMIT 1
+    ),
+    lastImageUpdateTime = strftime('%s', 'now') * 1000
+    WHERE id = OLD.workId;
+  END'''
 ];
