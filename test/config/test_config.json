@@ -1,0 +1,146 @@
+{
+    "analysis": {
+        "excludes": [
+            "**/generated/**",
+            "**/test/**"
+        ],
+        "implicit-casts": false,
+        "implicit-dynamic": false,
+        "strong-mode": true
+    },
+    "benchmarks": {
+        "metrics": {
+            "cpu": {
+                "threshold": 80,
+                "unit": "%"
+            },
+            "latency": {
+                "threshold": 100,
+                "unit": "ms"
+            },
+            "memory": {
+                "threshold": 512,
+                "unit": "MB"
+            }
+        },
+        "runs": 5,
+        "timeout": 600,
+        "warmup": 2
+    },
+    "ci": {
+        "notifications": {
+            "email": {
+                "on_failure": "always",
+                "on_success": "change"
+            },
+            "slack": {
+                "channel": "#ci-builds",
+                "on_failure": "always",
+                "on_success": "change"
+            }
+        },
+        "stages": [
+            {
+                "commands": [
+                    "dart analyze",
+                    "dart format --set-exit-if-changed ."
+                ],
+                "name": "lint"
+            },
+            {
+                "commands": [
+                    "dart test test/unit",
+                    "dart test test/integration",
+                    "dart test test/e2e"
+                ],
+                "coverage": true,
+                "name": "test"
+            },
+            {
+                "commands": [
+                    "dart compile exe bin/main.dart"
+                ],
+                "name": "build"
+            }
+        ]
+    },
+    "coverage": {
+        "excludes": [
+            "**/generated/**",
+            "**/test/**",
+            "**/example/**"
+        ],
+        "reports": {
+            "html": "coverage/html",
+            "json": "coverage/coverage.json",
+            "lcov": "coverage/lcov.info"
+        },
+        "required": 80
+    },
+    "dependencies": {
+        "flutter": ">=3.0.0",
+        "sdk": ">=2.18.0 <3.0.0"
+    },
+    "linting": {
+        "excludes": [
+            "**/generated/**",
+            "**/test/**"
+        ],
+        "rules": {
+            "avoid_print": true,
+            "prefer_const_constructors": true,
+            "sort_constructors_first": true,
+            "unnecessary_brace_in_string_interps": true,
+            "unnecessary_const": true,
+            "unnecessary_new": true,
+            "unnecessary_this": true
+        }
+    },
+    "tests": {
+        "e2e": {
+            "browser": {
+                "deviceScaleFactor": 1,
+                "headless": true,
+                "height": 1080,
+                "width": 1920
+            },
+            "parallel": false,
+            "patterns": [
+                "test/e2e/**_test.dart"
+            ],
+            "retries": 0,
+            "timeout": 300
+        },
+        "integration": {
+            "dependencies": {
+                "ports": [
+                    8080,
+                    8888,
+                    6379
+                ],
+                "services": [
+                    "redis",
+                    "postgres"
+                ]
+            },
+            "parallel": false,
+            "patterns": [
+                "test/integration/**_test.dart"
+            ],
+            "retries": 1,
+            "timeout": 120
+        },
+        "unit": {
+            "parallel": true,
+            "patterns": [
+                "test/unit/**_test.dart"
+            ],
+            "retries": 2,
+            "tags": {
+                "critical": true,
+                "performance": false
+            },
+            "timeout": 30
+        }
+    }
+}

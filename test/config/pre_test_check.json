@@ -1,0 +1,9 @@
+{
+    "backupIntervalHours": 24,
+    "cacheValidityMinutes": 5,
+    "enableCache": true,
+    "requiredDiskSpaceMB": 2048,
+    "retryCount": 3,
+    "retryIntervalSeconds": 1,
+    "timeoutSeconds": 30
+}

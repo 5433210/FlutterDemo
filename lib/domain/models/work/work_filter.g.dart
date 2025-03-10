@@ -9,8 +9,8 @@ part of 'work_filter.dart';
 _$WorkFilterImpl _$$WorkFilterImplFromJson(Map<String, dynamic> json) =>
     _$WorkFilterImpl(
       keyword: json['keyword'] as String?,
-      style: WorkStyle.fromValue(json['style']),
-      tool: WorkTool.fromValue(json['tool']),
+      style: _workStyleFilterFromJson(json['style']),
+      tool: _workToolFilterFromJson(json['tool']),
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],

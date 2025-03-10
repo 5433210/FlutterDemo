@@ -20,12 +20,41 @@ WorkImage _$WorkImageFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$WorkImage {
+  /// ID
+  String get id => throw _privateConstructorUsedError;
+
+  /// 关联的作品ID
+  String get workId => throw _privateConstructorUsedError;
+
+  /// 导入时的原始路径
+  String get originalPath => throw _privateConstructorUsedError;
+
   /// 图片路径
   String get path => throw _privateConstructorUsedError;
+
+  /// 缩略图路径
   String get thumbnailPath => throw _privateConstructorUsedError;
 
   /// 在作品中的序号
   int get index => throw _privateConstructorUsedError;
+
+  /// 图片宽度
+  int get width => throw _privateConstructorUsedError;
+
+  /// 图片高度
+  int get height => throw _privateConstructorUsedError;
+
+  /// 文件格式
+  String get format => throw _privateConstructorUsedError;
+
+  /// 文件大小(字节)
+  int get size => throw _privateConstructorUsedError;
+
+  /// 创建时间
+  DateTime get createTime => throw _privateConstructorUsedError;
+
+  /// 更新时间
+  DateTime get updateTime => throw _privateConstructorUsedError;
 
   /// Serializes this WorkImage to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -42,7 +71,19 @@ abstract class $WorkImageCopyWith<$Res> {
   factory $WorkImageCopyWith(WorkImage value, $Res Function(WorkImage) then) =
       _$WorkImageCopyWithImpl<$Res, WorkImage>;
   @useResult
-  $Res call({String path, String thumbnailPath, int index});
+  $Res call(
+      {String id,
+      String workId,
+      String originalPath,
+      String path,
+      String thumbnailPath,
+      int index,
+      int width,
+      int height,
+      String format,
+      int size,
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -60,11 +101,32 @@ class _$WorkImageCopyWithImpl<$Res, $Val extends WorkImage>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = null,
+    Object? workId = null,
+    Object? originalPath = null,
     Object? path = null,
     Object? thumbnailPath = null,
     Object? index = null,
+    Object? width = null,
+    Object? height = null,
+    Object? format = null,
+    Object? size = null,
+    Object? createTime = null,
+    Object? updateTime = null,
   }) {
     return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      workId: null == workId
+          ? _value.workId
+          : workId // ignore: cast_nullable_to_non_nullable
+              as String,
+      originalPath: null == originalPath
+          ? _value.originalPath
+          : originalPath // ignore: cast_nullable_to_non_nullable
+              as String,
       path: null == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -77,6 +139,30 @@ class _$WorkImageCopyWithImpl<$Res, $Val extends WorkImage>
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as int,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as int,
+      format: null == format
+          ? _value.format
+          : format // ignore: cast_nullable_to_non_nullable
+              as String,
+      size: null == size
+          ? _value.size
+          : size // ignore: cast_nullable_to_non_nullable
+              as int,
+      createTime: null == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updateTime: null == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
     ) as $Val);
   }
 }
@@ -89,7 +175,19 @@ abstract class _$$WorkImageImplCopyWith<$Res>
       __$$WorkImageImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String path, String thumbnailPath, int index});
+  $Res call(
+      {String id,
+      String workId,
+      String originalPath,
+      String path,
+      String thumbnailPath,
+      int index,
+      int width,
+      int height,
+      String format,
+      int size,
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -105,11 +203,32 @@ class __$$WorkImageImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? id = null,
+    Object? workId = null,
+    Object? originalPath = null,
     Object? path = null,
     Object? thumbnailPath = null,
     Object? index = null,
+    Object? width = null,
+    Object? height = null,
+    Object? format = null,
+    Object? size = null,
+    Object? createTime = null,
+    Object? updateTime = null,
   }) {
     return _then(_$WorkImageImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      workId: null == workId
+          ? _value.workId
+          : workId // ignore: cast_nullable_to_non_nullable
+              as String,
+      originalPath: null == originalPath
+          ? _value.originalPath
+          : originalPath // ignore: cast_nullable_to_non_nullable
+              as String,
       path: null == path
           ? _value.path
           : path // ignore: cast_nullable_to_non_nullable
@@ -122,6 +241,30 @@ class __$$WorkImageImplCopyWithImpl<$Res>
           ? _value.index
           : index // ignore: cast_nullable_to_non_nullable
               as int,
+      width: null == width
+          ? _value.width
+          : width // ignore: cast_nullable_to_non_nullable
+              as int,
+      height: null == height
+          ? _value.height
+          : height // ignore: cast_nullable_to_non_nullable
+              as int,
+      format: null == format
+          ? _value.format
+          : format // ignore: cast_nullable_to_non_nullable
+              as String,
+      size: null == size
+          ? _value.size
+          : size // ignore: cast_nullable_to_non_nullable
+              as int,
+      createTime: null == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updateTime: null == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
     ));
   }
 }
@@ -129,16 +272,41 @@ class __$$WorkImageImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$WorkImageImpl extends _WorkImage {
-  const _$WorkImageImpl(
-      {required this.path, required this.thumbnailPath, required this.index})
+  _$WorkImageImpl(
+      {required this.id,
+      required this.workId,
+      required this.originalPath,
+      required this.path,
+      required this.thumbnailPath,
+      required this.index,
+      required this.width,
+      required this.height,
+      required this.format,
+      required this.size,
+      required this.createTime,
+      required this.updateTime})
       : super._();
 
   factory _$WorkImageImpl.fromJson(Map<String, dynamic> json) =>
       _$$WorkImageImplFromJson(json);
 
+  /// ID
+  @override
+  final String id;
+
+  /// 关联的作品ID
+  @override
+  final String workId;
+
+  /// 导入时的原始路径
+  @override
+  final String originalPath;
+
   /// 图片路径
   @override
   final String path;
+
+  /// 缩略图路径
   @override
   final String thumbnailPath;
 
@@ -146,9 +314,33 @@ class _$WorkImageImpl extends _WorkImage {
   @override
   final int index;
 
+  /// 图片宽度
+  @override
+  final int width;
+
+  /// 图片高度
+  @override
+  final int height;
+
+  /// 文件格式
+  @override
+  final String format;
+
+  /// 文件大小(字节)
+  @override
+  final int size;
+
+  /// 创建时间
+  @override
+  final DateTime createTime;
+
+  /// 更新时间
+  @override
+  final DateTime updateTime;
+
   @override
   String toString() {
-    return 'WorkImage(path: $path, thumbnailPath: $thumbnailPath, index: $index)';
+    return 'WorkImage(id: $id, workId: $workId, originalPath: $originalPath, path: $path, thumbnailPath: $thumbnailPath, index: $index, width: $width, height: $height, format: $format, size: $size, createTime: $createTime, updateTime: $updateTime)';
   }
 
   @override
@@ -156,15 +348,40 @@ class _$WorkImageImpl extends _WorkImage {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$WorkImageImpl &&
+            (identical(other.id, id) || other.id == id) &&
+            (identical(other.workId, workId) || other.workId == workId) &&
+            (identical(other.originalPath, originalPath) ||
+                other.originalPath == originalPath) &&
             (identical(other.path, path) || other.path == path) &&
             (identical(other.thumbnailPath, thumbnailPath) ||
                 other.thumbnailPath == thumbnailPath) &&
-            (identical(other.index, index) || other.index == index));
+            (identical(other.index, index) || other.index == index) &&
+            (identical(other.width, width) || other.width == width) &&
+            (identical(other.height, height) || other.height == height) &&
+            (identical(other.format, format) || other.format == format) &&
+            (identical(other.size, size) || other.size == size) &&
+            (identical(other.createTime, createTime) ||
+                other.createTime == createTime) &&
+            (identical(other.updateTime, updateTime) ||
+                other.updateTime == updateTime));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, path, thumbnailPath, index);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      workId,
+      originalPath,
+      path,
+      thumbnailPath,
+      index,
+      width,
+      height,
+      format,
+      size,
+      createTime,
+      updateTime);
 
   /// Create a copy of WorkImage
   /// with the given fields replaced by the non-null parameter values.
@@ -183,24 +400,71 @@ class _$WorkImageImpl extends _WorkImage {
 }
 
 abstract class _WorkImage extends WorkImage {
-  const factory _WorkImage(
-      {required final String path,
+  factory _WorkImage(
+      {required final String id,
+      required final String workId,
+      required final String originalPath,
+      required final String path,
       required final String thumbnailPath,
-      required final int index}) = _$WorkImageImpl;
-  const _WorkImage._() : super._();
+      required final int index,
+      required final int width,
+      required final int height,
+      required final String format,
+      required final int size,
+      required final DateTime createTime,
+      required final DateTime updateTime}) = _$WorkImageImpl;
+  _WorkImage._() : super._();
 
   factory _WorkImage.fromJson(Map<String, dynamic> json) =
       _$WorkImageImpl.fromJson;
 
+  /// ID
+  @override
+  String get id;
+
+  /// 关联的作品ID
+  @override
+  String get workId;
+
+  /// 导入时的原始路径
+  @override
+  String get originalPath;
+
   /// 图片路径
   @override
   String get path;
+
+  /// 缩略图路径
   @override
   String get thumbnailPath;
 
   /// 在作品中的序号
   @override
   int get index;
+
+  /// 图片宽度
+  @override
+  int get width;
+
+  /// 图片高度
+  @override
+  int get height;
+
+  /// 文件格式
+  @override
+  String get format;
+
+  /// 文件大小(字节)
+  @override
+  int get size;
+
+  /// 创建时间
+  @override
+  DateTime get createTime;
+
+  /// 更新时间
+  @override
+  DateTime get updateTime;
 
   /// Create a copy of WorkImage
   /// with the given fields replaced by the non-null parameter values.

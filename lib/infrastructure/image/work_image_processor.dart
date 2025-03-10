@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
+import 'package:uuid/uuid.dart';
 
 import '../../domain/models/work/work_image.dart';
 import '../../domain/services/work_image_processing_interface.dart';
@@ -15,6 +16,8 @@ class WorkImageProcessor extends BaseImageProcessor
   static const int _quality = 85;
   static const int _maxImageWidth = 1920;
   static const int _maxImageHeight = 1080;
+
+  final _uuid = const Uuid();
 
   @override
   Future<File> generateWorkThumbnail(File image) async {
@@ -79,10 +82,7 @@ class WorkImageProcessor extends BaseImageProcessor
         final file = images[i];
 
         // 优化原图
-        final optimized = await optimize(
-          file,
-          _quality,
-        );
+        final optimized = await optimize(file, _quality);
 
         // 调整尺寸（如果需要）
         final bytes = await optimized.readAsBytes();
@@ -119,7 +119,16 @@ class WorkImageProcessor extends BaseImageProcessor
 
         // 添加到处理结果
         processed.add(WorkImage.create(
-            path: imagePath, index: i, thumbnailPath: thumbnailPath));
+            id: _uuid.v4(),
+            workId: workId,
+            originalPath: file.path,
+            path: imagePath,
+            thumbnailPath: thumbnailPath,
+            index: i,
+            width: image.width,
+            height: image.height,
+            format: path.extension(file.path).toLowerCase().replaceAll('.', ''),
+            size: await file.length()));
 
         AppLogger.debug('完成处理图片', tag: 'WorkImageProcessor', data: {
           'workId': workId,

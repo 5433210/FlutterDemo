@@ -1,61 +1,34 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as path;
-
 class AppConfig {
-  // Image related settings
-  static const maxImagesPerWork = 10;
-  static const maxImageSize = 20 * 1024 * 1024; // 20MB
-  static const maxImageWidth = 4096;
-  static const maxImageHeight = 4096;
+  // 缓存目录名
+  static String get cacheFolder => 'cache';
 
-  static const supportedImageFormats = ['jpg', 'jpeg', 'png'];
+  // 数据存储路径
+  static String get dataPath => 'data';
 
-  // Image processing settings
-  static const int optimizedImageWidth = 2048;
-  static const int optimizedImageHeight = 2048;
-  static const int optimizedImageQuality = 85;
-  static const int thumbnailSize = 256;
+  // 数据库文件名
+  static String get dbFilename => 'works.db';
 
-  // Storage paths
-  static const String workspacePath = 'workspace';
-  static const String originalsPath = 'workspace/originals';
-  static const String optimizedPath = 'workspace/optimized';
-  static const String thumbnailsPath = 'workspace/thumbnails';
+  // 最大文件大小限制 (20MB)
+  static int get maxImageSize => 20 * 1024 * 1024;
 
-  // Supported file types
-  static const List<String> supportedImageTypes = [
-    '.jpg',
-    '.jpeg',
-    '.png',
-    '.webp'
-  ];
+  static int get optimizedImageHeight => 1080;
 
-  // 更新路径配置
-  static const String appDataFolder = 'data';
-  static const String storageFolder = 'storage';
-  static const String worksFolder = 'works';
-  static const String thumbnailFile = 'thumbnail.jpg';
+  static int get optimizedImageQuality => 85;
 
-  // 获取应用数据根目录
-  static String get dataPath {
-    final envPath = Platform.environment['APP_DATA_PATH'];
-    if (envPath != null && envPath.isNotEmpty) {
-      return envPath;
-    }
+  // 图片优化设置
+  static int get optimizedImageWidth => 1920;
 
-    // 默认使用文档目录下的 data 文件夹
-    return path.join(defaultDocsPath, appDataFolder);
-  }
+  // 存储目录名
+  static String get storageFolder => 'storage';
+  // 临时文件目录名
+  static String get tempFolder => 'temp';
+  static int get thumbnailQuality => 85;
 
-  // 默认的文档目录路径
-  static String get defaultDocsPath => Platform.isWindows
-      ? path.join(Platform.environment['USERPROFILE'] ?? '', 'Documents')
-      : Platform.isMacOS
-          ? path.join(Platform.environment['HOME'] ?? '', 'Documents')
-          : Platform.isLinux
-              ? path.join(Platform.environment['HOME'] ?? '', 'Documents')
-              : '';
+  // 缩略图目录名
+  static String get thumbnailsFolder => 'thumbnails';
+  // 缩略图设置
+  static int get thumbnailSize => 256;
 
-  const AppConfig._();
+  // 作品存储目录名
+  static String get worksFolder => 'works';
 }

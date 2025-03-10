@@ -2,11 +2,26 @@ import 'dart:io';
 
 import 'package:demo/application/services/work/work_image_service.dart';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart' as path;
 
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
+import '../../domain/repositories/work_image_repository.dart';
+
+Future<ImageMetadata> _getImageMetadata(File file) async {
+  final image = await decodeImageFromList(await file.readAsBytes());
+  final size = await file.length();
+  final format = path.extension(file.path).toLowerCase().replaceAll('.', '');
+
+  return ImageMetadata(
+    width: image.width,
+    height: image.height,
+    format: format,
+    size: size,
+  );
+}
 
 /// 命令：添加图片
 class AddImageCommand implements WorkEditCommand {
@@ -219,11 +234,23 @@ class RotateImageCommand implements WorkEditCommand {
       // 覆盖原有缩略图
       await thumbnailFile.copy(_oldImage!.thumbnailPath);
 
+      // 获取图片元数据
+      final metadata = await _getImageMetadata(rotatedFile);
+
       // 6. 创建新的 WorkImage 对象
       _newImage = WorkImage(
-        index: _oldImage!.index,
+        id: _oldImage!.id,
+        workId: work.id,
+        originalPath: _oldImage!.originalPath,
         path: _oldImage!.path,
+        index: _oldImage!.index,
         thumbnailPath: _oldImage!.thumbnailPath,
+        width: metadata.width,
+        height: metadata.height,
+        format: metadata.format,
+        size: metadata.size,
+        createTime: _oldImage!.createTime ?? DateTime.now(),
+        updateTime: DateTime.now(),
       );
 
       // 7. 更新图片列表

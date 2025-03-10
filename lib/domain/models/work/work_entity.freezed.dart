@@ -55,6 +55,12 @@ mixin _$WorkEntity {
   /// 状态
   WorkStatus get status => throw _privateConstructorUsedError;
 
+  /// 首图ID
+  String? get firstImageId => throw _privateConstructorUsedError;
+
+  /// 图片最后更新时间
+  DateTime? get lastImageUpdateTime => throw _privateConstructorUsedError;
+
   /// 图片列表
   List<WorkImage> get images => throw _privateConstructorUsedError;
 
@@ -98,6 +104,8 @@ abstract class $WorkEntityCopyWith<$Res> {
       @JsonKey(name: 'create_time') DateTime createTime,
       @JsonKey(name: 'update_time') DateTime updateTime,
       WorkStatus status,
+      String? firstImageId,
+      DateTime? lastImageUpdateTime,
       List<WorkImage> images,
       @JsonKey(name: 'collected_chars') List<CharacterEntity> collectedChars,
       List<String> tags,
@@ -129,6 +137,8 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
     Object? createTime = null,
     Object? updateTime = null,
     Object? status = null,
+    Object? firstImageId = freezed,
+    Object? lastImageUpdateTime = freezed,
     Object? images = null,
     Object? collectedChars = null,
     Object? tags = null,
@@ -175,6 +185,14 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as WorkStatus,
+      firstImageId: freezed == firstImageId
+          ? _value.firstImageId
+          : firstImageId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastImageUpdateTime: freezed == lastImageUpdateTime
+          ? _value.lastImageUpdateTime
+          : lastImageUpdateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       images: null == images
           ? _value.images
           : images // ignore: cast_nullable_to_non_nullable
@@ -216,6 +234,8 @@ abstract class _$$WorkEntityImplCopyWith<$Res>
       @JsonKey(name: 'create_time') DateTime createTime,
       @JsonKey(name: 'update_time') DateTime updateTime,
       WorkStatus status,
+      String? firstImageId,
+      DateTime? lastImageUpdateTime,
       List<WorkImage> images,
       @JsonKey(name: 'collected_chars') List<CharacterEntity> collectedChars,
       List<String> tags,
@@ -245,6 +265,8 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
     Object? createTime = null,
     Object? updateTime = null,
     Object? status = null,
+    Object? firstImageId = freezed,
+    Object? lastImageUpdateTime = freezed,
     Object? images = null,
     Object? collectedChars = null,
     Object? tags = null,
@@ -291,6 +313,14 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as WorkStatus,
+      firstImageId: freezed == firstImageId
+          ? _value.firstImageId
+          : firstImageId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      lastImageUpdateTime: freezed == lastImageUpdateTime
+          ? _value.lastImageUpdateTime
+          : lastImageUpdateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
       images: null == images
           ? _value._images
           : images // ignore: cast_nullable_to_non_nullable
@@ -327,6 +357,8 @@ class _$WorkEntityImpl extends _WorkEntity {
       @JsonKey(name: 'create_time') required this.createTime,
       @JsonKey(name: 'update_time') required this.updateTime,
       this.status = WorkStatus.draft,
+      this.firstImageId,
+      this.lastImageUpdateTime,
       final List<WorkImage> images = const [],
       @JsonKey(name: 'collected_chars')
       final List<CharacterEntity> collectedChars = const [],
@@ -386,6 +418,14 @@ class _$WorkEntityImpl extends _WorkEntity {
   @JsonKey()
   final WorkStatus status;
 
+  /// 首图ID
+  @override
+  final String? firstImageId;
+
+  /// 图片最后更新时间
+  @override
+  final DateTime? lastImageUpdateTime;
+
   /// 图片列表
   final List<WorkImage> _images;
 
@@ -428,7 +468,7 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   @override
   String toString() {
-    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, creationDate: $creationDate, createTime: $createTime, updateTime: $updateTime, status: $status, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
+    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, creationDate: $creationDate, createTime: $createTime, updateTime: $updateTime, status: $status, firstImageId: $firstImageId, lastImageUpdateTime: $lastImageUpdateTime, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
   }
 
   @override
@@ -449,6 +489,10 @@ class _$WorkEntityImpl extends _WorkEntity {
             (identical(other.updateTime, updateTime) ||
                 other.updateTime == updateTime) &&
             (identical(other.status, status) || other.status == status) &&
+            (identical(other.firstImageId, firstImageId) ||
+                other.firstImageId == firstImageId) &&
+            (identical(other.lastImageUpdateTime, lastImageUpdateTime) ||
+                other.lastImageUpdateTime == lastImageUpdateTime) &&
             const DeepCollectionEquality().equals(other._images, _images) &&
             const DeepCollectionEquality()
                 .equals(other._collectedChars, _collectedChars) &&
@@ -471,6 +515,8 @@ class _$WorkEntityImpl extends _WorkEntity {
       createTime,
       updateTime,
       status,
+      firstImageId,
+      lastImageUpdateTime,
       const DeepCollectionEquality().hash(_images),
       const DeepCollectionEquality().hash(_collectedChars),
       const DeepCollectionEquality().hash(_tags),
@@ -506,6 +552,8 @@ abstract class _WorkEntity extends WorkEntity {
       @JsonKey(name: 'create_time') required final DateTime createTime,
       @JsonKey(name: 'update_time') required final DateTime updateTime,
       final WorkStatus status,
+      final String? firstImageId,
+      final DateTime? lastImageUpdateTime,
       final List<WorkImage> images,
       @JsonKey(name: 'collected_chars')
       final List<CharacterEntity> collectedChars,
@@ -560,6 +608,14 @@ abstract class _WorkEntity extends WorkEntity {
   /// 状态
   @override
   WorkStatus get status;
+
+  /// 首图ID
+  @override
+  String? get firstImageId;
+
+  /// 图片最后更新时间
+  @override
+  DateTime? get lastImageUpdateTime;
 
   /// 图片列表
   @override

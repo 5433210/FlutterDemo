@@ -45,6 +45,13 @@ class WorkService with WorkServiceErrorHandler {
     return handleOperation(
       'deleteWork',
       () async {
+        // 先删除封面缩略图
+        final coverPath = await PathHelper.getWorkCoverThumbnailPath(workId);
+        if (await PathHelper.isFileExists(coverPath)) {
+          await File(coverPath).delete();
+        }
+
+        // 删除作品及其图片
         await _repository.delete(workId);
         await _imageService.cleanupWorkImages(workId);
       },
@@ -117,10 +124,18 @@ class WorkService with WorkServiceErrorHandler {
         if (files.isEmpty) throw ArgumentError('图片文件不能为空');
 
         // 处理图片
-        final images = await _imageService.processImagesInBatches(
-          work.id,
-          files,
-        );
+        final images =
+            await _imageService.processImagesInBatches(work.id, files);
+
+        // 确保生成并保存封面缩略图
+        if (files.isNotEmpty) {
+          final coverThumb = await _imageService.createThumbnail(files[0]);
+          final coverPath = await PathHelper.getWorkCoverThumbnailPath(work.id);
+          await coverThumb.copy(coverPath);
+          AppLogger.debug('已生成作品封面缩略图',
+              tag: 'WorkService',
+              data: {'workId': work.id, 'coverPath': coverPath});
+        }
 
         // 更新作品信息
         final updatedWork = work.copyWith(

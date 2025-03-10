@@ -133,6 +133,16 @@ class _WorkBrowsePageState extends ConsumerState<WorkBrowsePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // 延迟执行初始加载，确保widget完全初始化
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
+        reason: '应用启动初始化',
+        force: true,
+        priority: 10,
+      );
+    });
   }
 
   Widget _buildMainContent() {

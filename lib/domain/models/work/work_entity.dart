@@ -52,6 +52,12 @@ class WorkEntity with _$WorkEntity {
     /// 状态
     @Default(WorkStatus.draft) WorkStatus status,
 
+    /// 首图ID
+    String? firstImageId,
+
+    /// 图片最后更新时间
+    DateTime? lastImageUpdateTime,
+
     /// 图片列表
     @Default([]) List<WorkImage> images,
 
@@ -72,8 +78,11 @@ class WorkEntity with _$WorkEntity {
 
   const WorkEntity._();
 
-  /// 获取图片数量
-  int get totalImages => images.length;
+  /// 获取首图
+  WorkImage? get firstImage => images.isEmpty ? null : images[0];
+
+  /// 获取图片总数量
+  int get totalImages => imageCount ?? images.length;
 
   /// 添加关联字
   WorkEntity addCollectedChar(CharacterEntity char) {
@@ -97,6 +106,10 @@ class WorkEntity with _$WorkEntity {
   WorkEntity removeTag(String tag) {
     return copyWith(tags: tags.where((t) => t != tag).toList());
   }
+
+  /// 更新首图
+  WorkEntity updateFirstImage(String? firstImageId) =>
+      copyWith(firstImageId: firstImageId);
 
   /// 更新标签
   WorkEntity updateTags(List<String> newTags) {

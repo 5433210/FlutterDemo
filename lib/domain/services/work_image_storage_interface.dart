@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'image_storage_interface.dart';
+import '../../infrastructure/storage/storage_interface.dart';
 
-abstract class IWorkImageStorage implements IImageStorage {
+abstract class IWorkImageStorage implements IStorage {
   /// 删除作品图片（Work专用）
   Future<void> deleteWorkImage(String workId, String imagePath);
 

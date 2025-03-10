@@ -24,11 +24,11 @@ mixin _$WorkFilter {
   String? get keyword => throw _privateConstructorUsedError;
 
   /// 作品风格
-  @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+  @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
   WorkStyle? get style => throw _privateConstructorUsedError;
 
   /// 创作工具
-  @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+  @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
   WorkTool? get tool => throw _privateConstructorUsedError;
 
   /// 标签
@@ -77,9 +77,9 @@ abstract class $WorkFilterCopyWith<$Res> {
   @useResult
   $Res call(
       {String? keyword,
-      @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+      @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       WorkStyle? style,
-      @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+      @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
       WorkTool? tool,
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
@@ -188,9 +188,9 @@ abstract class _$$WorkFilterImplCopyWith<$Res>
   @useResult
   $Res call(
       {String? keyword,
-      @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+      @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       WorkStyle? style,
-      @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+      @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
       WorkTool? tool,
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
@@ -283,9 +283,10 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
 class _$WorkFilterImpl extends _WorkFilter {
   const _$WorkFilterImpl(
       {this.keyword,
-      @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+      @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       this.style,
-      @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson) this.tool,
+      @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
+      this.tool,
       final List<String> tags = const [],
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       this.dateRange,
@@ -315,12 +316,12 @@ class _$WorkFilterImpl extends _WorkFilter {
 
   /// 作品风格
   @override
-  @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+  @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
   final WorkStyle? style;
 
   /// 创作工具
   @override
-  @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+  @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
   final WorkTool? tool;
 
   /// 标签
@@ -425,9 +426,9 @@ class _$WorkFilterImpl extends _WorkFilter {
 abstract class _WorkFilter extends WorkFilter {
   const factory _WorkFilter(
       {final String? keyword,
-      @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+      @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       final WorkStyle? style,
-      @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+      @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
       final WorkTool? tool,
       final List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
@@ -457,12 +458,12 @@ abstract class _WorkFilter extends WorkFilter {
 
   /// 作品风格
   @override
-  @JsonKey(fromJson: WorkStyle.fromValue, toJson: _workStyleToJson)
+  @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
   WorkStyle? get style;
 
   /// 创作工具
   @override
-  @JsonKey(fromJson: WorkTool.fromValue, toJson: _workToolToJson)
+  @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
   WorkTool? get tool;
 
   /// 标签

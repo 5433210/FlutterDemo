@@ -1,4 +1,4 @@
-abstract class IImageStorage {
+abstract class IStorage {
   /// 删除文件（通用）
   Future<void> deleteFile(String path);
 

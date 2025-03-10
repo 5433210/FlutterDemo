@@ -19,6 +19,10 @@ _$WorkEntityImpl _$$WorkEntityImplFromJson(Map<String, dynamic> json) =>
       updateTime: DateTime.parse(json['update_time'] as String),
       status: $enumDecodeNullable(_$WorkStatusEnumMap, json['status']) ??
           WorkStatus.draft,
+      firstImageId: json['firstImageId'] as String?,
+      lastImageUpdateTime: json['lastImageUpdateTime'] == null
+          ? null
+          : DateTime.parse(json['lastImageUpdateTime'] as String),
       images: (json['images'] as List<dynamic>?)
               ?.map((e) => WorkImage.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -45,6 +49,8 @@ Map<String, dynamic> _$$WorkEntityImplToJson(_$WorkEntityImpl instance) =>
       'create_time': instance.createTime.toIso8601String(),
       'update_time': instance.updateTime.toIso8601String(),
       'status': _$WorkStatusEnumMap[instance.status]!,
+      'firstImageId': instance.firstImageId,
+      'lastImageUpdateTime': instance.lastImageUpdateTime?.toIso8601String(),
       'images': instance.images,
       'collected_chars': instance.collectedChars,
       'tags': instance.tags,

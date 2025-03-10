@@ -156,26 +156,29 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   Future<void> loadWorks({bool forceRefresh = false}) async {
     if (state.isLoading) return;
 
-    AppLogger.debug(
-      '开始加载作品列表',
-      tag: 'WorkBrowseViewModel',
-      data: {
-        'forceRefresh': forceRefresh,
-        'currentState': {
-          'isLoading': state.isLoading,
-          'worksCount': state.works.length,
-          'hasError': state.error != null,
-        }
-      },
+    AppLogger.debug('触发加载流程',
+        tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
+
+    final filter = state.filter;
+
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      requestStatus: LoadRequestStatus.loading,
     );
 
     try {
-      state = state.copyWith(isLoading: true, error: null);
+      final works = await _workService.queryWorks(filter);
 
-      await _loadThrottler.throttle(
-        () => _executeLoadOperation(forceRefresh),
-        forceExecute: forceRefresh,
+      state = state.copyWith(
+        works: works,
+        isLoading: false,
+        error: null,
+        requestStatus: LoadRequestStatus.idle,
       );
+
+      AppLogger.debug('加载完成',
+          tag: 'WorkBrowseViewModel', data: {'worksCount': works.length});
     } catch (e, stack) {
       _handleLoadError(e, stack);
     }
@@ -192,21 +195,29 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   Future<void> searchWorks(String query) async {
     if (_searchDebounce?.isActive ?? false) _searchDebounce?.cancel();
+
     _searchDebounce = Timer(const Duration(milliseconds: 500), () async {
-      state = state.copyWith(isLoading: true);
+      state = state.copyWith(
+        isLoading: true,
+        requestStatus: LoadRequestStatus.loading,
+      );
+
       try {
         final works = await _workService.queryWorks(
           state.filter,
         );
+
         state = state.copyWith(
           works: works,
           searchQuery: query,
           isLoading: false,
+          requestStatus: LoadRequestStatus.idle,
         );
       } catch (e) {
         state = state.copyWith(
           error: e.toString(),
           isLoading: false,
+          requestStatus: LoadRequestStatus.idle,
         );
       }
     });
@@ -231,9 +242,8 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
       state = state.copyWith(
         searchQuery: query,
-        isLoading: true,
       );
-      _loadFilteredWorks();
+      loadWorks(forceRefresh: true);
     });
   }
 
@@ -308,8 +318,25 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   }
 
   void updateFilter(WorkFilter filter) {
-    state = state.copyWith(filter: filter);
-    _loadFilteredWorksWithFilter(filter);
+    AppLogger.debug(
+      '更新筛选条件',
+      tag: 'WorkBrowseViewModel',
+      data: {
+        'oldFilter': state.filter.toString(),
+        'newFilter': filter.toString(),
+      },
+    );
+
+    state = state.copyWith(
+      works: [], // 清空当前列表
+      filter: filter,
+      page: 1,
+      hasMore: true,
+
+      error: null,
+    );
+
+    loadWorks(forceRefresh: true);
   }
 
   void updateSortField(SortField field) {
@@ -336,6 +363,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         },
       );
 
+      // 处理批量模式
       final clearedBatchMode = state.batchMode && forceRefresh
           ? state.copyWith(batchMode: false, selectedWorks: {})
           : state;
@@ -344,9 +372,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         state = clearedBatchMode;
       }
 
+      // 执行查询
       final works = await _workService.queryWorks(
         filter,
       );
+
       AppLogger.debug(
         '查询作品完成',
         tag: 'WorkBrowseViewModel',
@@ -355,21 +385,33 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         },
       );
 
-      if (mounted) {
-        state = state.copyWith(
-          isLoading: false,
-          works: works,
-          error: null,
-        );
+      // 移除mounted检查，确保状态一定会更新
+      state = state.copyWith(
+        isLoading: false,
+        works: works,
+        error: null,
+        requestStatus: LoadRequestStatus.idle,
+      );
 
-        _saveState();
-      }
+      AppLogger.debug('状态更新完成',
+          tag: 'WorkBrowseViewModel',
+          data: {'worksCount': works.length, 'isLoading': false});
+
+      _saveState();
     } catch (e) {
       AppLogger.error(
         '加载作品失败',
         tag: 'WorkBrowseViewModel',
         error: e,
       );
+
+      // 确保在异常情况下也更新状态
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+        requestStatus: LoadRequestStatus.idle,
+      );
+
       rethrow;
     }
   }
@@ -381,6 +423,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(
       isLoading: false,
       error: error.toString(),
+      requestStatus: LoadRequestStatus.idle,
     );
   }
 
@@ -403,50 +446,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  Future<void> _loadFilteredWorks() async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final works = await _workService.queryWorks(
-        state.filter,
-      );
-
-      state = state.copyWith(
-        works: works,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        error: e.toString(),
-        isLoading: false,
-      );
-    }
-  }
-
-  Future<void> _loadFilteredWorksWithFilter(WorkFilter filter) async {
-    state = state.copyWith(
-      filter: filter,
-      isLoading: true,
-    );
-
-    try {
-      final works = await _workService.queryWorks(
-        filter,
-      );
-
-      state = state.copyWith(
-        works: works,
-        isLoading: false,
-      );
-
-      _saveState();
-    } catch (e) {
-      state = state.copyWith(
-        error: e.toString(),
-        isLoading: false,
-      );
-    }
-  }
-
   void _saveState() {
     try {
       _stateRestorationService.saveWorkBrowseState(state);
@@ -458,5 +457,23 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         stackTrace: stack,
       );
     }
+  }
+
+  // 添加一个辅助方法来处理加载超时情况
+  void _setupLoadingTimeout() {
+    // 如果5秒后仍然在加载状态，强制重置状态
+    Future.delayed(const Duration(seconds: 5), () {
+      if (state.isLoading) {
+        AppLogger.warning(
+          '加载操作超时，强制重置状态',
+          tag: 'WorkBrowseViewModel',
+        );
+        state = state.copyWith(
+          isLoading: false,
+          requestStatus: LoadRequestStatus.idle,
+          error: '加载操作超时，请重试',
+        );
+      }
+    });
   }
 }

@@ -38,6 +38,10 @@ class LogEntry {
       buffer.write('\nStack Trace:\n$stackTrace');
     }
 
+    if (data != null && data!.isNotEmpty) {
+      buffer.write('\nData: ${data.toString()}');
+    }
+
     return buffer.toString();
   }
 

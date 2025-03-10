@@ -1,0 +1,133 @@
+name: Test and Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: dart-lang/setup-dart@v1
+      with:
+        sdk: 'stable'
+
+    - name: Install dependencies
+      run: dart pub get
+
+    - name: Verify formatting
+      run: dart format --output=none --set-exit-if-changed .
+
+    - name: Analyze project source
+      run: dart analyze
+
+    - name: Run tests with coverage
+      run: |
+        dart pub global activate coverage
+        dart test --coverage=coverage
+        dart pub global run coverage:format_coverage \
+          --lcov \
+          --in=coverage \
+          --out=coverage/lcov.info \
+          --packages=.packages \
+          --report-on=lib
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: coverage/lcov.info
+        fail_ci_if_error: true
+
+    - name: Generate coverage report
+      run: |
+        dart run test/coverage/generate_report.dart
+
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          coverage/
+          test-results/
+          reports/
+
+    - name: Check coverage threshold
+      run: |
+        COVERAGE=$(dart run test/coverage/check_coverage.dart)
+        if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+          echo "Coverage $COVERAGE% is below threshold of 80%"
+          exit 1
+        fi
+
+    - name: Notify on failure
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_COLOR: '#ff0000'
+        SLACK_MESSAGE: 'Tests failed on main branch'
+        SLACK_TITLE: CI Failure
+
+  benchmark:
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: dart-lang/setup-dart@v1
+      with:
+        sdk: 'stable'
+
+    - name: Install dependencies
+      run: dart pub get
+
+    - name: Run benchmarks
+      run: dart run test/utils/alerts/alert_benchmark_test.dart
+
+    - name: Archive benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results
+        path: test/benchmark/results/
+
+    - name: Check performance regression
+      run: |
+        dart run test/benchmark/check_regression.dart
+        if [ $? -ne 0 ]; then
+          echo "Performance regression detected!"
+          exit 1
+        fi
+
+  integration:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - uses: dart-lang/setup-dart@v1
+      with:
+        sdk: 'stable'
+
+    - name: Install dependencies
+      run: dart pub get
+
+    - name: Run integration tests
+      run: dart test test/integration/
+
+    - name: Archive integration test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: integration-test-results
+        path: test/integration/results/
+
+    - name: Generate integration test report
+      run: |
+        dart run test/integration/generate_report.dart
