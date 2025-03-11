@@ -8,7 +8,6 @@ import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
-import '../../domain/repositories/work_image_repository.dart';
 
 Future<ImageMetadata> _getImageMetadata(File file) async {
   final image = await decodeImageFromList(await file.readAsBytes());
@@ -71,6 +70,21 @@ class AddImageCommand implements WorkEditCommand {
       updateTime: DateTime.now(),
     );
   }
+}
+
+/// Class to store metadata about an image
+class ImageMetadata {
+  final int width;
+  final int height;
+  final String format;
+  final int size;
+
+  ImageMetadata({
+    required this.width,
+    required this.height,
+    required this.format,
+    required this.size,
+  });
 }
 
 /// 命令：删除图片

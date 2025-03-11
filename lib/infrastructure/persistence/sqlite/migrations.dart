@@ -14,6 +14,7 @@ const migrations = [
     createTime INTEGER NOT NULL,
     updateTime INTEGER NOT NULL,
     tags TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
     imageCount INTEGER DEFAULT 0
   );
 

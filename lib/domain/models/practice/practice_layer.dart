@@ -39,10 +39,10 @@ class PracticeLayer with _$PracticeLayer {
     @Default([]) List<PracticeElement> elements,
 
     /// 图层创建时间
-    @JsonKey(name: 'create_time') required DateTime createTime,
+    required DateTime createTime,
 
     /// 图层更新时间
-    @JsonKey(name: 'update_time') required DateTime updateTime,
+    required DateTime updateTime,
   }) = _PracticeLayer;
 
   /// 新建图层

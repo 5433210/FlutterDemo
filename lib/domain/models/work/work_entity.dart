@@ -41,13 +41,20 @@ class WorkEntity with _$WorkEntity {
     required WorkTool tool,
 
     /// 创作日期
-    @JsonKey(name: 'creation_date') required DateTime creationDate,
+
+    required DateTime creationDate,
 
     /// 创建时间
-    @JsonKey(name: 'create_time') required DateTime createTime,
+
+    required DateTime createTime,
 
     /// 修改时间
-    @JsonKey(name: 'update_time') required DateTime updateTime,
+
+    required DateTime updateTime,
+
+    /// 图片最后更新时间
+
+    DateTime? lastImageUpdateTime,
 
     /// 状态
     @Default(WorkStatus.draft) WorkStatus status,
@@ -55,16 +62,12 @@ class WorkEntity with _$WorkEntity {
     /// 首图ID
     String? firstImageId,
 
-    /// 图片最后更新时间
-    DateTime? lastImageUpdateTime,
-
     /// 图片列表
     @Default([]) List<WorkImage> images,
 
     /// 关联字符列表
-    @JsonKey(name: 'collected_chars')
-    @Default([])
-    List<CharacterEntity> collectedChars,
+
+    @Default([]) List<CharacterEntity> collectedChars,
 
     /// 标签列表
     @Default([]) List<String> tags,

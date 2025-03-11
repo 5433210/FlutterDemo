@@ -127,7 +127,7 @@ class __$$CharsContentImplCopyWithImpl<$Res>
   }) {
     return _then(_$CharsContentImpl(
       chars: null == chars
-          ? _value._chars
+          ? _value.chars
           : chars // ignore: cast_nullable_to_non_nullable
               as List<CharElement>,
     ));
@@ -137,26 +137,17 @@ class __$$CharsContentImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$CharsContentImpl extends CharsContent {
-  const _$CharsContentImpl(
-      {final List<CharElement> chars = const [], final String? $type})
-      : _chars = chars,
-        $type = $type ?? 'chars',
+  _$CharsContentImpl({this.chars = const [], final String? $type})
+      : $type = $type ?? 'chars',
         super._();
 
   factory _$CharsContentImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharsContentImplFromJson(json);
 
   /// 字符列表
-  final List<CharElement> _chars;
-
-  /// 字符列表
   @override
   @JsonKey()
-  List<CharElement> get chars {
-    if (_chars is EqualUnmodifiableListView) return _chars;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_chars);
-  }
+  List<CharElement> chars;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -165,19 +156,6 @@ class _$CharsContentImpl extends CharsContent {
   String toString() {
     return 'ElementContent.chars(chars: $chars)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$CharsContentImpl &&
-            const DeepCollectionEquality().equals(other._chars, _chars));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode =>
-      Object.hash(runtimeType, const DeepCollectionEquality().hash(_chars));
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.
@@ -264,15 +242,17 @@ class _$CharsContentImpl extends CharsContent {
 }
 
 abstract class CharsContent extends ElementContent {
-  const factory CharsContent({final List<CharElement> chars}) =
-      _$CharsContentImpl;
-  const CharsContent._() : super._();
+  factory CharsContent({List<CharElement> chars}) = _$CharsContentImpl;
+  CharsContent._() : super._();
 
   factory CharsContent.fromJson(Map<String, dynamic> json) =
       _$CharsContentImpl.fromJson;
 
   /// 字符列表
   List<CharElement> get chars;
+
+  /// 字符列表
+  set chars(List<CharElement> value);
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.
@@ -329,7 +309,7 @@ class __$$ImageContentImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$ImageContentImpl extends ImageContent {
-  const _$ImageContentImpl({required this.image, final String? $type})
+  _$ImageContentImpl({required this.image, final String? $type})
       : $type = $type ?? 'image',
         super._();
 
@@ -338,7 +318,7 @@ class _$ImageContentImpl extends ImageContent {
 
   /// 图片对象
   @override
-  final ImageElement image;
+  ImageElement image;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -347,18 +327,6 @@ class _$ImageContentImpl extends ImageContent {
   String toString() {
     return 'ElementContent.image(image: $image)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ImageContentImpl &&
-            (identical(other.image, image) || other.image == image));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, image);
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.
@@ -445,15 +413,17 @@ class _$ImageContentImpl extends ImageContent {
 }
 
 abstract class ImageContent extends ElementContent {
-  const factory ImageContent({required final ImageElement image}) =
-      _$ImageContentImpl;
-  const ImageContent._() : super._();
+  factory ImageContent({required ImageElement image}) = _$ImageContentImpl;
+  ImageContent._() : super._();
 
   factory ImageContent.fromJson(Map<String, dynamic> json) =
       _$ImageContentImpl.fromJson;
 
   /// 图片对象
   ImageElement get image;
+
+  /// 图片对象
+  set image(ImageElement value);
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.
@@ -510,7 +480,7 @@ class __$$TextContentImplCopyWithImpl<$Res>
 /// @nodoc
 @JsonSerializable()
 class _$TextContentImpl extends TextContent {
-  const _$TextContentImpl({required this.text, final String? $type})
+  _$TextContentImpl({required this.text, final String? $type})
       : $type = $type ?? 'text',
         super._();
 
@@ -519,7 +489,7 @@ class _$TextContentImpl extends TextContent {
 
   /// 文本对象
   @override
-  final TextElement text;
+  TextElement text;
 
   @JsonKey(name: 'runtimeType')
   final String $type;
@@ -528,18 +498,6 @@ class _$TextContentImpl extends TextContent {
   String toString() {
     return 'ElementContent.text(text: $text)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$TextContentImpl &&
-            (identical(other.text, text) || other.text == text));
-  }
-
-  @JsonKey(includeFromJson: false, includeToJson: false)
-  @override
-  int get hashCode => Object.hash(runtimeType, text);
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.
@@ -626,15 +584,17 @@ class _$TextContentImpl extends TextContent {
 }
 
 abstract class TextContent extends ElementContent {
-  const factory TextContent({required final TextElement text}) =
-      _$TextContentImpl;
-  const TextContent._() : super._();
+  factory TextContent({required TextElement text}) = _$TextContentImpl;
+  TextContent._() : super._();
 
   factory TextContent.fromJson(Map<String, dynamic> json) =
       _$TextContentImpl.fromJson;
 
   /// 文本对象
   TextElement get text;
+
+  /// 文本对象
+  set text(TextElement value);
 
   /// Create a copy of ElementContent
   /// with the given fields replaced by the non-null parameter values.

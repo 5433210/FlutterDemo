@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
@@ -8,6 +10,11 @@ import 'presentation/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 在 Windows 平台上初始化 sqflite_ffi
+  if (defaultTargetPlatform == TargetPlatform.windows) {
+    sqfliteFfiInit();
+  }
 
   try {
     // 初始化 SharedPreferences (关键步骤)
@@ -27,12 +34,7 @@ void main() async {
   } catch (e, stack) {
     // 确保在初始化过程中的错误也能被记录
     if (AppLogger.hasHandlers) {
-      AppLogger.fatal(
-        '应用启动失败',
-        error: e,
-        stackTrace: stack,
-        tag: 'App',
-      );
+      AppLogger.fatal('应用启动失败', error: e, stackTrace: stack, tag: 'App');
     } else {
       // 如果日志系统未初始化，使用调试打印
       debugPrint('严重错误：应用启动失败: $e');
@@ -40,13 +42,9 @@ void main() async {
     }
 
     // 显示基本的错误界面
-    runApp(MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('应用启动失败: $e'),
-        ),
-      ),
-    ));
+    runApp(
+      MaterialApp(home: Scaffold(body: Center(child: Text('应用启动失败: $e')))),
+    );
   }
 }
 
@@ -69,10 +67,7 @@ class ProviderLogger extends ProviderObserver {
     ProviderBase<dynamic> provider,
     ProviderContainer container,
   ) {
-    AppLogger.debug(
-      'Provider $provider was disposed',
-      tag: 'Riverpod',
-    );
+    AppLogger.debug('Provider $provider was disposed', tag: 'Riverpod');
   }
 
   @override

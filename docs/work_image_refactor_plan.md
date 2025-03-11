@@ -744,3 +744,167 @@ final workThumbnailProvider = FutureProvider.family<String?, String>((ref, workI
   final firstImage = await ref.watch(workFirstImageProvider(workId).future);
   return firstImage?.thumbnailPath;
 });
+        tag: 'WorkImageService',
+        error: cleanupError,
+      );
+    }
+  }
+
+  Future<void> _handleProcessingError(WorkImageProcessingException e) async {
+    try {
+      await _cleanupTempFiles(e.workId);
+    } catch (cleanupError) {
+      AppLogger.error(
+        'Failed to cleanup after processing error',
+        tag: 'WorkImageService',
+        error: cleanupError,
+      );
+    }
+  }
+}
+```
+
+## 6. Work模型适配
+
+### 6.1 Work实体调整
+
+```dart
+@freezed
+class WorkEntity with _$WorkEntity {
+  const factory WorkEntity({
+    required String id,
+    required String title,
+    required String author,
+    String? remark,
+    @JsonKey(fromJson: _workStyleFromJson, toJson: _workStyleToJson)
+    required WorkStyle style,
+    @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
+    required WorkTool tool,
+    @JsonKey(name: 'creation_date') 
+    required DateTime creationDate,
+    @JsonKey(name: 'create_time') 
+    required DateTime createTime,
+    @JsonKey(name: 'update_time') 
+    required DateTime updateTime,
+    @Default(WorkStatus.draft) 
+    WorkStatus status,
+    
+    // 新增字段
+    String? firstImageId,
+    int? imageCount,
+    DateTime? lastImageUpdateTime,
+    
+    @JsonKey(name: 'collected_chars')
+    @Default([])
+    List<CharacterEntity> collectedChars,
+    @Default([]) 
+    List<String> tags,
+  }) = _WorkEntity;
+
+  const WorkEntity._();
+
+  // 异步获取图片
+  Future<List<WorkImage>> getImages(WorkImageRepository repository) async {
+    return repository.findByWorkId(id);
+  }
+
+  Future<WorkImage?> getFirstImage(WorkImageRepository repository) async {
+    return firstImageId != null ? 
+      repository.findById(firstImageId!) : 
+      repository.findFirstByWorkId(id);
+  }
+}
+```
+
+### 6.2 WorkService调整
+
+```dart
+class WorkService {
+  final WorkRepository _repository;
+  final WorkImageService _imageService;
+  final WorkImageRepository _imageRepository;
+
+  Future<Work> createWork(CreateWorkInput input) async {
+    return _repository.transaction(() async {
+      // 1. 创建Work记录
+      final work = await _repository.create(Work(
+        title: input.title,
+        author: input.author,
+        style: input.style,
+        tool: input.tool,
+        remark: input.remark,
+        creationDate: input.creationDate,
+      ));
+
+      // 2. 处理图片
+      if (input.images?.isNotEmpty ?? false) {
+        await _imageService.processImagesInBatches(
+          work.id,
+          input.images!,
+        );
+      }
+
+      return work;
+    });
+  }
+
+  Future<void> updateWork(UpdateWorkInput input) async {
+    await _repository.transaction(() async {
+      // 1. 更新基本信息
+      await _repository.update(input.toWork());
+
+      // 2. 处理图片更新
+      if (input.imageUpdates != null) {
+        await _imageService.reorderImages(
+          input.id,
+          input.imageUpdates!,
+        );
+      }
+    });
+  }
+
+  Future<void> deleteWork(String id) async {
+    await _repository.transaction(() async {
+      // 1. 删除图片
+      await _imageService.cleanupWorkImages(id);
+
+      // 2. 删除作品
+      await _repository.delete(id);
+    });
+  }
+}
+```
+
+## 7. Provider调整
+
+```dart
+// WorkImageRepository Provider
+final workImageRepositoryProvider = Provider<WorkImageRepository>((ref) {
+  final db = ref.watch(databaseProvider);
+  return WorkImageRepositoryImpl(db);
+});
+
+// WorkImageService Provider
+final workImageServiceProvider = Provider<WorkImageService>((ref) {
+  return WorkImageService(
+    storage: ref.watch(workImageStorageProvider),
+    processor: ref.watch(workImageProcessorProvider),
+    repository: ref.watch(workImageRepositoryProvider),
+  );
+});
+
+// 图片相关的Provider
+final workImagesProvider = FutureProvider.family<List<WorkImage>, String>((ref, workId) async {
+  final repository = ref.watch(workImageRepositoryProvider);
+  return repository.findByWorkId(workId);
+});
+
+final workFirstImageProvider = FutureProvider.family<WorkImage?, String>((ref, workId) async {
+  final repository = ref.watch(workImageRepositoryProvider);
+  return repository.findFirstByWorkId(workId);
+});
+
+final workThumbnailProvider = FutureProvider.family<String?, String>((ref, workId) async {
+  final firstImage = await ref.watch(workFirstImageProvider(workId).future);
+  return firstImage?.thumbnailPath;
+});

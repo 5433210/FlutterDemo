@@ -25,7 +25,7 @@ class WorkRepositoryImpl implements WorkRepository {
 
   @override
   Future<WorkEntity> create(WorkEntity work) async {
-    await _db.set(_table, work.id, work.toJson());
+    await _db.set(_table, work.id, _toTableJson(work));
     return work;
   }
 
@@ -53,7 +53,7 @@ class WorkRepositoryImpl implements WorkRepository {
       updateTime: now,
     );
 
-    await _db.set(_table, duplicated.id, duplicated.toJson());
+    await _db.set(_table, duplicated.id, _toTableJson(duplicated));
     return duplicated;
   }
 
@@ -103,7 +103,7 @@ class WorkRepositoryImpl implements WorkRepository {
   Future<WorkEntity> save(WorkEntity work) async {
     final now = DateTime.now();
     final updated = work.copyWith(updateTime: now);
-    await _db.save(_table, work.id, updated.toJson());
+    await _db.save(_table, work.id, _toTableJson(updated));
     return updated;
   }
 
@@ -111,7 +111,8 @@ class WorkRepositoryImpl implements WorkRepository {
   Future<List<WorkEntity>> saveMany(List<WorkEntity> works) async {
     final now = DateTime.now();
     final updates = {
-      for (final work in works) work.id: work.copyWith(updateTime: now).toJson()
+      for (final work in works)
+        work.id: _toTableJson(work.copyWith(updateTime: now))
     };
 
     await _db.saveMany(_table, updates);
@@ -274,5 +275,25 @@ class WorkRepositoryImpl implements WorkRepository {
     );
 
     return query.toJson();
+  }
+
+  /// 将WorkEntity转换为数据库表字段
+  Map<String, dynamic> _toTableJson(WorkEntity work) {
+    return {
+      'id': work.id,
+      'title': work.title,
+      'author': work.author,
+      'style': work.style.value,
+      'tool': work.tool.value,
+      'remark': work.remark,
+      'creationDate': work.creationDate.millisecondsSinceEpoch,
+      'createTime': work.createTime.millisecondsSinceEpoch,
+      'updateTime': work.updateTime.millisecondsSinceEpoch,
+      'lastImageUpdateTime': work.lastImageUpdateTime?.millisecondsSinceEpoch,
+      'status': work.status.name,
+      'firstImageId': work.firstImageId,
+      'tags': work.tags.join(','),
+      'imageCount': work.imageCount
+    };
   }
 }

@@ -4,6 +4,7 @@ import 'package:path/path.dart' as path;
 
 import '../../../domain/models/work/work_entity.dart';
 import '../../../domain/models/work/work_filter.dart';
+import '../../../domain/repositories/work_image_repository.dart';
 import '../../../domain/repositories/work_repository.dart';
 import '../../../domain/services/work_image_storage_interface.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -17,16 +18,19 @@ class WorkService with WorkServiceErrorHandler {
   final WorkImageService _imageService;
   final IStorage _storage;
   final IWorkImageStorage _workImageStorage;
+  final WorkImageRepository _workImageRepository;
 
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
     required IStorage storage,
     required IWorkImageStorage workImageStorage,
+    required WorkImageRepository workImageRepository,
   })  : _repository = repository,
         _imageService = imageService,
         _storage = storage,
-        _workImageStorage = workImageStorage;
+        _workImageStorage = workImageStorage,
+        _workImageRepository = workImageRepository;
 
   /// Count works
   Future<int> count(WorkFilter? filter) async {
@@ -117,7 +121,17 @@ class WorkService with WorkServiceErrorHandler {
   Future<WorkEntity> importWork(List<File> files, WorkEntity work) async {
     return handleOperation(
       'importWork',
+      tag: 'WorkService',
       () async {
+        AppLogger.debug(
+          '导入作品',
+          data: {'fileCount': files.length, 'work': work.toJson()},
+        );
+        AppLogger.debug(
+          '导入作品 - 文件列表',
+          tag: 'WorkService',
+          data: {'files': files.map((f) => f.path).toList()},
+        );
         // 验证输入
         if (files.isEmpty) throw ArgumentError('图片文件不能为空');
 
@@ -140,10 +154,16 @@ class WorkService with WorkServiceErrorHandler {
         final updatedWork = work.copyWith(
           imageCount: images.length,
           updateTime: DateTime.now(),
+          createTime: DateTime.now(),
+          // No need to set images field if the database table doesn't have it
         );
 
         // 保存到数据库
-        return await _repository.create(updatedWork);
+        final savedWork = await _repository.create(updatedWork);
+        // 保存图片信息到数据库
+        final savedImages = await _workImageRepository.saveMany(images);
+
+        return savedWork.copyWith(images: savedImages);
       },
       data: {'workId': work.id, 'fileCount': files.length},
     );

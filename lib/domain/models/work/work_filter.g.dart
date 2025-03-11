@@ -15,8 +15,8 @@ _$WorkFilterImpl _$$WorkFilterImplFromJson(Map<String, dynamic> json) =>
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       dateRange: _dateRangeFromJson(json['dateRange']),
-      createTimeRange: _dateRangeFromJson(json['create_time_range']),
-      updateTimeRange: _dateRangeFromJson(json['update_time_range']),
+      createTimeRange: _dateRangeFromJson(json['createTimeRange']),
+      updateTimeRange: _dateRangeFromJson(json['updateTimeRange']),
       datePreset: json['datePreset'] == null
           ? DateRangePreset.all
           : _dateRangePresetFromJson(json['datePreset']),
@@ -32,8 +32,8 @@ Map<String, dynamic> _$$WorkFilterImplToJson(_$WorkFilterImpl instance) =>
       'tool': _workToolToJson(instance.tool),
       'tags': instance.tags,
       'dateRange': _dateRangeToJson(instance.dateRange),
-      'create_time_range': _dateRangeToJson(instance.createTimeRange),
-      'update_time_range': _dateRangeToJson(instance.updateTimeRange),
+      'createTimeRange': _dateRangeToJson(instance.createTimeRange),
+      'updateTimeRange': _dateRangeToJson(instance.updateTimeRange),
       'datePreset': _dateRangePresetToJson(instance.datePreset),
       'sortOption': instance.sortOption,
     };

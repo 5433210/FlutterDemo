@@ -27,11 +27,9 @@ mixin _$PracticeFilter {
   List<String> get tags => throw _privateConstructorUsedError;
 
   /// 开始时间
-  @JsonKey(name: 'start_time')
   DateTime? get startTime => throw _privateConstructorUsedError;
 
   /// 结束时间
-  @JsonKey(name: 'end_time')
   DateTime? get endTime => throw _privateConstructorUsedError;
 
   /// 状态
@@ -68,8 +66,8 @@ abstract class $PracticeFilterCopyWith<$Res> {
   $Res call(
       {String? keyword,
       List<String> tags,
-      @JsonKey(name: 'start_time') DateTime? startTime,
-      @JsonKey(name: 'end_time') DateTime? endTime,
+      DateTime? startTime,
+      DateTime? endTime,
       String? status,
       int limit,
       int offset,
@@ -154,8 +152,8 @@ abstract class _$$PracticeFilterImplCopyWith<$Res>
   $Res call(
       {String? keyword,
       List<String> tags,
-      @JsonKey(name: 'start_time') DateTime? startTime,
-      @JsonKey(name: 'end_time') DateTime? endTime,
+      DateTime? startTime,
+      DateTime? endTime,
       String? status,
       int limit,
       int offset,
@@ -233,12 +231,12 @@ class _$PracticeFilterImpl extends _PracticeFilter {
   const _$PracticeFilterImpl(
       {this.keyword,
       final List<String> tags = const [],
-      @JsonKey(name: 'start_time') this.startTime,
-      @JsonKey(name: 'end_time') this.endTime,
+      this.startTime,
+      this.endTime,
       this.status,
       this.limit = 20,
       this.offset = 0,
-      this.sortField = 'create_time',
+      this.sortField = 'createTime',
       this.sortOrder = 'desc'})
       : _tags = tags,
         super._();
@@ -264,12 +262,10 @@ class _$PracticeFilterImpl extends _PracticeFilter {
 
   /// 开始时间
   @override
-  @JsonKey(name: 'start_time')
   final DateTime? startTime;
 
   /// 结束时间
   @override
-  @JsonKey(name: 'end_time')
   final DateTime? endTime;
 
   /// 状态
@@ -355,8 +351,8 @@ abstract class _PracticeFilter extends PracticeFilter {
   const factory _PracticeFilter(
       {final String? keyword,
       final List<String> tags,
-      @JsonKey(name: 'start_time') final DateTime? startTime,
-      @JsonKey(name: 'end_time') final DateTime? endTime,
+      final DateTime? startTime,
+      final DateTime? endTime,
       final String? status,
       final int limit,
       final int offset,
@@ -377,12 +373,10 @@ abstract class _PracticeFilter extends PracticeFilter {
 
   /// 开始时间
   @override
-  @JsonKey(name: 'start_time')
   DateTime? get startTime;
 
   /// 结束时间
   @override
-  @JsonKey(name: 'end_time')
   DateTime? get endTime;
 
   /// 状态

@@ -181,9 +181,6 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   void setCreationDate(DateTime? date) =>
       state = state.copyWith(creationDate: date);
 
-  // 基础信息设置
-  void setName(String name) => state = state.copyWith(name: name.trim());
-
   void setRemark(String remark) =>
       state = state.copyWith(remark: remark.trim());
 
@@ -211,6 +208,9 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       debugPrint('Error setting style: $e');
     }
   }
+
+  // 基础信息设置
+  void setTitle(String title) => state = state.copyWith(name: title.trim());
 
   // 枚举值设置
   void setTool(String? value) {

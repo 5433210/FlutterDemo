@@ -14,10 +14,10 @@ class PracticeFilter with _$PracticeFilter {
     @Default([]) List<String> tags,
 
     /// 开始时间
-    @JsonKey(name: 'start_time') DateTime? startTime,
+    DateTime? startTime,
 
     /// 结束时间
-    @JsonKey(name: 'end_time') DateTime? endTime,
+    DateTime? endTime,
 
     /// 状态
     String? status,
@@ -29,7 +29,7 @@ class PracticeFilter with _$PracticeFilter {
     @Default(0) int offset,
 
     /// 排序字段
-    @Default('create_time') String sortField,
+    @Default('createTime') String sortField,
 
     /// 排序方向(asc/desc)
     @Default('desc') String sortOrder,

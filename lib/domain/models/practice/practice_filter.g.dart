@@ -12,16 +12,16 @@ _$PracticeFilterImpl _$$PracticeFilterImplFromJson(Map<String, dynamic> json) =>
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
-      startTime: json['start_time'] == null
+      startTime: json['startTime'] == null
           ? null
-          : DateTime.parse(json['start_time'] as String),
-      endTime: json['end_time'] == null
+          : DateTime.parse(json['startTime'] as String),
+      endTime: json['endTime'] == null
           ? null
-          : DateTime.parse(json['end_time'] as String),
+          : DateTime.parse(json['endTime'] as String),
       status: json['status'] as String?,
       limit: (json['limit'] as num?)?.toInt() ?? 20,
       offset: (json['offset'] as num?)?.toInt() ?? 0,
-      sortField: json['sortField'] as String? ?? 'create_time',
+      sortField: json['sortField'] as String? ?? 'createTime',
       sortOrder: json['sortOrder'] as String? ?? 'desc',
     );
 
@@ -30,8 +30,8 @@ Map<String, dynamic> _$$PracticeFilterImplToJson(
     <String, dynamic>{
       'keyword': instance.keyword,
       'tags': instance.tags,
-      'start_time': instance.startTime?.toIso8601String(),
-      'end_time': instance.endTime?.toIso8601String(),
+      'startTime': instance.startTime?.toIso8601String(),
+      'endTime': instance.endTime?.toIso8601String(),
       'status': instance.status,
       'limit': instance.limit,
       'offset': instance.offset,

@@ -26,10 +26,10 @@ class PracticeEntity with _$PracticeEntity {
     @Default('active') String status,
 
     /// 创建时间
-    @JsonKey(name: 'create_time') required DateTime createTime,
+    required DateTime createTime,
 
     /// 更新时间
-    @JsonKey(name: 'update_time') required DateTime updateTime,
+    required DateTime updateTime,
   }) = _PracticeEntity;
 
   /// 新建练习，自动生成ID和时间戳

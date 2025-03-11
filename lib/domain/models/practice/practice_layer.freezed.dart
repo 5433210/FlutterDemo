@@ -51,11 +51,9 @@ mixin _$PracticeLayer {
   List<PracticeElement> get elements => throw _privateConstructorUsedError;
 
   /// 图层创建时间
-  @JsonKey(name: 'create_time')
   DateTime get createTime => throw _privateConstructorUsedError;
 
   /// 图层更新时间
-  @JsonKey(name: 'update_time')
   DateTime get updateTime => throw _privateConstructorUsedError;
 
   /// Serializes this PracticeLayer to a JSON map.
@@ -85,8 +83,8 @@ abstract class $PracticeLayerCopyWith<$Res> {
       double opacity,
       int order,
       List<PracticeElement> elements,
-      @JsonKey(name: 'create_time') DateTime createTime,
-      @JsonKey(name: 'update_time') DateTime updateTime});
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -189,8 +187,8 @@ abstract class _$$PracticeLayerImplCopyWith<$Res>
       double opacity,
       int order,
       List<PracticeElement> elements,
-      @JsonKey(name: 'create_time') DateTime createTime,
-      @JsonKey(name: 'update_time') DateTime updateTime});
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -286,8 +284,8 @@ class _$PracticeLayerImpl extends _PracticeLayer {
       this.opacity = 1.0,
       this.order = 0,
       final List<PracticeElement> elements = const [],
-      @JsonKey(name: 'create_time') required this.createTime,
-      @JsonKey(name: 'update_time') required this.updateTime})
+      required this.createTime,
+      required this.updateTime})
       : _elements = elements,
         super._();
 
@@ -348,12 +346,10 @@ class _$PracticeLayerImpl extends _PracticeLayer {
 
   /// 图层创建时间
   @override
-  @JsonKey(name: 'create_time')
   final DateTime createTime;
 
   /// 图层更新时间
   @override
-  @JsonKey(name: 'update_time')
   final DateTime updateTime;
 
   @override
@@ -419,19 +415,18 @@ class _$PracticeLayerImpl extends _PracticeLayer {
 
 abstract class _PracticeLayer extends PracticeLayer {
   const factory _PracticeLayer(
-          {required final String id,
-          required final PracticeLayerType type,
-          required final String imagePath,
-          final String? name,
-          final String? description,
-          final bool visible,
-          final bool locked,
-          final double opacity,
-          final int order,
-          final List<PracticeElement> elements,
-          @JsonKey(name: 'create_time') required final DateTime createTime,
-          @JsonKey(name: 'update_time') required final DateTime updateTime}) =
-      _$PracticeLayerImpl;
+      {required final String id,
+      required final PracticeLayerType type,
+      required final String imagePath,
+      final String? name,
+      final String? description,
+      final bool visible,
+      final bool locked,
+      final double opacity,
+      final int order,
+      final List<PracticeElement> elements,
+      required final DateTime createTime,
+      required final DateTime updateTime}) = _$PracticeLayerImpl;
   const _PracticeLayer._() : super._();
 
   factory _PracticeLayer.fromJson(Map<String, dynamic> json) =
@@ -479,12 +474,10 @@ abstract class _PracticeLayer extends PracticeLayer {
 
   /// 图层创建时间
   @override
-  @JsonKey(name: 'create_time')
   DateTime get createTime;
 
   /// 图层更新时间
   @override
-  @JsonKey(name: 'update_time')
   DateTime get updateTime;
 
   /// Create a copy of PracticeLayer

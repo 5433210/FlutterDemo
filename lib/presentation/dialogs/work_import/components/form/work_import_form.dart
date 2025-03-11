@@ -35,9 +35,9 @@ class WorkImportForm extends StatelessWidget {
             required: true,
             child: TextFormField(
               initialValue: state.title,
-              onChanged: viewModel.setName,
+              onChanged: viewModel.setTitle,
               onSaved: (value) {
-                viewModel.setName(value ?? '');
+                viewModel.setTitle(value ?? '');
               },
               style: theme.textTheme.bodyLarge,
               decoration: _getInputDecoration(theme, '请输入作品名称'),

@@ -8,11 +8,11 @@ part 'element_content.freezed.dart';
 part 'element_content.g.dart';
 
 /// 元素内容基类
-@freezed
+@unfreezed
 class ElementContent with _$ElementContent {
   /// 字符内容
   @FreezedUnionValue('chars')
-  const factory ElementContent.chars({
+  factory ElementContent.chars({
     /// 字符列表
     @Default([]) List<CharElement> chars,
   }) = CharsContent;
@@ -23,44 +23,19 @@ class ElementContent with _$ElementContent {
 
   /// 图片内容
   @FreezedUnionValue('image')
-  const factory ElementContent.image({
+  factory ElementContent.image({
     /// 图片对象
     required ImageElement image,
   }) = ImageContent;
 
   /// 文本内容
   @FreezedUnionValue('text')
-  const factory ElementContent.text({
+  factory ElementContent.text({
     /// 文本对象
     required TextElement text,
   }) = TextContent;
 
   const ElementContent._();
-
-  /// 获取内容类型
-  String get type => map(
-        chars: (_) => 'chars',
-        image: (_) => 'image',
-        text: (_) => 'text',
-      );
-
-  /// 序列化到JSON
-  Map<String, dynamic> toJson() {
-    return {
-      'type': type,
-      ...map(
-        chars: (content) => {
-          'chars': content.chars.map((e) => e.toJson()).toList(),
-        },
-        image: (content) => {
-          'image': content.image.toJson(),
-        },
-        text: (content) => {
-          'text': content.text.toJson(),
-        },
-      ),
-    };
-  }
 }
 
 /// CharsContent 扩展方法

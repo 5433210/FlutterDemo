@@ -36,11 +36,9 @@ mixin _$PracticeEntity {
   String get status => throw _privateConstructorUsedError;
 
   /// 创建时间
-  @JsonKey(name: 'create_time')
   DateTime get createTime => throw _privateConstructorUsedError;
 
   /// 更新时间
-  @JsonKey(name: 'update_time')
   DateTime get updateTime => throw _privateConstructorUsedError;
 
   /// Serializes this PracticeEntity to a JSON map.
@@ -65,8 +63,8 @@ abstract class $PracticeEntityCopyWith<$Res> {
       List<PracticePage> pages,
       List<String> tags,
       String status,
-      @JsonKey(name: 'create_time') DateTime createTime,
-      @JsonKey(name: 'update_time') DateTime updateTime});
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -139,8 +137,8 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
       List<PracticePage> pages,
       List<String> tags,
       String status,
-      @JsonKey(name: 'create_time') DateTime createTime,
-      @JsonKey(name: 'update_time') DateTime updateTime});
+      DateTime createTime,
+      DateTime updateTime});
 }
 
 /// @nodoc
@@ -206,8 +204,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       final List<PracticePage> pages = const [],
       final List<String> tags = const [],
       this.status = 'active',
-      @JsonKey(name: 'create_time') required this.createTime,
-      @JsonKey(name: 'update_time') required this.updateTime})
+      required this.createTime,
+      required this.updateTime})
       : _pages = pages,
         _tags = tags,
         super._();
@@ -254,12 +252,10 @@ class _$PracticeEntityImpl extends _PracticeEntity {
 
   /// 创建时间
   @override
-  @JsonKey(name: 'create_time')
   final DateTime createTime;
 
   /// 更新时间
   @override
-  @JsonKey(name: 'update_time')
   final DateTime updateTime;
 
   @override
@@ -309,14 +305,13 @@ class _$PracticeEntityImpl extends _PracticeEntity {
 
 abstract class _PracticeEntity extends PracticeEntity {
   const factory _PracticeEntity(
-          {required final String id,
-          required final String title,
-          final List<PracticePage> pages,
-          final List<String> tags,
-          final String status,
-          @JsonKey(name: 'create_time') required final DateTime createTime,
-          @JsonKey(name: 'update_time') required final DateTime updateTime}) =
-      _$PracticeEntityImpl;
+      {required final String id,
+      required final String title,
+      final List<PracticePage> pages,
+      final List<String> tags,
+      final String status,
+      required final DateTime createTime,
+      required final DateTime updateTime}) = _$PracticeEntityImpl;
   const _PracticeEntity._() : super._();
 
   factory _PracticeEntity.fromJson(Map<String, dynamic> json) =
@@ -344,12 +339,10 @@ abstract class _PracticeEntity extends PracticeEntity {
 
   /// 创建时间
   @override
-  @JsonKey(name: 'create_time')
   DateTime get createTime;
 
   /// 更新时间
   @override
-  @JsonKey(name: 'update_time')
   DateTime get updateTime;
 
   /// Create a copy of PracticeEntity

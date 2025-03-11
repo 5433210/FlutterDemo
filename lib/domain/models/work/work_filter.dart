@@ -77,17 +77,11 @@ class WorkFilter with _$WorkFilter {
     DateTimeRange? dateRange,
 
     /// 创建时间区间
-    @JsonKey(
-        name: 'create_time_range',
-        fromJson: _dateRangeFromJson,
-        toJson: _dateRangeToJson)
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
     DateTimeRange? createTimeRange,
 
     /// 修改时间区间
-    @JsonKey(
-        name: 'update_time_range',
-        fromJson: _dateRangeFromJson,
-        toJson: _dateRangeToJson)
+    @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
     DateTimeRange? updateTimeRange,
 
     /// 日期预设

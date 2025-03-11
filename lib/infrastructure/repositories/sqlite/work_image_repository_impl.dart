@@ -13,41 +13,62 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   WorkImageRepositoryImpl(this._db);
 
   @override
-  Future<List<WorkImage>> batchCreate(
-      String workId, List<WorkImageInput> inputs) async {
+  Future<WorkImage> create(String workId, WorkImage image) async {
+    final id = _uuid.v4();
+    final now = DateTime.now();
+
+    final data = {
+      'id': id,
+      'workId': workId,
+      'indexInWork':
+          image.index == -1 ? await getNextIndex(workId) : image.index,
+      'path': image.originalPath,
+      'width': image.width,
+      'height': image.height,
+      'format': image.format,
+      'size': image.size,
+      'thumbnailPath': image.thumbnailPath,
+      'createTime': now.millisecondsSinceEpoch,
+      'updateTime': now.millisecondsSinceEpoch,
+    };
+
+    await _db.set(_table, id, data);
+
+    final created = await get(id);
+    if (created == null) {
+      throw Exception('Failed to create work image: $id');
+    }
+    return created;
+  }
+
+  @override
+  Future<List<WorkImage>> createMany(
+      String workId, List<WorkImage> images) async {
     final now = DateTime.now();
     final results = <WorkImage>[];
     var currentIndex = await getNextIndex(workId);
 
     final batchData = <String, Map<String, dynamic>>{};
 
-    for (final input in inputs) {
+    for (final image in images) {
       final id = _uuid.v4();
       batchData[id] = {
         'id': id,
         'workId': workId,
-        'indexInWork': input.targetIndex ?? currentIndex++,
-        'path': input.originalPath,
-        'width': input.metadata.width,
-        'height': input.metadata.height,
-        'format': input.metadata.format,
-        'size': input.metadata.size,
-        'thumbnailPath': input.thumbnailPath ?? '',
+        'indexInWork': image.index == -1 ? currentIndex++ : image.index,
+        'path': image.originalPath,
+        'width': image.width,
+        'height': image.height,
+        'format': image.format,
+        'size': image.size,
+        'thumbnailPath': image.thumbnailPath,
         'createTime': now.millisecondsSinceEpoch,
         'updateTime': now.millisecondsSinceEpoch,
       };
 
-      results.add(WorkImage(
+      results.add(image.copyWith(
         id: id,
         workId: workId,
-        originalPath: input.originalPath,
-        path: input.originalPath,
-        thumbnailPath: input.thumbnailPath ?? '',
-        index: input.targetIndex ?? currentIndex - 1,
-        width: input.metadata.width,
-        height: input.metadata.height,
-        format: input.metadata.format,
-        size: input.metadata.size,
         createTime: now,
         updateTime: now,
       ));
@@ -58,52 +79,24 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   }
 
   @override
-  Future<void> batchDelete(String workId, List<String> imageIds) async {
-    await _db.deleteMany(_table, imageIds);
-  }
-
-  @override
-  Future<WorkImage> create(String workId, WorkImageInput input) async {
-    final id = _uuid.v4();
-    final now = DateTime.now();
-
-    final data = {
-      'id': id,
-      'workId': workId,
-      'indexInWork': input.targetIndex ?? await getNextIndex(workId),
-      'path': input.originalPath,
-      'width': input.metadata.width,
-      'height': input.metadata.height,
-      'format': input.metadata.format,
-      'size': input.metadata.size,
-      'thumbnailPath': input.thumbnailPath ?? '',
-      'createTime': now.millisecondsSinceEpoch,
-      'updateTime': now.millisecondsSinceEpoch,
-    };
-
-    await _db.set(_table, id, data);
-
-    final image = await findById(id);
-    if (image == null) {
-      throw Exception('Failed to create work image: $id');
-    }
-    return image;
-  }
-
-  @override
   Future<void> delete(String workId, String imageId) async {
     await _db.delete(_table, imageId);
   }
 
   @override
-  Future<WorkImage?> findById(String imageId) async {
+  Future<void> deleteMany(String workId, List<String> imageIds) async {
+    await _db.deleteMany(_table, imageIds);
+  }
+
+  @override
+  Future<WorkImage?> get(String imageId) async {
     final data = await _db.get(_table, imageId);
     if (data == null) return null;
     return _mapToWorkImage(data);
   }
 
   @override
-  Future<List<WorkImage>> findByWorkId(String workId) async {
+  Future<List<WorkImage>> getAllByWorkId(String workId) async {
     final query = DatabaseQuery(
       conditions: [
         DatabaseQueryCondition(
@@ -120,7 +113,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   }
 
   @override
-  Future<WorkImage?> findFirstByWorkId(String workId) async {
+  Future<WorkImage?> getFirstByWorkId(String workId) async {
     final query = DatabaseQuery(
       conditions: [
         DatabaseQueryCondition(
@@ -150,15 +143,45 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
   }
 
   @override
-  Future<T> transaction<T>(Future<T> Function() action) async {
-    // 直接执行，让数据库层处理事务
-    return action();
+  Future<List<WorkImage>> saveMany(List<WorkImage> images) async {
+    final updateTime = DateTime.now().millisecondsSinceEpoch;
+    final batch = <String, Map<String, dynamic>>{};
+
+    // 先获取已有记录以保留 createTime
+    final existingData =
+        await Future.wait(images.map((img) => _db.get(_table, img.id)));
+
+    for (var i = 0; i < images.length; i++) {
+      final image = images[i];
+      final existing = existingData[i];
+
+      batch[image.id] = {
+        'id': image.id,
+        'workId': image.workId,
+        'indexInWork': image.index,
+        'path': image.originalPath,
+        'width': image.width,
+        'height': image.height,
+        'format': image.format,
+        'size': image.size,
+        'thumbnailPath': image.thumbnailPath,
+        // 如果记录已存在，使用原有的 createTime，否则使用当前时间
+        'createTime': existing?['createTime'] ?? updateTime,
+        'updateTime': updateTime,
+      };
+    }
+
+    await _db.setMany(_table, batch);
+    return images
+        .map((img) => img.copyWith(
+            updateTime: DateTime.fromMillisecondsSinceEpoch(updateTime)))
+        .toList();
   }
 
   @override
   Future<void> updateIndex(String workId, String imageId, int newIndex) async {
     // Get current index
-    final image = await findById(imageId);
+    final image = await get(imageId);
     if (image == null) return;
     final oldIndex = image.index;
     if (oldIndex == newIndex) return;

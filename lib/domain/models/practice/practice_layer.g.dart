@@ -21,8 +21,8 @@ _$PracticeLayerImpl _$$PracticeLayerImplFromJson(Map<String, dynamic> json) =>
               ?.map((e) => PracticeElement.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
-      createTime: DateTime.parse(json['create_time'] as String),
-      updateTime: DateTime.parse(json['update_time'] as String),
+      createTime: DateTime.parse(json['createTime'] as String),
+      updateTime: DateTime.parse(json['updateTime'] as String),
     );
 
 Map<String, dynamic> _$$PracticeLayerImplToJson(_$PracticeLayerImpl instance) =>
@@ -37,8 +37,8 @@ Map<String, dynamic> _$$PracticeLayerImplToJson(_$PracticeLayerImpl instance) =>
       'opacity': instance.opacity,
       'order': instance.order,
       'elements': instance.elements,
-      'create_time': instance.createTime.toIso8601String(),
-      'update_time': instance.updateTime.toIso8601String(),
+      'createTime': instance.createTime.toIso8601String(),
+      'updateTime': instance.updateTime.toIso8601String(),
     };
 
 const _$PracticeLayerTypeEnumMap = {

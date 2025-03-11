@@ -39,17 +39,11 @@ mixin _$WorkFilter {
   DateTimeRange? get dateRange => throw _privateConstructorUsedError;
 
   /// 创建时间区间
-  @JsonKey(
-      name: 'create_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   DateTimeRange? get createTimeRange => throw _privateConstructorUsedError;
 
   /// 修改时间区间
-  @JsonKey(
-      name: 'update_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   DateTimeRange? get updateTimeRange => throw _privateConstructorUsedError;
 
   /// 日期预设
@@ -84,15 +78,9 @@ abstract class $WorkFilterCopyWith<$Res> {
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? dateRange,
-      @JsonKey(
-          name: 'create_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? createTimeRange,
-      @JsonKey(
-          name: 'update_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? updateTimeRange,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
@@ -195,15 +183,9 @@ abstract class _$$WorkFilterImplCopyWith<$Res>
       List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? dateRange,
-      @JsonKey(
-          name: 'create_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? createTimeRange,
-      @JsonKey(
-          name: 'update_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       DateTimeRange? updateTimeRange,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
@@ -290,15 +272,9 @@ class _$WorkFilterImpl extends _WorkFilter {
       final List<String> tags = const [],
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       this.dateRange,
-      @JsonKey(
-          name: 'create_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       this.createTimeRange,
-      @JsonKey(
-          name: 'update_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       this.updateTimeRange,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
@@ -343,18 +319,12 @@ class _$WorkFilterImpl extends _WorkFilter {
 
   /// 创建时间区间
   @override
-  @JsonKey(
-      name: 'create_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   final DateTimeRange? createTimeRange;
 
   /// 修改时间区间
   @override
-  @JsonKey(
-      name: 'update_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   final DateTimeRange? updateTimeRange;
 
   /// 日期预设
@@ -433,15 +403,9 @@ abstract class _WorkFilter extends WorkFilter {
       final List<String> tags,
       @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       final DateTimeRange? dateRange,
-      @JsonKey(
-          name: 'create_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       final DateTimeRange? createTimeRange,
-      @JsonKey(
-          name: 'update_time_range',
-          fromJson: _dateRangeFromJson,
-          toJson: _dateRangeToJson)
+      @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
       final DateTimeRange? updateTimeRange,
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
@@ -477,18 +441,12 @@ abstract class _WorkFilter extends WorkFilter {
 
   /// 创建时间区间
   @override
-  @JsonKey(
-      name: 'create_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   DateTimeRange? get createTimeRange;
 
   /// 修改时间区间
   @override
-  @JsonKey(
-      name: 'update_time_range',
-      fromJson: _dateRangeFromJson,
-      toJson: _dateRangeToJson)
+  @JsonKey(fromJson: _dateRangeFromJson, toJson: _dateRangeToJson)
   DateTimeRange? get updateTimeRange;
 
   /// 日期预设
