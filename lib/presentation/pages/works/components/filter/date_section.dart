@@ -32,10 +32,18 @@ class DateSection extends StatelessWidget {
             end: filter.dateRange?.end,
           ),
           onChanged: (dateFilter) {
-            onFilterChanged(filter.copyWith(
-              datePreset: dateFilter?.preset ?? filter.datePreset,
-              dateRange: dateFilter?.effectiveRange,
-            ));
+            if (dateFilter == null) {
+              // 如果日期筛选被清除，重置所有相关字段
+              onFilterChanged(filter.copyWith(
+                datePreset: DateRangePreset.all,
+                dateRange: null,
+              ));
+            } else {
+              onFilterChanged(filter.copyWith(
+                datePreset: dateFilter.preset ?? DateRangePreset.all,
+                dateRange: dateFilter.effectiveRange,
+              ));
+            }
           },
         ),
       ],
@@ -58,11 +66,8 @@ class _CustomTab extends ConsumerWidget {
         child: DateRangeSection(
           initialValue: state.filter.dateRange,
           onChanged: (range) {
-            if (range != null) {
-              viewModel.updateDateRange(range);
-            } else {
-              viewModel.clearDateFilter();
-            }
+            // 使用updateDateRange替代clearDateFilter
+            viewModel.updateDateRange(range);
           },
         ),
       ),
@@ -84,6 +89,7 @@ class _PresetTab extends ConsumerWidget {
         spacing: AppSizes.xs,
         runSpacing: AppSizes.xs,
         children: DateRangePreset.values
+            .where((preset) => preset != DateRangePreset.all) // 过滤掉"全部"选项
             .map((preset) => FilterChip(
                   label: Text(preset.label),
                   selected: state.filter.datePreset == preset,

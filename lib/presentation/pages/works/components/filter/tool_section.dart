@@ -31,11 +31,13 @@ class ToolSection extends StatelessWidget {
         return FilterChip(
           label: Text(tool.label),
           selected: selected,
-          onSelected: (value) => onFilterChanged(
-            filter.copyWith(
-              tool: WorkTool.fromValue(tool.value),
-            ),
-          ),
+          onSelected: (value) {
+            // 如果是取消选择或者点击当前已选中的项，则清除选择
+            final newTool = selected ? null : WorkTool.fromValue(tool.value);
+            onFilterChanged(
+              filter.copyWith(tool: newTool),
+            );
+          },
         );
       }).toList(),
     );

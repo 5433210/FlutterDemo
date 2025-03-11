@@ -31,11 +31,13 @@ class StyleSection extends StatelessWidget {
         return FilterChip(
           label: Text(style.label),
           selected: selected,
-          onSelected: (value) => onFilterChanged(
-            filter.copyWith(
-              style: WorkStyle.fromValue(style.value),
-            ),
-          ),
+          onSelected: (value) {
+            // 如果是取消选择或者点击当前已选中的项，则清除选择
+            final newStyle = selected ? null : WorkStyle.fromValue(style.value);
+            onFilterChanged(
+              filter.copyWith(style: newStyle),
+            );
+          },
         );
       }).toList(),
     );
