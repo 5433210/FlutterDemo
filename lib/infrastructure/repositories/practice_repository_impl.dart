@@ -1,6 +1,7 @@
 import '../../domain/models/practice/practice_entity.dart';
 import '../../domain/models/practice/practice_filter.dart';
 import '../../domain/repositories/practice_repository.dart';
+import '../../utils/date_time_helper.dart';
 import '../persistence/database_interface.dart';
 
 /// 字帖练习仓库实现
@@ -143,13 +144,14 @@ class PracticeRepositoryImpl implements PracticeRepository {
 
     if (filter.startTime != null) {
       query['create_time'] = {
-        'gte': filter.startTime!.toIso8601String(),
+        'gte': DateTimeHelper.toStorageFormat(filter.startTime!),
       };
     }
 
     if (filter.endTime != null) {
       query['create_time'] ??= {};
-      query['create_time']['lte'] = filter.endTime!.toIso8601String();
+      query['create_time']['lte'] =
+          DateTimeHelper.toStorageFormat(filter.endTime!);
     }
 
     query['sort'] = {

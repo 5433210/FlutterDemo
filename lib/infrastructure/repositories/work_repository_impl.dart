@@ -1,6 +1,7 @@
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../domain/repositories/work_repository.dart';
+import '../../utils/date_time_helper.dart';
 import '../logging/logger.dart';
 import '../persistence/database_interface.dart';
 import '../persistence/models/database_query.dart';
@@ -61,13 +62,13 @@ class WorkRepositoryImpl implements WorkRepository {
   Future<WorkEntity?> get(String id) async {
     final data = await _db.get(_table, id);
     if (data == null) return null;
-    return WorkEntity.fromJson(data);
+    return WorkEntity.fromJson(_convertDates(data));
   }
 
   @override
   Future<List<WorkEntity>> getAll() async {
     final data = await _db.getAll(_table);
-    return data.map((e) => WorkEntity.fromJson(e)).toList();
+    return data.map((e) => WorkEntity.fromJson(_convertDates(e))).toList();
   }
 
   @override
@@ -89,14 +90,14 @@ class WorkRepositoryImpl implements WorkRepository {
     ]);
 
     final data = await _db.query(_table, query.toJson());
-    return data.map((e) => WorkEntity.fromJson(e)).toList();
+    return data.map((e) => WorkEntity.fromJson(_convertDates(e))).toList();
   }
 
   @override
   Future<List<WorkEntity>> query(WorkFilter filter) async {
     final query = _buildQuery(filter);
     final data = await _db.query(_table, query);
-    return data.map((e) => WorkEntity.fromJson(e)).toList();
+    return data.map((e) => WorkEntity.fromJson(_convertDates(e))).toList();
   }
 
   @override
@@ -213,12 +214,15 @@ class WorkRepositoryImpl implements WorkRepository {
       final end = filter.dateRange?.end;
       if (start != null && end != null) {
         conditions.add(DatabaseQueryCondition(
-          field: 'creation_date',
-          operator: 'between',
-          value: {
-            'start': start.toIso8601String(),
-            'end': end.toIso8601String(),
-          },
+          field: 'creationDate',
+          operator: '>=',
+          value: DateTimeHelper.toStorageFormat(start),
+        ));
+
+        conditions.add(DatabaseQueryCondition(
+          field: 'creationDate',
+          operator: '<=',
+          value: DateTimeHelper.toStorageFormat(end),
         ));
       }
     }
@@ -229,12 +233,15 @@ class WorkRepositoryImpl implements WorkRepository {
       final end = filter.createTimeRange?.end;
       if (start != null && end != null) {
         conditions.add(DatabaseQueryCondition(
-          field: 'create_time',
-          operator: 'between',
-          value: {
-            'start': start.toIso8601String(),
-            'end': end.toIso8601String(),
-          },
+          field: 'createTime',
+          operator: '>=',
+          value: DateTimeHelper.toStorageFormat(start),
+        ));
+
+        conditions.add(DatabaseQueryCondition(
+          field: 'createTime',
+          operator: '<=',
+          value: DateTimeHelper.toStorageFormat(end),
         ));
       }
     }
@@ -245,12 +252,15 @@ class WorkRepositoryImpl implements WorkRepository {
       final end = filter.updateTimeRange?.end;
       if (start != null && end != null) {
         conditions.add(DatabaseQueryCondition(
-          field: 'update_time',
-          operator: 'between',
-          value: {
-            'start': start.toIso8601String(),
-            'end': end.toIso8601String(),
-          },
+          field: 'updateTime',
+          operator: '>=',
+          value: DateTimeHelper.toStorageFormat(start),
+        ));
+
+        conditions.add(DatabaseQueryCondition(
+          field: 'updateTime',
+          operator: '<=',
+          value: DateTimeHelper.toStorageFormat(end),
         ));
       }
     }
@@ -277,6 +287,38 @@ class WorkRepositoryImpl implements WorkRepository {
     return query.toJson();
   }
 
+  /// 将数据库中的时间戳转换为ISO8601字符串
+  Map<String, dynamic> _convertDates(Map<String, dynamic> data) {
+    return {
+      ...data,
+      'tags': data['tags']
+              ?.toString()
+              .split(',')
+              .where((tag) => tag.isNotEmpty)
+              .toList() ??
+          const [],
+      'creationDate': data['creationDate'],
+      'createTime': data['createTime'],
+      'updateTime': data['updateTime'],
+      'lastImageUpdateTime': data['lastImageUpdateTime'],
+    };
+  }
+
+  /// 将时间字段转换为ISO8601字符串
+  String? _convertToIso8601String(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    // 如果已经是字符串格式，检查是否为ISO8601格式
+    if (value is String && value.contains('T')) {
+      return value;
+    }
+
+    // 否则作为时间戳处理
+    return DateTime.fromMillisecondsSinceEpoch(value as int).toIso8601String();
+  }
+
   /// 将WorkEntity转换为数据库表字段
   Map<String, dynamic> _toTableJson(WorkEntity work) {
     return {
@@ -286,10 +328,11 @@ class WorkRepositoryImpl implements WorkRepository {
       'style': work.style.value,
       'tool': work.tool.value,
       'remark': work.remark,
-      'creationDate': work.creationDate.millisecondsSinceEpoch,
-      'createTime': work.createTime.millisecondsSinceEpoch,
-      'updateTime': work.updateTime.millisecondsSinceEpoch,
-      'lastImageUpdateTime': work.lastImageUpdateTime?.millisecondsSinceEpoch,
+      'creationDate': DateTimeHelper.toStorageFormat(work.creationDate),
+      'createTime': DateTimeHelper.toStorageFormat(work.createTime),
+      'updateTime': DateTimeHelper.toStorageFormat(work.updateTime),
+      'lastImageUpdateTime':
+          DateTimeHelper.toStorageFormat(work.lastImageUpdateTime),
       'status': work.status.name,
       'firstImageId': work.firstImageId,
       'tags': work.tags.join(','),

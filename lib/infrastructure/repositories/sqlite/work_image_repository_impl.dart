@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
+import '../../../utils/date_time_helper.dart';
 import '../../persistence/database_interface.dart';
 import '../../persistence/models/database_query.dart';
 
@@ -28,8 +29,8 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
       'format': image.format,
       'size': image.size,
       'thumbnailPath': image.thumbnailPath,
-      'createTime': now.millisecondsSinceEpoch,
-      'updateTime': now.millisecondsSinceEpoch,
+      'createTime': DateTimeHelper.toStorageFormat(now),
+      'updateTime': DateTimeHelper.toStorageFormat(now),
     };
 
     await _db.set(_table, id, data);
@@ -62,8 +63,8 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
         'format': image.format,
         'size': image.size,
         'thumbnailPath': image.thumbnailPath,
-        'createTime': now.millisecondsSinceEpoch,
-        'updateTime': now.millisecondsSinceEpoch,
+        'createTime': DateTimeHelper.toStorageFormat(now),
+        'updateTime': DateTimeHelper.toStorageFormat(now),
       };
 
       results.add(image.copyWith(
@@ -144,7 +145,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
 
   @override
   Future<List<WorkImage>> saveMany(List<WorkImage> images) async {
-    final updateTime = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime.now();
     final batch = <String, Map<String, dynamic>>{};
 
     // 先获取已有记录以保留 createTime
@@ -166,16 +167,14 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
         'size': image.size,
         'thumbnailPath': image.thumbnailPath,
         // 如果记录已存在，使用原有的 createTime，否则使用当前时间
-        'createTime': existing?['createTime'] ?? updateTime,
-        'updateTime': updateTime,
+        'createTime':
+            existing?['createTime'] ?? DateTimeHelper.toStorageFormat(now),
+        'updateTime': DateTimeHelper.toStorageFormat(now),
       };
     }
 
     await _db.setMany(_table, batch);
-    return images
-        .map((img) => img.copyWith(
-            updateTime: DateTime.fromMillisecondsSinceEpoch(updateTime)))
-        .toList();
+    return images.map((img) => img.copyWith(updateTime: now)).toList();
   }
 
   @override
@@ -187,7 +186,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
     if (oldIndex == newIndex) return;
 
     // Update indexes
-    final updateTime = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime.now();
 
     if (oldIndex < newIndex) {
       await _db.rawUpdate('''
@@ -197,7 +196,7 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
         WHERE workId = ?
           AND indexInWork > ?
           AND indexInWork <= ?
-      ''', [updateTime, workId, oldIndex, newIndex]);
+      ''', [DateTimeHelper.toStorageFormat(now), workId, oldIndex, newIndex]);
     } else {
       await _db.rawUpdate('''
         UPDATE work_images
@@ -206,13 +205,13 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
         WHERE workId = ?
           AND indexInWork >= ?
           AND indexInWork < ?
-      ''', [updateTime, workId, newIndex, oldIndex]);
+      ''', [DateTimeHelper.toStorageFormat(now), workId, newIndex, oldIndex]);
     }
 
     // Update target image
     await _db.save(_table, imageId, {
       'indexInWork': newIndex,
-      'updateTime': updateTime,
+      'updateTime': DateTimeHelper.toStorageFormat(now),
     });
   }
 
@@ -228,8 +227,10 @@ class WorkImageRepositoryImpl implements WorkImageRepository {
       height: row['height'] as int,
       format: row['format'] as String,
       size: row['size'] as int,
-      createTime: DateTime.fromMillisecondsSinceEpoch(row['createTime'] as int),
-      updateTime: DateTime.fromMillisecondsSinceEpoch(row['updateTime'] as int),
+      createTime:
+          DateTimeHelper.fromStorageFormat(row['createTime'] as String)!,
+      updateTime:
+          DateTimeHelper.fromStorageFormat(row['updateTime'] as String)!,
     );
   }
 }

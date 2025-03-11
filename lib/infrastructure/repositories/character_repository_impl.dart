@@ -34,10 +34,11 @@ class CharacterRepositoryImpl implements CharacterRepository {
     final character = await get(id);
     if (character == null) throw Exception('Character not found: $id');
 
+    final now = DateTime.now();
     return create(character.copyWith(
       id: newId,
-      createTime: DateTime.now(),
-      updateTime: DateTime.now(),
+      createTime: now,
+      updateTime: now,
     ));
   }
 
