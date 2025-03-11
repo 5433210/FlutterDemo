@@ -36,7 +36,7 @@ class MyApp extends ConsumerWidget {
       ),
       data: (_) => MaterialApp(
         title: '书法集字',
-        theme: AppTheme.light,
+        theme: AppTheme.light(),
         debugShowCheckedModeBanner: false,
         home: const MainWindow(),
         onGenerateRoute: _generateRoute,

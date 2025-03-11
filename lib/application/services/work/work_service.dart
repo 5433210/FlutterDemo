@@ -1,35 +1,32 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
 import '../../../domain/models/work/work_entity.dart';
 import '../../../domain/models/work/work_filter.dart';
 import '../../../domain/repositories/work_repository.dart';
+import '../../../domain/services/work_image_storage_interface.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/providers/repository_providers.dart';
-import '../../../utils/path_helper.dart';
+import '../../../infrastructure/storage/storage_interface.dart';
 import './service_errors.dart';
 import './work_image_service.dart';
-
-/// Work Service Provider
-final workServiceProvider = Provider<WorkService>((ref) {
-  return WorkService(
-    repository: ref.watch(workRepositoryProvider),
-    imageService: ref.watch(workImageServiceProvider),
-  );
-});
 
 /// Work Service Implementation
 class WorkService with WorkServiceErrorHandler {
   final WorkRepository _repository;
   final WorkImageService _imageService;
+  final IStorage _storage;
+  final IWorkImageStorage _workImageStorage;
 
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
+    required IStorage storage,
+    required IWorkImageStorage workImageStorage,
   })  : _repository = repository,
-        _imageService = imageService;
+        _imageService = imageService,
+        _storage = storage,
+        _workImageStorage = workImageStorage;
 
   /// Count works
   Future<int> count(WorkFilter? filter) async {
@@ -46,9 +43,10 @@ class WorkService with WorkServiceErrorHandler {
       'deleteWork',
       () async {
         // 先删除封面缩略图
-        final coverPath = await PathHelper.getWorkCoverThumbnailPath(workId);
-        if (await PathHelper.isFileExists(coverPath)) {
-          await File(coverPath).delete();
+        final coverPath =
+            await _workImageStorage.getWorkCoverThumbnailPath(workId);
+        if (await _storage.fileExists(coverPath)) {
+          await _storage.deleteFile(coverPath);
         }
 
         // 删除作品及其图片
@@ -91,21 +89,21 @@ class WorkService with WorkServiceErrorHandler {
       'getWorkThumbnail',
       () async {
         final thumbnailPath =
-            await PathHelper.getWorkCoverThumbnailPath(workId);
+            await _workImageStorage.getWorkCoverThumbnailPath(workId);
 
         // 检查缩略图是否存在
-        final file = File(thumbnailPath);
-        if (await file.exists()) {
-          // 检查文件是否为空
+        if (await _storage.fileExists(thumbnailPath)) {
+          // 检查文件大小
+          final file = File(thumbnailPath);
           if (await file.length() == 0) {
-            await PathHelper.createPlaceholderImage(thumbnailPath);
+            await _storage.createPlaceholderImage(thumbnailPath);
           }
           return thumbnailPath;
         } else {
           // 如果文件不存在但目录存在，创建占位图
           final dir = Directory(path.dirname(thumbnailPath));
           if (await dir.exists()) {
-            await PathHelper.createPlaceholderImage(thumbnailPath);
+            await _storage.createPlaceholderImage(thumbnailPath);
             return thumbnailPath;
           }
         }
@@ -130,7 +128,8 @@ class WorkService with WorkServiceErrorHandler {
         // 确保生成并保存封面缩略图
         if (files.isNotEmpty) {
           final coverThumb = await _imageService.createThumbnail(files[0]);
-          final coverPath = await PathHelper.getWorkCoverThumbnailPath(work.id);
+          final coverPath =
+              await _workImageStorage.getWorkCoverThumbnailPath(work.id);
           await coverThumb.copy(coverPath);
           AppLogger.debug('已生成作品封面缩略图',
               tag: 'WorkService',

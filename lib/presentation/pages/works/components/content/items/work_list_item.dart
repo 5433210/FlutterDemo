@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
-import '../../../../../../utils/path_helper.dart';
+import '../../../../../widgets/skeleton_loader.dart';
 
-class WorkListItem extends StatelessWidget {
+class WorkListItem extends ConsumerWidget {
   final WorkEntity work;
   final bool isSelected;
   final bool isSelectionMode;
@@ -22,7 +24,7 @@ class WorkListItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Card(
@@ -50,7 +52,7 @@ class WorkListItem extends StatelessWidget {
                 width: 200,
                 child: AspectRatio(
                   aspectRatio: 4 / 3,
-                  child: _buildThumbnail(context),
+                  child: _buildThumbnail(context, ref),
                 ),
               ),
 
@@ -276,21 +278,28 @@ class WorkListItem extends StatelessWidget {
   }
 
   // 构建缩略图
-  Widget _buildThumbnail(BuildContext context) {
+  Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
+    final storageService = ref.watch(storageServiceProvider);
+
     return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id),
+      future: storageService.getWorkCoverPath(work.id),
       builder: (context, pathSnapshot) {
-        if (!pathSnapshot.hasData) return _buildPlaceholder(context);
+        if (!pathSnapshot.hasData) {
+          return const SkeletonLoader(
+            width: 200,
+            height: 150,
+          );
+        }
 
         return FutureBuilder<bool>(
-          future: PathHelper.isFileExists(pathSnapshot.data!),
+          future: storageService.fileExists(pathSnapshot.data!),
           builder: (context, existsSnapshot) {
             if (!existsSnapshot.hasData || !existsSnapshot.data!) {
               return _buildPlaceholder(context);
             }
-            final file = File(pathSnapshot.data!);
+
             return Image.file(
-              file,
+              File(pathSnapshot.data!),
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => _buildPlaceholder(context),
             );

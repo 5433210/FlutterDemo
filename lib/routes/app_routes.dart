@@ -1,3 +1,16 @@
+import 'package:go_router/go_router.dart';
+
+import '../presentation/pages/home_page.dart';
+
+/// The route configuration.
+final routes = <RouteBase>[
+  GoRoute(
+    path: AppRoutes.home,
+    builder: (context, state) =>
+        const HomePagePlaceholder(), // Placeholder for home page
+  ),
+];
+
 /// App route definitions
 class AppRoutes {
   static const home = '/';

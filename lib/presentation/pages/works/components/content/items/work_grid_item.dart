@@ -1,13 +1,14 @@
-import 'dart:io';
-
-import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../../application/providers/service_providers.dart';
+import '../../../../../../domain/models/work/work_entity.dart';
+import '../../../../../../theme/app_colors.dart';
 import '../../../../../../theme/app_sizes.dart';
-import '../../../../../../utils/date_formatter.dart';
-import '../../../../../../utils/path_helper.dart';
+import '../../../../../widgets/image/cached_image.dart';
+import '../../../../../widgets/skeleton_loader.dart';
 
-class WorkGridItem extends StatelessWidget {
+class WorkGridItem extends ConsumerWidget {
   final WorkEntity work;
   final bool isSelected;
   final bool isSelectionMode;
@@ -16,17 +17,17 @@ class WorkGridItem extends StatelessWidget {
   const WorkGridItem({
     super.key,
     required this.work,
+    required this.isSelected,
+    required this.isSelectionMode,
     required this.onTap,
-    this.isSelected = false,
-    this.isSelectionMode = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final storageService = ref.watch(storageServiceProvider);
 
     return Card(
-      margin: const EdgeInsets.all(0), // 移除默认边距
       elevation:
           isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
@@ -42,74 +43,34 @@ class WorkGridItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // 使整个卡片尽可能小
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 图片容器 - 固定比例
-            AspectRatio(
-              aspectRatio: 4 / 3, // 保持4:3的图片比例
-              child: _buildThumbnail(context),
-            ),
-            // 信息容器 - 紧凑但可读的布局
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.s, // 左边距
-                AppSizes.xs, // 上边距
-                AppSizes.s, // 右边距
-                AppSizes.xs, // 底部边距减小
+            // 缩略图区域 - 固定宽度，维持比例
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 4 / 3,
+                child: _buildThumbnail(context, ref),
               ),
+            ),
+
+            // 底部信息区域
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.s),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 标题 - 单行截断
                   Text(
                     work.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontSize: 15, // 调整为更舒适的标题大小
-                    ),
+                    style: theme.textTheme.titleMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.xs), // 适当的间距
-                  // 作者和时间 - 单行截断
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          work.author,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            fontSize: 13, // 稍微增大作者字体
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text(
-                        DateFormatter.formatCompact(work.creationDate),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 12, // 日期字体大小
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.xxs),
-                  // 标签 - 紧凑但可读的标签
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4), // 底部减少留白
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildTag(context, work.style.label),
-                          ...[
-                            const SizedBox(width: AppSizes.xs),
-                            _buildTag(context, work.tool.label),
-                          ],
-                        ],
-                      ),
-                    ),
+                  const SizedBox(height: AppSizes.xs),
+                  Text(
+                    work.author,
+                    style: theme.textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -120,56 +81,44 @@ class WorkGridItem extends StatelessWidget {
     );
   }
 
+  // 构建缩略图占位符
   Widget _buildPlaceholder(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
-      child: Center(
+      child: const Center(
         child: Icon(
           Icons.image_outlined,
-          size: 32,
-          color: Theme.of(context).colorScheme.outline,
+          size: 48,
+          color: AppColors.textHint,
         ),
       ),
     );
   }
 
-  Widget _buildTag(BuildContext context, String label) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.xs,
-        vertical: 2, // 增加垂直内边距使标签更可读
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontSize: 11, // 增加字体大小
-          color: theme.colorScheme.onSecondaryContainer,
-        ),
-      ),
-    );
-  }
+  // 构建缩略图
+  Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
+    final storageService = ref.watch(storageServiceProvider);
 
-  Widget _buildThumbnail(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: PathHelper.getWorkThumbnailPath(work.id),
-      builder: (context, pathSnapshot) {
-        if (!pathSnapshot.hasData) return _buildPlaceholder(context);
+    return FutureBuilder<String>(
+      future: storageService.getWorkCoverPath(work.id),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SkeletonLoader(
+            width: 200,
+            height: 150,
+          );
+        }
+
         return FutureBuilder<bool>(
-          future: PathHelper.isFileExists(pathSnapshot.data!),
+          future: storageService.fileExists(snapshot.data!),
           builder: (context, existsSnapshot) {
             if (!existsSnapshot.hasData || !existsSnapshot.data!) {
               return _buildPlaceholder(context);
             }
-            final file = File(pathSnapshot.data!);
-            return Image.file(
-              file,
+
+            return CachedImage(
+              path: snapshot.data!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
             );
           },
         );

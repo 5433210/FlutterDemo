@@ -1,31 +1,24 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/services/work_image_processing_interface.dart';
 import '../../../domain/services/work_image_storage_interface.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/providers/image_providers.dart';
+import '../../../infrastructure/storage/storage_interface.dart';
 import './service_errors.dart';
-
-/// Work Image Service Provider
-final workImageServiceProvider = Provider<WorkImageService>((ref) {
-  return WorkImageService(
-    storage: ref.watch(workImageStorageProvider),
-    processor: ref.watch(workImageProcessorProvider),
-  );
-});
 
 /// Work Image Service Implementation
 class WorkImageService with WorkImageErrorHandler {
-  final IWorkImageStorage _storage;
+  final IStorage _storage;
+  final IWorkImageStorage _workImageStorage;
   final IWorkImageProcessing _processor;
 
   WorkImageService({
-    required IWorkImageStorage storage,
+    required IStorage storage,
+    required IWorkImageStorage workImageStorage,
     required IWorkImageProcessing processor,
   })  : _storage = storage,
+        _workImageStorage = workImageStorage,
         _processor = processor;
 
   /// Clean up all work images
@@ -38,7 +31,7 @@ class WorkImageService with WorkImageErrorHandler {
 
         // Delete each image
         for (final imagePath in images) {
-          await _storage.deleteWorkImage(workId, imagePath);
+          await _workImageStorage.deleteWorkImage(workId, imagePath);
 
           AppLogger.debug(
             'Deleted work image',
@@ -74,7 +67,7 @@ class WorkImageService with WorkImageErrorHandler {
   Future<void> deleteWorkImage(String workId, String imagePath) async {
     return handleImageOperation(
       'deleteWorkImage',
-      () => _storage.deleteWorkImage(workId, imagePath),
+      () => _workImageStorage.deleteWorkImage(workId, imagePath),
       data: {'workId': workId, 'imagePath': imagePath},
     );
   }
@@ -83,7 +76,7 @@ class WorkImageService with WorkImageErrorHandler {
   Future<List<String>> getWorkImages(String workId) async {
     return handleImageOperation(
       'getWorkImages',
-      () => _storage.getWorkImages(workId),
+      () => _workImageStorage.getWorkImages(workId),
       data: {'workId': workId},
     );
   }
@@ -181,7 +174,7 @@ class WorkImageService with WorkImageErrorHandler {
   Future<String> saveWorkImage(String workId, File image) async {
     return handleImageOperation(
       'saveWorkImage',
-      () => _storage.saveWorkImage(workId, image),
+      () => _workImageStorage.saveWorkImage(workId, image),
       data: {'workId': workId, 'imagePath': image.path},
     );
   }

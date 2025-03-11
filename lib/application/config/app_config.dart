@@ -1,4 +1,7 @@
 class AppConfig {
+  // 应用名称
+  static String get appName => '书法集字';
+
   // 缓存目录名
   static String get cacheFolder => 'cache';
 

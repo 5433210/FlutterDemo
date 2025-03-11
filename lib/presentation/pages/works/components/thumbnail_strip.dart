@@ -1,133 +1,130 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../infrastructure/logging/logger.dart';
-import '../../../../utils/path_helper.dart';
+import '../../../../application/providers/service_providers.dart';
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_sizes.dart';
+import '../../../widgets/skeleton_loader.dart';
 
-/// Widget that displays thumbnails for all images in a work
-class ThumbnailStrip extends StatefulWidget {
+class ThumbnailStrip extends ConsumerWidget {
   final String workId;
-  final int imageCount;
-  final int currentIndex;
+  final List<String> imageIds;
+  final int selectedIndex;
   final Function(int) onThumbnailTap;
+  final double? width;
+  final double? height;
 
   const ThumbnailStrip({
     super.key,
     required this.workId,
-    required this.imageCount,
-    required this.currentIndex,
+    required this.imageIds,
+    required this.selectedIndex,
     required this.onThumbnailTap,
+    this.width,
+    this.height,
   });
 
   @override
-  State<ThumbnailStrip> createState() => _ThumbnailStripState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.divider),
+        borderRadius: BorderRadius.circular(AppSizes.r4),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < imageIds.length; i++) ...[
+              _ThumbnailItem(
+                workId: workId,
+                imageId: imageIds[i],
+                isSelected: i == selectedIndex,
+                onTap: () => onThumbnailTap(i),
+                width: height,
+                height: height,
+              ),
+              if (i < imageIds.length - 1) const SizedBox(width: AppSizes.p4),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _ThumbnailStripState extends State<ThumbnailStrip> {
-  // Cache thumbnail futures to prevent rebuilds
-  final Map<int, Future<String?>> _thumbnailPathFutures = {};
+class _ThumbnailItem extends ConsumerWidget {
+  final String workId;
+  final String imageId;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final double? width;
+  final double? height;
+
+  const _ThumbnailItem({
+    required this.workId,
+    required this.imageId,
+    required this.isSelected,
+    required this.onTap,
+    this.width,
+    this.height,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: widget.imageCount,
-        itemBuilder: (context, index) {
-          return _buildThumbnail(index);
-        },
-      ),
-    );
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final storageService = ref.watch(storageServiceProvider);
 
-  @override
-  void initState() {
-    super.initState();
-    // Pre-fetch thumbnail paths
-    for (int i = 0; i < widget.imageCount; i++) {
-      _getThumbnailPathFuture(i);
-    }
-  }
-
-  Widget _buildThumbnail(int index) {
-    return GestureDetector(
-      onTap: () => widget.onThumbnailTap(index),
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        width: 100,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color:
-                widget.currentIndex == index ? Colors.blue : Colors.grey[300]!,
-            width: widget.currentIndex == index ? 3 : 1,
-          ),
-        ),
-        child: FutureBuilder<String?>(
-          future: _getThumbnailPathFuture(index),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              );
-            }
-
-            if (!snapshot.hasData || snapshot.data == null) {
-              return const Center(
-                child: Icon(Icons.image_not_supported),
-              );
-            }
-
-            final file = File(snapshot.data!);
-            if (!file.existsSync()) {
-              return const Center(
-                child: Icon(Icons.broken_image),
-              );
-            }
-
-            return Image.file(
-              file,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.broken_image),
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Future<String?> _getThumbnailPath(int index) async {
-    try {
-      final path = await PathHelper.getWorkThumbnailPath(widget.workId, index);
-
-      // Ensure directory exists if needed
-      if (path != null) {
-        final dir = Directory(path).parent;
-        if (!await dir.exists()) {
-          await dir.create(recursive: true);
+    return FutureBuilder<String>(
+      future: storageService.getWorkImageThumbnailPath(workId, imageId),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return SkeletonLoader(
+            width: width ?? 60,
+            height: height ?? 60,
+          );
         }
-      }
 
-      return path;
-    } catch (e, stack) {
-      AppLogger.error(
-        '获取缩略图路径失败',
-        tag: 'ThumbnailStrip',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': widget.workId, 'index': index},
-      );
-      return null;
-    }
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(AppSizes.r4),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.r4),
+              child: Image.file(
+                File(snapshot.data!),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildPlaceholder(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
-  // Get cached future for thumbnail path or create new one
-  Future<String?> _getThumbnailPathFuture(int index) {
-    return _thumbnailPathFutures[index] ??= _getThumbnailPath(index);
+  Widget _buildPlaceholder() {
+    return Container(
+      width: width,
+      height: height,
+      color: AppColors.background,
+      child: const Icon(
+        Icons.image_outlined,
+        color: AppColors.textHint,
+      ),
+    );
   }
 }

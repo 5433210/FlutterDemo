@@ -1,164 +1,90 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/providers/service_providers.dart';
 import '../../../../domain/models/work/work_entity.dart';
-import '../../../../infrastructure/logging/logger.dart';
-import '../../../../utils/path_helper.dart';
-
-// Provider to cache thumbnail paths and avoid expensive I/O operations
-final workThumbnailProvider =
-    FutureProvider.family<String?, String>((ref, workId) async {
-  try {
-    return await PathHelper.getWorkThumbnailPath(workId);
-  } catch (e, stack) {
-    AppLogger.error('Error loading thumbnail path',
-        tag: 'workThumbnailProvider',
-        error: e,
-        stackTrace: stack,
-        data: {'workId': workId});
-    return null;
-  }
-});
+import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_sizes.dart';
+import '../../../../theme/app_text_styles.dart';
+import '../../../widgets/image/cached_image.dart';
+import '../../../widgets/skeleton_loader.dart';
+import '../../../widgets/tag_list.dart';
 
 class WorkCard extends ConsumerWidget {
   final WorkEntity work;
-  final VoidCallback onTap;
+  final void Function()? onTap;
+  final bool selected;
+  final double? width;
+  final double? height;
 
   const WorkCard({
     super.key,
     required this.work,
-    required this.onTap,
+    this.onTap,
+    this.selected = false,
+    this.width,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final thumbnailAsync = ref.watch(workThumbnailProvider(work.id ?? ''));
+    final storageService = ref.watch(storageServiceProvider);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Thumbnail
-            Expanded(
-              child: thumbnailAsync.when(
-                data: (thumbnailPath) => _buildThumbnail(thumbnailPath),
-                loading: () => const Center(
-                  child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2)),
-                ),
-                error: (err, stack) => _buildErrorThumbnail(),
-              ),
-            ),
+    return FutureBuilder<String>(
+      future: storageService.getWorkCoverPath(work.id),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return SkeletonLoader(
+            width: width ?? 200,
+            height: height ?? 280,
+          );
+        }
 
-            // Work info - with fixed height to avoid layout shifts
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              height: 72,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    work.title,
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+        final coverPath = snapshot.data!;
+
+        return Card(
+          clipBehavior: Clip.antiAlias,
+          color: selected ? AppColors.selectedCard : null,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 缩略图
+                Expanded(
+                  child: CachedImage(
+                    path: coverPath,
+                    width: width,
+                    height: height,
+                    fit: BoxFit.cover,
                   ),
-                  const SizedBox(height: 4),
-                  // Author and style
-                  Row(
+                ),
+                // 标题和标签
+                Padding(
+                  padding: const EdgeInsets.all(AppSizes.p8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ...[
-                        Expanded(
-                          child: Text(
-                            work.author,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      Text(
+                        work.title,
+                        style: AppTextStyles.bodyMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSizes.p4),
+                      if (work.tags.isNotEmpty)
+                        TagList(
+                          tags: work.tags,
+                          maxLines: 1,
                         ),
-                      ],
-                      ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            work.style.label,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer,
-                            ),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorThumbnail() {
-    return Container(
-      color: Colors.grey[200],
-      child: const Center(
-        child: Icon(
-          Icons.broken_image,
-          size: 48,
-          color: Colors.grey,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderThumbnail() {
-    return Container(
-      color: Colors.grey[200],
-      child: const Center(
-        child: Icon(
-          Icons.image_outlined,
-          size: 48,
-          color: Colors.grey,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(String? thumbnailPath) {
-    if (thumbnailPath == null) {
-      return _buildPlaceholderThumbnail();
-    }
-
-    final file = File(thumbnailPath);
-
-    return Hero(
-      tag: 'work-thumbnail-${work.id}',
-      child: Image.file(
-        file,
-        fit: BoxFit.cover,
-        cacheWidth: 300, // Optimize memory usage
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorThumbnail();
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

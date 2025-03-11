@@ -1,28 +1,37 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../infrastructure/providers/image_processor_providers.dart';
 import '../../infrastructure/providers/repository_providers.dart';
-import '../services/character/character_service.dart';
-import '../services/practice/practice_service.dart';
+import '../../infrastructure/providers/storage_providers.dart';
+import '../services/storage/storage_service.dart';
 import '../services/work/work_image_service.dart';
 import '../services/work/work_service.dart';
 
-final characterServiceProvider = Provider<CharacterService>((ref) {
-  final repository = ref.watch(characterRepositoryProvider);
-  return CharacterService(repository: repository);
+/// Service Providers
+
+/// Storage Service Provider
+final storageServiceProvider = Provider<StorageService>((ref) {
+  return StorageService(
+    storage: ref.watch(storageProvider),
+    workImageStorage: ref.watch(workImageStorageProvider),
+  );
 });
 
-/// Practice Service Provider
-final practiceServiceProvider = Provider<PracticeService>((ref) {
-  final repository = ref.watch(practiceRepositoryProvider);
-  return PracticeService(repository: repository);
+/// Work Image Service Provider
+final workImageServiceProvider = Provider<WorkImageService>((ref) {
+  return WorkImageService(
+    storage: ref.watch(storageProvider),
+    workImageStorage: ref.watch(workImageStorageProvider),
+    processor: ref.watch(workImageProcessorProvider),
+  );
 });
 
 /// Work Service Provider
 final workServiceProvider = Provider<WorkService>((ref) {
-  final repository = ref.watch(workRepositoryProvider);
-  final imageService = ref.watch(workImageServiceProvider);
   return WorkService(
-    repository: repository,
-    imageService: imageService,
+    repository: ref.watch(workRepositoryProvider),
+    imageService: ref.watch(workImageServiceProvider),
+    storage: ref.watch(storageProvider),
+    workImageStorage: ref.watch(workImageStorageProvider),
   );
 });

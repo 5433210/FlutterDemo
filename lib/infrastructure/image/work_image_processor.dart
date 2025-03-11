@@ -6,8 +6,9 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/models/work/work_image.dart';
 import '../../domain/services/work_image_processing_interface.dart';
+import '../../domain/services/work_image_storage_interface.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../../utils/path_helper.dart';
+import '../../infrastructure/storage/storage_interface.dart';
 import './base_image_processor.dart';
 
 class WorkImageProcessor extends BaseImageProcessor
@@ -17,7 +18,11 @@ class WorkImageProcessor extends BaseImageProcessor
   static const int _maxImageWidth = 1920;
   static const int _maxImageHeight = 1080;
 
+  final IStorage _storage;
+  final IWorkImageStorage _workImageStorage;
   final _uuid = const Uuid();
+
+  WorkImageProcessor(this._storage, this._workImageStorage);
 
   @override
   Future<File> generateWorkThumbnail(File image) async {
@@ -48,7 +53,7 @@ class WorkImageProcessor extends BaseImageProcessor
       );
 
       // 创建临时文件
-      final tempDir = await PathHelper.getTempDirectory();
+      final tempDir = await _storage.getTempDirectory();
       final thumbnailPath = path.join(
           tempDir.path, 'thumb_${DateTime.now().millisecondsSinceEpoch}.jpg');
       final thumbnailFile = File(thumbnailPath);
@@ -102,8 +107,9 @@ class WorkImageProcessor extends BaseImageProcessor
         final thumbnail = await generateWorkThumbnail(resizedFile);
 
         // 移动到永久存储目录
-        final imageDir = await PathHelper.getWorkImageDirectory(workId, i);
-        await PathHelper.ensureDirectoryExists(imageDir);
+        final imageDir =
+            await _workImageStorage.getWorkImageDir(workId, i.toString());
+        await _storage.ensureDirectoryExists(imageDir);
 
         final imagePath =
             path.join(imageDir, 'image${path.extension(resizedFile.path)}');

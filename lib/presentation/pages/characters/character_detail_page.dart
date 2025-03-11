@@ -1,12 +1,12 @@
-import 'package:demo/domain/models/character/character_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/models/character/character_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/repository_providers.dart';
 import '../../providers/character_detail_provider.dart';
 import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/toolbar_action_button.dart';
 import '../../widgets/page_layout.dart';
 
 class CharacterDetailPage extends ConsumerStatefulWidget {
@@ -25,8 +25,7 @@ class CharacterDetailPage extends ConsumerStatefulWidget {
 }
 
 class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
-  late final CharacterDetailNotifier _notifier;
-  bool _isLoading = true;
+  var _isLoading = false;
   CharacterEntity? _character;
   String? _errorMessage;
 
@@ -41,37 +40,35 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
   @override
   void initState() {
     super.initState();
-    _notifier = ref.read(characterDetailProvider.notifier);
-    _loadCharacter();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCharacter();
+    });
   }
 
-  List<Widget> _buildActions() {
+  List<DetailToolbarAction> _buildActions() {
     if (_character == null) return [];
 
     return [
-      ToolbarActionButton(
+      DetailToolbarAction(
+        icon: Icons.edit,
         tooltip: '编辑字形',
         onPressed: () {
-          // Todo: 实现编辑字形功能
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('编辑功能尚未实现')),
           );
         },
-        child: const Icon(Icons.edit),
       ),
-      PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert),
-        onSelected: (value) {
-          if (value == 'delete') {
-            _confirmDelete();
-          }
+      DetailToolbarAction(
+        icon: Icons.image,
+        tooltip: '查看原图',
+        onPressed: () {
+          // Todo: 实现查看原图功能
         },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'delete',
-            child: Text('删除字形'),
-          ),
-        ],
+      ),
+      DetailToolbarAction(
+        icon: Icons.delete,
+        tooltip: '删除字形',
+        onPressed: _confirmDelete,
       ),
     ];
   }
@@ -115,7 +112,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Character Image
           const AspectRatio(
             aspectRatio: 1.0,
             child: Card(
@@ -125,20 +121,14 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
               ),
             ),
           ),
-
           const SizedBox(height: 24),
-
-          // Character Details
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '基本信息',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  Text('基本信息', style: Theme.of(context).textTheme.titleLarge),
                   const Divider(),
                   _buildInfoRow('汉字', character.char),
                   _buildInfoRow('创建时间', _formatDateTime(character.createTime)),
@@ -146,11 +136,8 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
               ),
             ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Source Region
-          if (character.region != null)
+          if (character.region != null) ...[
+            const SizedBox(height: 16),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -161,10 +148,8 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                       children: [
                         const Icon(Icons.crop, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          '原图区域',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
+                        Text('原图区域',
+                            style: Theme.of(context).textTheme.titleLarge),
                       ],
                     ),
                     const Divider(),
@@ -179,8 +164,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                 ),
               ),
             ),
-
-          const SizedBox(height: 16),
+          ],
         ],
       ),
     );
@@ -214,36 +198,11 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     return DetailToolbar(
       title: '字形详情',
       leadingIcon: Icons.text_fields,
-      badge: _character != null
-          ? DetailBadge(
-              text: _character!.char,
-            )
-          : null,
-      actions: _character != null
-          ? [
-              DetailToolbarAction(
-                icon: Icons.edit,
-                tooltip: '编辑字形',
-                onPressed: () {
-                  // 编辑功能
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('编辑功能尚未实现')),
-                  );
-                },
-              ),
-              DetailToolbarAction(
-                icon: Icons.image,
-                tooltip: '查看原图',
-                onPressed: () {
-                  // 查看原图功能
-                },
-              ),
-            ]
-          : [],
+      badge: _character != null ? DetailBadge(text: _character!.char) : null,
+      actions: _buildActions(),
     );
   }
 
-  /// Show delete confirmation dialog and delete if confirmed
   Future<void> _confirmDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -272,26 +231,22 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     }
   }
 
-  /// Delete character and handle result
   Future<void> _deleteCharacter() async {
     try {
       setState(() {
         _isLoading = true;
       });
 
-      await _notifier.deleteCharacter(widget.charId);
+      final repository = ref.read(characterRepositoryProvider);
+      await repository.delete(widget.charId);
+      ref.invalidate(characterDetailProvider);
 
       if (mounted) {
         if (widget.onBack != null) {
-          widget.onBack!(); // Call custom back function if provided
+          widget.onBack!();
         } else {
-          Navigator.of(context).pop(); // Regular navigation
+          Navigator.of(context).pop();
         }
-      } else if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = '删除失败';
-        });
       }
     } catch (e, stack) {
       AppLogger.error(
@@ -315,7 +270,6 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     }
   }
 
-  /// Format DateTime to readable string
   String _formatDateTime(DateTime? dateTime) {
     if (dateTime == null) return '未知';
 
@@ -333,7 +287,8 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     });
 
     try {
-      final character = await _notifier.getCharacter(widget.charId);
+      final character =
+          await ref.read(characterDetailProvider(widget.charId).future);
 
       if (mounted) {
         setState(() {
