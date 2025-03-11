@@ -38,13 +38,33 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   Future<void> deleteSelected() async {
     if (state.selectedWorks.isEmpty) return;
 
-    state = state.copyWith(isLoading: true);
+    AppLogger.debug('开始批量删除',
+        tag: 'WorkBrowseViewModel',
+        data: {'selectedCount': state.selectedWorks.length});
+
     try {
+      state = state.copyWith(isLoading: true);
+
+      // 1. 执行删除操作
       await Future.wait(
           state.selectedWorks.map((id) => _workService.deleteWork(id)));
-      await loadWorks(forceRefresh: true);
-      toggleBatchMode();
-    } catch (e) {
+
+      AppLogger.debug('删除完成，准备刷新列表', tag: 'WorkBrowseViewModel');
+
+      // 2. 重新加载作品列表
+      final works = await _workService.queryWorks(state.filter);
+
+      // 3. 更新状态
+      state = state.copyWith(
+        isLoading: false,
+        works: works,
+        batchMode: false, // 删除后退出批量模式
+        selectedWorks: {}, // 清空选择
+      );
+    } catch (e, stack) {
+      AppLogger.error('批量删除失败',
+          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
@@ -62,7 +82,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   // 加载相关方法
   Future<void> loadWorks({bool forceRefresh = false}) async {
-    if (state.isLoading) return;
+    if (state.isLoading && !forceRefresh) return;
 
     AppLogger.debug('触发加载流程',
         tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
@@ -92,12 +112,15 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   // 搜索相关方法
   void setSearchQuery(String query) {
+    AppLogger.debug('设置搜索关键词',
+        tag: 'WorkBrowseViewModel', data: {'query': query});
+
     if (_searchDebounce?.isActive ?? false) {
       _searchDebounce?.cancel();
     }
 
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
-      final newFilter = state.filter.copyWith(keyword: query);
+      final newFilter = state.filter.copyWith(keyword: query.trim());
       updateFilter(newFilter);
     });
   }
@@ -109,6 +132,9 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   // 批量操作相关方法
   void toggleBatchMode() {
+    AppLogger.debug('切换批量模式',
+        tag: 'WorkBrowseViewModel', data: {'currentMode': state.batchMode});
+
     state = state.copyWith(
       batchMode: !state.batchMode,
       selectedWorks: {}, // 退出批量模式时清空选择
@@ -122,6 +148,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     } else {
       newSelection.add(workId);
     }
+
+    AppLogger.debug('切换选择状态',
+        tag: 'WorkBrowseViewModel',
+        data: {'workId': workId, 'selected': newSelection.contains(workId)});
+
     state = state.copyWith(selectedWorks: newSelection);
   }
 
@@ -186,10 +217,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     );
 
     if (filter == null) {
-      // 清除所有日期相关的筛选条件
+      // 清除所有筛选条件
       final newFilter = state.filter.copyWith(
         datePreset: DateRangePreset.all,
         dateRange: null,
+        keyword: null, // 确保清除搜索关键词
       );
 
       state = state.copyWith(

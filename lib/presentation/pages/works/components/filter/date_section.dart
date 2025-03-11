@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../theme/app_sizes.dart';
-import '../../../../providers/work_browse_provider.dart';
 import 'date_range_filter_section.dart';
-import 'date_range_section.dart';
 
 class DateSection extends StatelessWidget {
   final WorkFilter filter;
@@ -47,58 +44,6 @@ class DateSection extends StatelessWidget {
           },
         ),
       ],
-    );
-  }
-}
-
-class _CustomTab extends ConsumerWidget {
-  const _CustomTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.s),
-        child: DateRangeSection(
-          initialValue: state.filter.dateRange,
-          onChanged: (range) {
-            // 使用updateDateRange替代clearDateFilter
-            viewModel.updateDateRange(range);
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class _PresetTab extends ConsumerWidget {
-  const _PresetTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.s),
-      child: Wrap(
-        spacing: AppSizes.xs,
-        runSpacing: AppSizes.xs,
-        children: DateRangePreset.values
-            .where((preset) => preset != DateRangePreset.all) // 过滤掉"全部"选项
-            .map((preset) => FilterChip(
-                  label: Text(preset.label),
-                  selected: state.filter.datePreset == preset,
-                  onSelected: (selected) =>
-                      viewModel.updateDatePreset(selected ? preset : null),
-                  visualDensity: VisualDensity.compact,
-                ))
-            .toList(),
-      ),
     );
   }
 }

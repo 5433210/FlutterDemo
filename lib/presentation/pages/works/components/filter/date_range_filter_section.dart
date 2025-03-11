@@ -23,12 +23,18 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _logger = Logger('DateRangeFilterSection');
+  DateTime? _startDate;
+  DateTime? _endDate;
+
+  bool get _hasSelection => _startDate != null || _endDate != null;
+
+  bool get _hasValidRange =>
+      _startDate != null && _endDate != null && _startDate!.isBefore(_endDate!);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // 显示筛选标签的条件：有预设或自定义日期
     final filter = widget.filter;
     final bool showResetChip = filter != null &&
         ((filter.preset != null && filter.preset != DateRangePreset.all) ||
@@ -90,6 +96,18 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.index = 0;
+    _startDate = widget.filter?.start;
+    _endDate = widget.filter?.end;
+  }
+
+  void _applyDateRange() {
+    if (_hasValidRange) {
+      _logger.fine('应用日期范围 - 开始: $_startDate, 结束: $_endDate');
+      widget.onChanged(DateRangeFilter(
+        start: _startDate,
+        end: _endDate,
+      ));
+    }
   }
 
   Widget _buildCustomRange(BuildContext context) {
@@ -100,18 +118,37 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
         _buildDateField(
           context: context,
           label: '开始日期',
-          value: widget.filter?.start,
+          value: _startDate,
           onPressed: () => _selectDate(context, true),
-          onClear: () => _updateDateRange(startDate: null),
         ),
         const SizedBox(height: AppSizes.m),
         _buildDateField(
           context: context,
           label: '结束日期',
-          value: widget.filter?.end,
+          value: _endDate,
           onPressed: () => _selectDate(context, false),
-          onClear: () => _updateDateRange(endDate: null),
         ),
+        if (_hasSelection) ...[
+          const SizedBox(height: AppSizes.l),
+          Row(
+            children: [
+              if (_hasValidRange)
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _applyDateRange,
+                    child: const Text('应用'),
+                  ),
+                ),
+              if (_hasValidRange) const SizedBox(width: AppSizes.s),
+              Expanded(
+                child: TextButton(
+                  onPressed: _clearDateRange,
+                  child: const Text('清除'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -121,27 +158,19 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     required String label,
     required DateTime? value,
     required VoidCallback onPressed,
-    required VoidCallback onClear,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(label, style: Theme.of(context).textTheme.titleSmall),
-            const SizedBox(width: AppSizes.l),
-            if (value != null)
-              TextButton(
-                onPressed: onClear,
-                child: const Text('清除'),
-              ),
-          ],
-        ),
+        Text(label, style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: AppSizes.xs),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.calendar_today, size: 18),
-          label: Text(value != null ? _formatDate(value) : '点击选择日期'),
-          onPressed: onPressed,
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.calendar_today, size: 18),
+            label: Text(value != null ? _formatDate(value) : '点击选择日期'),
+            onPressed: onPressed,
+          ),
         ),
       ],
     );
@@ -188,6 +217,14 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     );
   }
 
+  void _clearDateRange() {
+    setState(() {
+      _startDate = null;
+      _endDate = null;
+      widget.onChanged(null);
+    });
+  }
+
   String _formatDate(DateTime date) {
     return DateFormat('yyyy-MM-dd').format(date);
   }
@@ -215,7 +252,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
-    final initialDate = isStartDate ? widget.filter?.start : widget.filter?.end;
+    final initialDate = isStartDate ? _startDate : _endDate;
 
     final result = await showDatePicker(
       context: context,
@@ -225,27 +262,13 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     );
 
     if (result != null) {
-      _updateDateRange(
-        startDate: isStartDate ? result : widget.filter?.start,
-        endDate: isStartDate ? widget.filter?.end : result,
-      );
+      setState(() {
+        if (isStartDate) {
+          _startDate = result;
+        } else {
+          _endDate = result;
+        }
+      });
     }
-  }
-
-  void _updateDateRange({DateTime? startDate, DateTime? endDate}) {
-    _logger.fine('更新日期范围 - 开始: $startDate, 结束: $endDate');
-
-    if (startDate == null && endDate == null) {
-      widget.onChanged(null);
-      return;
-    }
-
-    final newFilter = DateRangeFilter(
-      start: startDate ?? widget.filter?.start,
-      end: endDate ?? widget.filter?.end,
-    );
-
-    _logger.fine('新的filter: $newFilter');
-    widget.onChanged(newFilter);
   }
 }
