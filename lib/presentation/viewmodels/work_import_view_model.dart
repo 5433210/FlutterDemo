@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:demo/domain/models/work/work_entity.dart';
+import 'package:demo/infrastructure/image/image_processor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +9,6 @@ import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
 import '../../application/config/app_config.dart';
-import '../../application/services/work/work_image_service.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -16,9 +16,9 @@ import 'states/work_import_state.dart';
 
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
-  final WorkImageService _imageService;
+  final ImageProcessor _imageProcessor;
 
-  WorkImportViewModel(this._workService, this._imageService)
+  WorkImportViewModel(this._workService, this._imageProcessor)
       : super(const WorkImportState());
 
   // 图片操作
@@ -147,7 +147,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
       final angle = clockwise ? 90 : -90;
       final selectedFile = state.images[state.selectedImageIndex];
-      final rotatedFile = await _imageService.rotateImage(selectedFile, angle);
+      final rotatedFile =
+          await _imageProcessor.rotateImage(selectedFile, angle);
 
       final updatedImages = List<File>.from(state.images);
       updatedImages[state.selectedImageIndex] = rotatedFile;
@@ -270,11 +271,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         //   await _imageService.backupOriginal(file);
         // }
 
-        final optimized = await _imageService.optimizeImage(
+        final optimized = await _imageProcessor.optimizeImage(
           file,
-          maxWidth: AppConfig.optimizedImageWidth,
-          maxHeight: AppConfig.optimizedImageHeight,
-          quality: AppConfig.optimizedImageQuality,
         );
 
         processedImages.add(optimized);

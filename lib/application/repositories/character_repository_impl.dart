@@ -1,7 +1,7 @@
 import '../../domain/models/character/character_entity.dart';
 import '../../domain/models/character/character_filter.dart';
 import '../../domain/repositories/character_repository.dart';
-import '../persistence/database_interface.dart';
+import '../../infrastructure/persistence/database_interface.dart';
 
 class CharacterRepositoryImpl implements CharacterRepository {
   final DatabaseInterface _database;

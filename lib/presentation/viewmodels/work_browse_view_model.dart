@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/services/restoration/state_restoration_service.dart';
 import '../../application/services/services.dart';
 import '../../domain/models/common/date_range_filter.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../../infrastructure/services/state_restoration_service.dart';
 import '../../utils/throttle_helper.dart';
 import 'states/work_browse_state.dart';
 

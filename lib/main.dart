@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'application/controllers/initialization_controller.dart';
 import 'infrastructure/logging/logger.dart';
+import 'infrastructure/providers/database_providers.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
 
@@ -13,21 +15,38 @@ void main() async {
 
   // 在 Windows 平台上初始化 sqflite_ffi
   if (defaultTargetPlatform == TargetPlatform.windows) {
+    AppLogger.debug('初始化 SQLite FFI', tag: 'App');
     sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
 
   try {
-    // 初始化 SharedPreferences (关键步骤)
+    // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();
 
-    // 启动应用，提供 SharedPreferences 实例
+    // 创建ProviderContainer用于初始化阶段
+    final container = ProviderContainer(
+      observers: [ProviderLogger()],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+    );
+
+    // 等待数据库初始化完成
+    AppLogger.info('等待数据库初始化', tag: 'App');
+    await container.read(databaseProvider.future);
+    AppLogger.info('数据库初始化完成', tag: 'App');
+
+    // 执行初始化检查
+    AppLogger.info('开始应用初始化检查', tag: 'App');
+    await container.read(initializationControllerProvider).runInitialChecks();
+    AppLogger.info('应用初始化检查完成', tag: 'App');
+
+    // 启动应用
     runApp(
       ProviderScope(
+        parent: container,
         observers: [ProviderLogger()],
-        overrides: [
-          // 覆盖 sharedPreferencesProvider
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
         child: const MyApp(),
       ),
     );
@@ -43,12 +62,29 @@ void main() async {
 
     // 显示基本的错误界面
     runApp(
-      MaterialApp(home: Scaffold(body: Center(child: Text('应用启动失败: $e')))),
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  '应用启动失败: $e',
+                  style: const TextStyle(color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// Riverpod 日志记录器（仅在调试模式下使用）
+/// Riverpod 日志记录器
 class ProviderLogger extends ProviderObserver {
   @override
   void didAddProvider(

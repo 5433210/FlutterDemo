@@ -1,10 +1,10 @@
 import 'package:uuid/uuid.dart';
 
-import '../../../domain/models/work/work_image.dart';
-import '../../../domain/repositories/work_image_repository.dart';
-import '../../../utils/date_time_helper.dart';
-import '../../persistence/database_interface.dart';
-import '../../persistence/models/database_query.dart';
+import '../../domain/models/work/work_image.dart';
+import '../../domain/repositories/work_image_repository.dart';
+import '../../infrastructure/persistence/database_interface.dart';
+import '../../infrastructure/persistence/models/database_query.dart';
+import '../../utils/date_time_helper.dart';
 
 class WorkImageRepositoryImpl implements WorkImageRepository {
   final DatabaseInterface _db;

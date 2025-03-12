@@ -1,3 +1,4 @@
+import 'package:demo/infrastructure/providers/storage_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,7 +26,7 @@ class WorkGridItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final storageService = ref.watch(storageServiceProvider);
+    final store = ref.watch(storageProvider);
 
     return Card(
       elevation:
@@ -97,10 +98,11 @@ class WorkGridItem extends ConsumerWidget {
 
   // 构建缩略图
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
-    final storageService = ref.watch(storageServiceProvider);
+    final storage = ref.watch(storageProvider);
+    final workStorage = ref.watch(workStorageProvider);
 
     return FutureBuilder<String>(
-      future: storageService.getWorkCoverPath(work.id),
+      future: Future.value(workStorage.getWorkCoverThumbnailPath(work.id)),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const SkeletonLoader(
@@ -110,7 +112,7 @@ class WorkGridItem extends ConsumerWidget {
         }
 
         return FutureBuilder<bool>(
-          future: storageService.fileExists(snapshot.data!),
+          future: storage.fileExists(snapshot.data!),
           builder: (context, existsSnapshot) {
             if (!existsSnapshot.hasData || !existsSnapshot.data!) {
               return _buildPlaceholder(context);

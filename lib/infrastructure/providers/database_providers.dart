@@ -1,31 +1,107 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/config/app_config.dart';
-import '../persistence/database_factory.dart';
+import '../../application/providers/storage_providers.dart';
+import '../persistence/app_database.dart';
 import '../persistence/database_interface.dart';
-import '../persistence/sqlite/migrations.dart';
 
-/// 数据库配置提供者
-final databaseConfigProvider = FutureProvider<DatabaseConfig>((ref) async {
-  return DatabaseConfig(
-    name: 'app.db',
-    directory: AppConfig.dataPath,
-    migrations: migrations, // 从 migrations.dart 导入的迁移脚本列表
-  );
+/// 数据库初始化Provider
+final databaseInitializationProvider =
+    FutureProvider.autoDispose<void>((ref) async {
+  final stateNotifier = ref.watch(databaseStateProvider.notifier);
+
+  try {
+    final db = await ref.watch(databaseProvider.future);
+    await stateNotifier.initialize(db);
+  } catch (e) {
+    stateNotifier.setError();
+    rethrow;
+  }
 });
 
-/// 数据库提供者
-final databaseProvider = FutureProvider<DatabaseInterface>((ref) async {
-  final config = await ref.watch(databaseConfigProvider.future);
+/// 数据库Provider
+final databaseProvider = FutureProvider<AppDatabase>((ref) async {
+  final basePath = await ref.watch(appRootDirectoryProvider.future);
+  return AppDatabase(basePath: basePath ?? '');
+});
 
-  // 使用工厂创建数据库实例
-  final database = await DatabaseFactory.create(config);
+/// 数据库状态Provider
+final databaseStateProvider =
+    StateNotifierProvider<DatabaseStateNotifier, DatabaseState>(
+  (ref) => DatabaseStateNotifier(),
+);
 
-  // 注册数据库关闭回调
-  ref.onDispose(() async {
-    await database.close();
+/// 数据库状态
+class DatabaseState {
+  final DatabaseInterface? database;
+  final String version;
+  final DatabaseStatus status;
+
+  factory DatabaseState.error() => DatabaseState._(
+        version: '0.0.0',
+        status: DatabaseStatus.error,
+      );
+
+  factory DatabaseState.initialized(DatabaseInterface database) =>
+      DatabaseState._(
+        database: database,
+        version: '1.0.0',
+        status: DatabaseStatus.initialized,
+      );
+
+  factory DatabaseState.initializing() => DatabaseState._(
+        version: '0.0.0',
+        status: DatabaseStatus.initializing,
+      );
+
+  factory DatabaseState.uninitialized() => DatabaseState._(
+        version: '0.0.0',
+        status: DatabaseStatus.uninitialized,
+      );
+
+  DatabaseState._({
+    this.database,
+    required this.version,
+    required this.status,
   });
 
-  await database.initialize();
-  return database;
-});
+  String get error => status == DatabaseStatus.error ? '初始化失败' : '';
+
+  bool get isInitialized =>
+      status == DatabaseStatus.initialized && database != null;
+
+  @override
+  String toString() => status.toString();
+}
+
+/// 数据库状态通知器
+class DatabaseStateNotifier extends StateNotifier<DatabaseState> {
+  DatabaseStateNotifier() : super(DatabaseState.uninitialized());
+
+  Future<void> initialize(DatabaseInterface database) async {
+    state = DatabaseState.initializing();
+    await database.initialize();
+    state = DatabaseState.initialized(database);
+  }
+
+  void setError() {
+    state = DatabaseState.error();
+  }
+}
+
+/// 数据库状态枚举
+enum DatabaseStatus {
+  uninitialized,
+  initializing,
+  initialized,
+  error;
+
+  @override
+  String toString() {
+    return switch (this) {
+      DatabaseStatus.uninitialized => '未初始化',
+      DatabaseStatus.initializing => '初始化中',
+      DatabaseStatus.initialized => '已初始化',
+      DatabaseStatus.error => '错误',
+    };
+  }
+}

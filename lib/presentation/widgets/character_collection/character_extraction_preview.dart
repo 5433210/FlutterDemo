@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
+import '../../../application/services/image/character_image_processor.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/repositories/character_repository.dart';
-import '../../../infrastructure/image/character_image_processor.dart';
 import 'character_preview_panel.dart';
 import 'region_painter.dart';
 import 'region_properties_dialog.dart';

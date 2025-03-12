@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/models/work/work_image.dart';
-import 'repository_providers.dart';
+import '../../infrastructure/providers/repository_providers.dart';
 
 /// 第一张图片提供者
 final firstWorkImageProvider = Provider.family<Future<WorkImage?>, String>(

@@ -4,16 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/services/restoration/state_restoration_service.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/services/state_restoration_service.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/sidebar_toggle.dart';
-import '../../widgets/dialogs/command_history_dialog.dart'; // 确保添加此导入
 import '../../widgets/forms/work_detail_edit_form.dart' as forms;
 import '../../widgets/page_layout.dart';
 import '../../widgets/tag_editor.dart';
@@ -641,21 +640,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
   }
 
-  /// 获取最后一个命令的描述
-  String _getLastCommandDescription(WorkDetailState state,
-      {required bool undo}) {
-    if (state.commandHistory == null || state.commandHistory!.isEmpty) {
-      return '操作';
-    }
-
-    final index = undo ? state.historyIndex : state.historyIndex + 1;
-    if (index < 0 || index >= state.commandHistory!.length) {
-      return '操作';
-    }
-
-    return state.commandHistory![index].description;
-  }
-
   // 处理返回按钮，确保返回时刷新作品列表
   void _handleBackButton() {
     Navigator.of(context).pop(true); // 返回true表示数据可能已更改
@@ -708,44 +692,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           HardwareKeyboard.instance.isMetaPressed;
 
       if (isCtrlPressed) {
-        if (event.logicalKey.keyLabel == 'z' ||
-            event.logicalKey.keyLabel == 'Z') {
-          _handleUndo(state);
-        } else if (event.logicalKey.keyLabel == 'y' ||
-            event.logicalKey.keyLabel == 'Y') {
-          _handleRedo(state);
-        } else if (event.logicalKey.keyLabel == 's' ||
+        if (event.logicalKey.keyLabel == 's' ||
             event.logicalKey.keyLabel == 'S') {
           _handleSave(state);
         }
       }
-    }
-  }
-
-  /// 处理重做操作
-  void _handleRedo(WorkDetailState state) {
-    if (!state.canRedo) return;
-
-    try {
-      ref.read(workDetailProvider.notifier).redo();
-
-      // 安全地获取命令描述
-      String cmdDescription = '操作';
-      if (state.commandHistory != null &&
-          state.historyIndex + 1 >= 0 &&
-          state.historyIndex + 1 < state.commandHistory!.length) {
-        cmdDescription =
-            state.commandHistory![state.historyIndex + 1].description;
-      }
-
-      _showOperationFeedback('重做：$cmdDescription');
-    } catch (e) {
-      AppLogger.error(
-        '执行重做操作失败',
-        tag: 'WorkDetailPage',
-        error: e,
-      );
-      _showOperationFeedback('重做操作失败');
     }
   }
 
@@ -754,32 +705,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     if (!state.hasChanges || state.isSaving) return;
 
     _saveChanges();
-  }
-
-  /// 处理撤销操作
-  void _handleUndo(WorkDetailState state) {
-    if (!state.canUndo) return;
-
-    try {
-      ref.read(workDetailProvider.notifier).undo();
-
-      // 安全地获取命令描述
-      String cmdDescription = '操作';
-      if (state.commandHistory != null &&
-          state.historyIndex >= 0 &&
-          state.historyIndex < state.commandHistory!.length) {
-        cmdDescription = state.commandHistory![state.historyIndex].description;
-      }
-
-      _showOperationFeedback('撤销：$cmdDescription');
-    } catch (e) {
-      AppLogger.error(
-        '执行撤销操作失败',
-        tag: 'WorkDetailPage',
-        error: e,
-      );
-      _showOperationFeedback('撤销操作失败');
-    }
   }
 
   /// 加载作品详情
@@ -939,20 +864,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     // 分享作品的实现
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('正在分享作品: ${work.title}')),
-    );
-  }
-
-  /// 显示命令历史对话框 - 添加此方法以便在需要时显示历史记录
-  void _showCommandHistoryDialog(WorkDetailState state) {
-    if (state.commandHistory == null || state.commandHistory!.isNotEmpty)
-      return;
-
-    showDialog(
-      context: context,
-      builder: (context) => CommandHistoryDialog(
-        commands: state.commandHistory!,
-        currentIndex: state.historyIndex,
-      ),
     );
   }
 

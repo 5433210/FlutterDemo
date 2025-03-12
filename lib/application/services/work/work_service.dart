@@ -1,38 +1,32 @@
 import 'dart:io';
 
-import 'package:path/path.dart' as path;
-
 import '../../../domain/models/work/work_entity.dart';
 import '../../../domain/models/work/work_filter.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../domain/repositories/work_repository.dart';
-import '../../../domain/services/work_image_storage_interface.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../infrastructure/storage/storage_interface.dart';
 import './service_errors.dart';
 import './work_image_service.dart';
 
-/// Work Service Implementation
+/// 作品服务
 class WorkService with WorkServiceErrorHandler {
   final WorkRepository _repository;
   final WorkImageService _imageService;
   final IStorage _storage;
-  final IWorkImageStorage _workImageStorage;
   final WorkImageRepository _workImageRepository;
 
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
     required IStorage storage,
-    required IWorkImageStorage workImageStorage,
     required WorkImageRepository workImageRepository,
   })  : _repository = repository,
         _imageService = imageService,
         _storage = storage,
-        _workImageStorage = workImageStorage,
         _workImageRepository = workImageRepository;
 
-  /// Count works
+  /// 统计作品数量
   Future<int> count(WorkFilter? filter) async {
     return handleOperation(
       'count',
@@ -41,19 +35,12 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Delete work and its images
+  /// 删除作品
   Future<void> deleteWork(String workId) async {
     return handleOperation(
       'deleteWork',
       () async {
-        // 先删除封面缩略图
-        final coverPath =
-            await _workImageStorage.getWorkCoverThumbnailPath(workId);
-        if (await _storage.fileExists(coverPath)) {
-          await _storage.deleteFile(coverPath);
-        }
-
-        // 删除作品及其图片
+        // 删除作品及图片
         await _repository.delete(workId);
         await _imageService.cleanupWorkImages(workId);
       },
@@ -61,7 +48,7 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Get all works
+  /// 获取所有作品
   Future<List<WorkEntity>> getAllWorks() async {
     return handleOperation(
       'getAllWorks',
@@ -69,16 +56,16 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Get work entity with all related data
-  Future<WorkEntity?> getWorkEntity(String id) async {
+  /// 获取作品实体
+  Future<WorkEntity?> getWork(String workId) async {
     return handleOperation(
       'getWorkEntity',
-      () => _repository.get(id),
-      data: {'workId': id},
+      () => _repository.get(workId),
+      data: {'workId': workId},
     );
   }
 
-  /// Get works by tags
+  /// 按标签获取作品
   Future<List<WorkEntity>> getWorksByTags(Set<String> tags) async {
     return handleOperation(
       'getWorksByTags',
@@ -87,80 +74,32 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Get work thumbnail path
-  Future<String?> getWorkThumbnail(String workId) async {
-    return handleOperation(
-      'getWorkThumbnail',
-      () async {
-        final thumbnailPath =
-            await _workImageStorage.getWorkCoverThumbnailPath(workId);
-
-        // 检查缩略图是否存在
-        if (await _storage.fileExists(thumbnailPath)) {
-          // 检查文件大小
-          final file = File(thumbnailPath);
-          if (await file.length() == 0) {
-            await _storage.createPlaceholderImage(thumbnailPath);
-          }
-          return thumbnailPath;
-        } else {
-          // 如果文件不存在但目录存在，创建占位图
-          final dir = Directory(path.dirname(thumbnailPath));
-          if (await dir.exists()) {
-            await _storage.createPlaceholderImage(thumbnailPath);
-            return thumbnailPath;
-          }
-        }
-        return null;
-      },
-      data: {'workId': workId},
-    );
-  }
-
-  /// Import work with images
+  /// 导入作品
   Future<WorkEntity> importWork(List<File> files, WorkEntity work) async {
     return handleOperation(
       'importWork',
-      tag: 'WorkService',
       () async {
         AppLogger.debug(
           '导入作品',
+          tag: 'WorkService',
           data: {'fileCount': files.length, 'work': work.toJson()},
         );
-        AppLogger.debug(
-          '导入作品 - 文件列表',
-          tag: 'WorkService',
-          data: {'files': files.map((f) => f.path).toList()},
-        );
+
         // 验证输入
         if (files.isEmpty) throw ArgumentError('图片文件不能为空');
 
-        // 处理图片
-        final images =
-            await _imageService.processImagesInBatches(work.id, files);
-
-        // 确保生成并保存封面缩略图
-        if (files.isNotEmpty) {
-          final coverThumb = await _imageService.createThumbnail(files[0]);
-          final coverPath =
-              await _workImageStorage.getWorkCoverThumbnailPath(work.id);
-          await coverThumb.copy(coverPath);
-          AppLogger.debug('已生成作品封面缩略图',
-              tag: 'WorkService',
-              data: {'workId': work.id, 'coverPath': coverPath});
-        }
+        // 导入图片
+        final images = await _imageService.importImages(work.id, files);
 
         // 更新作品信息
         final updatedWork = work.copyWith(
           imageCount: images.length,
           updateTime: DateTime.now(),
           createTime: DateTime.now(),
-          // No need to set images field if the database table doesn't have it
         );
 
         // 保存到数据库
         final savedWork = await _repository.create(updatedWork);
-        // 保存图片信息到数据库
         final savedImages = await _workImageRepository.saveMany(images);
 
         return savedWork.copyWith(images: savedImages);
@@ -169,7 +108,7 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Query works with filter
+  /// 查询作品
   Future<List<WorkEntity>> queryWorks(WorkFilter filter) async {
     return handleOperation(
       'queryWorks',
@@ -196,9 +135,7 @@ class WorkService with WorkServiceErrorHandler {
         AppLogger.debug(
           '查询作品完成',
           tag: 'WorkService',
-          data: {
-            'resultCount': results.length,
-          },
+          data: {'resultCount': results.length},
         );
 
         return results;
@@ -207,25 +144,14 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
-  /// Search works
-  Future<List<WorkEntity>> searchWorks(String query, {int? limit}) async {
-    return handleOperation(
-      'searchWorks',
-      () => _repository.search(query, limit: limit),
-      data: {'query': query, 'limit': limit},
-    );
-  }
-
-  /// Update complete work entity
+  /// 更新作品实体
   Future<WorkEntity> updateWorkEntity(WorkEntity work) async {
     return handleOperation(
       'updateWorkEntity',
       () async {
-        final now = DateTime.now();
         final updatedWork = work.copyWith(
-          updateTime: now,
+          updateTime: DateTime.now(),
         );
-
         return await _repository.save(updatedWork);
       },
       data: {'workId': work.id},

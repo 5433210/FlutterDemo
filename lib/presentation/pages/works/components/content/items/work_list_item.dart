@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
+import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
 import '../../../../../widgets/skeleton_loader.dart';
@@ -279,10 +280,11 @@ class WorkListItem extends ConsumerWidget {
 
   // 构建缩略图
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
-    final storageService = ref.watch(storageServiceProvider);
+    final workStorage = ref.watch(workStorageProvider);
+    final storage = ref.watch(storageProvider);
 
     return FutureBuilder<String?>(
-      future: storageService.getWorkCoverPath(work.id),
+      future: Future.value(workStorage.getWorkCoverThumbnailPath(work.id)),
       builder: (context, pathSnapshot) {
         if (!pathSnapshot.hasData) {
           return const SkeletonLoader(
@@ -292,7 +294,7 @@ class WorkListItem extends ConsumerWidget {
         }
 
         return FutureBuilder<bool>(
-          future: storageService.fileExists(pathSnapshot.data!),
+          future: storage.fileExists(pathSnapshot.data!),
           builder: (context, existsSnapshot) {
             if (!existsSnapshot.hasData || !existsSnapshot.data!) {
               return _buildPlaceholder(context);

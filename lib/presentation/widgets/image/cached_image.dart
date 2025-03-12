@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/service_providers.dart';
+import '../../../infrastructure/providers/storage_providers.dart';
 import '../skeleton_loader.dart';
 
 class CachedImage extends ConsumerWidget {
@@ -24,10 +24,10 @@ class CachedImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final storageService = ref.watch(storageServiceProvider);
+    final storage = ref.watch(storageProvider);
 
     return FutureBuilder<bool>(
-      future: storageService.fileExists(path),
+      future: storage.fileExists(path),
       builder: (context, snapshot) {
         if (!snapshot.hasData || !snapshot.data!) {
           return SkeletonLoader(

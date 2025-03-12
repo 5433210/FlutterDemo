@@ -28,10 +28,10 @@ class WorkCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final storageService = ref.watch(storageServiceProvider);
+    final storageService = ref.watch(workStorageProvider);
 
     return FutureBuilder<String>(
-      future: storageService.getWorkCoverPath(work.id),
+      future: Future.value(storageService.getWorkCoverThumbnailPath(work.id)),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return SkeletonLoader(

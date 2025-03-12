@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../infrastructure/providers/initialization_providers.dart';
+import '../application/providers/initialization_providers.dart';
 import '../presentation/pages/characters/character_list_page.dart';
 import '../presentation/pages/practices/practice_detail_page.dart';
 import '../presentation/pages/practices/practice_edit_page.dart';

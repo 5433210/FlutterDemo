@@ -3,13 +3,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/commands/work_edit_commands.dart';
 import '../../application/providers/service_providers.dart';
+import '../../application/services/restoration/state_restoration_service.dart';
+import '../../domain/commands/work_edit_command.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
-import '../../infrastructure/services/state_restoration_service.dart';
 
 /// Provider for the current image index in a work
 final currentWorkImageIndexProvider = StateProvider<int>((ref) {
@@ -162,62 +162,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
-  /// 执行编辑命令
-  Future<void> executeCommand(WorkEditCommand command) async {
-    if (!state.isEditing || state.editingWork == null) return;
-
-    try {
-      AppLogger.info('执行编辑命令',
-          tag: 'WorkDetailNotifier', data: {'command': command.description});
-
-      // 执行命令
-      final updatedWork = await command.execute(state.editingWork!);
-
-      // 当执行新命令时，需要丢弃当前位置之后的所有命令
-      List<WorkEditCommand> newHistory;
-      if (state.historyIndex < 0) {
-        // 没有历史记录，创建新列表
-        newHistory = [command];
-      } else {
-        // 有历史记录，保留当前位置之前的命令
-        newHistory = List<WorkEditCommand>.from(
-            state.commandHistory!.sublist(0, state.historyIndex + 1));
-        newHistory.add(command);
-      }
-
-      // 更新状态
-      state = state.copyWith(
-        editingWork: updatedWork,
-        hasChanges: true,
-        commandHistory: newHistory,
-        historyIndex: newHistory.length - 1,
-      );
-
-      // 保存编辑状态
-      await _saveEditState();
-
-      AppLogger.info('命令执行完成',
-          tag: 'WorkDetailNotifier', data: {'command': command.description});
-    } catch (e, stack) {
-      AppLogger.error(
-        '执行编辑命令失败',
-        tag: 'WorkDetailNotifier',
-        error: e,
-        stackTrace: stack,
-        data: {'command': command.description},
-      );
-
-      // 可以考虑在这里添加失败的视觉反馈
-    }
-  }
-
-  /// 获取命令历史副本
-  List<WorkEditCommand>? getCommandHistory() {
-    return state.commandHistory != null
-        ? List.from(state.commandHistory!)
-        : null;
-  }
-
   /// 加载作品详情
   Future<void> loadWorkDetails(String workId) async {
     // 如果已经在加载，防止重复触发
@@ -227,7 +171,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       state = state.copyWith(isLoading: true, error: null);
 
       final workService = _ref.read(workServiceProvider);
-      final work = await workService.getWorkEntity(workId);
+      final work = await workService.getWork(workId);
 
       if (work == null) {
         state = state.copyWith(isLoading: false, error: '作品未找到');
@@ -263,48 +207,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       state = state.copyWith(hasChanges: true);
 
       AppLogger.debug('表单状态已标记为已更改', tag: 'WorkDetailProvider');
-    }
-  }
-
-  /// 重做操作
-  Future<void> redo() async {
-    if (!state.canRedo) return;
-
-    try {
-      AppLogger.info('执行重做操作', tag: 'WorkDetailNotifier');
-
-      // 添加额外检查，确保索引有效
-      if (state.commandHistory == null ||
-          state.commandHistory!.isEmpty ||
-          state.historyIndex + 1 >= state.commandHistory!.length) {
-        AppLogger.warning('无效的重做操作：命令历史为空或索引无效', tag: 'WorkDetailNotifier');
-        return;
-      }
-
-      // 获取要重做的命令
-      final command = state.commandHistory![state.historyIndex + 1];
-
-      // 执行命令
-      final updatedWork = await command.execute(state.editingWork!);
-
-      // 更新状态
-      state = state.copyWith(
-        editingWork: updatedWork,
-        historyIndex: state.historyIndex + 1,
-      );
-
-      // 保存编辑状态
-      await _saveEditState();
-
-      AppLogger.info('重做操作完成',
-          tag: 'WorkDetailNotifier', data: {'command': command.description});
-    } catch (e, stack) {
-      AppLogger.error(
-        '重做操作失败',
-        tag: 'WorkDetailNotifier',
-        error: e,
-        stackTrace: stack,
-      );
     }
   }
 
@@ -421,40 +323,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
 
     return false;
-  }
-
-  /// 撤销操作
-  Future<void> undo() async {
-    if (!state.canUndo) return;
-
-    try {
-      AppLogger.info('执行撤销操作', tag: 'WorkDetailNotifier');
-
-      // 获取要撤销的命令
-      final command = state.commandHistory![state.historyIndex];
-
-      // 撤销命令
-      final updatedWork = await command.undo(state.editingWork!);
-
-      // 更新状态
-      state = state.copyWith(
-        editingWork: updatedWork,
-        historyIndex: state.historyIndex - 1,
-      );
-
-      // 保存编辑状态
-      await _saveEditState();
-
-      AppLogger.info('撤销操作完成',
-          tag: 'WorkDetailNotifier', data: {'command': command.description});
-    } catch (e, stack) {
-      AppLogger.error(
-        '撤销操作失败',
-        tag: 'WorkDetailNotifier',
-        error: e,
-        stackTrace: stack,
-      );
-    }
   }
 
   // 在 WorkDetailNotifier 类中添加方法，实时更新基本信息

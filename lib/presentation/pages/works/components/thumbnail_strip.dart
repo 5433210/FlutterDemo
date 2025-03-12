@@ -1,129 +1,83 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../application/providers/service_providers.dart';
-import '../../../../theme/app_colors.dart';
-import '../../../../theme/app_sizes.dart';
-import '../../../widgets/skeleton_loader.dart';
+import '../../../../domain/models/work/work_image.dart';
+import '../../../widgets/image/cached_image.dart';
 
-class ThumbnailStrip extends ConsumerWidget {
-  final String workId;
-  final List<String> imageIds;
+/// 缩略图条组件
+class ThumbnailStrip extends StatelessWidget {
+  final List<WorkImage> images;
   final int selectedIndex;
-  final Function(int) onThumbnailTap;
-  final double? width;
-  final double? height;
+  final Function(int) onTap;
+  final ScrollController? controller;
 
   const ThumbnailStrip({
     super.key,
-    required this.workId,
-    required this.imageIds,
+    required this.images,
     required this.selectedIndex,
-    required this.onThumbnailTap,
-    this.width,
-    this.height,
+    required this.onTap,
+    this.controller,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.divider),
-        borderRadius: BorderRadius.circular(AppSizes.r4),
-      ),
-      child: SingleChildScrollView(
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        controller: controller,
         scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            for (var i = 0; i < imageIds.length; i++) ...[
-              _ThumbnailItem(
-                workId: workId,
-                imageId: imageIds[i],
-                isSelected: i == selectedIndex,
-                onTap: () => onThumbnailTap(i),
-                width: height,
-                height: height,
-              ),
-              if (i < imageIds.length - 1) const SizedBox(width: AppSizes.p4),
-            ],
-          ],
-        ),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          final image = images[index];
+          final isSelected = index == selectedIndex;
+
+          return Padding(
+            padding: const EdgeInsets.all(4.0),
+            child: _ThumbnailItem(
+              image: image,
+              isSelected: isSelected,
+              onTap: () => onTap(index),
+            ),
+          );
+        },
       ),
     );
   }
 }
 
-class _ThumbnailItem extends ConsumerWidget {
-  final String workId;
-  final String imageId;
+/// 缩略图项目组件
+class _ThumbnailItem extends StatelessWidget {
+  final WorkImage image;
   final bool isSelected;
   final VoidCallback onTap;
-  final double? width;
-  final double? height;
 
   const _ThumbnailItem({
-    required this.workId,
-    required this.imageId,
+    required this.image,
     required this.isSelected,
     required this.onTap,
-    this.width,
-    this.height,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final storageService = ref.watch(storageServiceProvider);
-
-    return FutureBuilder<String>(
-      future: storageService.getWorkImageThumbnailPath(workId, imageId),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SkeletonLoader(
-            width: width ?? 60,
-            height: height ?? 60,
-          );
-        }
-
-        return GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.transparent,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(AppSizes.r4),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.r4),
-              child: Image.file(
-                File(snapshot.data!),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(),
-              ),
-            ),
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 80,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected
+                ? Theme.of(context).primaryColor
+                : Colors.transparent,
+            width: 2,
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      width: width,
-      height: height,
-      color: AppColors.background,
-      child: const Icon(
-        Icons.image_outlined,
-        color: AppColors.textHint,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: CachedImage(
+            path: image.thumbnailPath ?? image.path,
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }
