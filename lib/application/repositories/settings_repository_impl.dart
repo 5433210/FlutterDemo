@@ -10,7 +10,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
 
   @override
   Future<void> deleteValue(String key) async {
-    await _db.rawUpdate(
+    await _db.rawDelete(
       'DELETE FROM $_table WHERE key = ?',
       [key],
     );
