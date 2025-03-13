@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../widgets/common/base_image_preview.dart';
 
 // 创建一个图片索引提供者
@@ -26,6 +27,14 @@ class WorkImagePreview extends ConsumerWidget {
     final selectedIndex = ref.watch(selectedImageIndexProvider);
     final validImages =
         work.images.where((img) => img.path.isNotEmpty).toList();
+
+    AppLogger.debug('WorkImagePreview build', tag: 'WorkImagePreview', data: {
+      'workId': work.id,
+      'totalImages': work.images.length,
+      'validImages': validImages.length,
+      'imagePaths': validImages.map((img) => img.path).toList(),
+    });
+
     final imagePaths = validImages.map((img) => img.path).toList();
 
     return Column(

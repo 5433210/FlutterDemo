@@ -128,6 +128,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     }
 
     if (state.error != null) {
+      AppLogger.error('Work detail error',
+          tag: 'WorkDetailPage', error: state.error);
       return Center(
         child: ErrorDisplay(
           error: state.error!,
@@ -138,6 +140,13 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
     // 根据编辑状态选择要显示的实际内容
     final work = state.isEditing ? state.editingWork : state.work;
+    AppLogger.debug('Work detail data', tag: 'WorkDetailPage', data: {
+      'workId': work?.id,
+      'hasImages': work?.images.isNotEmpty,
+      'imageCount': work?.images.length,
+      'imagePaths': work?.images.map((img) => img.path).toList(),
+    });
+
     if (work == null) {
       return const Center(
         child: Text('作品不存在或已被删除'),

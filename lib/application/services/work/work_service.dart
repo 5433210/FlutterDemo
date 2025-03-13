@@ -60,7 +60,24 @@ class WorkService with WorkServiceErrorHandler {
   Future<WorkEntity?> getWork(String workId) async {
     return handleOperation(
       'getWorkEntity',
-      () => _repository.get(workId),
+      () async {
+        final work = await _repository.get(workId);
+        if (work != null) {
+          // Load work images
+          final images = await _workImageRepository.getAllByWorkId(workId);
+          AppLogger.debug(
+            'Loading work with images',
+            tag: 'WorkService',
+            data: {
+              'workId': workId,
+              'imageCount': images.length,
+              'imagePaths': images.map((img) => img.path).toList(),
+            },
+          );
+          return work.copyWith(images: images);
+        }
+        return work;
+      },
       data: {'workId': workId},
     );
   }

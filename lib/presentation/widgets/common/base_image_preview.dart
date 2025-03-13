@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../../infrastructure/logging/logger.dart';
+
 class BaseImagePreview extends StatefulWidget {
   final List<String> imagePaths;
   final int initialIndex;
@@ -37,6 +39,15 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.debug('BaseImagePreview build', tag: 'BaseImagePreview', data: {
+      'hasPaths': widget.imagePaths.isNotEmpty,
+      'pathCount': widget.imagePaths.length,
+      'currentIndex': _currentIndex,
+      'currentPath': widget.imagePaths.isNotEmpty
+          ? widget.imagePaths[_currentIndex]
+          : null,
+    });
+
     return Container(
       decoration: widget.previewDecoration ??
           BoxDecoration(
@@ -62,6 +73,18 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
   }
 
   Widget _buildImageViewer() {
+    final currentPath = widget.imagePaths[_currentIndex];
+    final file = File(currentPath);
+
+    // Check if file exists
+    AppLogger.debug('BaseImagePreview loading image',
+        tag: 'BaseImagePreview',
+        data: {
+          'path': currentPath,
+          'exists': file.existsSync(),
+          'size': file.existsSync() ? file.lengthSync() : null,
+        });
+
     return InteractiveViewer(
       transformationController: _transformationController,
       boundaryMargin: _viewerPadding,
@@ -69,9 +92,16 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
       maxScale: _maxZoomScale,
       child: Center(
         child: Image.file(
-          File(widget.imagePaths[_currentIndex]),
+          file,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
+            AppLogger.error(
+              '图片加载失败',
+              tag: 'BaseImagePreview',
+              error: error,
+              stackTrace: stackTrace,
+              data: {'path': currentPath},
+            );
             return const Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
