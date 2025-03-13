@@ -123,6 +123,11 @@ class SQLiteDatabase implements DatabaseInterface {
   }
 
   @override
+  Future<int> rawDelete(String sql, [List<Object?>? args]) async {
+    return _db.rawDelete(sql, args);
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> rawQuery(
     String sql, [
     List<Object?>? args,

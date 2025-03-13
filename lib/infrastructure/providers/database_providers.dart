@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/storage_providers.dart';
-import '../persistence/app_database.dart';
 import '../persistence/database_interface.dart';
+import '../persistence/sqlite/migrations.dart';
+import '../persistence/sqlite/sqlite_database.dart';
 
 /// 数据库初始化Provider
 final databaseInitializationProvider =
@@ -19,9 +20,13 @@ final databaseInitializationProvider =
 });
 
 /// 数据库Provider
-final databaseProvider = FutureProvider<AppDatabase>((ref) async {
+final databaseProvider = FutureProvider<DatabaseInterface>((ref) async {
   final basePath = await ref.watch(appRootDirectoryProvider.future);
-  return AppDatabase(basePath: basePath ?? '');
+  return SQLiteDatabase.create(
+    name: 'app.db',
+    directory: basePath ?? '',
+    migrations: migrations,
+  );
 });
 
 /// 数据库状态Provider

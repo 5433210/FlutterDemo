@@ -38,6 +38,9 @@ class FailingMockDatabase implements DatabaseInterface {
   ) async =>
       throw UnimplementedError();
   @override
+  Future<int> rawDelete(String sql, [List<Object?>? args]) async =>
+      throw UnimplementedError();
+  @override
   Future<List<Map<String, dynamic>>> rawQuery(
     String sql, [
     List<Object?>? args,
@@ -153,6 +156,12 @@ class MockDatabase implements DatabaseInterface {
     _checkInitialized();
     final maps = await query('works', filter.toJson());
     return maps.map((m) => WorkEntity.fromJson(m)).toList();
+  }
+
+  @override
+  Future<int> rawDelete(String sql, [List<Object?>? args]) async {
+    _checkInitialized();
+    return 0;
   }
 
   @override
@@ -281,6 +290,12 @@ class SlowMockDatabase implements DatabaseInterface {
   ) async {
     await Future.delayed(delay);
     return _delegate.query(table, filter);
+  }
+
+  @override
+  Future<int> rawDelete(String sql, [List<Object?>? args]) async {
+    await Future.delayed(delay);
+    return _delegate.rawDelete(sql, args);
   }
 
   @override

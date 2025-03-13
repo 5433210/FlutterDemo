@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as path;
+import 'package:sqflite/sqflite.dart';
 
 import 'database_interface.dart';
 
 class AppDatabase implements DatabaseInterface {
+  static const _version = 1;
   final String basePath;
-  Object? _database;
+  Database? _database;
+  bool _initialized = false;
 
   AppDatabase({required this.basePath});
 
@@ -28,8 +34,12 @@ class AppDatabase implements DatabaseInterface {
 
   @override
   Future<void> delete(String table, String id) async {
-    // TODO: 实现删除记录逻辑
-    throw UnimplementedError();
+    final db = _database;
+    if (db == null) {
+      throw StateError('Database not initialized');
+    }
+
+    await db.delete(table, where: 'key = ?', whereArgs: [id]);
   }
 
   @override
@@ -40,8 +50,19 @@ class AppDatabase implements DatabaseInterface {
 
   @override
   Future<Map<String, dynamic>?> get(String table, String id) async {
-    // TODO: 实现获取单个记录逻辑
-    throw UnimplementedError();
+    final db = _database;
+    if (db == null) {
+      throw StateError('Database not initialized');
+    }
+
+    final results = await db.query(
+      table,
+      where: 'key = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    return results.isNotEmpty ? results.first : null;
   }
 
   @override
@@ -53,8 +74,25 @@ class AppDatabase implements DatabaseInterface {
   @override
   Future<void> initialize() async {
     try {
-      // TODO: 实现实际的数据库初始化逻辑
-      _database = Object(); // 临时占位
+      if (_initialized) return;
+
+      // 确保目录存在
+      final dbDir = Directory(basePath);
+      await dbDir.create(recursive: true);
+      final dbPath = path.join(basePath, 'settings.db');
+      _database = await openDatabase(
+        dbPath,
+        version: _version,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+              key TEXT PRIMARY KEY,
+              value TEXT,
+              updateTime TEXT
+            )''');
+        },
+      );
+      _initialized = true;
     } catch (e) {
       debugPrint('Database initialization error: $e');
       rethrow;
@@ -65,6 +103,12 @@ class AppDatabase implements DatabaseInterface {
   Future<List<Map<String, dynamic>>> query(
       String table, Map<String, dynamic> filter) async {
     // TODO: 实现结构化查询逻辑
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<int> rawDelete(String sql, [List<Object?>? args]) async {
+    // TODO: 实现原生删除逻辑
     throw UnimplementedError();
   }
 
@@ -96,8 +140,12 @@ class AppDatabase implements DatabaseInterface {
 
   @override
   Future<void> set(String table, String id, Map<String, dynamic> data) async {
-    // TODO: 实现设置记录逻辑
-    throw UnimplementedError();
+    final db = _database;
+    if (db == null) {
+      throw StateError('Database not initialized');
+    }
+
+    await db.insert(table, data, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override

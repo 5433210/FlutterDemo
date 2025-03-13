@@ -28,6 +28,9 @@ abstract class DatabaseInterface {
   Future<List<Map<String, dynamic>>> query(
       String table, Map<String, dynamic> filter);
 
+  /// 执行原生删除
+  Future<int> rawDelete(String sql, [List<Object?>? args]);
+
   /// 执行原生查询
   Future<List<Map<String, dynamic>>> rawQuery(String sql,
       [List<Object?>? args]);
