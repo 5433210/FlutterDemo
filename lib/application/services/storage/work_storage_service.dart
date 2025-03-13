@@ -130,7 +130,8 @@ class WorkStorageService {
       path.join(getWorkPath(workId), 'images');
 
   /// 获取作品目录路径
-  String getWorkPath(String workId) => (path.join('works', workId));
+  String getWorkPath(String workId) =>
+      (path.join(_storage.getAppDataPath(), 'works', workId));
 
   /// 检查作品图片是否存在
   Future<bool> hasWorkImage(String path) => _storage.fileExists(path);

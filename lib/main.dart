@@ -1,25 +1,33 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:window_manager/window_manager.dart';
 
-import 'application/controllers/initialization_controller.dart';
 import 'infrastructure/logging/logger.dart';
-import 'infrastructure/providers/database_providers.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 在 Windows 平台上初始化 sqflite_ffi
-  if (defaultTargetPlatform == TargetPlatform.windows) {
-    AppLogger.debug('初始化 SQLite FFI', tag: 'App');
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
+  // 初始化窗口管理器
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(1280, 800),
+    minimumSize: Size(800, 600),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+  );
+
+  // 设置窗口
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
   AppLogger.init();
   try {
     // 初始化 SharedPreferences
@@ -33,15 +41,15 @@ void main() async {
       ],
     );
 
-    // 等待数据库初始化完成
-    AppLogger.info('等待数据库初始化', tag: 'App');
-    await container.read(databaseProvider.future);
-    AppLogger.info('数据库初始化完成', tag: 'App');
+    // // 等待数据库初始化完成
+    // AppLogger.info('等待数据库初始化', tag: 'App');
+    // await container.read(databaseProvider.future);
+    // AppLogger.info('数据库初始化完成', tag: 'App');
 
-    // 执行初始化检查
-    AppLogger.info('开始应用初始化检查', tag: 'App');
-    await container.read(initializationControllerProvider).runInitialChecks();
-    AppLogger.info('应用初始化检查完成', tag: 'App');
+    // // 执行初始化检查
+    // AppLogger.info('开始应用初始化检查', tag: 'App');
+    // await container.read(initializationControllerProvider).runInitialChecks();
+    // AppLogger.info('应用初始化检查完成', tag: 'App');
 
     // 启动应用
     runApp(

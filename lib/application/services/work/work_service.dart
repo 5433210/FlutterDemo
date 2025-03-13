@@ -88,21 +88,20 @@ class WorkService with WorkServiceErrorHandler {
         // 验证输入
         if (files.isEmpty) throw ArgumentError('图片文件不能为空');
 
-        // 导入图片
-        final images = await _imageService.importImages(work.id, files);
-
         // 更新作品信息
         final updatedWork = work.copyWith(
-          imageCount: images.length,
+          imageCount: files.length,
           updateTime: DateTime.now(),
           createTime: DateTime.now(),
         );
 
         // 保存到数据库
         final savedWork = await _repository.create(updatedWork);
-        final savedImages = await _workImageRepository.saveMany(images);
 
-        return savedWork.copyWith(images: savedImages);
+        // 导入图片
+        final images = await _imageService.importImages(work.id, files);
+
+        return savedWork.copyWith(images: images);
       },
       data: {'workId': work.id, 'fileCount': files.length},
     );

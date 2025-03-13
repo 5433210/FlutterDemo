@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../logging/logger.dart';
 import '../database_interface.dart';
@@ -272,6 +274,13 @@ class SQLiteDatabase implements DatabaseInterface {
     required String directory,
     List<String> migrations = const [],
   }) async {
+    // 在 Windows 平台上初始化 sqflite_ffi
+    if (defaultTargetPlatform == TargetPlatform.windows) {
+      AppLogger.debug('初始化 SQLite FFI', tag: 'App');
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
+
     final path = join(directory, name);
 
     AppLogger.info(
