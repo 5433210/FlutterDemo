@@ -20,7 +20,7 @@ void main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
-
+  AppLogger.init();
   try {
     // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();
