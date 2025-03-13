@@ -12,10 +12,10 @@ import 'storage_interface.dart';
 /// 2. 文件和目录管理
 /// 3. 路径生成和验证
 /// 4. 基础错误处理
-class StorageService implements IStorage {
+class LocalStorage implements IStorage {
   final String _basePath;
 
-  StorageService({
+  LocalStorage({
     required String basePath,
   }) : _basePath = basePath;
 
@@ -68,6 +68,20 @@ class StorageService implements IStorage {
         stack,
         data: {'path': dirPath},
       );
+      rethrow;
+    }
+  }
+
+  /// 获取临时目录
+  @override
+  Future<Directory> createTempDirectory() async {
+    try {
+      final tempBasePath = path.join(_basePath, 'temp');
+      final tempDirName = 'app_${DateTime.now().millisecondsSinceEpoch}';
+      return await Directory(path.join(tempBasePath, tempDirName))
+          .create(recursive: true);
+    } catch (e, stack) {
+      _handleError('获取临时目录失败', e, stack);
       rethrow;
     }
   }
@@ -140,10 +154,21 @@ class StorageService implements IStorage {
     return File(filePath).exists();
   }
 
+  /// 获取应用缓存目录路径
+  @override
+  String getAppCachePath() {
+    return path.join(_basePath, 'cache');
+  }
+
   /// 获取应用数据目录路径
   @override
   String getAppDataPath() {
     return _basePath;
+  }
+
+  @override
+  String getAppTempPath() {
+    return path.join(_basePath, 'temp');
   }
 
   /// 获取文件修改时间
@@ -184,18 +209,6 @@ class StorageService implements IStorage {
         stack,
         data: {'path': filePath},
       );
-      rethrow;
-    }
-  }
-
-  /// 获取临时目录
-  @override
-  Future<Directory> getTempDirectory() async {
-    try {
-      final tempDir = await Directory.systemTemp.createTemp('app_');
-      return tempDir;
-    } catch (e, stack) {
-      _handleError('获取临时目录失败', e, stack);
       rethrow;
     }
   }
@@ -289,7 +302,7 @@ class StorageService implements IStorage {
   @override
   Future<String> saveTempFile(String sourcePath) async {
     try {
-      final tempDir = await getTempDirectory();
+      final tempDir = await createTempDirectory();
       final fileName = path.basename(sourcePath);
       final tempPath = path.join(tempDir.path, fileName);
       await copyFile(sourcePath, tempPath);

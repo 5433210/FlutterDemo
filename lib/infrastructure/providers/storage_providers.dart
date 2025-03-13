@@ -1,4 +1,4 @@
-import 'package:demo/infrastructure/storage/storage_service.dart';
+import 'package:demo/infrastructure/storage/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -28,7 +28,7 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
     final storagePath = path.join(appDir.path, 'storage');
 
     // 2. 创建存储服务实例
-    final storage = StorageService(basePath: storagePath);
+    final storage = LocalStorage(basePath: storagePath);
 
     // 3. 初始化目录结构
     await _initializeStorageStructure(storage);
@@ -44,7 +44,7 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
 /// 创建存储服务所需的基础目录结构
 Future<void> _initializeStorageStructure(IStorage storage) async {
   final appDataDir = storage.getAppDataPath();
-  final tempDir = await storage.getTempDirectory();
+  final tempDir = await storage.createTempDirectory();
 
   // 创建所需的目录结构
   await Future.wait([
@@ -52,6 +52,7 @@ Future<void> _initializeStorageStructure(IStorage storage) async {
     storage.ensureDirectoryExists(path.join(appDataDir, 'works')),
     storage.ensureDirectoryExists(path.join(appDataDir, 'cache')),
     storage.ensureDirectoryExists(path.join(appDataDir, 'config')),
+    storage.ensureDirectoryExists(path.join(appDataDir, 'temp')),
     storage.ensureDirectoryExists(tempDir.path),
   ]);
 

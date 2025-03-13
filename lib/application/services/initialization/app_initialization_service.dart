@@ -42,8 +42,8 @@ class AppInitializationService {
     AppLogger.debug('初始化目录结构', tag: 'Init');
 
     // 获取并创建目录
-    final appDataDir = await _storage.getAppDataPath();
-    final tempDir = await _storage.getTempDirectory();
+    final appDataDir = _storage.getAppDataPath();
+    final tempDir = await _storage.getTempPath();
 
     await Future.wait([
       _storage.ensureDirectoryExists(appDataDir),

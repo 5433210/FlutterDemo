@@ -8,6 +8,9 @@ abstract class IStorage {
   /// 创建目录
   Future<Directory> createDirectory(String path);
 
+  /// 获取临时目录
+  Future<Directory> createTempDirectory();
+
   /// 删除目录
   Future<void> deleteDirectory(String path);
 
@@ -23,17 +26,20 @@ abstract class IStorage {
   /// 检查文件是否存在
   Future<bool> fileExists(String path);
 
+  /// 获取应用缓存目录路径
+  String getAppCachePath();
+
   /// 获取应用数据目录路径
   String getAppDataPath();
+
+  /// 获取应用临时目录路径
+  String getAppTempPath();
 
   /// 获取文件修改时间
   Future<DateTime> getFileModifiedTime(String path);
 
   /// 获取文件大小
   Future<int> getFileSize(String path);
-
-  /// 获取临时目录
-  Future<Directory> getTempDirectory();
 
   /// 移动文件
   Future<void> moveFile(String sourcePath, String destinationPath);
