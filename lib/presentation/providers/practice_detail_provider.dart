@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/repository_providers.dart';
 import '../../application/services/practice/practice_service.dart';
 import '../../domain/models/practice/practice_entity.dart';
 import '../../domain/models/practice/practice_layer.dart';
 import '../../domain/models/practice/practice_page.dart';
-import '../../infrastructure/providers/repository_providers.dart';
 
 /// 练习详情Provider
 final practiceDetailProvider = StateNotifierProvider.family<

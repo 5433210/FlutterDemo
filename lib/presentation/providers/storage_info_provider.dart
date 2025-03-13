@@ -7,11 +7,11 @@ import '../../infrastructure/providers/storage_providers.dart';
 
 /// 存储信息提供者
 final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
-  final storage = ref.watch(storageProvider);
+  final storage = ref.watch(initializedStorageProvider);
   final workService = ref.watch(workServiceProvider);
 
   // 获取应用数据目录
-  final basePath = await storage.getAppDataPath();
+  final basePath = storage.getAppDataPath();
   final baseDir = Directory(basePath);
 
   // 获取作品数量

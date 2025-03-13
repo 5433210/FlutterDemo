@@ -1,13 +1,12 @@
-import 'package:demo/infrastructure/providers/storage_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../domain/models/work/work_entity.dart';
+import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_colors.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../widgets/image/cached_image.dart';
-import '../../../../../widgets/skeleton_loader.dart';
 
 class WorkGridItem extends ConsumerWidget {
   final WorkEntity work;
@@ -26,7 +25,6 @@ class WorkGridItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final store = ref.watch(storageProvider);
 
     return Card(
       elevation:
@@ -98,31 +96,20 @@ class WorkGridItem extends ConsumerWidget {
 
   // 构建缩略图
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
-    final storage = ref.watch(storageProvider);
+    final storage = ref.watch(initializedStorageProvider);
     final workStorage = ref.watch(workStorageProvider);
+    final thumbnailPath = workStorage.getWorkCoverThumbnailPath(work.id);
 
-    return FutureBuilder<String>(
-      future: Future.value(workStorage.getWorkCoverThumbnailPath(work.id)),
+    return FutureBuilder<bool>(
+      future: storage.fileExists(thumbnailPath),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const SkeletonLoader(
-            width: 200,
-            height: 150,
-          );
+        if (!snapshot.hasData || !snapshot.data!) {
+          return _buildPlaceholder(context);
         }
 
-        return FutureBuilder<bool>(
-          future: storage.fileExists(snapshot.data!),
-          builder: (context, existsSnapshot) {
-            if (!existsSnapshot.hasData || !existsSnapshot.data!) {
-              return _buildPlaceholder(context);
-            }
-
-            return CachedImage(
-              path: snapshot.data!,
-              fit: BoxFit.cover,
-            );
-          },
+        return CachedImage(
+          path: thumbnailPath,
+          fit: BoxFit.cover,
         );
       },
     );

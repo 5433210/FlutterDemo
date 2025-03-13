@@ -8,7 +8,6 @@ import '../../../../../../application/providers/service_providers.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
-import '../../../../../widgets/skeleton_loader.dart';
 
 class WorkListItem extends ConsumerWidget {
   final WorkEntity work;
@@ -224,7 +223,6 @@ class WorkListItem extends ConsumerWidget {
 
   // 构建元数据预览
   Widget _buildMetadataPreview(BuildContext context) {
-    final theme = Theme.of(context);
     final tags = work.tags;
 
     if (tags.isEmpty) {
@@ -280,32 +278,21 @@ class WorkListItem extends ConsumerWidget {
 
   // 构建缩略图
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
+    final storage = ref.watch(initializedStorageProvider);
     final workStorage = ref.watch(workStorageProvider);
-    final storage = ref.watch(storageProvider);
+    final thumbnailPath = workStorage.getWorkCoverThumbnailPath(work.id);
 
-    return FutureBuilder<String?>(
-      future: Future.value(workStorage.getWorkCoverThumbnailPath(work.id)),
-      builder: (context, pathSnapshot) {
-        if (!pathSnapshot.hasData) {
-          return const SkeletonLoader(
-            width: 200,
-            height: 150,
-          );
+    return FutureBuilder<bool>(
+      future: storage.fileExists(thumbnailPath),
+      builder: (context, existsSnapshot) {
+        if (!existsSnapshot.hasData || !existsSnapshot.data!) {
+          return _buildPlaceholder(context);
         }
 
-        return FutureBuilder<bool>(
-          future: storage.fileExists(pathSnapshot.data!),
-          builder: (context, existsSnapshot) {
-            if (!existsSnapshot.hasData || !existsSnapshot.data!) {
-              return _buildPlaceholder(context);
-            }
-
-            return Image.file(
-              File(pathSnapshot.data!),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-            );
-          },
+        return Image.file(
+          File(thumbnailPath),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _buildPlaceholder(context),
         );
       },
     );

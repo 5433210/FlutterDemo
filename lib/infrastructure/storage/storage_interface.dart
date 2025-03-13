@@ -24,7 +24,7 @@ abstract class IStorage {
   Future<bool> fileExists(String path);
 
   /// 获取应用数据目录路径
-  Future<String> getAppDataPath();
+  String getAppDataPath();
 
   /// 获取文件修改时间
   Future<DateTime> getFileModifiedTime(String path);

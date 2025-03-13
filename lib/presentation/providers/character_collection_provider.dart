@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/repository_providers.dart';
 import '../../domain/models/character/character_filter.dart';
 import '../../domain/repositories/character_repository.dart';
-import '../../infrastructure/providers/repository_providers.dart';
 import '../viewmodels/states/character_collection_state.dart';
 
 /// 提供CharacterCollectionState状态管理

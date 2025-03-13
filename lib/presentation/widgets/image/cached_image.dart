@@ -24,7 +24,7 @@ class CachedImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final storage = ref.watch(storageProvider);
+    final storage = ref.watch(initializedStorageProvider);
 
     return FutureBuilder<bool>(
       future: storage.fileExists(path),

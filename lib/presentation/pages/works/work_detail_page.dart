@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/services/restoration/state_restoration_service.dart';
+import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../theme/app_sizes.dart';

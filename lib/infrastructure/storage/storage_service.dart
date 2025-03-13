@@ -142,7 +142,7 @@ class StorageService implements IStorage {
 
   /// 获取应用数据目录路径
   @override
-  Future<String> getAppDataPath() async {
+  String getAppDataPath() {
     return _basePath;
   }
 

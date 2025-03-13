@@ -1,19 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../../presentation/providers/work_detail_provider.dart';
 import '../../../presentation/viewmodels/states/work_browse_state.dart';
-
-final stateRestorationServiceProvider = Provider<StateRestorationService>(
-  (ref) => StateRestorationService(ref.watch(sharedPreferencesProvider)),
-);
 
 /// 负责保存和恢复应用状态
 class StateRestorationService {

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/repository_providers.dart';
 import '../../domain/models/character/character_entity.dart';
-import '../../infrastructure/providers/repository_providers.dart';
 
 /// 角色详情提供者
 final characterDetailProvider =

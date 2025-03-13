@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/providers/repository_providers.dart';
 import '../../../domain/models/character/character_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/providers/repository_providers.dart';
 import '../../providers/character_detail_provider.dart';
 import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';

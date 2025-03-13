@@ -1,4 +1,3 @@
-import 'package:demo/application/providers/image_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
