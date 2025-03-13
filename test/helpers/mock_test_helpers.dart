@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:demo/application/services/initialization/app_initialization_service.dart';
 import 'package:demo/domain/enums/work_style.dart';
 import 'package:demo/domain/enums/work_tool.dart';
 import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:demo/infrastructure/persistence/database_interface.dart';
-import 'package:demo/infrastructure/persistence/mock_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// 测试环境清理
@@ -51,28 +49,6 @@ class AsyncTestHelper {
   }
 }
 
-/// Mock initialization services
-class BaseMockInitializationService implements AppInitializationService {
-  @override
-  Future<void> initialize() async {
-    await initializeDatabase('test_path');
-  }
-
-  @override
-  Future<DatabaseInterface> initializeDatabase(String dataPath) async {
-    return MockDatabase();
-  }
-
-  @override
-  Future<T> retryOperation<T>(
-    Future<T> Function() operation, {
-    int maxAttempts = 3,
-    Duration delayBetweenAttempts = const Duration(seconds: 1),
-  }) async {
-    return operation();
-  }
-}
-
 /// 测试数据库预设
 class DatabasePreset {
   static Future<void> setupTestWorks(
@@ -96,49 +72,6 @@ class DatabasePreset {
       expect(stored, isNotNull);
       expect(stored!['title'], equals(expected.title));
     }
-  }
-}
-
-class MockFailingInitializationService implements AppInitializationService {
-  @override
-  Future<void> initialize() async {
-    await initializeDatabase('test_path');
-  }
-
-  @override
-  Future<DatabaseInterface> initializeDatabase(String dataPath) async {
-    throw Exception('模拟初始化失败');
-  }
-
-  @override
-  Future<T> retryOperation<T>(
-    Future<T> Function() operation, {
-    int maxAttempts = 3,
-    Duration delayBetweenAttempts = const Duration(seconds: 1),
-  }) async {
-    return operation();
-  }
-}
-
-class MockSlowInitializationService implements AppInitializationService {
-  @override
-  Future<void> initialize() async {
-    await initializeDatabase('test_path');
-  }
-
-  @override
-  Future<DatabaseInterface> initializeDatabase(String dataPath) async {
-    await Future.delayed(const Duration(seconds: 6));
-    return MockDatabase();
-  }
-
-  @override
-  Future<T> retryOperation<T>(
-    Future<T> Function() operation, {
-    int maxAttempts = 3,
-    Duration delayBetweenAttempts = const Duration(seconds: 1),
-  }) async {
-    return operation();
   }
 }
 
