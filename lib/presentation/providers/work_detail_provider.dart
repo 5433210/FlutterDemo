@@ -4,7 +4,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
-import '../../application/services/restoration/state_restoration_service.dart';
 import '../../domain/commands/work_edit_command.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -39,7 +38,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     });
   }
 
-  /// 取消编辑模式，放弃所有更改
+  /// 取消编辑模式
   Future<void> cancelEditing() async {
     if (state.isEditing) {
       try {
@@ -54,8 +53,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
           historyIndex: -1,
           hasChanges: false,
         );
-
-        // 如果需要，可以在这里添加其他清理工作
 
         // 重置标签页到基本信息页
         _ref.read(workDetailTabIndexProvider.notifier).state = 0;
@@ -72,7 +69,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
-  /// 完成编辑模式 - 新增此方法，由UI层在保存完成并显示反馈后调用
+  /// 完成编辑模式
   void completeEditing() {
     if (state.isEditing && !state.hasChanges) {
       state = state.copyWith(
@@ -132,16 +129,13 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       AppLogger.info('进入编辑模式',
           tag: 'WorkDetailNotifier', data: {'workId': state.work!.id});
 
-      // 将当前作品复制一份作为编辑副本
-      final editingWork = state.work;
-
       // 重置标签页到基本信息页
       _ref.read(workDetailTabIndexProvider.notifier).state = 0;
 
       // 更新状态为编辑模式
       state = state.copyWith(
         isEditing: true,
-        editingWork: editingWork,
+        editingWork: state.work,
         commandHistory: [],
         historyIndex: -1, // 初始时没有历史记录
         hasChanges: false,
@@ -164,7 +158,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
   /// 加载作品详情
   Future<void> loadWorkDetails(String workId) async {
-    // 如果已经在加载，防止重复触发
     if (state.isLoading) return;
 
     try {
@@ -183,7 +176,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         work: work,
       );
 
-      // 加载后尝试恢复编辑状态
       await tryRestoreEditState(workId);
     } catch (e, stack) {
       AppLogger.error(
@@ -205,7 +197,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   void markAsChanged() {
     if (state.isEditing && state.editingWork != null && !state.hasChanges) {
       state = state.copyWith(hasChanges: true);
-
       AppLogger.debug('表单状态已标记为已更改', tag: 'WorkDetailProvider');
     }
   }
@@ -217,40 +208,26 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
 
     try {
-      // 将状态设置为保存中
       state = state.copyWith(isSaving: true);
 
-      // 日志 - 开始保存
-      AppLogger.debug('开始保存编辑后的作品',
+      AppLogger.debug('开始保存作品',
           tag: 'WorkDetailProvider', data: {'workId': state.editingWork!.id});
 
-      // 获取服务
       final workService = _ref.read(workServiceProvider);
+      final workToSave = state.editingWork!;
 
-      // 保存更改 - 直接使用 updateWorkEntity
-      await workService.updateWorkEntity(state.editingWork!);
+      await workService.updateWorkEntity(workToSave);
 
-      // 清除编辑状态 - 保存成功后
-      await _clearEditState(state.editingWork!.id);
+      await _clearEditState(workToSave.id);
 
-      // 保留当前编辑模式状态，避免立即设置为false导致页面切换
-      // 将返回false的逻辑移到UI层处理
-      final savedWork = state.editingWork;
-
-      // 更新状态，但保持编辑模式，让UI层控制退出编辑模式的时机
       state = state.copyWith(
-        work: savedWork, // 更新主作品为已编辑的版本
+        work: workToSave,
         hasChanges: false,
         isSaving: false,
-        // 不立即重置这些状态，由UI层控制
-        // isEditing: false,
-        // editingWork: null,
-        // commandHistory: null,
-        // historyIndex: -1,
       );
 
-      AppLogger.info('编辑更改已保存，等待UI反馈',
-          tag: 'WorkDetailProvider', data: {'workId': savedWork!.id});
+      AppLogger.info('编辑更改已保存',
+          tag: 'WorkDetailProvider', data: {'workId': workToSave.id});
 
       return true;
     } catch (e, stack) {
@@ -262,7 +239,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         data: {'workId': state.editingWork?.id},
       );
 
-      // 即使失败也要重置保存中状态
       state = state.copyWith(
         isSaving: false,
         error: '保存更改失败: ${e.toString()}',
@@ -286,9 +262,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         return false;
       }
 
-      AppLogger.info('检测到未完成的编辑会话',
-          tag: 'WorkDetailNotifier', data: {'workId': workId});
-
       // 加载保存的编辑状态
       final savedState =
           await stateRestorationService.restoreWorkEditState(workId);
@@ -300,7 +273,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
           editingWork: savedState.editingWork,
           hasChanges: savedState.hasChanges,
           historyIndex: savedState.historyIndex,
-          // 命令历史无法从持久化存储中恢复，因为命令包含服务依赖
           commandHistory: [], // 创建新的空命令历史
         );
 
@@ -325,7 +297,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     return false;
   }
 
-  // 在 WorkDetailNotifier 类中添加方法，实时更新基本信息
+  // 实时更新基本信息
   void updateWorkBasicInfo({
     String? name,
     String? author,
@@ -337,8 +309,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     if (state.editingWork == null) return;
 
     final currentWork = state.editingWork!;
-
-    // 只更新提供的字段
     final updatedWork = currentWork.copyWith(
       title: name ?? currentWork.title,
       author: author ?? currentWork.author,
@@ -348,10 +318,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       remark: remark ?? currentWork.remark,
     );
 
-    // 检查是否有实际变化
-    final hasChanged = updatedWork != currentWork;
-
-    if (hasChanged) {
+    if (updatedWork != currentWork) {
       state = state.copyWith(
         editingWork: updatedWork,
         hasChanges: true,
@@ -362,26 +329,21 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
-  /// 直接更新标签，不使用命令模式
+  /// 直接更新标签
   void updateWorkTags(List<String> updatedTags) {
     if (state.editingWork == null) return;
 
     final currentWork = state.editingWork!;
-
-    // 记录详细日志，显示更新前后的标签
     AppLogger.debug('更新作品标签', tag: 'WorkDetailProvider', data: {
       'oldTags': currentWork.tags,
       'newTags': updatedTags,
       'workId': currentWork.id,
     });
 
-    // 创建带有更新后元数据的新作品对象
     final updatedWork = currentWork.copyWith(tags: updatedTags);
-
-    // 更新状态
     state = state.copyWith(
       editingWork: updatedWork,
-      hasChanges: true, // 标记有更改
+      hasChanges: true,
     );
   }
 
@@ -432,7 +394,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
   /// 设置自动保存计时器
   void _setupAutoSave() {
-    // 每30秒自动保存一次
     _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (state.isEditing && state.hasChanges && !state.isSaving) {
         _saveEditState();
@@ -467,21 +428,6 @@ class WorkDetailState {
     this.historyIndex = -1,
     this.isSaving = false,
   });
-
-  // 检查是否可以重做操作 - 添加更严格的检查
-  bool get canRedo =>
-      isEditing &&
-      commandHistory != null &&
-      commandHistory!.isNotEmpty && // 确保命令历史不为空
-      historyIndex >= -1 && // 确保索引有效
-      historyIndex < commandHistory!.length - 1; // 确保有更多命令可重做
-
-  // 检查是否可以撤销操作 - 添加更严格的检查
-  bool get canUndo =>
-      isEditing &&
-      commandHistory != null &&
-      commandHistory!.isNotEmpty && // 确保命令历史不为空
-      historyIndex >= 0; // 确保有命令可撤销
 
   WorkDetailState copyWith({
     bool? isLoading,

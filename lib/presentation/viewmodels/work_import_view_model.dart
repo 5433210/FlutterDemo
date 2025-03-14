@@ -19,7 +19,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final ImageProcessor _imageProcessor;
 
   WorkImportViewModel(this._workService, this._imageProcessor)
-      : super(const WorkImportState());
+      : super(WorkImportState.initial());
 
   // 图片操作
   Future<void> addImages(List<File> files) async {
@@ -132,7 +132,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   void reset() {
-    state = const WorkImportState();
+    state = WorkImportState.initial();
   }
 
   void resetView() {
@@ -211,7 +211,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   // 基础信息设置
-  void setTitle(String title) => state = state.copyWith(name: title.trim());
+  void setTitle(String title) => state = state.copyWith(title: title.trim());
 
   // 枚举值设置
   void setTool(String? value) {

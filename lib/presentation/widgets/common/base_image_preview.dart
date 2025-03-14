@@ -36,6 +36,7 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
   final TransformationController _transformationController =
       TransformationController();
   late int _currentIndex;
+  bool _isZoomed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +70,9 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _currentIndex = widget.imagePaths.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, widget.imagePaths.length - 1);
   }
 
   Widget _buildImageViewer() {
@@ -85,36 +88,98 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
           'size': file.existsSync() ? file.lengthSync() : null,
         });
 
-    return InteractiveViewer(
-      transformationController: _transformationController,
-      boundaryMargin: _viewerPadding,
-      minScale: _minZoomScale,
-      maxScale: _maxZoomScale,
-      child: Center(
-        child: Image.file(
-          file,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            AppLogger.error(
-              '图片加载失败',
-              tag: 'BaseImagePreview',
-              error: error,
-              stackTrace: stackTrace,
-              data: {'path': currentPath},
-            );
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.broken_image, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
-                  Text('图片加载失败', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            );
-          },
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (_isZoomed) return; // 如果已缩放则不切换图片
+
+        if (details.primaryVelocity == null) return;
+        if (details.primaryVelocity! > 0 && _currentIndex > 0) {
+          // 向右滑动，显示上一张
+          _updateIndex(_currentIndex - 1);
+        } else if (details.primaryVelocity! < 0 &&
+            _currentIndex < widget.imagePaths.length - 1) {
+          // 向左滑动，显示下一张
+          _updateIndex(_currentIndex + 1);
+        }
+      },
+      onTapDown: (details) {
+        if (_isZoomed) return; // 如果已缩放则不切换图片
+
+        final x = details.localPosition.dx;
+        final screenWidth = context.size?.width ?? 0;
+        if (x < screenWidth / 3) {
+          // 点击左侧三分之一区域，显示上一张
+          if (_currentIndex > 0) {
+            _updateIndex(_currentIndex - 1);
+          }
+        } else if (x > screenWidth * 2 / 3) {
+          // 点击右侧三分之一区域，显示下一张
+          if (_currentIndex < widget.imagePaths.length - 1) {
+            _updateIndex(_currentIndex + 1);
+          }
+        }
+      },
+      child: InteractiveViewer(
+        transformationController: _transformationController,
+        boundaryMargin: _viewerPadding,
+        minScale: _minZoomScale,
+        maxScale: _maxZoomScale,
+        onInteractionStart: (details) {
+          if (details.pointerCount > 1) {
+            _isZoomed = true;
+          }
+        },
+        onInteractionEnd: (details) {
+          // 检查是否恢复到原始大小
+          final matrix = _transformationController.value;
+          if (matrix == Matrix4.identity()) {
+            _isZoomed = false;
+          }
+        },
+        child: Center(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: Image.file(
+              file,
+              key: ValueKey(currentPath),
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                AppLogger.error(
+                  '图片加载失败',
+                  tag: 'BaseImagePreview',
+                  error: error,
+                  stackTrace: stackTrace,
+                  data: {'path': currentPath},
+                );
+                return const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.broken_image, size: 64, color: Colors.red),
+                      SizedBox(height: 16),
+                      Text('图片加载失败', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  void _updateIndex(int newIndex) {
+    if (newIndex != _currentIndex &&
+        newIndex >= 0 &&
+        newIndex < widget.imagePaths.length) {
+      setState(() {
+        _currentIndex = newIndex;
+        // 重置缩放
+        _transformationController.value = Matrix4.identity();
+        _isZoomed = false;
+      });
+      widget.onIndexChanged?.call(_currentIndex);
+    }
   }
 }

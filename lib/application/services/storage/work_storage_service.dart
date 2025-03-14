@@ -136,6 +136,22 @@ class WorkStorageService {
   /// 检查作品图片是否存在
   Future<bool> hasWorkImage(String path) => _storage.fileExists(path);
 
+  /// 列出作品所有文件路径（递归）
+  Future<List<String>> listWorkFiles(String workId) async {
+    try {
+      final workPath = getWorkPath(workId);
+      return await _storage.listDirectoryFiles(workPath);
+    } catch (e, stack) {
+      _handleError(
+        '获取作品文件列表失败',
+        e,
+        stack,
+        data: {'workId': workId},
+      );
+      return [];
+    }
+  }
+
   /// 保存作品封面导入图
   Future<String> saveCoverImported(String workId, File file) async {
     final targetPath = getWorkCoverImportedPath(workId);

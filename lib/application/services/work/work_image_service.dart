@@ -1,18 +1,16 @@
+import 'dart:collection';
 import 'dart:io';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../infrastructure/image/image_processor.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../storage/work_storage_service.dart';
 import './service_errors.dart';
 
+typedef ProgressCallback = void Function(double progress, String message);
+
 /// 作品图片服务
-///
-/// 职责:
-/// 1. 维护图片文件与数据的一致性
-/// 2. 协调存储和数据库操作
-/// 3. 处理图片业务逻辑
-/// 4. 管理图片生命周期
 class WorkImageService with WorkServiceErrorHandler {
   final WorkStorageService _storage;
   final ImageProcessor _processor;
@@ -26,11 +24,49 @@ class WorkImageService with WorkServiceErrorHandler {
         _processor = processor,
         _repository = repository;
 
+  /// 清理未使用的图片文件
+  Future<void> cleanupUnusedFiles(String workId, List<String> usedPaths) async {
+    return handleOperation(
+      'cleanupUnusedFiles',
+      () async {
+        AppLogger.debug('开始清理未使用的图片文件', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'usedPathsCount': usedPaths.length,
+        });
+
+        final allFiles = await _storage.listWorkFiles(workId);
+        final unusedFiles =
+            allFiles.where((f) => !usedPaths.contains(f)).toList();
+
+        if (unusedFiles.isNotEmpty) {
+          AppLogger.debug('发现未使用的文件', tag: 'WorkImageService', data: {
+            'count': unusedFiles.length,
+            'files': unusedFiles,
+          });
+
+          for (final file in unusedFiles) {
+            try {
+              await File(file).delete();
+            } catch (e) {
+              AppLogger.warning('删除未使用文件失败',
+                  tag: 'WorkImageService', error: e, data: {'file': file});
+            }
+          }
+        }
+      },
+      data: {'workId': workId},
+    );
+  }
+
   /// 清理作品图片
   Future<void> cleanupWorkImages(String workId) async {
     return handleOperation(
       'cleanupWorkImages',
       () async {
+        AppLogger.info('开始清理作品图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+        });
+
         // 删除图片文件
         await _storage.deleteWorkDirectory(workId);
 
@@ -41,176 +77,284 @@ class WorkImageService with WorkServiceErrorHandler {
             return _repository.deleteMany(workId, imageIds);
           }
         });
+
+        AppLogger.info('图片清理完成', tag: 'WorkImageService');
       },
       data: {'workId': workId},
     );
   }
 
-  /// 删除图片
+  /// 删除图片（不立即更新数据库）
   Future<void> deleteImage(String workId, String imageId) async {
     return handleOperation(
       'deleteImage',
       () async {
+        AppLogger.info('开始删除图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageId': imageId,
+        });
+
+        // 只删除文件，不更新数据库
         await _storage.deleteWorkImage(workId, imageId);
-        await _repository.delete(workId, imageId);
+
+        AppLogger.info('图片文件删除完成', tag: 'WorkImageService');
       },
       data: {'workId': workId, 'imageId': imageId},
     );
   }
 
-  /// 批量删除图片
-  Future<void> deleteImages(String workId, List<String> imageIds) async {
+  /// 获取作品的所有图片
+  Future<List<WorkImage>> getWorkImages(String workId) async {
     return handleOperation(
-      'deleteImages',
-      () async {
-        for (final imageId in imageIds) {
-          await _storage.deleteWorkImage(workId, imageId);
-        }
-        await _repository.deleteMany(workId, imageIds);
-      },
-      data: {'workId': workId, 'count': imageIds.length},
+      'getWorkImages',
+      () => _repository.getAllByWorkId(workId),
+      data: {'workId': workId},
     );
   }
 
-  /// 导入图片
+  /// 导入新图片（返回临时状态，不立即保存）
   Future<WorkImage> importImage(String workId, File file) async {
     return handleOperation(
       'importImage',
       () async {
-        // 生成图片ID
         final imageId = DateTime.now().millisecondsSinceEpoch.toString();
 
-        // 保存原始文件
-        final originalPath = await _storage.saveOriginalImage(
-          workId,
-          imageId,
-          file,
-        );
+        AppLogger.debug('准备导入新图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageId': imageId,
+          'filePath': file.path,
+        });
 
-        // 处理并保存导入图片
-        final processedImage = await _processor.processImage(
-          file,
-          maxWidth: 2400,
-          maxHeight: 2400,
-          quality: 90,
-        );
-        final importedPath = await _storage.saveImportedImage(
-          workId,
-          imageId,
-          processedImage,
-        );
+        if (!await file.exists()) {
+          throw FileSystemException('源文件不存在', file.path);
+        }
 
-        // 生成并保存缩略图
-        final thumbnail = await _processor.processImage(
-          file,
-          maxWidth: 200,
-          maxHeight: 200,
-          quality: 80,
-        );
-        final thumbnailPath = await _storage.saveThumbnail(
-          workId,
-          imageId,
-          thumbnail,
-        );
-
-        // 获取图片信息
-        final info = await _storage.getWorkImageInfo(importedPath);
-
-        // 创建工作图片实体
-        final image = WorkImage(
+        // 先创建临时图片对象
+        final nextIndex = await _getNextImageIndex(workId);
+        final tempImage = WorkImage(
           id: imageId,
           workId: workId,
-          path: importedPath,
-          originalPath: originalPath,
-          thumbnailPath: thumbnailPath,
+          path: file.path, // 临时使用原始路径
+          originalPath: file.path,
+          thumbnailPath: file.path,
           format: _getImageFormat(file),
-          size: info['size'] ?? 0,
-          width: info['width'] ?? 0,
-          height: info['height'] ?? 0,
+          size: await file.length(),
+          width: 0,
+          height: 0,
+          index: nextIndex,
           createTime: DateTime.now(),
           updateTime: DateTime.now(),
-          index: await _getNextImageIndex(workId),
         );
 
-        // 保存到数据库
-        await _repository.create(workId, image);
-        return image;
+        AppLogger.debug('创建临时图片对象', tag: 'WorkImageService', data: {
+          'imageId': imageId,
+          'index': nextIndex,
+        });
+
+        return tempImage;
       },
       data: {'workId': workId, 'file': file.path},
     );
   }
 
-  /// 批量导入图片
+  /// 批量导入图片（不立即保存）
   Future<List<WorkImage>> importImages(String workId, List<File> files) async {
     return handleOperation(
       'importImages',
       () async {
+        AppLogger.info('开始批量导入图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'fileCount': files.length,
+        });
+
         final images = <WorkImage>[];
-        for (final file in files) {
+        final uniqueFiles = LinkedHashSet<File>(
+          equals: (a, b) => a.path == b.path,
+          hashCode: (file) => file.absolute.path.hashCode,
+        )..addAll(files);
+
+        AppLogger.debug('文件去重完成', tag: 'WorkImageService', data: {
+          'originalCount': files.length,
+          'uniqueCount': uniqueFiles.length,
+        });
+
+        for (final file in uniqueFiles) {
           final image = await importImage(workId, file);
           images.add(image);
         }
-        updateCover(workId, images.first.id);
-        return await _repository.saveMany(images);
+
+        return images;
       },
       data: {'workId': workId, 'fileCount': files.length},
     );
   }
 
-  /// 优化图片
-  Future<File> optimizeImage(File file) async {
+  /// 保存图片更改
+  Future<List<WorkImage>> saveChanges(
+    String workId,
+    List<WorkImage> images, {
+    ProgressCallback? onProgress,
+  }) async {
     return handleOperation(
-      'optimizeImage',
-      () => _processor.optimizeImage(file),
-      data: {'path': file.path},
-    );
-  }
-
-  /// 更新图片顺序
-  Future<void> reorderImages(String workId, List<String> imageIds) async {
-    return handleOperation(
-      'reorderImages',
+      'saveChanges',
       () async {
-        for (int i = 0; i < imageIds.length; i++) {
-          await _repository.updateIndex(workId, imageIds[i], i);
+        AppLogger.info('开始保存图片更改', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageCount': images.length,
+        });
+
+        final processedImages = <WorkImage>[];
+        final tempFiles = <String>[];
+        var index = 0;
+        final total = images.length;
+
+        try {
+          // 处理每个图片
+          for (final image in images) {
+            onProgress?.call(
+              index / total,
+              '处理图片 ${index + 1}/$total',
+            );
+
+            AppLogger.debug('处理图片', tag: 'WorkImageService', data: {
+              'imageId': image.id,
+              'isNew': image.path == image.originalPath,
+              'index': index,
+            });
+
+            if (image.path == image.originalPath) {
+              // 新图片: 需要完整的处理流程
+              try {
+                final file = File(image.path);
+                if (!await file.exists()) {
+                  throw FileSystemException('源文件不存在', image.path);
+                }
+
+                // 1. 保存原始文件
+                final originalPath = await _storage.saveOriginalImage(
+                  workId,
+                  image.id,
+                  file,
+                );
+                tempFiles.add(originalPath);
+
+                // 2. 处理并保存导入图片
+                final processedFile = await _processor.processImage(
+                  file,
+                  maxWidth: 2400,
+                  maxHeight: 2400,
+                  quality: 90,
+                );
+                final importedPath = await _storage.saveImportedImage(
+                  workId,
+                  image.id,
+                  processedFile,
+                );
+                tempFiles.add(importedPath);
+
+                // 3. 生成并保存缩略图
+                final thumbnail = await _processor.processImage(
+                  file,
+                  maxWidth: 200,
+                  maxHeight: 200,
+                  quality: 80,
+                );
+                final thumbnailPath = await _storage.saveThumbnail(
+                  workId,
+                  image.id,
+                  thumbnail,
+                );
+                tempFiles.add(thumbnailPath);
+
+                // 4. 获取图片信息
+                final info = await _storage.getWorkImageInfo(importedPath);
+
+                processedImages.add(image.copyWith(
+                  path: importedPath,
+                  originalPath: originalPath,
+                  thumbnailPath: thumbnailPath,
+                  width: info['width'] ?? 0,
+                  height: info['height'] ?? 0,
+                  size: info['size'] ?? 0,
+                  index: index++,
+                  updateTime: DateTime.now(),
+                ));
+
+                AppLogger.debug('新图片处理完成', tag: 'WorkImageService', data: {
+                  'imageId': image.id,
+                  'size': info['size'],
+                });
+              } catch (e, stack) {
+                AppLogger.error('处理新图片失败',
+                    tag: 'WorkImageService',
+                    error: e,
+                    stackTrace: stack,
+                    data: {
+                      'imageId': image.id,
+                      'path': image.path,
+                    });
+                rethrow;
+              }
+            } else {
+              // 已存在的图片: 只更新索引
+              processedImages.add(image.copyWith(
+                index: index++,
+                updateTime: DateTime.now(),
+              ));
+            }
+          }
+
+          onProgress?.call(0.9, '保存到数据库...');
+
+          AppLogger.debug('所有图片处理完成', tag: 'WorkImageService', data: {
+            'totalProcessed': processedImages.length,
+          });
+
+          try {
+            // 批量保存到数据库
+            final savedImages = await _repository.saveMany(processedImages);
+
+            // 更新封面（如果顺序已改变）
+            if (savedImages.isNotEmpty &&
+                (savedImages.first.id != images.first.id)) {
+              await updateCover(workId, savedImages.first.id);
+            }
+
+            // 清理未使用的文件
+            final usedPaths = savedImages
+                .expand(
+                    (img) => [img.path, img.originalPath, img.thumbnailPath])
+                .toList();
+            await cleanupUnusedFiles(workId, usedPaths);
+
+            onProgress?.call(1.0, '完成');
+
+            AppLogger.info('图片保存完成', tag: 'WorkImageService', data: {
+              'savedCount': savedImages.length,
+            });
+
+            return savedImages;
+          } catch (e, stack) {
+            AppLogger.error('保存到数据库失败',
+                tag: 'WorkImageService', error: e, stackTrace: stack);
+            // 清理临时文件
+            for (final path in tempFiles) {
+              try {
+                await File(path).delete();
+              } catch (e) {
+                AppLogger.warning('清理临时文件失败',
+                    tag: 'WorkImageService', error: e, data: {'path': path});
+              }
+            }
+            rethrow;
+          }
+        } catch (e) {
+          // 确保进度回调显示错误状态
+          onProgress?.call(0, '保存失败: ${e.toString()}');
+          rethrow;
         }
       },
-      data: {'workId': workId, 'count': imageIds.length},
-    );
-  }
-
-  /// 旋转图片
-  Future<WorkImage> rotateImage(WorkImage image, int degrees) async {
-    return handleOperation(
-      'rotateImage',
-      () async {
-        final file = File(image.path);
-        final rotated = await _processor.rotateImage(file, degrees);
-        await rotated.copy(image.path);
-
-        final thumbnail = await _processor.processImage(
-          rotated,
-          maxWidth: 200,
-          maxHeight: 200,
-          quality: 80,
-        );
-        await thumbnail.copy(image.thumbnailPath);
-
-        final info = await _storage.getWorkImageInfo(image.path);
-        final updated = image.copyWith(
-          width: info['width'] ?? 0,
-          height: info['height'] ?? 0,
-          updateTime: DateTime.now(),
-        );
-
-        await _repository.saveMany([updated]);
-        return updated;
-      },
-      data: {
-        'workId': image.workId,
-        'imageId': image.id,
-        'degrees': degrees,
-      },
+      data: {'workId': workId, 'imageCount': images.length},
     );
   }
 
@@ -219,6 +363,11 @@ class WorkImageService with WorkServiceErrorHandler {
     return handleOperation(
       'updateCover',
       () async {
+        AppLogger.debug('开始更新作品封面', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'imageId': imageId,
+        });
+
         // 获取源图片
         final importedPath = _storage.getImportedPath(workId, imageId);
         final sourceFile = File(importedPath);
@@ -237,6 +386,8 @@ class WorkImageService with WorkServiceErrorHandler {
           quality: 80,
         );
         await _storage.saveCoverThumbnail(workId, thumbnail);
+
+        AppLogger.info('作品封面更新完成', tag: 'WorkImageService');
       },
       data: {'workId': workId, 'imageId': imageId},
     );

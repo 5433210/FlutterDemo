@@ -1,236 +1,280 @@
-import 'package:uuid/uuid.dart';
-
-import '../../domain/models/work/work_image.dart';
-import '../../domain/repositories/work_image_repository.dart';
-import '../../infrastructure/persistence/database_interface.dart';
-import '../../infrastructure/persistence/models/database_query.dart';
-import '../../utils/date_time_helper.dart';
+import 'package:demo/domain/models/work/work_image.dart';
+import 'package:demo/domain/repositories/work_image_repository.dart';
+import 'package:demo/infrastructure/logging/logger.dart';
+import 'package:demo/infrastructure/persistence/database_interface.dart';
+import 'package:demo/utils/date_time_helper.dart';
 
 class WorkImageRepositoryImpl implements WorkImageRepository {
   final DatabaseInterface _db;
-  final _uuid = const Uuid();
-  final String _table = 'work_images';
 
   WorkImageRepositoryImpl(this._db);
 
   @override
   Future<WorkImage> create(String workId, WorkImage image) async {
-    final id = _uuid.v4();
-    final now = DateTime.now();
+    // 检查是否已存在相同路径的图片
+    final existing = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId},
+        {'field': 'original_path', 'op': '=', 'val': image.originalPath},
+      ],
+      'limit': 1,
+    });
 
-    final data = {
-      'id': id,
+    AppLogger.info('检查图片是否已存在', tag: 'WorkImageRepository', data: {
       'workId': workId,
-      'indexInWork':
-          image.index == -1 ? await getNextIndex(workId) : image.index,
-      'path': image.originalPath,
-      'width': image.width,
-      'height': image.height,
-      'format': image.format,
-      'size': image.size,
-      'thumbnailPath': image.thumbnailPath,
-      'createTime': DateTimeHelper.toStorageFormat(now),
-      'updateTime': DateTimeHelper.toStorageFormat(now),
-    };
+      'originalPath': image.originalPath,
+      'exists': existing.isNotEmpty,
+      'createTime': DateTimeHelper.toStorageFormat(image.createTime),
+      'updateTime': DateTimeHelper.toStorageFormat(image.updateTime),
+    });
 
-    await _db.set(_table, id, data);
-
-    final created = await get(id);
-    if (created == null) {
-      throw Exception('Failed to create work image: $id');
+    if (existing.isNotEmpty) {
+      AppLogger.info('已存在图片的时间信息', tag: 'WorkImageRepository', data: {
+        'existingCreateTime': existing.first['createTime'],
+        'existingUpdateTime': existing.first['updateTime'],
+      });
+      return _mapToWorkImage(existing.first);
     }
-    return created;
+
+    // 创建新记录
+    final row = _mapToRow(image, workId);
+    AppLogger.debug('准备保存新图片', tag: 'WorkImageRepository', data: {
+      'row': row,
+    });
+
+    await _db.set('work_images', image.id, row);
+    return image;
   }
 
   @override
   Future<List<WorkImage>> createMany(
       String workId, List<WorkImage> images) async {
-    final now = DateTime.now();
-    final results = <WorkImage>[];
-    var currentIndex = await getNextIndex(workId);
+    AppLogger.debug('批量创建图片', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'count': images.length,
+      'createTimes': images
+          .map((img) => DateTimeHelper.toStorageFormat(img.createTime))
+          .toList(),
+    });
 
-    final batchData = <String, Map<String, dynamic>>{};
+    // 检查并过滤重复图片
+    final uniqueImages = <WorkImage>[];
+    final existingPaths = <String>{};
 
+    // 获取已存在的图片路径
+    final existing = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId},
+      ],
+    });
+    existingPaths.addAll(existing.map((e) => e['original_path'] as String));
+
+    AppLogger.debug('已存在图片路径', tag: 'WorkImageRepository', data: {
+      'paths': existingPaths.toList(),
+    });
+
+    // 过滤出不重复的图片
     for (final image in images) {
-      final id = _uuid.v4();
-      batchData[id] = {
-        'id': id,
-        'workId': workId,
-        'indexInWork': image.index == -1 ? currentIndex++ : image.index,
-        'path': image.originalPath,
-        'width': image.width,
-        'height': image.height,
-        'format': image.format,
-        'size': image.size,
-        'thumbnailPath': image.thumbnailPath,
-        'createTime': DateTimeHelper.toStorageFormat(now),
-        'updateTime': DateTimeHelper.toStorageFormat(now),
-      };
-
-      results.add(image.copyWith(
-        id: id,
-        workId: workId,
-        createTime: now,
-        updateTime: now,
-      ));
+      if (!existingPaths.contains(image.originalPath)) {
+        uniqueImages.add(image);
+      } else {
+        AppLogger.debug('跳过重复图片', tag: 'WorkImageRepository', data: {
+          'originalPath': image.originalPath,
+          'createTime': DateTimeHelper.toStorageFormat(image.createTime),
+        });
+      }
     }
 
-    await _db.setMany(_table, batchData);
-    return results;
+    AppLogger.debug('过滤重复图片完成', tag: 'WorkImageRepository', data: {
+      'originalCount': images.length,
+      'uniqueCount': uniqueImages.length,
+    });
+
+    if (uniqueImages.isNotEmpty) {
+      final data = Map.fromEntries(
+        uniqueImages.map((img) => MapEntry(img.id, _mapToRow(img, workId))),
+      );
+      await _db.setMany('work_images', data);
+    }
+
+    // 返回所有图片，包括已存在的
+    return getAllByWorkId(workId);
   }
 
   @override
   Future<void> delete(String workId, String imageId) async {
-    await _db.delete(_table, imageId);
+    AppLogger.debug('删除图片', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'imageId': imageId,
+    });
+    await _db.delete('work_images', imageId);
   }
 
   @override
   Future<void> deleteMany(String workId, List<String> imageIds) async {
-    await _db.deleteMany(_table, imageIds);
+    AppLogger.debug('批量删除图片', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'count': imageIds.length,
+    });
+    await _db.deleteMany('work_images', imageIds);
   }
 
   @override
   Future<WorkImage?> get(String imageId) async {
-    final data = await _db.get(_table, imageId);
-    if (data == null) return null;
-    return _mapToWorkImage(data);
+    final result = await _db.get('work_images', imageId);
+    if (result != null) {
+      AppLogger.debug('获取单个图片', tag: 'WorkImageRepository', data: {
+        'imageId': imageId,
+        'createTime': result['createTime'],
+        'updateTime': result['updateTime'],
+      });
+    }
+    return result != null ? _mapToWorkImage(result) : null;
   }
 
   @override
   Future<List<WorkImage>> getAllByWorkId(String workId) async {
-    final query = DatabaseQuery(
-      conditions: [
-        DatabaseQueryCondition(
-          field: 'workId',
-          operator: '=',
-          value: workId,
-        ),
+    final results = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId}
       ],
-      orderBy: 'indexInWork ASC',
-    );
+      'orderBy': 'indexInWork ASC',
+    });
 
-    final results = await _db.query(_table, query.toJson());
+    AppLogger.debug('获取作品所有图片', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'count': results.length,
+      'records': results
+          .map((row) => {
+                'id': row['id'],
+                'originalPath': row['original_path'],
+                'createTime': row['createTime'],
+                'updateTime': row['updateTime'],
+              })
+          .toList(),
+    });
+
     return results.map((row) => _mapToWorkImage(row)).toList();
   }
 
   @override
   Future<WorkImage?> getFirstByWorkId(String workId) async {
-    final query = DatabaseQuery(
-      conditions: [
-        DatabaseQueryCondition(
-          field: 'workId',
-          operator: '=',
-          value: workId,
-        ),
+    final results = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId}
       ],
-      orderBy: 'indexInWork ASC',
-      limit: 1,
-    );
-
-    final results = await _db.query(_table, query.toJson());
-    if (results.isEmpty) return null;
-    return _mapToWorkImage(results.first);
+      'orderBy': 'indexInWork ASC',
+      'limit': 1,
+    });
+    return results.isNotEmpty ? _mapToWorkImage(results.first) : null;
   }
 
   @override
   Future<int> getNextIndex(String workId) async {
-    final result = await _db.rawQuery('''
-      SELECT COALESCE(MAX(indexInWork), -1) + 1 as nextIndex
-      FROM work_images
-      WHERE workId = ?
-    ''', [workId]);
-
-    return result.first['nextIndex'] as int;
+    final results = await _db.query('work_images', {
+      'where': [
+        {'field': 'workId', 'op': '=', 'val': workId}
+      ],
+      'orderBy': 'indexInWork DESC',
+      'limit': 1,
+    });
+    return (results.isNotEmpty
+        ? (_mapToWorkImage(results.first).index + 1)
+        : 0);
   }
 
   @override
   Future<List<WorkImage>> saveMany(List<WorkImage> images) async {
-    final now = DateTime.now();
-    final batch = <String, Map<String, dynamic>>{};
+    AppLogger.debug('批量保存图片', tag: 'WorkImageRepository', data: {
+      'count': images.length,
+      'times': images
+          .map((img) => {
+                'id': img.id,
+                'createTime': DateTimeHelper.toStorageFormat(img.createTime),
+                'updateTime': DateTimeHelper.toStorageFormat(img.updateTime),
+              })
+          .toList(),
+    });
 
-    // 先获取已有记录以保留 createTime
-    final existingData =
-        await Future.wait(images.map((img) => _db.get(_table, img.id)));
+    if (images.isEmpty) return [];
 
-    for (var i = 0; i < images.length; i++) {
-      final image = images[i];
-      final existing = existingData[i];
-
-      batch[image.id] = {
-        'id': image.id,
-        'workId': image.workId,
-        'indexInWork': image.index,
-        'path': image.originalPath,
-        'width': image.width,
-        'height': image.height,
-        'format': image.format,
-        'size': image.size,
-        'thumbnailPath': image.thumbnailPath,
-        // 如果记录已存在，使用原有的 createTime，否则使用当前时间
-        'createTime':
-            existing?['createTime'] ?? DateTimeHelper.toStorageFormat(now),
-        'updateTime': DateTimeHelper.toStorageFormat(now),
-      };
-    }
-
-    await _db.setMany(_table, batch);
-    return images.map((img) => img.copyWith(updateTime: now)).toList();
+    final data = Map.fromEntries(
+      images.map((img) => MapEntry(img.id, _mapToRow(img, img.workId))),
+    );
+    await _db.setMany('work_images', data);
+    return images;
   }
 
   @override
-  Future<void> updateIndex(String workId, String imageId, int newIndex) async {
-    // Get current index
-    final image = await get(imageId);
-    if (image == null) return;
-    final oldIndex = image.index;
-    if (oldIndex == newIndex) return;
+  Future<void> updateIndex(String workId, String imageId, int index) async {
+    AppLogger.debug('更新图片索引', tag: 'WorkImageRepository', data: {
+      'workId': workId,
+      'imageId': imageId,
+      'newIndex': index,
+      'updateTime': DateTimeHelper.getCurrentUtc(),
+    });
 
-    // Update indexes
-    final now = DateTime.now();
-
-    if (oldIndex < newIndex) {
-      await _db.rawUpdate('''
-        UPDATE work_images
-        SET indexInWork = indexInWork - 1,
-            updateTime = ?
-        WHERE workId = ?
-          AND indexInWork > ?
-          AND indexInWork <= ?
-      ''', [DateTimeHelper.toStorageFormat(now), workId, oldIndex, newIndex]);
-    } else {
-      await _db.rawUpdate('''
-        UPDATE work_images
-        SET indexInWork = indexInWork + 1,
-            updateTime = ?
-        WHERE workId = ?
-          AND indexInWork >= ?
-          AND indexInWork < ?
-      ''', [DateTimeHelper.toStorageFormat(now), workId, newIndex, oldIndex]);
-    }
-
-    // Update target image
-    await _db.save(_table, imageId, {
-      'indexInWork': newIndex,
-      'updateTime': DateTimeHelper.toStorageFormat(now),
+    await _db.save('work_images', imageId, {
+      'indexInWork': index,
+      'updateTime': DateTimeHelper.getCurrentUtc(),
     });
   }
 
+  Map<String, dynamic> _mapToRow(WorkImage image, String workId) {
+    final row = {
+      'workId': workId,
+      'path': image.path,
+      'original_path': image.originalPath,
+      'thumbnail_path': image.thumbnailPath,
+      'format': image.format,
+      'size': image.size,
+      'width': image.width,
+      'height': image.height,
+      'indexInWork': image.index,
+      'createTime': DateTimeHelper.toStorageFormat(image.createTime),
+      'updateTime': DateTimeHelper.toStorageFormat(image.updateTime),
+    };
+
+    AppLogger.debug('转换为数据库行', tag: 'WorkImageRepository', data: {
+      'imageId': image.id,
+      'row': row,
+    });
+
+    return row;
+  }
+
   WorkImage _mapToWorkImage(Map<String, dynamic> row) {
+    AppLogger.debug('映射数据库记录', tag: 'WorkImageRepository', data: {
+      'record': row,
+    });
+
     return WorkImage(
       id: row['id'] as String,
       workId: row['workId'] as String,
-      originalPath: row['path'] as String,
       path: row['path'] as String,
-      thumbnailPath: row['thumbnailPath'] as String,
-      index: row['indexInWork'] as int,
-      width: row['width'] as int,
-      height: row['height'] as int,
+      originalPath: row['original_path'] as String,
+      thumbnailPath: row['thumbnail_path'] as String,
       format: row['format'] as String,
       size: row['size'] as int,
+      width: row['width'] as int,
+      height: row['height'] as int,
+      index: row['indexInWork'] as int,
       createTime:
-          DateTimeHelper.fromStorageFormat(row['createTime'] as String)!,
+          DateTimeHelper.fromStorageFormat(_safeGetTime(row, 'createTime')) ??
+              DateTime.now(),
       updateTime:
-          DateTimeHelper.fromStorageFormat(row['updateTime'] as String)!,
+          DateTimeHelper.fromStorageFormat(_safeGetTime(row, 'updateTime')) ??
+              DateTime.now(),
     );
+  }
+
+  String? _safeGetTime(Map<String, dynamic> row, String key) {
+    final value = row[key];
+    AppLogger.debug('读取时间字段', tag: 'WorkImageRepository', data: {
+      'field': key,
+      'value': value,
+      'type': value?.runtimeType.toString(),
+    });
+    return value as String?;
   }
 }

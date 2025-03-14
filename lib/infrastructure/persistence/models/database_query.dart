@@ -1,3 +1,5 @@
+import '../../../infrastructure/logging/logger.dart';
+
 /// 数据库查询
 class DatabaseQuery {
   final List<DatabaseQueryCondition> conditions;
@@ -15,42 +17,102 @@ class DatabaseQuery {
   });
 
   factory DatabaseQuery.fromJson(Map<String, dynamic> json) {
+    AppLogger.debug('DatabaseQuery.fromJson', tag: 'DatabaseQuery', data: {
+      'json': json,
+      'whereType': json['where']?.runtimeType.toString(),
+      'where': json['where'],
+    });
+
     final conditions = <DatabaseQueryCondition>[];
     final groups = <DatabaseQueryGroup>[];
 
-    if (json.containsKey('where')) {
-      final where = json['where'] as Map<String, dynamic>;
-      conditions.addAll(
-        where.entries.map((e) => DatabaseQueryCondition(
-              field: e.key,
-              operator: '=',
-              value: e.value,
-            )),
-      );
-    }
+    try {
+      if (json.containsKey('where')) {
+        if (json['where'] is List) {
+          final list = json['where'] as List;
+          AppLogger.debug('处理List类型的where条件', tag: 'DatabaseQuery', data: {
+            'count': list.length,
+            'firstItem': list.isNotEmpty ? list.first : null,
+          });
 
-    if (json.containsKey('conditions')) {
-      final list = json['conditions'] as List;
-      conditions.addAll(
-        list.map(
-            (e) => DatabaseQueryCondition.fromJson(e as Map<String, dynamic>)),
-      );
-    }
+          for (var item in list) {
+            if (item is Map) {
+              final condition = DatabaseQueryCondition.fromJson(
+                  Map<String, dynamic>.from(item));
+              conditions.add(condition);
 
-    if (json.containsKey('groups')) {
-      final list = json['groups'] as List;
-      groups.addAll(
-        list.map((e) => DatabaseQueryGroup.fromJson(e as Map<String, dynamic>)),
-      );
-    }
+              AppLogger.debug('添加查询条件', tag: 'DatabaseQuery', data: {
+                'field': condition.field,
+                'op': condition.operator,
+                'val': condition.value,
+              });
+            } else {
+              AppLogger.error('无效的查询条件',
+                  tag: 'DatabaseQuery',
+                  error: 'Item is not a Map',
+                  data: {
+                    'item': item,
+                    'type': item.runtimeType.toString(),
+                  });
+            }
+          }
+        } else if (json['where'] is Map) {
+          final where = Map<String, dynamic>.from(json['where'] as Map);
+          AppLogger.debug('处理Map类型的where条件', tag: 'DatabaseQuery', data: {
+            'fields': where.keys.toList(),
+          });
 
-    return DatabaseQuery(
-      conditions: conditions,
-      groups: groups.isEmpty ? null : groups,
-      orderBy: json['orderBy'] as String?,
-      limit: json['limit'] as int?,
-      offset: json['offset'] as int?,
-    );
+          conditions.addAll(
+            where.entries.map((e) => DatabaseQueryCondition(
+                  field: e.key,
+                  operator: '=',
+                  value: e.value,
+                )),
+          );
+        } else {
+          AppLogger.warning('不支持的where类型', tag: 'DatabaseQuery', data: {
+            'type': json['where']?.runtimeType.toString(),
+          });
+        }
+      }
+
+      if (json.containsKey('conditions')) {
+        final list = json['conditions'] as List;
+        conditions.addAll(
+          list.map((e) => DatabaseQueryCondition.fromJson(
+              Map<String, dynamic>.from(e as Map))),
+        );
+      }
+
+      if (json.containsKey('groups')) {
+        final list = json['groups'] as List;
+        groups.addAll(
+          list.map((e) =>
+              DatabaseQueryGroup.fromJson(Map<String, dynamic>.from(e as Map))),
+        );
+      }
+
+      AppLogger.debug('查询条件构建完成', tag: 'DatabaseQuery', data: {
+        'conditionCount': conditions.length,
+        'groupCount': groups.length,
+        'orderBy': json['orderBy'],
+      });
+
+      return DatabaseQuery(
+        conditions: conditions,
+        groups: groups.isEmpty ? null : groups,
+        orderBy: json['orderBy'] as String?,
+        limit: json['limit'] as int?,
+        offset: json['offset'] as int?,
+      );
+    } catch (e, stack) {
+      AppLogger.error('构建查询条件失败',
+          tag: 'DatabaseQuery',
+          error: e,
+          stackTrace: stack,
+          data: {'json': json});
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -75,17 +137,21 @@ class DatabaseQueryCondition {
   });
 
   factory DatabaseQueryCondition.fromJson(Map<String, dynamic> json) {
+    AppLogger.debug('创建查询条件', tag: 'DatabaseQuery', data: {
+      'json': json,
+    });
+
     return DatabaseQueryCondition(
       field: json['field'] as String,
-      operator: json['operator'] as String? ?? '=',
-      value: json['value'],
+      operator: json['op'] as String? ?? '=',
+      value: json['val'],
     );
   }
 
   Map<String, dynamic> toJson() => {
         'field': field,
-        'operator': operator,
-        'value': value,
+        'op': operator,
+        'val': value,
       };
 }
 
@@ -106,8 +172,8 @@ class DatabaseQueryGroup {
   factory DatabaseQueryGroup.fromJson(Map<String, dynamic> json) {
     return DatabaseQueryGroup(
       conditions: (json['conditions'] as List)
-          .map(
-              (e) => DatabaseQueryCondition.fromJson(e as Map<String, dynamic>))
+          .map((e) => DatabaseQueryCondition.fromJson(
+              Map<String, dynamic>.from(e as Map)))
           .toList(),
       type: json['type'] as String,
     );

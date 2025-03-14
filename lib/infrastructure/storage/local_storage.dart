@@ -72,6 +72,8 @@ class LocalStorage implements IStorage {
     }
   }
 
+  // ... Rest of the existing implementation ...
+
   /// 获取临时目录
   @override
   Future<Directory> createTempDirectory() async {
@@ -88,12 +90,12 @@ class LocalStorage implements IStorage {
 
   /// 删除目录
   @override
-  Future<void> deleteDirectory(String dirPath, {bool recursive = true}) async {
+  Future<void> deleteDirectory(String dirPath) async {
     try {
       _validatePath(dirPath);
       final dir = Directory(dirPath);
       if (await dir.exists()) {
-        await dir.delete(recursive: recursive);
+        await dir.delete(recursive: true);
       }
     } catch (e, stack) {
       _handleError(
@@ -217,6 +219,40 @@ class LocalStorage implements IStorage {
   bool isPathValid(String targetPath) {
     final normalized = path.normalize(targetPath);
     return normalized.startsWith(_basePath);
+  }
+
+  /// 列出目录中的所有文件路径（递归）
+  @override
+  Future<List<String>> listDirectoryFiles(String dirPath) async {
+    try {
+      _validatePath(dirPath);
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) {
+        return [];
+      }
+
+      final files = <String>[];
+      await for (final entity in dir.list(recursive: true)) {
+        if (entity is File) {
+          files.add(entity.path);
+        }
+      }
+
+      AppLogger.debug('列出目录文件', tag: 'LocalStorage', data: {
+        'directory': dirPath,
+        'fileCount': files.length,
+      });
+
+      return files;
+    } catch (e, stack) {
+      _handleError(
+        '列出目录文件失败',
+        e,
+        stack,
+        data: {'path': dirPath},
+      );
+      return [];
+    }
   }
 
   /// 移动文件

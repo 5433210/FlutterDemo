@@ -41,6 +41,9 @@ abstract class IStorage {
   /// 获取文件大小
   Future<int> getFileSize(String path);
 
+  /// 列出目录中的所有文件路径（递归）
+  Future<List<String>> listDirectoryFiles(String path);
+
   /// 移动文件
   Future<void> moveFile(String sourcePath, String destinationPath);
 

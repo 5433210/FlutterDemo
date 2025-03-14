@@ -117,8 +117,9 @@ class WorkService with WorkServiceErrorHandler {
 
         // 导入图片
         final images = await _imageService.importImages(work.id, files);
+        final imagesImported = await _imageService.saveChanges(work.id, images);
 
-        return savedWork.copyWith(images: images);
+        return savedWork.copyWith(images: imagesImported);
       },
       data: {'workId': work.id, 'fileCount': files.length},
     );

@@ -42,7 +42,13 @@ class WorkImportState {
 
   // 添加初始状态工厂方法
   factory WorkImportState.initial() {
-    return const WorkImportState();
+    return WorkImportState(
+      creationDate: DateTime.now(), // 默认今天
+      style: WorkStyle.regular, // 默认楷书
+      tool: WorkTool.brush, // 默认毛笔
+      optimizeImages: true, // 默认开启优化
+      keepOriginals: true, // 默认保留原图
+    );
   }
 
   bool get isDirty => images.isNotEmpty || title.isNotEmpty;
@@ -54,7 +60,7 @@ class WorkImportState {
     int? selectedImageIndex,
     Map<String, double>? imageRotations,
     double? scale,
-    String? name,
+    String? title,
     String? author,
     WorkStyle? style,
     WorkTool? tool,
@@ -72,7 +78,7 @@ class WorkImportState {
       selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
       imageRotations: imageRotations ?? this.imageRotations,
       scale: scale ?? this.scale,
-      title: name ?? title,
+      title: title ?? this.title,
       author: author ?? this.author,
       style: style ?? this.style,
       tool: tool ?? this.tool,
