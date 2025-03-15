@@ -5,25 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../presentation/viewmodels/states/work_import_state.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
 import '../../providers/works_providers.dart';
+import '../../viewmodels/states/work_import_state.dart';
 import 'components/form/work_import_form.dart';
 import 'components/preview/work_import_preview.dart';
-
-class ImportResult {
-  final bool isSuccess;
-  final String? error;
-
-  const ImportResult({
-    this.isSuccess = false,
-    this.error,
-  });
-
-  static ImportResult failure(String error) => ImportResult(error: error);
-  static ImportResult success() => const ImportResult(isSuccess: true);
-}
 
 class WorkImportDialog extends ConsumerStatefulWidget {
   const WorkImportDialog({super.key});
@@ -35,15 +22,12 @@ class WorkImportDialog extends ConsumerStatefulWidget {
 class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
-  // 用于记录已加载文件路径
-  final Set<String> _loadedFilePaths = <String>{};
-  late final TextEditingController _nameController;
-  late final TextEditingController _authorController;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(workImportProvider);
+    final viewModel = ref.read(workImportProvider.notifier);
     final isDirty = state.images.isNotEmpty;
 
     return WillPopScope(
@@ -73,7 +57,8 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
                       flex: 7,
                       child: WorkImportPreview(
                         state: state,
-                        viewModel: ref.read(workImportProvider.notifier),
+                        viewModel: viewModel,
+                        isProcessing: _isLoading,
                         onAddImages: () => _pickImages(context),
                       ),
                     ),
@@ -92,7 +77,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
                         key: _formKey,
                         child: WorkImportForm(
                           state: state,
-                          viewModel: ref.read(workImportProvider.notifier),
+                          viewModel: viewModel,
                         ),
                       ),
                     ),
@@ -111,18 +96,13 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _authorController.dispose();
-    _loadedFilePaths.clear();
+    // 退出时重置状态
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(workImportProvider.notifier).reset();
+      }
+    });
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController = TextEditingController();
-    _authorController = TextEditingController();
-    _resetDialog();
   }
 
   Widget _buildBottomBar(ThemeData theme, WorkImportState state, bool isDirty) {
@@ -170,50 +150,6 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     );
   }
 
-  Widget _buildHintText(ThemeData theme) {
-    return Positioned(
-      left: AppSizes.l,
-      bottom: AppSizes.l + 120, // 调整位置到缩略图条上方
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.s,
-          vertical: AppSizes.xs,
-        ),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withOpacity(0.8),
-          borderRadius: BorderRadius.circular(AppSizes.xxs),
-          border: Border.all(
-            color: theme.colorScheme.outline.withOpacity(0.2),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.shadow.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.info_outline,
-              size: 16,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            const SizedBox(width: AppSizes.xs),
-            Text(
-              '点击图片可以预览，拖动可以调整顺序',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTitleBar(ThemeData theme) {
     return Container(
       height: 48,
@@ -231,7 +167,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
           ),
           const Spacer(),
           IconButton(
-            onPressed: _handleExit,
+            onPressed: () => _handleExit(),
             icon: const Icon(Icons.close),
             tooltip: '关闭',
             style: IconButton.styleFrom(
@@ -245,16 +181,20 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
   }
 
   Future<bool> _handleExit() async {
+    final viewModel = ref.read(workImportProvider.notifier);
     final isDirty = ref.read(workImportProvider).isDirty;
+
     if (!isDirty) {
-      _resetDialog(); // Reset state before exit
-      Navigator.of(context).pop(false);
+      viewModel.reset();
+      if (mounted) {
+        Navigator.of(context).pop(false);
+      }
       return true;
     }
 
     final confirmed = await showDialog<bool>(
       context: context,
-      barrierDismissible: false, // 防止点击背景关闭
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
@@ -289,7 +229,7 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
     );
 
     if (confirmed == true && mounted) {
-      _resetDialog(); // Reset state before exit
+      viewModel.reset();
       Navigator.of(context).pop(false);
     }
     return confirmed ?? false;
@@ -319,10 +259,10 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
       if (!mounted) return;
 
       if (result) {
-        // 导入成功后清空状态
-        _resetDialog();
+        // 触发主列表刷新
         ref.read(worksNeedsRefreshProvider.notifier).state =
             RefreshInfo.importCompleted();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('导入成功')),
         );
@@ -338,8 +278,8 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
           ),
         );
       }
-    } catch (e, stackTrace) {
-      debugPrint('Import failed: $e\n$stackTrace');
+    } catch (e) {
+      debugPrint('Import failed: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -366,120 +306,26 @@ class _WorkImportDialogState extends ConsumerState<WorkImportDialog> {
 
       if (!mounted) return;
 
-      if (result != null) {
-        final newFiles = result.paths
-            .whereType<String>()
-            .where((path) => !_loadedFilePaths.contains(path)) // 过滤已加载的文件
-            .map((path) => File(path))
-            .toList();
+      if (result != null && result.paths.isNotEmpty) {
+        final files =
+            result.paths.whereType<String>().map((path) => File(path)).toList();
 
-        if (newFiles.isEmpty) {
-          _showWarning(context, '选中的图片已全部添加过');
+        if (files.isEmpty) {
+          _showWarning(context, '未选择任何图片');
           return;
         }
 
-        // 记录新添加的文件路径
-        _loadedFilePaths.addAll(newFiles.map((file) => file.path));
-
-        await ref.read(workImportProvider.notifier).addImages(newFiles);
+        await ref.read(workImportProvider.notifier).addImages(files);
         HapticFeedback.mediumImpact();
       }
     } catch (e) {
       if (!mounted) return;
-      _showErrorSnackBar(context, '选择图片失败: ${e.toString()}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('选择图片失败: $e')),
+      );
     }
   }
 
-  void _resetDialog() {
-    // 清空控制器的值
-    _nameController.clear();
-    _authorController.clear();
-
-    // 重置 provider 状态
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(workImportProvider.notifier).reset();
-    });
-  }
-
-  void _showErrorSnackBar(BuildContext context, String message) {
-    _showFeedback(
-      context: context,
-      message: message,
-      isError: true,
-    );
-  }
-
-  void _showFeedback({
-    required BuildContext context,
-    required String message,
-    required bool isError,
-  }) {
-    final theme = Theme.of(context);
-
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                child: Icon(
-                  isError ? Icons.error_outline : Icons.check_circle_outline,
-                  key: ValueKey(isError),
-                  color: isError
-                      ? theme.colorScheme.onError
-                      : theme.colorScheme.onSecondaryContainer,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: AppSizes.s),
-              Expanded(
-                child: Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isError
-                        ? theme.colorScheme.onError
-                        : theme.colorScheme.onSecondaryContainer,
-                    height: 1.2,
-                  ),
-                  maxLines: isError ? 3 : 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: isError
-              ? theme.colorScheme.error
-              : theme.colorScheme.secondaryContainer,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(AppSizes.m),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.m,
-            vertical: AppSizes.s,
-          ),
-          dismissDirection: DismissDirection.horizontal,
-          duration: Duration(seconds: isError ? 4 : 2),
-          showCloseIcon: isError,
-          closeIconColor: isError ? theme.colorScheme.onError : null,
-          animation: const AlwaysStoppedAnimation(1.0),
-        ),
-      );
-  }
-
-  void _showSuccessSnackBar(BuildContext context, String message) {
-    _showFeedback(
-      context: context,
-      message: message,
-      isError: false,
-    );
-  }
-
-  void _showValidationError() {
-    _showErrorSnackBar(context, '请填写所有必填项');
-  }
-
-  // 显示警告提示
   void _showWarning(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

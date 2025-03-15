@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
-import '../../providers/work_image_editor_provider.dart' as editor;
 import '../../widgets/common/error_view.dart';
 import '../../widgets/common/loading_view.dart';
 import 'components/info_card.dart';
@@ -28,7 +27,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final state = ref.watch(workDetailProvider);
     final work = state.work;
 
@@ -62,7 +60,12 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
   @override
   void initState() {
     super.initState();
-    _loadWork();
+    // 使用 Future.microtask 延迟加载，避免在构建过程中修改状态
+    Future.microtask(() {
+      if (mounted) {
+        _loadWork();
+      }
+    });
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, WorkEntity? work) {
@@ -144,9 +147,12 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('取消'),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确定'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('删除'),
           ),
         ],
       ),
