@@ -3,108 +3,88 @@ import 'dart:io';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
 
+/// 作品导入状态
 class WorkImportState {
   final List<File> images;
-  final int selectedImageIndex;
-  final Map<String, double> imageRotations;
-  final double scale;
+  final File? selectedImage;
   final String title;
   final String? author;
   final WorkStyle? style;
   final WorkTool? tool;
   final DateTime? creationDate;
   final String? remark;
+  final bool isProcessing;
+  final String? error;
   final bool optimizeImages;
   final bool keepOriginals;
-  final bool isLoading;
-  final String? error;
-  final double? zoomLevel;
-  final double? rotation;
+  final Map<String, double> imageRotations;
+  final double scale;
+  final double rotation;
+  final int selectedImageIndex;
 
   const WorkImportState({
     this.images = const [],
-    this.selectedImageIndex = -1,
-    this.imageRotations = const {},
-    this.scale = 1.0,
+    this.selectedImage,
     this.title = '',
     this.author,
     this.style,
     this.tool,
     this.creationDate,
     this.remark,
+    this.isProcessing = false,
+    this.error,
     this.optimizeImages = true,
     this.keepOriginals = false,
-    this.isLoading = false,
-    this.error,
-    this.zoomLevel = 1.0,
+    this.imageRotations = const {},
+    this.scale = 1.0,
     this.rotation = 0.0,
+    this.selectedImageIndex = 0,
   });
 
-  // 添加初始状态工厂方法
   factory WorkImportState.initial() {
-    return WorkImportState(
-      creationDate: DateTime.now(), // 默认今天
-      style: WorkStyle.regular, // 默认楷书
-      tool: WorkTool.brush, // 默认毛笔
-      optimizeImages: true, // 默认开启优化
-      keepOriginals: true, // 默认保留原图
-    );
+    return const WorkImportState();
   }
 
-  bool get isDirty => images.isNotEmpty || title.isNotEmpty;
+  bool get canSubmit => hasImages && !isProcessing;
 
-  bool get isValid => title.isNotEmpty && images.isNotEmpty;
-
+  bool get hasError => error != null;
+  bool get hasImages => images.isNotEmpty;
+  bool get isDirty => hasImages || title.isNotEmpty || author != null;
   WorkImportState copyWith({
     List<File>? images,
-    int? selectedImageIndex,
-    Map<String, double>? imageRotations,
-    double? scale,
+    File? selectedImage,
     String? title,
     String? author,
     WorkStyle? style,
     WorkTool? tool,
     DateTime? creationDate,
     String? remark,
+    bool? isProcessing,
+    String? error,
     bool? optimizeImages,
     bool? keepOriginals,
-    bool? isLoading,
-    String? error,
-    double? zoomLevel,
+    Map<String, double>? imageRotations,
+    double? scale,
     double? rotation,
+    int? selectedImageIndex,
   }) {
     return WorkImportState(
       images: images ?? this.images,
-      selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
-      imageRotations: imageRotations ?? this.imageRotations,
-      scale: scale ?? this.scale,
+      selectedImage: selectedImage ?? this.selectedImage,
       title: title ?? this.title,
       author: author ?? this.author,
       style: style ?? this.style,
       tool: tool ?? this.tool,
       creationDate: creationDate ?? this.creationDate,
       remark: remark ?? this.remark,
+      isProcessing: isProcessing ?? this.isProcessing,
+      error: error,
       optimizeImages: optimizeImages ?? this.optimizeImages,
       keepOriginals: keepOriginals ?? this.keepOriginals,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      zoomLevel: zoomLevel ?? this.zoomLevel,
+      imageRotations: imageRotations ?? this.imageRotations,
+      scale: scale ?? this.scale,
       rotation: rotation ?? this.rotation,
+      selectedImageIndex: selectedImageIndex ?? this.selectedImageIndex,
     );
-  }
-
-  double getRotation(String imagePath) => imageRotations[imagePath] ?? 0.0;
-
-  // 添加验证方法
-  bool validateImage(File file) {
-    try {
-      final path = file.path.toLowerCase();
-      return path.endsWith('.jpg') ||
-          path.endsWith('.jpeg') ||
-          path.endsWith('.png') ||
-          path.endsWith('.webp');
-    } catch (e) {
-      return false;
-    }
   }
 }

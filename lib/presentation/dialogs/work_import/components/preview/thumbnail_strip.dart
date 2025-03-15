@@ -1,292 +1,126 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../../domain/models/work/work_image.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class ThumbnailStrip extends StatefulWidget {
-  final List<File> images;
+  final List<WorkImage> images;
   final int selectedIndex;
-  final ValueChanged<int> onSelect;
-  final ValueChanged<int> onRemove;
-  final void Function(int oldIndex, int newIndex)? onReorder;
+  final Function(int) onTap;
+  final bool isEditable;
+  final Function(int, int)? onReorder;
+  final bool useOriginalImage;
 
   const ThumbnailStrip({
     super.key,
     required this.images,
     required this.selectedIndex,
-    required this.onSelect,
-    required this.onRemove,
+    required this.onTap,
+    this.isEditable = false,
     this.onReorder,
+    this.useOriginalImage = false,
   });
 
   @override
   State<ThumbnailStrip> createState() => _ThumbnailStripState();
 }
 
-class _ThumbnailItem extends StatelessWidget {
-  final File image;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final VoidCallback onRemove;
-  final int index;
-
-  const _ThumbnailItem({
-    required this.image,
-    required this.isSelected,
-    required this.onTap,
-    required this.onRemove,
-    required this.index,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Semantics(
-      label: '图片 $index',
-      selected: isSelected,
-      onTapHint: '选择图片',
-      child: Padding(
-        padding: const EdgeInsets.only(right: AppSizes.m),
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onTap();
-          },
-          borderRadius: BorderRadius.circular(AppSizes.xs),
-          child: Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border.all(
-                color:
-                    isSelected ? theme.colorScheme.primary : theme.dividerColor,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(AppSizes.xs),
-              boxShadow: [
-                if (isSelected)
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.2),
-                    blurRadius: 8,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                Hero(
-                  tag: image.path,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(AppSizes.xs),
-                    child: Image.file(
-                      image,
-                      fit: BoxFit.cover,
-                      frameBuilder:
-                          (context, child, frame, wasSynchronouslyLoaded) {
-                        if (wasSynchronouslyLoaded) return child;
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: frame != null
-                              ? child
-                              : Container(
-                                  color: theme.colorScheme.surface,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                ),
-                        );
-                      },
-                      errorBuilder: (context, error, _) => Container(
-                        padding: const EdgeInsets.all(AppSizes.s),
-                        decoration: BoxDecoration(
-                          color:
-                              theme.colorScheme.errorContainer.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSizes.xs),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.broken_image_outlined,
-                              color: theme.colorScheme.error,
-                              size: 24,
-                            ),
-                            const SizedBox(height: AppSizes.xs),
-                            Text(
-                              '加载失败',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.error,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // 序号指示器
-                Positioned(
-                  left: 8,
-                  bottom: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.xs,
-                      vertical: AppSizes.xxs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surface.withOpacity(0.8),
-                      borderRadius: BorderRadius.circular(AppSizes.xxs),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : theme.colorScheme.outline.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Text(
-                      '$index',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurface,
-                        fontWeight: isSelected ? FontWeight.bold : null,
-                      ),
-                    ),
-                  ),
-                ),
-                // 删除按钮
-                if (isSelected)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Tooltip(
-                      message: '移除图片',
-                      child: IconButton.filled(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          onRemove();
-                        },
-                        icon: const Icon(Icons.close, size: 16),
-                        style: IconButton.styleFrom(
-                          backgroundColor: theme.colorScheme.error,
-                          foregroundColor: theme.colorScheme.onError,
-                          padding: const EdgeInsets.all(4),
-                          minimumSize: const Size(24, 24),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppSizes.xxs),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ThumbnailStripState extends State<ThumbnailStrip> {
-  late final ScrollController _scrollController;
+  static const double _thumbWidth = 100.0;
+  static const double _thumbHeight = 100.0;
+  static const double _thumbSpacing = 8.0;
+  final ScrollController _scrollController = ScrollController();
+  final Map<String, bool> _fileExistsCache = {};
   bool _isDragging = false;
-  Timer? _scrollTimer;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: theme.dividerColor),
-        ),
-      ),
-      child: ScrollConfiguration(
-        behavior: ScrollConfiguration.of(context).copyWith(
-          scrollbars: false, // 使用自定义滚动条
-        ),
-        child: Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: true,
-          trackVisibility: true,
-          child: ReorderableListView.builder(
-            scrollController: _scrollController,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.m,
-              vertical: AppSizes.s,
-            ),
-            buildDefaultDragHandles: false,
-            proxyDecorator: _proxyDecorator,
-            onReorderStart: (index) {
-              setState(() => _isDragging = true);
-              HapticFeedback.selectionClick();
-              SystemSound.play(SystemSoundType.click);
-            },
-            onReorderEnd: (_) {
-              setState(() => _isDragging = false);
-              _scrollToSelected();
-            },
-            onReorder: (oldIndex, newIndex) {
-              if (oldIndex < newIndex) newIndex--;
-              widget.onReorder?.call(oldIndex, newIndex);
+    if (!widget.isEditable) {
+      // 非编辑模式：普通的滚动列表
+      return ListView.builder(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.images.length,
+        itemBuilder: (context, index) => _buildThumbnail(context, index, theme),
+      );
+    }
 
-              // 添加触觉反馈
-              HapticFeedback.mediumImpact();
-              SystemSound.play(SystemSoundType.click);
+    // 编辑模式：可重排序的列表
+    return ReorderableListView.builder(
+      scrollController: _scrollController,
+      scrollDirection: Axis.horizontal,
+      buildDefaultDragHandles: false,
+      onReorderStart: (index) {
+        setState(() => _isDragging = true);
+        HapticFeedback.selectionClick();
+      },
+      onReorderEnd: (_) {
+        setState(() => _isDragging = false);
+        HapticFeedback.lightImpact();
+      },
+      onReorder: (oldIndex, newIndex) {
+        if (widget.onReorder != null) {
+          widget.onReorder!(oldIndex, newIndex);
+        }
+      },
+      proxyDecorator: (child, index, animation) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) {
+            final elevationValue = animation.value * 8.0;
+            final scaleValue =
+                1.0 + math.min(0.2, animation.value * 0.1); // 最大放大 1.1 倍
+            final rotateValue = (1.0 - animation.value) * 0.1; // 轻微倾斜，最大 5.7 度
 
-              // 更新滚动位置
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollToSelected();
-              });
-            },
-            itemCount: widget.images.length,
-            itemBuilder: (context, index) {
-              final image = widget.images[index];
-              return RepaintBoundary(
-                key: ValueKey(image.path),
-                child: SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: MouseRegion(
-                    cursor: _isDragging
-                        ? SystemMouseCursors.grabbing
-                        : SystemMouseCursors.grab,
-                    child: ReorderableDragStartListener(
-                      index: index,
-                      child: _ThumbnailItem(
-                        image: image,
-                        isSelected: index == widget.selectedIndex,
-                        onTap: () => widget.onSelect(index),
-                        onRemove: () => widget.onRemove(index),
-                        index: index + 1,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
+            return Transform(
+              transform: Matrix4.identity()
+                ..scale(scaleValue, scaleValue)
+                ..rotateZ(rotateValue),
+              alignment: Alignment.center,
+              child: Material(
+                elevation: elevationValue,
+                color: Colors.transparent,
+                shadowColor: Colors.black38,
+                borderRadius: BorderRadius.circular(4),
+                child: child,
+              ),
+            );
+          },
+          child: child,
+        );
+      },
+      itemBuilder: (context, index) {
+        final thumbnail = _buildThumbnail(context, index, theme);
+        if (!widget.isEditable) return thumbnail;
+
+        return ReorderableDragStartListener(
+          key: ValueKey(widget.images[index].id),
+          index: index,
+          enabled: !_isDragging,
+          child: MouseRegion(
+            cursor: _isDragging
+                ? SystemMouseCursors.grabbing
+                : SystemMouseCursors.grab,
+            child: thumbnail,
           ),
-        ),
-      ),
+        );
+      },
+      itemCount: widget.images.length,
     );
   }
 
   @override
   void didUpdateWidget(ThumbnailStrip oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.images != oldWidget.images) {
+      _checkImageFiles();
+    }
     if (widget.selectedIndex != oldWidget.selectedIndex) {
       _scrollToSelected();
     }
@@ -294,7 +128,6 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
 
   @override
   void dispose() {
-    _scrollTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -302,67 +135,188 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    // 延迟检查滚动状态，确保视图已经构建完成
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeEnableScroll());
+    _checkImageFiles();
+
+    // 延迟滚动到选中项
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToSelected();
+    });
   }
 
-  void _maybeEnableScroll() {
-    // 确保控制器已经连接到视图
-    if (!mounted || !_scrollController.hasClients) {
-      return;
-    }
+  Widget _buildThumbnail(BuildContext context, int index, ThemeData theme) {
+    final image = widget.images[index];
+    final isSelected = index == widget.selectedIndex;
+    final fileExists = _fileExistsCache[image.id] ?? false;
 
-    try {
-      final maxScroll = _scrollController.position.maxScrollExtent;
-      if (maxScroll > 0) {
-        setState(() {}); // 触发重建以更新滚动行为
-      }
-    } catch (e) {
-      // 忽略可能的滚动控制器错误
-      debugPrint('ScrollController error: $e');
-    }
-  }
+    // 选择合适的图片路径
+    final imagePath = widget.useOriginalImage
+        ? (image.originalPath.isNotEmpty ? image.originalPath : image.path)
+        : (image.thumbnailPath.isNotEmpty ? image.thumbnailPath : image.path);
 
-  Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 0.9).animate(animation),
-      child: ScaleTransition(
-        scale: Tween<double>(begin: 1.0, end: 1.05).animate(animation),
-        child: Material(
-          elevation: animation.value * 8.0,
-          color: Colors.transparent,
-          shadowColor: Colors.black38,
-          borderRadius: BorderRadius.circular(AppSizes.xs),
-          child: child,
+    return GestureDetector(
+      onTap: () {
+        if (!_isDragging) {
+          HapticFeedback.selectionClick();
+          widget.onTap(index);
+        }
+      },
+      child: Container(
+        width: _thumbWidth,
+        height: _thumbHeight,
+        margin: const EdgeInsets.symmetric(horizontal: AppSizes.xs),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.outlineVariant,
+            width: isSelected ? 2.0 : 1.0,
+          ),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: theme.colorScheme.primary.withOpacity(0.2),
+                blurRadius: 4,
+                spreadRadius: 1,
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Image or placeholder
+              if (fileExists)
+                Hero(
+                  tag: image.id,
+                  child: Image.file(
+                    File(imagePath),
+                    fit: BoxFit.cover,
+                    frameBuilder:
+                        (context, child, frame, wasSynchronouslyLoaded) {
+                      if (wasSynchronouslyLoaded) return child;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: frame != null
+                            ? child
+                            : Container(
+                                color:
+                                    theme.colorScheme.surfaceContainerHighest,
+                                child: const Center(
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                      );
+                    },
+                    errorBuilder: (context, error, stack) => Center(
+                      child: Icon(Icons.broken_image,
+                          size: 32, color: theme.colorScheme.error),
+                    ),
+                  ),
+                )
+              else
+                Center(
+                  child: Icon(Icons.image_not_supported,
+                      size: 32,
+                      color: theme.colorScheme.surfaceContainerHighest),
+                ),
+
+              // Index label
+              Positioned(
+                left: 4,
+                top: 4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: Text(
+                    '${index + 1}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Drag handle in edit mode
+              if (widget.isEditable && !_isDragging)
+                Positioned(
+                  right: 4,
+                  bottom: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withOpacity(0.8),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: Icon(
+                      Icons.drag_indicator,
+                      size: 16,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+              // Error indicator
+              if (!fileExists)
+                Center(
+                  child: Tooltip(
+                    message: '图片文件不存在',
+                    child: Icon(
+                      Icons.error_outline,
+                      size: 24,
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Future<void> _checkImageFiles() async {
+    for (final image in widget.images) {
+      try {
+        final imagePath = widget.useOriginalImage
+            ? (image.originalPath.isNotEmpty ? image.originalPath : image.path)
+            : (image.thumbnailPath.isNotEmpty
+                ? image.thumbnailPath
+                : image.path);
+
+        final file = File(imagePath);
+        _fileExistsCache[image.id] = await file.exists();
+      } catch (e) {
+        _fileExistsCache[image.id] = false;
+      }
+    }
+    if (mounted) setState(() {});
+  }
+
   void _scrollToSelected() {
-    if (!mounted || !_scrollController.hasClients || widget.selectedIndex < 0) {
-      return;
-    }
+    if (!mounted || !_scrollController.hasClients) return;
 
-    try {
-      final viewportWidth = _scrollController.position.viewportDimension;
-      final itemWidth = 100.0 + AppSizes.m; // thumbnail width + padding
-      final targetOffset = widget.selectedIndex * itemWidth;
+    final itemWidth = _thumbWidth + _thumbSpacing * 2;
+    final viewportWidth = MediaQuery.of(context).size.width;
+    final targetOffset = widget.selectedIndex * itemWidth;
 
-      // 计算目标位置，使选中项尽可能居中
-      final offset = (targetOffset - (viewportWidth - itemWidth) / 2)
-          .clamp(0.0, _scrollController.position.maxScrollExtent)
-          .toDouble();
+    // 计算目标偏移，使选中项居中
+    final offset = (targetOffset - (viewportWidth - itemWidth) / 2)
+        .clamp(0.0, _scrollController.position.maxScrollExtent)
+        .toDouble();
 
-      _scrollController.animateTo(
-        offset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-      );
-    } catch (e) {
-      // 忽略滚动控制器错误
-      debugPrint('ScrollToSelected error: $e');
-    }
+    _scrollController.animateTo(
+      offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
   }
 }

@@ -322,7 +322,7 @@ class _WorkDetailEditFormState extends ConsumerState<WorkDetailEditForm> {
             if (controller == _nameController) {
               ref
                   .read(workDetailProvider.notifier)
-                  .updateWorkBasicInfo(name: value);
+                  .updateWorkBasicInfo(title: value);
             } else if (controller == _authorController) {
               ref
                   .read(workDetailProvider.notifier)

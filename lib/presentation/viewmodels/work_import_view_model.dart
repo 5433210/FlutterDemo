@@ -1,19 +1,16 @@
 import 'dart:io';
 
-import 'package:demo/domain/models/work/work_entity.dart';
-import 'package:demo/infrastructure/image/image_processor.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
 
-import '../../application/config/app_config.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
+import '../../domain/models/work/work_entity.dart';
+import '../../infrastructure/image/image_processor.dart';
 import 'states/work_import_state.dart';
 
+/// 作品导入视图模型
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
   final ImageProcessor _imageProcessor;
@@ -21,286 +18,212 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   WorkImportViewModel(this._workService, this._imageProcessor)
       : super(WorkImportState.initial());
 
-  // 图片操作
-  Future<void> addImages(List<File> files) async {
-    try {
-      state = state.copyWith(isLoading: true, error: null);
+  /// 判断是否可以保存
+  bool get canSubmit {
+    return state.images.isNotEmpty &&
+        state.title.trim().isNotEmpty &&
+        !state.isProcessing;
+  }
 
-      await _validateImages(files);
-      final updatedImages = List<File>.from(state.images)..addAll(files);
+  /// 添加图片
+  Future<void> addImages(List<File> files) async {
+    if (files.isEmpty) return;
+
+    try {
+      state = state.copyWith(
+        isProcessing: true,
+        error: null,
+      );
 
       state = state.copyWith(
-        images: updatedImages,
-        selectedImageIndex:
-            state.selectedImageIndex < 0 ? 0 : state.selectedImageIndex,
-        isLoading: false,
+        images: [...state.images, ...files],
+        isProcessing: false,
       );
-      HapticFeedback.mediumImpact();
     } catch (e) {
       state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
+        isProcessing: false,
+        error: '添加图片失败: $e',
       );
     }
   }
 
-  // 导入功能
+  /// 导入作品
   Future<bool> importWork() async {
-    if (state.images.isEmpty ||
-        state.title.isEmpty ||
-        state.author?.isEmpty != false ||
-        state.style == null ||
-        state.tool == null ||
-        state.creationDate == null) {
-      state = state.copyWith(error: '请填写所有必填字段');
-      return false;
-    }
+    if (!canSubmit) return false;
 
-    state = state.copyWith(isLoading: true, error: null);
     try {
-      final processedImages = await _processImages();
+      state = state.copyWith(isProcessing: true, error: null);
 
-      await _workService.importWork(
-        processedImages,
-        WorkEntity(
-          id: const Uuid().v4(),
-          title: state.title,
-          author: state.author!,
-          style: state.style!,
-          tool: state.tool!,
-          createTime: DateTime.now(),
-          updateTime: DateTime.now(),
-          creationDate: state.creationDate!,
-          imageCount: state.images.length,
-          remark: state.remark,
-        ),
+      // 创建新的作品实体
+      final work = WorkEntity(
+        id: const Uuid().v4(),
+        title: state.title.trim(),
+        author: state.author!,
+        style: state.style!,
+        tool: state.tool!,
+        creationDate: state.creationDate!,
+        remark: state.remark?.trim(),
+        createTime: DateTime.now(),
+        updateTime: DateTime.now(),
       );
+
+      // 执行导入操作
+      await _workService.importWork(state.images, work);
+
+      state = state.copyWith(isProcessing: false);
       return true;
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      state = state.copyWith(
+        isProcessing: false,
+        error: '导入失败: $e',
+      );
       return false;
-    } finally {
-      state = state.copyWith(isLoading: false);
     }
   }
 
-  void removeAllImages() {
-    state = state.copyWith(
-      images: const [],
-      selectedImageIndex: -1,
-    );
+  /// 初始化现有作品的图片
+  Future<void> initialize(List<File> images) async {
+    if (images.isEmpty) return;
+
+    try {
+      state = state.copyWith(
+        images: images,
+        isProcessing: true,
+        error: null,
+      );
+
+      state = state.copyWith(
+        selectedImageIndex: 0,
+        isProcessing: false,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isProcessing: false,
+        error: '初始化图片失败: $e',
+      );
+    }
   }
 
+  /// 删除图片
   void removeImage(int index) {
-    if (!_isValidIndex(index)) return;
+    if (index < 0 || index >= state.images.length) return;
 
-    final updatedImages = List<File>.from(state.images)..removeAt(index);
-    final updatedRotations = Map<String, double>.from(state.imageRotations)
-      ..remove(state.images[index].path);
+    final newImages = List<File>.from(state.images);
+    newImages.removeAt(index);
 
-    final newSelectedIndex =
-        _calculateNewSelectedIndex(index, updatedImages.length);
+    // 如果删除的是当前选中项，需要更新选中索引
+    final newSelectedIndex = _calculateNewSelectedIndex(
+      oldIndex: index,
+      maxIndex: newImages.length - 1,
+    );
 
     state = state.copyWith(
-      images: updatedImages,
+      images: newImages,
       selectedImageIndex: newSelectedIndex,
-      imageRotations: updatedRotations,
-      error: null,
     );
-    HapticFeedback.lightImpact();
   }
 
+  /// 重新排序
   void reorderImages(int oldIndex, int newIndex) {
-    if (!_isValidIndex(oldIndex) || !_isValidIndex(newIndex)) return;
+    if (oldIndex < 0 ||
+        oldIndex >= state.images.length ||
+        newIndex < 0 ||
+        newIndex > state.images.length) return;
 
-    HapticFeedback.selectionClick();
-
-    if (oldIndex < newIndex) newIndex--;
-
-    final updatedImages = List<File>.from(state.images);
-    final item = updatedImages.removeAt(oldIndex);
-    updatedImages.insert(newIndex, item);
-
-    final newSelectedIndex = _calculateNewSelectedIndex(oldIndex, newIndex);
+    final images = List<File>.from(state.images);
+    final item = images.removeAt(oldIndex);
+    images.insert(newIndex, item);
 
     state = state.copyWith(
-      images: updatedImages,
-      selectedImageIndex: newSelectedIndex,
-      imageRotations: state.imageRotations,
-      error: null,
+      images: images,
+      selectedImageIndex: _calculateNewSelectedIndex(
+        oldIndex: oldIndex,
+        newIndex: newIndex,
+        maxIndex: images.length - 1,
+      ),
     );
   }
 
+  /// 重置
   void reset() {
     state = WorkImportState.initial();
   }
 
-  void resetView() {
-    state = state.copyWith(scale: 1.0, rotation: 0.0);
-  }
-
-  Future<void> rotateImage(bool clockwise) async {
-    if (state.selectedImageIndex < 0) return;
-
-    try {
-      state = state.copyWith(isLoading: true, error: null);
-
-      final angle = clockwise ? 90 : -90;
-      final selectedFile = state.images[state.selectedImageIndex];
-      final rotatedFile =
-          await _imageProcessor.rotateImage(selectedFile, angle);
-
-      final updatedImages = List<File>.from(state.images);
-      updatedImages[state.selectedImageIndex] = rotatedFile;
-
-      final updatedRotations = Map<String, double>.from(state.imageRotations);
-      updatedRotations[rotatedFile.path] =
-          ((updatedRotations[selectedFile.path] ?? 0 + angle) % 360).toDouble();
-
-      state = state.copyWith(
-        images: updatedImages,
-        imageRotations: updatedRotations,
-        isLoading: false,
-      );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: '旋转图片失败: ${e.toString()}',
-      );
-    }
-  }
-
+  /// 选择图片
   void selectImage(int index) {
-    if (index >= 0 && index < state.images.length) {
-      state = state.copyWith(selectedImageIndex: index);
-    }
+    if (index < 0 || index >= state.images.length) return;
+    state = state.copyWith(selectedImageIndex: index);
   }
 
-  void setAuthor(String author) =>
-      state = state.copyWith(author: author.trim());
-
-  void setCreationDate(DateTime? date) =>
-      state = state.copyWith(creationDate: date);
-
-  void setRemark(String remark) =>
-      state = state.copyWith(remark: remark.trim());
-
-  // 视图控制
-  void setScale(double scale) {
-    if (scale >= 0.5 && scale <= 5.0) {
-      state = state.copyWith(scale: scale);
-    }
+  /// 设置作者
+  void setAuthor(String author) {
+    state = state.copyWith(author: author.trim());
   }
 
-  void setStyle(String? value) {
-    if (value?.isEmpty ?? true) return;
-
-    try {
-      final enumValue = value!.trim();
-      final style = WorkStyle.values.firstWhere(
-        (e) =>
-            e.toString().split('.').last.toLowerCase() ==
-            enumValue.toLowerCase(),
-        orElse: () => throw Exception('未知的书法风格: $value'),
-      );
-      state = state.copyWith(style: style);
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      debugPrint('Error setting style: $e');
-    }
+  /// 设置创作日期
+  void setCreationDate(DateTime date) {
+    state = state.copyWith(creationDate: date);
   }
 
-  // 基础信息设置
-  void setTitle(String title) => state = state.copyWith(title: title.trim());
-
-  // 枚举值设置
-  void setTool(String? value) {
-    if (value?.isEmpty ?? true) return;
-
-    try {
-      final enumValue = value!.trim();
-      final tool = WorkTool.values.firstWhere(
-        (e) =>
-            e.toString().split('.').last.toLowerCase() ==
-            enumValue.toLowerCase(),
-        orElse: () => throw Exception('未知的书写工具: $value'),
-      );
-      state = state.copyWith(tool: tool);
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-      debugPrint('Error setting tool: $e');
-    }
+  /// 设置备注
+  void setRemark(String remark) {
+    state = state.copyWith(remark: remark.trim());
   }
 
-  void toggleKeepOriginals() {
-    state = state.copyWith(keepOriginals: !state.keepOriginals);
+  /// 设置画风
+  void setStyle(String? styleStr) {
+    if (styleStr == null) return;
+    final style = WorkStyle.values.firstWhere(
+      (s) => s.toString().split('.').last == styleStr,
+      orElse: () => WorkStyle.other,
+    );
+    state = state.copyWith(style: style);
   }
 
-  // 优化选项
-  void toggleOptimizeImages() {
-    state = state.copyWith(optimizeImages: !state.optimizeImages);
+  /// 设置标题
+  void setTitle(String title) {
+    state = state.copyWith(title: title.trim());
   }
 
-  int _calculateNewSelectedIndex(int oldIndex, int newIndex) {
-    if (state.selectedImageIndex == oldIndex) {
-      return newIndex;
-    }
-    if (state.selectedImageIndex > oldIndex &&
-        state.selectedImageIndex <= newIndex) {
-      return state.selectedImageIndex - 1;
-    }
-    if (state.selectedImageIndex < oldIndex &&
-        state.selectedImageIndex >= newIndex) {
-      return state.selectedImageIndex + 1;
-    }
-    return state.selectedImageIndex;
+  /// 设置创作工具
+  void setTool(String? toolStr) {
+    if (toolStr == null) return;
+    final tool = WorkTool.values.firstWhere(
+      (t) => t.toString().split('.').last == toolStr,
+      orElse: () => WorkTool.other,
+    );
+    state = state.copyWith(tool: tool);
   }
 
-  bool _isValidIndex(int index) => index >= 0 && index < state.images.length;
+  /// 计算新的选中索引
+  int _calculateNewSelectedIndex({
+    required int oldIndex,
+    int? newIndex,
+    required int maxIndex,
+  }) {
+    int selectedIndex = state.selectedImageIndex;
 
-  Future<List<File>> _processImages() async {
-    if (!state.optimizeImages || state.images.isEmpty) {
-      return state.images;
-    }
-
-    try {
-      final processedImages = <File>[];
-
-      for (final file in state.images) {
-        // if (state.keepOriginals) {
-        //   await _imageService.backupOriginal(file);
-        // }
-
-        final optimized = await _imageProcessor.optimizeImage(
-          file,
-        );
-
-        processedImages.add(optimized);
+    // 重新排序时的索引计算
+    if (newIndex != null) {
+      if (selectedIndex == oldIndex) {
+        return newIndex;
       }
-
-      return processedImages;
-    } catch (e) {
-      throw Exception('图片处理失败: ${e.toString()}');
-    }
-  }
-
-  Future<void> _validateImages(List<File> files) async {
-    if (files.isEmpty) {
-      throw Exception('请选择需要导入的图片');
-    }
-
-    for (final file in files) {
-      final ext = path.extension(file.path).toLowerCase();
-      if (!['.jpg', '.jpeg', '.png', '.webp'].contains(ext)) {
-        throw Exception('不支持的文件类型: $ext\n支持的格式：jpg、jpeg、png、webp');
+      if (selectedIndex > oldIndex && selectedIndex <= newIndex) {
+        return selectedIndex - 1;
       }
-
-      final size = await file.length();
-      if (size > AppConfig.maxImageSize) {
-        throw Exception('文件过大：${path.basename(file.path)}\n'
-            '大小：${(size / 1024 / 1024).toStringAsFixed(1)}MB\n'
-            '限制：${(AppConfig.maxImageSize / 1024 / 1024).toStringAsFixed(0)}MB');
+      if (selectedIndex < oldIndex && selectedIndex >= newIndex) {
+        return selectedIndex + 1;
       }
+      return selectedIndex;
     }
+
+    // 删除时的索引计算
+    if (selectedIndex == oldIndex) {
+      return maxIndex >= 0 ? maxIndex : 0;
+    }
+    if (selectedIndex > oldIndex) {
+      return selectedIndex - 1;
+    }
+    return selectedIndex;
   }
 }

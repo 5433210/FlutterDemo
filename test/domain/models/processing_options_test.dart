@@ -1,10 +1,10 @@
-import "package:flutter_test/flutter_test.dart";
-import "package:demo/domain/models/processing_options.dart";
+import 'package:demo/domain/models/character/processing_options.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  group("ProcessingOptions", () {
-    test("should create with default values", () {
-      final options = ProcessingOptions();
+  group('ProcessingOptions', () {
+    test('should create with default values', () {
+      final options = const ProcessingOptions();
       expect(options.inverted, false);
       expect(options.showContour, false);
       expect(options.threshold, 0.5);

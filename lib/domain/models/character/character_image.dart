@@ -1,4 +1,4 @@
-import 'package:demo/domain/models/processing_options.dart';
+import 'package:demo/domain/models/character/processing_options.dart';
 import 'package:equatable/equatable.dart';
 
 class CharacterImage extends Equatable {

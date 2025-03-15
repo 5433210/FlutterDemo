@@ -1,96 +1,75 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:io';
 
-import '../../../../domain/models/work/work_entity.dart';
-import '../../../providers/work_image_editor_provider.dart' as editor;
-import '../../../widgets/common/base_image_preview.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../domain/models/work/work_image.dart';
 import 'thumbnail_strip.dart';
 
-class ViewModeImagePreview extends ConsumerStatefulWidget {
-  final WorkEntity work;
+/// 作品图片预览组件（查看模式）
+class ViewModeImagePreview extends StatelessWidget {
+  final List<WorkImage> images;
+  final int selectedIndex;
+  final Function(int) onImageSelect;
 
   const ViewModeImagePreview({
     super.key,
-    required this.work,
+    required this.images,
+    required this.selectedIndex,
+    required this.onImageSelect,
   });
 
   @override
-  ConsumerState<ViewModeImagePreview> createState() =>
-      _ViewModeImagePreviewState();
-}
-
-class _ViewModeImagePreviewState extends ConsumerState<ViewModeImagePreview> {
-  @override
   Widget build(BuildContext context) {
-    final selectedIndex = ref.watch(editor.currentWorkImageIndexProvider);
-    final imagePaths = widget.work.images.map((img) => img.path).toList();
-
     return Column(
       children: [
-        // Main preview
         Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            child: imagePaths.isEmpty
-                ? const Center(
-                    child: Text('暂无图片'),
-                  )
-                : BaseImagePreview(
-                    imagePaths: imagePaths,
-                    initialIndex: selectedIndex,
-                    onIndexChanged: (index) {
-                      ref
-                          .read(editor.currentWorkImageIndexProvider.notifier)
-                          .state = index;
-                    },
-                    showThumbnails: false,
-                    enableZoom: true,
-                  ),
-          ),
+          child: _buildPreviewArea(context),
         ),
-
-        // Thumbnail strip
-        if (widget.work.images.isNotEmpty)
+        if (images.length > 1)
           SizedBox(
             height: 100,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ThumbnailStrip(
-                images: widget.work.images,
-                selectedIndex: selectedIndex,
-                isEditable: false,
-                onTap: (index) {
-                  ref
-                      .read(editor.currentWorkImageIndexProvider.notifier)
-                      .state = index;
-                },
-              ),
+            child: ThumbnailStrip<WorkImage>(
+              images: images,
+              selectedIndex: selectedIndex,
+              onTap: onImageSelect,
+              pathResolver: (image) => image.thumbnailPath.isNotEmpty
+                  ? image.thumbnailPath
+                  : image.path,
+              keyResolver: (image) => image.id,
             ),
           ),
       ],
     );
   }
 
-  @override
-  void dispose() {
-    // Reset index when view is disposed
-    if (widget.work.images.isNotEmpty) {
-      // 不在dispose中直接修改state，避免可能的错误
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          ref.read(editor.currentWorkImageIndexProvider.notifier).state = 0;
-        }
-      });
+  Widget _buildPreviewArea(BuildContext context) {
+    if (images.isEmpty) {
+      return const Center(
+        child: Text('没有图片'),
+      );
     }
-    super.dispose();
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    // Reset index when view is mounted
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(editor.currentWorkImageIndexProvider.notifier).state = 0;
-    });
+    final image = images[selectedIndex];
+    final imagePath =
+        image.thumbnailPath.isNotEmpty ? image.thumbnailPath : image.path;
+
+    return Center(
+      child: Image.file(
+        File(imagePath),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stack) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.broken_image, size: 64, color: Colors.red),
+                SizedBox(height: 16),
+                Text('图片加载失败', style: TextStyle(color: Colors.red)),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 }

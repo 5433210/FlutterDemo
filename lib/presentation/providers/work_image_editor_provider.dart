@@ -36,28 +36,38 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
             'filePath': filePath,
           });
 
-          final workImageService = _ref.read(workImageServiceProvider);
-          final workId = _ref.read(workDetailProvider).work?.id;
+          // 创建临时图片对象
+          final imageId = DateTime.now().millisecondsSinceEpoch.toString();
+          final file = File(filePath);
 
-          if (workId != null) {
-            final newImage = await workImageService.importImage(
-              workId,
-              File(filePath),
-            );
+          // 使用文件路径作为临时路径
+          final newImage = WorkImage(
+            id: imageId,
+            workId: _ref.read(workDetailProvider).work!.id,
+            path: file.path,
+            originalPath: file.path,
+            thumbnailPath: file.path,
+            format: file.path.split('.').last.toLowerCase(),
+            size: await file.length(),
+            width: 0,
+            height: 0,
+            index: state.images.length,
+            createTime: DateTime.now(),
+            updateTime: DateTime.now(),
+          );
 
-            final newImages = [...state.images, newImage];
-            state = state.copyWith(
-              images: newImages,
-              isProcessing: false,
-            );
+          final newImages = [...state.images, newImage];
+          state = state.copyWith(
+            images: newImages,
+            isProcessing: false,
+          );
 
-            // Update selected index to show new image
-            _ref.read(currentWorkImageIndexProvider.notifier).state =
-                newImages.length - 1;
+          // 更新选中索引到新图片
+          _ref.read(currentWorkImageIndexProvider.notifier).state =
+              newImages.length - 1;
 
-            // Mark work as changed
-            _ref.read(workDetailProvider.notifier).markAsChanged();
-          }
+          // 标记作品已更改
+          _ref.read(workDetailProvider.notifier).markAsChanged();
         }
       } else {
         state = state.copyWith(isProcessing: false);
@@ -76,35 +86,37 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
     try {
       state = state.copyWith(isProcessing: true, error: null);
 
-      final workId = _ref.read(workDetailProvider).work?.id;
-      if (workId == null) return;
-
       AppLogger.debug('删除图片', tag: 'WorkImageEditor', data: {
         'imageId': imageId,
       });
 
       final currentIndex = _ref.read(currentWorkImageIndexProvider);
-      final workImageService = _ref.read(workImageServiceProvider);
 
-      // Delete image file
-      await workImageService.deleteImage(workId, imageId);
+      // 从列表中移除图片并重新计算索引
+      final remainingImages =
+          state.images.where((img) => img.id != imageId).toList();
+      final reindexedImages = List<WorkImage>.generate(
+        remainingImages.length,
+        (index) => remainingImages[index].copyWith(
+          index: index,
+          updateTime: DateTime.now(),
+        ),
+      );
 
-      // Update state
-      final newImages = state.images.where((img) => img.id != imageId).toList();
       state = state.copyWith(
-        images: newImages,
+        images: reindexedImages,
         isProcessing: false,
       );
 
-      // Update selected index if needed
-      if (newImages.isEmpty) {
+      // 更新选中索引
+      if (reindexedImages.isEmpty) {
         _ref.read(currentWorkImageIndexProvider.notifier).state = 0;
-      } else if (currentIndex >= newImages.length) {
+      } else if (currentIndex >= reindexedImages.length) {
         _ref.read(currentWorkImageIndexProvider.notifier).state =
-            newImages.length - 1;
+            reindexedImages.length - 1;
       }
 
-      // Mark work as changed
+      // 标记作品已更改
       _ref.read(workDetailProvider.notifier).markAsChanged();
     } catch (e) {
       AppLogger.error('删除图片失败', tag: 'WorkImageEditor', error: e);
@@ -131,17 +143,26 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       final item = items.removeAt(oldIndex);
       items.insert(newIndex, item);
 
+      // 重新计算所有图片的索引
+      final reindexedImages = List<WorkImage>.generate(
+        items.length,
+        (index) => items[index].copyWith(
+          index: index,
+          updateTime: DateTime.now(),
+        ),
+      );
+
       AppLogger.debug('重排序图片', tag: 'WorkImageEditor', data: {
         'oldIndex': oldIndex,
         'newIndex': newIndex,
       });
 
-      state = state.copyWith(images: items);
+      state = state.copyWith(images: reindexedImages);
 
-      // Update selected index
+      // 更新选中索引
       _ref.read(currentWorkImageIndexProvider.notifier).state = newIndex;
 
-      // Mark work as changed
+      // 标记作品已更改
       _ref.read(workDetailProvider.notifier).markAsChanged();
     } catch (e) {
       AppLogger.error('重排序图片失败', tag: 'WorkImageEditor', error: e);
@@ -159,7 +180,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       final workImageService = _ref.read(workImageServiceProvider);
 
-      // Save images
+      // 保存所有图片
       final savedImages = await workImageService.saveChanges(
         workId,
         state.images,
