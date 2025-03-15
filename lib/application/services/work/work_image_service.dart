@@ -94,8 +94,11 @@ class WorkImageService with WorkServiceErrorHandler {
           'imageId': imageId,
         });
 
-        // 只删除文件，不更新数据库
+        // 删除文件
         await _storage.deleteWorkImage(workId, imageId);
+
+        // 删除数据库记录
+        await _repository.delete(workId, imageId);
 
         AppLogger.info('图片文件删除完成', tag: 'WorkImageService');
       },
@@ -239,6 +242,17 @@ class WorkImageService with WorkServiceErrorHandler {
           'imageCount': images.length,
         });
 
+        // 首先获取当前所有图片，用于清理未使用的图片
+        final existingImages = await _repository.getAllByWorkId(workId);
+        final existingIds = existingImages.map((img) => img.id).toSet();
+        final newIds = images.map((img) => img.id).toSet();
+
+        // 清理已删除的图片记录
+        final deletedIds = existingIds.difference(newIds).toList();
+        if (deletedIds.isNotEmpty) {
+          await _repository.deleteMany(workId, deletedIds);
+        }
+
         final processedImages = <WorkImage>[];
         final tempFiles = <String>[];
         var index = 0;
@@ -362,6 +376,21 @@ class WorkImageService with WorkServiceErrorHandler {
             AppLogger.info('图片保存完成', tag: 'WorkImageService', data: {
               'savedCount': savedImages.length,
             });
+
+            // 更新封面（使用第一张图片）
+            if (savedImages.isNotEmpty) {
+              try {
+                AppLogger.debug('更新作品封面', tag: 'WorkImageService', data: {
+                  'imageId': savedImages[0].id,
+                });
+
+                await updateCover(workId, savedImages[0].id);
+              } catch (e) {
+                // 记录错误但不中断保存流程
+                AppLogger.error('更新封面失败', tag: 'WorkImageService', error: e);
+                // 下次保存时会重试
+              }
+            }
 
             return savedImages;
           } catch (e, stack) {

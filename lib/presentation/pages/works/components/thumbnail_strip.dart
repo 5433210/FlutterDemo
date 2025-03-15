@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -36,12 +37,20 @@ class ThumbnailStrip<T> extends StatefulWidget {
   State<ThumbnailStrip<T>> createState() => _ThumbnailStripState<T>();
 }
 
+class _FileStatus {
+  final bool exists;
+  final DateTime lastModified;
+
+  _FileStatus({required this.exists, DateTime? lastModified})
+      : lastModified = lastModified ?? DateTime.now();
+}
+
 class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   static const double _thumbWidth = 100.0;
   static const double _thumbHeight = 100.0;
   static const double _thumbSpacing = 8.0;
   final ScrollController _scrollController = ScrollController();
-  final Map<String, bool> _fileExistsCache = {};
+  final Map<String, _FileStatus> _fileStatus = {};
   bool _isDragging = false;
 
   @override
@@ -50,11 +59,18 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
 
     if (!widget.isEditable) {
       // 非编辑模式：普通的滚动列表
-      return ListView.builder(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        itemCount: widget.images.length,
-        itemBuilder: (context, index) => _buildThumbnail(context, index, theme),
+      return Listener(
+        onPointerSignal: _handlePointerSignal,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
+          child: ListView.builder(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.images.length,
+            itemBuilder: (context, index) =>
+                _buildThumbnail(context, index, theme),
+          ),
+        ),
       );
     }
 
@@ -121,7 +137,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   @override
   void didUpdateWidget(ThumbnailStrip<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.images != oldWidget.images) {
+    if (widget.images.length != oldWidget.images.length) {
       _checkImageFiles();
     }
     if (widget.selectedIndex != oldWidget.selectedIndex) {
@@ -146,7 +162,12 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
     final image = widget.images[index];
     final isSelected = index == widget.selectedIndex;
     final path = widget.pathResolver(image);
-    final fileExists = _fileExistsCache[path] ?? false;
+    final status = _fileStatus[path];
+    final fileExists = status?.exists ?? false;
+
+    final heroTag = fileExists
+        ? '${path}_${status?.lastModified.millisecondsSinceEpoch}'
+        : path;
 
     return GestureDetector(
       onTap: () {
@@ -184,7 +205,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
               // Image or placeholder
               if (fileExists)
                 Hero(
-                  tag: path,
+                  tag: heroTag,
                   child: Image.file(
                     File(path),
                     fit: BoxFit.cover,
@@ -328,12 +349,31 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
       try {
         final path = widget.pathResolver(image);
         final file = File(path);
-        _fileExistsCache[path] = await file.exists();
+        if (await file.exists()) {
+          _fileStatus[path] = _FileStatus(
+            exists: true,
+            lastModified: await file.lastModified(),
+          );
+        } else {
+          _fileStatus[path] = _FileStatus(exists: false);
+        }
       } catch (e) {
-        _fileExistsCache[widget.pathResolver(image)] = false;
+        _fileStatus[widget.pathResolver(image)] = _FileStatus(exists: false);
       }
     }
     if (mounted) setState(() {});
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      // 滚轮事件处理：垂直滚动转换为水平滚动
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(
+          (_scrollController.offset + event.scrollDelta.dy)
+              .clamp(0, _scrollController.position.maxScrollExtent),
+        );
+      }
+    }
   }
 
   void _scrollToSelected() {

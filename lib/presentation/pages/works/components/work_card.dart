@@ -55,6 +55,7 @@ class WorkCard extends ConsumerWidget {
                   child: CachedImage(
                     path: coverPath,
                     width: width,
+                    cacheKey: work.updateTime.millisecondsSinceEpoch.toString(),
                     height: height,
                     fit: BoxFit.cover,
                   ),

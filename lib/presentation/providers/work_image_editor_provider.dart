@@ -105,6 +105,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       state = state.copyWith(
         images: reindexedImages,
+        deletedImageIds: [...state.deletedImageIds, imageId],
         isProcessing: false,
       );
 
@@ -180,6 +181,21 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       final workImageService = _ref.read(workImageServiceProvider);
 
+      // 先删除标记为删除的图片
+      for (final imageId in state.deletedImageIds) {
+        try {
+          await workImageService.deleteImage(workId, imageId);
+        } catch (e) {
+          AppLogger.warning('删除图片文件失败',
+              tag: 'WorkImageEditor',
+              error: e,
+              data: {
+                'imageId': imageId,
+                'workId': workId,
+              });
+        }
+      }
+
       // 保存所有图片
       final savedImages = await workImageService.saveChanges(
         workId,
@@ -194,6 +210,7 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       state = state.copyWith(
         images: savedImages,
+        deletedImageIds: [], // Reset deleted images list
         isProcessing: false,
       );
     } catch (e) {
@@ -209,22 +226,26 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
 class WorkImageEditorState {
   final List<WorkImage> images;
+  final List<String> deletedImageIds;
   final bool isProcessing;
   final String? error;
 
   const WorkImageEditorState({
     this.images = const [],
+    this.deletedImageIds = const [],
     this.isProcessing = false,
     this.error,
   });
 
   WorkImageEditorState copyWith({
     List<WorkImage>? images,
+    List<String>? deletedImageIds,
     bool? isProcessing,
     String? error,
   }) {
     return WorkImageEditorState(
       images: images ?? this.images,
+      deletedImageIds: deletedImageIds ?? this.deletedImageIds,
       isProcessing: isProcessing ?? this.isProcessing,
       error: error,
     );

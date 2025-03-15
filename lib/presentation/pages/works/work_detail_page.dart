@@ -487,8 +487,12 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         await Future.delayed(const Duration(milliseconds: 300));
         if (!context.mounted) return;
 
+        // 标记作品列表需要刷新
         ref.read(worksNeedsRefreshProvider.notifier).state =
             RefreshInfo.dataChanged();
+
+        // 重新加载作品详情以获取最新状态
+        await _loadWorkDetails();
         ref.read(workDetailProvider.notifier).completeEditing();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

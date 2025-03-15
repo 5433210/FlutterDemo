@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
@@ -135,61 +137,82 @@ class _WorkImagesManagementViewState
                             ? image.originalPath
                             : image.path;
 
-                        return InteractiveViewer(
-                          transformationController: _transformationController,
-                          minScale: _minScale,
-                          maxScale: _maxScale,
-                          onInteractionStart: (details) {
-                            if (details.pointerCount > 1) {
-                              setState(() => _isZoomed = true);
+                        return Listener(
+                          onPointerSignal: (event) {
+                            if (event is PointerScrollEvent &&
+                                HardwareKeyboard.instance.isControlPressed) {
+                              // 计算新的缩放比例
+                              final currentScale = _transformationController
+                                  .value
+                                  .getMaxScaleOnAxis();
+                              final newScale =
+                                  currentScale - event.scrollDelta.dy * 0.001;
+
+                              // 限制缩放范围
+                              final scale =
+                                  newScale.clamp(_minScale, _maxScale);
+                              setState(() => _isZoomed = scale > 1.0);
+
+                              _transformationController.value =
+                                  Matrix4.identity()..scale(scale);
                             }
                           },
-                          onInteractionEnd: (details) {
-                            // 检查是否恢复到原始大小
-                            final matrix = _transformationController.value;
-                            if (matrix == Matrix4.identity()) {
-                              setState(() => _isZoomed = false);
-                            }
-                          },
-                          child: Center(
-                            child: Image.file(
-                              File(imagePath),
-                              fit: BoxFit.contain,
-                              frameBuilder: (context, child, frame,
-                                  wasSynchronouslyLoaded) {
-                                if (wasSynchronouslyLoaded) return child;
-                                return AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  child: frame != null
-                                      ? child
-                                      : Container(
-                                          color: theme.colorScheme
-                                              .surfaceContainerHighest,
-                                          child: const Center(
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2),
+                          child: InteractiveViewer(
+                            transformationController: _transformationController,
+                            minScale: _minScale,
+                            maxScale: _maxScale,
+                            onInteractionStart: (details) {
+                              if (details.pointerCount > 1) {
+                                setState(() => _isZoomed = true);
+                              }
+                            },
+                            onInteractionEnd: (details) {
+                              // 检查是否恢复到原始大小
+                              final matrix = _transformationController.value;
+                              if (matrix == Matrix4.identity()) {
+                                setState(() => _isZoomed = false);
+                              }
+                            },
+                            child: Center(
+                              child: Image.file(
+                                File(imagePath),
+                                fit: BoxFit.contain,
+                                frameBuilder: (context, child, frame,
+                                    wasSynchronouslyLoaded) {
+                                  if (wasSynchronouslyLoaded) return child;
+                                  return AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: frame != null
+                                        ? child
+                                        : Container(
+                                            color: theme.colorScheme
+                                                .surfaceContainerHighest,
+                                            child: const Center(
+                                              child: CircularProgressIndicator(
+                                                  strokeWidth: 2),
+                                            ),
                                           ),
-                                        ),
-                                );
-                              },
-                              errorBuilder: (context, error, stack) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.broken_image,
-                                          size: 64,
-                                          color: theme.colorScheme.error),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        '图片加载失败',
-                                        style: TextStyle(
+                                  );
+                                },
+                                errorBuilder: (context, error, stack) {
+                                  return Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.broken_image,
+                                            size: 64,
                                             color: theme.colorScheme.error),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          '图片加载失败',
+                                          style: TextStyle(
+                                              color: theme.colorScheme.error),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                         );

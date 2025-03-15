@@ -12,6 +12,7 @@ class CachedImage extends ConsumerWidget {
   final double? height;
   final BoxFit? fit;
   final BorderRadius? borderRadius;
+  final String? cacheKey;
 
   const CachedImage({
     super.key,
@@ -20,6 +21,7 @@ class CachedImage extends ConsumerWidget {
     this.height,
     this.fit,
     this.borderRadius,
+    this.cacheKey,
   });
 
   @override
@@ -27,7 +29,9 @@ class CachedImage extends ConsumerWidget {
     final storage = ref.watch(initializedStorageProvider);
 
     return FutureBuilder<bool>(
-      future: storage.fileExists(path),
+      // Add cache key to trigger rebuild when needed
+      key: ValueKey('cached_image_${path}_${cacheKey ?? ''}'),
+      future: _checkFile(storage),
       builder: (context, snapshot) {
         if (!snapshot.hasData || !snapshot.data!) {
           return SkeletonLoader(
@@ -37,23 +41,33 @@ class CachedImage extends ConsumerWidget {
           );
         }
 
-        return ClipRRect(
-          borderRadius: borderRadius ?? BorderRadius.zero,
-          child: Image.file(
-            File(path),
-            width: width,
-            height: height,
-            fit: fit,
-            errorBuilder: (context, error, stackTrace) {
-              return SkeletonLoader(
-                width: width ?? 200,
-                height: height ?? 200,
-                borderRadius: borderRadius,
-              );
-            },
-          ),
-        );
+        return _buildImage();
       },
     );
+  }
+
+  Widget _buildImage() {
+    return ClipRRect(
+      borderRadius: borderRadius ?? BorderRadius.zero,
+      child: Image.file(
+        File(path),
+        width: width,
+        height: height,
+        fit: fit,
+        cacheWidth: width?.toInt(),
+        cacheHeight: height?.toInt(),
+        errorBuilder: (context, error, stackTrace) {
+          return SkeletonLoader(
+            width: width ?? 200,
+            height: height ?? 200,
+            borderRadius: borderRadius,
+          );
+        },
+      ),
+    );
+  }
+
+  Future<bool> _checkFile(storage) async {
+    return await storage.fileExists(path);
   }
 }
