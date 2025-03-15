@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -199,7 +198,7 @@ class _ThumbnailItem extends StatelessWidget {
 }
 
 class _ThumbnailStripState extends State<ThumbnailStrip> {
-  late ScrollController _scrollController;
+  late final ScrollController _scrollController;
   bool _isDragging = false;
   Timer? _scrollTimer;
 
@@ -207,90 +206,78 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return MouseRegion(
-      onEnter: (_) => _maybeEnableScroll(),
-      child: Listener(
-        onPointerSignal: (pointerSignal) {
-          // 鼠标滚轮事件处理
-          if (pointerSignal is PointerScrollEvent) {
-            // 将垂直滚动转换为水平滚动
-            final offset =
-                _scrollController.offset + pointerSignal.scrollDelta.dy;
-            _scrollController.animateTo(
-              offset.clamp(0.0, _scrollController.position.maxScrollExtent),
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-            );
-          }
-        },
-        child: Container(
-          height: 120,
-          decoration: BoxDecoration(
-            border: Border(
-              top: BorderSide(color: theme.dividerColor),
+    return Container(
+      height: 120,
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: theme.dividerColor),
+        ),
+      ),
+      child: ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          scrollbars: false, // 使用自定义滚动条
+        ),
+        child: Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          trackVisibility: true,
+          child: ReorderableListView.builder(
+            scrollController: _scrollController,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.m,
+              vertical: AppSizes.s,
             ),
-          ),
-          child: ScrollConfiguration(
-            behavior: ScrollConfiguration.of(context).copyWith(
-              scrollbars: false, // 使用自定义滚动条
-            ),
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              trackVisibility: true,
-              child: ReorderableListView.builder(
-                scrollController: _scrollController,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.m,
-                  vertical: AppSizes.s,
-                ),
-                buildDefaultDragHandles: false,
-                proxyDecorator: _proxyDecorator,
-                onReorderStart: (index) {
-                  setState(() => _isDragging = true);
-                  HapticFeedback.selectionClick();
-                  SystemSound.play(SystemSoundType.click);
-                },
-                onReorderEnd: (_) {
-                  setState(() => _isDragging = false);
-                  _scrollToSelected();
-                },
-                onReorder: (oldIndex, newIndex) {
-                  // 延迟处理重排序，避免布局冲突
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    _handleReorder(oldIndex, newIndex);
-                  });
-                },
-                itemCount: widget.images.length,
-                itemBuilder: (context, index) {
-                  final image = widget.images[index];
-                  return RepaintBoundary(
-                    // 添加重绘边界
-                    key: ValueKey(image.path),
-                    child: SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: MouseRegion(
-                        cursor: _isDragging
-                            ? SystemMouseCursors.grabbing
-                            : SystemMouseCursors.grab,
-                        child: ReorderableDragStartListener(
-                          index: index,
-                          child: _ThumbnailItem(
-                            image: image,
-                            isSelected: index == widget.selectedIndex,
-                            onTap: () => widget.onSelect(index),
-                            onRemove: () => widget.onRemove(index),
-                            index: index + 1,
-                          ),
-                        ),
+            buildDefaultDragHandles: false,
+            proxyDecorator: _proxyDecorator,
+            onReorderStart: (index) {
+              setState(() => _isDragging = true);
+              HapticFeedback.selectionClick();
+              SystemSound.play(SystemSoundType.click);
+            },
+            onReorderEnd: (_) {
+              setState(() => _isDragging = false);
+              _scrollToSelected();
+            },
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) newIndex--;
+              widget.onReorder?.call(oldIndex, newIndex);
+
+              // 添加触觉反馈
+              HapticFeedback.mediumImpact();
+              SystemSound.play(SystemSoundType.click);
+
+              // 更新滚动位置
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _scrollToSelected();
+              });
+            },
+            itemCount: widget.images.length,
+            itemBuilder: (context, index) {
+              final image = widget.images[index];
+              return RepaintBoundary(
+                key: ValueKey(image.path),
+                child: SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: MouseRegion(
+                    cursor: _isDragging
+                        ? SystemMouseCursors.grabbing
+                        : SystemMouseCursors.grab,
+                    child: ReorderableDragStartListener(
+                      index: index,
+                      child: _ThumbnailItem(
+                        image: image,
+                        isSelected: index == widget.selectedIndex,
+                        onTap: () => widget.onSelect(index),
+                        onRemove: () => widget.onRemove(index),
+                        index: index + 1,
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -316,33 +303,27 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-  }
-
-  void _handleReorder(int oldIndex, int newIndex) {
-    if (oldIndex < newIndex) newIndex--;
-    widget.onReorder?.call(oldIndex, newIndex);
-
-    // 添加触觉反馈
-    HapticFeedback.mediumImpact();
-    SystemSound.play(SystemSoundType.click);
-
-    // 更新滚动位置
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToSelected();
-    });
+    // 延迟检查滚动状态，确保视图已经构建完成
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeEnableScroll());
   }
 
   void _maybeEnableScroll() {
-    if (!_scrollController.hasClients) return;
+    // 确保控制器已经连接到视图
+    if (!mounted || !_scrollController.hasClients) {
+      return;
+    }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.position.maxScrollExtent > 0 && mounted) {
-        setState(() {}); // Trigger rebuild to update scroll physics
+    try {
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      if (maxScroll > 0) {
+        setState(() {}); // 触发重建以更新滚动行为
       }
-    });
+    } catch (e) {
+      // 忽略可能的滚动控制器错误
+      debugPrint('ScrollController error: $e');
+    }
   }
 
-  // 改进代理装饰器
   Widget _proxyDecorator(Widget child, int index, Animation<double> animation) {
     return FadeTransition(
       opacity: Tween<double>(begin: 0.0, end: 0.9).animate(animation),
@@ -360,21 +341,28 @@ class _ThumbnailStripState extends State<ThumbnailStrip> {
   }
 
   void _scrollToSelected() {
-    if (!_scrollController.hasClients || widget.selectedIndex < 0) return;
+    if (!mounted || !_scrollController.hasClients || widget.selectedIndex < 0) {
+      return;
+    }
 
-    final viewportWidth = _scrollController.position.viewportDimension;
-    final itemWidth = 100.0 + AppSizes.m; // thumbnail width + padding
-    final targetOffset = widget.selectedIndex * itemWidth;
+    try {
+      final viewportWidth = _scrollController.position.viewportDimension;
+      final itemWidth = 100.0 + AppSizes.m; // thumbnail width + padding
+      final targetOffset = widget.selectedIndex * itemWidth;
 
-    // 计算目标位置，使选中项尽可能居中
-    final offset = (targetOffset - (viewportWidth - itemWidth) / 2)
-        .clamp(0, _scrollController.position.maxScrollExtent)
-        .toDouble();
+      // 计算目标位置，使选中项尽可能居中
+      final offset = (targetOffset - (viewportWidth - itemWidth) / 2)
+          .clamp(0.0, _scrollController.position.maxScrollExtent)
+          .toDouble();
 
-    _scrollController.animateTo(
-      offset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
+      _scrollController.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    } catch (e) {
+      // 忽略滚动控制器错误
+      debugPrint('ScrollToSelected error: $e');
+    }
   }
 }

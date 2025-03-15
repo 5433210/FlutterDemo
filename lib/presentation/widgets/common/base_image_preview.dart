@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/logging/logger.dart';
 
 class BaseImagePreview extends StatefulWidget {
   final List<String> imagePaths;
@@ -32,6 +32,7 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
   static const double _minZoomScale = 0.1;
   static const double _maxZoomScale = 10.0;
   static const EdgeInsets _viewerPadding = EdgeInsets.all(20.0);
+  final Map<String, bool> _fileExistsCache = {};
 
   final TransformationController _transformationController =
       TransformationController();
@@ -55,9 +56,9 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(4),
           ),
-      child: widget.imagePaths.isNotEmpty
-          ? _buildImageViewer()
-          : const Center(child: Text('没有图片')),
+      child: widget.imagePaths.isEmpty
+          ? const Center(child: Text('没有图片'))
+          : _buildImageViewer(),
     );
   }
 
@@ -73,20 +74,27 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
     _currentIndex = widget.imagePaths.isEmpty
         ? 0
         : widget.initialIndex.clamp(0, widget.imagePaths.length - 1);
+    _checkImageFiles();
   }
 
   Widget _buildImageViewer() {
     final currentPath = widget.imagePaths[_currentIndex];
-    final file = File(currentPath);
+    final fileExists = _fileExistsCache[currentPath] ?? false;
 
-    // Check if file exists
-    AppLogger.debug('BaseImagePreview loading image',
-        tag: 'BaseImagePreview',
-        data: {
-          'path': currentPath,
-          'exists': file.existsSync(),
-          'size': file.existsSync() ? file.lengthSync() : null,
-        });
+    if (!fileExists) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.broken_image, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('图片文件不存在'),
+          ],
+        ),
+      );
+    }
+
+    final file = File(currentPath);
 
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -167,6 +175,22 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
         ),
       ),
     );
+  }
+
+  Future<void> _checkImageFiles() async {
+    for (final path in widget.imagePaths) {
+      try {
+        final file = File(path);
+        _fileExistsCache[path] = await file.exists();
+      } catch (e) {
+        _fileExistsCache[path] = false;
+        AppLogger.error('检查图片文件失败',
+            tag: 'BaseImagePreview', error: e, data: {'path': path});
+      }
+    }
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _updateIndex(int newIndex) {

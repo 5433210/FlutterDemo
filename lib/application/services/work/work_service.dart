@@ -115,9 +115,9 @@ class WorkService with WorkServiceErrorHandler {
         // 保存到数据库
         final savedWork = await _repository.create(updatedWork);
 
-        // 导入图片
-        final images = await _imageService.importImages(work.id, files);
-        final imagesImported = await _imageService.saveChanges(work.id, images);
+        // 处理图片导入（包括生成封面）
+        final imagesImported =
+            await _imageService.processImport(work.id, files);
 
         return savedWork.copyWith(images: imagesImported);
       },

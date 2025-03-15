@@ -9,6 +9,7 @@ import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/logging/logger.dart';
+import './work_image_editor_provider.dart' as editor;
 
 /// Provider for the current image index in a work
 final currentWorkImageIndexProvider = StateProvider<int>((ref) {
@@ -210,14 +211,24 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     try {
       state = state.copyWith(isSaving: true);
 
-      AppLogger.debug('开始保存作品',
-          tag: 'WorkDetailProvider', data: {'workId': state.editingWork!.id});
+      final workId = state.editingWork!.id;
+      AppLogger.debug('开始保存作品', tag: 'WorkDetailProvider', data: {
+        'workId': workId,
+      });
 
+      // 1. 先保存图片
+      AppLogger.debug('保存图片', tag: 'WorkDetailProvider');
+      final workImageNotifier =
+          _ref.read(editor.workImageEditorProvider.notifier);
+      await workImageNotifier.saveChanges();
+
+      // 2. 再保存作品信息
+      AppLogger.debug('保存作品信息', tag: 'WorkDetailProvider');
       final workService = _ref.read(workServiceProvider);
       final workToSave = state.editingWork!;
-
       await workService.updateWorkEntity(workToSave);
 
+      // 3. 清理编辑状态
       await _clearEditState(workToSave.id);
 
       state = state.copyWith(

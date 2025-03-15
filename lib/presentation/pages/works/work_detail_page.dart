@@ -9,6 +9,7 @@ import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
+import '../../providers/work_image_editor_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
@@ -17,8 +18,8 @@ import '../../widgets/forms/work_detail_edit_form.dart' as forms;
 import '../../widgets/page_layout.dart';
 import '../../widgets/tag_editor.dart';
 import './character_collection_page.dart';
+import 'components/view_mode_image_preview.dart';
 import 'components/work_detail_info_panel.dart';
-import 'components/work_image_preview.dart';
 import 'components/work_images_management_view.dart';
 import 'components/work_tabs.dart';
 
@@ -43,18 +44,31 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   Widget build(BuildContext context) {
     final state = ref.watch(workDetailProvider);
 
-    final toolbar = state.isEditing
-        ? _buildEditModeToolbar(context, state)
-        : _buildViewModeToolbar(context, state);
-
-    return KeyboardListener(
-      focusNode: FocusNode(skipTraversal: true),
-      onKeyEvent: (keyEvent) => _handleKeyboardShortcuts(keyEvent, state),
-      child: PageLayout(
-        toolbar: toolbar,
-        body: _buildBody(context, state),
+    return WillPopScope(
+      onWillPop: () async {
+        if (state.isEditing) {
+          // 如果有未保存的更改，显示提示
+          return _handleBackButton();
+        }
+        return true;
+      },
+      child: KeyboardListener(
+        focusNode: FocusNode(skipTraversal: true),
+        onKeyEvent: (keyEvent) => _handleKeyboardShortcuts(keyEvent, state),
+        child: PageLayout(
+          toolbar: state.isEditing
+              ? _buildEditModeToolbar(context, state)
+              : _buildViewModeToolbar(context, state),
+          body: _buildBody(context, state),
+        ),
       ),
     );
+  }
+
+  @override
+  Future<bool> didPopRoute() async {
+    // 处理系统返回按钮
+    return _handleBackButton();
   }
 
   @override
@@ -269,9 +283,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
       children: [
         Expanded(
           flex: 7,
-          child: WorkImagePreview(
+          child: ViewModeImagePreview(
             work: work,
-            isEditing: false,
           ),
         ),
         SidebarToggle(
@@ -304,7 +317,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
-            onPressed: _handleBackButton,
+            onPressed: () => _handleBackButton(),
           ),
           Text(
             '作品详情',
@@ -423,8 +436,59 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     ref.read(workDetailTabIndexProvider.notifier).state = 0;
   }
 
-  void _handleBackButton() {
-    Navigator.of(context).pop(true);
+  Future<bool> _handleBackButton() async {
+    final hasChanges = ref.read(workDetailProvider).hasChanges;
+    if (hasChanges) {
+      final shouldSave = await showDialog<bool?>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('保存更改？'),
+          content: const Text('你有未保存的更改，是否保存？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('放弃更改'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('保存'),
+            ),
+          ],
+        ),
+      );
+
+      // 用户选择取消
+      if (shouldSave == null) {
+        return false;
+      }
+
+      // 用户选择保存
+      if (shouldSave) {
+        try {
+          await _saveChanges();
+          return true;
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('保存失败: $e')),
+            );
+          }
+          return false;
+        }
+      }
+
+      // 用户选择放弃更改
+      await ref.read(workDetailProvider.notifier).cancelEditing();
+    }
+
+    if (mounted) {
+      Navigator.of(context).pop(true);
+    }
+    return true;
   }
 
   void _handleKeyboardShortcuts(KeyEvent event, WorkDetailState state) {
@@ -495,6 +559,12 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
 
     try {
+      // Save images first
+      final workImageEditorNotifier =
+          ref.read(workImageEditorProvider.notifier);
+      await workImageEditorNotifier.saveChanges();
+
+      // Then save work details
       final success = await ref.read(workDetailProvider.notifier).saveChanges();
       if (!context.mounted) return;
 

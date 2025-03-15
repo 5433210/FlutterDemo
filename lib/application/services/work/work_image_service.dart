@@ -189,6 +189,42 @@ class WorkImageService with WorkServiceErrorHandler {
     );
   }
 
+  /// 处理完整的图片导入流程
+  Future<List<WorkImage>> processImport(String workId, List<File> files) async {
+    return handleOperation(
+      'processImport',
+      () async {
+        AppLogger.info('开始处理图片导入', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'fileCount': files.length,
+        });
+
+        // 1. 确保作品目录结构
+        await _storage.ensureWorkDirectoryExists(workId);
+
+        // 2. 导入所有图片
+        final tempImages = await importImages(workId, files);
+
+        // 3. 处理并保存图片
+        final savedImages = await saveChanges(workId, tempImages);
+
+        // 4. 生成封面（使用第一张图片）
+        if (savedImages.isNotEmpty) {
+          await updateCover(workId, savedImages.first.id);
+        }
+
+        AppLogger.info('图片导入处理完成', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'totalSaved': savedImages.length,
+          'coverId': savedImages.isNotEmpty ? savedImages.first.id : null,
+        });
+
+        return savedImages;
+      },
+      data: {'workId': workId, 'fileCount': files.length},
+    );
+  }
+
   /// 保存图片更改
   Future<List<WorkImage>> saveChanges(
     String workId,
@@ -314,12 +350,6 @@ class WorkImageService with WorkServiceErrorHandler {
             // 批量保存到数据库
             final savedImages = await _repository.saveMany(processedImages);
 
-            // 更新封面（如果顺序已改变）
-            if (savedImages.isNotEmpty &&
-                (savedImages.first.id != images.first.id)) {
-              await updateCover(workId, savedImages.first.id);
-            }
-
             // 清理未使用的文件
             final usedPaths = savedImages
                 .expand(
@@ -368,26 +398,64 @@ class WorkImageService with WorkServiceErrorHandler {
           'imageId': imageId,
         });
 
-        // 获取源图片
+        // 确保封面目录存在
+        await _storage.ensureWorkDirectoryExists(workId);
+        final coverPath = _storage.getWorkCoverPath(workId);
+
+        // 获取源图片路径
         final importedPath = _storage.getImportedPath(workId, imageId);
         final sourceFile = File(importedPath);
         if (!await sourceFile.exists()) {
           throw FileSystemException('源图片不存在', importedPath);
         }
 
-        // 保存封面导入图
-        await _storage.saveCoverImported(workId, sourceFile);
+        AppLogger.debug('准备生成封面', tag: 'WorkImageService', data: {
+          'sourcePath': importedPath,
+          'coverPath': coverPath,
+        });
 
-        // 生成并保存封面缩略图
-        final thumbnail = await _processor.processImage(
-          sourceFile,
-          maxWidth: 200,
-          maxHeight: 200,
-          quality: 80,
-        );
-        await _storage.saveCoverThumbnail(workId, thumbnail);
+        try {
+          // 保存封面导入图
+          final coverImportedPath =
+              await _storage.saveCoverImported(workId, sourceFile);
 
-        AppLogger.info('作品封面更新完成', tag: 'WorkImageService');
+          // 检查封面导入图是否成功生成
+          if (!await File(coverImportedPath).exists()) {
+            throw FileSystemException('封面导入图生成失败', coverImportedPath);
+          }
+
+          // 生成并保存封面缩略图
+          final thumbnail = await _processor.processImage(
+            sourceFile,
+            maxWidth: 200,
+            maxHeight: 200,
+            quality: 80,
+          );
+
+          final coverThumbnailPath =
+              await _storage.saveCoverThumbnail(workId, thumbnail);
+
+          // 检查封面缩略图是否成功生成
+          if (!await File(coverThumbnailPath).exists()) {
+            throw FileSystemException('封面缩略图生成失败', coverThumbnailPath);
+          }
+
+          AppLogger.info('作品封面更新完成', tag: 'WorkImageService', data: {
+            'coverImported': coverImportedPath,
+            'coverThumbnail': coverThumbnailPath,
+          });
+        } catch (e, stack) {
+          AppLogger.error('生成封面失败',
+              tag: 'WorkImageService',
+              error: e,
+              stackTrace: stack,
+              data: {
+                'workId': workId,
+                'imageId': imageId,
+                'sourcePath': importedPath,
+              });
+          rethrow;
+        }
       },
       data: {'workId': workId, 'imageId': imageId},
     );

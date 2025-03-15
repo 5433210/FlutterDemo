@@ -68,6 +68,21 @@ class WorkStorageService {
     }
   }
 
+  Future<void> ensureWorkDirectoryExists(String workId) async {
+    try {
+      await _storage.ensureDirectoryExists(getWorkPath(workId));
+      await _storage.ensureDirectoryExists(getWorkImagesPath(workId));
+      await _storage.ensureDirectoryExists(getWorkCoverPath(workId));
+    } catch (e, stack) {
+      _handleError(
+        '创建作品目录失败',
+        e,
+        stack,
+        data: {'workId': workId},
+      );
+    }
+  }
+
   /// 获取作品导入图片路径
   String getImportedPath(String workId, String imageId) =>
       path.join(getWorkImagePath(workId, imageId), 'imported.png');
