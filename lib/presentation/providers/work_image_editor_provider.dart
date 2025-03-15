@@ -156,6 +156,8 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       AppLogger.debug('重排序图片', tag: 'WorkImageEditor', data: {
         'oldIndex': oldIndex,
         'newIndex': newIndex,
+        'firstImageId':
+            reindexedImages.isNotEmpty ? reindexedImages[0].id : null,
       });
 
       state = state.copyWith(images: reindexedImages);
@@ -178,6 +180,12 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       final workId = _ref.read(workDetailProvider).work?.id;
       if (workId == null) return;
+
+      AppLogger.debug('开始保存图片更改', tag: 'WorkImageEditor', data: {
+        'workId': workId,
+        'imageCount': state.images.length,
+        'firstImageId': state.images.isNotEmpty ? state.images[0].id : null,
+      });
 
       final workImageService = _ref.read(workImageServiceProvider);
 
@@ -210,9 +218,16 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
 
       state = state.copyWith(
         images: savedImages,
-        deletedImageIds: [], // Reset deleted images list
+        deletedImageIds: [],
         isProcessing: false,
       );
+
+      AppLogger.debug('图片保存完成', tag: 'WorkImageEditor', data: {
+        'savedCount': savedImages.length,
+      });
+
+      // 重新加载作品详情以获取最新状态
+      await _ref.read(workDetailProvider.notifier).loadWorkDetails(workId);
     } catch (e) {
       AppLogger.error('保存图片更改失败', tag: 'WorkImageEditor', error: e);
       state = state.copyWith(

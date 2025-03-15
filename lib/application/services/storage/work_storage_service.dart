@@ -170,14 +170,68 @@ class WorkStorageService {
   /// 保存作品封面导入图
   Future<String> saveCoverImported(String workId, File file) async {
     final targetPath = getWorkCoverImportedPath(workId);
-    await _storage.copyFile(file.path, targetPath);
+    try {
+      await ensureWorkDirectoryExists(workId);
+
+      // 如果目标文件存在则先删除
+      if (await _storage.fileExists(targetPath)) {
+        await _storage.deleteFile(targetPath);
+      }
+      await _storage.copyFile(file.path, targetPath);
+
+      // 验证文件是否成功保存
+      if (!await _storage.fileExists(targetPath)) {
+        throw FileSystemException('封面导入图保存失败', targetPath);
+      }
+
+      return targetPath;
+    } catch (e, stack) {
+      _handleError(
+        '保存封面导入图失败',
+        e,
+        stack,
+        data: {
+          'workId': workId,
+          'sourcePath': file.path,
+          'targetPath': targetPath
+        },
+      );
+      rethrow;
+    }
     return targetPath;
   }
 
   /// 保存作品封面缩略图
   Future<String> saveCoverThumbnail(String workId, File file) async {
     final targetPath = getWorkCoverThumbnailPath(workId);
-    await _storage.copyFile(file.path, targetPath);
+    try {
+      await ensureWorkDirectoryExists(workId);
+
+      // 如果目标文件存在则先删除
+      if (await _storage.fileExists(targetPath)) {
+        await _storage.deleteFile(targetPath);
+      }
+      await _storage.copyFile(file.path, targetPath);
+
+      // 验证文件是否成功保存
+      if (!await _storage.fileExists(targetPath)) {
+        throw FileSystemException('封面缩略图保存失败', targetPath);
+      }
+
+      return targetPath;
+    } catch (e, stack) {
+      _handleError(
+        '保存封面缩略图失败',
+        e,
+        stack,
+        data: {
+          'workId': workId,
+          'sourcePath': file.path,
+          'targetPath': targetPath
+        },
+      );
+      rethrow;
+    }
     return targetPath;
   }
 

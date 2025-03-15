@@ -137,7 +137,7 @@ class WorkImageService with WorkServiceErrorHandler {
         final tempImage = WorkImage(
           id: imageId,
           workId: workId,
-          path: file.path, // 临时使用原始路径
+          path: file.path,
           originalPath: file.path,
           thumbnailPath: file.path,
           format: _getImageFormat(file),
@@ -211,15 +211,9 @@ class WorkImageService with WorkServiceErrorHandler {
         // 3. 处理并保存图片
         final savedImages = await saveChanges(workId, tempImages);
 
-        // 4. 生成封面（使用第一张图片）
-        if (savedImages.isNotEmpty) {
-          await updateCover(workId, savedImages.first.id);
-        }
-
         AppLogger.info('图片导入处理完成', tag: 'WorkImageService', data: {
           'workId': workId,
           'totalSaved': savedImages.length,
-          'coverId': savedImages.isNotEmpty ? savedImages.first.id : null,
         });
 
         return savedImages;
@@ -240,12 +234,18 @@ class WorkImageService with WorkServiceErrorHandler {
         AppLogger.info('开始保存图片更改', tag: 'WorkImageService', data: {
           'workId': workId,
           'imageCount': images.length,
+          'firstImageId': images.isNotEmpty ? images[0].id : null,
         });
 
         // 首先获取当前所有图片，用于清理未使用的图片
         final existingImages = await _repository.getAllByWorkId(workId);
         final existingIds = existingImages.map((img) => img.id).toSet();
         final newIds = images.map((img) => img.id).toSet();
+
+        // 获取当前的首张图片ID（用于后续检查是否需要更新封面）
+        final existingFirstImage =
+            existingImages.isNotEmpty ? existingImages[0] : null;
+        final newFirstImageId = images.isNotEmpty ? images[0].id : null;
 
         // 清理已删除的图片记录
         final deletedIds = existingIds.difference(newIds).toList();
@@ -364,6 +364,27 @@ class WorkImageService with WorkServiceErrorHandler {
             // 批量保存到数据库
             final savedImages = await _repository.saveMany(processedImages);
 
+            // 检查是否需要更新封面（首图变化时）
+            if (savedImages.isNotEmpty) {
+              final newFirstImage = savedImages[0];
+              if (existingFirstImage == null ||
+                  existingFirstImage.id != newFirstImageId) {
+                AppLogger.debug('首张图片已更改，重新生成封面',
+                    tag: 'WorkImageService',
+                    data: {
+                      'oldImageId': existingFirstImage?.id,
+                      'newImageId': newFirstImage.id,
+                    });
+
+                try {
+                  await updateCover(workId, newFirstImage.id);
+                } catch (e) {
+                  AppLogger.error('生成封面失败', tag: 'WorkImageService', error: e);
+                  // 继续执行，不中断保存流程
+                }
+              }
+            }
+
             // 清理未使用的文件
             final usedPaths = savedImages
                 .expand(
@@ -376,21 +397,6 @@ class WorkImageService with WorkServiceErrorHandler {
             AppLogger.info('图片保存完成', tag: 'WorkImageService', data: {
               'savedCount': savedImages.length,
             });
-
-            // 更新封面（使用第一张图片）
-            if (savedImages.isNotEmpty) {
-              try {
-                AppLogger.debug('更新作品封面', tag: 'WorkImageService', data: {
-                  'imageId': savedImages[0].id,
-                });
-
-                await updateCover(workId, savedImages[0].id);
-              } catch (e) {
-                // 记录错误但不中断保存流程
-                AppLogger.error('更新封面失败', tag: 'WorkImageService', error: e);
-                // 下次保存时会重试
-              }
-            }
 
             return savedImages;
           } catch (e, stack) {
@@ -429,29 +435,18 @@ class WorkImageService with WorkServiceErrorHandler {
 
         // 确保封面目录存在
         await _storage.ensureWorkDirectoryExists(workId);
-        final coverPath = _storage.getWorkCoverPath(workId);
 
-        // 获取源图片路径
+        // 获取源图片路径并验证
         final importedPath = _storage.getImportedPath(workId, imageId);
         final sourceFile = File(importedPath);
         if (!await sourceFile.exists()) {
           throw FileSystemException('源图片不存在', importedPath);
         }
 
-        AppLogger.debug('准备生成封面', tag: 'WorkImageService', data: {
-          'sourcePath': importedPath,
-          'coverPath': coverPath,
-        });
-
         try {
-          // 保存封面导入图
+          // 生成并保存封面导入图
           final coverImportedPath =
               await _storage.saveCoverImported(workId, sourceFile);
-
-          // 检查封面导入图是否成功生成
-          if (!await File(coverImportedPath).exists()) {
-            throw FileSystemException('封面导入图生成失败', coverImportedPath);
-          }
 
           // 生成并保存封面缩略图
           final thumbnail = await _processor.processImage(
@@ -460,16 +455,24 @@ class WorkImageService with WorkServiceErrorHandler {
             maxHeight: 200,
             quality: 80,
           );
-
           final coverThumbnailPath =
               await _storage.saveCoverThumbnail(workId, thumbnail);
 
-          // 检查封面缩略图是否成功生成
-          if (!await File(coverThumbnailPath).exists()) {
-            throw FileSystemException('封面缩略图生成失败', coverThumbnailPath);
+          // 验证封面文件是否成功生成
+          final coverFiles = [
+            File(coverImportedPath),
+            File(coverThumbnailPath),
+          ];
+
+          for (final file in coverFiles) {
+            if (!await file.exists()) {
+              throw FileSystemException('封面文件生成失败', file.path);
+            }
           }
 
           AppLogger.info('作品封面更新完成', tag: 'WorkImageService', data: {
+            'workId': workId,
+            'imageId': imageId,
             'coverImported': coverImportedPath,
             'coverThumbnail': coverThumbnailPath,
           });

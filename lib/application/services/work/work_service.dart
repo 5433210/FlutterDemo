@@ -172,52 +172,14 @@ class WorkService with WorkServiceErrorHandler {
           'hasImages': work.images.isNotEmpty,
         });
 
-        // 获取原有作品信息以比较变化
-        final existingWork = await _repository.get(work.id);
-        bool coverUpdated = false;
-
-        // 检查并更新封面
-        if (existingWork != null && work.images.isNotEmpty) {
-          final existingFirstImage =
-              await _workImageRepository.getFirstByWorkId(work.id);
-          final newFirstImage = work.images[0];
-
-          // 如果第一张图片发生变化，重新生成封面
-          if (existingFirstImage == null ||
-              existingFirstImage.id != newFirstImage.id) {
-            AppLogger.debug(
-              '第一张图片已更改，更新作品封面',
-              tag: 'WorkService',
-              data: {
-                'workId': work.id,
-                'oldImageId': existingFirstImage?.id,
-                'newImageId': newFirstImage.id,
-              },
-            );
-
-            await _imageService.updateCover(work.id, newFirstImage.id);
-            coverUpdated = true;
-          }
-        }
-
-        // 强制更新时间戳以触发缩略图缓存刷新
-        final timestamp = coverUpdated ? DateTime.now() : work.updateTime;
+        // 更新基本信息
         final updatedWork = work.copyWith(
-          updateTime: timestamp,
+          updateTime: DateTime.now(),
           imageCount: work.images.length,
         );
 
-        AppLogger.debug('保存作品信息', tag: 'WorkService', data: {
-          'workId': work.id,
-          'coverUpdated': coverUpdated,
-          'updateTime': timestamp.toIso8601String(),
-        });
-
-        // 保存作品基本信息
-        final savedWork = await _repository.save(updatedWork);
-
-        // 返回包含最新图片信息的作品实体
-        return savedWork.copyWith(images: work.images);
+        // 保存作品信息
+        return await _repository.save(updatedWork);
       },
       data: {'workId': work.id},
     );

@@ -5,6 +5,7 @@ import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
+import '../../domain/models/work/work_image.dart';
 
 /// 作品详情提供器
 final workDetailProvider =
@@ -169,6 +170,25 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       createTime: state.editingWork!.createTime,
       updateTime: DateTime.now(),
       images: state.editingWork!.images,
+      imageCount: state.editingWork!.imageCount,
+      tags: state.editingWork!.tags,
+      collectedChars: state.editingWork!.collectedChars,
+    );
+
+    state = state.copyWith(
+      editingWork: updatedWork,
+      hasChanges: true,
+    );
+  }
+
+  /// 更新作品图片列表
+  void updateWorkImages(List<WorkImage> images) {
+    if (state.editingWork == null) return;
+
+    final updatedWork = state.editingWork!.copyWith(
+      images: images,
+      imageCount: images.length,
+      updateTime: DateTime.now(),
     );
 
     state = state.copyWith(
@@ -181,20 +201,9 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   void updateWorkTags(List<String> tags) {
     if (state.editingWork == null) return;
 
-    final updatedWork = WorkEntity(
-      id: state.editingWork!.id,
-      title: state.editingWork!.title,
-      author: state.editingWork!.author,
-      remark: state.editingWork!.remark,
-      style: state.editingWork!.style,
-      tool: state.editingWork!.tool,
-      creationDate: state.editingWork!.creationDate,
-      createTime: state.editingWork!.createTime,
-      updateTime: DateTime.now(),
-      images: state.editingWork!.images,
+    final updatedWork = state.editingWork!.copyWith(
       tags: tags,
-      collectedChars: state.editingWork!.collectedChars,
-      imageCount: state.editingWork!.imageCount,
+      updateTime: DateTime.now(),
     );
 
     state = state.copyWith(
