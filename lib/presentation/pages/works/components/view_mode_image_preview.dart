@@ -1,14 +1,13 @@
 import 'dart:io';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_image.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import 'thumbnail_strip.dart';
 
-/// 作品图片预览组件（查看模式）
-class ViewModeImagePreview extends StatefulWidget {
+class ViewModeImagePreview extends ConsumerStatefulWidget {
   final List<WorkImage> images;
   final int selectedIndex;
   final Function(int) onImageSelect;
@@ -21,143 +20,148 @@ class ViewModeImagePreview extends StatefulWidget {
   });
 
   @override
-  State<ViewModeImagePreview> createState() => _ViewModeImagePreviewState();
+  ConsumerState<ViewModeImagePreview> createState() =>
+      _ViewModeImagePreviewState();
 }
 
-class _ViewModeImagePreviewState extends State<ViewModeImagePreview> {
-  static const double _minScale = 0.5;
-  static const double _maxScale = 4.0;
-  final TransformationController _transformationController =
-      TransformationController();
-  bool _isZoomed = false;
+class _ViewModeImagePreviewState extends ConsumerState<ViewModeImagePreview> {
+  final Map<String, bool> _fileExistsCache = {};
 
   @override
   Widget build(BuildContext context) {
+    if (widget.images.isEmpty) {
+      return const Center(
+        child: Text('没有可显示的图片'),
+      );
+    }
+
+    // Get the current image
+    final currentImage = widget.selectedIndex < widget.images.length
+        ? widget.images[widget.selectedIndex]
+        : widget.images.first;
+
     return Column(
       children: [
+        // Main image display area
         Expanded(
-          child: _buildPreviewArea(context),
-        ),
-        if (widget.images.length > 1)
-          SizedBox(
-            height: 100,
-            child: ThumbnailStrip<WorkImage>(
-              images: widget.images,
-              selectedIndex: widget.selectedIndex,
-              onTap: (index) {
-                _resetZoom();
-                widget.onImageSelect(index);
+          child: Center(
+            child: FutureBuilder<bool>(
+              // Check if file exists when building the widget
+              future: _checkFileExists(currentImage.path),
+              builder: (context, snapshot) {
+                final fileExists = snapshot.data ?? false;
+
+                if (!fileExists) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '无法加载图片: ${currentImage.path}',
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.error),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          _fileExistsCache.remove(currentImage.path);
+                          setState(() {}); // Force rebuild
+                        },
+                        child: const Text('重试'),
+                      ),
+                    ],
+                  );
+                }
+
+                return Image.file(
+                  File(currentImage.path),
+                  fit: BoxFit.contain,
+                );
               },
-              pathResolver: (image) => image.thumbnailPath.isNotEmpty
-                  ? image.thumbnailPath
-                  : image.path,
-              keyResolver: (image) => image.id,
             ),
           ),
+        ),
+
+        // Thumbnail strip below the main image
+        SizedBox(
+          height: 120,
+          child: ThumbnailStrip<WorkImage>(
+            images: widget.images,
+            selectedIndex: widget.selectedIndex,
+            onTap: widget.onImageSelect,
+            pathResolver: (image) => image.thumbnailPath,
+            keyResolver: (image) => image.id,
+          ),
+        ),
       ],
     );
   }
 
   @override
-  void dispose() {
-    _transformationController.dispose();
-    super.dispose();
+  void didUpdateWidget(ViewModeImagePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.images != oldWidget.images) {
+      _fileExistsCache.clear();
+      _verifyImageFiles();
+    }
   }
 
-  Widget _buildPreviewArea(BuildContext context) {
-    if (widget.images.isEmpty) {
-      return const Center(
-        child: Text('没有图片'),
-      );
+  @override
+  void initState() {
+    super.initState();
+    _verifyImageFiles();
+  }
+
+  // Check if a file exists, using the cache when possible
+  Future<bool> _checkFileExists(String path) async {
+    if (_fileExistsCache.containsKey(path)) {
+      return _fileExistsCache[path] ?? false;
     }
 
-    final image = widget.images[widget.selectedIndex];
-    final imagePath =
-        image.thumbnailPath.isNotEmpty ? image.thumbnailPath : image.path;
-
-    return Stack(
-      alignment: Alignment.topRight,
-      children: [
-        Listener(
-          onPointerSignal: (event) {
-            if (event is PointerScrollEvent &&
-                HardwareKeyboard.instance.isControlPressed) {
-              // 计算新的缩放比例
-              final currentScale =
-                  _transformationController.value.getMaxScaleOnAxis();
-              final newScale = currentScale - event.scrollDelta.dy * 0.001;
-
-              // 限制缩放范围
-              final scale = newScale.clamp(_minScale, _maxScale);
-              setState(() => _isZoomed = scale > 1.0);
-
-              _transformationController.value = Matrix4.identity()
-                ..scale(scale);
-            }
-          },
-          child: InteractiveViewer(
-            transformationController: _transformationController,
-            minScale: _minScale,
-            maxScale: _maxScale,
-            onInteractionStart: (details) {
-              if (details.pointerCount > 1) {
-                setState(() => _isZoomed = true);
-              }
-            },
-            onInteractionEnd: (details) {
-              // 检查是否恢复到原始大小
-              final matrix = _transformationController.value;
-              if (matrix == Matrix4.identity()) {
-                setState(() => _isZoomed = false);
-              }
-            },
-            child: Center(
-              child: Image.file(
-                File(imagePath),
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stack) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.broken_image,
-                            size: 64, color: Colors.red),
-                        const SizedBox(height: 16),
-                        Text(
-                          '图片加载失败',
-                          style: TextStyle(
-                              color: Theme.of(context).colorScheme.error),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-        // Zoom reset button
-        if (_isZoomed)
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              icon: const Icon(Icons.zoom_out_map),
-              onPressed: _resetZoom,
-              tooltip: '重置缩放',
-              style: IconButton.styleFrom(
-                backgroundColor: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest
-                    .withOpacity(0.8),
-              ),
-            ),
-          ),
-      ],
-    );
+    try {
+      final exists = await File(path).exists();
+      _fileExistsCache[path] = exists;
+      return exists;
+    } catch (e) {
+      _fileExistsCache[path] = false;
+      return false;
+    }
   }
 
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
-    setState(() => _isZoomed = false);
+  // Verify that image files exist and log any issues
+  Future<void> _verifyImageFiles() async {
+    for (final image in widget.images) {
+      try {
+        final file = File(image.path);
+        final exists = await file.exists();
+        _fileExistsCache[image.path] = exists;
+
+        if (!exists) {
+          AppLogger.warning(
+            'Image file not found',
+            tag: 'ViewModeImagePreview',
+            data: {
+              'path': image.path,
+              'imageId': image.id,
+              'workId': image.workId
+            },
+          );
+        }
+      } catch (e, stack) {
+        AppLogger.error(
+          'Error checking image file',
+          tag: 'ViewModeImagePreview',
+          error: e,
+          stackTrace: stack,
+          data: {'path': image.path},
+        );
+        _fileExistsCache[image.path] = false;
+      }
+    }
   }
 }

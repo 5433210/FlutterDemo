@@ -421,6 +421,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
   Future<void> _loadWorkDetails() async {
     await ref.read(workDetailProvider.notifier).loadWorkDetails(widget.workId);
+
+    // Verify all work images exist
+    final work = ref.read(workDetailProvider).work;
+    if (work != null) {
+      final storageService = ref.read(workStorageProvider);
+      await storageService.verifyWorkImages(widget.workId);
+    }
+
     _checkForUnfinishedEditSession();
   }
 
@@ -446,6 +454,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     final editingWork = ref.read(workDetailProvider).editingWork;
     AppLogger.debug('开始保存作品', tag: 'WorkDetailPage', data: {
       'workId': editingWork?.id,
+      'hasImages': editingWork?.images.isNotEmpty ?? false,
+      'firstImageId': editingWork?.images.isNotEmpty ?? false
+          ? editingWork!.images[0].id
+          : 'none',
     });
 
     if (!context.mounted) return;
@@ -468,12 +480,36 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
 
     try {
-      // Save images first
+      // Save images first - this should handle cover generation internally
       final workImageEditorNotifier =
           ref.read(workImageEditorProvider.notifier);
       await workImageEditorNotifier.saveChanges();
 
-      // Then save work details
+      // 获取保存后的图片列表
+      final savedImages = ref.read(workImageEditorProvider).images;
+
+      // 仅在有图片时处理封面
+      if (savedImages.isNotEmpty && editingWork != null) {
+        final imageService = ref.read(workImageServiceProvider);
+        final storageService = ref.read(workStorageProvider);
+
+        // 检查封面是否与当前首图匹配
+        final coverPath =
+            storageService.getWorkCoverImportedPath(editingWork.id);
+        final coverExists =
+            await storageService.verifyWorkImageExists(coverPath);
+
+        if (!coverExists) {
+          AppLogger.info('保存后封面不存在，重新生成',
+              tag: 'WorkDetailPage', data: {'firstImageId': savedImages[0].id});
+
+          await imageService.updateCover(editingWork.id, savedImages[0].id);
+        } else {
+          AppLogger.debug('保存后封面已存在', tag: 'WorkDetailPage');
+        }
+      }
+
+      // Then save work details (which includes the updated image order)
       final success = await ref.read(workDetailProvider.notifier).saveChanges();
       if (!context.mounted) return;
 

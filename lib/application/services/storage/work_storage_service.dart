@@ -173,6 +173,12 @@ class WorkStorageService {
     try {
       await ensureWorkDirectoryExists(workId);
 
+      // 确保目标目录存在
+      final targetDir = Directory(path.dirname(targetPath));
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+
       // 如果目标文件存在则先删除
       if (await _storage.fileExists(targetPath)) {
         await _storage.deleteFile(targetPath);
@@ -181,6 +187,11 @@ class WorkStorageService {
 
       // 验证文件是否成功保存
       if (!await _storage.fileExists(targetPath)) {
+        AppLogger.error('封面导入图保存失败', tag: 'WorkStorageService', data: {
+          'workId': workId,
+          'sourcePath': file.path,
+          'targetPath': targetPath
+        });
         throw FileSystemException('封面导入图保存失败', targetPath);
       }
 
@@ -198,7 +209,6 @@ class WorkStorageService {
       );
       rethrow;
     }
-    return targetPath;
   }
 
   /// 保存作品封面缩略图
@@ -206,6 +216,12 @@ class WorkStorageService {
     final targetPath = getWorkCoverThumbnailPath(workId);
     try {
       await ensureWorkDirectoryExists(workId);
+
+      // 确保目标目录存在
+      final targetDir = Directory(path.dirname(targetPath));
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
 
       // 如果目标文件存在则先删除
       if (await _storage.fileExists(targetPath)) {
@@ -215,6 +231,11 @@ class WorkStorageService {
 
       // 验证文件是否成功保存
       if (!await _storage.fileExists(targetPath)) {
+        AppLogger.error('封面缩略图保存失败', tag: 'WorkStorageService', data: {
+          'workId': workId,
+          'sourcePath': file.path,
+          'targetPath': targetPath
+        });
         throw FileSystemException('封面缩略图保存失败', targetPath);
       }
 
@@ -232,7 +253,6 @@ class WorkStorageService {
       );
       rethrow;
     }
-    return targetPath;
   }
 
   /// 保存作品导入图片
@@ -272,6 +292,105 @@ class WorkStorageService {
     final targetPath = getThumbnailPath(workId, imageId);
     await _storage.copyFile(file.path, targetPath);
     return targetPath;
+  }
+
+  /// 检查作品图片是否存在（带重试机制）
+  Future<bool> verifyWorkImageExists(String path, {int retries = 3}) async {
+    bool exists = await _storage.fileExists(path);
+
+    // If file doesn't exist, retry a few times with delays
+    int attempt = 0;
+    while (!exists && attempt < retries) {
+      await Future.delayed(Duration(milliseconds: 200 * (attempt + 1)));
+      exists = await _storage.fileExists(path);
+      attempt++;
+
+      AppLogger.debug(
+        'Retry checking file existence',
+        tag: 'WorkStorageService',
+        data: {
+          'path': path,
+          'attempt': attempt,
+          'exists': exists,
+        },
+      );
+    }
+
+    // 如果文件存在，尝试读取以确保它完全写入
+    if (exists) {
+      try {
+        final file = File(path);
+        final randomAccessFile = await file.open(mode: FileMode.read);
+        try {
+          // 尝试读取几个字节以验证文件可访问
+          await randomAccessFile.read(8);
+        } finally {
+          await randomAccessFile.close();
+        }
+      } catch (e) {
+        AppLogger.warning(
+          '文件存在但无法完全访问',
+          tag: 'WorkStorageService',
+          error: e,
+          data: {'path': path},
+        );
+        exists = false; // 文件存在但不可访问，标记为不存在
+      }
+    }
+
+    if (!exists) {
+      AppLogger.warning(
+        '文件不存在或不可访问',
+        tag: 'WorkStorageService',
+        data: {'path': path, 'afterRetries': retries},
+      );
+    }
+
+    return exists;
+  }
+
+  /// 确认作品所有图片都存在
+  Future<Map<String, bool>> verifyWorkImages(String workId) async {
+    Map<String, bool> results = {};
+    try {
+      final workPath = getWorkPath(workId);
+      final files = await _storage.listDirectoryFiles(workPath);
+
+      for (final file in files) {
+        results[file] = await _storage.fileExists(file);
+      }
+
+      // Check cover files specifically
+      final coverPath = getWorkCoverImportedPath(workId);
+      final coverThumbPath = getWorkCoverThumbnailPath(workId);
+
+      results[coverPath] = await verifyWorkImageExists(coverPath);
+      results[coverThumbPath] = await verifyWorkImageExists(coverThumbPath);
+
+      // Log any missing files
+      final missingFiles =
+          results.entries.where((e) => !e.value).map((e) => e.key).toList();
+
+      if (missingFiles.isNotEmpty) {
+        AppLogger.warning(
+          '作品存在丢失的文件',
+          tag: 'WorkStorageService',
+          data: {
+            'workId': workId,
+            'missingFiles': missingFiles,
+          },
+        );
+      }
+    } catch (e, stack) {
+      _handleError(
+        '验证作品图片失败',
+        e,
+        stack,
+        data: {'workId': workId},
+      );
+    }
+
+    return results;
   }
 
   /// 获取文件扩展名

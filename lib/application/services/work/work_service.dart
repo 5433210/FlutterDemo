@@ -119,6 +119,9 @@ class WorkService with WorkServiceErrorHandler {
         final imagesImported =
             await _imageService.processImport(work.id, files);
 
+        // 注意：不需要在这里显式调用updateCover，
+        // processImport内部的saveChanges已经处理了封面生成
+
         return savedWork.copyWith(images: imagesImported);
       },
       data: {'workId': work.id, 'fileCount': files.length},

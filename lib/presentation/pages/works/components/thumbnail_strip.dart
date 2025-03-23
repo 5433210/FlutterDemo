@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -5,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../../theme/app_sizes.dart';
 
 /// 缩略图条组件
@@ -40,6 +42,7 @@ class ThumbnailStrip<T> extends StatefulWidget {
 class _FileStatus {
   final bool exists;
   final DateTime lastModified;
+  int checkAttempts = 0;
 
   _FileStatus({required this.exists, DateTime? lastModified})
       : lastModified = lastModified ?? DateTime.now();
@@ -49,9 +52,11 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   static const double _thumbWidth = 100.0;
   static const double _thumbHeight = 100.0;
   static const double _thumbSpacing = 8.0;
+  static const int _maxRetryAttempts = 3;
   final ScrollController _scrollController = ScrollController();
   final Map<String, _FileStatus> _fileStatus = {};
   bool _isDragging = false;
+  Timer? _retryTimer;
 
   @override
   Widget build(BuildContext context) {
@@ -137,7 +142,11 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   @override
   void didUpdateWidget(ThumbnailStrip<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.images.length != oldWidget.images.length) {
+
+    // Clear cache when images change to force re-checking
+    if (widget.images.length != oldWidget.images.length ||
+        !_listsEqual(widget.images, oldWidget.images, widget.keyResolver)) {
+      _fileStatus.clear();
       _checkImageFiles();
     }
     if (widget.selectedIndex != oldWidget.selectedIndex) {
@@ -148,6 +157,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _retryTimer?.cancel();
     super.dispose();
   }
 
@@ -164,6 +174,15 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
     final path = widget.pathResolver(image);
     final status = _fileStatus[path];
     final fileExists = status?.exists ?? false;
+    final attemptCount = status?.checkAttempts ?? 0;
+
+    // Display different messages based on retry attempts
+    String errorMessage = '图片文件不存在';
+    if (attemptCount > 0 && attemptCount < _maxRetryAttempts) {
+      errorMessage = '正在重试加载图片 ($attemptCount/$_maxRetryAttempts)';
+    } else if (attemptCount >= _maxRetryAttempts) {
+      errorMessage = '图片加载失败，请检查文件路径';
+    }
 
     final heroTag = fileExists
         ? '${path}_${status?.lastModified.millisecondsSinceEpoch}'
@@ -329,11 +348,23 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
               if (!fileExists)
                 Center(
                   child: Tooltip(
-                    message: '图片文件不存在',
-                    child: Icon(
-                      Icons.error_outline,
-                      size: 24,
-                      color: theme.colorScheme.error,
+                    message: errorMessage,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 24,
+                          color: theme.colorScheme.error,
+                        ),
+                        if (attemptCount > 0 &&
+                            attemptCount < _maxRetryAttempts)
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -345,23 +376,75 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   }
 
   Future<void> _checkImageFiles() async {
+    // Cancel any pending retries
+    _retryTimer?.cancel();
+
+    bool hasFailures = false;
+
     for (final image in widget.images) {
       try {
         final path = widget.pathResolver(image);
-        final file = File(path);
-        if (await file.exists()) {
-          _fileStatus[path] = _FileStatus(
-            exists: true,
-            lastModified: await file.lastModified(),
+
+        // Try to open the file for reading - this is a stronger test than just exists()
+        // as it verifies the file is fully accessible
+        try {
+          final file = File(path);
+          if (await file.exists()) {
+            // Try to read a small part of the file to ensure it's accessible
+            final randomAccessFile = await file.open(mode: FileMode.read);
+            try {
+              // Read just a few bytes to verify file is accessible
+              await randomAccessFile.read(4);
+              _fileStatus[path] = _FileStatus(
+                exists: true,
+                lastModified: await file.lastModified(),
+              );
+            } finally {
+              await randomAccessFile.close();
+            }
+          } else {
+            final status = _fileStatus[path];
+            final attempts = status?.checkAttempts ?? 0;
+
+            _fileStatus[path] = _FileStatus(exists: false)
+              ..checkAttempts = attempts + 1;
+
+            if (attempts < _maxRetryAttempts) {
+              hasFailures = true;
+            }
+          }
+        } catch (e) {
+          // The file exists but couldn't be accessed - treat as not ready yet
+          AppLogger.debug(
+            'File exists but not accessible yet',
+            tag: 'ThumbnailStrip',
+            data: {'path': path, 'error': e.toString()},
           );
-        } else {
-          _fileStatus[path] = _FileStatus(exists: false);
+
+          final status = _fileStatus[path];
+          final attempts = status?.checkAttempts ?? 0;
+
+          _fileStatus[path] = _FileStatus(exists: false)
+            ..checkAttempts = attempts + 1;
+
+          if (attempts < _maxRetryAttempts) {
+            hasFailures = true;
+          }
         }
       } catch (e) {
         _fileStatus[widget.pathResolver(image)] = _FileStatus(exists: false);
+        hasFailures = true;
       }
     }
+
     if (mounted) setState(() {});
+
+    // Schedule a retry if any files failed to load
+    if (hasFailures) {
+      _retryTimer = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) _checkImageFiles();
+      });
+    }
   }
 
   void _handlePointerSignal(PointerSignalEvent event) {
@@ -374,6 +457,15 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
         );
       }
     }
+  }
+
+  // Check if two lists of images are equal by comparing their keys
+  bool _listsEqual(List<T> a, List<T> b, String Function(T) keyResolver) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (keyResolver(a[i]) != keyResolver(b[i])) return false;
+    }
+    return true;
   }
 
   void _scrollToSelected() {
