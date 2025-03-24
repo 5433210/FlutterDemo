@@ -289,6 +289,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             FilledButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                // Reset the image editor state first
+                ref.read(workImageEditorProvider.notifier).reset();
                 ref.read(workDetailProvider.notifier).cancelEditing();
               },
               child: const Text('放弃更改'),
@@ -297,6 +299,8 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         ),
       );
     } else {
+      // Reset the image editor state first
+      ref.read(workImageEditorProvider.notifier).reset();
       ref.read(workDetailProvider.notifier).cancelEditing();
     }
   }
@@ -345,7 +349,52 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   }
 
   void _enterEditMode() {
-    ref.read(workDetailProvider.notifier).enterEditMode();
+    final detailNotifier = ref.read(workDetailProvider.notifier);
+    final work = ref.read(workDetailProvider).work;
+
+    if (work != null) {
+      // Log the work images to verify they exist
+      AppLogger.debug(
+        'Entering edit mode with work',
+        tag: 'WorkDetailPage',
+        data: {
+          'workId': work.id,
+          'imageCount': work.images.length,
+          'firstImageId': work.images.isNotEmpty ? work.images[0].id : 'none',
+        },
+      );
+
+      // First enter edit mode to ensure the editingWork is set
+      detailNotifier.enterEditMode();
+
+      // Ensure image editor state is properly initialized
+      if (work.images.isNotEmpty) {
+        // Reset the editor provider state
+        ref.read(workImageInitializedProvider.notifier).state = false;
+        ref.read(workImageEditorProvider.notifier).reset();
+
+        // Initialize with a microtask to ensure it happens after the current frame
+        Future.microtask(() {
+          // Verify the providers still exist
+          if (!ref.exists(workImageEditorProvider)) return;
+          if (!context.mounted) return;
+
+          // Initialize the image editor with work images
+          final editorNotifier = ref.read(workImageEditorProvider.notifier);
+          editorNotifier.initialize(work.images);
+
+          // Set selected index after initialization
+          final selectedIndex = ref.read(workDetailProvider).selectedImageIndex;
+          editorNotifier.updateSelectedIndex(selectedIndex);
+        });
+      } else {
+        AppLogger.warning(
+          'Entering edit mode with no images',
+          tag: 'WorkDetailPage',
+          data: {'workId': work.id},
+        );
+      }
+    }
   }
 
   Future<bool> _handleBackButton() async {
@@ -480,6 +529,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     );
 
     try {
+      // Log the state of the editor before saving
+      final editorState = ref.read(workImageEditorProvider);
+      AppLogger.debug('作品编辑器状态', tag: 'WorkDetailPage', data: {
+        'imagesCount': editorState.images.length,
+        'hasPendingAdditions': editorState.hasPendingAdditions,
+        'deletedImageCount': editorState.deletedImageIds.length,
+      });
+
       // Save images first - this should handle cover generation internally
       final workImageEditorNotifier =
           ref.read(workImageEditorProvider.notifier);

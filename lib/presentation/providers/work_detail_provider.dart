@@ -123,6 +123,8 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
   /// 选择图片
   void selectImage(int index) {
+    if (index < 0 || index >= (state.work?.images.length ?? 0)) return;
+
     state = state.copyWith(
       selectedImageIndex: index,
     );
@@ -148,7 +150,6 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     }
   }
 
-  /// 更新作品基本信息
   void updateWorkBasicInfo({
     String title = '',
     String author = '',

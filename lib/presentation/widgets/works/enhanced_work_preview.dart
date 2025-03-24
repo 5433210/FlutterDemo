@@ -91,7 +91,20 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      child: Row(children: widget.toolbarActions!),
+                      child: Row(
+                        children: widget.toolbarActions!.map((widget) {
+                          // Make sure buttons stay enabled unless explicitly disabled
+                          if (widget is IconButton) {
+                            return IconButton(
+                              icon: widget.icon,
+                              onPressed: widget.onPressed,
+                              tooltip: widget.tooltip,
+                              style: widget.style,
+                            );
+                          }
+                          return widget;
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ],

@@ -1,18 +1,15 @@
-import 'dart:io';
-
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
-import '../../../../domain/models/work/work_image.dart';
-import '../../../../theme/app_sizes.dart';
-import '../../../providers/work_image_editor_provider.dart' as editor;
-import 'thumbnail_strip.dart';
+import '../../../../infrastructure/logging/logger.dart';
+import '../../../providers/work_detail_provider.dart';
+import '../../../providers/work_image_editor_provider.dart';
+import '../../../widgets/works/enhanced_work_preview.dart';
+import 'image_operations_toolbar.dart';
 
 /// 作品图片管理视图
-class WorkImagesManagementView extends ConsumerStatefulWidget {
+class WorkImagesManagementView extends ConsumerWidget {
   final WorkEntity work;
 
   const WorkImagesManagementView({
@@ -21,325 +18,382 @@ class WorkImagesManagementView extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WorkImagesManagementView> createState() =>
-      _WorkImagesManagementViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(workImageEditorProvider);
+    final notifier = ref.read(workImageEditorProvider.notifier);
+    final isProcessing = state.isProcessing;
+    final currentIndex = ref.watch(currentWorkImageIndexProvider);
+    final isInitialized = ref.watch(workImageInitializedProvider);
 
-class _WorkImagesManagementViewState
-    extends ConsumerState<WorkImagesManagementView> {
-  static const double _minScale = 0.5;
-  static const double _maxScale = 4.0;
-  PageController? _pageController;
-  final TransformationController _transformationController =
-      TransformationController();
-  bool _isZoomed = false;
+    // Add debugging to understand what state we're getting
+    AppLogger.debug(
+      'Building WorkImagesManagementView',
+      tag: 'WorkImagesManagementView',
+      data: {
+        'imageCount': state.images.length,
+        'selectedIndex': currentIndex,
+        'isProcessing': isProcessing,
+        'hasError': state.error != null,
+        'workImagesCount': work.images.length,
+        'isInitialized': isInitialized,
+        'stateMatch': state.images.length == work.images.length,
+        'deletedImageCount': state.deletedImageIds.length,
+      },
+    );
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final editorState = ref.watch(editor.workImageEditorProvider);
-    final selectedIndex = ref.watch(editor.currentWorkImageIndexProvider);
+    // Detect inconsistent state with improved logic that accounts for deleted images
+    final hasInconsistentState =
+        _detectInconsistentState(state, work, isInitialized);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.m),
-      child: Column(
-        children: [
-          // Tools bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add_photo_alternate),
-                  onPressed: editorState.isProcessing
-                      ? null
-                      : () async {
-                          try {
-                            await ref
-                                .read(editor.workImageEditorProvider.notifier)
-                                .addImage();
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('添加图片失败: $e'),
-                                  backgroundColor: theme.colorScheme.error,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  tooltip: '添加图片',
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: editorState.isProcessing ||
-                          editorState.images.isEmpty ||
-                          selectedIndex >= editorState.images.length
-                      ? null
-                      : () async {
-                          try {
-                            final imageToDelete =
-                                editorState.images[selectedIndex];
-                            await ref
-                                .read(editor.workImageEditorProvider.notifier)
-                                .deleteImage(imageToDelete.id);
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('删除图片失败: $e'),
-                                  backgroundColor: theme.colorScheme.error,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  tooltip: '删除当前图片',
-                ),
-                if (_isZoomed)
-                  IconButton(
-                    icon: const Icon(Icons.zoom_out_map),
-                    onPressed: _resetZoom,
-                    tooltip: '重置缩放',
-                  ),
-              ],
-            ),
-          ),
+    if (hasInconsistentState) {
+      AppLogger.warning(
+        'Inconsistent state detected in WorkImagesManagementView',
+        tag: 'WorkImagesManagementView',
+        data: {
+          'workId': work.id,
+          'workImagesCount': work.images.length,
+          'editorImagesCount': state.images.length,
+          'isInitialized': isInitialized,
+        },
+      );
 
-          const SizedBox(height: 8),
+      // Force reinitialization to recover from inconsistent state
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.exists(workImageEditorProvider)) {
+          ref.read(workImageInitializedProvider.notifier).state = false;
+          notifier.reset(); // Clear state first
+          notifier.initialize(work.images);
 
-          // Image preview
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.colorScheme.outlineVariant),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: editorState.images.isEmpty
-                  ? const Center(
-                      child: Text('暂无图片，点击上方"添加"按钮添加图片'),
-                    )
-                  : PageView.builder(
-                      controller: _pageController,
-                      physics: _isZoomed
-                          ? const NeverScrollableScrollPhysics()
-                          : null,
-                      itemCount: editorState.images.length,
-                      onPageChanged: (index) {
-                        ref
-                            .read(editor.currentWorkImageIndexProvider.notifier)
-                            .state = index;
-                      },
-                      itemBuilder: (context, index) {
-                        final image = editorState.images[index];
-                        final imagePath = image.originalPath.isNotEmpty
-                            ? image.originalPath
-                            : image.path;
+          // After initialization, set the selected index
+          final selectedIndex = ref.read(workDetailProvider).selectedImageIndex;
+          notifier.updateSelectedIndex(selectedIndex);
+        }
+      });
 
-                        return Listener(
-                          onPointerSignal: (event) {
-                            if (event is PointerScrollEvent &&
-                                HardwareKeyboard.instance.isControlPressed) {
-                              // 计算新的缩放比例
-                              final currentScale = _transformationController
-                                  .value
-                                  .getMaxScaleOnAxis();
-                              final newScale =
-                                  currentScale - event.scrollDelta.dy * 0.001;
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('正在恢复图片数据...'),
+          ],
+        ),
+      );
+    }
 
-                              // 限制缩放范围
-                              final scale =
-                                  newScale.clamp(_minScale, _maxScale);
-                              setState(() => _isZoomed = scale > 1.0);
+    // Check for normal initialization status
+    if (!isInitialized && work.images.isNotEmpty) {
+      AppLogger.debug(
+        'Editor not initialized yet, initializing with work images',
+        tag: 'WorkImagesManagementView',
+        data: {
+          'workId': work.id,
+          'workImagesCount': work.images.length,
+        },
+      );
 
-                              _transformationController.value =
-                                  Matrix4.identity()..scale(scale);
-                            }
-                          },
-                          child: InteractiveViewer(
-                            transformationController: _transformationController,
-                            minScale: _minScale,
-                            maxScale: _maxScale,
-                            onInteractionStart: (details) {
-                              if (details.pointerCount > 1) {
-                                setState(() => _isZoomed = true);
-                              }
-                            },
-                            onInteractionEnd: (details) {
-                              // 检查是否恢复到原始大小
-                              final matrix = _transformationController.value;
-                              if (matrix == Matrix4.identity()) {
-                                setState(() => _isZoomed = false);
-                              }
-                            },
-                            child: Center(
-                              child: Image.file(
-                                File(imagePath),
-                                fit: BoxFit.contain,
-                                frameBuilder: (context, child, frame,
-                                    wasSynchronouslyLoaded) {
-                                  if (wasSynchronouslyLoaded) return child;
-                                  return AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    child: frame != null
-                                        ? child
-                                        : Container(
-                                            color: theme.colorScheme
-                                                .surfaceContainerHighest,
-                                            child: const Center(
-                                              child: CircularProgressIndicator(
-                                                  strokeWidth: 2),
-                                            ),
-                                          ),
-                                  );
-                                },
-                                errorBuilder: (context, error, stack) {
-                                  return Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.broken_image,
-                                            size: 64,
-                                            color: theme.colorScheme.error),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          '图片加载失败',
-                                          style: TextStyle(
-                                              color: theme.colorScheme.error),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ),
+      // Try initializing the editor
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.exists(workImageEditorProvider)) {
+          notifier.initialize(work.images);
 
-          const SizedBox(height: 8),
+          // After initialization, set the selected index
+          final selectedIndex = ref.read(workDetailProvider).selectedImageIndex;
+          notifier.updateSelectedIndex(selectedIndex);
+        }
+      });
 
-          // Error message
-          if (editorState.error != null)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                editorState.error!,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-            ),
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-          // Thumbnail strip
-          if (editorState.images.isNotEmpty)
-            SizedBox(
-              height: 100,
-              child: ThumbnailStrip<WorkImage>(
-                images: editorState.images,
-                selectedIndex: selectedIndex,
-                isEditable: !editorState.isProcessing,
-                useOriginalImage: true,
-                onTap: _handleThumbnailTap,
-                pathResolver: (image) => image.originalPath.isNotEmpty
-                    ? image.originalPath
-                    : image.path,
-                keyResolver: (image) => image.id,
-                onReorder: editorState.isProcessing
-                    ? null
-                    : (oldIndex, newIndex) {
-                        // 重置缩放
-                        _resetZoom();
+    // If images are empty but should exist, provide a loading state
+    // but don't try to reinitialize here - that's handled by the provider
+    if (state.images.isEmpty && work.images.isNotEmpty) {
+      AppLogger.warning(
+        'Editor has no images but work does',
+        tag: 'WorkImagesManagementView',
+        data: {
+          'workId': work.id,
+          'workImageCount': work.images.length,
+        },
+      );
 
-                        // 处理索引
-                        if (oldIndex < newIndex) newIndex--;
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
-                        // 更新状态
-                        ref
-                            .read(editor.workImageEditorProvider.notifier)
-                            .reorderImages(oldIndex, newIndex);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallWidth = constraints.maxWidth < 500;
 
-                        // 更新选中项
-                        _updateSelectedIndex(newIndex);
-
-                        // 平滑切换预览
-                        _pageController?.animateToPage(
-                          newIndex,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-              ),
-            ),
-
-          // Processing indicator
-          if (editorState.isProcessing)
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const LinearProgressIndicator(),
-                  if (editorState.error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        editorState.error!,
-                        style: TextStyle(color: theme.colorScheme.error),
+        return Stack(
+          children: [
+            // Enhanced Work Preview
+            EnhancedWorkPreview(
+              images: state.images,
+              selectedIndex: currentIndex,
+              isEditing: true,
+              showToolbar: true,
+              toolbarActions: [
+                // 使用原有的工具栏操作，但根据屏幕尺寸进行调整
+                isSmallWidth
+                    ? _buildCompactToolbar(context, ref, state, notifier)
+                    : ImageOperationsToolbar(
+                        onAddImages:
+                            isProcessing ? null : () => notifier.addImages(),
+                        onDeleteImage: (isProcessing || state.images.isEmpty)
+                            ? null
+                            : () => _handleDeleteSelected(context, ref),
+                        onSortImages: (isProcessing || state.images.isEmpty)
+                            ? null
+                            : () => notifier.sortImages(),
                       ),
+              ],
+              onIndexChanged: isProcessing
+                  ? null
+                  : (index) => _handleIndexChanged(ref, index),
+              onImagesReordered: isProcessing
+                  ? null
+                  : (oldIndex, newIndex) =>
+                      _handleReorder(ref, oldIndex, newIndex),
+            ),
+
+            // Error message display
+            if (state.error != null)
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Material(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      state.error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                ],
+                  ),
+                ),
+              ),
+
+            // Processing overlay
+            if (isProcessing)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.3),
+                  child: const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 构建小屏幕下的紧凑工具栏
+  Widget _buildCompactToolbar(BuildContext context, WidgetRef ref,
+      WorkImageEditorState state, dynamic notifier) {
+    final theme = Theme.of(context);
+    final isProcessing = state.isProcessing;
+
+    return Row(
+      children: [
+        // 添加图片按钮 - simplified to a single button
+        IconButton.filled(
+          onPressed: isProcessing ? null : () => notifier.addImages(),
+          icon: const Icon(Icons.add_photo_alternate),
+          tooltip: '添加图片 (可按住Ctrl多选)',
+        ),
+        const SizedBox(width: 8),
+
+        // 删除图片按钮
+        IconButton.outlined(
+          onPressed: (isProcessing || state.images.isEmpty)
+              ? null
+              : () => _handleDeleteSelected(context, ref),
+          icon: const Icon(Icons.delete_outline),
+          tooltip: '删除图片',
+          style: IconButton.styleFrom(
+            foregroundColor: theme.colorScheme.error,
+            side: BorderSide(
+              color: theme.colorScheme.error.withOpacity(
+                (isProcessing || state.images.isEmpty) ? 0.38 : 1.0,
               ),
             ),
-        ],
-      ),
+          ),
+        ),
+        const SizedBox(width: 8),
+
+        // 排序图片按钮
+        IconButton.outlined(
+          onPressed: (isProcessing || state.images.isEmpty)
+              ? null
+              : () => notifier.sortImages(),
+          icon: const Icon(Icons.sort),
+          tooltip: '排序',
+        ),
+      ],
     );
   }
 
-  @override
-  void dispose() {
-    _pageController?.dispose();
-    _transformationController.dispose();
-    super.dispose();
+  /// Helper method to detect inconsistent state with better logic
+  bool _detectInconsistentState(
+      WorkImageEditorState state, WorkEntity work, bool isInitialized) {
+    // If we're not initialized, can't be inconsistent yet
+    if (!isInitialized) return false;
+
+    // If we have no images in state but should have some, that's inconsistent
+    if (state.images.isEmpty && work.images.isNotEmpty) return true;
+
+    // When adding images, we expect editor to have more images than work entity
+    // This is normal during editing and shouldn't trigger a reset
+    if (state.images.length > work.images.length) {
+      AppLogger.debug(
+        'Editor has more images than work - this is expected during editing',
+        tag: 'WorkImagesManagementView',
+        data: {
+          'editorImagesCount': state.images.length,
+          'workImagesCount': work.images.length,
+          'difference': state.images.length - work.images.length,
+        },
+      );
+      return false; // Not inconsistent, just new images being added
+    }
+
+    // If there are deleted images, account for them in the comparison
+    final expectedCount = work.images.length - state.deletedImageIds.length;
+
+    // Calculate if we have a legitimate inconsistency
+    // Only flag as inconsistent if the current count is less than expected
+    // after accounting for deletions - missing images is a real inconsistency
+    final countMismatch = state.images.length < expectedCount;
+
+    // Log the decision factors for debugging
+    if (countMismatch) {
+      AppLogger.debug(
+        'Image count mismatch after deletion checks',
+        tag: 'WorkImagesManagementView',
+        data: {
+          'stateImagesCount': state.images.length,
+          'workImagesCount': work.images.length,
+          'deletedCount': state.deletedImageIds.length,
+          'expectedCount': expectedCount,
+        },
+      );
+    }
+
+    return countMismatch;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(editor.workImageEditorProvider.notifier)
-          .initialize(widget.work.images);
-      _initPageController();
-    });
+  /// 处理删除选中图片
+  Future<void> _handleDeleteSelected(
+      BuildContext context, WidgetRef ref) async {
+    try {
+      final state = ref.read(workImageEditorProvider);
+      if (state.images.isEmpty) {
+        AppLogger.warning('Attempted to delete image but no images exist',
+            tag: 'WorkImagesManagementView');
+        return;
+      }
+
+      final notifier = ref.read(workImageEditorProvider.notifier);
+      final currentIndex = ref.read(currentWorkImageIndexProvider);
+
+      // Ensure index is valid
+      if (currentIndex < 0 || currentIndex >= state.images.length) {
+        AppLogger.error('Invalid selected index for deletion',
+            tag: 'WorkImagesManagementView',
+            data: {
+              'currentIndex': currentIndex,
+              'imageCount': state.images.length
+            });
+        return;
+      }
+
+      final selectedImage = state.images[currentIndex];
+
+      AppLogger.debug('Preparing to delete image',
+          tag: 'WorkImagesManagementView',
+          data: {'imageId': selectedImage.id, 'index': currentIndex});
+
+      // 确认删除
+      final shouldDelete = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false, // Prevent dismiss by tapping outside
+        builder: (context) => AlertDialog(
+          title: const Text('确认删除'),
+          content: const Text('确定要删除当前选中的图片吗？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('取消'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+                foregroundColor: Theme.of(context).colorScheme.onError,
+              ),
+              child: const Text('删除'),
+            ),
+          ],
+        ),
+      );
+
+      AppLogger.debug('Delete confirmation result',
+          tag: 'WorkImagesManagementView', data: {'confirmed': shouldDelete});
+
+      if (shouldDelete == true) {
+        // Immediately update UI to show processing state
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('正在删除图片...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        await notifier.deleteImage(selectedImage.id);
+
+        // 如果删除后没有图片了，标记作品详情发生了变化
+        if (ref.read(workImageEditorProvider).images.isEmpty) {
+          ref.read(workDetailProvider.notifier).markAsChanged();
+        }
+      }
+    } catch (e, stack) {
+      AppLogger.error('Error in delete operation',
+          tag: 'WorkImagesManagementView', error: e, stackTrace: stack);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('删除图片失败: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
-  // 处理缩略图点击
-  void _handleThumbnailTap(int index) {
-    _resetZoom();
-    _updateSelectedIndex(index);
-    _pageController?.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  /// 处理图片索引变化
+  void _handleIndexChanged(WidgetRef ref, int index) {
+    ref.read(currentWorkImageIndexProvider.notifier).state = index;
   }
 
-  void _initPageController() {
-    final currentIndex = ref.read(editor.currentWorkImageIndexProvider);
-    _pageController = PageController(initialPage: currentIndex);
-  }
-
-  // 重置缩放
-  void _resetZoom() {
-    _transformationController.value = Matrix4.identity();
-    setState(() => _isZoomed = false);
-  }
-
-  // 更新选中索引
-  void _updateSelectedIndex(int index) {
-    ref.read(editor.currentWorkImageIndexProvider.notifier).state = index;
+  /// 处理图片重新排序
+  void _handleReorder(WidgetRef ref, int oldIndex, int newIndex) {
+    ref
+        .read(workImageEditorProvider.notifier)
+        .reorderImages(oldIndex, newIndex);
+    // 更新详情页状态，标记为已更改
+    ref.read(workDetailProvider.notifier).markAsChanged();
   }
 }
