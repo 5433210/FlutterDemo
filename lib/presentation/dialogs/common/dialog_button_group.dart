@@ -2,49 +2,46 @@ import 'package:flutter/material.dart';
 
 class DialogButtonGroup extends StatelessWidget {
   final VoidCallback onCancel;
-  final VoidCallback? onConfirm;
-  final String? cancelText;
-  final String? confirmText;
+  final VoidCallback onConfirm;
+  final String cancelText;
+  final String confirmText;
   final bool isProcessing;
+  final bool isConfirmEnabled;
 
   const DialogButtonGroup({
     super.key,
     required this.onCancel,
-    this.onConfirm,
-    this.cancelText,
-    this.confirmText,
+    required this.onConfirm,
+    this.cancelText = '取消',
+    this.confirmText = '确定',
     this.isProcessing = false,
+    this.isConfirmEnabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          TextButton(
-            onPressed: isProcessing ? null : onCancel,
-            child: Text(cancelText ?? '取消'),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        if (isProcessing)
+          const Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: isProcessing || onConfirm == null ? null : onConfirm,
-            child: isProcessing
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  )
-                : Text(confirmText ?? '确定'),
-          ),
-        ],
-      ),
+        TextButton(
+          onPressed: isProcessing ? null : onCancel,
+          child: Text(cancelText),
+        ),
+        const SizedBox(width: 8),
+        FilledButton(
+          onPressed: (isProcessing || !isConfirmEnabled) ? null : onConfirm,
+          child: Text(confirmText),
+        ),
+      ],
     );
   }
 }

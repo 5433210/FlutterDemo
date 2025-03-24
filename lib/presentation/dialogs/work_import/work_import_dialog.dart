@@ -25,38 +25,50 @@ class WorkImportDialog extends ConsumerWidget {
 
         return Material(
           color: Theme.of(context).colorScheme.surface,
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppBar(
-                  title: const Text('导入作品'),
-                  actions: [
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () {
-                        viewModel.reset();
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ],
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: _buildResponsiveLayout(
-                      context,
-                      isLargeScreen,
-                      isMediumScreen,
-                      isSmallScreen,
-                      availableHeight,
-                      availableWidth,
-                      state,
-                      viewModel,
+          child: PopScope(
+            // Prevent dialog dismissal during processing
+            canPop: !state.isProcessing,
+            child: SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppBar(
+                    title: const Text('导入作品'),
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: state.isProcessing
+                            ? null // Disable close button when processing
+                            : () {
+                                viewModel.reset();
+                                Navigator.of(context).pop();
+                              },
+                        // Visual feedback for disabled state
+                        style: IconButton.styleFrom(
+                          foregroundColor: state.isProcessing
+                              ? Theme.of(context).disabledColor
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: _buildResponsiveLayout(
+                        context,
+                        isLargeScreen,
+                        isMediumScreen,
+                        isSmallScreen,
+                        availableHeight,
+                        availableWidth,
+                        state,
+                        viewModel,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );

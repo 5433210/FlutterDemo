@@ -5,12 +5,13 @@ import 'package:intl/intl.dart';
 class DateInputField extends StatefulWidget {
   final String label;
   final DateTime? value;
-  final ValueChanged<DateTime?> onChanged;
+  final ValueChanged<DateTime?>? onChanged;
   final DateFormat? format;
   final bool isRequired;
   final String? Function(DateTime?)? validator;
   final TextInputAction? textInputAction;
   final VoidCallback? onEditingComplete;
+  final bool enabled;
 
   const DateInputField({
     super.key,
@@ -22,6 +23,7 @@ class DateInputField extends StatefulWidget {
     this.validator,
     this.textInputAction,
     this.onEditingComplete,
+    this.enabled = true,
   });
 
   @override
@@ -36,6 +38,7 @@ class _DateInputFieldState extends State<DateInputField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEnabled = widget.enabled;
 
     return FormField<DateTime>(
       initialValue: widget.value,
@@ -46,10 +49,10 @@ class _DateInputFieldState extends State<DateInputField> {
           decoration: InputDecoration(
             labelText: widget.label,
             errorText: field.errorText,
-            suffixText: _hasFocus ? 'Enter 选择' : null,
+            suffixText: _hasFocus && isEnabled ? 'Enter 选择' : null,
             suffixIcon: Icon(
               Icons.calendar_today,
-              color: _hasFocus ? theme.colorScheme.primary : null,
+              color: _hasFocus && isEnabled ? theme.colorScheme.primary : null,
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
@@ -62,39 +65,49 @@ class _DateInputFieldState extends State<DateInputField> {
                 color: theme.colorScheme.outline,
               ),
             ),
-            filled: _hasFocus,
-            fillColor: _hasFocus
+            disabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: theme.colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            filled: _hasFocus && isEnabled,
+            fillColor: _hasFocus && isEnabled
                 ? theme.colorScheme.primaryContainer.withOpacity(0.1)
                 : null,
+            enabled: isEnabled,
           ),
           isEmpty: widget.value == null,
           isFocused: _hasFocus,
           child: Focus(
             focusNode: _focusNode,
-            onKeyEvent: (_, event) {
-              if (event is KeyDownEvent &&
-                  (event.logicalKey == LogicalKeyboardKey.enter ||
-                      event.logicalKey == LogicalKeyboardKey.space)) {
-                _showDatePicker(context, field);
-                return KeyEventResult.handled;
-              }
-              if (event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.tab) {
-                if (widget.onEditingComplete != null) {
-                  widget.onEditingComplete!();
-                }
-                return KeyEventResult.handled;
-              }
-              return KeyEventResult.ignored;
-            },
+            onKeyEvent: isEnabled
+                ? (_, event) {
+                    if (event is KeyDownEvent &&
+                        (event.logicalKey == LogicalKeyboardKey.enter ||
+                            event.logicalKey == LogicalKeyboardKey.space)) {
+                      _showDatePicker(context, field);
+                      return KeyEventResult.handled;
+                    }
+                    if (event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.tab) {
+                      if (widget.onEditingComplete != null) {
+                        widget.onEditingComplete!();
+                      }
+                      return KeyEventResult.handled;
+                    }
+                    return KeyEventResult.ignored;
+                  }
+                : null,
             child: GestureDetector(
-              onTap: () => _showDatePicker(context, field),
+              onTap: isEnabled ? () => _showDatePicker(context, field) : null,
               behavior: HitTestBehavior.opaque,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: DefaultTextStyle(
                   style: widget.value != null
-                      ? theme.textTheme.bodyMedium!
+                      ? theme.textTheme.bodyMedium!.copyWith(
+                          color: isEnabled ? null : theme.disabledColor,
+                        )
                       : theme.textTheme.bodyMedium!.copyWith(
                           color: theme.hintColor,
                         ),
@@ -141,6 +154,8 @@ class _DateInputFieldState extends State<DateInputField> {
 
   Future<void> _showDatePicker(
       BuildContext context, FormFieldState<DateTime> field) async {
+    if (!widget.enabled || widget.onChanged == null) return;
+
     final initialDate = widget.value ?? DateTime.now();
     final firstDate = DateTime(1000); // 支持古代作品
     final lastDate = DateTime.now().add(const Duration(days: 365)); // 允许未来一年
@@ -154,7 +169,7 @@ class _DateInputFieldState extends State<DateInputField> {
 
     if (picked != null && picked != widget.value) {
       field.didChange(picked);
-      widget.onChanged(picked);
+      widget.onChanged!(picked);
     }
 
     // 选择完日期后继续 Tab 导航

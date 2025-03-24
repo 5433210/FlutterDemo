@@ -5,12 +5,13 @@ class DropdownField<T> extends StatefulWidget {
   final String label;
   final T? value;
   final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?> onChanged;
+  final ValueChanged<T?>? onChanged;
   final bool isRequired;
   final String? Function(T?)? validator;
   final String? hintText;
   final TextInputAction? textInputAction;
   final VoidCallback? onEditingComplete;
+  final bool enabled;
 
   const DropdownField({
     super.key,
@@ -23,6 +24,7 @@ class DropdownField<T> extends StatefulWidget {
     this.hintText,
     this.textInputAction,
     this.onEditingComplete,
+    this.enabled = true,
   });
 
   @override
@@ -40,6 +42,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isEnabled = widget.enabled && widget.onChanged != null;
 
     return FormField<T>(
       initialValue: widget.value,
@@ -63,26 +66,33 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
                   color: theme.colorScheme.outline,
                 ),
               ),
+              disabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.outline.withOpacity(0.5),
+                ),
+              ),
               suffixIcon: Icon(
                 Icons.arrow_drop_down,
-                color: _hasFocus ? theme.colorScheme.primary : null,
+                color:
+                    _hasFocus && isEnabled ? theme.colorScheme.primary : null,
               ),
-              filled: _hasFocus,
-              fillColor: _hasFocus
+              filled: _hasFocus && isEnabled,
+              fillColor: _hasFocus && isEnabled
                   ? theme.colorScheme.primaryContainer.withOpacity(0.1)
                   : null,
+              enabled: isEnabled,
             ),
             isEmpty: widget.value == null,
             isFocused: _hasFocus,
             child: Focus(
               focusNode: _focusNode,
-              onKeyEvent: _handleKeyEvent,
+              onKeyEvent: isEnabled ? _handleKeyEvent : null,
               child: GestureDetector(
-                onTap: _showDropdown,
+                onTap: isEnabled ? _showDropdown : null,
                 behavior: HitTestBehavior.opaque,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: _buildText(theme),
+                  child: _buildText(theme, isEnabled),
                 ),
               ),
             ),
@@ -119,14 +129,16 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
     _updateSelectedIndex();
   }
 
-  Widget _buildText(ThemeData theme) {
+  Widget _buildText(ThemeData theme, bool isEnabled) {
     if (widget.value != null) {
       final selectedItem = widget.items.firstWhere(
         (item) => item.value == widget.value,
         orElse: () => widget.items.first,
       );
       return DefaultTextStyle(
-        style: theme.textTheme.bodyMedium!,
+        style: theme.textTheme.bodyMedium!.copyWith(
+          color: isEnabled ? null : theme.disabledColor,
+        ),
         child: selectedItem.child,
       );
     }
@@ -204,7 +216,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
   void _selectCurrentItem() {
     if (_selectedIndex >= 0 && _selectedIndex < widget.items.length) {
       final selectedItem = widget.items[_selectedIndex];
-      widget.onChanged(selectedItem.value);
+      widget.onChanged!(selectedItem.value);
       _hideDropdown();
       if (widget.onEditingComplete != null) {
         widget.onEditingComplete!();
@@ -231,6 +243,8 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
   }
 
   void _showDropdown() {
+    if (!widget.enabled || widget.onChanged == null) return;
+
     if (_isDropdownOpen) {
       _hideDropdown();
       return;
@@ -267,7 +281,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
 
                     return InkWell(
                       onTap: () {
-                        widget.onChanged(item.value);
+                        widget.onChanged!(item.value);
                         _hideDropdown();
                         if (widget.onEditingComplete != null) {
                           widget.onEditingComplete!();

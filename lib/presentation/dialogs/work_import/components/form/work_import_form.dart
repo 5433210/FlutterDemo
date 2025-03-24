@@ -137,6 +137,7 @@ class _WorkImportFormState extends State<WorkImportForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isProcessing = widget.state.isProcessing;
 
     return Focus(
       onKey: (_, event) {
@@ -232,7 +233,8 @@ class _WorkImportFormState extends State<WorkImportForm> {
                             child: Text(e.label),
                           ))
                       .toList(),
-                  onChanged: _handleStyleChange,
+                  onChanged: isProcessing ? null : _handleStyleChange,
+                  enabled: !isProcessing,
                 ),
               ),
               const SizedBox(height: AppSizes.m),
@@ -252,7 +254,8 @@ class _WorkImportFormState extends State<WorkImportForm> {
                             child: Text(e.label),
                           ))
                       .toList(),
-                  onChanged: _handleToolChange,
+                  onChanged: isProcessing ? null : _handleToolChange,
+                  enabled: !isProcessing,
                 ),
               ),
               const SizedBox(height: AppSizes.m),
@@ -266,9 +269,11 @@ class _WorkImportFormState extends State<WorkImportForm> {
                 child: DateInputField(
                   label: '创作日期',
                   value: widget.state.creationDate,
-                  onChanged: _handleDateChange,
+                  onChanged: isProcessing ? null : _handleDateChange,
                   textInputAction: TextInputAction.next,
-                  onEditingComplete: () => _remarkFocus.requestFocus(),
+                  onEditingComplete:
+                      isProcessing ? null : () => _remarkFocus.requestFocus(),
+                  enabled: !isProcessing,
                 ),
               ),
               const SizedBox(height: AppSizes.m),
