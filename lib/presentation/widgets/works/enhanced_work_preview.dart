@@ -59,6 +59,7 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
     final currentImage = widget.selectedIndex < widget.images.length
         ? widget.images[widget.selectedIndex]
         : null;
+    final theme = Theme.of(context);
 
     return LayoutBuilder(builder: (context, constraints) {
       final availableHeight = constraints.maxHeight;
@@ -68,15 +69,16 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
 
       return Column(
         children: [
-          // 工具栏 - 始终显示
+          // 工具栏 - 采用更轻量化的设计
           if (widget.showToolbar && widget.toolbarActions != null)
             Container(
               height: toolbarHeight,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                color: theme.colorScheme.surface, // Use surface color instead
                 border: Border(
                   bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outlineVariant,
+                    color: theme.colorScheme.outlineVariant
+                        .withOpacity(0.3), // Softer line
                     width: 1,
                   ),
                 ),
@@ -106,14 +108,15 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
                     maxScale: 4.0,
                     showControls: true,
                   )
-                : const Center(
+                : Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.image_not_supported,
-                            size: 48, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text('没有可显示的图片'),
+                            size: 48, color: theme.colorScheme.outline),
+                        const SizedBox(height: 16),
+                        Text('没有可显示的图片',
+                            style: TextStyle(color: theme.colorScheme.outline)),
                       ],
                     ),
                   ),

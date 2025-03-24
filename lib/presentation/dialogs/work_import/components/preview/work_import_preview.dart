@@ -10,7 +10,12 @@ import '../../../common/dialogs.dart';
 
 /// Displays a preview of work images during import with editing capabilities
 class WorkImportPreview extends ConsumerStatefulWidget {
-  const WorkImportPreview({super.key});
+  final bool showBottomButtons;
+
+  const WorkImportPreview({
+    super.key,
+    this.showBottomButtons = true,
+  });
 
   @override
   ConsumerState<WorkImportPreview> createState() => _WorkImportPreviewState();
@@ -63,6 +68,14 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
             Expanded(
               child: Card(
                 clipBehavior: Clip.antiAlias,
+                elevation: 0, // Remove card elevation for cleaner UI
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(
+                    color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                    width: 1,
+                  ),
+                ),
                 child: EnhancedWorkPreview(
                   images: images,
                   selectedIndex: state.selectedImageIndex,
@@ -107,24 +120,26 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            DialogButtonGroup(
-              // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
-              onCancel: state.isProcessing
-                  ? () {}
-                  : () => Navigator.of(context).pop(),
-              // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
-              onConfirm: (images.isEmpty || state.isProcessing)
-                  ? () {}
-                  : () async {
-                      final success = await _handleConfirm();
-                      if (success && mounted) {
-                        Navigator.of(context).pop(true);
-                      }
-                    },
-              confirmText: '导入',
-              isProcessing: state.isProcessing,
-            ),
+            // Only show the bottom buttons if requested
+            if (widget.showBottomButtons) const SizedBox(height: 16),
+            if (widget.showBottomButtons)
+              DialogButtonGroup(
+                // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
+                onCancel: state.isProcessing
+                    ? () {}
+                    : () => Navigator.of(context).pop(),
+                // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
+                onConfirm: (images.isEmpty || state.isProcessing)
+                    ? () {}
+                    : () async {
+                        final success = await _handleConfirm();
+                        if (success && mounted) {
+                          Navigator.of(context).pop(true);
+                        }
+                      },
+                confirmText: '导入',
+                isProcessing: state.isProcessing,
+              ),
           ],
         );
       },

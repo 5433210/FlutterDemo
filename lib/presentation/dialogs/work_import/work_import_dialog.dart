@@ -32,24 +32,41 @@ class WorkImportDialog extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // AppBar with action buttons moved here
                   AppBar(
                     title: const Text('导入作品'),
                     actions: [
-                      IconButton(
-                        icon: const Icon(Icons.close),
+                      // Cancel button
+                      TextButton.icon(
                         onPressed: state.isProcessing
-                            ? null // Disable close button when processing
+                            ? null
                             : () {
                                 viewModel.reset();
-                                Navigator.of(context).pop();
+                                Navigator.of(context).pop(false);
                               },
-                        // Visual feedback for disabled state
-                        style: IconButton.styleFrom(
+                        icon: const Icon(Icons.close),
+                        label: const Text('取消'),
+                        style: TextButton.styleFrom(
                           foregroundColor: state.isProcessing
                               ? Theme.of(context).disabledColor
                               : null,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      // Import button
+                      FilledButton.icon(
+                        onPressed: (state.canSubmit && !state.isProcessing)
+                            ? () async {
+                                final success = await viewModel.importWork();
+                                if (success && context.mounted) {
+                                  Navigator.of(context).pop(true);
+                                }
+                              }
+                            : null,
+                        icon: const Icon(Icons.save),
+                        label: const Text('导入'),
+                      ),
+                      const SizedBox(width: 16),
                     ],
                   ),
                   Expanded(
@@ -89,7 +106,7 @@ class WorkImportDialog extends ConsumerWidget {
     // For large and medium screens, use horizontal layout
     if (isLargeScreen || isMediumScreen) {
       return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start, // Align at the top
         children: [
           // Preview section
           Expanded(
@@ -98,7 +115,7 @@ class WorkImportDialog extends ConsumerWidget {
               constraints: BoxConstraints(
                 maxHeight: availableHeight - 48, // Account for padding
               ),
-              child: const WorkImportPreview(),
+              child: const WorkImportPreviewWithoutButtons(),
             ),
           ),
 
@@ -129,7 +146,7 @@ class WorkImportDialog extends ConsumerWidget {
         // Preview section with proportional height based on screen size
         SizedBox(
           height: availableHeight * 0.5, // 50% of available height
-          child: const WorkImportPreview(),
+          child: const WorkImportPreviewWithoutButtons(),
         ),
 
         const SizedBox(height: 16),
@@ -159,5 +176,15 @@ class WorkImportDialog extends ConsumerWidget {
       barrierDismissible: false,
       builder: (context) => const WorkImportDialog(),
     );
+  }
+}
+
+/// A version of WorkImportPreview without bottom buttons
+class WorkImportPreviewWithoutButtons extends ConsumerWidget {
+  const WorkImportPreviewWithoutButtons({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const WorkImportPreview(showBottomButtons: false);
   }
 }
