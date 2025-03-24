@@ -60,67 +60,88 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
         ? widget.images[widget.selectedIndex]
         : null;
 
-    return Column(
-      children: [
-        // 工具栏 - 始终显示
-        if (widget.showToolbar && widget.toolbarActions != null)
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                  width: 1,
+    return LayoutBuilder(builder: (context, constraints) {
+      final availableHeight = constraints.maxHeight;
+      final toolbarHeight = widget.showToolbar ? 56.0 : 0.0;
+      final thumbnailHeight = widget.images.isNotEmpty ? 120.0 : 0.0;
+      final imageHeight = availableHeight - toolbarHeight - thumbnailHeight;
+
+      return Column(
+        children: [
+          // 工具栏 - 始终显示
+          if (widget.showToolbar && widget.toolbarActions != null)
+            Container(
+              height: toolbarHeight,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1,
+                  ),
                 ),
               ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(children: widget.toolbarActions!),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(children: widget.toolbarActions!),
-                const SizedBox(width: 8),
-              ],
-            ),
+
+          // 主图片显示区域
+          Expanded(
+            child: currentImage != null
+                ? ZoomableImageView(
+                    imagePath: currentImage.path,
+                    enableMouseWheel: true,
+                    minScale: 0.5,
+                    maxScale: 4.0,
+                    showControls: true,
+                  )
+                : const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image_not_supported,
+                            size: 48, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text('没有可显示的图片'),
+                      ],
+                    ),
+                  ),
           ),
 
-        // 主图片显示区域
-        Expanded(
-          child: currentImage != null
-              ? ZoomableImageView(
-                  imagePath: currentImage.path,
-                  enableMouseWheel: true,
-                  minScale: 0.5,
-                  maxScale: 4.0,
-                )
-              : const Center(
-                  child: Text('没有可显示的图片'),
-                ),
-        ),
-
-        // 缩略图条 - 仅在有图片时显示
-        if (widget.images.isNotEmpty)
-          SizedBox(
-            height: 120,
-            child: ThumbnailStrip<WorkImage>(
-              images: widget.images,
-              selectedIndex: widget.selectedIndex,
-              isEditable: widget.isEditing,
-              onTap: (index) {
-                AppLogger.debug('EnhancedWorkPreview onTap: $index');
-                widget.onIndexChanged?.call(index);
-              },
-              onReorder: (oldIndex, newIndex) {
-                AppLogger.debug(
-                    'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex');
-                widget.onImagesReordered?.call(oldIndex, newIndex);
-              },
-              pathResolver: (image) => image.path,
-              keyResolver: (image) => image.id,
+          // 缩略图条 - 仅在有图片时显示
+          if (widget.images.isNotEmpty)
+            SizedBox(
+              height: thumbnailHeight,
+              child: ThumbnailStrip<WorkImage>(
+                images: widget.images,
+                selectedIndex: widget.selectedIndex,
+                isEditable: widget.isEditing,
+                onTap: (index) {
+                  AppLogger.debug('EnhancedWorkPreview onTap: $index');
+                  widget.onIndexChanged?.call(index);
+                },
+                onReorder: (oldIndex, newIndex) {
+                  AppLogger.debug(
+                      'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex');
+                  widget.onImagesReordered?.call(oldIndex, newIndex);
+                },
+                pathResolver: (image) => image.path,
+                keyResolver: (image) => image.id,
+              ),
             ),
-          ),
-      ],
-    );
+        ],
+      );
+    });
   }
 }

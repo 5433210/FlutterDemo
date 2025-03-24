@@ -15,14 +15,17 @@ class WorkImportDialog extends ConsumerWidget {
     final viewModel = ref.read(workImportProvider.notifier);
 
     return Dialog.fullscreen(
-      child: Material(
-        color: Theme.of(context).colorScheme.surface,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 1200,
-              maxHeight: 800,
-            ),
+      child: LayoutBuilder(builder: (context, constraints) {
+        // Calculate responsive sizes based on available space
+        final availableWidth = constraints.maxWidth;
+        final availableHeight = constraints.maxHeight;
+        final isLargeScreen = availableWidth >= 1100;
+        final isMediumScreen = availableWidth >= 800 && availableWidth < 1100;
+        final isSmallScreen = availableWidth < 800;
+
+        return Material(
+          color: Theme.of(context).colorScheme.surface,
+          child: SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -39,39 +42,96 @@ class WorkImportDialog extends ConsumerWidget {
                   ],
                 ),
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
+                  child: Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Preview section
-                        const Expanded(
-                          flex: 3,
-                          child: WorkImportPreview(),
-                        ),
-
-                        const SizedBox(width: 24),
-
-                        // Form section
-                        Expanded(
-                          flex: 2,
-                          child: WorkImportForm(
-                            state: state,
-                            viewModel: viewModel,
-                          ),
-                        ),
-                      ],
+                    child: _buildResponsiveLayout(
+                      context,
+                      isLargeScreen,
+                      isMediumScreen,
+                      isSmallScreen,
+                      availableHeight,
+                      availableWidth,
+                      state,
+                      viewModel,
                     ),
                   ),
                 ),
               ],
             ),
           ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildResponsiveLayout(
+    BuildContext context,
+    bool isLargeScreen,
+    bool isMediumScreen,
+    bool isSmallScreen,
+    double availableHeight,
+    double availableWidth,
+    dynamic state,
+    dynamic viewModel,
+  ) {
+    // For large and medium screens, use horizontal layout
+    if (isLargeScreen || isMediumScreen) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Preview section
+          Expanded(
+            flex: 3,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: availableHeight - 48, // Account for padding
+              ),
+              child: const WorkImportPreview(),
+            ),
+          ),
+
+          const SizedBox(width: 24),
+
+          // Form section
+          Expanded(
+            flex: isLargeScreen ? 2 : 3,
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: availableHeight - 48, // Account for padding
+                ),
+                child: WorkImportForm(
+                  state: state,
+                  viewModel: viewModel,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // For small screens, use vertical layout
+    return Column(
+      children: [
+        // Preview section with proportional height based on screen size
+        SizedBox(
+          height: availableHeight * 0.5, // 50% of available height
+          child: const WorkImportPreview(),
         ),
-      ),
+
+        const SizedBox(height: 16),
+
+        // Form section that can scroll to fit in remaining space
+        Expanded(
+          child: SingleChildScrollView(
+            child: WorkImportForm(
+              state: state,
+              viewModel: viewModel,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -84,6 +144,7 @@ class WorkImportDialog extends ConsumerWidget {
 
     return showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => const WorkImportDialog(),
     );
   }

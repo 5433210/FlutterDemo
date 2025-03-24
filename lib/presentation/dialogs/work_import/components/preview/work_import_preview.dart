@@ -51,65 +51,83 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
         ? null
         : () => _handleDeleteSelected();
 
-    return Column(
-      children: [
-        Expanded(
-          child: EnhancedWorkPreview(
-            images: images,
-            selectedIndex: state.selectedImageIndex,
-            isEditing: !state.isProcessing, // 处理中禁用编辑
-            showToolbar: true,
-            toolbarActions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: FilledButton.tonalIcon(
-                  onPressed: handleAdd, // 处理中禁用
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('添加图片'),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: OutlinedButton.icon(
-                  onPressed: handleDelete, // 处理中禁用
-                  icon: const Icon(
-                    Icons.delete_outline,
-                  ),
-                  label: const Text('删除图片'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    side: BorderSide(
-                      color: theme.colorScheme.error.withOpacity(
-                        images.isEmpty || state.isProcessing ? 0.38 : 1.0,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use constraints to adapt layout
+        final isSmallWidth = constraints.maxWidth < 500;
+        final buttonHeight = 60.0; // Approximate height for buttons
+        final previewHeight = constraints.maxHeight - buttonHeight;
+
+        return Column(
+          children: [
+            Expanded(
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: EnhancedWorkPreview(
+                  images: images,
+                  selectedIndex: state.selectedImageIndex,
+                  isEditing: !state.isProcessing, // 处理中禁用编辑
+                  showToolbar: true,
+                  toolbarActions: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: FilledButton.tonalIcon(
+                        onPressed: handleAdd, // 处理中禁用
+                        icon: const Icon(Icons.add_photo_alternate),
+                        label: isSmallWidth
+                            ? const Text('添加')
+                            : const Text('添加图片'),
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: OutlinedButton.icon(
+                        onPressed: handleDelete, // 处理中禁用
+                        icon: const Icon(
+                          Icons.delete_outline,
+                        ),
+                        label: isSmallWidth
+                            ? const Text('删除')
+                            : const Text('删除图片'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: theme.colorScheme.error,
+                          side: BorderSide(
+                            color: theme.colorScheme.error.withOpacity(
+                              images.isEmpty || state.isProcessing ? 0.38 : 1.0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  onIndexChanged:
+                      state.isProcessing ? null : _handleIndexChanged,
+                  onImagesReordered:
+                      state.isProcessing ? null : _handleImagesReordered,
                 ),
               ),
-            ],
-            onIndexChanged: state.isProcessing ? null : _handleIndexChanged,
-            onImagesReordered:
-                state.isProcessing ? null : _handleImagesReordered,
-          ),
-        ),
-        const SizedBox(height: 16),
-        DialogButtonGroup(
-          // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
-          onCancel:
-              state.isProcessing ? () {} : () => Navigator.of(context).pop(),
-          // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
-          onConfirm: (images.isEmpty || state.isProcessing)
-              ? () {}
-              : () async {
-                  final success = await _handleConfirm();
-                  if (success && mounted) {
-                    Navigator.of(context).pop(true);
-                  }
-                },
-          confirmText: '导入',
-          isProcessing: state.isProcessing,
-        ),
-      ],
+            ),
+            const SizedBox(height: 16),
+            DialogButtonGroup(
+              // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
+              onCancel: state.isProcessing
+                  ? () {}
+                  : () => Navigator.of(context).pop(),
+              // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
+              onConfirm: (images.isEmpty || state.isProcessing)
+                  ? () {}
+                  : () async {
+                      final success = await _handleConfirm();
+                      if (success && mounted) {
+                        Navigator.of(context).pop(true);
+                      }
+                    },
+              confirmText: '导入',
+              isProcessing: state.isProcessing,
+            ),
+          ],
+        );
+      },
     );
   }
 
