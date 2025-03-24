@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -20,16 +21,35 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
   /// 判断是否可以保存
   bool get canSubmit {
-    return state.images.isNotEmpty &&
+    return state.hasImages &&
         state.title.trim().isNotEmpty &&
         !state.isProcessing;
   }
 
   /// 添加图片
-  Future<void> addImages(List<File> files) async {
-    if (files.isEmpty) return;
-
+  Future<void> addImages([List<File>? files]) async {
     try {
+      state = state.copyWith(error: null);
+
+      // 如果没有传入文件，则打开文件选择器
+      if (files == null || files.isEmpty) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          allowMultiple: true,
+        );
+
+        if (result == null || result.files.isEmpty) {
+          return;
+        }
+
+        files = result.files
+            .where((file) => file.path != null)
+            .map((file) => File(file.path!))
+            .toList();
+
+        if (files.isEmpty) return;
+      }
+
       state = state.copyWith(
         isProcessing: true,
         error: null,
@@ -45,6 +65,11 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         error: '添加图片失败: $e',
       );
     }
+  }
+
+  /// 清理状态（关闭对话框时调用）
+  void cleanup() {
+    reset();
   }
 
   /// 导入作品
@@ -70,7 +95,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       // 执行导入操作
       await _workService.importWork(state.images, work);
 
-      state = state.copyWith(isProcessing: false);
+      // 导入成功后重置状态
+      reset();
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -123,7 +149,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     );
   }
 
-  /// 重新排序
+  /// 重新排序图片
   void reorderImages(int oldIndex, int newIndex) {
     if (oldIndex < 0 ||
         oldIndex >= state.images.length ||
@@ -132,21 +158,22 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
 
     final images = List<File>.from(state.images);
     final item = images.removeAt(oldIndex);
-    images.insert(newIndex, item);
+    final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    images.insert(adjustedNewIndex, item);
 
     state = state.copyWith(
       images: images,
       selectedImageIndex: _calculateNewSelectedIndex(
         oldIndex: oldIndex,
-        newIndex: newIndex,
+        newIndex: adjustedNewIndex,
         maxIndex: images.length - 1,
       ),
     );
   }
 
-  /// 重置
+  /// 重置状态
   void reset() {
-    state = WorkImportState.initial();
+    state = WorkImportState.clean();
   }
 
   /// 选择图片
@@ -156,23 +183,24 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 设置作者
-  void setAuthor(String author) {
-    state = state.copyWith(author: author.trim());
+  void setAuthor(String? author) {
+    state = state.copyWith(author: author?.trim() ?? '');
   }
 
   /// 设置创作日期
-  void setCreationDate(DateTime date) {
+  void setCreationDate(DateTime? date) {
     state = state.copyWith(creationDate: date);
   }
 
   /// 设置备注
-  void setRemark(String remark) {
-    state = state.copyWith(remark: remark.trim());
+  void setRemark(String? remark) {
+    state = state.copyWith(remark: remark?.trim() ?? '');
   }
 
   /// 设置画风
   void setStyle(String? styleStr) {
     if (styleStr == null) return;
+
     final style = WorkStyle.values.firstWhere(
       (s) => s.toString().split('.').last == styleStr,
       orElse: () => WorkStyle.other,
@@ -181,13 +209,14 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 设置标题
-  void setTitle(String title) {
-    state = state.copyWith(title: title.trim());
+  void setTitle(String? title) {
+    state = state.copyWith(title: title?.trim() ?? '');
   }
 
   /// 设置创作工具
   void setTool(String? toolStr) {
     if (toolStr == null) return;
+
     final tool = WorkTool.values.firstWhere(
       (t) => t.toString().split('.').last == toolStr,
       orElse: () => WorkTool.other,

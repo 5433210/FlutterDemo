@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/models/work/work_image.dart';
 import '../../../../infrastructure/logging/logger.dart';
+import '../../../widgets/common/zoomable_image_view.dart';
 import 'thumbnail_strip.dart';
 
 class ViewModeImagePreview extends ConsumerStatefulWidget {
@@ -78,9 +79,11 @@ class _ViewModeImagePreviewState extends ConsumerState<ViewModeImagePreview> {
                   );
                 }
 
-                return Image.file(
-                  File(currentImage.path),
-                  fit: BoxFit.contain,
+                return ZoomableImageView(
+                  imagePath: currentImage.path,
+                  enableMouseWheel: true,
+                  minScale: 0.5,
+                  maxScale: 4.0,
                 );
               },
             ),

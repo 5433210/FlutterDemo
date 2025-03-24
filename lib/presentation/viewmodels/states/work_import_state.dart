@@ -26,11 +26,11 @@ class WorkImportState {
     this.images = const [],
     this.selectedImage,
     this.title = '',
-    this.author,
+    this.author = '',
     this.style,
     this.tool,
     this.creationDate,
-    this.remark,
+    this.remark = '',
     this.isProcessing = false,
     this.error,
     this.optimizeImages = true,
@@ -41,15 +41,39 @@ class WorkImportState {
     this.selectedImageIndex = 0,
   });
 
-  factory WorkImportState.initial() {
-    return const WorkImportState();
+  /// 获取干净的初始状态
+  factory WorkImportState.clean() {
+    return WorkImportState.initial().copyWith(
+      images: const [],
+      selectedImage: null,
+      title: '',
+      error: null,
+      imageRotations: const {},
+    );
   }
 
+  factory WorkImportState.initial() {
+    return WorkImportState(
+      // 设置默认值
+      style: WorkStyle.regular,
+      tool: WorkTool.brush,
+      creationDate: DateTime.now(), // 直接设置当前日期作为默认值
+      author: '', // 提供空字符串而不是 null
+      remark: '', // 提供空字符串而不是 null
+      optimizeImages: true,
+      keepOriginals: false,
+      scale: 1.0,
+      rotation: 0.0,
+      selectedImageIndex: 0,
+    );
+  }
   bool get canSubmit => hasImages && !isProcessing;
-
   bool get hasError => error != null;
   bool get hasImages => images.isNotEmpty;
-  bool get isDirty => hasImages || title.isNotEmpty || author != null;
+
+  bool get isDirty =>
+      hasImages || title.isNotEmpty || author?.isNotEmpty == true;
+
   WorkImportState copyWith({
     List<File>? images,
     File? selectedImage,

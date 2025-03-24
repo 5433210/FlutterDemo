@@ -1,130 +1,165 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../theme/app_sizes.dart';
-import '../../../../pages/works/components/thumbnail_strip.dart';
-import '../../../../viewmodels/states/work_import_state.dart';
-import '../../../../viewmodels/work_import_view_model.dart';
-import '../../../../widgets/common/base_card.dart';
-import '../../../../widgets/common/base_image_preview.dart';
-import '../../../../widgets/common/confirm_dialog.dart';
+import '../../../../../domain/models/work/work_image.dart';
+import '../../../../../infrastructure/logging/logger.dart';
+import '../../../../providers/work_import_provider.dart';
+import '../../../../widgets/works/enhanced_work_preview.dart';
+import '../../../common/dialog_button_group.dart';
+import '../../../common/dialogs.dart';
 
-class WorkImportPreview extends StatelessWidget {
-  final WorkImportState state;
-  final WorkImportViewModel viewModel;
-  final bool isProcessing;
-  final VoidCallback? onAddImages;
-
-  const WorkImportPreview({
-    super.key,
-    required this.state,
-    required this.viewModel,
-    this.isProcessing = false,
-    this.onAddImages,
-  });
+/// Displays a preview of work images during import with editing capabilities
+class WorkImportPreview extends ConsumerStatefulWidget {
+  const WorkImportPreview({super.key});
 
   @override
+  ConsumerState<WorkImportPreview> createState() => _WorkImportPreviewState();
+}
+
+class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
+  @override
   Widget build(BuildContext context) {
-    if (state.images.isEmpty) {
-      return BaseCard(
-        child: InkWell(
-          onTap: onAddImages,
-          child: const Center(
-            child: Padding(
-              padding: EdgeInsets.all(AppSizes.l),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_photo_alternate_outlined, size: 48),
-                  SizedBox(height: AppSizes.s),
-                  Text('点击或拖拽图片以添加'),
-                ],
+    final state = ref.watch(workImportProvider);
+    final theme = Theme.of(context);
+
+    AppLogger.debug(
+        'Building WorkImportPreview with ${state.images.length} images');
+
+    final images = state.images
+        .map((file) => WorkImage(
+              id: file.path,
+              path: file.path,
+              workId: '', // Will be set during import
+              originalPath: file.path,
+              thumbnailPath: file.path,
+              index: state.images.indexOf(file),
+              width: 0, // Will be set during import
+              height: 0, // Will be set during import
+              format: 'image',
+              size: 0, // Will be set during import
+              createTime: DateTime.now(),
+              updateTime: DateTime.now(),
+            ))
+        .toList();
+
+    // 创建一个函数来处理"添加图片"按钮的点击
+    VoidCallback? handleAdd =
+        state.isProcessing ? null : () => _handleAddImages();
+
+    // 创建一个函数来处理"删除图片"按钮的点击
+    VoidCallback? handleDelete = (images.isEmpty || state.isProcessing)
+        ? null
+        : () => _handleDeleteSelected();
+
+    return Column(
+      children: [
+        Expanded(
+          child: EnhancedWorkPreview(
+            images: images,
+            selectedIndex: state.selectedImageIndex,
+            isEditing: !state.isProcessing, // 处理中禁用编辑
+            showToolbar: true,
+            toolbarActions: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: FilledButton.tonalIcon(
+                  onPressed: handleAdd, // 处理中禁用
+                  icon: const Icon(Icons.add_photo_alternate),
+                  label: const Text('添加图片'),
+                ),
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: OutlinedButton.icon(
+                  onPressed: handleDelete, // 处理中禁用
+                  icon: const Icon(
+                    Icons.delete_outline,
+                  ),
+                  label: const Text('删除图片'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(
+                      color: theme.colorScheme.error.withOpacity(
+                        images.isEmpty || state.isProcessing ? 0.38 : 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            onIndexChanged: state.isProcessing ? null : _handleIndexChanged,
+            onImagesReordered:
+                state.isProcessing ? null : _handleImagesReordered,
           ),
         ),
-      );
-    }
-
-    return BaseCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 工具栏
-          Container(
-            padding: const EdgeInsets.all(AppSizes.s),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Theme.of(context).dividerColor,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                // 追加按钮
-                IconButton(
-                  onPressed: isProcessing ? null : onAddImages,
-                  icon: const Icon(Icons.add_photo_alternate_outlined),
-                  tooltip: '追加图片',
-                  visualDensity: VisualDensity.compact,
-                ),
-                const SizedBox(width: AppSizes.s),
-                Text(
-                  '共 ${state.images.length} 张图片',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-          ),
-
-          // Image preview
-          Expanded(
-            child: BaseImagePreview(
-              imagePaths: state.images.map((file) => file.path).toList(),
-              initialIndex: state.selectedImageIndex,
-              onIndexChanged: viewModel.selectImage,
-              showThumbnails: false,
-            ),
-          ),
-
-          // Thumbnail strip
-          SizedBox(
-            height: 100,
-            child: ThumbnailStrip<File>(
-              images: state.images,
-              selectedIndex: state.selectedImageIndex,
-              onTap: viewModel.selectImage,
-              isEditable: !isProcessing,
-              pathResolver: (file) => file.path,
-              keyResolver: (file) => file.path,
-              onReorder: viewModel.reorderImages,
-              onRemove: isProcessing
-                  ? null
-                  : (index) => _handleRemoveImage(context, index),
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 16),
+        DialogButtonGroup(
+          // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
+          onCancel:
+              state.isProcessing ? () {} : () => Navigator.of(context).pop(),
+          // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
+          onConfirm: (images.isEmpty || state.isProcessing)
+              ? () {}
+              : () async {
+                  final success = await _handleConfirm();
+                  if (success && mounted) {
+                    Navigator.of(context).pop(true);
+                  }
+                },
+          confirmText: '导入',
+          isProcessing: state.isProcessing,
+        ),
+      ],
     );
   }
 
-  void _handleRemoveImage(BuildContext context, int index) {
-    if (state.images.length > 1) {
-      viewModel.removeImage(index);
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => ConfirmDialog(
-          title: '确认删除',
-          content: '这是最后一张图片，删除后将退出导入。确定要删除吗？',
-          onConfirm: () {
-            viewModel.removeImage(index);
-            Navigator.of(context).pop(true);
-          },
-        ),
-      );
+  Future<void> _handleAddImages() async {
+    final viewModel = ref.read(workImportProvider.notifier);
+    AppLogger.debug('WorkImportPreview handling addImages');
+    await viewModel.addImages([]);
+  }
+
+  Future<bool> _handleConfirm() async {
+    final viewModel = ref.read(workImportProvider.notifier);
+    return viewModel.importWork();
+  }
+
+  Future<void> _handleDeleteSelected() async {
+    final state = ref.read(workImportProvider);
+    if (state.images.isEmpty) return;
+
+    final isLastImage = state.images.length == 1;
+    String title = isLastImage ? '确认删除' : '删除图片';
+    String message = isLastImage ? '这是最后一张图片，删除后将退出导入。确定要删除吗？' : '确定要删除选中的图片吗？';
+
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: title,
+      message: message,
+    );
+
+    if (confirmed == true) {
+      final viewModel = ref.read(workImportProvider.notifier);
+      AppLogger.debug(
+          'WorkImportPreview removing image at index: ${state.selectedImageIndex}');
+      viewModel.removeImage(state.selectedImageIndex);
+
+      if (isLastImage && mounted) {
+        Navigator.of(context).pop();
+      }
     }
+  }
+
+  void _handleImagesReordered(int oldIndex, int newIndex) {
+    final viewModel = ref.read(workImportProvider.notifier);
+    AppLogger.debug(
+        'WorkImportPreview reordering images: $oldIndex -> $newIndex');
+    viewModel.reorderImages(oldIndex, newIndex);
+  }
+
+  void _handleIndexChanged(int index) {
+    final viewModel = ref.read(workImportProvider.notifier);
+    AppLogger.debug('WorkImportPreview selecting image: $index');
+    viewModel.selectImage(index);
   }
 }

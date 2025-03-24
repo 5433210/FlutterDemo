@@ -53,6 +53,9 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   static const double _thumbHeight = 100.0;
   static const double _thumbSpacing = 8.0;
   static const int _maxRetryAttempts = 3;
+  static const Duration _scrollAnimationDuration = Duration(milliseconds: 100);
+  static const double _scrollMultiplier = 2.0;
+
   final ScrollController _scrollController = ScrollController();
   final Map<String, _FileStatus> _fileStatus = {};
   bool _isDragging = false;
@@ -60,82 +63,103 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
 
   @override
   Widget build(BuildContext context) {
+    AppLogger.debug(
+        'Building ThumbnailStrip with ${widget.images.length} images');
     final theme = Theme.of(context);
 
     if (!widget.isEditable) {
-      // 非编辑模式：普通的滚动列表
-      return Listener(
-        onPointerSignal: _handlePointerSignal,
-        child: ScrollConfiguration(
-          behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
-          child: ListView.builder(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            itemCount: widget.images.length,
-            itemBuilder: (context, index) =>
-                _buildThumbnail(context, index, theme),
+      return SizedBox(
+        height: 120,
+        child: Listener(
+          onPointerSignal: _handlePointerSignal,
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              scrollbars: false,
+              dragDevices: PointerDeviceKind.values.toSet(),
+              physics: const BouncingScrollPhysics(),
+            ),
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              itemCount: widget.images.length,
+              itemBuilder: (context, index) =>
+                  _buildThumbnail(context, index, theme),
+            ),
           ),
         ),
       );
     }
 
     // 编辑模式：可重排序的列表
-    return ReorderableListView.builder(
-      scrollController: _scrollController,
-      scrollDirection: Axis.horizontal,
-      buildDefaultDragHandles: false,
-      onReorderStart: (index) {
-        setState(() => _isDragging = true);
-        HapticFeedback.selectionClick();
-      },
-      onReorderEnd: (_) {
-        setState(() => _isDragging = false);
-        HapticFeedback.lightImpact();
-      },
-      onReorder: (oldIndex, newIndex) {
-        if (oldIndex < newIndex) newIndex--;
-        widget.onReorder?.call(oldIndex, newIndex);
-      },
-      proxyDecorator: (child, index, animation) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (context, child) {
-            final elevationValue = animation.value * 8.0;
-            final scaleValue = 1.0 + math.min(0.2, animation.value * 0.1);
-            final rotateValue = (1.0 - animation.value) * 0.1;
-
-            return Transform(
-              transform: Matrix4.identity()
-                ..scale(scaleValue, scaleValue)
-                ..rotateZ(rotateValue),
-              alignment: Alignment.center,
-              child: Material(
-                elevation: elevationValue,
-                color: Colors.transparent,
-                shadowColor: Colors.black38,
-                borderRadius: BorderRadius.circular(4),
-                child: child,
-              ),
-            );
-          },
-          child: child,
-        );
-      },
-      itemBuilder: (context, index) {
-        final thumbnail = _buildThumbnail(context, index, theme);
-        return ReorderableDragStartListener(
-          key: ValueKey(widget.keyResolver(widget.images[index])),
-          index: index,
-          enabled: !_isDragging,
-          child: MouseRegion(
-            cursor: _isDragging
-                ? SystemMouseCursors.grabbing
-                : SystemMouseCursors.grab,
-            child: thumbnail,
+    return SizedBox(
+      height: 120,
+      child: Listener(
+        onPointerSignal: _handlePointerSignal,
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+            dragDevices: PointerDeviceKind.values.toSet(),
+            physics: const BouncingScrollPhysics(),
           ),
-        );
-      },
-      itemCount: widget.images.length,
+          child: ReorderableListView.builder(
+            scrollController: _scrollController,
+            scrollDirection: Axis.horizontal,
+            buildDefaultDragHandles: false,
+            onReorderStart: (index) {
+              setState(() => _isDragging = true);
+              HapticFeedback.selectionClick();
+            },
+            onReorderEnd: (_) {
+              setState(() => _isDragging = false);
+              HapticFeedback.lightImpact();
+            },
+            onReorder: (oldIndex, newIndex) {
+              if (oldIndex < newIndex) newIndex--;
+              widget.onReorder?.call(oldIndex, newIndex);
+            },
+            proxyDecorator: (child, index, animation) {
+              return AnimatedBuilder(
+                animation: animation,
+                builder: (context, child) {
+                  final elevationValue = animation.value * 8.0;
+                  final scaleValue = 1.0 + math.min(0.2, animation.value * 0.1);
+                  final rotateValue = (1.0 - animation.value) * 0.1;
+
+                  return Transform(
+                    transform: Matrix4.identity()
+                      ..scale(scaleValue, scaleValue)
+                      ..rotateZ(rotateValue),
+                    alignment: Alignment.center,
+                    child: Material(
+                      elevation: elevationValue,
+                      color: Colors.transparent,
+                      shadowColor: Colors.black38,
+                      borderRadius: BorderRadius.circular(4),
+                      child: child,
+                    ),
+                  );
+                },
+                child: child,
+              );
+            },
+            itemBuilder: (context, index) {
+              final thumbnail = _buildThumbnail(context, index, theme);
+              return ReorderableDragStartListener(
+                key: ValueKey(widget.keyResolver(widget.images[index])),
+                index: index,
+                enabled: !_isDragging,
+                child: MouseRegion(
+                  cursor: _isDragging
+                      ? SystemMouseCursors.grabbing
+                      : SystemMouseCursors.grab,
+                  child: thumbnail,
+                ),
+              );
+            },
+            itemCount: widget.images.length,
+          ),
+        ),
+      ),
     );
   }
 
@@ -143,7 +167,6 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   void didUpdateWidget(ThumbnailStrip<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Clear cache when images change to force re-checking
     if (widget.images.length != oldWidget.images.length ||
         !_listsEqual(widget.images, oldWidget.images, widget.keyResolver)) {
       _fileStatus.clear();
@@ -176,7 +199,6 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
     final fileExists = status?.exists ?? false;
     final attemptCount = status?.checkAttempts ?? 0;
 
-    // Display different messages based on retry attempts
     String errorMessage = '图片文件不存在';
     if (attemptCount > 0 && attemptCount < _maxRetryAttempts) {
       errorMessage = '正在重试加载图片 ($attemptCount/$_maxRetryAttempts)';
@@ -221,7 +243,6 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Image or placeholder
               if (fileExists)
                 Hero(
                   tag: heroTag,
@@ -385,15 +406,11 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
       try {
         final path = widget.pathResolver(image);
 
-        // Try to open the file for reading - this is a stronger test than just exists()
-        // as it verifies the file is fully accessible
         try {
           final file = File(path);
           if (await file.exists()) {
-            // Try to read a small part of the file to ensure it's accessible
             final randomAccessFile = await file.open(mode: FileMode.read);
             try {
-              // Read just a few bytes to verify file is accessible
               await randomAccessFile.read(4);
               _fileStatus[path] = _FileStatus(
                 exists: true,
@@ -414,7 +431,6 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
             }
           }
         } catch (e) {
-          // The file exists but couldn't be accessed - treat as not ready yet
           AppLogger.debug(
             'File exists but not accessible yet',
             tag: 'ThumbnailStrip',
@@ -439,7 +455,6 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
 
     if (mounted) setState(() {});
 
-    // Schedule a retry if any files failed to load
     if (hasFailures) {
       _retryTimer = Timer(const Duration(milliseconds: 500), () {
         if (mounted) _checkImageFiles();
@@ -448,18 +463,34 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   }
 
   void _handlePointerSignal(PointerSignalEvent event) {
+    AppLogger.debug('收到指针信号事件: ${event.runtimeType}');
+
     if (event is PointerScrollEvent) {
-      // 滚轮事件处理：垂直滚动转换为水平滚动
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(
-          (_scrollController.offset + event.scrollDelta.dy)
-              .clamp(0, _scrollController.position.maxScrollExtent),
-        );
+      AppLogger.debug('滚动事件: delta=${event.scrollDelta}, kind=${event.kind}');
+
+      if (!mounted || !_scrollController.hasClients) {
+        AppLogger.debug('组件未挂载或滚动控制器未就绪');
+        return;
       }
+
+      final delta = event.scrollDelta;
+      // 如果是水平滚动则直接使用，如果是垂直滚动则转换为水平方向
+      final adjustedDelta =
+          (delta.dx != 0 ? delta.dx : -delta.dy) * _scrollMultiplier;
+
+      AppLogger.debug('调整后的滚动增量: $adjustedDelta');
+
+      final newOffset = (_scrollController.offset + adjustedDelta)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      _scrollController.animateTo(
+        newOffset,
+        duration: _scrollAnimationDuration,
+        curve: Curves.easeOutCubic,
+      );
     }
   }
 
-  // Check if two lists of images are equal by comparing their keys
   bool _listsEqual(List<T> a, List<T> b, String Function(T) keyResolver) {
     if (a.length != b.length) return false;
     for (int i = 0; i < a.length; i++) {
@@ -475,10 +506,8 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
     final viewportWidth = MediaQuery.of(context).size.width;
     final targetOffset = widget.selectedIndex * itemWidth;
 
-    // 计算目标偏移，使选中项居中
     final offset = (targetOffset - (viewportWidth - itemWidth) / 2)
-        .clamp(0.0, _scrollController.position.maxScrollExtent)
-        .toDouble();
+        .clamp(0.0, _scrollController.position.maxScrollExtent);
 
     _scrollController.animateTo(
       offset,
