@@ -374,9 +374,9 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.error_outline,
+                          Icons.circle_rounded,
                           size: 24,
-                          color: theme.colorScheme.error,
+                          color: theme.colorScheme.surface,
                         ),
                         if (attemptCount > 0 &&
                             attemptCount < _maxRetryAttempts)

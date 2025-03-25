@@ -276,19 +276,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
       children: [
         Expanded(
           flex: 7,
-          child: Column(
-            children: [
-              // 添加与工具栏高度一致的留白区域，确保与编辑模式平滑切换
-              const SizedBox(height: AppSizes.spacingMedium),
-              Expanded(
-                child: ViewModeImagePreview(
-                  images: work.images,
-                  selectedIndex: state.selectedImageIndex,
-                  onImageSelect: (index) =>
-                      ref.read(workDetailProvider.notifier).selectImage(index),
-                ),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.spacingMedium),
+            child: ViewModeImagePreview(
+              images: work.images,
+              selectedIndex: state.selectedImageIndex,
+              onImageSelect: (index) =>
+                  ref.read(workDetailProvider.notifier).selectImage(index),
+            ),
           ),
         ),
         SidebarToggle(

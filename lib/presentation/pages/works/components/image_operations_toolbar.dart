@@ -14,60 +14,67 @@ class ImageOperationsToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.2),
-          width: 1,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 添加图片按钮
+        Tooltip(
+          message: '添加图片',
+          preferBelow: false,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.inverseSurface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Container(
+            height: 36,
+            width: 36,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: IconButton(
+              onPressed: onAddImages,
+              icon: const Icon(Icons.add_photo_alternate, size: 20),
+              color: theme.colorScheme.onPrimary,
+              padding: EdgeInsets.zero,
+            ),
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 添加图片按钮
-          FilledButton.icon(
-            onPressed: onAddImages,
-            icon: const Icon(Icons.add_photo_alternate, size: 16),
-            label: const Text('添加图片'),
-            style: FilledButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              backgroundColor: theme.colorScheme.primaryContainer,
-              foregroundColor: theme.colorScheme.onPrimaryContainer,
-            ),
+
+        const SizedBox(width: 8),
+
+        // 删除图片按钮
+        Tooltip(
+          message: '删除图片',
+          preferBelow: false,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.inverseSurface.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(6),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: SizedBox(
-              height: 24,
-              child: VerticalDivider(
+          child: Container(
+            height: 36,
+            width: 36,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              border: Border.all(
+                color: onDeleteImage == null
+                    ? theme.colorScheme.error.withOpacity(0.3)
+                    : theme.colorScheme.error.withOpacity(0.8),
                 width: 1,
-                color: theme.dividerColor.withOpacity(0.5),
               ),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: IconButton(
+              onPressed: onDeleteImage,
+              icon: const Icon(Icons.delete_outline, size: 20),
+              color: onDeleteImage == null
+                  ? theme.colorScheme.error.withOpacity(0.3)
+                  : theme.colorScheme.error,
+              padding: EdgeInsets.zero,
             ),
           ),
-          // 删除图片按钮
-          OutlinedButton.icon(
-            onPressed: onDeleteImage,
-            icon: const Icon(Icons.delete_outline, size: 16),
-            label: const Text('删除图片'),
-            style: OutlinedButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              foregroundColor: theme.colorScheme.error,
-              side: BorderSide(
-                color: theme.colorScheme.error.withOpacity(
-                  onDeleteImage == null ? 0.38 : 1.0,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -1,191 +1,91 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class DateInputField extends StatefulWidget {
+/// A custom date input field with consistent styling
+class DateInputField extends StatelessWidget {
   final String label;
   final DateTime? value;
   final ValueChanged<DateTime?>? onChanged;
-  final DateFormat? format;
-  final bool isRequired;
-  final String? Function(DateTime?)? validator;
   final TextInputAction? textInputAction;
   final VoidCallback? onEditingComplete;
   final bool enabled;
-  final bool readOnly; // 新增只读模式参数
+  final bool readOnly;
+  final TextStyle? textStyle; // Add this parameter for consistent styling
 
   const DateInputField({
     super.key,
     required this.label,
-    required this.value,
-    required this.onChanged,
-    this.format,
-    this.isRequired = false,
-    this.validator,
+    this.value,
+    this.onChanged,
     this.textInputAction,
     this.onEditingComplete,
     this.enabled = true,
-    this.readOnly = false, // 默认非只读
+    this.readOnly = false,
+    this.textStyle, // Add this parameter to the constructor
   });
-
-  @override
-  State<DateInputField> createState() => _DateInputFieldState();
-}
-
-class _DateInputFieldState extends State<DateInputField> {
-  final _focusNode = FocusNode();
-  bool _hasFocus = false;
-  late final DateFormat _format;
-  final _textController = TextEditingController(); // 用于只读模式显示日期的控制器
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final formattedDate =
-        widget.value != null ? _format.format(widget.value!) : '';
-
-    // 更新控制器文本
-    if (_textController.text != formattedDate) {
-      _textController.text = formattedDate;
-    }
-
+    final effectiveTextStyle = textStyle ?? theme.textTheme.bodyLarge;
     final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    final displayText = value != null ? dateFormat.format(value!) : '';
 
-    // 只读模式使用TextFormField
-    if (widget.readOnly) {
-      return TextFormField(
-        controller: _textController,
+    // Build read-only display with consistent styling
+    if (readOnly) {
+      return InputDecorator(
         decoration: InputDecoration(
-          labelText: widget.label,
-          border: const OutlineInputBorder(),
-          suffixIcon: Icon(
-            Icons.calendar_today,
-            size: 20,
-            color: theme.disabledColor,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 16,
-          ),
+          labelText: label,
           filled: true,
           fillColor: readOnlyFillColor,
-          // 不显示提示文本
-          hintText: null,
+          border: const OutlineInputBorder(),
         ),
-        enabled: true, // 启用但不可编辑
-        readOnly: true,
-        style: TextStyle(color: theme.textTheme.bodyLarge?.color), // 使用普通文本颜色
+        child: Text(
+          displayText,
+          style: effectiveTextStyle, // Use the provided text style
+        ),
       );
     }
 
-    // 互动模式
-    return FormField<DateTime>(
-      initialValue: widget.value,
-      validator:
-          widget.validator ?? (widget.isRequired ? _requiredValidator : null),
-      builder: (FormFieldState<DateTime> field) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            InkWell(
-              onTap:
-                  widget.enabled ? () => _showDatePicker(context, field) : null,
-              borderRadius: BorderRadius.circular(4),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: widget.label,
-                  errorText: field.errorText,
-                  border: const OutlineInputBorder(),
-                  suffixIcon: Icon(
-                    Icons.calendar_today,
-                    size: 20,
-                    color: widget.enabled
-                        ? theme.colorScheme.primary
-                        : theme.disabledColor,
-                  ),
-                ),
-                isEmpty: formattedDate.isEmpty,
-                child: Text(
-                  formattedDate.isEmpty ? '' : formattedDate,
-                  style: widget.enabled
-                      ? null
-                      : TextStyle(color: theme.disabledColor),
-                ),
-              ),
-            ),
-          ],
+    // Build editable field
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: enabled ? '选择日期' : null,
+        border: const OutlineInputBorder(),
+        suffixIcon: enabled
+            ? IconButton(
+                icon: const Icon(Icons.calendar_today),
+                onPressed: () => _selectDate(context),
+              )
+            : null,
+      ),
+      readOnly: true, // Always read-only for the text field itself
+      controller: TextEditingController(text: displayText),
+      style: effectiveTextStyle, // Use the provided text style
+      onTap: enabled ? () => _selectDate(context) : null,
+      textInputAction: textInputAction,
+      onEditingComplete: onEditingComplete,
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: value ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context),
+          child: child!,
         );
       },
     );
-  }
 
-  @override
-  void didUpdateWidget(DateInputField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
-      _updateTextController();
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _focusNode.dispose();
-    _textController.dispose(); // 释放控制器资源
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _format = widget.format ?? DateFormat('yyyy-MM-dd');
-    _focusNode.addListener(_handleFocusChange);
-  }
-
-  void _handleFocusChange() {
-    if (mounted) {
-      setState(() => _hasFocus = _focusNode.hasFocus);
-    }
-  }
-
-  String? _requiredValidator(DateTime? value) {
-    if (widget.isRequired && value == null) {
-      return '请选择${widget.label}';
-    }
-    return null;
-  }
-
-  Future<void> _showDatePicker(
-      BuildContext context, FormFieldState<DateTime> field) async {
-    if (!widget.enabled || widget.onChanged == null) return;
-
-    final initialDate = widget.value ?? DateTime.now();
-    final firstDate = DateTime(1000); // 支持古代作品
-    final lastDate = DateTime.now().add(const Duration(days: 365)); // 允许未来一年
-
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: lastDate,
-    );
-
-    if (picked != null && picked != widget.value) {
-      field.didChange(picked);
-      widget.onChanged!(picked);
-    }
-
-    // 选择完日期后继续 Tab 导航
-    if (widget.onEditingComplete != null) {
-      widget.onEditingComplete!();
-    }
-  }
-
-  void _updateTextController() {
-    final formattedDate =
-        widget.value != null ? _format.format(widget.value!) : '';
-    if (_textController.text != formattedDate) {
-      _textController.text = formattedDate;
+    if (picked != null && onChanged != null) {
+      onChanged!(picked);
     }
   }
 }

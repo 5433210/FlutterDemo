@@ -7,31 +7,14 @@ import '../common/zoomable_image_view.dart';
 
 /// An enhanced work preview component that combines image viewing and thumbnails
 class EnhancedWorkPreview extends StatefulWidget {
-  /// List of work images to display
   final List<WorkImage> images;
-
-  /// Currently selected image index
   final int selectedIndex;
-
-  /// Whether the preview is in editing mode
   final bool isEditing;
-
-  /// Whether to show the toolbar
   final bool showToolbar;
-
-  /// Optional toolbar actions
   final List<Widget>? toolbarActions;
-
-  /// Called when selected image index changes
   final Function(int)? onIndexChanged;
-
-  /// Called when a new image is added
   final Function(WorkImage)? onImageAdded;
-
-  /// Called when an image is deleted
   final Function(String)? onImageDeleted;
-
-  /// Called when images are reordered
   final Function(int, int)? onImagesReordered;
 
   const EnhancedWorkPreview({
@@ -63,47 +46,27 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
 
     return LayoutBuilder(builder: (context, constraints) {
       final availableHeight = constraints.maxHeight;
-      final toolbarHeight = widget.showToolbar ? 56.0 : 0.0;
+      final toolbarHeight = widget.showToolbar ? 48.0 : 0.0;
       final thumbnailHeight = widget.images.isNotEmpty ? 120.0 : 0.0;
       final imageHeight = availableHeight - toolbarHeight - thumbnailHeight;
 
       return Column(
         children: [
-          // 工具栏 - 采用更轻量化的设计
+          // 工具栏 - 图标按钮设计
           if (widget.showToolbar && widget.toolbarActions != null)
             Container(
               height: toolbarHeight,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface, // Use surface color instead
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.colorScheme.outlineVariant
-                        .withOpacity(0.3), // Softer line
-                    width: 1,
-                  ),
-                ),
-              ),
               padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+              alignment: Alignment.centerLeft,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
-                        children: widget.toolbarActions!.map((widget) {
-                          // Make sure buttons stay enabled unless explicitly disabled
-                          if (widget is IconButton) {
-                            return IconButton(
-                              icon: widget.icon,
-                              onPressed: widget.onPressed,
-                              tooltip: widget.tooltip,
-                              style: widget.style,
-                            );
-                          }
-                          return widget;
-                        }).toList(),
+                        mainAxisSize: MainAxisSize.min,
+                        children: widget.toolbarActions!,
                       ),
                     ),
                   ),

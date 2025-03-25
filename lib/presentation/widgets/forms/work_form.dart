@@ -173,6 +173,10 @@ class _ErrorAnimationState extends State<_ErrorAnimation>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // Use a softer color for error text
+    final errorColor = theme.colorScheme.tertiary.withOpacity(0.8);
+
     return FadeTransition(
       opacity: _animation,
       child: SlideTransition(
@@ -182,12 +186,24 @@ class _ErrorAnimationState extends State<_ErrorAnimation>
         ).animate(_animation),
         child: Padding(
           padding: const EdgeInsets.only(left: 12, top: 4),
-          child: Text(
-            widget.errorText,
-            style: TextStyle(
-              color: widget.color,
-              fontSize: 12,
-            ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline, // Use info icon instead of error icon
+                size: 14,
+                color: errorColor,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  widget.errorText,
+                  style: TextStyle(
+                    color: errorColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -277,6 +293,8 @@ class _WorkFormState extends State<WorkForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Use a more gentle color for form error message
+    final errorColor = theme.colorScheme.tertiary;
 
     return Focus(
       onKey: (_, event) {
@@ -351,12 +369,12 @@ class _WorkFormState extends State<WorkForm> {
               // Insert custom fields after remark
               ..._buildCustomFields(WorkFormField.remark),
 
-              // Form error message
+              // Form error message with gentler styling
               if (widget.error != null) ...[
                 const SizedBox(height: AppSizes.spacingMedium),
                 _ErrorAnimation(
                   errorText: widget.error!,
-                  color: theme.colorScheme.error,
+                  color: errorColor, // Use gentler color
                 ),
               ],
 
@@ -441,9 +459,12 @@ class _WorkFormState extends State<WorkForm> {
         enabled: true,
         readOnly: _isReadOnly,
         maxLength: 50,
-        style: _isReadOnly
-            ? TextStyle(color: theme.textTheme.bodyLarge?.color)
-            : null,
+        // Update readOnly style to match normal input style
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: _isReadOnly
+              ? theme.textTheme.bodyLarge?.color
+              : theme.textTheme.bodyLarge?.color,
+        ),
       ),
     );
   }
@@ -535,14 +556,19 @@ class _WorkFormState extends State<WorkForm> {
         enabled: true,
         readOnly: _isReadOnly,
         maxLength: 500,
-        style: _isReadOnly
-            ? TextStyle(color: theme.textTheme.bodyLarge?.color)
-            : null,
+        // Update readOnly style to match normal input style
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: _isReadOnly
+              ? theme.textTheme.bodyLarge?.color
+              : theme.textTheme.bodyLarge?.color,
+        ),
       ),
     );
   }
 
   Widget _buildStyleField() {
+    final theme = Theme.of(context);
+
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
       tooltip: '按 Tab 键导航到下一个字段',
@@ -560,6 +586,8 @@ class _WorkFormState extends State<WorkForm> {
         onChanged: _handleStyleChange,
         enabled: true,
         readOnly: _isReadOnly,
+        // Ensure dropdown text uses the same style as other fields
+        textStyle: theme.textTheme.bodyLarge,
       ),
     );
   }
@@ -595,14 +623,19 @@ class _WorkFormState extends State<WorkForm> {
         enabled: true,
         readOnly: _isReadOnly,
         maxLength: 100,
-        style: _isReadOnly
-            ? TextStyle(color: theme.textTheme.bodyLarge?.color)
-            : null,
+        // Update readOnly style to match normal input style
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: _isReadOnly
+              ? theme.textTheme.bodyLarge?.color
+              : theme.textTheme.bodyLarge?.color,
+        ),
       ),
     );
   }
 
   Widget _buildToolField() {
+    final theme = Theme.of(context);
+
     return _buildFieldWithTooltip(
       shortcut: 'Tab',
       tooltip: '按 Tab 键导航到下一个字段',
@@ -620,6 +653,8 @@ class _WorkFormState extends State<WorkForm> {
         onChanged: _handleToolChange,
         enabled: true,
         readOnly: _isReadOnly,
+        // Ensure dropdown text uses the same style as other fields
+        textStyle: theme.textTheme.bodyLarge,
       ),
     );
   }

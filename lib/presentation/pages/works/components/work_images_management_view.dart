@@ -6,7 +6,6 @@ import '../../../../infrastructure/logging/logger.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../providers/work_image_editor_provider.dart';
 import '../../../widgets/works/enhanced_work_preview.dart';
-import 'image_operations_toolbar.dart';
 
 /// 作品图片管理视图
 class WorkImagesManagementView extends ConsumerWidget {
@@ -129,6 +128,7 @@ class WorkImagesManagementView extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isSmallWidth = constraints.maxWidth < 500;
+        final theme = Theme.of(context);
 
         return Stack(
           children: [
@@ -139,17 +139,68 @@ class WorkImagesManagementView extends ConsumerWidget {
               isEditing: true,
               showToolbar: true,
               toolbarActions: [
-                // 使用原有的工具栏操作，但根据屏幕尺寸进行调整
-                isSmallWidth
-                    ? _buildCompactToolbar(context, ref, state, notifier)
-                    : ImageOperationsToolbar(
-                        onAddImages:
-                            isProcessing ? null : () => notifier.addImages(),
-                        onDeleteImage: (isProcessing || state.images.isEmpty)
-                            ? null
-                            : () => _handleDeleteSelected(context, ref),
-                        // 移除排序按钮
+                // 添加图片按钮 - 改为图标按钮
+                Tooltip(
+                  message: '添加图片',
+                  preferBelow: false,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.inverseSurface.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Container(
+                    height: 36,
+                    width: 36,
+                    decoration: BoxDecoration(
+                      color: isProcessing
+                          ? theme.colorScheme.primary.withOpacity(0.3)
+                          : theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: IconButton(
+                      onPressed:
+                          isProcessing ? null : () => notifier.addImages(),
+                      icon: const Icon(Icons.add_photo_alternate, size: 20),
+                      color: theme.colorScheme.onPrimary,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // 删除图片按钮 - 改为图标按钮
+                Tooltip(
+                  message: '删除当前图片',
+                  preferBelow: false,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.inverseSurface.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Container(
+                    height: 36,
+                    width: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                        color: (isProcessing || state.images.isEmpty)
+                            ? theme.colorScheme.error.withOpacity(0.3)
+                            : theme.colorScheme.error.withOpacity(0.8),
+                        width: 1,
                       ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: IconButton(
+                      onPressed: (isProcessing || state.images.isEmpty)
+                          ? null
+                          : () => _handleDeleteSelected(context, ref),
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      color: (isProcessing || state.images.isEmpty)
+                          ? theme.colorScheme.error.withOpacity(0.3)
+                          : theme.colorScheme.error,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ),
               ],
               onIndexChanged: isProcessing
                   ? null
@@ -194,51 +245,6 @@ class WorkImagesManagementView extends ConsumerWidget {
           ],
         );
       },
-    );
-  }
-
-  // 构建小屏幕下的紧凑工具栏
-  Widget _buildCompactToolbar(BuildContext context, WidgetRef ref,
-      WorkImageEditorState state, dynamic notifier) {
-    final theme = Theme.of(context);
-    final isProcessing = state.isProcessing;
-
-    return Row(
-      children: [
-        // 添加图片按钮 - 使用更紧凑的设计
-        FilledButton.icon(
-          onPressed: isProcessing ? null : () => notifier.addImages(),
-          icon: const Icon(Icons.add_photo_alternate, size: 16),
-          label: const Text('添加图片'),
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            backgroundColor: theme.colorScheme.primaryContainer,
-            foregroundColor: theme.colorScheme.onPrimaryContainer,
-          ),
-        ),
-        const SizedBox(width: 8),
-
-        // 删除图片按钮 - 使用更紧凑的设计
-        OutlinedButton.icon(
-          onPressed: (isProcessing || state.images.isEmpty)
-              ? null
-              : () => _handleDeleteSelected(context, ref),
-          icon: const Icon(Icons.delete_outline, size: 16),
-          label: const Text('删除图片'),
-          style: OutlinedButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            foregroundColor: theme.colorScheme.error,
-            side: BorderSide(
-              color: theme.colorScheme.error.withOpacity(
-                (isProcessing || state.images.isEmpty) ? 0.38 : 1.0,
-              ),
-            ),
-          ),
-        ),
-        // 排序按钮已移除
-      ],
     );
   }
 

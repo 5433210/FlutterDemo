@@ -13,6 +13,7 @@ class DropdownField<T> extends StatefulWidget {
   final VoidCallback? onEditingComplete;
   final bool enabled;
   final bool readOnly;
+  final TextStyle? textStyle; // Add this parameter to accept text style
 
   const DropdownField({
     super.key,
@@ -27,6 +28,7 @@ class DropdownField<T> extends StatefulWidget {
     this.onEditingComplete,
     this.enabled = true,
     this.readOnly = false,
+    this.textStyle, // Add this parameter to the constructor
   });
 
   @override
@@ -46,6 +48,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final displayText = _getSelectedItemText();
+    final effectiveTextStyle = widget.textStyle ?? theme.textTheme.bodyLarge;
 
     // 更新控制器文本
     if (_textController.text != displayText) {
@@ -76,7 +79,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
         ),
         enabled: true,
         readOnly: true,
-        style: TextStyle(color: theme.textTheme.bodyLarge?.color), // 使用普通文本颜色
+        style: effectiveTextStyle, // Use the provided text style
       );
     }
 
@@ -195,17 +198,19 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
         orElse: () => widget.items.first,
       );
       return DefaultTextStyle(
-        style: theme.textTheme.bodyMedium!.copyWith(
-          color: isEnabled ? null : theme.disabledColor,
-        ),
+        style: widget.textStyle ??
+            theme.textTheme.bodyMedium!.copyWith(
+              color: isEnabled ? null : theme.disabledColor,
+            ),
         child: selectedItem.child,
       );
     }
     return Text(
       widget.hintText ?? '',
-      style: theme.textTheme.bodyMedium?.copyWith(
-        color: theme.hintColor,
-      ),
+      style: widget.textStyle ??
+          theme.textTheme.bodyMedium?.copyWith(
+            color: theme.hintColor,
+          ),
     );
   }
 
@@ -376,7 +381,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
                             ? Theme.of(context).colorScheme.primaryContainer
                             : null,
                         child: DefaultTextStyle(
-                          style:
+                          style: widget.textStyle ??
                               Theme.of(context).textTheme.bodyMedium!.copyWith(
                                     color: isSelected
                                         ? Theme.of(context)
