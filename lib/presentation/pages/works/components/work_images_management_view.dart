@@ -148,9 +148,7 @@ class WorkImagesManagementView extends ConsumerWidget {
                         onDeleteImage: (isProcessing || state.images.isEmpty)
                             ? null
                             : () => _handleDeleteSelected(context, ref),
-                        onSortImages: (isProcessing || state.images.isEmpty)
-                            ? null
-                            : () => notifier.sortImages(),
+                        // 移除排序按钮
                       ),
               ],
               onIndexChanged: isProcessing
@@ -207,22 +205,30 @@ class WorkImagesManagementView extends ConsumerWidget {
 
     return Row(
       children: [
-        // 添加图片按钮 - simplified to a single button
-        IconButton.filled(
+        // 添加图片按钮 - 使用更紧凑的设计
+        FilledButton.icon(
           onPressed: isProcessing ? null : () => notifier.addImages(),
-          icon: const Icon(Icons.add_photo_alternate),
-          tooltip: '添加图片 (可按住Ctrl多选)',
+          icon: const Icon(Icons.add_photo_alternate, size: 16),
+          label: const Text('添加图片'),
+          style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            backgroundColor: theme.colorScheme.primaryContainer,
+            foregroundColor: theme.colorScheme.onPrimaryContainer,
+          ),
         ),
         const SizedBox(width: 8),
 
-        // 删除图片按钮
-        IconButton.outlined(
+        // 删除图片按钮 - 使用更紧凑的设计
+        OutlinedButton.icon(
           onPressed: (isProcessing || state.images.isEmpty)
               ? null
               : () => _handleDeleteSelected(context, ref),
-          icon: const Icon(Icons.delete_outline),
-          tooltip: '删除图片',
-          style: IconButton.styleFrom(
+          icon: const Icon(Icons.delete_outline, size: 16),
+          label: const Text('删除图片'),
+          style: OutlinedButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             foregroundColor: theme.colorScheme.error,
             side: BorderSide(
               color: theme.colorScheme.error.withOpacity(
@@ -231,16 +237,7 @@ class WorkImagesManagementView extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
-
-        // 排序图片按钮
-        IconButton.outlined(
-          onPressed: (isProcessing || state.images.isEmpty)
-              ? null
-              : () => notifier.sortImages(),
-          icon: const Icon(Icons.sort),
-          tooltip: '排序',
-        ),
+        // 排序按钮已移除
       ],
     );
   }

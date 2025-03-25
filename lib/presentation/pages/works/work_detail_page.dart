@@ -127,15 +127,27 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           ),
         ),
 
-        // 右侧面板
-        SizedBox(
-          width: 350,
-          child: UnifiedWorkDetailPanel(
-            key: ValueKey('form_${work.id}'),
-            work: work,
-            isEditing: true,
-          ),
+        // 添加面板切换按钮
+        SidebarToggle(
+          isOpen: _isPanelOpen,
+          onToggle: () {
+            setState(() {
+              _isPanelOpen = !_isPanelOpen;
+            });
+          },
+          alignRight: true,
         ),
+
+        // 右侧面板 - 添加条件显示
+        if (_isPanelOpen)
+          SizedBox(
+            width: 350,
+            child: UnifiedWorkDetailPanel(
+              key: ValueKey('form_${work.id}'),
+              work: work,
+              isEditing: true,
+            ),
+          ),
       ],
     );
   }
@@ -145,38 +157,80 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
     return Container(
       height: kToolbarHeight,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
       child: Row(
         children: [
-          Text(
-            '编辑作品',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
+          // 返回按钮 - 修改为返回到查看模式
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
+            tooltip: '返回',
+            onPressed: () => _cancelEditing(), // 直接调用取消编辑功能
+            visualDensity: VisualDensity.compact,
+          ),
+
+          // 标题部分 - 改为"作品编辑"
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  '作品编辑',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (state.work?.title != null) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '- ${state.work!.title}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.normal,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (state.work?.title != null) ...[
-            const SizedBox(width: 8),
-            Text(
-              '- ${state.work!.title}',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.normal,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          const Spacer(),
+
+          // 保持按钮靠右摆放，使用更紧凑的设计
           FilledButton.icon(
-            icon: const Icon(Icons.save),
+            icon: const Icon(Icons.save, size: 18),
             label: const Text('保存'),
             onPressed: state.hasChanges && !state.isSaving
                 ? () => _saveChanges()
                 : null,
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
           ),
           const SizedBox(width: 8),
           OutlinedButton(
-            child: const Text('取消'),
             onPressed: () => _cancelEditing(),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: const Text('取消'),
           ),
         ],
       ),
@@ -190,11 +244,19 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
       children: [
         Expanded(
           flex: 7,
-          child: ViewModeImagePreview(
-            images: work.images,
-            selectedIndex: state.selectedImageIndex,
-            onImageSelect: (index) =>
-                ref.read(workDetailProvider.notifier).selectImage(index),
+          child: Column(
+            children: [
+              // 添加与工具栏高度一致的留白区域，确保与编辑模式平滑切换
+              const SizedBox(height: AppSizes.spacingMedium),
+              Expanded(
+                child: ViewModeImagePreview(
+                  images: work.images,
+                  selectedIndex: state.selectedImageIndex,
+                  onImageSelect: (index) =>
+                      ref.read(workDetailProvider.notifier).selectImage(index),
+                ),
+              ),
+            ],
           ),
         ),
         SidebarToggle(
@@ -224,47 +286,76 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
     return Container(
       height: kToolbarHeight,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
       child: Row(
         children: [
+          // 保持左侧的返回按钮不变
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
             onPressed: () => _handleBackButton(),
+            visualDensity: VisualDensity.compact,
           ),
-          Text(
-            '作品详情',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
+
+          // 标题部分
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  '作品详情',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (work != null && work.title.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '- ${work.title}',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.normal,
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          if (work != null && work.title.isNotEmpty) ...[
-            const SizedBox(width: 8),
-            Text(
-              '- ${work.title}',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.normal,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          const SizedBox(width: AppSizes.spacingMedium),
+
+          // 按钮靠右摆放，与编辑模式保持一致的样式
           FilledButton.icon(
             onPressed: work != null ? _enterEditMode : null,
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('编辑'),
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           ),
-          const SizedBox(width: AppSizes.spacingMedium),
+          const SizedBox(width: 8),
           FilledButton.tonal(
             onPressed: work != null ? () => _navigateToExtract(work.id) : null,
             style: FilledButton.styleFrom(
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             child: const Text('提取字形'),
           ),
@@ -398,51 +489,65 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   }
 
   Future<bool> _handleBackButton() async {
-    final hasChanges = ref.read(workDetailProvider).hasChanges;
-    if (hasChanges) {
-      final shouldSave = await showDialog<bool?>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('保存更改？'),
-          content: const Text('你有未保存的更改，是否保存？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('放弃更改'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('保存'),
-            ),
-          ],
-        ),
-      );
+    final state = ref.read(workDetailProvider);
+    final hasChanges = state.hasChanges;
 
-      if (shouldSave == null) {
-        return false;
-      }
+    // 如果在编辑模式，先检查是否有更改
+    if (state.isEditing) {
+      if (hasChanges) {
+        final shouldSave = await showDialog<bool?>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('保存更改？'),
+            content: const Text('你有未保存的更改，是否保存？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('放弃更改'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('保存'),
+              ),
+            ],
+          ),
+        );
 
-      if (shouldSave) {
-        try {
-          await _saveChanges();
-          return true;
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('保存失败: $e')),
-            );
-          }
-          return false;
+        if (shouldSave == null) {
+          return false; // 用户点击了取消，不执行任何操作
         }
-      }
 
-      ref.read(workDetailProvider.notifier).cancelEditing();
+        if (shouldSave) {
+          try {
+            await _saveChanges();
+            // 不退出页面，仅退出编辑模式
+            ref.read(workDetailProvider.notifier).completeEditing();
+            return false;
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('保存失败: $e')),
+              );
+            }
+            return false;
+          }
+        }
+
+        // 用户选择放弃更改，取消编辑模式
+        ref.read(workDetailProvider.notifier).cancelEditing();
+        return false; // 不退出页面
+      } else {
+        // 没有更改，直接退出编辑模式
+        ref.read(workDetailProvider.notifier).cancelEditing();
+        return false; // 不退出页面
+      }
     }
 
+    // 在查看模式下，正常退出页面
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -501,12 +606,31 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
   Future<void> _saveChanges() async {
     final editingWork = ref.read(workDetailProvider).editingWork;
+
+    // 确保当前编辑状态的完整副本
+    AppLogger.debug('保存前的完整作品状态', tag: 'WorkDetailPage', data: {
+      'workId': editingWork?.id,
+      'title': editingWork?.title,
+      'author': editingWork?.author,
+      'style': editingWork?.style.value,
+      'tool': editingWork?.tool.value,
+      'creationDate': editingWork?.creationDate.toString(),
+      'remark': editingWork?.remark,
+      'tagCount': editingWork?.tags.length,
+      'tags': editingWork?.tags,
+      'imageCount': editingWork?.images.length,
+      'updateTime': editingWork?.updateTime.toString(),
+    });
+
     AppLogger.debug('开始保存作品', tag: 'WorkDetailPage', data: {
       'workId': editingWork?.id,
       'hasImages': editingWork?.images.isNotEmpty ?? false,
       'firstImageId': editingWork?.images.isNotEmpty ?? false
           ? editingWork!.images[0].id
           : 'none',
+      'title': editingWork?.title,
+      'author': editingWork?.author,
+      'tagCount': editingWork?.tags.length,
     });
 
     if (!context.mounted) return;
@@ -566,8 +690,35 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         }
       }
 
-      // Then save work details (which includes the updated image order)
+      // 保存作品详情之前再次确认编辑状态完整
+      final currentEditingWork = ref.read(workDetailProvider).editingWork;
+      AppLogger.debug('保存前最终检查', tag: 'WorkDetailPage', data: {
+        'workId': currentEditingWork?.id,
+        'title': currentEditingWork?.title,
+        'tagCount': currentEditingWork?.tags.length,
+        'tags': currentEditingWork?.tags,
+      });
+
+      // 然后保存作品详情
       final success = await ref.read(workDetailProvider.notifier).saveChanges();
+
+      // 保存后立即记录最新状态
+      final savedWork = ref.read(workDetailProvider).work;
+      AppLogger.debug('保存后的完整作品状态', tag: 'WorkDetailPage', data: {
+        'workId': savedWork?.id,
+        'title': savedWork?.title,
+        'author': savedWork?.author,
+        'style': savedWork?.style.value,
+        'tool': savedWork?.tool.value,
+        'creationDate': savedWork?.creationDate.toString(),
+        'remark': savedWork?.remark,
+        'tagCount': savedWork?.tags.length,
+        'tags': savedWork?.tags,
+        'imageCount': savedWork?.images.length,
+        'updateTime': savedWork?.updateTime.toString(),
+        'saveSuccess': success,
+      });
+
       if (!context.mounted) return;
 
       Navigator.of(context, rootNavigator: true).pop();
@@ -584,9 +735,10 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
         ref.read(worksNeedsRefreshProvider.notifier).state =
             RefreshInfo.dataChanged();
 
-        // 重新加载作品详情以获取最新状态
-        await _loadWorkDetails();
-        // 这里确保完成编辑后，工作面板会刷新以显示最新的标签
+        // 修改这里 - 不要重新加载作品详情，会覆盖已保存的更改
+        // await _loadWorkDetails();
+
+        // 直接结束编辑模式，保留当前编辑的状态
         ref.read(workDetailProvider.notifier).completeEditing();
 
         // 强制刷新面板组件

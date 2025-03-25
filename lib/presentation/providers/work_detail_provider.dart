@@ -6,6 +6,7 @@ import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
+import '../../infrastructure/logging/logger.dart';
 
 /// 作品详情提供器
 final workDetailProvider =
@@ -31,10 +32,20 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
   /// 完成编辑（从编辑模式切换回查看模式）
   void completeEditing() {
+    // 确保已编辑的内容保持不变，只改变编辑状态
+    // 修改此方法，确保work值也被更新为最新的editingWork值
     state = state.copyWith(
+      work: state.editingWork, // 更新主要工作状态为编辑后的状态
       isEditing: false,
       hasChanges: false,
     );
+
+    AppLogger.debug('编辑完成', tag: 'WorkDetailProvider', data: {
+      'workId': state.work?.id,
+      'title': state.work?.title,
+      'tagCount': state.work?.tags.length,
+      'isEditing': state.isEditing,
+    });
   }
 
   /// 删除作品
@@ -101,8 +112,20 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     try {
       state = state.copyWith(isSaving: true, error: null);
 
+      AppLogger.debug('保存作品前状态', tag: 'WorkDetailProvider', data: {
+        'workId': state.editingWork!.id,
+        'title': state.editingWork!.title,
+        'tagCount': state.editingWork!.tags.length,
+      });
+
       final updatedWork =
           await _workService.updateWorkEntity(state.editingWork!);
+
+      AppLogger.debug('保存作品后状态', tag: 'WorkDetailProvider', data: {
+        'workId': updatedWork.id,
+        'title': updatedWork.title,
+        'tagCount': updatedWork.tags.length,
+      });
 
       state = state.copyWith(
         work: updatedWork,
@@ -113,6 +136,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
       return true;
     } catch (e) {
+      AppLogger.error('保存作品失败', tag: 'WorkDetailProvider', error: e);
       state = state.copyWith(
         isSaving: false,
         error: '保存失败: $e',
@@ -151,20 +175,31 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   }
 
   void updateWorkBasicInfo({
-    String title = '',
-    String author = '',
-    String remark = '',
+    String? title,
+    String? author,
+    String? remark,
     WorkStyle? style,
     WorkTool? tool,
     DateTime? creationDate,
   }) {
     if (state.editingWork == null) return;
 
+    // 添加日志帮助调试
+    AppLogger.debug('更新作品基本信息', tag: 'WorkDetailProvider', data: {
+      'workId': state.editingWork!.id,
+      'title': title ?? '[unchanged]',
+      'author': author ?? '[unchanged]',
+      'style': style?.value ?? '[unchanged]',
+      'tool': tool?.value ?? '[unchanged]',
+      'creationDate': creationDate?.toString() ?? '[unchanged]',
+      'remark': remark?.toString() ?? '[unchanged]',
+    });
+
     final updatedWork = WorkEntity(
       id: state.editingWork!.id,
-      title: title.isEmpty ? state.editingWork!.title : title,
-      author: author.isEmpty ? state.editingWork!.author : author,
-      remark: remark.isEmpty ? state.editingWork!.remark : remark,
+      title: title ?? state.editingWork!.title,
+      author: author ?? state.editingWork!.author,
+      remark: remark ?? state.editingWork!.remark,
       style: style ?? state.editingWork!.style,
       tool: tool ?? state.editingWork!.tool,
       creationDate: creationDate ?? state.editingWork!.creationDate,
@@ -201,6 +236,15 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   /// 更新作品标签
   void updateWorkTags(List<String> tags) {
     if (state.editingWork == null) return;
+
+    // 添加日志帮助调试
+    AppLogger.debug('更新作品标签', tag: 'WorkDetailProvider', data: {
+      'workId': state.editingWork!.id,
+      'oldTagCount': state.editingWork!.tags.length,
+      'newTagCount': tags.length,
+      'oldTags': state.editingWork!.tags,
+      'newTags': tags,
+    });
 
     final updatedWork = state.editingWork!.copyWith(
       tags: tags,

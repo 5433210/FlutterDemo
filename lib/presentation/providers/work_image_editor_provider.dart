@@ -435,8 +435,8 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         'savedCount': savedImages.length,
       });
 
-      // 重新加载作品详情以获取最新状态
-      await _ref.read(workDetailProvider.notifier).loadWorkDetails(workId);
+      // 移除此行 - 不要重新加载作品详情，会覆盖已编辑的更改
+      // await _ref.read(workDetailProvider.notifier).loadWorkDetails(workId);
     } catch (e) {
       AppLogger.error('保存图片更改失败', tag: 'WorkImageEditor', error: e);
       state = state.copyWith(

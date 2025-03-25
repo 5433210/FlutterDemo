@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../domain/models/work/work_entity.dart';
+import '../../../../infrastructure/logging/logger.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../widgets/common/tab_bar_theme_wrapper.dart';
@@ -35,6 +36,16 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     // 确保每次构建时都使用最新的标签数据
     final tags = List<String>.from(widget.work.tags);
 
+    // 添加调试日志，帮助诊断问题
+    AppLogger.debug('Building UnifiedWorkDetailPanel',
+        tag: 'WorkDetailPanel',
+        data: {
+          'isEditing': widget.isEditing,
+          'workId': widget.work.id,
+          'tagCount': tags.length,
+          'title': widget.work.title,
+        });
+
     return Card(
       margin: const EdgeInsets.only(
         top: AppSizes.spacingMedium,
@@ -49,8 +60,8 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
               controller: _tabController,
               tabs: const [
                 Tab(text: '基本信息'),
+                Tab(text: '标签'), // 移到第二位置
                 Tab(text: '集字'),
-                Tab(text: '标签'),
               ],
               indicatorSize: TabBarIndicatorSize.tab,
             ),
@@ -60,8 +71,8 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
               controller: _tabController,
               children: [
                 _buildBasicInfoTab(context),
+                _buildTagsTab(context, tags), // 移到第二位置
                 _buildCharactersTab(context),
-                _buildTagsTab(context, tags),
               ],
             ),
           ),
@@ -75,6 +86,17 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.work != widget.work ||
         oldWidget.isEditing != widget.isEditing) {
+      // 记录状态变化
+      AppLogger.debug('UnifiedWorkDetailPanel updated',
+          tag: 'WorkDetailPanel',
+          data: {
+            'oldTitle': oldWidget.work.title,
+            'newTitle': widget.work.title,
+            'oldTagCount': oldWidget.work.tags.length,
+            'newTagCount': widget.work.tags.length,
+            'isEditingChanged': oldWidget.isEditing != widget.isEditing,
+          });
+
       setState(() {
         // 强制更新状态以反映新的数据
       });
@@ -90,8 +112,7 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(length: 3, vsync: this); // Added tab for tags
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   // Additional metadata not included in the form
@@ -255,6 +276,13 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
               readOnly: !widget.isEditing,
               onTagsChanged: (newTags) {
                 _updateWorkField('tags', newTags);
+                // 添加调试日志以跟踪标签变化
+                AppLogger.debug('标签已更新', tag: 'UnifiedWorkDetailPanel', data: {
+                  'workId': widget.work.id,
+                  'oldTags': tags,
+                  'newTags': newTags,
+                  'isEditing': widget.isEditing,
+                });
               },
             ),
           ],
@@ -273,8 +301,47 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     return DateFormat('yyyy-MM-dd HH:mm').format(date);
   }
 
+  // 获取当前字段值的辅助方法
+  dynamic _getCurrentFieldValue(String field) {
+    final currentWork = widget.work;
+    switch (field) {
+      case 'title':
+        return currentWork.title;
+      case 'author':
+        return currentWork.author;
+      case 'style':
+        return currentWork.style;
+      case 'tool':
+        return currentWork.tool;
+      case 'creationDate':
+        return currentWork.creationDate;
+      case 'remark':
+        return currentWork.remark;
+      case 'tags':
+        return currentWork.tags;
+      default:
+        return null;
+    }
+  }
+
   void _updateWorkField(String field, dynamic value) {
     final notifier = ref.read(workDetailProvider.notifier);
+    final currentState = ref.read(workDetailProvider);
+    final currentValue = _getCurrentFieldValue(field);
+
+    // 记录更详细的字段修改前后对比信息
+    AppLogger.debug('字段修改', tag: 'WorkDetailPanel', data: {
+      'field': field,
+      'oldValue': field == 'tags'
+          ? '${widget.work.tags.length} tags: ${widget.work.tags}'
+          : currentValue.toString(),
+      'newValue': field == 'tags'
+          ? '${(value as List<String>).length} tags: $value'
+          : value.toString(),
+      'workId': widget.work.id,
+      'isChanged': currentValue != value,
+    });
+
     switch (field) {
       case 'title':
         notifier.updateWorkBasicInfo(title: value);
@@ -296,9 +363,29 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
         break;
       case 'tags':
         // 使用专门的方法更新标签
-        notifier.updateWorkTags(value);
+        notifier.updateWorkTags(List<String>.from(value));
         break;
     }
+
+    // 确保标记状态已更改
     notifier.markAsChanged();
+
+    // 记录修改后的完整状态
+    Future.microtask(() {
+      final updatedState = ref.read(workDetailProvider);
+      AppLogger.debug('字段修改后的编辑状态', tag: 'WorkDetailPanel', data: {
+        'editingWorkTitle': updatedState.editingWork?.title,
+        'editingWorkAuthor': updatedState.editingWork?.author,
+        'editingWorkStyle': updatedState.editingWork?.style.value,
+        'editingWorkTool': updatedState.editingWork?.tool.value,
+        'editingWorkTagCount': updatedState.editingWork?.tags.length,
+        'editingWorkTags': updatedState.editingWork?.tags,
+        'hasChanges': updatedState.hasChanges,
+      });
+
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 }
