@@ -198,11 +198,17 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 设置画风
-  void setStyle(String? styleStr) {
+  void setStyle(WorkStyle? style) {
+    if (style == null) return;
+    state = state.copyWith(style: style);
+  }
+
+  /// 设置画风 (string version for compatibility)
+  void setStyleByString(String? styleStr) {
     if (styleStr == null) return;
 
     final style = WorkStyle.values.firstWhere(
-      (s) => s.toString().split('.').last == styleStr,
+      (s) => s.value == styleStr,
       orElse: () => WorkStyle.other,
     );
     state = state.copyWith(style: style);
@@ -214,11 +220,17 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   }
 
   /// 设置创作工具
-  void setTool(String? toolStr) {
+  void setTool(WorkTool? tool) {
+    if (tool == null) return;
+    state = state.copyWith(tool: tool);
+  }
+
+  /// 设置创作工具 (string version for compatibility)
+  void setToolByString(String? toolStr) {
     if (toolStr == null) return;
 
     final tool = WorkTool.values.firstWhere(
-      (t) => t.toString().split('.').last == toolStr,
+      (t) => t.value == toolStr,
       orElse: () => WorkTool.other,
     );
     state = state.copyWith(tool: tool);

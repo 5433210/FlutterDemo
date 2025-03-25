@@ -12,6 +12,7 @@ class DropdownField<T> extends StatefulWidget {
   final TextInputAction? textInputAction;
   final VoidCallback? onEditingComplete;
   final bool enabled;
+  final bool readOnly;
 
   const DropdownField({
     super.key,
@@ -25,6 +26,7 @@ class DropdownField<T> extends StatefulWidget {
     this.textInputAction,
     this.onEditingComplete,
     this.enabled = true,
+    this.readOnly = false,
   });
 
   @override
@@ -38,11 +40,65 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   int _selectedIndex = -1;
+  final _textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isEnabled = widget.enabled && widget.onChanged != null;
+    final displayText = _getSelectedItemText();
+
+    // 更新控制器文本
+    if (_textController.text != displayText) {
+      _textController.text = displayText;
+    }
+
+    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+
+    // 只读模式
+    if (widget.readOnly) {
+      return TextFormField(
+        controller: _textController,
+        decoration: InputDecoration(
+          labelText: widget.label,
+          border: const OutlineInputBorder(),
+          suffixIcon: Icon(
+            Icons.arrow_drop_down,
+            color: theme.disabledColor,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 16,
+          ),
+          filled: true,
+          fillColor: readOnlyFillColor,
+          // 不显示提示文本
+          hintText: null,
+        ),
+        enabled: true,
+        readOnly: true,
+        style: TextStyle(color: theme.textTheme.bodyLarge?.color), // 使用普通文本颜色
+      );
+    }
+
+    final isEnabled =
+        widget.enabled && !widget.readOnly && widget.onChanged != null;
+    _updateTextController();
+
+    if (widget.readOnly) {
+      // 只读模式下使用 TextFormField
+      return TextFormField(
+        controller: _textController,
+        decoration: InputDecoration(
+          labelText: widget.label,
+          suffixIcon: Icon(
+            Icons.arrow_drop_down,
+            color: theme.disabledColor,
+          ),
+        ),
+        enabled: true,
+        readOnly: true,
+      );
+    }
 
     return FormField<T>(
       initialValue: widget.value,
@@ -107,6 +163,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.value != widget.value) {
       _updateSelectedIndex();
+      _updateTextController();
     }
   }
 
@@ -119,6 +176,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
       _isDropdownOpen = false;
     }
     _focusNode.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
@@ -127,6 +185,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
     super.initState();
     _focusNode.addListener(_handleFocusChange);
     _updateSelectedIndex();
+    _updateTextController();
   }
 
   Widget _buildText(ThemeData theme, bool isEnabled) {
@@ -148,6 +207,27 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
         color: theme.hintColor,
       ),
     );
+  }
+
+  // 获取当前选中项的显示文本
+  String _getSelectedItemText() {
+    if (widget.value == null) return '';
+
+    // 找到选中的项
+    final selectedItem = widget.items.firstWhere(
+      (item) => item.value == widget.value,
+      orElse: () => widget.items.isNotEmpty
+          ? widget.items.first
+          : DropdownMenuItem<T>(value: null, child: Container()),
+    );
+
+    // 如果子组件是文本，直接获取文本内容
+    if (selectedItem.child is Text) {
+      return (selectedItem.child as Text).data ?? '';
+    }
+
+    // 否则返回空字符串
+    return '';
   }
 
   void _handleFocusChange() {
@@ -331,6 +411,14 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
     if (widget.value != null) {
       _selectedIndex =
           widget.items.indexWhere((item) => item.value == widget.value);
+    }
+  }
+
+  // 更新控制器中的文字为当前选中项的显示值
+  void _updateTextController() {
+    final selectedText = _getSelectedItemText();
+    if (_textController.text != selectedText) {
+      _textController.text = selectedText;
     }
   }
 }

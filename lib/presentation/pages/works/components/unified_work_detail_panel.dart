@@ -1,14 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../domain/enums/work_style.dart';
-import '../../../../domain/enums/work_tool.dart';
 import '../../../../domain/models/work/work_entity.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/work_detail_provider.dart';
-import '../../../widgets/common/section_title.dart';
 import '../../../widgets/common/tab_bar_theme_wrapper.dart';
+import '../../../widgets/forms/work_form.dart';
 import '../../../widgets/tag_editor.dart';
 
 class UnifiedWorkDetailPanel extends ConsumerStatefulWidget {
@@ -30,20 +30,10 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  // Form controllers
-  late TextEditingController _titleController;
-  late TextEditingController _authorController;
-  late TextEditingController _remarkController;
-
-  // Form state
-  WorkStyle? _selectedStyle;
-  WorkTool? _selectedTool;
-  DateTime? _selectedDate;
-  List<String> _tags = [];
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // 确保每次构建时都使用最新的标签数据
+    final tags = List<String>.from(widget.work.tags);
 
     return Card(
       margin: const EdgeInsets.only(
@@ -59,11 +49,9 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
               controller: _tabController,
               tabs: const [
                 Tab(text: '基本信息'),
+                Tab(text: '集字'),
                 Tab(text: '标签'),
-                Tab(text: '集字信息'),
               ],
-              labelStyle: theme.textTheme.titleSmall,
-              unselectedLabelStyle: theme.textTheme.bodyMedium,
               indicatorSize: TabBarIndicatorSize.tab,
             ),
           ),
@@ -72,8 +60,8 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
               controller: _tabController,
               children: [
                 _buildBasicInfoTab(context),
-                _buildTagsTab(context),
                 _buildCharactersTab(context),
+                _buildTagsTab(context, tags),
               ],
             ),
           ),
@@ -87,16 +75,15 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.work != widget.work ||
         oldWidget.isEditing != widget.isEditing) {
-      _initFormControllers();
+      setState(() {
+        // 强制更新状态以反映新的数据
+      });
     }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _titleController.dispose();
-    _authorController.dispose();
-    _remarkController.dispose();
     super.dispose();
   }
 
@@ -105,23 +92,23 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     super.initState();
     _tabController =
         TabController(length: 3, vsync: this); // Added tab for tags
-    _initFormControllers();
   }
 
-  Widget _buildBasicInfoDisplay(BuildContext context) {
+  // Additional metadata not included in the form
+  Widget _buildAdditionalMetadata(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInfoRow('标题', widget.work.title),
-        _buildInfoRow('作者', widget.work.author),
-        _buildInfoRow('风格', widget.work.style.label),
-        _buildInfoRow('工具', widget.work.tool.label),
-        _buildInfoRow('创作时间', _formatDate(widget.work.creationDate)),
+        const Divider(),
+        const SizedBox(height: AppSizes.spacingSmall),
+        Text(
+          '其他信息',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: AppSizes.spacingSmall),
         _buildInfoRow('图片数量', (widget.work.imageCount ?? 0).toString()),
         _buildInfoRow('创建时间', _formatDateTime(widget.work.createTime)),
         _buildInfoRow('修改时间', _formatDateTime(widget.work.updateTime)),
-        if (widget.work.remark != null && widget.work.remark!.isNotEmpty)
-          _buildRemarkSection(context),
       ],
     );
   }
@@ -130,9 +117,47 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     return ListView(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       children: [
-        widget.isEditing
-            ? _buildEditForm(context)
-            : _buildBasicInfoDisplay(context),
+        // Use WorkForm for both view and edit modes
+        WorkForm(
+          title: '基本信息',
+          initialTitle: widget.work.title,
+          initialAuthor: widget.work.author,
+          initialStyle: widget.work.style,
+          initialTool: widget.work.tool,
+          initialCreationDate: widget.work.creationDate,
+          initialRemark: widget.work.remark,
+          isProcessing: false,
+          // Only enable editing in edit mode
+          onTitleChanged: widget.isEditing
+              ? (value) => _updateWorkField('title', value)
+              : null,
+          onAuthorChanged: widget.isEditing
+              ? (value) => _updateWorkField('author', value)
+              : null,
+          onStyleChanged: widget.isEditing
+              ? (value) => _updateWorkField('style', value)
+              : null,
+          onToolChanged: widget.isEditing
+              ? (value) => _updateWorkField('tool', value)
+              : null,
+          onCreationDateChanged: widget.isEditing
+              ? (value) => _updateWorkField('creationDate', value)
+              : null,
+          onRemarkChanged: widget.isEditing
+              ? (value) => _updateWorkField('remark', value)
+              : null,
+          // Configure form appearance
+          visibleFields: WorkFormPresets.editFields,
+          requiredFields: {WorkFormField.title},
+          showHelp: false,
+          showKeyboardShortcuts: false,
+        ),
+
+        // Display additional metadata in view mode
+        if (!widget.isEditing) ...[
+          const SizedBox(height: AppSizes.spacingMedium),
+          _buildAdditionalMetadata(context),
+        ],
       ],
     );
   }
@@ -158,26 +183,22 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
         if (charCount == 0)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(
-              child: Text('尚未从此作品中提取字形'),
-            ),
+            child: Center(child: Text('暂无集字')),
           )
         else
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: List.generate(
-              charCount.clamp(0, 20),
+              math.min(charCount, 20),
               (index) => _buildCharacterChip(context),
             ),
           ),
         if (charCount > 20)
           Center(
             child: TextButton(
-              onPressed: () {
-                // TODO: Navigate to characters list page
-              },
-              child: const Text('查看全部'),
+              onPressed: () {},
+              child: const Text('查看更多'),
             ),
           ),
       ],
@@ -193,134 +214,6 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     );
   }
 
-  Widget _buildDatePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '创作日期',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        InkWell(
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate ?? DateTime.now(),
-              firstDate: DateTime(1500),
-              lastDate: DateTime.now(),
-            );
-            if (date != null) {
-              setState(() => _selectedDate = date);
-              _updateWorkField('creationDate', date);
-            }
-          },
-          child: InputDecorator(
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              suffixIcon: const Icon(Icons.calendar_today, size: 18),
-            ),
-            child: Text(
-              _selectedDate != null
-                  ? DateFormat('yyyy-MM-dd').format(_selectedDate!)
-                  : '未设置',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditForm(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionTitle(title: '基本信息'),
-        const SizedBox(height: AppSizes.spacingMedium),
-        _buildFormField(
-          label: '作品名称',
-          controller: _titleController,
-          onChanged: (value) => _updateWorkField('title', value),
-        ),
-        const SizedBox(height: AppSizes.spacingSmall),
-        _buildFormField(
-          label: '作者',
-          controller: _authorController,
-          onChanged: (value) => _updateWorkField('author', value),
-        ),
-        const SizedBox(height: AppSizes.spacingSmall),
-        _buildStyleDropdown(),
-        const SizedBox(height: AppSizes.spacingSmall),
-        _buildToolDropdown(),
-        const SizedBox(height: AppSizes.spacingSmall),
-        _buildDatePicker(),
-        const SizedBox(height: AppSizes.spacingSmall),
-        _buildFormField(
-          label: '备注',
-          controller: _remarkController,
-          onChanged: (value) => _updateWorkField('remark', value),
-          maxLines: 3,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFormField({
-    required String label,
-    required TextEditingController controller,
-    required ValueChanged<String> onChanged,
-    int maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        TextFormField(
-          controller: controller,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
-
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -331,10 +224,7 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
             width: 80,
             child: Text(
               label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -345,80 +235,8 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
     );
   }
 
-  Widget _buildRemarkSection(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '备注:',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(widget.work.remark!),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStyleDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '作品风格',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        DropdownButtonFormField<WorkStyle>(
-          value: _selectedStyle,
-          items: WorkStyle.values
-              .map((style) => DropdownMenuItem(
-                    value: style,
-                    child: Text(style.label),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _selectedStyle = value);
-              _updateWorkField('style', value);
-            }
-          },
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTagsTab(BuildContext context) {
+  // 修改标签标签页构建方法，直接使用传入的标签数据
+  Widget _buildTagsTab(BuildContext context, List<String> tags) {
     final theme = Theme.of(context);
 
     return ListView(
@@ -429,103 +247,17 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
           children: [
             Text(
               '标签管理',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+              style: theme.textTheme.titleMedium,
             ),
-            const SizedBox(height: AppSizes.spacingMedium),
-            if (widget.isEditing)
-              TagEditor(
-                tags: _tags,
-                suggestedTags: const [
-                  '行书',
-                  '楷书',
-                  '隶书',
-                  '草书',
-                  '真迹',
-                  '拓片',
-                  '碑帖',
-                  '字帖',
-                  '宋代',
-                  '元代',
-                  '明代',
-                  '清代',
-                ],
-                onTagsChanged: (updatedTags) {
-                  setState(() => _tags = updatedTags);
-                  ref
-                      .read(workDetailProvider.notifier)
-                      .updateWorkTags(updatedTags);
-                },
-                chipColor: theme.colorScheme.primaryContainer,
-                textColor: theme.colorScheme.onPrimaryContainer,
-              )
-            else if (_tags.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSizes.spacingLarge),
-                  child: Text('没有标签'),
-                ),
-              )
-            else
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _tags
-                    .map((tag) => Chip(
-                          label: Text(tag),
-                          backgroundColor:
-                              theme.colorScheme.surfaceContainerHighest,
-                        ))
-                    .toList(),
-              ),
+            const SizedBox(height: 16),
+            TagEditor(
+              tags: tags,
+              readOnly: !widget.isEditing,
+              onTagsChanged: (newTags) {
+                _updateWorkField('tags', newTags);
+              },
+            ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildToolDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '使用工具',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        DropdownButtonFormField<WorkTool>(
-          value: _selectedTool,
-          items: WorkTool.values
-              .map((tool) => DropdownMenuItem(
-                    value: tool,
-                    child: Text(tool.label),
-                  ))
-              .toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() => _selectedTool = value);
-              _updateWorkField('tool', value);
-            }
-          },
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-          ),
         ),
       ],
     );
@@ -539,16 +271,6 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
   String _formatDateTime(DateTime? date) {
     if (date == null) return '未知';
     return DateFormat('yyyy-MM-dd HH:mm').format(date);
-  }
-
-  void _initFormControllers() {
-    _titleController = TextEditingController(text: widget.work.title);
-    _authorController = TextEditingController(text: widget.work.author);
-    _remarkController = TextEditingController(text: widget.work.remark);
-    _selectedStyle = widget.work.style;
-    _selectedTool = widget.work.tool;
-    _selectedDate = widget.work.creationDate;
-    _tags = List.from(widget.work.tags);
   }
 
   void _updateWorkField(String field, dynamic value) {
@@ -571,6 +293,10 @@ class _UnifiedWorkDetailPanelState extends ConsumerState<UnifiedWorkDetailPanel>
         break;
       case 'remark':
         notifier.updateWorkBasicInfo(remark: value);
+        break;
+      case 'tags':
+        // 使用专门的方法更新标签
+        notifier.updateWorkTags(value);
         break;
     }
     notifier.markAsChanged();

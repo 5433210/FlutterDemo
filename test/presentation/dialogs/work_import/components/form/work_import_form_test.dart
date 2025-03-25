@@ -130,7 +130,7 @@ void main() {
 
       // Manually trigger date change
       final dateInput = tester.widget<DateInputField>(dateField);
-      dateInput.onChanged.call(futureDate);
+      dateInput.onChanged?.call(futureDate);
       await tester.pumpAndSettle();
 
       // Verify error message

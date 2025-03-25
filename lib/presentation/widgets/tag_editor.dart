@@ -6,6 +6,7 @@ class TagEditor extends StatefulWidget {
   final Function(List<String>) onTagsChanged;
   final Color? chipColor;
   final Color? textColor;
+  final bool readOnly;
 
   const TagEditor({
     super.key,
@@ -14,6 +15,7 @@ class TagEditor extends StatefulWidget {
     this.suggestedTags = const [],
     this.chipColor,
     this.textColor,
+    this.readOnly = false,
   });
 
   @override
@@ -30,57 +32,72 @@ class _TagEditorState extends State<TagEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 标签输入
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                decoration: InputDecoration(
-                  hintText: '输入标签后按Enter添加',
-                  isDense: true,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
+        // Only show tag input when not in read-only mode
+        if (!widget.readOnly) ...[
+          // 标签输入
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  decoration: InputDecoration(
+                    hintText: '输入标签后按Enter添加',
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        if (_controller.text.isNotEmpty) {
+                          _addTag(_controller.text);
+                        }
+                      },
+                    ),
                   ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add),
-                    onPressed: () {
-                      if (_controller.text.isNotEmpty) {
-                        _addTag(_controller.text);
-                      }
-                    },
-                  ),
+                  onSubmitted: (value) {
+                    _addTag(value);
+                    _focusNode.requestFocus(); // 保持焦点
+                  },
                 ),
-                onSubmitted: (value) {
-                  _addTag(value);
-                  _focusNode.requestFocus(); // 保持焦点
-                },
               ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+        ],
+
+        // Current tags display - always shown
+        if (_tags.isEmpty && widget.readOnly)
+          Text(
+            '暂无标签',
+            style: TextStyle(
+              color: Theme.of(context).hintColor,
+              fontStyle: FontStyle.italic,
             ),
-          ],
-        ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _tags.map((tag) {
+              return Chip(
+                label: Text(
+                  tag,
+                  style: TextStyle(color: widget.textColor),
+                ),
+                backgroundColor: widget.chipColor,
+                // Only show delete icon when not in read-only mode
+                deleteIcon:
+                    widget.readOnly ? null : const Icon(Icons.close, size: 16),
+                onDeleted: widget.readOnly ? null : () => _removeTag(tag),
+              );
+            }).toList(),
+          ),
 
-        const SizedBox(height: 8),
-
-        // 当前标签显示
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _tags.map((tag) {
-            return Chip(
-              label: Text(
-                tag,
-                style: TextStyle(color: widget.textColor),
-              ),
-              backgroundColor: widget.chipColor,
-              deleteIcon: const Icon(Icons.close, size: 16),
-              onDeleted: () => _removeTag(tag),
-            );
-          }).toList(),
-        ),
-
-        if (widget.suggestedTags.isNotEmpty) ...[
+        // Only show suggested tags when not in read-only mode and there are suggestions
+        if (!widget.readOnly && widget.suggestedTags.isNotEmpty) ...[
           const SizedBox(height: 16),
           const Text('建议标签:', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
@@ -127,6 +144,9 @@ class _TagEditorState extends State<TagEditor> {
   }
 
   void _addTag(String tag) {
+    if (widget.readOnly)
+      return; // Safety check - don't add tags in readonly mode
+
     tag = tag.trim();
     if (tag.isNotEmpty && !_tags.contains(tag)) {
       setState(() {
@@ -138,6 +158,9 @@ class _TagEditorState extends State<TagEditor> {
   }
 
   void _removeTag(String tag) {
+    if (widget.readOnly)
+      return; // Safety check - don't remove tags in readonly mode
+
     setState(() {
       _tags.remove(tag);
     });

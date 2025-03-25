@@ -586,7 +586,11 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
 
         // 重新加载作品详情以获取最新状态
         await _loadWorkDetails();
+        // 这里确保完成编辑后，工作面板会刷新以显示最新的标签
         ref.read(workDetailProvider.notifier).completeEditing();
+
+        // 强制刷新面板组件
+        setState(() {});
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('保存失败')),

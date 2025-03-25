@@ -29,8 +29,8 @@ class TestWorkImportViewModel extends WorkImportViewModel {
     this.mockImageProcessor,
   ) : super(mockWorkService, mockImageProcessor) {
     // 设置初始默认值
-    setStyle(WorkStyle.regular.value);
-    setTool(WorkTool.brush.value);
+    setStyle(WorkStyle.regular);
+    setTool(WorkTool.brush);
     setCreationDate(DateTime.now());
   }
 
@@ -87,8 +87,8 @@ class TestWorkImportViewModel extends WorkImportViewModel {
     shouldSucceedAdd = true;
     mockWorkService.reset();
     mockImageProcessor.reset();
-    setStyle(WorkStyle.regular.value);
-    setTool(WorkTool.brush.value);
+    setStyle(WorkStyle.regular);
+    setTool(WorkTool.brush);
     setCreationDate(DateTime.now());
   }
 
