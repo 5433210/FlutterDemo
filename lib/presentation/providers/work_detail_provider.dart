@@ -134,6 +134,8 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
         hasChanges: false,
       );
 
+      loadWorkDetails(updatedWork.id);
+
       return true;
     } catch (e) {
       AppLogger.error('保存作品失败', tag: 'WorkDetailProvider', error: e);
