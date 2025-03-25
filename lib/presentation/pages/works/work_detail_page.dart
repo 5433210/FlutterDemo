@@ -155,36 +155,44 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   Widget _buildEditModeToolbar(BuildContext context, WorkDetailState state) {
     final theme = Theme.of(context);
 
-    return Container(
-      height: kToolbarHeight,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: kToolbarHeight + 8,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: theme.colorScheme.surface.withOpacity(0.98),
         boxShadow: [
           BoxShadow(
+            color: theme.shadowColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
             color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 1,
+            blurRadius: 2,
             offset: const Offset(0, 1),
           ),
         ],
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.1),
+            color: theme.dividerColor.withOpacity(0.15),
             width: 1,
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+      padding: const EdgeInsets.only(
+          left: AppSizes.spacingMedium,
+          right: AppSizes.spacingMedium,
+          top: 4,
+          bottom: 4),
       child: Row(
         children: [
-          // 返回按钮 - 修改为返回到查看模式
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
-            onPressed: () => _cancelEditing(), // 直接调用取消编辑功能
+            onPressed: () => _cancelEditing(),
             visualDensity: VisualDensity.compact,
           ),
 
-          // 标题部分 - 改为"作品编辑"
           Expanded(
             child: Row(
               children: [
@@ -211,7 +219,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           ),
 
-          // 保持按钮靠右摆放，使用更紧凑的设计
+          // 添加分隔线
+          Container(
+            height: 24,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: theme.dividerColor.withOpacity(0.2),
+          ),
+
           FilledButton.icon(
             icon: const Icon(Icons.save, size: 18),
             label: const Text('保存'),
@@ -219,16 +234,33 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
                 ? () => _saveChanges()
                 : null,
             style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 0,
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           OutlinedButton(
             onPressed: () => _cancelEditing(),
             style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.onSurface.withOpacity(0.8),
+              side: BorderSide(
+                color: theme.colorScheme.outline.withOpacity(0.5),
+                width: 1,
+              ),
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('取消'),
           ),
@@ -284,28 +316,37 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     final theme = Theme.of(context);
     final work = state.work;
 
-    return Container(
-      height: kToolbarHeight,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: kToolbarHeight + 8,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: theme.colorScheme.surface.withOpacity(0.98),
         boxShadow: [
           BoxShadow(
+            color: theme.shadowColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
             color: theme.shadowColor.withOpacity(0.05),
-            blurRadius: 1,
+            blurRadius: 2,
             offset: const Offset(0, 1),
           ),
         ],
         border: Border(
           bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.1),
+            color: theme.dividerColor.withOpacity(0.15),
             width: 1,
           ),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+      padding: const EdgeInsets.only(
+          left: AppSizes.spacingMedium,
+          right: AppSizes.spacingMedium,
+          top: 4,
+          bottom: 4),
       child: Row(
         children: [
-          // 保持左侧的返回按钮不变
           IconButton(
             icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
             tooltip: '返回',
@@ -313,7 +354,6 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             visualDensity: VisualDensity.compact,
           ),
 
-          // 标题部分
           Expanded(
             child: Row(
               children: [
@@ -340,22 +380,51 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
             ),
           ),
 
-          // 按钮靠右摆放，与编辑模式保持一致的样式
+          // 添加分隔线
+          Container(
+            height: 24,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: theme.dividerColor.withOpacity(0.2),
+          ),
+
           FilledButton.icon(
             onPressed: work != null ? _enterEditMode : null,
             icon: const Icon(Icons.edit, size: 18),
             label: const Text('编辑'),
             style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 0,
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
             onPressed: work != null ? () => _navigateToExtract(work.id) : null,
             style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondaryContainer,
+              foregroundColor: theme.colorScheme.onSecondaryContainer,
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 0,
+              side: BorderSide(
+                color: theme.colorScheme.outline.withOpacity(0.1),
+                width: 1,
+              ),
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('提取字形'),
           ),
