@@ -9,6 +9,7 @@ import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../infrastructure/image/image_processor.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../providers/service_providers.dart';
 import '../storage/cache_manager.dart';
 
@@ -36,8 +37,10 @@ class CharacterImageProcessor {
     final cacheKey = _generateCacheKey(imageData, region, options, erasePoints);
 
     // 检查缓存
+    AppLogger.debug('检查缓存', data: {'cacheKey': cacheKey});
     final cachedResult = await _cacheManager.get(cacheKey);
     if (cachedResult != null) {
+      AppLogger.debug('找到缓存的处理结果', data: {'dataLength': cachedResult.length});
       try {
         // 从缓存数据反序列化结果
         return _deserializeProcessingResult(cachedResult);
@@ -47,6 +50,7 @@ class CharacterImageProcessor {
       }
     }
 
+    AppLogger.debug('未找到缓存，开始处理图像...');
     // 创建处理参数
     final processingParams = {
       'imageData': imageData,
@@ -65,11 +69,18 @@ class CharacterImageProcessor {
       'erasePoints': erasePoints?.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
     };
 
-    // 使用Isolate在后台线程处理
-    final result = await _processInIsolate(processingParams);
+    late ProcessingResult result;
+    try {
+      result = await _processInIsolate(processingParams);
 
-    // 缓存处理结果
-    await _cacheManager.put(cacheKey, result.toArchiveBytes());
+      AppLogger.debug('图像处理完成',
+          data: {'resultSize': '${result.binaryImage.length}bytes'});
+      AppLogger.debug('缓存处理结果');
+      await _cacheManager.put(cacheKey, result.toArchiveBytes());
+    } catch (e) {
+      AppLogger.error('图像处理失败', error: e);
+      rethrow;
+    }
 
     return result;
   }
@@ -262,7 +273,8 @@ class CharacterImageProcessor {
     return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
   }
 
-  static Uint8List _cropImage(Uint8List sourceImage, Rect region) {
+  static Future<Uint8List> _cropImage(
+      Uint8List sourceImage, Rect region) async {
     // 解码图像
     final image = img.decodeImage(sourceImage);
     if (image == null) {
@@ -382,6 +394,7 @@ class CharacterImageProcessor {
 
     try {
       // 解析参数
+      AppLogger.debug('开始在Isolate中处理图像');
       final imageData = params['imageData'] as Uint8List;
       final regionData = params['region'] as Map<String, dynamic>;
       final optionsData = params['options'] as Map<String, dynamic>;
@@ -408,7 +421,12 @@ class CharacterImageProcessor {
       // 执行处理步骤
 
       // 1. 裁剪区域
-      final croppedImage = _cropImage(imageData, region);
+      final croppedImage = await _cropImage(imageData, region);
+      AppLogger.debug('图像裁剪完成', data: {
+        'cropWidth': region.width,
+        'cropHeight': region.height,
+        'cropLength': croppedImage.length
+      });
 
       // 2. 应用擦除（如果有）
       final erasedImage = erasePoints != null && erasePoints.isNotEmpty
@@ -421,6 +439,11 @@ class CharacterImageProcessor {
         options.threshold,
         options.inverted,
       );
+      AppLogger.debug('图像二值化完成', data: {
+        'threshold': options.threshold,
+        'inverted': options.inverted,
+        'binaryLength': binaryImage.length
+      });
 
       // 4. 降噪处理
       final denoisedImage = _denoiseImage(
@@ -452,6 +475,7 @@ class CharacterImageProcessor {
         },
       });
     } catch (e) {
+      AppLogger.error('Isolate中的图像处理失败', error: e);
       // 发送错误信息
       sendPort.send({'error': e.toString()});
     }

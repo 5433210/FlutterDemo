@@ -653,14 +653,65 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
   void _navigateToExtract() {
     final work = ref.read(workDetailProvider).work;
     if (work != null) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => CharacterCollectionPage(
-            workId: work.id,
-            initialPageId: work.firstImageId!,
-          ),
-        ),
-      );
+      // Check if there are images available
+      if (work.images.isNotEmpty) {
+        try {
+          final initialPageId = work.firstImageId ?? work.images.first.id;
+
+          // Log navigation attempt
+          AppLogger.debug(
+            'Navigating to character extraction',
+            tag: 'WorkDetailPage',
+            data: {
+              'workId': work.id,
+              'initialPageId': initialPageId,
+            },
+          );
+
+          // Verify image before navigation
+          final storageService = ref.read(workStorageProvider);
+          storageService
+              .verifyWorkImageExists(
+                  storageService.getImportedPath(work.id, initialPageId))
+              .then((exists) {
+            if (!exists && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('选择的图片无法加载，请尝试重新导入图片')),
+              );
+              return;
+            }
+
+            if (mounted) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => CharacterCollectionPage(
+                    workId: work.id,
+                    initialPageId: initialPageId,
+                  ),
+                ),
+              );
+            }
+          });
+        } catch (e, stack) {
+          AppLogger.error(
+            '导航到字形提取页面出错',
+            tag: 'WorkDetailPage',
+            error: e,
+            stackTrace: stack,
+          );
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('无法打开字形提取: ${e.toString()}')),
+            );
+          }
+        }
+      } else {
+        // Handle case where there are no images
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('无法提取字形：作品没有图片')),
+        );
+      }
     }
   }
 

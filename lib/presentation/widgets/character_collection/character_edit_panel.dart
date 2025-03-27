@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/edit_panel_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
+import '../../providers/character/work_image_provider.dart';
 import '../common/empty_state.dart';
 import 'action_buttons.dart';
 import 'character_input.dart';
@@ -19,6 +20,7 @@ class CharacterEditPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedRegion = ref.watch(selectedRegionProvider);
     final editState = ref.watch(editPanelProvider);
+    final imageState = ref.watch(workImageProvider);
 
     // 如果没有选中区域，显示空状态
     if (selectedRegion == null) {
@@ -57,6 +59,8 @@ class CharacterEditPanel extends ConsumerWidget {
           Expanded(
             child: PreviewCanvas(
               regionId: selectedRegion.id,
+              pageImageData: imageState.imageData,
+              regionRect: selectedRegion.rect,
               isInverted: editState.isInverted,
               showOutline: editState.showOutline,
               zoomLevel: editState.zoomLevel,

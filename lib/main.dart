@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
@@ -28,7 +29,8 @@ void main() async {
     await windowManager.focus();
   });
 
-  AppLogger.init();
+  // 初始化日志系统，启用控制台输出和调试级别
+  await AppLogger.init(enableConsole: true, minLevel: LogLevel.debug);
   try {
     // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();

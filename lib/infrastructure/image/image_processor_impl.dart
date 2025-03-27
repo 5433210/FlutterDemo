@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'dart:ui';
 
 import 'package:image/image.dart' as img;
@@ -559,6 +560,22 @@ class ImageProcessorImpl implements ImageProcessor {
         },
       );
       rethrow;
+    }
+  }
+
+  /// 验证图像数据是否可解码
+  @override
+  Future<bool> validateImageData(Uint8List data) async {
+    if (data.isEmpty) return false;
+    try {
+      // 尝试解码图像以验证数据有效性
+      final codec = await ui.instantiateImageCodec(data);
+      final frame = await codec.getNextFrame();
+      return true;
+    } catch (e) {
+      AppLogger.warning('图像数据验证失败',
+          tag: 'ImageProcessor', error: e, data: {'dataLength': data.length});
+      return false;
     }
   }
 

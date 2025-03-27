@@ -56,7 +56,7 @@ const migrations = [
 
   -- 创建索引
   CREATE INDEX IF NOT EXISTS idx_characters_workId ON characters(workId);
-  CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(char);
+  CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(character);
   ''',
 
   // 版本 2: 添加作品图片管理 - 表和索引
@@ -172,11 +172,7 @@ const migrations = [
   // 版本 4: 处理字段命名统一性
   '''
   -- 重命名列
-  ALTER TABLE work_images RENAME COLUMN work_id TO workId;
-  ''',
 
-  '''
-  -- 更新触发器
   DROP TRIGGER IF EXISTS update_work_image_count_insert;
   DROP TRIGGER IF EXISTS update_work_image_count_delete;
   DROP TRIGGER IF EXISTS update_work_first_image_on_insert;

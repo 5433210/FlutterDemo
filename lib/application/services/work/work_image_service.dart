@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
+import 'package:image/image.dart' as img;
+
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../infrastructure/image/image_processor.dart';
@@ -163,7 +165,29 @@ class WorkImageService with WorkServiceErrorHandler {
         }
 
         // 读取图片数据
-        return await file.readAsBytes();
+        final imageBytes = await file.readAsBytes();
+
+        AppLogger.debug('读取页面图片数据', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'pageId': pageId,
+          'imageSize': imageBytes.length,
+        });
+
+        // 验证图片数据
+        try {
+          final image = img.decodeImage(imageBytes);
+          if (image != null) {
+            AppLogger.debug('图片数据验证成功', tag: 'WorkImageService', data: {
+              'width': image.width,
+              'height': image.height,
+            });
+          }
+        } catch (e, stack) {
+          AppLogger.error('图片数据解码失败',
+              tag: 'WorkImageService', error: e, stackTrace: stack);
+        }
+
+        return imageBytes;
       },
       data: {
         'workId': workId,

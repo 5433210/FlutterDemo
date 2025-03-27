@@ -9,6 +9,7 @@ import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/viewmodels/character_collection_viewmodel.dart';
 import '../../providers/repository_providers.dart';
 import '../image/character_image_processor.dart';
@@ -121,6 +122,13 @@ class CharacterService {
     Uint8List imageData,
   ) async {
     try {
+      AppLogger.debug('开始提取字符区域', data: {
+        'workId': workId,
+        'pageId': pageId,
+        'region':
+            '${region.left},${region.top},${region.width},${region.height}',
+        'imageDataLength': imageData.length
+      });
       // 处理字符区域
       final result = await _imageProcessor.processCharacterRegion(
         imageData,
@@ -128,6 +136,11 @@ class CharacterService {
         options,
         null, // 新创建的字符没有擦除点
       );
+      AppLogger.debug('字符区域处理完成', data: {
+        'originalCropLength': result.originalCrop.length,
+        'binaryImageLength': result.binaryImage.length,
+        'thumbnailLength': result.thumbnail.length
+      });
 
       // 创建字符区域
       final characterRegion = CharacterRegion.create(
@@ -135,24 +148,32 @@ class CharacterService {
         rect: region,
         options: options,
       );
+      AppLogger.debug('字符区域创建完成', data: {'regionId': characterRegion.id});
 
       // 保存字符和图像
       final character = await _persistenceService.saveCharacter(
         characterRegion,
         result,
       );
+      AppLogger.debug('字符和图像保存完成', data: {'characterId': character.id});
 
       // 缓存图像数据
       final id = character.id;
-      await Future.wait([
-        _cacheManager.put('${id}_original', result.originalCrop),
-        _cacheManager.put('${id}_binary', result.binaryImage),
-        _cacheManager.put('${id}_thumbnail', result.thumbnail),
-      ]);
+      try {
+        await Future.wait([
+          _cacheManager.put('${id}_original', result.originalCrop),
+          _cacheManager.put('${id}_binary', result.binaryImage),
+          _cacheManager.put('${id}_thumbnail', result.thumbnail),
+        ]);
+
+        AppLogger.debug('图像数据缓存完成', data: {'characterId': id});
+      } catch (e) {
+        AppLogger.error('缓存图像数据失败', error: e, data: {'characterId': id});
+      }
 
       return character.copyWith(workId: workId);
     } catch (e) {
-      print('提取字符失败: $e');
+      AppLogger.error('提取字符失败', error: e);
       rethrow;
     }
   }

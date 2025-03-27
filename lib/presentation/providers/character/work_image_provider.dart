@@ -1,13 +1,16 @@
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/work/work_image_service.dart';
+import '../../../infrastructure/logging/logger.dart';
 
 final workImageProvider =
     StateNotifierProvider<WorkImageNotifier, WorkImageState>((ref) {
   final workImageService = ref.watch(workImageServiceProvider);
+  AppLogger.debug('初始化WorkImageProvider');
   return WorkImageNotifier(workImageService);
 });
 
@@ -31,6 +34,20 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
           await _workImageService.getWorkPageImage(state.workId, pageId);
       if (imageData == null) {
         throw Exception('Image not found');
+      }
+
+      // 验证图像数据
+      AppLogger.debug('WorkImageProvider接收到图像数据',
+          data: {'imageLength': imageData.length});
+
+      try {
+        final image = img.decodeImage(imageData);
+        if (image != null) {
+          AppLogger.debug('WorkImageProvider验证图像成功',
+              data: {'width': image.width, 'height': image.height});
+        }
+      } catch (e, stack) {
+        AppLogger.error('WorkImageProvider图像验证失败', error: e, stackTrace: stack);
       }
 
       // 更新状态

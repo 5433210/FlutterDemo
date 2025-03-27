@@ -1,7 +1,14 @@
 import 'dart:typed_data';
+import 'dart:ui';
 
+import 'package:demo/application/services/character/character_service.dart';
+import 'package:demo/application/services/image/character_image_processor.dart';
+import 'package:demo/domain/models/character/character_image_type.dart';
+import 'package:demo/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../domain/models/character/processing_options.dart';
 
 // 擦除绘制器
 class ErasePainter extends CustomPainter {
@@ -57,6 +64,8 @@ class ErasePainter extends CustomPainter {
 
 class PreviewCanvas extends ConsumerStatefulWidget {
   final String regionId;
+  final Uint8List? pageImageData;
+  final Rect? regionRect;
   final bool isInverted;
   final bool showOutline;
   final double zoomLevel;
@@ -67,6 +76,8 @@ class PreviewCanvas extends ConsumerStatefulWidget {
   const PreviewCanvas({
     Key? key,
     required this.regionId,
+    this.pageImageData,
+    this.regionRect,
     required this.isInverted,
     required this.showOutline,
     required this.zoomLevel,
@@ -215,6 +226,42 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     super.dispose();
   }
 
+  // 创建占位图像 - 用于加载失败时显示
+  Future<Uint8List> _createPlaceholderImage(
+      int width, int height, Color color) async {
+    final recorder = PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    // 绘制背景
+    canvas.drawRect(
+        Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()), paint);
+
+    // 绘制错误图标
+    final iconPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+
+    // 绘制简单的X形
+    canvas.drawLine(Offset(width * 0.3, height * 0.3),
+        Offset(width * 0.7, height * 0.7), iconPaint);
+    canvas.drawLine(Offset(width * 0.3, height * 0.7),
+        Offset(width * 0.7, height * 0.3), iconPaint);
+
+    final picture = recorder.endRecording();
+    final img = picture.toImageSync(width, height);
+    final byteData = await img.toByteData(format: ImageByteFormat.png);
+
+    if (byteData == null) {
+      throw Exception('Failed to convert image to byte data');
+    }
+
+    return byteData.buffer.asUint8List();
+  }
+
   // 处理擦除结束
   void _handleErasePanEnd(DragEndDetails details) {
     if (!_isErasing || _currentErasePoints.isEmpty) return;
@@ -251,28 +298,65 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   // 加载字符图像
   Future<Uint8List?> _loadCharacterImage() async {
     try {
-      // 从仓库加载图像
-      // 在实际应用中，这里应该调用字符服务加载处理后的图像
-      // return await ref.read(characterServiceProvider).getProcessedImage(widget.regionId, widget.isInverted);
+      // 检查基本条件
+      if (widget.regionId.isEmpty) {
+        return null;
+      }
 
-      // 临时实现：返回一个空的1x1图像
-      return Uint8List.fromList([0, 0, 0, 0]);
+      // 设置处理选项
+      final processingOptions = ProcessingOptions(
+        inverted: widget.isInverted,
+        threshold: 128.0,
+        noiseReduction: 0.5,
+        showContour: false,
+      );
+
+      // 尝试从仓库加载已保存的图像
+      final savedImage = await ref
+          .read(characterServiceProvider)
+          .getCharacterImage(widget.regionId, CharacterImageType.binary);
+
+      if (savedImage != null) {
+        return savedImage;
+      }
+
+      // 如果没有找到已保存的图像，且提供了页面图像数据和区域，则从页面截取
+      if (widget.pageImageData != null && widget.regionRect != null) {
+        AppLogger.debug('从页面图像中截取区域', data: {
+          'regionId': widget.regionId,
+          'rect':
+              '${widget.regionRect!.left},${widget.regionRect!.top},${widget.regionRect!.width},${widget.regionRect!.height}'
+        });
+
+        final result = await ref
+            .read(characterImageProcessorProvider)
+            .processCharacterRegion(
+              widget.pageImageData!,
+              widget.regionRect!,
+              processingOptions,
+              null,
+            );
+        return result.binaryImage;
+      }
+
+      return null;
     } catch (e) {
-      // 记录错误并重新抛出
       print('加载字符图像失败: $e');
-      rethrow;
+      // 在开发阶段，返回一个占位图像而不是抛出异常
+      // 这样UI可以显示一个错误状态而不是崩溃
+      return _createPlaceholderImage(100, 100, Colors.red);
     }
   }
 
   // 加载轮廓SVG
   Future<String?> _loadOutlineSvg() async {
     try {
-      // 从仓库加载SVG
-      // 在实际应用中，这里应该调用字符服务加载SVG轮廓
-      // return await ref.read(characterServiceProvider).getOutlineSvg(widget.regionId);
+      // 如果不显示轮廓或区域ID为空，则返回null
+      if (!widget.showOutline || widget.regionId.isEmpty) {
+        return null;
+      }
 
-      // 临时实现：返回一个示例SVG
-      return '<svg>...</svg>';
+      return 'data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"></svg>';
     } catch (e) {
       print('加载轮廓失败: $e');
       return null;

@@ -75,4 +75,7 @@ abstract class ImageProcessor {
   ///
   /// [degrees] 旋转角度(90, 180, 270)
   Future<File> rotateImage(File input, int degrees);
+
+  /// 验证图像数据是否可解码
+  Future<bool> validateImageData(Uint8List data);
 }

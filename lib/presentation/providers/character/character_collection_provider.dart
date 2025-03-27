@@ -2,11 +2,13 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/undo_action.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
 import 'selected_region_provider.dart';
 import 'tool_mode_provider.dart';
@@ -214,6 +216,13 @@ class CharacterCollectionNotifier
         case UndoActionType.create:
           // 重做创建操作 - 恢复创建的区域
           final region = action.data as CharacterRegion;
+
+          if (_currentPageImage == null) {
+            throw Exception('当前页面图像为空');
+          }
+          AppLogger.debug('使用当前页面图像进行重做操作',
+              data: {'imageDataLength': _currentPageImage!.length});
+
           await _characterService.extractCharacter(
             _currentWorkId ?? '',
             region.pageId,
@@ -328,6 +337,9 @@ class CharacterCollectionNotifier
           throw Exception('Page image or ID not available');
         }
 
+        AppLogger.debug('使用当前页面图像创建新区域',
+            data: {'imageDataLength': _currentPageImage!.length});
+
         // 提取并处理字符
         final characterEntity = await _characterService.extractCharacter(
           _currentWorkId ?? '',
@@ -385,7 +397,21 @@ class CharacterCollectionNotifier
 
   // 更新当前页面图像
   void setCurrentPageImage(Uint8List imageData) {
-    _currentPageImage = imageData;
+    AppLogger.debug('设置当前页面图像', data: {'imageDataLength': imageData.length});
+
+    try {
+      final decodedImage = img.decodeImage(imageData);
+      if (decodedImage == null) {
+        AppLogger.error('图像数据解码失败：解码结果为null');
+        throw Exception('Invalid image data: decoded result is null');
+      }
+      _currentPageImage = imageData;
+      AppLogger.debug('图像数据解码成功',
+          data: {'width': decodedImage.width, 'height': decodedImage.height});
+    } catch (e, stack) {
+      AppLogger.error('图像数据解码失败', error: e, stackTrace: stack);
+      rethrow;
+    }
   }
 
   // 多选功能：切换选择状态
@@ -440,6 +466,13 @@ class CharacterCollectionNotifier
           final id = data['id'] as String;
           final deletedRegion = data['deletedState'] as CharacterRegion;
 
+          if (_currentPageImage == null) {
+            throw Exception('当前页面图像为空');
+          }
+
+          AppLogger.debug('使用当前页面图像进行撤销操作',
+              data: {'imageDataLength': _currentPageImage!.length});
+
           await _characterService.extractCharacter(
             _currentWorkId ?? '',
             deletedRegion.pageId,
@@ -447,6 +480,7 @@ class CharacterCollectionNotifier
             deletedRegion.options,
             _currentPageImage!,
           );
+
           final updatedRegions = [...state.regions, deletedRegion];
 
           state = state.copyWith(
