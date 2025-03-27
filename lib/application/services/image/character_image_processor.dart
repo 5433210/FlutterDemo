@@ -1,274 +1,459 @@
-import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
-import 'package:flutter/rendering.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as path;
+
+import '../../../domain/models/character/detected_outline.dart';
+import '../../../domain/models/character/processing_options.dart';
+import '../../../domain/models/character/processing_result.dart';
+import '../../../infrastructure/image/image_processor.dart';
+import '../../providers/service_providers.dart';
+import '../storage/cache_manager.dart';
+
+final characterImageProcessorProvider =
+    Provider<CharacterImageProcessor>((ref) {
+  final imageProcessor = ref.watch(imageProcessorProvider);
+  final cacheManager = ref.watch(cacheManagerProvider);
+  return CharacterImageProcessor(imageProcessor, cacheManager);
+});
 
 class CharacterImageProcessor {
-  /// 根据框选区域裁剪图片
-  /// 返回三种格式: 原图裁剪, 二值化处理后的图片, 缩略图
-  Future<Map<String, String>> processCharacterImage({
-    required String sourcePath,
-    required String outputDir,
-    required String charId,
-    required Rect region,
-    double rotation = 0.0,
-    bool inverted = false,
+  final ImageProcessor _processor;
+  final CacheManager _cacheManager;
+
+  CharacterImageProcessor(this._processor, this._cacheManager);
+
+  /// 完整的字符区域处理流程
+  Future<ProcessingResult> processCharacterRegion(
+    Uint8List imageData,
+    Rect region,
+    ProcessingOptions options,
     List<Offset>? erasePoints,
-  }) async {
-    // 创建输出目录
-    final outputPath = path.join(outputDir, charId);
-    await Directory(outputPath).create(recursive: true);
+  ) async {
+    // 生成处理参数的缓存键
+    final cacheKey = _generateCacheKey(imageData, region, options, erasePoints);
 
-    // 读取源图
-    final sourceImage = img.decodeImage(await File(sourcePath).readAsBytes());
-    if (sourceImage == null) throw Exception('Failed to load source image');
+    // 检查缓存
+    final cachedResult = await _cacheManager.get(cacheKey);
+    if (cachedResult != null) {
+      try {
+        // 从缓存数据反序列化结果
+        return _deserializeProcessingResult(cachedResult);
+      } catch (e) {
+        print('从缓存反序列化处理结果失败: $e');
+        // 缓存数据有问题则继续处理
+      }
+    }
 
-    // 1. 裁剪原图 - 保持原始比例和尺寸
-    final croppedOriginal = _cropImage(
-      sourceImage,
-      region.left.round(),
-      region.top.round(),
-      region.width.round(),
-      region.height.round(),
-    );
-    if (croppedOriginal == null) throw Exception('Failed to crop image');
-
-    // 旋转图片（如果需要）
-    final rotatedOriginal = rotation != 0.0
-        ? img.copyRotate(croppedOriginal,
-            angle: (rotation * 180 / 3.141592653589793).round())
-        : croppedOriginal;
-
-    // 保存原图裁剪
-    final originalPath = path.join(outputPath, 'original.png');
-    await File(originalPath).writeAsBytes(img.encodePng(rotatedOriginal));
-
-    // 2. 二值化处理
-    final binaryImage = await _processBinaryImage(
-      rotatedOriginal,
-      inverted: inverted,
-      targetSize: const Size(300, 300),
-      erasePoints: erasePoints,
-    );
-
-    // 保存二值化图片
-    final binaryPath = path.join(outputPath, 'char.png');
-    await File(binaryPath).writeAsBytes(img.encodePng(binaryImage));
-
-    // 3. 生成缩略图
-    final thumbnail = img.copyResize(binaryImage, width: 50, height: 50);
-    final thumbnailPath = path.join(outputPath, 'thumbnail.jpg');
-    await File(thumbnailPath)
-        .writeAsBytes(img.encodeJpg(thumbnail, quality: 85));
-
-    return {
-      'original': originalPath,
-      'binary': binaryPath,
-      'thumbnail': thumbnailPath,
+    // 创建处理参数
+    final processingParams = {
+      'imageData': imageData,
+      'region': {
+        'x': region.left,
+        'y': region.top,
+        'width': region.width,
+        'height': region.height,
+      },
+      'options': {
+        'inverted': options.inverted,
+        'threshold': options.threshold,
+        'noiseReduction': options.noiseReduction,
+        'showContour': options.showContour,
+      },
+      'erasePoints': erasePoints?.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
     };
-  }
 
-  /// 自适应阈值二值化
-  Uint8List _adaptiveThreshold(img.Image source,
-      {int windowSize = 11, int t = 15}) {
-    final width = source.width;
-    final height = source.height;
-    final result = Uint8List(width * height);
-    final integralImg = List.filled(width * height, 0);
+    // 使用Isolate在后台线程处理
+    final result = await _processInIsolate(processingParams);
 
-    // 计算积分图
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        final pos = y * width + x;
-        final pixel = source.getPixel(x, y).r.toInt();
-        integralImg[pos] = pixel +
-            (x > 0 ? integralImg[pos - 1] : 0) +
-            (y > 0 ? integralImg[pos - width] : 0) -
-            (x > 0 && y > 0 ? integralImg[pos - width - 1] : 0);
-      }
-    }
-
-    // 应用自适应阈值
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        final pos = y * width + x;
-        final pixel = source.getPixel(x, y).r.toInt();
-
-        // 计算局部窗口的边界
-        final x1 = x - windowSize ~/ 2;
-        final y1 = y - windowSize ~/ 2;
-        final x2 = x + windowSize ~/ 2;
-        final y2 = y + windowSize ~/ 2;
-
-        // 确保窗口在图像范围内并转换为整数
-        final rx1 = x1 < 0
-            ? 0
-            : x1 >= width
-                ? width - 1
-                : x1;
-        final ry1 = y1 < 0
-            ? 0
-            : y1 >= height
-                ? height - 1
-                : y1;
-        final rx2 = x2 < 0
-            ? 0
-            : x2 >= width
-                ? width - 1
-                : x2;
-        final ry2 = y2 < 0
-            ? 0
-            : y2 >= height
-                ? height - 1
-                : y2;
-
-        // 计算窗口内的平均值
-        final areaWidth = (rx2 - rx1);
-        final areaHeight = (ry2 - ry1);
-        final area = areaWidth * areaHeight;
-
-        if (area > 0) {
-          final sum = integralImg[ry2 * width + rx2] -
-              (rx1 > 0 ? integralImg[ry2 * width + rx1 - 1] : 0) -
-              (ry1 > 0 ? integralImg[ry1 * width + rx2] : 0) +
-              (rx1 > 0 && ry1 > 0 ? integralImg[ry1 * width + rx1 - 1] : 0);
-          final average = sum ~/ area;
-          result[pos] = pixel < (average - t) ? 0 : 255;
-        } else {
-          result[pos] = pixel < t ? 0 : 255;
-        }
-      }
-    }
+    // 缓存处理结果
+    await _cacheManager.put(cacheKey, result.toArchiveBytes());
 
     return result;
   }
 
-  /// 裁剪图片
-  img.Image? _cropImage(img.Image source, int x, int y, int width, int height) {
-    return img.copyCrop(
-      source,
-      x: x,
-      y: y,
-      width: width,
-      height: height,
+  /// 从缓存数据反序列化处理结果
+  ProcessingResult _deserializeProcessingResult(dynamic cachedData) {
+    try {
+      final bytes = cachedData as Uint8List;
+      return ProcessingResult.fromArchiveBytes(bytes);
+    } catch (e) {
+      print('从缓存反序列化处理结果失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 生成缓存键
+  String _generateCacheKey(
+    Uint8List imageData,
+    Rect region,
+    ProcessingOptions options,
+    List<Offset>? erasePoints,
+  ) {
+    // 区域坐标处理为整数，减少不必要的差异
+    final regionKey =
+        'rect_${region.left.toInt()}_${region.top.toInt()}_${region.width.toInt()}_${region.height.toInt()}';
+
+    // 处理选项键
+    final optionsKey =
+        'opt_${options.inverted ? 1 : 0}_${options.threshold.toInt()}_${(options.noiseReduction * 10).toInt()}';
+
+    // 使用图像数据的哈希作为唯一标识
+    final imageHashCode = imageData.hashCode.toString();
+
+    // 擦除点处理（如果有）
+    final eraseKey = erasePoints != null && erasePoints.isNotEmpty
+        ? 'erase_${erasePoints.length}'
+        : 'noerase';
+
+    return '$imageHashCode:$regionKey:$optionsKey:$eraseKey';
+  }
+
+  /// 在Isolate中处理图像
+  Future<ProcessingResult> _processInIsolate(
+      Map<String, dynamic> params) async {
+    final receivePort = ReceivePort();
+    await Isolate.spawn(_isolateProcessImage, [receivePort.sendPort, params]);
+
+    final result = await receivePort.first as Map<String, dynamic>;
+    receivePort.close();
+
+    if (result.containsKey('error')) {
+      throw Exception(result['error']);
+    }
+
+    return ProcessingResult(
+      originalCrop: result['originalCrop'] as Uint8List,
+      binaryImage: result['binaryImage'] as Uint8List,
+      thumbnail: result['thumbnail'] as Uint8List,
+      svgOutline: result['svgOutline'] as String?,
+      boundingBox: Rect.fromLTWH(
+        result['boundingBox']['x'] as double,
+        result['boundingBox']['y'] as double,
+        result['boundingBox']['width'] as double,
+        result['boundingBox']['height'] as double,
+      ),
     );
   }
 
-  /// 画线（用于擦除）
-  void _drawLine(
-    img.Image image,
-    int x1,
-    int y1,
-    int x2,
-    int y2,
-    int color, {
-    int thickness = 1,
-  }) {
-    final dx = (x2 - x1).abs();
-    final dy = (y2 - y1).abs();
-    final sx = x1 < x2 ? 1 : -1;
-    final sy = y1 < y2 ? 1 : -1;
-    var err = dx - dy;
+  static Uint8List _applyErase(
+      Uint8List image, List<Offset> erasePoints, double brushSize) {
+    // 解码图像
+    final decodedImage = img.decodeImage(image);
+    if (decodedImage == null) {
+      throw Exception('无法解码图像用于擦除');
+    }
 
-    while (true) {
-      // 绘制粗线
-      for (int i = -thickness ~/ 2; i <= thickness ~/ 2; i++) {
-        for (int j = -thickness ~/ 2; j <= thickness ~/ 2; j++) {
-          final px = x1 + i;
-          final py = y1 + j;
-          if (px >= 0 && px < image.width && py >= 0 && py < image.height) {
-            image.setPixel(px, py, img.ColorInt8.rgb(color, color, color));
+    // 创建副本进行修改
+    final resultImage = img.copyResize(decodedImage,
+        width: decodedImage.width, height: decodedImage.height);
+
+    // 应用擦除点，用白色填充
+    final brushRadius = brushSize / 2;
+    final white = img.ColorRgba8(255, 255, 255, 255);
+
+    for (final point in erasePoints) {
+      // 将画布坐标转换为图像坐标
+      final imgX = point.dx.clamp(0, decodedImage.width - 1).toInt();
+      final imgY = point.dy.clamp(0, decodedImage.height - 1).toInt();
+
+      // 绘制圆形擦除区域
+      for (int y = -brushRadius.toInt(); y <= brushRadius.toInt(); y++) {
+        for (int x = -brushRadius.toInt(); x <= brushRadius.toInt(); x++) {
+          // 判断是否在圆内
+          if (x * x + y * y <= brushRadius * brushRadius) {
+            final px = imgX + x;
+            final py = imgY + y;
+
+            // 检查像素是否在图像范围内
+            if (px >= 0 &&
+                px < resultImage.width &&
+                py >= 0 &&
+                py < resultImage.height) {
+              resultImage.setPixel(px, py, white);
+            }
           }
         }
       }
-
-      if (x1 == x2 && y1 == y2) break;
-      final e2 = 2 * err;
-      if (e2 > -dy) {
-        err -= dy;
-        x1 += sx;
-      }
-      if (e2 < dx) {
-        err += dx;
-        y1 += sy;
-      }
     }
+
+    // 编码为PNG
+    return Uint8List.fromList(img.encodePng(resultImage));
   }
 
-  /// 二值化处理并调整尺寸
-  Future<img.Image> _processBinaryImage(
-    img.Image source, {
-    bool inverted = false,
-    Size targetSize = const Size(300, 300),
-    List<Offset>? erasePoints,
-  }) async {
-    // 转换为灰度图
-    final grayscale = img.grayscale(source);
-
-    // 应用擦除点
-    if (erasePoints != null && erasePoints.isNotEmpty) {
-      for (int i = 0; i < erasePoints.length - 1; i++) {
-        _drawLine(
-          grayscale,
-          erasePoints[i].dx.round(),
-          erasePoints[i].dy.round(),
-          erasePoints[i + 1].dx.round(),
-          erasePoints[i + 1].dy.round(),
-          255, // 白色
-          thickness: 10,
-        );
-      }
+  static Uint8List _binarizeImage(
+      Uint8List image, double threshold, bool inverted) {
+    // 解码图像
+    final decodedImage = img.decodeImage(image);
+    if (decodedImage == null) {
+      throw Exception('无法解码图像用于二值化');
     }
 
-    // 应用自适应阈值进行二值化
-    final binary = _adaptiveThreshold(grayscale);
+    // 转为灰度图
+    final grayscale = img.grayscale(decodedImage);
+
+    // 应用阈值，进行二值化
+    // 将阈值限制在0-255范围内
+    final thresholdValue = threshold.toInt().clamp(0, 255);
+
+    // 创建一个二值化图像
+    final binary = img.Image(
+      width: grayscale.width,
+      height: grayscale.height,
+      numChannels: grayscale.numChannels,
+    );
+
+    // 逐像素应用阈值
+    for (int y = 0; y < grayscale.height; y++) {
+      for (int x = 0; x < grayscale.width; x++) {
+        // 获取灰度值
+        final pixel = grayscale.getPixel(x, y);
+        final luminance = img.getLuminanceRgb(
+          pixel.r,
+          pixel.g,
+          pixel.b,
+        );
+
+        // 应用阈值
+        if (luminance > thresholdValue) {
+          binary.setPixel(x, y, img.ColorRgb8(255, 255, 255)); // 白色
+        } else {
+          binary.setPixel(x, y, img.ColorRgb8(0, 0, 0)); // 黑色
+        }
+      }
+    }
 
     // 如果需要反转颜色
-    if (inverted) {
-      for (int i = 0; i < binary.length; i++) {
-        binary[i] = binary[i] == 0 ? 255 : 0;
-      }
+    final resultImage = inverted ? img.invert(binary) : binary;
+
+    // 编码为PNG
+    return Uint8List.fromList(img.encodePng(resultImage));
+  }
+
+  static Uint8List _createThumbnail(Uint8List image, int maxSize) {
+    // 解码图像
+    final decodedImage = img.decodeImage(image);
+    if (decodedImage == null) {
+      throw Exception('无法解码图像用于生成缩略图');
     }
 
-    // 调整大小，保持宽高比
-    final aspectRatio = source.width / source.height;
-    int newWidth, newHeight;
-    if (aspectRatio > 1) {
-      newWidth = targetSize.width.round();
-      newHeight = (targetSize.width / aspectRatio).round();
+    // 计算缩放比例
+    double ratio = 1.0;
+    if (decodedImage.width > decodedImage.height) {
+      ratio = maxSize / decodedImage.width;
     } else {
-      newHeight = targetSize.height.round();
-      newWidth = (targetSize.height * aspectRatio).round();
+      ratio = maxSize / decodedImage.height;
     }
 
-    // 创建目标尺寸的空白图像
-    final resized = img.Image(
-      width: targetSize.width.round(),
-      height: targetSize.height.round(),
-      format: img.Format.uint8,
+    final targetWidth = (decodedImage.width * ratio).toInt();
+    final targetHeight = (decodedImage.height * ratio).toInt();
+
+    // 调整图像大小
+    final thumbnail = img.copyResize(
+      decodedImage,
+      width: targetWidth,
+      height: targetHeight,
+      interpolation: img.Interpolation.cubic,
     );
 
-    // 将二值化图像调整到新尺寸并居中放置
-    final scaled = img.copyResize(
-      img.Image.fromBytes(
-        width: source.width,
-        height: source.height,
-        bytes: binary.buffer,
-        format: img.Format.uint8,
-      ),
-      width: newWidth,
-      height: newHeight,
+    // 编码为JPEG（缩略图使用JPEG以减小体积）
+    return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
+  }
+
+  static Uint8List _cropImage(Uint8List sourceImage, Rect region) {
+    // 解码图像
+    final image = img.decodeImage(sourceImage);
+    if (image == null) {
+      throw Exception('无法解码源图像');
+    }
+
+    // 进行裁剪
+    final cropX = region.left.toInt().clamp(0, image.width - 1);
+    final cropY = region.top.toInt().clamp(0, image.height - 1);
+    final cropWidth = region.width.toInt().clamp(1, image.width - cropX);
+    final cropHeight = region.height.toInt().clamp(1, image.height - cropY);
+
+    final croppedImage = img.copyCrop(
+      image,
+      x: cropX,
+      y: cropY,
+      width: cropWidth,
+      height: cropHeight,
     );
 
-    // 计算居中位置
-    final x = ((targetSize.width - newWidth) / 2).round();
-    final y = ((targetSize.height - newHeight) / 2).round();
+    // 编码为PNG
+    return Uint8List.fromList(img.encodePng(croppedImage));
+  }
 
-    // 将调整后的图像复制到目标图像的中心
-    img.compositeImage(resized, scaled, dstX: x, dstY: y);
+  static Uint8List _denoiseImage(Uint8List binaryImage, double noiseReduction) {
+    // 解码图像
+    final decodedImage = img.decodeImage(binaryImage);
+    if (decodedImage == null) {
+      throw Exception('无法解码图像用于降噪');
+    }
 
-    return resized;
+    if (noiseReduction <= 0) {
+      return binaryImage;
+    }
+
+    // 应用中值滤波降噪
+    var kernelSize = (noiseReduction * 3).toInt().clamp(1, 9);
+    if (kernelSize % 2 == 0) kernelSize++; // 确保为奇数
+
+    // 使用现代化的图像滤波API
+    final command = img.Command()
+      ..image(decodedImage)
+      ..gaussianBlur(radius: kernelSize ~/ 2);
+    final Object denoisedObj = command.getImage();
+    final img.Image imageToEncode =
+        denoisedObj is img.Image ? denoisedObj : decodedImage;
+
+    // 编码为PNG
+    return Uint8List.fromList(img.encodePng(imageToEncode));
+  }
+
+  static DetectedOutline _detectOutline(Uint8List binaryImage) {
+    // 解码图像
+    final decodedImage = img.decodeImage(binaryImage);
+    if (decodedImage == null) {
+      throw Exception('无法解码图像用于轮廓检测');
+    }
+
+    // 此处应实现轮廓检测算法
+    // 目前返回一个简单的边界，实际使用需要更复杂的算法
+
+    // 默认轮廓为整个图像的边界
+    final boundingRect = Rect.fromLTWH(
+        0, 0, decodedImage.width.toDouble(), decodedImage.height.toDouble());
+
+    // 简化的轮廓点，实际需要提取真实轮廓
+    final contourPoints = [
+      [
+        const Offset(0, 0),
+        Offset(decodedImage.width.toDouble(), 0),
+        Offset(decodedImage.width.toDouble(), decodedImage.height.toDouble()),
+        Offset(0, decodedImage.height.toDouble()),
+        const Offset(0, 0),
+      ]
+    ];
+
+    return DetectedOutline(
+      boundingRect: boundingRect,
+      contourPoints: contourPoints,
+    );
+  }
+
+  static String _generateSvgOutline(DetectedOutline outline) {
+    // 生成SVG路径字符串
+    final width = outline.boundingRect.width;
+    final height = outline.boundingRect.height;
+
+    StringBuffer svg = StringBuffer();
+    svg.write(
+        '<svg viewBox="0 0 $width $height" xmlns="http://www.w3.org/2000/svg">');
+
+    // 为每个轮廓生成路径
+    for (final contour in outline.contourPoints) {
+      if (contour.isEmpty) continue;
+
+      svg.write('<path d="');
+
+      // 移动到第一个点
+      svg.write('M${contour[0].dx},${contour[0].dy} ');
+
+      // 连接后续点
+      for (int i = 1; i < contour.length; i++) {
+        svg.write('L${contour[i].dx},${contour[i].dy} ');
+      }
+
+      svg.write('" stroke="black" fill="none" />');
+    }
+
+    svg.write('</svg>');
+    return svg.toString();
+  }
+
+  /// Isolate处理入口
+  static void _isolateProcessImage(List<dynamic> args) async {
+    final SendPort sendPort = args[0] as SendPort;
+    final Map<String, dynamic> params = args[1] as Map<String, dynamic>;
+
+    try {
+      // 解析参数
+      final imageData = params['imageData'] as Uint8List;
+      final regionData = params['region'] as Map<String, dynamic>;
+      final optionsData = params['options'] as Map<String, dynamic>;
+      final erasePointsData = params['erasePoints'] as List<dynamic>?;
+
+      final region = Rect.fromLTWH(
+        regionData['x'] as double,
+        regionData['y'] as double,
+        regionData['width'] as double,
+        regionData['height'] as double,
+      );
+
+      final options = ProcessingOptions(
+        inverted: optionsData['inverted'] as bool,
+        threshold: optionsData['threshold'] as double,
+        noiseReduction: optionsData['noiseReduction'] as double,
+        showContour: optionsData['showContour'] as bool,
+      );
+
+      final erasePoints = erasePointsData
+          ?.map((p) => Offset(p['x'] as double, p['y'] as double))
+          .toList();
+
+      // 执行处理步骤
+
+      // 1. 裁剪区域
+      final croppedImage = _cropImage(imageData, region);
+
+      // 2. 应用擦除（如果有）
+      final erasedImage = erasePoints != null && erasePoints.isNotEmpty
+          ? _applyErase(croppedImage, erasePoints, 10.0) // 10.0是笔刷大小
+          : croppedImage;
+
+      // 3. 二值化处理
+      final binaryImage = _binarizeImage(
+        erasedImage,
+        options.threshold,
+        options.inverted,
+      );
+
+      // 4. 降噪处理
+      final denoisedImage = _denoiseImage(
+        binaryImage,
+        options.noiseReduction,
+      );
+
+      // 5. 检测轮廓
+      final outline = _detectOutline(denoisedImage);
+
+      // 6. 生成SVG轮廓（如果需要）
+      final svgOutline =
+          options.showContour ? _generateSvgOutline(outline) : null;
+
+      // 7. 生成缩略图
+      final thumbnail = _createThumbnail(denoisedImage, 100);
+
+      // 发送处理结果
+      sendPort.send({
+        'originalCrop': croppedImage,
+        'binaryImage': denoisedImage,
+        'thumbnail': thumbnail,
+        'svgOutline': svgOutline,
+        'boundingBox': {
+          'x': outline.boundingRect.left,
+          'y': outline.boundingRect.top,
+          'width': outline.boundingRect.width,
+          'height': outline.boundingRect.height,
+        },
+      });
+    } catch (e) {
+      // 发送错误信息
+      sendPort.send({'error': e.toString()});
+    }
   }
 }

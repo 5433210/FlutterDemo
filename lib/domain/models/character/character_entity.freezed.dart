@@ -20,26 +20,16 @@ CharacterEntity _$CharacterEntityFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CharacterEntity {
-  /// ID
-  String? get id => throw _privateConstructorUsedError;
-
-  /// 汉字
-  String get char => throw _privateConstructorUsedError;
-
-  /// 所属作品ID
-  String? get workId => throw _privateConstructorUsedError;
-
-  /// 字形区域
-  CharacterRegion? get region => throw _privateConstructorUsedError;
-
-  /// 标签列表
+  String get id => throw _privateConstructorUsedError;
+  String get workId => throw _privateConstructorUsedError;
+  String get pageId => throw _privateConstructorUsedError;
+  String get character => throw _privateConstructorUsedError;
+  CharacterRegion get region => throw _privateConstructorUsedError;
+  DateTime get createTime => throw _privateConstructorUsedError;
+  DateTime get updateTime => throw _privateConstructorUsedError;
+  bool get isFavorite => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
-
-  /// 创建时间
-  DateTime? get createTime => throw _privateConstructorUsedError;
-
-  /// 更新时间
-  DateTime? get updateTime => throw _privateConstructorUsedError;
+  String? get note => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -58,15 +48,18 @@ abstract class $CharacterEntityCopyWith<$Res> {
       _$CharacterEntityCopyWithImpl<$Res, CharacterEntity>;
   @useResult
   $Res call(
-      {String? id,
-      String char,
-      String? workId,
-      CharacterRegion? region,
+      {String id,
+      String workId,
+      String pageId,
+      String character,
+      CharacterRegion region,
+      DateTime createTime,
+      DateTime updateTime,
+      bool isFavorite,
       List<String> tags,
-      DateTime? createTime,
-      DateTime? updateTime});
+      String? note});
 
-  $CharacterRegionCopyWith<$Res>? get region;
+  $CharacterRegionCopyWith<$Res> get region;
 }
 
 /// @nodoc
@@ -84,43 +77,58 @@ class _$CharacterEntityCopyWithImpl<$Res, $Val extends CharacterEntity>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
-    Object? char = null,
-    Object? workId = freezed,
-    Object? region = freezed,
+    Object? id = null,
+    Object? workId = null,
+    Object? pageId = null,
+    Object? character = null,
+    Object? region = null,
+    Object? createTime = null,
+    Object? updateTime = null,
+    Object? isFavorite = null,
     Object? tags = null,
-    Object? createTime = freezed,
-    Object? updateTime = freezed,
+    Object? note = freezed,
   }) {
     return _then(_value.copyWith(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String?,
-      char: null == char
-          ? _value.char
-          : char // ignore: cast_nullable_to_non_nullable
               as String,
-      workId: freezed == workId
+      workId: null == workId
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      region: freezed == region
+              as String,
+      pageId: null == pageId
+          ? _value.pageId
+          : pageId // ignore: cast_nullable_to_non_nullable
+              as String,
+      character: null == character
+          ? _value.character
+          : character // ignore: cast_nullable_to_non_nullable
+              as String,
+      region: null == region
           ? _value.region
           : region // ignore: cast_nullable_to_non_nullable
-              as CharacterRegion?,
+              as CharacterRegion,
+      createTime: null == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updateTime: null == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      createTime: freezed == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updateTime: freezed == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -128,12 +136,8 @@ class _$CharacterEntityCopyWithImpl<$Res, $Val extends CharacterEntity>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
-  $CharacterRegionCopyWith<$Res>? get region {
-    if (_value.region == null) {
-      return null;
-    }
-
-    return $CharacterRegionCopyWith<$Res>(_value.region!, (value) {
+  $CharacterRegionCopyWith<$Res> get region {
+    return $CharacterRegionCopyWith<$Res>(_value.region, (value) {
       return _then(_value.copyWith(region: value) as $Val);
     });
   }
@@ -148,16 +152,19 @@ abstract class _$$CharacterEntityImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String? id,
-      String char,
-      String? workId,
-      CharacterRegion? region,
+      {String id,
+      String workId,
+      String pageId,
+      String character,
+      CharacterRegion region,
+      DateTime createTime,
+      DateTime updateTime,
+      bool isFavorite,
       List<String> tags,
-      DateTime? createTime,
-      DateTime? updateTime});
+      String? note});
 
   @override
-  $CharacterRegionCopyWith<$Res>? get region;
+  $CharacterRegionCopyWith<$Res> get region;
 }
 
 /// @nodoc
@@ -173,84 +180,99 @@ class __$$CharacterEntityImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = freezed,
-    Object? char = null,
-    Object? workId = freezed,
-    Object? region = freezed,
+    Object? id = null,
+    Object? workId = null,
+    Object? pageId = null,
+    Object? character = null,
+    Object? region = null,
+    Object? createTime = null,
+    Object? updateTime = null,
+    Object? isFavorite = null,
     Object? tags = null,
-    Object? createTime = freezed,
-    Object? updateTime = freezed,
+    Object? note = freezed,
   }) {
     return _then(_$CharacterEntityImpl(
-      id: freezed == id
+      id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
-              as String?,
-      char: null == char
-          ? _value.char
-          : char // ignore: cast_nullable_to_non_nullable
               as String,
-      workId: freezed == workId
+      workId: null == workId
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      region: freezed == region
+              as String,
+      pageId: null == pageId
+          ? _value.pageId
+          : pageId // ignore: cast_nullable_to_non_nullable
+              as String,
+      character: null == character
+          ? _value.character
+          : character // ignore: cast_nullable_to_non_nullable
+              as String,
+      region: null == region
           ? _value.region
           : region // ignore: cast_nullable_to_non_nullable
-              as CharacterRegion?,
+              as CharacterRegion,
+      createTime: null == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      updateTime: null == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
       tags: null == tags
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
               as List<String>,
-      createTime: freezed == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      updateTime: freezed == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$CharacterEntityImpl extends _CharacterEntity {
+class _$CharacterEntityImpl implements _CharacterEntity {
   const _$CharacterEntityImpl(
-      {this.id,
-      required this.char,
-      this.workId,
-      this.region,
+      {required this.id,
+      required this.workId,
+      required this.pageId,
+      required this.character,
+      required this.region,
+      required this.createTime,
+      required this.updateTime,
+      this.isFavorite = false,
       final List<String> tags = const [],
-      this.createTime,
-      this.updateTime})
-      : _tags = tags,
-        super._();
+      this.note})
+      : _tags = tags;
 
   factory _$CharacterEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharacterEntityImplFromJson(json);
 
-  /// ID
   @override
-  final String? id;
-
-  /// 汉字
+  final String id;
   @override
-  final String char;
-
-  /// 所属作品ID
+  final String workId;
   @override
-  final String? workId;
-
-  /// 字形区域
+  final String pageId;
   @override
-  final CharacterRegion? region;
-
-  /// 标签列表
+  final String character;
+  @override
+  final CharacterRegion region;
+  @override
+  final DateTime createTime;
+  @override
+  final DateTime updateTime;
+  @override
+  @JsonKey()
+  final bool isFavorite;
   final List<String> _tags;
-
-  /// 标签列表
   @override
   @JsonKey()
   List<String> get tags {
@@ -259,13 +281,13 @@ class _$CharacterEntityImpl extends _CharacterEntity {
     return EqualUnmodifiableListView(_tags);
   }
 
-  /// 创建时间
   @override
-  final DateTime? createTime;
+  final String? note;
 
-  /// 更新时间
   @override
-  final DateTime? updateTime;
+  String toString() {
+    return 'CharacterEntity(id: $id, workId: $workId, pageId: $pageId, character: $character, region: $region, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, tags: $tags, note: $note)';
+  }
 
   @override
   bool operator ==(Object other) {
@@ -273,20 +295,35 @@ class _$CharacterEntityImpl extends _CharacterEntity {
         (other.runtimeType == runtimeType &&
             other is _$CharacterEntityImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.char, char) || other.char == char) &&
             (identical(other.workId, workId) || other.workId == workId) &&
+            (identical(other.pageId, pageId) || other.pageId == pageId) &&
+            (identical(other.character, character) ||
+                other.character == character) &&
             (identical(other.region, region) || other.region == region) &&
-            const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.createTime, createTime) ||
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
-                other.updateTime == updateTime));
+                other.updateTime == updateTime) &&
+            (identical(other.isFavorite, isFavorite) ||
+                other.isFavorite == isFavorite) &&
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
+            (identical(other.note, note) || other.note == note));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, char, workId, region,
-      const DeepCollectionEquality().hash(_tags), createTime, updateTime);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      workId,
+      pageId,
+      character,
+      region,
+      createTime,
+      updateTime,
+      isFavorite,
+      const DeepCollectionEquality().hash(_tags),
+      note);
 
   /// Create a copy of CharacterEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -305,47 +342,42 @@ class _$CharacterEntityImpl extends _CharacterEntity {
   }
 }
 
-abstract class _CharacterEntity extends CharacterEntity {
+abstract class _CharacterEntity implements CharacterEntity {
   const factory _CharacterEntity(
-      {final String? id,
-      required final String char,
-      final String? workId,
-      final CharacterRegion? region,
+      {required final String id,
+      required final String workId,
+      required final String pageId,
+      required final String character,
+      required final CharacterRegion region,
+      required final DateTime createTime,
+      required final DateTime updateTime,
+      final bool isFavorite,
       final List<String> tags,
-      final DateTime? createTime,
-      final DateTime? updateTime}) = _$CharacterEntityImpl;
-  const _CharacterEntity._() : super._();
+      final String? note}) = _$CharacterEntityImpl;
 
   factory _CharacterEntity.fromJson(Map<String, dynamic> json) =
       _$CharacterEntityImpl.fromJson;
 
-  /// ID
   @override
-  String? get id;
-
-  /// 汉字
+  String get id;
   @override
-  String get char;
-
-  /// 所属作品ID
+  String get workId;
   @override
-  String? get workId;
-
-  /// 字形区域
+  String get pageId;
   @override
-  CharacterRegion? get region;
-
-  /// 标签列表
+  String get character;
+  @override
+  CharacterRegion get region;
+  @override
+  DateTime get createTime;
+  @override
+  DateTime get updateTime;
+  @override
+  bool get isFavorite;
   @override
   List<String> get tags;
-
-  /// 创建时间
   @override
-  DateTime? get createTime;
-
-  /// 更新时间
-  @override
-  DateTime? get updateTime;
+  String? get note;
 
   /// Create a copy of CharacterEntity
   /// with the given fields replaced by the non-null parameter values.

@@ -22,7 +22,8 @@ const migrations = [
   CREATE TABLE IF NOT EXISTS characters (
     id TEXT PRIMARY KEY,
     workId TEXT NOT NULL,
-    char TEXT NOT NULL,
+    pageId TEXT NOT NULL,
+    character TEXT NOT NULL,
     region TEXT NOT NULL,
     tags TEXT,
     createTime TEXT NOT NULL,

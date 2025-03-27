@@ -10,7 +10,7 @@ import file_picker
 import path_provider_foundation
 import screen_retriever_macos
 import shared_preferences_foundation
-import sqflite
+import sqflite_darwin
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {

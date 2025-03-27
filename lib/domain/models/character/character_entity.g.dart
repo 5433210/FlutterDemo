@@ -9,31 +9,31 @@ part of 'character_entity.dart';
 _$CharacterEntityImpl _$$CharacterEntityImplFromJson(
         Map<String, dynamic> json) =>
     _$CharacterEntityImpl(
-      id: json['id'] as String?,
-      char: json['char'] as String,
-      workId: json['workId'] as String?,
-      region: json['region'] == null
-          ? null
-          : CharacterRegion.fromJson(json['region'] as Map<String, dynamic>),
+      id: json['id'] as String,
+      workId: json['workId'] as String,
+      pageId: json['pageId'] as String,
+      character: json['character'] as String,
+      region: CharacterRegion.fromJson(json['region'] as Map<String, dynamic>),
+      createTime: DateTime.parse(json['createTime'] as String),
+      updateTime: DateTime.parse(json['updateTime'] as String),
+      isFavorite: json['isFavorite'] as bool? ?? false,
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
-      createTime: json['createTime'] == null
-          ? null
-          : DateTime.parse(json['createTime'] as String),
-      updateTime: json['updateTime'] == null
-          ? null
-          : DateTime.parse(json['updateTime'] as String),
+      note: json['note'] as String?,
     );
 
 Map<String, dynamic> _$$CharacterEntityImplToJson(
         _$CharacterEntityImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'char': instance.char,
       'workId': instance.workId,
+      'pageId': instance.pageId,
+      'character': instance.character,
       'region': instance.region,
+      'createTime': instance.createTime.toIso8601String(),
+      'updateTime': instance.updateTime.toIso8601String(),
+      'isFavorite': instance.isFavorite,
       'tags': instance.tags,
-      'createTime': instance.createTime?.toIso8601String(),
-      'updateTime': instance.updateTime?.toIso8601String(),
+      'note': instance.note,
     };

@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
@@ -113,6 +114,61 @@ class WorkImageService with WorkServiceErrorHandler {
       'getWorkImages',
       () => _repository.getAllByWorkId(workId),
       data: {'workId': workId},
+    );
+  }
+
+  /// Gets the all image ids for a work
+  Future<List<String>?> getWorkPageIds(String workId) async {
+    return handleOperation(
+      'getWorkPageIds',
+      () async {
+        AppLogger.debug('获取作品页面ID列表', tag: 'WorkImageService', data: {
+          'workId': workId,
+        });
+
+        final images = await _repository.getAllByWorkId(workId);
+        if (images.isEmpty) {
+          return null;
+        }
+
+        // 按照索引排序并提取ID
+        final sortedImages = [...images]
+          ..sort((a, b) => a.index.compareTo(b.index));
+        final ids = sortedImages.map((img) => img.id).toList();
+
+        return ids;
+      },
+      data: {'workId': workId},
+    );
+  }
+
+  /// Gets the image data for a specific page of a work
+  Future<Uint8List?> getWorkPageImage(String workId, String pageId) async {
+    return handleOperation(
+      'getWorkPageImage',
+      () async {
+        AppLogger.debug('获取作品页面图片', tag: 'WorkImageService', data: {
+          'workId': workId,
+          'pageId': pageId,
+        });
+
+        // 获取导入后的图片路径
+        final imagePath = _storage.getImportedPath(workId, pageId);
+        final file = File(imagePath);
+
+        if (!await file.exists()) {
+          AppLogger.warning('图片文件不存在',
+              tag: 'WorkImageService', data: {'path': imagePath});
+          return null;
+        }
+
+        // 读取图片数据
+        return await file.readAsBytes();
+      },
+      data: {
+        'workId': workId,
+        'pageId': pageId,
+      },
     );
   }
 

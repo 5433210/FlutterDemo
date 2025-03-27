@@ -130,13 +130,14 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                 children: [
                   Text('基本信息', style: Theme.of(context).textTheme.titleLarge),
                   const Divider(),
-                  _buildInfoRow('汉字', character.char),
+                  _buildInfoRow('汉字', character.character),
                   _buildInfoRow('创建时间', _formatDateTime(character.createTime)),
+                  _buildInfoRow('更新时间', _formatDateTime(character.updateTime)),
                 ],
               ),
             ),
           ),
-          if (character.region != null) ...[
+          ...[
             const SizedBox(height: 16),
             Card(
               child: Padding(
@@ -154,10 +155,10 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
                     ),
                     const Divider(),
                     Text(
-                      '左: ${character.region?.rect.left}, '
-                      '上: ${character.region?.rect.top}, '
-                      '宽: ${character.region?.rect.width}, '
-                      '高: ${character.region?.rect.height}',
+                      '左: ${character.region.rect.left}, '
+                      '上: ${character.region.rect.top}, '
+                      '宽: ${character.region.rect.width}, '
+                      '高: ${character.region.rect.height}',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
@@ -198,7 +199,8 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
     return DetailToolbar(
       title: '字形详情',
       leadingIcon: Icons.text_fields,
-      badge: _character != null ? DetailBadge(text: _character!.char) : null,
+      badge:
+          _character != null ? DetailBadge(text: _character!.character) : null,
       actions: _buildActions(),
     );
   }
@@ -208,7 +210,7 @@ class _CharacterDetailPageState extends ConsumerState<CharacterDetailPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('删除字形'),
-        content: Text('确定要删除字形"${_character!.char}"吗？此操作不可撤销。'),
+        content: Text('确定要删除字形"${_character!.character}"吗？此操作不可撤销。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),

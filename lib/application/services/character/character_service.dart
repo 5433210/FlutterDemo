@@ -1,140 +1,286 @@
-import '../../../domain/models/character/character_entity.dart';
-import '../../../domain/models/character/character_filter.dart';
-import '../../../domain/models/character/character_region.dart';
-import '../../../domain/repositories/character_repository.dart';
+import 'dart:typed_data';
 
-/// 字形管理服务
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../domain/models/character/character_entity.dart';
+import '../../../domain/models/character/character_image_type.dart';
+import '../../../domain/models/character/character_region.dart';
+import '../../../domain/models/character/processing_options.dart';
+import '../../../domain/models/character/processing_result.dart';
+import '../../../domain/repositories/character_repository.dart';
+import '../../../presentation/viewmodels/character_collection_viewmodel.dart';
+import '../../providers/repository_providers.dart';
+import '../image/character_image_processor.dart';
+import '../storage/cache_manager.dart';
+import 'character_persistence_service.dart';
+
+final characterServiceProvider = Provider<CharacterService>((ref) {
+  final repository = ref.watch(characterRepositoryProvider);
+  final imageProcessor = ref.watch(characterImageProcessorProvider);
+  final persistenceService = ref.watch(characterPersistenceServiceProvider);
+  final cacheManager = ref.watch(cacheManagerProvider);
+
+  return CharacterService(
+    repository: repository,
+    imageProcessor: imageProcessor,
+    persistenceService: persistenceService,
+    cacheManager: cacheManager,
+  );
+});
+
 class CharacterService {
   final CharacterRepository _repository;
+  final CharacterImageProcessor _imageProcessor;
+  final CharacterPersistenceService _persistenceService;
+  final CacheManager _cacheManager;
 
   CharacterService({
     required CharacterRepository repository,
-  }) : _repository = repository;
+    required CharacterImageProcessor imageProcessor,
+    required CharacterPersistenceService persistenceService,
+    required CacheManager cacheManager,
+  })  : _repository = repository,
+        _imageProcessor = imageProcessor,
+        _persistenceService = persistenceService,
+        _cacheManager = cacheManager;
 
-  /// 创建新字形
-  Future<CharacterEntity> createCharacter({
-    required String char,
-    required String workId,
-    CharacterRegion? region,
-    List<String> tags = const [],
-  }) async {
-    final now = DateTime.now();
-    final character = CharacterEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      char: char,
-      workId: workId,
-      region: region,
-      tags: tags,
-      createTime: now,
-      updateTime: now,
-    );
-    return await _repository.save(character);
-  }
+  /// 应用擦除操作
+  Future<ProcessingResult> applyErase(
+    String characterId,
+    CharacterRegion region,
+    List<Offset> erasePoints,
+    Uint8List originalImage,
+  ) async {
+    // 合并所有擦除点
+    final allErasePoints = <Offset>[
+      ...(region.erasePoints ?? []),
+      ...erasePoints,
+    ];
 
-  /// 删除字形
-  Future<void> deleteCharacter(String id) {
-    return _repository.delete(id);
-  }
-
-  /// 批量删除字形
-  Future<void> deleteCharacters(List<String> ids) {
-    return _repository.deleteMany(ids);
-  }
-
-  /// 复制字形
-  Future<CharacterEntity> duplicateCharacter(String id,
-      {String? newWorkId}) async {
-    final character = await _repository.get(id);
-    if (character == null) {
-      throw Exception('Character not found');
-    }
-
-    final now = DateTime.now();
-    final copy = character.copyWith(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      workId: newWorkId,
-      createTime: now,
-      updateTime: now,
+    // 重新处理图像
+    final result = await _imageProcessor.processCharacterRegion(
+      originalImage,
+      region.rect,
+      region.options,
+      allErasePoints,
     );
 
-    return _repository.save(copy);
+    return result;
   }
 
-  /// 获取所有标签
-  Future<Set<String>> getAllTags() {
-    return _repository.getAllTags();
-  }
-
-  /// 获取单个字形
-  Future<CharacterEntity?> getCharacter(String id) {
-    return _repository.get(id);
-  }
-
-  /// 获取字形列表
-  Future<List<CharacterEntity>> getCharacters({
-    CharacterFilter? filter,
-    bool forceRefresh = false,
-  }) {
-    if (filter != null) {
-      return _repository.query(filter);
+  /// 清理缓存
+  Future<void> clearCache() async {
+    try {
+      await _cacheManager.clear();
+    } catch (e) {
+      print('清理缓存失败: $e');
     }
-    return _repository.getAll();
   }
 
-  /// 按标签搜索字形
-  Future<List<CharacterEntity>> getCharactersByTags(List<String> tags) {
-    return _repository.getByTags(tags.toSet());
+  /// 批量删除字符
+  Future<void> deleteBatchCharacters(List<String> ids) async {
+    try {
+      // 批量删除数据库记录
+      await _repository.deleteBatch(ids);
+
+      // 批量删除文件
+      for (final id in ids) {
+        await _persistenceService.deleteCharacter(id);
+        _cacheManager.invalidate(id);
+      }
+    } catch (e) {
+      print('批量删除字符失败: $e');
+      rethrow;
+    }
   }
 
-  /// 获取作品相关字形
-  Future<List<CharacterEntity>> getCharactersByWork(String workId) {
-    return _repository.getByWorkId(workId);
+  /// 删除字符
+  Future<void> deleteCharacter(String id) async {
+    try {
+      // 删除数据库记录
+      await _repository.delete(id);
+
+      // 删除相关文件
+      await _persistenceService.deleteCharacter(id);
+
+      // 清除缓存
+      _cacheManager.invalidate(id);
+    } catch (e) {
+      print('删除字符失败: $e');
+      rethrow;
+    }
   }
 
-  /// 获取字形统计信息
-  Future<Map<String, int>> getCharacterStats() async {
-    final characters = await _repository.getAll();
-    final tags = await _repository.getAllTags();
+  /// 提取字符区域并处理
+  Future<CharacterEntity> extractCharacter(
+    String workId,
+    String pageId,
+    Rect region,
+    ProcessingOptions options,
+    Uint8List imageData,
+  ) async {
+    try {
+      // 处理字符区域
+      final result = await _imageProcessor.processCharacterRegion(
+        imageData,
+        region,
+        options,
+        null, // 新创建的字符没有擦除点
+      );
 
-    return {
-      'total': characters.length,
-      'tags': tags.length,
-      'works': characters
-          .where((c) => c.workId != null)
-          .map((c) => c.workId!)
-          .toSet()
-          .length,
-      'unassigned': characters.where((c) => c.workId == null).length,
-    };
+      // 创建字符区域
+      final characterRegion = CharacterRegion.create(
+        pageId: pageId,
+        rect: region,
+        options: options,
+      );
+
+      // 保存字符和图像
+      final character = await _persistenceService.saveCharacter(
+        characterRegion,
+        result,
+      );
+
+      // 缓存图像数据
+      final id = character.id;
+      await Future.wait([
+        _cacheManager.put('${id}_original', result.originalCrop),
+        _cacheManager.put('${id}_binary', result.binaryImage),
+        _cacheManager.put('${id}_thumbnail', result.thumbnail),
+      ]);
+
+      return character.copyWith(workId: workId);
+    } catch (e) {
+      print('提取字符失败: $e');
+      rethrow;
+    }
   }
 
-  /// 获取字形数量
-  Future<int> getCount({CharacterFilter? filter}) {
-    return _repository.count(filter);
+  /// 获取字符详情
+  Future<CharacterEntity?> getCharacterDetails(String id) async {
+    try {
+      final character = await _repository.findById(id);
+      if (character == null) {
+        throw Exception('Character not found: $id');
+      }
+      return character;
+    } catch (e) {
+      print('获取字符详情失败: $e');
+      rethrow;
+    }
   }
 
-  /// 搜索字形
-  Future<List<CharacterEntity>> searchCharacters(String query, {int? limit}) {
-    return _repository.search(query, limit: limit);
+  /// 获取字符原始图像
+  Future<Uint8List?> getCharacterImage(
+      String id, CharacterImageType type) async {
+    try {
+      // 尝试从缓存获取
+      final cacheKey = '${id}_${type.toString()}';
+      final cached = await _cacheManager.get(cacheKey);
+      if (cached != null) {
+        return cached;
+      }
+
+      // 从仓库获取
+      final imageData = await _persistenceService.getCharacterImage(id, type);
+
+      // 缓存结果
+      if (imageData != null) {
+        await _cacheManager.put(cacheKey, imageData);
+      }
+
+      return imageData;
+    } catch (e) {
+      print('获取字符图像失败: $e');
+      rethrow;
+    }
   }
 
-  /// 获取标签建议
-  Future<List<String>> suggestTags(String prefix, {int limit = 10}) {
-    return _repository.suggestTags(prefix, limit: limit);
+  /// 获取页面上的所有区域
+  Future<List<CharacterRegion>> getPageRegions(String pageId) async {
+    try {
+      return await _repository.getRegionsByPageId(pageId);
+    } catch (e) {
+      print('获取页面区域失败: $e');
+      return [];
+    }
   }
 
-  /// 更新字形
-  Future<CharacterEntity> updateCharacter(CharacterEntity character) {
-    return _repository.save(character.copyWith(
-      updateTime: DateTime.now(),
-    ));
+  /// 获取作品中的字符列表
+  Future<List<CharacterViewModel>> listCharacters(String workId) async {
+    try {
+      final characters = await _repository.findByWorkId(workId);
+
+      // 将字符实体转换为视图模型
+      final futures = characters.map((entity) async {
+        // 构建缩略图路径
+        final thumbnailPath =
+            await _persistenceService.getThumbnailPath(entity.id);
+
+        return CharacterViewModel(
+          id: entity.id,
+          pageId: entity.pageId,
+          character: entity.character,
+          rect: entity.region.rect,
+          thumbnailPath: thumbnailPath,
+          createdAt: entity.createTime,
+          updatedAt: entity.updateTime,
+          isFavorite: false,
+        );
+      }).toList();
+
+      return await Future.wait(futures);
+    } catch (e) {
+      print('获取字符列表失败: $e');
+      rethrow;
+    }
   }
 
-  /// 批量更新字形
-  Future<List<CharacterEntity>> updateCharacters(
-      List<CharacterEntity> characters) {
-    final now = DateTime.now();
-    final updated = characters.map((c) => c.copyWith(updateTime: now)).toList();
-    return _repository.saveMany(updated);
+  /// 搜索字符
+  Future<List<CharacterViewModel>> searchCharacters(String query) async {
+    try {
+      final characters = await _repository.search(query);
+
+      // 将结果转换为视图模型
+      final futures = characters.map((entity) async {
+        final thumbnailPath =
+            await _persistenceService.getThumbnailPath(entity.id);
+
+        return CharacterViewModel(
+          id: entity.id,
+          pageId: entity.pageId,
+          character: entity.character,
+          rect: entity.region.rect,
+          thumbnailPath: thumbnailPath,
+          createdAt: entity.createTime,
+          updatedAt: entity.updateTime,
+          isFavorite: false,
+        );
+      }).toList();
+
+      return await Future.wait(futures);
+    } catch (e) {
+      print('搜索字符失败: $e');
+      return [];
+    }
+  }
+
+  /// 更新字符
+  Future<void> updateCharacter(
+      String id, CharacterRegion region, String character,
+      {ProcessingResult? newResult}) async {
+    try {
+      // 更新字符和处理结果
+      await _persistenceService.updateCharacter(
+        id,
+        region.copyWith(character: character),
+        newResult,
+        character,
+      );
+    } catch (e) {
+      print('更新字符失败: $e');
+      rethrow;
+    }
   }
 }

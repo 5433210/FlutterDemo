@@ -90,75 +90,25 @@ class WorkImageException extends ServiceException {
       : super(operation, message, data);
 }
 
-/// 作品服务错误处理Mixin
+/// Utility mixin for handling service operations with error logging
 mixin WorkServiceErrorHandler {
-  /// 处理服务操作
+  /// Execute a service operation with proper error handling and logging
   Future<T> handleOperation<T>(
     String operation,
     Future<T> Function() action, {
     Map<String, dynamic>? data,
-    bool rethrowError = true,
-    String? tag,
   }) async {
     try {
       return await action();
     } catch (e, stack) {
-      // 记录错误
       AppLogger.error(
-        'Operation failed: $operation',
-        tag: tag ?? runtimeType.toString(),
+        'Operation "$operation" failed',
+        tag: runtimeType.toString(),
         error: e,
         stackTrace: stack,
         data: data,
       );
-
-      if (rethrowError) {
-        if (e is ArgumentError) {
-          rethrow; // 参数错误直接抛出
-        }
-        throw WorkServiceException(
-          operation,
-          e.toString(),
-          data,
-        );
-      }
-
-      return Future.value(); // 如果不重新抛出，返回null
-    }
-  }
-
-  /// 处理同步操作
-  T handleSync<T>(
-    String operation,
-    T Function() action, {
-    Map<String, dynamic>? data,
-    bool rethrowError = true,
-    String? tag,
-  }) {
-    try {
-      return action();
-    } catch (e, stack) {
-      // 记录错误
-      AppLogger.error(
-        'Operation failed: $operation',
-        tag: tag ?? runtimeType.toString(),
-        error: e,
-        stackTrace: stack,
-        data: data,
-      );
-
-      if (rethrowError) {
-        if (e is ArgumentError) {
-          rethrow;
-        }
-        throw WorkServiceException(
-          operation,
-          e.toString(),
-          data,
-        );
-      }
-
-      return null as T; // 如果不重新抛出，返回null
+      rethrow;
     }
   }
 }

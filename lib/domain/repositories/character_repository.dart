@@ -1,11 +1,8 @@
 import '../models/character/character_entity.dart';
-import '../models/character/character_filter.dart';
+import '../models/character/character_region.dart';
 
 /// 字形仓库接口
 abstract class CharacterRepository {
-  /// 关闭仓库
-  Future<void> close();
-
   /// 获取字形数量
   Future<int> count(CharacterFilter? filter);
 
@@ -15,11 +12,17 @@ abstract class CharacterRepository {
   /// 删除字形
   Future<void> delete(String id);
 
+  /// 批量删除字符
+  Future<void> deleteBatch(List<String> ids);
+
   /// 批量删除
   Future<void> deleteMany(List<String> ids);
 
-  /// 复制字形
-  Future<CharacterEntity> duplicate(String id, {String? newId});
+  /// 根据ID查找单个字符
+  Future<CharacterEntity?> findById(String id);
+
+  /// 根据作品ID查找字符
+  Future<List<CharacterEntity>> findByWorkId(String workId);
 
   /// 获取字形
   Future<CharacterEntity?> get(String id);
@@ -27,14 +30,14 @@ abstract class CharacterRepository {
   /// 获取所有字形
   Future<List<CharacterEntity>> getAll();
 
-  /// 获取所有标签
-  Future<Set<String>> getAllTags();
-
-  /// 根据标签获取字形
-  Future<List<CharacterEntity>> getByTags(Set<String> tags);
-
   /// 根据作品ID获取字形
   Future<List<CharacterEntity>> getByWorkId(String workId);
+
+  /// 根据页面ID获取字符区域
+  Future<List<CharacterRegion>> getRegionsByPageId(String pageId);
+
+  /// 获取字符的所有区域信息
+  Future<List<CharacterRegion>> getRegionsByWorkId(String workId);
 
   /// 条件查询
   Future<List<CharacterEntity>> query(CharacterFilter filter);
@@ -48,6 +51,6 @@ abstract class CharacterRepository {
   /// 搜索字形
   Future<List<CharacterEntity>> search(String query, {int? limit});
 
-  /// 标签建议
-  Future<List<String>> suggestTags(String prefix, {int limit = 10});
+  /// 更新字符区域
+  Future<void> updateRegion(CharacterRegion region);
 }

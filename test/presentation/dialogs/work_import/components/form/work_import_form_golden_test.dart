@@ -1,4 +1,6 @@
 import 'package:demo/application/services/work/work_service.dart';
+import 'package:demo/domain/enums/work_style.dart';
+import 'package:demo/domain/enums/work_tool.dart';
 import 'package:demo/infrastructure/image/image_processor.dart';
 import 'package:demo/presentation/dialogs/work_import/components/form/work_import_form.dart';
 import 'package:demo/presentation/viewmodels/states/work_import_state.dart';
@@ -62,7 +64,7 @@ void main() {
 
     testWidgets('renders error state', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 800));
-      final state = const WorkImportState(
+      const state = WorkImportState(
         error: '导入失败：网络错误',
       );
       await tester.pumpWidget(buildTestWidget(state: state));
@@ -100,7 +102,7 @@ void main() {
 
     testWidgets('renders in processing state', (tester) async {
       await tester.binding.setSurfaceSize(const Size(600, 800));
-      final state = const WorkImportState(isProcessing: true);
+      const state = WorkImportState(isProcessing: true);
       await tester.pumpWidget(buildTestWidget(state: state));
       await expectLater(
         find.byType(WorkImportForm),
@@ -151,16 +153,13 @@ class MockWorkImportViewModel extends WorkImportViewModel {
   void setCreationDate(DateTime? date) {}
 
   @override
-  void setRemark(String? remark) {}
-
-  @override
-  void setStyle(String? styleStr) {}
+  void setStyle(WorkStyle? style) {}
 
   @override
   void setTitle(String? title) {}
 
   @override
-  void setTool(String? toolStr) {}
+  void setTool(WorkTool? tool) {}
 }
 
 class MockWorkService implements WorkService {

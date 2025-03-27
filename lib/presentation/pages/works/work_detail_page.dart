@@ -403,7 +403,7 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
-            onPressed: work != null ? () => _navigateToExtract(work.id) : null,
+            onPressed: work != null ? () => _navigateToExtract() : null,
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.secondaryContainer,
               foregroundColor: theme.colorScheme.onSecondaryContainer,
@@ -650,18 +650,14 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     _checkForUnfinishedEditSession();
   }
 
-  void _navigateToExtract(String workId) {
+  void _navigateToExtract() {
     final work = ref.read(workDetailProvider).work;
     if (work != null) {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => CharacterCollectionPage(
-            imageId: workId,
-            workTitle: work.title,
-            images: work.images
-                .where((img) => img.path != null)
-                .map((img) => img.path.replaceAll('\\', '/'))
-                .toList(),
+            workId: work.id,
+            initialPageId: work.firstImageId!,
           ),
         ),
       );

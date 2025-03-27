@@ -1,4 +1,6 @@
 import 'package:demo/application/services/work/work_service.dart';
+import 'package:demo/domain/enums/work_style.dart';
+import 'package:demo/domain/enums/work_tool.dart';
 import 'package:demo/infrastructure/image/image_processor.dart';
 import 'package:demo/presentation/dialogs/work_import/components/form/work_import_form.dart';
 import 'package:demo/presentation/viewmodels/states/work_import_state.dart';
@@ -252,13 +254,12 @@ class MockWorkImportViewModel extends WorkImportViewModel {
   void setRemark(String? remark) => setRemarkCalls.add(remark ?? '');
 
   @override
-  void setStyle(String? styleStr) => setStyleCalls.add(styleStr ?? '');
+  void setStyle(WorkStyle? style) => setStyleCalls.add(style?.toString() ?? '');
 
   @override
   void setTitle(String? title) => setTitleCalls.add(title ?? '');
-
   @override
-  void setTool(String? toolStr) => setToolCalls.add(toolStr ?? '');
+  void setTool(WorkTool? tool) => setToolCalls.add(tool?.toString() ?? '');
 }
 
 class MockWorkService implements WorkService {

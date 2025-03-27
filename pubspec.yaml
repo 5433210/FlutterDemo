@@ -12,37 +12,38 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   path: ^1.8.3
-  sqflite: 2.2.6
+  sqflite: ^2.3.0
   shared_preferences: ^2.1.1
   provider: ^6.0.5
   freezed_annotation: ^2.4.1
   equatable: ^2.0.5
-  flutter_riverpod: ^2.3.6
-  sqflite_common_ffi: 2.1.1
+  flutter_riverpod: ^2.4.5
+  sqflite_common_ffi: ^2.3.5
   intl: ^0.19.0
   file_picker: ^9.0.2  # Make sure this version is compatible
   desktop_drop: ^0.5.0
   uuid: ^4.2.1
   window_manager: ^0.4.3
   archive: ^4.0.4
-  json_annotation: ^4.9.0
-  path_provider: ^2.1.2
+  json_annotation: ^4.8.1
+  path_provider: ^2.1.1
   collection: ^1.18.0
   logging: ^1.2.0
+  go_router: ^14.8.1
+  image: ^4.1.3
+  crypto: ^3.0.3
 
-  go_router: ^7.0.0
-  image: ^4.5.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
   test: ^1.24.9
   mockito: ^5.4.0
-  build_runner: ^2.4.4
-  freezed: ^2.4.1
+  build_runner: ^2.4.6
+  freezed: ^2.4.5
   json_serializable: ^6.7.1
   coverage: ^1.6.3
-  flutter_lints: ^5.0.0
-  analyzer: ^6.11.0
+  flutter_lints: ^2.0.0
+  analyzer: ^7.3.0
   benchmark_harness: ^2.2.2
 
 flutter:
