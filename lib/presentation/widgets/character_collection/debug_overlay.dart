@@ -177,7 +177,7 @@ class DebugOverlay extends CustomPainter {
   void _drawCoordinateSystems(Canvas canvas, Size size) {
     // 在右下角绘制坐标系示意图
     final rectWidth = 160.0 * textScale;
-    final rectHeight = 200.0 * textScale;
+    final rectHeight = 250.0 * textScale; // 增加高度以容纳更多说明
     final rect = Rect.fromLTWH(size.width - rectWidth - 10,
         size.height - rectHeight - 10, rectWidth, rectHeight);
 
@@ -196,16 +196,16 @@ class DebugOverlay extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
-    // 标题 - 添加新的坐标系说明
+    // 标题
     _drawText(
       canvas,
-      '坐标系统 (中心点原点, 缩放: ${(transformer.currentScale * 100).toInt()}%)',
+      '坐标系统 (统一使用视口中心点作为原点)',
       Offset(rect.left + 5, rect.top + 5),
       color: Colors.black.withOpacity(0.8),
       fontSize: 12 * textScale,
     );
 
-    // 视口坐标系 (红色) - 更新说明
+    // 视口坐标系 (红色)
     final viewportRect = Rect.fromLTWH(
         rect.left + 10, rect.top + 25, rectWidth - 20, 40 * textScale);
 
@@ -216,32 +216,33 @@ class DebugOverlay extends CustomPainter {
         ..style = PaintingStyle.fill,
     );
 
-    // 视口坐标轴
-    canvas.drawLine(
-      viewportRect.topLeft,
-      Offset(viewportRect.right, viewportRect.top),
-      Paint()
-        ..color = Colors.red
-        ..strokeWidth = 1.5,
+    // 添加中心点标记
+    final viewportCenter = Offset(
+      viewportRect.left + viewportRect.width / 2,
+      viewportRect.top + viewportRect.height / 2,
     );
 
+    // 绘制十字标记
     canvas.drawLine(
-      viewportRect.topLeft,
-      Offset(viewportRect.left, viewportRect.bottom),
-      Paint()
-        ..color = Colors.red
-        ..strokeWidth = 1.5,
+      Offset(viewportCenter.dx - 5, viewportCenter.dy),
+      Offset(viewportCenter.dx + 5, viewportCenter.dy),
+      Paint()..color = Colors.red,
+    );
+    canvas.drawLine(
+      Offset(viewportCenter.dx, viewportCenter.dy - 5),
+      Offset(viewportCenter.dx, viewportCenter.dy + 5),
+      Paint()..color = Colors.red,
     );
 
     _drawText(
       canvas,
-      '视口坐标系 (容器中心点为原点)',
+      '视口坐标系 (Viewport - 原点在视口中心)',
       Offset(viewportRect.left + 5, viewportRect.bottom + 5),
       color: Colors.red,
       fontSize: 10 * textScale,
     );
 
-    // 视图坐标系 (蓝色) - 更新说明
+    // 视图坐标系 (蓝色)
     final viewRect = Rect.fromLTWH(
         rect.left + 25, rect.top + 90, rectWidth - 50, 25 * textScale);
 
@@ -252,64 +253,52 @@ class DebugOverlay extends CustomPainter {
         ..style = PaintingStyle.fill,
     );
 
-    // 视图坐标轴
-    canvas.drawLine(
-      viewRect.topLeft,
-      Offset(viewRect.right, viewRect.top),
-      Paint()
-        ..color = Colors.blue
-        ..strokeWidth = 1.5,
+    // 添加中心点标记
+    final viewCenter = Offset(
+      viewRect.left + viewRect.width / 2,
+      viewRect.top + viewRect.height / 2,
     );
 
+    // 绘制十字标记
     canvas.drawLine(
-      viewRect.topLeft,
-      Offset(viewRect.left, viewRect.bottom),
-      Paint()
-        ..color = Colors.blue
-        ..strokeWidth = 1.5,
+      Offset(viewCenter.dx - 5, viewCenter.dy),
+      Offset(viewCenter.dx + 5, viewCenter.dy),
+      Paint()..color = Colors.blue,
+    );
+    canvas.drawLine(
+      Offset(viewCenter.dx, viewCenter.dy - 5),
+      Offset(viewCenter.dx, viewCenter.dy + 5),
+      Paint()..color = Colors.blue,
     );
 
     _drawText(
       canvas,
-      '视图坐标系 (图像中心点为原点)',
+      '视图坐标系 (View - 原点也在视口中心)',
       Offset(viewRect.left, viewRect.bottom + 5),
       color: Colors.blue,
       fontSize: 10 * textScale,
     );
 
-    // 图像坐标系 (绿色) - 更新说明
-    final imageRect = Rect.fromLTWH(
-        rect.left + 30, rect.top + 135, rectWidth - 60, 30 * textScale);
+    // 坐标转换公式说明
+    final formulaRect = Rect.fromLTWH(
+        rect.left + 10, rect.top + 150, rectWidth - 20, 60 * textScale);
 
     canvas.drawRect(
-      imageRect,
+      formulaRect,
       Paint()
-        ..color = Colors.green.withOpacity(0.2)
+        ..color = Colors.purple.withOpacity(0.1)
         ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawLine(
-      imageRect.topLeft,
-      Offset(imageRect.right, imageRect.top),
-      Paint()
-        ..color = Colors.green
-        ..strokeWidth = 1.5,
-    );
-
-    canvas.drawLine(
-      imageRect.topLeft,
-      Offset(imageRect.left, imageRect.bottom),
-      Paint()
-        ..color = Colors.green
-        ..strokeWidth = 1.5,
     );
 
     _drawText(
       canvas,
-      '图像坐标系 (原始图像中心点为原点)',
-      Offset(imageRect.left, imageRect.bottom + 5),
-      color: Colors.green,
-      fontSize: 10 * textScale,
+      '坐标转换公式:\n'
+      '视口 → 视图: (p-c-o)/s\n'
+      '视图 → 视口: p*s+o+c\n'
+      '其中: p=点, c=中心, o=偏移, s=缩放',
+      Offset(formulaRect.left + 5, formulaRect.top + 5),
+      color: Colors.purple,
+      fontSize: 9 * textScale,
     );
   }
 
