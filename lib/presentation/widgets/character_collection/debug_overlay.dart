@@ -37,40 +37,17 @@ class DebugOverlay extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     try {
-      // 1. 绘制图像边界
       _drawImageBounds(canvas);
-
-      // 2. 绘制网格
-      if (showGrid) {
-        _drawGrid(canvas);
-      }
-
-      // 3. 绘制坐标轴
-      if (showCoordinates) {
-        _drawAxis(canvas, size);
-      }
-
-      // 4. 绘制坐标系示意图
+      if (showGrid) _drawGrid(canvas);
+      if (showCoordinates) _drawAxis(canvas, size);
       if (showDetails) {
         _drawCoordinateSystems(canvas, size);
-      }
-
-      // 5. 绘制区域信息
-      if (showDetails) {
         for (final region in regions) {
           _drawRegionInfo(canvas, region);
         }
       }
-
-      // 6. 绘制最近裁剪区域
-      if (lastCropRect != null) {
-        _drawLastCropRect(canvas);
-      }
-
-      // 7. 绘制图像信息
-      if (showImageInfo) {
-        _drawViewInfo(canvas, size);
-      }
+      if (lastCropRect != null) _drawLastCropRect(canvas);
+      if (showImageInfo) _drawViewInfo(canvas, size);
     } catch (e) {
       _drawError(canvas, e.toString());
     }
@@ -93,60 +70,19 @@ class DebugOverlay extends CustomPainter {
   }
 
   void _drawAxis(Canvas canvas, Size size) {
-    // 新增：绘制中心点原点的坐标轴
-    final viewportCenterX = size.width / 2;
-    final viewportCenterY = size.height / 2;
-
-    // 主坐标轴 - 中心点坐标系
-    final axisPaint = Paint()
-      ..color = Colors.purple.withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // X轴
-    canvas.drawLine(
-      Offset(viewportCenterX - 300, viewportCenterY),
-      Offset(viewportCenterX + 300, viewportCenterY),
-      axisPaint,
-    );
-
-    // Y轴
-    canvas.drawLine(
-      Offset(viewportCenterX, viewportCenterY - 300),
-      Offset(viewportCenterX, viewportCenterY + 300),
-      axisPaint,
-    );
-
-    // 中心点
-    canvas.drawCircle(
-      Offset(viewportCenterX, viewportCenterY),
-      5,
-      Paint()..color = Colors.purple.withOpacity(opacity),
-    );
-
-    // 标注
-    _drawText(
-      canvas,
-      'O (视口中心点)',
-      Offset(viewportCenterX + 10, viewportCenterY + 10),
-      color: Colors.purple.withOpacity(opacity),
-      fontSize: 12 * textScale,
-    );
-
-    // 还绘制传统坐标轴以便比较
     final displayRect = transformer.displayRect;
     final axisColor = Colors.red.withOpacity(opacity);
 
-    // 传统X轴
+    // X轴（从原点向右）
     canvas.drawLine(
-      Offset(displayRect.left, displayRect.bottom),
-      Offset(displayRect.right, displayRect.bottom),
+      Offset(displayRect.left, displayRect.top),
+      Offset(displayRect.right, displayRect.top),
       Paint()
         ..color = axisColor
         ..strokeWidth = 1.0,
     );
 
-    // 传统Y轴
+    // Y轴（从原点向下）
     canvas.drawLine(
       Offset(displayRect.left, displayRect.top),
       Offset(displayRect.left, displayRect.bottom),
@@ -155,29 +91,43 @@ class DebugOverlay extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
+    // 原点指示
+    canvas.drawCircle(
+      Offset(displayRect.left, displayRect.top),
+      4,
+      Paint()..color = axisColor,
+    );
+
     if (showCoordinates) {
       _drawText(
         canvas,
-        'X',
-        Offset(displayRect.right + 10, displayRect.bottom),
+        'O',
+        Offset(displayRect.left - 15, displayRect.top - 15),
         color: axisColor,
         fontSize: 12 * textScale,
       );
+
       _drawText(
         canvas,
-        'Y',
-        Offset(displayRect.left, displayRect.top - 20),
+        'X →',
+        Offset(displayRect.right + 5, displayRect.top),
+        color: axisColor,
+        fontSize: 12 * textScale,
+      );
+
+      _drawText(
+        canvas,
+        'Y ↓',
+        Offset(displayRect.left - 20, displayRect.bottom),
         color: axisColor,
         fontSize: 12 * textScale,
       );
     }
   }
 
-  // 绘制坐标系示意图
   void _drawCoordinateSystems(Canvas canvas, Size size) {
-    // 在右下角绘制坐标系示意图
     final rectWidth = 160.0 * textScale;
-    final rectHeight = 250.0 * textScale; // 增加高度以容纳更多说明
+    final rectHeight = 180.0 * textScale;
     final rect = Rect.fromLTWH(size.width - rectWidth - 10,
         size.height - rectHeight - 10, rectWidth, rectHeight);
 
@@ -196,109 +146,22 @@ class DebugOverlay extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
-    // 标题
+    final padding = 8.0 * textScale;
     _drawText(
       canvas,
-      '坐标系统 (统一使用视口中心点作为原点)',
-      Offset(rect.left + 5, rect.top + 5),
+      '坐标系统说明 (左上角为原点)：\n'
+      '1. 视口坐标：相对于组件左上角\n'
+      '2. 视图坐标：相对于图像左上角\n'
+      '\n'
+      '坐标转换：\n'
+      '视口 → 视图: (p - o) / s\n'
+      '视图 → 视口: p * s + o\n'
+      '其中: p=点, o=偏移, s=缩放',
+      Offset(rect.left + padding, rect.top + padding),
       color: Colors.black.withOpacity(0.8),
-      fontSize: 12 * textScale,
-    );
-
-    // 视口坐标系 (红色)
-    final viewportRect = Rect.fromLTWH(
-        rect.left + 10, rect.top + 25, rectWidth - 20, 40 * textScale);
-
-    canvas.drawRect(
-      viewportRect,
-      Paint()
-        ..color = Colors.red.withOpacity(0.2)
-        ..style = PaintingStyle.fill,
-    );
-
-    // 添加中心点标记
-    final viewportCenter = Offset(
-      viewportRect.left + viewportRect.width / 2,
-      viewportRect.top + viewportRect.height / 2,
-    );
-
-    // 绘制十字标记
-    canvas.drawLine(
-      Offset(viewportCenter.dx - 5, viewportCenter.dy),
-      Offset(viewportCenter.dx + 5, viewportCenter.dy),
-      Paint()..color = Colors.red,
-    );
-    canvas.drawLine(
-      Offset(viewportCenter.dx, viewportCenter.dy - 5),
-      Offset(viewportCenter.dx, viewportCenter.dy + 5),
-      Paint()..color = Colors.red,
-    );
-
-    _drawText(
-      canvas,
-      '视口坐标系 (Viewport - 原点在视口中心)',
-      Offset(viewportRect.left + 5, viewportRect.bottom + 5),
-      color: Colors.red,
-      fontSize: 10 * textScale,
-    );
-
-    // 视图坐标系 (蓝色)
-    final viewRect = Rect.fromLTWH(
-        rect.left + 25, rect.top + 90, rectWidth - 50, 25 * textScale);
-
-    canvas.drawRect(
-      viewRect,
-      Paint()
-        ..color = Colors.blue.withOpacity(0.2)
-        ..style = PaintingStyle.fill,
-    );
-
-    // 添加中心点标记
-    final viewCenter = Offset(
-      viewRect.left + viewRect.width / 2,
-      viewRect.top + viewRect.height / 2,
-    );
-
-    // 绘制十字标记
-    canvas.drawLine(
-      Offset(viewCenter.dx - 5, viewCenter.dy),
-      Offset(viewCenter.dx + 5, viewCenter.dy),
-      Paint()..color = Colors.blue,
-    );
-    canvas.drawLine(
-      Offset(viewCenter.dx, viewCenter.dy - 5),
-      Offset(viewCenter.dx, viewCenter.dy + 5),
-      Paint()..color = Colors.blue,
-    );
-
-    _drawText(
-      canvas,
-      '视图坐标系 (View - 原点也在视口中心)',
-      Offset(viewRect.left, viewRect.bottom + 5),
-      color: Colors.blue,
-      fontSize: 10 * textScale,
-    );
-
-    // 坐标转换公式说明
-    final formulaRect = Rect.fromLTWH(
-        rect.left + 10, rect.top + 150, rectWidth - 20, 60 * textScale);
-
-    canvas.drawRect(
-      formulaRect,
-      Paint()
-        ..color = Colors.purple.withOpacity(0.1)
-        ..style = PaintingStyle.fill,
-    );
-
-    _drawText(
-      canvas,
-      '坐标转换公式:\n'
-      '视口 → 视图: (p-c-o)/s\n'
-      '视图 → 视口: p*s+o+c\n'
-      '其中: p=点, c=中心, o=偏移, s=缩放',
-      Offset(formulaRect.left + 5, formulaRect.top + 5),
-      color: Colors.purple,
-      fontSize: 9 * textScale,
+      fontSize: 11 * textScale,
+      bgColor: Colors.white.withOpacity(0.8),
+      padding: EdgeInsets.all(padding),
     );
   }
 
@@ -336,82 +199,28 @@ class DebugOverlay extends CustomPainter {
     canvas.drawRect(displayRect, paint);
   }
 
-  // 绘制最近的裁剪区域
   void _drawLastCropRect(Canvas canvas) {
-    // 确保lastCropRect不为空
     if (lastCropRect == null) return;
-
-    // 转换为视口坐标
     final viewportRect = transformer.imageRectToViewportRect(lastCropRect!);
-
-    // 绘制裁剪区域
-    final paint = Paint()
-      ..color = Colors.red.withOpacity(opacity * 0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    canvas.drawRect(viewportRect, paint);
-
-    // 绘制区域信息
-    _drawText(
-      canvas,
-      '最近裁剪: ${lastCropRect!.width.toInt()}x${lastCropRect!.height.toInt()} px',
-      Offset(viewportRect.right + 5, viewportRect.top),
-      color: Colors.red.withOpacity(opacity),
-      fontSize: 12 * textScale,
-      bgColor: Colors.white.withOpacity(0.7),
-      padding: const EdgeInsets.all(4),
+    canvas.drawRect(
+      viewportRect,
+      Paint()
+        ..color = Colors.red.withOpacity(opacity * 0.7)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0,
     );
   }
 
   void _drawRegionInfo(Canvas canvas, CharacterRegion region) {
     final isSelected = selectedIds.contains(region.id);
-    // 使用新的坐标转换方法
     final viewportRect = transformer.imageRectToViewportRect(region.rect);
-
-    // 绘制区域边框
-    final paint = Paint()
-      ..color = (isSelected ? Colors.blue : Colors.green).withOpacity(opacity)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    canvas.drawRect(viewportRect, paint);
-
-    // 绘制区域信息
-    if (showDetails) {
-      final info = [
-        '区域 ${region.id.substring(0, 6)}...',
-        '位置: (${region.rect.left.toInt()}, ${region.rect.top.toInt()})',
-        '大小: ${region.rect.width.toInt()}x${region.rect.height.toInt()} px',
-        if (region.character.isNotEmpty) '字: ${region.character}',
-        if (region.rotation != 0) '旋转: ${region.rotation}°',
-      ].join('\n');
-
-      _drawText(
-        canvas,
-        info,
-        Offset(viewportRect.left, viewportRect.top - 60),
-        color: (isSelected ? Colors.blue : Colors.green).withOpacity(opacity),
-        fontSize: 10 * textScale,
-        bgColor: Colors.white.withOpacity(0.8),
-        padding: const EdgeInsets.all(4),
-      );
-    }
-
-    // 绘制中心点
-    if (showRegionCenter) {
-      final center = Offset(
-        viewportRect.left + viewportRect.width / 2,
-        viewportRect.top + viewportRect.height / 2,
-      );
-      canvas.drawCircle(
-        center,
-        3,
-        Paint()
-          ..color =
-              (isSelected ? Colors.blue : Colors.green).withOpacity(opacity),
-      );
-    }
+    canvas.drawRect(
+      viewportRect,
+      Paint()
+        ..color = (isSelected ? Colors.blue : Colors.green).withOpacity(opacity)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
   }
 
   void _drawText(
@@ -447,7 +256,6 @@ class DebugOverlay extends CustomPainter {
 
     textPainter.layout();
 
-    // 根据对齐方式调整位置
     switch (alignment) {
       case TextAlign.right:
         position = position.translate(-textPainter.width, -textPainter.height);
@@ -459,7 +267,6 @@ class DebugOverlay extends CustomPainter {
         break;
     }
 
-    // 绘制背景
     if (bgColor != null && padding != null) {
       final rect = Rect.fromLTWH(
         position.dx - padding.left,
@@ -473,7 +280,6 @@ class DebugOverlay extends CustomPainter {
       );
     }
 
-    // 绘制文本
     textPainter.paint(canvas, position);
   }
 
@@ -494,7 +300,6 @@ class DebugOverlay extends CustomPainter {
       '缩放比例',
       ' - 基础比例: ${(baseScale * 100).toInt()}%',
       ' - 当前比例: ${(scale * 100).toInt()}%',
-      // 改用当前可用的属性
       ' - 实际偏移: (${offset.dx.toStringAsFixed(2)}, ${offset.dy.toStringAsFixed(2)})',
       '选中区域',
       ' - 区域总数: ${regions.length}',

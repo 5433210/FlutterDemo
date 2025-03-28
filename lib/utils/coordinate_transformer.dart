@@ -5,7 +5,7 @@ import 'package:vector_math/vector_math_64.dart';
 
 import '../infrastructure/logging/logger.dart';
 
-/// 坐标转换工具类 - 使用中心点作为原点的实现
+/// 坐标转换工具类 - 使用左上角作为原点的实现
 class CoordinateTransformer {
   final TransformationController transformationController;
   final Size imageSize;
@@ -142,20 +142,16 @@ class CoordinateTransformer {
       AppLogger.debug('【坐标转换】将图像坐标转换为视口坐标: ${imageCoord.dx},${imageCoord.dy}');
     }
 
-    // 1. 计算图像坐标相对于图像中心的偏移
-    final imageCenter = Offset(imageSize.width / 2, imageSize.height / 2);
-    final relativeToCenter =
-        Offset(imageCoord.dx - imageCenter.dx, imageCoord.dy - imageCenter.dy);
-
-    // 2. 应用缩放 - 使用实际缩放比例 (currentScale)
+    // 1. 应用缩放
     final scale = currentScale;
-    final scaledOffset =
-        Offset(relativeToCenter.dx * scale, relativeToCenter.dy * scale);
+    final scaledOffset = Offset(
+      imageCoord.dx * scale,
+      imageCoord.dy * scale,
+    );
 
-    // 3. 应用平移并添加视口中心点偏移，得到最终视口坐标
+    // 2. 应用平移，得到最终视口坐标
     final viewportRect = Offset(
-        scaledOffset.dx + _viewportCenter.dx + currentOffset.dx,
-        scaledOffset.dy + _viewportCenter.dy + currentOffset.dy);
+        scaledOffset.dx + currentOffset.dx, scaledOffset.dy + currentOffset.dy);
 
     if (enableLogging) {
       AppLogger.debug('【坐标转换】视图→视口: '
@@ -193,15 +189,8 @@ class CoordinateTransformer {
             '【坐标转换】将鼠标坐标转换为图像坐标: ${mousePoint.dx},${mousePoint.dy}');
       }
 
-      // 1. 计算视口中心点
-      final viewportCenter = _viewportCenter;
-
-      // 2. 将鼠标坐标（相对左上角）转换为视口坐标（相对中心点）
-      // 注意：不要在这里减去currentOffset，因为viewportToImageCoordinate已经处理了
-      final adjustedPoint = Offset(
-        mousePoint.dx - viewportCenter.dx,
-        viewportCenter.dy - mousePoint.dy,
-      );
+      // 直接使用鼠标坐标作为视口坐标
+      final adjustedPoint = mousePoint;
 
       AppLogger.debug('【坐标转换】鼠标坐标转换为视口坐标(相对中心点): '
           '(${mousePoint.dx},${mousePoint.dy}) → '
@@ -306,8 +295,9 @@ class CoordinateTransformer {
           '【坐标转换】将视图矩形转换为图像矩形: ${viewRect.left},${viewRect.top},${viewRect.width}x${viewRect.height}');
     }
 
-    return Rect.fromLTWH(imageSize.width / 2 + viewRect.left,
-        imageSize.height / 2 - viewRect.top, viewRect.width, viewRect.height);
+    // 直接使用视图坐标作为图像坐标
+    return Rect.fromLTWH(
+        viewRect.left, viewRect.top, viewRect.width, viewRect.height);
   }
 
   /// 计算基础缩放比例
@@ -350,15 +340,13 @@ class CoordinateTransformer {
 
   /// 应用矩阵变换到点 - 辅助方法
   Offset _transformPoint(Offset point, Matrix4 transform) {
-    // 将点相对于图像中心
-    final centered = Vector3(
-        point.dx - imageSize.width / 2, point.dy - imageSize.height / 2, 0.0);
+    // 直接使用点坐标
+    final vector = Vector3(point.dx, point.dy, 0.0);
 
     // 应用变换
-    final transformed = transform.transform3(centered);
+    final transformed = transform.transform3(vector);
 
-    // 转换回视口坐标系（相对于视口中心）
-    return Offset(
-        transformed.x + _viewportCenter.dx, transformed.y + _viewportCenter.dy);
+    // 返回变换后的坐标
+    return Offset(transformed.x, transformed.y);
   }
 }

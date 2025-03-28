@@ -423,33 +423,32 @@ class _ImageViewState extends ConsumerState<ImageView>
         onInteractionEnd: _handleInteractionEnd,
         child: Stack(
           children: [
-            Center(
-              child: Image.memory(
-                imageState.imageData!,
-                fit: BoxFit.contain,
-                filterQuality: FilterQuality.high,
-                gaplessPlayback: true,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded) return child;
+            Image.memory(
+              imageState.imageData!,
+              fit: BoxFit.contain,
+              alignment: Alignment.topLeft,
+              filterQuality: FilterQuality.high,
+              gaplessPlayback: true,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded) return child;
 
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: frame != null
-                        ? child
-                        : const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.broken_image, size: 64, color: Colors.red),
-                      SizedBox(height: 16),
-                      Text('无法加载图片', style: TextStyle(color: Colors.red)),
-                    ],
-                  ),
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: frame != null
+                      ? child
+                      : const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.broken_image, size: 64, color: Colors.red),
+                    SizedBox(height: 16),
+                    Text('无法加载图片', style: TextStyle(color: Colors.red)),
+                  ],
                 ),
               ),
             ),
@@ -683,14 +682,14 @@ class _ImageViewState extends ConsumerState<ImageView>
 
       // 调试日志记录原始鼠标坐标 (相对于组件左上角的坐标系)
       AppLogger.debug(
-          '【框选调试】鼠标坐标起点(相对组件左上角): ${_selectionStart!.dx},${_selectionStart!.dy}');
+          '【框选调试】鼠标坐标起点: ${_selectionStart!.dx},${_selectionStart!.dy}');
       AppLogger.debug(
-          '【框选调试】鼠标坐标终点(相对组件左上角): ${_selectionCurrent!.dx},${_selectionCurrent!.dy}');
+          '【框选调试】鼠标坐标终点: ${_selectionCurrent!.dx},${_selectionCurrent!.dy}');
       AppLogger.debug('【框选调试】变换矩阵: ${_transformationController.value}');
       AppLogger.debug(
           '【框选调试】图像大小: ${_transformer!.imageSize.width}x${_transformer!.imageSize.height}');
       AppLogger.debug(
-          '【框选调试】视口大小: ${_transformer!.viewportSize.width}x${_transformer!.viewportSize.height}');
+          '【框选调试】视图大小: ${_transformer!.viewportSize.width}x${_transformer!.viewportSize.height}');
 
       AppLogger.debug('【框选调试】当前缩放比例: ${_transformer!.currentScale}');
       AppLogger.debug('【框选调试】基础缩放比例: ${_transformer!.baseScale}');
@@ -700,15 +699,15 @@ class _ImageViewState extends ConsumerState<ImageView>
       final viewStart = _transformer!.mouseToViewCoordinate(_selectionStart!);
       final viewEnd = _transformer!.mouseToViewCoordinate(_selectionCurrent!);
 
-      AppLogger.debug('【框选调试】图像坐标起点: ${viewStart.dx},${viewStart.dy}');
-      AppLogger.debug('【框选调试】图像坐标终点: ${viewEnd.dx},${viewEnd.dy}');
+      AppLogger.debug('【框选调试】转换后坐标起点: ${viewStart.dx},${viewStart.dy}');
+      AppLogger.debug('【框选调试】转换后坐标终点: ${viewEnd.dx},${viewEnd.dy}');
 
       // 创建并规范化矩形
       final rect = _transformer!
           .viewRectToImageRect(Rect.fromPoints(viewStart, viewEnd));
 
       AppLogger.debug(
-          '【框选调试】最终规范化矩形: ${rect.left},${rect.top},${rect.right},${rect.bottom} (${rect.width}x${rect.height})');
+          '【框选调试】最终矩形: ${rect.left},${rect.top},${rect.right},${rect.bottom} (${rect.width}x${rect.height})');
 
       if (rect.width >= 20.0 && rect.height >= 20.0) {
         setState(() {

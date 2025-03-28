@@ -241,12 +241,6 @@ class DebugToolbar extends ConsumerWidget {
               ref.read(debugOptionsProvider.notifier).toggleImageInfo(),
         ),
         _buildToggle(
-          label: '中心点',
-          value: options.showRegionCenter,
-          onChanged: (value) =>
-              ref.read(debugOptionsProvider.notifier).toggleRegionCenter(),
-        ),
-        _buildToggle(
           label: '日志',
           tooltip: 'Alt+L',
           value: options.enableLogging,
