@@ -65,9 +65,6 @@ class CharacterCollectionNotifier
   void createRegion(Rect rect) {
     if (_currentPageId == null) return;
 
-    // 从工具模式切换到编辑模式
-    _toolModeNotifier.setMode(Tool.pan);
-
     // 创建新的区域
     final region = CharacterRegion.create(
       pageId: _currentPageId!,
