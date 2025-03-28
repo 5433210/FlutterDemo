@@ -68,6 +68,8 @@ class ImagePreviewPanel extends ConsumerWidget {
                           '加载图像失败: ${imageState.error}',
                           style: const TextStyle(color: Colors.white),
                           textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 3,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(

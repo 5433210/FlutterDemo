@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -7,6 +8,7 @@ import 'package:demo/domain/models/character/character_image_type.dart';
 import 'package:demo/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../domain/models/character/processing_options.dart';
 
@@ -144,6 +146,9 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                   transformationController: _transformationController,
                   minScale: 0.5,
                   maxScale: 5.0,
+                  constrained: true, // 确保受限于容器
+                  clipBehavior: Clip.hardEdge, // 添加裁剪行为
+                  boundaryMargin: EdgeInsets.zero, // 确保无边界边距
                   child: Center(
                     child: Image.memory(
                       snapshot.data!,
@@ -317,33 +322,81 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
           .getCharacterImage(widget.regionId, CharacterImageType.binary);
 
       if (savedImage != null) {
+        AppLogger.debug('从仓库加载已保存的图像', data: {'regionId': widget.regionId});
         return savedImage;
       }
 
       // 如果没有找到已保存的图像，且提供了页面图像数据和区域，则从页面截取
       if (widget.pageImageData != null && widget.regionRect != null) {
-        AppLogger.debug('从页面图像中截取区域', data: {
+        // 直接使用传入的矩形，它已经是图像坐标系的矩形
+        final cropRect = widget.regionRect!;
+
+        AppLogger.debug('准备裁剪图像', data: {
           'regionId': widget.regionId,
-          'rect':
-              '${widget.regionRect!.left},${widget.regionRect!.top},${widget.regionRect!.width},${widget.regionRect!.height}'
+          'cropRectOriginal':
+              '${cropRect.left.toInt()},${cropRect.top.toInt()},${cropRect.width.toInt()},${cropRect.height.toInt()}'
         });
 
-        final result = await ref
-            .read(characterImageProcessorProvider)
-            .processCharacterRegion(
-              widget.pageImageData!,
-              widget.regionRect!,
-              processingOptions,
-              null,
-            );
-        return result.binaryImage;
+        try {
+          // 解码图像以获取原始尺寸
+          final decodedImage = img.decodeImage(widget.pageImageData!);
+          if (decodedImage == null) {
+            throw Exception('图像解码失败');
+          }
+
+          final imageSize = Size(
+              decodedImage.width.toDouble(), decodedImage.height.toDouble());
+
+          // 确保裁剪区域完全在图像范围内 - 这里是必要的安全检查，不是多余的转换
+          final safeRect = Rect.fromLTRB(
+              math.max(0, cropRect.left),
+              math.max(0, cropRect.top),
+              math.min(imageSize.width, cropRect.right),
+              math.min(imageSize.height, cropRect.bottom));
+
+          // 验证裁剪区域
+          if (safeRect.width <= 0 || safeRect.height <= 0) {
+            throw Exception('裁剪区域无效: 宽度或高度为零');
+          }
+
+          AppLogger.debug('发送裁剪请求', data: {
+            'imageSize': '${imageSize.width}x${imageSize.height}',
+            'cropRectSafe':
+                '${safeRect.left.toInt()},${safeRect.top.toInt()},${safeRect.width.toInt()},${safeRect.height.toInt()}'
+          });
+
+          // 处理图像
+          final result = await ref
+              .read(characterImageProcessorProvider)
+              .processCharacterRegion(
+                widget.pageImageData!,
+                safeRect,
+                processingOptions,
+                null,
+              );
+
+          if (result.originalCrop.isEmpty) {
+            throw Exception('裁剪结果为空');
+          }
+
+          AppLogger.debug('裁剪成功', data: {
+            'cropSize': result.originalCrop.length,
+            'binarySize': result.binaryImage.length
+          });
+
+          // 成功裁剪后返回二值化或原始裁剪结果
+          return result.binaryImage.isNotEmpty
+              ? result.binaryImage
+              : result.originalCrop;
+        } catch (e) {
+          AppLogger.error('裁剪过程中发生错误', error: e);
+          rethrow;
+        }
       }
 
       return null;
     } catch (e) {
-      print('加载字符图像失败: $e');
-      // 在开发阶段，返回一个占位图像而不是抛出异常
-      // 这样UI可以显示一个错误状态而不是崩溃
+      AppLogger.error('加载字符图像失败', error: e);
       return _createPlaceholderImage(100, 100, Colors.red);
     }
   }

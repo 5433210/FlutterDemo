@@ -1,8 +1,11 @@
+import 'dart:isolate';
+
 import 'package:flutter/widgets.dart';
 
 import 'handlers/console_handler.dart';
 import 'handlers/file_handler.dart';
 import 'handlers/log_handler.dart';
+import 'isolate_logger.dart';
 import 'log_entry.dart';
 import 'log_level.dart';
 
@@ -23,6 +26,10 @@ class AppLogger {
 
   static final _logQueue = <_LogEntry>[];
   static bool _isProcessingLogs = false;
+
+  /// 初始化 Isolate 日志通道
+  static ReceivePort? _isolateLogReceiver;
+
   static bool get hasHandlers => _handlers.isNotEmpty;
 
   // 便利方法
@@ -121,6 +128,19 @@ class AppLogger {
     }
   }
 
+  /// 启动 Isolate 日志监听
+  static ReceivePort startIsolateLogging() {
+    _isolateLogReceiver = ReceivePort();
+    _isolateLogReceiver!.listen(_handleIsolateLog);
+    return _isolateLogReceiver!;
+  }
+
+  /// 停止 Isolate 日志监听
+  static void stopIsolateLogging() {
+    _isolateLogReceiver?.close();
+    _isolateLogReceiver = null;
+  }
+
   static void warning(
     dynamic message, {
     String? tag,
@@ -152,6 +172,31 @@ class AppLogger {
       }
     } catch (_) {}
     return null;
+  }
+
+  /// 处理来自 Isolate 的日志消息
+  static void _handleIsolateLog(dynamic message) {
+    if (message is LogMessage) {
+      switch (message.level) {
+        case 'debug':
+          debug('[Isolate] ${message.message}', data: message.data);
+          break;
+        case 'info':
+          info('[Isolate] ${message.message}', data: message.data);
+          break;
+        case 'warning':
+          warning('[Isolate] ${message.message}', data: message.data);
+          break;
+        case 'error':
+          error('[Isolate] ${message.message}',
+              data: message.data, stackTrace: message.stackTrace);
+          break;
+        case 'fatal':
+          fatal('[Isolate] ${message.message}',
+              data: message.data, stackTrace: message.stackTrace);
+          break;
+      }
+    }
   }
 
   // 处理日志队列

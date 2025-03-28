@@ -69,6 +69,11 @@ class CharacterImageProcessor {
       'erasePoints': erasePoints?.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
     };
 
+    final aa = img.decodeImage(processingParams['imageData'] as Uint8List);
+
+    if (aa == null) {
+      throw Exception('图像解码失败22222');
+    }
     late ProcessingResult result;
     try {
       result = await _processInIsolate(processingParams);
@@ -275,28 +280,64 @@ class CharacterImageProcessor {
 
   static Future<Uint8List> _cropImage(
       Uint8List sourceImage, Rect region) async {
-    // 解码图像
-    final image = img.decodeImage(sourceImage);
-    if (image == null) {
-      throw Exception('无法解码源图像');
+    try {
+      // 解码源图像
+      final image = img.decodeImage(sourceImage);
+      if (image == null) {
+        throw Exception('无法解码图像用于裁剪');
+      }
+
+      // 记录详细信息以便调试
+      AppLogger.debug('裁剪源图像信息', data: {
+        'imageWidth': image.width,
+        'imageHeight': image.height,
+        'region': {
+          'left': region.left.toInt(),
+          'top': region.top.toInt(),
+          'right': region.right.toInt(),
+          'bottom': region.bottom.toInt(),
+          'width': region.width.toInt(),
+          'height': region.height.toInt(),
+        },
+        'coordinateSystem': '图像坐标系(像素)'
+      });
+
+      // 确保裁剪参数有效（整数且在范围内）
+      int x = region.left.toInt().clamp(0, image.width - 1);
+      int y = region.top.toInt().clamp(0, image.height - 1);
+      int width = region.width.toInt().clamp(1, image.width - x);
+      int height = region.height.toInt().clamp(1, image.height - y);
+
+      // 记录实际的裁剪参数
+      AppLogger.debug('实际裁剪参数',
+          data: {'x': x, 'y': y, 'width': width, 'height': height});
+
+      // 执行裁剪操作
+      final croppedImage = img.copyCrop(
+        image,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+      );
+
+      // 记录裁剪结果
+      AppLogger.debug('裁剪完成', data: {
+        'resultWidth': croppedImage.width,
+        'resultHeight': croppedImage.height
+      });
+
+      // 确保裁剪成功
+      if (croppedImage.width <= 0 || croppedImage.height <= 0) {
+        throw Exception('裁剪后图像无效，宽度或高度为零');
+      }
+
+      // 编码为PNG
+      return Uint8List.fromList(img.encodePng(croppedImage));
+    } catch (e) {
+      AppLogger.error('裁剪图像失败', error: e);
+      rethrow;
     }
-
-    // 进行裁剪
-    final cropX = region.left.toInt().clamp(0, image.width - 1);
-    final cropY = region.top.toInt().clamp(0, image.height - 1);
-    final cropWidth = region.width.toInt().clamp(1, image.width - cropX);
-    final cropHeight = region.height.toInt().clamp(1, image.height - cropY);
-
-    final croppedImage = img.copyCrop(
-      image,
-      x: cropX,
-      y: cropY,
-      width: cropWidth,
-      height: cropHeight,
-    );
-
-    // 编码为PNG
-    return Uint8List.fromList(img.encodePng(croppedImage));
   }
 
   static Uint8List _denoiseImage(Uint8List binaryImage, double noiseReduction) {
@@ -394,7 +435,6 @@ class CharacterImageProcessor {
 
     try {
       // 解析参数
-      AppLogger.debug('开始在Isolate中处理图像');
       final imageData = params['imageData'] as Uint8List;
       final regionData = params['region'] as Map<String, dynamic>;
       final optionsData = params['options'] as Map<String, dynamic>;
@@ -407,6 +447,11 @@ class CharacterImageProcessor {
         regionData['height'] as double,
       );
 
+      // 验证裁剪区域有效性
+      if (region.width <= 0 || region.height <= 0) {
+        throw Exception('裁剪区域无效: 宽度或高度为零');
+      }
+
       final options = ProcessingOptions(
         inverted: optionsData['inverted'] as bool,
         threshold: optionsData['threshold'] as double,
@@ -418,15 +463,14 @@ class CharacterImageProcessor {
           ?.map((p) => Offset(p['x'] as double, p['y'] as double))
           .toList();
 
-      // 执行处理步骤
+      // 打印详细参数
+      print(
+          'Isolate: 处理裁剪请求 - 区域: ${region.left.toInt()},${region.top.toInt()},${region.width.toInt()},${region.height.toInt()}');
 
+      // 执行处理步骤
       // 1. 裁剪区域
       final croppedImage = await _cropImage(imageData, region);
-      AppLogger.debug('图像裁剪完成', data: {
-        'cropWidth': region.width,
-        'cropHeight': region.height,
-        'cropLength': croppedImage.length
-      });
+      print('Isolate: 裁剪完成，结果大小: ${croppedImage.length} 字节');
 
       // 2. 应用擦除（如果有）
       final erasedImage = erasePoints != null && erasePoints.isNotEmpty

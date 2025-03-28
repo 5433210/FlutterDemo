@@ -3,16 +3,29 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region.dart';
+import '../../../infrastructure/logging/logger.dart';
+import '../../../utils/coordinate_transformer.dart';
 import '../../providers/character/tool_mode_provider.dart';
 
+/// 调整大小的模式
+enum ResizeMode {
+  topLeft,
+  topRight,
+  bottomLeft,
+  bottomRight,
+}
+
+/// 选框覆盖层
 class SelectionOverlay extends StatefulWidget {
   final List<CharacterRegion> regions;
   final Set<String> selectedIds;
   final Tool toolMode;
   final TransformationController transformationController;
-  final Function(Rect) onRegionCreated;
-  final Function(String) onRegionSelected;
-  final Function(String, Rect) onRegionUpdated;
+  final Size imageSize;
+  final Size viewportSize;
+  final void Function(Rect rect) onRegionCreated;
+  final void Function(String id) onRegionSelected;
+  final void Function(String id, Rect rect) onRegionUpdated;
 
   const SelectionOverlay({
     Key? key,
@@ -20,6 +33,8 @@ class SelectionOverlay extends StatefulWidget {
     required this.selectedIds,
     required this.toolMode,
     required this.transformationController,
+    required this.imageSize,
+    required this.viewportSize,
     required this.onRegionCreated,
     required this.onRegionSelected,
     required this.onRegionUpdated,
@@ -29,451 +44,446 @@ class SelectionOverlay extends StatefulWidget {
   State<SelectionOverlay> createState() => _SelectionOverlayState();
 }
 
-// 自定义绘制类
-class SelectionPainter extends CustomPainter {
-  final List<CharacterRegion> regions;
-  final Set<String> selectedIds;
-  final Rect? selectionRect;
-  final TransformationController transformationController;
-  final String? adjustingRegionId;
-  final int? activeHandleIndex;
+/// 选框可视化组件
+class _RegionBox extends StatelessWidget {
+  final bool isSelected;
+  final bool isDrawing;
+  final bool isResizing;
+  final void Function(ResizeMode)? onResizeStart;
+  final ValueChanged<Offset>? onResize;
+  final VoidCallback? onResizeEnd;
+  final VoidCallback? onTap;
 
-  SelectionPainter({
-    required this.regions,
-    required this.selectedIds,
-    this.selectionRect,
-    required this.transformationController,
-    this.adjustingRegionId,
-    this.activeHandleIndex,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 绘制已保存的区域
-    for (final region in regions) {
-      final isSelected = selectedIds.contains(region.id);
-      final isAdjusting = region.id == adjustingRegionId;
-
-      // 设置样式
-      final Paint paint = Paint()
-        ..color = isSelected || isAdjusting ? Colors.blue : Colors.green
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = isSelected || isAdjusting ? 2.0 : 1.5;
-
-      // 保存画布状态
-      canvas.save();
-
-      // 应用旋转
-      if (region.rotation != 0) {
-        canvas.translate(region.rect.center.dx, region.rect.center.dy);
-        canvas.rotate(region.rotation * math.pi / 180);
-        canvas.translate(-region.rect.center.dx, -region.rect.center.dy);
-      }
-
-      // 绘制区域矩形
-      canvas.drawRect(region.rect, paint);
-
-      // 绘制角落手柄（仅当选中或调整时）
-      if (isSelected || isAdjusting) {
-        _drawHandles(canvas, region.rect);
-      }
-
-      // 标注文字（如果有）
-      if (region.character.isNotEmpty) {
-        final textStyle = TextStyle(
-          color: isSelected ? Colors.blue : Colors.green,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        );
-
-        final textSpan = TextSpan(
-          text: region.character,
-          style: textStyle,
-        );
-
-        final textPainter = TextPainter(
-          text: textSpan,
-          textDirection: TextDirection.ltr,
-        );
-
-        textPainter.layout();
-
-        // 在区域上方绘制字符
-        textPainter.paint(
-          canvas,
-          Offset(
-            region.rect.center.dx - textPainter.width / 2,
-            region.rect.top - textPainter.height - 4,
-          ),
-        );
-      }
-
-      // 恢复画布状态
-      canvas.restore();
-    }
-
-    // 绘制当前选择矩形（如果有）
-    if (selectionRect != null) {
-      final Paint paint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.0;
-
-      canvas.drawRect(selectionRect!, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant SelectionPainter oldDelegate) {
-    return regions != oldDelegate.regions ||
-        selectedIds != oldDelegate.selectedIds ||
-        selectionRect != oldDelegate.selectionRect ||
-        adjustingRegionId != oldDelegate.adjustingRegionId ||
-        activeHandleIndex != oldDelegate.activeHandleIndex ||
-        transformationController.value !=
-            oldDelegate.transformationController.value;
-  }
-
-  // 绘制调整手柄
-  void _drawHandles(Canvas canvas, Rect rect) {
-    final handles = [
-      Offset(rect.left, rect.top), // 左上
-      Offset(rect.left + rect.width / 2, rect.top), // 上中
-      Offset(rect.right, rect.top), // 右上
-      Offset(rect.right, rect.top + rect.height / 2), // 右中
-      Offset(rect.right, rect.bottom), // 右下
-      Offset(rect.left + rect.width / 2, rect.bottom), // 下中
-      Offset(rect.left, rect.bottom), // 左下
-      Offset(rect.left, rect.top + rect.height / 2), // 左中
-    ];
-
-    for (int i = 0; i < handles.length; i++) {
-      final isActive = i == activeHandleIndex;
-
-      final fillPaint = Paint()
-        ..color = isActive ? Colors.blue : Colors.white
-        ..style = PaintingStyle.fill;
-
-      final strokePaint = Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-
-      // 绘制手柄
-      canvas.drawCircle(handles[i], 5, fillPaint);
-      canvas.drawCircle(handles[i], 5, strokePaint);
-    }
-  }
-}
-
-class _SelectionOverlayState extends State<SelectionOverlay> {
-  // 拖动状态
-  Offset? _startPoint;
-  Offset? _currentPoint;
-
-  // 调整状态
-  String? _adjustingRegionId;
-  int? _activeHandleIndex;
-  Rect? _initialRect;
-
-  // 移动状态
-  String? _movingRegionId;
-  Offset? _initialPointerPosition;
+  const _RegionBox({
+    Key? key,
+    this.isSelected = false,
+    this.isDrawing = false,
+    this.isResizing = false,
+    this.onResizeStart,
+    this.onResize,
+    this.onResizeEnd,
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onPanStart: _handlePanStart,
-      onPanUpdate: _handlePanUpdate,
-      onPanEnd: _handlePanEnd,
-      child: CustomPaint(
-        painter: SelectionPainter(
-          regions: widget.regions,
-          selectedIds: widget.selectedIds,
-          selectionRect: _getSelectionRect(),
-          transformationController: widget.transformationController,
-          adjustingRegionId: _adjustingRegionId,
-          activeHandleIndex: _activeHandleIndex,
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: _getBorderColor(),
+            width: 2,
+          ),
         ),
-        child: Container(
-          color: Colors.transparent,
+        child: Stack(
+          children: [
+            if (!isDrawing) ...[
+              _buildResizeHandle(ResizeMode.topLeft, Alignment.topLeft),
+              _buildResizeHandle(ResizeMode.topRight, Alignment.topRight),
+              _buildResizeHandle(ResizeMode.bottomLeft, Alignment.bottomLeft),
+              _buildResizeHandle(ResizeMode.bottomRight, Alignment.bottomRight),
+            ],
+          ],
         ),
       ),
     );
   }
 
-  // 查找点击位置上的调整手柄索引
-  int? _findHandleAtPosition(Offset position, CharacterRegion region) {
-    final handles = _getHandlePositions(region.rect);
-    const handleSize = 16.0; // 手柄点击范围
+  Widget _buildResizeHandle(ResizeMode mode, Alignment alignment) {
+    return Align(
+      alignment: alignment,
+      child: GestureDetector(
+        onPanStart: (_) => onResizeStart?.call(mode),
+        onPanUpdate: (details) => onResize?.call(details.delta),
+        onPanEnd: (_) => onResizeEnd?.call(),
+        child: Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: _getBorderColor(),
+              width: 2,
+            ),
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
+    );
+  }
 
-    for (int i = 0; i < handles.length; i++) {
-      final handle = handles[i];
-      final handleRect = Rect.fromCenter(
-        center: handle,
-        width: handleSize,
-        height: handleSize,
+  Color _getBorderColor() {
+    if (isDrawing) return Colors.blue;
+    if (isSelected) return Colors.blue;
+    if (isResizing) return Colors.orange;
+    return Colors.green;
+  }
+}
+
+class _SelectionOverlayState extends State<SelectionOverlay> {
+  // 最小选框尺寸（图像坐标系）
+  static const double minRegionSize = 20.0;
+  // 选框相关状态
+  Offset? _startPoint;
+  Offset? _currentPoint;
+  String? _draggingId;
+  bool _isResizing = false;
+
+  ResizeMode? _resizeMode;
+
+  // 坐标转换器
+  late CoordinateTransformer _transformer;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.precise, // 使用十字光标更清晰地表示选择模式
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 现有选框
+          ...widget.regions.map((region) => _buildRegion(region)),
+
+          // 当前正在绘制的选框
+          if (_startPoint != null && _currentPoint != null)
+            _buildNewRegion(_startPoint!, _currentPoint!),
+
+          // 使用原生监听器代替GestureDetector
+          Positioned.fill(
+            child: Listener(
+              onPointerDown: _handlePointerDown,
+              onPointerMove: _handlePointerMove,
+              onPointerUp: _handlePointerUp,
+              behavior: HitTestBehavior.translucent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(SelectionOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.transformationController != widget.transformationController ||
+        oldWidget.imageSize != widget.imageSize ||
+        oldWidget.viewportSize != widget.viewportSize) {
+      _updateTransformer();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _updateTransformer();
+  }
+
+  Widget _buildNewRegion(Offset start, Offset end) {
+    try {
+      // 直接转换为图像坐标
+      final imageStart = _transformer.viewportToImageCoordinate(start);
+      final imageEnd = _transformer.viewportToImageCoordinate(end);
+
+      // 创建并规范化图像坐标系中的矩形
+      final imageRect = _normalizeRect(Rect.fromPoints(imageStart, imageEnd));
+
+      // 转换到视口坐标系显示
+      final displayRect = _transformer.imageRectToViewportRect(imageRect);
+
+      AppLogger.debug('预览选框', data: {
+        'imageRect': _formatRect(imageRect),
+        'displayRect': _formatRect(displayRect)
+      });
+
+      return Positioned.fromRect(
+        rect: displayRect,
+        child: const _RegionBox(isDrawing: true),
       );
-
-      if (handleRect.contains(position)) {
-        return i;
-      }
-    }
-
-    return null;
-  }
-
-  // 查找指定位置的区域
-  CharacterRegion? _findRegionAtPosition(Offset position) {
-    // 按照添加顺序倒序检查，以便优先选择最近添加的区域
-    for (int i = widget.regions.length - 1; i >= 0; i--) {
-      final region = widget.regions[i];
-
-      // 创建包含旋转的转换矩阵
-      final transform = Matrix4.identity()
-        ..translate(region.rect.center.dx, region.rect.center.dy)
-        ..rotateZ(region.rotation * math.pi / 180)
-        ..translate(-region.rect.center.dx, -region.rect.center.dy);
-
-      // 创建一个变换路径来测试点击
-      final path = Path();
-      path.addRect(region.rect);
-      path.transform(transform.storage);
-
-      if (path.contains(position)) {
-        return region;
-      }
-    }
-
-    return null;
-  }
-
-  // 获取区域的调整手柄位置
-  List<Offset> _getHandlePositions(Rect rect) {
-    return [
-      Offset(rect.left, rect.top), // 左上
-      Offset(rect.left + rect.width / 2, rect.top), // 上中
-      Offset(rect.right, rect.top), // 右上
-      Offset(rect.right, rect.top + rect.height / 2), // 右中
-      Offset(rect.right, rect.bottom), // 右下
-      Offset(rect.left + rect.width / 2, rect.bottom), // 下中
-      Offset(rect.left, rect.bottom), // 左下
-      Offset(rect.left, rect.top + rect.height / 2), // 左中
-    ];
-  }
-
-  // 获取当前选择矩形（在绘制新选框时使用）
-  Rect? _getSelectionRect() {
-    if (_startPoint == null || _currentPoint == null) {
-      return null;
-    }
-
-    final left = math.min(_startPoint!.dx, _currentPoint!.dx);
-    final top = math.min(_startPoint!.dy, _currentPoint!.dy);
-    final right = math.max(_startPoint!.dx, _currentPoint!.dx);
-    final bottom = math.max(_startPoint!.dy, _currentPoint!.dy);
-
-    return Rect.fromLTRB(left, top, right, bottom);
-  }
-
-  // 处理拖动结束
-  void _handlePanEnd(DragEndDetails details) {
-    if (_adjustingRegionId != null || _movingRegionId != null) {
-      // 已完成调整或移动
-      setState(() {
-        _adjustingRegionId = null;
-        _activeHandleIndex = null;
-        _movingRegionId = null;
-        _initialRect = null;
-        _initialPointerPosition = null;
-      });
-    } else if (_startPoint != null &&
-        _currentPoint != null &&
-        widget.toolMode == Tool.selection) {
-      // 完成选择操作，创建新区域
-      final selectionRect = _getSelectionRect();
-
-      // 确保选框大小合适（防止点击误操作）
-      if (selectionRect != null &&
-          selectionRect.width > 20 &&
-          selectionRect.height > 20) {
-        widget.onRegionCreated(selectionRect);
-      }
-
-      setState(() {
-        _startPoint = null;
-        _currentPoint = null;
-      });
+    } catch (e) {
+      AppLogger.error('构建选框预览失败', error: e);
+      return const SizedBox.shrink();
     }
   }
 
-  // 处理拖动开始
-  void _handlePanStart(DragStartDetails details) {
-    final position = details.localPosition;
+  Widget _buildRegion(CharacterRegion region) {
+    try {
+      // 使用新的坐标转换方法
+      final viewportRect = _transformer.imageRectToViewportRect(region.rect);
+      final isSelected = widget.selectedIds.contains(region.id);
 
-    switch (widget.toolMode) {
-      case Tool.selection:
-        // 在选择模式下，开始新的选框
-        setState(() {
-          _startPoint = position;
-          _currentPoint = position;
-          _adjustingRegionId = null;
-          _movingRegionId = null;
-        });
-        break;
+      return Positioned.fromRect(
+        rect: viewportRect,
+        child: _RegionBox(
+          isSelected: isSelected,
+          isResizing: _isResizing && _draggingId == region.id,
+          onResizeStart: (mode) => _startResizing(region.id, mode),
+          onResize: (delta) => _handleResize(region.id, delta),
+          onResizeEnd: _endResizing,
+          onTap: () => _handleRegionTap(region.id),
+        ),
+      );
+    } catch (e) {
+      AppLogger.error('构建选框失败', error: e, data: {'regionId': region.id});
+      return const SizedBox.shrink();
+    }
+  }
 
-      case Tool.multiSelect:
-        // 在多选模式下，检查是否点击了已有区域
-        final selectedRegion = _findRegionAtPosition(position);
-        if (selectedRegion != null) {
-          // 选中区域
-          widget.onRegionSelected(selectedRegion.id);
-
-          // 检查是否点击了调整手柄
-          final handleIndex = _findHandleAtPosition(position, selectedRegion);
-          if (handleIndex != null) {
-            // 开始调整区域
-            setState(() {
-              _adjustingRegionId = selectedRegion.id;
-              _activeHandleIndex = handleIndex;
-              _initialRect = selectedRegion.rect;
-              _initialPointerPosition = position;
-              _movingRegionId = null;
-              _startPoint = null;
-              _currentPoint = null;
-            });
-          } else if (selectedRegion.rect.contains(position)) {
-            // 开始移动区域
-            setState(() {
-              _movingRegionId = selectedRegion.id;
-              _initialRect = selectedRegion.rect;
-              _initialPointerPosition = position;
-              _adjustingRegionId = null;
-              _startPoint = null;
-              _currentPoint = null;
-            });
-          }
-        }
-        break;
-
+  /// 计算调整大小后的矩形
+  Rect _calculateNewRect(Rect oldRect, Offset delta) {
+    switch (_resizeMode) {
+      case ResizeMode.topLeft:
+        return _normalizeRect(Rect.fromPoints(
+          oldRect.bottomRight,
+          Offset(oldRect.left + delta.dx, oldRect.top + delta.dy),
+        ));
+      case ResizeMode.topRight:
+        return _normalizeRect(Rect.fromPoints(
+          oldRect.bottomLeft,
+          Offset(oldRect.right + delta.dx, oldRect.top + delta.dy),
+        ));
+      case ResizeMode.bottomLeft:
+        return _normalizeRect(Rect.fromPoints(
+          oldRect.topRight,
+          Offset(oldRect.left + delta.dx, oldRect.bottom + delta.dy),
+        ));
+      case ResizeMode.bottomRight:
+        return _normalizeRect(Rect.fromPoints(
+          oldRect.topLeft,
+          Offset(oldRect.right + delta.dx, oldRect.bottom + delta.dy),
+        ));
       default:
-        // 其他模式不处理拖动
-        break;
+        return oldRect;
     }
   }
 
-  // 处理拖动更新
-  void _handlePanUpdate(DragUpdateDetails details) {
-    final position = details.localPosition;
+  void _endResizing() {
+    setState(() {
+      _draggingId = null;
+      _isResizing = false;
+      _resizeMode = null;
+    });
+  }
 
-    if (_adjustingRegionId != null &&
-        _initialRect != null &&
-        _initialPointerPosition != null &&
-        _activeHandleIndex != null) {
-      // 正在调整区域
-      final delta = position - _initialPointerPosition!;
-      final newRect = _resizeRect(_initialRect!, _activeHandleIndex!, delta);
+  // 辅助方法，用于格式化矩形
+  String _formatRect(Rect rect) {
+    return '${rect.left.toInt()},${rect.top.toInt()},${rect.width.toInt()},${rect.height.toInt()}';
+  }
 
-      setState(() {
-        // 更新区域大小
-        widget.onRegionUpdated(_adjustingRegionId!, newRect);
-      });
-    } else if (_movingRegionId != null &&
-        _initialRect != null &&
-        _initialPointerPosition != null) {
-      // 正在移动区域
-      final delta = position - _initialPointerPosition!;
-      final newRect = _initialRect!.translate(delta.dx, delta.dy);
+  void _handlePanCancel() {}
 
-      setState(() {
-        // 更新区域位置
-        widget.onRegionUpdated(_movingRegionId!, newRect);
+  // 移除不再使用的方法
+  void _handlePanDown(DragDownDetails details) {}
+
+  void _handlePanEnd(DragEndDetails details) {}
+
+  void _handlePanStart(DragStartDetails details) {}
+  void _handlePanUpdate(DragUpdateDetails details) {}
+
+  // 使用原生指针事件代替手势检测器
+  void _handlePointerDown(PointerDownEvent event) {
+    if (widget.toolMode != Tool.select) return;
+
+    AppLogger.debug('指针按下', data: {
+      'position':
+          '${event.localPosition.dx.toInt()},${event.localPosition.dy.toInt()}'
+    });
+
+    setState(() {
+      _startPoint = event.localPosition;
+      _currentPoint = event.localPosition;
+    });
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (widget.toolMode != Tool.select || _startPoint == null) return;
+
+    // 只有当移动足够距离时才更新
+    final distance = (event.localPosition - _startPoint!).distance;
+    if (distance < 2) return; // 忽略很小的移动
+
+    setState(() {
+      _currentPoint = event.localPosition;
+    });
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_startPoint == null ||
+        _currentPoint == null ||
+        widget.toolMode != Tool.select) {
+      _resetSelectionState();
+      return;
+    }
+
+    try {
+      // 计算拖动的距离，如果太短可能是点击而非拖动
+      final dragDistance = (_currentPoint! - _startPoint!).distance;
+
+      if (dragDistance < 5) {
+        // 距离太短，可能是意外点击，不处理
+        _resetSelectionState();
+        return;
+      }
+
+      // 记录框选的视口坐标
+      AppLogger.debug('框选视口坐标', data: {
+        'start': '${_startPoint!.dx.toInt()},${_startPoint!.dy.toInt()}',
+        'end': '${_currentPoint!.dx.toInt()},${_currentPoint!.dy.toInt()}'
       });
-    } else if (_startPoint != null) {
-      // 正在绘制新的选框
-      setState(() {
-        _currentPoint = position;
+
+      // 转换为视图坐标 (添加这部分)
+      final viewStartPoint =
+          _transformer.viewportToViewCoordinate(_startPoint!);
+      final viewEndPoint =
+          _transformer.viewportToViewCoordinate(_currentPoint!);
+
+      // 记录视图坐标 (新增)
+      AppLogger.debug('框选视图坐标', data: {
+        'start': '${viewStartPoint.dx.toInt()},${viewStartPoint.dy.toInt()}',
+        'end': '${viewEndPoint.dx.toInt()},${viewEndPoint.dy.toInt()}',
+        'coordinateSystem': '视图坐标系(图像左上角为原点)',
+        'scale': _transformer.currentScale,
+        'displayRect': _formatRect(_transformer.displayRect)
       });
+
+      // 记录完整的坐标转换过程(用于调试)
+      _transformer.logCoordinateConversion(_startPoint!);
+      _transformer.logCoordinateConversion(_currentPoint!);
+
+      // 转换起点和终点到图像坐标系
+      final startPoint = _transformer.viewportToImageCoordinate(_startPoint!);
+      final endPoint = _transformer.viewportToImageCoordinate(_currentPoint!);
+
+      // 创建并规范化图像坐标系中的矩形
+      final rect = _normalizeRect(Rect.fromPoints(startPoint, endPoint));
+
+      // 详细记录转换过程
+      AppLogger.debug('框选坐标转换结果', data: {
+        'viewportStart':
+            '${_startPoint!.dx.toInt()},${_startPoint!.dy.toInt()}',
+        'viewportEnd':
+            '${_currentPoint!.dx.toInt()},${_currentPoint!.dy.toInt()}',
+        'viewStart':
+            '${viewStartPoint.dx.toInt()},${viewStartPoint.dy.toInt()}',
+        'viewEnd': '${viewEndPoint.dx.toInt()},${viewEndPoint.dy.toInt()}',
+        'imageStart': '${startPoint.dx.toInt()},${startPoint.dy.toInt()}',
+        'imageEnd': '${endPoint.dx.toInt()},${endPoint.dy.toInt()}',
+        'finalImageRect':
+            '${rect.left.toInt()},${rect.top.toInt()},${rect.width.toInt()},${rect.height.toInt()}',
+      });
+
+      // 检查选框是否足够大
+      if (rect.width >= minRegionSize && rect.height >= minRegionSize) {
+        widget.onRegionCreated(rect);
+      } else {
+        AppLogger.warning('选框太小，忽略', data: {
+          'width': rect.width,
+          'height': rect.height,
+          'minSize': minRegionSize
+        });
+      }
+    } catch (e) {
+      AppLogger.error('选框坐标转换错误', error: e, data: {
+        'viewportStart': _startPoint != null
+            ? '${_startPoint!.dx.toInt()},${_startPoint!.dy.toInt()}'
+            : 'null',
+        'viewportEnd': _currentPoint != null
+            ? '${_currentPoint!.dx.toInt()},${_currentPoint!.dy.toInt()}'
+            : 'null',
+        'scale': _transformer.currentScale,
+        'imageSize': '${widget.imageSize.width}x${widget.imageSize.height}',
+      });
+    } finally {
+      _resetSelectionState();
     }
   }
 
-  // 调整矩形大小
-  Rect _resizeRect(Rect rect, int handleIndex, Offset delta) {
-    double left = rect.left;
-    double top = rect.top;
-    double right = rect.right;
-    double bottom = rect.bottom;
+  void _handleRegionTap(String id) {
+    widget.onRegionSelected(id);
+  }
 
-    switch (handleIndex) {
-      case 0: // 左上
-        left += delta.dx;
-        top += delta.dy;
-        break;
-      case 1: // 上中
-        top += delta.dy;
-        break;
-      case 2: // 右上
-        right += delta.dx;
-        top += delta.dy;
-        break;
-      case 3: // 右中
-        right += delta.dx;
-        break;
-      case 4: // 右下
-        right += delta.dx;
-        bottom += delta.dy;
-        break;
-      case 5: // 下中
-        bottom += delta.dy;
-        break;
-      case 6: // 左下
-        left += delta.dx;
-        bottom += delta.dy;
-        break;
-      case 7: // 左中
-        left += delta.dx;
-        break;
+  // 处理调整大小时的坐标转换，关注缩放比例
+  void _handleResize(String id, Offset screenDelta) {
+    try {
+      final region = widget.regions.firstWhere((r) => r.id == id);
+
+      // 将屏幕增量转换为图像坐标系的增量
+      final scale = _transformer.actualScale;
+      final imageDelta = Offset(screenDelta.dx / scale, screenDelta.dy / scale);
+
+      AppLogger.debug('调整大小', data: {
+        'id': id,
+        'screenDelta': '${screenDelta.dx.toInt()},${screenDelta.dy.toInt()}',
+        'scale': scale.toStringAsFixed(3),
+        'imageDelta':
+            '${imageDelta.dx.toStringAsFixed(2)},${imageDelta.dy.toStringAsFixed(2)}'
+      });
+
+      // 计算新矩形并确保在图像范围内
+      final newRect =
+          _normalizeRect(_calculateNewRect(region.rect, imageDelta));
+
+      // 检查最小尺寸要求
+      if (newRect.width >= minRegionSize && newRect.height >= minRegionSize) {
+        widget.onRegionUpdated(id, newRect);
+      } else {
+        AppLogger.debug('选框太小', data: {
+          'width': newRect.width.toInt(),
+          'height': newRect.height.toInt(),
+          'minSize': minRegionSize
+        });
+      }
+    } catch (e) {
+      AppLogger.error('调整选框大小失败', error: e);
     }
+  }
 
-    // 确保矩形不会翻转（宽高始终为正）
-    if (left > right) {
-      final temp = left;
-      left = right;
-      right = temp;
+  /// 标准化矩形，确保宽高都是正数且在图像范围内
+  Rect _normalizeRect(Rect rect) {
+    final left = math.min(rect.left, rect.right);
+    final top = math.min(rect.top, rect.bottom);
+    final right = math.max(rect.left, rect.right);
+    final bottom = math.max(rect.top, rect.bottom);
 
-      // 更新手柄索引（左右对调）
-      if (handleIndex == 0)
-        _activeHandleIndex = 2;
-      else if (handleIndex == 2)
-        _activeHandleIndex = 0;
-      else if (handleIndex == 6)
-        _activeHandleIndex = 4;
-      else if (handleIndex == 4)
-        _activeHandleIndex = 6;
-      else if (handleIndex == 3)
-        _activeHandleIndex = 7;
-      else if (handleIndex == 7) _activeHandleIndex = 3;
+    return Rect.fromLTRB(
+      math.max(0.0, math.min(left, widget.imageSize.width)),
+      math.max(0.0, math.min(top, widget.imageSize.height)),
+      math.max(0.0, math.min(right, widget.imageSize.width)),
+      math.max(0.0, math.min(bottom, widget.imageSize.height)),
+    );
+  }
+
+  // 安全地重置选择状态
+  void _resetSelectionState() {
+    setState(() {
+      _startPoint = null;
+      _currentPoint = null;
+    });
+  }
+
+  void _startResizing(String id, ResizeMode mode) {
+    setState(() {
+      _draggingId = id;
+      _isResizing = true;
+      _resizeMode = mode;
+    });
+  }
+
+  void _updateTransformer() {
+    _transformer = CoordinateTransformer(
+      transformationController: widget.transformationController,
+      imageSize: widget.imageSize,
+      viewportSize: widget.viewportSize,
+    );
+
+    // 记录转换器状态，帮助调试
+    if (widget.toolMode == Tool.select) {
+      AppLogger.debug('更新坐标转换器', data: {
+        'imageSize': '${widget.imageSize.width}x${widget.imageSize.height}',
+        'viewportSize':
+            '${widget.viewportSize.width}x${widget.viewportSize.height}',
+        'scale': _transformer.currentScale,
+      });
     }
-
-    if (top > bottom) {
-      final temp = top;
-      top = bottom;
-      bottom = temp;
-
-      // 更新手柄索引（上下对调）
-      if (handleIndex == 0)
-        _activeHandleIndex = 6;
-      else if (handleIndex == 1)
-        _activeHandleIndex = 5;
-      else if (handleIndex == 2)
-        _activeHandleIndex = 4;
-      else if (handleIndex == 6)
-        _activeHandleIndex = 0;
-      else if (handleIndex == 5)
-        _activeHandleIndex = 1;
-      else if (handleIndex == 4) _activeHandleIndex = 2;
-    }
-
-    return Rect.fromLTRB(left, top, right, bottom);
   }
 }

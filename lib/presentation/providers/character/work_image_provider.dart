@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
@@ -36,27 +37,24 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
         throw Exception('Image not found');
       }
 
-      // 验证图像数据
-      AppLogger.debug('WorkImageProvider接收到图像数据',
-          data: {'imageLength': imageData.length});
-
-      try {
-        final image = img.decodeImage(imageData);
-        if (image != null) {
-          AppLogger.debug('WorkImageProvider验证图像成功',
-              data: {'width': image.width, 'height': image.height});
-        }
-      } catch (e, stack) {
-        AppLogger.error('WorkImageProvider图像验证失败', error: e, stackTrace: stack);
-      }
+      // 解析图像尺寸
+      final imageSize = await _parseImageSize(imageData);
+      AppLogger.debug('WorkImageProvider获取到图像尺寸', data: {
+        'width': imageSize.width,
+        'height': imageSize.height,
+        'dataLength': imageData.length,
+      });
 
       // 更新状态
       state = state.copyWith(
         currentPageId: pageId,
         imageData: imageData,
+        imageWidth: imageSize.width,
+        imageHeight: imageSize.height,
         loading: false,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error('WorkImageProvider切换页面失败', error: e, stackTrace: stack);
       state = state.copyWith(
         loading: false,
         error: e.toString(),
@@ -84,6 +82,14 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
         throw Exception('Image not found');
       }
 
+      // 解析图像尺寸
+      final imageSize = await _parseImageSize(imageData);
+      AppLogger.debug('WorkImageProvider加载图像成功', data: {
+        'width': imageSize.width,
+        'height': imageSize.height,
+        'dataLength': imageData.length,
+      });
+
       // 获取所有页面ID
       final pageIds = await _workImageService.getWorkPageIds(workId);
 
@@ -93,9 +99,12 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
         currentPageId: pageId,
         pageIds: pageIds,
         imageData: imageData,
+        imageWidth: imageSize.width,
+        imageHeight: imageSize.height,
         loading: false,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error('WorkImageProvider加载图像失败', error: e, stackTrace: stack);
       state = state.copyWith(
         loading: false,
         error: e.toString(),
@@ -125,16 +134,18 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
     await changePage(previousPageId);
   }
 
+  // 重新加载当前页面
   Future<void> reload() async {
     await loadWorkImage(state.workId, state.currentPageId);
   }
 
-  // 更新图像宽高比
-  void updateAspectRatio(double width, double height) {
-    state = state.copyWith(
-      imageWidth: width,
-      imageHeight: height,
-    );
+  // 解析图像尺寸
+  Future<Size> _parseImageSize(Uint8List imageData) async {
+    final decodedImage = img.decodeImage(imageData);
+    if (decodedImage == null) {
+      throw Exception('Failed to decode image data');
+    }
+    return Size(decodedImage.width.toDouble(), decodedImage.height.toDouble());
   }
 }
 
@@ -182,6 +193,13 @@ class WorkImageState {
     final currentIndex = pageIds.indexOf(currentPageId);
     return currentIndex > 0;
   }
+
+  // 检查图像是否有效
+  bool get hasValidImage =>
+      imageData != null && imageWidth > 0 && imageHeight > 0;
+
+  // 获取图像尺寸
+  Size get imageSize => Size(imageWidth, imageHeight);
 
   WorkImageState copyWith({
     String? workId,
