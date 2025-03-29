@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
-import '../../../application/services/character/character_service.dart';
-import '../../../application/services/image/character_image_processor.dart';
+import '../../../application/providers/image_providers.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
@@ -16,12 +15,10 @@ import '../../../infrastructure/logging/logger.dart';
 class ErasePainter extends CustomPainter {
   final List<Offset> points;
   final double brushSize;
-  final Color color;
 
-  ErasePainter({
+  const ErasePainter({
     required this.points,
     required this.brushSize,
-    required this.color,
   });
 
   @override
@@ -29,7 +26,7 @@ class ErasePainter extends CustomPainter {
     if (points.isEmpty) return;
 
     final paint = Paint()
-      ..color = color
+      ..color = Colors.red.withOpacity(0.6)
       ..strokeWidth = brushSize
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
@@ -43,38 +40,24 @@ class ErasePainter extends CustomPainter {
     }
 
     canvas.drawPath(path, paint);
-
-    final dotPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    for (final point in points) {
-      canvas.drawCircle(point, brushSize / 2, dotPaint);
-    }
   }
 
   @override
   bool shouldRepaint(covariant ErasePainter oldDelegate) {
-    return points != oldDelegate.points ||
-        brushSize != oldDelegate.brushSize ||
-        color != oldDelegate.color;
+    return points != oldDelegate.points || brushSize != oldDelegate.brushSize;
   }
 }
 
 /// 轮廓绘制器
 class OutlinePainter extends CustomPainter {
   final DetectedOutline outline;
-  final Color color;
-  final double strokeWidth;
   final Size imageSize;
   final Size canvasSize;
 
-  OutlinePainter({
+  const OutlinePainter({
     required this.outline,
     required this.imageSize,
     required this.canvasSize,
-    this.color = Colors.blue,
-    this.strokeWidth = 1.0,
   });
 
   @override
@@ -83,12 +66,16 @@ class OutlinePainter extends CustomPainter {
     final scaleY = canvasSize.height / imageSize.height;
     final scale = math.min(scaleX, scaleY);
 
-    final paint = Paint()
-      ..color = color
+    final strokePaint = Paint()
+      ..color = Colors.blue.withOpacity(0.8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
+      ..strokeWidth = 1.0
       ..strokeCap = StrokeCap.butt
       ..strokeJoin = StrokeJoin.miter;
+
+    final fillPaint = Paint()
+      ..color = Colors.blue.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
 
     final offsetX = (canvasSize.width - imageSize.width * scale) / 2;
     final offsetY = (canvasSize.height - imageSize.height * scale) / 2;
@@ -100,11 +87,6 @@ class OutlinePainter extends CustomPainter {
     for (final contour in outline.contourPoints) {
       if (contour.length < 2) continue;
 
-      // 跳过边框轮廓
-      if (_isImageBorderContour(contour, imageSize)) {
-        continue;
-      }
-
       final path = Path();
       path.moveTo(contour[0].dx, contour[0].dy);
 
@@ -113,7 +95,11 @@ class OutlinePainter extends CustomPainter {
       }
 
       path.close();
-      canvas.drawPath(path, paint);
+
+      // 先用填充色绘制轮廓内部
+      canvas.drawPath(path, fillPaint);
+      // 再用描边色绘制轮廓线
+      canvas.drawPath(path, strokePaint);
     }
 
     canvas.restore();
@@ -122,20 +108,8 @@ class OutlinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant OutlinePainter oldDelegate) {
     return outline != oldDelegate.outline ||
-        color != oldDelegate.color ||
-        strokeWidth != oldDelegate.strokeWidth ||
         imageSize != oldDelegate.imageSize ||
         canvasSize != oldDelegate.canvasSize;
-  }
-
-  /// 检查是否是图像边框轮廓
-  bool _isImageBorderContour(List<Offset> contour, Size size) {
-    const threshold = 2.0; // 2像素的容差
-    return contour.any((point) =>
-        point.dx <= threshold ||
-        point.dx >= size.width - threshold ||
-        point.dy <= threshold ||
-        point.dy >= size.height - threshold);
   }
 }
 
@@ -178,6 +152,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   img.Image? _currentImage;
   Size? _currentImageSize;
   Size? _currentCanvasSize;
+  bool _isProcessing = false;
 
   // 缓存处理状态
   bool _lastInverted = false;
@@ -192,7 +167,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         return FutureBuilder<bool>(
           future: _loadCharacterImage(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                _isProcessing) {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               AppLogger.error('预览加载失败', error: snapshot.error);
@@ -263,8 +239,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                           outline: _currentOutline!,
                           imageSize: _currentImageSize!,
                           canvasSize: _currentCanvasSize!,
-                          color: Colors.blue.withOpacity(0.8),
-                          strokeWidth: 1.0,
                         ),
                       ),
                     ),
@@ -279,7 +253,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                         painter: ErasePainter(
                           points: _currentErasePoints,
                           brushSize: widget.brushSize,
-                          color: Colors.red.withOpacity(0.6),
                         ),
                         child: Container(
                           color: Colors.transparent,
@@ -315,22 +288,12 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanvasSize());
   }
 
-  Future<Size?> _getImageSize(Uint8List imageData) async {
-    final decodedImage = img.decodeImage(imageData);
-    if (decodedImage == null) return null;
-    return Size(
-      decodedImage.width.toDouble(),
-      decodedImage.height.toDouble(),
-    );
-  }
-
   void _handleErasePanEnd(DragEndDetails details) {
     if (!_isErasing || _currentErasePoints.isEmpty) return;
     widget.onErasePointsChanged(_currentErasePoints);
     setState(() {
       _isErasing = false;
     });
-    _loadCharacterImage(); // 重新加载以显示擦除效果
   }
 
   void _handleErasePanStart(DragStartDetails details) {
@@ -353,17 +316,18 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     try {
       // 仅在必要时重新加载图像
       if (_currentImage != null &&
-          !widget.isErasing &&
+          !_isProcessing &&
           widget.isInverted == _lastInverted &&
           widget.showOutline == _lastShowOutline) {
         return true;
       }
 
+      _isProcessing = true;
+
       AppLogger.debug('开始加载预览图像', data: {
         'regionId': widget.regionId,
         'hasPageImage': widget.pageImageData != null,
         'hasRect': widget.regionRect != null,
-        'isErasing': widget.isErasing,
       });
 
       final processingOptions = ProcessingOptions(
@@ -373,74 +337,71 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         showContour: widget.showOutline,
       );
 
-      // 处理新框选的情况
-      if (widget.pageImageData != null && widget.regionRect != null) {
-        final preview =
-            await ref.read(characterImageProcessorProvider).previewProcessing(
-                  widget.pageImageData!,
-                  widget.regionRect!,
-                  processingOptions,
-                  _currentErasePoints.isNotEmpty ? _currentErasePoints : null,
-                );
+      try {
+        if (widget.pageImageData != null && widget.regionRect != null) {
+          final preview =
+              await ref.read(characterImageProcessorProvider).previewProcessing(
+                    widget.pageImageData!,
+                    widget.regionRect!,
+                    processingOptions,
+                    _currentErasePoints.isNotEmpty ? _currentErasePoints : null,
+                  );
 
-        if (!mounted) return false;
+          if (!mounted) return false;
 
-        setState(() {
-          _currentImage = preview.processedImage;
-          _currentOutline = preview.outline;
-          _lastInverted = widget.isInverted;
-          _lastShowOutline = widget.showOutline;
-        });
+          setState(() {
+            _currentImage = preview.processedImage;
+            _currentOutline = preview.outline;
+            _lastInverted = widget.isInverted;
+            _lastShowOutline = widget.showOutline;
+          });
+        } else if (widget.regionId.isNotEmpty) {
+          final savedImage = await ref
+              .read(characterProvider)
+              .getCharacterImage(widget.regionId, CharacterImageType.binary);
 
-        return true;
-      }
+          if (savedImage != null) {
+            final imageSize = Size(
+              _currentImage?.width.toDouble() ?? 0,
+              _currentImage?.height.toDouble() ?? 0,
+            );
 
-      // 处理已保存字符的情况
-      if (widget.regionId.isNotEmpty) {
-        final savedImage = await ref
-            .read(characterServiceProvider)
-            .getCharacterImage(widget.regionId, CharacterImageType.binary);
+            final imageRect = Rect.fromLTWH(
+              0,
+              0,
+              imageSize.width,
+              imageSize.height,
+            );
 
-        if (savedImage == null) {
-          throw Exception('找不到保存的图像');
-        }
-
-        final imageSize = await _getImageSize(savedImage);
-        if (imageSize == null) {
-          throw Exception('无法解码保存的图像');
-        }
-
-        final imageRect = Rect.fromLTWH(
-          0,
-          0,
-          imageSize.width,
-          imageSize.height,
-        );
-
-        final preview =
-            await ref.read(characterImageProcessorProvider).previewProcessing(
+            final preview = await ref
+                .read(characterImageProcessorProvider)
+                .previewProcessing(
                   savedImage,
                   imageRect,
                   processingOptions,
                   _currentErasePoints.isNotEmpty ? _currentErasePoints : null,
                 );
 
-        if (!mounted) return false;
+            if (!mounted) return false;
 
-        setState(() {
-          _currentImage = preview.processedImage;
-          _currentOutline = preview.outline;
-          _lastInverted = widget.isInverted;
-          _lastShowOutline = widget.showOutline;
-        });
+            setState(() {
+              _currentImage = preview.processedImage;
+              _currentOutline = preview.outline;
+              _lastInverted = widget.isInverted;
+              _lastShowOutline = widget.showOutline;
+            });
+          }
+        }
 
+        _isProcessing = false;
         return true;
+      } catch (e) {
+        _isProcessing = false;
+        rethrow;
       }
-
-      AppLogger.debug('没有有效的图像数据');
-      return false;
     } catch (e, stack) {
       AppLogger.error('预览处理失败', error: e, stackTrace: stack);
+      _isProcessing = false;
       return false;
     }
   }
