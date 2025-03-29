@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,6 +99,7 @@ class _ThumbnailItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final imageState = ref.watch(workImageProvider);
 
     return GestureDetector(
       onTap: onTap,
@@ -113,9 +116,32 @@ class _ThumbnailItem extends ConsumerWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 缩略图（实际应用中应加载真实缩略图）
-            const Center(
-              child: Icon(Icons.image, size: 24, color: Colors.grey),
+            // 实际缩略图
+            FutureBuilder<String?>(
+              future:
+                  ref.read(workImageProvider.notifier).getThumbnailPath(pageId),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(3),
+                    child: Image.file(
+                      File(snapshot.data!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image_outlined,
+                          size: 24,
+                          color: Colors.grey,
+                        );
+                      },
+                    ),
+                  );
+                }
+                return const Center(
+                  child:
+                      Icon(Icons.image_outlined, size: 24, color: Colors.grey),
+                );
+              },
             ),
 
             // 页码指示器
@@ -125,7 +151,14 @@ class _ThumbnailItem extends ConsumerWidget {
               bottom: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 2),
-                color: isSelected ? theme.colorScheme.primary : Colors.black54,
+                decoration: BoxDecoration(
+                  color:
+                      isSelected ? theme.colorScheme.primary : Colors.black54,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(3),
+                    bottomRight: Radius.circular(3),
+                  ),
+                ),
                 child: Text(
                   '$index',
                   textAlign: TextAlign.center,
@@ -137,6 +170,27 @@ class _ThumbnailItem extends ConsumerWidget {
                 ),
               ),
             ),
+
+            // 加载指示器
+            if (isSelected && imageState.loading)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

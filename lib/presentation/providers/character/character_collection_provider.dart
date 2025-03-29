@@ -169,6 +169,16 @@ class CharacterCollectionNotifier
     }
   }
 
+  // 获取缩略图路径
+  Future<String?> getThumbnailPath(String regionId) async {
+    try {
+      return await _characterService.getCharacterThumbnailPath(regionId);
+    } catch (e) {
+      AppLogger.error('获取缩略图路径失败', error: e);
+      return null;
+    }
+  }
+
   // 加载作品数据
   Future<void> loadWorkData(String workId, {String? pageId}) async {
     state = state.copyWith(

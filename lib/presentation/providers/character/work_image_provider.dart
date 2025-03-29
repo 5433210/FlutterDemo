@@ -17,6 +17,7 @@ final workImageProvider =
 
 class WorkImageNotifier extends StateNotifier<WorkImageState> {
   final WorkImageService _workImageService;
+  final Map<String, String?> _thumbnailCache = {};
 
   WorkImageNotifier(this._workImageService) : super(WorkImageState.initial());
 
@@ -62,9 +63,31 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
     }
   }
 
-  // 清除错误
-  void clearError() {
-    state = state.copyWith(error: null);
+  @override
+  void dispose() {
+    _thumbnailCache.clear();
+    super.dispose();
+  }
+
+  // 获取页面缩略图路径
+  Future<String?> getThumbnailPath(String pageId) async {
+    try {
+      // 检查缓存
+      if (_thumbnailCache.containsKey(pageId)) {
+        return _thumbnailCache[pageId];
+      }
+
+      // 从服务获取缩略图路径
+      final path = await _workImageService.getPageThumbnailPath(pageId);
+
+      // 更新缓存
+      _thumbnailCache[pageId] = path;
+
+      return path;
+    } catch (e) {
+      AppLogger.error('获取缩略图路径失败', error: e, data: {'pageId': pageId});
+      return null;
+    }
   }
 
   // 加载作品图像

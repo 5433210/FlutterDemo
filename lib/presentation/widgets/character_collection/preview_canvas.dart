@@ -74,7 +74,7 @@ class OutlinePainter extends CustomPainter {
     required this.imageSize,
     required this.canvasSize,
     this.color = Colors.blue,
-    this.strokeWidth = 2.0,
+    this.strokeWidth = 1.0,
   });
 
   @override
@@ -86,9 +86,9 @@ class OutlinePainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth * scale
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt
+      ..strokeJoin = StrokeJoin.miter;
 
     final offsetX = (canvasSize.width - imageSize.width * scale) / 2;
     final offsetY = (canvasSize.height - imageSize.height * scale) / 2;
@@ -99,6 +99,11 @@ class OutlinePainter extends CustomPainter {
 
     for (final contour in outline.contourPoints) {
       if (contour.length < 2) continue;
+
+      // 跳过边框轮廓
+      if (_isImageBorderContour(contour, imageSize)) {
+        continue;
+      }
 
       final path = Path();
       path.moveTo(contour[0].dx, contour[0].dy);
@@ -121,6 +126,16 @@ class OutlinePainter extends CustomPainter {
         strokeWidth != oldDelegate.strokeWidth ||
         imageSize != oldDelegate.imageSize ||
         canvasSize != oldDelegate.canvasSize;
+  }
+
+  /// 检查是否是图像边框轮廓
+  bool _isImageBorderContour(List<Offset> contour, Size size) {
+    const threshold = 2.0; // 2像素的容差
+    return contour.any((point) =>
+        point.dx <= threshold ||
+        point.dx >= size.width - threshold ||
+        point.dy <= threshold ||
+        point.dy >= size.height - threshold);
   }
 }
 
@@ -249,7 +264,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                           imageSize: _currentImageSize!,
                           canvasSize: _currentCanvasSize!,
                           color: Colors.blue.withOpacity(0.8),
-                          strokeWidth: 2.0,
+                          strokeWidth: 1.0,
                         ),
                       ),
                     ),
@@ -300,18 +315,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanvasSize());
   }
 
-  /// 创建占位图像
-  img.Image _createPlaceholder() {
-    final placeholder = img.Image(width: 100, height: 100);
-    for (int y = 0; y < placeholder.height; y++) {
-      for (int x = 0; x < placeholder.width; x++) {
-        placeholder.setPixel(x, y, img.ColorRgb8(255, 0, 0));
-      }
-    }
-    return placeholder;
-  }
-
-  /// 获取图像尺寸
   Future<Size?> _getImageSize(Uint8List imageData) async {
     final decodedImage = img.decodeImage(imageData);
     if (decodedImage == null) return null;
@@ -326,8 +329,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     widget.onErasePointsChanged(_currentErasePoints);
     setState(() {
       _isErasing = false;
-      _currentErasePoints.clear();
     });
+    _loadCharacterImage(); // 重新加载以显示擦除效果
   }
 
   void _handleErasePanStart(DragStartDetails details) {
@@ -335,35 +338,32 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     setState(() {
       _isErasing = true;
       _currentErasePoints.clear();
-      _currentErasePoints.add(details.localPosition);
+      _currentErasePoints.add(_transformPointToImage(details.localPosition));
     });
   }
 
   void _handleErasePanUpdate(DragUpdateDetails details) {
     if (!_isErasing) return;
     setState(() {
-      _currentErasePoints.add(details.localPosition);
+      _currentErasePoints.add(_transformPointToImage(details.localPosition));
     });
   }
 
   Future<bool> _loadCharacterImage() async {
     try {
-      // 检查是否需要重新加载
-      if (_currentImage != null) {
-        final hasChanges = widget.isInverted != _lastInverted ||
-            widget.showOutline != _lastShowOutline;
-        if (!hasChanges) {
-          return true;
-        }
+      // 仅在必要时重新加载图像
+      if (_currentImage != null &&
+          !widget.isErasing &&
+          widget.isInverted == _lastInverted &&
+          widget.showOutline == _lastShowOutline) {
+        return true;
       }
 
       AppLogger.debug('开始加载预览图像', data: {
         'regionId': widget.regionId,
         'hasPageImage': widget.pageImageData != null,
         'hasRect': widget.regionRect != null,
-        'currentImageExists': _currentImage != null,
-        'isInverted': widget.isInverted,
-        'showOutline': widget.showOutline,
+        'isErasing': widget.isErasing,
       });
 
       final processingOptions = ProcessingOptions(
@@ -375,16 +375,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
 
       // 处理新框选的情况
       if (widget.pageImageData != null && widget.regionRect != null) {
-        final imageSize = await _getImageSize(widget.pageImageData!);
-        if (imageSize == null) {
-          throw Exception('无法解码页面图像');
-        }
-
-        AppLogger.debug('处理新框选区域', data: {
-          'rect': widget.regionRect.toString(),
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-        });
-
         final preview =
             await ref.read(characterImageProcessorProvider).previewProcessing(
                   widget.pageImageData!,
@@ -398,7 +388,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         setState(() {
           _currentImage = preview.processedImage;
           _currentOutline = preview.outline;
-          _updateProcessingState();
+          _lastInverted = widget.isInverted;
+          _lastShowOutline = widget.showOutline;
         });
 
         return true;
@@ -419,11 +410,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
           throw Exception('无法解码保存的图像');
         }
 
-        AppLogger.debug('从仓库加载已保存的图像', data: {
-          'regionId': widget.regionId,
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-        });
-
         final imageRect = Rect.fromLTWH(
           0,
           0,
@@ -436,7 +422,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                   savedImage,
                   imageRect,
                   processingOptions,
-                  null,
+                  _currentErasePoints.isNotEmpty ? _currentErasePoints : null,
                 );
 
         if (!mounted) return false;
@@ -444,7 +430,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         setState(() {
           _currentImage = preview.processedImage;
           _currentOutline = preview.outline;
-          _updateProcessingState();
+          _lastInverted = widget.isInverted;
+          _lastShowOutline = widget.showOutline;
         });
 
         return true;
@@ -454,15 +441,27 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
       return false;
     } catch (e, stack) {
       AppLogger.error('预览处理失败', error: e, stackTrace: stack);
-      if (!mounted) return false;
-
-      setState(() {
-        _currentImage = _createPlaceholder();
-        _currentOutline = null;
-        _updateProcessingState();
-      });
-      return true;
+      return false;
     }
+  }
+
+  Offset _transformPointToImage(Offset point) {
+    if (_currentImageSize == null || _currentCanvasSize == null) return point;
+
+    final scale = math.min(
+      _currentCanvasSize!.width / _currentImageSize!.width,
+      _currentCanvasSize!.height / _currentImageSize!.height,
+    );
+
+    final offsetX =
+        (_currentCanvasSize!.width - _currentImageSize!.width * scale) / 2;
+    final offsetY =
+        (_currentCanvasSize!.height - _currentImageSize!.height * scale) / 2;
+
+    return Offset(
+      (point.dx - offsetX) / scale,
+      (point.dy - offsetY) / scale,
+    );
   }
 
   void _updateCanvasSize() {
@@ -473,11 +472,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         _currentCanvasSize = renderBox.size;
       });
     }
-  }
-
-  void _updateProcessingState() {
-    _lastInverted = widget.isInverted;
-    _lastShowOutline = widget.showOutline;
   }
 
   void _updateTransform() {

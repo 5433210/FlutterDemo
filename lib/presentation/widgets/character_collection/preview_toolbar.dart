@@ -19,11 +19,6 @@ class PreviewToolbar extends ConsumerWidget {
         child: Row(
           children: [
             const SizedBox(width: 8),
-            Text(
-              '工具：',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(width: 8),
             _ToolButton(
               icon: Icons.edit,
               tooltip: '选择工具',
@@ -37,13 +32,6 @@ class PreviewToolbar extends ConsumerWidget {
               isSelected: toolMode == Tool.pan,
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.pan),
-            ),
-            _ToolButton(
-              icon: Icons.delete,
-              tooltip: '擦除工具',
-              isSelected: toolMode == Tool.erase,
-              onPressed: () =>
-                  ref.read(toolModeProvider.notifier).setMode(Tool.erase),
             ),
           ],
         ),

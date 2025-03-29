@@ -218,6 +218,16 @@ class CharacterService {
     }
   }
 
+  /// 获取字符缩略图路径
+  Future<String?> getCharacterThumbnailPath(String characterId) async {
+    try {
+      return await _persistenceService.getThumbnailPath(characterId);
+    } catch (e) {
+      AppLogger.error('获取缩略图路径失败', error: e);
+      return null;
+    }
+  }
+
   /// 获取页面上的所有区域
   Future<List<CharacterRegion>> getPageRegions(String pageId) async {
     try {

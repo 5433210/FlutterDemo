@@ -6,18 +6,24 @@ import '../../providers/character/edit_panel_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../common/empty_state.dart';
-import './preview_canvas.dart';
 import 'action_buttons.dart';
 import 'character_input.dart';
-import 'edit_toolbar.dart';
-import 'region_info_bar.dart';
-import 'zoom_control_bar.dart';
+import 'preview_canvas.dart';
 
-class CharacterEditPanel extends ConsumerWidget {
+class CharacterEditPanel extends ConsumerStatefulWidget {
   const CharacterEditPanel({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CharacterEditPanel> createState() => _CharacterEditPanelState();
+}
+
+class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
+  bool _isErasing = false;
+  double _brushSize = 20.0;
+  List<Offset> _erasePoints = [];
+
+  @override
+  Widget build(BuildContext context) {
     final selectedRegion = ref.watch(selectedRegionProvider);
     final editState = ref.watch(editPanelProvider);
     final imageState = ref.watch(workImageProvider);
@@ -36,21 +42,113 @@ class CharacterEditPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 编辑工具栏
-          EditToolbar(
-            isInverted: editState.isInverted,
-            showOutline: editState.showOutline,
-            isErasing: editState.isErasing,
-            canUndo: true, // 这里应该从擦除管理器获取状态
-            canRedo: false, // 这里应该从擦除管理器获取状态
-            onInvertToggled: (value) =>
-                ref.read(editPanelProvider.notifier).toggleInvert(),
-            onOutlineToggled: (value) =>
-                ref.read(editPanelProvider.notifier).toggleOutline(),
-            onEraseToggled: (value) =>
-                ref.read(editPanelProvider.notifier).toggleErase(),
-            onUndo: () => {}, // 这里应该调用擦除管理器的撤销方法
-            onRedo: () => {}, // 这里应该调用擦除管理器的重做方法
+          // 工具栏
+          Material(
+            color: Colors.transparent,
+            child: Row(
+              children: [
+                // 反色按钮
+                Tooltip(
+                  message: '反色处理',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedPadding(
+                      padding: EdgeInsets.all(editState.isInverted ? 6.0 : 8.0),
+                      duration: const Duration(milliseconds: 200),
+                      child: AnimatedScale(
+                        scale: editState.isInverted ? 1.1 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.invert_colors,
+                          color:
+                              editState.isInverted ? Colors.blue : Colors.grey,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    onTap: () =>
+                        ref.read(editPanelProvider.notifier).toggleInvert(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 轮廓按钮
+                Tooltip(
+                  message: '显示轮廓',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedPadding(
+                      padding:
+                          EdgeInsets.all(editState.showOutline ? 6.0 : 8.0),
+                      duration: const Duration(milliseconds: 200),
+                      child: AnimatedScale(
+                        scale: editState.showOutline ? 1.1 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.border_clear,
+                          color:
+                              editState.showOutline ? Colors.blue : Colors.grey,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    onTap: () =>
+                        ref.read(editPanelProvider.notifier).toggleOutline(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 擦除按钮
+                Tooltip(
+                  message: '擦除工具',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    child: AnimatedPadding(
+                      padding: EdgeInsets.all(_isErasing ? 6.0 : 8.0),
+                      duration: const Duration(milliseconds: 200),
+                      child: AnimatedScale(
+                        scale: _isErasing ? 1.1 : 1.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: Icon(
+                          Icons.auto_fix_high,
+                          color: _isErasing ? Colors.blue : Colors.grey,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    onTap: () => setState(() => _isErasing = !_isErasing),
+                  ),
+                ),
+                if (_isErasing) ...[
+                  const SizedBox(width: 8),
+                  // 擦除笔刷大小滑块
+                  Expanded(
+                    child: Slider(
+                      value: _brushSize,
+                      min: 5,
+                      max: 50,
+                      divisions: 9,
+                      label: '${_brushSize.round()}',
+                      onChanged: (value) => setState(() => _brushSize = value),
+                    ),
+                  ),
+                ] else
+                  const Spacer(),
+                // 区域信息（只读）
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.color
+                                ?.withOpacity(0.7),
+                          ) ??
+                      const TextStyle(),
+                  child: Text(
+                    '${selectedRegion.rect.width.toInt()} × ${selectedRegion.rect.height.toInt()} px',
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -58,50 +156,19 @@ class CharacterEditPanel extends ConsumerWidget {
           // 预览画布
           Expanded(
             child: PreviewCanvas(
+              key: ValueKey('preview_${selectedRegion.id}'),
               regionId: selectedRegion.id,
               pageImageData: imageState.imageData,
               regionRect: selectedRegion.rect,
               isInverted: editState.isInverted,
               showOutline: editState.showOutline,
               zoomLevel: editState.zoomLevel,
-              isErasing: editState.isErasing,
-              brushSize: editState.brushSize,
-              onErasePointsChanged: (points) => ref
-                  .read(selectedRegionProvider.notifier)
-                  .addErasePoints(points),
+              isErasing: _isErasing,
+              brushSize: _brushSize,
+              onErasePointsChanged: (points) {
+                _erasePoints = points;
+              },
             ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // 缩放控制栏
-          ZoomControlBar(
-            zoomLevel: editState.zoomLevel,
-            onZoomIn: () =>
-                ref.read(editPanelProvider.notifier).incrementZoom(),
-            onZoomOut: () =>
-                ref.read(editPanelProvider.notifier).decrementZoom(),
-            onReset: () => ref.read(editPanelProvider.notifier).resetZoom(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // 区域信息栏
-          RegionInfoBar(
-            rect: selectedRegion.rect,
-            rotation: selectedRegion.rotation,
-            onSizeChanged: (size) {
-              // 更新区域大小
-              final center = selectedRegion.rect.center;
-              final newRect = Rect.fromCenter(
-                center: center,
-                width: size.width,
-                height: size.height,
-              );
-              ref.read(selectedRegionProvider.notifier).updateRect(newRect);
-            },
-            onRotationChanged: (angle) =>
-                ref.read(selectedRegionProvider.notifier).updateAngle(angle),
           ),
 
           const SizedBox(height: 16),
@@ -109,20 +176,33 @@ class CharacterEditPanel extends ConsumerWidget {
           // 字符输入
           CharacterInput(
             value: selectedRegion.character,
-            onChanged: (value) => ref
-                .read(selectedRegionProvider.notifier)
-                .updateCharacter(value),
+            onChanged: (value) {
+              // 只更新字符，不刷新预览
+              ref.read(selectedRegionProvider.notifier).updateCharacter(value);
+            },
           ),
 
           const SizedBox(height: 16),
 
           // 操作按钮
           ActionButtons(
-            onSave: () => ref
-                .read(characterCollectionProvider.notifier)
-                .saveCurrentRegion(),
-            onCancel: () =>
-                ref.read(selectedRegionProvider.notifier).clearRegion(),
+            onSave: () async {
+              // 保存时包含擦除点
+              final region = selectedRegion.copyWith(
+                erasePoints: _erasePoints,
+              );
+              ref.read(selectedRegionProvider.notifier).setRegion(region);
+              await ref
+                  .read(characterCollectionProvider.notifier)
+                  .saveCurrentRegion();
+            },
+            onCancel: () {
+              ref.read(selectedRegionProvider.notifier).clearRegion();
+              setState(() {
+                _erasePoints = [];
+                _isErasing = false;
+              });
+            },
           ),
         ],
       ),
