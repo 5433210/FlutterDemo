@@ -107,7 +107,7 @@ class _ImageViewState extends ConsumerState<ImageView>
               if (_transformer != null && debugOptions.enabled)
                 _buildDebugLayer(
                     debugOptions, regions, selectedIds, viewportSize),
-              if (_isInSelectionMode) _buildSelectionToolLayer(),
+              _buildSelectionToolLayer(),
               _buildUILayer(debugOptions),
             ],
           );
@@ -200,6 +200,7 @@ class _ImageViewState extends ConsumerState<ImageView>
         transformationController: _transformationController,
         minScale: 0.1,
         maxScale: 10.0,
+        scaleEnabled: true,
         panEnabled: !_isInSelectionMode,
         onInteractionStart: _handleInteractionStart,
         onInteractionUpdate: _handleInteractionUpdate,
@@ -370,25 +371,44 @@ class _ImageViewState extends ConsumerState<ImageView>
   void _handlePointerSignal(PointerSignalEvent event) {
     if (event is! PointerScrollEvent) return;
 
-    if (HardwareKeyboard.instance.isControlPressed) {
+    try {
+      // 获取鼠标相对于视口的位置
+      final box = context.findRenderObject() as RenderBox;
+      final localPosition = box.globalToLocal(event.position);
       final delta = event.scrollDelta.dy;
+
+      // 计算目标缩放比例
       final currentScale = _transformer?.currentScale ?? 1.0;
       final baseScale = _transformer?.baseScale ?? 1.0;
-
       var targetScale = (currentScale - delta * 0.001).clamp(0.1, 10.0);
 
       if (targetScale < baseScale * 0.2) {
         targetScale = baseScale * 0.2;
       }
 
-      final matrix = Matrix4.identity()..scale(targetScale, targetScale);
+      final scaleChange = targetScale / currentScale;
 
       if (delta.abs() > 0) {
         setState(() {
+          // 获取当前变换矩阵并应用缩放
+          final matrix = Matrix4.copy(_transformationController.value);
+
+          // 移动原点到鼠标位置
+          matrix.translate(localPosition.dx, localPosition.dy);
+          matrix.scale(scaleChange, scaleChange);
+          matrix.translate(-localPosition.dx, -localPosition.dy);
+
           _transformationController.value = matrix;
           _isZoomed = targetScale > 1.05;
         });
+
+        AppLogger.debug('缩放变换', data: {
+          'scale': targetScale,
+          'mousePosition': '${localPosition.dx},${localPosition.dy}'
+        });
       }
+    } catch (e) {
+      AppLogger.error('滚轮缩放失败', error: e);
     }
   }
 

@@ -23,7 +23,7 @@ enum Tool {
 class ToolModeNotifier extends StateNotifier<Tool> {
   Tool _previousMode = Tool.pan;
 
-  ToolModeNotifier() : super(Tool.select);
+  ToolModeNotifier() : super(Tool.pan);
 
   /// 获取当前模式
   Tool get currentMode => state;
