@@ -6,10 +6,10 @@ import '../../providers/character/edit_panel_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../common/empty_state.dart';
+import './preview_canvas.dart';
 import 'action_buttons.dart';
 import 'character_input.dart';
 import 'edit_toolbar.dart';
-import 'preview_canvas.dart';
 import 'region_info_bar.dart';
 import 'zoom_control_bar.dart';
 

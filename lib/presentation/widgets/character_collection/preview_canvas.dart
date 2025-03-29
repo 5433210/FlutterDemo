@@ -1,18 +1,18 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'dart:ui';
 
-import 'package:demo/application/services/character/character_service.dart';
-import 'package:demo/application/services/image/character_image_processor.dart';
-import 'package:demo/domain/models/character/character_image_type.dart';
-import 'package:demo/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../application/services/character/character_service.dart';
+import '../../../application/services/image/character_image_processor.dart';
+import '../../../domain/models/character/character_image_type.dart';
+import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
+import '../../../infrastructure/logging/logger.dart';
 
-// 擦除绘制器
+/// 擦除绘制器
 class ErasePainter extends CustomPainter {
   final List<Offset> points;
   final double brushSize;
@@ -35,7 +35,6 @@ class ErasePainter extends CustomPainter {
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
 
-    // 创建路径
     final path = Path();
     path.moveTo(points.first.dx, points.first.dy);
 
@@ -43,10 +42,8 @@ class ErasePainter extends CustomPainter {
       path.lineTo(points[i].dx, points[i].dy);
     }
 
-    // 绘制路径
     canvas.drawPath(path, paint);
 
-    // 在每个点画圆点，使线条更平滑
     final dotPaint = Paint()
       ..color = color
       ..style = PaintingStyle.fill;
@@ -64,6 +61,69 @@ class ErasePainter extends CustomPainter {
   }
 }
 
+/// 轮廓绘制器
+class OutlinePainter extends CustomPainter {
+  final DetectedOutline outline;
+  final Color color;
+  final double strokeWidth;
+  final Size imageSize;
+  final Size canvasSize;
+
+  OutlinePainter({
+    required this.outline,
+    required this.imageSize,
+    required this.canvasSize,
+    this.color = Colors.blue,
+    this.strokeWidth = 2.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scaleX = canvasSize.width / imageSize.width;
+    final scaleY = canvasSize.height / imageSize.height;
+    final scale = math.min(scaleX, scaleY);
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth * scale
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final offsetX = (canvasSize.width - imageSize.width * scale) / 2;
+    final offsetY = (canvasSize.height - imageSize.height * scale) / 2;
+
+    canvas.save();
+    canvas.translate(offsetX, offsetY);
+    canvas.scale(scale);
+
+    for (final contour in outline.contourPoints) {
+      if (contour.length < 2) continue;
+
+      final path = Path();
+      path.moveTo(contour[0].dx, contour[0].dy);
+
+      for (int i = 1; i < contour.length; i++) {
+        path.lineTo(contour[i].dx, contour[i].dy);
+      }
+
+      path.close();
+      canvas.drawPath(path, paint);
+    }
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant OutlinePainter oldDelegate) {
+    return outline != oldDelegate.outline ||
+        color != oldDelegate.color ||
+        strokeWidth != oldDelegate.strokeWidth ||
+        imageSize != oldDelegate.imageSize ||
+        canvasSize != oldDelegate.canvasSize;
+  }
+}
+
 class PreviewCanvas extends ConsumerStatefulWidget {
   final String regionId;
   final Uint8List? pageImageData;
@@ -76,7 +136,7 @@ class PreviewCanvas extends ConsumerStatefulWidget {
   final Function(List<Offset>) onErasePointsChanged;
 
   const PreviewCanvas({
-    Key? key,
+    super.key,
     required this.regionId,
     this.pageImageData,
     this.regionRect,
@@ -86,130 +146,135 @@ class PreviewCanvas extends ConsumerStatefulWidget {
     required this.isErasing,
     required this.brushSize,
     required this.onErasePointsChanged,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<PreviewCanvas> createState() => _PreviewCanvasState();
 }
 
 class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
-  // 变换控制器
   final TransformationController _transformationController =
       TransformationController();
+  final GlobalKey _containerKey = GlobalKey();
 
-  // 擦除状态
   final List<Offset> _currentErasePoints = [];
   bool _isErasing = false;
+  DetectedOutline? _currentOutline;
+  img.Image? _currentImage;
+  Size? _currentImageSize;
+  Size? _currentCanvasSize;
+
+  // 缓存处理状态
+  bool _lastInverted = false;
+  bool _lastShowOutline = false;
 
   @override
   Widget build(BuildContext context) {
-    // 使用FutureBuilder加载并显示字符图像
-    return FutureBuilder<Uint8List?>(
-      future: _loadCharacterImage(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _currentCanvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+
+        return FutureBuilder<bool>(
+          future: _loadCharacterImage(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              AppLogger.error('预览加载失败', error: snapshot.error);
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      '加载图像失败: ${snapshot.error}',
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            } else if (_currentImage == null) {
+              return const Center(
+                child: Text('无图像数据'),
+              );
+            }
+
+            final displayImage =
+                Uint8List.fromList(img.encodePng(_currentImage!));
+            _currentImageSize = Size(
+              _currentImage!.width.toDouble(),
+              _currentImage!.height.toDouble(),
+            );
+
+            return Stack(
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                Text(
-                  '加载图像失败: ${snapshot.error}',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        } else if (!snapshot.hasData || snapshot.data == null) {
-          return const Center(
-            child: Text('无图像数据'),
-          );
-        }
-
-        // 图像加载成功
-        return Stack(
-          children: [
-            // 预览容器
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(7),
-                child: InteractiveViewer(
-                  transformationController: _transformationController,
-                  minScale: 0.5,
-                  maxScale: 5.0,
-                  constrained: true, // 确保受限于容器
-                  clipBehavior: Clip.hardEdge, // 添加裁剪行为
-                  boundaryMargin: EdgeInsets.zero, // 确保无边界边距
-                  child: Center(
-                    child: Image.memory(
-                      snapshot.data!,
-                      fit: BoxFit.contain,
-                      gaplessPlayback: true,
-                    ),
+                Container(
+                  key: _containerKey,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Theme.of(context).dividerColor),
                   ),
-                ),
-              ),
-            ),
-
-            // 擦除层 - 仅在擦除模式下显示
-            if (widget.isErasing)
-              Positioned.fill(
-                child: GestureDetector(
-                  onPanStart: _handleErasePanStart,
-                  onPanUpdate: _handleErasePanUpdate,
-                  onPanEnd: _handleErasePanEnd,
-                  child: CustomPaint(
-                    painter: ErasePainter(
-                      points: _currentErasePoints,
-                      brushSize: widget.brushSize,
-                      color: Colors.red.withOpacity(0.6),
-                    ),
-                    child: Container(
-                      color: Colors.transparent,
-                    ),
-                  ),
-                ),
-              ),
-
-            // 轮廓层 - 仅在显示轮廓时显示
-            if (widget.showOutline)
-              Positioned.fill(
-                child: FutureBuilder<String?>(
-                  future: _loadOutlineSvg(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && snapshot.data != null) {
-                      // 在实际应用中，这里应该使用SvgPicture显示SVG轮廓
-                      return Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.blue,
-                              width: 1,
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: const Text(
-                            'SVG Outline',
-                            style: TextStyle(color: Colors.blue),
-                          ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: InteractiveViewer(
+                      transformationController: _transformationController,
+                      minScale: 0.5,
+                      maxScale: 5.0,
+                      constrained: true,
+                      clipBehavior: Clip.hardEdge,
+                      boundaryMargin: EdgeInsets.zero,
+                      child: Center(
+                        child: Image.memory(
+                          displayImage,
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
                         ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+                if (widget.showOutline &&
+                    _currentOutline != null &&
+                    _currentImageSize != null &&
+                    _currentCanvasSize != null)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: CustomPaint(
+                        painter: OutlinePainter(
+                          outline: _currentOutline!,
+                          imageSize: _currentImageSize!,
+                          canvasSize: _currentCanvasSize!,
+                          color: Colors.blue.withOpacity(0.8),
+                          strokeWidth: 2.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (widget.isErasing)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onPanStart: _handleErasePanStart,
+                      onPanUpdate: _handleErasePanUpdate,
+                      onPanEnd: _handleErasePanEnd,
+                      child: CustomPaint(
+                        painter: ErasePainter(
+                          points: _currentErasePoints,
+                          brushSize: widget.brushSize,
+                          color: Colors.red.withOpacity(0.6),
+                        ),
+                        child: Container(
+                          color: Colors.transparent,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         );
       },
     );
@@ -218,8 +283,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   @override
   void didUpdateWidget(PreviewCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    // 缩放级别变化时更新变换
     if (widget.zoomLevel != oldWidget.zoomLevel) {
       _updateTransform();
     }
@@ -231,59 +294,44 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     super.dispose();
   }
 
-  // 创建占位图像 - 用于加载失败时显示
-  Future<Uint8List> _createPlaceholderImage(
-      int width, int height, Color color) async {
-    final recorder = PictureRecorder();
-    final canvas = Canvas(recorder);
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    // 绘制背景
-    canvas.drawRect(
-        Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()), paint);
-
-    // 绘制错误图标
-    final iconPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    // 绘制简单的X形
-    canvas.drawLine(Offset(width * 0.3, height * 0.3),
-        Offset(width * 0.7, height * 0.7), iconPaint);
-    canvas.drawLine(Offset(width * 0.3, height * 0.7),
-        Offset(width * 0.7, height * 0.3), iconPaint);
-
-    final picture = recorder.endRecording();
-    final img = picture.toImageSync(width, height);
-    final byteData = await img.toByteData(format: ImageByteFormat.png);
-
-    if (byteData == null) {
-      throw Exception('Failed to convert image to byte data');
-    }
-
-    return byteData.buffer.asUint8List();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanvasSize());
   }
 
-  // 处理擦除结束
+  /// 创建占位图像
+  img.Image _createPlaceholder() {
+    final placeholder = img.Image(width: 100, height: 100);
+    for (int y = 0; y < placeholder.height; y++) {
+      for (int x = 0; x < placeholder.width; x++) {
+        placeholder.setPixel(x, y, img.ColorRgb8(255, 0, 0));
+      }
+    }
+    return placeholder;
+  }
+
+  /// 获取图像尺寸
+  Future<Size?> _getImageSize(Uint8List imageData) async {
+    final decodedImage = img.decodeImage(imageData);
+    if (decodedImage == null) return null;
+    return Size(
+      decodedImage.width.toDouble(),
+      decodedImage.height.toDouble(),
+    );
+  }
+
   void _handleErasePanEnd(DragEndDetails details) {
     if (!_isErasing || _currentErasePoints.isEmpty) return;
-
-    // 通知擦除点变化
     widget.onErasePointsChanged(_currentErasePoints);
-
     setState(() {
       _isErasing = false;
       _currentErasePoints.clear();
     });
   }
 
-  // 处理擦除开始
   void _handleErasePanStart(DragStartDetails details) {
     if (!widget.isErasing) return;
-
     setState(() {
       _isErasing = true;
       _currentErasePoints.clear();
@@ -291,133 +339,148 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     });
   }
 
-  // 处理擦除更新
   void _handleErasePanUpdate(DragUpdateDetails details) {
     if (!_isErasing) return;
-
     setState(() {
       _currentErasePoints.add(details.localPosition);
     });
   }
 
-  // 加载字符图像
-  Future<Uint8List?> _loadCharacterImage() async {
+  Future<bool> _loadCharacterImage() async {
     try {
-      // 检查基本条件
-      if (widget.regionId.isEmpty) {
-        return null;
+      // 检查是否需要重新加载
+      if (_currentImage != null) {
+        final hasChanges = widget.isInverted != _lastInverted ||
+            widget.showOutline != _lastShowOutline;
+        if (!hasChanges) {
+          return true;
+        }
       }
 
-      // 设置处理选项
+      AppLogger.debug('开始加载预览图像', data: {
+        'regionId': widget.regionId,
+        'hasPageImage': widget.pageImageData != null,
+        'hasRect': widget.regionRect != null,
+        'currentImageExists': _currentImage != null,
+        'isInverted': widget.isInverted,
+        'showOutline': widget.showOutline,
+      });
+
       final processingOptions = ProcessingOptions(
         inverted: widget.isInverted,
         threshold: 128.0,
         noiseReduction: 0.5,
-        showContour: false,
+        showContour: widget.showOutline,
       );
 
-      // 尝试从仓库加载已保存的图像
-      final savedImage = await ref
-          .read(characterServiceProvider)
-          .getCharacterImage(widget.regionId, CharacterImageType.binary);
-
-      if (savedImage != null) {
-        AppLogger.debug('从仓库加载已保存的图像', data: {'regionId': widget.regionId});
-        return savedImage;
-      }
-
-      // 如果没有找到已保存的图像，且提供了页面图像数据和区域，则从页面截取
+      // 处理新框选的情况
       if (widget.pageImageData != null && widget.regionRect != null) {
-        // 直接使用传入的矩形，它已经是图像坐标系的矩形
-        final cropRect = widget.regionRect!;
+        final imageSize = await _getImageSize(widget.pageImageData!);
+        if (imageSize == null) {
+          throw Exception('无法解码页面图像');
+        }
 
-        AppLogger.debug('准备裁剪图像', data: {
-          'regionId': widget.regionId,
-          'cropRectOriginal':
-              '${cropRect.left.toInt()},${cropRect.top.toInt()},${cropRect.width.toInt()},${cropRect.height.toInt()}'
+        AppLogger.debug('处理新框选区域', data: {
+          'rect': widget.regionRect.toString(),
+          'imageSize': '${imageSize.width}x${imageSize.height}',
         });
 
-        try {
-          // 解码图像以获取原始尺寸
-          final decodedImage = img.decodeImage(widget.pageImageData!);
-          if (decodedImage == null) {
-            throw Exception('图像解码失败');
-          }
+        final preview =
+            await ref.read(characterImageProcessorProvider).previewProcessing(
+                  widget.pageImageData!,
+                  widget.regionRect!,
+                  processingOptions,
+                  _currentErasePoints.isNotEmpty ? _currentErasePoints : null,
+                );
 
-          final imageSize = Size(
-              decodedImage.width.toDouble(), decodedImage.height.toDouble());
+        if (!mounted) return false;
 
-          // 确保裁剪区域完全在图像范围内 - 这里是必要的安全检查，不是多余的转换
-          final safeRect = Rect.fromLTRB(
-              math.max(0, cropRect.left),
-              math.max(0, cropRect.top),
-              math.min(imageSize.width, cropRect.right),
-              math.min(imageSize.height, cropRect.bottom));
+        setState(() {
+          _currentImage = preview.processedImage;
+          _currentOutline = preview.outline;
+          _updateProcessingState();
+        });
 
-          // 验证裁剪区域
-          if (safeRect.width <= 0 || safeRect.height <= 0) {
-            throw Exception('裁剪区域无效: 宽度或高度为零');
-          }
-
-          AppLogger.debug('发送裁剪请求', data: {
-            'imageSize': '${imageSize.width}x${imageSize.height}',
-            'cropRectSafe':
-                '${safeRect.left.toInt()},${safeRect.top.toInt()},${safeRect.width.toInt()},${safeRect.height.toInt()}'
-          });
-
-          // 处理图像
-          final result = await ref
-              .read(characterImageProcessorProvider)
-              .processCharacterRegion(
-                widget.pageImageData!,
-                safeRect,
-                processingOptions,
-                null,
-              );
-
-          if (result.originalCrop.isEmpty) {
-            throw Exception('裁剪结果为空');
-          }
-
-          AppLogger.debug('裁剪成功', data: {
-            'cropSize': result.originalCrop.length,
-            'binarySize': result.binaryImage.length
-          });
-
-          // 成功裁剪后返回二值化或原始裁剪结果
-          return result.binaryImage.isNotEmpty
-              ? result.binaryImage
-              : result.originalCrop;
-        } catch (e) {
-          AppLogger.error('裁剪过程中发生错误', error: e);
-          rethrow;
-        }
+        return true;
       }
 
-      return null;
-    } catch (e) {
-      AppLogger.error('加载字符图像失败', error: e);
-      return _createPlaceholderImage(100, 100, Colors.red);
+      // 处理已保存字符的情况
+      if (widget.regionId.isNotEmpty) {
+        final savedImage = await ref
+            .read(characterServiceProvider)
+            .getCharacterImage(widget.regionId, CharacterImageType.binary);
+
+        if (savedImage == null) {
+          throw Exception('找不到保存的图像');
+        }
+
+        final imageSize = await _getImageSize(savedImage);
+        if (imageSize == null) {
+          throw Exception('无法解码保存的图像');
+        }
+
+        AppLogger.debug('从仓库加载已保存的图像', data: {
+          'regionId': widget.regionId,
+          'imageSize': '${imageSize.width}x${imageSize.height}',
+        });
+
+        final imageRect = Rect.fromLTWH(
+          0,
+          0,
+          imageSize.width,
+          imageSize.height,
+        );
+
+        final preview =
+            await ref.read(characterImageProcessorProvider).previewProcessing(
+                  savedImage,
+                  imageRect,
+                  processingOptions,
+                  null,
+                );
+
+        if (!mounted) return false;
+
+        setState(() {
+          _currentImage = preview.processedImage;
+          _currentOutline = preview.outline;
+          _updateProcessingState();
+        });
+
+        return true;
+      }
+
+      AppLogger.debug('没有有效的图像数据');
+      return false;
+    } catch (e, stack) {
+      AppLogger.error('预览处理失败', error: e, stackTrace: stack);
+      if (!mounted) return false;
+
+      setState(() {
+        _currentImage = _createPlaceholder();
+        _currentOutline = null;
+        _updateProcessingState();
+      });
+      return true;
     }
   }
 
-  // 加载轮廓SVG
-  Future<String?> _loadOutlineSvg() async {
-    try {
-      // 如果不显示轮廓或区域ID为空，则返回null
-      if (!widget.showOutline || widget.regionId.isEmpty) {
-        return null;
-      }
-
-      return 'data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"></svg>';
-    } catch (e) {
-      print('加载轮廓失败: $e');
-      return null;
+  void _updateCanvasSize() {
+    final RenderBox? renderBox =
+        _containerKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      setState(() {
+        _currentCanvasSize = renderBox.size;
+      });
     }
+  }
+
+  void _updateProcessingState() {
+    _lastInverted = widget.isInverted;
+    _lastShowOutline = widget.showOutline;
   }
 
   void _updateTransform() {
-    // 计算基于当前缩放和平移的变换
     final scale = Matrix4.identity()
       ..scale(widget.zoomLevel, widget.zoomLevel, 1.0);
     _transformationController.value = scale;
