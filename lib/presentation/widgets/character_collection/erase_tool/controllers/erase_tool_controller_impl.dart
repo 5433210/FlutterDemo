@@ -203,6 +203,8 @@ class EraseToolControllerImpl extends EraseToolController {
     required Size imageSize,
     Offset? containerOffset,
     Rect? viewport,
+    Offset calibrationOffset = Offset.zero,
+    double scaleCorrection = 1.0,
   }) {
     try {
       // 如果已经初始化则忽略
@@ -227,7 +229,12 @@ class EraseToolControllerImpl extends EraseToolController {
           imageSize: imageSize,
           containerOffset: containerOffset ?? Offset.zero,
           viewport: viewport,
+          calibrationOffset: calibrationOffset,
+          scaleCorrection: scaleCorrection,
         );
+
+        // 启用调试模式，方便排查问题
+        _transformer.enableDebug();
 
         // 更新图层状态
         _stateManager.updateLayerState(originalImage);

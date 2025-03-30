@@ -1,100 +1,83 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../models/erase_mode.dart';
 import 'erase_tool_controller.dart';
 
-/// 擦除手势处理Mixin
-/// 提供处理擦除相关手势的方法
+/// 擦除手势处理混入
+/// 提供通用的擦除手势处理能力
 mixin EraseGestureMixin<T extends StatefulWidget> on State<T> {
-  /// 最小移动阈值，防止抖动
-  static const double _minMoveThreshold = 0.5;
-
-  /// 跟踪是否正在擦除
-  bool _isErasing = false;
-
-  /// 上一次位置
-  Offset? _lastPosition;
-
-  /// 获取擦除工具控制器
+  /// 擦除工具控制器
   EraseToolController get controller;
 
-  /// 处理笔刷大小变更
+  /// 处理笔刷大小变化
   void handleBrushSizeChanged(double size) {
+    // 确保控制器可用
     controller.setBrushSize(size);
   }
 
   /// 处理清除所有
   void handleClearAll() {
+    // 确保控制器可用
     controller.clearAll();
   }
 
-  /// 处理模式变更
-  void handleModeChanged(EraseMode mode) {
-    controller.setMode(mode);
-  }
-
-  /// 处理取消事件
+  /// 处理平移取消
   void handlePanCancel() {
-    if (_isErasing) {
-      print('EraseGestureMixin: 擦除取消 ❌');
-      controller.cancelErase();
-      _isErasing = false;
-      _lastPosition = null;
+    // 确保控制器可用
+    if (kDebugMode) {
+      print('✏️ 擦除取消');
     }
+
+    // 处理擦除取消
+    controller.cancelErase();
   }
 
-  /// 处理抬起事件
+  /// 处理平移结束
   void handlePanEnd(DragEndDetails details) {
-    if (_isErasing) {
-      print(
-          'EraseGestureMixin: 擦除完成 ✓ (velocity: ${details.velocity.pixelsPerSecond})');
-      controller.endErase();
-      _isErasing = false;
-      _lastPosition = null;
+    // 确保控制器可用
+    if (kDebugMode) {
+      print('✏️ 擦除结束');
     }
+
+    // 处理擦除结束
+    controller.endErase();
   }
 
-  /// 处理按下事件
+  /// 处理平移开始
   void handlePanStart(DragStartDetails details) {
-    print('EraseGestureMixin: 开始擦除 🖌️ at ${details.localPosition}');
-    controller.startErase(details.localPosition);
-    _isErasing = true;
-    _lastPosition = details.localPosition;
+    // 确保控制器可用
+    final localPosition = details.localPosition;
+
+    if (kDebugMode) {
+      print('✏️ 开始擦除: $localPosition');
+    }
+
+    // 处理擦除开始
+    controller.startErase(localPosition);
   }
 
-  /// 处理移动事件
+  /// 处理平移更新
   void handlePanUpdate(DragUpdateDetails details) {
-    if (!_isErasing) {
-      // 异常情况：没有开始就收到更新
-      print('EraseGestureMixin: 收到更新但未开始擦除，自动开始');
-      controller.startErase(details.localPosition);
-      _isErasing = true;
+    // 确保控制器可用
+    final localPosition = details.localPosition;
+
+    if (kDebugMode && details.delta.distance > 5) {
+      print('✏️ 擦除更新: $localPosition (delta: ${details.delta})');
     }
 
-    // 检查移动距离是否超过阈值，避免微小抖动
-    if (_lastPosition != null) {
-      final distance = (details.localPosition - _lastPosition!).distance;
-      if (distance < _minMoveThreshold) {
-        return; // 忽略微小移动
-      }
-    }
-
-    controller.continueErase(details.localPosition);
-    _lastPosition = details.localPosition;
-
-    // 日志记录，每10个点记录一次
-    if (controller.currentPoints.length % 10 == 0) {
-      print('EraseGestureMixin: 擦除更新 ➡️ 点数:${controller.currentPoints.length}');
-    }
+    // 处理擦除更新
+    controller.continueErase(localPosition);
   }
 
   /// 处理重做
   void handleRedo() {
+    // 确保控制器可用
     controller.redo();
   }
 
   /// 处理撤销
   void handleUndo() {
+    // 确保控制器可用
     controller.undo();
   }
 }

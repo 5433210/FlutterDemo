@@ -281,12 +281,21 @@ class _EraseToolWidgetState extends State<EraseToolWidget>
 
       final viewport = _getViewportRect();
 
+      // 坐标校准 - 为修复鼠标和绘制点的偏差添加校准偏移
+      const calibrationOffset = Offset.zero; // 可以根据需要调整
+      const scaleCorrection = 1.0; // 可以根据需要调整
+
       controller.initialize(
         originalImage: widget.image,
         transformMatrix: _transformationController.value,
         containerSize: containerSize,
         imageSize: imageSize,
+        containerOffset: Offset(
+            _transformationController.value.getTranslation().x,
+            _transformationController.value.getTranslation().y),
         viewport: viewport,
+        calibrationOffset: calibrationOffset,
+        scaleCorrection: scaleCorrection,
       );
 
       print('📌 EraseToolWidget[$_instanceId]: 控制器初始化成功');

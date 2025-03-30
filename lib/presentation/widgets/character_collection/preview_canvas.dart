@@ -155,6 +155,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   final List<Offset> _currentErasePoints = [];
   final bool _isErasing = false;
   DetectedOutline? _currentOutline;
+  Uint8List? _displayImageBytes;
   img.Image? _currentImage;
   Size? _currentImageSize;
   Size? _currentCanvasSize;
@@ -222,8 +223,10 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
               );
             }
 
-            final displayImage =
+            // 避免每次重建都重新编码图像
+            _displayImageBytes ??=
                 Uint8List.fromList(img.encodePng(_currentImage!));
+
             _currentImageSize = Size(
               _currentImage!.width.toDouble(),
               _currentImage!.height.toDouble(),
@@ -241,17 +244,32 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(7),
                     child: InteractiveViewer(
+                      key: _containerKey,
                       transformationController: _transformationController,
                       minScale: 0.5,
                       maxScale: 5.0,
                       constrained: true,
                       clipBehavior: Clip.hardEdge,
                       boundaryMargin: EdgeInsets.zero,
-                      child: Center(
-                        child: Image.memory(
-                          displayImage,
-                          fit: BoxFit.contain,
-                          gaplessPlayback: true,
+                      child: Listener(
+                        onPointerDown:
+                            widget.isErasing ? _handlePointerDown : null,
+                        onPointerMove:
+                            widget.isErasing ? _handlePointerMove : null,
+                        onPointerUp: widget.isErasing ? _handlePointerUp : null,
+                        onPointerCancel:
+                            widget.isErasing ? _handlePointerCancel : null,
+                        child: Center(
+                          child: Stack(
+                            children: [
+                              Image.memory(
+                                _displayImageBytes!,
+                                fit: BoxFit.contain,
+                                gaplessPlayback: true,
+                              ),
+                              if (widget.isErasing) _buildEraseToolLayer(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -265,15 +283,12 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                     child: IgnorePointer(
                       child: CustomPaint(
                         painter: OutlinePainter(
-                          outline: _currentOutline!,
-                          imageSize: _currentImageSize!,
-                          canvasSize: _currentCanvasSize!,
-                        ),
+                            outline: _currentOutline!,
+                            imageSize: _currentImageSize!,
+                            canvasSize: _currentCanvasSize!),
                       ),
                     ),
                   ),
-                if (widget.isErasing && _currentImage != null)
-                  _buildEraseToolLayer(),
               ],
             );
           },
@@ -358,17 +373,14 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                 Positioned.fill(
                   child: RepaintBoundary(
                     child: ClipRect(
-                      child: EraseToolWidget(
-                        key: ValueKey(
-                            'eraser_${widget.regionId}_${DateTime.now().millisecondsSinceEpoch}'),
+                      child: IgnorePointer(
+                          // 禁止 EraseToolWidget 接收手势
+                          child: EraseToolWidget(
                         image: _lastUiImage!,
                         initialBrushSize: widget.brushSize,
                         onEraseComplete: _handleEraseComplete,
-                        onControllerReady: (controller) {
-                          _eraseToolInitialized = true;
-                          _handleControllerReady(controller);
-                        },
-                      ),
+                        onControllerReady: _handleControllerReady,
+                      )),
                     ),
                   ),
                 ),
@@ -387,6 +399,22 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         },
       ),
     );
+  }
+
+  /// 将全局指针位置转换为图像坐标系中的位置
+  Offset? _getTransformedPosition(Offset globalPosition) {
+    final box = _containerKey.currentContext?.findRenderObject() as RenderBox?;
+    final matrix = _transformationController.value;
+    final inverseMatrix = Matrix4.tryInvert(matrix);
+    if (box == null || inverseMatrix == null) return null;
+
+    final localPosition = box.globalToLocal(globalPosition);
+    final transformedPosition =
+        MatrixUtils.transformPoint(inverseMatrix, localPosition);
+    print(
+        '🔍 坐标转换 [缩放: ${_transformationController.value.getMaxScaleOnAxis()}] - 全局: $globalPosition, 变换后: $transformedPosition');
+
+    return transformedPosition;
   }
 
   // 处理擦除控制器初始化
@@ -422,13 +450,57 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
         _currentImage = imgImage;
         _currentErasePoints.clear();
         _cachedEraseToolWidget = null;
+        _displayImageBytes = null; // 清除图像缓存以便重新生成
         _lastUiImage = null;
       });
 
       widget.onErasePointsChanged(_currentErasePoints);
     } catch (e) {
-      print('图像处理失败: $e');
+      AppLogger.error('擦除完成处理失败', error: e);
+      // TODO: 考虑添加用户提示
     }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_eraseController == null || !widget.isErasing) return;
+
+    print('🖱️ Pointer Cancel');
+    _eraseController?.cancelErase();
+  }
+
+  /// 处理指针按下事件
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_eraseController == null || !widget.isErasing) return;
+
+    final position = _getTransformedPosition(event.position);
+    if (position != null) {
+      print('👆 开始擦除 - 位置: $position');
+      _eraseController?.startErase(position);
+    }
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (_eraseController == null || !widget.isErasing) return;
+
+    // 获取转换后的坐标
+    final position = _getTransformedPosition(event.position);
+    if (position != null) {
+      print('✏️ 擦除中 - 位置: $position');
+
+      _eraseController?.continueErase(position);
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_eraseController == null || !widget.isErasing) return;
+
+    // 获取转换后的坐标
+    final position = _getTransformedPosition(event.position);
+    if (position != null) {
+      print('✋ 结束擦除 - 位置: $position');
+    }
+
+    _eraseController?.endErase();
   }
 
   Future<bool> _loadCharacterImage() async {
@@ -548,25 +620,6 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     });
   }
 
-  Offset _transformPointToImage(Offset point) {
-    if (_currentImageSize == null || _currentCanvasSize == null) return point;
-
-    final scale = math.min(
-      _currentCanvasSize!.width / _currentImageSize!.width,
-      _currentCanvasSize!.height / _currentImageSize!.height,
-    );
-
-    final offsetX =
-        (_currentCanvasSize!.width - _currentImageSize!.width * scale) / 2;
-    final offsetY =
-        (_currentCanvasSize!.height - _currentImageSize!.height * scale) / 2;
-
-    return Offset(
-      (point.dx - offsetX) / scale,
-      (point.dy - offsetY) / scale,
-    );
-  }
-
   void _updateCanvasSize() {
     final RenderBox? renderBox =
         _containerKey.currentContext?.findRenderObject() as RenderBox?;
@@ -578,6 +631,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   }
 
   void _updateTransform() {
+    // 更新缩放变换
     final scale = Matrix4.identity()
       ..scale(widget.zoomLevel, widget.zoomLevel, 1.0);
     _transformationController.value = scale;

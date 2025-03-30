@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'layers/background_layer.dart';
@@ -48,59 +49,101 @@ class EraseLayerStack extends StatelessWidget {
       aspectRatio: imageRatio,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 简化布局计算，减少性能开销
           final Size containerSize = constraints.biggest;
           final double containerRatio =
               containerSize.width / containerSize.height;
 
-          // 根据容器尺寸和图像比例计算实际显示尺寸
-          final Size displaySize;
-          if (imageRatio > containerRatio) {
-            displaySize =
-                Size(containerSize.width, containerSize.width / imageRatio);
-          } else {
-            displaySize =
-                Size(containerSize.height * imageRatio, containerSize.height);
-          }
+          // 根据容器尺寸和图像比例计算图像实际显示尺寸
+          final Size displaySize = _calculateDisplaySize(
+            containerSize: containerSize,
+            imageRatio: imageRatio,
+            containerRatio: containerRatio,
+          );
 
-          return SizedBox.fromSize(
-            size: displaySize,
-            child: GestureDetector(
-              onPanStart: onPanStart,
-              onPanUpdate: onPanUpdate,
-              onPanEnd: onPanEnd,
-              onPanCancel: onPanCancel,
-              behavior: HitTestBehavior.opaque, // 强制接收所有手势事件
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // 背景图层 - 根据showBackgroundImage参数决定是否显示
-                  if (showBackgroundImage)
-                    RepaintBoundary(
-                      child: BackgroundLayer(
-                        image: image,
-                        transformationController: transformationController,
-                        onChanged: onTransformationChanged,
+          // 添加坐标系调试网格用于校准
+          bool showDebugGrid = kDebugMode && false; // 开发时可设为true以显示网格
+
+          return Center(
+            child: SizedBox.fromSize(
+              size: displaySize,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.precise, // 使用精确光标
+                onHover: (event) {
+                  if (kDebugMode && showDebugGrid) {
+                    print('🖱️ 鼠标悬停: ${event.localPosition}');
+                  }
+                },
+                child: Listener(
+                  // 使用Listener代替GestureDetector以获取原始指针事件
+                  onPointerDown: (event) {
+                    if (onPanStart != null) {
+                      final localPosition = event.localPosition;
+                      if (kDebugMode) {
+                        print('👆 指针按下: $localPosition');
+                      }
+                      onPanStart!(DragStartDetails(
+                        globalPosition: event.position,
+                        localPosition: localPosition,
+                      ));
+                    }
+                  },
+                  onPointerMove: (event) {
+                    if (onPanUpdate != null) {
+                      final localPosition = event.localPosition;
+                      onPanUpdate!(DragUpdateDetails(
+                        globalPosition: event.position,
+                        localPosition: localPosition,
+                        delta: event.delta,
+                      ));
+                    }
+                  },
+                  onPointerUp: (event) {
+                    if (onPanEnd != null) {
+                      if (kDebugMode) {
+                        print('👆 指针抬起: ${event.localPosition}');
+                      }
+                      onPanEnd!(DragEndDetails());
+                    }
+                  },
+                  onPointerCancel: (event) {
+                    if (onPanCancel != null) {
+                      onPanCancel!();
+                    }
+                  },
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // 背景图层 - 根据showBackgroundImage参数决定是否显示
+                      if (showBackgroundImage)
+                        RepaintBoundary(
+                          child: BackgroundLayer(
+                            image: image,
+                            transformationController: transformationController,
+                            onChanged: onTransformationChanged,
+                          ),
+                        ),
+
+                      // 预览图层 - 总是显示擦除效果
+                      RepaintBoundary(
+                        child: PreviewLayer(
+                          transformationController: transformationController,
+                        ),
                       ),
-                    ),
 
-                  // 独立的透明背景层，确保手势区域覆盖整个区域
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.01, // 几乎透明但提供交互区域
-                      child: Container(color: Colors.white),
-                    ),
-                  ),
-
-                  // 预览图层 - 总是显示擦除效果，即使没有背景
-                  Positioned.fill(
-                    child: RepaintBoundary(
-                      child: PreviewLayer(
-                        transformationController: transformationController,
+                      // 交互辅助层 - 提供半透明覆盖使得手势捕获更容易
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: Container(
+                            color: Colors.transparent,
+                          ),
+                        ),
                       ),
-                    ),
+
+                      // 调试网格用于校准
+                      if (showDebugGrid) _buildDebugLayer(),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           );
@@ -108,4 +151,82 @@ class EraseLayerStack extends StatelessWidget {
       ),
     );
   }
+
+  /// 构建调试辅助层
+  Widget _buildDebugLayer() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: CustomPaint(
+          painter: _DebugGridPainter(),
+          isComplex: false,
+        ),
+      ),
+    );
+  }
+
+  /// 计算最佳显示尺寸
+  Size _calculateDisplaySize({
+    required Size containerSize,
+    required double imageRatio,
+    required double containerRatio,
+  }) {
+    // 基于宽高比和容器尺寸计算显示大小
+    if (imageRatio > containerRatio) {
+      // 图像更宽，使用容器宽度
+      return Size(containerSize.width, containerSize.width / imageRatio);
+    } else {
+      // 图像更高，使用容器高度
+      return Size(containerSize.height * imageRatio, containerSize.height);
+    }
+  }
+}
+
+/// 调试网格绘制器
+class _DebugGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制参考网格
+    final gridPaint = Paint()
+      ..color = Colors.green.withOpacity(0.2)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    // 水平线
+    for (double y = 0; y <= size.height; y += 50) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    // 垂直线
+    for (double x = 0; x <= size.width; x += 50) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+
+    // 绘制中心十字线
+    final centerPaint = Paint()
+      ..color = Colors.red.withOpacity(0.3)
+      ..strokeWidth = 1.0;
+
+    canvas.drawLine(Offset(size.width / 2, 0),
+        Offset(size.width / 2, size.height), centerPaint);
+
+    canvas.drawLine(Offset(0, size.height / 2),
+        Offset(size.width, size.height / 2), centerPaint);
+
+    // 绘制坐标标签
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    // 显示尺寸
+    textPainter.text = TextSpan(
+      text:
+          '${size.width.toStringAsFixed(0)} x ${size.height.toStringAsFixed(0)}',
+      style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 10),
+    );
+    textPainter.layout();
+    textPainter.paint(canvas, const Offset(5, 5));
+  }
+
+  @override
+  bool shouldRepaint(_DebugGridPainter oldDelegate) => false;
 }
