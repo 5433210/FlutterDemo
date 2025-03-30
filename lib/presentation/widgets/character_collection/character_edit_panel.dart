@@ -8,6 +8,7 @@ import '../../providers/character/work_image_provider.dart';
 import '../common/empty_state.dart';
 import 'action_buttons.dart';
 import 'character_input.dart';
+import 'erase_tool/controllers/erase_tool_controller.dart';
 import 'preview_canvas.dart';
 
 class CharacterEditPanel extends ConsumerStatefulWidget {
@@ -18,9 +19,18 @@ class CharacterEditPanel extends ConsumerStatefulWidget {
 }
 
 class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
+  // 添加静态实例计数器方便调试
+  static int _panelInstanceCount = 0;
   bool _isErasing = false;
   double _brushSize = 20.0;
   List<Offset> _erasePoints = [];
+  EraseToolController? _eraseController;
+
+  bool _isUpdatingController = false;
+
+  // 创建一个key来保持EraseToolWidget的状态
+  final _eraseToolKey = GlobalKey();
+  final int _panelInstanceId = _panelInstanceCount++;
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +111,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                   message: '擦除工具',
                   child: InkWell(
                     borderRadius: BorderRadius.circular(20),
+                    onTap: _toggleErasing,
                     child: AnimatedPadding(
                       padding: EdgeInsets.all(_isErasing ? 6.0 : 8.0),
                       duration: const Duration(milliseconds: 200),
@@ -113,10 +124,10 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                           size: 20,
                         ),
                       ),
-                    ),
-                    onTap: () => setState(() => _isErasing = !_isErasing),
+                    ), // 使用专用方法控制状态变化
                   ),
                 ),
+
                 if (_isErasing) ...[
                   const SizedBox(width: 8),
                   // 擦除笔刷大小滑块
@@ -130,8 +141,35 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                       onChanged: (value) => setState(() => _brushSize = value),
                     ),
                   ),
+
+                  // 撤销按钮
+                  IconButton(
+                    icon: const Icon(Icons.undo),
+                    onPressed: _eraseController?.canUndo == true
+                        ? () => _safelyOperateController((c) => c.undo())
+                        : null,
+                    tooltip: '撤销',
+                  ),
+
+                  // 重做按钮
+                  IconButton(
+                    icon: const Icon(Icons.redo),
+                    onPressed: _eraseController?.canRedo == true
+                        ? () => _safelyOperateController((c) => c.redo())
+                        : null,
+                    tooltip: '重做',
+                  ),
+
+                  // 清除所有按钮
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () =>
+                        _safelyOperateController((c) => c.clearAll()),
+                    tooltip: '清除所有',
+                  ),
                 ] else
                   const Spacer(),
+
                 // 区域信息（只读）
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
@@ -153,21 +191,43 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
           const SizedBox(height: 16),
 
-          // 预览画布
+          // 预览画布 - 使用RepaintBoundary和适当的key避免不必要的重建
           Expanded(
-            child: PreviewCanvas(
-              key: ValueKey('preview_${selectedRegion.id}'),
-              regionId: selectedRegion.id,
-              pageImageData: imageState.imageData,
-              regionRect: selectedRegion.rect,
-              isInverted: editState.isInverted,
-              showOutline: editState.showOutline,
-              zoomLevel: editState.zoomLevel,
-              isErasing: _isErasing,
-              brushSize: _brushSize,
-              onErasePointsChanged: (points) {
-                _erasePoints = points;
-              },
+            child: RepaintBoundary(
+              child: PreviewCanvas(
+                key: ValueKey(_isErasing
+                    ? 'erasing_${selectedRegion.id}_${_brushSize.round()}'
+                    : 'preview_${selectedRegion.id}_${editState.isInverted}_${editState.showOutline}'),
+                regionId: selectedRegion.id,
+                pageImageData: imageState.imageData,
+                regionRect: selectedRegion.rect,
+                isInverted: editState.isInverted,
+                showOutline: editState.showOutline,
+                zoomLevel: editState.zoomLevel,
+                isErasing: _isErasing,
+                brushSize: _brushSize,
+                onErasePointsChanged: (points) {
+                  // 避免频繁更新状态
+                  if (points.length != _erasePoints.length) {
+                    _erasePoints = points;
+                  }
+                },
+                onEraseControllerReady: (controller) {
+                  if (_eraseController != controller &&
+                      !_isUpdatingController) {
+                    _isUpdatingController = true;
+                    // 使用延迟避免在构建过程中setState
+                    Future.delayed(const Duration(milliseconds: 50), () {
+                      if (mounted) {
+                        setState(() {
+                          _eraseController = controller;
+                          _isUpdatingController = false;
+                        });
+                      }
+                    });
+                  }
+                },
+              ),
             ),
           ),
 
@@ -207,5 +267,55 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    print('⭐ CharacterEditPanel[$_panelInstanceId] disposed');
+    _eraseController = null;
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    print('⭐ CharacterEditPanel[$_panelInstanceId] created');
+  }
+
+  // 添加一个安全的操作控制器的方法
+  void _safelyOperateController(Function(EraseToolController) operation) {
+    if (_eraseController != null) {
+      try {
+        operation(_eraseController!);
+      } catch (e) {
+        print('Error operating on erase controller: $e');
+      }
+    }
+  }
+
+  // 添加一个处理擦除工具选择的专用方法
+  void _toggleErasing() {
+    if (_isUpdatingController) return;
+
+    print('🔍 切换擦除模式: ${!_isErasing}');
+
+    // 使用一个延迟机制避免频繁状态更新
+    setState(() {
+      _isErasing = !_isErasing;
+    });
+
+    // 如果启用擦除，预先创建控制器
+    if (_isErasing && _eraseController == null) {
+      _isUpdatingController = true;
+
+      // 延迟消除切换后的卡顿感
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          setState(() {
+            _isUpdatingController = false;
+          });
+        }
+      });
+    }
   }
 }

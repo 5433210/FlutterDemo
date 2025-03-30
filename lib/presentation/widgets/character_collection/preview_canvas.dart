@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
-import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -10,6 +12,8 @@ import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../infrastructure/logging/logger.dart';
+import 'erase_tool/controllers/erase_tool_controller.dart';
+import 'erase_tool/widgets/erase_tool_widget.dart';
 
 /// 擦除绘制器
 class ErasePainter extends CustomPainter {
@@ -123,6 +127,7 @@ class PreviewCanvas extends ConsumerStatefulWidget {
   final bool isErasing;
   final double brushSize;
   final Function(List<Offset>) onErasePointsChanged;
+  final Function(EraseToolController)? onEraseControllerReady;
 
   const PreviewCanvas({
     super.key,
@@ -135,6 +140,7 @@ class PreviewCanvas extends ConsumerStatefulWidget {
     required this.isErasing,
     required this.brushSize,
     required this.onErasePointsChanged,
+    this.onEraseControllerReady,
   });
 
   @override
@@ -147,19 +153,42 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
   final GlobalKey _containerKey = GlobalKey();
 
   final List<Offset> _currentErasePoints = [];
-  bool _isErasing = false;
+  final bool _isErasing = false;
   DetectedOutline? _currentOutline;
   img.Image? _currentImage;
   Size? _currentImageSize;
   Size? _currentCanvasSize;
   bool _isProcessing = false;
+  EraseToolController? _eraseController;
 
   // 缓存处理状态
   bool _lastInverted = false;
   bool _lastShowOutline = false;
 
+  // 图像缓存相关
+  Uint8List? _lastImageBytes;
+  Widget? _cachedEraseToolWidget;
+  ui.Image? _lastUiImage;
+  Completer<ui.Image>? _pendingImageConversion;
+  final int _imageHash = 0; // 用于跟踪图像内容变化
+
+  // 添加独立的擦除工具状态跟踪
+  final bool _isEraseToolInitializing = false;
+  bool _eraseToolInitialized = false;
+  String _lastRegionId = '';
+  GlobalKey _eraseToolKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
+    // 检查区域是否变化，变化则重置擦除工具状态
+    if (_lastRegionId != widget.regionId) {
+      _lastRegionId = widget.regionId;
+      _eraseToolInitialized = false;
+      _cachedEraseToolWidget = null;
+      _lastUiImage = null;
+      _eraseToolKey = GlobalKey();
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         _currentCanvasSize = Size(constraints.maxWidth, constraints.maxHeight);
@@ -243,23 +272,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                       ),
                     ),
                   ),
-                if (widget.isErasing)
-                  Positioned.fill(
-                    child: GestureDetector(
-                      onPanStart: _handleErasePanStart,
-                      onPanUpdate: _handleErasePanUpdate,
-                      onPanEnd: _handleErasePanEnd,
-                      child: CustomPaint(
-                        painter: ErasePainter(
-                          points: _currentErasePoints,
-                          brushSize: widget.brushSize,
-                        ),
-                        child: Container(
-                          color: Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ),
+                if (widget.isErasing && _currentImage != null)
+                  _buildEraseToolLayer(),
               ],
             );
           },
@@ -278,6 +292,8 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
 
   @override
   void dispose() {
+    // 清理控制器引用，避免潜在的内存泄漏
+    _eraseController = null;
     _transformationController.dispose();
     super.dispose();
   }
@@ -288,28 +304,101 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanvasSize());
   }
 
-  void _handleErasePanEnd(DragEndDetails details) {
-    if (!_isErasing || _currentErasePoints.isEmpty) return;
-    widget.onErasePointsChanged(_currentErasePoints);
-    setState(() {
-      _isErasing = false;
-    });
+  // 进一步简化擦除工具层，专注解决画布阻塞问题
+  Widget _buildEraseToolLayer() {
+    if (!widget.isErasing) {
+      return const SizedBox.shrink();
+    }
+
+    // 关键改进：使用独立的叠加层而不是重复图像
+    return Positioned.fill(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 如果缓存存在且有效，直接返回
+          if (_cachedEraseToolWidget != null && _eraseToolInitialized) {
+            return _cachedEraseToolWidget!;
+          }
+
+          if (_lastUiImage == null) {
+            // 异步准备图像，不阻塞UI
+            _prepareImageAsync();
+            return const Center(
+                child: SizedBox(
+              width: 30,
+              height: 30,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ));
+          }
+
+          if (_cachedEraseToolWidget == null) {
+            print(
+                '🔨 创建擦除工具实例 (${_lastUiImage!.width}x${_lastUiImage!.height})');
+
+            // 创建一个包含所有必要UI组件的树，但只渲染一次
+            // 使用ClipRect避免溢出
+            _cachedEraseToolWidget = ClipRect(
+              child: RepaintBoundary(
+                child: EraseToolWidget(
+                  key: ValueKey(
+                      'eraser_${widget.regionId}_${DateTime.now().millisecondsSinceEpoch}'),
+                  image: _lastUiImage!,
+                  initialBrushSize: widget.brushSize,
+                  onEraseComplete: _handleEraseComplete,
+                  onControllerReady: (controller) {
+                    _eraseToolInitialized = true;
+                    _handleControllerReady(controller);
+                  },
+                ),
+              ),
+            );
+          }
+
+          return _cachedEraseToolWidget!;
+        },
+      ),
+    );
   }
 
-  void _handleErasePanStart(DragStartDetails details) {
-    if (!widget.isErasing) return;
-    setState(() {
-      _isErasing = true;
-      _currentErasePoints.clear();
-      _currentErasePoints.add(_transformPointToImage(details.localPosition));
-    });
+  // 处理擦除控制器初始化
+  void _handleControllerReady(EraseToolController controller) {
+    _eraseController = controller;
+    if (widget.onEraseControllerReady != null) {
+      widget.onEraseControllerReady!(controller);
+    }
   }
 
-  void _handleErasePanUpdate(DragUpdateDetails details) {
-    if (!_isErasing) return;
-    setState(() {
-      _currentErasePoints.add(_transformPointToImage(details.localPosition));
-    });
+  // 简化图像处理完成回调
+  Future<void> _handleEraseComplete(ui.Image processedImage) async {
+    if (!mounted) return;
+
+    try {
+      // 先清除状态，避免UI冻结感
+      setState(() {
+        // 清除缓存状态，后续会重建
+        _eraseToolInitialized = false;
+        // 不立即清除缓存视图，避免闪烁
+      });
+
+      // 利用isolate转换图像，避免阻塞UI线程
+      final bytes =
+          await processedImage.toByteData(format: ui.ImageByteFormat.png);
+      final imgImage = await compute((ByteData data) {
+        return img.decodePng(data.buffer.asUint8List())!;
+      }, bytes!);
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentImage = imgImage;
+        _currentErasePoints.clear();
+        _cachedEraseToolWidget = null;
+        _lastUiImage = null;
+      });
+
+      widget.onErasePointsChanged(_currentErasePoints);
+    } catch (e) {
+      print('图像处理失败: $e');
+    }
   }
 
   Future<bool> _loadCharacterImage() async {
@@ -406,6 +495,29 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     }
   }
 
+  // 优化图像准备方法
+  void _prepareImageAsync() {
+    if (_pendingImageConversion != null || _lastUiImage != null) return;
+
+    // 使用微任务避免阻塞UI
+    Future.microtask(() {
+      if (!mounted) return;
+
+      final bytes = Uint8List.fromList(img.encodePng(_currentImage!));
+      // 设置标志，防止重复调用
+      _pendingImageConversion = Completer<ui.Image>();
+
+      ui.decodeImageFromList(bytes, (image) {
+        if (!mounted) return;
+
+        setState(() {
+          _lastUiImage = image;
+          _pendingImageConversion = null;
+        });
+      });
+    });
+  }
+
   Offset _transformPointToImage(Offset point) {
     if (_currentImageSize == null || _currentCanvasSize == null) return point;
 
@@ -439,5 +551,14 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     final scale = Matrix4.identity()
       ..scale(widget.zoomLevel, widget.zoomLevel, 1.0);
     _transformationController.value = scale;
+  }
+
+  // 静态方法用于在isolate中解码图像
+  static img.Image _decodeImage(ByteData? byteData) {
+    if (byteData == null) {
+      throw Exception('Cannot decode null image data');
+    }
+    final bytes = byteData.buffer.asUint8List();
+    return img.decodePng(bytes)!;
   }
 }
