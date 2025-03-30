@@ -139,36 +139,35 @@ class EraseToolControllerImpl extends EraseToolController {
       // 转换为图像坐标
       final transformedPoint = _transformer.transformPoint(point);
 
-      // 为了提高绘制性能，仅当新点与上一个点间距超过特定阈值时才添加
-      const minDistance = 1.5; // 略微增加距离阈值，减少点数
+      // 添加到临时缓存，较小阈值以保证线条平滑
+      const minDistance = 1.0;
 
       if (_pointBuffer.isEmpty ||
           (_pointBuffer.isNotEmpty &&
               (transformedPoint - _pointBuffer.last).distance > minDistance)) {
-        // 添加到临时缓存
         _pointBuffer.add(transformedPoint);
         _pointsAddedSinceLastNotify++;
+
+        // 立即添加第一个点，以保证立即显示光标
+        if (_pointBuffer.length == 1) {
+          _stateManager.continueErase(transformedPoint);
+          // 强制进行一次通知，让UI立即更新显示光标
+          notifyListeners();
+        }
       }
 
-      // 应用节流，避免过于频繁的更新
-      _throttleTimer?.cancel();
-      _throttleTimer = Timer(const Duration(milliseconds: throttleDelayMs), () {
-        if (_disposed) return;
-        // 处理缓存的点
+      // 当积累足够的点后进行处理
+      if (_pointsAddedSinceLastNotify >= minPointsBeforeNotify) {
         _processPointBuffer();
-      });
 
-      // 实时添加第一个点，保证立即有反馈
-      if (_pointBuffer.length == 1) {
-        _stateManager.continueErase(transformedPoint);
-        // 暂时禁用通知，减少不必要的重建
-        _pauseNotifications();
-      } else if (_pointsAddedSinceLastNotify >= minPointsBeforeNotify) {
-        // 累积了足够多的点，可以进行一次处理
-        _processPointBuffer();
+        // 强制通知UI更新，确保能看到擦除轨迹
+        if (!_notificationsEnabled) {
+          _notificationsEnabled = true;
+          notifyListeners();
+        }
       }
     } catch (e) {
-      print('ERROR in continueErase: $e');
+      print('❌ continueErase 错误: $e');
     }
   }
 
@@ -296,18 +295,18 @@ class EraseToolControllerImpl extends EraseToolController {
 
   @override
   void startErase(Offset point) {
-    // 增加详细调试日志
-    print('startErase called at $point with brushSize: $_brushSize');
+    // 添加详细调试日志
+    print('🖌️ startErase at $point with brushSize: $_brushSize');
 
     if (!_isInitialized) {
-      print('Warning: Controller not initialized yet');
+      print('⚠️ 警告: 控制器未初始化');
+
       // 尝试自动初始化，如果状态允许
       if (_stateManager.layerState.originalImage != null) {
-        print('Auto-initializing controller with existing image');
+        print('🔄 使用现有图像自动初始化控制器');
         _isInitialized = true;
       } else {
-        print(
-            'ERROR: Cannot start erasing - controller not initialized and no image available');
+        print('❌ 无法开始擦除 - 控制器未初始化且无可用图像');
         return;
       }
     }
@@ -315,22 +314,22 @@ class EraseToolControllerImpl extends EraseToolController {
     try {
       // 转换为图像坐标
       final transformedPoint = _transformer.transformPoint(point);
-      print('Transformed point: $transformedPoint (original: $point)');
+      print('👉 转换后的坐标: $transformedPoint (原始: $point)');
+
+      // 清除所有现有点，确保开始新的擦除操作
+      _pointBuffer.clear();
+
+      // 立即强制通知状态变化，确保UI更新
+      _notificationsEnabled = true;
 
       // 开始新的擦除操作
       _stateManager.startErase(transformedPoint, _brushSize);
-      print('Erase operation started with brush size: $_brushSize');
+      print('✅ 开始新的擦除操作，笔刷大小: $_brushSize');
 
-      // 清除节流缓存
-      _pointBuffer.clear();
-
-      // 暂时禁用通知，仅在必要时更新
-      _pauseNotifications();
-
-      // 强制更新UI显示初始状态
+      // 立即触发一次通知，确保UI能显示初始状态
       notifyListeners();
     } catch (e) {
-      print('ERROR in startErase: $e');
+      print('❌ startErase 错误: $e');
     }
   }
 

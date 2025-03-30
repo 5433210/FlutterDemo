@@ -304,13 +304,30 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _updateCanvasSize());
   }
 
+  // 添加调试信息组件，帮助排查问题
+  Widget _buildDebugInfo() {
+    if (!kDebugMode) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        'Brush: ${widget.brushSize.toStringAsFixed(1)}',
+        style: const TextStyle(color: Colors.white, fontSize: 10),
+      ),
+    );
+  }
+
   // 进一步简化擦除工具层，专注解决画布阻塞问题
   Widget _buildEraseToolLayer() {
     if (!widget.isErasing) {
       return const SizedBox.shrink();
     }
 
-    // 关键改进：使用独立的叠加层而不是重复图像
+    // 使用Positioned.fill确保擦除工具层完全覆盖画布
     return Positioned.fill(
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -334,22 +351,35 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
             print(
                 '🔨 创建擦除工具实例 (${_lastUiImage!.width}x${_lastUiImage!.height})');
 
-            // 创建一个包含所有必要UI组件的树，但只渲染一次
-            // 使用ClipRect避免溢出
-            _cachedEraseToolWidget = ClipRect(
-              child: RepaintBoundary(
-                child: EraseToolWidget(
-                  key: ValueKey(
-                      'eraser_${widget.regionId}_${DateTime.now().millisecondsSinceEpoch}'),
-                  image: _lastUiImage!,
-                  initialBrushSize: widget.brushSize,
-                  onEraseComplete: _handleEraseComplete,
-                  onControllerReady: (controller) {
-                    _eraseToolInitialized = true;
-                    _handleControllerReady(controller);
-                  },
+            // 使用GestureDetector和IgnorePointer确保手势正确传递
+            _cachedEraseToolWidget = Stack(
+              children: [
+                // 底层画布 - 透明背景
+                Positioned.fill(
+                  child: RepaintBoundary(
+                    child: ClipRect(
+                      child: EraseToolWidget(
+                        key: ValueKey(
+                            'eraser_${widget.regionId}_${DateTime.now().millisecondsSinceEpoch}'),
+                        image: _lastUiImage!,
+                        initialBrushSize: widget.brushSize,
+                        onEraseComplete: _handleEraseComplete,
+                        onControllerReady: (controller) {
+                          _eraseToolInitialized = true;
+                          _handleControllerReady(controller);
+                        },
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+
+                // 调试信息层 - 帮助排查问题
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: _buildDebugInfo(),
+                ),
+              ],
             );
           }
 

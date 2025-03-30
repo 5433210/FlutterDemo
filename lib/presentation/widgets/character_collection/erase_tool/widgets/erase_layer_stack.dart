@@ -48,9 +48,6 @@ class EraseLayerStack extends StatelessWidget {
       aspectRatio: imageRatio,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          print(
-              '📱 EraseLayerStack initialized with image size: Size(${image.width.toDouble()}, ${image.height.toDouble()})');
-
           // 简化布局计算，减少性能开销
           final Size containerSize = constraints.biggest;
           final double containerRatio =
@@ -66,9 +63,6 @@ class EraseLayerStack extends StatelessWidget {
                 Size(containerSize.height * imageRatio, containerSize.height);
           }
 
-          print(
-              '📐 Size calculation:\n  - Image ratio: $imageRatio\n  - Container ratio: $containerRatio\n  - Result: $displaySize');
-
           return SizedBox.fromSize(
             size: displaySize,
             child: GestureDetector(
@@ -76,6 +70,7 @@ class EraseLayerStack extends StatelessWidget {
               onPanUpdate: onPanUpdate,
               onPanEnd: onPanEnd,
               onPanCancel: onPanCancel,
+              behavior: HitTestBehavior.opaque, // 强制接收所有手势事件
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -89,10 +84,20 @@ class EraseLayerStack extends StatelessWidget {
                       ),
                     ),
 
-                  // 预览图层 - 总是显示擦除效果
-                  RepaintBoundary(
-                    child: PreviewLayer(
-                      transformationController: transformationController,
+                  // 独立的透明背景层，确保手势区域覆盖整个区域
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.01, // 几乎透明但提供交互区域
+                      child: Container(color: Colors.white),
+                    ),
+                  ),
+
+                  // 预览图层 - 总是显示擦除效果，即使没有背景
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: PreviewLayer(
+                        transformationController: transformationController,
+                      ),
                     ),
                   ),
                 ],
