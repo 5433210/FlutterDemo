@@ -39,6 +39,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseStart: _handleEraseStart,
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
+            // 添加画笔颜色参数
+            brushColor: Colors.white,
           ),
         ),
 

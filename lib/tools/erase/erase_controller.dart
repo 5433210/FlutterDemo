@@ -9,8 +9,11 @@ class EraseController with ChangeNotifier {
   List<Path> _paths = [];
   List<Path> _redoPaths = [];
 
+  // 获取画笔颜色
+  Color get brushColor => _state.invertMode ? Colors.black : Colors.white;
   // 设置和获取画笔大小
   double get brushSize => _state.brushSize;
+
   set brushSize(double value) {
     _state.brushSize = value;
     notifyListeners();
@@ -18,11 +21,12 @@ class EraseController with ChangeNotifier {
 
   // 检查是否可以重做
   bool get canRedo => _redoPaths.isNotEmpty;
+
   // 检查是否可以撤销
   bool get canUndo => _paths.isNotEmpty;
-
   // 设置和获取反转模式
   bool get invertMode => _state.invertMode;
+
   set invertMode(bool value) {
     _state.invertMode = value;
     notifyListeners();

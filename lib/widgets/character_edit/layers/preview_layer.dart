@@ -14,7 +14,8 @@ class PreviewLayer extends BaseLayer {
     Key? key,
     this.paths = const [],
     this.currentPath,
-    this.brushColor = Colors.red,
+    // 修改默认颜色为白色，代表擦除
+    this.brushColor = Colors.white,
     this.brushSize = 10.0,
     this.dirtyRect,
   }) : super(key: key);
@@ -58,6 +59,7 @@ class _PreviewPainter extends CustomPainter {
       ..strokeWidth = brushSize
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
+      // 修改为填充模式，确保完全覆盖原内容
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true; // 确保抗锯齿
 

@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// 擦除模式枚举
 enum EraseMode {
   normal, // 普通擦除
@@ -18,6 +20,9 @@ class EraseState {
 
   // 当前活动模式
   EraseMode mode = EraseMode.normal;
+
+  // 获取当前画笔颜色 - 基于模式
+  Color get brushColor => invertMode ? Colors.black : Colors.white;
 
   // 复制状态
   EraseState copy() {

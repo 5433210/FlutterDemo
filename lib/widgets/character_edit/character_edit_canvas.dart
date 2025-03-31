@@ -20,6 +20,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
   final Function()? onEraseEnd;
   final Function(List<Offset>)? onErasePointsChanged;
   final double brushSize;
+  final Color brushColor;
 
   const CharacterEditCanvas({
     Key? key,
@@ -31,6 +32,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
     this.onEraseEnd,
     this.onErasePointsChanged,
     this.brushSize = 10.0,
+    required this.brushColor,
   }) : super(key: key);
 
   @override
