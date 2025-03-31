@@ -8,11 +8,13 @@ import 'base_layer.dart';
 class BackgroundLayer extends BaseLayer {
   final ui.Image image;
   final bool hasChanged;
+  final bool invertMode;
 
   const BackgroundLayer({
     Key? key,
     required this.image,
     this.hasChanged = false,
+    this.invertMode = false,
   }) : super(key: key);
 
   @override
@@ -26,12 +28,14 @@ class BackgroundLayer extends BaseLayer {
         // Changed from _createPainter to createPainter
         image: image,
         hasChanged: hasChanged,
+        invertMode: invertMode,
       );
 }
 
 class _BackgroundPainter extends CustomPainter {
   final ui.Image image;
   final bool hasChanged;
+  final bool invertMode;
 
   ui.Picture? _cachedPicture;
   Size? _cachedSize;
@@ -39,6 +43,7 @@ class _BackgroundPainter extends CustomPainter {
   _BackgroundPainter({
     required this.image,
     required this.hasChanged,
+    required this.invertMode,
   });
 
   @override
@@ -56,6 +61,7 @@ class _BackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(_BackgroundPainter oldDelegate) {
     return image != oldDelegate.image ||
+        invertMode != oldDelegate.invertMode ||
         hasChanged != oldDelegate.hasChanged ||
         _cachedSize == null;
   }
@@ -88,6 +94,16 @@ class _BackgroundPainter extends CustomPainter {
     final paint = Paint()
       ..filterQuality = FilterQuality.high
       ..isAntiAlias = true;
+
+    // 如果是反转模式，设置反转颜色的ColorFilter
+    if (invertMode) {
+      paint.colorFilter = const ColorFilter.matrix([
+        -1, 0, 0, 0, 255, // 红色通道反转
+        0, -1, 0, 0, 255, // 绿色通道反转
+        0, 0, -1, 0, 255, // 蓝色通道反转
+        0, 0, 0, 1, 0 // alpha通道保持不变
+      ]);
+    }
 
     cacheCanvas.drawImageRect(
       image,

@@ -63,7 +63,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
         children: [
           // 背景图层
           RepaintBoundary(
-            child: BackgroundLayer(image: widget.image),
+            child: BackgroundLayer(
+              image: widget.image,
+              invertMode: widget.brushColor == Colors.black, // 根据画笔颜色判断反转模式
+            ),
           ),
 
           // 预览图层 - 不使用RepaintBoundary，确保能及时更新
