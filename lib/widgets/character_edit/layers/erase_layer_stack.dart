@@ -43,6 +43,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
   @override
   Widget build(BuildContext context) {
+    print('构建擦除图层栈 - 路径数: ${_paths.length}, 当前路径: ${_currentPath != null}');
+
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
@@ -52,13 +54,11 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             child: BackgroundLayer(image: widget.image),
           ),
 
-          // 预览图层
-          RepaintBoundary(
-            child: PreviewLayer(
-              paths: _paths,
-              currentPath: _currentPath,
-              dirtyRect: _dirtyRect,
-            ),
+          // 预览图层 - 不使用RepaintBoundary，确保能及时更新
+          PreviewLayer(
+            paths: _paths,
+            currentPath: _currentPath,
+            dirtyRect: _dirtyRect,
           ),
 
           // UI图层 - 添加轮廓支持和Alt键状态
@@ -100,14 +100,20 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   }
 
   void _handlePointerDown(Offset position) {
+    print('处理鼠标按下 - 现有路径数: ${_paths.length}');
+
     final imagePosition = _transformToImageCoordinates(position);
 
-    // 创建新路径
+    // 创建新路径，但不清除现有路径列表
     _currentPath = Path()..moveTo(imagePosition.dx, imagePosition.dy);
     _dirtyRect = Rect.fromPoints(imagePosition, imagePosition).inflate(10);
 
     widget.onEraseStart?.call(imagePosition);
-    setState(() {});
+
+    // 显式地维持现有路径
+    setState(() {
+      // 仅更新_currentPath和_dirtyRect，不修改_paths
+    });
   }
 
   void _handlePointerMove(Offset position, Offset delta) {
@@ -118,7 +124,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 更新路径
     _currentPath!.lineTo(imagePosition.dx, imagePosition.dy);
 
-    // 更新脏区域
+    // 更新脏区域 - 确保包含整个路径区域
     if (_dirtyRect != null) {
       _dirtyRect = _dirtyRect!
           .expandToInclude(Rect.fromCircle(center: imagePosition, radius: 10));
@@ -127,19 +133,40 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     }
 
     widget.onEraseUpdate?.call(imagePosition, delta);
-    setState(() {});
+
+    // 强制更新UI以显示所有路径
+    setState(() {
+      // 空setState，仅触发重绘
+    });
   }
 
   void _handlePointerUp(Offset position) {
-    if (_currentPath != null) {
-      // 完成当前路径
-      _paths = List.from(_paths)..add(_currentPath!);
-      _currentPath = null;
-      _dirtyRect = null;
+    if (_currentPath == null) return;
 
-      widget.onEraseEnd?.call();
-      setState(() {});
+    // 确保有真实的路径内容
+    Rect bounds = _currentPath!.getBounds();
+    if (bounds.width > 0 || bounds.height > 0) {
+      print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
+
+      // 创建一个新的路径列表，保留所有现有路径并添加当前完成的路径
+      List<Path> newPaths = List.from(_paths);
+      newPaths.add(_currentPath!);
+
+      // 更新状态，清除当前路径和脏区域
+      setState(() {
+        _paths = newPaths;
+        _currentPath = null;
+        _dirtyRect = null;
+      });
+    } else {
+      // 空路径，仅清除当前路径
+      setState(() {
+        _currentPath = null;
+        _dirtyRect = null;
+      });
     }
+
+    widget.onEraseEnd?.call();
   }
 
   // 转换视图坐标到图像坐标

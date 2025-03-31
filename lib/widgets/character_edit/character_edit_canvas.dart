@@ -177,9 +177,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
   // 处理擦除开始事件
   void _handleEraseStart(Offset position) {
-    _currentErasePoints.clear();
+    // 保留历史点，只添加新点
+    // 注意：不清空现有数组，这可能是导致问题的原因之一
     _currentErasePoints.add(position);
     widget.onEraseStart?.call(position);
+
+    print('擦除开始 - 当前点数: ${_currentErasePoints.length}');
   }
 
   // 处理擦除更新事件

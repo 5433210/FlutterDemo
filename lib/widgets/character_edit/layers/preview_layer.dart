@@ -27,7 +27,6 @@ class PreviewLayer extends BaseLayer {
 
   @override
   CustomPainter createPainter() => _PreviewPainter(
-        // Changed from _createPainter to createPainter
         paths: paths,
         currentPath: currentPath,
         brushColor: brushColor,
@@ -53,20 +52,22 @@ class _PreviewPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 如果有脏区域，只重绘该区域
-    if (dirtyRect != null) {
-      canvas.save();
-      canvas.clipRect(dirtyRect!);
-    }
-
+    // 设置画笔
     final paint = Paint()
       ..color = brushColor
       ..strokeWidth = brushSize
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true; // 确保抗锯齿
 
-    // 绘制已完成的路径
+    // 打印调试信息
+    print('绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}');
+
+    // 不要使用save/restore，可能导致状态问题
+    // 仅在需要裁剪区域时使用
+
+    // 绘制所有已完成的路径
     for (final path in paths) {
       canvas.drawPath(path, paint);
     }
@@ -75,18 +76,19 @@ class _PreviewPainter extends CustomPainter {
     if (currentPath != null) {
       canvas.drawPath(currentPath!, paint);
     }
-
-    if (dirtyRect != null) {
-      canvas.restore();
-    }
   }
 
   @override
-  bool shouldRepaint(_PreviewPainter oldDelegate) {
-    return brushColor != oldDelegate.brushColor ||
-        brushSize != oldDelegate.brushSize ||
-        paths.length != oldDelegate.paths.length ||
-        currentPath != oldDelegate.currentPath ||
-        dirtyRect != oldDelegate.dirtyRect;
+  bool shouldRepaint(covariant _PreviewPainter oldDelegate) {
+    // 简化重绘逻辑，确保路径变化时重绘
+    if (paths.length != oldDelegate.paths.length) return true;
+    if ((currentPath == null) != (oldDelegate.currentPath == null)) return true;
+    if (brushColor != oldDelegate.brushColor) return true;
+    if (brushSize != oldDelegate.brushSize) return true;
+
+    // 如果有当前路径，总是重绘（因为路径在变化）
+    if (currentPath != null) return true;
+
+    return false;
   }
 }
