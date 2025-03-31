@@ -1,4 +1,4 @@
-# CharacterEditPanel 重构方案
+# CharacterEditPanel 全新实现方案
 
 ## 1. 组件结构设计
 
@@ -41,15 +41,18 @@ graph TB
     A[EraseLayerStack] --> B[BackgroundLayer]
     A --> C[PreviewLayer]
     A --> D[UILayer]
+    A --> E[InteractiveViewer]
     
     B --> B1[原始图像渲染]
     C --> C1[实时擦除预览]
     D --> D1[交互UI元素]
+    E --> E1[缩放与平移交互]
 
     subgraph 性能优化
         B1 --> BO[RepaintBoundary]
         C1 --> CO[局部更新策略]
         D1 --> DO[按需重绘]
+        E1 --> EO[交互优化]
     end
 ```
 

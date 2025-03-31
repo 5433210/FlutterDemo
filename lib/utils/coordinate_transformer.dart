@@ -116,6 +116,18 @@ class CoordinateTransformer {
     return lines;
   }
 
+  /// 从PreviewCanvas中迁移的计算图像在视口中显示区域的方法
+  Rect calculateImageRectInViewport() {
+    // 计算图像在视口中的显示区域
+    final matrix = transformationController.value;
+    final topLeft = imageToViewportCoordinate(Offset.zero);
+    final bottomRight = imageToViewportCoordinate(
+      Offset(imageSize.width, imageSize.height),
+    );
+
+    return Rect.fromPoints(topLeft, bottomRight);
+  }
+
   /// 图像矩形转换为视口矩形
   Rect imageRectToViewportRect(Rect imageRect) {
     if (enableLogging) {
@@ -267,6 +279,19 @@ class CoordinateTransformer {
     return imageRect;
   }
 
+  /// 从PreviewCanvas._transformToImageCoordinates迁移
+  /// 将视口坐标转换为图像坐标，考虑了当前变换和设备像素比
+  Offset viewportToImageCoordinate(Offset viewportOffset) {
+    // 1. 基础转换 - 从PreviewCanvas迁移
+    final matrix = transformationController.value.clone();
+    final vector = Matrix4.inverted(matrix)
+        .transform3(Vector3(viewportOffset.dx, viewportOffset.dy, 0));
+    final basicTransform = Offset(vector.x, vector.y);
+
+    // 2. 增强功能 - 设备像素比处理
+    return basicTransform;
+  }
+
   /// 视口坐标转换为图像坐标
   /// 按照公式: Xview = (Xviewport/ActualScaleX) - ActualOffsetX
   Offset viewportToViewCoordinate(Offset viewportPoint) {
@@ -303,18 +328,6 @@ class CoordinateTransformer {
         'viewportPoint': '${viewportPoint.dx},${viewportPoint.dy}',
         'viewCoordinate': '${viewCoordinate.dx},${viewCoordinate.dy}',
       });
-
-      // // 确保结果在图像范围内
-      // final clampedviewportRect = Offset(
-      //   viewCoordinate.dx.clamp(0.0, imageSize.width),
-      //   viewCoordinate.dy.clamp(0.0, imageSize.height),
-      // );
-
-      // if (enableLogging) {
-      //   AppLogger.debug('【坐标转换】视口→视图: '
-      //       '(${viewportPoint.dx.toStringAsFixed(1)},${viewportPoint.dy.toStringAsFixed(1)}) → '
-      //       '(${clampedviewportRect.dx.toStringAsFixed(1)},${clampedviewportRect.dy.toStringAsFixed(1)})');
-      // }
 
       return viewCoordinate;
     } catch (e) {

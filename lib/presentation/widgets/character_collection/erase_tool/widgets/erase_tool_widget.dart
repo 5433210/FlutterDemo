@@ -49,10 +49,15 @@ class EraseToolWidget extends ConsumerStatefulWidget {
 }
 
 class _EraseToolWidgetState extends ConsumerState<EraseToolWidget> {
+  // 节流控制
+  static const _updateThrottleMs = 16; // 约60fps
   late final EraseToolConfig _config;
+  late final FocusNode _focusNode;
   Size? _currentSize;
   bool _isErasing = false;
   bool _isProcessingResult = false;
+
+  DateTime? _lastUpdate;
 
   @override
   Widget build(BuildContext context) {
@@ -66,81 +71,118 @@ class _EraseToolWidgetState extends ConsumerState<EraseToolWidget> {
       }
     });
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final size = Size(constraints.maxWidth, constraints.maxHeight);
-
-        // 通知容器尺寸变化
-        _handleSizeChanged(size);
-
-        return Stack(
-          children: [
-            // 背景图层
-            Positioned.fill(
-              child: BackgroundLayer(
-                image: widget.image,
-                transformationController: widget.transformationController,
-              ),
-            ),
-
-            // 预览图层
-            Positioned.fill(
-              child: PreviewLayer(
-                transformationController: widget.transformationController,
-                brushSize: widget.initialBrushSize,
-                operations: controller.operations,
-                currentOperation: controller.currentOperation,
-                scale:
-                    widget.transformationController.value.getMaxScaleOnAxis(),
-              ),
-            ),
-
-            // UI图层
-            Positioned.fill(
-              child: UILayer(
-                transformationController: widget.transformationController,
-                eraseMode: true,
-                brushSize: widget.initialBrushSize,
-                onPanStart: (details) {
-                  _isErasing = true;
-                  controller.startErase(details.localPosition);
-                },
-                onPanUpdate: (details) {
-                  if (_isErasing) {
-                    controller.continueErase(details.localPosition);
-                  }
-                },
-                onPanEnd: (details) {
-                  if (_isErasing) {
-                    controller.endErase();
-                    _handleEraseComplete();
-                  }
-                },
-                onPanCancel: () {
-                  if (_isErasing) {
-                    controller.cancelErase();
-                    _isErasing = false;
-                  }
-                },
-              ),
-            ),
-
-            // 加载指示器
-            if (_isProcessingResult)
-              const Positioned.fill(
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-          ],
-        );
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onFocusChange: (hasFocus) {
+        if (!hasFocus) {
+          _focusNode.requestFocus(); // 失去焦点时自动重新请求
+        }
       },
+      child: GestureDetector(
+        onTapDown: (_) => _focusNode.requestFocus(),
+        behavior: HitTestBehavior.opaque,
+        child: RepaintBoundary(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final size = Size(constraints.maxWidth, constraints.maxHeight);
+
+              // 通知容器尺寸变化
+              _handleSizeChanged(size);
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  // 背景图层
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: BackgroundLayer(
+                        image: widget.image,
+                        transformationController:
+                            widget.transformationController,
+                      ),
+                    ),
+                  ),
+
+                  // 预览图层
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: PreviewLayer(
+                        transformationController:
+                            widget.transformationController,
+                        brushSize: widget.initialBrushSize,
+                        operations: controller.operations,
+                        currentOperation: controller.currentOperation,
+                        scale: widget.transformationController.value
+                            .getMaxScaleOnAxis(),
+                      ),
+                    ),
+                  ),
+
+                  // UI图层
+                  Positioned.fill(
+                    child: RepaintBoundary(
+                      child: UILayer(
+                        transformationController:
+                            widget.transformationController,
+                        eraseMode: true,
+                        brushSize: widget.initialBrushSize,
+                        onPanStart: (details) {
+                          _isErasing = true;
+                          controller.startErase(details.localPosition);
+                        },
+                        onPanUpdate: (details) {
+                          if (_isErasing) {
+                            controller.continueErase(details.localPosition);
+                          }
+                        },
+                        onPanEnd: (details) {
+                          if (_isErasing) {
+                            controller.endErase();
+                            _handleEraseComplete();
+                          }
+                        },
+                        onPanCancel: () {
+                          if (_isErasing) {
+                            controller.cancelErase();
+                            _isErasing = false;
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+
+                  // 加载指示器
+                  if (_isProcessingResult)
+                    const Positioned.fill(
+                      child: RepaintBoundary(
+                        child: ColoredBox(
+                          color: Color(0x80FFFFFF),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _focusNode = FocusNode();
     final imageSize = Size(
       widget.image.width.toDouble(),
       widget.image.height.toDouble(),
@@ -156,6 +198,7 @@ class _EraseToolWidgetState extends ConsumerState<EraseToolWidget> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = ref.read(eraseToolProvider(_config));
       controller.setCanvasSize(imageSize);
+      _focusNode.requestFocus(); // 请求焦点
     });
   }
 
@@ -186,6 +229,15 @@ class _EraseToolWidgetState extends ConsumerState<EraseToolWidget> {
   /// 处理大小变化
   void _handleSizeChanged(Size size) {
     if (_currentSize == size) return;
+
+    // 节流控制
+    final now = DateTime.now();
+    if (_lastUpdate != null &&
+        now.difference(_lastUpdate!).inMilliseconds < _updateThrottleMs) {
+      return;
+    }
+    _lastUpdate = now;
+
     _currentSize = size;
     widget.onSizeChanged?.call(size);
   }
