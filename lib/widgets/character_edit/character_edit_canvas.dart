@@ -15,6 +15,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
   final ui.Image image;
   final bool showOutline;
   final bool invertMode;
+  final bool imageInvertMode; // 新增图像反转模式
   final Function(Offset)? onEraseStart;
   final Function(Offset, Offset)? onEraseUpdate;
   final Function()? onEraseEnd;
@@ -27,6 +28,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
     required this.image,
     this.showOutline = false,
     this.invertMode = false,
+    this.imageInvertMode = false, // 默认为false
     this.onEraseStart,
     this.onEraseUpdate,
     this.onEraseEnd,
@@ -44,27 +46,20 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   final TransformationController _transformationController =
       TransformationController();
   final GlobalKey _stackKey = GlobalKey();
-  // 修改为新的数据结构，使用单个路径记录所有点
   final Map<String, dynamic> _currentErasePath = {
     'points': <Offset>[],
     'brushSize': 10.0,
   };
-  // 存储所有擦除路径
   final List<Map<String, dynamic>> _erasePaths = [];
   DetectedOutline? _outline;
   bool _isProcessing = false;
-
-  // 获取EraseLayerStack的引用
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
-
-  // 添加Alt键状态跟踪
   bool _isAltKeyPressed = false;
 
   @override
   Widget build(BuildContext context) {
-    // 打印当前Alt键状态以便调试
-    print(
-        '画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, 画笔颜色: ${widget.brushColor}');
+    print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
+        '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}');
 
     return Focus(
       autofocus: true,
@@ -75,7 +70,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
         boundaryMargin: const EdgeInsets.all(double.infinity),
         minScale: 0.1,
         maxScale: 5.0,
-        // 只在Alt键按下时允许平移
         panEnabled: _isAltKeyPressed,
         child: SizedBox(
           width: widget.image.width.toDouble(),
@@ -91,6 +85,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
             altKeyPressed: _isAltKeyPressed,
             brushSize: widget.brushSize,
             brushColor: widget.brushColor,
+            imageInvertMode: widget.imageInvertMode,
           ),
         ),
       ),
@@ -101,23 +96,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   void didUpdateWidget(CharacterEditCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 图像改变时重新适配屏幕
     if (widget.image != oldWidget.image) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         fitToScreen();
       });
     }
 
-    // 当轮廓检测设置改变时，更新轮廓
     if (widget.showOutline != oldWidget.showOutline ||
-        widget.invertMode != oldWidget.invertMode) {
-      print(
-          '轮廓或反转模式变化 - invertMode: ${widget.invertMode}, showOutline: ${widget.showOutline}');
+        widget.invertMode != oldWidget.invertMode ||
+        widget.imageInvertMode != oldWidget.imageInvertMode) {
+      print('设置变化 - invertMode: ${widget.invertMode}, '
+          'imageInvertMode: ${widget.imageInvertMode}, '
+          'showOutline: ${widget.showOutline}');
       _updateOutline();
     }
   }
 
-  /// 将图像适配到屏幕大小，确保坐标系对齐
   void fitToScreen() {
     if (!mounted) return;
 
@@ -128,60 +122,31 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     final double imageWidth = widget.image.width.toDouble();
     final double imageHeight = widget.image.height.toDouble();
 
-    // 计算缩放比例，使图像适合视口
     final double scaleX = viewportSize.width / imageWidth;
     final double scaleY = viewportSize.height / imageHeight;
     final double scale = scaleX < scaleY ? scaleX : scaleY;
 
-    // 计算平移，使图像居中
     final double dx = (viewportSize.width - imageWidth * scale) / 2;
     final double dy = (viewportSize.height - imageHeight * scale) / 2;
 
-    // 创建变换矩阵
     final Matrix4 matrix = Matrix4.identity()
       ..translate(dx, dy)
       ..scale(scale, scale);
 
-    // 应用变换
     _transformationController.value = matrix;
-
-    print('适配屏幕: 图像大小(${imageWidth}x$imageHeight), '
-        '视口大小(${viewportSize.width}x${viewportSize.height}), '
-        '缩放比例($scale), 平移($dx, $dy)');
   }
 
   @override
   void initState() {
     super.initState();
-    // 使用帧回调确保在布局完成后适配屏幕
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fitToScreen();
-
-      // 初始化时检测轮廓
       if (widget.showOutline) {
         _updateOutline();
       }
     });
   }
 
-  // 设置缩放比例
-  void setScale(double scale) {
-    if (_transformationController.value != Matrix4.identity()) {
-      final Matrix4 matrix = Matrix4.copy(_transformationController.value);
-      final double currentScale = _getScaleFromMatrix(matrix);
-      final double scaleChange = scale / currentScale;
-
-      matrix.scale(scaleChange, scaleChange);
-      _transformationController.value = matrix;
-    }
-  }
-
-  /// 从矩阵中获取当前缩放比例
-  double _getScaleFromMatrix(Matrix4 matrix) {
-    return matrix.getMaxScaleOnAxis();
-  }
-
-  // 处理擦除结束事件
   void _handleEraseEnd() {
     if ((_currentErasePath['points'] as List<Offset>).isNotEmpty) {
       _erasePaths.add(Map<String, dynamic>.from(_currentErasePath));
@@ -190,37 +155,28 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
     widget.onEraseEnd?.call();
 
-    // 如果显示轮廓，更新轮廓
     if (widget.showOutline) {
       _updateOutline();
     }
   }
 
-  // 处理擦除开始事件
   void _handleEraseStart(Offset position) {
     _currentErasePath['points'] = <Offset>[position];
     _currentErasePath['brushSize'] = widget.brushSize;
     widget.onEraseStart?.call(position);
-
-    print(
-        '擦除开始 - 当前点数: ${(_currentErasePath['points'] as List<Offset>).length}');
   }
 
-  // 处理擦除更新事件
   void _handleEraseUpdate(Offset position, Offset delta) {
     (_currentErasePath['points'] as List<Offset>).add(position);
     widget.onEraseUpdate?.call(position, delta);
 
-    // 更新擦除点回调
     widget.onErasePointsChanged?.call(
       (_currentErasePath['points'] as List<Offset>)
         ..addAll(_erasePaths.expand((path) => path['points'] as List<Offset>)),
     );
   }
 
-  // 处理键盘事件
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    // 检测Alt键状态
     if (event.logicalKey == LogicalKeyboardKey.alt) {
       final bool isDown = event is KeyDownEvent;
       setState(() {
@@ -231,17 +187,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     return KeyEventResult.ignored;
   }
 
-  /// 使用CharacterImageProcessor检测并更新轮廓
   Future<void> _updateOutline() async {
     if (_isProcessing || !widget.showOutline) return;
 
     setState(() => _isProcessing = true);
 
     try {
-      // 使用现有的CharacterImageProcessor进行轮廓检测
       final imageBytes = await ImageUtils.imageToBytes(widget.image);
-      if (imageBytes == null)
+      if (imageBytes == null) {
         throw Exception('Failed to convert image to bytes');
+      }
 
       final imageProcessor = ref.read(characterImageProcessorProvider);
 
@@ -249,14 +204,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
         inverted: widget.invertMode,
         threshold: 128.0,
         noiseReduction: 0.5,
-        showContour: true, // 启用轮廓检测
+        showContour: true,
       );
 
       final fullImageRect = Rect.fromLTWH(
-          0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
+        0,
+        0,
+        widget.image.width.toDouble(),
+        widget.image.height.toDouble(),
+      );
 
-      final result = await imageProcessor.previewProcessing(imageBytes,
-          fullImageRect, options, _erasePaths.isNotEmpty ? _erasePaths : null);
+      final result = await imageProcessor.previewProcessing(
+        imageBytes,
+        fullImageRect,
+        options,
+        _erasePaths.isNotEmpty ? _erasePaths : null,
+      );
 
       if (mounted) {
         setState(() {
@@ -264,7 +227,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
           _isProcessing = false;
         });
 
-        // 更新UI层显示轮廓
         _layerStackKey.currentState?.setOutline(_outline);
       }
     } catch (e) {

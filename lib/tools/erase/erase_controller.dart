@@ -27,16 +27,27 @@ class EraseController with ChangeNotifier {
   // 检查是否可以撤销
   bool get canUndo => _paths.isNotEmpty;
 
-  // 设置和获取反转模式
+  // 获取图像反转模式
+  bool get imageInvertMode => _state.imageInvertMode;
+
+  // 设置图像反转模式
+  set imageInvertMode(bool value) {
+    if (_state.imageInvertMode != value) {
+      _state.imageInvertMode = value;
+      print('切换图像反转 - imageInvertMode: ${_state.imageInvertMode}');
+      notifyListeners();
+    }
+  }
+
+  // 设置和获取笔刷反转模式
   bool get invertMode => _state.invertMode;
 
   set invertMode(bool value) {
     if (_state.invertMode != value) {
       _state.invertMode = value;
       print(
-          '切换反转模式 - invertMode: ${_state.invertMode}, brushColor: ${_state.brushColor}');
+          '切换笔刷反转 - invertMode: ${_state.invertMode}, brushColor: ${_state.brushColor}');
       notifyListeners();
-      print('通知监听器完成');
     }
   }
 
@@ -78,6 +89,7 @@ class EraseController with ChangeNotifier {
     return {
       'paths': pathsData,
       'invertMode': invertMode,
+      'imageInvertMode': imageInvertMode,
       'outlineMode': outlineMode,
     };
   }

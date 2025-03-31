@@ -21,6 +21,8 @@ class EraseLayerStack extends StatefulWidget {
   final double brushSize;
   // 添加画笔颜色参数
   final Color brushColor;
+  // 添加图像反转模式参数
+  final bool imageInvertMode;
 
   const EraseLayerStack({
     Key? key,
@@ -32,6 +34,7 @@ class EraseLayerStack extends StatefulWidget {
     this.altKeyPressed = false,
     this.brushSize = 10.0,
     this.brushColor = Colors.white,
+    this.imageInvertMode = false,
   }) : super(key: key);
 
   @override
@@ -65,7 +68,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
           RepaintBoundary(
             child: BackgroundLayer(
               image: widget.image,
-              invertMode: widget.brushColor == Colors.black, // 根据画笔颜色判断反转模式
+              invertMode: widget.imageInvertMode, // 使用独立的图像反转模式
             ),
           ),
 

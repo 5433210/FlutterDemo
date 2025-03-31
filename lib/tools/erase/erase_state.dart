@@ -12,8 +12,11 @@ class EraseState {
   // 画笔大小
   double brushSize = 10.0;
 
-  // 是否反转模式（擦白变成擦黑）
+  // 笔刷颜色反转（擦白变成擦黑）
   bool invertMode = false;
+
+  // 图像反转
+  bool imageInvertMode = false;
 
   // 是否描边模式
   bool outlineMode = false;
@@ -30,6 +33,7 @@ class EraseState {
       ..brushSize = brushSize
       ..invertMode = invertMode
       ..outlineMode = outlineMode
+      ..imageInvertMode = imageInvertMode
       ..mode = mode;
 
     return newState;

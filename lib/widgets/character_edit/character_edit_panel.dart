@@ -40,9 +40,9 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseStart: _handleEraseStart,
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
-            brushColor:
-                _eraseController.brushColor, // 使用EraseController中的brushColor
-            brushSize: _currentBrushSize, // 传递当前笔刷大小
+            brushColor: _eraseController.brushColor,
+            brushSize: _currentBrushSize,
+            imageInvertMode: _eraseController.imageInvertMode,
           ),
         ),
 
@@ -103,16 +103,42 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
       ),
       child: Row(
         children: [
-          // 反转按钮
+          // 笔刷反转按钮
           IconButton(
-            icon: const Icon(Icons.invert_colors),
+            icon: Stack(
+              children: [
+                const Icon(Icons.brush),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Icon(
+                    Icons.invert_colors,
+                    size: 14,
+                    color: _eraseController.invertMode ? Colors.blue : null,
+                  ),
+                ),
+              ],
+            ),
             onPressed: _toggleInvert,
-            tooltip: '反转',
+            tooltip: '笔刷反转',
+          ),
+
+          // 图像反转按钮
+          IconButton(
+            icon: Icon(
+              Icons.invert_colors,
+              color: _eraseController.imageInvertMode ? Colors.blue : null,
+            ),
+            onPressed: _toggleImageInvert,
+            tooltip: '图像反转',
           ),
 
           // 描边按钮
           IconButton(
-            icon: const Icon(Icons.border_style),
+            icon: Icon(
+              Icons.border_style,
+              color: _eraseController.outlineMode ? Colors.blue : null,
+            ),
             onPressed: _toggleOutline,
             tooltip: '描边',
           ),
@@ -166,13 +192,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   }
 
   void _finishEditing() {
-    // 获取最终的擦除结果
     final result = _eraseController.getFinalResult();
-
-    // 调用回调
     widget.onEditComplete?.call(result);
-
-    // 返回结果
     Navigator.of(context).pop(result);
   }
 
@@ -180,9 +201,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     _eraseController.endErase();
   }
 
-  // 处理擦除开始事件，传递当前笔刷大小
   void _handleEraseStart(Offset position) {
-    _eraseController.brushSize = _currentBrushSize; // 确保使用当前设置的笔刷大小
+    _eraseController.brushSize = _currentBrushSize;
     _eraseController.startErase(position);
   }
 
@@ -195,12 +215,15 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     setState(() {});
   }
 
+  void _toggleImageInvert() {
+    setState(() {
+      _eraseController.imageInvertMode = !_eraseController.imageInvertMode;
+    });
+  }
+
   void _toggleInvert() {
-    print('切换反转模式');
     setState(() {
       _eraseController.invertMode = !_eraseController.invertMode;
-      print(
-          '当前反转模式: ${_eraseController.invertMode}, 画笔颜色: ${_eraseController.brushColor}');
     });
   }
 
