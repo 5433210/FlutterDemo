@@ -3,9 +3,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 /// 背景图层
-/// 显示原始图像
+/// 负责显示原始图像内容
 class BackgroundLayer extends StatelessWidget {
-  /// 图像数据
+  /// 原始图像
   final ui.Image image;
 
   /// 变换控制器
@@ -24,59 +24,65 @@ class BackgroundLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 使用ValueListenableBuilder优化重建范围
-    return ValueListenableBuilder<Matrix4>(
-      valueListenable: transformationController,
-      builder: (context, matrix, _) {
-        return InteractiveViewer(
-          transformationController: transformationController,
-          onInteractionUpdate: (_) => onChanged?.call(),
-          onInteractionEnd: (_) => onChanged?.call(),
-          child: CustomPaint(
-            painter: _BackgroundPainter(
-              image: image,
-            ),
-            size: Size(
-              image.width.toDouble(),
-              image.height.toDouble(),
-            ),
-          ),
-        );
-      },
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _BackgroundPainter(
+          image: image,
+          transform: transformationController.value,
+        ),
+        isComplex: true,
+        willChange: false,
+      ),
     );
   }
 }
 
-/// 背景图层绘制器
+/// 背景绘制器
 class _BackgroundPainter extends CustomPainter {
-  /// 图像数据
   final ui.Image image;
+  final Matrix4 transform;
 
-  /// 缓存的画笔
-  late final Paint _paint;
-
-  /// 构造函数
-  _BackgroundPainter({
+  const _BackgroundPainter({
     required this.image,
-  }) {
-    // 初始化画笔，减少重建开销
-    _paint = Paint()
-      ..filterQuality = FilterQuality.high
-      ..isAntiAlias = true;
-  }
+    required this.transform,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    // 计算缩放比例以适应画布
+    final imageAspectRatio = image.width / image.height;
+    final canvasAspectRatio = size.width / size.height;
+
+    double scale;
+    double dx = 0;
+    double dy = 0;
+
+    if (imageAspectRatio > canvasAspectRatio) {
+      // 图像更宽，以宽度为准
+      scale = size.width / image.width;
+      dy = (size.height - image.height * scale) / 2;
+    } else {
+      // 图像更高，以高度为准
+      scale = size.height / image.height;
+      dx = (size.width - image.width * scale) / 2;
+    }
+
+    // 应用变换
     canvas.save();
+    canvas.translate(dx, dy);
+    canvas.scale(scale);
 
     // 绘制图像
-    canvas.drawImage(image, Offset.zero, _paint);
+    final paint = Paint()
+      ..filterQuality = FilterQuality.high
+      ..isAntiAlias = true;
 
+    canvas.drawImage(image, Offset.zero, paint);
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_BackgroundPainter oldDelegate) {
-    return image != oldDelegate.image;
+  bool shouldRepaint(covariant _BackgroundPainter oldDelegate) {
+    return image != oldDelegate.image || transform != oldDelegate.transform;
   }
 }

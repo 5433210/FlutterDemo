@@ -2,36 +2,49 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../models/erase_mode.dart';
+import '../models/render_types.dart';
 
 /// 渲染管理器接口
-/// 定义渲染层的所有操作和状态管理
 abstract class RenderManager {
-  /// 清除特定类型的缓存
+  /// 清除指定类型的缓存
   void clearCache(CacheType type);
 
-  /// 合成所有图层并返回结果
-  Future<ui.Image> composite();
+  /// 清除图层脏区域
+  void clearDirtyRegion(LayerType type);
 
   /// 释放资源
   void dispose();
 
-  /// 获取特定类型的缓存
+  /// 强制重绘所有图层
+  void forceRepaint();
+
+  /// 获取指定类型的缓存
   ui.Image? getCache(CacheType type);
 
-  /// 获取特定类型图层的当前图像
+  /// 获取缓存统计信息
+  CacheStats getCacheStats();
+
+  /// 获取图层脏区域
+  Rect? getDirtyRegion(LayerType type);
+
+  /// 获取指定类型的图层图像
   ui.Image? getLayerImage(LayerType type);
 
-  /// 使图层失效，需要重新渲染
+  /// 使指定图层无效（需要重绘）
   void invalidateLayer(LayerType type);
 
-  /// 安排重绘
-  /// 如果提供了area参数，则只重绘该区域
-  void scheduleRepaint(Rect? area);
+  /// 准备渲染资源
+  Future<void> prepare(Size size);
+
+  /// 重建所有缓存
+  void rebuildCaches();
+
+  /// 设置图层脏区域
+  void setDirtyRegion(LayerType type, Rect region);
 
   /// 更新缓存
   void updateCache(CacheType type, ui.Image data);
 
-  /// 更新特定类型的图层
+  /// 更新图层
   void updateLayer(LayerType type, dynamic data);
 }

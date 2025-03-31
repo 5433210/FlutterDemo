@@ -15,6 +15,9 @@ class EraseLayerStack extends StatelessWidget {
   /// 变换控制器
   final TransformationController transformationController;
 
+  /// 笔刷大小
+  final double brushSize;
+
   /// 变换回调
   final VoidCallback? onTransformationChanged;
 
@@ -24,7 +27,7 @@ class EraseLayerStack extends StatelessWidget {
   final GestureDragEndCallback? onPanEnd;
   final GestureDragCancelCallback? onPanCancel;
 
-  /// 是否显示背景图像 - 添加此参数控制背景显示
+  /// 是否显示背景图像
   final bool showBackgroundImage;
 
   /// 构造函数
@@ -32,12 +35,13 @@ class EraseLayerStack extends StatelessWidget {
     Key? key,
     required this.image,
     required this.transformationController,
+    this.brushSize = 20.0,
     this.onTransformationChanged,
     this.onPanStart,
     this.onPanUpdate,
     this.onPanEnd,
     this.onPanCancel,
-    this.showBackgroundImage = true, // 默认显示背景
+    this.showBackgroundImage = true,
   }) : super(key: key);
 
   @override
@@ -77,31 +81,23 @@ class EraseLayerStack extends StatelessWidget {
                   // 使用Listener代替GestureDetector以获取原始指针事件
                   onPointerDown: (event) {
                     if (onPanStart != null) {
-                      final localPosition = event.localPosition;
-                      if (kDebugMode) {
-                        print('👆 指针按下: $localPosition');
-                      }
                       onPanStart!(DragStartDetails(
                         globalPosition: event.position,
-                        localPosition: localPosition,
+                        localPosition: event.localPosition,
                       ));
                     }
                   },
                   onPointerMove: (event) {
                     if (onPanUpdate != null) {
-                      final localPosition = event.localPosition;
                       onPanUpdate!(DragUpdateDetails(
                         globalPosition: event.position,
-                        localPosition: localPosition,
+                        localPosition: event.localPosition,
                         delta: event.delta,
                       ));
                     }
                   },
                   onPointerUp: (event) {
                     if (onPanEnd != null) {
-                      if (kDebugMode) {
-                        print('👆 指针抬起: ${event.localPosition}');
-                      }
                       onPanEnd!(DragEndDetails());
                     }
                   },
@@ -113,34 +109,27 @@ class EraseLayerStack extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // 背景图层 - 根据showBackgroundImage参数决定是否显示
+                      // 背景图层
                       if (showBackgroundImage)
                         RepaintBoundary(
                           child: BackgroundLayer(
                             image: image,
                             transformationController: transformationController,
-                            onChanged: onTransformationChanged,
                           ),
                         ),
 
-                      // 预览图层 - 总是显示擦除效果
+                      // 预览图层
                       RepaintBoundary(
                         child: PreviewLayer(
                           transformationController: transformationController,
+                          brushSize: brushSize,
+                          scale: transformationController.value
+                              .getMaxScaleOnAxis(),
                         ),
                       ),
 
-                      // 交互辅助层 - 提供半透明覆盖使得手势捕获更容易
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: Container(
-                            color: Colors.transparent,
-                          ),
-                        ),
-                      ),
-
-                      // 调试网格用于校准
-                      if (showDebugGrid) _buildDebugLayer(),
+                      // 调试网格
+                      if (showDebugGrid) _buildDebugGrid(),
                     ],
                   ),
                 ),
@@ -152,14 +141,11 @@ class EraseLayerStack extends StatelessWidget {
     );
   }
 
-  /// 构建调试辅助层
-  Widget _buildDebugLayer() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: CustomPaint(
-          painter: _DebugGridPainter(),
-          isComplex: false,
-        ),
+  /// 构建调试网格
+  Widget _buildDebugGrid() {
+    return IgnorePointer(
+      child: CustomPaint(
+        painter: _DebugGridPainter(),
       ),
     );
   }
@@ -170,7 +156,6 @@ class EraseLayerStack extends StatelessWidget {
     required double imageRatio,
     required double containerRatio,
   }) {
-    // 基于宽高比和容器尺寸计算显示大小
     if (imageRatio > containerRatio) {
       // 图像更宽，使用容器宽度
       return Size(containerSize.width, containerSize.width / imageRatio);
@@ -212,7 +197,7 @@ class _DebugGridPainter extends CustomPainter {
     canvas.drawLine(Offset(0, size.height / 2),
         Offset(size.width, size.height / 2), centerPaint);
 
-    // 绘制坐标标签
+    // 绘制尺寸标签
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );

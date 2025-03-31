@@ -1,159 +1,177 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../models/erase_mode.dart';
+import '../models/render_types.dart';
 import 'render_manager.dart';
 
-/// 渲染管理器具体实现
+/// 渲染管理器实现
 class RenderManagerImpl implements RenderManager {
-  /// 图层缓存
+  /// 图层图像缓存
   final Map<LayerType, ui.Image?> _layerImages = {};
 
   /// 图层脏区域
   final Map<LayerType, Rect?> _dirtyRegions = {};
 
-  /// 缓存
+  /// 类型缓存
   final Map<CacheType, ui.Image?> _caches = {};
 
-  /// 渲染锁
-  final Completer<void>? _renderLock = null;
+  /// 画布尺寸
+  Size? _size;
 
-  /// 构造函数
-  RenderManagerImpl();
+  /// 缓存统计
+  final Map<CacheType, int> _cacheHits = {};
+  final Map<CacheType, int> _cacheMisses = {};
 
   @override
   void clearCache(CacheType type) {
-    final cache = _caches[type];
-    if (cache != null) {
-      cache.dispose();
-      _caches[type] = null;
-    }
+    _caches[type]?.dispose();
+    _caches.remove(type);
   }
 
   @override
-  Future<ui.Image> composite() async {
-    if (_renderLock != null && !_renderLock!.isCompleted) {
-      await _renderLock!.future;
-    }
-
-    final completer = Completer<ui.Image>();
-    final Completer<void> renderLock = Completer<void>();
-
-    // 创建离屏渲染器
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    // 获取最大图像尺寸
-    Size compositeSize = const Size(1, 1);
-    for (final layer in _layerImages.values) {
-      if (layer != null) {
-        if (layer.width > compositeSize.width) {
-          compositeSize = Size(layer.width.toDouble(), compositeSize.height);
-        }
-        if (layer.height > compositeSize.height) {
-          compositeSize = Size(compositeSize.width, layer.height.toDouble());
-        }
-      }
-    }
-
-    // 按顺序绘制每个图层
-    final layerOrder = [
-      LayerType.original,
-      LayerType.buffer,
-      LayerType.preview,
-      LayerType.ui,
-    ];
-
-    for (final layerType in layerOrder) {
-      final layerImage = _layerImages[layerType];
-      if (layerImage != null) {
-        canvas.drawImage(layerImage, Offset.zero, Paint());
-      }
-    }
-
-    // 完成绘制并获取合成图像
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(
-      compositeSize.width.toInt(),
-      compositeSize.height.toInt(),
-    );
-
-    completer.complete(image);
-    renderLock.complete();
-
-    return completer.future;
+  void clearDirtyRegion(LayerType type) {
+    _dirtyRegions.remove(type);
   }
 
   @override
   void dispose() {
-    // 释放所有图层图像
-    for (final layer in _layerImages.values) {
-      layer?.dispose();
+    // 清理所有图像资源
+    for (final image in [..._layerImages.values, ..._caches.values]) {
+      image?.dispose();
     }
     _layerImages.clear();
-
-    // 释放所有缓存
-    for (final cache in _caches.values) {
-      cache?.dispose();
-    }
     _caches.clear();
+    _dirtyRegions.clear();
+  }
+
+  @override
+  void forceRepaint() {
+    // 将所有图层标记为脏区域
+    for (final type in LayerType.values) {
+      if (_layerImages.containsKey(type)) {
+        _dirtyRegions[type] = Rect.fromLTWH(
+          0,
+          0,
+          _size?.width ?? 0,
+          _size?.height ?? 0,
+        );
+      }
+    }
   }
 
   @override
   ui.Image? getCache(CacheType type) {
-    return _caches[type];
+    final image = _caches[type];
+    if (image != null) {
+      _cacheHits[type] = (_cacheHits[type] ?? 0) + 1;
+    } else {
+      _cacheMisses[type] = (_cacheMisses[type] ?? 0) + 1;
+    }
+    return image;
   }
 
   @override
-  ui.Image? getLayerImage(LayerType type) {
-    return _layerImages[type];
+  CacheStats getCacheStats() {
+    int totalSize = 0;
+    int totalHits = 0;
+    int totalMisses = 0;
+
+    for (final type in CacheType.values) {
+      if (_caches.containsKey(type)) {
+        final image = _caches[type];
+        if (image != null) {
+          // 估算图像内存大小
+          totalSize += image.width * image.height * 4; // 4字节/像素
+        }
+      }
+      totalHits += _cacheHits[type] ?? 0;
+      totalMisses += _cacheMisses[type] ?? 0;
+    }
+
+    return CacheStats(
+      size: totalSize,
+      hits: totalHits,
+      misses: totalMisses,
+    );
   }
+
+  @override
+  Rect? getDirtyRegion(LayerType type) => _dirtyRegions[type];
+
+  @override
+  ui.Image? getLayerImage(LayerType type) => _layerImages[type];
 
   @override
   void invalidateLayer(LayerType type) {
-    _dirtyRegions[type] = Rect.largest;
+    // 如果图层存在，标记整个图层为脏区域
+    if (_layerImages.containsKey(type)) {
+      _dirtyRegions[type] = Rect.fromLTWH(
+        0,
+        0,
+        _size?.width ?? 0,
+        _size?.height ?? 0,
+      );
+    }
   }
 
   @override
-  void scheduleRepaint(Rect? area) {
-    // 如果指定了区域，更新所有图层的脏区域
-    if (area != null) {
-      for (final layerType in _dirtyRegions.keys) {
-        final currentDirty = _dirtyRegions[layerType];
-        if (currentDirty == null) {
-          _dirtyRegions[layerType] = area;
-        } else {
-          _dirtyRegions[layerType] = currentDirty.expandToInclude(area);
-        }
+  Future<void> prepare(Size size) async {
+    _size = size;
+    // 清除所有脏区域
+    _dirtyRegions.clear();
+
+    // 检查并调整图层尺寸
+    for (final entry in _layerImages.entries) {
+      final image = entry.value;
+      if (image != null &&
+          (image.width != size.width.toInt() ||
+              image.height != size.height.toInt())) {
+        // 图层尺寸不匹配，需要重新创建
+        _layerImages[entry.key]?.dispose();
+        _layerImages[entry.key] = null;
+        invalidateLayer(entry.key);
       }
     }
+  }
 
-    // 在下一帧触发重绘
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 这里可以使用通知机制触发UI更新
-    });
+  @override
+  void rebuildCaches() {
+    // 清除所有缓存
+    for (final cache in _caches.values) {
+      cache?.dispose();
+    }
+    _caches.clear();
+
+    // 重置统计数据
+    _cacheHits.clear();
+    _cacheMisses.clear();
+  }
+
+  @override
+  void setDirtyRegion(LayerType type, Rect region) {
+    final existing = _dirtyRegions[type];
+    if (existing == null) {
+      _dirtyRegions[type] = region;
+    } else {
+      // 合并脏区域
+      _dirtyRegions[type] = existing.expandToInclude(region);
+    }
   }
 
   @override
   void updateCache(CacheType type, ui.Image data) {
-    final oldCache = _caches[type];
-    if (oldCache != null) {
-      oldCache.dispose();
-    }
+    _caches[type]?.dispose();
     _caches[type] = data;
   }
 
   @override
   void updateLayer(LayerType type, dynamic data) {
     if (data is ui.Image) {
-      final oldImage = _layerImages[type];
-      if (oldImage != null) {
-        oldImage.dispose();
-      }
+      _layerImages[type]?.dispose();
       _layerImages[type] = data;
-      _dirtyRegions.remove(type);
+    } else {
+      throw ArgumentError('Invalid layer data type');
     }
   }
 }

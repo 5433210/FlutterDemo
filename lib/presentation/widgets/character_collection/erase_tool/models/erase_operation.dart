@@ -1,113 +1,212 @@
 import 'dart:ui';
 
-/// 表示单个擦除操作的数据模型
+import 'erase_mode.dart';
+
+/// 擦除操作
 class EraseOperation {
-  /// 操作唯一标识符
+  /// 唯一标识符
   final String id;
 
-  /// 擦除点列表
+  /// 路径点列表
   final List<Offset> points;
 
   /// 笔刷大小
   final double brushSize;
 
-  /// 操作时间戳
+  /// 擦除模式
+  final EraseMode mode;
+
+  /// 创建时间
   final DateTime timestamp;
 
-  /// 创建一个擦除操作
+  /// 脏区域
+  Rect? _boundingBox;
+
+  /// 路径缓存
+  Path? _cachedPath;
+
   EraseOperation({
-    required this.id,
-    List<Offset>? points,
-    required this.brushSize,
-    DateTime? timestamp,
-  })  : points = points ?? <Offset>[],
-        timestamp = timestamp ?? DateTime.now();
-
-  /// 添加擦除点
-  void addPoint(Offset point) {
-    points.add(point);
-  }
-
-  /// 将操作应用到画布上
-  void apply(Canvas canvas) {
-    if (points.isEmpty) return;
-
-    final paint = Paint()
-      ..color = const Color(0x00000000) // 透明色
-      ..strokeWidth = brushSize
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke
-      ..blendMode = BlendMode.clear; // 使用清除混合模式实现擦除效果
-
-    // 创建路径并添加点
-    final path = Path();
-    path.moveTo(points.first.dx, points.first.dy);
-
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  /// 判断两个操作是否可以合并
-  /// 用于优化历史记录和性能
-  bool canMergeWith(EraseOperation other) {
-    // 如果两个操作时间间隔小于500毫秒，认为它们是连续的操作
-    final timeDifference =
-        timestamp.difference(other.timestamp).inMilliseconds.abs();
-    if (timeDifference > 500) return false;
-
-    // 如果笔刷大小不同，不合并
-    if (brushSize != other.brushSize) return false;
-
-    // 如果点之间的距离太远，不合并
-    if (points.isNotEmpty && other.points.isNotEmpty) {
-      final distance = (points.last - other.points.first).distance;
-      return distance < brushSize * 2; // 如果距离小于两倍笔刷大小，认为可以合并
-    }
-
-    return false;
-  }
-
-  /// 创建此操作的副本
-  EraseOperation copyWith({
     String? id,
     List<Offset>? points,
     double? brushSize,
+    EraseMode? mode,
     DateTime? timestamp,
-  }) {
-    return EraseOperation(
-      id: id ?? this.id,
-      points: points ?? List<Offset>.from(this.points),
-      brushSize: brushSize ?? this.brushSize,
-      timestamp: timestamp ?? this.timestamp,
-    );
-  }
+  })  : id = id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        points = points ?? <Offset>[],
+        brushSize = brushSize ?? 20.0,
+        mode = mode ?? EraseMode.normal,
+        timestamp = timestamp ?? DateTime.now();
 
-  /// 计算操作的边界矩形，用于局部更新
-  Rect getBounds() {
-    if (points.isEmpty) return Rect.zero;
+  /// 获取操作的边界矩形
+  Rect get bounds {
+    if (_boundingBox != null) return _boundingBox!;
 
-    double minX = points.first.dx;
-    double minY = points.first.dy;
-    double maxX = points.first.dx;
-    double maxY = points.first.dy;
+    if (points.isEmpty) {
+      return Rect.zero;
+    }
 
-    for (final point in points) {
+    double minX = points[0].dx;
+    double minY = points[0].dy;
+    double maxX = points[0].dx;
+    double maxY = points[0].dy;
+
+    for (var point in points) {
       if (point.dx < minX) minX = point.dx;
       if (point.dy < minY) minY = point.dy;
       if (point.dx > maxX) maxX = point.dx;
       if (point.dy > maxY) maxY = point.dy;
     }
 
-    // 添加笔刷大小的半径，确保包含所有可能被擦除的区域
-    return Rect.fromLTRB(
-      minX - brushSize / 2,
-      minY - brushSize / 2,
-      maxX + brushSize / 2,
-      maxY + brushSize / 2,
+    // 考虑笔刷大小
+    final halfBrush = brushSize / 2;
+    _boundingBox = Rect.fromLTRB(
+      minX - halfBrush,
+      minY - halfBrush,
+      maxX + halfBrush,
+      maxY + halfBrush,
+    );
+
+    return _boundingBox!;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is EraseOperation && other.id == id;
+  }
+
+  /// 添加点
+  void addPoint(Offset point) {
+    points.add(point);
+    // 清除缓存
+    _boundingBox = null;
+    _cachedPath = null;
+  }
+
+  /// 应用擦除效果到画布
+  void apply(Canvas canvas) {
+    if (points.isEmpty) return;
+
+    final path = createPath();
+    final paint = Paint()
+      ..color = const Color(0xFFFFFFFF) // 白色
+      ..strokeWidth = brushSize
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke
+      ..blendMode = BlendMode.clear; // 清除模式
+
+    // 绘制路径
+    canvas.drawPath(path, paint);
+
+    // 在每个点绘制圆形，确保断点处也被擦除
+    paint.style = PaintingStyle.fill;
+    for (final point in points) {
+      canvas.drawCircle(point, brushSize / 2, paint);
+    }
+  }
+
+  /// 检查是否可以与另一个操作合并
+  bool canMergeWith(EraseOperation other) {
+    if (mode != other.mode || brushSize != other.brushSize) {
+      return false;
+    }
+
+    // 检查时间间隔
+    const maxTimeGap = Duration(milliseconds: 500);
+    if (other.timestamp.difference(timestamp).abs() > maxTimeGap) {
+      return false;
+    }
+
+    // 检查空间距离
+    if (points.isNotEmpty && other.points.isNotEmpty) {
+      final lastPoint = points.last;
+      final firstPoint = other.points.first;
+      const maxDistance = 20.0;
+      if ((lastPoint - firstPoint).distance > maxDistance) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /// 创建笔刷路径
+  Path createPath() {
+    if (_cachedPath != null) return _cachedPath!;
+
+    final path = Path();
+    if (points.isEmpty) return path;
+
+    path.moveTo(points[0].dx, points[0].dy);
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    _cachedPath = path;
+    return path;
+  }
+
+  /// 获取边界矩形（用于兼容性）
+  Rect getBounds() => bounds;
+
+  /// 与另一个操作合并
+  EraseOperation mergeWith(EraseOperation other) {
+    if (!canMergeWith(other)) {
+      throw StateError('Cannot merge incompatible operations');
+    }
+
+    return EraseOperation(
+      id: id, // 保持原id
+      points: [...points, ...other.points],
+      brushSize: brushSize,
+      mode: mode,
+      timestamp: timestamp,
+    );
+  }
+
+  /// 优化路径点
+  EraseOperation optimize() {
+    if (points.length < 3) return this;
+
+    final optimizedPoints = <Offset>[points.first];
+    const minDistance = 5.0; // 最小点距离
+
+    for (int i = 1; i < points.length - 1; i++) {
+      final prev = points[i - 1];
+      final curr = points[i];
+      final next = points[i + 1];
+
+      // 计算当前点到前后点的距离
+      final d1 = (curr - prev).distance;
+      final d2 = (next - curr).distance;
+
+      // 如果距离太小，跳过当前点
+      if (d1 < minDistance && d2 < minDistance) continue;
+
+      // 计算角度变化
+      final angle1 = (curr - prev).direction;
+      final angle2 = (next - curr).direction;
+      final angleDiff = (angle2 - angle1).abs();
+
+      // 如果角度变化大，保留该点
+      if (angleDiff > 0.3) {
+        // 约17度
+        optimizedPoints.add(curr);
+      }
+    }
+
+    optimizedPoints.add(points.last);
+
+    return EraseOperation(
+      id: id,
+      points: optimizedPoints,
+      brushSize: brushSize,
+      mode: mode,
+      timestamp: timestamp,
     );
   }
 }

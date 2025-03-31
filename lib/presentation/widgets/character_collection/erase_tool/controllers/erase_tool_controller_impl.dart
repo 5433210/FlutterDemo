@@ -1,492 +1,267 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-import '../controllers/erase_tool_controller.dart';
 import '../models/erase_mode.dart';
 import '../models/erase_operation.dart';
-import '../states/erase_layer_state.dart';
-import '../states/erase_state_manager.dart';
-import '../utils/coordinate_transformer.dart';
+import '../models/render_types.dart';
+import 'erase_tool_controller.dart';
+import 'render_manager.dart';
 
-/// 擦除工具控制器实现
 class EraseToolControllerImpl extends EraseToolController {
-  /// 最小笔刷大小
-  static const double minBrushSize = 3.0;
+  /// 最大栈大小
+  static const int _maxStackSize = 50;
+  final RenderManager _renderManager;
+  final Queue<EraseOperation> _undoStack = Queue();
 
-  /// 最大笔刷大小
-  static const double maxBrushSize = 30.0;
+  final Queue<EraseOperation> _redoStack = Queue();
+  EraseOperation? _currentOperation;
+  double _brushSize;
+  EraseMode _mode;
+  bool _isErasing = false;
+  final bool _isInitialized = false;
+  Matrix4? _currentTransform;
+  Rect? _viewport;
 
-  /// 默认笔刷大小
-  static const double defaultBrushSize = 10.0;
+  Size? _canvasSize;
 
-  /// 节流计时器延迟(毫秒)
-  static const int throttleDelayMs = 32; // 降低到约30fps，减少频繁刷新
-
-  /// 单独处理通知节流的计时器
-  static const int notificationThrottleMs = 60; // 进一步限制UI更新频率
-
-  /// 最小重绘点数阈值 - 只有累积足够数量的点后才触发重绘
-  static const int minPointsBeforeNotify = 5;
-
-  /// 状态管理器
-  final EraseStateManager _stateManager;
-
-  /// 坐标转换器
-  final CoordinateTransformer _transformer;
-
-  /// 当前笔刷大小
-  double _brushSize = defaultBrushSize;
-
-  /// 当前擦除模式
-  EraseMode _mode = EraseMode.normal;
-
-  /// 事件节流计时器
-  Timer? _throttleTimer;
-
-  /// 临时擦除点缓存，用于节流处理
-  final List<Offset> _pointBuffer = [];
-
-  /// 是否初始化
-  bool _isInitialized = false;
-
-  /// 状态事件订阅
-  StreamSubscription<EraseStateEvent>? _stateEventSubscription;
-
-  /// 当前视口区域
-  Rect _viewport = Rect.zero;
-
-  bool _notificationsEnabled = true;
-
-  bool _pendingNotification = false;
-  Timer? _notificationThrottleTimer;
-  bool _disposed = false;
-
-  int _pointsAddedSinceLastNotify = 0;
-
-  /// 创建控制器
   EraseToolControllerImpl({
-    EraseStateManager? stateManager,
-    CoordinateTransformer? transformer,
+    required RenderManager renderManager,
     double? initialBrushSize,
     EraseMode? initialMode,
-  })  : _stateManager = stateManager ?? EraseStateManager(),
-        _transformer = transformer ?? CoordinateTransformer() {
-    if (initialBrushSize != null) {
-      _brushSize = initialBrushSize.clamp(minBrushSize, maxBrushSize);
-    }
-
-    if (initialMode != null) {
-      _mode = initialMode;
-    }
-
-    // 订阅状态变更事件
-    _subscribeToStateEvents();
-  }
-
-  // EraseToolController接口实现
+  })  : _renderManager = renderManager,
+        _brushSize = initialBrushSize ?? 20.0,
+        _mode = initialMode ?? EraseMode.normal;
 
   @override
   double get brushSize => _brushSize;
 
   @override
-  bool get canRedo => _stateManager.undoManager.canRedo;
+  bool get canRedo => _redoStack.isNotEmpty;
 
   @override
-  bool get canUndo => _stateManager.undoManager.canUndo;
+  bool get canUndo => _undoStack.isNotEmpty;
 
   @override
-  List<Offset> get currentPoints => _stateManager.layerState.displayPoints;
+  EraseOperation? get currentOperation => _currentOperation;
 
   @override
-  bool get isErasing =>
-      _stateManager.layerState.stateType == EraseStateType.erasing;
+  List<Offset> get currentPoints =>
+      _currentOperation?.points.toList() ?? const [];
 
-  /// 是否已初始化
-  bool get isInitialized => _isInitialized;
+  @override
+  bool get isErasing => _isErasing;
 
   @override
   EraseMode get mode => _mode;
 
   @override
-  List<EraseOperation> get operations {
-    // 获取所有未撤销的操作
-    return _stateManager.undoManager.undoOperations;
+  List<EraseOperation> get operations =>
+      [..._undoStack, if (_currentOperation != null) _currentOperation!];
+
+  @override
+  void applyOperations(Canvas canvas) {
+    // 应用已完成的操作
+    for (final operation in operations) {
+      operation.apply(canvas);
+    }
+
+    // 应用当前操作
+    _currentOperation?.apply(canvas);
   }
 
   @override
   void cancelErase() {
-    if (!_isInitialized || !isErasing) return;
-
-    _pointBuffer.clear();
-    _throttleTimer?.cancel();
-    _stateManager.cancelErase();
+    if (!_isErasing) return;
+    _currentOperation = null;
+    _isErasing = false;
+    _renderManager.invalidateLayer(LayerType.preview);
+    notifyListeners();
   }
 
   @override
   void clearAll() {
-    if (!_isInitialized || isErasing) return;
-
-    _stateManager.clearAll();
+    _undoStack.clear();
+    _redoStack.clear();
+    _currentOperation = null;
+    _isErasing = false;
+    _renderManager.invalidateLayer(LayerType.preview);
+    notifyListeners();
   }
 
   @override
   void continueErase(Offset point) {
-    if (!_isInitialized || !isErasing || _disposed) return;
+    if (!_isErasing || _currentOperation == null) return;
 
-    try {
-      // 转换为图像坐标
-      final transformedPoint = _transformer.transformPoint(point);
+    // 添加点到当前操作
+    _currentOperation!.addPoint(point);
 
-      // 添加到临时缓存，较小阈值以保证线条平滑
-      const minDistance = 1.0;
+    // 更新预览层的脏区域
+    final pointBounds = Rect.fromCircle(
+      center: point,
+      radius: _brushSize / 2,
+    );
+    _renderManager.setDirtyRegion(LayerType.preview, pointBounds);
 
-      if (_pointBuffer.isEmpty ||
-          (_pointBuffer.isNotEmpty &&
-              (transformedPoint - _pointBuffer.last).distance > minDistance)) {
-        _pointBuffer.add(transformedPoint);
-        _pointsAddedSinceLastNotify++;
-
-        // 立即添加第一个点，以保证立即显示光标
-        if (_pointBuffer.length == 1) {
-          _stateManager.continueErase(transformedPoint);
-          // 强制进行一次通知，让UI立即更新显示光标
-          notifyListeners();
-        }
-      }
-
-      // 当积累足够的点后进行处理
-      if (_pointsAddedSinceLastNotify >= minPointsBeforeNotify) {
-        _processPointBuffer();
-
-        // 强制通知UI更新，确保能看到擦除轨迹
-        if (!_notificationsEnabled) {
-          _notificationsEnabled = true;
-          notifyListeners();
-        }
-      }
-    } catch (e) {
-      print('❌ continueErase 错误: $e');
-    }
+    notifyListeners();
   }
 
   @override
   void dispose() {
-    _disposed = true;
-    _throttleTimer?.cancel();
-    _notificationThrottleTimer?.cancel();
-    _stateEventSubscription?.cancel();
-    _stateManager.dispose();
+    _currentOperation = null;
+    _undoStack.clear();
+    _redoStack.clear();
     super.dispose();
   }
 
   @override
   void endErase() {
-    if (!_isInitialized || !isErasing) return;
+    if (!_isErasing || _currentOperation == null) return;
 
-    // 处理剩余的点
-    _processPointBuffer();
+    // 优化路径点
+    final optimizedOperation = _currentOperation!.optimize();
 
-    // 结束擦除操作
-    _stateManager.endErase();
+    // 添加到撤销栈
+    _pushToUndoStack(optimizedOperation);
 
-    // 恢复通知
-    _resumeNotifications();
-  }
+    // 清理当前操作
+    _currentOperation = null;
+    _isErasing = false;
 
-  /// 初始化控制器
-  void initialize({
-    required ui.Image originalImage,
-    required Matrix4 transformMatrix,
-    required Size containerSize,
-    required Size imageSize,
-    Offset? containerOffset,
-    Rect? viewport,
-    Offset calibrationOffset = Offset.zero,
-    double scaleCorrection = 1.0,
-  }) {
-    try {
-      // 如果已经初始化则忽略
-      if (_isInitialized) {
-        print('⚠️ 控制器已初始化，忽略重复初始化');
-        return;
-      }
-
-      print('🔧 初始化控制器: ${imageSize.width}x${imageSize.height}');
-
-      // 使用异步方式更新图层状态，避免阻塞UI线程
-      Future.microtask(() {
-        if (_disposed) return;
-
-        // 设置原始图像
-        _stateManager.layerState.originalImage = originalImage;
-
-        // 初始化坐标转换器
-        _transformer.initializeTransform(
-          transformMatrix: transformMatrix,
-          containerSize: containerSize,
-          imageSize: imageSize,
-          containerOffset: containerOffset ?? Offset.zero,
-          viewport: viewport,
-          calibrationOffset: calibrationOffset,
-          scaleCorrection: scaleCorrection,
-        );
-
-        // 启用调试模式，方便排查问题
-        _transformer.enableDebug();
-
-        // 更新图层状态
-        _stateManager.updateLayerState(originalImage);
-
-        _isInitialized = true;
-
-        // 触发UI更新
-        notifyListeners();
-      });
-    } catch (e) {
-      print('❌ 初始化控制器失败: $e');
-    }
-  }
-
-  @override
-  void notifyListeners() {
-    if (_disposed) return;
-
-    if (!_notificationsEnabled) {
-      _pendingNotification = true;
-      return;
-    }
-
-    // 使用更严格的节流控制通知频率
-    if (_notificationThrottleTimer?.isActive ?? false) {
-      _pendingNotification = true;
-      return;
-    }
-
-    super.notifyListeners();
-
-    // 延长通知防抖时间，减少UI更新频率
-    _notificationThrottleTimer = Timer(
-      const Duration(milliseconds: notificationThrottleMs * 2),
-      () {
-        if (_disposed) return;
-        if (_pendingNotification) {
-          _pendingNotification = false;
-          if (!_disposed) {
-            super.notifyListeners();
-          }
-        }
-      },
-    );
-  }
-
-  @override
-  void redo() {
-    if (!_isInitialized || isErasing) return;
-
-    _stateManager.redo();
-  }
-
-  @override
-  void setBrushSize(double size) {
-    _brushSize = size.clamp(minBrushSize, maxBrushSize);
+    // 更新预览层
+    _renderManager.invalidateLayer(LayerType.preview);
     notifyListeners();
   }
 
   @override
+  Future<ui.Image?> getResultImage() async {
+    if (_canvasSize == null) return null;
+
+    // 获取预览层图像
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+
+    // 设置初始剪裁区域
+    canvas.clipRect(Offset.zero & _canvasSize!);
+
+    // 应用所有操作
+    applyOperations(canvas);
+
+    // 获取图像
+    final picture = recorder.endRecording();
+    final resultImage = await picture.toImage(
+      _canvasSize!.width.round(),
+      _canvasSize!.height.round(),
+    );
+
+    return resultImage;
+  }
+
+  /// 使所有图层无效
+  void invalidateAllLayers() {
+    _renderManager.invalidateLayer(LayerType.original);
+    _renderManager.invalidateLayer(LayerType.buffer);
+    _renderManager.invalidateLayer(LayerType.preview);
+  }
+
+  @override
+  void redo() {
+    if (!canRedo) return;
+
+    final operation = _redoStack.removeLast();
+    _pushToUndoStack(operation);
+
+    // 更新预览层
+    _renderManager.invalidateLayer(LayerType.preview);
+    notifyListeners();
+  }
+
+  @override
+  void setBrushSize(double size) {
+    if (size == _brushSize) return;
+    _brushSize = size.clamp(5.0, 100.0);
+    notifyListeners();
+  }
+
+  @override
+  void setCanvasSize(Size size) {
+    if (_canvasSize != size) {
+      _canvasSize = size;
+      // 通知渲染管理器
+      _renderManager.prepare(size);
+      invalidateAllLayers();
+    }
+  }
+
+  @override
   void setMode(EraseMode mode) {
+    if (mode == _mode) return;
     _mode = mode;
+
+    // 调整笔刷大小到新模式的范围
+    final (min, max) = mode.brushSizeRange;
+    _brushSize = _brushSize.clamp(min, max);
+
     notifyListeners();
   }
 
   @override
   void startErase(Offset point) {
-    // 添加详细调试日志
-    print('🖌️ startErase at $point with brushSize: $_brushSize');
+    if (_isErasing) return;
 
-    if (!_isInitialized) {
-      print('⚠️ 警告: 控制器未初始化');
+    // 清除重做栈
+    _redoStack.clear();
 
-      // 尝试自动初始化，如果状态允许
-      if (_stateManager.layerState.originalImage != null) {
-        print('🔄 使用现有图像自动初始化控制器');
-        _isInitialized = true;
-      } else {
-        print('❌ 无法开始擦除 - 控制器未初始化且无可用图像');
-        return;
-      }
-    }
+    // 创建新操作
+    _currentOperation = EraseOperation(
+      brushSize: _brushSize,
+      mode: _mode,
+    );
+    _currentOperation!.addPoint(point);
 
-    try {
-      // 转换为图像坐标
-      final transformedPoint = _transformer.transformPoint(point);
-      print('👉 转换后的坐标: $transformedPoint (原始: $point)');
+    _isErasing = true;
 
-      // 清除所有现有点，确保开始新的擦除操作
-      _pointBuffer.clear();
+    // 更新预览层的脏区域
+    final pointBounds = Rect.fromCircle(
+      center: point,
+      radius: _brushSize / 2,
+    );
+    _renderManager.setDirtyRegion(LayerType.preview, pointBounds);
 
-      // 立即强制通知状态变化，确保UI更新
-      _notificationsEnabled = true;
-
-      // 开始新的擦除操作
-      _stateManager.startErase(transformedPoint, _brushSize);
-      print('✅ 开始新的擦除操作，笔刷大小: $_brushSize');
-
-      // 立即触发一次通知，确保UI能显示初始状态
-      notifyListeners();
-    } catch (e) {
-      print('❌ startErase 错误: $e');
-    }
+    notifyListeners();
   }
 
   @override
   void undo() {
-    if (!_isInitialized || isErasing) return;
+    if (!canUndo) return;
 
-    _stateManager.undo();
+    final operation = _undoStack.removeLast();
+    _redoStack.add(operation);
+
+    // 更新预览层
+    _renderManager.invalidateLayer(LayerType.preview);
+    notifyListeners();
   }
 
-  /// 更新容器偏移
-  void updateContainerOffset(Offset offset) {
-    _transformer.updateContainerOffset(offset);
-  }
-
-  /// 更新容器大小
-  void updateContainerSize(Size size) {
-    _transformer.updateContainerSize(size);
-  }
-
-  /// 更新图像大小
-  void updateImageSize(Size size) {
-    _transformer.updateImageSize(size);
-  }
-
-  /// 更新变换矩阵
-  void updateTransform(Matrix4 transformMatrix) {
-    _transformer.updateTransform(transformMatrix);
-  }
-
-  /// 更新视口区域
-  void updateViewport(Rect viewport) {
-    _viewport = viewport;
-    _transformer.updateViewport(viewport);
-    print(
-        '📺 Updated viewport: ${viewport.left},${viewport.top},${viewport.width}x${viewport.height}');
-  }
-
-  /// 暂停通知，避免频繁刷新
-  void _pauseNotifications() {
-    _notificationsEnabled = false;
-    _pendingNotification = false;
-  }
-
-  /// 处理点缓存，应用平滑化处理
-  void _processPointBuffer() {
-    if (_disposed || _pointBuffer.isEmpty) return;
-
-    try {
-      // 对点进行采样并平滑化处理
-      final processedPoints = _processPoints(_pointBuffer);
-
-      // 添加到当前操作，但不触发立即通知
-      for (final point in processedPoints) {
-        _stateManager.continueErase(point);
-        print('➕ Added point: $point');
+  /// 将操作添加到撤销栈
+  void _pushToUndoStack(EraseOperation operation) {
+    // 尝试与上一个操作合并
+    if (_undoStack.isNotEmpty) {
+      final lastOperation = _undoStack.last;
+      if (lastOperation.canMergeWith(operation)) {
+        _undoStack.removeLast();
+        _undoStack.add(lastOperation.mergeWith(operation));
+        return;
       }
-
-      // 重置计数器
-      _pointsAddedSinceLastNotify = 0;
-
-      print('🔄 Processed ${processedPoints.length} points');
-
-      // 清空缓存
-      _pointBuffer.clear();
-    } catch (e) {
-      print('ERROR in _processPointBuffer: $e');
-    }
-  }
-
-  /// 处理点序列，进行采样和平滑化
-  List<Offset> _processPoints(List<Offset> points) {
-    if (points.length <= 2) return List.from(points);
-
-    // 采样率根据模式和点数动态调整
-    int sampleRate = 1;
-    if (_mode != EraseMode.precise && points.length > 10) {
-      sampleRate = 2; // 对于普通模式且点数较多时，进行采样减少点数
     }
 
-    // 采样点
-    final sampled = <Offset>[];
-    for (int i = 0; i < points.length; i += sampleRate) {
-      sampled.add(points[i]);
+    _undoStack.add(operation);
+
+    // 限制栈大小
+    while (_undoStack.length > _maxStackSize) {
+      _undoStack.removeFirst();
     }
-
-    // 确保包含最后一个点
-    if (points.isNotEmpty && sampled.last != points.last) {
-      sampled.add(points.last);
-    }
-
-    // 平滑处理(如果有足够的点)
-    if (_mode != EraseMode.precise && sampled.length > 3) {
-      return _smoothPoints(sampled);
-    }
-
-    return sampled;
-  }
-
-  /// 恢复通知并触发一次更新
-  void _resumeNotifications() {
-    _notificationsEnabled = true;
-    if (_pendingNotification) {
-      _pendingNotification = false;
-      notifyListeners();
-    }
-  }
-
-  /// 平滑点序列，减少抖动，使用高斯加权
-  List<Offset> _smoothPoints(List<Offset> points) {
-    if (points.length <= 3) return points;
-
-    final result = <Offset>[];
-
-    // 保留首尾点
-    result.add(points.first);
-
-    // 对中间点进行平滑处理，使用三点高斯加权
-    for (int i = 1; i < points.length - 1; i++) {
-      final prev = points[i - 1];
-      final current = points[i];
-      final next = points[i + 1];
-
-      // 使用高斯加权 [0.25, 0.5, 0.25]
-      final smoothedX = prev.dx * 0.25 + current.dx * 0.5 + next.dx * 0.25;
-      final smoothedY = prev.dy * 0.25 + current.dy * 0.5 + next.dy * 0.25;
-
-      result.add(Offset(smoothedX, smoothedY));
-    }
-
-    // 添加最后一个点
-    result.add(points.last);
-
-    return result;
-  }
-
-  /// 订阅状态变更事件
-  void _subscribeToStateEvents() {
-    _stateEventSubscription = _stateManager.stateEvents.listen((event) {
-      // 根据事件类型处理状态变更
-      switch (event.type) {
-        case EraseStateType.idle:
-        case EraseStateType.erasing:
-        case EraseStateType.committing:
-        case EraseStateType.undoing:
-        case EraseStateType.redoing:
-          // 通知UI更新
-          notifyListeners();
-          break;
-      }
-    });
   }
 }

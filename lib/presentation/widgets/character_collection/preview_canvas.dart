@@ -376,6 +376,7 @@ class _PreviewCanvasState extends ConsumerState<PreviewCanvas> {
                       child: IgnorePointer(
                           // 禁止 EraseToolWidget 接收手势
                           child: EraseToolWidget(
+                        transformationController: _transformationController,
                         image: _lastUiImage!,
                         initialBrushSize: widget.brushSize,
                         onEraseComplete: _handleEraseComplete,
