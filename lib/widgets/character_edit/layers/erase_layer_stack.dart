@@ -19,6 +19,8 @@ class EraseLayerStack extends StatefulWidget {
   final bool altKeyPressed;
   // 添加笔刷大小参数
   final double brushSize;
+  // 添加画笔颜色参数
+  final Color brushColor;
 
   const EraseLayerStack({
     Key? key,
@@ -29,6 +31,7 @@ class EraseLayerStack extends StatefulWidget {
     this.onEraseEnd,
     this.altKeyPressed = false,
     this.brushSize = 10.0,
+    this.brushColor = Colors.white,
   }) : super(key: key);
 
   @override
@@ -69,6 +72,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             currentPath: _currentPath,
             dirtyRect: _dirtyRect,
             brushSize: widget.brushSize, // 传递笔刷大小作为默认值
+            brushColor: widget.brushColor, // 传递画笔颜色
           ),
 
           // UI图层 - 添加轮廓支持和Alt键状态

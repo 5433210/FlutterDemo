@@ -63,7 +63,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   @override
   Widget build(BuildContext context) {
     // 打印当前Alt键状态以便调试
-    print('当前Alt键状态: $_isAltKeyPressed, 擦除笔刷大小: ${widget.brushSize}');
+    print(
+        '画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, 画笔颜色: ${widget.brushColor}');
 
     return Focus(
       autofocus: true,
@@ -89,6 +90,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
             onEraseEnd: _handleEraseEnd,
             altKeyPressed: _isAltKeyPressed,
             brushSize: widget.brushSize,
+            brushColor: widget.brushColor,
           ),
         ),
       ),
@@ -109,6 +111,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     // 当轮廓检测设置改变时，更新轮廓
     if (widget.showOutline != oldWidget.showOutline ||
         widget.invertMode != oldWidget.invertMode) {
+      print(
+          '轮廓或反转模式变化 - invertMode: ${widget.invertMode}, showOutline: ${widget.showOutline}');
       _updateOutline();
     }
   }

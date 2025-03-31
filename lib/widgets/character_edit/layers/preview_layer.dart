@@ -70,7 +70,8 @@ class _PreviewPainter extends CustomPainter {
       ..isAntiAlias = true;
 
     // 打印调试信息
-    print('绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}');
+    print('绘制预览层 - 路径数: ${paths.length}, 当前路径: ${currentPath != null},'
+        ' 画笔颜色: $brushColor');
 
     // 绘制所有已完成的路径，每个路径使用自己的笔刷大小
     for (final pathInfo in paths) {
@@ -104,7 +105,11 @@ class _PreviewPainter extends CustomPainter {
     // 简化重绘逻辑，确保路径变化时重绘
     if (paths.length != oldDelegate.paths.length) return true;
     if ((currentPath == null) != (oldDelegate.currentPath == null)) return true;
-    if (brushColor != oldDelegate.brushColor) return true;
+    if (brushColor != oldDelegate.brushColor) {
+      print('画笔颜色改变 - 旧: ${oldDelegate.brushColor}, 新: $brushColor');
+      return true;
+    }
+
     if (brushSize != oldDelegate.brushSize) return true;
 
     // 如果有当前路径，总是重绘（因为路径在变化）

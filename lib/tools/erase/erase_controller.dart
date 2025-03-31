@@ -10,8 +10,8 @@ class EraseController with ChangeNotifier {
   List<PathInfo> _paths = [];
   List<PathInfo> _redoPaths = [];
 
-  // 获取画笔颜色
-  Color get brushColor => _state.invertMode ? Colors.black : Colors.white;
+  // 获取画笔颜色 - 直接使用state中的实现
+  Color get brushColor => _state.brushColor;
 
   // 设置和获取画笔大小
   double get brushSize => _state.brushSize;
@@ -31,8 +31,13 @@ class EraseController with ChangeNotifier {
   bool get invertMode => _state.invertMode;
 
   set invertMode(bool value) {
-    _state.invertMode = value;
-    notifyListeners();
+    if (_state.invertMode != value) {
+      _state.invertMode = value;
+      print(
+          '切换反转模式 - invertMode: ${_state.invertMode}, brushColor: ${_state.brushColor}');
+      notifyListeners();
+      print('通知监听器完成');
+    }
   }
 
   // 设置和获取描边模式

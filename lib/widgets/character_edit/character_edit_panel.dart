@@ -40,7 +40,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseStart: _handleEraseStart,
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
-            brushColor: Colors.white,
+            brushColor:
+                _eraseController.brushColor, // 使用EraseController中的brushColor
             brushSize: _currentBrushSize, // 传递当前笔刷大小
           ),
         ),
@@ -195,8 +196,11 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   }
 
   void _toggleInvert() {
+    print('切换反转模式');
     setState(() {
       _eraseController.invertMode = !_eraseController.invertMode;
+      print(
+          '当前反转模式: ${_eraseController.invertMode}, 画笔颜色: ${_eraseController.brushColor}');
     });
   }
 
