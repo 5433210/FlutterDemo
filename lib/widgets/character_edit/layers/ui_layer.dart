@@ -10,6 +10,7 @@ class UILayer extends BaseLayer {
   final Function(Offset)? onPointerDown;
   final Function(Offset, Offset)? onPointerMove;
   final Function(Offset)? onPointerUp;
+  final Function(Offset)? onPan;
   final MouseCursor cursor;
   final DetectedOutline? outline;
   final Size? imageSize;
@@ -25,6 +26,7 @@ class UILayer extends BaseLayer {
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
+    this.onPan,
     this.cursor = SystemMouseCursors.precise,
     this.outline,
     this.imageSize,
@@ -44,23 +46,33 @@ class UILayer extends BaseLayer {
     return MouseRegion(
       cursor: altKeyPressed ? SystemMouseCursors.move : cursor,
       child: Listener(
-        // 在Alt键按下时不处理擦除事件
         onPointerDown: (event) {
-          if (altKeyPressed) return; // Alt键按下时不处理擦除
+          if (altKeyPressed) {
+            print('Alt+鼠标按下，准备平移');
+            return;
+          }
           print('鼠标按下: ${event.localPosition}');
           onPointerDown?.call(event.localPosition);
         },
         onPointerMove: (event) {
-          if (altKeyPressed) return; // Alt键按下时不处理擦除
-          print('鼠标移动: ${event.localPosition}, 增量: ${event.delta}');
-          onPointerMove?.call(
-            event.localPosition,
-            event.delta,
-          );
+          if (altKeyPressed) {
+            if (event.buttons == 1) {
+              // 鼠标左键按下
+              print('Alt+拖拽平移: ${event.delta}');
+              // 使用原始delta进行平移，不再反转方向
+              onPan?.call(event.delta);
+              return;
+            }
+          } else {
+            print('鼠标移动: ${event.localPosition}, 增量: ${event.delta}');
+            onPointerMove?.call(
+              event.localPosition,
+              event.delta,
+            );
+          }
         },
         onPointerUp: (event) {
-          if (altKeyPressed) return; // Alt键按下时不处理擦除
-          print('鼠标释放: ${event.localPosition}');
+          if (altKeyPressed) return;
           onPointerUp?.call(event.localPosition);
         },
         child: Container(

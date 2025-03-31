@@ -16,7 +16,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
   final ui.Image image;
   final bool showOutline;
   final bool invertMode;
-  final bool imageInvertMode; // 新增图像反转模式
+  final bool imageInvertMode;
   final Function(Offset)? onEraseStart;
   final Function(Offset, Offset)? onEraseUpdate;
   final Function()? onEraseEnd;
@@ -29,7 +29,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
     required this.image,
     this.showOutline = false,
     this.invertMode = false,
-    this.imageInvertMode = false, // 默认为false
+    this.imageInvertMode = false,
     this.onEraseStart,
     this.onEraseUpdate,
     this.onEraseEnd,
@@ -56,37 +56,51 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   bool _isProcessing = false;
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
   bool _isAltKeyPressed = false;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
     print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
         '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}');
 
-    return Focus(
+    return RawKeyboardListener(
+      focusNode: _focusNode,
       autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: InteractiveViewer(
-        transformationController: _transformationController,
-        constrained: false,
-        boundaryMargin: const EdgeInsets.all(double.infinity),
-        minScale: 0.1,
-        maxScale: 5.0,
-        panEnabled: _isAltKeyPressed,
-        child: SizedBox(
-          width: widget.image.width.toDouble(),
-          height: widget.image.height.toDouble(),
-          key: _stackKey,
-          child: EraseLayerStack(
-            key: _layerStackKey,
-            image: widget.image,
-            transformationController: _transformationController,
-            onEraseStart: _handleEraseStart,
-            onEraseUpdate: _handleEraseUpdate,
-            onEraseEnd: _handleEraseEnd,
-            altKeyPressed: _isAltKeyPressed,
-            brushSize: widget.brushSize,
-            brushColor: widget.brushColor,
-            imageInvertMode: widget.imageInvertMode,
+      onKey: _handleRawKeyEvent,
+      child: GestureDetector(
+        onTapDown: (_) => _focusNode.requestFocus(),
+        child: InteractiveViewer(
+          transformationController: _transformationController,
+          constrained: false,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          minScale: 0.1,
+          maxScale: 5.0,
+          panEnabled: false,
+          child: SizedBox(
+            width: widget.image.width.toDouble(),
+            height: widget.image.height.toDouble(),
+            key: _stackKey,
+            child: EraseLayerStack(
+              key: _layerStackKey,
+              image: widget.image,
+              transformationController: _transformationController,
+              onEraseStart: _handleEraseStart,
+              onEraseUpdate: _handleEraseUpdate,
+              onEraseEnd: _handleEraseEnd,
+              altKeyPressed: _isAltKeyPressed,
+              onPan: (delta) {
+                // 直接使用原始delta，不再反转方向
+                setState(() {
+                  final Matrix4 matrix =
+                      _transformationController.value.clone();
+                  matrix.translate(delta.dx, delta.dy);
+                  _transformationController.value = matrix;
+                });
+              },
+              brushSize: widget.brushSize,
+              brushColor: widget.brushColor,
+              imageInvertMode: widget.imageInvertMode,
+            ),
           ),
         ),
       ),
@@ -111,6 +125,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
           'showOutline: ${widget.showOutline}');
       _updateOutline();
     }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   void fitToScreen() {
@@ -148,7 +168,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     });
   }
 
-  // 更新路径列表
   void updatePaths(List<PathInfo> paths) {
     if (_layerStackKey.currentState != null) {
       _layerStackKey.currentState!.updatePaths(paths);
@@ -184,15 +203,20 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     );
   }
 
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (event.logicalKey == LogicalKeyboardKey.alt) {
-      final bool isDown = event is KeyDownEvent;
-      setState(() {
-        _isAltKeyPressed = isDown;
-      });
-      return KeyEventResult.handled;
+  void _handleRawKeyEvent(RawKeyEvent event) {
+    print('键盘事件: ${event.runtimeType}, 键: ${event.logicalKey}');
+
+    if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      final bool shouldBePressed = event is RawKeyDownEvent;
+
+      if (_isAltKeyPressed != shouldBePressed) {
+        print('Alt键状态改变: $shouldBePressed');
+        setState(() {
+          _isAltKeyPressed = shouldBePressed;
+        });
+      }
     }
-    return KeyEventResult.ignored;
   }
 
   Future<void> _updateOutline() async {

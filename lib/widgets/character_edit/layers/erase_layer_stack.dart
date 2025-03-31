@@ -15,6 +15,8 @@ class EraseLayerStack extends StatefulWidget {
   final Function(Offset)? onEraseStart;
   final Function(Offset, Offset)? onEraseUpdate;
   final Function()? onEraseEnd;
+  // 添加平移回调
+  final Function(Offset)? onPan;
   // 添加Alt键状态参数
   final bool altKeyPressed;
   // 添加笔刷大小参数
@@ -31,6 +33,7 @@ class EraseLayerStack extends StatefulWidget {
     this.onEraseStart,
     this.onEraseUpdate,
     this.onEraseEnd,
+    this.onPan,
     this.altKeyPressed = false,
     this.brushSize = 10.0,
     this.brushColor = Colors.white,
@@ -87,6 +90,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
               onPointerDown: _handlePointerDown,
               onPointerMove: _handlePointerMove,
               onPointerUp: _handlePointerUp,
+              onPan: widget.onPan,
               outline: _outline,
               imageSize: Size(
                 widget.image.width.toDouble(),
