@@ -9,6 +9,7 @@ import '../../../domain/models/character/processing_options.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../tools/image/image_utils.dart';
 import 'layers/erase_layer_stack.dart';
+import 'layers/preview_layer.dart';
 
 /// 编辑画布组件，管理缩放和平移，整合所有功能
 class CharacterEditCanvas extends ConsumerStatefulWidget {
@@ -145,6 +146,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
         _updateOutline();
       }
     });
+  }
+
+  // 更新路径列表
+  void updatePaths(List<PathInfo> paths) {
+    if (_layerStackKey.currentState != null) {
+      _layerStackKey.currentState!.updatePaths(paths);
+    }
   }
 
   void _handleEraseEnd() {

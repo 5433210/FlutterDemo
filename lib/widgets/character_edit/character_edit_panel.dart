@@ -24,6 +24,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   final EraseController _eraseController = EraseController();
   final GlobalKey<CharacterEditCanvasState> _canvasKey = GlobalKey();
   double _currentBrushSize = 10.0;
+  bool _canUndo = false;
+  bool _canRedo = false;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +54,20 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     );
   }
 
+  @override
+  void dispose() {
+    _eraseController.removeListener(_handleEraseControllerChange);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 监听EraseController的变化
+    _eraseController.addListener(_handleEraseControllerChange);
+    _updateUndoRedoState();
+  }
+
   Widget _buildBottomActions() {
     return Container(
       height: 60,
@@ -69,15 +85,12 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // 取消按钮
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
             },
             child: const Text('取消'),
           ),
-
-          // 完成按钮
           ElevatedButton(
             onPressed: _finishEditing,
             child: const Text('完成'),
@@ -176,14 +189,14 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
           // 撤销按钮
           IconButton(
             icon: const Icon(Icons.undo),
-            onPressed: _eraseController.canUndo ? _undo : null,
+            onPressed: _canUndo ? _undo : null,
             tooltip: '撤销',
           ),
 
           // 重做按钮
           IconButton(
             icon: const Icon(Icons.redo),
-            onPressed: _eraseController.canRedo ? _redo : null,
+            onPressed: _canRedo ? _redo : null,
             tooltip: '重做',
           ),
         ],
@@ -197,8 +210,13 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     Navigator.of(context).pop(result);
   }
 
+  void _handleEraseControllerChange() {
+    _updateUndoRedoState();
+  }
+
   void _handleEraseEnd() {
     _eraseController.endErase();
+    print('结束擦除');
   }
 
   void _handleEraseStart(Offset position) {
@@ -211,8 +229,13 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   }
 
   void _redo() {
-    _eraseController.redo();
-    setState(() {});
+    if (_canRedo) {
+      print('执行重做操作');
+      _eraseController.redo();
+      final paths = _eraseController.getPaths();
+      print('重做后获取路径 - 数量: ${paths.length}');
+      _canvasKey.currentState?.updatePaths(paths);
+    }
   }
 
   void _toggleImageInvert() {
@@ -234,7 +257,20 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   }
 
   void _undo() {
-    _eraseController.undo();
-    setState(() {});
+    if (_canUndo) {
+      print('执行撤销操作');
+      _eraseController.undo();
+      final paths = _eraseController.getPaths();
+      print('撤销后获取路径 - 数量: ${paths.length}');
+      _canvasKey.currentState?.updatePaths(paths);
+    }
+  }
+
+  void _updateUndoRedoState() {
+    setState(() {
+      _canUndo = _eraseController.canUndo;
+      _canRedo = _eraseController.canRedo;
+      print('更新按钮状态 - canUndo: $_canUndo, canRedo: $_canRedo');
+    });
   }
 }

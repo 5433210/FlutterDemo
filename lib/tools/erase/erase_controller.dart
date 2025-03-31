@@ -17,8 +17,10 @@ class EraseController with ChangeNotifier {
   double get brushSize => _state.brushSize;
 
   set brushSize(double value) {
-    _state.brushSize = value;
-    notifyListeners();
+    if (_state.brushSize != value) {
+      _state.brushSize = value;
+      notifyListeners();
+    }
   }
 
   // 检查是否可以重做
@@ -61,29 +63,37 @@ class EraseController with ChangeNotifier {
 
   // 清除所有路径
   void clearPaths() {
-    _paths = [];
-    _redoPaths = [];
-    _currentPath = null;
-    notifyListeners();
+    if (_paths.isNotEmpty || _currentPath != null) {
+      _paths = [];
+      _redoPaths = [];
+      _currentPath = null;
+      print('清除所有路径');
+      notifyListeners();
+    }
   }
 
   // 结束擦除操作
   void endErase() {
     if (_currentPath != null) {
-      _paths.add(_currentPath!);
+      // 检查路径是否有效
+      Rect bounds = _currentPath!.path.getBounds();
+      if (bounds.width > 0 || bounds.height > 0) {
+        _paths.add(_currentPath!);
+        _redoPaths.clear(); // 添加新路径时清空重做栈
+        print('结束擦除 - 添加路径 - 路径数: ${_paths.length}');
+        notifyListeners();
+      }
       _currentPath = null;
-      notifyListeners();
     }
   }
 
   // 获取最终结果
   dynamic getFinalResult() {
-    // 收集所有路径和笔刷大小信息
     final pathsData = _paths
         .map((pathInfo) => {
               'path': pathInfo.path,
               'brushSize': pathInfo.brushSize,
-              'brushColor': pathInfo.brushColor.value, // 保存颜色值
+              'brushColor': pathInfo.brushColor.value,
             })
         .toList();
 
@@ -109,16 +119,25 @@ class EraseController with ChangeNotifier {
     if (_redoPaths.isNotEmpty) {
       final path = _redoPaths.removeLast();
       _paths.add(path);
+      print('重做操作 - 路径数: ${_paths.length}, 重做栈: ${_redoPaths.length}');
       notifyListeners();
     }
   }
 
   // 开始擦除操作
-  void startErase(Offset position, {bool? useCurrentColor}) {
+  void startErase(Offset position) {
+    if (_currentPath != null) {
+      // 如果有未完成的路径，先完成它
+      endErase();
+    }
+
     final path = Path()..moveTo(position.dx, position.dy);
-    _currentPath =
-        PathInfo(path: path, brushSize: brushSize, brushColor: brushColor);
-    _redoPaths = []; // 清空重做栈
+    _currentPath = PathInfo(
+      path: path,
+      brushSize: brushSize,
+      brushColor: brushColor,
+    );
+    print('开始擦除 - 笔刷大小: $brushSize, 颜色: $brushColor');
     notifyListeners();
   }
 
@@ -127,6 +146,7 @@ class EraseController with ChangeNotifier {
     if (_paths.isNotEmpty) {
       final path = _paths.removeLast();
       _redoPaths.add(path);
+      print('撤销操作 - 路径数: ${_paths.length}, 重做栈: ${_redoPaths.length}');
       notifyListeners();
     }
   }

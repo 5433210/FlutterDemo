@@ -139,6 +139,18 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     });
   }
 
+  // 更新路径列表方法
+  void updatePaths(List<PathInfo> newPaths) {
+    setState(() {
+      print(
+          'EraseLayerStack更新路径 - 当前: ${_paths.length}, 新路径: ${newPaths.length}');
+      _paths = newPaths;
+      _currentPath = null;
+      _dirtyRect = null;
+      print('更新路径列表 - 当前路径数: ${_paths.length}');
+    });
+  }
+
   void _handlePointerDown(Offset position) {
     print('处理鼠标按下 - 现有路径数: ${_paths.length}');
 
@@ -214,6 +226,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       // 创建一个新的路径列表，保留所有现有路径并添加当前完成的路径
       List<PathInfo> newPaths = List.from(_paths);
       newPaths.add(_currentPath!);
+      print('添加新路径 - 更新前: ${_paths.length}, 更新后: ${newPaths.length}');
 
       // 更新状态，清除当前路径和脏区域
       setState(() {
