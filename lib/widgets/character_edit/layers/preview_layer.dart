@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 
 import 'base_layer.dart';
 
-/// 路径信息类，包含路径和笔刷大小
+/// 路径信息类，包含路径和笔刷信息
 class PathInfo {
   final Path path;
   final double brushSize;
+  final Color brushColor;
 
-  PathInfo({required this.path, required this.brushSize});
+  PathInfo({
+    required this.path,
+    required this.brushSize,
+    required this.brushColor,
+  });
 }
 
 /// 预览图层，显示擦除预览效果
@@ -48,7 +53,7 @@ class _PreviewPainter extends CustomPainter {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
   final Color brushColor;
-  final double brushSize; // 默认笔刷大小
+  final double brushSize;
   final Rect? dirtyRect;
 
   _PreviewPainter({
@@ -61,22 +66,14 @@ class _PreviewPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 设置基础画笔
-    final basePaint = Paint()
-      ..color = brushColor
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke
-      ..isAntiAlias = true;
-
     // 打印调试信息
-    print('绘制预览层 - 路径数: ${paths.length}, 当前路径: ${currentPath != null},'
-        ' 画笔颜色: $brushColor');
+    print('绘制预览层 - 路径数: ${paths.length}, 当前路径: ${currentPath != null}, '
+        '画笔颜色: $brushColor');
 
-    // 绘制所有已完成的路径，每个路径使用自己的笔刷大小
+    // 绘制所有已完成的路径，每个路径使用自己的笔刷属性
     for (final pathInfo in paths) {
       final paint = Paint()
-        ..color = brushColor
+        ..color = pathInfo.brushColor // 使用路径保存的颜色
         ..strokeWidth = pathInfo.brushSize
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
@@ -89,7 +86,7 @@ class _PreviewPainter extends CustomPainter {
     // 绘制当前路径
     if (currentPath != null) {
       final paint = Paint()
-        ..color = brushColor
+        ..color = currentPath!.brushColor // 使用当前路径的颜色
         ..strokeWidth = currentPath!.brushSize
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round
@@ -109,7 +106,6 @@ class _PreviewPainter extends CustomPainter {
       print('画笔颜色改变 - 旧: ${oldDelegate.brushColor}, 新: $brushColor');
       return true;
     }
-
     if (brushSize != oldDelegate.brushSize) return true;
 
     // 如果有当前路径，总是重绘（因为路径在变化）

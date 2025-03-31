@@ -83,6 +83,7 @@ class EraseController with ChangeNotifier {
         .map((pathInfo) => {
               'path': pathInfo.path,
               'brushSize': pathInfo.brushSize,
+              'brushColor': pathInfo.brushColor.value, // 保存颜色值
             })
         .toList();
 
@@ -113,9 +114,10 @@ class EraseController with ChangeNotifier {
   }
 
   // 开始擦除操作
-  void startErase(Offset position) {
+  void startErase(Offset position, {bool? useCurrentColor}) {
     final path = Path()..moveTo(position.dx, position.dy);
-    _currentPath = PathInfo(path: path, brushSize: brushSize);
+    _currentPath =
+        PathInfo(path: path, brushSize: brushSize, brushColor: brushColor);
     _redoPaths = []; // 清空重做栈
     notifyListeners();
   }

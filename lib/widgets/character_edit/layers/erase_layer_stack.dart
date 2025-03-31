@@ -155,7 +155,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
     // 创建新路径，使用当前笔刷大小
     final path = Path()..moveTo(imagePosition.dx, imagePosition.dy);
-    _currentPath = PathInfo(path: path, brushSize: widget.brushSize);
+    _currentPath = PathInfo(
+        path: path, brushSize: widget.brushSize, brushColor: widget.brushColor);
 
     _dirtyRect =
         Rect.fromPoints(imagePosition, imagePosition).inflate(widget.brushSize);
