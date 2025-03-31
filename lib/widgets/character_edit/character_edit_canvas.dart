@@ -1,10 +1,9 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../application/services/image/character_image_processor.dart';
@@ -50,25 +49,35 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   // 获取EraseLayerStack的引用
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
 
+  // 添加Alt键状态跟踪
+  bool _isAltKeyPressed = false;
+
   @override
   Widget build(BuildContext context) {
-    return InteractiveViewer(
-      transformationController: _transformationController,
-      constrained: false,
-      boundaryMargin: const EdgeInsets.all(double.infinity),
-      minScale: 0.1,
-      maxScale: 5.0,
-      child: SizedBox(
-        width: widget.image.width.toDouble(),
-        height: widget.image.height.toDouble(),
-        key: _stackKey,
-        child: EraseLayerStack(
-          key: _layerStackKey,
-          image: widget.image,
-          transformationController: _transformationController,
-          onEraseStart: _handleEraseStart,
-          onEraseUpdate: _handleEraseUpdate,
-          onEraseEnd: _handleEraseEnd,
+    return Focus(
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: InteractiveViewer(
+        transformationController: _transformationController,
+        constrained: false,
+        boundaryMargin: const EdgeInsets.all(double.infinity),
+        minScale: 0.1,
+        maxScale: 5.0,
+        // 只在Alt键按下时允许平移
+        panEnabled: _isAltKeyPressed,
+        child: SizedBox(
+          width: widget.image.width.toDouble(),
+          height: widget.image.height.toDouble(),
+          key: _stackKey,
+          child: EraseLayerStack(
+            key: _layerStackKey,
+            image: widget.image,
+            transformationController: _transformationController,
+            onEraseStart: _handleEraseStart,
+            onEraseUpdate: _handleEraseUpdate,
+            onEraseEnd: _handleEraseEnd,
+            altKeyPressed: _isAltKeyPressed, // 传递Alt键状态
+          ),
         ),
       ),
     );
@@ -78,6 +87,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   void didUpdateWidget(CharacterEditCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // 图像改变时重新适配屏幕
+    if (widget.image != oldWidget.image) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        fitToScreen();
+      });
+    }
+
     // 当轮廓检测设置改变时，更新轮廓
     if (widget.showOutline != oldWidget.showOutline ||
         widget.invertMode != oldWidget.invertMode) {
@@ -85,7 +101,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     }
   }
 
-  /// 将图像适配到屏幕大小
+  /// 将图像适配到屏幕大小，确保坐标系对齐
   void fitToScreen() {
     if (!mounted) return;
 
@@ -110,12 +126,18 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
       ..translate(dx, dy)
       ..scale(scale, scale);
 
+    // 应用变换
     _transformationController.value = matrix;
+
+    print('适配屏幕: 图像大小(${imageWidth}x$imageHeight), '
+        '视口大小(${viewportSize.width}x${viewportSize.height}), '
+        '缩放比例($scale), 平移($dx, $dy)');
   }
 
   @override
   void initState() {
     super.initState();
+    // 使用帧回调确保在布局完成后适配屏幕
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fitToScreen();
 
@@ -167,6 +189,19 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
     // 更新擦除点回调
     widget.onErasePointsChanged?.call(_currentErasePoints);
+  }
+
+  // 处理键盘事件
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    // 检测Alt键状态
+    if (event.logicalKey == LogicalKeyboardKey.alt) {
+      final bool isDown = event is KeyDownEvent;
+      setState(() {
+        _isAltKeyPressed = isDown;
+      });
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   /// 使用CharacterImageProcessor检测并更新轮廓

@@ -13,6 +13,8 @@ class UILayer extends BaseLayer {
   final MouseCursor cursor;
   final DetectedOutline? outline;
   final Size? imageSize;
+  // 添加Alt键状态
+  final bool altKeyPressed;
 
   const UILayer({
     Key? key,
@@ -22,6 +24,7 @@ class UILayer extends BaseLayer {
     this.cursor = SystemMouseCursors.precise,
     this.outline,
     this.imageSize,
+    this.altKeyPressed = false,
   }) : super(key: key);
 
   @override
@@ -33,23 +36,29 @@ class UILayer extends BaseLayer {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      cursor: cursor,
-      child: GestureDetector(
-        onPanStart: (details) {
-          onPointerDown?.call(details.localPosition);
+      cursor: altKeyPressed ? SystemMouseCursors.move : cursor,
+      child: Listener(
+        // 在Alt键按下时不处理擦除事件
+        onPointerDown: (event) {
+          if (altKeyPressed) return; // Alt键按下时不处理擦除
+          print('鼠标按下: ${event.localPosition}');
+          onPointerDown?.call(event.localPosition);
         },
-        onPanUpdate: (details) {
+        onPointerMove: (event) {
+          if (altKeyPressed) return; // Alt键按下时不处理擦除
+          print('鼠标移动: ${event.localPosition}, 增量: ${event.delta}');
           onPointerMove?.call(
-            details.localPosition,
-            details.delta,
+            event.localPosition,
+            event.delta,
           );
         },
-        onPanEnd: (details) {
-          // 使用最后一个已知位置
-          onPointerUp?.call(Offset.zero);
+        onPointerUp: (event) {
+          if (altKeyPressed) return; // Alt键按下时不处理擦除
+          print('鼠标释放: ${event.localPosition}');
+          onPointerUp?.call(event.localPosition);
         },
         child: Container(
-          color: Colors.transparent, // 确保GestureDetector能接收整个区域的事件
+          color: Colors.transparent, // 确保能接收整个区域的事件
           child: super.build(context),
         ),
       ),

@@ -1,7 +1,6 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math_64.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
 import 'background_layer.dart';
@@ -16,6 +15,8 @@ class EraseLayerStack extends StatefulWidget {
   final Function(Offset)? onEraseStart;
   final Function(Offset, Offset)? onEraseUpdate;
   final Function()? onEraseEnd;
+  // 添加Alt键状态参数
+  final bool altKeyPressed;
 
   const EraseLayerStack({
     Key? key,
@@ -24,6 +25,7 @@ class EraseLayerStack extends StatefulWidget {
     this.onEraseStart,
     this.onEraseUpdate,
     this.onEraseEnd,
+    this.altKeyPressed = false,
   }) : super(key: key);
 
   @override
@@ -59,7 +61,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             ),
           ),
 
-          // UI图层 - 添加轮廓支持
+          // UI图层 - 添加轮廓支持和Alt键状态
           RepaintBoundary(
             child: UILayer(
               onPointerDown: _handlePointerDown,
@@ -70,6 +72,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
                 widget.image.width.toDouble(),
                 widget.image.height.toDouble(),
               ),
+              altKeyPressed: widget.altKeyPressed, // 传递Alt键状态
+              cursor: widget.altKeyPressed
+                  ? SystemMouseCursors.move
+                  : SystemMouseCursors.precise,
             ),
           ),
         ],
@@ -138,9 +144,29 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
   // 转换视图坐标到图像坐标
   Offset _transformToImageCoordinates(Offset viewportOffset) {
-    final matrix = widget.transformationController.value.clone();
-    final vector = Matrix4.inverted(matrix)
-        .transform3(Vector3(viewportOffset.dx, viewportOffset.dy, 0));
-    return Offset(vector.x, vector.y);
+    try {
+      // // 获取当前变换矩阵
+      // final matrix = widget.transformationController.value.clone();
+
+      // // 获取逆矩阵进行反向转换
+      // final invertedMatrix = Matrix4.tryInvert(matrix);
+      // if (invertedMatrix == null) {
+      //   return viewportOffset; // 无法求逆时返回原始值
+      // }
+
+      // // 应用变换获取图像坐标
+      // final vector = invertedMatrix
+      //     .transform3(Vector3(viewportOffset.dx, viewportOffset.dy, 0));
+
+      final vector = viewportOffset;
+
+      // 添加日志以便调试
+      print('坐标转换: 视口($viewportOffset) -> 图像($vector)');
+
+      return vector;
+    } catch (e) {
+      print('坐标转换错误: $e');
+      return viewportOffset;
+    }
   }
 }
