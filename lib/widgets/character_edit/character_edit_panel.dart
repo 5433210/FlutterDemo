@@ -41,7 +41,7 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
             brushColor: Colors.white,
-            brushSize: _currentBrushSize,
+            brushSize: _currentBrushSize, // 传递当前笔刷大小
           ),
         ),
 
@@ -179,7 +179,9 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     _eraseController.endErase();
   }
 
+  // 处理擦除开始事件，传递当前笔刷大小
   void _handleEraseStart(Offset position) {
+    _eraseController.brushSize = _currentBrushSize; // 确保使用当前设置的笔刷大小
     _eraseController.startErase(position);
   }
 

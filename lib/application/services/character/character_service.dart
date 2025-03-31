@@ -53,10 +53,14 @@ class CharacterService {
     List<Offset> erasePoints,
     Uint8List originalImage,
   ) async {
-    // 合并所有擦除点
-    final allErasePoints = <Offset>[
-      ...(region.erasePoints ?? []),
-      ...erasePoints,
+    // 将擦除点转换为正确的格式
+    final allErasePoints = <Map<String, dynamic>>[
+      if (region.erasePoints != null)
+        {'points': region.erasePoints!, 'brushSize': region.options.brushSize},
+      {
+        'points': erasePoints,
+        'brushSize': region.options.brushSize,
+      }
     ];
 
     // 重新处理图像

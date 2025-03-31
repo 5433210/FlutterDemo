@@ -37,11 +37,15 @@ class EraseLayerStack extends StatefulWidget {
 
 class EraseLayerStackState extends State<EraseLayerStack> {
   final EventDispatcher _eventDispatcher = EventDispatcher();
-  List<Path> _paths = [];
-  Path? _currentPath;
+  // 修改为PathInfo列表
+  List<PathInfo> _paths = [];
+  // 修改为PathInfo
+  PathInfo? _currentPath;
   Rect? _dirtyRect;
   // 添加当前鼠标位置跟踪
   Offset? _currentCursorPosition;
+  // 添加图像边界矩形
+  late Rect _imageBounds;
 
   // 添加轮廓支持
   DetectedOutline? _outline;
@@ -64,7 +68,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             paths: _paths,
             currentPath: _currentPath,
             dirtyRect: _dirtyRect,
-            brushSize: widget.brushSize, // 传递笔刷大小
+            brushSize: widget.brushSize, // 传递笔刷大小作为默认值
           ),
 
           // UI图层 - 添加轮廓支持和Alt键状态
@@ -100,6 +104,24 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     });
   }
 
+  @override
+  void didUpdateWidget(EraseLayerStack oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.image != widget.image) {
+      // 图像改变时更新边界
+      _imageBounds = Rect.fromLTWH(
+          0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化图像边界
+    _imageBounds = Rect.fromLTWH(
+        0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
+  }
+
   // 添加设置轮廓方法
   void setOutline(DetectedOutline? outline) {
     setState(() {
@@ -110,13 +132,21 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   void _handlePointerDown(Offset position) {
     print('处理鼠标按下 - 现有路径数: ${_paths.length}');
 
-    final imagePosition = _transformToImageCoordinates(position);
+    final imagePosition = (position);
+
+    // 检查点是否在图像边界内
+    if (!_isPointInImageBounds(imagePosition)) {
+      print('鼠标按下位置超出图像边界，忽略此操作');
+      return;
+    }
 
     // 更新光标位置
     _currentCursorPosition = imagePosition;
 
-    // 创建新路径，但不清除现有路径列表
-    _currentPath = Path()..moveTo(imagePosition.dx, imagePosition.dy);
+    // 创建新路径，使用当前笔刷大小
+    final path = Path()..moveTo(imagePosition.dx, imagePosition.dy);
+    _currentPath = PathInfo(path: path, brushSize: widget.brushSize);
+
     _dirtyRect =
         Rect.fromPoints(imagePosition, imagePosition).inflate(widget.brushSize);
 
@@ -131,13 +161,19 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   void _handlePointerMove(Offset position, Offset delta) {
     if (_currentPath == null) return;
 
-    final imagePosition = _transformToImageCoordinates(position);
+    final imagePosition = (position);
+
+    // 检查点是否在图像边界内
+    if (!_isPointInImageBounds(imagePosition)) {
+      print('鼠标移动位置超出图像边界，忽略此点');
+      return;
+    }
 
     // 更新光标位置
     _currentCursorPosition = imagePosition;
 
     // 更新路径
-    _currentPath!.lineTo(imagePosition.dx, imagePosition.dy);
+    (_currentPath!.path).lineTo(imagePosition.dx, imagePosition.dy);
 
     // 更新脏区域 - 确保包含整个路径区域
     if (_dirtyRect != null) {
@@ -160,12 +196,12 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     if (_currentPath == null) return;
 
     // 确保有真实的路径内容
-    Rect bounds = _currentPath!.getBounds();
+    Rect bounds = _currentPath!.path.getBounds();
     if (bounds.width > 0 || bounds.height > 0) {
       print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
 
       // 创建一个新的路径列表，保留所有现有路径并添加当前完成的路径
-      List<Path> newPaths = List.from(_paths);
+      List<PathInfo> newPaths = List.from(_paths);
       newPaths.add(_currentPath!);
 
       // 更新状态，清除当前路径和脏区域
@@ -187,18 +223,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     widget.onEraseEnd?.call();
   }
 
-  // 转换视图坐标到图像坐标
-  Offset _transformToImageCoordinates(Offset viewportOffset) {
-    try {
-      final vector = viewportOffset;
-
-      // 添加日志以便调试
-      print('坐标转换: 视口($viewportOffset) -> 图像($vector)');
-
-      return vector;
-    } catch (e) {
-      print('坐标转换错误: $e');
-      return viewportOffset;
-    }
+  // 检查点是否在图像边界内
+  bool _isPointInImageBounds(Offset point) {
+    return _imageBounds.contains(point);
   }
 }

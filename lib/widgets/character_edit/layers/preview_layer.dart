@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 
 import 'base_layer.dart';
 
+/// 路径信息类，包含路径和笔刷大小
+class PathInfo {
+  final Path path;
+  final double brushSize;
+
+  PathInfo({required this.path, required this.brushSize});
+}
+
 /// 预览图层，显示擦除预览效果
 class PreviewLayer extends BaseLayer {
-  final List<Path> paths;
-  final Path? currentPath;
+  final List<PathInfo> paths;
+  final PathInfo? currentPath;
   final Color brushColor;
   final double brushSize;
   final Rect? dirtyRect;
@@ -37,10 +45,10 @@ class PreviewLayer extends BaseLayer {
 }
 
 class _PreviewPainter extends CustomPainter {
-  final List<Path> paths;
-  final Path? currentPath;
+  final List<PathInfo> paths;
+  final PathInfo? currentPath;
   final Color brushColor;
-  final double brushSize;
+  final double brushSize; // 默认笔刷大小
   final Rect? dirtyRect;
 
   _PreviewPainter({
@@ -53,27 +61,41 @@ class _PreviewPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 设置画笔
-    final paint = Paint()
+    // 设置基础画笔
+    final basePaint = Paint()
       ..color = brushColor
-      ..strokeWidth = brushSize // 使用传入的笔刷大小
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke
-      ..isAntiAlias = true; // 确保抗锯齿
+      ..isAntiAlias = true;
 
     // 打印调试信息
-    print(
-        '绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}, 笔刷大小: $brushSize');
+    print('绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}');
 
-    // 绘制所有已完成的路径
-    for (final path in paths) {
-      canvas.drawPath(path, paint);
+    // 绘制所有已完成的路径，每个路径使用自己的笔刷大小
+    for (final pathInfo in paths) {
+      final paint = Paint()
+        ..color = brushColor
+        ..strokeWidth = pathInfo.brushSize
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
+
+      canvas.drawPath(pathInfo.path, paint);
     }
 
     // 绘制当前路径
     if (currentPath != null) {
-      canvas.drawPath(currentPath!, paint);
+      final paint = Paint()
+        ..color = brushColor
+        ..strokeWidth = currentPath!.brushSize
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
+
+      canvas.drawPath(currentPath!.path, paint);
     }
   }
 

@@ -33,13 +33,13 @@ class CharacterImageProcessor {
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
-    List<Offset>? erasePoints,
+    List<Map<String, dynamic>>? erasePaths,
   ) async {
     final params = ProcessingParams(
       imageData: imageData,
       region: region,
       options: options,
-      erasePoints: erasePoints,
+      erasePaths: erasePaths,
     );
 
     if (!params.isRegionValid) {
@@ -75,13 +75,13 @@ class CharacterImageProcessor {
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
-    List<Offset>? erasePoints,
+    List<Map<String, dynamic>>? erasePaths,
   ) async {
     final params = ProcessingParams(
       imageData: imageData,
       region: region,
       options: options,
-      erasePoints: erasePoints,
+      erasePaths: erasePaths,
     );
 
     if (!params.isRegionValid) {
@@ -142,8 +142,8 @@ class CharacterImageProcessor {
         '${(params.options.noiseReduction * 10).toInt()}';
 
     final imageHash = params.imageData.hashCode.toString();
-    final eraseKey = params.erasePoints?.isNotEmpty == true
-        ? 'erase_${params.erasePoints!.length}'
+    final eraseKey = params.erasePaths?.isNotEmpty == true
+        ? 'erase_${params.erasePaths!.length}'
         : 'noerase';
 
     return '$imageHash:$regionKey:$optionsKey:$eraseKey';
@@ -156,10 +156,9 @@ class CharacterImageProcessor {
   ) async {
     var processed = source;
 
-    if (params.erasePoints?.isNotEmpty == true) {
-      // 使用最新的笔刷大小
-      final brushSize = params.options.brushSize ?? 10.0;
-      processed = _applyErase(processed, params.erasePoints!, brushSize);
+    if (params.erasePaths?.isNotEmpty == true) {
+      // 使用修改后的擦除函数，支持不同的笔刷大小
+      processed = _applyErase(processed, params.erasePaths!);
     }
 
     processed = _binarize(processed, params.options);
@@ -188,29 +187,44 @@ class CharacterImageProcessor {
     }
   }
 
-  /// 应用擦除
+  /// 应用擦除 - 修改为支持路径级别笔刷大小并限制擦除区域
   static img.Image _applyErase(
     img.Image source,
-    List<Offset> points,
-    double brushSize,
+    List<Map<String, dynamic>> erasePaths,
   ) {
     final result =
         img.copyResize(source, width: source.width, height: source.height);
-    final brushRadius = brushSize / 2;
     final white = img.ColorRgb8(255, 255, 255);
 
-    for (final point in points) {
-      final x = point.dx.clamp(0, source.width - 1).toInt();
-      final y = point.dy.clamp(0, source.height - 1).toInt();
+    // 图像边界矩形
+    final imageBounds =
+        Rect.fromLTWH(0, 0, source.width.toDouble(), source.height.toDouble());
 
-      // 使用实际的笔刷大小绘制擦除点
-      for (var dy = -brushRadius; dy <= brushRadius; dy++) {
-        for (var dx = -brushRadius; dx <= brushRadius; dx++) {
-          if (dx * dx + dy * dy <= brushRadius * brushRadius) {
-            final px = (x + dx).round();
-            final py = (y + dy).round();
-            if (px >= 0 && px < result.width && py >= 0 && py < result.height) {
-              result.setPixel(px, py, white);
+    for (final pathData in erasePaths) {
+      final points = pathData['points'] as List<Offset>;
+      final brushSize = (pathData['brushSize'] as double?) ?? 10.0;
+      final brushRadius = brushSize / 2;
+
+      for (final point in points) {
+        // 检查点是否在图像边界内
+        if (!imageBounds.contains(point)) continue;
+
+        final x = point.dx.clamp(0, source.width - 1).toInt();
+        final y = point.dy.clamp(0, source.height - 1).toInt();
+
+        // 使用路径指定的笔刷大小绘制擦除点
+        for (var dy = -brushRadius; dy <= brushRadius; dy++) {
+          for (var dx = -brushRadius; dx <= brushRadius; dx++) {
+            if (dx * dx + dy * dy <= brushRadius * brushRadius) {
+              final px = (x + dx).round();
+              final py = (y + dy).round();
+              // 确保在图像边界内
+              if (px >= 0 &&
+                  px < result.width &&
+                  py >= 0 &&
+                  py < result.height) {
+                result.setPixel(px, py, white);
+              }
             }
           }
         }
@@ -310,8 +324,8 @@ class CharacterImageProcessor {
       );
 
       var processed = cropped;
-      if (params.erasePoints?.isNotEmpty == true) {
-        processed = _applyErase(cropped, params.erasePoints!, 10.0);
+      if (params.erasePaths?.isNotEmpty == true) {
+        processed = _applyErase(cropped, params.erasePaths!);
       }
       processed = _binarize(processed, params.options);
       processed = _denoise(processed, params.options.noiseReduction);
@@ -372,13 +386,13 @@ class ProcessingParams {
   final Uint8List imageData;
   final Rect region;
   final ProcessingOptions options;
-  final List<Offset>? erasePoints;
+  final List<Map<String, dynamic>>? erasePaths;
 
   ProcessingParams({
     required this.imageData,
     required this.region,
     required this.options,
-    this.erasePoints,
+    this.erasePaths,
   });
 
   bool get isRegionValid => region.width > 0 && region.height > 0;
@@ -398,7 +412,14 @@ class ProcessingParams {
           'brushSize': options.brushSize,
           'showContour': options.showContour,
         },
-        'erasePoints': erasePoints?.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
+        'erasePaths': erasePaths
+            ?.map((path) => {
+                  'points': path['points']
+                      .map((p) => {'x': p.dx, 'y': p.dy})
+                      .toList(),
+                  'brushSize': path['brushSize'],
+                })
+            .toList(),
       };
 
   static ProcessingParams fromMap(Map<String, dynamic> map) {
@@ -420,11 +441,15 @@ class ProcessingParams {
         brushSize: optionsData['brushSize'] as double,
         showContour: optionsData['showContour'] as bool,
       ),
-      erasePoints: (map['erasePoints'] as List<dynamic>?)
-          ?.map(
-            (p) => Offset(
-                (p as Map<String, dynamic>)['x'] as double, p['y'] as double),
-          )
+      erasePaths: (map['erasePaths'] as List<dynamic>?)
+          ?.map((path) => {
+                'points': (path['points'] as List<dynamic>)
+                    .map((p) => Offset(
+                        (p as Map<String, dynamic>)['x'] as double,
+                        p['y'] as double))
+                    .toList(),
+                'brushSize': path['brushSize'] as double?,
+              })
           .toList(),
     );
   }

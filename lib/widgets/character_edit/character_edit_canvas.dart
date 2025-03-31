@@ -44,7 +44,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   final TransformationController _transformationController =
       TransformationController();
   final GlobalKey _stackKey = GlobalKey();
-  final List<Offset> _currentErasePoints = [];
+  // 修改为新的数据结构，使用单个路径记录所有点
+  final Map<String, dynamic> _currentErasePath = {
+    'points': <Offset>[],
+    'brushSize': 10.0,
+  };
+  // 存储所有擦除路径
+  final List<Map<String, dynamic>> _erasePaths = [];
   DetectedOutline? _outline;
   bool _isProcessing = false;
 
@@ -82,7 +88,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
             altKeyPressed: _isAltKeyPressed,
-            brushSize: widget.brushSize, // 传递笔刷大小
+            brushSize: widget.brushSize,
           ),
         ),
       ),
@@ -173,6 +179,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
   // 处理擦除结束事件
   void _handleEraseEnd() {
+    if ((_currentErasePath['points'] as List<Offset>).isNotEmpty) {
+      _erasePaths.add(Map<String, dynamic>.from(_currentErasePath));
+      _currentErasePath['points'] = <Offset>[];
+    }
+
     widget.onEraseEnd?.call();
 
     // 如果显示轮廓，更新轮廓
@@ -183,21 +194,24 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
   // 处理擦除开始事件
   void _handleEraseStart(Offset position) {
-    // 保留历史点，只添加新点
-    // 注意：不清空现有数组，这可能是导致问题的原因之一
-    _currentErasePoints.add(position);
+    _currentErasePath['points'] = <Offset>[position];
+    _currentErasePath['brushSize'] = widget.brushSize;
     widget.onEraseStart?.call(position);
 
-    print('擦除开始 - 当前点数: ${_currentErasePoints.length}');
+    print(
+        '擦除开始 - 当前点数: ${(_currentErasePath['points'] as List<Offset>).length}');
   }
 
   // 处理擦除更新事件
   void _handleEraseUpdate(Offset position, Offset delta) {
-    _currentErasePoints.add(position);
+    (_currentErasePath['points'] as List<Offset>).add(position);
     widget.onEraseUpdate?.call(position, delta);
 
     // 更新擦除点回调
-    widget.onErasePointsChanged?.call(_currentErasePoints);
+    widget.onErasePointsChanged?.call(
+      (_currentErasePath['points'] as List<Offset>)
+        ..addAll(_erasePaths.expand((path) => path['points'] as List<Offset>)),
+    );
   }
 
   // 处理键盘事件
@@ -237,11 +251,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
       final fullImageRect = Rect.fromLTWH(
           0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
 
-      final result = await imageProcessor.previewProcessing(
-          imageBytes,
-          fullImageRect,
-          options,
-          _currentErasePoints.isNotEmpty ? _currentErasePoints : null);
+      final result = await imageProcessor.previewProcessing(imageBytes,
+          fullImageRect, options, _erasePaths.isNotEmpty ? _erasePaths : null);
 
       if (mounted) {
         setState(() {
