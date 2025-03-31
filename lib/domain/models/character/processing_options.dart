@@ -10,6 +10,7 @@ class ProcessingOptions with _$ProcessingOptions {
     @Default(false) bool showContour,
     @Default(128.0) double threshold,
     @Default(0.5) double noiseReduction,
+    @Default(10.0) double brushSize,
   }) = _ProcessingOptions;
 
   factory ProcessingOptions.fromJson(Map<String, dynamic> json) =>

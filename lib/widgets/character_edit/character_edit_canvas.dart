@@ -56,6 +56,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    // 打印当前Alt键状态以便调试
+    print('当前Alt键状态: $_isAltKeyPressed, 擦除笔刷大小: ${widget.brushSize}');
+
     return Focus(
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
@@ -78,7 +81,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
             onEraseStart: _handleEraseStart,
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
-            altKeyPressed: _isAltKeyPressed, // 传递Alt键状态
+            altKeyPressed: _isAltKeyPressed,
+            brushSize: widget.brushSize, // 传递笔刷大小
           ),
         ),
       ),

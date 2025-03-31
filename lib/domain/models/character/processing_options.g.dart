@@ -13,6 +13,7 @@ _$ProcessingOptionsImpl _$$ProcessingOptionsImplFromJson(
       showContour: json['showContour'] as bool? ?? false,
       threshold: (json['threshold'] as num?)?.toDouble() ?? 128.0,
       noiseReduction: (json['noiseReduction'] as num?)?.toDouble() ?? 0.5,
+      brushSize: (json['brushSize'] as num?)?.toDouble() ?? 10.0,
     );
 
 Map<String, dynamic> _$$ProcessingOptionsImplToJson(
@@ -22,4 +23,5 @@ Map<String, dynamic> _$$ProcessingOptionsImplToJson(
       'showContour': instance.showContour,
       'threshold': instance.threshold,
       'noiseReduction': instance.noiseReduction,
+      'brushSize': instance.brushSize,
     };

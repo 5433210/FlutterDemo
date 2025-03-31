@@ -23,6 +23,7 @@ class CharacterEditPanel extends StatefulWidget {
 class _CharacterEditPanelState extends State<CharacterEditPanel> {
   final EraseController _eraseController = EraseController();
   final GlobalKey<CharacterEditCanvasState> _canvasKey = GlobalKey();
+  double _currentBrushSize = 10.0;
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +40,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseStart: _handleEraseStart,
             onEraseUpdate: _handleEraseUpdate,
             onEraseEnd: _handleEraseEnd,
-            // 添加画笔颜色参数
             brushColor: Colors.white,
+            brushSize: _currentBrushSize,
           ),
         ),
 
@@ -117,16 +118,31 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
 
           // 画笔大小滑块
           Expanded(
-            child: Slider(
-              value: _eraseController.brushSize,
-              min: 1.0,
-              max: 50.0,
-              onChanged: (value) {
-                setState(() {
-                  _eraseController.brushSize = value;
-                });
-              },
-              label: '画笔大小: ${_eraseController.brushSize.toInt()}',
+            child: Row(
+              children: [
+                const Text('笔刷: ', style: TextStyle(fontSize: 12)),
+                Expanded(
+                  child: Slider(
+                    value: _currentBrushSize,
+                    min: 1.0,
+                    max: 50.0,
+                    onChanged: (value) {
+                      setState(() {
+                        _currentBrushSize = value;
+                        _eraseController.brushSize = value;
+                      });
+                    },
+                    label: '${_currentBrushSize.toInt()}',
+                  ),
+                ),
+                SizedBox(
+                  width: 30,
+                  child: Text(
+                    '${_currentBrushSize.toInt()}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+              ],
             ),
           ),
 

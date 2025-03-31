@@ -17,6 +17,8 @@ class EraseLayerStack extends StatefulWidget {
   final Function()? onEraseEnd;
   // 添加Alt键状态参数
   final bool altKeyPressed;
+  // 添加笔刷大小参数
+  final double brushSize;
 
   const EraseLayerStack({
     Key? key,
@@ -26,6 +28,7 @@ class EraseLayerStack extends StatefulWidget {
     this.onEraseUpdate,
     this.onEraseEnd,
     this.altKeyPressed = false,
+    this.brushSize = 10.0,
   }) : super(key: key);
 
   @override
@@ -37,6 +40,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   List<Path> _paths = [];
   Path? _currentPath;
   Rect? _dirtyRect;
+  // 添加当前鼠标位置跟踪
+  Offset? _currentCursorPosition;
 
   // 添加轮廓支持
   DetectedOutline? _outline;
@@ -59,6 +64,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             paths: _paths,
             currentPath: _currentPath,
             dirtyRect: _dirtyRect,
+            brushSize: widget.brushSize, // 传递笔刷大小
           ),
 
           // UI图层 - 添加轮廓支持和Alt键状态
@@ -76,6 +82,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
               cursor: widget.altKeyPressed
                   ? SystemMouseCursors.move
                   : SystemMouseCursors.precise,
+              brushSize: widget.brushSize, // 传递笔刷大小
+              cursorPosition: _currentCursorPosition, // 传递光标位置
             ),
           ),
         ],
@@ -104,9 +112,13 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
     final imagePosition = _transformToImageCoordinates(position);
 
+    // 更新光标位置
+    _currentCursorPosition = imagePosition;
+
     // 创建新路径，但不清除现有路径列表
     _currentPath = Path()..moveTo(imagePosition.dx, imagePosition.dy);
-    _dirtyRect = Rect.fromPoints(imagePosition, imagePosition).inflate(10);
+    _dirtyRect =
+        Rect.fromPoints(imagePosition, imagePosition).inflate(widget.brushSize);
 
     widget.onEraseStart?.call(imagePosition);
 
@@ -121,15 +133,19 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
     final imagePosition = _transformToImageCoordinates(position);
 
+    // 更新光标位置
+    _currentCursorPosition = imagePosition;
+
     // 更新路径
     _currentPath!.lineTo(imagePosition.dx, imagePosition.dy);
 
     // 更新脏区域 - 确保包含整个路径区域
     if (_dirtyRect != null) {
-      _dirtyRect = _dirtyRect!
-          .expandToInclude(Rect.fromCircle(center: imagePosition, radius: 10));
+      _dirtyRect = _dirtyRect!.expandToInclude(
+          Rect.fromCircle(center: imagePosition, radius: widget.brushSize));
     } else {
-      _dirtyRect = Rect.fromCircle(center: imagePosition, radius: 10);
+      _dirtyRect =
+          Rect.fromCircle(center: imagePosition, radius: widget.brushSize);
     }
 
     widget.onEraseUpdate?.call(imagePosition, delta);
@@ -157,12 +173,14 @@ class EraseLayerStackState extends State<EraseLayerStack> {
         _paths = newPaths;
         _currentPath = null;
         _dirtyRect = null;
+        _currentCursorPosition = null; // 清除光标位置
       });
     } else {
       // 空路径，仅清除当前路径
       setState(() {
         _currentPath = null;
         _dirtyRect = null;
+        _currentCursorPosition = null; // 清除光标位置
       });
     }
 
@@ -172,19 +190,6 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   // 转换视图坐标到图像坐标
   Offset _transformToImageCoordinates(Offset viewportOffset) {
     try {
-      // // 获取当前变换矩阵
-      // final matrix = widget.transformationController.value.clone();
-
-      // // 获取逆矩阵进行反向转换
-      // final invertedMatrix = Matrix4.tryInvert(matrix);
-      // if (invertedMatrix == null) {
-      //   return viewportOffset; // 无法求逆时返回原始值
-      // }
-
-      // // 应用变换获取图像坐标
-      // final vector = invertedMatrix
-      //     .transform3(Vector3(viewportOffset.dx, viewportOffset.dy, 0));
-
       final vector = viewportOffset;
 
       // 添加日志以便调试

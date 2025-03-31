@@ -14,7 +14,7 @@ class PreviewLayer extends BaseLayer {
     Key? key,
     this.paths = const [],
     this.currentPath,
-    // 修改默认颜色为白色，代表擦除
+    // 默认颜色为白色，代表擦除
     this.brushColor = Colors.white,
     this.brushSize = 10.0,
     this.dirtyRect,
@@ -56,18 +56,15 @@ class _PreviewPainter extends CustomPainter {
     // 设置画笔
     final paint = Paint()
       ..color = brushColor
-      ..strokeWidth = brushSize
+      ..strokeWidth = brushSize // 使用传入的笔刷大小
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      // 修改为填充模式，确保完全覆盖原内容
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true; // 确保抗锯齿
 
     // 打印调试信息
-    print('绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}');
-
-    // 不要使用save/restore，可能导致状态问题
-    // 仅在需要裁剪区域时使用
+    print(
+        '绘制预览层 - 现有路径数: ${paths.length}, 当前路径: ${currentPath != null}, 笔刷大小: $brushSize');
 
     // 绘制所有已完成的路径
     for (final path in paths) {

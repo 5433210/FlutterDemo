@@ -24,6 +24,7 @@ mixin _$ProcessingOptions {
   bool get showContour => throw _privateConstructorUsedError;
   double get threshold => throw _privateConstructorUsedError;
   double get noiseReduction => throw _privateConstructorUsedError;
+  double get brushSize => throw _privateConstructorUsedError;
 
   /// Serializes this ProcessingOptions to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -45,7 +46,8 @@ abstract class $ProcessingOptionsCopyWith<$Res> {
       {bool inverted,
       bool showContour,
       double threshold,
-      double noiseReduction});
+      double noiseReduction,
+      double brushSize});
 }
 
 /// @nodoc
@@ -67,6 +69,7 @@ class _$ProcessingOptionsCopyWithImpl<$Res, $Val extends ProcessingOptions>
     Object? showContour = null,
     Object? threshold = null,
     Object? noiseReduction = null,
+    Object? brushSize = null,
   }) {
     return _then(_value.copyWith(
       inverted: null == inverted
@@ -85,6 +88,10 @@ class _$ProcessingOptionsCopyWithImpl<$Res, $Val extends ProcessingOptions>
           ? _value.noiseReduction
           : noiseReduction // ignore: cast_nullable_to_non_nullable
               as double,
+      brushSize: null == brushSize
+          ? _value.brushSize
+          : brushSize // ignore: cast_nullable_to_non_nullable
+              as double,
     ) as $Val);
   }
 }
@@ -101,7 +108,8 @@ abstract class _$$ProcessingOptionsImplCopyWith<$Res>
       {bool inverted,
       bool showContour,
       double threshold,
-      double noiseReduction});
+      double noiseReduction,
+      double brushSize});
 }
 
 /// @nodoc
@@ -121,6 +129,7 @@ class __$$ProcessingOptionsImplCopyWithImpl<$Res>
     Object? showContour = null,
     Object? threshold = null,
     Object? noiseReduction = null,
+    Object? brushSize = null,
   }) {
     return _then(_$ProcessingOptionsImpl(
       inverted: null == inverted
@@ -139,6 +148,10 @@ class __$$ProcessingOptionsImplCopyWithImpl<$Res>
           ? _value.noiseReduction
           : noiseReduction // ignore: cast_nullable_to_non_nullable
               as double,
+      brushSize: null == brushSize
+          ? _value.brushSize
+          : brushSize // ignore: cast_nullable_to_non_nullable
+              as double,
     ));
   }
 }
@@ -150,7 +163,8 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
       {this.inverted = false,
       this.showContour = false,
       this.threshold = 128.0,
-      this.noiseReduction = 0.5});
+      this.noiseReduction = 0.5,
+      this.brushSize = 10.0});
 
   factory _$ProcessingOptionsImpl.fromJson(Map<String, dynamic> json) =>
       _$$ProcessingOptionsImplFromJson(json);
@@ -167,10 +181,13 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
   @override
   @JsonKey()
   final double noiseReduction;
+  @override
+  @JsonKey()
+  final double brushSize;
 
   @override
   String toString() {
-    return 'ProcessingOptions(inverted: $inverted, showContour: $showContour, threshold: $threshold, noiseReduction: $noiseReduction)';
+    return 'ProcessingOptions(inverted: $inverted, showContour: $showContour, threshold: $threshold, noiseReduction: $noiseReduction, brushSize: $brushSize)';
   }
 
   @override
@@ -185,13 +202,15 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
             (identical(other.threshold, threshold) ||
                 other.threshold == threshold) &&
             (identical(other.noiseReduction, noiseReduction) ||
-                other.noiseReduction == noiseReduction));
+                other.noiseReduction == noiseReduction) &&
+            (identical(other.brushSize, brushSize) ||
+                other.brushSize == brushSize));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
-      runtimeType, inverted, showContour, threshold, noiseReduction);
+      runtimeType, inverted, showContour, threshold, noiseReduction, brushSize);
 
   /// Create a copy of ProcessingOptions
   /// with the given fields replaced by the non-null parameter values.
@@ -215,7 +234,8 @@ abstract class _ProcessingOptions implements ProcessingOptions {
       {final bool inverted,
       final bool showContour,
       final double threshold,
-      final double noiseReduction}) = _$ProcessingOptionsImpl;
+      final double noiseReduction,
+      final double brushSize}) = _$ProcessingOptionsImpl;
 
   factory _ProcessingOptions.fromJson(Map<String, dynamic> json) =
       _$ProcessingOptionsImpl.fromJson;
@@ -228,6 +248,8 @@ abstract class _ProcessingOptions implements ProcessingOptions {
   double get threshold;
   @override
   double get noiseReduction;
+  @override
+  double get brushSize;
 
   /// Create a copy of ProcessingOptions
   /// with the given fields replaced by the non-null parameter values.

@@ -157,7 +157,9 @@ class CharacterImageProcessor {
     var processed = source;
 
     if (params.erasePoints?.isNotEmpty == true) {
-      processed = _applyErase(processed, params.erasePoints!, 10.0);
+      // 使用最新的笔刷大小
+      final brushSize = params.options.brushSize ?? 10.0;
+      processed = _applyErase(processed, params.erasePoints!, brushSize);
     }
 
     processed = _binarize(processed, params.options);
@@ -201,6 +203,7 @@ class CharacterImageProcessor {
       final x = point.dx.clamp(0, source.width - 1).toInt();
       final y = point.dy.clamp(0, source.height - 1).toInt();
 
+      // 使用实际的笔刷大小绘制擦除点
       for (var dy = -brushRadius; dy <= brushRadius; dy++) {
         for (var dx = -brushRadius; dx <= brushRadius; dx++) {
           if (dx * dx + dy * dy <= brushRadius * brushRadius) {
@@ -392,6 +395,7 @@ class ProcessingParams {
           'inverted': options.inverted,
           'threshold': options.threshold,
           'noiseReduction': options.noiseReduction,
+          'brushSize': options.brushSize,
           'showContour': options.showContour,
         },
         'erasePoints': erasePoints?.map((p) => {'x': p.dx, 'y': p.dy}).toList(),
@@ -413,6 +417,7 @@ class ProcessingParams {
         inverted: optionsData['inverted'] as bool,
         threshold: optionsData['threshold'] as double,
         noiseReduction: optionsData['noiseReduction'] as double,
+        brushSize: optionsData['brushSize'] as double,
         showContour: optionsData['showContour'] as bool,
       ),
       erasePoints: (map['erasePoints'] as List<dynamic>?)
