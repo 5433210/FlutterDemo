@@ -17,6 +17,9 @@ class DebugFlags {
   /// 启用模式状态跟踪
   static bool enableModeTracking = true;
 
+  /// 启用焦点调试
+  static bool enableFocusDebug = true;
+
   /// 添加当前应用中所有AltKey状态监控点
   static final Map<String, bool> _altKeyStates = {};
 
@@ -34,6 +37,12 @@ class DebugFlags {
       msg += ', delta: $delta';
     }
     log('擦除', msg);
+  }
+
+  /// 记录焦点状态变化
+  static void logFocusChange(String source, bool hasFocus) {
+    if (!enableFocusDebug) return;
+    log('焦点', '$source ${hasFocus ? "获得焦点" : "失去焦点"}');
   }
 
   /// 记录模式切换

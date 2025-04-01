@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
+import '../../../utils/debug/debug_flags.dart';
 import 'background_layer.dart';
 import 'events/event_dispatcher.dart';
 import 'preview_layer.dart';
@@ -104,6 +105,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   @override
   void didUpdateWidget(EraseLayerStack oldWidget) {
     super.didUpdateWidget(oldWidget);
+
     if (oldWidget.image != widget.image) {
       _imageBounds = Rect.fromLTWH(
           0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
@@ -112,13 +114,22 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 检测Alt键状态变化
     if (widget.altKeyPressed != oldWidget.altKeyPressed) {
       print('Alt键状态更新: ${widget.altKeyPressed}, 当前光标: $_currentCursorPosition');
+      DebugFlags.trackAltKeyState('EraseLayerStack', widget.altKeyPressed);
 
       // 如果模式变化，立即刷新UI
-      setState(() {});
+      setState(() {
+        if (widget.altKeyPressed) {
+          _lastMode = EditMode.pan; // 设置为平移模式
+        } else {
+          _lastMode = EditMode.erase; // 设置为擦除模式
+        }
+      });
 
-      // 当按下Alt时，确保任何进行中的擦除操作被结束
-      if (widget.altKeyPressed && _currentPath != null) {
-        print('进入平移模式，结束当前擦除操作');
+      // 当平移模式结束时，确保任何进行中的擦除操作被结束
+      if (!widget.altKeyPressed &&
+          oldWidget.altKeyPressed &&
+          _currentPath != null) {
+        print('从平移模式返回擦除模式，结束当前擦除操作');
         _finishCurrentPath();
         widget.onEraseEnd?.call();
       }
@@ -157,7 +168,7 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       try {
         for (int i = 0; i < _paths.length; i++) {
           final bounds = _paths[i].path.getBounds();
-          print('路径 #$i - 边界: $bounds, 笔刷: ${_paths[i].brushSize}');
+          // print('路径 #$i - 边界: $bounds, 笔刷: ${_paths[i].brushSize}');
         }
       } catch (e) {
         print('路径调试异常: $e');
@@ -229,24 +240,28 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 始终更新光标位置
     _currentCursorPosition = position;
 
-    // Alt键处理 - 平移模式优先级最高
+    // Alt键处理 - 优先级最高，如果按下Alt键，则执行平移而非擦除
     if (widget.altKeyPressed) {
-      _lastMode = EditMode.pan; // 记住上一个模式
+      // 确保模式被正确设置为平移
+      if (_lastMode != EditMode.pan) {
+        _lastMode = EditMode.pan;
+        print('切换到平移模式');
+      }
 
-      if (widget.onPan != null) {
+      if (widget.onPan != null && delta != Offset.zero) {
+        DebugFlags.logPan(position, delta);
         widget.onPan!(delta);
       }
 
       // 即使在平移模式下也更新UI，确保光标跟随
       setState(() {});
-      return;
+      return; // 重要：当按下Alt键时，直接返回，不执行任何擦除操作
     } else {
       // 从平移切换回擦除模式时，可能需要特殊处理
       if (_lastMode == EditMode.pan) {
         print('从平移模式返回擦除模式');
-        // 这里可以添加必要的状态重置
+        _lastMode = EditMode.erase;
       }
-      _lastMode = EditMode.erase;
     }
 
     // 检查是否为实际擦除操作还是仅光标移动

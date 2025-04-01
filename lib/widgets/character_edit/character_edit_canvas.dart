@@ -8,6 +8,8 @@ import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../tools/image/image_utils.dart';
+import '../../utils/debug/debug_flags.dart';
+import '../../utils/focus/focus_persistence.dart';
 import 'layers/erase_layer_stack.dart';
 import 'layers/preview_layer.dart';
 
@@ -43,8 +45,9 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
       CharacterEditCanvasState();
 }
 
-class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
-  static const _altToggleDebounce = Duration(milliseconds: 100); // 防抖间隔
+class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
+    with FocusPersistenceMixin {
+  static const _altToggleDebounce = Duration(milliseconds: 100);
   final TransformationController _transformationController =
       TransformationController();
   final GlobalKey _stackKey = GlobalKey();
@@ -57,21 +60,23 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   bool _isProcessing = false;
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
   bool _isAltKeyPressed = false;
-  final FocusNode _focusNode = FocusNode();
-  DateTime _lastAltToggleTime = DateTime.now(); // 添加时间戳记录
+  DateTime _lastAltToggleTime = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
     print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
         '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}, '
-        '显示轮廓: ${widget.showOutline}');
+        '显示轮廓: ${widget.showOutline}, 焦点状态: ${focusNode.hasFocus}');
 
     return Focus(
-      focusNode: _focusNode,
+      focusNode: focusNode,
       autofocus: true,
       onKeyEvent: _handleKeyEvent,
       child: GestureDetector(
-        onTapDown: (_) => _focusNode.requestFocus(),
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          if (!focusNode.hasFocus) focusNode.requestFocus();
+        },
         child: InteractiveViewer(
           transformationController: _transformationController,
           constrained: false,
@@ -132,7 +137,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    focusNode.removeListener(_onFocusChange);
     super.dispose();
   }
 
@@ -163,8 +168,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   @override
   void initState() {
     super.initState();
+
     // 初始化空路径列表
     _currentErasePath['points'] = <Offset>[];
+
+    // 添加焦点监听
+    focusNode.addListener(_onFocusChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fitToScreen();
@@ -284,7 +293,25 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
         event.logicalKey == LogicalKeyboardKey.altLeft ||
         event.logicalKey == LogicalKeyboardKey.altRight) {
       final now = DateTime.now();
-      final bool isDown = event is KeyDownEvent;
+      bool isDown;
+
+      // 关键修复：正确处理不同类型的键盘事件
+      if (event is KeyDownEvent) {
+        isDown = true;
+      } else if (event is KeyUpEvent) {
+        isDown = false;
+      } else if (event is KeyRepeatEvent) {
+        // 重要修复：KeyRepeatEvent 时保持当前状态不变
+        // Alt键按住时会产生重复事件，但不应改变状态
+        isDown = _isAltKeyPressed;
+
+        // 记录正在处理重复事件
+        print('处理Alt键重复事件 - 保持当前状态: $_isAltKeyPressed');
+        return KeyEventResult.handled;
+      } else {
+        // 未知事件类型，忽略
+        return KeyEventResult.ignored;
+      }
 
       // 防止快速切换 - 忽略短时间内的反向切换
       if (_isAltKeyPressed != isDown &&
@@ -295,12 +322,24 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
 
           // 记录状态变化便于调试
           print('Alt键状态变化: $_isAltKeyPressed, 事件类型: ${event.runtimeType}');
+          DebugFlags.trackAltKeyState('CharacterEditCanvas', _isAltKeyPressed);
         });
       }
 
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
+  }
+
+  void _onFocusChange() {
+    DebugFlags.logFocusChange('EditCanvas', focusNode.hasFocus);
+
+    // 焦点变化时处理Alt键状态
+    if (!focusNode.hasFocus && _isAltKeyPressed) {
+      setState(() {
+        _isAltKeyPressed = false;
+      });
+    }
   }
 
   Future<void> _updateOutline() async {

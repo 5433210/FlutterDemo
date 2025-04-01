@@ -7,9 +7,14 @@ import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
+import 'utils/keyboard/keyboard_monitor.dart';
+import 'utils/keyboard/keyboard_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化键盘工具
+  KeyboardUtils.initialize();
 
   // 初始化窗口管理器
   await windowManager.ensureInitialized();
@@ -43,22 +48,12 @@ void main() async {
       ],
     );
 
-    // // 等待数据库初始化完成
-    // AppLogger.info('等待数据库初始化', tag: 'App');
-    // await container.read(databaseProvider.future);
-    // AppLogger.info('数据库初始化完成', tag: 'App');
-
-    // // 执行初始化检查
-    // AppLogger.info('开始应用初始化检查', tag: 'App');
-    // await container.read(initializationControllerProvider).runInitialChecks();
-    // AppLogger.info('应用初始化检查完成', tag: 'App');
-
     // 启动应用
     runApp(
       ProviderScope(
         parent: container,
         observers: [ProviderLogger()],
-        child: const MyApp(),
+        child: KeyboardMonitor.wrapApp(const MyApp()),
       ),
     );
   } catch (e, stack) {
