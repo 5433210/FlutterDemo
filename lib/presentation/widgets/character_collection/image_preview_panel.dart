@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'image_view.dart';
 import 'preview_toolbar.dart';
@@ -12,11 +13,15 @@ class ImagePreviewPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final imageState = ref.watch(workImageProvider);
+    final toolMode = ref.watch(toolModeProvider);
 
     return Column(
       children: [
         // 工具栏
-        const PreviewToolbar(),
+        PreviewToolbar(
+          showContour: false,
+          onShowContourChanged: (_) {}, // 提供空的回调函数
+        ),
 
         // 主图像区域
         Expanded(

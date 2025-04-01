@@ -61,12 +61,27 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   @override
   Widget build(BuildContext context) {
     print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
-        '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}');
+        '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}, '
+        '显示轮廓: ${widget.showOutline}');
 
-    return RawKeyboardListener(
+    return Focus(
       focusNode: _focusNode,
       autofocus: true,
-      onKey: _handleRawKeyEvent,
+      onKeyEvent: (node, event) {
+        // 处理Alt键事件
+        if (event.logicalKey == LogicalKeyboardKey.alt ||
+            event.logicalKey == LogicalKeyboardKey.altLeft ||
+            event.logicalKey == LogicalKeyboardKey.altRight) {
+          final bool isDown = event is KeyDownEvent;
+          if (_isAltKeyPressed != isDown) {
+            setState(() {
+              _isAltKeyPressed = isDown;
+            });
+          }
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       child: GestureDetector(
         onTapDown: (_) => _focusNode.requestFocus(),
         child: InteractiveViewer(
@@ -89,7 +104,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
               onEraseEnd: _handleEraseEnd,
               altKeyPressed: _isAltKeyPressed,
               onPan: (delta) {
-                // 直接使用原始delta，不再反转方向
                 setState(() {
                   final Matrix4 matrix =
                       _transformationController.value.clone();
@@ -100,6 +114,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
               brushSize: widget.brushSize,
               brushColor: widget.brushColor,
               imageInvertMode: widget.imageInvertMode,
+              showOutline: widget.showOutline,
             ),
           ),
         ),
@@ -171,6 +186,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   void updatePaths(List<PathInfo> paths) {
     if (_layerStackKey.currentState != null) {
       _layerStackKey.currentState!.updatePaths(paths);
+      if (widget.showOutline) {
+        _updateOutline(); // 路径更新后，如果需要显示轮廓就更新轮廓
+      }
     }
   }
 
@@ -203,24 +221,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     );
   }
 
-  void _handleRawKeyEvent(RawKeyEvent event) {
-    print('键盘事件: ${event.runtimeType}, 键: ${event.logicalKey}');
-
-    if (event.logicalKey == LogicalKeyboardKey.altLeft ||
-        event.logicalKey == LogicalKeyboardKey.altRight) {
-      final bool shouldBePressed = event is RawKeyDownEvent;
-
-      if (_isAltKeyPressed != shouldBePressed) {
-        print('Alt键状态改变: $shouldBePressed');
-        setState(() {
-          _isAltKeyPressed = shouldBePressed;
-        });
-      }
-    }
-  }
-
   Future<void> _updateOutline() async {
-    if (_isProcessing || !widget.showOutline) return;
+    if (_isProcessing) return;
 
     setState(() => _isProcessing = true);
 
@@ -259,7 +261,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
           _isProcessing = false;
         });
 
-        _layerStackKey.currentState?.setOutline(_outline);
+        _layerStackKey.currentState
+            ?.setOutline(widget.showOutline ? _outline : null);
       }
     } catch (e) {
       print('轮廓检测失败: $e');

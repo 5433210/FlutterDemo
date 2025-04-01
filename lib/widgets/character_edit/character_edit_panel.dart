@@ -45,6 +45,7 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             brushColor: _eraseController.brushColor,
             brushSize: _currentBrushSize,
             imageInvertMode: _eraseController.imageInvertMode,
+            showOutline: _eraseController.outlineMode, // 添加描边状态
           ),
         ),
 
@@ -211,7 +212,11 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   }
 
   void _handleEraseControllerChange() {
-    _updateUndoRedoState();
+    setState(() {
+      _updateUndoRedoState();
+      // 刷新画布
+      _canvasKey.currentState?.updatePaths(_eraseController.getPaths());
+    });
   }
 
   void _handleEraseEnd() {
@@ -253,6 +258,8 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   void _toggleOutline() {
     setState(() {
       _eraseController.outlineMode = !_eraseController.outlineMode;
+      // 强制刷新画布以更新轮廓
+      _canvasKey.currentState?.updatePaths(_eraseController.getPaths());
     });
   }
 

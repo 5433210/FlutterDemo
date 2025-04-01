@@ -5,7 +5,14 @@ import '../../providers/character/tool_mode_provider.dart';
 
 /// 预览工具栏
 class PreviewToolbar extends ConsumerWidget {
-  const PreviewToolbar({Key? key}) : super(key: key);
+  final bool showContour;
+  final Function(bool) onShowContourChanged;
+
+  const PreviewToolbar({
+    Key? key,
+    required this.showContour,
+    required this.onShowContourChanged,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,6 +40,14 @@ class PreviewToolbar extends ConsumerWidget {
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.pan),
             ),
+            const Spacer(),
+            _ToolButton(
+              icon: Icons.border_clear,
+              tooltip: '显示描边',
+              isSelected: showContour,
+              onPressed: () => onShowContourChanged(!showContour),
+            ),
+            const SizedBox(width: 8),
           ],
         ),
       ),

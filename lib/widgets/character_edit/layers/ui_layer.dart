@@ -14,11 +14,8 @@ class UILayer extends BaseLayer {
   final MouseCursor cursor;
   final DetectedOutline? outline;
   final Size? imageSize;
-  // 添加Alt键状态
   final bool altKeyPressed;
-  // 添加笔刷大小参数
   final double brushSize;
-  // 添加当前鼠标位置跟踪
   final Offset? cursorPosition;
 
   const UILayer({
@@ -59,7 +56,6 @@ class UILayer extends BaseLayer {
             if (event.buttons == 1) {
               // 鼠标左键按下
               print('Alt+拖拽平移: ${event.delta}');
-              // 使用原始delta进行平移，不再反转方向
               onPan?.call(event.delta);
               return;
             }
@@ -76,7 +72,7 @@ class UILayer extends BaseLayer {
           onPointerUp?.call(event.localPosition);
         },
         child: Container(
-          color: Colors.transparent, // 确保能接收整个区域的事件
+          color: Colors.transparent,
           child: super.build(context),
         ),
       ),
@@ -110,12 +106,10 @@ class _UIPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // 从PreviewCanvas的OutlinePainter迁移：显示轮廓
     if (outline != null && imageSize != null) {
       _drawOutline(canvas, size);
     }
 
-    // 绘制笔刷光标
     if (cursorPosition != null && !altKeyPressed) {
       _drawBrushCursor(canvas, cursorPosition!);
     }
@@ -129,51 +123,42 @@ class _UIPainter extends CustomPainter {
       cursorPosition != oldDelegate.cursorPosition ||
       altKeyPressed != oldDelegate.altKeyPressed;
 
-  // 绘制笔刷光标 - 显示笔刷大小
   void _drawBrushCursor(Canvas canvas, Offset position) {
-    // 外圈 - 白色半透明
     final outlinePaint = Paint()
       ..color = Colors.white.withOpacity(0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    // 内圈 - 黑色半透明
     final innerPaint = Paint()
       ..color = Colors.black.withOpacity(0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    // 绘制表示笔刷大小的圆圈
     canvas.drawCircle(position, brushSize / 2, outlinePaint);
     canvas.drawCircle(position, brushSize / 2 - 1.5, innerPaint);
 
-    // 绘制十字准星
     final crosshairPaint = Paint()
       ..color = Colors.white.withOpacity(0.9)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    // 横线
     canvas.drawLine(
       Offset(position.dx - 6, position.dy),
       Offset(position.dx + 6, position.dy),
       crosshairPaint,
     );
 
-    // 竖线
     canvas.drawLine(
       Offset(position.dx, position.dy - 6),
       Offset(position.dx, position.dy + 6),
       crosshairPaint,
     );
 
-    // 为十字准星添加黑色描边以增强对比度
     final shadowPaint = Paint()
       ..color = Colors.black.withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5;
 
-    // 绘制十字准星黑色描边
     canvas.drawLine(
       Offset(position.dx - 7, position.dy),
       Offset(position.dx + 7, position.dy),
@@ -192,16 +177,36 @@ class _UIPainter extends CustomPainter {
     final scaleY = canvasSize.height / imageSize!.height;
     final scale = math.min(scaleX, scaleY);
 
-    final strokePaint = Paint()
-      ..color = Colors.blue.withOpacity(0.8)
+    // 创建两个画笔，一个用于主描边，一个用于外描边效果
+    final mainStrokePaint = Paint()
+      ..color = Colors.blue
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..strokeCap = StrokeCap.butt
-      ..strokeJoin = StrokeJoin.miter;
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
-    final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
+    final outerStrokePaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // 内部轮廓使用不同颜色以区分
+    final innerStrokePaint = Paint()
+      ..color = Colors.red.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // 内部轮廓的外描边
+    final innerOuterStrokePaint = Paint()
+      ..color = Colors.white.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     final offsetX = (canvasSize.width - imageSize!.width * scale) / 2;
     final offsetY = (canvasSize.height - imageSize!.height * scale) / 2;
@@ -209,6 +214,9 @@ class _UIPainter extends CustomPainter {
     canvas.save();
     canvas.translate(offsetX, offsetY);
     canvas.scale(scale);
+
+    // 跟踪已绘制的轮廓数
+    int contourCount = 0;
 
     for (final contour in outline!.contourPoints) {
       if (contour.length < 2) continue;
@@ -222,11 +230,24 @@ class _UIPainter extends CustomPainter {
 
       path.close();
 
-      // 先用填充色绘制轮廓内部
-      canvas.drawPath(path, fillPaint);
-      // 再用描边色绘制轮廓线
-      canvas.drawPath(path, strokePaint);
+      // 第一个轮廓使用蓝色（外轮廓），其余使用红色（内轮廓）
+      if (contourCount == 0) {
+        // 先绘制外描边（白色）
+        canvas.drawPath(path, outerStrokePaint);
+        // 再绘制主描边（蓝色）
+        canvas.drawPath(path, mainStrokePaint);
+      } else {
+        // 先绘制外描边（白色）
+        canvas.drawPath(path, innerOuterStrokePaint);
+        // 再绘制主描边（红色）
+        canvas.drawPath(path, innerStrokePaint);
+      }
+
+      contourCount++;
     }
+
+    // 打印轮廓数量，帮助调试
+    print('绘制了 $contourCount 个轮廓');
 
     canvas.restore();
   }
