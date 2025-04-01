@@ -8,6 +8,12 @@ import 'events/event_dispatcher.dart';
 import 'preview_layer.dart';
 import 'ui_layer.dart';
 
+// 添加编辑模式枚举，便于跟踪当前状态
+enum EditMode {
+  erase,
+  pan,
+}
+
 /// 擦除图层栈组件，管理所有图层
 class EraseLayerStack extends StatefulWidget {
   final ui.Image image;
@@ -49,6 +55,9 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   Offset? _currentCursorPosition;
   late Rect _imageBounds;
   DetectedOutline? _outline;
+
+  // 添加对上次模式的记忆
+  EditMode _lastMode = EditMode.erase;
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +108,21 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       _imageBounds = Rect.fromLTWH(
           0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
     }
+
+    // 检测Alt键状态变化
+    if (widget.altKeyPressed != oldWidget.altKeyPressed) {
+      print('Alt键状态更新: ${widget.altKeyPressed}, 当前光标: $_currentCursorPosition');
+
+      // 如果模式变化，立即刷新UI
+      setState(() {});
+
+      // 当按下Alt时，确保任何进行中的擦除操作被结束
+      if (widget.altKeyPressed && _currentPath != null) {
+        print('进入平移模式，结束当前擦除操作');
+        _finishCurrentPath();
+        widget.onEraseEnd?.call();
+      }
+    }
   }
 
   @override
@@ -115,95 +139,214 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   }
 
   void updatePaths(List<PathInfo> newPaths) {
+    print(
+        'EraseLayerStack更新路径 - 当前: ${_paths.length}, 新路径: ${newPaths.length}');
+
+    // 确保在setState中更新状态
     setState(() {
-      print(
-          'EraseLayerStack更新路径 - 当前: ${_paths.length}, 新路径: ${newPaths.length}');
-      _paths = newPaths;
-      _currentPath = null;
-      _dirtyRect = null;
-      print('更新路径列表 - 当前路径数: ${_paths.length}');
+      // 替换路径列表
+      _paths = List<PathInfo>.from(newPaths);
+      _currentPath = null; // 清空当前路径
+      _dirtyRect = null; // 重置脏区域，强制完全重绘
+
+      print('更新路径列表完成 - 当前路径数: ${_paths.length}');
     });
+
+    // 添加调试日志检查路径内容
+    if (_paths.isNotEmpty) {
+      try {
+        for (int i = 0; i < _paths.length; i++) {
+          final bounds = _paths[i].path.getBounds();
+          print('路径 #$i - 边界: $bounds, 笔刷: ${_paths[i].brushSize}');
+        }
+      } catch (e) {
+        print('路径调试异常: $e');
+      }
+    }
+  }
+
+  // 抽取路径完成逻辑为单独方法
+  void _finishCurrentPath() {
+    if (_currentPath == null) return;
+
+    // 检查路径是否有效（至少有两个点）
+    Rect bounds = _currentPath!.path.getBounds();
+    if (bounds.width > 0 || bounds.height > 0) {
+      print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
+      _paths = [..._paths, _currentPath!];
+    }
+
+    // 清空当前路径和脏区域
+    _currentPath = null;
+    _dirtyRect = null;
   }
 
   void _handlePointerDown(Offset position) {
-    if (widget.altKeyPressed) return;
+    // 更新光标位置
+    _currentCursorPosition = position;
 
+    // 检查Alt键并处理平移模式 - 如果按下Alt键，不执行擦除操作
+    if (widget.altKeyPressed) {
+      setState(() {}); // 仅更新光标
+      return; // 重要：当按下Alt键时，直接返回，不创建擦除路径
+    }
+
+    // 检查边界
     if (!_isPointInImageBounds(position)) {
-      print('鼠标按下位置超出图像边界，忽略此操作');
+      print('鼠标超出边界，忽略操作');
+      setState(() {});
       return;
     }
 
-    _currentCursorPosition = position;
+    print('开始创建新路径 - 位置: $position');
 
-    final path = Path()..moveTo(position.dx, position.dy);
+    // 创建新路径 - 使用直接指定构造函数参数的方式
+    final path = Path();
+    path.moveTo(position.dx, position.dy);
+
     _currentPath = PathInfo(
-        path: path, brushSize: widget.brushSize, brushColor: widget.brushColor);
+      path: path,
+      brushSize: widget.brushSize,
+      brushColor: widget.brushColor,
+    );
 
-    _dirtyRect = Rect.fromPoints(position, position).inflate(widget.brushSize);
+    print('新路径创建完成 - ID: ${_currentPath.hashCode}');
 
+    // 创建大一点的脏矩形区域确保完全覆盖笔触
+    _dirtyRect = Rect.fromCircle(
+      center: position,
+      radius: widget.brushSize + 10, // 使用更大的半径
+    );
+
+    // 调用外部回调
     widget.onEraseStart?.call(position);
 
+    // 强制更新UI
     setState(() {});
   }
 
   void _handlePointerMove(Offset position, Offset delta) {
+    // 始终更新光标位置
     _currentCursorPosition = position;
 
-    if (widget.altKeyPressed || _currentPath == null) {
-      setState(() {}); // 仅更新光标位置
+    // Alt键处理 - 平移模式优先级最高
+    if (widget.altKeyPressed) {
+      _lastMode = EditMode.pan; // 记住上一个模式
+
+      if (widget.onPan != null) {
+        widget.onPan!(delta);
+      }
+
+      // 即使在平移模式下也更新UI，确保光标跟随
+      setState(() {});
+      return;
+    } else {
+      // 从平移切换回擦除模式时，可能需要特殊处理
+      if (_lastMode == EditMode.pan) {
+        print('从平移模式返回擦除模式');
+        // 这里可以添加必要的状态重置
+      }
+      _lastMode = EditMode.erase;
+    }
+
+    // 检查是否为实际擦除操作还是仅光标移动
+    bool isErasing = delta != Offset.zero;
+    if (!isErasing) {
+      // 如果delta为零，只更新光标位置，不执行擦除
+      setState(() {});
       return;
     }
 
+    // 以下是实际擦除操作的逻辑 - 仅在拖拽时执行
+
+    // 如果没有当前路径，创建一个新路径
+    if (_currentPath == null) {
+      print('拖拽开始，创建新擦除路径');
+      _handlePointerDown(position);
+      return;
+    }
+
+    // 边界检查
     if (!_isPointInImageBounds(position)) {
-      print('鼠标移动位置超出图像边界，忽略此点');
+      print('鼠标移出边界，仅更新光标');
+      setState(() {});
       return;
     }
 
+    print('添加擦除点: $position (delta: $delta)');
+
+    // 将点添加到当前路径
     _currentPath!.path.lineTo(position.dx, position.dy);
 
+    // 更新脏区域
     if (_dirtyRect != null) {
       _dirtyRect = _dirtyRect!.expandToInclude(
-          Rect.fromCircle(center: position, radius: widget.brushSize));
-    } else {
-      _dirtyRect = Rect.fromCircle(center: position, radius: widget.brushSize);
+        Rect.fromCircle(center: position, radius: widget.brushSize + 5),
+      );
     }
 
+    // 调用外部回调
     widget.onEraseUpdate?.call(position, delta);
 
+    // 强制更新UI以重绘
     setState(() {});
   }
 
   void _handlePointerUp(Offset position) {
+    // 如果Alt键被按下，仅清除光标位置，不执行擦除完成操作
+    if (widget.altKeyPressed) {
+      setState(() {
+        _currentCursorPosition = null;
+      });
+      return; // 重要：确保Alt+拖拽不会生成擦除路径
+    }
+
+    // 清除光标位置
     _currentCursorPosition = null;
 
-    if (widget.altKeyPressed || _currentPath == null) {
-      setState(() {}); // 清除光标位置
+    // 如果无当前路径，无需处理
+    if (_currentPath == null) {
+      setState(() {});
       return;
     }
 
+    // 检查路径是否有效（至少有两个点）
     Rect bounds = _currentPath!.path.getBounds();
     if (bounds.width > 0 || bounds.height > 0) {
       print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
-      List<PathInfo> newPaths = List.from(_paths);
-      newPaths.add(_currentPath!);
-      print('添加新路径 - 更新前: ${_paths.length}, 更新后: ${newPaths.length}');
 
+      // 创建新路径列表并添加当前路径
       setState(() {
-        _paths = newPaths;
+        _paths = [..._paths, _currentPath!];
         _currentPath = null;
         _dirtyRect = null;
       });
+
+      print('添加新路径后 - 路径总数: ${_paths.length}');
     } else {
+      // 清空无效路径
       setState(() {
         _currentPath = null;
         _dirtyRect = null;
       });
     }
 
+    // 调用擦除完成回调
     widget.onEraseEnd?.call();
   }
 
   bool _isPointInImageBounds(Offset point) {
     return _imageBounds.contains(point);
+  }
+
+  // 辅助方法: 获取路径上的点数量
+  int _pathPointCount(Path path) {
+    try {
+      // 尝试获取路径的边界以确认路径有内容
+      final bounds = path.getBounds();
+      return bounds.isEmpty ? 0 : 1; // 无法直接获取点数，但可判断是否为空
+    } catch (e) {
+      return 0;
+    }
   }
 }

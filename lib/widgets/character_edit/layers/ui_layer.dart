@@ -40,36 +40,38 @@ class UILayer extends BaseLayer {
 
   @override
   Widget build(BuildContext context) {
+    // 记录当前使用的光标，便于调试
+    final currentCursor = altKeyPressed ? SystemMouseCursors.move : cursor;
+    print(
+        'UI图层 - 当前光标: ${altKeyPressed ? "移动" : "擦除"}, Alt键状态: $altKeyPressed');
+
     return MouseRegion(
-      cursor: altKeyPressed ? SystemMouseCursors.move : cursor,
-      child: Listener(
-        onPointerDown: (event) {
-          if (altKeyPressed) {
-            print('Alt+鼠标按下，准备平移');
-            return;
-          }
-          print('鼠标按下: ${event.localPosition}');
-          onPointerDown?.call(event.localPosition);
-        },
-        onPointerMove: (event) {
-          if (altKeyPressed) {
-            if (event.buttons == 1) {
-              // 鼠标左键按下
-              print('Alt+拖拽平移: ${event.delta}');
-              onPan?.call(event.delta);
-              return;
-            }
-          } else {
-            print('鼠标移动: ${event.localPosition}, 增量: ${event.delta}');
-            onPointerMove?.call(
-              event.localPosition,
-              event.delta,
-            );
+      cursor: currentCursor,
+      onHover: (event) {
+        // 只更新光标位置，不触发擦除操作
+        _updateCursorPosition(event.localPosition);
+      },
+      child: GestureDetector(
+        // 仅当拖动且非Alt模式时处理擦除
+        onPanStart: (details) {
+          print('手势开始: ${details.localPosition}, Alt键: $altKeyPressed');
+          if (onPointerDown != null) {
+            onPointerDown!(details.localPosition); // 函数内部会根据Alt键状态决定行为
           }
         },
-        onPointerUp: (event) {
-          if (altKeyPressed) return;
-          onPointerUp?.call(event.localPosition);
+        onPanUpdate: (details) {
+          print(
+              '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: $altKeyPressed');
+          if (onPointerMove != null) {
+            onPointerMove!(
+                details.localPosition, details.delta); // 函数内部会根据Alt键状态决定行为
+          }
+        },
+        onPanEnd: (_) {
+          print('手势结束, Alt键: $altKeyPressed');
+          if (cursorPosition != null && onPointerUp != null) {
+            onPointerUp!(cursorPosition!); // 函数内部会根据Alt键状态决定行为
+          }
         },
         child: Container(
           color: Colors.transparent,
@@ -87,6 +89,12 @@ class UILayer extends BaseLayer {
         cursorPosition: cursorPosition,
         altKeyPressed: altKeyPressed,
       );
+
+  // 辅助方法：仅更新光标位置
+  void _updateCursorPosition(Offset position) {
+    // 如果有onPointerMove回调，调用它但设置delta为Zero，表示只是光标移动而非擦除
+    onPointerMove?.call(position, Offset.zero);
+  }
 }
 
 class _UIPainter extends CustomPainter {
@@ -110,8 +118,15 @@ class _UIPainter extends CustomPainter {
       _drawOutline(canvas, size);
     }
 
-    if (cursorPosition != null && !altKeyPressed) {
-      _drawBrushCursor(canvas, cursorPosition!);
+    // 根据模式显示不同光标
+    if (cursorPosition != null) {
+      if (altKeyPressed) {
+        // 平移模式 - 绘制带有"Pan"标签的手型光标
+        _drawPanCursor(canvas, cursorPosition!);
+      } else {
+        // 擦除模式 - 绘制带有"Erase"标签的圆形光标
+        _drawBrushCursor(canvas, cursorPosition!);
+      }
     }
   }
 
@@ -122,6 +137,42 @@ class _UIPainter extends CustomPainter {
       brushSize != oldDelegate.brushSize ||
       cursorPosition != oldDelegate.cursorPosition ||
       altKeyPressed != oldDelegate.altKeyPressed;
+
+  void _drawArrow(Canvas canvas, Offset start, Offset end, Paint paint) {
+    // 绘制主线
+    canvas.drawLine(start, end, paint);
+
+    // 计算箭头方向
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    final length = math.sqrt(dx * dx + dy * dy);
+    final unitX = dx / length;
+    final unitY = dy / length;
+
+    // 计算垂直方向
+    final perpX = -unitY;
+    final perpY = unitX;
+
+    // 计算箭头的两个端点
+    const arrowSize = 4.0;
+    final arrowPoint1 = Offset(
+      end.dx - unitX * arrowSize + perpX * arrowSize,
+      end.dy - unitY * arrowSize + perpY * arrowSize,
+    );
+    final arrowPoint2 = Offset(
+      end.dx - unitX * arrowSize - perpX * arrowSize,
+      end.dy - unitY * arrowSize - perpY * arrowSize,
+    );
+
+    // 绘制箭头
+    final path = Path()
+      ..moveTo(end.dx, end.dy)
+      ..lineTo(arrowPoint1.dx, arrowPoint1.dy)
+      ..lineTo(arrowPoint2.dx, arrowPoint2.dy)
+      ..close();
+
+    canvas.drawPath(path, Paint()..color = Colors.blue);
+  }
 
   void _drawBrushCursor(Canvas canvas, Offset position) {
     final outlinePaint = Paint()
@@ -250,5 +301,49 @@ class _UIPainter extends CustomPainter {
     print('绘制了 $contourCount 个轮廓');
 
     canvas.restore();
+  }
+
+  void _drawPanCursor(Canvas canvas, Offset position) {
+    // 绘制移动指示器 - 手型光标
+    final paint = Paint()
+      ..color = Colors.blue.withOpacity(0.7)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    // 增加半透明背景圆形，让光标更明显
+    canvas.drawCircle(
+      position,
+      15.0,
+      Paint()
+        ..color = Colors.blue.withOpacity(0.2)
+        ..style = PaintingStyle.fill,
+    );
+
+    // 绘制外圈
+    canvas.drawCircle(position, 14.0, paint);
+
+    // 绘制移动指示箭头
+    _drawArrow(canvas, position, Offset(position.dx, position.dy - 12), paint);
+    _drawArrow(canvas, position, Offset(position.dx, position.dy + 12), paint);
+    _drawArrow(canvas, position, Offset(position.dx - 12, position.dy), paint);
+    _drawArrow(canvas, position, Offset(position.dx + 12, position.dy), paint);
+
+    // 添加"Pan"标签
+    final textPainter = TextPainter(
+      text: const TextSpan(
+        text: 'Pan',
+        style: TextStyle(
+          color: Colors.blue,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      position.translate(-textPainter.width / 2, 16),
+    );
   }
 }

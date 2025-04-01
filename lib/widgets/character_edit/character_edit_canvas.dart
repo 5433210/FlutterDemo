@@ -44,6 +44,7 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
 }
 
 class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
+  static const _altToggleDebounce = Duration(milliseconds: 100); // 防抖间隔
   final TransformationController _transformationController =
       TransformationController();
   final GlobalKey _stackKey = GlobalKey();
@@ -57,6 +58,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
   bool _isAltKeyPressed = false;
   final FocusNode _focusNode = FocusNode();
+  DateTime _lastAltToggleTime = DateTime.now(); // 添加时间戳记录
 
   @override
   Widget build(BuildContext context) {
@@ -67,21 +69,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
-      onKeyEvent: (node, event) {
-        // 处理Alt键事件
-        if (event.logicalKey == LogicalKeyboardKey.alt ||
-            event.logicalKey == LogicalKeyboardKey.altLeft ||
-            event.logicalKey == LogicalKeyboardKey.altRight) {
-          final bool isDown = event is KeyDownEvent;
-          if (_isAltKeyPressed != isDown) {
-            setState(() {
-              _isAltKeyPressed = isDown;
-            });
-          }
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
+      onKeyEvent: _handleKeyEvent,
       child: GestureDetector(
         onTapDown: (_) => _focusNode.requestFocus(),
         child: InteractiveViewer(
@@ -175,50 +163,144 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas> {
   @override
   void initState() {
     super.initState();
+    // 初始化空路径列表
+    _currentErasePath['points'] = <Offset>[];
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fitToScreen();
       if (widget.showOutline) {
         _updateOutline();
       }
+
+      // 确保擦除层能正常工作
+      print('画布初始化完成，图片尺寸: ${widget.image.width}x${widget.image.height}');
     });
   }
 
   void updatePaths(List<PathInfo> paths) {
     if (_layerStackKey.currentState != null) {
-      _layerStackKey.currentState!.updatePaths(paths);
-      if (widget.showOutline) {
-        _updateOutline(); // 路径更新后，如果需要显示轮廓就更新轮廓
-      }
+      print('更新擦除路径 - 路径数: ${paths.length}');
+
+      // 确保在UI线程执行
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _layerStackKey.currentState!.updatePaths(paths);
+
+        // 如果需要显示轮廓，更新轮廓
+        if (widget.showOutline) {
+          _updateOutline();
+        }
+      });
+    } else {
+      print('错误: 图层栈不可用，无法更新路径');
     }
   }
 
   void _handleEraseEnd() {
-    if ((_currentErasePath['points'] as List<Offset>).isNotEmpty) {
-      _erasePaths.add(Map<String, dynamic>.from(_currentErasePath));
+    final points = _currentErasePath['points'] as List<Offset>;
+
+    if (points.isNotEmpty) {
+      print('结束擦除 - 添加路径，点数: ${points.length}');
+
+      // 深度复制当前路径
+      final pathCopy = Map<String, dynamic>.from(_currentErasePath);
+      pathCopy['points'] = List<Offset>.from(points);
+
+      _erasePaths.add(pathCopy);
       _currentErasePath['points'] = <Offset>[];
+
+      print('结束后路径总数: ${_erasePaths.length}');
     }
 
     widget.onEraseEnd?.call();
 
+    // 如果显示轮廓开关打开，在每次擦除完成后更新轮廓
     if (widget.showOutline) {
       _updateOutline();
     }
   }
 
   void _handleEraseStart(Offset position) {
+    // 如果Alt键被按下，不进行擦除操作
+    if (_isAltKeyPressed) return;
+
+    // 仅当不在Alt键模式时才创建擦除路径
+    print('开始擦除 - 位置: $position');
+
     _currentErasePath['points'] = <Offset>[position];
     _currentErasePath['brushSize'] = widget.brushSize;
+
     widget.onEraseStart?.call(position);
+
+    // 立即通知视图更新
+    if (widget.onErasePointsChanged != null) {
+      final allPoints = <Offset>[
+        ...(_currentErasePath['points'] as List<Offset>),
+        ..._erasePaths.expand((path) => path['points'] as List<Offset>),
+      ];
+      widget.onErasePointsChanged!(allPoints);
+    }
   }
 
   void _handleEraseUpdate(Offset position, Offset delta) {
+    // 如果Alt键被按下，不进行擦除更新
+    if (_isAltKeyPressed) return;
+
+    // 检查是否是实际的擦除操作（有delta）还是单纯的光标移动
+    bool isErasing = delta != Offset.zero;
+
+    if (!isErasing) {
+      // 如果是单纯的光标移动，只更新光标位置，不执行擦除
+      return;
+    }
+
+    // 以下是实际擦除操作的逻辑 - 仅在真正拖拽时执行且不在Alt键模式下
+
+    // 如果没有活动的擦除路径，创建一个
+    if ((_currentErasePath['points'] as List<Offset>).isEmpty) {
+      _handleEraseStart(position);
+    }
+
+    // 添加点到当前路径
     (_currentErasePath['points'] as List<Offset>).add(position);
+
+    print('擦除更新 - 添加点到路径: $position, delta: $delta');
+
+    // 调用擦除更新回调
     widget.onEraseUpdate?.call(position, delta);
 
-    widget.onErasePointsChanged?.call(
-      (_currentErasePath['points'] as List<Offset>)
-        ..addAll(_erasePaths.expand((path) => path['points'] as List<Offset>)),
-    );
+    // 通知点集合更新
+    if (widget.onErasePointsChanged != null) {
+      final allPoints = <Offset>[
+        ...(_currentErasePath['points'] as List<Offset>),
+        ..._erasePaths.expand((path) => path['points'] as List<Offset>),
+      ];
+      widget.onErasePointsChanged!(allPoints);
+    }
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    // 处理Alt键事件
+    if (event.logicalKey == LogicalKeyboardKey.alt ||
+        event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      final now = DateTime.now();
+      final bool isDown = event is KeyDownEvent;
+
+      // 防止快速切换 - 忽略短时间内的反向切换
+      if (_isAltKeyPressed != isDown &&
+          now.difference(_lastAltToggleTime) > _altToggleDebounce) {
+        setState(() {
+          _isAltKeyPressed = isDown;
+          _lastAltToggleTime = now;
+
+          // 记录状态变化便于调试
+          print('Alt键状态变化: $_isAltKeyPressed, 事件类型: ${event.runtimeType}');
+        });
+      }
+
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   Future<void> _updateOutline() async {
