@@ -151,11 +151,27 @@ class CharacterImageProcessor {
       final brushRadius = brushSize / 2;
 
       for (final point in points) {
-        final x =
-            (point['x'] as num).toDouble().clamp(0, source.width - 1).toInt();
-        final y =
-            (point['y'] as num).toDouble().clamp(0, source.height - 1).toInt();
+        // 修复：正确处理Offset类型的点
+        // 旧代码尝试访问 point['x']，这在point是Map时有效，但point实际是Offset类型
+        double x, y;
+        if (point is Offset) {
+          // 直接访问Offset的dx和dy属性
+          x = point.dx;
+          y = point.dy;
+        } else if (point is Map) {
+          // 向后兼容：如果point是Map格式
+          x = (point['x'] as num).toDouble();
+          y = (point['y'] as num).toDouble();
+        } else {
+          // 跳过无效格式
+          continue;
+        }
 
+        // 确保坐标在有效范围内
+        x = x.clamp(0, source.width - 1);
+        y = y.clamp(0, source.height - 1);
+
+        // 应用擦除笔刷
         for (var dy = -brushRadius; dy <= brushRadius; dy++) {
           for (var dx = -brushRadius; dx <= brushRadius; dx++) {
             if (dx * dx + dy * dy <= brushRadius * brushRadius) {

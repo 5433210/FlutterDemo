@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
@@ -49,21 +51,26 @@ class EraseLayerStack extends StatefulWidget {
 }
 
 class EraseLayerStackState extends State<EraseLayerStack> {
+  static const _updateThrottleInterval = Duration(milliseconds: 16); // 约60fps
   final EventDispatcher _eventDispatcher = EventDispatcher();
   List<PathInfo> _paths = [];
   PathInfo? _currentPath;
   Rect? _dirtyRect;
   Offset? _currentCursorPosition;
   late Rect _imageBounds;
+
   DetectedOutline? _outline;
 
   // 添加对上次模式的记忆
   EditMode _lastMode = EditMode.erase;
+  // 添加状态更新节流控制
+  Timer? _updateThrottleTimer;
+
+  // 添加拖拽状态跟踪
+  bool _isDragging = false;
 
   @override
   Widget build(BuildContext context) {
-    print('构建擦除图层栈 - 路径数: ${_paths.length}, 当前路径: ${_currentPath != null}');
-
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
@@ -137,6 +144,12 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   }
 
   @override
+  void dispose() {
+    _updateThrottleTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _imageBounds = Rect.fromLTWH(
@@ -150,17 +163,12 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   }
 
   void updatePaths(List<PathInfo> newPaths) {
-    print(
-        'EraseLayerStack更新路径 - 当前: ${_paths.length}, 新路径: ${newPaths.length}');
-
     // 确保在setState中更新状态
     setState(() {
       // 替换路径列表
       _paths = List<PathInfo>.from(newPaths);
       _currentPath = null; // 清空当前路径
       _dirtyRect = null; // 重置脏区域，强制完全重绘
-
-      print('更新路径列表完成 - 当前路径数: ${_paths.length}');
     });
 
     // 添加调试日志检查路径内容
@@ -168,7 +176,6 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       try {
         for (int i = 0; i < _paths.length; i++) {
           final bounds = _paths[i].path.getBounds();
-          // print('路径 #$i - 边界: $bounds, 笔刷: ${_paths[i].brushSize}');
         }
       } catch (e) {
         print('路径调试异常: $e');
@@ -196,6 +203,9 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 更新光标位置
     _currentCursorPosition = position;
 
+    // 设置拖拽状态为true
+    _isDragging = true;
+
     // 检查Alt键并处理平移模式 - 如果按下Alt键，不执行擦除操作
     if (widget.altKeyPressed) {
       setState(() {}); // 仅更新光标
@@ -204,12 +214,15 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
     // 检查边界
     if (!_isPointInImageBounds(position)) {
-      print('鼠标超出边界，忽略操作');
+      // 减少不必要的日志
       setState(() {});
       return;
     }
 
-    print('开始创建新路径 - 位置: $position');
+    // 只在调试模式打印
+    if (kDebugMode && DebugFlags.enableEraseDebug) {
+      print('开始创建新路径 - 位置: $position');
+    }
 
     // 创建新路径 - 使用直接指定构造函数参数的方式
     final path = Path();
@@ -221,7 +234,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       brushColor: widget.brushColor,
     );
 
-    print('新路径创建完成 - ID: ${_currentPath.hashCode}');
+    // 只在调试模式打印
+    if (kDebugMode && DebugFlags.enableEraseDebug) {
+      print('新路径创建完成 - ID: ${_currentPath.hashCode}');
+    }
 
     // 创建大一点的脏矩形区域确保完全覆盖笔触
     _dirtyRect = Rect.fromCircle(
@@ -240,6 +256,12 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 始终更新光标位置
     _currentCursorPosition = position;
 
+    // 如果不是拖拽状态，只更新光标位置，不执行擦除操作
+    if (!_isDragging) {
+      _throttledSetState();
+      return;
+    }
+
     // Alt键处理 - 优先级最高，如果按下Alt键，则执行平移而非擦除
     if (widget.altKeyPressed) {
       // 确保模式被正确设置为平移
@@ -253,8 +275,8 @@ class EraseLayerStackState extends State<EraseLayerStack> {
         widget.onPan!(delta);
       }
 
-      // 即使在平移模式下也更新UI，确保光标跟随
-      setState(() {});
+      // 使用节流更新UI
+      _throttledSetState();
       return; // 重要：当按下Alt键时，直接返回，不执行任何擦除操作
     } else {
       // 从平移切换回擦除模式时，可能需要特殊处理
@@ -264,33 +286,31 @@ class EraseLayerStackState extends State<EraseLayerStack> {
       }
     }
 
-    // 检查是否为实际擦除操作还是仅光标移动
-    bool isErasing = delta != Offset.zero;
-    if (!isErasing) {
-      // 如果delta为零，只更新光标位置，不执行擦除
-      setState(() {});
-      return;
-    }
-
-    // 以下是实际擦除操作的逻辑 - 仅在拖拽时执行
-
     // 如果没有当前路径，创建一个新路径
     if (_currentPath == null) {
-      print('拖拽开始，创建新擦除路径');
+      // 只在调试模式打印
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('拖拽开始，创建新擦除路径');
+      }
       _handlePointerDown(position);
       return;
     }
 
     // 边界检查
     if (!_isPointInImageBounds(position)) {
-      print('鼠标移出边界，仅更新光标');
-      setState(() {});
+      // 减少不必要的日志
+      _throttledSetState();
       return;
     }
 
-    print('添加擦除点: $position (delta: $delta)');
+    // 只在调试模式下且每20个点才打印一次
+    if (kDebugMode &&
+        DebugFlags.enableEraseDebug &&
+        _pathPointCount(_currentPath!.path) % 20 == 0) {
+      print('添加擦除点: $position (delta: $delta)');
+    }
 
-    // 将点添加到当前路径
+    // 将点添加到当前路径 - 无论delta是否为零
     _currentPath!.path.lineTo(position.dx, position.dy);
 
     // 更新脏区域
@@ -303,11 +323,14 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 调用外部回调
     widget.onEraseUpdate?.call(position, delta);
 
-    // 强制更新UI以重绘
-    setState(() {});
+    // 使用节流更新UI以重绘，减少状态更新频率
+    _throttledSetState();
   }
 
   void _handlePointerUp(Offset position) {
+    // 重置拖拽状态
+    _isDragging = false;
+
     // 如果Alt键被按下，仅清除光标位置，不执行擦除完成操作
     if (widget.altKeyPressed) {
       setState(() {
@@ -328,7 +351,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     // 检查路径是否有效（至少有两个点）
     Rect bounds = _currentPath!.path.getBounds();
     if (bounds.width > 0 || bounds.height > 0) {
-      print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
+      // 只在调试模式打印
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('路径完成 - 旧路径数: ${_paths.length}, 添加新路径');
+      }
 
       // 创建新路径列表并添加当前路径
       setState(() {
@@ -337,7 +363,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
         _dirtyRect = null;
       });
 
-      print('添加新路径后 - 路径总数: ${_paths.length}');
+      // 只在调试模式打印
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('添加新路径后 - 路径总数: ${_paths.length}');
+      }
     } else {
       // 清空无效路径
       setState(() {
@@ -363,5 +392,14 @@ class EraseLayerStackState extends State<EraseLayerStack> {
     } catch (e) {
       return 0;
     }
+  }
+
+  // 节流状态更新的方法
+  void _throttledSetState() {
+    if (_updateThrottleTimer?.isActive ?? false) return;
+
+    _updateThrottleTimer = Timer(_updateThrottleInterval, () {
+      if (mounted) setState(() {});
+    });
   }
 }

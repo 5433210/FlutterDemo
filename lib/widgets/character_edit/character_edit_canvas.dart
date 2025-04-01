@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,9 +65,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
-        '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}, '
-        '显示轮廓: ${widget.showOutline}, 焦点状态: ${focusNode.hasFocus}');
+    // 只在调试模式下打印状态
+    if (kDebugMode && DebugFlags.enableEraseDebug) {
+      print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
+          '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}, '
+          '显示轮廓: ${widget.showOutline}, 焦点状态: ${focusNode.hasFocus}');
+    }
 
     return Focus(
       focusNode: focusNode,
@@ -188,7 +192,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void updatePaths(List<PathInfo> paths) {
     if (_layerStackKey.currentState != null) {
-      print('更新擦除路径 - 路径数: ${paths.length}');
+      // print('更新擦除路径 - 路径数: ${paths.length}');
 
       // 确保在UI线程执行
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -233,7 +237,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     if (_isAltKeyPressed) return;
 
     // 仅当不在Alt键模式时才创建擦除路径
-    print('开始擦除 - 位置: $position');
+    // 只在调试模式打印
+    if (kDebugMode && DebugFlags.enableEraseDebug) {
+      print('开始擦除 - 位置: $position');
+    }
 
     _currentErasePath['points'] = <Offset>[position];
     _currentErasePath['brushSize'] = widget.brushSize;
@@ -254,15 +261,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     // 如果Alt键被按下，不进行擦除更新
     if (_isAltKeyPressed) return;
 
-    // 检查是否是实际的擦除操作（有delta）还是单纯的光标移动
-    bool isErasing = delta != Offset.zero;
-
-    if (!isErasing) {
-      // 如果是单纯的光标移动，只更新光标位置，不执行擦除
+    // 检查是否真正的拖拽操作（有实际移动）
+    bool isDragging = delta != Offset.zero;
+    if (!isDragging) {
+      // 如果只是光标移动而非拖拽，不执行擦除操作
       return;
     }
 
-    // 以下是实际擦除操作的逻辑 - 仅在真正拖拽时执行且不在Alt键模式下
+    // 以下是实际擦除操作的逻辑 - 仅在真正拖拽时执行
 
     // 如果没有活动的擦除路径，创建一个
     if ((_currentErasePath['points'] as List<Offset>).isEmpty) {
@@ -272,7 +278,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     // 添加点到当前路径
     (_currentErasePath['points'] as List<Offset>).add(position);
 
-    print('擦除更新 - 添加点到路径: $position, delta: $delta');
+    // 性能优化：只在调试模式下且每50个点才打印一次
+    if (kDebugMode &&
+        DebugFlags.enableEraseDebug &&
+        (_currentErasePath['points'] as List<Offset>).length % 50 == 0) {
+      print(
+          '擦除更新 - 添加点到路径: $position, 当前点数: ${(_currentErasePath['points'] as List<Offset>).length}');
+    }
 
     // 调用擦除更新回调
     widget.onEraseUpdate?.call(position, delta);
@@ -320,8 +332,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           _isAltKeyPressed = isDown;
           _lastAltToggleTime = now;
 
-          // 记录状态变化便于调试
-          print('Alt键状态变化: $_isAltKeyPressed, 事件类型: ${event.runtimeType}');
+          // 只在调试模式下打印
+          if (kDebugMode && DebugFlags.enableEraseDebug) {
+            print('Alt键状态变化: $_isAltKeyPressed, 事件类型: ${event.runtimeType}');
+          }
           DebugFlags.trackAltKeyState('CharacterEditCanvas', _isAltKeyPressed);
         });
       }

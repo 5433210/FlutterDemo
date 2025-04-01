@@ -1,14 +1,21 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../utils/debug/debug_flags.dart';
+import '../../utils/path/path_smoothing.dart'; // 添加导入
 import '../../widgets/character_edit/layers/preview_layer.dart';
 import 'erase_state.dart';
 
 /// 擦除工具控制器，管理擦除状态和操作
 class EraseController with ChangeNotifier {
+  static const int _bufferThreshold = 10; // 缓冲区阈值
   final EraseState _state = EraseState();
   PathInfo? _currentPath;
   List<PathInfo> _paths = [];
+
   List<PathInfo> _redoPaths = [];
+  // 添加点缓冲区和阈值
+  final List<Offset> _pointBuffer = [];
 
   // 记录最近的操作模式，便于出现问题时诊断
   bool _isInPanMode = false;
@@ -40,7 +47,6 @@ class EraseController with ChangeNotifier {
   set imageInvertMode(bool value) {
     if (_state.imageInvertMode != value) {
       _state.imageInvertMode = value;
-      print('切换图像反转 - imageInvertMode: ${_state.imageInvertMode}');
       notifyListeners();
     }
   }
@@ -51,8 +57,6 @@ class EraseController with ChangeNotifier {
   set invertMode(bool value) {
     if (_state.invertMode != value) {
       _state.invertMode = value;
-      print(
-          '切换笔刷反转 - invertMode: ${_state.invertMode}, brushColor: ${_state.brushColor}');
       notifyListeners();
     }
   }
@@ -73,11 +77,17 @@ class EraseController with ChangeNotifier {
     if (_isInPanMode != value) {
       _isInPanMode = value;
       _lastModeChangeTime = DateTime.now();
-      print('EraseController: 切换平移模式 -> $_isInPanMode');
+
+      // 只在调试模式下打印
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('EraseController: 切换平移模式 -> $_isInPanMode');
+      }
 
       // 如果从平移模式切回来，且有活动路径，结束它
       if (!_isInPanMode && _currentPath != null) {
-        print('从平移模式返回时结束当前路径');
+        if (kDebugMode && DebugFlags.enableEraseDebug) {
+          print('从平移模式返回时结束当前路径');
+        }
         endErase();
       }
 
@@ -91,7 +101,6 @@ class EraseController with ChangeNotifier {
       _paths = [];
       _redoPaths = [];
       _currentPath = null;
-      print('清除所有路径');
       notifyListeners();
     }
   }
@@ -99,6 +108,11 @@ class EraseController with ChangeNotifier {
   // 结束擦除操作
   void endErase() {
     if (_currentPath != null) {
+      // 应用所有缓冲的点
+      if (_pointBuffer.isNotEmpty) {
+        _applyBufferedPoints();
+      }
+
       // 检查路径是否有效（存在点）
       try {
         final bounds = _currentPath!.path.getBounds();
@@ -107,15 +121,13 @@ class EraseController with ChangeNotifier {
         if (hasPoints) {
           _paths.add(_currentPath!);
           _redoPaths.clear(); // 添加新路径时清空重做栈
-          print('结束擦除 - 添加有效路径 - 总数: ${_paths.length}');
-        } else {
-          print('结束擦除 - 跳过空路径');
         }
       } catch (e) {
         print('结束擦除 - 错误: $e');
       }
 
       _currentPath = null;
+      _pointBuffer.clear();
       notifyListeners();
     }
   }
@@ -143,9 +155,6 @@ class EraseController with ChangeNotifier {
     final result = List<PathInfo>.from(_paths);
     if (_currentPath != null) {
       result.add(_currentPath!);
-      print('获取路径 - 包含当前活动路径，总数: ${result.length}');
-    } else {
-      print('获取路径 - 无活动路径，总数: ${result.length}');
     }
     return result;
   }
@@ -155,7 +164,6 @@ class EraseController with ChangeNotifier {
     if (_redoPaths.isNotEmpty) {
       final path = _redoPaths.removeLast();
       _paths.add(path);
-      print('重做操作 - 路径数: ${_paths.length}, 重做栈: ${_redoPaths.length}');
       notifyListeners();
     }
   }
@@ -164,15 +172,22 @@ class EraseController with ChangeNotifier {
   void startErase(Offset position) {
     // 在平移模式下不启动擦除
     if (_isInPanMode) {
-      print('EraseController: 忽略擦除请求，当前处于平移模式');
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('EraseController: 忽略擦除请求，当前处于平移模式');
+      }
       return;
     }
 
-    print('EraseController: 开始擦除操作，位置 $position，笔刷大小 $brushSize');
+    // 只在调试模式下打印
+    if (kDebugMode && DebugFlags.enableEraseDebug) {
+      print('EraseController: 开始擦除操作，位置 $position，笔刷大小 $brushSize');
+    }
 
     // 如果有未完成的路径，先完成它
     if (_currentPath != null) {
-      print('发现未完成的擦除路径，先完成它');
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('发现未完成的擦除路径，先完成它');
+      }
       endErase();
     }
 
@@ -185,7 +200,11 @@ class EraseController with ChangeNotifier {
         brushSize: brushSize,
         brushColor: brushColor,
       );
-      print('创建新擦除路径：${_currentPath.hashCode}');
+
+      // 只在调试模式下打印
+      if (kDebugMode && DebugFlags.enableEraseDebug) {
+        print('创建新擦除路径：${_currentPath.hashCode}');
+      }
       notifyListeners();
     } catch (e) {
       print('创建路径时出错: $e');
@@ -197,7 +216,6 @@ class EraseController with ChangeNotifier {
     if (_paths.isNotEmpty) {
       final path = _paths.removeLast();
       _redoPaths.add(path);
-      print('撤销操作 - 路径数: ${_paths.length}, 重做栈: ${_redoPaths.length}');
       notifyListeners();
     }
   }
@@ -211,20 +229,52 @@ class EraseController with ChangeNotifier {
 
     // 检查是否有活动的擦除路径
     if (_currentPath == null) {
-      // 这种情况不应该发生，因为我们现在只在拖拽时执行擦除
-      print('警告: 尝试更新不存在的擦除路径');
       return;
     }
 
     try {
-      // 添加点到当前路径
-      _currentPath!.path.lineTo(position.dx, position.dy);
-      print('擦除路径更新: 添加点 $position');
+      // 添加点到当前路径 - 不使用lineTo，而是收集点
+      // 然后在结束时应用平滑处理
+      _pointBuffer.add(position);
+
+      // 如果缓冲区足够大，应用部分平滑
+      if (_pointBuffer.length > _bufferThreshold) {
+        _applyBufferedPoints();
+      }
 
       // 通知监听器更新UI
       notifyListeners();
     } catch (e) {
       print('更新擦除路径时出错: $e');
+    }
+  }
+
+  // 应用缓冲区中的点到路径
+  void _applyBufferedPoints() {
+    if (_pointBuffer.isEmpty || _currentPath == null) return;
+
+    // 只在调试模式且缓冲区足够大时打印
+    if (kDebugMode && DebugFlags.enableEraseDebug && _pointBuffer.length > 20) {
+      print('应用缓冲区 - 点数: ${_pointBuffer.length}');
+    }
+
+    // 平滑处理缓冲区中的点
+    final smoothedPoints = PathSmoothing.interpolatePoints(
+      _pointBuffer,
+      maxDistance: 6.0,
+    );
+
+    // 创建平滑路径段
+    final smoothPath = PathSmoothing.createSmoothPath(smoothedPoints);
+
+    // 将平滑路径段添加到当前路径
+    _currentPath!.path.addPath(smoothPath, Offset.zero);
+
+    // 清空缓冲区，但保留最后一个点作为下一段的起点
+    if (_pointBuffer.isNotEmpty) {
+      final lastPoint = _pointBuffer.last;
+      _pointBuffer.clear();
+      _pointBuffer.add(lastPoint);
     }
   }
 }

@@ -1,12 +1,16 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
+import '../../../utils/debug/debug_flags.dart';
 import 'base_layer.dart';
 
 /// UI图层，处理用户交互和显示光标
 class UILayer extends BaseLayer {
+  // 添加静态计数器用于降低日志频率
+  static int _updateCounter = 0;
   final Function(Offset)? onPointerDown;
   final Function(Offset, Offset)? onPointerMove;
   final Function(Offset)? onPointerUp;
@@ -16,6 +20,7 @@ class UILayer extends BaseLayer {
   final Size? imageSize;
   final bool altKeyPressed;
   final double brushSize;
+
   final Offset? cursorPosition;
 
   const UILayer({
@@ -42,37 +47,50 @@ class UILayer extends BaseLayer {
   Widget build(BuildContext context) {
     // 记录当前使用的光标，便于调试
     final currentCursor = altKeyPressed ? SystemMouseCursors.move : cursor;
-    print(
-        'UI图层 - 当前光标: ${altKeyPressed ? "移动" : "擦除"}, Alt键状态: $altKeyPressed');
 
     return MouseRegion(
       cursor: currentCursor,
       onHover: (event) {
         // 只更新光标位置，不触发擦除操作
-        _updateCursorPosition(event.localPosition);
+        if (onPointerMove != null) {
+          // 重要: 传递Offset.zero作为delta，表明这只是光标移动而非拖拽
+          onPointerMove!(event.localPosition, Offset.zero);
+        }
       },
       child: GestureDetector(
-        // 仅当拖动且非Alt模式时处理擦除
+        // 仅当拖动时处理擦除
         onPanStart: (details) {
-          print('手势开始: ${details.localPosition}, Alt键: $altKeyPressed');
+          // 只在调试模式下打印
+          if (kDebugMode && DebugFlags.enableEraseDebug) {
+            print('手势开始: ${details.localPosition}, Alt键: $altKeyPressed');
+          }
           if (onPointerDown != null) {
-            onPointerDown!(details.localPosition); // 函数内部会根据Alt键状态决定行为
+            onPointerDown!(details.localPosition);
           }
         },
         onPanUpdate: (details) {
-          print(
-              '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: $altKeyPressed');
+          // 只打印每15个点的一次，避免大量日志
+          if (kDebugMode &&
+              DebugFlags.enableEraseDebug &&
+              _updateCounter++ % 15 == 0) {
+            print(
+                '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: $altKeyPressed');
+          }
           if (onPointerMove != null) {
-            onPointerMove!(
-                details.localPosition, details.delta); // 函数内部会根据Alt键状态决定行为
+            onPointerMove!(details.localPosition, details.delta);
           }
         },
         onPanEnd: (_) {
-          print('手势结束, Alt键: $altKeyPressed');
+          // 只在调试模式下打印
+          if (kDebugMode && DebugFlags.enableEraseDebug) {
+            print('手势结束, Alt键: $altKeyPressed');
+          }
           if (cursorPosition != null && onPointerUp != null) {
-            onPointerUp!(cursorPosition!); // 函数内部会根据Alt键状态决定行为
+            onPointerUp!(cursorPosition!);
           }
         },
+        // 确保透明部分也能接收事件
+        behavior: HitTestBehavior.opaque,
         child: Container(
           color: Colors.transparent,
           child: super.build(context),

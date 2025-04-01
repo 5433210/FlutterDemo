@@ -277,7 +277,7 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     setState(() {
       _canUndo = _eraseController.canUndo;
       _canRedo = _eraseController.canRedo;
-      print('更新按钮状态 - canUndo: $_canUndo, canRedo: $_canRedo');
+      // print('更新按钮状态 - canUndo: $_canUndo, canRedo: $_canRedo');
     });
   }
 }

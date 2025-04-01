@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../utils/debug/debug_flags.dart';
 import 'base_layer.dart';
 
 /// 路径信息类，包含路径和笔刷信息
@@ -66,9 +68,6 @@ class _PreviewPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print('绘制预览层 - 路径数: ${paths.length}, 当前路径: ${currentPath != null}, '
-        '路径状态: ${_getPathsStatus()}, 画笔大小: $brushSize');
-
     // 应用全局颜色混合模式 - 确保白色擦除效果正确显示
     final compositeMode = Paint()..blendMode = BlendMode.srcOver;
     canvas.saveLayer(null, compositeMode);
@@ -89,9 +88,12 @@ class _PreviewPainter extends CustomPainter {
         brushSize != oldDelegate.brushSize ||
         dirtyRect != oldDelegate.dirtyRect;
 
-    if (result) {
-      print(
-          '需要重绘预览层 - 原因: ${paths != oldDelegate.paths ? '路径列表变化' : ''}${currentPath?.path != oldDelegate.currentPath?.path ? '当前路径变化' : ''}${dirtyRect != oldDelegate.dirtyRect ? '脏区域变化' : ''}');
+    // 减少不必要的日志，只在调试模式且发生变化时打印
+    if (result && kDebugMode && DebugFlags.enableEraseDebug) {
+      print('需要重绘预览层 - 原因: '
+          '${paths != oldDelegate.paths ? '路径列表变化' : ''}'
+          '${currentPath?.path != oldDelegate.currentPath?.path ? '当前路径变化' : ''}'
+          '${dirtyRect != oldDelegate.dirtyRect ? '脏区域变化' : ''}');
     }
 
     return result;
@@ -110,20 +112,28 @@ class _PreviewPainter extends CustomPainter {
         print('绘制路径出错: $e');
       }
     }
-    print('  已绘制完成路径数: $pathCount');
+
+    // 只在调试模式下打印，且降低打印频率
+    if (kDebugMode && DebugFlags.enableEraseDebug && pathCount % 5 == 0) {
+      print('  已绘制完成路径数: $pathCount');
+    }
 
     // 绘制当前活动路径
     if (currentPath != null) {
       try {
         _drawPath(canvas, currentPath!);
-        print('  已绘制当前路径');
+
+        // 只在调试模式下打印
+        if (kDebugMode && DebugFlags.enableEraseDebug && pathCount % 5 == 0) {
+          print('  已绘制当前路径');
+        }
       } catch (e) {
         print('  绘制当前路径失败: $e');
       }
     }
   }
 
-  // 简化的路径绘制方法
+  // 改进路径绘制方法，优化性能
   void _drawPath(Canvas canvas, PathInfo pathInfo) {
     final paint = Paint()
       ..color = pathInfo.brushColor
@@ -133,7 +143,7 @@ class _PreviewPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..isAntiAlias = true;
 
-    // 直接绘制路径，简化逻辑避免过多判断
+    // 使用简化绘制逻辑，避免复杂的计算
     canvas.drawPath(pathInfo.path, paint);
   }
 
