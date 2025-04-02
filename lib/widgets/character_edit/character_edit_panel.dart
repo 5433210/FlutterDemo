@@ -31,10 +31,7 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 工具栏
         _buildToolbar(),
-
-        // 编辑画布区域
         Expanded(
           child: CharacterEditCanvas(
             key: _canvasKey,
@@ -44,12 +41,11 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onEraseEnd: _handleEraseEnd,
             brushColor: _eraseController.brushColor,
             brushSize: _currentBrushSize,
+            invertMode: _eraseController.invertMode,
             imageInvertMode: _eraseController.imageInvertMode,
-            showOutline: _eraseController.outlineMode, // 添加描边状态
+            showOutline: _eraseController.outlineMode,
           ),
         ),
-
-        // 底部操作区
         _buildBottomActions(),
       ],
     );
@@ -64,7 +60,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   @override
   void initState() {
     super.initState();
-    // 监听EraseController的变化
     _eraseController.addListener(_handleEraseControllerChange);
     _updateUndoRedoState();
   }
@@ -117,7 +112,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
       ),
       child: Row(
         children: [
-          // 笔刷反转按钮
           IconButton(
             icon: Stack(
               children: [
@@ -136,8 +130,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onPressed: _toggleInvert,
             tooltip: '笔刷反转',
           ),
-
-          // 图像反转按钮
           IconButton(
             icon: Icon(
               Icons.invert_colors,
@@ -146,8 +138,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onPressed: _toggleImageInvert,
             tooltip: '图像反转',
           ),
-
-          // 描边按钮
           IconButton(
             icon: Icon(
               Icons.border_style,
@@ -156,8 +146,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
             onPressed: _toggleOutline,
             tooltip: '描边',
           ),
-
-          // 画笔大小滑块
           Expanded(
             child: Row(
               children: [
@@ -186,15 +174,11 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
               ],
             ),
           ),
-
-          // 撤销按钮
           IconButton(
             icon: const Icon(Icons.undo),
             onPressed: _canUndo ? _undo : null,
             tooltip: '撤销',
           ),
-
-          // 重做按钮
           IconButton(
             icon: const Icon(Icons.redo),
             onPressed: _canRedo ? _redo : null,
@@ -214,14 +198,24 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
   void _handleEraseControllerChange() {
     setState(() {
       _updateUndoRedoState();
-      // 刷新画布
-      _canvasKey.currentState?.updatePaths(_eraseController.getPaths());
+      if (_canvasKey.currentState != null) {
+        final paths = _eraseController.getPaths();
+        print('准备更新画布路径 - 路径数量: ${paths.length}');
+        _canvasKey.currentState!.updatePaths(paths);
+      }
     });
   }
 
   void _handleEraseEnd() {
+    print('结束擦除 - 描边模式: ${_eraseController.outlineMode}');
     _eraseController.endErase();
-    print('结束擦除');
+
+    // 确保在每次擦除结束后都强制更新轮廓
+    if (_eraseController.outlineMode && _canvasKey.currentState != null) {
+      print('强制更新画布和轮廓');
+      final paths = _eraseController.getPaths();
+      _canvasKey.currentState!.updatePaths(paths);
+    }
   }
 
   void _handleEraseStart(Offset position) {
@@ -235,11 +229,11 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
 
   void _redo() {
     if (_canRedo) {
-      print('执行重做操作');
       _eraseController.redo();
       final paths = _eraseController.getPaths();
-      print('重做后获取路径 - 数量: ${paths.length}');
-      _canvasKey.currentState?.updatePaths(paths);
+      if (_canvasKey.currentState != null) {
+        _canvasKey.currentState!.updatePaths(paths);
+      }
     }
   }
 
@@ -257,19 +251,23 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
 
   void _toggleOutline() {
     setState(() {
+      print('切换描边模式');
       _eraseController.outlineMode = !_eraseController.outlineMode;
-      // 强制刷新画布以更新轮廓
-      _canvasKey.currentState?.updatePaths(_eraseController.getPaths());
+      if (_canvasKey.currentState != null) {
+        final paths = _eraseController.getPaths();
+        print('更新画布路径 - 路径数量: ${paths.length}');
+        _canvasKey.currentState!.updatePaths(paths);
+      }
     });
   }
 
   void _undo() {
     if (_canUndo) {
-      print('执行撤销操作');
       _eraseController.undo();
       final paths = _eraseController.getPaths();
-      print('撤销后获取路径 - 数量: ${paths.length}');
-      _canvasKey.currentState?.updatePaths(paths);
+      if (_canvasKey.currentState != null) {
+        _canvasKey.currentState!.updatePaths(paths);
+      }
     }
   }
 
@@ -277,7 +275,6 @@ class _CharacterEditPanelState extends State<CharacterEditPanel> {
     setState(() {
       _canUndo = _eraseController.canUndo;
       _canRedo = _eraseController.canRedo;
-      // print('更新按钮状态 - canUndo: $_canUndo, canRedo: $_canRedo');
     });
   }
 }

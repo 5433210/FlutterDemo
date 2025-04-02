@@ -53,6 +53,17 @@ class DebugFlags {
     log('模式切换', '当前为$mode');
   }
 
+  /// Log paint operation details
+  static void logPaintOperation(String type, Rect bounds, {String? details}) {
+    if (!enableEraseDebug) return;
+
+    log(
+        'Paint',
+        '$type at ${bounds.left.toInt()},${bounds.top.toInt()} '
+            'size ${bounds.width.toInt()}x${bounds.height.toInt()} '
+            '${details != null ? '- $details' : ''}');
+  }
+
   /// 记录平移事件
   static void logPan(Offset position, Offset delta) {
     if (!enableEraseDebug) return;

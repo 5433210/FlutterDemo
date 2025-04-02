@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -14,7 +15,7 @@ import '../../utils/focus/focus_persistence.dart';
 import 'layers/erase_layer_stack.dart';
 import 'layers/preview_layer.dart';
 
-/// 编辑画布组件，管理缩放和平移，整合所有功能
+/// 编辑画布组件
 class CharacterEditCanvas extends ConsumerStatefulWidget {
   final ui.Image image;
   final bool showOutline;
@@ -51,25 +52,25 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   static const _altToggleDebounce = Duration(milliseconds: 100);
   final TransformationController _transformationController =
       TransformationController();
-  final GlobalKey _stackKey = GlobalKey();
+  final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
+
   final Map<String, dynamic> _currentErasePath = {
     'points': <Offset>[],
     'brushSize': 10.0,
   };
   final List<Map<String, dynamic>> _erasePaths = [];
+
   DetectedOutline? _outline;
   bool _isProcessing = false;
-  final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
   bool _isAltKeyPressed = false;
   DateTime _lastAltToggleTime = DateTime.now();
+  Timer? _outlineUpdateTimer;
 
   @override
   Widget build(BuildContext context) {
-    // 只在调试模式下打印状态
     if (kDebugMode && DebugFlags.enableEraseDebug) {
-      print('画布状态 - Alt键: $_isAltKeyPressed, 笔刷大小: ${widget.brushSize}, '
-          '画笔颜色: ${widget.brushColor}, 图像反转: ${widget.imageInvertMode}, '
-          '显示轮廓: ${widget.showOutline}, 焦点状态: ${focusNode.hasFocus}');
+      print(
+          '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
     }
 
     return Focus(
@@ -91,7 +92,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           child: SizedBox(
             width: widget.image.width.toDouble(),
             height: widget.image.height.toDouble(),
-            key: _stackKey,
             child: EraseLayerStack(
               key: _layerStackKey,
               image: widget.image,
@@ -99,11 +99,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
               onEraseStart: _handleEraseStart,
               onEraseUpdate: _handleEraseUpdate,
               onEraseEnd: _handleEraseEnd,
+              onTap: _handleTap,
               altKeyPressed: _isAltKeyPressed,
               onPan: (delta) {
                 setState(() {
-                  final Matrix4 matrix =
-                      _transformationController.value.clone();
+                  final matrix = _transformationController.value.clone();
                   matrix.translate(delta.dx, delta.dy);
                   _transformationController.value = matrix;
                 });
@@ -132,15 +132,17 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     if (widget.showOutline != oldWidget.showOutline ||
         widget.invertMode != oldWidget.invertMode ||
         widget.imageInvertMode != oldWidget.imageInvertMode) {
-      print('设置变化 - invertMode: ${widget.invertMode}, '
-          'imageInvertMode: ${widget.imageInvertMode}, '
-          'showOutline: ${widget.showOutline}');
-      _updateOutline();
+      print('画布属性变化:');
+      print('- showOutline: ${widget.showOutline}');
+      print('- invertMode: ${widget.invertMode}');
+      print('- imageInvertMode: ${widget.imageInvertMode}');
+      _scheduleOutlineUpdate();
     }
   }
 
   @override
   void dispose() {
+    _outlineUpdateTimer?.cancel();
     focusNode.removeListener(_onFocusChange);
     super.dispose();
   }
@@ -172,82 +174,51 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   @override
   void initState() {
     super.initState();
-
-    // 初始化空路径列表
     _currentErasePath['points'] = <Offset>[];
-
-    // 添加焦点监听
     focusNode.addListener(_onFocusChange);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fitToScreen();
       if (widget.showOutline) {
-        _updateOutline();
+        _scheduleOutlineUpdate();
       }
-
-      // 确保擦除层能正常工作
-      print('画布初始化完成，图片尺寸: ${widget.image.width}x${widget.image.height}');
     });
   }
 
   void updatePaths(List<PathInfo> paths) {
+    print(
+        '更新路径 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
     if (_layerStackKey.currentState != null) {
-      // print('更新擦除路径 - 路径数: ${paths.length}');
-
-      // 确保在UI线程执行
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _layerStackKey.currentState!.updatePaths(paths);
-
-        // 如果需要显示轮廓，更新轮廓
-        if (widget.showOutline) {
-          _updateOutline();
-        }
-      });
-    } else {
-      print('错误: 图层栈不可用，无法更新路径');
+      _layerStackKey.currentState!.updatePaths(paths);
+      // 使用延迟更新来避免过于频繁的轮廓更新
+      _scheduleOutlineUpdate();
     }
   }
 
   void _handleEraseEnd() {
+    print('擦除结束 - showOutline: ${widget.showOutline}');
+    widget.onEraseEnd?.call();
+
     final points = _currentErasePath['points'] as List<Offset>;
-
     if (points.isNotEmpty) {
-      print('结束擦除 - 添加路径，点数: ${points.length}');
-
-      // 深度复制当前路径
       final pathCopy = Map<String, dynamic>.from(_currentErasePath);
       pathCopy['points'] = List<Offset>.from(points);
-
       _erasePaths.add(pathCopy);
       _currentErasePath['points'] = <Offset>[];
 
-      print('结束后路径总数: ${_erasePaths.length}');
-    }
-
-    widget.onEraseEnd?.call();
-
-    // 如果显示轮廓开关打开，在每次擦除完成后更新轮廓
-    if (widget.showOutline) {
-      _updateOutline();
+      // 强制更新轮廓
+      _scheduleOutlineUpdate();
     }
   }
 
   void _handleEraseStart(Offset position) {
-    // 如果Alt键被按下，不进行擦除操作
     if (_isAltKeyPressed) return;
-
-    // 仅当不在Alt键模式时才创建擦除路径
-    // 只在调试模式打印
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      print('开始擦除 - 位置: $position');
-    }
 
     _currentErasePath['points'] = <Offset>[position];
     _currentErasePath['brushSize'] = widget.brushSize;
 
     widget.onEraseStart?.call(position);
 
-    // 立即通知视图更新
     if (widget.onErasePointsChanged != null) {
       final allPoints = <Offset>[
         ...(_currentErasePath['points'] as List<Offset>),
@@ -258,85 +229,57 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleEraseUpdate(Offset position, Offset delta) {
-    // 如果Alt键被按下，不进行擦除更新
     if (_isAltKeyPressed) return;
 
-    // 检查是否真正的拖拽操作（有实际移动）
-    bool isDragging = delta != Offset.zero;
-    if (!isDragging) {
-      // 如果只是光标移动而非拖拽，不执行擦除操作
-      return;
-    }
-
-    // 以下是实际擦除操作的逻辑 - 仅在真正拖拽时执行
-
-    // 如果没有活动的擦除路径，创建一个
     if ((_currentErasePath['points'] as List<Offset>).isEmpty) {
       _handleEraseStart(position);
     }
 
-    // 添加点到当前路径
-    (_currentErasePath['points'] as List<Offset>).add(position);
+    final points = _currentErasePath['points'] as List<Offset>;
+    if (points.isNotEmpty) {
+      final lastPoint = points.last;
+      final distance = (position - lastPoint).distance;
 
-    // 性能优化：只在调试模式下且每50个点才打印一次
-    if (kDebugMode &&
-        DebugFlags.enableEraseDebug &&
-        (_currentErasePath['points'] as List<Offset>).length % 50 == 0) {
-      print(
-          '擦除更新 - 添加点到路径: $position, 当前点数: ${(_currentErasePath['points'] as List<Offset>).length}');
+      if (distance > widget.brushSize / 2) {
+        const interpolationCount = 3;
+        for (int i = 1; i <= interpolationCount; i++) {
+          final t = i / (interpolationCount + 1);
+          final interpolatedPoint = Offset(
+            lastPoint.dx + (position.dx - lastPoint.dx) * t,
+            lastPoint.dy + (position.dy - lastPoint.dy) * t,
+          );
+          points.add(interpolatedPoint);
+        }
+      }
     }
 
-    // 调用擦除更新回调
+    points.add(position);
     widget.onEraseUpdate?.call(position, delta);
-
-    // 通知点集合更新
-    if (widget.onErasePointsChanged != null) {
-      final allPoints = <Offset>[
-        ...(_currentErasePath['points'] as List<Offset>),
-        ..._erasePaths.expand((path) => path['points'] as List<Offset>),
-      ];
-      widget.onErasePointsChanged!(allPoints);
-    }
   }
 
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    // 处理Alt键事件
     if (event.logicalKey == LogicalKeyboardKey.alt ||
         event.logicalKey == LogicalKeyboardKey.altLeft ||
         event.logicalKey == LogicalKeyboardKey.altRight) {
       final now = DateTime.now();
       bool isDown;
 
-      // 关键修复：正确处理不同类型的键盘事件
       if (event is KeyDownEvent) {
         isDown = true;
       } else if (event is KeyUpEvent) {
         isDown = false;
       } else if (event is KeyRepeatEvent) {
-        // 重要修复：KeyRepeatEvent 时保持当前状态不变
-        // Alt键按住时会产生重复事件，但不应改变状态
         isDown = _isAltKeyPressed;
-
-        // 记录正在处理重复事件
-        print('处理Alt键重复事件 - 保持当前状态: $_isAltKeyPressed');
         return KeyEventResult.handled;
       } else {
-        // 未知事件类型，忽略
         return KeyEventResult.ignored;
       }
 
-      // 防止快速切换 - 忽略短时间内的反向切换
       if (_isAltKeyPressed != isDown &&
           now.difference(_lastAltToggleTime) > _altToggleDebounce) {
         setState(() {
           _isAltKeyPressed = isDown;
           _lastAltToggleTime = now;
-
-          // 只在调试模式下打印
-          if (kDebugMode && DebugFlags.enableEraseDebug) {
-            print('Alt键状态变化: $_isAltKeyPressed, 事件类型: ${event.runtimeType}');
-          }
-          DebugFlags.trackAltKeyState('CharacterEditCanvas', _isAltKeyPressed);
         });
       }
 
@@ -345,10 +288,29 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     return KeyEventResult.ignored;
   }
 
-  void _onFocusChange() {
-    DebugFlags.logFocusChange('EditCanvas', focusNode.hasFocus);
+  void _handleTap(Offset position) {
+    if (_isAltKeyPressed) return;
 
-    // 焦点变化时处理Alt键状态
+    _currentErasePath['points'] = <Offset>[position];
+    _currentErasePath['brushSize'] = widget.brushSize;
+
+    widget.onEraseStart?.call(position);
+
+    final pathCopy = Map<String, dynamic>.from(_currentErasePath);
+    pathCopy['points'] =
+        List<Offset>.from(_currentErasePath['points'] as List<Offset>);
+    _erasePaths.add(pathCopy);
+    _currentErasePath['points'] = <Offset>[];
+
+    widget.onEraseEnd?.call();
+
+    // 强制更新轮廓
+    _scheduleOutlineUpdate();
+
+    HapticFeedback.lightImpact();
+  }
+
+  void _onFocusChange() {
     if (!focusNode.hasFocus && _isAltKeyPressed) {
       setState(() {
         _isAltKeyPressed = false;
@@ -356,19 +318,32 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  Future<void> _updateOutline() async {
-    if (_isProcessing) return;
+  void _scheduleOutlineUpdate() {
+    _outlineUpdateTimer?.cancel();
+    _outlineUpdateTimer = Timer(const Duration(milliseconds: 100), () {
+      if (mounted && widget.showOutline) {
+        _updateOutline();
+      }
+    });
+  }
 
+  Future<void> _updateOutline() async {
+    if (_isProcessing) {
+      print('轮廓正在处理中，跳过更新');
+      return;
+    }
+
+    print(
+        '开始更新轮廓 - isProcessing: $_isProcessing, showOutline: ${widget.showOutline}');
     setState(() => _isProcessing = true);
 
     try {
       final imageBytes = await ImageUtils.imageToBytes(widget.image);
       if (imageBytes == null) {
-        throw Exception('Failed to convert image to bytes');
+        throw Exception('无法将图像转换为字节数组');
       }
 
       final imageProcessor = ref.read(characterImageProcessorProvider);
-
       final options = ProcessingOptions(
         inverted: widget.invertMode,
         threshold: 128.0,
@@ -394,6 +369,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         setState(() {
           _outline = result.outline;
           _isProcessing = false;
+          print('轮廓更新完成，是否有轮廓：${_outline != null}');
+          if (_outline != null) {
+            print('轮廓信息:');
+            print('- 轮廓数量: ${_outline!.contourPoints.length}');
+            print('- 边界矩形: ${_outline!.boundingRect}');
+          }
         });
 
         _layerStackKey.currentState
