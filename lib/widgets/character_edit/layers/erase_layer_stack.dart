@@ -223,26 +223,10 @@ class EraseLayerStackState extends State<EraseLayerStack> {
         position,
         widget.brushSize / 2,
       );
-      _dirtyRect = Rect.fromCircle(
-        center: position,
-        radius: widget.brushSize + 5,
-      );
     });
 
     // 2. 触发开始擦除
     widget.onEraseStart?.call(position);
-
-    // 3. 添加到_paths并清理currentPath
-    setState(() {
-      if (!PathUtils.isPathEmpty(_currentPath)) {
-        _paths.add(PathInfo(
-          path: _currentPath,
-          brushSize: widget.brushSize,
-          brushColor: widget.brushColor,
-        ));
-        _currentPath = Path();
-      }
-    });
 
     // 4. 触发结束擦除
     widget.onEraseEnd?.call();

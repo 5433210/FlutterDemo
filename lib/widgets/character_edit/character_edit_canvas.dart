@@ -291,19 +291,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   void _handleTap(Offset position) {
     if (_isAltKeyPressed) return;
 
-    _currentErasePath['points'] = <Offset>[position];
-    _currentErasePath['brushSize'] = widget.brushSize;
-
-    widget.onEraseStart?.call(position);
-
-    final pathCopy = Map<String, dynamic>.from(_currentErasePath);
-    pathCopy['points'] =
-        List<Offset>.from(_currentErasePath['points'] as List<Offset>);
-    _erasePaths.add(pathCopy);
-    _currentErasePath['points'] = <Offset>[];
-
-    widget.onEraseEnd?.call();
-
     // 强制更新轮廓
     _scheduleOutlineUpdate();
 
