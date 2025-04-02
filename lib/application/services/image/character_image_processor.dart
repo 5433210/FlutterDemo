@@ -327,7 +327,8 @@ class CharacterImageProcessor {
     if (startPoint != null) {
       final outerContour = _traceContour(paddedImage, visited, startPoint);
       if (outerContour.length >= 4) {
-        allContours.add(_smoothContour(outerContour));
+        //allContours.add(_smoothContour(outerContour));
+        allContours.add(outerContour);
       }
     }
 
@@ -346,7 +347,8 @@ class CharacterImageProcessor {
 
           // 只添加有效的内部轮廓（长度足够且形成封闭区域）
           if (innerContour.length >= 4) {
-            allContours.add(_smoothContour(innerContour));
+            // allContours.add(_smoothContour(innerContour));
+            allContours.add(innerContour);
           }
         }
       }
