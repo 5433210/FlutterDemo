@@ -56,15 +56,6 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
   @override
   Widget build(BuildContext context) {
-    PathInfo? currentPathInfo;
-    if (!PathUtils.isPathEmpty(_currentPath)) {
-      currentPathInfo = PathInfo(
-        path: Path()..addPath(_currentPath, Offset.zero),
-        brushSize: widget.brushSize,
-        brushColor: widget.brushColor,
-      );
-    }
-
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
@@ -81,8 +72,6 @@ class EraseLayerStackState extends State<EraseLayerStack> {
               brushColor: widget.brushColor,
             ),
             dirtyRect: _dirtyRect,
-            brushSize: widget.brushSize,
-            brushColor: widget.brushColor,
           ),
           UILayer(
             onPointerDown: _handlePointerDown,
@@ -227,6 +216,13 @@ class EraseLayerStackState extends State<EraseLayerStack> {
 
     // 2. 触发开始擦除
     widget.onEraseStart?.call(position);
+
+    // 创建新的PathInfo时明确设置颜色
+    _paths.add(PathInfo(
+      path: PathUtils.createSolidCircle(position, widget.brushSize / 2),
+      brushSize: widget.brushSize,
+      brushColor: widget.brushColor, // 明确设置颜色
+    ));
 
     // 4. 触发结束擦除
     widget.onEraseEnd?.call();

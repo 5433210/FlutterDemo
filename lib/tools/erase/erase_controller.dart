@@ -20,7 +20,19 @@ class EraseController with ChangeNotifier {
   int _pendingPointCount = 0;
   DateTime _lastNotifyTime = DateTime.now();
 
-  Color get brushColor => _state.brushColor;
+  // Get the brush color - based on invert and image invert modes
+  Color get brushColor {
+    final baseColor = _state.invertMode ? Colors.black : Colors.white;
+
+    // If image is inverted, we need to invert the brush color too
+    // to maintain the correct erasing behavior
+    if (_state.imageInvertMode) {
+      return baseColor == Colors.white ? Colors.black : Colors.white;
+    }
+
+    return baseColor;
+  }
+
   double get brushSize => _state.brushSize;
   set brushSize(double value) {
     if (_state.brushSize != value) {
@@ -32,18 +44,25 @@ class EraseController with ChangeNotifier {
   bool get canRedo => _redoPaths.isNotEmpty;
   bool get canUndo => _paths.isNotEmpty;
   bool get imageInvertMode => _state.imageInvertMode;
+
+  // Override the existing imageInvertMode setter
   set imageInvertMode(bool value) {
     if (_state.imageInvertMode != value) {
       _state.imageInvertMode = value;
+      // Only update the current path if it exists, don't refresh previous paths
+      _updateCurrentPathColor();
       notifyListeners();
     }
   }
 
   bool get invertMode => _state.invertMode;
 
+  // Override the existing invertMode setter
   set invertMode(bool value) {
     if (_state.invertMode != value) {
       _state.invertMode = value;
+      // Only update the current path if it exists, don't refresh previous paths
+      _updateCurrentPathColor();
       notifyListeners();
     }
   }
@@ -100,7 +119,7 @@ class EraseController with ChangeNotifier {
         .map((pathInfo) => {
               'path': pathInfo.path,
               'brushSize': pathInfo.brushSize,
-              'brushColor': pathInfo.brushColor.value,
+              'brushColor': pathInfo.brushColor.value, // 确保颜色值正确保存
             })
         .toList();
 
@@ -151,6 +170,13 @@ class EraseController with ChangeNotifier {
       _paths.add(path);
       notifyListeners();
     }
+  }
+
+  // Replace the existing refreshPathColors method with a simpler version
+  // that only logs the change but doesn't modify existing paths
+  void refreshPathColors() {
+    print('Brush color changed to: $brushColor');
+    // No longer modifying existing paths
   }
 
   void startErase(Offset position) {
@@ -213,6 +239,22 @@ class EraseController with ChangeNotifier {
       }
     } catch (e) {
       print('更新擦除路径时出错: $e');
+    }
+  }
+
+  // New method to update only the current path color if needed
+  void _updateCurrentPathColor() {
+    // Only update current path if it exists
+    if (_currentPath != null) {
+      final currentColor = brushColor;
+
+      if (_currentPath!.brushColor != currentColor) {
+        _currentPath = PathInfo(
+          path: _currentPath!.path,
+          brushSize: _currentPath!.brushSize,
+          brushColor: currentColor,
+        );
+      }
     }
   }
 }

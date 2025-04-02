@@ -22,16 +22,12 @@ class PathInfo {
 class PreviewLayer extends BaseLayer {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
-  final Color brushColor;
-  final double brushSize;
   final Rect? dirtyRect;
 
   const PreviewLayer({
     Key? key,
     this.paths = const [],
     this.currentPath,
-    this.brushColor = Colors.white,
-    this.brushSize = 10.0,
     this.dirtyRect,
   }) : super(key: key);
 
@@ -45,8 +41,6 @@ class PreviewLayer extends BaseLayer {
   CustomPainter createPainter() => _PreviewPainter(
         paths: paths,
         currentPath: currentPath,
-        brushColor: brushColor,
-        brushSize: brushSize,
         dirtyRect: dirtyRect,
       );
 }
@@ -54,15 +48,12 @@ class PreviewLayer extends BaseLayer {
 class _PreviewPainter extends CustomPainter {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
-  final Color brushColor;
-  final double brushSize;
+
   final Rect? dirtyRect;
 
   _PreviewPainter({
     required this.paths,
     this.currentPath,
-    required this.brushColor,
-    required this.brushSize,
     this.dirtyRect,
   });
 
@@ -72,48 +63,15 @@ class _PreviewPainter extends CustomPainter {
       print('绘制预览层 - 路径数量: ${paths.length}, 当前路径: ${currentPath != null}');
     }
 
-    // 创建填充画笔
-    final paint = Paint()
-      ..style = PaintingStyle.fill
-      ..strokeWidth = 0 // 填充模式不需要描边宽度
-      ..isAntiAlias = true;
+    // Apply global color blend mode - ensure erased areas display correctly
+    final compositeMode = Paint()..blendMode = BlendMode.srcOver;
+    canvas.saveLayer(null, compositeMode);
 
-    // 尝试合并并绘制已完成的路径
-    if (paths.isNotEmpty) {
-      try {
-        // 合并所有已完成的路径
-        final pathsList = paths.map((p) => p.path).toList();
-        final completePath = PathUtils.mergePaths(pathsList);
-
-        if (!PathUtils.isPathEmpty(completePath)) {
-          print('绘制已完成路径');
-          canvas.drawPath(completePath, paint..color = brushColor);
-        }
-      } catch (e) {
-        print('合并路径失败，尝试单独绘制: $e');
-        // 如果合并失败，逐个绘制每个路径
-        for (final pathInfo in paths) {
-          try {
-            canvas.drawPath(pathInfo.path, paint..color = pathInfo.brushColor);
-          } catch (e2) {
-            print('单独绘制路径失败: $e2');
-          }
-        }
-      }
-    }
-
-    // 绘制当前正在擦除的路径
-    if (currentPath != null) {
-      try {
-        print('绘制当前路径');
-        // 当前路径不参与合并，单独绘制
-        canvas.drawPath(
-          PathUtils.clonePath(currentPath!.path),
-          paint..color = currentPath!.brushColor,
-        );
-      } catch (e) {
-        print('绘制当前路径失败: $e');
-      }
+    try {
+      // Draw all completed paths
+      _drawAllPaths(canvas);
+    } finally {
+      canvas.restore(); // Ensure canvas state is restored
     }
 
     // 在调试模式下绘制边界框
@@ -132,8 +90,6 @@ class _PreviewPainter extends CustomPainter {
   bool shouldRepaint(_PreviewPainter oldDelegate) {
     final shouldRepaint = paths != oldDelegate.paths ||
         currentPath?.path != oldDelegate.currentPath?.path ||
-        brushColor != oldDelegate.brushColor ||
-        brushSize != oldDelegate.brushSize ||
         dirtyRect != oldDelegate.dirtyRect;
 
     if (shouldRepaint && kDebugMode) {
@@ -141,5 +97,66 @@ class _PreviewPainter extends CustomPainter {
     }
 
     return shouldRepaint;
+  }
+
+  void _drawAllPaths(Canvas canvas) {
+    // 尝试合并并绘制已完成的路径
+    if (paths.isNotEmpty) {
+      try {
+        // 合并所有已完成的路径
+        final pathsList = paths.map((p) => p.path).toList();
+        final completePath = PathUtils.mergePaths(pathsList);
+
+        if (!PathUtils.isPathEmpty(completePath)) {
+          // 使用第一个路径的颜色，因为所有路径应该使用相同的颜色
+          if (paths.isNotEmpty) {
+            print('绘制已完成路径');
+            canvas.drawPath(
+              completePath,
+              Paint()..color = paths[0].brushColor,
+            );
+          }
+        }
+      } catch (e) {
+        print('合并路径失败，尝试单独绘制: $e');
+        // 如果合并失败，逐个绘制每个路径
+        for (final pathInfo in paths) {
+          try {
+            _drawPath(canvas, pathInfo);
+          } catch (e2) {
+            print('单独绘制路径失败: $e2');
+          }
+        }
+      }
+    }
+
+    // 绘制当前正在擦除的路径
+    if (currentPath != null) {
+      try {
+        print('绘制当前路径');
+        // 当前路径不参与合并，单独绘制
+        _drawPath(canvas, currentPath!);
+      } catch (e) {
+        print('绘制当前路径失败: $e');
+      }
+    }
+  }
+
+  // Improved path drawing method that properly handles inverted colors
+  void _drawPath(Canvas canvas, PathInfo pathInfo) {
+    // Click erase point - use fill style for better visibility
+    final fillPaint = Paint()
+      ..color = pathInfo.brushColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(pathInfo.path, fillPaint);
+  }
+
+  // Helper method to get a contrasting color for stroke
+  Color _getContrastingColor(Color color) {
+    // If the brush color is light, use dark border and vice versa
+    return color.computeLuminance() > 0.5
+        ? color.withOpacity(0.7)
+        : Colors.white.withOpacity(0.7);
   }
 }
