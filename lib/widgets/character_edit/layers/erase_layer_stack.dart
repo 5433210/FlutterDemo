@@ -75,7 +75,11 @@ class EraseLayerStackState extends State<EraseLayerStack> {
           ),
           PreviewLayer(
             paths: _paths,
-            currentPath: currentPathInfo,
+            currentPath: PathInfo(
+              path: Path()..addPath(_currentPath, Offset.zero),
+              brushSize: widget.brushSize,
+              brushColor: widget.brushColor,
+            ),
             dirtyRect: _dirtyRect,
             brushSize: widget.brushSize,
             brushColor: widget.brushColor,
@@ -213,22 +217,37 @@ class EraseLayerStackState extends State<EraseLayerStack> {
   void _handleTap(Offset position) {
     if (widget.altKeyPressed) return;
 
+    // 1. 先设置_currentPath显示圆形
     setState(() {
-      print('处理单击 - position: $position');
-      final circlePath = PathUtils.createSolidCircle(
+      _currentPath = PathUtils.createSolidCircle(
         position,
         widget.brushSize / 2,
       );
-
-      _paths.add(PathInfo(
-        path: circlePath,
-        brushSize: widget.brushSize,
-        brushColor: widget.brushColor,
-      ));
+      _dirtyRect = Rect.fromCircle(
+        center: position,
+        radius: widget.brushSize + 5,
+      );
     });
 
+    // 2. 触发开始擦除
     widget.onEraseStart?.call(position);
+
+    // 3. 添加到_paths并清理currentPath
+    setState(() {
+      if (!PathUtils.isPathEmpty(_currentPath)) {
+        _paths.add(PathInfo(
+          path: _currentPath,
+          brushSize: widget.brushSize,
+          brushColor: widget.brushColor,
+        ));
+        _currentPath = Path();
+      }
+    });
+
+    // 4. 触发结束擦除
     widget.onEraseEnd?.call();
+
+    // 5. 最后触发tap回调
     widget.onTap?.call(position);
   }
 }

@@ -61,13 +61,11 @@ class UILayer extends BaseLayer {
       },
       child: GestureDetector(
         // 添加点击处理
-        onTap: () {
-          if (cursorPosition != null && onTap != null) {
-            print('UI层执行点击回调: $cursorPosition');
-            onTap!(cursorPosition!);
-          } else {
-            print(
-                '点击回调未执行: cursorPosition=$cursorPosition, onTap=${onTap != null}');
+        onTapUp: (details) {
+          // 直接使用点击位置，不依赖cursorPosition
+          if (onTap != null) {
+            print('UI层执行点击回调: ${details.localPosition}');
+            onTap!(details.localPosition);
           }
         },
         // 仅当拖动时处理擦除
