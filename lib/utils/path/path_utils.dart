@@ -41,6 +41,7 @@ class PathUtils {
 
   /// 创建实心圆形路径
   static Path createSolidCircle(Offset center, double radius) {
+    // 确保使用准确的圆形半径，不进行四舍五入
     return Path()..addOval(Rect.fromCircle(center: center, radius: radius));
   }
 
@@ -59,7 +60,7 @@ class PathUtils {
     final nx = -dy / distance;
     final ny = dx / distance;
 
-    // 计算四个角点
+    // 计算四个角点 - 确保使用准确的笔刷宽度，不进行四舍五入
     final halfWidth = width / 2;
     final p1 = Offset(start.dx + nx * halfWidth, start.dy + ny * halfWidth);
     final p2 = Offset(start.dx - nx * halfWidth, start.dy - ny * halfWidth);

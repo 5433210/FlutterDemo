@@ -198,6 +198,41 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
+  // 添加一个调试方法，可视化笔刷大小
+  void _debugVisualizeBrushSize() {
+    if (!kDebugMode) return;
+
+    final eraseState = ref.read(eraseStateProvider);
+    final brushSize = eraseState.brushSize;
+    final brushColor = eraseState.brushColor;
+
+    print('调试笔刷大小: $brushSize, 颜色: $brushColor');
+
+    // 在屏幕中心绘制一个圆形，半径正好是笔刷大小的一半
+    final canvasSize = Size(
+      widget.image.width.toDouble(),
+      widget.image.height.toDouble(),
+    );
+
+    final center = Offset(
+      canvasSize.width / 2,
+      canvasSize.height / 2,
+    );
+
+    // 创建一个路径用于笔刷大小可视化
+    final debugPath = Path()
+      ..addOval(Rect.fromCircle(
+        center: center,
+        radius: brushSize / 2,
+      ));
+
+    // 使用当前的笔刷设置应用这个路径
+    ref.read(eraseStateProvider.notifier).startPath(center);
+    ref.read(eraseStateProvider.notifier).completePath();
+
+    print('在中心位置 $center 创建了半径为 ${brushSize / 2} 的调试圆');
+  }
+
   // 添加一个辅助方法来从Path对象中提取点，确保精确提取
   List<Offset> _extractPointsFromPath(Path path) {
     List<Offset> points = [];

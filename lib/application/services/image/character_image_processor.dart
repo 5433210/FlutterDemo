@@ -584,6 +584,30 @@ class CharacterImageProcessor {
       // 验证第一条轮廓的位置（调试用）
       if (adjustedContours.isNotEmpty && adjustedContours[0].isNotEmpty) {
         final firstContour = adjustedContours[0];
+        // 生成调试图像：合成二值化图片和轮廓线
+        try {
+          // 创建RGB图像副本用于可视化
+          final debugImage = img.copyResize(binaryImage,
+              width: binaryImage.width, height: binaryImage.height);
+
+          // 绘制所有轮廓 - 使用红色
+          final contourColor = img.ColorRgb8(255, 0, 0);
+          for (final contour in adjustedContours) {
+            for (int i = 0; i < contour.length; i++) {
+              final current = contour[i];
+              final next = contour[(i + 1) % contour.length];
+              _drawLineBetweenPoints(debugImage, current, next, contourColor);
+            }
+          }
+
+          final debugImagePath =
+              'debug_contours_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          img.encodeJpgFile(debugImagePath, debugImage, quality: 90);
+          print('已保存轮廓调试图片到: $debugImagePath');
+        } catch (e) {
+          print('保存调试图像失败: $e');
+        }
+
         double minX = double.infinity, minY = double.infinity;
         double maxX = -double.infinity, maxY = -double.infinity;
 
@@ -593,7 +617,66 @@ class CharacterImageProcessor {
           maxX = math.max(maxX, point.dx);
           maxY = math.max(maxY, point.dy);
         }
-        print('第一条轮廓边界: ($minX,$minY) - ($maxX,$maxY)');
+
+        // 生成调试图像：合成二值化图片和轮廓线
+        try {
+          // 创建RGB图像副本用于可视化
+          final debugImage = img.copyResize(binaryImage,
+              width: binaryImage.width, height: binaryImage.height);
+
+          // 绘制所有轮廓 - 使用红色
+          final contourColor = img.ColorRgb8(255, 0, 0);
+          for (final contour in adjustedContours) {
+            for (int i = 0; i < contour.length; i++) {
+              final current = contour[i];
+              final next = contour[(i + 1) % contour.length];
+              _drawLineBetweenPoints(debugImage, current, next, contourColor);
+            }
+          }
+
+          // 保存调试图像
+          final debugImagePath =
+              'debug_contours_${DateTime.now().millisecondsSinceEpoch}.jpg';
+          img.encodeJpgFile(debugImagePath, debugImage, quality: 90);
+          print('已保存轮廓调试图片到: $debugImagePath');
+          print('第一条轮廓边界: ($minX,$minY) - ($maxX,$maxY)');
+        } catch (e) {
+          print('保存调试图像失败: $e');
+        }
+      }
+
+      /// 在图像上绘制轮廓线
+      void drawContourLine(
+          img.Image image, Offset start, Offset end, img.Color color) {
+        // 使用Bresenham算法绘制线段
+        int x0 = start.dx.round();
+        int y0 = start.dy.round();
+        int x1 = end.dx.round();
+        int y1 = end.dy.round();
+
+        var dx = (x1 - x0).abs();
+        var dy = (y1 - y0).abs();
+        var sx = x0 < x1 ? 1 : -1;
+        var sy = y0 < y1 ? 1 : -1;
+        var err = dx - dy;
+
+        while (true) {
+          // 检查边界并设置像素
+          if (x0 >= 0 && x0 < image.width && y0 >= 0 && y0 < image.height) {
+            image.setPixel(x0, y0, color);
+          }
+
+          if (x0 == x1 && y0 == y1) break;
+          var e2 = 2 * err;
+          if (e2 > -dy) {
+            err -= dy;
+            x0 += sx;
+          }
+          if (e2 < dx) {
+            err += dx;
+            y0 += sy;
+          }
+        }
       }
 
       return DetectedOutline(
@@ -608,6 +691,41 @@ class CharacterImageProcessor {
             0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
         contourPoints: [],
       );
+    }
+  }
+
+  /// 在图像上绘制两点之间的线段
+  static void _drawLineBetweenPoints(
+      img.Image image, Offset start, Offset end, img.Color color) {
+    int x0 = start.dx.round();
+    int y0 = start.dy.round();
+    int x1 = end.dx.round();
+    int y1 = end.dy.round();
+
+    // 使用Bresenham算法绘制线段
+    var dx = (x1 - x0).abs();
+    var dy = (y1 - y0).abs();
+    var sx = x0 < x1 ? 1 : -1;
+    var sy = y0 < y1 ? 1 : -1;
+    var err = dx - dy;
+
+    while (true) {
+      // 检查边界并设置像素
+      if (x0 >= 0 && x0 < image.width && y0 >= 0 && y0 < image.height) {
+        image.setPixel(x0, y0, color);
+      }
+
+      if (x0 == x1 && y0 == y1) break;
+
+      var e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        x0 += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y0 += sy;
+      }
     }
   }
 

@@ -35,7 +35,6 @@ class PreviewLayer extends BaseLayer {
 class _PreviewPainter extends CustomPainter {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
-
   final Rect? dirtyRect;
 
   _PreviewPainter({
@@ -57,6 +56,11 @@ class _PreviewPainter extends CustomPainter {
     try {
       // Draw all completed paths
       _drawAllPaths(canvas);
+
+      // Draw current path if exists
+      if (currentPath != null) {
+        _drawCurrentPath(canvas);
+      }
     } finally {
       canvas.restore(); // Ensure canvas state is restored
     }
@@ -86,34 +90,57 @@ class _PreviewPainter extends CustomPainter {
     return shouldRepaint;
   }
 
+  /// 绘制所有已完成的路径
   void _drawAllPaths(Canvas canvas) {
-    // First draw all completed paths
     if (paths.isNotEmpty) {
-      try {
-        // Each path with its own color
-        for (final pathInfo in paths) {
-          // Make sure we're using each path's stored color
-          final fillPaint = Paint()
-            ..color = pathInfo.brushColor
-            ..style = PaintingStyle.fill;
+      // 创建可重用的Paint对象以提高性能
+      final paint = Paint();
 
-          canvas.drawPath(pathInfo.path, fillPaint);
-        }
+      try {
+        _drawPathsWithPaint(canvas, paint);
       } catch (e) {
-        print('绘制已完成路径失败: $e');
+        debugPrint('绘制路径失败: ${e.toString()}');
       }
     }
+  }
 
-    // Then draw the current path on top
+  /// 绘制当前活动路径
+  void _drawCurrentPath(Canvas canvas) {
     if (currentPath != null) {
       try {
-        final fillPaint = Paint()
+        final paint = Paint()
           ..color = currentPath!.brushColor
-          ..style = PaintingStyle.fill;
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = currentPath!.brushSize;
 
-        canvas.drawPath(currentPath!.path, fillPaint);
+        canvas.drawPath(currentPath!.path, paint);
       } catch (e) {
-        print('绘制当前路径失败: $e');
+        debugPrint('绘制当前路径失败: ${e.toString()}');
+      }
+    }
+  }
+
+  /// 使用给定的Paint对象绘制所有路径
+  ///
+  /// 将绘制逻辑分离出来以提高代码可读性和可维护性
+  void _drawPathsWithPaint(Canvas canvas, Paint paint) {
+    for (final pathInfo in paths) {
+      if (pathInfo.path.getBounds().isEmpty ||
+          !pathInfo.path.getBounds().isFinite) {
+        debugPrint('跳过无效路径');
+        continue;
+      }
+
+      try {
+        paint
+          ..color = pathInfo.brushColor
+          ..style = PaintingStyle.stroke // 使用描边样式来应用线条粗细
+          ..strokeWidth = pathInfo.brushSize;
+
+        canvas.drawPath(pathInfo.path, paint);
+      } catch (e) {
+        debugPrint('绘制单个路径失败: ${e.toString()}');
+        // 继续绘制其他路径
       }
     }
   }

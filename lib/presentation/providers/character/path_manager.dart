@@ -238,7 +238,7 @@ class PathManager {
     if (_currentPoints.length == 1) {
       // 单点情况，创建圆形路径
       final point = _currentPoints.first;
-      // 使用当前笔刷大小的一半作为半径
+      // 使用当前笔刷大小的一半作为半径，不进行四舍五入
       path.addOval(
           Rect.fromCircle(center: point, radius: _currentBrushSize / 2));
     } else {
