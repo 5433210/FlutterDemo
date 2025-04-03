@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,7 +53,7 @@ void main() async {
     runApp(
       ProviderScope(
         parent: container,
-        observers: [ProviderLogger()],
+        observers: kDebugMode ? [FilteredProviderObserver()] : null,
         child: KeyboardMonitor.wrapApp(const MyApp()),
       ),
     );
@@ -87,6 +88,31 @@ void main() async {
         ),
       ),
     );
+  }
+}
+
+/// Custom provider observer that filters log messages
+class FilteredProviderObserver extends ProviderObserver {
+  // List of providers to ignore in logs
+  static final _ignoredProviders = ['cursor', 'position', 'render', 'path'];
+
+  @override
+  void didUpdateProvider(
+    ProviderBase provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    // Skip logging for certain providers that update frequently
+    final name = provider.name ?? '';
+    if (_ignoredProviders.any((term) => name.contains(term))) {
+      return; // Skip logging entirely
+    }
+
+    // For other providers, only log significant updates
+    if (previousValue != newValue) {
+      debugPrint('[Provider] ${provider.name}: updated');
+    }
   }
 }
 

@@ -1,0 +1,284 @@
+import 'package:flutter/material.dart';
+
+import '../../../utils/path/path_utils.dart';
+
+/// 存储路径及其属性的类
+class PathEntry {
+  final Path path;
+  final double brushSize;
+  final Color brushColor;
+  final bool
+      wasReversed; // Track whether this path was created with reversed brush
+
+  const PathEntry({
+    required this.path,
+    required this.brushSize,
+    required this.brushColor,
+    required this.wasReversed, // Add this parameter
+  });
+}
+
+/// 路径管理器，负责管理绘制路径的状态
+class PathManager {
+  // 完成的路径列表 - 修改为存储PathEntry而不仅仅是Path
+  final List<PathEntry> _completedPaths = [];
+
+  // 当前正在绘制的路径
+  Path? _currentPath;
+
+  // 当前路径的颜色和大小
+  Color? _currentColor;
+  double _currentBrushSize = 10.0;
+
+  // 重做路径列表
+  final List<PathEntry> _redoPaths = [];
+
+  // 脏区域（需要重绘的区域）
+  Rect? _dirtyBounds;
+
+  // 当前点列表（用于构建当前路径）
+  final List<Offset> _currentPoints = [];
+
+  // 是否可以重做
+  bool get canRedo => _redoPaths.isNotEmpty;
+
+  // 已完成的路径的只读访问
+  List<PathEntry> get completedPaths => List.unmodifiable(_completedPaths);
+
+  // 当前路径的颜色
+  Color? get currentColor => _currentColor;
+
+  // 当前路径的只读访问
+  Path? get currentPath => _currentPath;
+
+  // 脏区域的只读访问
+  Rect? get dirtyBounds => _dirtyBounds;
+
+  // 重做路径列表的只读访问
+  List<PathEntry> get redoPaths => List.unmodifiable(_redoPaths);
+
+  /// 清除所有路径
+  void clear() {
+    _completedPaths.clear();
+    _currentPath = null;
+    _currentColor = null;
+    _currentPoints.clear();
+    _dirtyBounds = null;
+    _redoPaths.clear();
+  }
+
+  /// 完成当前路径
+  void completePath() {
+    if (_currentPath != null) {
+      // 确保即使 _currentColor 为 null 也能使用默认的颜色
+      final color = _currentColor ?? Colors.white;
+
+      // isReversed now represents the visual intention (black vs white brush)
+      // rather than the technical color value
+      final isReversed = color == Colors.black;
+
+      _completedPaths.add(PathEntry(
+        path: _currentPath!,
+        brushSize: _currentBrushSize,
+        brushColor: color,
+        wasReversed: isReversed, // Save the reversal intent for later updates
+      ));
+
+      print('完成路径，颜色: $color, 反转状态: $isReversed');
+
+      _currentPath = null;
+      _currentColor = null;
+      _currentPoints.clear();
+      _redoPaths.clear(); // 完成新路径时清除重做列表
+    }
+  }
+
+  // 获取指定路径的颜色信息，用于调试和轮廓检测
+  Map<String, dynamic> getPathColorInfo() {
+    int blackPaths = 0;
+    int whitePaths = 0;
+
+    for (final path in _completedPaths) {
+      if (path.brushColor == Colors.black) {
+        blackPaths++;
+      } else if (path.brushColor == Colors.white) {
+        whitePaths++;
+      }
+    }
+
+    return {
+      'blackPaths': blackPaths,
+      'whitePaths': whitePaths,
+      'hasMixedColors': blackPaths > 0 && whitePaths > 0,
+      'currentColor': _currentColor?.toString(),
+    };
+  }
+
+  /// 重做上一个撤销的路径
+  void redoPath() {
+    if (_redoPaths.isNotEmpty) {
+      final pathEntry = _redoPaths.removeLast();
+      _completedPaths.add(pathEntry);
+    }
+  }
+
+  /// 开始新的路径
+  void startPath(Offset position, {double? brushSize, Color? brushColor}) {
+    _currentPoints.clear();
+    _currentPath = Path();
+    _currentPoints.add(position);
+
+    if (brushSize != null) {
+      _currentBrushSize = brushSize;
+    }
+
+    if (brushColor != null) {
+      _currentColor = brushColor;
+      print('开始路径，设置颜色: $brushColor');
+    }
+
+    _updateCurrentPath();
+    _updateDirtyBounds(position);
+  }
+
+  /// 撤销上一个路径
+  void undo() {
+    if (_completedPaths.isNotEmpty) {
+      final pathEntry = _completedPaths.removeLast();
+      _redoPaths.add(pathEntry); // 保存到重做列表
+    }
+  }
+
+  /// 更新所有已完成路径的颜色 (用于图像反转或笔刷反转时同步更新)
+  void updateAllPathColors(bool imageInverted, bool brushReversed) {
+    if (_completedPaths.isEmpty) return;
+
+    // 基于笔刷反转状态，确定应该使用的颜色
+    // 图像反转不应影响笔刷颜色的确定
+    final targetColor = brushReversed ? Colors.black : Colors.white;
+
+    print(
+        '更新当前笔刷颜色: 笔刷反转=$brushReversed, 目标颜色=${targetColor == Colors.black ? "黑色" : "白色"}');
+
+    // 不要修改已完成的路径颜色，只更新当前路径的颜色
+    if (_currentPath != null && _currentColor != null) {
+      _currentColor = targetColor;
+    }
+
+    print('只更新当前路径颜色，保持已完成路径颜色不变');
+  }
+
+  /// 更新所有路径以适应图像反转状态变化
+  void updateAllPathsForImageInversion(bool imageInverted) {
+    if (_completedPaths.isEmpty) return;
+
+    print('图像反转状态更改为: $imageInverted, 更新所有已存在的路径');
+
+    // 复制路径但反转颜色，以适应新的图像反转状态
+    final updatedPaths = <PathEntry>[];
+
+    for (final entry in _completedPaths) {
+      // 获取新颜色 - 在图像反转时，反转路径颜色，使其在视觉上保持一致
+      final newColor = _invertColor(entry.brushColor);
+
+      updatedPaths.add(PathEntry(
+        path: entry.path,
+        brushSize: entry.brushSize,
+        brushColor: newColor,
+        wasReversed: entry.wasReversed,
+      ));
+    }
+
+    // 替换路径列表
+    _completedPaths.clear();
+    _completedPaths.addAll(updatedPaths);
+
+    print('已更新 ${updatedPaths.length} 条路径的颜色以适应图像反转');
+  }
+
+  /// 更新当前路径的颜色
+  void updateCurrentColor(Color color) {
+    if (_currentPath != null) {
+      _currentColor = color;
+      print('更新当前路径颜色: $color');
+    }
+  }
+
+  /// 更新当前路径
+  void updatePath(Offset position) {
+    if (_currentPath == null) return;
+
+    _currentPoints.add(position);
+    _updateCurrentPath();
+    _updateDirtyBounds(position);
+  }
+
+  // Helper method to determine color based on brush reversed state and image inverted state
+  Color _getColorForInversionState(bool brushReversed, bool imageInverted) {
+    // If both inversions are active or both are inactive, visual effect is the same
+    // If only one is active, we need to invert the color
+    if (brushReversed == imageInverted) {
+      return Colors.white;
+    } else {
+      return Colors.black;
+    }
+  }
+
+  /// 反转颜色 (黑变白，白变黑)
+  Color _invertColor(Color color) {
+    return color == Colors.black ? Colors.white : Colors.black;
+  }
+
+  // 更新当前路径的实际形状
+  void _updateCurrentPath() {
+    if (_currentPoints.isEmpty) return;
+
+    Path path = Path();
+
+    if (_currentPoints.length == 1) {
+      // 单点情况，创建圆形路径
+      final point = _currentPoints.first;
+      // 使用当前笔刷大小的一半作为半径
+      path.addOval(
+          Rect.fromCircle(center: point, radius: _currentBrushSize / 2));
+    } else {
+      // 多点情况 - 使用PathUtils创建实心路径
+      if (_currentPoints.length == 2) {
+        // 仅有两个点，直接创建一个Gap
+        path = PathUtils.createSolidGap(
+          _currentPoints.first,
+          _currentPoints.last,
+          _currentBrushSize,
+        );
+      } else {
+        // 多个点，逐段创建并合并
+        path = Path(); // 创建空路径
+
+        // 首先添加第一个点的圆形
+        path.addOval(Rect.fromCircle(
+          center: _currentPoints.first,
+          radius: _currentBrushSize / 2,
+        ));
+
+        // 然后逐段连接
+        for (int i = 1; i < _currentPoints.length; i++) {
+          final gap = PathUtils.createSolidGap(
+            _currentPoints[i - 1],
+            _currentPoints[i],
+            _currentBrushSize,
+          );
+          path.addPath(gap, Offset.zero);
+        }
+      }
+    }
+
+    _currentPath = path;
+  }
+
+  // 更新脏区域
+  void _updateDirtyBounds(Offset position) {
+    final pointBounds =
+        Rect.fromCircle(center: position, radius: _currentBrushSize / 2);
+    _dirtyBounds = _dirtyBounds?.expandToInclude(pointBounds) ?? pointBounds;
+  }
+}

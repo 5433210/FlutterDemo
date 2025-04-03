@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/models/character/path_info.dart';
 import '../../utils/path/path_utils.dart';
-import '../../widgets/character_edit/layers/preview_layer.dart';
 import 'erase_state.dart';
 
 /// 擦除工具控制器，管理擦除状态和操作

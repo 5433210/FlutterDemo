@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:demo/domain/models/character/character_region.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
 import '../../../application/services/image/character_image_processor.dart';
+import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
+import '../../../presentation/providers/character/erase_providers.dart';
 import '../../../widgets/character_edit/character_edit_panel.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
@@ -36,82 +37,20 @@ class _RightPanelState extends ConsumerState<RightPanel>
   Widget build(BuildContext context) {
     final imageState = ref.watch(workImageProvider);
     final selectedRegion = ref.watch(selectedRegionProvider);
+    // 监听处理选项
+    final processingOptions = ref.watch(processingOptionsProvider);
 
     return Column(
       children: [
-        // 标签栏
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            border: Border(
-              bottom: BorderSide(color: Theme.of(context).dividerColor),
-            ),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: '集字效果预览'),
-              Tab(text: '作品集字结果'),
-            ],
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
-            indicatorColor: Theme.of(context).colorScheme.primary,
-          ),
-        ),
-
-        // 标签内容
+        _buildTabBar(),
         Expanded(
           child: TabBarView(
             controller: _tabController,
             children: [
               // 标签1: 集字效果预览
-              Builder(
-                builder: (context) {
-                  // 如果没有选择区域或图像未加载，显示提示
-                  if (selectedRegion == null) {
-                    return const Center(
-                      child: Text(
-                        '请在左侧预览区选择字符区域',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    );
-                  }
-
-                  // 获取选定区域的图像部分
-                  return FutureBuilder<ui.Image>(
-                    future: _getSelectedRegionImage(
-                        selectedRegion, imageState.imageData),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (snapshot.hasError || !snapshot.hasData) {
-                        return Center(
-                          child: Text(
-                            '处理选中区域失败: ${snapshot.error ?? "未知错误"}',
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        );
-                      } else {
-                        // 处理选中区域成功，显示编辑面板
-                        return Center(
-                          // 将裁剪后的图像传递给 CharacterEditPanel
-                          child: _buildCharacterEditor(snapshot.data!),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-
+              _buildPreviewTab(selectedRegion, imageState, processingOptions),
               // 标签2: 作品集字结果
-              CharacterGridView(
-                workId: widget.workId,
-                onCharacterSelected: (id) async {
-                  _tabController.animateTo(0);
-                },
-              ),
+              _buildGridTab(),
             ],
           ),
         ),
@@ -138,47 +77,145 @@ class _RightPanelState extends ConsumerState<RightPanel>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+
+    // 初始化时清除擦除状态
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(eraseStateProvider.notifier).clear();
+    });
   }
 
   Widget _buildCharacterEditor(ui.Image image) {
     return CharacterEditPanel(
+      key: ValueKey(image.hashCode),
       image: image,
-      onEditComplete: (p0) {
-        // 处理编辑完成的回调
-        // 例如：保存编辑结果、更新UI等
+      onEditComplete: _handleEditComplete,
+    );
+  }
+
+  Widget _buildGridTab() {
+    return CharacterGridView(
+      workId: widget.workId,
+      onCharacterSelected: (id) async {
+        _tabController.animateTo(0);
       },
     );
   }
 
-  // 裁剪选定区域的图像
+  Widget _buildPreviewTab(
+    CharacterRegion? selectedRegion,
+    WorkImageState imageState,
+    ProcessingOptions processingOptions,
+  ) {
+    if (selectedRegion == null) {
+      return const Center(
+        child: Text(
+          '请在左侧预览区选择字符区域',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    if (imageState.loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (imageState.error != null) {
+      return Center(
+        child: Text(
+          '加载失败: ${imageState.error}',
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    return FutureBuilder<ui.Image>(
+      future: _getSelectedRegionImage(
+        selectedRegion,
+        imageState.imageData,
+        processingOptions,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return Center(
+            child: Text(
+              '处理选中区域失败: ${snapshot.error ?? "未知错误"}',
+              style: const TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        return Center(
+          child: _buildCharacterEditor(snapshot.data!),
+        );
+      },
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        tabs: const [
+          Tab(text: '集字效果预览'),
+          Tab(text: '作品集字结果'),
+        ],
+        labelColor: Theme.of(context).colorScheme.primary,
+        unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+        indicatorColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
 
   Future<ui.Image> _getSelectedRegionImage(
-      CharacterRegion region, Uint8List? imageData) async {
+    CharacterRegion region,
+    Uint8List? imageData,
+    ProcessingOptions processingOptions,
+  ) async {
     if (imageData == null) {
       throw Exception('No image data available');
     }
 
-    const processingOptions = ProcessingOptions(
-      inverted: false,
-      threshold: 128.0,
-      noiseReduction: 0.5,
-      showContour: false,
+    final imageProcessor = ref.read(characterImageProcessorProvider);
+    final preview = await imageProcessor.previewProcessing(
+      imageData,
+      region.rect,
+      processingOptions,
+      null,
     );
-    final preview = await ref
-        .read(characterImageProcessorProvider)
-        .previewProcessing(imageData, region.rect, processingOptions, null);
 
-    // 将 img.Image 转换为字节数据，然后创建 Flutter Image
     final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
-
-    // 创建一个 Completer 来处理异步图像解码
     final completer = Completer<ui.Image>();
 
-    // 解码图像数据
     ui.decodeImageFromList(bytes, (result) {
       completer.complete(result);
     });
 
     return completer.future;
+  }
+
+  void _handleEditComplete(Map<String, dynamic> result) {
+    // 获取路径数据和处理选项
+    final pathRenderData = ref.read(pathRenderDataProvider);
+    final eraseState = ref.read(eraseStateProvider);
+
+    final resultData = {
+      'paths': pathRenderData.completedPaths ?? [],
+      'processingOptions': ProcessingOptions(
+        inverted: eraseState.isReversed,
+        threshold: 128.0,
+        noiseReduction: 0.5,
+        showContour: eraseState.showContour,
+      ),
+    };
   }
 }

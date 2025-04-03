@@ -1,15 +1,18 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
-import '../../../utils/path/path_utils.dart';
+import '../../../domain/models/character/path_info.dart';
+import '../../../presentation/providers/character/erase_providers.dart';
 import 'background_layer.dart';
 import 'preview_layer.dart';
 import 'ui_layer.dart';
 
 /// 擦除图层栈组件，管理所有图层
-class EraseLayerStack extends StatefulWidget {
+class EraseLayerStack extends ConsumerStatefulWidget {
   final ui.Image image;
   final TransformationController transformationController;
   final Function(Offset)? onEraseStart;
@@ -40,22 +43,34 @@ class EraseLayerStack extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<EraseLayerStack> createState() => EraseLayerStackState();
+  ConsumerState<EraseLayerStack> createState() => EraseLayerStackState();
 }
 
-class EraseLayerStackState extends State<EraseLayerStack> {
-  final List<PathInfo> _paths = [];
-  Path _currentPath = Path();
-  Rect? _dirtyRect;
-  Offset? _lastPoint;
-  Offset? _cursorPosition;
-  bool _isDragging = false;
+class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   DetectedOutline? _outline;
-
-  late Rect _imageBounds;
+  List<PathInfo> _paths = [];
+  PathInfo? _currentPath;
+  Rect? _dirtyBounds;
 
   @override
   Widget build(BuildContext context) {
+    // 通过Provider获取路径渲染数据
+    final renderData = ref.watch(pathRenderDataProvider);
+    final eraseState = ref.watch(eraseStateProvider);
+    final showContour = eraseState.showContour;
+
+    // 确保_outline变量被正确更新
+    if (_outline != null) {
+      print('EraseLayerStack 轮廓数据存在, 路径数量: ${_outline!.contourPoints.length}');
+    } else {
+      print('EraseLayerStack 轮廓数据不存在');
+    }
+
+    // 确定显示的路径数据（优先使用Provider数据）
+    final displayPaths = renderData.completedPaths ?? _paths;
+    final displayCurrentPath = renderData.currentPath;
+    final displayDirtyRect = renderData.dirtyBounds;
+
     return RepaintBoundary(
       child: Stack(
         fit: StackFit.expand,
@@ -65,13 +80,9 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             invertMode: widget.imageInvertMode,
           ),
           PreviewLayer(
-            paths: _paths,
-            currentPath: PathInfo(
-              path: Path()..addPath(_currentPath, Offset.zero),
-              brushSize: widget.brushSize,
-              brushColor: widget.brushColor,
-            ),
-            dirtyRect: _dirtyRect,
+            paths: displayPaths,
+            currentPath: displayCurrentPath,
+            dirtyRect: displayDirtyRect,
           ),
           UILayer(
             onPointerDown: _handlePointerDown,
@@ -79,155 +90,105 @@ class EraseLayerStackState extends State<EraseLayerStack> {
             onPointerUp: _handlePointerUp,
             onPan: widget.onPan,
             onTap: _handleTap,
-            outline: widget.showOutline ? _outline : null,
+            outline: showContour ? _outline : null, // 确保这里传递的是正确的轮廓数据
             imageSize: Size(
               widget.image.width.toDouble(),
               widget.image.height.toDouble(),
             ),
             altKeyPressed: widget.altKeyPressed,
             brushSize: widget.brushSize,
-            cursorPosition: _cursorPosition,
+            cursorPosition: _getCursorPosition(),
           ),
         ],
       ),
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _imageBounds = Rect.fromLTWH(
-      0,
-      0,
-      widget.image.width.toDouble(),
-      widget.image.height.toDouble(),
-    );
-  }
-
   void setOutline(DetectedOutline? outline) {
+    print('EraseLayerStack 收到轮廓设置: ${outline != null}');
+    if (outline != null) {
+      print('轮廓包含 ${outline.contourPoints.length} 条路径');
+      if (outline.contourPoints.isNotEmpty &&
+          outline.contourPoints[0].isNotEmpty) {
+        // 检查第一个轮廓点集的边界，确保位置正确
+        double minX = double.infinity, minY = double.infinity;
+        double maxX = -double.infinity, maxY = -double.infinity;
+
+        for (var point in outline.contourPoints[0]) {
+          minX = math.min(minX, point.dx);
+          minY = math.min(minY, point.dy);
+          maxX = math.max(maxX, point.dx);
+          maxY = math.max(maxY, point.dy);
+        }
+
+        print('第一条轮廓边界: ($minX,$minY) - ($maxX,$maxY)');
+        print('图像大小: ${widget.image.width}x${widget.image.height}');
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _outline = outline;
+      });
+    }
+  }
+
+  void updateCurrentPath(PathInfo? path) {
     setState(() {
-      _outline = outline;
+      _currentPath = path;
     });
   }
 
-  void updatePaths(List<PathInfo> newPaths) {
-    print('更新路径列表 - 数量: ${newPaths.length}');
+  void updateDirtyRect(Rect? rect) {
     setState(() {
-      _paths.clear();
-      _paths.addAll(newPaths);
-      _currentPath = Path();
-      _dirtyRect = null;
+      _dirtyBounds = rect;
     });
+  }
+
+  void updatePaths(List<PathInfo> paths) {
+    setState(() {
+      _paths = paths;
+    });
+  }
+
+  Offset? _getCursorPosition() {
+    // 通过Provider获取当前路径
+    final state = ref.read(eraseStateProvider);
+    if (state.currentPath == null) return null;
+
+    final bounds = state.currentPath!.path.getBounds();
+    return bounds.center;
   }
 
   void _handlePointerDown(Offset position) {
     if (widget.altKeyPressed) return;
-
-    setState(() {
-      print('开始擦除 - position: $position');
-      _isDragging = true;
-      _lastPoint = position;
-      _cursorPosition = position;
-
-      _currentPath = PathUtils.createSolidCircle(
-        position,
-        widget.brushSize / 2,
-      );
-
-      _dirtyRect = Rect.fromCircle(
-        center: position,
-        radius: widget.brushSize + 5,
-      );
-    });
-
     widget.onEraseStart?.call(position);
   }
 
   void _handlePointerMove(Offset position, Offset delta) {
-    _cursorPosition = position;
-
     if (widget.altKeyPressed) {
+      // 在Alt键按下时，调用平移回调
       widget.onPan?.call(delta);
-      setState(() {});
       return;
     }
-
-    if (!_isDragging || _lastPoint == null) return;
-
-    final gapPath = PathUtils.createSolidGap(
-      _lastPoint!,
-      position,
-      widget.brushSize,
-    );
-
-    setState(() {
-      _currentPath = Path.combine(
-        PathOperation.union,
-        _currentPath,
-        gapPath,
-      );
-
-      _dirtyRect = _dirtyRect?.expandToInclude(
-        Rect.fromCircle(center: position, radius: widget.brushSize + 5),
-      );
-
-      _lastPoint = position;
-    });
-
+    // 正常的擦除更新
     widget.onEraseUpdate?.call(position, delta);
   }
 
   void _handlePointerUp(Offset position) {
-    if (!_isDragging) return;
-
-    _isDragging = false;
-    _cursorPosition = null;
-
-    if (_lastPoint != null) {
-      _handlePointerMove(position, Offset.zero);
-    }
-
-    setState(() {
-      if (!PathUtils.isPathEmpty(_currentPath)) {
-        print('完成擦除路径');
-        _paths.add(PathInfo(
-          path: _currentPath,
-          brushSize: widget.brushSize,
-          brushColor: widget.brushColor,
-        ));
-      }
-      _currentPath = Path();
-      _dirtyRect = null;
-    });
-
     widget.onEraseEnd?.call();
   }
 
   void _handleTap(Offset position) {
     if (widget.altKeyPressed) return;
 
-    // 1. 先设置_currentPath显示圆形
-    setState(() {
-      _currentPath = PathUtils.createSolidCircle(
-        position,
-        widget.brushSize / 2,
-      );
-    });
-
-    // 2. 触发开始擦除
+    // 处理单击擦除 - 先触发start再触发end
     widget.onEraseStart?.call(position);
 
-    // 创建新的PathInfo时明确设置颜色
-    _paths.add(PathInfo(
-      path: PathUtils.createSolidCircle(position, widget.brushSize / 2),
-      brushSize: widget.brushSize,
-      brushColor: widget.brushColor, // 明确设置颜色
-    ));
-
-    // 4. 触发结束擦除
+    // 确保两个事件之间有足够的分离
+    // 这会触发completePath，确保单击擦除路径被保存
     widget.onEraseEnd?.call();
 
-    // 5. 最后触发tap回调
     widget.onTap?.call(position);
   }
 }

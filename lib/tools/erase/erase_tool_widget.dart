@@ -45,6 +45,7 @@ class _EraseToolWidgetState extends State<EraseToolWidget> {
       ),
       body: CharacterEditPanel(
         image: widget.image,
+        onEditComplete: _handleEditComplete,
       ),
     );
   }

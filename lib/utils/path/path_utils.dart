@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 /// 路径处理工具类
@@ -36,39 +39,42 @@ class PathUtils {
     return result..close();
   }
 
-  /// 创建一个圆形的实心路径
+  /// 创建实心圆形路径
   static Path createSolidCircle(Offset center, double radius) {
-    return Path()
-      ..addOval(Rect.fromCircle(center: center, radius: radius))
-      ..close();
+    return Path()..addOval(Rect.fromCircle(center: center, radius: radius));
   }
 
-  /// 连接两点之间的间隙，创建实心区域
+  /// 创建两点之间的实心连接路径
   static Path createSolidGap(Offset start, Offset end, double width) {
+    final dx = end.dx - start.dx;
+    final dy = end.dy - start.dy;
+    final distance = math.sqrt(dx * dx + dy * dy);
+
+    if (distance < 0.001) {
+      // 如果点几乎重合，返回一个小圆
+      return createSolidCircle(start, width / 2);
+    }
+
+    // 计算垂直于连线的单位向量
+    final nx = -dy / distance;
+    final ny = dx / distance;
+
+    // 计算四个角点
+    final halfWidth = width / 2;
+    final p1 = Offset(start.dx + nx * halfWidth, start.dy + ny * halfWidth);
+    final p2 = Offset(start.dx - nx * halfWidth, start.dy - ny * halfWidth);
+    final p3 = Offset(end.dx - nx * halfWidth, end.dy - ny * halfWidth);
+    final p4 = Offset(end.dx + nx * halfWidth, end.dy + ny * halfWidth);
+
+    // 创建路径
     final path = Path();
-    final distance = (end - start).distance;
+    path.moveTo(p1.dx, p1.dy);
+    path.lineTo(p2.dx, p2.dy);
+    path.lineTo(p3.dx, p3.dy);
+    path.lineTo(p4.dx, p4.dy);
+    path.close();
 
-    // 如果距离太小，只创建一个圆形
-    if (distance < width / 2) {
-      path.addOval(Rect.fromCircle(center: end, radius: width / 2));
-      return path..close();
-    }
-
-    // 计算需要的圆形数量，确保有足够的重叠
-    final steps = (distance / (width / 4)).ceil();
-    print('创建间隙路径 - 距离: $distance, 步数: $steps');
-
-    // 在两点之间插入均匀分布的圆形
-    for (int i = 0; i <= steps; i++) {
-      final t = i / steps;
-      final point = Offset(
-        start.dx + (end.dx - start.dx) * t,
-        start.dy + (end.dy - start.dy) * t,
-      );
-      path.addOval(Rect.fromCircle(center: point, radius: width / 2));
-    }
-
-    return path..close();
+    return path;
   }
 
   /// 获取路径的边界矩形，安全处理
@@ -81,31 +87,25 @@ class PathUtils {
     }
   }
 
-  /// 判断路径是否为空
+  /// 检查路径是否为空
   static bool isPathEmpty(Path path) {
-    final bounds = getPathBounds(path);
-    if (bounds == null) return true;
-    return bounds.isEmpty;
+    try {
+      final bounds = path.getBounds();
+      return bounds.isEmpty || (bounds.width < 0.1 && bounds.height < 0.1);
+    } catch (e) {
+      return true;
+    }
   }
 
-  /// 智能合并多个路径为一个实心区域
-  static Path mergePaths(List<Path> paths, {bool close = true}) {
+  /// 合并多条路径
+  static Path mergePaths(List<Path> paths) {
     if (paths.isEmpty) return Path();
-    if (paths.length == 1) {
-      final result = Path()..addPath(paths.first, Offset.zero);
-      if (close) result.close();
-      return result;
-    }
+    if (paths.length == 1) return paths.first;
 
-    var result = Path()..addPath(paths.first, Offset.zero);
-    for (int i = 1; i < paths.length; i++) {
-      try {
-        result = Path.combine(PathOperation.union, result, paths[i]);
-      } catch (e) {
-        print('合并路径出错: $e');
-      }
+    final result = Path();
+    for (final path in paths) {
+      result.addPath(path, Offset.zero);
     }
-    if (close) result.close();
     return result;
   }
 }
