@@ -58,7 +58,7 @@ class CharacterPersistenceService {
 
       // 创建实体并保存到数据库
       final entity = CharacterEntity.create(
-        workId: '', // 工作ID将在后续设置
+        workId: 'temp', // TODO: 替换为实际的workId，暂时使用临时ID以满足外键约束
         pageId: region.pageId,
         region: region,
         character: region.character,
@@ -170,7 +170,7 @@ class CharacterPersistenceService {
 
   // 保存字符数据
   Future<CharacterEntity> saveCharacter(
-      CharacterRegion region, ProcessingResult result) async {
+      CharacterRegion region, ProcessingResult result, String workId) async {
     try {
       await _storageService.saveOriginalImage(region.id, result.originalCrop);
       await _storageService.saveBinaryImage(region.id, result.binaryImage);
@@ -182,7 +182,7 @@ class CharacterPersistenceService {
 
       // 创建实体并保存到数据库
       final entity = CharacterEntity.create(
-        workId: '',
+        workId: workId,
         pageId: region.pageId,
         region: region,
         character: region.character,

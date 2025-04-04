@@ -158,6 +158,7 @@ class CharacterService {
       final character = await _persistenceService.saveCharacter(
         characterRegion,
         result,
+        workId,
       );
       AppLogger.debug('字符和图像保存完成', data: {'characterId': character.id});
 

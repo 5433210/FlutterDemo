@@ -105,93 +105,6 @@ const migrations = [
       WHERE workId = NEW.workId
     )
     WHERE id = NEW.workId;
-  END
-  ''',
-
-  '''
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete 
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works 
-    SET imageCount = (
-      SELECT COUNT(*) 
-      FROM work_images 
-      WHERE workId = OLD.workId
-    )
-    WHERE id = OLD.workId;
-  END
-  ''',
-
-  '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert 
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works 
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END
-  ''',
-
-  '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update 
-  AFTER UPDATE OF indexInWork ON work_images
-  BEGIN
-    UPDATE works 
-    SET firstImageId = (
-      SELECT id
-      FROM work_images
-      WHERE workId = NEW.workId
-      ORDER BY indexInWork ASC
-      LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = NEW.workId;
-  END
-  ''',
-
-  '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete 
-  AFTER DELETE ON work_images
-  BEGIN
-    UPDATE works 
-    SET firstImageId = (
-      SELECT id FROM work_images WHERE workId = OLD.workId ORDER BY indexInWork ASC LIMIT 1
-    ),
-    lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-    WHERE id = OLD.workId;
-  END
-  ''',
-
-  // 版本 4: 处理字段命名统一性
-  '''
-  -- 重命名列
-
-  DROP TRIGGER IF EXISTS update_work_image_count_insert;
-  DROP TRIGGER IF EXISTS update_work_image_count_delete;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_insert;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_update;
-  DROP TRIGGER IF EXISTS update_work_first_image_on_delete;
-  ''',
-
-  '''
-  -- 重建触发器
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert 
-  AFTER INSERT ON work_images
-  BEGIN
-    UPDATE works 
-    SET imageCount = (
-      SELECT COUNT(*) 
-      FROM work_images 
-      WHERE workId = NEW.workId
-    )
-    WHERE id = NEW.workId;
   END;
   ''',
 
@@ -254,5 +167,30 @@ const migrations = [
     lastImageUpdateTime = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
     WHERE id = OLD.workId;
   END;
+  ''',
+
+  // 版本 5: 添加字符收藏功能
+  '''
+  ALTER TABLE characters ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
+  ALTER TABLE characters ADD COLUMN note TEXT;
+  ''',
+
+  // 版本 6: 添加临时工作项
+  '''
+  INSERT OR IGNORE INTO works (
+    id,
+    title,
+    author,
+    status,
+    createTime,
+    updateTime
+  ) VALUES (
+    'temp',
+    '临时工作项',
+    'system',
+    'draft',
+    datetime('now'),
+    datetime('now')
+  );
   ''',
 ];

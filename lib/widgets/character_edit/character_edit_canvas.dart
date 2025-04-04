@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/detected_outline.dart';
-import '../../domain/models/character/path_info.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../presentation/providers/character/erase_providers.dart';
 import '../../utils/debug/debug_flags.dart';
@@ -65,46 +64,37 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
     }
 
-    // 监听状态变化
     final eraseState = ref.watch(eraseStateProvider);
     final pathRenderData = ref.watch(pathRenderDataProvider);
-
-    // 监听轮廓显示状态变化
     final showContour =
         ref.watch(eraseStateProvider.select((state) => state.showContour));
 
-    // When contour state changes, force an update
     ref.listen(eraseStateProvider.select((state) => state.showContour),
         (previous, current) {
       if (current) {
         print('轮廓状态变化，强制更新轮廓显示，当前值: $current');
-        _scheduleOutlineUpdate();
+        _updateOutline();
       }
     });
 
-    // 监听路径数据变化，当路径变化且轮廓显示开启时更新轮廓
     ref.listen(pathRenderDataProvider, (previous, current) {
-      // 只有在轮廓显示开启且路径有变化时才更新
       final showContour = ref.read(eraseStateProvider).showContour;
       if (showContour) {
-        // 比较路径列表长度，检测是否有变化
         final prevPaths = previous?.completedPaths ?? [];
         final currentPaths = current.completedPaths ?? [];
         if (prevPaths.length != currentPaths.length) {
           print('路径变化检测：从 ${prevPaths.length} 到 ${currentPaths.length} 个路径');
-          _scheduleOutlineUpdate();
+          _updateOutline();
         }
       }
     });
 
-    // 监听图像反转状态变化，在需要时更新轮廓
     ref.listen(eraseStateProvider.select((state) => state.imageInvertMode),
         (previous, current) {
       if (previous != current && ref.read(eraseStateProvider).showContour) {
         print('图像反转状态变化，强制更新轮廓');
-        // 延迟处理，确保状态更新完成
         Future.delayed(const Duration(milliseconds: 100), () {
-          _scheduleOutlineUpdate();
+          _updateOutline();
         });
       }
     });
@@ -124,7 +114,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           boundaryMargin: const EdgeInsets.all(double.infinity),
           minScale: 0.1,
           maxScale: 5.0,
-          panEnabled: _isAltKeyPressed, // 仅在Alt键按下时启用平移
+          panEnabled: _isAltKeyPressed,
           child: SizedBox(
             width: widget.image.width.toDouble(),
             height: widget.image.height.toDouble(),
@@ -141,14 +131,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
               imageInvertMode: widget.imageInvertMode,
               showOutline: widget.showOutline,
               onPan: (delta) {
-                // Alt键按下时的平移逻辑
                 if (_isAltKeyPressed) {
                   final matrix = _transformationController.value.clone();
                   matrix.translate(delta.dx, delta.dy);
                   _transformationController.value = matrix;
                 }
               },
-              onTap: _handleTap, // 添加单击回调
+              onTap: _handleTap,
             ),
           ),
         ),
@@ -163,6 +152,36 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     super.dispose();
   }
 
+  /// 获取处理后的图像
+  Future<ui.Image?> getProcessedImage() async {
+    if (_layerStackKey.currentState == null) return null;
+
+    try {
+      // 创建一个带有当前大小的图片记录器
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+      final size = Size(
+        widget.image.width.toDouble(),
+        widget.image.height.toDouble(),
+      );
+
+      // 调用EraseLayerStack的渲染方法
+      await _layerStackKey.currentState!.renderToCanvas(canvas, size);
+
+      // 创建最终图像
+      final picture = recorder.endRecording();
+      final processedImage = await picture.toImage(
+        widget.image.width,
+        widget.image.height,
+      );
+
+      return processedImage;
+    } catch (e) {
+      print('获取处理后图像失败: $e');
+      return null;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -170,70 +189,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitToScreen();
       if (widget.showOutline) {
-        _scheduleOutlineUpdate();
+        _updateOutline();
       }
     });
   }
 
-  void setOutline(DetectedOutline? outline) {
-    if (_layerStackKey.currentState != null) {
-      _layerStackKey.currentState!.setOutline(outline);
-    }
-  }
-
-  void updateCurrentPath(PathInfo? path) {
-    // 不再直接更新EraseLayerStack，而是通过Provider更新
-    // 仅用于保持兼容性
-  }
-
-  void updateDirtyRect(Rect? rect) {
-    // 不再直接更新EraseLayerStack，而是通过Provider更新
-    // 仅用于保持兼容性
-  }
-
-  void updatePaths(List<PathInfo> paths) {
-    // 需要保留此方法以保持兼容性，但实际功能通过Provider实现
-    if (_layerStackKey.currentState != null) {
-      _layerStackKey.currentState!.updatePaths(paths);
-    }
-  }
-
-  // 添加一个调试方法，可视化笔刷大小
-  void _debugVisualizeBrushSize() {
-    if (!kDebugMode) return;
-
-    final eraseState = ref.read(eraseStateProvider);
-    final brushSize = eraseState.brushSize;
-    final brushColor = eraseState.brushColor;
-
-    print('调试笔刷大小: $brushSize, 颜色: $brushColor');
-
-    // 在屏幕中心绘制一个圆形，半径正好是笔刷大小的一半
-    final canvasSize = Size(
-      widget.image.width.toDouble(),
-      widget.image.height.toDouble(),
-    );
-
-    final center = Offset(
-      canvasSize.width / 2,
-      canvasSize.height / 2,
-    );
-
-    // 创建一个路径用于笔刷大小可视化
-    final debugPath = Path()
-      ..addOval(Rect.fromCircle(
-        center: center,
-        radius: brushSize / 2,
-      ));
-
-    // 使用当前的笔刷设置应用这个路径
-    ref.read(eraseStateProvider.notifier).startPath(center);
-    ref.read(eraseStateProvider.notifier).completePath();
-
-    print('在中心位置 $center 创建了半径为 ${brushSize / 2} 的调试圆');
-  }
-
-  // 添加一个调试方法，导出轮廓调试图
   Future<void> _exportContourDebugImage() async {
     if (!kDebugMode) return;
 
@@ -262,21 +222,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         widget.image.height.toDouble(),
       );
 
-      // 生成调试图像
-      // print('开始生成轮廓调试图...');
-      // final debugImageBytes = imageProcessor.createContourDebugImage(
-      //     imageBytes, fullImageRect, options);
-
-      // 将调试图像保存到文件
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filename = 'contour_debug_$timestamp.png';
 
       print('轮廓调试图已生成，文件名: $filename');
       print('轮廓图显示了每条轮廓的起点(绿色)和终点(红色)，以及终止原因');
-
-      // 这里可以添加保存到设备或分享的逻辑
-      // 例如:
-      // await File(filename).writeAsBytes(debugImageBytes);
     } catch (e) {
       print('导出轮廓调试图失败: $e');
     } finally {
@@ -284,21 +234,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  // 添加一个辅助方法来从Path对象中提取点，确保精确提取
   List<Offset> _extractPointsFromPath(Path path) {
     List<Offset> points = [];
     try {
-      // 提取路径的每个点，使用更密集的采样确保准确性
       for (final metric in path.computeMetrics()) {
-        // 对长度为0的度量进行特殊处理
         if (metric.length == 0) {
-          // 这可能是单点的圆形路径，尝试获取路径边界的中心点
           final pathBounds = path.getBounds();
           points.add(pathBounds.center);
           continue;
         }
 
-        // 根据路径长度计算步长，确保点的密度适中
         final stepLength = math.max(1.0, metric.length / 100);
 
         for (double distance = 0;
@@ -310,7 +255,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           }
         }
 
-        // 确保添加终点
         if (metric.length > 0) {
           final lastTangent = metric.getTangentForOffset(metric.length);
           if (lastTangent != null) {
@@ -319,17 +263,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
       }
 
-      // 确保提取了足够的点
       if (points.isEmpty) {
         print('警告：从路径中未提取到点，尝试使用路径边界');
         final bounds = path.getBounds();
         points.add(bounds.center);
-      } else {
-        print('从路径中提取了 ${points.length} 个点');
       }
     } catch (e) {
       print('提取路径点出错: $e');
-      // 如果无法提取，尝试至少获取路径边界
       try {
         final bounds = path.getBounds();
         points.add(bounds.center);
@@ -366,40 +306,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleEraseEnd() {
-    // 首先调用原始回调
     widget.onEraseEnd?.call();
-
-    // Alt键按下时不处理擦除
     if (!_isAltKeyPressed) {
-      // 完成当前路径
       ref.read(eraseStateProvider.notifier).completePath();
-      // 不再在这里调用轮廓更新，而是依赖pathRenderDataProvider的监听
-      // 路径变化时会自动触发轮廓更新
     }
   }
 
   void _handleEraseStart(Offset position) {
-    // 首先调用原始回调
     widget.onEraseStart?.call(position);
-
-    // Alt键按下时不处理擦除
     if (!_isAltKeyPressed) {
-      // 更新擦除状态
       ref.read(eraseStateProvider.notifier).startPath(position);
     }
   }
 
   void _handleEraseUpdate(Offset position, Offset delta) {
-    // 首先调用原始回调
     widget.onEraseUpdate?.call(position, delta);
-
-    // Alt键按下时处理平移
-    if (_isAltKeyPressed) {
-      final matrix = _transformationController.value.clone();
-      matrix.translate(delta.dx, delta.dy);
-      _transformationController.value = matrix;
-    } else {
-      // 更新擦除状态
+    if (!_isAltKeyPressed) {
       ref.read(eraseStateProvider.notifier).updatePath(position);
     }
   }
@@ -433,7 +355,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       return KeyEventResult.handled;
     }
 
-    // 添加D键处理来导出调试图
     if (kDebugMode &&
         event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.keyD) {
@@ -446,14 +367,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleTap(Offset position) {
-    // Alt键按下时不处理擦除
     if (_isAltKeyPressed) return;
 
-    // 通过Provider执行单击擦除
     ref.read(eraseStateProvider.notifier).startPath(position);
     ref.read(eraseStateProvider.notifier).completePath();
 
-    // 触发回调
     widget.onEraseStart?.call(position);
     widget.onEraseEnd?.call();
   }
@@ -466,32 +384,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  void _scheduleOutlineUpdate() {
+  Future<void> _updateOutline() async {
     if (_isProcessing) {
       print('轮廓正在处理中，跳过更新');
       return;
     }
 
-    // 添加延迟，确保路径状态已经完全更新
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (!mounted) return;
-
-      final showContour = ref.read(eraseStateProvider).showContour;
-      print(
-          '准备更新轮廓, showContour=$showContour, 路径数量=${ref.read(pathRenderDataProvider).completedPaths.length ?? 0}');
-
-      if (showContour) {
-        _updateOutline();
-      }
-    });
-  }
-
-  Future<void> _updateOutline() async {
     setState(() => _isProcessing = true);
-
-    if (kDebugMode) {
-      print('开始处理轮廓...');
-    }
 
     try {
       final imageBytes = await ImageUtils.imageToBytes(widget.image);
@@ -503,35 +402,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       final pathRenderData = ref.read(pathRenderDataProvider);
       final eraseState = ref.read(eraseStateProvider);
 
-      // 添加详细的日志，确认擦除路径的颜色信息
-      if (kDebugMode) {
-        print('准备处理轮廓，路径数量: ${pathRenderData.completedPaths.length}');
-        print(
-            '图像反转状态: ${eraseState.imageInvertMode}, 笔刷反转状态: ${eraseState.isReversed}');
-        print('使用的笔刷颜色: ${eraseState.brushColor}');
-
-        // 检查路径中存储的颜色值
-        int blackCount = 0;
-        int whiteCount = 0;
-        for (final path in pathRenderData.completedPaths) {
-          if (path.brushColor == Colors.black)
-            blackCount++;
-          else if (path.brushColor == Colors.white) whiteCount++;
-        }
-        print('路径颜色统计: 黑色=$blackCount, 白色=$whiteCount');
-      }
-
-      // 确保ProcessingOptions与当前的EraseState一致
       final options = ProcessingOptions(
-        // 修正这里的反转标志，使用与eraseState一致的逻辑
         inverted: eraseState.imageInvertMode,
         threshold: 128.0,
         noiseReduction: 0.5,
         showContour: true,
       );
-
-      print(
-          '轮廓处理选项: inverted=${options.inverted}, showContour=${options.showContour}');
 
       final fullImageRect = Rect.fromLTWH(
         0,
@@ -540,29 +416,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         widget.image.height.toDouble(),
       );
 
-      // 确保erasePaths里的brushColor与当前路径中存储的颜色一致
+      if (kDebugMode) {
+        print(
+            '轮廓处理选项: inverted=${options.inverted}, showContour=${options.showContour}');
+      }
+
       List<Map<String, dynamic>> erasePaths = [];
       if (pathRenderData.completedPaths.isNotEmpty) {
         erasePaths = pathRenderData.completedPaths.map((p) {
-          // 提取高密度的点集，确保擦除效果精确
           final points = _extractPointsFromPath(p.path);
-
-          // 确保有足够的点来表示路径
-          if (points.length < 5 && p.path.computeMetrics().isNotEmpty) {
-            print('警告：路径点数过少(${points.length})，可能不精确');
-          }
-
-          return <String, dynamic>{
+          return {
             'brushSize': p.brushSize,
             'brushColor': p.brushColor.value,
             'points': points,
-            // 添加一个路径ID，便于调试
             'pathId': p.hashCode.toString(),
           };
         }).toList();
-
-        print(
-            '准备了 ${erasePaths.length} 条擦除路径，总点数: ${erasePaths.fold<int>(0, (sum, path) => sum + (path['points'] as List).length)}');
       }
 
       print('开始处理轮廓，传递 ${erasePaths.length} 个路径...');
@@ -578,25 +447,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         setState(() {
           _outline = result.outline;
           _isProcessing = false;
-          if (_outline != null) {
-            print('轮廓更新成功 - 包含 ${_outline!.contourPoints.length} 条路径');
-            // 额外检查轮廓对象的位置信息
-            final bounds = _outline!.boundingRect;
-            print(
-                '轮廓边界: $bounds, 图像大小: ${widget.image.width}x${widget.image.height}');
-          } else {
-            print('警告: 未生成轮廓数据');
-          }
         });
 
-        // 确保轮廓被设置和显示
         if (_layerStackKey.currentState != null) {
           final showContour = ref.read(eraseStateProvider).showContour;
           print('传递轮廓数据到 EraseLayerStack, 显示=$showContour');
           _layerStackKey.currentState!
               .setOutline(showContour ? _outline : null);
-        } else {
-          print('警告: EraseLayerStack state 不可用');
         }
       }
     } catch (e) {

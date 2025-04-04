@@ -120,6 +120,7 @@ class _EraseToolExamplePageState extends State<EraseToolExamplePage> {
       MaterialPageRoute(
         builder: (context) => EraseToolWidget(
           image: _image!,
+          workId: 'example', // 示例代码使用临时ID，实际使用时需要传入真实的workId
           onComplete: _handleEraseComplete,
         ),
       ),

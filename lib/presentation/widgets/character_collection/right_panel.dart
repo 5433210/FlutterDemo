@@ -88,6 +88,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
     return CharacterEditPanel(
       key: ValueKey(image.hashCode),
       image: image,
+      workId: widget.workId,
       onEditComplete: _handleEditComplete,
     );
   }
