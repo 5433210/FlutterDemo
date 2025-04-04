@@ -39,13 +39,34 @@ class PathUtils {
     return result..close();
   }
 
+  /// 使用平滑连接创建路径
+  static Path createSmoothPath(List<Offset> points, double width) {
+    if (points.isEmpty) return Path();
+    if (points.length == 1) {
+      return createSolidCircle(points[0], width / 2);
+    }
+
+    final path = Path();
+
+    // 添加第一个点的圆形
+    path.addOval(Rect.fromCircle(center: points.first, radius: width / 2));
+
+    // 添加连接的线段，确保平滑连接
+    for (int i = 1; i < points.length; i++) {
+      final gap = createSolidGap(points[i - 1], points[i], width);
+      path.addPath(gap, Offset.zero);
+    }
+
+    return path;
+  }
+
   /// 创建实心圆形路径
   static Path createSolidCircle(Offset center, double radius) {
     // 确保使用准确的圆形半径，不进行四舍五入
     return Path()..addOval(Rect.fromCircle(center: center, radius: radius));
   }
 
-  /// 创建两点之间的实心连接路径
+  /// 创建两点之间的实心连接路径，改进版
   static Path createSolidGap(Offset start, Offset end, double width) {
     final dx = end.dx - start.dx;
     final dy = end.dy - start.dy;
@@ -60,20 +81,32 @@ class PathUtils {
     final nx = -dy / distance;
     final ny = dx / distance;
 
-    // 计算四个角点 - 确保使用准确的笔刷宽度，不进行四舍五入
+    // 计算四个角点，确保精确表示
     final halfWidth = width / 2;
     final p1 = Offset(start.dx + nx * halfWidth, start.dy + ny * halfWidth);
     final p2 = Offset(start.dx - nx * halfWidth, start.dy - ny * halfWidth);
     final p3 = Offset(end.dx - nx * halfWidth, end.dy - ny * halfWidth);
     final p4 = Offset(end.dx + nx * halfWidth, end.dy + ny * halfWidth);
 
-    // 创建路径
+    // 创建路径，使用更精确的控制
     final path = Path();
+
+    // 使用更精确的方式绘制四边形，确保边角处理正确
     path.moveTo(p1.dx, p1.dy);
     path.lineTo(p2.dx, p2.dy);
     path.lineTo(p3.dx, p3.dy);
     path.lineTo(p4.dx, p4.dy);
+
+    // 确保路径闭合，防止边角泄漏
     path.close();
+
+    // 为保证圆形的端点，添加两个半圆
+    final startCircle = createSolidCircle(start, halfWidth);
+    final endCircle = createSolidCircle(end, halfWidth);
+
+    // 合并所有部分，确保完整覆盖
+    path.addPath(startCircle, Offset.zero);
+    path.addPath(endCircle, Offset.zero);
 
     return path;
   }

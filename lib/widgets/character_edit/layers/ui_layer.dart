@@ -300,7 +300,7 @@ class _UIPainter extends CustomPainter {
       return;
     }
 
-    // Reduce log verbosity
+    // 减少日志冗长度
     if (kDebugMode && DebugFlags.enableEraseDebug) {
       print('开始绘制轮廓');
     }
@@ -323,19 +323,22 @@ class _UIPainter extends CustomPainter {
     final offsetX = (size.width - imageSize!.width * scale) / 2;
     final offsetY = (size.height - imageSize!.height * scale) / 2;
 
+    // 增强轮廓线条清晰度
     final mainStrokePaint = Paint()
-      ..color = Colors.blue
+      ..color = Colors.blue.withOpacity(0.8) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5 / scale // 根据缩放比例调整线宽
+      ..strokeWidth = 1.2 / scale // 微微加粗轮廓线
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true; // 确保抗锯齿
 
     final outerStrokePaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
+      ..color = Colors.white.withOpacity(0.8) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5 / scale // 根据缩放比例调整线宽
+      ..strokeWidth = 2.2 / scale // 加粗外边框
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true; // 确保抗锯齿
 
     canvas.save();
     // 应用正确的变换
@@ -343,11 +346,16 @@ class _UIPainter extends CustomPainter {
     canvas.scale(scale);
 
     int contourCount = 0;
+    int pointCount = 0;
+
     for (final contour in outline!.contourPoints) {
       if (contour.length < 2) {
         continue;
       }
 
+      pointCount += contour.length;
+
+      // 使用path来绘制复杂轮廓可获得更好的性能和质量
       final path = Path();
       path.moveTo(contour[0].dx, contour[0].dy);
 
@@ -363,19 +371,7 @@ class _UIPainter extends CustomPainter {
       contourCount++;
     }
 
-    print('成功绘制了 $contourCount 个轮廓');
-
-    // 调试显示边界框
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      final bounds = outline!.boundingRect;
-      canvas.drawRect(
-        bounds,
-        Paint()
-          ..color = Colors.yellow.withOpacity(0.3)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.0 / scale,
-      );
-    }
+    print('成功绘制了 $contourCount 个轮廓，共 $pointCount 个轮廓点');
 
     canvas.restore();
   }

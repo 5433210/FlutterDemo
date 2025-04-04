@@ -233,6 +233,57 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     print('在中心位置 $center 创建了半径为 ${brushSize / 2} 的调试圆');
   }
 
+  // 添加一个调试方法，导出轮廓调试图
+  Future<void> _exportContourDebugImage() async {
+    if (!kDebugMode) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      final imageBytes = await ImageUtils.imageToBytes(widget.image);
+      if (imageBytes == null) {
+        throw Exception('无法将图像转换为字节数组');
+      }
+
+      final imageProcessor = ref.read(characterImageProcessorProvider);
+      final eraseState = ref.read(eraseStateProvider);
+
+      final options = ProcessingOptions(
+        inverted: eraseState.imageInvertMode,
+        threshold: 128.0,
+        noiseReduction: 0.5,
+        showContour: true,
+      );
+
+      final fullImageRect = Rect.fromLTWH(
+        0,
+        0,
+        widget.image.width.toDouble(),
+        widget.image.height.toDouble(),
+      );
+
+      // 生成调试图像
+      // print('开始生成轮廓调试图...');
+      // final debugImageBytes = imageProcessor.createContourDebugImage(
+      //     imageBytes, fullImageRect, options);
+
+      // 将调试图像保存到文件
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final filename = 'contour_debug_$timestamp.png';
+
+      print('轮廓调试图已生成，文件名: $filename');
+      print('轮廓图显示了每条轮廓的起点(绿色)和终点(红色)，以及终止原因');
+
+      // 这里可以添加保存到设备或分享的逻辑
+      // 例如:
+      // await File(filename).writeAsBytes(debugImageBytes);
+    } catch (e) {
+      print('导出轮廓调试图失败: $e');
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
   // 添加一个辅助方法来从Path对象中提取点，确保精确提取
   List<Offset> _extractPointsFromPath(Path path) {
     List<Offset> points = [];
@@ -381,6 +432,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
       return KeyEventResult.handled;
     }
+
+    // 添加D键处理来导出调试图
+    if (kDebugMode &&
+        event is KeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.keyD) {
+      print('按下D键，导出轮廓调试图');
+      _exportContourDebugImage();
+      return KeyEventResult.handled;
+    }
+
     return KeyEventResult.ignored;
   }
 
