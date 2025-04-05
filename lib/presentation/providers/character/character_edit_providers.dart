@@ -69,36 +69,73 @@ class ProcessedImageData {
 }
 
 class ProcessedImageNotifier extends StateNotifier<ProcessedImageData> {
+  bool _disposed = false;
+
   ProcessedImageNotifier() : super(const ProcessedImageData());
 
   void clear() {
-    state = const ProcessedImageData();
+    if (_disposed) return;
+    try {
+      if (state.image != null) {
+        state.image!.dispose();
+      }
+      state = const ProcessedImageData();
+    } catch (e) {
+      // 忽略清理过程中的错误
+    }
   }
 
   @override
   void dispose() {
-    if (state.image != null) {
-      state.image!.dispose();
+    if (_disposed) return;
+    _disposed = true;
+
+    try {
+      clear();
+    } finally {
+      super.dispose();
     }
-    super.dispose();
   }
 
   void setError(String error) {
-    state = state.copyWith(
-      error: error,
-      isProcessing: false,
-    );
+    if (_disposed) return;
+    try {
+      state = state.copyWith(
+        error: error,
+        isProcessing: false,
+      );
+    } catch (e) {
+      // 忽略在设置错误状态时可能发生的异常
+    }
   }
 
   void setImage(ui.Image image) {
-    state = state.copyWith(
-      image: image,
-      isProcessing: false,
-      error: null,
-    );
+    if (_disposed) return;
+    try {
+      final oldImage = state.image;
+      state = state.copyWith(
+        image: image,
+        isProcessing: false,
+        error: null,
+      );
+      // 清理旧图像
+      if (oldImage != null) {
+        oldImage.dispose();
+      }
+    } catch (e) {
+      // 忽略在设置图像时可能发生的异常
+    }
   }
 
   void setProcessing(bool isProcessing) {
-    state = state.copyWith(isProcessing: isProcessing, error: null);
+    if (_disposed) return;
+    try {
+      state = state.copyWith(
+        isProcessing: isProcessing,
+        error: null,
+      );
+    } catch (e) {
+      // 忽略在设置处理状态时可能发生的异常
+    }
   }
 }

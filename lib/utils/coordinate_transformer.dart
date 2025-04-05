@@ -264,13 +264,11 @@ class CoordinateTransformer {
       AppLogger.debug(
           '【矩形转换】将视口矩形转换为图像矩形: ${viewportRect.left},${viewportRect.top},${viewportRect.width}x${viewportRect.height}');
     }
-
     final topLeft = viewportToViewCoordinate(viewportRect.topLeft);
     final bottomRight = viewportToViewCoordinate(viewportRect.bottomRight);
 
     final viewRect = Rect.fromPoints(topLeft, bottomRight);
     final imageRect = viewRectToImageRect(viewRect);
-
     if (enableLogging) {
       AppLogger.debug(
           '【矩形转换】转换结果: ${imageRect.left},${imageRect.top},${imageRect.width}x${imageRect.height}');

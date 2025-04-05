@@ -8,15 +8,22 @@ import '../../widgets/character_edit/character_edit_panel.dart';
 
 /// 擦除工具组件
 /// 提供字符擦除功能的入口点
+///
+/// [image] - 要编辑的图片
+/// [workId] - 作品ID
+/// [pageId] - 作品图片ID
+/// [onComplete] - 编辑完成时的回调函数
 class EraseToolWidget extends StatefulWidget {
   final ui.Image image;
   final String workId;
+  final String pageId;
   final Function(Map<String, dynamic>)? onComplete;
 
   const EraseToolWidget({
     Key? key,
     required this.image,
     required this.workId,
+    required this.pageId,
     this.onComplete,
   }) : super(key: key);
 
@@ -48,6 +55,7 @@ class _EraseToolWidgetState extends State<EraseToolWidget> {
       body: CharacterEditPanel(
         image: widget.image,
         workId: widget.workId,
+        pageId: widget.pageId,
         onEditComplete: _handleEditComplete,
       ),
     );

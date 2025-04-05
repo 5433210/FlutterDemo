@@ -85,10 +85,12 @@ class _RightPanelState extends ConsumerState<RightPanel>
   }
 
   Widget _buildCharacterEditor(ui.Image image) {
+    final workImageState = ref.watch(workImageProvider);
     return CharacterEditPanel(
       key: ValueKey(image.hashCode),
       image: image,
       workId: widget.workId,
+      pageId: workImageState.currentPageId ?? '',
       onEditComplete: _handleEditComplete,
     );
   }

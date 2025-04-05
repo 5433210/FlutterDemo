@@ -5,28 +5,38 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../domain/models/character/processing_result.dart';
+import '../../presentation/providers/character/character_collection_provider.dart';
 import '../../presentation/providers/character/character_edit_providers.dart'
     hide PathRenderData;
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
+import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
 import 'dialogs/shortcuts_help_dialog.dart';
 import 'keyboard/shortcut_handler.dart';
 
 /// 字符编辑面板组件
+///
+/// 用于编辑作品图片中的字符区域。
+///
+/// [image] - 要编辑的图片
+/// [workId] - 作品ID
+/// [pageId] - 作品图片ID
+/// [onEditComplete] - 编辑完成时的回调函数
 class CharacterEditPanel extends ConsumerStatefulWidget {
   final ui.Image image;
   final String workId;
+  final String pageId;
   final Function(Map<String, dynamic>) onEditComplete;
 
   const CharacterEditPanel({
     super.key,
     required this.image,
     required this.workId,
+    required this.pageId,
     required this.onEditComplete,
   });
 
@@ -99,10 +109,16 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
   @override
   void dispose() {
-    final notifier = ref.read(processedImageProvider.notifier);
-    _characterController.dispose();
-    notifier.clear();
-    super.dispose();
+    try {
+      // 在 super.dispose() 之前进行所有清理工作
+      final notifier = ref.read(processedImageProvider.notifier);
+      notifier.clear();
+      _characterController.dispose();
+    } catch (e) {
+      debugPrint('Character edit panel dispose error: $e');
+    } finally {
+      super.dispose();
+    }
   }
 
   @override
@@ -416,8 +432,8 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
     if (confirmed != true) return;
     if (!mounted) return;
-// 更新处理状态
-    ref.read(processedImageProvider.notifier).setProcessing(true);
+    // 更新处理状态
+    if (!mounted) return;
     ref.read(processedImageProvider.notifier).setProcessing(true);
 
     try {
@@ -452,12 +468,17 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         showContour: eraseState.showContour,
       );
 
-      final rect = Rect.fromLTWH(
-        0,
-        0,
-        widget.image.width.toDouble(),
-        widget.image.height.toDouble(),
-      );
+      // 从selectedRegionProvider获取当前选区
+      final selectedRegion = ref.read(selectedRegionProvider);
+      if (selectedRegion == null) {
+        throw _SaveError('未选择任何区域');
+      }
+
+      // 获取处理所需的画布状态
+      final canvasState = _canvasKey.currentState;
+      if (canvasState == null) {
+        throw _SaveError('无法获取画布状态');
+      }
 
       // 获取图像数据（带重试机制）
       final imageData = await _RetryStrategy.run(
@@ -474,10 +495,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
       final uint8List = imageData.buffer.asUint8List();
 
-      // 创建字符区域
-      final region = CharacterRegion.create(
-        pageId: '1', // TODO: 从参数获取pageId
-        rect: rect,
+      // 更新选区信息
+      final updatedRegion = selectedRegion.copyWith(
+        pageId: widget.pageId,
         character: _characterController.text,
         options: processingOptions,
       );
@@ -487,7 +507,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         originalCrop: uint8List,
         binaryImage: uint8List,
         thumbnail: uint8List,
-        boundingBox: rect,
+        boundingBox: selectedRegion.rect,
       );
 
       // 保存（带重试机制）
@@ -496,8 +516,8 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           if (!mounted) throw _SaveError('操作已取消');
 
           final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
-          final result =
-              await saveNotifier.save(region, processingResult, widget.workId);
+          final result = await saveNotifier.save(
+              updatedRegion, processingResult, widget.workId);
 
           if (!mounted) throw _SaveError('操作已取消');
 
@@ -517,6 +537,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             backgroundColor: Colors.green,
           ),
         );
+        // 更新选区状态
+        final collectionNotifier =
+            ref.read(characterCollectionProvider.notifier);
+        collectionNotifier.selectRegion(updatedRegion.id);
+
         widget.onEditComplete({
           'paths': pathRenderData.completedPaths ?? [],
           'processingOptions': processingOptions,
@@ -525,9 +550,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       }
     } catch (e) {
       if (!mounted) return;
-      final errorMessage = e is _SaveError ? e.toString() : '保存失败：$e';
-      ref.read(processedImageProvider.notifier).setError(errorMessage);
-      if (mounted) {
+
+      try {
+        final errorMessage = e is _SaveError ? e.toString() : '保存失败：$e';
+        ref.read(processedImageProvider.notifier).setError(errorMessage);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -539,6 +566,12 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             ),
           ),
         );
+      } catch (e) {
+        // 忽略在显示错误消息时可能发生的异常
+      }
+    } finally {
+      if (mounted) {
+        ref.read(processedImageProvider.notifier).setProcessing(false);
       }
     }
   }

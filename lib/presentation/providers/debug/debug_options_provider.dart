@@ -47,7 +47,7 @@ class DebugOptions {
     this.showRegionCenter = true,
     this.gridSize = 50.0,
     this.textScale = 1.0,
-    this.enableLogging = true,
+    this.enableLogging = false,
     this.opacity = 0.5,
   });
 

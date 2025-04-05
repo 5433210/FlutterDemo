@@ -56,33 +56,87 @@ class CharacterCollectionNotifier
     state = state.copyWith(error: null);
   }
 
-  // 多选功能：清除所有选择
+  // 清理已选择的区域
+  void clearSelectedRegions() {
+    _selectedRegionNotifier.clearRegion();
+    state = state.copyWith(
+      currentId: null,
+      selectedIds: {},
+    );
+  }
+
+// 多选功能：清除所有选择
   void clearSelections() {
     state = state.copyWith(selectedIds: {});
   }
 
-  // 创建新的选框
+// 清理所有状态
+  void clearState() {
+    _currentPageImage = null;
+    _currentWorkId = null;
+    _currentPageId = null;
+    _selectedRegionNotifier.clearRegion();
+    state = CharacterCollectionState.initial();
+  }
+
+  /// 创建新的框选区域
+  /// 1. 验证必要条件
+  /// 2. 创建新区域并处理选区状态
+  /// 3. 记录操作以支持撤销
   void createRegion(Rect rect) {
-    if (_currentPageId == null) return;
+    try {
+      // 1. 验证条件
+      if (_currentPageId == null) {
+        throw Exception('当前页面ID未设置，无法创建选区');
+      }
+      if (_currentPageImage == null) {
+        throw Exception('当前页面图像未设置，无法创建选区');
+      }
+      if (rect.width < 20 || rect.height < 20) {
+        throw Exception('选区尺寸过小，最小尺寸为20x20');
+      }
 
-    // 创建新的区域
-    final region = CharacterRegion.create(
-      pageId: _currentPageId!,
-      rect: rect,
-      options: const ProcessingOptions(),
-    );
+      AppLogger.debug('开始创建新选区', data: {
+        'rect': '${rect.left.toStringAsFixed(1)},'
+            '${rect.top.toStringAsFixed(1)},'
+            '${rect.width.toStringAsFixed(1)}x'
+            '${rect.height.toStringAsFixed(1)}',
+        'pageId': _currentPageId,
+      });
 
-    // 更新选中区域
-    _selectedRegionNotifier.setRegion(region);
+      // 2. 创建新区域
+      final region = CharacterRegion.create(
+        pageId: _currentPageId!,
+        rect: rect,
+        options: const ProcessingOptions(),
+      );
 
-    // 添加撤销操作
-    final undoAction = UndoAction.create(region.id);
-    final undoStack = [...state.undoStack, undoAction];
+      // 清理现有选择状态
+      _selectedRegionNotifier.clearRegion();
 
-    state = state.copyWith(
-      currentId: region.id,
-      undoStack: undoStack,
-    );
+      // 设置新的选中区域
+      _selectedRegionNotifier.setRegion(region);
+
+      // 更新区域列表和状态
+      final updatedRegions = [...state.regions, region];
+      state = state.copyWith(
+        regions: updatedRegions,
+        currentId: region.id,
+        selectedIds: {region.id}, // 更新多选状态
+      );
+
+      AppLogger.debug('新选区创建完成', data: {
+        'regionId': region.id,
+        'totalRegions': updatedRegions.length,
+      });
+    } catch (e, stack) {
+      AppLogger.error('创建选区失败',
+          error: e, stackTrace: stack, data: {'rect': rect.toString()});
+
+      state = state.copyWith(
+        error: '创建选区失败: ${e.toString()}',
+      );
+    }
   }
 
   // 批量删除区域
@@ -181,28 +235,62 @@ class CharacterCollectionNotifier
 
   // 加载作品数据
   Future<void> loadWorkData(String workId, {String? pageId}) async {
+    AppLogger.debug('开始加载选区数据', data: {
+      'workId': workId,
+      'pageId': pageId,
+      'hasCurrentImage': _currentPageImage != null,
+    });
+
+    // 清理现有状态
     state = state.copyWith(
       loading: true,
       error: null,
+      selectedIds: {}, // 清除选中状态
+      currentId: null, // 清除当前选中区域
+      regions: [], // 清空区域列表
     );
+    _selectedRegionNotifier.clearRegion(); // 清除选中区域
 
     try {
+      // 更新当前上下文
       _currentWorkId = workId;
       _currentPageId = pageId;
 
-      // 获取页面区域（已保存的字符框）
+      if (_currentPageImage == null) {
+        throw Exception('页面图像未设置，无法加载选区数据');
+      }
+
+      // 加载区域数据
+      AppLogger.debug('从数据库加载选区数据', data: {
+        'pageId': pageId ?? 'null',
+      });
+
       final regions = await _characterService.getPageRegions(pageId ?? '');
 
+      AppLogger.debug('选区数据加载完成', data: {
+        'regionsCount': regions.length,
+        'workId': workId,
+        'pageId': pageId,
+      });
+
+      // 更新状态
       state = state.copyWith(
         workId: workId,
         pageId: pageId,
         regions: regions,
         loading: false,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      AppLogger.error('加载选区数据失败', error: e, stackTrace: stack, data: {
+        'workId': workId,
+        'pageId': pageId,
+      });
+
+      // 更新错误状态
       state = state.copyWith(
         loading: false,
-        error: e.toString(),
+        error: '加载选区数据失败: ${e.toString()}',
+        regions: [], // 确保清空区域列表
       );
     }
   }
@@ -385,45 +473,110 @@ class CharacterCollectionNotifier
     state = state.copyWith(selectedIds: selectedIds);
   }
 
-  // 选择已有区域
+  /// 选择指定的区域
+  /// 1. 处理取消选择的情况
+  /// 2. 查找并验证目标区域
+  /// 3. 更新选择状态
   void selectRegion(String? id) {
-    if (id == null) {
+    try {
+      AppLogger.debug('处理区域选择', data: {
+        'targetId': id,
+        'currentId': state.currentId,
+        'totalRegions': state.regions.length,
+      });
+
+      // 1. 处理取消选择
+      if (id == null) {
+        _selectedRegionNotifier.clearRegion();
+        state = state.copyWith(
+          currentId: null,
+          selectedIds: {}, // 清除多选状态
+        );
+        AppLogger.debug('已清除选区');
+        return;
+      }
+
+      // 2. 查找目标区域
+      final region = state.regions.firstWhere(
+        (r) => r.id == id,
+        orElse: () => throw Exception('找不到指定ID的区域: $id'),
+      );
+
+      // 3. 更新选择状态
+      _selectedRegionNotifier.setRegion(region);
+      state = state.copyWith(
+        currentId: id,
+        selectedIds: {id}, // 更新多选状态
+      );
+
+      AppLogger.debug('区域选择完成', data: {
+        'regionId': id,
+        'rect': '${region.rect.left.toStringAsFixed(1)},'
+            '${region.rect.top.toStringAsFixed(1)},'
+            '${region.rect.width.toStringAsFixed(1)}x'
+            '${region.rect.height.toStringAsFixed(1)}',
+      });
+    } catch (e, stack) {
+      AppLogger.error('选择区域失败',
+          error: e, stackTrace: stack, data: {'targetId': id});
+
+      // 错误时清理选择状态
       _selectedRegionNotifier.clearRegion();
-      state = state.copyWith(currentId: null);
-      return;
+      state = state.copyWith(
+        currentId: null,
+        selectedIds: {},
+        error: '选择区域失败: ${e.toString()}',
+      );
     }
-
-    final region = state.regions.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw Exception('Region not found: $id'),
-    );
-
-    _selectedRegionNotifier.setRegion(region);
-    state = state.copyWith(currentId: id);
   }
 
-  // 更新当前页面图像
+  /// 设置当前页面图像
+  /// 1. 解码并验证图像数据
+  /// 2. 清理现有状态
+  /// 3. 更新图像数据
   void setCurrentPageImage(Uint8List imageData) {
-    AppLogger.debug('设置当前页面图像', data: {'imageDataLength': imageData.length});
+    AppLogger.debug('准备设置当前页面图像', data: {
+      'imageDataLength': imageData.length,
+      'hasExistingImage': _currentPageImage != null,
+    });
 
     try {
+      // 1. 解码并验证图像数据
       final decodedImage = img.decodeImage(imageData);
       if (decodedImage == null) {
         AppLogger.error('图像数据解码失败：解码结果为null');
         throw Exception('Invalid image data: decoded result is null');
       }
+
+      // 2. 清理现有状态
+      _currentPageImage = null;
+      state = state.copyWith(
+        regions: [],
+        selectedIds: {},
+        currentId: null,
+        error: null,
+      );
+      _selectedRegionNotifier.clearRegion();
+
+      // 3. 更新图像数据
       _currentPageImage = imageData;
-      AppLogger.debug('图像数据解码成功',
-          data: {'width': decodedImage.width, 'height': decodedImage.height});
+      AppLogger.debug('图像数据设置完成', data: {
+        'width': decodedImage.width,
+        'height': decodedImage.height,
+        'channels': decodedImage.numChannels,
+      });
     } catch (e, stack) {
-      AppLogger.error('图像数据解码失败', error: e, stackTrace: stack);
+      AppLogger.error('设置页面图像失败',
+          error: e,
+          stackTrace: stack,
+          data: {'imageDataLength': imageData.length});
       rethrow;
     }
   }
 
   // 多选功能：切换选择状态
   void toggleSelection(String id) {
-    final selectedIds = {...state.selectedIds};
+    final selectedIds = <String>{...state.selectedIds};
 
     if (selectedIds.contains(id)) {
       selectedIds.remove(id);

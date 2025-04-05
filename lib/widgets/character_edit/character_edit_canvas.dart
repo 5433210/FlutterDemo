@@ -9,7 +9,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/detected_outline.dart';
 import '../../domain/models/character/processing_options.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/erase_providers.dart';
+import '../../utils/coordinate_transformer.dart';
 import '../../utils/debug/debug_flags.dart';
 import '../../utils/focus/focus_persistence.dart';
 import '../../utils/image/image_utils.dart';
@@ -50,13 +52,19 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   static const _altToggleDebounce = Duration(milliseconds: 100);
   final TransformationController _transformationController =
       TransformationController();
+  late CoordinateTransformer _transformer;
+
   final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
 
   bool _isProcessing = false;
+
   bool _isAltKeyPressed = false;
   DateTime _lastAltToggleTime = DateTime.now();
+
   DetectedOutline? _outline;
 
+  /// 返回当前的坐标转换器
+  CoordinateTransformer get transformer => _transformer;
   @override
   Widget build(BuildContext context) {
     if (kDebugMode && DebugFlags.enableEraseDebug) {
@@ -108,41 +116,56 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         onTap: () {
           if (!focusNode.hasFocus) focusNode.requestFocus();
         },
-        child: InteractiveViewer(
-          transformationController: _transformationController,
-          constrained: false,
-          boundaryMargin: const EdgeInsets.all(double.infinity),
-          minScale: 0.1,
-          maxScale: 5.0,
-          panEnabled: _isAltKeyPressed,
-          child: SizedBox(
-            width: widget.image.width.toDouble(),
-            height: widget.image.height.toDouble(),
-            child: EraseLayerStack(
-              key: _layerStackKey,
-              image: widget.image,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            _updateTransformer(constraints.biggest);
+
+            return InteractiveViewer(
               transformationController: _transformationController,
-              onEraseStart: _handleEraseStart,
-              onEraseUpdate: _handleEraseUpdate,
-              onEraseEnd: _handleEraseEnd,
-              altKeyPressed: _isAltKeyPressed,
-              brushSize: widget.brushSize,
-              brushColor: widget.brushColor,
-              imageInvertMode: widget.imageInvertMode,
-              showOutline: widget.showOutline,
-              onPan: (delta) {
-                if (_isAltKeyPressed) {
-                  final matrix = _transformationController.value.clone();
-                  matrix.translate(delta.dx, delta.dy);
-                  _transformationController.value = matrix;
-                }
+              constrained: false,
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              minScale: 0.1,
+              maxScale: 5.0,
+              panEnabled: _isAltKeyPressed,
+              onInteractionUpdate: (details) {
+                _updateTransformer(constraints.biggest);
               },
-              onTap: _handleTap,
-            ),
-          ),
+              child: SizedBox(
+                width: widget.image.width.toDouble(),
+                height: widget.image.height.toDouble(),
+                child: EraseLayerStack(
+                  key: _layerStackKey,
+                  image: widget.image,
+                  transformationController: _transformationController,
+                  onEraseStart: _handleEraseStart,
+                  onEraseUpdate: _handleEraseUpdate,
+                  onEraseEnd: _handleEraseEnd,
+                  altKeyPressed: _isAltKeyPressed,
+                  brushSize: widget.brushSize,
+                  brushColor: widget.brushColor,
+                  imageInvertMode: widget.imageInvertMode,
+                  showOutline: widget.showOutline,
+                  onPan: (delta) {
+                    if (_isAltKeyPressed) {
+                      final matrix = _transformationController.value.clone();
+                      matrix.translate(delta.dx, delta.dy);
+                      _transformationController.value = matrix;
+                    }
+                  },
+                  onTap: _handleTap,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
+  }
+
+  @override
+  void didUpdateWidget(CharacterEditCanvas oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // transformer的更新已经移到LayoutBuilder中处理
   }
 
   @override
@@ -186,12 +209,38 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   void initState() {
     super.initState();
     focusNode.addListener(_onFocusChange);
+
+    // 初始化坐标转换器
+    _transformer = CoordinateTransformer(
+      transformationController: _transformationController,
+      imageSize: Size(
+        widget.image.width.toDouble(),
+        widget.image.height.toDouble(),
+      ),
+      viewportSize: const Size(800, 600), // 初始默认值，将在LayoutBuilder中更新
+      enableLogging: false,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitToScreen();
       if (widget.showOutline) {
         _updateOutline();
       }
+
+      // 让布局完成后再进行transformer的更新
+      if (mounted && context.size != null) {
+        _updateTransformer(context.size!);
+      }
     });
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    // 热重载时更新transformer
+    if (mounted && context.size != null) {
+      _updateTransformer(context.size!);
+    }
   }
 
   Future<void> _exportContourDebugImage() async {
@@ -462,6 +511,42 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         print('错误堆栈: ${StackTrace.current}');
       }
       setState(() => _isProcessing = false);
+    }
+  }
+
+  /// 更新坐标转换器
+  /// [viewportSize] 视口尺寸
+  void _updateTransformer(Size viewportSize) {
+    if (!mounted) {
+      AppLogger.warning('无法更新坐标转换器：组件未挂载');
+      return;
+    }
+
+    try {
+      final imageSize = Size(
+        widget.image.width.toDouble(),
+        widget.image.height.toDouble(),
+      );
+
+      _transformer = CoordinateTransformer(
+        transformationController: _transformationController,
+        imageSize: imageSize,
+        viewportSize: viewportSize,
+        enableLogging: kDebugMode,
+      );
+
+      if (kDebugMode) {
+        AppLogger.debug('坐标转换器更新完成', data: {
+          'imageSize': '${imageSize.width}x${imageSize.height}',
+          'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+          'scale': _transformer.currentScale.toStringAsFixed(3),
+        });
+      }
+    } catch (e, stack) {
+      AppLogger.error('更新坐标转换器失败', error: e, stackTrace: stack, data: {
+        'imageSize': '${widget.image.width}x${widget.image.height}',
+        'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+      });
     }
   }
 }
