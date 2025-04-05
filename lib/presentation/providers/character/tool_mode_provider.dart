@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/logging/logger.dart';
@@ -9,14 +10,43 @@ final toolModeProvider = StateNotifierProvider<ToolModeNotifier, Tool>((ref) {
 
 /// 工具模式枚举
 enum Tool {
-  /// 选择和绘制模式
-  select,
-
-  /// 平移和缩放模式
+  /// 平移和缩放模式（默认）
   pan,
 
+  /// 框选工具模式
+  select,
+
+  /// 多选工具模式
+  multiSelect,
+
   /// 擦除模式
-  erase,
+  erase;
+
+  IconData get icon {
+    switch (this) {
+      case Tool.pan:
+        return Icons.pan_tool;
+      case Tool.select:
+        return Icons.crop_square;
+      case Tool.multiSelect:
+        return Icons.select_all;
+      case Tool.erase:
+        return Icons.auto_fix_normal;
+    }
+  }
+
+  String get tooltip {
+    switch (this) {
+      case Tool.pan:
+        return '拖拽工具 (V)';
+      case Tool.select:
+        return '框选工具 (R)';
+      case Tool.multiSelect:
+        return '多选工具 (M)';
+      case Tool.erase:
+        return '擦除工具 (E)';
+    }
+  }
 }
 
 /// 工具模式状态管理器

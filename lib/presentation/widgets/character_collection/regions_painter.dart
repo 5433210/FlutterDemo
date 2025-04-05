@@ -38,36 +38,9 @@ class RegionsPainter extends CustomPainter {
           final isSelected = selectedIds.contains(region.id);
           final isHovered = hoveredId == region.id;
 
-          // 绘制选区填充
-          canvas.drawRect(
-            viewportRect,
-            Paint()
-              ..color = _getRegionFillColor(isSelected, isHovered)
-              ..style = PaintingStyle.fill,
-          );
-
-          // 绘制选区边框
-          canvas.drawRect(
-            viewportRect,
-            Paint()
-              ..color = isSelected || isHovered ? Colors.blue : Colors.grey
-              ..style = PaintingStyle.stroke
-              ..strokeWidth = isSelected || isHovered ? 2.0 : 1.0,
-          );
-
-          // 计算并显示文本
-          _drawRegionText(
-            canvas,
-            viewportRect,
-            region,
-            regions.indexOf(region) + 1,
-            isSelected || isHovered,
-          );
-
-          // 绘制控制点
-          if (isSelected || isHovered) {
-            _drawHandles(canvas, viewportRect, isSelected || isHovered);
-          }
+          // 绘制选区
+          _drawRegion(canvas, viewportRect, region, regions.indexOf(region) + 1,
+              isSelected || isHovered);
         } catch (e, stack) {
           debugPrint('区域绘制失败: ${region.id}, error: $e\n$stack');
         }
@@ -225,7 +198,60 @@ class RegionsPainter extends CustomPainter {
     } else if (isHovered) {
       return Colors.blue.withOpacity(0.1);
     } else {
-      return Colors.grey.withOpacity(0.05);
+      return Colors.green.withOpacity(0.05);
+    }
+  }
+
+  void _drawRegion(
+    Canvas canvas,
+    Rect viewportRect,
+    CharacterRegion region,
+    int index,
+    bool isActive,
+  ) {
+    // 绘制选区填充
+    canvas.drawRect(
+      viewportRect,
+      Paint()
+        ..color = _getRegionFillColor(isActive, false)
+        ..style = PaintingStyle.fill,
+    );
+
+    // 绘制选区边框
+    final borderPaint = Paint()
+      ..color = isActive ? Colors.blue : Colors.green
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = isActive ? 2.0 : 1.5;
+
+    // 如果区域有旋转，绘制旋转后的边框
+    if (region.rotation != 0) {
+      final center = viewportRect.center;
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(region.rotation);
+      canvas.translate(-center.dx, -center.dy);
+
+      // 绘制旋转后的矩形
+      canvas.drawRect(viewportRect, borderPaint);
+
+      canvas.restore();
+    } else {
+      // 绘制普通矩形
+      canvas.drawRect(viewportRect, borderPaint);
+    }
+
+    // 计算并显示文本
+    _drawRegionText(
+      canvas,
+      viewportRect,
+      region,
+      index,
+      isActive,
+    );
+
+    // 绘制控制点
+    if (isActive) {
+      _drawHandles(canvas, viewportRect, isActive);
     }
   }
 }

@@ -18,11 +18,7 @@ class ImagePreviewPanel extends ConsumerWidget {
     return Column(
       children: [
         // 工具栏
-        PreviewToolbar(
-          showContour: false,
-          onShowContourChanged: (_) {}, // 提供空的回调函数
-        ),
-
+        const PreviewToolbar(),
         // 主图像区域
         Expanded(
           child: Stack(

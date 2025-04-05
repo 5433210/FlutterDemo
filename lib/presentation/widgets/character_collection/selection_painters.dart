@@ -6,66 +6,43 @@ class ActiveSelectionPainter extends CustomPainter {
   final Offset startPoint;
   final Offset endPoint;
   final Size viewportSize;
+  final bool isActive;
 
-  const ActiveSelectionPainter({
+  ActiveSelectionPainter({
     required this.startPoint,
     required this.endPoint,
     required this.viewportSize,
+    this.isActive = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    try {
-      // 确保绘制区域不超出视口
-      final selectionRect = Rect.fromPoints(startPoint, endPoint)
-          .intersect(Offset.zero & viewportSize);
+    if (!isActive) return;
 
-      // 填充
-      canvas.drawRect(
-        selectionRect,
-        Paint()
-          ..color = Colors.blue.withOpacity(0.1)
-          ..style = PaintingStyle.fill,
-      );
+    // 画选取框
+    final rect = Rect.fromPoints(startPoint, endPoint);
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..color = Colors.blue.withOpacity(0.3)
+        ..style = PaintingStyle.fill,
+    );
 
-      // 边框
-      canvas.drawRect(
-        selectionRect,
-        Paint()
-          ..color = Colors.blue
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.0,
-      );
-
-      // 绘制角点
-      const handleSize = 6.0;
-      final handlePaint = Paint()..color = Colors.blue;
-
-      final corners = [
-        selectionRect.topLeft,
-        selectionRect.topRight,
-        selectionRect.bottomLeft,
-        selectionRect.bottomRight,
-      ];
-
-      for (var corner in corners) {
-        canvas.drawRect(
-          Rect.fromCenter(
-            center: corner,
-            width: handleSize,
-            height: handleSize,
-          ),
-          handlePaint,
-        );
-      }
-    } catch (e) {}
+    // 画边框
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..color = Colors.blue
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
   }
 
   @override
   bool shouldRepaint(covariant ActiveSelectionPainter oldDelegate) {
     return startPoint != oldDelegate.startPoint ||
         endPoint != oldDelegate.endPoint ||
-        viewportSize != oldDelegate.viewportSize;
+        isActive != oldDelegate.isActive;
   }
 }
 

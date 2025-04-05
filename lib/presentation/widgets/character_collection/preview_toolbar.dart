@@ -1,53 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
+import '../../../widgets/character_edit/dialogs/shortcuts_help_dialog.dart';
 
 /// 预览工具栏
 class PreviewToolbar extends ConsumerWidget {
-  final bool showContour;
-  final Function(bool) onShowContourChanged;
-
-  const PreviewToolbar({
-    Key? key,
-    required this.showContour,
-    required this.onShowContourChanged,
-  }) : super(key: key);
+  const PreviewToolbar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final toolMode = ref.watch(toolModeProvider);
+    final hasSelection =
+        ref.watch(characterCollectionProvider).selectedIds.isNotEmpty;
 
     return Material(
       color: Colors.white,
       elevation: 4,
-      child: SizedBox(
-        height: 40,
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Row(
           children: [
-            const SizedBox(width: 8),
-            _ToolButton(
-              icon: Icons.edit,
-              tooltip: '选择工具',
-              isSelected: toolMode == Tool.select,
-              onPressed: () =>
-                  ref.read(toolModeProvider.notifier).setMode(Tool.select),
-            ),
+            // 工具按钮组
             _ToolButton(
               icon: Icons.pan_tool,
-              tooltip: '平移工具',
+              tooltip: '拖拽工具 (V)',
               isSelected: toolMode == Tool.pan,
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.pan),
             ),
-            const Spacer(),
+            const SizedBox(width: 4),
             _ToolButton(
-              icon: Icons.border_clear,
-              tooltip: '显示描边',
-              isSelected: showContour,
-              onPressed: () => onShowContourChanged(!showContour),
+              icon: Icons.crop_square,
+              tooltip: '框选工具 (R)',
+              isSelected: toolMode == Tool.select,
+              onPressed: () =>
+                  ref.read(toolModeProvider.notifier).setMode(Tool.select),
             ),
+            const SizedBox(width: 4),
+            _ToolButton(
+              icon: Icons.select_all,
+              tooltip: '多选工具 (M)',
+              isSelected: toolMode == Tool.multiSelect,
+              onPressed: () =>
+                  ref.read(toolModeProvider.notifier).setMode(Tool.multiSelect),
+            ),
+            const SizedBox(width: 16),
+
+            // 分隔线
+            const VerticalDivider(),
             const SizedBox(width: 8),
+
+            // 删除按钮
+            _ToolButton(
+              icon: Icons.delete,
+              tooltip: '删除选中区域',
+              isEnabled: hasSelection,
+              onPressed: hasSelection
+                  ? () {
+                      final selectedIds =
+                          ref.read(characterCollectionProvider).selectedIds;
+                      ref
+                          .read(characterCollectionProvider.notifier)
+                          .deleteBatchRegions(selectedIds.toList());
+                    }
+                  : null,
+            ),
+
+            const Spacer(),
+
+            // 帮助按钮
+            _ToolButton(
+              icon: Icons.help_outline,
+              tooltip: '快捷键帮助',
+              onPressed: () => showShortcutsHelp(context),
+            ),
           ],
         ),
       ),
@@ -60,26 +89,35 @@ class _ToolButton extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final bool isSelected;
-  final VoidCallback onPressed;
+  final bool isEnabled;
+  final VoidCallback? onPressed;
 
   const _ToolButton({
     required this.icon,
     required this.tooltip,
-    required this.isSelected,
-    required this.onPressed,
+    this.isSelected = false,
+    this.isEnabled = true,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Tooltip(
       message: tooltip,
       child: IconButton(
-        icon: Icon(
-          icon,
-          color: isSelected ? Colors.blue : Colors.black54,
+        icon: Icon(icon),
+        onPressed: isEnabled ? onPressed : null,
+        style: IconButton.styleFrom(
+          backgroundColor:
+              isSelected ? theme.colorScheme.primary.withOpacity(0.1) : null,
+          foregroundColor: isSelected
+              ? theme.colorScheme.primary
+              : isEnabled
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onSurface.withOpacity(0.38),
         ),
-        onPressed: onPressed,
-        splashRadius: 20,
       ),
     );
   }
