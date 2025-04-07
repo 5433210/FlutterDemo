@@ -149,10 +149,19 @@ class _ImageViewState extends ConsumerState<ImageView>
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  _buildImageLayer(imageState, regions, selectedIds),
+                  _buildImageLayer(
+                    imageState,
+                    regions,
+                    selectedIds,
+                    viewportSize,
+                  ),
                   if (_transformer != null && debugOptions.enabled)
                     _buildDebugLayer(
-                        debugOptions, regions, selectedIds, viewportSize),
+                      debugOptions,
+                      regions,
+                      selectedIds,
+                      viewportSize,
+                    ),
                   _buildSelectionToolLayer(),
                   _buildUILayer(debugOptions),
                 ],
@@ -514,6 +523,7 @@ class _ImageViewState extends ConsumerState<ImageView>
     WorkImageState imageState,
     List<CharacterRegion> regions,
     Set<String> selectedIds,
+    Size viewportSize,
   ) {
     final toolMode = ref.watch(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
@@ -567,8 +577,8 @@ class _ImageViewState extends ConsumerState<ImageView>
                 onInteractionStart: _handleInteractionStart,
                 onInteractionUpdate: _handleInteractionUpdate,
                 onInteractionEnd: _handleInteractionEnd,
+                alignment: Alignment.topLeft,
                 child: Stack(
-                  fit: StackFit.expand,
                   children: [
                     Image.memory(
                       imageState.imageData!,
@@ -615,20 +625,17 @@ class _ImageViewState extends ConsumerState<ImageView>
                         _handleAdjustmentPanUpdate, // Use dedicated handler
                     onPanEnd: _handleAdjustmentPanEnd, // Use dedicated handler
                     child: CustomPaint(
-                      // Painter should ignore pointer events itself
                       painter: AdjustableRegionPainter(
-                        region:
-                            _originalRegion!, // Should be original image coords
+                        region: _originalRegion!,
                         transformer: _transformer!,
                         isActive: true,
                         isAdjusting: true,
                         activeHandleIndex: _activeHandleIndex,
                         currentRotation: _currentRotation,
                         guideLines: _guideLines,
-                        // Pass the viewport rect for painting controls
                         viewportRect: _adjustingRect,
                       ),
-                      size: _transformer!.viewportSize,
+                      size: viewportSize,
                     ),
                   ),
                 ),
