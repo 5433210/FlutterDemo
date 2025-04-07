@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/services/image/character_image_processor.dart';
+import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/detected_outline.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -28,6 +30,8 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
   final Function()? onEraseEnd;
   final double brushSize;
   final Color brushColor;
+  final double? rotation;
+  final CharacterRegion? region;
 
   const CharacterEditCanvas({
     Key? key,
@@ -40,6 +44,8 @@ class CharacterEditCanvas extends ConsumerStatefulWidget {
     this.onEraseEnd,
     this.brushSize = 10.0,
     required this.brushColor,
+    this.rotation,
+    this.region,
   }) : super(key: key);
 
   @override
@@ -489,6 +495,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         fullImageRect,
         options,
         erasePaths,
+        rotation: widget.region?.rotation ?? 0.0,
       );
       print('轮廓处理完成');
 

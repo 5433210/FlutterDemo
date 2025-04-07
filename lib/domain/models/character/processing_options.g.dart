@@ -14,6 +14,8 @@ _$ProcessingOptionsImpl _$$ProcessingOptionsImplFromJson(
       threshold: (json['threshold'] as num?)?.toDouble() ?? 128.0,
       noiseReduction: (json['noiseReduction'] as num?)?.toDouble() ?? 0.5,
       brushSize: (json['brushSize'] as num?)?.toDouble() ?? 10.0,
+      contrast: (json['contrast'] as num?)?.toDouble() ?? 1.0,
+      brightness: (json['brightness'] as num?)?.toDouble() ?? 0.0,
     );
 
 Map<String, dynamic> _$$ProcessingOptionsImplToJson(
@@ -24,4 +26,6 @@ Map<String, dynamic> _$$ProcessingOptionsImplToJson(
       'threshold': instance.threshold,
       'noiseReduction': instance.noiseReduction,
       'brushSize': instance.brushSize,
+      'contrast': instance.contrast,
+      'brightness': instance.brightness,
     };

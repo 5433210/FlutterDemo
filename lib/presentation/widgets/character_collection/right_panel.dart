@@ -14,6 +14,7 @@ import '../../../widgets/character_edit/character_edit_panel.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'character_grid_view.dart';
+import '../../providers/character/character_collection_provider.dart';
 
 class RightPanel extends ConsumerStatefulWidget {
   final String workId;
@@ -32,6 +33,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
   late TabController _tabController;
   int _currentIndex = 0;
   ui.Image? _characterImage;
+  bool _wasAdjusting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,24 @@ class _RightPanelState extends ConsumerState<RightPanel>
     final selectedRegion = ref.watch(selectedRegionProvider);
     // 监听处理选项
     final processingOptions = ref.watch(processingOptionsProvider);
+    // 监听选区调整状态
+    final isAdjusting = ref.watch(characterCollectionProvider).isAdjusting;
+
+    // 处理选区调整状态变化
+    if (isAdjusting != _wasAdjusting) {
+      _wasAdjusting = isAdjusting;
+      if (!isAdjusting) {
+        // 选区调整完成，更新图像
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _characterImage?.dispose();
+              _characterImage = null;
+            });
+          }
+        });
+      }
+    }
 
     return Column(
       children: [
@@ -90,8 +110,10 @@ class _RightPanelState extends ConsumerState<RightPanel>
     WorkImageState imageState,
     ProcessingOptions processingOptions,
   ) {
+    // 使用selectedRegion的id、rect和rotation作为key的一部分，确保选区变化时重建
     return CharacterEditPanel(
-      key: ValueKey('editor_${selectedRegion.id}'),
+      key: ValueKey(
+          'editor_${selectedRegion.id}_${selectedRegion.rect.left}_${selectedRegion.rect.top}_${selectedRegion.rect.width}_${selectedRegion.rect.height}_${selectedRegion.rotation}'),
       selectedRegion: selectedRegion,
       workId: widget.workId,
       pageId: imageState.currentPageId ?? '',

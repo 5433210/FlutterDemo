@@ -182,6 +182,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         region.rect,
         processingOptions,
         null,
+        rotation: region.rotation,
       );
 
       final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));

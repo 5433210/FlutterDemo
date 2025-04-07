@@ -77,11 +77,13 @@ class CharacterImageProcessor {
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
-    List<Map<String, dynamic>>? erasePaths,
-  ) async {
+    List<Map<String, dynamic>>? erasePaths, {
+    double rotation = 0.0,
+  }) async {
     final params = ProcessingParams(
       imageData: imageData,
       region: region,
+      rotation: rotation,
       options: options,
       erasePaths: erasePaths,
     );
@@ -96,24 +98,61 @@ class CharacterImageProcessor {
         throw ImageProcessingException('图像解码失败');
       }
 
-      final cropped = _cropAndResize(sourceImage, params.region);
-      var processed = _binarize(cropped, params.options);
+      final croppedImage =
+          _rotateAndCropImage(sourceImage, params.region, params.rotation);
 
-      if (params.erasePaths?.isNotEmpty == true) {
-        processed = _applyErase(processed, params.erasePaths!, params.options);
+      // 应用对比度和亮度调整
+      img.Image finalImage = croppedImage;
+      if (params.options.contrast != 1.0 || params.options.brightness != 0.0) {
+        final adjustedImage =
+            img.Image(width: croppedImage.width, height: croppedImage.height);
+        for (var y = 0; y < croppedImage.height; y++) {
+          for (var x = 0; x < croppedImage.width; x++) {
+            final pixel = croppedImage.getPixel(x, y);
+            final r = ((pixel.r - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            final g = ((pixel.g - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            final b = ((pixel.b - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            adjustedImage.setPixelRgba(x, y, r, g, b, pixel.a);
+          }
+        }
+        finalImage = adjustedImage;
       }
 
+      // 应用其他处理选项
       if (params.options.noiseReduction > 0.3) {
-        processed = _denoise(processed, params.options.noiseReduction);
+        finalImage = _denoise(finalImage, params.options.noiseReduction);
       }
 
-      DetectedOutline? outline;
-      if (options.showContour) {
-        outline = _detectOutline(processed, options.inverted);
-      }
+      final processedBytes = Uint8List.fromList(img.encodeJpg(finalImage));
+      final thumbnailBytes = _generateThumbnail(finalImage);
+      final outline = options.showContour
+          ? _detectOutline(finalImage, options.inverted)
+          : null;
+
+      final result = ProcessingResult(
+        originalCrop: processedBytes,
+        binaryImage: processedBytes,
+        thumbnail: thumbnailBytes,
+        svgOutline: outline != null
+            ? generateSvgOutline(outline, options.inverted)
+            : null,
+        boundingBox: outline?.boundingRect ?? params.region,
+      );
 
       return PreviewResult(
-        processedImage: processed,
+        processedImage: finalImage,
         outline: outline,
       );
     } catch (e) {
@@ -148,21 +187,47 @@ class CharacterImageProcessor {
         throw ImageProcessingException('图像解码失败');
       }
 
-      final cropped = _cropAndResize(sourceImage, params.region);
-      var processed = _binarize(cropped, params.options);
+      final croppedImage =
+          _rotateAndCropImage(sourceImage, params.region, params.rotation);
 
-      if (params.erasePaths?.isNotEmpty == true) {
-        processed = _applyErase(processed, params.erasePaths!, params.options);
+      // 应用对比度和亮度调整
+      img.Image finalImage = croppedImage;
+      if (params.options.contrast != 1.0 || params.options.brightness != 0.0) {
+        final adjustedImage =
+            img.Image(width: croppedImage.width, height: croppedImage.height);
+        for (var y = 0; y < croppedImage.height; y++) {
+          for (var x = 0; x < croppedImage.width; x++) {
+            final pixel = croppedImage.getPixel(x, y);
+            final r = ((pixel.r - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            final g = ((pixel.g - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            final b = ((pixel.b - 128) * params.options.contrast +
+                    128 +
+                    params.options.brightness)
+                .clamp(0, 255)
+                .round();
+            adjustedImage.setPixelRgba(x, y, r, g, b, pixel.a);
+          }
+        }
+        finalImage = adjustedImage;
       }
 
+      // 应用其他处理选项
       if (params.options.noiseReduction > 0.3) {
-        processed = _denoise(processed, params.options.noiseReduction);
+        finalImage = _denoise(finalImage, params.options.noiseReduction);
       }
 
-      final processedBytes = Uint8List.fromList(img.encodePng(processed));
-      final thumbnailBytes = _generateThumbnail(processed);
+      final processedBytes = Uint8List.fromList(img.encodeJpg(finalImage));
+      final thumbnailBytes = _generateThumbnail(finalImage);
       final outline = options.showContour
-          ? _detectOutline(processed, options.inverted)
+          ? _detectOutline(finalImage, options.inverted)
           : null;
 
       final result = ProcessingResult(
@@ -263,6 +328,38 @@ class CharacterImageProcessor {
     return options.inverted ? img.invert(gray) : gray;
   }
 
+  /// 计算旋转后的矩形区域
+  Rect _calculateRotatedRect(Rect rect, double rotation) {
+    if (rotation == 0) return rect;
+
+    final center = Offset(rect.center.dx, rect.center.dy);
+    final width = rect.width;
+    final height = rect.height;
+
+    // 计算旋转后的四个角点
+    final points = [
+      _rotatePoint(Offset(rect.left, rect.top), center, rotation),
+      _rotatePoint(Offset(rect.right, rect.top), center, rotation),
+      _rotatePoint(Offset(rect.right, rect.bottom), center, rotation),
+      _rotatePoint(Offset(rect.left, rect.bottom), center, rotation),
+    ];
+
+    // 计算新的边界
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = -double.infinity;
+    double maxY = -double.infinity;
+
+    for (final point in points) {
+      minX = math.min(minX, point.dx);
+      minY = math.min(minY, point.dy);
+      maxX = math.max(maxX, point.dx);
+      maxY = math.max(maxY, point.dy);
+    }
+
+    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
+  }
+
   /// 裁剪并调整大小
   img.Image _cropAndResize(img.Image source, Rect region) {
     final cropped = img.copyCrop(
@@ -333,6 +430,111 @@ class CharacterImageProcessor {
       interpolation: img.Interpolation.cubic,
     );
     return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
+  }
+
+  /// 对图像进行基于选区中心的旋转和裁剪处理
+  ///
+  /// [sourceImage] 源图像
+  /// [region] 选区矩形
+  /// [rotation] 旋转角度
+  /// 返回处理后的图像
+  img.Image _rotateAndCropImage(
+    img.Image sourceImage,
+    Rect region,
+    double rotation,
+  ) {
+    final center =
+        Offset(region.left + region.width / 2, region.top + region.height / 2);
+
+    if (rotation == 0) {
+      return img.copyCrop(
+        sourceImage,
+        x: region.left.round(),
+        y: region.top.round(),
+        width: region.width.round(),
+        height: region.height.round(),
+      );
+    }
+
+    // 创建目标图像
+    final result =
+        img.Image(width: region.width.round(), height: region.height.round());
+
+    // 创建变换矩阵
+    final cos = math.cos(rotation);
+    final sin = math.sin(rotation);
+
+    // 使用仿射变换进行旋转裁剪
+    for (int y = 0; y < result.height; y++) {
+      for (int x = 0; x < result.width; x++) {
+        // 将目标坐标映射回源图像坐标
+        final srcX = cos * (x - region.width / 2) -
+            sin * (y - region.height / 2) +
+            center.dx;
+        final srcY = sin * (x - region.width / 2) +
+            cos * (y - region.height / 2) +
+            center.dy;
+
+        // 双线性插值获取像素值
+        if (srcX >= 0 &&
+            srcX < sourceImage.width - 1 &&
+            srcY >= 0 &&
+            srcY < sourceImage.height - 1) {
+          // 获取周围四个像素点
+          final x0 = srcX.floor();
+          final y0 = srcY.floor();
+          final x1 = x0 + 1;
+          final y1 = y0 + 1;
+
+          // 计算插值权重
+          final wx = srcX - x0;
+          final wy = srcY - y0;
+
+          // 获取四个角的像素值
+          final p00 = sourceImage.getPixel(x0, y0);
+          final p01 = sourceImage.getPixel(x0, y1);
+          final p10 = sourceImage.getPixel(x1, y0);
+          final p11 = sourceImage.getPixel(x1, y1);
+
+          // 进行双线性插值
+          final r = ((1 - wx) * (1 - wy) * p00.r +
+                  wx * (1 - wy) * p10.r +
+                  (1 - wx) * wy * p01.r +
+                  wx * wy * p11.r)
+              .round();
+          final g = ((1 - wx) * (1 - wy) * p00.g +
+                  wx * (1 - wy) * p10.g +
+                  (1 - wx) * wy * p01.g +
+                  wx * wy * p11.g)
+              .round();
+          final b = ((1 - wx) * (1 - wy) * p00.b +
+                  wx * (1 - wy) * p10.b +
+                  (1 - wx) * wy * p01.b +
+                  wx * wy * p11.b)
+              .round();
+          final a = ((1 - wx) * (1 - wy) * p00.a +
+                  wx * (1 - wy) * p10.a +
+                  (1 - wx) * wy * p01.a +
+                  wx * wy * p11.a)
+              .round();
+
+          result.setPixelRgba(x, y, r, g, b, a);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  Offset _rotatePoint(Offset point, Offset center, double rotation) {
+    final dx = point.dx - center.dx;
+    final dy = point.dy - center.dy;
+    final cos = math.cos(rotation);
+    final sin = math.sin(rotation);
+    return Offset(
+      center.dx + dx * cos - dy * sin,
+      center.dy + dx * sin + dy * cos,
+    );
   }
 
   static img.Image _addBorderToImage(img.Image source, bool isInverted) {
@@ -624,15 +826,21 @@ class PreviewResult {
 class ProcessingParams {
   final Uint8List imageData;
   final Rect region;
+  final double rotation;
   final ProcessingOptions options;
   final List<Map<String, dynamic>>? erasePaths;
 
-  ProcessingParams({
+  const ProcessingParams({
     required this.imageData,
     required this.region,
+    this.rotation = 0.0,
     required this.options,
     this.erasePaths,
   });
 
-  bool get isRegionValid => region.width > 0 && region.height > 0;
+  bool get isRegionValid =>
+      region.left >= 0 &&
+      region.top >= 0 &&
+      region.width > 0 &&
+      region.height > 0;
 }

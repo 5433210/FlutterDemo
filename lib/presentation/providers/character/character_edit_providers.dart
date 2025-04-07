@@ -4,11 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/path_info.dart';
 
-/// 路径渲染状态提供者
-final pathRenderDataProvider = StateProvider<PathRenderData>((ref) {
-  return const PathRenderData();
-});
-
 /// 处理后的图像数据提供者
 final processedImageProvider =
     StateNotifierProvider<ProcessedImageNotifier, ProcessedImageData>((ref) {

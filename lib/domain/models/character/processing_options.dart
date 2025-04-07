@@ -11,6 +11,8 @@ class ProcessingOptions with _$ProcessingOptions {
     @Default(128.0) double threshold,
     @Default(0.5) double noiseReduction,
     @Default(10.0) double brushSize,
+    @Default(1.0) double contrast,
+    @Default(0.0) double brightness,
   }) = _ProcessingOptions;
 
   factory ProcessingOptions.fromJson(Map<String, dynamic> json) =>
