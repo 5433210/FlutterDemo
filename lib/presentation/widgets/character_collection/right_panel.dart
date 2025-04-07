@@ -1,20 +1,19 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image/image.dart' as img;
 
-import '../../../application/services/image/character_image_processor.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
+import '../../../application/services/character/character_service.dart';
 import '../../../presentation/providers/character/erase_providers.dart';
 import '../../../widgets/character_edit/character_edit_panel.dart';
+import '../../providers/character/character_collection_provider.dart';
+import '../../providers/character/character_grid_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'character_grid_view.dart';
-import '../../providers/character/character_collection_provider.dart';
 
 class RightPanel extends ConsumerStatefulWidget {
   final String workId;
@@ -126,8 +125,132 @@ class _RightPanelState extends ConsumerState<RightPanel>
   Widget _buildGridTab() {
     return CharacterGridView(
       workId: widget.workId,
-      onCharacterSelected: (id) async {
-        _tabController.animateTo(0);
+      onCharacterSelected: (characterId) async {
+        final collectionState = ref.read(characterCollectionProvider);
+        // 查找匹配的region，如果找不到则返回null
+        final regions = collectionState.regions
+            .where((r) => r.characterId == characterId)
+            .toList();
+
+        if (regions.isEmpty) {
+          // 如果在当前已加载的regions中找不到，需要从数据库查询
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('正在查找字符区域...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+
+          try {
+            // 先切换到预览标签页
+            _tabController.animateTo(0);
+
+            // 获取字符服务来查询字符区域信息
+            final characterService = ref.read(characterServiceProvider);
+
+            // 通过characterId获取字符详情
+            final character =
+                await characterService.getCharacterDetails(characterId);
+            if (character == null) {
+              throw Exception('找不到字符信息');
+            }
+
+            final pageId = character.pageId;
+            final workId = widget.workId;
+
+            // 获取图像提供者
+            final imageProvider = ref.read(workImageProvider.notifier);
+
+            // 加载目标页面
+            await imageProvider.loadWorkImage(workId, pageId);
+
+            // 加载该页的字符区域数据
+            await ref.read(characterCollectionProvider.notifier).loadWorkData(
+                  workId,
+                  pageId: pageId,
+                );
+
+            // 重新查找region（应该已加载到regions中）
+            final updatedState = ref.read(characterCollectionProvider);
+            final updatedRegions = updatedState.regions
+                .where((r) => r.characterId == characterId)
+                .toList();
+
+            if (updatedRegions.isNotEmpty) {
+              // 选中目标字符区域
+              ref
+                  .read(characterCollectionProvider.notifier)
+                  .selectRegion(updatedRegions.first.id);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('无法找到对应的选区，请手动选择'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('查找并切换页面失败: $e'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+          return;
+        }
+
+        final region = regions.first;
+        final pageId = region.pageId;
+
+        try {
+          // 先切换到预览标签页，让用户看到正在切换
+          _tabController.animateTo(0);
+
+          // 显示加载提示
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('正在切换到字符所在页面...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+
+          // 获取图像提供者
+          final imageProvider = ref.read(workImageProvider.notifier);
+          final currentWorkId = widget.workId;
+
+          // 检查当前是否已经是目标页面
+          final currentState = ref.read(workImageProvider);
+          final isAlreadyOnPage = currentState.currentPageId == pageId &&
+              currentState.workId == currentWorkId;
+
+          if (!isAlreadyOnPage) {
+            // 加载目标页面
+            await imageProvider.loadWorkImage(currentWorkId, pageId);
+
+            // 加载该页的字符区域数据
+            await ref.read(characterCollectionProvider.notifier).loadWorkData(
+                  currentWorkId,
+                  pageId: pageId,
+                );
+          }
+
+          // 选中目标字符区域
+          ref
+              .read(characterCollectionProvider.notifier)
+              .selectRegion(region.id);
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('切换到字符所在页面失败: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       },
     );
   }
@@ -170,19 +293,27 @@ class _RightPanelState extends ConsumerState<RightPanel>
     );
   }
 
-  void _handleEditComplete(Map<String, dynamic> result) {
-    // 获取路径数据和处理选项
-    final pathRenderData = ref.read(pathRenderDataProvider);
-    final eraseState = ref.read(eraseStateProvider);
+  void _handleEditComplete(Map<String, dynamic> result) async {
+    final characterId = result['characterId'];
+    if (characterId != null) {
+      // 切换到作品集字结果标签页
+      _tabController.animateTo(1);
 
-    final resultData = {
-      'paths': pathRenderData.completedPaths ?? [],
-      'processingOptions': ProcessingOptions(
-        inverted: eraseState.isReversed,
-        threshold: 128.0,
-        noiseReduction: 0.5,
-        showContour: eraseState.showContour,
-      ),
-    };
+      // 等待一下让UI更新完成
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      // 重新加载集字列表
+      await ref.read(characterCollectionProvider.notifier).loadWorkData(
+            widget.workId,
+            pageId: ref.read(workImageProvider).currentPageId ?? '',
+          );
+
+      // 确保刷新作品集字结果
+      try {
+        await ref.read(characterGridProvider.notifier).loadCharacters();
+      } catch (e) {
+        print('刷新字符网格失败: $e');
+      }
+    }
   }
 }

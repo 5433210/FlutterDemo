@@ -123,7 +123,17 @@ class AdjustableRegionPainter extends CustomPainter {
 
     for (var i = 0; i < handles.length; i++) {
       final isActive = i == activeHandleIndex;
+
+      // // 保存当前画布状态
+      // canvas.save();
+
+      // // 在手柄位置应用旋转
+      // canvas.translate(handles[i].dx, handles[i].dy);
+      // canvas.rotate(currentRotation);
+
+      // 绘制手柄
       final handleRect = Rect.fromCenter(
+        // center: Offset.zero, // 因为已经平移到手柄位置，所以使用原点
         center: handles[i],
         width: isActive ? 12.0 : 10.0,
         height: isActive ? 12.0 : 10.0,
@@ -131,6 +141,9 @@ class AdjustableRegionPainter extends CustomPainter {
 
       canvas.drawRect(handleRect, isActive ? activeHandlePaint : handlePaint);
       canvas.drawRect(handleRect, handleBorderPaint);
+
+      // 恢复画布状态
+      // canvas.restore();
     }
   }
 

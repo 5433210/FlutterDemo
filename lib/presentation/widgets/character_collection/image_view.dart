@@ -1714,7 +1714,7 @@ class _ImageViewState extends ConsumerState<ImageView>
     // 从后向前检测，使最上层的选区优先响应
     for (final region in regions.reversed) {
       final rect = _transformer!.imageRectToViewportRect(region.rect);
-      if (rect.contains(position)) {
+      if (_isPointInRotatedRect(position, rect, region.rotation)) {
         return region;
       }
     }

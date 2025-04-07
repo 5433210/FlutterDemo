@@ -1187,20 +1187,19 @@ extension StateManagement on CharacterCollectionNotifier {
     if (state.isAdjusting) {
       setAdjusting(false); // Exit adjusting mode
     }
-// 使用 toggleSelection 支持多选
-    toggleSelection(id);
-    // // Toggle selection state using the public selectRegion which now handles state correctly
-    // if (state.selectedIds.contains(id)) {
-    //   // If it's already selected, deselect it by calling selectRegion(null)
-    //   selectRegion(null);
-    //   AppLogger.debug('Pan Mode Click: Deselected region',
-    //       data: {'regionId': id});
-    // } else {
-    //   // If not selected, select it
-    //   selectRegion(id);
-    //   AppLogger.debug('Pan Mode Click: Selected region',
-    //       data: {'regionId': id});
-    // }
+
+    // Toggle selection state using selectRegion to maintain synchronization
+    if (state.selectedIds.contains(id)) {
+      // If it's already selected, deselect it by calling selectRegion(null)
+      selectRegion(null);
+      AppLogger.debug('Pan Mode Click: Deselected region',
+          data: {'regionId': id});
+    } else {
+      // If not selected, select it
+      selectRegion(id);
+      AppLogger.debug('Pan Mode Click: Selected region',
+          data: {'regionId': id});
+    }
   }
 
   /// 处理Select模式下的点击

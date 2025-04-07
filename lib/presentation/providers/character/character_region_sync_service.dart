@@ -4,6 +4,7 @@ import '../../../domain/models/character/character_region.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
 import 'character_collection_provider.dart';
+import 'character_grid_provider.dart';
 import 'character_save_notifier.dart';
 
 /// 提供Character与Region同步服务
@@ -18,12 +19,10 @@ class CharacterRegionSyncService {
   final Ref _ref;
 
   CharacterRegionSyncService(this._ref) {
-    // 监听Character的保存状态 (注释掉或移除此监听)
-    /*
+    // 监听Character的保存状态
     _ref.listen(characterSaveNotifierProvider, (previous, next) {
       _handleCharacterSaveStateChange(previous, next);
     });
-    */
 
     // 监听Region的修改状态
     _ref.listen(characterCollectionProvider, (previous, next) {
@@ -35,7 +34,6 @@ class CharacterRegionSyncService {
   }
 
   /// 处理Character保存状态变化
-  /* (注释掉或移除此方法)
   void _handleCharacterSaveStateChange(SaveState? previous, SaveState next) {
     if (previous?.isSaving == true &&
         next.isSaving == false &&
@@ -65,7 +63,7 @@ class CharacterRegionSyncService {
         _ref
             .read(characterCollectionProvider.notifier)
             .markAsSaved(regionWithCharacter.id);
-        
+
         // 强制刷新UI
         Future.microtask(() {
           // 使用微任务确保在当前构建周期后刷新
@@ -73,6 +71,17 @@ class CharacterRegionSyncService {
           // 通过重新应用当前状态强制触发刷新
           final currentState = _ref.read(characterCollectionProvider);
           notifier.state = currentState.copyWith();
+
+          // 刷新字符网格数据
+          try {
+            _ref.read(characterGridProvider.notifier).loadCharacters();
+            AppLogger.debug('已触发字符网格刷新', data: {
+              'regionId': regionWithCharacter.id,
+            });
+          } catch (e) {
+            AppLogger.error('刷新字符网格失败', error: e);
+          }
+
           AppLogger.debug('已触发UI刷新以更新保存状态', data: {
             'regionId': regionWithCharacter.id,
           });
@@ -84,7 +93,6 @@ class CharacterRegionSyncService {
       }
     }
   }
-  */
 
   /// 处理Region修改状态变化
   void _handleRegionModificationStateChange(

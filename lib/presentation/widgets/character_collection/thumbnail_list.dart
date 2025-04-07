@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 
 class ThumbnailList extends ConsumerWidget {
@@ -45,8 +46,16 @@ class ThumbnailList extends ConsumerWidget {
                   pageId: pageId,
                   index: index + 1,
                   isSelected: isSelected,
-                  onTap: () =>
-                      ref.read(workImageProvider.notifier).changePage(pageId),
+                  onTap: () {
+                    final notifier = ref.read(workImageProvider.notifier);
+                    // 切换页面
+                    notifier.changePage(pageId);
+                    // 加载该页的选区
+                    ref.read(characterCollectionProvider.notifier).loadWorkData(
+                          imageState.workId,
+                          pageId: pageId,
+                        );
+                  },
                 );
               },
             ),
