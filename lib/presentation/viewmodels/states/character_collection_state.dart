@@ -67,7 +67,7 @@ class CharacterCollectionState extends Equatable {
   // 是否有选中的区域
   bool get hasSelection => currentId != null;
 
-  // 是否有未保存的修改区域
+  // Ensure hasUnsavedChanges uses modifiedIds directly and doesn't rely on other state
   bool get hasUnsavedChanges => modifiedIds.isNotEmpty;
 
   @override

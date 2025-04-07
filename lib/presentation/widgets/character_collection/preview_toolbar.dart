@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
-import '../../../widgets/character_edit/dialogs/shortcuts_help_dialog.dart';
 
 /// 预览工具栏
 class PreviewToolbar extends ConsumerWidget {
@@ -39,14 +38,6 @@ class PreviewToolbar extends ConsumerWidget {
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.select),
             ),
-            const SizedBox(width: 4),
-            _ToolButton(
-              icon: Icons.select_all,
-              tooltip: '多选工具 (M)',
-              isSelected: toolMode == Tool.multiSelect,
-              onPressed: () =>
-                  ref.read(toolModeProvider.notifier).setMode(Tool.multiSelect),
-            ),
             const SizedBox(width: 16),
 
             // 分隔线
@@ -67,15 +58,6 @@ class PreviewToolbar extends ConsumerWidget {
                           .deleteBatchRegions(selectedIds.toList());
                     }
                   : null,
-            ),
-
-            const Spacer(),
-
-            // 帮助按钮
-            _ToolButton(
-              icon: Icons.help_outline,
-              tooltip: '快捷键帮助',
-              onPressed: () => showShortcutsHelp(context),
             ),
           ],
         ),

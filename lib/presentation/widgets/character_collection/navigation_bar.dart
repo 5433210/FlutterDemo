@@ -50,12 +50,7 @@ class CharacterNavigationBar extends ConsumerWidget {
             icon: const Icon(Icons.arrow_back),
             tooltip: '返回',
             onPressed: () {
-              // 显示未保存确认对话框
-              if (collectionState.selectedIds.isNotEmpty) {
-                _showUnsavedChangesDialog(context);
-              } else {
-                onBack();
-              }
+              onBack();
             },
           ),
 

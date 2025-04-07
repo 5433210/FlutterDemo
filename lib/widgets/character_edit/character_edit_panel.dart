@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:ui' as ui;
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../domain/models/character/processing_result.dart';
+import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/character_collection_provider.dart';
 import '../../presentation/providers/character/character_edit_providers.dart'
     hide PathRenderData;
@@ -18,10 +19,7 @@ import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
-import 'dialogs/shortcuts_help_dialog.dart';
 import 'keyboard/shortcut_handler.dart';
-import '../../application/services/image/character_image_processor.dart';
-import '../../infrastructure/logging/logger.dart';
 
 /// 字符编辑面板组件
 ///
@@ -109,14 +107,17 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       };
 
   @override
-  void initState() {
-    super.initState();
-    _characterController.text = widget.selectedRegion.character;
-    _initiateImageLoading();
-    // Clear erase state on init
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(erase.eraseStateProvider.notifier).clear();
-    });
+  Widget build(BuildContext context) {
+    return Shortcuts(
+      shortcuts: _shortcuts,
+      child: Actions(
+        actions: _actions,
+        child: Focus(
+          autofocus: true,
+          child: _buildContent(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -151,65 +152,15 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     }
   }
 
-  void _initiateImageLoading() {
-    if (widget.imageData != null) {
-      setState(() {
-        // Cancel previous future?
-        _loadedImage = null; // Clear current image while loading
-        _imageLoadingFuture = _loadAndProcessImage(
-          widget.selectedRegion,
-          widget.imageData!,
-          widget.processingOptions,
-        );
-      });
-    } else {
-      setState(() {
-        _imageLoadingFuture = Future.value(null); // Set future to null result
-        _loadedImage = null;
-      });
-    }
-  }
-
-  Future<ui.Image?> _loadAndProcessImage(
-    CharacterRegion region,
-    Uint8List imageData,
-    ProcessingOptions processingOptions,
-  ) async {
-    try {
-      final imageProcessor = ref.read(characterImageProcessorProvider);
-      final preview = await imageProcessor.previewProcessing(
-        imageData,
-        region.rect,
-        processingOptions,
-        null,
-        rotation: region.rotation,
-      );
-
-      final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(bytes, completer.complete);
-      _loadedImage?.dispose(); // Dispose previous loaded image
-      _loadedImage = await completer.future;
-      return _loadedImage;
-    } catch (e, stack) {
-      AppLogger.error('Error loading/processing character image in panel',
-          error: e, stackTrace: stack);
-      return null;
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    return Shortcuts(
-      shortcuts: _shortcuts,
-      child: Actions(
-        actions: _actions,
-        child: Focus(
-          autofocus: true,
-          child: _buildContent(),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _characterController.text = widget.selectedRegion.character;
+    _initiateImageLoading();
+    // Clear erase state on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(erase.eraseStateProvider.notifier).clear();
+    });
   }
 
   Widget _buildBottomButtons(SaveState saveState) {
@@ -456,25 +407,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                       : null,
                 ),
               ),
-              Tooltip(
-                message: ShortcutTooltipBuilder.build(
-                    '平移模式', EditorShortcuts.togglePanMode),
-                child: IconButton(
-                  icon: const Icon(Icons.pan_tool),
-                  onPressed: () {
-                    ref.read(erase.eraseStateProvider.notifier).togglePanMode();
-                  },
-                  color: eraseState.isPanMode
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                ),
-              ),
-              const VerticalDivider(),
-              IconButton(
-                icon: const Icon(Icons.help_outline),
-                onPressed: () => showShortcutsHelp(context),
-                tooltip: '快捷键帮助',
-              ),
             ],
           ),
           if (kDebugMode)
@@ -677,6 +609,53 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       } catch (e) {
         // 忽略在显示错误消息时可能发生的异常
       }
+    }
+  }
+
+  void _initiateImageLoading() {
+    if (widget.imageData != null) {
+      setState(() {
+        // Cancel previous future?
+        _loadedImage = null; // Clear current image while loading
+        _imageLoadingFuture = _loadAndProcessImage(
+          widget.selectedRegion,
+          widget.imageData!,
+          widget.processingOptions,
+        );
+      });
+    } else {
+      setState(() {
+        _imageLoadingFuture = Future.value(null); // Set future to null result
+        _loadedImage = null;
+      });
+    }
+  }
+
+  Future<ui.Image?> _loadAndProcessImage(
+    CharacterRegion region,
+    Uint8List imageData,
+    ProcessingOptions processingOptions,
+  ) async {
+    try {
+      final imageProcessor = ref.read(characterImageProcessorProvider);
+      final preview = await imageProcessor.previewProcessing(
+        imageData,
+        region.rect,
+        processingOptions,
+        null,
+        rotation: region.rotation,
+      );
+
+      final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromList(bytes, completer.complete);
+      _loadedImage?.dispose(); // Dispose previous loaded image
+      _loadedImage = await completer.future;
+      return _loadedImage;
+    } catch (e, stack) {
+      AppLogger.error('Error loading/processing character image in panel',
+          error: e, stackTrace: stack);
+      return null;
     }
   }
 }

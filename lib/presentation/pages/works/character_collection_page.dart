@@ -64,8 +64,17 @@ class _CharacterCollectionPageState
     final collectionState = ref.watch(characterCollectionProvider);
     final imageState = ref.watch(workImageProvider);
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) async {
+        if (didPop) return;
+        final canPop = await _onWillPop();
+        if (canPop) {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
       child: Scaffold(
         body: Column(
           children: [
@@ -196,6 +205,82 @@ class _CharacterCollectionPageState
     );
   }
 
+  // 检查是否有未保存的修改，显示确认对话框
+  Future<bool> _checkUnsavedChanges() async {
+    final state = ref.read(characterCollectionProvider);
+    final notifier = ref.read(characterCollectionProvider.notifier);
+
+    AppLogger.debug('检查未保存修改状态', data: {
+      'hasUnsavedChanges': state.hasUnsavedChanges,
+      'modifiedIds': state.modifiedIds.toList(),
+      'regionCount': state.regions.length,
+      'savedRegionCount': state.regions.where((r) => r.isSaved).length,
+      'currentId': state.currentId,
+      'isAdjusting': state.isAdjusting,
+    });
+
+    // // 如果当前正在调整或者有选中的区域，需要先完成调整
+    // if (state.isAdjusting || state.currentId != null) {
+    //   notifier.finishCurrentAdjustment();
+    //   // 读取更新后的状态
+    //   final updatedState = ref.read(characterCollectionProvider);
+
+    //   AppLogger.debug('完成调整后的状态', data: {
+    //     'hasUnsavedChanges': updatedState.hasUnsavedChanges,
+    //     'modifiedIds': updatedState.modifiedIds.toList(),
+    //     'isAdjusting': updatedState.isAdjusting,
+    //     'currentId': updatedState.currentId,
+    //   });
+    // }
+
+    // // 获取最新状态
+    // final finalState = ref.read(characterCollectionProvider);
+
+    // // 只有当modifiedIds不为空时才认为有未保存的修改
+    // final bool reallyHasUnsavedChanges = finalState.modifiedIds.isNotEmpty;
+
+    // // 检查是否有未保存的修改
+    // if (reallyHasUnsavedChanges) {
+    if (state.hasUnsavedChanges) {
+      // 显示确认对话框
+      final result = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('未保存的修改'),
+          content: const Text('您有未保存的区域修改，离开将丢失这些修改。\n\n是否确定离开？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // 取消
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                // 用户确认离开，清除所有修改标记
+                if (state.modifiedIds.isNotEmpty) {
+                  final notifier =
+                      ref.read(characterCollectionProvider.notifier);
+                  for (final id in List.from(state.modifiedIds)) {
+                    notifier.markAsSaved(id);
+                    AppLogger.debug('强制标记区域为已保存', data: {'regionId': id});
+                  }
+                }
+                Navigator.of(context).pop(true); // 确认离开
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('离开'),
+            ),
+          ],
+        ),
+      );
+
+      return result ?? false;
+    }
+
+    // 没有未保存的修改，可以直接离开
+    return true;
+  }
+
   // 加载字符数据
   Future<void> _loadCharacterData() async {
     try {
@@ -306,6 +391,20 @@ class _CharacterCollectionPageState
     }
   }
 
+  // 处理返回按钮点击
+  void _onBackPressed() {
+    _checkUnsavedChanges().then((canPop) {
+      if (canPop) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  // 检查未保存的修改
+  Future<bool> _onWillPop() async {
+    return await _checkUnsavedChanges();
+  }
+
   // 验证图像数据是否有效
   Future<bool> _validateImageData(Uint8List imageData) async {
     if (imageData.length < 100) {
@@ -343,53 +442,5 @@ class _CharacterCollectionPageState
       AppLogger.error('验证图像数据时出错', tag: 'CharacterCollectionPage', error: e);
       return false;
     }
-  }
-
-  // 处理返回按钮点击
-  void _onBackPressed() {
-    _checkUnsavedChanges().then((canPop) {
-      if (canPop) {
-        Navigator.of(context).pop();
-      }
-    });
-  }
-
-  // 检查未保存的修改
-  Future<bool> _onWillPop() async {
-    return await _checkUnsavedChanges();
-  }
-
-  // 检查是否有未保存的修改，显示确认对话框
-  Future<bool> _checkUnsavedChanges() async {
-    final state = ref.read(characterCollectionProvider);
-
-    // 检查是否有未保存的修改
-    if (state.hasUnsavedChanges) {
-      // 显示确认对话框
-      final result = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => AlertDialog(
-          title: const Text('未保存的修改'),
-          content: const Text('您有未保存的区域修改，离开将丢失这些修改。\n\n是否确定离开？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // 取消
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true), // 确认离开
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('离开'),
-            ),
-          ],
-        ),
-      );
-
-      return result ?? false;
-    }
-
-    // 没有未保存的修改，可以直接离开
-    return true;
   }
 }

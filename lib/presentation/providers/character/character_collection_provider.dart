@@ -255,41 +255,47 @@ class CharacterCollectionNotifier
       'currentId': currentRegionId,
       'isAdjusting': state.isAdjusting,
       'selectedIds': state.selectedIds.toString(),
+      'modifiedIds': state.modifiedIds.toList(),
     });
 
-    // // Find the region that *was* being adjusted
-    // final matchingAdjustedRegions =
-    //     state.regions.where((r) => r.id == currentRegionId).toList();
-    // final CharacterRegion? adjustedRegion = matchingAdjustedRegions.isNotEmpty
-    //     ? matchingAdjustedRegions.first
-    //     : null;
-    // bool wasModified = state.modifiedIds.contains(currentRegionId);
-// 获取当前调整的选区
-    // final region = state.regions.firstWhere(
-    //   (r) => r.id == currentRegionId,
-    //   orElse: () => CharacterRegion.create(
-    //       pageId: '', rect: Rect.zero, options: const ProcessingOptions()),
-    // );
+    // Find the region that *was* being adjusted
+    final matchingAdjustedRegions =
+        state.regions.where((r) => r.id == currentRegionId).toList();
+    final CharacterRegion? adjustedRegion = matchingAdjustedRegions.isNotEmpty
+        ? matchingAdjustedRegions.first
+        : null;
 
-    // // 如果选区被修改过，确保保存更改
-    // if (state.modifiedIds.contains(currentRegionId)) {
-    //   AppLogger.debug('Saving modified region before finishing adjustment',
-    //       data: {'regionId': currentRegionId});
-    //   // TODO: 实现保存逻辑
-    //   markAsModified(currentRegionId);
-    // }
-    // Decide what the state should be after adjustment finishes:
-    // - Keep it selected? No, design says Normal.
-    // - Clear selection entirely? Yes, clicking blank implies deselect.
+    // 检查是否真的做了内容修改
+    // 如果没有实际内容修改，从modifiedIds中移除
+    final Set<String> updatedModifiedIds = {...state.modifiedIds};
+    if (adjustedRegion != null &&
+        updatedModifiedIds.contains(currentRegionId)) {
+      // 查找原始区域以比较是否有实际内容变化
+      final originalRegion = _findOriginalRegion(currentRegionId);
+      if (originalRegion != null &&
+          _isRegionUnchanged(originalRegion, adjustedRegion)) {
+        updatedModifiedIds.remove(currentRegionId);
+        AppLogger.debug('区域未实际修改，从modifiedIds中移除', data: {
+          'regionId': currentRegionId,
+          'isSaved': adjustedRegion.isSaved,
+        });
+      }
+    }
 
     // Reset state: Exit adjusting, clear selection. isSaved status determines color via painter.
-    state =
-        state.copyWith(isAdjusting: false, currentId: null, selectedIds: {});
+    state = state.copyWith(
+      isAdjusting: false,
+      currentId: null,
+      selectedIds: {},
+      modifiedIds: updatedModifiedIds, // 更新修改状态
+    );
+
     AppLogger.debug('Finished Adjustment - State Reset (Provider)', data: {
       'regionId': currentRegionId,
       'newState_isAdjusting': state.isAdjusting,
       'newState_currentId': state.currentId,
       'newState_selectedIds': state.selectedIds.toString(),
+      'newState_modifiedIds': state.modifiedIds.toList(),
     });
 
     // Potentially trigger a save action if it was modified? Or rely on user action?
@@ -583,8 +589,9 @@ class CharacterCollectionNotifier
         final modifiedIds = {...state.modifiedIds}..remove(region.id);
         AppLogger.debug('更新modifiedIds (现有区域)', data: {
           'regionId': region.id,
-          'beforeRemove': originalModifiedIds,
-          'afterRemove': modifiedIds,
+          'beforeRemove': originalModifiedIds.toList(),
+          'afterRemove': modifiedIds.toList(),
+          'hasBeenRemoved': !modifiedIds.contains(region.id),
         });
 
         state = state.copyWith(
@@ -593,7 +600,11 @@ class CharacterCollectionNotifier
           modifiedIds: modifiedIds, // 更新修改状态
           isAdjusting: false, // 退出调整状态
         );
-        AppLogger.debug('状态更新完成 (现有区域)...');
+        AppLogger.debug('状态更新完成 (现有区域)', data: {
+          'modifiedIdsCount': state.modifiedIds.length,
+          'modifiedIds': state.modifiedIds.toList(),
+          'hasUnsavedChanges': state.hasUnsavedChanges,
+        });
 
         // 强制创建一个全新的状态对象
         final newState = CharacterCollectionState(
@@ -613,7 +624,11 @@ class CharacterCollectionNotifier
           isAdjusting: state.isAdjusting,
         );
         state = newState;
-        AppLogger.debug('强制应用了全新的 State 对象 (现有区域)');
+        AppLogger.debug('强制应用了全新的 State 对象 (现有区域)', data: {
+          'modifiedIdsCount': state.modifiedIds.length,
+          'modifiedIds': state.modifiedIds.toList(),
+          'hasUnsavedChanges': state.hasUnsavedChanges,
+        });
       } else {
         // 创建新区域
         AppLogger.debug('创建并保存新区域', data: {'tempRegionId': region.id});
@@ -672,8 +687,10 @@ class CharacterCollectionNotifier
         AppLogger.debug('更新modifiedIds (新区域)', data: {
           'tempRegionId': region.id,
           'newRegionId': newRegion.id,
-          'beforeRemove': originalModifiedIds,
-          'afterRemove': modifiedIds,
+          'beforeRemove': originalModifiedIds.toList(),
+          'afterRemove': modifiedIds.toList(),
+          'hasBeenRemovedTemp': !modifiedIds.contains(region.id),
+          'hasBeenRemovedNew': !modifiedIds.contains(newRegion.id),
         });
 
         state = state.copyWith(
@@ -683,7 +700,11 @@ class CharacterCollectionNotifier
           modifiedIds: modifiedIds, // 更新修改状态
           isAdjusting: false, // 退出调整状态
         );
-        AppLogger.debug('状态更新完成 (新区域)...');
+        AppLogger.debug('状态更新完成 (新区域)', data: {
+          'modifiedIdsCount': state.modifiedIds.length,
+          'modifiedIds': state.modifiedIds.toList(),
+          'hasUnsavedChanges': state.hasUnsavedChanges,
+        });
         _selectedRegionNotifier.setRegion(newRegion);
         AppLogger.debug('SelectedRegionProvider 更新完成...');
 
@@ -705,7 +726,11 @@ class CharacterCollectionNotifier
           isAdjusting: state.isAdjusting,
         );
         state = newState;
-        AppLogger.debug('强制应用了全新的 State 对象 (新区域)');
+        AppLogger.debug('强制应用了全新的 State 对象 (新区域)', data: {
+          'modifiedIdsCount': state.modifiedIds.length,
+          'modifiedIds': state.modifiedIds.toList(),
+          'hasUnsavedChanges': state.hasUnsavedChanges,
+        });
       }
     } catch (e) {
       AppLogger.error('保存区域失败', error: e);
@@ -735,6 +760,29 @@ class CharacterCollectionNotifier
       if (state.currentId != null ||
           state.selectedIds.isNotEmpty ||
           state.isAdjusting) {
+        // 在清除选择时检查当前区域是否有实际修改
+        // 如果当前存在区域且在modifiedIds中
+        if (state.currentId != null &&
+            state.modifiedIds.contains(state.currentId!)) {
+          final currentRegion = state.regions.firstWhere(
+              (r) => r.id == state.currentId!,
+              orElse: () => null as CharacterRegion);
+
+          final originalRegion = _findOriginalRegion(currentRegion.id);
+          if (originalRegion != null &&
+              _isRegionUnchanged(originalRegion, currentRegion)) {
+            // 如果没有实际修改，从modifiedIds中移除
+            final updatedModifiedIds = {...state.modifiedIds}
+              ..remove(currentRegion.id);
+            state = state.copyWith(
+                currentId: null,
+                selectedIds: {},
+                isAdjusting: false,
+                modifiedIds: updatedModifiedIds);
+            return;
+          }
+        }
+
         state = state.copyWith(
             currentId: null, selectedIds: {}, isAdjusting: false);
         AppLogger.debug('Cleared main selection state and exited adjusting');
@@ -948,17 +996,45 @@ class CharacterCollectionNotifier
     final index = state.regions.indexWhere((r) => r.id == state.currentId);
 
     if (index >= 0) {
+      // 获取旧区域以便比较是否有实际内容变化
+      final oldRegion = state.regions[index];
+
+      // 检查擦除点是否有变化
+      bool hasErasePointsChanges =
+          _hasErasePointsChanged(oldRegion.erasePoints, region.erasePoints);
+
+      // 检查是否有实际内容变化（例如位置、大小、旋转等）
+      bool hasContentChanges = oldRegion.rect != region.rect ||
+          oldRegion.rotation != region.rotation ||
+          oldRegion.character != region.character ||
+          hasErasePointsChanges ||
+          oldRegion.options != region.options;
+
+      AppLogger.debug('检查区域内容变化', data: {
+        'regionId': region.id,
+        'hasContentChanges': hasContentChanges,
+        'hasErasePointsChanges': hasErasePointsChanges,
+        'oldRect': oldRegion.rect.toString(),
+        'newRect': region.rect.toString(),
+        'oldRotation': oldRegion.rotation,
+        'oldCharacter': oldRegion.character,
+        'newCharacter': region.character,
+        'newRotation': region.rotation,
+      });
+
       // 更新区域列表
       final updatedRegions = [...state.regions];
       updatedRegions[index] = region;
 
-      // 将更新的区域添加到已修改集合中
-      final modifiedIds = {...state.modifiedIds, region.id};
+      // 仅当有实际内容变化时，才将更新的区域添加到已修改集合中
+      final modifiedIds = hasContentChanges
+          ? {...state.modifiedIds, region.id}
+          : state.modifiedIds;
 
       // 更新状态
       state = state.copyWith(
         regions: updatedRegions,
-        modifiedIds: modifiedIds, // 更新修改状态
+        modifiedIds: modifiedIds, // 只在内容变化时更新修改状态
       );
 
       // 更新选中区域
@@ -1001,62 +1077,68 @@ class CharacterCollectionNotifier
       return null;
     }
   }
+
+  // 新增: 查找原始区域数据 (用于比较是否有实际修改)
+  CharacterRegion? _findOriginalRegion(String id) {
+    try {
+      // 这里应该是从数据库或缓存中获取原始区域数据
+      // 目前简单实现，仅返回当前state中的region
+      final regions = state.regions.where((r) => r.id == id).toList();
+      return regions.isNotEmpty ? regions.first : null;
+    } catch (e) {
+      AppLogger.error('查找原始区域数据失败', error: e, data: {'id': id});
+      return null;
+    }
+  }
+
+  // 检查擦除点是否有变化
+  bool _hasErasePointsChanged(
+      List<Offset>? oldPoints, List<Offset>? newPoints) {
+    // 如果一个为null而另一个不为null，则视为有变化
+    if ((oldPoints == null && newPoints != null) ||
+        (oldPoints != null && newPoints == null)) {
+      return true;
+    }
+
+    // 如果两者都为null，则没有变化
+    if (oldPoints == null && newPoints == null) {
+      return false;
+    }
+
+    // 如果点的数量不同，则有变化
+    if (oldPoints!.length != newPoints!.length) {
+      return true;
+    }
+
+    // 简化判断：如果有擦除点，认为有变化
+    // 实际应用中可能需要更精确的比较
+    if (oldPoints.isNotEmpty || newPoints.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
+
+  // 新增: 检查两个区域是否实际内容相同 (没有实质性修改)
+  bool _isRegionUnchanged(CharacterRegion original, CharacterRegion current) {
+    // 比较关键属性是否有变化
+    bool unchanged = original.rect == current.rect &&
+        original.rotation == current.rotation &&
+        original.character == current.character;
+
+    AppLogger.debug('检查区域是否有实际修改', data: {
+      'regionId': original.id,
+      'unchanged': unchanged,
+      'rectEquals': original.rect == current.rect,
+      'rotationEquals': original.rotation == current.rotation,
+      'characterEquals': original.character == current.character,
+    });
+
+    return unchanged;
+  }
 }
 
 // 添加状态管理扩展方法
 extension StateManagement on CharacterCollectionNotifier {
-  /// 完成当前的调整操作 (Likely called when clicking blank area or changing tool)
-  void finishCurrentAdjustment() {
-    // Only finish adjustment if we are actually adjusting something
-    if (!state.isAdjusting || state.currentId == null) return;
-
-    final currentRegionId = state.currentId!;
-    AppLogger.debug('Finishing Adjustment (Provider)', data: {
-      'currentId': currentRegionId,
-      'isAdjusting': state.isAdjusting,
-      'selectedIds': state.selectedIds.toString(),
-    });
-
-    // Find the region that *was* being adjusted
-    final matchingAdjustedRegions =
-        state.regions.where((r) => r.id == currentRegionId).toList();
-    final CharacterRegion? adjustedRegion = matchingAdjustedRegions.isNotEmpty
-        ? matchingAdjustedRegions.first
-        : null;
-    bool wasModified = state.modifiedIds.contains(currentRegionId);
-
-    // Decide what the state should be after adjustment finishes:
-    // - Keep it selected? No, design says Normal.
-    // - Clear selection entirely? Yes, clicking blank implies deselect.
-
-    // Reset state: Exit adjusting, clear selection. isSaved status determines color via painter.
-    state =
-        state.copyWith(isAdjusting: false, currentId: null, selectedIds: {});
-    AppLogger.debug('Finished Adjustment - State Reset (Provider)', data: {
-      'regionId': currentRegionId,
-      'newState_isAdjusting': state.isAdjusting,
-      'newState_currentId': state.currentId,
-      'newState_selectedIds': state.selectedIds.toString(),
-    });
-
-    // Potentially trigger a save action if it was modified? Or rely on user action?
-    // Current design implies it just transitions to Normal (Saved/Unsaved)
-  }
-
-  /// 获取区域的视觉状态
-  CharacterRegionState getRegionState(String id) {
-    final isSelected = state.selectedIds.contains(id);
-    final isAdjusting = state.isAdjusting && state.currentId == id;
-
-    if (isAdjusting) {
-      return CharacterRegionState.adjusting;
-    } else if (isSelected) {
-      return CharacterRegionState.selected;
-    } else {
-      return CharacterRegionState.normal;
-    }
-  }
-
   /// 处理区域点击逻辑
   /// 根据当前工具模式转换区域状态
   void handleRegionClick(String id) {
@@ -1096,72 +1178,6 @@ extension StateManagement on CharacterCollectionNotifier {
         _handlePanModeClick(id);
         break;
     }
-  }
-
-  /// 标记区域为已修改
-  void markAsModified(String id) {
-    if (!state.regions.any((r) => r.id == id)) return;
-
-    state = state.copyWith(
-      modifiedIds: {...state.modifiedIds, id},
-    );
-  }
-
-  /// 标记区域为已保存
-  void markAsSaved(String id) {
-    AppLogger.debug('尝试标记区域为已保存', data: {
-      'regionId': id,
-      'currentlyModified': state.modifiedIds.contains(id),
-    });
-
-    if (!state.modifiedIds.contains(id)) return;
-
-    final updatedModifiedIds = {...state.modifiedIds}..remove(id);
-
-    // 更新区域的保存状态
-    final index = state.regions.indexWhere((r) => r.id == id);
-    List<CharacterRegion> updatedRegions = [...state.regions];
-    if (index >= 0) {
-      final oldRegion = updatedRegions[index];
-      updatedRegions[index] = updatedRegions[index].copyWith(isSaved: true);
-      AppLogger.debug('更新区域列表中的isSaved状态', data: {
-        'regionId': id,
-        'oldIsSaved': oldRegion.isSaved,
-        'newIsSaved': updatedRegions[index].isSaved,
-      });
-    } else {
-      AppLogger.warning('在regions列表中未找到要标记为已保存的区域', data: {'regionId': id});
-    }
-
-    final oldModifiedIds = state.modifiedIds;
-    state = state.copyWith(
-      modifiedIds: updatedModifiedIds,
-      regions: updatedRegions, // 确保更新区域列表
-    );
-    AppLogger.debug('markAsSaved 完成状态更新', data: {
-      'regionId': id,
-      'previousModifiedIds': oldModifiedIds,
-      'currentModifiedIds': state.modifiedIds,
-    });
-  }
-
-  /// 请求删除单个区域
-  /// 返回一个Future<bool>表示用户是否确认删除
-  Future<bool> requestDeleteRegion(String id) async {
-    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
-    // 返回true表示可以继续删除操作
-    return true;
-  }
-
-  /// 请求删除选中的区域
-  /// 返回一个Future<bool>表示用户是否确认删除
-  /// 注意：此方法不执行实际删除，只是提供一个统一的接口来请求删除
-  Future<bool> requestDeleteRegions() async {
-    if (state.selectedIds.isEmpty) return false;
-
-    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
-    // 返回true表示可以继续删除操作
-    return true;
   }
 
   /// 处理Pan模式下的点击 (Add logging and ensure adjusting is false)
@@ -1213,11 +1229,14 @@ extension StateManagement on CharacterCollectionNotifier {
     // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
     bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
 
+    // 重要：只选择区域，不标记为已修改
+    // 只有当实际内容发生变化时才应该添加到modifiedIds
     state = state.copyWith(
       currentId: id,
       selectedIds: {id},
       isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
       error: null,
+      // 不在这里修改modifiedIds
     );
 
     AppLogger.debug('Select Mode Click - State Update Complete', data: {
@@ -1225,6 +1244,7 @@ extension StateManagement on CharacterCollectionNotifier {
       'newStateSelectedIds': state.selectedIds,
       'newStateIsAdjusting': state.isAdjusting,
       'wasAlreadyAdjusting': !shouldEnterAdjusting,
+      'modifiedIds': state.modifiedIds.toList(),
     });
   }
 }
