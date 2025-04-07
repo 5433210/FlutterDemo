@@ -6,6 +6,7 @@ import 'package:image/image.dart' as img;
 
 import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
+import '../../../domain/models/character/character_region_state.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/undo_action.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -45,10 +46,22 @@ class CharacterCollectionNotifier
         _selectedRegionNotifier = selectedRegionNotifier,
         super(CharacterCollectionState.initial());
 
+  // 添加区域到多选集合中
+  void addToSelection(String id) {
+    if (state.regions.any((r) => r.id == id)) {
+      final updatedSelectedIds = {...state.selectedIds, id};
+
+      state = state.copyWith(
+        selectedIds: updatedSelectedIds,
+      );
+    }
+  }
+
   // 取消编辑
   void cancelEdit() {
     _selectedRegionNotifier.clearRegion();
-    state = state.copyWith(currentId: null);
+    state =
+        state.copyWith(currentId: null, selectedIds: {}, isAdjusting: false);
   }
 
   // 清除错误消息
@@ -56,7 +69,7 @@ class CharacterCollectionNotifier
     state = state.copyWith(error: null);
   }
 
-  // 清理已选择的区域
+// 清理已选择的区域
   void clearSelectedRegions() {
     _selectedRegionNotifier.clearRegion();
     state = state.copyWith(
@@ -70,7 +83,7 @@ class CharacterCollectionNotifier
     state = state.copyWith(selectedIds: {});
   }
 
-// 清理所有状态
+  // 清理所有状态
   void clearState() {
     _currentPageImage = null;
     _currentWorkId = null;
@@ -83,7 +96,7 @@ class CharacterCollectionNotifier
   /// 1. 验证必要条件
   /// 2. 创建新区域并处理选区状态
   /// 3. 记录操作以支持撤销
-  void createRegion(Rect rect) {
+  CharacterRegion? createRegion(Rect rect) {
     try {
       // 1. 验证条件
       if (_currentPageId == null) {
@@ -114,21 +127,29 @@ class CharacterCollectionNotifier
       // 清理现有选择状态
       _selectedRegionNotifier.clearRegion();
 
-      // 设置新的选中区域
+      // 设置新的选中区域并立即进入可调节状态
       _selectedRegionNotifier.setRegion(region);
 
       // 更新区域列表和状态
       final updatedRegions = [...state.regions, region];
+
+      // 将新创建的区域标记为未保存
+      final modifiedIds = {...state.modifiedIds, region.id};
+
       state = state.copyWith(
         regions: updatedRegions,
         currentId: region.id,
         selectedIds: {region.id}, // 更新多选状态
+        modifiedIds: modifiedIds, // 更新修改状态
+        isAdjusting: true, // 立即进入可调节状态
       );
 
       AppLogger.debug('新选区创建完成', data: {
         'regionId': region.id,
         'totalRegions': updatedRegions.length,
       });
+
+      return region;
     } catch (e, stack) {
       AppLogger.error('创建选区失败',
           error: e, stackTrace: stack, data: {'rect': rect.toString()});
@@ -136,6 +157,7 @@ class CharacterCollectionNotifier
       state = state.copyWith(
         error: '创建选区失败: ${e.toString()}',
       );
+      return null;
     }
   }
 
@@ -223,6 +245,71 @@ class CharacterCollectionNotifier
     }
   }
 
+  /// 完成当前的调整操作 (Likely called when clicking blank area or changing tool)
+  void finishCurrentAdjustment() {
+    // Only finish adjustment if we are actually adjusting something
+    if (!state.isAdjusting || state.currentId == null) return;
+
+    final currentRegionId = state.currentId!;
+    AppLogger.debug('Finishing Adjustment (Provider)', data: {
+      'currentId': currentRegionId,
+      'isAdjusting': state.isAdjusting,
+      'selectedIds': state.selectedIds.toString(),
+    });
+
+    // // Find the region that *was* being adjusted
+    // final matchingAdjustedRegions =
+    //     state.regions.where((r) => r.id == currentRegionId).toList();
+    // final CharacterRegion? adjustedRegion = matchingAdjustedRegions.isNotEmpty
+    //     ? matchingAdjustedRegions.first
+    //     : null;
+    // bool wasModified = state.modifiedIds.contains(currentRegionId);
+// 获取当前调整的选区
+    // final region = state.regions.firstWhere(
+    //   (r) => r.id == currentRegionId,
+    //   orElse: () => CharacterRegion.create(
+    //       pageId: '', rect: Rect.zero, options: const ProcessingOptions()),
+    // );
+
+    // // 如果选区被修改过，确保保存更改
+    // if (state.modifiedIds.contains(currentRegionId)) {
+    //   AppLogger.debug('Saving modified region before finishing adjustment',
+    //       data: {'regionId': currentRegionId});
+    //   // TODO: 实现保存逻辑
+    //   markAsModified(currentRegionId);
+    // }
+    // Decide what the state should be after adjustment finishes:
+    // - Keep it selected? No, design says Normal.
+    // - Clear selection entirely? Yes, clicking blank implies deselect.
+
+    // Reset state: Exit adjusting, clear selection. isSaved status determines color via painter.
+    state =
+        state.copyWith(isAdjusting: false, currentId: null, selectedIds: {});
+    AppLogger.debug('Finished Adjustment - State Reset (Provider)', data: {
+      'regionId': currentRegionId,
+      'newState_isAdjusting': state.isAdjusting,
+      'newState_currentId': state.currentId,
+      'newState_selectedIds': state.selectedIds.toString(),
+    });
+
+    // Potentially trigger a save action if it was modified? Or rely on user action?
+    // Current design implies it just transitions to Normal (Saved/Unsaved)
+  }
+
+  /// 获取区域的视觉状态
+  CharacterRegionState getRegionState(String id) {
+    final isSelected = state.selectedIds.contains(id);
+    final isAdjusting = state.isAdjusting && state.currentId == id;
+
+    if (isAdjusting) {
+      return CharacterRegionState.adjusting;
+    } else if (isSelected) {
+      return CharacterRegionState.selected;
+    } else {
+      return CharacterRegionState.normal;
+    }
+  }
+
   // 获取缩略图路径
   Future<String?> getThumbnailPath(String regionId) async {
     try {
@@ -293,6 +380,53 @@ class CharacterCollectionNotifier
         regions: [], // 确保清空区域列表
       );
     }
+  }
+
+  /// 标记区域为已修改
+  void markAsModified(String id) {
+    if (!state.regions.any((r) => r.id == id)) return;
+
+    state = state.copyWith(
+      modifiedIds: {...state.modifiedIds, id},
+    );
+  }
+
+  /// 标记区域为已保存
+  void markAsSaved(String id) {
+    AppLogger.debug('尝试标记区域为已保存', data: {
+      'regionId': id,
+      'currentlyModified': state.modifiedIds.contains(id),
+    });
+
+    if (!state.modifiedIds.contains(id)) return;
+
+    final updatedModifiedIds = {...state.modifiedIds}..remove(id);
+
+    // 更新区域的保存状态
+    final index = state.regions.indexWhere((r) => r.id == id);
+    List<CharacterRegion> updatedRegions = [...state.regions];
+    if (index >= 0) {
+      final oldRegion = updatedRegions[index];
+      updatedRegions[index] = updatedRegions[index].copyWith(isSaved: true);
+      AppLogger.debug('更新区域列表中的isSaved状态', data: {
+        'regionId': id,
+        'oldIsSaved': oldRegion.isSaved,
+        'newIsSaved': updatedRegions[index].isSaved,
+      });
+    } else {
+      AppLogger.warning('在regions列表中未找到要标记为已保存的区域', data: {'regionId': id});
+    }
+
+    final oldModifiedIds = state.modifiedIds;
+    state = state.copyWith(
+      modifiedIds: updatedModifiedIds,
+      regions: updatedRegions, // 确保更新区域列表
+    );
+    AppLogger.debug('markAsSaved 完成状态更新', data: {
+      'regionId': id,
+      'previousModifiedIds': oldModifiedIds,
+      'currentModifiedIds': state.modifiedIds,
+    });
   }
 
   // 重做操作
@@ -394,8 +528,29 @@ class CharacterCollectionNotifier
     }
   }
 
+  /// 请求删除单个区域
+  /// 返回一个Future<bool>表示用户是否确认删除
+  Future<bool> requestDeleteRegion(String id) async {
+    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
+    // 返回true表示可以继续删除操作
+    return true;
+  }
+
+  /// 请求删除选中的区域
+  /// 返回一个Future<bool>表示用户是否确认删除
+  /// 注意：此方法不执行实际删除，只是提供一个统一的接口来请求删除
+  Future<bool> requestDeleteRegions() async {
+    if (state.selectedIds.isEmpty) return false;
+
+    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
+    // 返回true表示可以继续删除操作
+    return true;
+  }
+
   // 保存当前编辑的区域
   Future<void> saveCurrentRegion() async {
+    AppLogger.debug('saveCurrentRegion 调用',
+        data: {'currentId': state.currentId});
     if (state.currentId == null) return;
 
     try {
@@ -411,23 +566,57 @@ class CharacterCollectionNotifier
 
       if (exists) {
         // 更新现有区域
+        AppLogger.debug('保存现有区域', data: {'regionId': region.id});
         await _characterService.updateCharacter(
           region.id,
-          region,
+          region.copyWith(isSaved: true), // 明确标记为已保存
           region.character,
         );
 
         // 更新区域列表
         final updatedRegions = [...state.regions];
         final index = updatedRegions.indexWhere((r) => r.id == region.id);
-        updatedRegions[index] = region;
+        updatedRegions[index] = region.copyWith(isSaved: true); // 标记为已保存
+
+        // 从已修改集合中移除，表示已保存
+        final Set<String> originalModifiedIds = {...state.modifiedIds};
+        final modifiedIds = {...state.modifiedIds}..remove(region.id);
+        AppLogger.debug('更新modifiedIds (现有区域)', data: {
+          'regionId': region.id,
+          'beforeRemove': originalModifiedIds,
+          'afterRemove': modifiedIds,
+        });
 
         state = state.copyWith(
           regions: updatedRegions,
           processing: false,
+          modifiedIds: modifiedIds, // 更新修改状态
+          isAdjusting: false, // 退出调整状态
         );
+        AppLogger.debug('状态更新完成 (现有区域)...');
+
+        // 强制创建一个全新的状态对象
+        final newState = CharacterCollectionState(
+          workId: state.workId,
+          pageId: state.pageId,
+          regions: List.from(state.regions), // 确保是新列表实例
+          selectedIds: Set.from(state.selectedIds),
+          modifiedIds: Set.from(state.modifiedIds), // 确保是新 Set 实例
+          currentId: state.currentId,
+          currentTool: state.currentTool,
+          defaultOptions: state.defaultOptions,
+          undoStack: List.from(state.undoStack),
+          redoStack: List.from(state.redoStack),
+          loading: state.loading,
+          processing: state.processing,
+          error: state.error,
+          isAdjusting: state.isAdjusting,
+        );
+        state = newState;
+        AppLogger.debug('强制应用了全新的 State 对象 (现有区域)');
       } else {
         // 创建新区域
+        AppLogger.debug('创建并保存新区域', data: {'tempRegionId': region.id});
         if (_currentPageImage == null || _currentPageId == null) {
           throw Exception('Page image or ID not available');
         }
@@ -435,31 +624,91 @@ class CharacterCollectionNotifier
         AppLogger.debug('使用当前页面图像创建新区域',
             data: {'imageDataLength': _currentPageImage!.length});
 
-        // 提取并处理字符
+        // 提取并处理字符，明确设置isSaved为true
         final characterEntity = await _characterService.extractCharacter(
           _currentWorkId ?? '',
           _currentPageId!,
           region.rect,
           region.options,
           _currentPageImage!,
+          isSaved: true, // 添加参数，确保数据库中也标记为已保存
         );
+        AppLogger.debug('数据库操作完成，获取到 CharacterEntity',
+            data: {'entityId': characterEntity.id});
 
-        // 更新为正确的ID
-        final newRegion = region.copyWith(id: characterEntity.id);
+        // 更新为正确的ID并标记为已保存
+        final newRegion = region.copyWith(
+          id: characterEntity.id,
+          isSaved: true,
+          characterId: characterEntity.id, // 设置关联的Character ID
+        );
+        AppLogger.debug('创建了新的 Region 对象', data: {
+          'newRegionId': newRegion.id,
+          'isSaved': newRegion.isSaved,
+          'characterId': newRegion.characterId,
+        });
 
         // 更新区域列表
-        final updatedRegions = [...state.regions, newRegion];
+        final updatedRegions = [...state.regions];
+        final index =
+            updatedRegions.indexWhere((r) => r.id == region.id); // 查找临时 ID
+        if (index >= 0) {
+          // 替换已存在的临时区域
+          AppLogger.debug('替换临时区域',
+              data: {'tempId': region.id, 'newId': newRegion.id});
+          updatedRegions[index] = newRegion;
+        } else {
+          // 添加新区域 (理论上创建新区域时，旧的临时ID应该存在)
+          AppLogger.warning('未找到要替换的临时区域，直接添加',
+              data: {'tempId': region.id, 'newId': newRegion.id});
+          updatedRegions.add(newRegion);
+        }
+
+        // 从已修改集合中移除，表示已保存
+        final Set<String> originalModifiedIds = {...state.modifiedIds};
+        final modifiedIds = {...state.modifiedIds}
+          ..remove(region.id) // 移除旧的临时ID
+          ..remove(newRegion.id); // 移除新的、已保存的ID
+        AppLogger.debug('更新modifiedIds (新区域)', data: {
+          'tempRegionId': region.id,
+          'newRegionId': newRegion.id,
+          'beforeRemove': originalModifiedIds,
+          'afterRemove': modifiedIds,
+        });
 
         state = state.copyWith(
           regions: updatedRegions,
-          currentId: newRegion.id,
+          currentId: newRegion.id, // 确保当前ID更新为新的ID
           processing: false,
+          modifiedIds: modifiedIds, // 更新修改状态
+          isAdjusting: false, // 退出调整状态
         );
-
-        // 更新选中区域
+        AppLogger.debug('状态更新完成 (新区域)...');
         _selectedRegionNotifier.setRegion(newRegion);
+        AppLogger.debug('SelectedRegionProvider 更新完成...');
+
+        // 强制创建一个全新的状态对象
+        final newState = CharacterCollectionState(
+          workId: state.workId,
+          pageId: state.pageId,
+          regions: List.from(state.regions), // 确保是新列表实例
+          selectedIds: Set.from(state.selectedIds),
+          modifiedIds: Set.from(state.modifiedIds), // 确保是新 Set 实例
+          currentId: state.currentId,
+          currentTool: state.currentTool,
+          defaultOptions: state.defaultOptions,
+          undoStack: List.from(state.undoStack),
+          redoStack: List.from(state.redoStack),
+          loading: state.loading,
+          processing: state.processing,
+          error: state.error,
+          isAdjusting: state.isAdjusting,
+        );
+        state = newState;
+        AppLogger.debug('强制应用了全新的 State 对象 (新区域)');
       }
     } catch (e) {
+      AppLogger.error('保存区域失败', error: e);
       state = state.copyWith(
         processing: false,
         error: e.toString(),
@@ -473,60 +722,45 @@ class CharacterCollectionNotifier
     state = state.copyWith(selectedIds: selectedIds);
   }
 
-  /// 选择指定的区域
-  /// 1. 处理取消选择的情况
-  /// 2. 查找并验证目标区域
-  /// 3. 更新选择状态
+  /// 选择指定的区域 (Now only updates the main state)
+  /// Relies on _findAndSetSelectedRegion to update the SelectedRegionNotifier.
   void selectRegion(String? id) {
-    try {
-      AppLogger.debug('处理区域选择', data: {
-        'targetId': id,
-        'currentId': state.currentId,
-        'totalRegions': state.regions.length,
-      });
+    // 1. Update the SelectedRegionNotifier first (finds the region)
+    final region = _findAndSetSelectedRegion(id);
 
-      // 1. 处理取消选择
-      if (id == null) {
-        _selectedRegionNotifier.clearRegion();
+    // 2. Handle main state update
+    if (id == null) {
+      // If clearing selection, update main state accordingly
+      // Also ensure we exit adjusting mode if we were adjusting
+      if (state.currentId != null ||
+          state.selectedIds.isNotEmpty ||
+          state.isAdjusting) {
         state = state.copyWith(
-          currentId: null,
-          selectedIds: {}, // 清除多选状态
-        );
-        AppLogger.debug('已清除选区');
-        return;
+            currentId: null, selectedIds: {}, isAdjusting: false);
+        AppLogger.debug('Cleared main selection state and exited adjusting');
       }
-
-      // 2. 查找目标区域
-      final region = state.regions.firstWhere(
-        (r) => r.id == id,
-        orElse: () => throw Exception('找不到指定ID的区域: $id'),
-      );
-
-      // 3. 更新选择状态
-      _selectedRegionNotifier.setRegion(region);
+    } else if (region != null) {
+      // If a valid region was found and set in the notifier, update main state
+      // Importantly, this selectRegion call itself DOES NOT enter adjusting mode.
       state = state.copyWith(
         currentId: id,
-        selectedIds: {id}, // 更新多选状态
+        selectedIds: {id}, // Only select the single region
+        isAdjusting:
+            false, // Explicitly set adjusting to false for simple selection
+        error: null, // Clear previous error if selection succeeds
       );
+      AppLogger.debug('Updated main selection state (not adjusting)',
+          data: {'regionId': id});
+    }
+    // If region is null due to an error, _findAndSetSelectedRegion already updated the error state.
+  }
 
-      AppLogger.debug('区域选择完成', data: {
-        'regionId': id,
-        'rect': '${region.rect.left.toStringAsFixed(1)},'
-            '${region.rect.top.toStringAsFixed(1)},'
-            '${region.rect.width.toStringAsFixed(1)}x'
-            '${region.rect.height.toStringAsFixed(1)}',
-      });
-    } catch (e, stack) {
-      AppLogger.error('选择区域失败',
-          error: e, stackTrace: stack, data: {'targetId': id});
-
-      // 错误时清理选择状态
-      _selectedRegionNotifier.clearRegion();
-      state = state.copyWith(
-        currentId: null,
-        selectedIds: {},
-        error: '选择区域失败: ${e.toString()}',
-      );
+  // 设置调整状态
+  void setAdjusting(bool isAdjusting) {
+    if (state.isAdjusting != isAdjusting) {
+      state = state.copyWith(isAdjusting: isAdjusting);
+      AppLogger.debug('Set Adjusting State',
+          data: {'isAdjusting': isAdjusting});
     }
   }
 
@@ -689,6 +923,23 @@ class CharacterCollectionNotifier
     }
   }
 
+  // 从多选集合中移除区域
+  void unselectRegion(String id) {
+    final updatedSelectedIds = {...state.selectedIds}..remove(id);
+
+    // 如果当前正在编辑的区域被取消选择，则也清除currentId
+    final newCurrentId = (state.currentId == id) ? null : state.currentId;
+
+    if (newCurrentId == null) {
+      _selectedRegionNotifier.clearRegion();
+    }
+
+    state = state.copyWith(
+      selectedIds: updatedSelectedIds,
+      currentId: newCurrentId,
+    );
+  }
+
   // 更新选中区域
   void updateSelectedRegion(CharacterRegion region) {
     if (state.currentId == null) return;
@@ -701,11 +952,279 @@ class CharacterCollectionNotifier
       final updatedRegions = [...state.regions];
       updatedRegions[index] = region;
 
+      // 将更新的区域添加到已修改集合中
+      final modifiedIds = {...state.modifiedIds, region.id};
+
       // 更新状态
-      state = state.copyWith(regions: updatedRegions);
+      state = state.copyWith(
+        regions: updatedRegions,
+        modifiedIds: modifiedIds, // 更新修改状态
+      );
 
       // 更新选中区域
       _selectedRegionNotifier.setRegion(region);
     }
+  }
+
+  /// [Internal] Finds the region and updates the SelectedRegionNotifier.
+  /// Does NOT update the main collection state. Returns null if not found or error.
+  CharacterRegion? _findAndSetSelectedRegion(String? id) {
+    try {
+      AppLogger.debug('[Internal] Finding region', data: {'targetId': id});
+      if (id == null) {
+        _selectedRegionNotifier.clearRegion();
+        AppLogger.debug('[Internal] Cleared selected region notifier');
+        return null;
+      }
+
+      // Find region using where + firstOrNull pattern (emulated)
+      final matchingRegions = state.regions.where((r) => r.id == id).toList();
+      final CharacterRegion? region =
+          matchingRegions.isNotEmpty ? matchingRegions.first : null;
+
+      if (region == null) {
+        // Update error state if region not found
+        state = state.copyWith(error: '查找区域失败: ID $id 未找到');
+        _selectedRegionNotifier.clearRegion(); // Ensure notifier is cleared
+        return null;
+      }
+
+      _selectedRegionNotifier.setRegion(region);
+      AppLogger.debug('[Internal] Set selected region notifier',
+          data: {'regionId': id});
+      return region;
+    } catch (e, stack) {
+      AppLogger.error('[Internal] Finding region failed',
+          error: e, stackTrace: stack, data: {'targetId': id});
+      _selectedRegionNotifier.clearRegion();
+      state = state.copyWith(error: '查找区域时发生错误: ${e.toString()}');
+      return null;
+    }
+  }
+}
+
+// 添加状态管理扩展方法
+extension StateManagement on CharacterCollectionNotifier {
+  /// 完成当前的调整操作 (Likely called when clicking blank area or changing tool)
+  void finishCurrentAdjustment() {
+    // Only finish adjustment if we are actually adjusting something
+    if (!state.isAdjusting || state.currentId == null) return;
+
+    final currentRegionId = state.currentId!;
+    AppLogger.debug('Finishing Adjustment (Provider)', data: {
+      'currentId': currentRegionId,
+      'isAdjusting': state.isAdjusting,
+      'selectedIds': state.selectedIds.toString(),
+    });
+
+    // Find the region that *was* being adjusted
+    final matchingAdjustedRegions =
+        state.regions.where((r) => r.id == currentRegionId).toList();
+    final CharacterRegion? adjustedRegion = matchingAdjustedRegions.isNotEmpty
+        ? matchingAdjustedRegions.first
+        : null;
+    bool wasModified = state.modifiedIds.contains(currentRegionId);
+
+    // Decide what the state should be after adjustment finishes:
+    // - Keep it selected? No, design says Normal.
+    // - Clear selection entirely? Yes, clicking blank implies deselect.
+
+    // Reset state: Exit adjusting, clear selection. isSaved status determines color via painter.
+    state =
+        state.copyWith(isAdjusting: false, currentId: null, selectedIds: {});
+    AppLogger.debug('Finished Adjustment - State Reset (Provider)', data: {
+      'regionId': currentRegionId,
+      'newState_isAdjusting': state.isAdjusting,
+      'newState_currentId': state.currentId,
+      'newState_selectedIds': state.selectedIds.toString(),
+    });
+
+    // Potentially trigger a save action if it was modified? Or rely on user action?
+    // Current design implies it just transitions to Normal (Saved/Unsaved)
+  }
+
+  /// 获取区域的视觉状态
+  CharacterRegionState getRegionState(String id) {
+    final isSelected = state.selectedIds.contains(id);
+    final isAdjusting = state.isAdjusting && state.currentId == id;
+
+    if (isAdjusting) {
+      return CharacterRegionState.adjusting;
+    } else if (isSelected) {
+      return CharacterRegionState.selected;
+    } else {
+      return CharacterRegionState.normal;
+    }
+  }
+
+  /// 处理区域点击逻辑
+  /// 根据当前工具模式转换区域状态
+  void handleRegionClick(String id) {
+    final currentTool = _toolModeNotifier.currentMode;
+    // Find the region first to ensure it exists before proceeding
+    final matchingRegions = state.regions.where((r) => r.id == id).toList();
+    final CharacterRegion? region =
+        matchingRegions.isNotEmpty ? matchingRegions.first : null;
+
+    if (region == null) {
+      AppLogger.warning('Region clicked but not found in state',
+          data: {'regionId': id});
+      state = state.copyWith(error: 'Clicked region $id not found');
+      return;
+    }
+
+    AppLogger.debug('处理区域点击', data: {
+      'regionId': id,
+      'currentTool': currentTool.toString(),
+      'isAdjusting': state.isAdjusting,
+      'isSelected': state.selectedIds.contains(id),
+    });
+
+    switch (currentTool) {
+      case Tool.pan:
+        _handlePanModeClick(id);
+        break;
+      case Tool.select:
+        _handleSelectModeClick(id);
+        break;
+      case Tool.multiSelect:
+        // 多选模式已废弃，降级为Pan模式处理
+        _handlePanModeClick(id);
+        break;
+      default:
+        // 其他工具模式默认处理为Pan模式
+        _handlePanModeClick(id);
+        break;
+    }
+  }
+
+  /// 标记区域为已修改
+  void markAsModified(String id) {
+    if (!state.regions.any((r) => r.id == id)) return;
+
+    state = state.copyWith(
+      modifiedIds: {...state.modifiedIds, id},
+    );
+  }
+
+  /// 标记区域为已保存
+  void markAsSaved(String id) {
+    AppLogger.debug('尝试标记区域为已保存', data: {
+      'regionId': id,
+      'currentlyModified': state.modifiedIds.contains(id),
+    });
+
+    if (!state.modifiedIds.contains(id)) return;
+
+    final updatedModifiedIds = {...state.modifiedIds}..remove(id);
+
+    // 更新区域的保存状态
+    final index = state.regions.indexWhere((r) => r.id == id);
+    List<CharacterRegion> updatedRegions = [...state.regions];
+    if (index >= 0) {
+      final oldRegion = updatedRegions[index];
+      updatedRegions[index] = updatedRegions[index].copyWith(isSaved: true);
+      AppLogger.debug('更新区域列表中的isSaved状态', data: {
+        'regionId': id,
+        'oldIsSaved': oldRegion.isSaved,
+        'newIsSaved': updatedRegions[index].isSaved,
+      });
+    } else {
+      AppLogger.warning('在regions列表中未找到要标记为已保存的区域', data: {'regionId': id});
+    }
+
+    final oldModifiedIds = state.modifiedIds;
+    state = state.copyWith(
+      modifiedIds: updatedModifiedIds,
+      regions: updatedRegions, // 确保更新区域列表
+    );
+    AppLogger.debug('markAsSaved 完成状态更新', data: {
+      'regionId': id,
+      'previousModifiedIds': oldModifiedIds,
+      'currentModifiedIds': state.modifiedIds,
+    });
+  }
+
+  /// 请求删除单个区域
+  /// 返回一个Future<bool>表示用户是否确认删除
+  Future<bool> requestDeleteRegion(String id) async {
+    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
+    // 返回true表示可以继续删除操作
+    return true;
+  }
+
+  /// 请求删除选中的区域
+  /// 返回一个Future<bool>表示用户是否确认删除
+  /// 注意：此方法不执行实际删除，只是提供一个统一的接口来请求删除
+  Future<bool> requestDeleteRegions() async {
+    if (state.selectedIds.isEmpty) return false;
+
+    // 这里实际上只是提供一个接口，实际的确认对话框逻辑在UI层实现
+    // 返回true表示可以继续删除操作
+    return true;
+  }
+
+  /// 处理Pan模式下的点击 (Add logging and ensure adjusting is false)
+  void _handlePanModeClick(String id) {
+    AppLogger.debug('Handling Pan Mode Click', data: {'regionId': id});
+    // Ensure we are not in adjusting mode when using Pan click
+    if (state.isAdjusting) {
+      setAdjusting(false); // Exit adjusting mode
+    }
+// 使用 toggleSelection 支持多选
+    toggleSelection(id);
+    // // Toggle selection state using the public selectRegion which now handles state correctly
+    // if (state.selectedIds.contains(id)) {
+    //   // If it's already selected, deselect it by calling selectRegion(null)
+    //   selectRegion(null);
+    //   AppLogger.debug('Pan Mode Click: Deselected region',
+    //       data: {'regionId': id});
+    // } else {
+    //   // If not selected, select it
+    //   selectRegion(id);
+    //   AppLogger.debug('Pan Mode Click: Selected region',
+    //       data: {'regionId': id});
+    // }
+  }
+
+  /// 处理Select模式下的点击
+  /// Select模式下点击直接进入调整模式 (Atomic Update)
+  void _handleSelectModeClick(String id) {
+    AppLogger.debug('Handling Select Mode Click', data: {
+      'regionId': id,
+      'currentStateIsAdjusting': state.isAdjusting,
+      'currentStateCurrentId': state.currentId
+    });
+
+    // 1. 如果当前正在调整其他选区，先保存状态
+    if (state.isAdjusting && state.currentId != id) {
+      finishCurrentAdjustment(); // 保存当前调整中的选区
+    }
+
+    // 2. 查找目标选区
+    final regionToSelect = _findAndSetSelectedRegion(id);
+    if (regionToSelect == null) {
+      AppLogger.warning(
+          'Select mode click failed: Region not found or error occurred.',
+          data: {'regionId': id});
+      return;
+    }
+
+    // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
+    bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
+
+    state = state.copyWith(
+      currentId: id,
+      selectedIds: {id},
+      isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
+      error: null,
+    );
+
+    AppLogger.debug('Select Mode Click - State Update Complete', data: {
+      'newStateRegionId': state.currentId,
+      'newStateSelectedIds': state.selectedIds,
+      'newStateIsAdjusting': state.isAdjusting,
+      'wasAlreadyAdjusting': !shouldEnterAdjusting,
+    });
   }
 }

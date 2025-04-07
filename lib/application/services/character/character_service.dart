@@ -118,20 +118,17 @@ class CharacterService {
   }
 
   /// 提取字符区域并处理
-  Future<CharacterEntity> extractCharacter(
-    String workId,
-    String pageId,
-    Rect region,
-    ProcessingOptions options,
-    Uint8List imageData,
-  ) async {
+  Future<CharacterEntity> extractCharacter(String workId, String pageId,
+      Rect region, ProcessingOptions options, Uint8List imageData,
+      {bool isSaved = false}) async {
     try {
       AppLogger.debug('开始提取字符区域', data: {
         'workId': workId,
         'pageId': pageId,
         'region':
             '${region.left},${region.top},${region.width},${region.height}',
-        'imageDataLength': imageData.length
+        'imageDataLength': imageData.length,
+        'isSaved': isSaved,
       });
       // 处理字符区域
       final result = await _imageProcessor.processCharacterRegion(
@@ -146,13 +143,17 @@ class CharacterService {
         'thumbnailLength': result.thumbnail.length
       });
 
-      // 创建字符区域
+      // 创建字符区域，设置保存状态
       final characterRegion = CharacterRegion.create(
         pageId: pageId,
         rect: region,
         options: options,
-      );
-      AppLogger.debug('字符区域创建完成', data: {'regionId': characterRegion.id});
+      ).copyWith(isSaved: isSaved);
+
+      AppLogger.debug('字符区域创建完成', data: {
+        'regionId': characterRegion.id,
+        'isSaved': characterRegion.isSaved,
+      });
 
       // 保存字符和图像
       final character = await _persistenceService.saveCharacter(

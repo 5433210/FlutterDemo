@@ -1,6 +1,3 @@
-import 'dart:ui' as ui;
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region.dart';
@@ -39,55 +36,63 @@ class AdjustableRegionPainter extends CustomPainter {
       ..color = Colors.blue.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
-    // 根据旋转角度绘制区域
+    // 保存画布状态用于旋转
+    canvas.save();
+
+    // 应用旋转变换
     if (currentRotation != 0) {
-      canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(currentRotation);
       canvas.translate(-center.dx, -center.dy);
-
-      canvas.drawRect(viewportRect!, fillPaint);
-
-      canvas.restore();
-    } else {
-      canvas.drawRect(viewportRect!, fillPaint);
     }
+
+    // 绘制选区填充
+    canvas.drawRect(viewportRect!, fillPaint);
 
     // 绘制选区边框
     final borderPaint = Paint()
       ..color = Colors.blue
       ..style = PaintingStyle.stroke
       ..strokeWidth = isAdjusting ? 2.0 : 1.5;
+    canvas.drawRect(viewportRect!, borderPaint);
 
-    // 如果区域有旋转，绘制旋转后的边框
-    if (currentRotation != 0) {
-      canvas.save();
-      canvas.translate(center.dx, center.dy);
-      canvas.rotate(currentRotation);
-      canvas.translate(-center.dx, -center.dy);
-      canvas.drawRect(viewportRect!, borderPaint);
-      canvas.restore();
-    } else {
-      canvas.drawRect(viewportRect!, borderPaint);
-    }
-
-    // 绘制调整手柄
+    // 绘制调整手柄 (draw with rotation applied)
     _drawHandles(canvas, viewportRect!);
 
-    // 绘制旋转控件
+    // 绘制旋转控件 (draw with rotation applied)
     _drawRotationControl(canvas, viewportRect!);
 
+    // 恢复画布状态，后续绘制不会受到旋转影响
+    canvas.restore();
+
+    // 绘制不随旋转的元素
     // 绘制辅助线
     if (guideLines != null) {
       _drawGuideLines(canvas);
     }
+  }
 
-    // 绘制尺寸指示器
-    _drawSizeIndicator(canvas, viewportRect!);
+  @override
+  bool shouldRepaint(AdjustableRegionPainter oldDelegate) {
+    return region != oldDelegate.region ||
+        isActive != oldDelegate.isActive ||
+        isAdjusting != oldDelegate.isAdjusting ||
+        activeHandleIndex != oldDelegate.activeHandleIndex ||
+        currentRotation != oldDelegate.currentRotation ||
+        guideLines != oldDelegate.guideLines ||
+        viewportRect != oldDelegate.viewportRect;
+  }
 
-    // 绘制角度指示器（旋转时）
-    if (currentRotation != 0) {
-      _drawAngleIndicator(canvas, viewportRect!);
+  void _drawGuideLines(Canvas canvas) {
+    if (guideLines == null || guideLines!.length < 2) return;
+
+    final guidePaint = Paint()
+      ..color = Colors.red.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    for (var i = 0; i < guideLines!.length - 1; i += 2) {
+      canvas.drawLine(guideLines![i], guideLines![i + 1], guidePaint);
     }
   }
 
@@ -141,8 +146,8 @@ class AdjustableRegionPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     // 绘制虚线
-    final dashWidth = 5.0;
-    final dashSpace = 5.0;
+    const dashWidth = 5.0;
+    const dashSpace = 5.0;
     final path = Path();
     var distance = 0.0;
     final totalDistance = (rotationPoint - center).distance;
@@ -172,12 +177,6 @@ class AdjustableRegionPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
-    final controlRect = Rect.fromCenter(
-      center: rotationPoint,
-      width: 16.0,
-      height: 16.0,
-    );
-
     canvas.drawCircle(rotationPoint, 8.0, controlPaint);
     canvas.drawCircle(rotationPoint, 8.0, controlBorderPaint);
 
@@ -196,120 +195,5 @@ class AdjustableRegionPainter extends CustomPainter {
       ..lineTo(rotationPoint.dx + 2, rotationPoint.dy + 2);
 
     canvas.drawPath(arrowPath, arrowPaint);
-  }
-
-  void _drawGuideLines(Canvas canvas) {
-    if (guideLines == null || guideLines!.length < 2) return;
-
-    final guidePaint = Paint()
-      ..color = Colors.red.withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    for (var i = 0; i < guideLines!.length - 1; i += 2) {
-      canvas.drawLine(guideLines![i], guideLines![i + 1], guidePaint);
-    }
-  }
-
-  // 绘制尺寸指示器
-  void _drawSizeIndicator(Canvas canvas, Rect rect) {
-    final text = '${rect.width.round()}×${rect.height.round()}';
-    final textStyle = TextStyle(
-      color: Colors.blue,
-      fontSize: 14,
-      fontWeight: FontWeight.bold,
-    );
-
-    final textSpan = TextSpan(
-      text: text,
-      style: textStyle,
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-
-    final position = Offset(rect.right + 5, rect.top);
-
-    // 绘制背景
-    final bgRect = Rect.fromLTWH(position.dx - 2, position.dy - 2,
-        textPainter.width + 6, textPainter.height + 4);
-
-    canvas.drawRect(
-      bgRect,
-      Paint()
-        ..color = Colors.white.withOpacity(0.9)
-        ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawRect(
-      bgRect,
-      Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    textPainter.paint(canvas, position);
-  }
-
-  // 绘制角度指示器
-  void _drawAngleIndicator(Canvas canvas, Rect rect) {
-    final angle = (currentRotation * 180 / 3.14159).round();
-    final text = '$angle°';
-    final textStyle = TextStyle(
-      color: Colors.blue,
-      fontSize: 14,
-      fontWeight: FontWeight.bold,
-    );
-
-    final textSpan = TextSpan(
-      text: text,
-      style: textStyle,
-    );
-
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-
-    final position = Offset(rect.right + 5, rect.top + 25);
-
-    // 绘制背景
-    final bgRect = Rect.fromLTWH(position.dx - 2, position.dy - 2,
-        textPainter.width + 6, textPainter.height + 4);
-
-    canvas.drawRect(
-      bgRect,
-      Paint()
-        ..color = Colors.white.withOpacity(0.9)
-        ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawRect(
-      bgRect,
-      Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    textPainter.paint(canvas, position);
-  }
-
-  @override
-  bool shouldRepaint(AdjustableRegionPainter oldDelegate) {
-    return region != oldDelegate.region ||
-        isActive != oldDelegate.isActive ||
-        isAdjusting != oldDelegate.isAdjusting ||
-        activeHandleIndex != oldDelegate.activeHandleIndex ||
-        currentRotation != oldDelegate.currentRotation ||
-        guideLines != oldDelegate.guideLines ||
-        viewportRect != oldDelegate.viewportRect;
   }
 }

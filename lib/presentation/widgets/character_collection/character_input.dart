@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CharacterInput extends StatelessWidget {
+class CharacterInput extends StatefulWidget {
   final String value;
   final ValueChanged<String> onChanged;
 
@@ -9,6 +9,29 @@ class CharacterInput extends StatelessWidget {
     required this.value,
     required this.onChanged,
   }) : super(key: key);
+
+  @override
+  _CharacterInputState createState() => _CharacterInputState();
+}
+
+class _CharacterInputState extends State<CharacterInput> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.value);
+  }
+
+  @override
+  void didUpdateWidget(CharacterInput oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != _controller.text) {
+      _controller.text = widget.value;
+      _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: _controller.text.length));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +43,7 @@ class CharacterInput extends StatelessWidget {
         border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: TextField(
-        controller: TextEditingController(text: value)
-          ..selection = TextSelection.collapsed(offset: value.length),
+        controller: _controller,
         decoration: const InputDecoration(
           border: InputBorder.none,
           hintText: '请输入字符',
@@ -29,8 +51,14 @@ class CharacterInput extends StatelessWidget {
           contentPadding: EdgeInsets.zero,
         ),
         style: Theme.of(context).textTheme.bodyLarge,
-        onChanged: onChanged,
+        onChanged: widget.onChanged,
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

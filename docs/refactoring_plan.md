@@ -1,224 +1,269 @@
-# Image Preview Controls Refactoring Plan
+# ImagePreviewPanel 重构方案
 
-## Phase 1: Enhance BaseImagePreview
+## 1. 状态定义与转换
 
-### Current Issues
+### 1.1 核心状态
 
-1. BaseImagePreview lacks some essential features:
-   - Mouse wheel zoom support
-   - Loading indicators
-   - Advanced error handling
+```mermaid
+classDiagram
+    class CharacterRegion {
+        +String id
+        +String pageId
+        +String? characterId
+        +Rect rect
+        +double rotation
+        +bool isSaved
+        +DateTime updateTime
+    }
 
-### Changes Needed
+    class CharacterRegionState {
+        <<enumeration>>
+        normal
+        selected
+        adjusting
+    }
+```
+
+### 1.2 颜色状态变迁
+
+```mermaid
+stateDiagram-v2
+    [*] --> Normal
+
+    state "Normal" as N {
+        Saved --> Unsaved: 修改
+        Unsaved --> Saved: 保存
+    }
+
+    state "Selected" as S {
+        SelectedNormal --> SelectedModified: 修改
+        SelectedModified --> SelectedNormal: 保存
+    }
+
+    state "Adjusting" as A {
+        AdjustingInit --> AdjustingModified: 调整
+        AdjustingModified --> Normal: 失焦+保存
+        AdjustingModified --> Unsaved: 失焦+未保存
+    }
+
+    N --> S: 点击选择
+    S --> N: 取消选择
+    N --> A: 进入调整
+    A --> N: 退出调整
+```
+
+### 1.3 颜色映射关系
 
 ```dart
-class BaseImagePreview {
-  // Add new parameters
-  final bool enableMouseWheel;
-  final Widget Function(BuildContext)? loadingBuilder;
-  final Widget Function(BuildContext, dynamic)? errorBuilder;
-  final double minScale;
-  final double maxScale;
+class RegionColorScheme {
+  static const normalSaved = Colors.green;
+  static const normalUnsaved = Colors.blue;
+  static const selected = Colors.red;
+  static const adjusting = Colors.blue;
   
-  // Add new methods
-  void handleMouseWheel(PointerScrollEvent event);
-  void handleZoomReset();
-  Widget buildErrorDisplay(BuildContext context, dynamic error);
-  Widget buildLoadingIndicator(BuildContext context);
+  static const normalSavedOpacity = 0.05;
+  static const normalUnsavedOpacity = 0.1;
+  static const selectedOpacity = 0.2;
+  static const adjustingOpacity = 0.2;
 }
 ```
 
-### Implementation Steps
+## 2. 保存状态同步
 
-1. Update BaseImagePreview constructor parameters
-2. Add mouse wheel zoom support
-3. Enhance error and loading states
-4. Add zoom reset functionality
-5. Update existing uses of BaseImagePreview
+### 2.1 同步流程
 
-## Phase 2: Create EnhancedImagePreview
+```mermaid
+sequenceDiagram
+    participant Collection as CharacterCollection
+    participant Region as CharacterRegion
+    participant Edit as CharacterEditPanel
+    participant Service as CharacterService
+    
+    Collection->>Region: 修改选区
+    Region->>Collection: 更新修改状态
+    Collection->>Edit: 通知编辑面板
+    Edit->>Service: 保存修改
+    Service-->>Edit: 返回结果
+    Edit->>Collection: 更新保存状态
+    Collection->>Region: 更新isSaved
+```
 
-### New Component
+### 2.2 保存状态管理
 
 ```dart
-class EnhancedImagePreview extends StatefulWidget {
-  final PreviewMode mode;
-  final List<WorkImage> images;
-  final bool showThumbnails;
-  final bool showToolbar;
-  final Function(int)? onIndexChanged;
-  final Function(List<WorkImage>)? onImagesChanged;
+extension SaveStateManagement on CharacterCollectionProvider {
+  // 标记修改
+  void markAsModified(String regionId) {
+    state = state.copyWith(
+      modifiedIds: {...state.modifiedIds, regionId},
+    );
+    // 通知相关组件更新
+    notifyListeners();
+  }
+
+  // 标记已保存
+  void markAsSaved(String regionId) {
+    final region = regions.firstWhere((r) => r.id == regionId);
+    final updatedRegion = region.copyWith(
+      isSaved: true,
+      updateTime: DateTime.now(),
+    );
+    
+    // 更新区域
+    updateRegion(updatedRegion);
+    
+    // 从修改集合中移除
+    state = state.copyWith(
+      modifiedIds: {...state.modifiedIds}..remove(regionId),
+    );
+  }
+}
+```
+
+### 2.3 编辑面板同步
+
+```dart
+class CharacterEditSyncHandler {
+  // 处理保存完成
+  void handleSaveComplete(String regionId) {
+    // 更新选区状态
+    ref.read(characterCollectionProvider.notifier)
+      .markAsSaved(regionId);
+      
+    // 更新编辑面板状态
+    ref.read(characterEditProvider.notifier)
+      .updateSaveState(true);
+  }
   
-  // Mode specific callbacks
-  final Function(WorkImage)? onImageAdded;
-  final Function(String)? onImageDeleted;
-  final Function(int, int)? onImagesReordered;
+  // 处理修改
+  void handleModification(String regionId) {
+    // 更新选区状态
+    ref.read(characterCollectionProvider.notifier)
+      .markAsModified(regionId);
+      
+    // 更新编辑面板状态
+    ref.read(characterEditProvider.notifier)
+      .updateSaveState(false);
+  }
 }
 ```
 
-### Implementation Steps
+## 3. 实现步骤
 
-1. Create new EnhancedImagePreview class
-2. Migrate work import and edit previews to use EnhancedImagePreview
-3. Add toolbar functionality
-4. Integrate thumbnail strip
+### 3.1 阶段一：状态系统改造
 
-## Phase 3: Refactor Existing Components
+1. 定义CharacterRegionState枚举
+2. 实现颜色映射系统
+3. 添加保存状态追踪机制
 
-### WorkImportPreview
+### 3.2 阶段二：同步机制实现
 
-1. Remove direct BaseImagePreview usage
-2. Use EnhancedImagePreview with import mode
-3. Move import-specific logic to callbacks
+1. 构建保存状态管理器
+2. 实现编辑面板同步逻辑
+3. 优化状态转换流程
+
+### 3.3 阶段三：UI更新
+
+1. 更新RegionsPainter的绘制逻辑
+2. 优化视觉反馈系统
+3. 完善交互体验
+
+## 4. 关键代码示例
+
+### 4.1 选区状态管理
 
 ```dart
-// Before
-class WorkImportPreview extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BaseImagePreview(...);
+class CharacterRegionStateManager {
+  void updateState(String regionId, CharacterRegionState newState) {
+    final region = getRegion(regionId);
+    if (region == null) return;
+    
+    switch (newState) {
+      case CharacterRegionState.normal:
+        exitAdjustingMode();
+        clearSelection();
+        break;
+      case CharacterRegionState.selected:
+        if (currentToolMode == Tool.pan) {
+          selectRegion(regionId);
+        }
+        break;
+      case CharacterRegionState.adjusting:
+        if (currentToolMode == Tool.select) {
+          enterAdjustingMode(regionId);
+        }
+        break;
+    }
   }
 }
+```
 
-// After
-class WorkImportPreview extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return EnhancedImagePreview(
-      mode: PreviewMode.import,
-      images: state.images,
-      showThumbnails: true,
-      showToolbar: true,
-      onImageAdded: viewModel.addImage,
-      onImageDeleted: viewModel.removeImage,
+### 4.2 保存状态监听
+
+```dart
+class SaveStateListener {
+  void initialize() {
+    // 监听编辑面板的保存事件
+    ref.listen<SaveState>(characterEditProvider, (previous, next) {
+      if (next.isSuccess && previous?.isSuccess != true) {
+        final regionId = ref.read(selectedRegionProvider)?.id;
+        if (regionId != null) {
+          ref.read(characterCollectionProvider.notifier)
+            .markAsSaved(regionId);
+        }
+      }
+    });
+    
+    // 监听选区修改
+    ref.listen<CharacterCollectionState>(
+      characterCollectionProvider,
+      (previous, next) {
+        final modifiedIds = next.modifiedIds;
+        if (modifiedIds != previous?.modifiedIds) {
+          _updateEditPanelState(modifiedIds.isNotEmpty);
+        }
+      }
     );
   }
 }
 ```
 
-### WorkImagesManagementView
+## 5. 测试计划
 
-1. Remove direct image preview implementation
-2. Use EnhancedImagePreview with edit mode
-3. Move edit-specific logic to callbacks
+### 5.1 状态转换测试
 
-```dart
-// Before
-class WorkImagesManagementView extends ConsumerStatefulWidget {
-  // Current implementation
-}
+1. 测试所有可能的状态转换
+2. 验证颜色变化的正确性
+3. 检查边界情况处理
 
-// After
-class WorkImagesManagementView extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context) {
-    return EnhancedImagePreview(
-      mode: PreviewMode.edit,
-      images: editorState.images,
-      showThumbnails: true,
-      showToolbar: true,
-      onImagesReordered: handleReorder,
-      onImageAdded: handleAdd,
-      onImageDeleted: handleDelete,
-    );
-  }
-}
-```
+### 5.2 保存同步测试
 
-### ViewModeImagePreview
+1. 测试保存流程
+2. 验证状态同步
+3. 测试错误处理
 
-1. Use EnhancedImagePreview with view mode
-2. Enable zoom functionality
-3. Keep simple interface
+### 5.3 集成测试
 
-```dart
-// Before
-class ViewModeImagePreview extends ConsumerStatefulWidget {
-  // Current implementation
-}
+1. 工具模式切换
+2. 选区状态更新
+3. 编辑面板交互
 
-// After
-class ViewModeImagePreview extends ConsumerWidget {
-  @override
-  Widget build(BuildContext context) {
-    return EnhancedImagePreview(
-      mode: PreviewMode.view,
-      images: widget.images,
-      showThumbnails: true,
-      showToolbar: false,
-      enableZoom: true,
-    );
-  }
-}
-```
+## 6. 注意事项
 
-### CharacterExtractionPreview
+### 6.1 性能优化
 
-1. Add thumbnail strip
-2. Keep specialized features
-3. Use enhanced zoom controls
+1. 减少不必要的状态更新
+2. 优化渲染性能
+3. 实现状态缓存
 
-```dart
-class CharacterExtractionPreview extends StatefulWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: EnhancedImagePreview(
-            mode: PreviewMode.extract,
-            images: widget.images,
-            showThumbnails: true,
-            enableZoom: true,
-          ),
-        ),
-        CharacterExtractionPanel(...),
-      ],
-    );
-  }
-}
-```
+### 6.2 错误处理
 
-## Phase 4: Update Tests and Documentation
+1. 保存失败恢复
+2. 状态同步异常处理
+3. 用户操作容错
 
-### Test Updates
+### 6.3 兼容性
 
-1. Add tests for new BaseImagePreview features
-2. Create test suite for EnhancedImagePreview
-3. Update existing component tests
-4. Add integration tests for mode transitions
-
-### Documentation
-
-1. Update component documentation
-2. Add migration guide for existing usages
-3. Document new features and capabilities
-4. Provide usage examples for each mode
-
-## Migration Order
-
-1. Create and test enhanced BaseImagePreview
-2. Implement EnhancedImagePreview
-3. Migrate WorkImportPreview and WorkImagesManagementView
-4. Update ViewModeImagePreview
-5. Enhance CharacterExtractionPreview
-6. Run full test suite
-7. Deploy changes gradually
-
-## Risks and Mitigations
-
-### Risks
-
-1. Breaking existing functionality
-2. Performance impact
-3. State management complexity
-4. Migration challenges
-
-### Mitigations
-
-1. Comprehensive test coverage
-2. Performance benchmarking
-3. Clear state boundaries
-4. Gradual rollout
-5. Feature flags for new functionality
-6. Fallback options
+1. 保持现有功能
+2. 向后兼容
+3. 平滑过渡

@@ -77,6 +77,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(handleTabChange);
 
     // 初始化时清除擦除状态
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -84,13 +85,18 @@ class _RightPanelState extends ConsumerState<RightPanel>
     });
   }
 
-  Widget _buildCharacterEditor(ui.Image image) {
-    final workImageState = ref.watch(workImageProvider);
+  Widget _buildCharacterEditor(
+    CharacterRegion selectedRegion,
+    WorkImageState imageState,
+    ProcessingOptions processingOptions,
+  ) {
     return CharacterEditPanel(
-      key: ValueKey(image.hashCode),
-      image: image,
+      key: ValueKey('editor_${selectedRegion.id}'),
+      selectedRegion: selectedRegion,
       workId: widget.workId,
-      pageId: workImageState.currentPageId ?? '',
+      pageId: imageState.currentPageId ?? '',
+      imageData: imageState.imageData,
+      processingOptions: processingOptions,
       onEditComplete: _handleEditComplete,
     );
   }
@@ -118,44 +124,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
       );
     }
 
-    if (imageState.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (imageState.error != null) {
-      return Center(
-        child: Text(
-          '加载失败: ${imageState.error}',
-          style: const TextStyle(color: Colors.red),
-        ),
-      );
-    }
-
-    return FutureBuilder<ui.Image>(
-      future: _getSelectedRegionImage(
-        selectedRegion,
-        imageState.imageData,
-        processingOptions,
-      ),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError || !snapshot.hasData) {
-          return Center(
-            child: Text(
-              '处理选中区域失败: ${snapshot.error ?? "未知错误"}',
-              style: const TextStyle(color: Colors.red),
-            ),
-          );
-        }
-
-        return Center(
-          child: _buildCharacterEditor(snapshot.data!),
-        );
-      },
-    );
+    return _buildCharacterEditor(selectedRegion, imageState, processingOptions);
   }
 
   Widget _buildTabBar() {
@@ -177,33 +146,6 @@ class _RightPanelState extends ConsumerState<RightPanel>
         indicatorColor: Theme.of(context).colorScheme.primary,
       ),
     );
-  }
-
-  Future<ui.Image> _getSelectedRegionImage(
-    CharacterRegion region,
-    Uint8List? imageData,
-    ProcessingOptions processingOptions,
-  ) async {
-    if (imageData == null) {
-      throw Exception('No image data available');
-    }
-
-    final imageProcessor = ref.read(characterImageProcessorProvider);
-    final preview = await imageProcessor.previewProcessing(
-      imageData,
-      region.rect,
-      processingOptions,
-      null,
-    );
-
-    final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
-    final completer = Completer<ui.Image>();
-
-    ui.decodeImageFromList(bytes, (result) {
-      completer.complete(result);
-    });
-
-    return completer.future;
   }
 
   void _handleEditComplete(Map<String, dynamic> result) {

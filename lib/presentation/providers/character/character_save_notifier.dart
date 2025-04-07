@@ -30,8 +30,11 @@ class CharacterSaveNotifier extends StateNotifier<SaveState> {
         workId,
       );
 
-      // 保存成功，更新状态
-      state = state.copyWith(isSaving: false);
+      // 保存成功，更新状态，记录最后保存的characterId
+      state = state.copyWith(
+        isSaving: false,
+        lastSavedCharacterId: savedEntity.id,
+      );
       return Result.success(savedEntity.id);
     } catch (e) {
       // 保存失败，更新错误状态
@@ -57,19 +60,23 @@ class CharacterSaveNotifier extends StateNotifier<SaveState> {
 class SaveState {
   final bool isSaving;
   final String? error;
+  final String? lastSavedCharacterId;
 
   const SaveState({
     this.isSaving = false,
     this.error,
+    this.lastSavedCharacterId,
   });
 
   SaveState copyWith({
     bool? isSaving,
     String? error,
+    String? lastSavedCharacterId,
   }) {
     return SaveState(
       isSaving: isSaving ?? this.isSaving,
       error: error ?? this.error,
+      lastSavedCharacterId: lastSavedCharacterId ?? this.lastSavedCharacterId,
     );
   }
 }

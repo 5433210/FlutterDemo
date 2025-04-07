@@ -14,13 +14,16 @@ _$CharacterRegionImpl _$$CharacterRegionImplFromJson(
       rect:
           const RectConverter().fromJson(json['rect'] as Map<String, dynamic>),
       rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
-      character: json['character'] as String,
+      character: json['character'] as String? ?? '',
       createTime: DateTime.parse(json['createTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
-      options:
-          ProcessingOptions.fromJson(json['options'] as Map<String, dynamic>),
+      options: json['options'] == null
+          ? const ProcessingOptions()
+          : ProcessingOptions.fromJson(json['options'] as Map<String, dynamic>),
       erasePoints:
           const OffsetListConverter().fromJson(json['erasePoints'] as List?),
+      isSaved: json['isSaved'] as bool? ?? false,
+      characterId: json['characterId'] as String?,
     );
 
 Map<String, dynamic> _$$CharacterRegionImplToJson(
@@ -35,4 +38,6 @@ Map<String, dynamic> _$$CharacterRegionImplToJson(
       'updateTime': instance.updateTime.toIso8601String(),
       'options': instance.options,
       'erasePoints': const OffsetListConverter().toJson(instance.erasePoints),
+      'isSaved': instance.isSaved,
+      'characterId': instance.characterId,
     };

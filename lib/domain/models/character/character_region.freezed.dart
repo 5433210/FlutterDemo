@@ -31,6 +31,8 @@ mixin _$CharacterRegion {
   ProcessingOptions get options => throw _privateConstructorUsedError;
   @OffsetListConverter()
   List<Offset>? get erasePoints => throw _privateConstructorUsedError;
+  bool get isSaved => throw _privateConstructorUsedError;
+  String? get characterId => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterRegion to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -57,7 +59,9 @@ abstract class $CharacterRegionCopyWith<$Res> {
       DateTime createTime,
       DateTime updateTime,
       ProcessingOptions options,
-      @OffsetListConverter() List<Offset>? erasePoints});
+      @OffsetListConverter() List<Offset>? erasePoints,
+      bool isSaved,
+      String? characterId});
 
   $ProcessingOptionsCopyWith<$Res> get options;
 }
@@ -86,6 +90,8 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
     Object? updateTime = null,
     Object? options = null,
     Object? erasePoints = freezed,
+    Object? isSaved = null,
+    Object? characterId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -124,6 +130,14 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
           ? _value.erasePoints
           : erasePoints // ignore: cast_nullable_to_non_nullable
               as List<Offset>?,
+      isSaved: null == isSaved
+          ? _value.isSaved
+          : isSaved // ignore: cast_nullable_to_non_nullable
+              as bool,
+      characterId: freezed == characterId
+          ? _value.characterId
+          : characterId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 
@@ -155,7 +169,9 @@ abstract class _$$CharacterRegionImplCopyWith<$Res>
       DateTime createTime,
       DateTime updateTime,
       ProcessingOptions options,
-      @OffsetListConverter() List<Offset>? erasePoints});
+      @OffsetListConverter() List<Offset>? erasePoints,
+      bool isSaved,
+      String? characterId});
 
   @override
   $ProcessingOptionsCopyWith<$Res> get options;
@@ -183,6 +199,8 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
     Object? updateTime = null,
     Object? options = null,
     Object? erasePoints = freezed,
+    Object? isSaved = null,
+    Object? characterId = freezed,
   }) {
     return _then(_$CharacterRegionImpl(
       id: null == id
@@ -221,6 +239,14 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
           ? _value._erasePoints
           : erasePoints // ignore: cast_nullable_to_non_nullable
               as List<Offset>?,
+      isSaved: null == isSaved
+          ? _value.isSaved
+          : isSaved // ignore: cast_nullable_to_non_nullable
+              as bool,
+      characterId: freezed == characterId
+          ? _value.characterId
+          : characterId // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -233,11 +259,13 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       required this.pageId,
       @RectConverter() required this.rect,
       this.rotation = 0.0,
-      required this.character,
+      this.character = '',
       required this.createTime,
       required this.updateTime,
-      required this.options,
-      @OffsetListConverter() final List<Offset>? erasePoints})
+      this.options = const ProcessingOptions(),
+      @OffsetListConverter() final List<Offset>? erasePoints,
+      this.isSaved = false,
+      this.characterId})
       : _erasePoints = erasePoints;
 
   factory _$CharacterRegionImpl.fromJson(Map<String, dynamic> json) =>
@@ -254,12 +282,14 @@ class _$CharacterRegionImpl implements _CharacterRegion {
   @JsonKey()
   final double rotation;
   @override
+  @JsonKey()
   final String character;
   @override
   final DateTime createTime;
   @override
   final DateTime updateTime;
   @override
+  @JsonKey()
   final ProcessingOptions options;
   final List<Offset>? _erasePoints;
   @override
@@ -273,8 +303,14 @@ class _$CharacterRegionImpl implements _CharacterRegion {
   }
 
   @override
+  @JsonKey()
+  final bool isSaved;
+  @override
+  final String? characterId;
+
+  @override
   String toString() {
-    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, rotation: $rotation, character: $character, createTime: $createTime, updateTime: $updateTime, options: $options, erasePoints: $erasePoints)';
+    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, rotation: $rotation, character: $character, createTime: $createTime, updateTime: $updateTime, options: $options, erasePoints: $erasePoints, isSaved: $isSaved, characterId: $characterId)';
   }
 
   @override
@@ -295,7 +331,10 @@ class _$CharacterRegionImpl implements _CharacterRegion {
                 other.updateTime == updateTime) &&
             (identical(other.options, options) || other.options == options) &&
             const DeepCollectionEquality()
-                .equals(other._erasePoints, _erasePoints));
+                .equals(other._erasePoints, _erasePoints) &&
+            (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
+            (identical(other.characterId, characterId) ||
+                other.characterId == characterId));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -310,7 +349,9 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       createTime,
       updateTime,
       options,
-      const DeepCollectionEquality().hash(_erasePoints));
+      const DeepCollectionEquality().hash(_erasePoints),
+      isSaved,
+      characterId);
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.
@@ -331,16 +372,17 @@ class _$CharacterRegionImpl implements _CharacterRegion {
 
 abstract class _CharacterRegion implements CharacterRegion {
   const factory _CharacterRegion(
-          {required final String id,
-          required final String pageId,
-          @RectConverter() required final Rect rect,
-          final double rotation,
-          required final String character,
-          required final DateTime createTime,
-          required final DateTime updateTime,
-          required final ProcessingOptions options,
-          @OffsetListConverter() final List<Offset>? erasePoints}) =
-      _$CharacterRegionImpl;
+      {required final String id,
+      required final String pageId,
+      @RectConverter() required final Rect rect,
+      final double rotation,
+      final String character,
+      required final DateTime createTime,
+      required final DateTime updateTime,
+      final ProcessingOptions options,
+      @OffsetListConverter() final List<Offset>? erasePoints,
+      final bool isSaved,
+      final String? characterId}) = _$CharacterRegionImpl;
 
   factory _CharacterRegion.fromJson(Map<String, dynamic> json) =
       _$CharacterRegionImpl.fromJson;
@@ -365,6 +407,10 @@ abstract class _CharacterRegion implements CharacterRegion {
   @override
   @OffsetListConverter()
   List<Offset>? get erasePoints;
+  @override
+  bool get isSaved;
+  @override
+  String? get characterId;
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.

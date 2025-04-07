@@ -64,56 +64,59 @@ class _CharacterCollectionPageState
     final collectionState = ref.watch(characterCollectionProvider);
     final imageState = ref.watch(workImageProvider);
 
-    return Scaffold(
-      body: Column(
-        children: [
-          // 导航栏
-          CharacterNavigationBar(
-            workId: widget.workId,
-            onBack: () => Navigator.of(context).pop(),
-          ),
-
-          // 主体内容
-          Expanded(
-            child: Stack(
-              children: [
-                if (_isImageValid)
-                  Row(
-                    children: [
-                      // 左侧图片预览区
-                      const Expanded(
-                        flex: 6,
-                        child: ImagePreviewPanel(),
-                      ),
-
-                      // 右侧面板
-                      Expanded(
-                        flex: 4,
-                        child: RightPanel(workId: widget.workId),
-                      ),
-                    ],
-                  )
-                else
-                  _buildImageErrorState(),
-
-                // 使用Stack显示加载覆盖层和错误消息
-                if (collectionState.loading ||
-                    collectionState.processing ||
-                    imageState.loading)
-                  const Positioned.fill(child: LoadingOverlay()),
-
-                // 错误提示
-                if (collectionState.error != null)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 20,
-                    child: _buildErrorMessage(collectionState.error!),
-                  ),
-              ],
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: Column(
+          children: [
+            // 导航栏
+            CharacterNavigationBar(
+              workId: widget.workId,
+              onBack: () => _onBackPressed(),
             ),
-          ),
-        ],
+
+            // 主体内容
+            Expanded(
+              child: Stack(
+                children: [
+                  if (_isImageValid)
+                    Row(
+                      children: [
+                        // 左侧图片预览区
+                        const Expanded(
+                          flex: 6,
+                          child: ImagePreviewPanel(),
+                        ),
+
+                        // 右侧面板
+                        Expanded(
+                          flex: 4,
+                          child: RightPanel(workId: widget.workId),
+                        ),
+                      ],
+                    )
+                  else
+                    _buildImageErrorState(),
+
+                  // 使用Stack显示加载覆盖层和错误消息
+                  if (collectionState.loading ||
+                      collectionState.processing ||
+                      imageState.loading)
+                    const Positioned.fill(child: LoadingOverlay()),
+
+                  // 错误提示
+                  if (collectionState.error != null)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 20,
+                      child: _buildErrorMessage(collectionState.error!),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -340,5 +343,53 @@ class _CharacterCollectionPageState
       AppLogger.error('验证图像数据时出错', tag: 'CharacterCollectionPage', error: e);
       return false;
     }
+  }
+
+  // 处理返回按钮点击
+  void _onBackPressed() {
+    _checkUnsavedChanges().then((canPop) {
+      if (canPop) {
+        Navigator.of(context).pop();
+      }
+    });
+  }
+
+  // 检查未保存的修改
+  Future<bool> _onWillPop() async {
+    return await _checkUnsavedChanges();
+  }
+
+  // 检查是否有未保存的修改，显示确认对话框
+  Future<bool> _checkUnsavedChanges() async {
+    final state = ref.read(characterCollectionProvider);
+
+    // 检查是否有未保存的修改
+    if (state.hasUnsavedChanges) {
+      // 显示确认对话框
+      final result = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('未保存的修改'),
+          content: const Text('您有未保存的区域修改，离开将丢失这些修改。\n\n是否确定离开？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // 取消
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true), // 确认离开
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('离开'),
+            ),
+          ],
+        ),
+      );
+
+      return result ?? false;
+    }
+
+    // 没有未保存的修改，可以直接离开
+    return true;
   }
 }

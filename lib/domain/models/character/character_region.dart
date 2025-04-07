@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/utils/json_converters.dart';
 import 'processing_options.dart';
@@ -16,11 +17,13 @@ class CharacterRegion with _$CharacterRegion {
     required String pageId,
     @RectConverter() required Rect rect,
     @Default(0.0) double rotation,
-    required String character,
+    @Default('') String character,
     required DateTime createTime,
     required DateTime updateTime,
-    required ProcessingOptions options,
-    @OffsetListConverter() List<Offset>? erasePoints, // 新增：擦除点列表
+    @Default(ProcessingOptions()) ProcessingOptions options,
+    @OffsetListConverter() List<Offset>? erasePoints,
+    @Default(false) bool isSaved,
+    String? characterId,
   }) = _CharacterRegion;
 
   factory CharacterRegion.create({
@@ -29,6 +32,7 @@ class CharacterRegion with _$CharacterRegion {
     double rotation = 0.0,
     String character = '',
     ProcessingOptions? options,
+    String? characterId,
   }) {
     final now = DateTime.now();
     return CharacterRegion(
@@ -40,6 +44,8 @@ class CharacterRegion with _$CharacterRegion {
       createTime: now,
       updateTime: now,
       options: options ?? const ProcessingOptions(),
+      isSaved: false,
+      characterId: characterId,
     );
   }
 
@@ -65,6 +71,7 @@ extension CharacterRegionExt on CharacterRegion {
       'erasePoints': erasePoints != null
           ? jsonEncode(erasePoints!.map((p) => {'x': p.dx, 'y': p.dy}).toList())
           : null,
+      'characterId': characterId,
     };
   }
 
@@ -91,6 +98,8 @@ extension CharacterRegionExt on CharacterRegion {
                   (point) => Offset(point['x'] as double, point['y'] as double))
               .toList()
           : [],
+      isSaved: json['isSaved'] as bool,
+      characterId: json['characterId'] as String?,
     );
   }
 }

@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
+import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../domain/models/character/processing_result.dart';
 import '../../presentation/providers/character/character_collection_provider.dart';
@@ -17,24 +20,32 @@ import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
 import 'dialogs/shortcuts_help_dialog.dart';
 import 'keyboard/shortcut_handler.dart';
+import '../../application/services/image/character_image_processor.dart';
+import '../../infrastructure/logging/logger.dart';
 
 /// 字符编辑面板组件
 ///
 /// 用于编辑作品图片中的字符区域。
 ///
-/// [image] - 要编辑的图片
+/// [selectedRegion] - 选中的字符区域
+/// [imageData] - 图像数据
+/// [processingOptions] - 处理选项
 /// [workId] - 作品ID
 /// [pageId] - 作品图片ID
 /// [onEditComplete] - 编辑完成时的回调函数
 class CharacterEditPanel extends ConsumerStatefulWidget {
-  final ui.Image image;
+  final CharacterRegion selectedRegion;
+  final Uint8List? imageData;
+  final ProcessingOptions processingOptions;
   final String workId;
   final String pageId;
   final Function(Map<String, dynamic>) onEditComplete;
 
   const CharacterEditPanel({
     super.key,
-    required this.image,
+    required this.selectedRegion,
+    required this.imageData,
+    required this.processingOptions,
     required this.workId,
     required this.pageId,
     required this.onEditComplete,
@@ -48,6 +59,10 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   final GlobalKey<CharacterEditCanvasState> _canvasKey = GlobalKey();
   final TextEditingController _characterController = TextEditingController();
   bool _isEditing = false;
+
+  // State for internal image loading
+  Future<ui.Image?>? _imageLoadingFuture;
+  ui.Image? _loadedImage;
 
   Map<Type, Action<Intent>> get _actions => {
         _SaveIntent: CallbackAction(onInvoke: (_) => _handleSave()),
@@ -94,6 +109,95 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       };
 
   @override
+  void initState() {
+    super.initState();
+    _characterController.text = widget.selectedRegion.character;
+    _initiateImageLoading();
+    // Clear erase state on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(erase.eraseStateProvider.notifier).clear();
+    });
+  }
+
+  @override
+  void didUpdateWidget(CharacterEditPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update character input if region character changes externally
+    if (widget.selectedRegion.character != _characterController.text) {
+      _characterController.text = widget.selectedRegion.character;
+    }
+    // Reload image if selected region or image data changes
+    if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
+        widget.imageData != oldWidget.imageData ||
+        widget.processingOptions != oldWidget.processingOptions) {
+      _initiateImageLoading();
+      // Clear erase state when region changes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(erase.eraseStateProvider.notifier).clear();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    try {
+      _loadedImage?.dispose();
+      _characterController.dispose();
+      // Consider clearing providers related to THIS panel instance if needed
+    } catch (e) {
+      AppLogger.error('Character edit panel dispose error: $e');
+    } finally {
+      super.dispose();
+    }
+  }
+
+  void _initiateImageLoading() {
+    if (widget.imageData != null) {
+      setState(() {
+        // Cancel previous future?
+        _loadedImage = null; // Clear current image while loading
+        _imageLoadingFuture = _loadAndProcessImage(
+          widget.selectedRegion,
+          widget.imageData!,
+          widget.processingOptions,
+        );
+      });
+    } else {
+      setState(() {
+        _imageLoadingFuture = Future.value(null); // Set future to null result
+        _loadedImage = null;
+      });
+    }
+  }
+
+  Future<ui.Image?> _loadAndProcessImage(
+    CharacterRegion region,
+    Uint8List imageData,
+    ProcessingOptions processingOptions,
+  ) async {
+    try {
+      final imageProcessor = ref.read(characterImageProcessorProvider);
+      final preview = await imageProcessor.previewProcessing(
+        imageData,
+        region.rect,
+        processingOptions,
+        null,
+      );
+
+      final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromList(bytes, completer.complete);
+      _loadedImage?.dispose(); // Dispose previous loaded image
+      _loadedImage = await completer.future;
+      return _loadedImage;
+    } catch (e, stack) {
+      AppLogger.error('Error loading/processing character image in panel',
+          error: e, stackTrace: stack);
+      return null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Shortcuts(
       shortcuts: _shortcuts,
@@ -107,29 +211,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
   }
 
-  @override
-  void dispose() {
-    try {
-      // 在 super.dispose() 之前进行所有清理工作
-      final notifier = ref.read(processedImageProvider.notifier);
-      notifier.clear();
-      _characterController.dispose();
-    } catch (e) {
-      debugPrint('Character edit panel dispose error: $e');
-    } finally {
-      super.dispose();
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Widget _buildBottomButtons(
-      SaveState saveState, ProcessedImageData processedImage) {
-    final bool isSaving = saveState.isSaving || processedImage.isProcessing;
-    final String? errorMessage = saveState.error ?? processedImage.error;
+  Widget _buildBottomButtons(SaveState saveState) {
+    final bool isSaving = saveState.isSaving;
+    final String? errorMessage = saveState.error;
 
     return Container(
       padding: const EdgeInsets.all(8.0),
@@ -157,13 +241,8 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             children: [
               if (!_isEditing)
                 TextButton(
-                  onPressed: isSaving
-                      ? null
-                      : () {
-                          setState(() {
-                            _isEditing = true;
-                          });
-                        },
+                  onPressed:
+                      isSaving ? null : () => setState(() => _isEditing = true),
                   child: Text(ShortcutTooltipBuilder.build(
                     '输入汉字',
                     EditorShortcuts.openInput,
@@ -209,11 +288,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           ),
           const SizedBox(width: 8),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _isEditing = false;
-              });
-            },
+            onPressed: () => setState(() => _isEditing = false),
             child: const Text('取消'),
           ),
         ],
@@ -223,40 +298,70 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
   Widget _buildContent() {
     final eraseState = ref.watch(erase.eraseStateProvider);
-    final pathRenderData = ref.watch(erase.pathRenderDataProvider);
+    final pathRenderData = ref.read(erase.pathRenderDataProvider);
     final saveState = ref.watch(characterSaveNotifierProvider);
-    final processedImage = ref.watch(processedImageProvider);
-    return Column(
-      children: [
-        if (_isEditing) _buildCharacterInput(),
-        Expanded(
-          child: Stack(
-            children: [
-              CharacterEditCanvas(
-                key: _canvasKey,
-                image: widget.image,
-                showOutline: eraseState.showContour,
-                invertMode: eraseState.isReversed,
-                imageInvertMode: eraseState.imageInvertMode,
-                brushSize: eraseState.brushSize,
-                brushColor: eraseState.brushColor,
-                onEraseStart: _handleEraseStart,
-                onEraseUpdate: _handleEraseUpdate,
-                onEraseEnd: _handleEraseEnd,
-              ),
-              if (processedImage.isProcessing)
-                const Center(
-                  child: CircularProgressIndicator(),
+    final processedImageNotifier = ref.watch(processedImageProvider.notifier);
+
+    return FutureBuilder<ui.Image?>(
+      future: _imageLoadingFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+          processedImageNotifier
+              .setError('图像加载失败: ${snapshot.error ?? "未知错误"}');
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  '无法加载或处理字符图像',
+                  style: TextStyle(color: Colors.red.shade700),
                 ),
-            ],
-          ),
-        ),
-        _buildToolbar(),
-        _buildBottomButtons(
-          saveState,
-          processedImage,
-        ),
-      ],
+                const SizedBox(height: 8),
+                Text(
+                  '${snapshot.error ?? "未知错误"}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Image loaded successfully
+        final loadedImageForCanvas = snapshot.data!;
+
+        return Column(
+          children: [
+            if (_isEditing) _buildCharacterInput(),
+            Expanded(
+              child: Stack(
+                children: [
+                  CharacterEditCanvas(
+                    key: _canvasKey,
+                    image: loadedImageForCanvas,
+                    showOutline: eraseState.showContour,
+                    invertMode: eraseState.isReversed,
+                    imageInvertMode: eraseState.imageInvertMode,
+                    brushSize: eraseState.brushSize,
+                    brushColor: eraseState.brushColor,
+                    onEraseStart: _handleEraseStart,
+                    onEraseUpdate: _handleEraseUpdate,
+                    onEraseEnd: _handleEraseEnd,
+                  ),
+                ],
+              ),
+            ),
+            _buildToolbar(),
+            _buildBottomButtons(saveState),
+          ],
+        );
+      },
     );
   }
 
@@ -432,9 +537,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
     if (confirmed != true) return;
     if (!mounted) return;
-    // 更新处理状态
-    if (!mounted) return;
-    ref.read(processedImageProvider.notifier).setProcessing(true);
 
     try {
       // 获取处理后的图像（带重试机制）
@@ -454,8 +556,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         operationName: '图像处理',
       );
       if (!mounted) return;
-// 更新处理后的图像
-      ref.read(processedImageProvider.notifier).setImage(processedImage);
 
       // 创建处理结果
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
@@ -511,11 +611,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       );
 
       // 保存（带重试机制）
-      await _RetryStrategy.run(
+      final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
+      final saveResult = await _RetryStrategy.run(
         operation: () async {
           if (!mounted) throw _SaveError('操作已取消');
 
-          final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
           final result = await saveNotifier.save(
               updatedRegion, processingResult, widget.workId);
 
@@ -540,9 +640,14 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         // 更新选区状态
         final collectionNotifier =
             ref.read(characterCollectionProvider.notifier);
-        collectionNotifier.selectRegion(updatedRegion.id);
+        final finalRegionId = saveResult.data!;
+        final finalRegion =
+            updatedRegion.copyWith(id: finalRegionId, isSaved: true);
+        collectionNotifier.updateSelectedRegion(finalRegion);
+        collectionNotifier.markAsSaved(finalRegionId);
 
         widget.onEditComplete({
+          'characterId': finalRegionId,
           'paths': pathRenderData.completedPaths ?? [],
           'processingOptions': processingOptions,
           'character': _characterController.text,
@@ -553,7 +658,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
       try {
         final errorMessage = e is _SaveError ? e.toString() : '保存失败：$e';
-        ref.read(processedImageProvider.notifier).setError(errorMessage);
+        ref.read(characterSaveNotifierProvider.notifier).state = ref
+            .read(characterSaveNotifierProvider)
+            .copyWith(error: errorMessage);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -568,10 +675,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         );
       } catch (e) {
         // 忽略在显示错误消息时可能发生的异常
-      }
-    } finally {
-      if (mounted) {
-        ref.read(processedImageProvider.notifier).setProcessing(false);
       }
     }
   }
