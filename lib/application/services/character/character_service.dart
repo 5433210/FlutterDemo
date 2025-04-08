@@ -1,7 +1,9 @@
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../domain/models/character/character_entity.dart';
 import '../../../domain/models/character/character_image_type.dart';
@@ -227,9 +229,69 @@ class CharacterService {
   /// 获取字符缩略图路径
   Future<String?> getCharacterThumbnailPath(String characterId) async {
     try {
-      return await _persistenceService.getThumbnailPath(characterId);
+      print('CharacterService - 获取缩略图路径: $characterId');
+      // 从持久化服务获取缩略图路径
+      final path = await _persistenceService.getThumbnailPath(characterId);
+
+      // 检查缩略图文件是否存在
+      final file = File(path);
+      final exists = await file.exists();
+
+      // 如果缩略图不存在，尝试从原始图像生成
+      if (!exists) {
+        print('CharacterService - 缩略图不存在，尝试重新生成: $path');
+        try {
+          // 获取字符详情
+          final character = await _repository.findById(characterId);
+          if (character == null) {
+            print('CharacterService - 字符不存在，无法重新生成缩略图: $characterId');
+            return path; // 即使文件不存在，也返回路径供上层处理
+          }
+
+          // 获取原始图像数据
+          final originalData =
+              await getCharacterImage(characterId, CharacterImageType.original);
+          if (originalData == null) {
+            print('CharacterService - 原始图像数据为空，无法重新生成缩略图');
+            return path;
+          }
+
+          // 生成新的缩略图
+          // 将原始图像解码为img.Image
+          final image = img.decodeImage(originalData);
+          if (image == null) {
+            print('CharacterService - 无法解码原始图像');
+            return path;
+          }
+
+          // 生成缩略图
+          final thumbnail = img.copyResize(image,
+              width: 100,
+              height: 100,
+              interpolation: img.Interpolation.average);
+
+          // 编码为JPEG数据
+          final thumbnailData =
+              Uint8List.fromList(img.encodeJpg(thumbnail, quality: 80));
+
+          // 保存到文件系统 - 直接写入文件而不是调用可能不存在的服务方法
+          await file.create(recursive: true);
+          await file.writeAsBytes(thumbnailData);
+
+          print('CharacterService - 缩略图重新生成成功: $path');
+          return path;
+        } catch (regenerateError) {
+          print('CharacterService - 重新生成缩略图失败: $regenerateError');
+          AppLogger.error('重新生成缩略图失败',
+              error: regenerateError, data: {'characterId': characterId});
+          return path; // 即使重新生成失败，也返回路径供上层处理
+        }
+      }
+
+      return path;
     } catch (e) {
-      AppLogger.error('获取缩略图路径失败', error: e);
+      AppLogger.error('获取缩略图路径失败',
+          error: e, data: {'characterId': characterId});
       return null;
     }
   }

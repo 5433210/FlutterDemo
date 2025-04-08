@@ -298,7 +298,9 @@ class CharacterRepositoryImpl implements CharacterRepository {
   CharacterEntity _fromDbMap(Map<String, dynamic> map) {
     // Parse region field
     final regionJson = jsonDecode(map['region'] as String);
-    final region = CharacterRegion.fromJson(regionJson);
+    final region = CharacterRegion.fromJson(regionJson).copyWith(
+      characterId: map['id'] as String,
+    );
 
     // Parse tags field
     final tagsJson = map['tags'] as String?;

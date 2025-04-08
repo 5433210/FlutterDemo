@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/path_info.dart';
@@ -75,10 +74,10 @@ class EraseState {
     // 反转模式(isReversed=true): 黑色 - 填充效果
     final brushColor = isReversed ? Colors.black : Colors.white;
 
-    if (kDebugMode) {
-      print(
-          '获取笔刷颜色 - isReversed=$isReversed => ${brushColor == Colors.black ? "黑色" : "白色"}');
-    }
+    // if (kDebugMode) {
+    //   print(
+    //       '获取笔刷颜色 - isReversed=$isReversed => ${brushColor == Colors.black ? "黑色" : "白色"}');
+    // }
 
     return brushColor;
   }

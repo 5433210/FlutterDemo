@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../application/services/character/character_service.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../domain/models/character/processing_result.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/character_collection_provider.dart';
-import '../../presentation/providers/character/character_edit_providers.dart'
-    hide PathRenderData;
+import '../../presentation/providers/character/character_edit_providers.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/selected_region_provider.dart';
@@ -163,102 +164,16 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     });
   }
 
-  Widget _buildBottomButtons(SaveState saveState) {
-    final bool isSaving = saveState.isSaving;
-    final String? errorMessage = saveState.error;
-
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (errorMessage != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                errorMessage,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (!_isEditing)
-                TextButton(
-                  onPressed:
-                      isSaving ? null : () => setState(() => _isEditing = true),
-                  child: Text(ShortcutTooltipBuilder.build(
-                    '输入汉字',
-                    EditorShortcuts.openInput,
-                  )),
-                ),
-              const SizedBox(width: 8),
-              ElevatedButton(
-                onPressed: isSaving ? null : () => _handleSave(),
-                child: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(ShortcutTooltipBuilder.build(
-                        '保存',
-                        EditorShortcuts.save,
-                      )),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCharacterInput() {
-    return Container(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _characterController,
-              decoration: const InputDecoration(
-                labelText: '请输入汉字',
-                hintText: '单个汉字',
-                border: OutlineInputBorder(),
-              ),
-              maxLength: 1,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-          const SizedBox(width: 8),
-          TextButton(
-            onPressed: () => setState(() => _isEditing = false),
-            child: const Text('取消'),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildContent() {
-    final eraseState = ref.watch(erase.eraseStateProvider);
-    final pathRenderData = ref.read(erase.pathRenderDataProvider);
     final saveState = ref.watch(characterSaveNotifierProvider);
+    final eraseState = ref.watch(erase.eraseStateProvider);
     final processedImageNotifier = ref.watch(processedImageProvider.notifier);
 
     return FutureBuilder<ui.Image?>(
       future: _imageLoadingFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildLoadingState();
         }
 
         if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
@@ -285,15 +200,19 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           );
         }
 
-        // Image loaded successfully
         final loadedImageForCanvas = snapshot.data!;
+        final region = ref.watch(selectedRegionProvider);
 
         return Column(
           children: [
-            if (_isEditing) _buildCharacterInput(),
+            // 顶部工具栏
+            _buildToolbar(),
+
+            // 主要内容区域
             Expanded(
               child: Stack(
                 children: [
+                  // 画布
                   CharacterEditCanvas(
                     key: _canvasKey,
                     image: loadedImageForCanvas,
@@ -306,10 +225,27 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                     onEraseUpdate: _handleEraseUpdate,
                     onEraseEnd: _handleEraseEnd,
                   ),
+
+                  // 缩略图预览
+                  if (region != null && region.id != null)
+                    Positioned(
+                      right: 16,
+                      top: 16,
+                      child: _buildThumbnailPreview(),
+                    ),
+
+                  // 字符输入悬浮窗
+                  if (_isEditing)
+                    Positioned(
+                      left: 16,
+                      top: 16,
+                      child: _buildCharacterInput(),
+                    ),
                 ],
               ),
             ),
-            _buildToolbar(),
+
+            // 底部按钮
             _buildBottomButtons(saveState),
           ],
         );
@@ -319,118 +255,418 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
   Widget _buildToolbar() {
     final eraseState = ref.watch(erase.eraseStateProvider);
-    final brushColor = eraseState.brushColor;
 
     return Container(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Theme.of(context).colorScheme.surface,
+      child: Row(
+        children: [
+          // 撤销/重做按钮组
+          _buildToolbarButtonGroup([
+            _ToolbarButton(
+              icon: Icons.undo,
+              tooltip: '撤销',
+              onPressed: eraseState.canUndo
+                  ? () => ref.read(erase.eraseStateProvider.notifier).undo()
+                  : null,
+              shortcut: EditorShortcuts.undo,
+            ),
+            _ToolbarButton(
+              icon: Icons.redo,
+              tooltip: '重做',
+              onPressed: eraseState.canRedo
+                  ? () => ref.read(erase.eraseStateProvider.notifier).redo()
+                  : null,
+              shortcut: EditorShortcuts.redo,
+            ),
+          ]),
+
+          const SizedBox(width: 16),
+
+          // 笔刷大小控制
+          Expanded(
+            child: Row(
+              children: [
+                const Icon(Icons.brush, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: eraseState.brushSize,
+                    min: 1.0,
+                    max: 50.0,
+                    onChanged: (value) {
+                      ref
+                          .read(erase.eraseStateProvider.notifier)
+                          .setBrushSize(value);
+                    },
+                  ),
+                ),
+                Text(
+                  eraseState.brushSize.toStringAsFixed(1),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 16),
+
+          // 工具按钮组
+          _buildToolbarButtonGroup([
+            _ToolbarButton(
+              icon: Icons.invert_colors,
+              tooltip: '反转模式',
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).toggleReverse();
+              },
+              isActive: eraseState.isReversed,
+              shortcut: EditorShortcuts.toggleInvert,
+            ),
+            _ToolbarButton(
+              icon: Icons.flip,
+              tooltip: '图像反转',
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+              },
+              isActive: eraseState.imageInvertMode,
+              shortcut: EditorShortcuts.toggleImageInvert,
+            ),
+            _ToolbarButton(
+              icon: Icons.border_all,
+              tooltip: '轮廓显示',
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).toggleContour();
+              },
+              isActive: eraseState.showContour,
+              shortcut: EditorShortcuts.toggleContour,
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbarButtonGroup(List<_ToolbarButton> buttons) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: buttons.map((button) {
+          final isFirst = buttons.indexOf(button) == 0;
+          final isLast = buttons.indexOf(button) == buttons.length - 1;
+
+          return Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: isFirst
+                    ? BorderSide.none
+                    : BorderSide(color: Colors.grey.shade300),
+              ),
+            ),
+            child: Tooltip(
+              message:
+                  ShortcutTooltipBuilder.build(button.tooltip, button.shortcut),
+              child: IconButton(
+                icon: Icon(
+                  button.icon,
+                  size: 20,
+                  color: button.isActive
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey.shade700,
+                ),
+                onPressed: button.onPressed,
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(),
+                style: IconButton.styleFrom(
+                  backgroundColor: button.isActive
+                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                      : null,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(isFirst ? 4 : 0),
+                      right: Radius.circular(isLast ? 4 : 0),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCharacterInput() {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
-        ),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Tooltip(
-                message:
-                    ShortcutTooltipBuilder.build('撤销', EditorShortcuts.undo),
-                child: IconButton(
-                  icon: const Icon(Icons.undo),
-                  onPressed: eraseState.canUndo
-                      ? () => ref.read(erase.eraseStateProvider.notifier).undo()
-                      : null,
+              const Icon(Icons.edit, size: 16, color: Colors.grey),
+              const SizedBox(width: 8),
+              const Text(
+                '输入汉字',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              Tooltip(
-                message:
-                    ShortcutTooltipBuilder.build('重做', EditorShortcuts.redo),
-                child: IconButton(
-                  icon: const Icon(Icons.redo),
-                  onPressed: eraseState.canRedo
-                      ? () => ref.read(erase.eraseStateProvider.notifier).redo()
-                      : null,
-                ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close, size: 16),
+                onPressed: () => setState(() => _isEditing = false),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
               ),
-              Expanded(
-                child: Slider(
-                  value: eraseState.brushSize,
-                  min: 1.0,
-                  max: 50.0,
-                  onChanged: (value) {
-                    ref
-                        .read(erase.eraseStateProvider.notifier)
-                        .setBrushSize(value);
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _characterController,
+            autofocus: true,
+            maxLength: 1,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24),
+            decoration: const InputDecoration(
+              hintText: '请输入',
+              counterText: '',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => setState(() => _isEditing = false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThumbnailPreview() {
+    // 检查region是否存在，如果不存在则不显示缩略图
+    final region = ref.watch(selectedRegionProvider);
+    if (region == null) {
+      print('CharacterEditPanel - 没有选中的区域，不显示缩略图');
+      return const SizedBox.shrink();
+    }
+
+    // 检查region的id是否存在，如果不存在则不显示缩略图
+    if (region.id == null) {
+      print('CharacterEditPanel - 区域ID为空，不显示缩略图');
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<String?>(
+      future: _getThumbnailPath(),
+      builder: (context, snapshot) {
+        print('CharacterEditPanel - 构建缩略图预览');
+
+        if (snapshot.hasError) {
+          print('CharacterEditPanel - 获取缩略图路径失败: ${snapshot.error}');
+          return _buildErrorWidget('加载缩略图失败');
+        }
+
+        if (!snapshot.hasData) {
+          print('CharacterEditPanel - 等待缩略图路径...');
+          return _buildLoadingWidget();
+        }
+
+        final thumbnailPath = snapshot.data!;
+        print('CharacterEditPanel - 获取到缩略图路径: $thumbnailPath');
+
+        return FutureBuilder<bool>(
+          future: File(thumbnailPath).exists(),
+          builder: (context, existsSnapshot) {
+            if (existsSnapshot.hasError) {
+              print(
+                  'CharacterEditPanel - 检查缩略图文件存在失败: ${existsSnapshot.error}');
+              return _buildErrorWidget('检查文件失败');
+            }
+
+            if (!existsSnapshot.hasData) {
+              print('CharacterEditPanel - 检查缩略图文件是否存在...');
+              return _buildLoadingWidget();
+            }
+
+            final exists = existsSnapshot.data!;
+            print(
+                'CharacterEditPanel - 缩略图文件${exists ? "存在" : "不存在"}: $thumbnailPath');
+
+            if (!exists) {
+              print('CharacterEditPanel - 缩略图文件不存在');
+              return _buildErrorWidget('缩略图不存在');
+            }
+
+            return FutureBuilder<int>(
+              future: File(thumbnailPath).length(),
+              builder: (context, sizeSnapshot) {
+                if (sizeSnapshot.hasError) {
+                  print(
+                      'CharacterEditPanel - 获取缩略图文件大小失败: ${sizeSnapshot.error}');
+                  return _buildErrorWidget('获取文件大小失败');
+                }
+
+                if (!sizeSnapshot.hasData) {
+                  print('CharacterEditPanel - 获取缩略图文件大小...');
+                  return _buildLoadingWidget();
+                }
+
+                final fileSize = sizeSnapshot.data!;
+                print('CharacterEditPanel - 缩略图文件大小: $fileSize 字节');
+
+                if (fileSize == 0) {
+                  print('CharacterEditPanel - 缩略图文件大小为0');
+                  return _buildErrorWidget('缩略图文件为空');
+                }
+
+                return Image.file(
+                  File(thumbnailPath),
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('CharacterEditPanel - 加载缩略图失败: $error');
+                    print('$stackTrace');
+                    return _buildErrorWidget('加载图片失败');
                   },
-                ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorWidget(String message) {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red),
+            SizedBox(height: 4),
+            Text(
+              message,
+              style: TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildBottomButtons(SaveState saveState) {
+    final bool isSaving = saveState.isSaving;
+    final String? errorMessage = saveState.error;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (errorMessage != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
               ),
-              Tooltip(
-                message: ShortcutTooltipBuilder.build(
-                    '反转模式', EditorShortcuts.toggleInvert),
-                child: IconButton(
-                  icon: const Icon(Icons.invert_colors),
-                  onPressed: () {
-                    ref.read(erase.eraseStateProvider.notifier).toggleReverse();
-                  },
-                  color: eraseState.isReversed
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Tooltip(
-                message: ShortcutTooltipBuilder.build(
-                    '图像反转', EditorShortcuts.toggleImageInvert),
-                child: IconButton(
-                  icon: const Icon(Icons.flip),
-                  onPressed: () {
-                    ref
-                        .read(erase.eraseStateProvider.notifier)
-                        .toggleImageInvert();
-                  },
-                  color: eraseState.imageInvertMode
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (!_isEditing)
+                TextButton.icon(
+                  onPressed:
+                      isSaving ? null : () => setState(() => _isEditing = true),
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: Text(ShortcutTooltipBuilder.build(
+                    '输入汉字',
+                    EditorShortcuts.openInput,
+                  )),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
                 ),
-              ),
-              Tooltip(
-                message: ShortcutTooltipBuilder.build(
-                    '轮廓显示', EditorShortcuts.toggleContour),
-                child: IconButton(
-                  icon: const Icon(Icons.border_all),
-                  onPressed: () {
-                    ref.read(erase.eraseStateProvider.notifier).toggleContour();
-                  },
-                  color: eraseState.showContour
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: isSaving ? null : () => _handleSave(),
+                icon: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save, size: 18),
+                label: Text(ShortcutTooltipBuilder.build(
+                  '保存',
+                  EditorShortcuts.save,
+                )),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
               ),
             ],
           ),
-          if (kDebugMode)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('笔刷颜色: ', style: TextStyle(fontSize: 12)),
-                  Container(
-                    width: 12,
-                    height: 12,
-                    color: brushColor,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                  ),
-                  Text('${brushColor == Colors.black ? "黑色" : "白色"} | ',
-                      style: const TextStyle(fontSize: 12)),
-                  Text('反转模式: ${eraseState.isReversed ? "开" : "关"} | ',
-                      style: const TextStyle(fontSize: 12)),
-                  Text('图像反转: ${eraseState.imageInvertMode ? "开" : "关"}',
-                      style: const TextStyle(fontSize: 12)),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -574,8 +810,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         final collectionNotifier =
             ref.read(characterCollectionProvider.notifier);
         final finalRegionId = saveResult.data!;
-        final finalRegion =
-            updatedRegion.copyWith(id: finalRegionId, isSaved: true);
+        final finalRegion = updatedRegion.copyWith(
+          id: finalRegionId,
+          isSaved: true,
+          characterId: finalRegionId,
+        );
         collectionNotifier.updateSelectedRegion(finalRegion);
         collectionNotifier.markAsSaved(finalRegionId);
 
@@ -655,6 +894,70 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     } catch (e, stack) {
       AppLogger.error('Error loading/processing character image in panel',
           error: e, stackTrace: stack);
+      return null;
+    }
+  }
+
+  // 构建加载状态
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(strokeWidth: 2),
+          SizedBox(height: 16),
+          Text('正在加载字符图像...', style: TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  // 获取缩略图路径
+  Future<String?> _getThumbnailPath() async {
+    try {
+      print('获取缩略图路径');
+
+      // 获取characterId，如果为空则使用region的id
+      final String? characterId =
+          widget.selectedRegion.characterId ?? widget.selectedRegion.id;
+      print('使用的characterId: $characterId');
+
+      if (characterId == null) {
+        print('characterId为空，无法获取缩略图');
+        throw Exception('characterId为空，无法获取缩略图');
+      }
+
+      final path = await ref
+          .read(characterCollectionProvider.notifier)
+          .getThumbnailPath(characterId);
+      print('获取到缩略图路径: $path');
+
+      if (path == null) {
+        throw Exception('缩略图路径为空');
+      }
+
+      final file = File(path);
+      final exists = await file.exists();
+      if (!exists) {
+        AppLogger.error('缩略图文件不存在',
+            data: {'path': path, 'characterId': characterId});
+        throw Exception('缩略图文件不存在');
+      }
+
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        AppLogger.error('缩略图文件大小为0',
+            data: {'path': path, 'characterId': characterId});
+        throw Exception('缩略图文件大小为0');
+      }
+
+      return path;
+    } catch (e) {
+      print('获取缩略图路径失败: $e');
+      AppLogger.error('获取缩略图路径失败', error: e, data: {
+        'characterId':
+            widget.selectedRegion.characterId ?? widget.selectedRegion.id
+      });
       return null;
     }
   }
@@ -756,4 +1059,20 @@ class _ValidationResult {
         isValid: false,
         error: error,
       );
+}
+
+class _ToolbarButton {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final bool isActive;
+  final SingleActivator shortcut;
+
+  const _ToolbarButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.isActive = false,
+    required this.shortcut,
+  });
 }

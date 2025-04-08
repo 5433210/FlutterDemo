@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../domain/models/character/character_region.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -56,25 +58,27 @@ class _ImageViewState extends ConsumerState<ImageView>
       TransformationController();
   final FocusNode _focusNode = FocusNode();
   CoordinateTransformer? _transformer;
+
   late final AnimationController _debugPanelController;
   late final Animation<double> _debugPanelAnimation;
   AnimationController? _animationController;
+  Timer? _transformationDebouncer;
   String? _lastImageId;
-
   bool _isFirstLoad = true;
 
   bool _isInSelectionMode = false;
+
   bool _isPanning = false;
   bool _isZoomed = false;
-
   // 选区相关
   Offset? _selectionStart;
+
   Offset? _selectionCurrent;
   Rect? _lastCompletedSelection;
   bool _hasCompletedSelection = false;
-
   // 调整相关
   bool _isAdjusting = false;
+
   String? _adjustingRegionId;
   int? _activeHandleIndex;
   List<Offset>? _guideLines;
@@ -85,7 +89,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   double _rotationStartAngle = 0.0;
   double _currentRotation = 0.0;
   Offset? _rotationCenter;
-
   bool _mounted = true;
 
   Offset? _lastPanPosition;
@@ -141,6 +144,34 @@ class _ImageViewState extends ConsumerState<ImageView>
             enableLogging: debugOptions.enableLogging,
           );
 
+          // 首次加载且图像和transformer都准备好时设置初始缩放
+          if (_isFirstLoad &&
+              imageState.hasValidImage &&
+              imageSize.width > 0 &&
+              imageSize.height > 0 &&
+              _transformer != null) {
+            // 确保在布局完成后执行
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!_mounted || _transformer == null) return;
+
+              final effectiveViewportSize = _transformer!.viewportSize;
+              _setInitialScale(
+                  imageSize: imageSize, viewportSize: effectiveViewportSize);
+
+              setState(() {
+                _isFirstLoad = false;
+                _isZoomed = false;
+              });
+
+              AppLogger.debug('首次加载完成，已设置初始缩放', data: {
+                'imageSize': '${imageSize.width}x${imageSize.height}',
+                'viewportSize':
+                    '${effectiveViewportSize.width}x${effectiveViewportSize.height}',
+                'scale': _transformer!.currentScale
+              });
+            });
+          }
+
           return Material(
             // 添加Material widget以支持elevation效果
             color: Colors.transparent,
@@ -195,7 +226,7 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   @override
-  void didUpdateWidget(covariant ImageView oldWidget) {
+  void didUpdateWidget(ImageView oldWidget) {
     super.didUpdateWidget(oldWidget);
     // 不在这里触发数据加载，改为观察图像状态变化
   }
@@ -203,7 +234,9 @@ class _ImageViewState extends ConsumerState<ImageView>
   @override
   void dispose() {
     _mounted = false;
+    _transformationDebouncer?.cancel();
     _animationController?.dispose();
+    _transformationController.removeListener(_onTransformationChanged);
     _transformationController.dispose();
     _focusNode.dispose();
     _debugPanelController.dispose();
@@ -221,6 +254,10 @@ class _ImageViewState extends ConsumerState<ImageView>
       parent: _debugPanelController,
       curve: Curves.easeInOut,
     );
+
+    // 添加变换矩阵变化监听
+    _transformationController.addListener(_onTransformationChanged);
+
     _initializeView();
 
     // Listen for external region deletions affecting the adjusted region
@@ -286,24 +323,36 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _activateAdjustmentMode(CharacterRegion region) {
-    setState(() {
-      _isAdjusting = true;
-      _adjustingRegionId = region.id;
-      _originalRegion = region;
-      // 将图像坐标系中的矩形转换为视口坐标系
-      _adjustingRect = _transformer!.imageRectToViewportRect(region.rect);
-      _currentRotation = region.rotation;
-      _selectionStart = null;
-      _selectionCurrent = null;
-      _hasCompletedSelection = false;
-    });
-    AppLogger.debug('选区进入调整模式', data: {
-      'regionId': region.id,
-      'isAdjusting': _isAdjusting,
-      'rect':
-          '${_adjustingRect!.left},${_adjustingRect!.top},${_adjustingRect!.width}x${_adjustingRect!.height}',
-      'rotation': _currentRotation,
-    });
+    if (_transformer == null) return;
+
+    try {
+      setState(() {
+        _isAdjusting = true;
+        _adjustingRegionId = region.id;
+        _originalRegion = region;
+        // 将图像坐标系中的矩形转换为视口坐标系
+        _adjustingRect = _transformer!.imageRectToViewportRect(region.rect);
+        _currentRotation = region.rotation;
+        _selectionStart = null;
+        _selectionCurrent = null;
+        _hasCompletedSelection = false;
+      });
+
+      // 记录激活状态
+      AppLogger.debug('选区进入调整模式', data: {
+        'regionId': region.id,
+        'isAdjusting': _isAdjusting,
+        'rect': '${_adjustingRect!.width}x${_adjustingRect!.height}',
+        'position': '${_adjustingRect!.left},${_adjustingRect!.top}',
+        'rotation': _currentRotation,
+        'scale': _transformer!.currentScale.toStringAsFixed(2)
+      });
+    } catch (e) {
+      AppLogger.error('激活调整模式失败',
+          error: e,
+          data: {'regionId': region.id, 'rect': region.rect.toString()});
+      _resetAdjustmentState();
+    }
   }
 
   Rect _adjustRect(Rect rect, Offset position, int handleIndex) {
@@ -1351,7 +1400,8 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _handleInteractionEnd(ScaleEndDetails details) {
-    // 结束平移
+    // 结束平移和清理定时器
+    _transformationDebouncer?.cancel();
     setState(() {
       _isPanning = false;
       _lastPanPosition = null;
@@ -1389,9 +1439,14 @@ class _ImageViewState extends ConsumerState<ImageView>
       _lastPanPosition = details.localFocalPoint;
     }
 
-    final scale = _transformer?.currentScale ?? 1.0;
-    setState(() {
-      _isZoomed = scale > 1.05;
+    // 添加防抖以避免频繁更新状态
+    _transformationDebouncer?.cancel();
+    _transformationDebouncer = Timer(const Duration(milliseconds: 16), () {
+      if (!_mounted) return;
+      final scale = _transformer?.currentScale ?? 1.0;
+      setState(() {
+        _isZoomed = scale > 1.05;
+      });
     });
   }
 
@@ -1722,8 +1777,33 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _initializeView() {
+    if (!_mounted) return;
+
+    // 重置变换控制器
+    _transformationController.value = Matrix4.identity();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _resetView(animate: false);
+      // 重置所有状态
+      setState(() {
+        _isFirstLoad = true;
+        _isZoomed = false;
+        _isPanning = false;
+        _lastImageId = null;
+
+        // 清理transformer相关状态
+        if (_transformer != null) {
+          _transformer = null;
+        }
+      });
+
+      // 检查当前图像状态
+      final imageState = ref.read(workImageProvider);
+      AppLogger.debug('视图初始化', data: {
+        'hasValidImage': imageState.hasValidImage,
+        'imageSize': imageState.hasValidImage
+            ? '${imageState.imageWidth}x${imageState.imageHeight}'
+            : 'none'
+      });
     });
   }
 
@@ -1779,6 +1859,44 @@ class _ImageViewState extends ConsumerState<ImageView>
       _handleRegionTap(hitRegion.id);
       return;
     }
+  }
+
+  /// 处理变换矩阵变化事件
+  void _onTransformationChanged() {
+    if (!_isAdjusting || _originalRegion == null || _transformer == null)
+      return;
+
+    // 使用防抖处理频繁的变换更新
+    _transformationDebouncer?.cancel();
+    _transformationDebouncer = Timer(const Duration(milliseconds: 16), () {
+      if (!_mounted) return;
+
+      // 计算新的视口矩形
+      final newRect =
+          _transformer!.imageRectToViewportRect(_originalRegion!.rect);
+
+      // 只在位置或大小有显著变化时更新
+      if (_adjustingRect == null ||
+          (newRect.left - _adjustingRect!.left).abs() > 0.1 ||
+          (newRect.top - _adjustingRect!.top).abs() > 0.1 ||
+          (newRect.width - _adjustingRect!.width).abs() > 0.1 ||
+          (newRect.height - _adjustingRect!.height).abs() > 0.1) {
+        setState(() {
+          _adjustingRect = newRect;
+          if (_guideLines != null) {
+            _guideLines = _calculateGuideLines(newRect);
+          }
+        });
+
+        AppLogger.debug('变换更新选区', data: {
+          'scale': _transformer!.currentScale.toStringAsFixed(2),
+          'rect':
+              '${newRect.width.toStringAsFixed(1)}x${newRect.height.toStringAsFixed(1)}',
+          'position':
+              '${newRect.left.toStringAsFixed(1)},${newRect.top.toStringAsFixed(1)}'
+        });
+      }
+    });
   }
 
   // 请求删除单个区域（显示确认对话框）
@@ -1895,31 +2013,86 @@ class _ImageViewState extends ConsumerState<ImageView>
   void _resetView({bool animate = true}) {
     if (_transformer == null) return;
 
-    final viewportSize = _transformer!.viewportSize;
-    final imageSize = _transformer!.imageSize;
-
-    final viewportRatio = viewportSize.width / viewportSize.height;
-    final imageRatio = imageSize.width / imageSize.height;
-
-    double scale;
-    if (viewportRatio < imageRatio) {
-      scale = viewportSize.width / imageSize.width * 0.98;
-    } else {
-      scale = viewportSize.height / imageSize.height * 0.98;
-    }
-
-    final matrix = Matrix4.identity()..scale(scale, scale);
-
-    if (animate && !_isFirstLoad) {
-      _animateMatrix(matrix);
-    } else {
-      _transformationController.value = matrix;
-      _isFirstLoad = false;
-    }
+    // 使用_setInitialScale来处理缩放
+    _setInitialScale(
+      imageSize: _transformer!.imageSize,
+      viewportSize: _transformer!.viewportSize,
+    );
 
     setState(() {
       _isZoomed = false;
     });
+  }
+
+  /// 设置图像初始缩放以适应视口
+  void _setInitialScale({
+    required Size imageSize,
+    required Size viewportSize,
+  }) {
+    // 避免重复调用动画设置
+    if (_animationController != null && _animationController!.isAnimating) {
+      AppLogger.debug('动画已在进行中，跳过缩放设置');
+      return;
+    }
+
+    try {
+      // 计算基础缩放比例：宽度/高度适配模式，取较小值以确保完整显示
+      final double widthScale = viewportSize.width / imageSize.width;
+      final double heightScale = viewportSize.height / imageSize.height;
+      final scale = math.min(widthScale, heightScale);
+
+      // 计算居中偏移
+      final double offsetX = (viewportSize.width - imageSize.width * scale) / 2;
+      final double offsetY =
+          (viewportSize.height - imageSize.height * scale) / 2;
+
+      // 构建变换矩阵
+      final targetMatrix = Matrix4.identity()
+        ..translate(offsetX, offsetY)
+        ..scale(scale, scale, 1.0);
+
+      // 使用动画平滑过渡
+      if (_animationController != null) {
+        _animationController!.dispose();
+      }
+
+      _animationController = AnimationController(
+        duration: const Duration(milliseconds: 300),
+        vsync: this,
+      );
+
+      final animation = Matrix4Tween(
+        begin: _transformationController.value,
+        end: targetMatrix,
+      ).animate(CurvedAnimation(
+        parent: _animationController!,
+        curve: Curves.easeOutCubic,
+      ));
+
+      animation.addListener(() {
+        if (_mounted) {
+          _transformationController.value = animation.value;
+        }
+      });
+
+      animation.addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          _animationController?.dispose();
+          _animationController = null;
+        }
+      });
+
+      _animationController!.forward();
+
+      AppLogger.debug('设置初始缩放', data: {
+        'scale': scale.toStringAsFixed(3),
+        'imageSize': '${imageSize.width}x${imageSize.height}',
+        'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+        'offset': '${offsetX.toStringAsFixed(1)},${offsetY.toStringAsFixed(1)}'
+      });
+    } catch (e) {
+      AppLogger.error('设置初始缩放失败', error: e);
+    }
   }
 
   Future<void> _tryLoadCharacterData() async {

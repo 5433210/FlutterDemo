@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
 
 final characterStorageServiceProvider =
     Provider<CharacterStorageService>((ref) {
@@ -157,8 +158,100 @@ class CharacterStorageService {
 
   // 获取缩略图路径
   Future<String> getThumbnailPath(String characterId) async {
-    final characterDir = await getCharacterDirectory(characterId);
-    return path.join(characterDir, 'thumbnail.jpg');
+    try {
+      await _ensureInitialized();
+
+      print('CharacterStorageService - 获取缩略图路径 - ID: $characterId');
+      print('CharacterStorageService - 存储根目录: $_baseStoragePath');
+      print('CharacterStorageService - 字符存储目录: $_charactersPath');
+
+      final characterDir = await getCharacterDirectory(characterId);
+      print('CharacterStorageService - 字符目录: $characterDir');
+
+      final thumbnailPath = path.join(characterDir, 'thumbnail.jpg');
+      print('CharacterStorageService - 完整缩略图路径: $thumbnailPath');
+
+      // 检查文件是否存在
+      final file = File(thumbnailPath);
+      final exists = await file.exists();
+      print(
+          'CharacterStorageService - 缩略图文件${exists ? "存在" : "不存在"}: $thumbnailPath');
+
+      if (!exists) {
+        print('CharacterStorageService - 缩略图文件不存在，尝试从原始图像生成');
+        try {
+          // 获取原始图像路径
+          final originalPath = path.join(characterDir, 'original.png');
+          final originalFile = File(originalPath);
+
+          if (!await originalFile.exists()) {
+            print('CharacterStorageService - 原始图像文件不存在，无法生成缩略图');
+            return thumbnailPath;
+          }
+
+          // 读取原始图像
+          final originalBytes = await originalFile.readAsBytes();
+          if (originalBytes.isEmpty) {
+            print('CharacterStorageService - 原始图像文件为空');
+            return thumbnailPath;
+          }
+
+          // 解码图像
+          final image = img.decodeImage(originalBytes);
+          if (image == null) {
+            print('CharacterStorageService - 无法解码原始图像');
+            return thumbnailPath;
+          }
+
+          // 生成缩略图
+          final thumbnail = img.copyResize(
+            image,
+            width: 100,
+            height: 100,
+            interpolation: img.Interpolation.average,
+          );
+
+          // 编码为JPEG
+          final thumbnailBytes = Uint8List.fromList(
+            img.encodeJpg(thumbnail, quality: 80),
+          );
+
+          // 保存缩略图
+          await file.writeAsBytes(thumbnailBytes);
+          print('CharacterStorageService - 缩略图生成成功');
+
+          // 验证生成的文件
+          final newExists = await file.exists();
+          final fileSize = await file.length();
+          print(
+              'CharacterStorageService - 新生成的缩略图文件${newExists ? "存在" : "不存在"}，大小: $fileSize 字节');
+        } catch (e) {
+          print('CharacterStorageService - 生成缩略图失败: $e');
+        }
+      } else {
+        // 验证现有文件
+        try {
+          final fileSize = await file.length();
+          print('CharacterStorageService - 现有缩略图文件大小: $fileSize 字节');
+
+          if (fileSize == 0) {
+            print('CharacterStorageService - 现有缩略图文件大小为0');
+          } else {
+            // 尝试读取文件内容
+            final bytes = await file.readAsBytes();
+            print('CharacterStorageService - 成功读取缩略图文件，大小: ${bytes.length} 字节');
+          }
+        } catch (e) {
+          print('CharacterStorageService - 验证现有缩略图文件失败: $e');
+        }
+      }
+
+      return thumbnailPath;
+    } catch (e, stack) {
+      print('CharacterStorageService - 获取缩略图路径异常: $e');
+      print('$stack');
+      rethrow;
+    }
   }
 
   // 检查存储空间是否足够

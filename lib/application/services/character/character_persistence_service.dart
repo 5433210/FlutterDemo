@@ -8,6 +8,7 @@ import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../providers/repository_providers.dart';
 import '../storage/cache_manager.dart';
 import '../storage/character_storage_service.dart';
@@ -165,8 +166,33 @@ class CharacterPersistenceService {
   }
 
   /// 获取字符缩略图路径
-  Future<String> getThumbnailPath(String id) =>
-      _storageService.getThumbnailPath(id);
+  Future<String> getThumbnailPath(String id) async {
+    try {
+      final path = await _storageService.getThumbnailPath(id);
+
+      // 添加日志检查生成的路径
+      print('字符缩略图路径生成: $path，ID: $id');
+
+      // 检查文件是否存在
+      final file = File(path);
+      final exists = await file.exists();
+      print('缩略图路径检查: ${exists ? '存在' : '不存在'} $path');
+
+      if (!exists) {
+        print('缩略图文件不存在: $path');
+      } else {
+        final fileSize = await file.length();
+        print('缩略图文件大小: $fileSize 字节');
+      }
+
+      return path;
+    } catch (e, stack) {
+      print('获取缩略图路径异常: $e');
+      AppLogger.error('获取缩略图路径异常',
+          error: e, stackTrace: stack, data: {'id': id});
+      rethrow;
+    }
+  }
 
   // 保存字符数据
   Future<CharacterEntity> saveCharacter(

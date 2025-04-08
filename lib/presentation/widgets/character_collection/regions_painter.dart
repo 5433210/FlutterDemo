@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
-import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/providers/character/tool_mode_provider.dart';
 import '../../../utils/coordinate_transformer.dart';
 import 'regions_state_utils.dart';
@@ -96,18 +95,18 @@ class RegionsPainter extends CustomPainter {
             isHovered: isHovered,
           );
 
-          // 精简日志，只记录选中或调整中的区域
-          if (isSelected || isRegionAdjusting) {
-            AppLogger.debug('RegionsPainter - Key Region State', data: {
-              'regionId': region.id,
-              'isSelected': isSelected,
-              'isAdjusting': isRegionAdjusting,
-              'isSaved': isSaved,
-              'tool': currentTool.toString(),
-              'regionState': regionState.toString(),
-              'borderColor': _colorToString(finalBorderColor),
-            });
-          }
+          // // 精简日志，只记录选中或调整中的区域
+          // if (isSelected || isRegionAdjusting) {
+          //   AppLogger.debug('RegionsPainter - Key Region State', data: {
+          //     'regionId': region.id,
+          //     'isSelected': isSelected,
+          //     'isAdjusting': isRegionAdjusting,
+          //     'isSaved': isSaved,
+          //     'tool': currentTool.toString(),
+          //     'regionState': regionState.toString(),
+          //     'borderColor': _colorToString(finalBorderColor),
+          //   });
+          // }
 
           // 绘制选区
           _drawRegion(

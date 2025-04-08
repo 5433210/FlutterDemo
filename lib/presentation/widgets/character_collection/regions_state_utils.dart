@@ -1,49 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region_state.dart';
-import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character/tool_mode_provider.dart';
 
 /// 区域状态工具类
 /// 提供获取区域状态和对应颜色的方法
 class RegionStateUtils {
-  /// 获取区域的状态
-  /// 根据当前工具模式和区域的选中、调整状态确定区域状态
-  static CharacterRegionState getRegionState({
-    required Tool currentTool,
-    required bool isSelected,
-    required bool isAdjusting,
-  }) {
-    // 如果正在调整，返回调整状态
-    if (isAdjusting) {
-      return CharacterRegionState.adjusting;
-    }
-
-    // 如果被选中，根据工具模式确定状态
-    if (isSelected) {
-      // 在Select模式下，选中的区域应该显示为adjusting状态（蓝色）
-      if (currentTool == Tool.select) {
-        AppLogger.debug('Select模式下选中区域使用adjusting状态', data: {
-          'tool': currentTool.toString(),
-          'isSelected': isSelected,
-          'state': 'adjusting',
-        });
-        return CharacterRegionState.adjusting;
-      }
-
-      // 在其他模式下（如Pan模式），使用selected状态（红色）
-      AppLogger.debug('非Select模式下选中区域使用selected状态', data: {
-        'tool': currentTool.toString(),
-        'isSelected': isSelected,
-        'state': 'selected',
-      });
-      return CharacterRegionState.selected;
-    }
-
-    // 其他情况返回正常状态
-    return CharacterRegionState.normal;
-  }
-
   /// 获取区域边框颜色
   /// 根据区域状态、保存状态和悬停状态确定边框颜色
   static Color getBorderColor({
@@ -68,15 +30,15 @@ class RegionStateUtils {
         break;
     }
 
-    // 添加调试日志，特别关注红色边框场景
-    if (state == CharacterRegionState.adjusting ||
-        (result.value == CharacterRegionColorScheme.selected)) {
-      AppLogger.debug('边框颜色计算', data: {
-        'state': state.toString(),
-        'isSaved': isSaved,
-        'colorHex': '#${result.value.toRadixString(16)}',
-      });
-    }
+    // // 添加调试日志，特别关注红色边框场景
+    // if (state == CharacterRegionState.adjusting ||
+    //     (result.value == CharacterRegionColorScheme.selected)) {
+    //   AppLogger.debug('边框颜色计算', data: {
+    //     'state': state.toString(),
+    //     'isSaved': isSaved,
+    //     'colorHex': '#${result.value.toRadixString(16)}',
+    //   });
+    // }
 
     return result;
   }
@@ -117,5 +79,42 @@ class RegionStateUtils {
     }
 
     return baseColor.withOpacity(opacity);
+  }
+
+  /// 获取区域的状态
+  /// 根据当前工具模式和区域的选中、调整状态确定区域状态
+  static CharacterRegionState getRegionState({
+    required Tool currentTool,
+    required bool isSelected,
+    required bool isAdjusting,
+  }) {
+    // 如果正在调整，返回调整状态
+    if (isAdjusting) {
+      return CharacterRegionState.adjusting;
+    }
+
+    // 如果被选中，根据工具模式确定状态
+    if (isSelected) {
+      // 在Select模式下，选中的区域应该显示为adjusting状态（蓝色）
+      if (currentTool == Tool.select) {
+        // AppLogger.debug('Select模式下选中区域使用adjusting状态', data: {
+        //   'tool': currentTool.toString(),
+        //   'isSelected': isSelected,
+        //   'state': 'adjusting',
+        // });
+        return CharacterRegionState.adjusting;
+      }
+
+      // // 在其他模式下（如Pan模式），使用selected状态（红色）
+      // AppLogger.debug('非Select模式下选中区域使用selected状态', data: {
+      //   'tool': currentTool.toString(),
+      //   'isSelected': isSelected,
+      //   'state': 'selected',
+      // });
+      return CharacterRegionState.selected;
+    }
+
+    // 其他情况返回正常状态
+    return CharacterRegionState.normal;
   }
 }

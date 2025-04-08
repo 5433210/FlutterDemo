@@ -1120,20 +1120,52 @@ class CharacterCollectionNotifier
 
   // 新增: 检查两个区域是否实际内容相同 (没有实质性修改)
   bool _isRegionUnchanged(CharacterRegion original, CharacterRegion current) {
-    // 比较关键属性是否有变化
-    bool unchanged = original.rect == current.rect &&
-        original.rotation == current.rotation &&
-        original.character == current.character;
+    // 比较rect
+    if (original.rect != current.rect) {
+      AppLogger.debug('Region changed: rect', data: {
+        'original': original.rect.toString(),
+        'current': current.rect.toString()
+      });
+      return false;
+    }
 
-    AppLogger.debug('检查区域是否有实际修改', data: {
-      'regionId': original.id,
-      'unchanged': unchanged,
-      'rectEquals': original.rect == current.rect,
-      'rotationEquals': original.rotation == current.rotation,
-      'characterEquals': original.character == current.character,
-    });
+    // 比较rotation
+    if (original.rotation != current.rotation) {
+      AppLogger.debug('Region changed: rotation',
+          data: {'original': original.rotation, 'current': current.rotation});
+      return false;
+    }
 
-    return unchanged;
+    // 比较character
+    if (original.character != current.character) {
+      AppLogger.debug('Region changed: character',
+          data: {'original': original.character, 'current': current.character});
+      return false;
+    }
+
+    // 比较erasePoints
+    if (!_areErasePointsEqual(
+        original.erasePoints ?? [], current.erasePoints ?? [])) {
+      AppLogger.debug('Region changed: erasePoints', data: {
+        'original': original.erasePoints?.length ?? 0,
+        'current': current.erasePoints?.length ?? 0
+      });
+      return false;
+    }
+
+    return true;
+  }
+
+  bool _areErasePointsEqual(List<Offset> points1, List<Offset> points2) {
+    if (points1.length != points2.length) return false;
+
+    for (int i = 0; i < points1.length; i++) {
+      if (points1[i].dx != points2[i].dx || points1[i].dy != points2[i].dy) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 
@@ -1228,14 +1260,13 @@ extension StateManagement on CharacterCollectionNotifier {
     // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
     bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
 
-    // 重要：只选择区域，不标记为已修改
-    // 只有当实际内容发生变化时才应该添加到modifiedIds
+    // 重要：选择区域，但不添加到modifiedIds中
     state = state.copyWith(
       currentId: id,
       selectedIds: {id},
       isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
       error: null,
-      // 不在这里修改modifiedIds
+      // 不再自动添加到modifiedIds中
     );
 
     AppLogger.debug('Select Mode Click - State Update Complete', data: {

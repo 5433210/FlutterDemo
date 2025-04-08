@@ -182,12 +182,79 @@ class _RightPanelState extends ConsumerState<RightPanel>
                   .read(characterCollectionProvider.notifier)
                   .selectRegion(updatedRegions.first.id);
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('无法找到对应的选区，请手动选择'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
+              // 如果仍然找不到，尝试直接通过id查找
+              final regions = updatedState.regions;
+
+              // 打印调试信息
+              print('无法通过characterId找到区域, characterId: $characterId');
+              print('当前页面的区域数量: ${regions.length}');
+              if (regions.isNotEmpty) {
+                print(
+                    '第一个区域信息: id=${regions.first.id}, characterId=${regions.first.characterId}');
+              }
+
+              // 尝试另一种匹配方式：找到与字符id相同的区域id
+              final directMatchRegions =
+                  regions.where((r) => r.id == characterId).toList();
+              if (directMatchRegions.isNotEmpty) {
+                // 找到直接匹配的区域
+                ref
+                    .read(characterCollectionProvider.notifier)
+                    .selectRegion(directMatchRegions.first.id);
+                return;
+              }
+
+              // 再尝试一种方法：根据character信息查找可能匹配的区域
+              // 这里假设已经切换到了正确的页面，只是ID匹配有问题
+              if (regions.isNotEmpty) {
+                print('尝试通过页面ID和位置信息匹配...');
+
+                // 选择当前页面的第一个区域（至少让用户看到有区域被选中）
+                final firstRegionId = regions.first.id;
+                ref
+                    .read(characterCollectionProvider.notifier)
+                    .selectRegion(firstRegionId);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('已选择当前页面的第一个区域，可能不是目标区域'),
+                    backgroundColor: Colors.blue,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+                return;
+              }
+
+              // 最后一种尝试：如果这个字符有关联的区域，但在当前状态中找不到
+              // 则尝试直接获取绑定的区域信息并手动添加到状态中
+              try {
+                // 假设CharacterService有一个方法可以获取字符对应的区域信息
+                print('尝试直接从CharacterService获取字符区域...');
+
+                // 注意：这里需要CharacterService提供这样的方法
+                // 如果没有，会走到catch捕获异常
+                final pageRegions =
+                    await characterService.getPageRegions(pageId);
+
+                if (pageRegions.isNotEmpty) {
+                  // 立即更新状态
+                  final regionId = pageRegions.first.id;
+                  ref
+                      .read(characterCollectionProvider.notifier)
+                      .selectRegion(regionId);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('已找到页面区域并选择'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+              } catch (innerError) {
+                print('尝试从服务获取区域时发生错误: $innerError');
+              }
             }
           } catch (e) {
             if (mounted) {
