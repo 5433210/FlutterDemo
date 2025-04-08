@@ -135,6 +135,12 @@ class CharacterCollectionNotifier
 
       // 将新创建的区域标记为未保存
       final modifiedIds = {...state.modifiedIds, region.id};
+      AppLogger.debug('创建新选区 - modifiedIds更新', data: {
+        'regionId': region.id,
+        'previousModifiedIds': state.modifiedIds.toList(),
+        'newModifiedIds': modifiedIds.toList(),
+        'isSaved': !modifiedIds.contains(region.id),
+      });
 
       state = state.copyWith(
         regions: updatedRegions,
@@ -144,9 +150,10 @@ class CharacterCollectionNotifier
         isAdjusting: true, // 立即进入可调节状态
       );
 
-      AppLogger.debug('新选区创建完成', data: {
+      AppLogger.debug('创建新选区 - 状态更新完成', data: {
         'regionId': region.id,
-        'totalRegions': updatedRegions.length,
+        'currentModifiedIds': state.modifiedIds.toList(),
+        'isSaved': !state.modifiedIds.contains(region.id),
       });
 
       return region;
@@ -250,9 +257,10 @@ class CharacterCollectionNotifier
     if (!state.isAdjusting || state.currentId == null) return;
 
     final currentRegionId = state.currentId!;
-    AppLogger.debug('完成调整', data: {
+    AppLogger.debug('完成调整 - 开始', data: {
       'currentId': currentRegionId,
       'isAdjusting': state.isAdjusting,
+      'modifiedIds': state.modifiedIds.toList(),
     });
 
     // 查找当前调整的区域
@@ -272,28 +280,86 @@ class CharacterCollectionNotifier
       return;
     }
 
+    // 检查是否是新建选区（没有characterId）
+    final isNewRegion = region.characterId == null || !region.isSaved;
+
     // 检查是否有实际修改
     final originalRegion = _findOriginalRegion(currentRegionId);
-    if (originalRegion != null && _isRegionUnchanged(originalRegion, region)) {
-      // 如果没有实际修改，从modifiedIds中移除
-      final updatedModifiedIds = {...state.modifiedIds}
-        ..remove(currentRegionId);
-      state = state.copyWith(
-        isAdjusting: false,
-        modifiedIds: updatedModifiedIds,
-      );
-      AppLogger.debug('完成调整：无实际修改', data: {'regionId': currentRegionId});
-      return;
+
+    // 判断是否有实际修改（优化检测逻辑）
+    bool hasActualChanges = false;
+    if (originalRegion != null) {
+      // 明确检查每种可能的修改
+      bool positionChanged = originalRegion.rect.left != region.rect.left ||
+          originalRegion.rect.top != region.rect.top;
+      bool sizeChanged = originalRegion.rect.width != region.rect.width ||
+          originalRegion.rect.height != region.rect.height;
+      bool rotationChanged = originalRegion.rotation != region.rotation;
+      bool characterChanged = originalRegion.character != region.character;
+      bool optionsChanged = originalRegion.options != region.options;
+      bool erasePointsChanged = _hasErasePointsChanged(
+          originalRegion.erasePoints, region.erasePoints);
+
+      hasActualChanges = positionChanged ||
+          sizeChanged ||
+          rotationChanged ||
+          characterChanged ||
+          optionsChanged ||
+          erasePointsChanged;
+
+      AppLogger.debug('修改检测详情', data: {
+        'regionId': currentRegionId,
+        'positionChanged': positionChanged,
+        'sizeChanged': sizeChanged,
+        'rotationChanged': rotationChanged,
+        'characterChanged': characterChanged,
+        'optionsChanged': optionsChanged,
+        'erasePointsChanged': erasePointsChanged,
+        'isNewRegion': isNewRegion,
+      });
     }
 
-    // 如果有修改，保持选中状态但退出调整模式
+    // 决定是否保留在modifiedIds中
+    Set<String> updatedModifiedIds = {...state.modifiedIds};
+    if (isNewRegion) {
+      // 新建选区总是保留在modifiedIds中，直到保存
+      if (!updatedModifiedIds.contains(currentRegionId)) {
+        updatedModifiedIds.add(currentRegionId);
+      }
+      AppLogger.debug('保留新建选区在modifiedIds中', data: {
+        'regionId': currentRegionId,
+      });
+    } else if (!hasActualChanges && !isNewRegion) {
+      // 如果不是新建选区，且没有实际修改，从modifiedIds中移除
+      updatedModifiedIds.remove(currentRegionId);
+      AppLogger.debug('完成调整 - 无实际修改', data: {
+        'regionId': currentRegionId,
+        'previousModifiedIds': state.modifiedIds.toList(),
+        'newModifiedIds': updatedModifiedIds.toList(),
+        'isNewRegion': isNewRegion,
+      });
+    } else if (hasActualChanges) {
+      // 如果有实际修改，确保在modifiedIds中
+      if (!updatedModifiedIds.contains(currentRegionId)) {
+        updatedModifiedIds.add(currentRegionId);
+      }
+      AppLogger.debug('完成调整 - 有修改', data: {
+        'regionId': currentRegionId,
+        'hasActualChanges': hasActualChanges,
+        'modifiedIds': updatedModifiedIds.toList(),
+      });
+    }
+
+    // 更新状态
     state = state.copyWith(
       isAdjusting: false,
+      modifiedIds: updatedModifiedIds,
     );
 
-    AppLogger.debug('完成调整：有修改', data: {
+    AppLogger.debug('完成调整 - 结束', data: {
       'regionId': currentRegionId,
-      'modifiedIds': state.modifiedIds.toList(),
+      'modifiedIdsCount': updatedModifiedIds.length,
+      'isInModifiedIds': updatedModifiedIds.contains(currentRegionId),
     });
   }
 
@@ -363,6 +429,28 @@ class CharacterCollectionNotifier
       final currentSelectedIds = {...state.selectedIds};
       final currentId = state.currentId;
 
+      // 根据每个区域的 characterId 状态初始化 modifiedIds
+      final modifiedIds = <String>{};
+      for (final region in regions) {
+        // 两种情况需要添加到modifiedIds：
+        // 1. 未保存的区域（characterId为null）
+        // 2. 已有characterId但isSaved=false的区域（已修改但未保存）
+        if (region.characterId == null || !region.isSaved) {
+          modifiedIds.add(region.id);
+          AppLogger.debug('添加未保存区域到 modifiedIds', data: {
+            'regionId': region.id,
+            'characterId': region.characterId,
+            'isSaved': region.isSaved,
+          });
+        }
+      }
+
+      AppLogger.debug('初始化 modifiedIds', data: {
+        'modifiedIds': modifiedIds.toList(),
+        'totalRegions': regions.length,
+        'unsavedCount': modifiedIds.length,
+      });
+
       // 更新状态，但保留选中状态
       state = state.copyWith(
         workId: workId,
@@ -370,6 +458,7 @@ class CharacterCollectionNotifier
         regions: regions,
         selectedIds: currentSelectedIds,
         currentId: currentId,
+        modifiedIds: modifiedIds,
         loading: false,
       );
 
@@ -1026,9 +1115,13 @@ class CharacterCollectionNotifier
         'oldRect': oldRegion.rect.toString(),
         'newRect': region.rect.toString(),
         'oldRotation': oldRegion.rotation,
+        'newRotation': region.rotation,
+        'rotationChanged': oldRegion.rotation != region.rotation,
         'oldCharacter': oldRegion.character,
         'newCharacter': region.character,
-        'newRotation': region.rotation,
+        'characterChanged': oldRegion.character != region.character,
+        'optionsChanged': oldRegion.options != region.options,
+        'isInModifiedIds': state.modifiedIds.contains(region.id),
       });
 
       // 更新区域列表
@@ -1045,6 +1138,13 @@ class CharacterCollectionNotifier
         regions: updatedRegions,
         modifiedIds: modifiedIds, // 只在内容变化时更新修改状态
       );
+
+      AppLogger.debug('区域更新完成', data: {
+        'regionId': region.id,
+        'hasContentChanges': hasContentChanges,
+        'isInModifiedIds': modifiedIds.contains(region.id),
+        'modifiedIdsCount': modifiedIds.length,
+      });
 
       // 更新选中区域
       _selectedRegionNotifier.setRegion(region);

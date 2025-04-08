@@ -16,7 +16,7 @@ class CharacterRegionColorScheme {
   static const normalSaved = 0xFF00C853; // 绿色
 
   /// 未保存的普通状态颜色
-  static const normalUnsaved = 0xFF2196F3; // 蓝色
+  static const normalUnsaved = 0xFFFFD700; // 黄色
 
   /// 选中状态颜色
   static const selected = 0xFFFF5252; // 红色

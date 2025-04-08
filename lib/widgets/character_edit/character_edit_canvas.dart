@@ -542,13 +542,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         enableLogging: kDebugMode,
       );
 
-      if (kDebugMode) {
-        AppLogger.debug('坐标转换器更新完成', data: {
-          'imageSize': '${imageSize.width}x${imageSize.height}',
-          'viewportSize': '${viewportSize.width}x${viewportSize.height}',
-          'scale': _transformer.currentScale.toStringAsFixed(3),
-        });
-      }
+      // if (kDebugMode) {
+      //   AppLogger.debug('坐标转换器更新完成', data: {
+      //     'imageSize': '${imageSize.width}x${imageSize.height}',
+      //     'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+      //     'scale': _transformer.currentScale.toStringAsFixed(3),
+      //   });
+      // }
     } catch (e, stack) {
       AppLogger.error('更新坐标转换器失败', error: e, stackTrace: stack, data: {
         'imageSize': '${widget.image.width}x${widget.image.height}',

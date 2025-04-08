@@ -66,14 +66,16 @@ class RegionsPainter extends CustomPainter {
               isAdjusting && region.id == adjustingRegionId;
           final isSaved = !modifiedIds.contains(region.id);
 
-          // // 添加日志：记录从状态中读取的isSaved值
-          // AppLogger.debug('RegionsPainter 绘制', data: {
+          // AppLogger.debug('RegionsPainter - 区域状态计算', data: {
           //   'regionId': region.id,
-          //   'isSavedFromState': isSaved,
-          //   'isModified': modifiedIds.contains(region.id),
-          //   'selectedIds': selectedIds,
-          //   'modifiedIds': modifiedIds,
-          //   'regionObjectIsSaved': region.isSaved // 记录Region对象本身的isSaved值
+          //   'isSelected': isSelected,
+          //   'isHovered': isHovered,
+          //   'isRegionAdjusting': isRegionAdjusting,
+          //   'isSaved': isSaved,
+          //   'modifiedIds': modifiedIds.toList(),
+          //   'selectedIds': selectedIds.toList(),
+          //   'isAdjusting': isAdjusting,
+          //   'adjustingRegionId': adjustingRegionId,
           // });
 
           // 获取区域状态
@@ -82,6 +84,12 @@ class RegionsPainter extends CustomPainter {
             isSelected: isSelected,
             isAdjusting: isRegionAdjusting,
           );
+
+          // AppLogger.debug('RegionsPainter - 区域状态确定', data: {
+          //   'regionId': region.id,
+          //   'regionState': regionState.toString(),
+          //   'currentTool': currentTool.toString(),
+          // });
 
           // 获取颜色用于日志
           final Color finalBorderColor = RegionStateUtils.getBorderColor(

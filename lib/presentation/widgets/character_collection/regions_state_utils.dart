@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/character_region_state.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character/tool_mode_provider.dart';
 
 /// 区域状态工具类
@@ -88,8 +89,15 @@ class RegionStateUtils {
     required bool isSelected,
     required bool isAdjusting,
   }) {
+    // AppLogger.debug('获取区域状态', data: {
+    //   'currentTool': currentTool.toString(),
+    //   'isSelected': isSelected,
+    //   'isAdjusting': isAdjusting,
+    // });
+
     // 如果正在调整，返回调整状态
     if (isAdjusting) {
+      AppLogger.debug('区域状态: adjusting');
       return CharacterRegionState.adjusting;
     }
 
@@ -97,24 +105,17 @@ class RegionStateUtils {
     if (isSelected) {
       // 在Select模式下，选中的区域应该显示为adjusting状态（蓝色）
       if (currentTool == Tool.select) {
-        // AppLogger.debug('Select模式下选中区域使用adjusting状态', data: {
-        //   'tool': currentTool.toString(),
-        //   'isSelected': isSelected,
-        //   'state': 'adjusting',
-        // });
+        AppLogger.debug('区域状态: adjusting (Select模式)');
         return CharacterRegionState.adjusting;
       }
 
-      // // 在其他模式下（如Pan模式），使用selected状态（红色）
-      // AppLogger.debug('非Select模式下选中区域使用selected状态', data: {
-      //   'tool': currentTool.toString(),
-      //   'isSelected': isSelected,
-      //   'state': 'selected',
-      // });
+      // 在其他模式下（如Pan模式），使用selected状态（红色）
+      AppLogger.debug('区域状态: selected');
       return CharacterRegionState.selected;
     }
 
     // 其他情况返回正常状态
+    // AppLogger.debug('区域状态: normal');
     return CharacterRegionState.normal;
   }
 }
