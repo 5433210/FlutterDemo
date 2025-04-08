@@ -2125,9 +2125,6 @@ class _ImageViewState extends ConsumerState<ImageView>
         return;
       }
 
-      // 清理当前状态
-      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
-
       // 加载新数据
       AppLogger.debug('开始加载新选区数据', data: {
         'workId': imageState.workId,
@@ -2155,10 +2152,8 @@ class _ImageViewState extends ConsumerState<ImageView>
         data: {'imageId': currentImageId},
       );
 
-      // 清理错误状态
-      if (_mounted) {
-        ref.read(characterCollectionProvider.notifier).clearState();
-      }
+      // 只记录错误日志，不清理状态
+      // loadWorkData内部会处理自己的错误状态
     }
   }
 

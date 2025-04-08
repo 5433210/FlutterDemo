@@ -126,193 +126,65 @@ class _RightPanelState extends ConsumerState<RightPanel>
     return CharacterGridView(
       workId: widget.workId,
       onCharacterSelected: (characterId) async {
-        final collectionState = ref.read(characterCollectionProvider);
-        // 查找匹配的region，如果找不到则返回null
-        final regions = collectionState.regions
-            .where((r) => r.characterId == characterId)
-            .toList();
-
-        if (regions.isEmpty) {
-          // 如果在当前已加载的regions中找不到，需要从数据库查询
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('正在查找字符区域...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-
-          try {
-            // 先切换到预览标签页
-            _tabController.animateTo(0);
-
-            // 获取字符服务来查询字符区域信息
-            final characterService = ref.read(characterServiceProvider);
-
-            // 通过characterId获取字符详情
-            final character =
-                await characterService.getCharacterDetails(characterId);
-            if (character == null) {
-              throw Exception('找不到字符信息');
-            }
-
-            final pageId = character.pageId;
-            final workId = widget.workId;
-
-            // 获取图像提供者
-            final imageProvider = ref.read(workImageProvider.notifier);
-
-            // 加载目标页面
-            await imageProvider.loadWorkImage(workId, pageId);
-
-            // 加载该页的字符区域数据
-            await ref.read(characterCollectionProvider.notifier).loadWorkData(
-                  workId,
-                  pageId: pageId,
-                );
-
-            // 重新查找region（应该已加载到regions中）
-            final updatedState = ref.read(characterCollectionProvider);
-            final updatedRegions = updatedState.regions
-                .where((r) => r.characterId == characterId)
-                .toList();
-
-            if (updatedRegions.isNotEmpty) {
-              // 选中目标字符区域
-              ref
-                  .read(characterCollectionProvider.notifier)
-                  .selectRegion(updatedRegions.first.id);
-            } else {
-              // 如果仍然找不到，尝试直接通过id查找
-              final regions = updatedState.regions;
-
-              // 打印调试信息
-              print('无法通过characterId找到区域, characterId: $characterId');
-              print('当前页面的区域数量: ${regions.length}');
-              if (regions.isNotEmpty) {
-                print(
-                    '第一个区域信息: id=${regions.first.id}, characterId=${regions.first.characterId}');
-              }
-
-              // 尝试另一种匹配方式：找到与字符id相同的区域id
-              final directMatchRegions =
-                  regions.where((r) => r.id == characterId).toList();
-              if (directMatchRegions.isNotEmpty) {
-                // 找到直接匹配的区域
-                ref
-                    .read(characterCollectionProvider.notifier)
-                    .selectRegion(directMatchRegions.first.id);
-                return;
-              }
-
-              // 再尝试一种方法：根据character信息查找可能匹配的区域
-              // 这里假设已经切换到了正确的页面，只是ID匹配有问题
-              if (regions.isNotEmpty) {
-                print('尝试通过页面ID和位置信息匹配...');
-
-                // 选择当前页面的第一个区域（至少让用户看到有区域被选中）
-                final firstRegionId = regions.first.id;
-                ref
-                    .read(characterCollectionProvider.notifier)
-                    .selectRegion(firstRegionId);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('已选择当前页面的第一个区域，可能不是目标区域'),
-                    backgroundColor: Colors.blue,
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-                return;
-              }
-
-              // 最后一种尝试：如果这个字符有关联的区域，但在当前状态中找不到
-              // 则尝试直接获取绑定的区域信息并手动添加到状态中
-              try {
-                // 假设CharacterService有一个方法可以获取字符对应的区域信息
-                print('尝试直接从CharacterService获取字符区域...');
-
-                // 注意：这里需要CharacterService提供这样的方法
-                // 如果没有，会走到catch捕获异常
-                final pageRegions =
-                    await characterService.getPageRegions(pageId);
-
-                if (pageRegions.isNotEmpty) {
-                  // 立即更新状态
-                  final regionId = pageRegions.first.id;
-                  ref
-                      .read(characterCollectionProvider.notifier)
-                      .selectRegion(regionId);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('已找到页面区域并选择'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
-                }
-              } catch (innerError) {
-                print('尝试从服务获取区域时发生错误: $innerError');
-              }
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('查找并切换页面失败: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-          return;
-        }
-
-        final region = regions.first;
-        final pageId = region.pageId;
-
         try {
-          // 先切换到预览标签页，让用户看到正在切换
-          _tabController.animateTo(0);
-
-          // 显示加载提示
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('正在切换到字符所在页面...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-
-          // 获取图像提供者
-          final imageProvider = ref.read(workImageProvider.notifier);
+          // 1. 获取当前页面状态
+          final currentState = ref.read(workImageProvider);
+          final currentPageId = currentState.currentPageId;
           final currentWorkId = widget.workId;
 
-          // 检查当前是否已经是目标页面
-          final currentState = ref.read(workImageProvider);
-          final isAlreadyOnPage = currentState.currentPageId == pageId &&
-              currentState.workId == currentWorkId;
+          // 2. 获取字符服务来查询字符详情
+          final characterService = ref.read(characterServiceProvider);
+          final character =
+              await characterService.getCharacterDetails(characterId);
 
-          if (!isAlreadyOnPage) {
-            // 加载目标页面
-            await imageProvider.loadWorkImage(currentWorkId, pageId);
-
-            // 加载该页的字符区域数据
-            await ref.read(characterCollectionProvider.notifier).loadWorkData(
-                  currentWorkId,
-                  pageId: pageId,
-                );
+          if (character == null) {
+            throw Exception('找不到字符信息');
           }
 
-          // 选中目标字符区域
-          ref
-              .read(characterCollectionProvider.notifier)
-              .selectRegion(region.id);
+          // 3. 检查字符是否在当前页面
+          final isOnCurrentPage = character.pageId == currentPageId &&
+              character.workId == currentWorkId;
+
+          if (!isOnCurrentPage) {
+            // 4. 如果不在当前页面，需要切换页面
+            // 4.1 显示加载提示
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('正在切换到字符所在页面...'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+
+            // 4.2 加载目标页面
+            final imageProvider = ref.read(workImageProvider.notifier);
+            await imageProvider.loadWorkImage(
+                character.workId, character.pageId);
+
+            // 4.3 加载该页的字符区域数据
+            await ref.read(characterCollectionProvider.notifier).loadWorkData(
+                  character.workId,
+                  pageId: character.pageId,
+                  defaultSelectedRegionId: characterId,
+                );
+
+            // 4.4 切换到预览标签页
+            _tabController.animateTo(0);
+          } else {
+            // 5. 如果在当前页面，直接加载区域数据
+            await ref.read(characterCollectionProvider.notifier).loadWorkData(
+                  currentWorkId,
+                  pageId: currentPageId,
+                  defaultSelectedRegionId: characterId,
+                );
+
+            // 5.1 切换到预览标签页
+            _tabController.animateTo(0);
+          }
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('切换到字符所在页面失败: $e'),
+                content: Text('查找并切换页面失败: $e'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -366,16 +238,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
       // 切换到作品集字结果标签页
       _tabController.animateTo(1);
 
-      // 等待一下让UI更新完成
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      // 重新加载集字列表
-      await ref.read(characterCollectionProvider.notifier).loadWorkData(
-            widget.workId,
-            pageId: ref.read(workImageProvider).currentPageId ?? '',
-          );
-
-      // 确保刷新作品集字结果
+      // 刷新作品集字结果
       try {
         await ref.read(characterGridProvider.notifier).loadCharacters();
       } catch (e) {
