@@ -470,9 +470,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       return const SizedBox.shrink();
     }
 
-    // 检查region是否已保存，如果未保存则不显示缩略图
-    if (!region.isSaved) {
-      print('CharacterEditPanel - 区域未保存，不显示缩略图');
+    // 检查region的characterId是否存在，如果不存在说明是新建选区，不显示缩略图
+    if (region.characterId == null) {
+      print('CharacterEditPanel - 区域未关联字符，不显示缩略图');
       return const SizedBox.shrink();
     }
 
