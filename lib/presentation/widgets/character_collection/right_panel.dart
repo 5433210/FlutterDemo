@@ -4,13 +4,14 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
-import '../../../application/services/character/character_service.dart';
 import '../../../presentation/providers/character/erase_providers.dart';
 import '../../../widgets/character_edit/character_edit_panel.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_grid_provider.dart';
+import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'character_grid_view.dart';
@@ -89,6 +90,11 @@ class _RightPanelState extends ConsumerState<RightPanel>
       setState(() {
         _currentIndex = _tabController.index;
       });
+
+      // If switching to the grid tab, refresh characters to ensure latest data
+      if (_tabController.index == 1) {
+        _refreshCharacterGrid();
+      }
     }
   }
 
@@ -101,6 +107,32 @@ class _RightPanelState extends ConsumerState<RightPanel>
     // 初始化时清除擦除状态
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(eraseStateProvider.notifier).clear();
+
+      // Setup listener for character refresh events
+      ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
+        if (previous != current) {
+          // Only refresh if we're on the grid tab or we've just deleted a character
+          final refreshEvent =
+              ref.read(characterRefreshNotifierProvider.notifier).lastEventType;
+          if (_currentIndex == 1 ||
+              refreshEvent == RefreshEventType.characterDeleted ||
+              refreshEvent == RefreshEventType.characterSaved) {
+            _refreshCharacterGrid();
+
+            // If a character was deleted and we're in preview tab with no selected region,
+            // consider switching to grid tab
+            if (refreshEvent == RefreshEventType.characterDeleted &&
+                _currentIndex == 0 &&
+                ref.read(selectedRegionProvider) == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _tabController.animateTo(1); // Switch to grid tab
+                }
+              });
+            }
+          }
+        }
+      });
     });
   }
 
@@ -238,12 +270,17 @@ class _RightPanelState extends ConsumerState<RightPanel>
       // 切换到作品集字结果标签页
       _tabController.animateTo(1);
 
-      // 刷新作品集字结果
-      try {
-        await ref.read(characterGridProvider.notifier).loadCharacters();
-      } catch (e) {
-        print('刷新字符网格失败: $e');
-      }
+      // Refresh grid (now handled by our refresh mechanism too)
+      await _refreshCharacterGrid();
+    }
+  }
+
+  // Helper method to refresh the character grid
+  Future<void> _refreshCharacterGrid() async {
+    try {
+      await ref.read(characterGridProvider.notifier).loadCharacters();
+    } catch (e) {
+      debugPrint('刷新字符网格失败: $e');
     }
   }
 }

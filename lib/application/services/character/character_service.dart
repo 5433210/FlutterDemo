@@ -120,9 +120,14 @@ class CharacterService {
   }
 
   /// 提取字符区域并处理
-  Future<CharacterEntity> extractCharacter(String workId, String pageId,
-      Rect region, ProcessingOptions options, Uint8List imageData,
-      {bool isSaved = false}) async {
+  Future<CharacterEntity> extractCharacter(
+      String workId,
+      String pageId,
+      Rect region,
+      double rotation,
+      ProcessingOptions options,
+      Uint8List imageData,
+      String character) async {
     try {
       AppLogger.debug('开始提取字符区域', data: {
         'workId': workId,
@@ -130,7 +135,6 @@ class CharacterService {
         'region':
             '${region.left},${region.top},${region.width},${region.height}',
         'imageDataLength': imageData.length,
-        'isSaved': isSaved,
       });
       // 处理字符区域
       final result = await _imageProcessor.processCharacterRegion(
@@ -150,6 +154,9 @@ class CharacterService {
         pageId: pageId,
         rect: region,
         options: options,
+        character: character,
+        isModified: false, // 新创建的字符区域默认为未修改
+        rotation: rotation,
       );
 
       AppLogger.debug('字符区域创建完成', data: {
@@ -157,15 +164,15 @@ class CharacterService {
       });
 
       // 保存字符和图像
-      final character = await _persistenceService.saveCharacter(
+      final characterEntity = await _persistenceService.saveCharacter(
         characterRegion,
         result,
         workId,
       );
-      AppLogger.debug('字符和图像保存完成', data: {'characterId': character.id});
+      AppLogger.debug('字符和图像保存完成', data: {'characterId': characterEntity.id});
 
       // 缓存图像数据
-      final id = character.id;
+      final id = characterEntity.id;
       try {
         await Future.wait([
           _cacheManager.put('${id}_original', result.originalCrop),
@@ -178,7 +185,7 @@ class CharacterService {
         AppLogger.error('缓存图像数据失败', error: e, data: {'characterId': id});
       }
 
-      return character.copyWith(workId: workId);
+      return characterEntity.copyWith(workId: workId);
     } catch (e) {
       AppLogger.error('提取字符失败', error: e);
       rethrow;

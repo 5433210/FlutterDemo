@@ -690,7 +690,6 @@ class _ImageViewState extends ConsumerState<ImageView>
                         guideLines: _guideLines,
                         viewportRect: _adjustingRect,
                       ),
-                      size: viewportSize,
                     ),
                   ),
                 ),

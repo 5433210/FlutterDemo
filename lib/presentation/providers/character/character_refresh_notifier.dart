@@ -25,10 +25,18 @@ enum RefreshEventType {
 /// 刷新通知状态管理
 /// 通过简单的计数器增长来触发订阅者刷新
 class RefreshNotifier extends StateNotifier<int> {
+  RefreshEventType? _lastEventType;
+
   RefreshNotifier() : super(0);
 
+  /// 获取最后一次事件类型
+  RefreshEventType? get lastEventType => _lastEventType;
+
   /// 通知特定类型的刷新事件
-  void notifyEvent(RefreshEventType eventType) => state = state + 1;
+  void notifyEvent(RefreshEventType eventType) {
+    _lastEventType = eventType;
+    state = state + 1;
+  }
 
   /// 通知所有监听者刷新数据
   void notifyRefresh() => state = state + 1;

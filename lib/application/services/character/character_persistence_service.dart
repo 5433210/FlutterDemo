@@ -210,7 +210,7 @@ class CharacterPersistenceService {
       final entity = CharacterEntity.create(
         workId: workId,
         pageId: region.pageId,
-        region: region,
+        region: region.copyWith(characterId: region.id),
         character: region.character,
       );
 
@@ -242,9 +242,18 @@ class CharacterPersistenceService {
           await _storageService.saveSvgOutline(id, newResult.svgOutline!);
         }
       }
+      final characterEntity = await _repository.findById(id);
+      if (characterEntity == null) {
+        throw Exception('Character not found: $id');
+      }
 
+      final updatedEntity = characterEntity.copyWith(
+        character: character,
+        region: updatedRegion,
+        updateTime: now,
+      );
       // 更新区域数据
-      await _repository.updateRegion(updatedRegion);
+      await _repository.save(updatedEntity);
 
       // 清除缓存
       _cacheManager.invalidate(id);

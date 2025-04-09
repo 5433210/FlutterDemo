@@ -687,25 +687,25 @@ class CharacterCollectionNotifier
           'hasUnsavedChanges': state.hasUnsavedChanges,
         });
 
-        // 强制创建一个全新的状态对象
-        final newState = CharacterCollectionState(
-          workId: state.workId,
-          pageId: state.pageId,
-          regions: List.from(state.regions), // 确保是新列表实例
-          currentId: state.currentId,
-          currentTool: state.currentTool,
-          defaultOptions: state.defaultOptions,
-          undoStack: List.from(state.undoStack),
-          redoStack: List.from(state.redoStack),
-          loading: state.loading,
-          processing: state.processing,
-          error: state.error,
-          isAdjusting: state.isAdjusting,
-        );
-        state = newState;
-        AppLogger.debug('强制应用了全新的 State 对象 (现有区域)', data: {
-          'hasUnsavedChanges': state.hasUnsavedChanges,
-        });
+        // // 强制创建一个全新的状态对象
+        // final newState = CharacterCollectionState(
+        //   workId: state.workId,
+        //   pageId: state.pageId,
+        //   regions: List.from(state.regions), // 确保是新列表实例
+        //   currentId: state.currentId,
+        //   currentTool: state.currentTool,
+        //   defaultOptions: state.defaultOptions,
+        //   undoStack: List.from(state.undoStack),
+        //   redoStack: List.from(state.redoStack),
+        //   loading: state.loading,
+        //   processing: state.processing,
+        //   error: state.error,
+        //   isAdjusting: state.isAdjusting,
+        // );
+        // state = newState;
+        // AppLogger.debug('强制应用了全新的 State 对象 (现有区域)', data: {
+        //   'hasUnsavedChanges': state.hasUnsavedChanges,
+        // });
 
         // Notify about character save
         _ref
@@ -726,9 +726,10 @@ class CharacterCollectionNotifier
           _currentWorkId ?? '',
           _currentPageId!,
           region.rect,
+          region.rotation,
           region.options,
           _currentPageImage!,
-          isSaved: true, // 添加参数，确保数据库中也标记为已保存
+          region.character,
         );
         AppLogger.debug('数据库操作完成，获取到 CharacterEntity',
             data: {'entityId': characterEntity.id});
@@ -773,26 +774,26 @@ class CharacterCollectionNotifier
         _selectedRegionNotifier.setRegion(newRegion);
         AppLogger.debug('SelectedRegionProvider 更新完成...');
 
-        // 强制创建一个全新的状态对象
-        final newState = CharacterCollectionState(
-          workId: state.workId,
-          pageId: state.pageId,
-          regions: List.from(state.regions), // 确保是新列表实例
+        // // 强制创建一个全新的状态对象
+        // final newState = CharacterCollectionState(
+        //   workId: state.workId,
+        //   pageId: state.pageId,
+        //   regions: List.from(state.regions), // 确保是新列表实例
 
-          currentId: state.currentId,
-          currentTool: state.currentTool,
-          defaultOptions: state.defaultOptions,
-          undoStack: List.from(state.undoStack),
-          redoStack: List.from(state.redoStack),
-          loading: state.loading,
-          processing: state.processing,
-          error: state.error,
-          isAdjusting: state.isAdjusting,
-        );
-        state = newState;
-        AppLogger.debug('强制应用了全新的 State 对象 (新区域)', data: {
-          'hasUnsavedChanges': state.hasUnsavedChanges,
-        });
+        //   currentId: state.currentId,
+        //   currentTool: state.currentTool,
+        //   defaultOptions: state.defaultOptions,
+        //   undoStack: List.from(state.undoStack),
+        //   redoStack: List.from(state.redoStack),
+        //   loading: state.loading,
+        //   processing: state.processing,
+        //   error: state.error,
+        //   isAdjusting: state.isAdjusting,
+        // );
+        // state = newState;
+        // AppLogger.debug('强制应用了全新的 State 对象 (新区域)', data: {
+        //   'hasUnsavedChanges': state.hasUnsavedChanges,
+        // });
 
         // Notify about character save
         _ref

@@ -177,7 +177,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
   @override
   Future<void> updateRegion(CharacterRegion region) async {
     try {
-      final character = await findById(region.id);
+      final character = await findById(region.characterId ?? region.id);
       if (character == null) {
         throw Exception('Character not found: ${region.id}');
       }
