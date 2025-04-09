@@ -233,15 +233,51 @@ class CharacterPersistenceService {
       );
 
       // 如果有新的处理结果，则更新图像文件
-      if (newResult != null && newResult.isValid) {
-        await _storageService.saveOriginalImage(id, newResult.originalCrop);
-        await _storageService.saveBinaryImage(id, newResult.binaryImage);
-        await _storageService.saveThumbnail(id, newResult.thumbnail);
+      if (newResult != null) {
+        // Explicitly check each component of the result
+        bool hasValidOriginal = newResult.originalCrop.isNotEmpty;
+        bool hasValidBinary = newResult.binaryImage.isNotEmpty;
+        bool hasValidThumbnail = newResult.thumbnail.isNotEmpty;
 
-        if (newResult.svgOutline != null) {
-          await _storageService.saveSvgOutline(id, newResult.svgOutline!);
+        AppLogger.debug('更新字符图像文件检查', data: {
+          'characterId': id,
+          'hasValidOriginal': hasValidOriginal,
+          'hasValidBinary': hasValidBinary,
+          'hasValidThumbnail': hasValidThumbnail,
+          'originalLength': newResult.originalCrop.length,
+          'binaryLength': newResult.binaryImage.length,
+          'thumbnailLength': newResult.thumbnail.length,
+        });
+
+        if (hasValidOriginal && hasValidBinary && hasValidThumbnail) {
+          try {
+            // Use await on each save operation to ensure they complete
+            await _storageService.saveOriginalImage(id, newResult.originalCrop);
+            await _storageService.saveBinaryImage(id, newResult.binaryImage);
+            await _storageService.saveThumbnail(id, newResult.thumbnail);
+
+            if (newResult.svgOutline != null) {
+              await _storageService.saveSvgOutline(id, newResult.svgOutline!);
+            }
+
+            AppLogger.debug('字符图像文件更新成功', data: {'characterId': id});
+          } catch (e) {
+            AppLogger.error('保存图像文件失败', error: e, data: {'characterId': id});
+            throw Exception('保存图像文件失败: $e');
+          }
+        } else {
+          AppLogger.warning('处理结果包含无效数据，跳过图像更新', data: {
+            'characterId': id,
+            'originalValid': hasValidOriginal,
+            'binaryValid': hasValidBinary,
+            'thumbnailValid': hasValidThumbnail,
+          });
         }
+      } else {
+        AppLogger.debug('没有新的图像数据，保持原有图像', data: {'characterId': id});
       }
+
+      // Update character entity in the database
       final characterEntity = await _repository.findById(id);
       if (characterEntity == null) {
         throw Exception('Character not found: $id');
@@ -252,14 +288,22 @@ class CharacterPersistenceService {
         region: updatedRegion,
         updateTime: now,
       );
+
       // 更新区域数据
       await _repository.save(updatedEntity);
 
       // 清除缓存
       _cacheManager.invalidate(id);
+
+      // Also invalidate related cache keys
+      _cacheManager.invalidate('${id}_original');
+      _cacheManager.invalidate('${id}_binary');
+      _cacheManager.invalidate('${id}_thumbnail');
+
+      AppLogger.debug('字符数据更新完成，缓存已清除', data: {'characterId': id});
     } catch (e) {
-      print('更新字符失败: $e');
-      rethrow;
+      AppLogger.error('更新字符失败', error: e, data: {'characterId': id});
+      throw Exception('更新字符失败: $e');
     }
   }
 }

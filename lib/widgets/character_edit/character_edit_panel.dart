@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -63,6 +64,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   Future<ui.Image?>? _imageLoadingFuture;
   ui.Image? _loadedImage;
 
+  // Add a timestamp for cache busting
+  int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
+
   Map<Type, Action<Intent>> get _actions => {
         _SaveIntent: CallbackAction(onInvoke: (_) => _handleSave()),
         _UndoIntent: CallbackAction(
@@ -109,6 +113,21 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(characterRefreshNotifierProvider, (previous, current) {
+      if (previous != current) {
+        final refreshEvent =
+            ref.read(characterRefreshNotifierProvider.notifier).lastEventType;
+        if (refreshEvent == RefreshEventType.characterSaved) {
+          // Force refresh of the thumbnail by updating the timestamp
+          setState(() {
+            _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
+          });
+          AppLogger.debug('触发缩略图刷新',
+              data: {'timestamp': _thumbnailRefreshTimestamp});
+        }
+      }
+    });
+
     return Shortcuts(
       shortcuts: _shortcuts,
       child: Actions(
@@ -521,11 +540,18 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                   return _buildErrorWidget('缩略图文件为空');
                 }
 
+                // Add cache busting parameter to force image refresh
                 return Image.file(
                   File(thumbnailPath),
                   width: 100,
                   height: 100,
                   fit: BoxFit.cover,
+                  // Add the timestamp as a cache-busting key
+                  key: ValueKey(
+                      'thumbnail_${region.id}_$_thumbnailRefreshTimestamp'),
+                  // Disable caching to ensure we always load the latest version
+                  cacheWidth: null,
+                  cacheHeight: null,
                   errorBuilder: (context, error, stackTrace) {
                     print('CharacterEditPanel - 加载缩略图失败: $error');
                     print('$stackTrace');
@@ -686,6 +712,37 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
   }
 
+  // 创建缩略图的辅助方法
+  Future<Uint8List?> _createThumbnail(Uint8List imageData) async {
+    try {
+      // 解码图像
+      final codec = await ui.instantiateImageCodec(imageData);
+      final frame = await codec.getNextFrame();
+      final image = frame.image;
+
+      // 计算合适的缩略图大小
+      final double ratio = 100 / math.max(image.width, image.height);
+      final int targetWidth = (image.width * ratio).round();
+      final int targetHeight = (image.height * ratio).round();
+
+      // 使用图像包重新调整大小
+      final img.Image? decodedImage = img.decodeImage(imageData);
+      if (decodedImage == null) return null;
+
+      final img.Image thumbnail = img.copyResize(
+        decodedImage,
+        width: targetWidth,
+        height: targetHeight,
+        interpolation: img.Interpolation.average,
+      );
+
+      return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
+    } catch (e) {
+      AppLogger.error('创建缩略图失败', error: e);
+      return null;
+    }
+  }
+
   // 获取缩略图路径
   Future<String?> _getThumbnailPath() async {
     try {
@@ -779,6 +836,32 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       );
       if (!mounted) return;
 
+      // 确保画布状态有效并且图像已处理
+      if (processedImage == null) {
+        throw _SaveError('处理后的图像为空');
+      }
+
+      // 获取图像数据（带重试机制）
+      final imageData = await _RetryStrategy.run(
+        operation: () async {
+          return await processedImage.toByteData(
+              format: ui.ImageByteFormat.png);
+        },
+        operationName: '图像数据转换',
+      );
+
+      if (imageData == null) {
+        throw _SaveError('图像数据转换失败');
+      }
+
+      final uint8List = imageData.buffer.asUint8List();
+
+      AppLogger.debug('保存图像数据', data: {
+        'imageDataLength': uint8List.length,
+        'imageWidth': processedImage.width,
+        'imageHeight': processedImage.height,
+      });
+
       // 创建处理结果
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
       final eraseState = ref.read(erase.eraseStateProvider);
@@ -788,6 +871,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         threshold: 128.0,
         noiseReduction: 0.5,
         showContour: eraseState.showContour,
+        brushSize: eraseState.brushSize,
+        contrast: widget.processingOptions.contrast,
+        brightness: widget.processingOptions.brightness,
       );
 
       // 从selectedRegionProvider获取当前选区
@@ -796,38 +882,35 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         throw _SaveError('未选择任何区域');
       }
 
-      // 获取处理所需的画布状态
-      final canvasState = _canvasKey.currentState;
-      if (canvasState == null) {
-        throw _SaveError('无法获取画布状态');
-      }
-
-      // 获取图像数据（带重试机制）
-      final imageData = await _RetryStrategy.run(
-        operation: () async {
-          return await processedImage!
-              .toByteData(format: ui.ImageByteFormat.png);
-        },
-        operationName: '图像数据转换',
-      );
-
-      final uint8List = imageData!.buffer.asUint8List();
-
       // 更新选区信息
       final updatedRegion = selectedRegion.copyWith(
         pageId: widget.pageId,
         character: _characterController.text,
         options: processingOptions,
-        isModified: true, // Explicitly mark as modified using the new property
+        isModified: true,
       );
 
-      // 创建处理结果
+      // 创建缩略图
+      final thumbnail = await _createThumbnail(uint8List);
+
+      // 创建处理结果对象，包含所有必要的图像数据
       final processingResult = ProcessingResult(
         originalCrop: uint8List,
         binaryImage: uint8List,
-        thumbnail: uint8List,
+        thumbnail: thumbnail ?? uint8List,
         boundingBox: selectedRegion.rect,
       );
+
+      // 验证处理结果是否有效
+      if (!processingResult.isValid) {
+        AppLogger.error('处理结果无效', data: {
+          'originalCropLength': processingResult.originalCrop.length,
+          'binaryImageLength': processingResult.binaryImage.length,
+          'thumbnailLength': processingResult.thumbnail.length,
+          'hasBoundingBox': processingResult.boundingBox != null,
+        });
+        throw _SaveError('处理结果无效，无法保存');
+      }
 
       // 保存（带重试机制）
       final collectionNotifier = ref.read(characterCollectionProvider.notifier);
@@ -835,8 +918,10 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       // Update the region first
       collectionNotifier.updateSelectedRegion(updatedRegion);
 
-      // Now save the current region
-      await collectionNotifier.saveCurrentRegion();
+      // Now save the current region with the processed image data
+      await collectionNotifier.saveCurrentRegion(
+        imageData: processingResult,
+      );
 
       // Notify about character saved event
       ref
@@ -844,6 +929,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           .notifyEvent(RefreshEventType.characterSaved);
 
       if (mounted) {
+        // Force thumbnail to update right after saving
+        setState(() {
+          _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('保存成功: ${_characterController.text}'),
@@ -851,8 +941,13 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           ),
         );
 
+        // Check if this was a new character or an edit of an existing one
+        final isNewCharacter = widget.selectedRegion.characterId == null;
+
         widget.onEditComplete({
           'character': _characterController.text,
+          'characterId': updatedRegion.characterId,
+          'isNewCharacter': isNewCharacter, // Add this flag
         });
       }
     } catch (e) {

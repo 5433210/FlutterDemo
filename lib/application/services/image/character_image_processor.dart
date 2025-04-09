@@ -172,11 +172,13 @@ class CharacterImageProcessor {
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
-    List<Map<String, dynamic>>? erasePaths,
-  ) async {
+    List<Map<String, dynamic>>? erasePaths, {
+    double rotation = 0.0,
+  }) async {
     final params = ProcessingParams(
       imageData: imageData,
       region: region,
+      rotation: rotation,
       options: options,
       erasePaths: erasePaths,
     );
@@ -206,23 +208,32 @@ class CharacterImageProcessor {
             final pixel = croppedImage.getPixel(x, y);
             final r = ((pixel.r - 128) * params.options.contrast +
                     128 +
-                    params.options.brightness)
+                    params.options.brightness * 255)
                 .clamp(0, 255)
                 .round();
             final g = ((pixel.g - 128) * params.options.contrast +
                     128 +
-                    params.options.brightness)
+                    params.options.brightness * 255)
                 .clamp(0, 255)
                 .round();
             final b = ((pixel.b - 128) * params.options.contrast +
                     128 +
-                    params.options.brightness)
+                    params.options.brightness * 255)
                 .clamp(0, 255)
                 .round();
             adjustedImage.setPixelRgba(x, y, r, g, b, pixel.a);
           }
         }
         finalImage = adjustedImage;
+      }
+
+      // 应用二值化
+      finalImage = _binarize(finalImage, params.options);
+
+      // 应用擦除路径
+      if (params.erasePaths?.isNotEmpty == true) {
+        finalImage =
+            _applyErase(finalImage, params.erasePaths!, params.options);
       }
 
       // 应用其他处理选项

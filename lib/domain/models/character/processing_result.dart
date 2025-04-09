@@ -29,12 +29,12 @@ class ProcessingResult {
     );
   }
 
-  // 是否为有效的处理结果
-  bool get isValid =>
-      originalCrop.isNotEmpty &&
-      binaryImage.isNotEmpty &&
-      thumbnail.isNotEmpty &&
-      boundingBox != Rect.zero;
+  /// 判断处理结果是否有效
+  bool get isValid {
+    return originalCrop.isNotEmpty &&
+        binaryImage.isNotEmpty &&
+        thumbnail.isNotEmpty;
+  }
 
   /// 将 ProcessingResult 序列化并压缩为 Uint8List
   Uint8List toArchiveBytes() {

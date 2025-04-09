@@ -3,41 +3,52 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// 字符数据刷新通知Provider
 /// 用于不同组件间协调字符数据的刷新
 final characterRefreshNotifierProvider =
-    StateNotifierProvider<RefreshNotifier, int>((ref) {
-  return RefreshNotifier();
+    StateNotifierProvider<CharacterRefreshNotifier, RefreshEvent>((ref) {
+  return CharacterRefreshNotifier();
 });
+
+/// 刷新通知状态管理
+/// 通过刷新事件来触发订阅者刷新
+class CharacterRefreshNotifier extends StateNotifier<RefreshEvent> {
+  CharacterRefreshNotifier()
+      : super(RefreshEvent(
+          type: RefreshEventType.none,
+          timestamp: DateTime.now().millisecondsSinceEpoch,
+        ));
+
+  /// 获取最后一次事件类型
+  RefreshEventType get lastEventType => state.type;
+
+  /// 获取最后一次事件时间戳
+  int get lastTimestamp => state.timestamp;
+
+  /// 通知特定类型的刷新事件
+  void notifyEvent(RefreshEventType eventType, {Map<String, dynamic>? data}) {
+    state = RefreshEvent(
+      type: eventType,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+      data: data,
+    );
+  }
+}
+
+/// 刷新事件
+class RefreshEvent {
+  final RefreshEventType type;
+  final int timestamp;
+  final Map<String, dynamic>? data;
+
+  RefreshEvent({
+    required this.type,
+    required this.timestamp,
+    this.data,
+  });
+}
 
 /// 刷新事件类型
 enum RefreshEventType {
-  /// 字符保存事件
+  none,
   characterSaved,
-
-  /// 字符删除事件
   characterDeleted,
-
-  /// 字符修改事件
-  characterModified,
-
-  /// 字符区域更新事件
   regionUpdated,
-}
-
-/// 刷新通知状态管理
-/// 通过简单的计数器增长来触发订阅者刷新
-class RefreshNotifier extends StateNotifier<int> {
-  RefreshEventType? _lastEventType;
-
-  RefreshNotifier() : super(0);
-
-  /// 获取最后一次事件类型
-  RefreshEventType? get lastEventType => _lastEventType;
-
-  /// 通知特定类型的刷新事件
-  void notifyEvent(RefreshEventType eventType) {
-    _lastEventType = eventType;
-    state = state + 1;
-  }
-
-  /// 通知所有监听者刷新数据
-  void notifyRefresh() => state = state + 1;
 }

@@ -8,6 +8,7 @@ import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
 import '../../../domain/models/character/processing_options.dart';
+import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/models/character/undo_action.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
@@ -290,77 +291,8 @@ class CharacterCollectionNotifier
   void finishCurrentAdjustment() {
     if (!state.isAdjusting || state.currentId == null) return;
 
-    // final currentRegionId = state.currentId!;
-    // AppLogger.debug('完成调整 - 开始', data: {
-    //   'currentId': currentRegionId,
-    //   'isAdjusting': state.isAdjusting,
-    // });
-
-    // // 查找当前调整的区域
-    // final region = state.regions.firstWhere(
-    //   (r) => r.id == currentRegionId,
-    //   orElse: () => null as CharacterRegion,
-    // );
-
-    // // 检查是否是新建选区（没有characterId）
-    // final isNewRegion = region.characterId == null;
-
-    // // 检查是否有实际修改
-    // final originalRegion = _findOriginalRegion(currentRegionId);
-
-    // // 判断是否有实际修改（优化检测逻辑）
-    // bool hasActualChanges = false;
-    // if (originalRegion != null) {
-    //   // 明确检查每种可能的修改
-    //   bool positionChanged = originalRegion.rect.left != region.rect.left ||
-    //       originalRegion.rect.top != region.rect.top;
-    //   bool sizeChanged = originalRegion.rect.width != region.rect.width ||
-    //       originalRegion.rect.height != region.rect.height;
-    //   bool rotationChanged = originalRegion.rotation != region.rotation;
-    //   bool characterChanged = originalRegion.character != region.character;
-    //   bool optionsChanged = originalRegion.options != region.options;
-    //   bool erasePointsChanged = _hasErasePointsChanged(
-    //       originalRegion.erasePoints, region.erasePoints);
-
-    //   hasActualChanges = positionChanged ||
-    //       sizeChanged ||
-    //       rotationChanged ||
-    //       characterChanged ||
-    //       optionsChanged ||
-    //       erasePointsChanged;
-
-    //   AppLogger.debug('修改检测详情', data: {
-    //     'regionId': currentRegionId,
-    //     'positionChanged': positionChanged,
-    //     'sizeChanged': sizeChanged,
-    //     'rotationChanged': rotationChanged,
-    //     'characterChanged': characterChanged,
-    //     'optionsChanged': optionsChanged,
-    //     'erasePointsChanged': erasePointsChanged,
-    //     'isNewRegion': isNewRegion,
-    //   });
-    // }
-
-    // // Update region's isModified property based on changes
-    // List<CharacterRegion> updatedRegions = [...state.regions];
-    // final index = updatedRegions.indexWhere((r) => r.id == currentRegionId);
-    // if (index >= 0) {
-    //   bool shouldBeModified = isNewRegion || hasActualChanges;
-    //   if (shouldBeModified) {
-    //     AppLogger.debug('区域被修改', data: {
-    //       'regionId': currentRegionId,
-    //       'isNewRegion': isNewRegion,
-    //       'hasActualChanges': hasActualChanges,
-    //     });
-    //   }
-    //   updatedRegions[index] =
-    //       updatedRegions[index].copyWith(isModified: shouldBeModified);
-    // }
-
-    // 更新状态
     state = state.copyWith(
       isAdjusting: false,
-      // regions: updatedRegions,
     );
 
     AppLogger.debug('完成调整 - 结束', data: {
@@ -473,24 +405,11 @@ class CharacterCollectionNotifier
         'pageId': pageId,
       });
 
-      // // Now set isSelected and isModified properties on loaded regions
-      // final updatedRegions = regions.map((region) {
-      //   bool isSelected = defaultSelectedRegionId == region.id;
-      //   return region.copyWith(isSelected: isSelected, isModified: false);
-      // }).toList();
-
-      // AppLogger.debug('初始化 modifiedIds', data: {
-      //   'totalRegions': regions.length,
-      //   'selectedRegionId': defaultSelectedRegionId,
-      // });
-
       // 更新状态，但保留选中状态
       state = state.copyWith(
         workId: workId,
         pageId: pageId,
         regions: regions,
-        // regions: updatedRegions,
-        // currentId: state.currentId, // Keep current selection
         loading: false,
       );
 
@@ -644,7 +563,7 @@ class CharacterCollectionNotifier
   }
 
   // 保存当前编辑的区域
-  Future<void> saveCurrentRegion() async {
+  Future<void> saveCurrentRegion({ProcessingResult? imageData}) async {
     AppLogger.debug('saveCurrentRegion 调用',
         data: {'currentId': state.currentId});
     if (state.currentId == null) return;
@@ -660,6 +579,7 @@ class CharacterCollectionNotifier
       AppLogger.debug('保存选区', data: {
         'regionId': region.id,
         'isModified': region.isModified,
+        'hasImageData': imageData != null,
       });
 
       final exists = region.characterId != null;
@@ -667,10 +587,13 @@ class CharacterCollectionNotifier
       if (exists) {
         // 更新现有区域
         AppLogger.debug('保存现有区域', data: {'regionId': region.id});
+
+        // 如果有图像数据，传递给服务层进行更新
         await _characterService.updateCharacter(
           region.id,
           region,
           region.character,
+          newResult: imageData, // Pass the image data for updating
         );
 
         // 更新区域列表 - 设置 isModified = false
@@ -686,26 +609,6 @@ class CharacterCollectionNotifier
         AppLogger.debug('状态更新完成 (现有区域)', data: {
           'hasUnsavedChanges': state.hasUnsavedChanges,
         });
-
-        // // 强制创建一个全新的状态对象
-        // final newState = CharacterCollectionState(
-        //   workId: state.workId,
-        //   pageId: state.pageId,
-        //   regions: List.from(state.regions), // 确保是新列表实例
-        //   currentId: state.currentId,
-        //   currentTool: state.currentTool,
-        //   defaultOptions: state.defaultOptions,
-        //   undoStack: List.from(state.undoStack),
-        //   redoStack: List.from(state.redoStack),
-        //   loading: state.loading,
-        //   processing: state.processing,
-        //   error: state.error,
-        //   isAdjusting: state.isAdjusting,
-        // );
-        // state = newState;
-        // AppLogger.debug('强制应用了全新的 State 对象 (现有区域)', data: {
-        //   'hasUnsavedChanges': state.hasUnsavedChanges,
-        // });
 
         // Notify about character save
         _ref
@@ -728,8 +631,11 @@ class CharacterCollectionNotifier
           region.rect,
           region.rotation,
           region.options,
-          _currentPageImage!,
+          // 如果提供了图像数据，就使用它，否则使用页面图像
+          imageData?.originalCrop ?? _currentPageImage!,
           region.character,
+          processingResult:
+              imageData, // Pass the complete processing result if available
         );
         AppLogger.debug('数据库操作完成，获取到 CharacterEntity',
             data: {'entityId': characterEntity.id});
@@ -765,7 +671,6 @@ class CharacterCollectionNotifier
           regions: updatedRegions,
           currentId: newRegion.id, // 确保当前ID更新为新的ID
           processing: false,
-
           isAdjusting: false, // 退出调整状态
         );
         AppLogger.debug('状态更新完成 (新区域)', data: {
@@ -773,27 +678,6 @@ class CharacterCollectionNotifier
         });
         _selectedRegionNotifier.setRegion(newRegion);
         AppLogger.debug('SelectedRegionProvider 更新完成...');
-
-        // // 强制创建一个全新的状态对象
-        // final newState = CharacterCollectionState(
-        //   workId: state.workId,
-        //   pageId: state.pageId,
-        //   regions: List.from(state.regions), // 确保是新列表实例
-
-        //   currentId: state.currentId,
-        //   currentTool: state.currentTool,
-        //   defaultOptions: state.defaultOptions,
-        //   undoStack: List.from(state.undoStack),
-        //   redoStack: List.from(state.redoStack),
-        //   loading: state.loading,
-        //   processing: state.processing,
-        //   error: state.error,
-        //   isAdjusting: state.isAdjusting,
-        // );
-        // state = newState;
-        // AppLogger.debug('强制应用了全新的 State 对象 (新区域)', data: {
-        //   'hasUnsavedChanges': state.hasUnsavedChanges,
-        // });
 
         // Notify about character save
         _ref

@@ -13,6 +13,7 @@ import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/viewmodels/character_collection_viewmodel.dart';
+import '../../../utils/image/image_cache_util.dart';
 import '../../providers/repository_providers.dart';
 import '../image/character_image_processor.dart';
 import '../storage/cache_manager.dart';
@@ -127,7 +128,8 @@ class CharacterService {
       double rotation,
       ProcessingOptions options,
       Uint8List imageData,
-      String character) async {
+      String character,
+      {ProcessingResult? processingResult}) async {
     try {
       AppLogger.debug('开始提取字符区域', data: {
         'workId': workId,
@@ -135,14 +137,18 @@ class CharacterService {
         'region':
             '${region.left},${region.top},${region.width},${region.height}',
         'imageDataLength': imageData.length,
+        'hasProcessingResult': processingResult != null,
       });
-      // 处理字符区域
-      final result = await _imageProcessor.processCharacterRegion(
-        imageData,
-        region,
-        options,
-        null, // 新创建的字符没有擦除点
-      );
+
+      // 如果提供了处理结果，就直接使用，否则处理图像
+      final result = processingResult ??
+          await _imageProcessor.processCharacterRegion(
+            imageData,
+            region,
+            options,
+            null, // 新创建的字符没有擦除点
+          );
+
       AppLogger.debug('字符区域处理完成', data: {
         'originalCropLength': result.originalCrop.length,
         'binaryImageLength': result.binaryImage.length,
@@ -376,6 +382,22 @@ class CharacterService {
       String id, CharacterRegion region, String character,
       {ProcessingResult? newResult}) async {
     try {
+      // Log update attempt with image info
+      AppLogger.debug('更新字符开始', data: {
+        'characterId': id,
+        'character': character,
+        'hasNewResult': newResult != null,
+        'imageDataSize': newResult?.originalCrop.length,
+      });
+
+      // Get the thumbnail path before update to clean up cache after
+      String? thumbnailPath;
+      try {
+        thumbnailPath = await _persistenceService.getThumbnailPath(id);
+      } catch (e) {
+        AppLogger.warning('获取缩略图路径失败，无法清除缓存', error: e);
+      }
+
       // 更新字符和处理结果
       await _persistenceService.updateCharacter(
         id,
@@ -383,8 +405,33 @@ class CharacterService {
         newResult,
         character,
       );
+
+      // Explicitly invalidate any cached images
+      await Future.wait([
+        _cacheManager.invalidate('${id}_original'),
+        _cacheManager.invalidate('${id}_binary'),
+        _cacheManager.invalidate('${id}_thumbnail'),
+      ]);
+
+      // Clear the UI image cache of the thumbnail file
+      if (thumbnailPath != null) {
+        ImageCacheUtil.evictImage(thumbnailPath);
+      }
+
+      // Clear any memory image caches if we have a new result
+      if (newResult != null) {
+        if (newResult.thumbnail.isNotEmpty) {
+          ImageCacheUtil.evictMemoryImage(newResult.thumbnail);
+        }
+        if (newResult.originalCrop.isNotEmpty) {
+          ImageCacheUtil.evictMemoryImage(newResult.originalCrop);
+        }
+      }
+
+      AppLogger.debug('更新字符完成，缓存已失效', data: {'characterId': id});
     } catch (e) {
-      print('更新字符失败: $e');
+      AppLogger.error('更新字符失败',
+          error: e, data: {'characterId': id, 'character': character});
       rethrow;
     }
   }

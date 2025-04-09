@@ -266,13 +266,16 @@ class _RightPanelState extends ConsumerState<RightPanel>
 
   void _handleEditComplete(Map<String, dynamic> result) async {
     final characterId = result['characterId'];
-    if (characterId != null) {
-      // 切换到作品集字结果标签页
-      _tabController.animateTo(1);
+    // Check if this is a new character or just an edit
+    final isNewCharacter = result['isNewCharacter'] == true;
 
-      // Refresh grid (now handled by our refresh mechanism too)
-      await _refreshCharacterGrid();
+    if (characterId != null && isNewCharacter) {
+      // Only switch to the results tab if it's a new character
+      _tabController.animateTo(1);
     }
+
+    // Refresh grid in any case
+    await _refreshCharacterGrid();
   }
 
   // Helper method to refresh the character grid

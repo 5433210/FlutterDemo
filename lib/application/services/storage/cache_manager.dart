@@ -92,25 +92,23 @@ class CacheManager {
 
   // 移除缓存项
   Future<void> invalidate(String key) async {
-    await _ensureInitialized();
-
-    // 从内存缓存移除
-    _memoryCache.remove(key);
-
-    // 从文件缓存移除
     try {
+      // 移除内存缓存
+      _memoryCache.remove(key);
+
+      // 记录缓存失效
+      print('缓存条目已失效: $key');
+
+      // 从文件缓存移除
       final hashedKey = _hashKey(key);
       final cacheFile = File(path.join(_cachePath, hashedKey));
 
       if (await cacheFile.exists()) {
-        final stat = await cacheFile.stat();
         await cacheFile.delete();
-
-        // 更新缓存大小
-        _currentCacheSize -= stat.size;
+        print('磁盘缓存条目已删除: $key, 路径: ${cacheFile.path}');
       }
     } catch (e) {
-      print('从缓存移除数据失败: $e');
+      print('使缓存条目失效时出错: $e, 键: $key');
     }
   }
 
