@@ -130,7 +130,13 @@ class CharacterImageProcessor {
         finalImage = adjustedImage;
       }
 
-      // 应用其他处理选项
+      finalImage = _binarize(finalImage, params.options);
+
+      if (params.erasePaths?.isNotEmpty == true) {
+        finalImage =
+            _applyErase(finalImage, params.erasePaths!, params.options);
+      } // 应用其他处理选项
+
       if (params.options.noiseReduction > 0.3) {
         finalImage = _denoise(finalImage, params.options.noiseReduction);
       }
