@@ -212,35 +212,12 @@ class _CharacterCollectionPageState
 
     AppLogger.debug('检查未保存修改状态', data: {
       'hasUnsavedChanges': state.hasUnsavedChanges,
-      'modifiedIds': state.modifiedIds.toList(),
       'regionCount': state.regions.length,
-      'savedRegionCount': state.regions.where((r) => r.isSaved).length,
       'currentId': state.currentId,
       'isAdjusting': state.isAdjusting,
+      'hasUnsavedRegions': state.regions.any((r) => r.isModified),
     });
 
-    // // 如果当前正在调整或者有选中的区域，需要先完成调整
-    // if (state.isAdjusting || state.currentId != null) {
-    //   notifier.finishCurrentAdjustment();
-    //   // 读取更新后的状态
-    //   final updatedState = ref.read(characterCollectionProvider);
-
-    //   AppLogger.debug('完成调整后的状态', data: {
-    //     'hasUnsavedChanges': updatedState.hasUnsavedChanges,
-    //     'modifiedIds': updatedState.modifiedIds.toList(),
-    //     'isAdjusting': updatedState.isAdjusting,
-    //     'currentId': updatedState.currentId,
-    //   });
-    // }
-
-    // // 获取最新状态
-    // final finalState = ref.read(characterCollectionProvider);
-
-    // // 只有当modifiedIds不为空时才认为有未保存的修改
-    // final bool reallyHasUnsavedChanges = finalState.modifiedIds.isNotEmpty;
-
-    // // 检查是否有未保存的修改
-    // if (reallyHasUnsavedChanges) {
     if (state.hasUnsavedChanges) {
       // 显示确认对话框
       final result = await showDialog<bool>(
@@ -257,14 +234,9 @@ class _CharacterCollectionPageState
             TextButton(
               onPressed: () {
                 // 用户确认离开，清除所有修改标记
-                if (state.modifiedIds.isNotEmpty) {
-                  final notifier =
-                      ref.read(characterCollectionProvider.notifier);
-                  for (final id in List.from(state.modifiedIds)) {
-                    notifier.markAsSaved(id);
-                    AppLogger.debug('强制标记区域为已保存', data: {'regionId': id});
-                  }
-                }
+                notifier.markAllAsSaved();
+                AppLogger.debug('强制标记所有区域为已保存');
+
                 Navigator.of(context).pop(true); // 确认离开
               },
               style: TextButton.styleFrom(foregroundColor: Colors.red),

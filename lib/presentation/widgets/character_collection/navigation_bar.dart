@@ -26,8 +26,13 @@ class CharacterNavigationBar extends ConsumerWidget {
       statusText = '处理中...';
     } else if (collectionState.error != null) {
       statusText = '错误：${collectionState.error}';
-    } else if (collectionState.selectedIds.isNotEmpty) {
-      statusText = '已选择 ${collectionState.selectedIds.length} 个字符';
+    } else if (collectionState.regions
+        .where((e) => (e.isSelected))
+        .toList()
+        .isNotEmpty) {
+      final region =
+          collectionState.regions.where((e) => (e.isSelected)).toList()[0];
+      statusText = 'isModified:${region.isModified}';
     }
 
     return Container(

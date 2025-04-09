@@ -10,7 +10,6 @@ import '../presentation/pages/practices/practice_list_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/works/work_browse_page.dart';
 import '../presentation/pages/works/work_detail_page.dart';
-import '../presentation/providers/character/character_region_sync_service.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/initialization/initialization_screen.dart';
@@ -23,9 +22,6 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Listen to initialization provider to ensure everything is set up
     final initialization = ref.watch(appInitializationProvider);
-
-    // 初始化区域同步服务
-    ref.read(characterRegionSyncServiceProvider);
 
     return initialization.when(
       loading: () => const MaterialApp(

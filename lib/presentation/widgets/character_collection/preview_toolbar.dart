@@ -11,8 +11,12 @@ class PreviewToolbar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final toolMode = ref.watch(toolModeProvider);
-    final hasSelection =
-        ref.watch(characterCollectionProvider).selectedIds.isNotEmpty;
+    final hasSelection = ref
+        .watch(characterCollectionProvider)
+        .regions
+        .map((e) => e.isSelected)
+        .toList()
+        .isNotEmpty;
 
     return Material(
       color: Colors.white,
@@ -51,11 +55,15 @@ class PreviewToolbar extends ConsumerWidget {
               isEnabled: hasSelection,
               onPressed: hasSelection
                   ? () {
-                      final selectedIds =
-                          ref.read(characterCollectionProvider).selectedIds;
+                      final selectedIds = ref
+                          .read(characterCollectionProvider)
+                          .regions
+                          .where((e) => e.isSelected)
+                          .map((e) => e.id)
+                          .toList();
                       ref
                           .read(characterCollectionProvider.notifier)
-                          .deleteBatchRegions(selectedIds.toList());
+                          .deleteBatchRegions(selectedIds);
                     }
                   : null,
             ),

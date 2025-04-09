@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/utils/json_converters.dart';
 import 'processing_options.dart';
@@ -22,8 +21,9 @@ class CharacterRegion with _$CharacterRegion {
     required DateTime updateTime,
     @Default(ProcessingOptions()) ProcessingOptions options,
     @OffsetListConverter() List<Offset>? erasePoints,
-    @Default(false) bool isSaved,
     String? characterId,
+    @Default(false) bool isSelected, // New property
+    @Default(false) bool isModified, // New property
   }) = _CharacterRegion;
 
   factory CharacterRegion.create({
@@ -33,6 +33,8 @@ class CharacterRegion with _$CharacterRegion {
     String character = '',
     ProcessingOptions? options,
     String? characterId,
+    bool isSelected = false, // New parameter
+    bool isModified = true, // Default to true for new regions
   }) {
     final now = DateTime.now();
     return CharacterRegion(
@@ -44,8 +46,9 @@ class CharacterRegion with _$CharacterRegion {
       createTime: now,
       updateTime: now,
       options: options ?? const ProcessingOptions(),
-      isSaved: false,
       characterId: characterId,
+      isSelected: isSelected, // Set new property
+      isModified: isModified, // Set new property
     );
   }
 
@@ -72,6 +75,8 @@ extension CharacterRegionExt on CharacterRegion {
           ? jsonEncode(erasePoints!.map((p) => {'x': p.dx, 'y': p.dy}).toList())
           : null,
       'characterId': characterId,
+      'isSelected': isSelected, // New field
+      'isModified': isModified, // New field
     };
   }
 
@@ -98,8 +103,9 @@ extension CharacterRegionExt on CharacterRegion {
                   (point) => Offset(point['x'] as double, point['y'] as double))
               .toList()
           : [],
-      isSaved: json['isSaved'] as bool,
       characterId: json['characterId'] as String?,
+      isSelected: json['isSelected'] as bool? ?? false, // New field
+      isModified: json['isModified'] as bool? ?? false, // New field
     );
   }
 }

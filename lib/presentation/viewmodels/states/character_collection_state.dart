@@ -10,8 +10,6 @@ class CharacterCollectionState extends Equatable {
   final String? workId;
   final String? pageId;
   final List<CharacterRegion> regions;
-  final Set<String> selectedIds;
-  final Set<String> modifiedIds;
   final String? currentId;
   final Tool currentTool;
   final ProcessingOptions defaultOptions;
@@ -26,8 +24,6 @@ class CharacterCollectionState extends Equatable {
     this.workId,
     this.pageId,
     required this.regions,
-    required this.selectedIds,
-    required this.modifiedIds,
     this.currentId,
     required this.currentTool,
     required this.defaultOptions,
@@ -43,8 +39,6 @@ class CharacterCollectionState extends Equatable {
   factory CharacterCollectionState.initial() {
     return const CharacterCollectionState(
       regions: [],
-      selectedIds: {},
-      modifiedIds: {},
       currentTool: Tool.pan,
       defaultOptions: ProcessingOptions(),
       undoStack: [],
@@ -61,22 +55,20 @@ class CharacterCollectionState extends Equatable {
   // 是否有撤销操作
   bool get canUndo => undoStack.isNotEmpty;
 
-  // 是否有多选区域
-  bool get hasMultiSelection => selectedIds.isNotEmpty;
+  // 是否有多选区域 - 使用对象属性
+  bool get hasMultiSelection => regions.where((r) => r.isSelected).isNotEmpty;
 
   // 是否有选中的区域
   bool get hasSelection => currentId != null;
 
-  // Ensure hasUnsavedChanges uses modifiedIds directly and doesn't rely on other state
-  bool get hasUnsavedChanges => modifiedIds.isNotEmpty;
+  // Use regions.isModified property to determine if there are unsaved changes
+  bool get hasUnsavedChanges => regions.any((r) => r.isModified);
 
   @override
   List<Object?> get props => [
         workId,
         pageId,
         regions,
-        selectedIds,
-        modifiedIds,
         currentId,
         currentTool,
         defaultOptions,
@@ -103,8 +95,6 @@ class CharacterCollectionState extends Equatable {
     String? workId,
     String? pageId,
     List<CharacterRegion>? regions,
-    Set<String>? selectedIds,
-    Set<String>? modifiedIds,
     String? currentId,
     Tool? currentTool,
     ProcessingOptions? defaultOptions,
@@ -119,8 +109,6 @@ class CharacterCollectionState extends Equatable {
       workId: workId ?? this.workId,
       pageId: pageId ?? this.pageId,
       regions: regions ?? this.regions,
-      selectedIds: selectedIds ?? this.selectedIds,
-      modifiedIds: modifiedIds ?? this.modifiedIds,
       currentId: currentId ?? this.currentId,
       currentTool: currentTool ?? this.currentTool,
       defaultOptions: defaultOptions ?? this.defaultOptions,
@@ -128,7 +116,7 @@ class CharacterCollectionState extends Equatable {
       redoStack: redoStack ?? this.redoStack,
       loading: loading ?? this.loading,
       processing: processing ?? this.processing,
-      error: error,
+      error: error ?? this.error,
       isAdjusting: isAdjusting ?? this.isAdjusting,
     );
   }

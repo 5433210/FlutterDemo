@@ -1,5 +1,5 @@
-import 'dart:typed_data';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -150,11 +150,10 @@ class CharacterService {
         pageId: pageId,
         rect: region,
         options: options,
-      ).copyWith(isSaved: isSaved);
+      );
 
       AppLogger.debug('字符区域创建完成', data: {
         'regionId': characterRegion.id,
-        'isSaved': characterRegion.isSaved,
       });
 
       // 保存字符和图像

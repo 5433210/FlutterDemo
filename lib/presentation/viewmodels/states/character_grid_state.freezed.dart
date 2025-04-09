@@ -25,7 +25,8 @@ mixin _$CharacterGridState {
       throw _privateConstructorUsedError;
   String get searchTerm => throw _privateConstructorUsedError;
   FilterType get filterType => throw _privateConstructorUsedError;
-  Set<String> get selectedIds => throw _privateConstructorUsedError;
+  Set<String> get selectedIds =>
+      throw _privateConstructorUsedError; // Keeping for transition period
   int get currentPage => throw _privateConstructorUsedError;
   int get totalPages => throw _privateConstructorUsedError;
   bool get loading => throw _privateConstructorUsedError;
@@ -263,6 +264,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
     return EqualUnmodifiableSetView(_selectedIds);
   }
 
+// Keeping for transition period
   @override
   @JsonKey()
   final int currentPage;
@@ -358,7 +360,7 @@ abstract class _CharacterGridState implements CharacterGridState {
   @override
   FilterType get filterType;
   @override
-  Set<String> get selectedIds;
+  Set<String> get selectedIds; // Keeping for transition period
   @override
   int get currentPage;
   @override
@@ -389,6 +391,8 @@ mixin _$CharacterViewModel {
   DateTime get createdAt => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
   bool get isFavorite => throw _privateConstructorUsedError;
+  bool get isSelected => throw _privateConstructorUsedError; // New property
+  bool get isModified => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterViewModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -413,7 +417,9 @@ abstract class $CharacterViewModelCopyWith<$Res> {
       String thumbnailPath,
       DateTime createdAt,
       DateTime updatedAt,
-      bool isFavorite});
+      bool isFavorite,
+      bool isSelected,
+      bool isModified});
 }
 
 /// @nodoc
@@ -438,6 +444,8 @@ class _$CharacterViewModelCopyWithImpl<$Res, $Val extends CharacterViewModel>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isFavorite = null,
+    Object? isSelected = null,
+    Object? isModified = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -468,6 +476,14 @@ class _$CharacterViewModelCopyWithImpl<$Res, $Val extends CharacterViewModel>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isModified: null == isModified
+          ? _value.isModified
+          : isModified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -487,7 +503,9 @@ abstract class _$$CharacterViewModelImplCopyWith<$Res>
       String thumbnailPath,
       DateTime createdAt,
       DateTime updatedAt,
-      bool isFavorite});
+      bool isFavorite,
+      bool isSelected,
+      bool isModified});
 }
 
 /// @nodoc
@@ -510,6 +528,8 @@ class __$$CharacterViewModelImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? updatedAt = null,
     Object? isFavorite = null,
+    Object? isSelected = null,
+    Object? isModified = null,
   }) {
     return _then(_$CharacterViewModelImpl(
       id: null == id
@@ -540,6 +560,14 @@ class __$$CharacterViewModelImplCopyWithImpl<$Res>
           ? _value.isFavorite
           : isFavorite // ignore: cast_nullable_to_non_nullable
               as bool,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isModified: null == isModified
+          ? _value.isModified
+          : isModified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -554,7 +582,9 @@ class _$CharacterViewModelImpl implements _CharacterViewModel {
       required this.thumbnailPath,
       required this.createdAt,
       required this.updatedAt,
-      this.isFavorite = false});
+      this.isFavorite = false,
+      this.isSelected = false,
+      this.isModified = false});
 
   factory _$CharacterViewModelImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharacterViewModelImplFromJson(json);
@@ -574,10 +604,17 @@ class _$CharacterViewModelImpl implements _CharacterViewModel {
   @override
   @JsonKey()
   final bool isFavorite;
+  @override
+  @JsonKey()
+  final bool isSelected;
+// New property
+  @override
+  @JsonKey()
+  final bool isModified;
 
   @override
   String toString() {
-    return 'CharacterViewModel(id: $id, pageId: $pageId, character: $character, thumbnailPath: $thumbnailPath, createdAt: $createdAt, updatedAt: $updatedAt, isFavorite: $isFavorite)';
+    return 'CharacterViewModel(id: $id, pageId: $pageId, character: $character, thumbnailPath: $thumbnailPath, createdAt: $createdAt, updatedAt: $updatedAt, isFavorite: $isFavorite, isSelected: $isSelected, isModified: $isModified)';
   }
 
   @override
@@ -596,13 +633,17 @@ class _$CharacterViewModelImpl implements _CharacterViewModel {
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt) &&
             (identical(other.isFavorite, isFavorite) ||
-                other.isFavorite == isFavorite));
+                other.isFavorite == isFavorite) &&
+            (identical(other.isSelected, isSelected) ||
+                other.isSelected == isSelected) &&
+            (identical(other.isModified, isModified) ||
+                other.isModified == isModified));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, pageId, character,
-      thumbnailPath, createdAt, updatedAt, isFavorite);
+      thumbnailPath, createdAt, updatedAt, isFavorite, isSelected, isModified);
 
   /// Create a copy of CharacterViewModel
   /// with the given fields replaced by the non-null parameter values.
@@ -629,7 +670,9 @@ abstract class _CharacterViewModel implements CharacterViewModel {
       required final String thumbnailPath,
       required final DateTime createdAt,
       required final DateTime updatedAt,
-      final bool isFavorite}) = _$CharacterViewModelImpl;
+      final bool isFavorite,
+      final bool isSelected,
+      final bool isModified}) = _$CharacterViewModelImpl;
 
   factory _CharacterViewModel.fromJson(Map<String, dynamic> json) =
       _$CharacterViewModelImpl.fromJson;
@@ -648,6 +691,10 @@ abstract class _CharacterViewModel implements CharacterViewModel {
   DateTime get updatedAt;
   @override
   bool get isFavorite;
+  @override
+  bool get isSelected; // New property
+  @override
+  bool get isModified;
 
   /// Create a copy of CharacterViewModel
   /// with the given fields replaced by the non-null parameter values.

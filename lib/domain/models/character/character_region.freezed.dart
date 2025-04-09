@@ -31,8 +31,9 @@ mixin _$CharacterRegion {
   ProcessingOptions get options => throw _privateConstructorUsedError;
   @OffsetListConverter()
   List<Offset>? get erasePoints => throw _privateConstructorUsedError;
-  bool get isSaved => throw _privateConstructorUsedError;
   String? get characterId => throw _privateConstructorUsedError;
+  bool get isSelected => throw _privateConstructorUsedError; // New property
+  bool get isModified => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterRegion to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -60,8 +61,9 @@ abstract class $CharacterRegionCopyWith<$Res> {
       DateTime updateTime,
       ProcessingOptions options,
       @OffsetListConverter() List<Offset>? erasePoints,
-      bool isSaved,
-      String? characterId});
+      String? characterId,
+      bool isSelected,
+      bool isModified});
 
   $ProcessingOptionsCopyWith<$Res> get options;
 }
@@ -90,8 +92,9 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
     Object? updateTime = null,
     Object? options = null,
     Object? erasePoints = freezed,
-    Object? isSaved = null,
     Object? characterId = freezed,
+    Object? isSelected = null,
+    Object? isModified = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -130,14 +133,18 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
           ? _value.erasePoints
           : erasePoints // ignore: cast_nullable_to_non_nullable
               as List<Offset>?,
-      isSaved: null == isSaved
-          ? _value.isSaved
-          : isSaved // ignore: cast_nullable_to_non_nullable
-              as bool,
       characterId: freezed == characterId
           ? _value.characterId
           : characterId // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isModified: null == isModified
+          ? _value.isModified
+          : isModified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -170,8 +177,9 @@ abstract class _$$CharacterRegionImplCopyWith<$Res>
       DateTime updateTime,
       ProcessingOptions options,
       @OffsetListConverter() List<Offset>? erasePoints,
-      bool isSaved,
-      String? characterId});
+      String? characterId,
+      bool isSelected,
+      bool isModified});
 
   @override
   $ProcessingOptionsCopyWith<$Res> get options;
@@ -199,8 +207,9 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
     Object? updateTime = null,
     Object? options = null,
     Object? erasePoints = freezed,
-    Object? isSaved = null,
     Object? characterId = freezed,
+    Object? isSelected = null,
+    Object? isModified = null,
   }) {
     return _then(_$CharacterRegionImpl(
       id: null == id
@@ -239,14 +248,18 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
           ? _value._erasePoints
           : erasePoints // ignore: cast_nullable_to_non_nullable
               as List<Offset>?,
-      isSaved: null == isSaved
-          ? _value.isSaved
-          : isSaved // ignore: cast_nullable_to_non_nullable
-              as bool,
       characterId: freezed == characterId
           ? _value.characterId
           : characterId // ignore: cast_nullable_to_non_nullable
               as String?,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isModified: null == isModified
+          ? _value.isModified
+          : isModified // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -264,8 +277,9 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       required this.updateTime,
       this.options = const ProcessingOptions(),
       @OffsetListConverter() final List<Offset>? erasePoints,
-      this.isSaved = false,
-      this.characterId})
+      this.characterId,
+      this.isSelected = false,
+      this.isModified = false})
       : _erasePoints = erasePoints;
 
   factory _$CharacterRegionImpl.fromJson(Map<String, dynamic> json) =>
@@ -303,14 +317,18 @@ class _$CharacterRegionImpl implements _CharacterRegion {
   }
 
   @override
-  @JsonKey()
-  final bool isSaved;
-  @override
   final String? characterId;
+  @override
+  @JsonKey()
+  final bool isSelected;
+// New property
+  @override
+  @JsonKey()
+  final bool isModified;
 
   @override
   String toString() {
-    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, rotation: $rotation, character: $character, createTime: $createTime, updateTime: $updateTime, options: $options, erasePoints: $erasePoints, isSaved: $isSaved, characterId: $characterId)';
+    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, rotation: $rotation, character: $character, createTime: $createTime, updateTime: $updateTime, options: $options, erasePoints: $erasePoints, characterId: $characterId, isSelected: $isSelected, isModified: $isModified)';
   }
 
   @override
@@ -332,9 +350,12 @@ class _$CharacterRegionImpl implements _CharacterRegion {
             (identical(other.options, options) || other.options == options) &&
             const DeepCollectionEquality()
                 .equals(other._erasePoints, _erasePoints) &&
-            (identical(other.isSaved, isSaved) || other.isSaved == isSaved) &&
             (identical(other.characterId, characterId) ||
-                other.characterId == characterId));
+                other.characterId == characterId) &&
+            (identical(other.isSelected, isSelected) ||
+                other.isSelected == isSelected) &&
+            (identical(other.isModified, isModified) ||
+                other.isModified == isModified));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -350,8 +371,9 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       updateTime,
       options,
       const DeepCollectionEquality().hash(_erasePoints),
-      isSaved,
-      characterId);
+      characterId,
+      isSelected,
+      isModified);
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.
@@ -381,8 +403,9 @@ abstract class _CharacterRegion implements CharacterRegion {
       required final DateTime updateTime,
       final ProcessingOptions options,
       @OffsetListConverter() final List<Offset>? erasePoints,
-      final bool isSaved,
-      final String? characterId}) = _$CharacterRegionImpl;
+      final String? characterId,
+      final bool isSelected,
+      final bool isModified}) = _$CharacterRegionImpl;
 
   factory _CharacterRegion.fromJson(Map<String, dynamic> json) =
       _$CharacterRegionImpl.fromJson;
@@ -408,9 +431,11 @@ abstract class _CharacterRegion implements CharacterRegion {
   @OffsetListConverter()
   List<Offset>? get erasePoints;
   @override
-  bool get isSaved;
-  @override
   String? get characterId;
+  @override
+  bool get isSelected; // New property
+  @override
+  bool get isModified;
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.

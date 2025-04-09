@@ -50,10 +50,7 @@ Map<String, dynamic> _$$CharacterGridStateImplToJson(
 const _$FilterTypeEnumMap = {
   FilterType.all: 'all',
   FilterType.recent: 'recent',
-  FilterType.modified: 'modified',
   FilterType.favorite: 'favorite',
-  FilterType.byStroke: 'byStroke',
-  FilterType.custom: 'custom',
 };
 
 _$CharacterViewModelImpl _$$CharacterViewModelImplFromJson(
@@ -66,6 +63,8 @@ _$CharacterViewModelImpl _$$CharacterViewModelImplFromJson(
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       isFavorite: json['isFavorite'] as bool? ?? false,
+      isSelected: json['isSelected'] as bool? ?? false,
+      isModified: json['isModified'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$CharacterViewModelImplToJson(
@@ -78,4 +77,6 @@ Map<String, dynamic> _$$CharacterViewModelImplToJson(
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
       'isFavorite': instance.isFavorite,
+      'isSelected': instance.isSelected,
+      'isModified': instance.isModified,
     };

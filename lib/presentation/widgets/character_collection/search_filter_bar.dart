@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'filter_type.dart';
+import '../../viewmodels/states/character_grid_state.dart';
 
 class SearchFilterBar extends StatelessWidget {
   final String searchTerm;
@@ -58,10 +58,7 @@ class SearchFilterBar extends StatelessWidget {
                   items: [
                     _buildDropdownItem(FilterType.all, '全部字符', context),
                     _buildDropdownItem(FilterType.recent, '最近添加', context),
-                    _buildDropdownItem(FilterType.modified, '最近修改', context),
                     _buildDropdownItem(FilterType.favorite, '已收藏', context),
-                    _buildDropdownItem(FilterType.byStroke, '按笔画数', context),
-                    _buildDropdownItem(FilterType.custom, '自定义排序', context),
                   ],
                   onChanged: (value) {
                     if (value != null) {
@@ -112,14 +109,8 @@ class SearchFilterBar extends StatelessWidget {
         return Icons.format_list_bulleted;
       case FilterType.recent:
         return Icons.access_time;
-      case FilterType.modified:
-        return Icons.edit;
       case FilterType.favorite:
         return Icons.favorite;
-      case FilterType.byStroke:
-        return Icons.brush;
-      case FilterType.custom:
-        return Icons.sort;
     }
   }
 }

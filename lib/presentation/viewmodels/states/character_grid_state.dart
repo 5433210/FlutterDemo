@@ -1,7 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../widgets/character_collection/filter_type.dart';
-
 part 'character_grid_state.freezed.dart';
 part 'character_grid_state.g.dart';
 
@@ -12,7 +10,7 @@ class CharacterGridState with _$CharacterGridState {
     @Default([]) List<CharacterViewModel> filteredCharacters,
     @Default('') String searchTerm,
     @Default(FilterType.all) FilterType filterType,
-    @Default({}) Set<String> selectedIds,
+    @Default({}) Set<String> selectedIds, // Keeping for transition period
     @Default(1) int currentPage,
     @Default(1) int totalPages,
     @Default(false) bool loading,
@@ -33,8 +31,16 @@ class CharacterViewModel with _$CharacterViewModel {
     required DateTime createdAt,
     required DateTime updatedAt,
     @Default(false) bool isFavorite,
+    @Default(false) bool isSelected, // New property
+    @Default(false) bool isModified, // New property
   }) = _CharacterViewModel;
 
   factory CharacterViewModel.fromJson(Map<String, dynamic> json) =>
       _$CharacterViewModelFromJson(json);
+}
+
+enum FilterType {
+  all,
+  recent,
+  favorite,
 }

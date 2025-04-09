@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
-import '../../application/services/character/character_service.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/processing_options.dart';
@@ -15,6 +14,7 @@ import '../../domain/models/character/processing_result.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/character_collection_provider.dart';
 import '../../presentation/providers/character/character_edit_providers.dart';
+import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/selected_region_provider.dart';
@@ -164,6 +164,144 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     });
   }
 
+  Widget _buildBottomButtons(SaveState saveState) {
+    final bool isSaving = saveState.isSaving;
+    final String? errorMessage = saveState.error;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (errorMessage != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      errorMessage,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (!_isEditing)
+                TextButton.icon(
+                  onPressed:
+                      isSaving ? null : () => setState(() => _isEditing = true),
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: Text(ShortcutTooltipBuilder.build(
+                    '输入汉字',
+                    EditorShortcuts.openInput,
+                  )),
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: isSaving ? null : () => _handleSave(),
+                icon: isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save, size: 18),
+                label: Text(ShortcutTooltipBuilder.build(
+                  '保存',
+                  EditorShortcuts.save,
+                )),
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCharacterInput() {
+    return Container(
+      width: 200,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.edit, size: 16, color: Colors.grey),
+              const SizedBox(width: 8),
+              const Text(
+                '输入汉字',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.close, size: 16),
+                onPressed: () => setState(() => _isEditing = false),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _characterController,
+            autofocus: true,
+            maxLength: 1,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24),
+            decoration: const InputDecoration(
+              hintText: '请输入',
+              counterText: '',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => setState(() => _isEditing = false),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContent() {
     final saveState = ref.watch(characterSaveNotifierProvider);
     final eraseState = ref.watch(erase.eraseStateProvider);
@@ -227,7 +365,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                   ),
 
                   // 缩略图预览
-                  if (region != null && region.id != null)
+                  if (region != null)
                     Positioned(
                       right: 16,
                       top: 16,
@@ -248,6 +386,155 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             // 底部按钮
             _buildBottomButtons(saveState),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorWidget(String message) {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red),
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 构建加载状态
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(strokeWidth: 2),
+          SizedBox(height: 16),
+          Text('正在加载字符图像...', style: TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  Widget _buildThumbnailPreview() {
+    // 检查region是否存在，如果不存在则不显示缩略图
+    final region = ref.watch(selectedRegionProvider);
+    if (region == null) {
+      print('CharacterEditPanel - 没有选中的区域，不显示缩略图');
+      return const SizedBox.shrink();
+    }
+
+    // 检查region的characterId是否存在，如果不存在说明是新建选区，不显示缩略图
+    if (region.characterId == null) {
+      print('CharacterEditPanel - 区域未关联字符，不显示缩略图');
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<String?>(
+      future: _getThumbnailPath(),
+      builder: (context, snapshot) {
+        print('CharacterEditPanel - 构建缩略图预览');
+
+        if (snapshot.hasError) {
+          print('CharacterEditPanel - 获取缩略图路径失败: ${snapshot.error}');
+          return _buildErrorWidget('加载缩略图失败');
+        }
+
+        if (!snapshot.hasData) {
+          print('CharacterEditPanel - 等待缩略图路径...');
+          return _buildLoadingWidget();
+        }
+
+        final thumbnailPath = snapshot.data!;
+        print('CharacterEditPanel - 获取到缩略图路径: $thumbnailPath');
+
+        return FutureBuilder<bool>(
+          future: File(thumbnailPath).exists(),
+          builder: (context, existsSnapshot) {
+            if (existsSnapshot.hasError) {
+              print(
+                  'CharacterEditPanel - 检查缩略图文件存在失败: ${existsSnapshot.error}');
+              return _buildErrorWidget('检查文件失败');
+            }
+
+            if (!existsSnapshot.hasData) {
+              print('CharacterEditPanel - 检查缩略图文件是否存在...');
+              return _buildLoadingWidget();
+            }
+
+            final exists = existsSnapshot.data!;
+            print(
+                'CharacterEditPanel - 缩略图文件${exists ? "存在" : "不存在"}: $thumbnailPath');
+
+            if (!exists) {
+              print('CharacterEditPanel - 缩略图文件不存在');
+              return _buildErrorWidget('缩略图不存在');
+            }
+
+            return FutureBuilder<int>(
+              future: File(thumbnailPath).length(),
+              builder: (context, sizeSnapshot) {
+                if (sizeSnapshot.hasError) {
+                  print(
+                      'CharacterEditPanel - 获取缩略图文件大小失败: ${sizeSnapshot.error}');
+                  return _buildErrorWidget('获取文件大小失败');
+                }
+
+                if (!sizeSnapshot.hasData) {
+                  print('CharacterEditPanel - 获取缩略图文件大小...');
+                  return _buildLoadingWidget();
+                }
+
+                final fileSize = sizeSnapshot.data!;
+                print('CharacterEditPanel - 缩略图文件大小: $fileSize 字节');
+
+                if (fileSize == 0) {
+                  print('CharacterEditPanel - 缩略图文件大小为0');
+                  return _buildErrorWidget('缩略图文件为空');
+                }
+
+                return Image.file(
+                  File(thumbnailPath),
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print('CharacterEditPanel - 加载缩略图失败: $error');
+                    print('$stackTrace');
+                    return _buildErrorWidget('加载图片失败');
+                  },
+                );
+              },
+            );
+          },
         );
       },
     );
@@ -399,283 +686,48 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
   }
 
-  Widget _buildCharacterInput() {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.edit, size: 16, color: Colors.grey),
-              const SizedBox(width: 8),
-              const Text(
-                '输入汉字',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.close, size: 16),
-                onPressed: () => setState(() => _isEditing = false),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _characterController,
-            autofocus: true,
-            maxLength: 1,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24),
-            decoration: const InputDecoration(
-              hintText: '请输入',
-              counterText: '',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: (_) => setState(() => _isEditing = false),
-          ),
-        ],
-      ),
-    );
-  }
+  // 获取缩略图路径
+  Future<String?> _getThumbnailPath() async {
+    try {
+      print('获取缩略图路径');
 
-  Widget _buildThumbnailPreview() {
-    // 检查region是否存在，如果不存在则不显示缩略图
-    final region = ref.watch(selectedRegionProvider);
-    if (region == null) {
-      print('CharacterEditPanel - 没有选中的区域，不显示缩略图');
-      return const SizedBox.shrink();
+      // 获取characterId，如果为空则使用region的id
+      final String characterId =
+          widget.selectedRegion.characterId ?? widget.selectedRegion.id;
+      print('使用的characterId: $characterId');
+
+      final path = await ref
+          .read(characterCollectionProvider.notifier)
+          .getThumbnailPath(characterId);
+      print('获取到缩略图路径: $path');
+
+      if (path == null) {
+        print('缩略图路径为空');
+        return null;
+      }
+
+      final file = File(path);
+      final exists = await file.exists();
+      if (!exists) {
+        print('缩略图文件不存在');
+        return null;
+      }
+
+      final fileSize = await file.length();
+      if (fileSize == 0) {
+        print('缩略图文件大小为0');
+        return null;
+      }
+
+      return path;
+    } catch (e) {
+      print('获取缩略图路径失败: $e');
+      AppLogger.error('获取缩略图路径失败', error: e, data: {
+        'characterId': widget.selectedRegion.characterId,
+        'regionId': widget.selectedRegion.id,
+      });
+      return null;
     }
-
-    // 检查region的id是否存在，如果不存在则不显示缩略图
-    if (region.id == null) {
-      print('CharacterEditPanel - 区域ID为空，不显示缩略图');
-      return const SizedBox.shrink();
-    }
-
-    // 检查region的characterId是否存在，如果不存在说明是新建选区，不显示缩略图
-    if (region.characterId == null) {
-      print('CharacterEditPanel - 区域未关联字符，不显示缩略图');
-      return const SizedBox.shrink();
-    }
-
-    return FutureBuilder<String?>(
-      future: _getThumbnailPath(),
-      builder: (context, snapshot) {
-        print('CharacterEditPanel - 构建缩略图预览');
-
-        if (snapshot.hasError) {
-          print('CharacterEditPanel - 获取缩略图路径失败: ${snapshot.error}');
-          return _buildErrorWidget('加载缩略图失败');
-        }
-
-        if (!snapshot.hasData) {
-          print('CharacterEditPanel - 等待缩略图路径...');
-          return _buildLoadingWidget();
-        }
-
-        final thumbnailPath = snapshot.data!;
-        print('CharacterEditPanel - 获取到缩略图路径: $thumbnailPath');
-
-        return FutureBuilder<bool>(
-          future: File(thumbnailPath).exists(),
-          builder: (context, existsSnapshot) {
-            if (existsSnapshot.hasError) {
-              print(
-                  'CharacterEditPanel - 检查缩略图文件存在失败: ${existsSnapshot.error}');
-              return _buildErrorWidget('检查文件失败');
-            }
-
-            if (!existsSnapshot.hasData) {
-              print('CharacterEditPanel - 检查缩略图文件是否存在...');
-              return _buildLoadingWidget();
-            }
-
-            final exists = existsSnapshot.data!;
-            print(
-                'CharacterEditPanel - 缩略图文件${exists ? "存在" : "不存在"}: $thumbnailPath');
-
-            if (!exists) {
-              print('CharacterEditPanel - 缩略图文件不存在');
-              return _buildErrorWidget('缩略图不存在');
-            }
-
-            return FutureBuilder<int>(
-              future: File(thumbnailPath).length(),
-              builder: (context, sizeSnapshot) {
-                if (sizeSnapshot.hasError) {
-                  print(
-                      'CharacterEditPanel - 获取缩略图文件大小失败: ${sizeSnapshot.error}');
-                  return _buildErrorWidget('获取文件大小失败');
-                }
-
-                if (!sizeSnapshot.hasData) {
-                  print('CharacterEditPanel - 获取缩略图文件大小...');
-                  return _buildLoadingWidget();
-                }
-
-                final fileSize = sizeSnapshot.data!;
-                print('CharacterEditPanel - 缩略图文件大小: $fileSize 字节');
-
-                if (fileSize == 0) {
-                  print('CharacterEditPanel - 缩略图文件大小为0');
-                  return _buildErrorWidget('缩略图文件为空');
-                }
-
-                return Image.file(
-                  File(thumbnailPath),
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('CharacterEditPanel - 加载缩略图失败: $error');
-                    print('$stackTrace');
-                    return _buildErrorWidget('加载图片失败');
-                  },
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildErrorWidget(String message) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, color: Colors.red),
-            SizedBox(height: 4),
-            Text(
-              message,
-              style: TextStyle(fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingWidget() {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-  }
-
-  Widget _buildBottomButtons(SaveState saveState) {
-    final bool isSaving = saveState.isSaving;
-    final String? errorMessage = saveState.error;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (errorMessage != null)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      errorMessage,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (!_isEditing)
-                TextButton.icon(
-                  onPressed:
-                      isSaving ? null : () => setState(() => _isEditing = true),
-                  icon: const Icon(Icons.edit, size: 18),
-                  label: Text(ShortcutTooltipBuilder.build(
-                    '输入汉字',
-                    EditorShortcuts.openInput,
-                  )),
-                  style: TextButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  ),
-                ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: isSaving ? null : () => _handleSave(),
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save, size: 18),
-                label: Text(ShortcutTooltipBuilder.build(
-                  '保存',
-                  EditorShortcuts.save,
-                )),
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
   void _handleEraseEnd() {
@@ -719,14 +771,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         operation: () async {
           final canvasState = _canvasKey.currentState;
           if (canvasState == null) {
-            throw _SaveError('画布状态获取失败');
+            throw _SaveError('无法获取画布状态');
           }
-
-          final image = await canvasState.getProcessedImage();
-          if (image == null) {
-            throw _SaveError('获取处理结果失败');
-          }
-          return image;
+          return await canvasState.getProcessedImage();
         },
         operationName: '图像处理',
       );
@@ -758,23 +805,20 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       // 获取图像数据（带重试机制）
       final imageData = await _RetryStrategy.run(
         operation: () async {
-          final data =
-              await processedImage.toByteData(format: ui.ImageByteFormat.png);
-          if (data == null) {
-            throw _SaveError('图像数据获取失败');
-          }
-          return data;
+          return await processedImage!
+              .toByteData(format: ui.ImageByteFormat.png);
         },
         operationName: '图像数据转换',
       );
 
-      final uint8List = imageData.buffer.asUint8List();
+      final uint8List = imageData!.buffer.asUint8List();
 
       // 更新选区信息
       final updatedRegion = selectedRegion.copyWith(
         pageId: widget.pageId,
         character: _characterController.text,
         options: processingOptions,
+        isModified: true, // Explicitly mark as modified using the new property
       );
 
       // 创建处理结果
@@ -786,48 +830,28 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       );
 
       // 保存（带重试机制）
-      final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
-      final saveResult = await _RetryStrategy.run(
-        operation: () async {
-          if (!mounted) throw _SaveError('操作已取消');
+      final collectionNotifier = ref.read(characterCollectionProvider.notifier);
 
-          final result = await saveNotifier.save(
-              updatedRegion, processingResult, widget.workId);
+      // Update the region first
+      collectionNotifier.updateSelectedRegion(updatedRegion);
 
-          if (!mounted) throw _SaveError('操作已取消');
+      // Now save the current region
+      await collectionNotifier.saveCurrentRegion();
 
-          if (!result.isSuccess) {
-            throw _SaveError(result.error?.toString() ?? '保存失败');
-          }
-
-          return result;
-        },
-        operationName: '保存字符',
-      );
+      // Notify about character saved event
+      ref
+          .read(characterRefreshNotifierProvider.notifier)
+          .notifyEvent(RefreshEventType.characterSaved);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('保存成功'),
+          SnackBar(
+            content: Text('保存成功: ${_characterController.text}'),
             backgroundColor: Colors.green,
           ),
         );
-        // 更新选区状态
-        final collectionNotifier =
-            ref.read(characterCollectionProvider.notifier);
-        final finalRegionId = saveResult.data!;
-        final finalRegion = updatedRegion.copyWith(
-          id: finalRegionId,
-          isSaved: true,
-          characterId: finalRegionId,
-        );
-        collectionNotifier.updateSelectedRegion(finalRegion);
-        collectionNotifier.markAsSaved(finalRegionId);
 
         widget.onEditComplete({
-          'characterId': finalRegionId,
-          'paths': pathRenderData.completedPaths ?? [],
-          'processingOptions': processingOptions,
           'character': _characterController.text,
         });
       }
@@ -836,23 +860,15 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
       try {
         final errorMessage = e is _SaveError ? e.toString() : '保存失败：$e';
-        ref.read(characterSaveNotifierProvider.notifier).state = ref
-            .read(characterSaveNotifierProvider)
-            .copyWith(error: errorMessage);
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            action: SnackBarAction(
-              label: '重试',
-              textColor: Colors.white,
-              onPressed: _handleSave,
-            ),
           ),
         );
       } catch (e) {
-        // 忽略在显示错误消息时可能发生的异常
+        // 双重异常捕获
+        debugPrint('显示错误信息时发生异常: $e');
       }
     }
   }
@@ -900,70 +916,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     } catch (e, stack) {
       AppLogger.error('Error loading/processing character image in panel',
           error: e, stackTrace: stack);
-      return null;
-    }
-  }
-
-  // 构建加载状态
-  Widget _buildLoadingState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(strokeWidth: 2),
-          SizedBox(height: 16),
-          Text('正在加载字符图像...', style: TextStyle(color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  // 获取缩略图路径
-  Future<String?> _getThumbnailPath() async {
-    try {
-      print('获取缩略图路径');
-
-      // 获取characterId，如果为空则使用region的id
-      final String? characterId =
-          widget.selectedRegion.characterId ?? widget.selectedRegion.id;
-      print('使用的characterId: $characterId');
-
-      if (characterId == null) {
-        print('characterId为空，无法获取缩略图');
-        throw Exception('characterId为空，无法获取缩略图');
-      }
-
-      final path = await ref
-          .read(characterCollectionProvider.notifier)
-          .getThumbnailPath(characterId);
-      print('获取到缩略图路径: $path');
-
-      if (path == null) {
-        throw Exception('缩略图路径为空');
-      }
-
-      final file = File(path);
-      final exists = await file.exists();
-      if (!exists) {
-        AppLogger.error('缩略图文件不存在',
-            data: {'path': path, 'characterId': characterId});
-        throw Exception('缩略图文件不存在');
-      }
-
-      final fileSize = await file.length();
-      if (fileSize == 0) {
-        AppLogger.error('缩略图文件大小为0',
-            data: {'path': path, 'characterId': characterId});
-        throw Exception('缩略图文件大小为0');
-      }
-
-      return path;
-    } catch (e) {
-      print('获取缩略图路径失败: $e');
-      AppLogger.error('获取缩略图路径失败', error: e, data: {
-        'characterId':
-            widget.selectedRegion.characterId ?? widget.selectedRegion.id
-      });
       return null;
     }
   }
@@ -1047,6 +999,22 @@ class _ToggleInvertIntent extends Intent {}
 
 class _TogglePanModeIntent extends Intent {}
 
+class _ToolbarButton {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+  final bool isActive;
+  final SingleActivator shortcut;
+
+  const _ToolbarButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.isActive = false,
+    required this.shortcut,
+  });
+}
+
 class _UndoIntent extends Intent {}
 
 // 验证器
@@ -1065,20 +1033,4 @@ class _ValidationResult {
         isValid: false,
         error: error,
       );
-}
-
-class _ToolbarButton {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final bool isActive;
-  final SingleActivator shortcut;
-
-  const _ToolbarButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.isActive = false,
-    required this.shortcut,
-  });
 }

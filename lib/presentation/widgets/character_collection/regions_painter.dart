@@ -8,8 +8,6 @@ import 'regions_state_utils.dart';
 
 class RegionsPainter extends CustomPainter {
   final List<CharacterRegion> regions;
-  final Set<String> selectedIds;
-  final Set<String> modifiedIds; // 未保存（已修改）的区域ID集合
   final CoordinateTransformer transformer;
   final String? hoveredId;
   final String? adjustingRegionId; // 当前正在调整的区域ID
@@ -18,9 +16,7 @@ class RegionsPainter extends CustomPainter {
 
   const RegionsPainter({
     required this.regions,
-    required this.selectedIds,
     required this.transformer,
-    this.modifiedIds = const {}, // 默认为空集合
     this.hoveredId,
     this.adjustingRegionId, // 接收调整中的区域ID
     required this.currentTool, // 当前工具模式
@@ -35,14 +31,6 @@ class RegionsPainter extends CustomPainter {
     try {
       // 计算可见区域
       final viewportBounds = Rect.fromLTWH(0, 0, size.width, size.height);
-
-      // // 调试输出关键绘制参数
-      // AppLogger.debug('RegionsPainter - 关键绘制参数', data: {
-      //   'currentTool': currentTool.toString(),
-      //   'isAdjusting': isAdjusting,
-      //   'selectedIds': selectedIds.toString(),
-      //   'adjustingRegionId': adjustingRegionId ?? 'null'
-      // });
 
       for (final region in regions) {
         // 如果区域正在被其他组件调整，则跳过绘制
@@ -59,24 +47,14 @@ class RegionsPainter extends CustomPainter {
             continue; // 跳过不可见的区域
           }
 
-          // 确定区域状态
-          final isSelected = selectedIds.contains(region.id);
+          // 确定区域状态 - using region.isSelected property
+          final isSelected =
+              region.isSelected; // Use object property instead of selectedIds
           final isHovered = region.id == hoveredId;
           final isRegionAdjusting =
               isAdjusting && region.id == adjustingRegionId;
-          final isSaved = !modifiedIds.contains(region.id);
-
-          // AppLogger.debug('RegionsPainter - 区域状态计算', data: {
-          //   'regionId': region.id,
-          //   'isSelected': isSelected,
-          //   'isHovered': isHovered,
-          //   'isRegionAdjusting': isRegionAdjusting,
-          //   'isSaved': isSaved,
-          //   'modifiedIds': modifiedIds.toList(),
-          //   'selectedIds': selectedIds.toList(),
-          //   'isAdjusting': isAdjusting,
-          //   'adjustingRegionId': adjustingRegionId,
-          // });
+          final isSaved =
+              !region.isModified; // Use object property instead of modifiedIds
 
           // 获取区域状态
           final regionState = RegionStateUtils.getRegionState(
@@ -84,37 +62,6 @@ class RegionsPainter extends CustomPainter {
             isSelected: isSelected,
             isAdjusting: isRegionAdjusting,
           );
-
-          // AppLogger.debug('RegionsPainter - 区域状态确定', data: {
-          //   'regionId': region.id,
-          //   'regionState': regionState.toString(),
-          //   'currentTool': currentTool.toString(),
-          // });
-
-          // 获取颜色用于日志
-          final Color finalBorderColor = RegionStateUtils.getBorderColor(
-            state: regionState,
-            isSaved: isSaved,
-            isHovered: isHovered,
-          );
-          final Color finalFillColor = RegionStateUtils.getFillColor(
-            state: regionState,
-            isSaved: isSaved,
-            isHovered: isHovered,
-          );
-
-          // // 精简日志，只记录选中或调整中的区域
-          // if (isSelected || isRegionAdjusting) {
-          //   AppLogger.debug('RegionsPainter - Key Region State', data: {
-          //     'regionId': region.id,
-          //     'isSelected': isSelected,
-          //     'isAdjusting': isRegionAdjusting,
-          //     'isSaved': isSaved,
-          //     'tool': currentTool.toString(),
-          //     'regionState': regionState.toString(),
-          //     'borderColor': _colorToString(finalBorderColor),
-          //   });
-          // }
 
           // 绘制选区
           _drawRegion(
@@ -139,17 +86,11 @@ class RegionsPainter extends CustomPainter {
   @override
   bool shouldRepaint(RegionsPainter oldDelegate) {
     return oldDelegate.regions != regions ||
-        oldDelegate.selectedIds != selectedIds ||
-        oldDelegate.modifiedIds != modifiedIds ||
         oldDelegate.transformer != transformer ||
         oldDelegate.hoveredId != hoveredId ||
         oldDelegate.currentTool != currentTool ||
         oldDelegate.adjustingRegionId != adjustingRegionId ||
         oldDelegate.isAdjusting != isAdjusting;
-  }
-
-  String _colorToString(Color color) {
-    return 'rgba(${color.red}, ${color.green}, ${color.blue}, ${color.alpha})';
   }
 
   void _drawHandles(Canvas canvas, Rect rect, bool isActive) {

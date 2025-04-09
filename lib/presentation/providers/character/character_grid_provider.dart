@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/repository_providers.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../viewmodels/states/character_grid_state.dart';
-import '../../widgets/character_collection/filter_type.dart';
 
 final characterGridProvider =
     StateNotifierProvider<CharacterGridNotifier, CharacterGridState>((ref) {
@@ -26,33 +25,25 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
     loadCharacters();
   }
 
+  // New methods for managing selections
   void clearSelection() {
-    state = state.copyWith(selectedIds: {});
+    final updatedCharacters = state.characters
+        .map((c) => c.isSelected ? c.copyWith(isSelected: false) : c)
+        .toList();
+
+    state = state.copyWith(
+      characters: updatedCharacters,
+      filteredCharacters: _filterAndSortCharacters(updatedCharacters),
+      selectedIds: {},
+    );
   }
 
-  Future<void> deleteSelected() async {
-    try {
-      state = state.copyWith(loading: true, error: null);
-
-      // 删除所选字符
-      await _repository.deleteBatch(state.selectedIds.toList());
-
-      // 重新加载数据
-      await loadCharacters();
-
-      // 清除选择
-      clearSelection();
-    } catch (e) {
-      state = state.copyWith(
-        loading: false,
-        error: e.toString(),
-      );
-    }
-  }
-
-  Future<void> exportSelected() async {
-    // 导出功能实现
-    // 这里需要调用导出服务
+  // Get selected character IDs
+  List<String> getSelectedCharacterIds() {
+    return state.characters
+        .where((c) => c.isSelected)
+        .map((c) => c.id)
+        .toList();
   }
 
   Future<void> loadCharacters() async {
@@ -111,6 +102,14 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
   }
 
   void toggleSelection(String id) {
+    final updatedCharacters = state.characters.map((c) {
+      if (c.id == id) {
+        return c.copyWith(isSelected: !c.isSelected);
+      }
+      return c;
+    }).toList();
+
+    // Also keep selectedIds in sync for transition period
     final selectedIds = Set<String>.from(state.selectedIds);
     if (selectedIds.contains(id)) {
       selectedIds.remove(id);
@@ -118,7 +117,11 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
       selectedIds.add(id);
     }
 
-    state = state.copyWith(selectedIds: selectedIds);
+    state = state.copyWith(
+      characters: updatedCharacters,
+      filteredCharacters: _filterAndSortCharacters(updatedCharacters),
+      selectedIds: selectedIds,
+    );
   }
 
   void updateFilter(FilterType type) {
@@ -134,55 +137,58 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
   void _applyFilters() {
     var filtered = List<CharacterViewModel>.from(state.characters);
 
-    // 应用搜索条件
+    // Apply search filter
     if (state.searchTerm.isNotEmpty) {
       filtered = filtered
           .where((char) => char.character.contains(state.searchTerm))
           .toList();
     }
 
-    // 应用筛选类型
+    // Apply type filter
     switch (state.filterType) {
-      case FilterType.recent:
-        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      case FilterType.all:
+        // No additional filtering needed
         break;
-      case FilterType.modified:
-        filtered.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      case FilterType.recent:
+        // Sort by creation date, newest first
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         break;
       case FilterType.favorite:
         filtered = filtered.where((char) => char.isFavorite).toList();
         break;
-      case FilterType.byStroke:
-        // 这里需要调用笔画排序服务
-        break;
-      case FilterType.custom:
-        // 自定义排序
-        break;
-      case FilterType.all:
-      default:
-        // 默认排序
-        break;
     }
 
-    // 计算分页
-    const itemsPerPage = 16;
-    final totalPages = (filtered.length / itemsPerPage).ceil();
-
-    // 应用分页
-    final startIndex = (state.currentPage - 1) * itemsPerPage;
-    if (startIndex < filtered.length) {
-      final endIndex = startIndex + itemsPerPage < filtered.length
-          ? startIndex + itemsPerPage
-          : filtered.length;
-      filtered = filtered.sublist(startIndex, endIndex);
-    } else {
-      filtered = [];
-    }
-
+    // Update filtered list
     state = state.copyWith(
       filteredCharacters: filtered,
-      totalPages: totalPages > 0 ? totalPages : 1,
-      currentPage: state.currentPage > totalPages ? 1 : state.currentPage,
     );
+  }
+
+  // New helper method for filtering and sorting
+  List<CharacterViewModel> _filterAndSortCharacters(
+      List<CharacterViewModel> characters) {
+    var filtered = List<CharacterViewModel>.from(characters);
+
+    // Apply current filters
+    if (state.searchTerm.isNotEmpty) {
+      filtered = filtered
+          .where((char) => char.character.contains(state.searchTerm))
+          .toList();
+    }
+
+    // Apply current sorting
+    switch (state.filterType) {
+      case FilterType.all:
+        // No additional sorting needed
+        break;
+      case FilterType.recent:
+        filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case FilterType.favorite:
+        filtered = filtered.where((char) => char.isFavorite).toList();
+        break;
+    }
+
+    return filtered;
   }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/character/character_grid_provider.dart';
-import 'batch_action_bar.dart';
+import '../../viewmodels/states/character_grid_state.dart';
 import 'character_tile.dart';
 import 'pagination_control.dart';
 import 'search_filter_bar.dart';
@@ -41,18 +41,6 @@ class CharacterGridView extends ConsumerWidget {
           onFilterChanged: (type) =>
               ref.read(characterGridProvider.notifier).updateFilter(type),
         ),
-
-        // 批量操作栏（条件显示）
-        if (gridState.selectedIds.isNotEmpty)
-          BatchActionBar(
-            selectedCount: gridState.selectedIds.length,
-            onExport: () =>
-                ref.read(characterGridProvider.notifier).exportSelected(),
-            onDelete: () =>
-                ref.read(characterGridProvider.notifier).deleteSelected(),
-            onCancel: () =>
-                ref.read(characterGridProvider.notifier).clearSelection(),
-          ),
 
         // 字符网格
         Expanded(

@@ -5,12 +5,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../domain/models/character/character_region.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../utils/coordinate_transformer.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../../providers/debug/debug_options_provider.dart';
@@ -102,7 +102,7 @@ class _ImageViewState extends ConsumerState<ImageView>
     final toolMode = ref.watch(toolModeProvider);
     final characterCollection = ref.watch(characterCollectionProvider);
     final regions = characterCollection.regions;
-    final selectedIds = characterCollection.selectedIds;
+    // No need to access selectedIds and modifiedIds directly as they're now part of region properties
     final debugOptions = ref.watch(debugOptionsProvider);
 
     // 处理工具模式变化
@@ -183,14 +183,12 @@ class _ImageViewState extends ConsumerState<ImageView>
                   _buildImageLayer(
                     imageState,
                     regions,
-                    selectedIds,
                     viewportSize,
                   ),
                   if (_transformer != null && debugOptions.enabled)
                     _buildDebugLayer(
                       debugOptions,
                       regions,
-                      selectedIds,
                       viewportSize,
                     ),
                   _buildSelectionToolLayer(),
@@ -209,15 +207,14 @@ class _ImageViewState extends ConsumerState<ImageView>
     super.didChangeDependencies();
 
     // Check if there's a selected region and activate adjustment mode if needed
-    final selectedIds = ref.read(characterCollectionProvider).selectedIds;
-    if (selectedIds.length == 1 &&
+    final characterCollection = ref.read(characterCollectionProvider);
+    final selectedRegions =
+        characterCollection.regions.where((r) => r.isSelected);
+
+    if (selectedRegions.length == 1 &&
         !_isAdjusting &&
         ref.read(toolModeProvider) == Tool.select) {
-      final regions = ref.read(characterCollectionProvider).regions;
-      final selectedRegion = regions.firstWhere(
-        (r) => selectedIds.contains(r.id),
-        orElse: () => throw Exception('No selected region found'),
-      );
+      final selectedRegion = selectedRegions.first;
 
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _activateAdjustmentMode(selectedRegion);
@@ -307,6 +304,20 @@ class _ImageViewState extends ConsumerState<ImageView>
             AppLogger.debug(
                 'Resetting local adjustment state from provider state');
             _resetAdjustmentState(); // 重置本地状态
+          }
+        });
+      }
+    });
+
+    // Listen for refresh events
+    ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
+      if (previous != current) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_mounted) {
+            // This could be optimized to handle specific refresh event types
+            setState(() {
+              // Force rebuild to reflect updated state
+            });
           }
         });
       }
@@ -482,7 +493,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   Widget _buildDebugLayer(
     DebugOptions debugOptions,
     List<CharacterRegion> regions,
-    Set<String> selectedIds,
     Size viewportSize,
   ) {
     return Positioned.fill(
@@ -499,7 +509,7 @@ class _ImageViewState extends ConsumerState<ImageView>
             textScale: debugOptions.textScale,
             opacity: debugOptions.opacity,
             regions: regions,
-            selectedIds: selectedIds,
+            // selectedIds is no longer needed, regions have isSelected property
           ),
           size: viewportSize,
         ),
@@ -571,7 +581,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   Widget _buildImageLayer(
     WorkImageState imageState,
     List<CharacterRegion> regions,
-    Set<String> selectedIds,
     Size viewportSize,
   ) {
     final toolMode = ref.watch(toolModeProvider);
@@ -598,7 +607,6 @@ class _ImageViewState extends ConsumerState<ImageView>
       },
       onExit: (_) {
         setState(() {
-          _hoveredRegionId = null;
           _hoveredHandleIndex = null;
         });
       },
@@ -650,8 +658,6 @@ class _ImageViewState extends ConsumerState<ImageView>
                     child: CustomPaint(
                       painter: RegionsPainter(
                         regions: regions,
-                        selectedIds: selectedIds,
-                        modifiedIds: characterCollection.modifiedIds,
                         transformer: _transformer!,
                         hoveredId: _hoveredRegionId,
                         adjustingRegionId: _adjustingRegionId,
@@ -853,6 +859,7 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   double _calculateAngle(Offset center, Offset point) {
+    // ...existing code...
     return (point - center).direction;
   }
 
@@ -944,47 +951,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     });
   }
 
-  void _confirmAdjustment() {
-    if (!_isAdjusting ||
-        _adjustingRegionId == null ||
-        _adjustingRect == null ||
-        _originalRegion == null) {
-      return;
-    }
-
-    final imageRect = _transformer!.viewportRectToImageRect(_adjustingRect!);
-
-    // 使用Future延迟更新provider状态
-    Future(() {
-      if (_mounted) {
-        // 创建更新后的区域
-        final updatedRegion = _originalRegion!.copyWith(
-          rect: imageRect,
-          rotation: _currentRotation,
-          updateTime: DateTime.now(),
-        );
-
-        // 更新区域
-        ref
-            .read(characterCollectionProvider.notifier)
-            .updateSelectedRegion(updatedRegion);
-      }
-    });
-
-    // 重置状态
-    setState(() {
-      _isAdjusting = false;
-      _adjustingRegionId = null;
-      _activeHandleIndex = null;
-      _guideLines = null;
-      _originalRegion = null;
-      _adjustingRect = null;
-      _isRotating = false;
-      _currentRotation = 0.0;
-      _rotationCenter = null;
-    });
-  }
-
   void _confirmSelection() {
     if (_lastCompletedSelection == null) return;
 
@@ -996,6 +962,11 @@ class _ImageViewState extends ConsumerState<ImageView>
       if (_mounted) {
         // 添加区域
         ref.read(characterCollectionProvider.notifier).createRegion(imageRect);
+
+        // Notify refresh
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.regionUpdated);
       }
     });
 
@@ -1146,19 +1117,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     return null;
   }
 
-  /// 获取更新transformer的原因，用于调试
-  String _getUpdateReason(
-    Size imageSize,
-    Size viewportSize,
-    CoordinateTransformer? oldTransformer,
-  ) {
-    if (oldTransformer == null) return 'initial';
-    if (oldTransformer.imageSize != imageSize) return 'image_size_changed';
-    if (oldTransformer.viewportSize != viewportSize)
-      return 'viewport_size_changed';
-    return 'unknown';
-  }
-
   void _handleAdjustmentPanEnd(DragEndDetails details) {
     if (!_isAdjusting || _originalRegion == null || _adjustingRect == null) {
       // Ensure state is reset even if something went wrong
@@ -1178,12 +1136,18 @@ class _ImageViewState extends ConsumerState<ImageView>
       rect: finalImageRect,
       rotation: finalRotation,
       updateTime: DateTime.now(),
+      isModified: true, // Mark as modified
     );
 
     // 立即更新provider状态
     ref
         .read(characterCollectionProvider.notifier)
         .updateSelectedRegion(updatedRegion);
+
+    // Notify refresh
+    ref
+        .read(characterRefreshNotifierProvider.notifier)
+        .notifyEvent(RefreshEventType.regionUpdated);
 
     // 重置UI状态，但保持调整模式
     setState(() {
@@ -1266,88 +1230,13 @@ class _ImageViewState extends ConsumerState<ImageView>
     _cancelSelection();
   }
 
-  // 处理控制点拖动
-  void _handleHandleDrag(DragUpdateDetails details, int handleIndex) {
-    if (_adjustingRect == null) return;
-
-    final delta = details.delta;
-    final matrix = _transformationController.value.clone();
-    matrix.invert();
-    final scale = matrix.getMaxScaleOnAxis();
-    final scaledDelta = Offset(delta.dx / scale, delta.dy / scale);
-
-    Rect newRect = _adjustingRect!;
-    switch (handleIndex) {
-      case 0: // 左上
-        newRect = Rect.fromPoints(
-          _adjustingRect!.topLeft.translate(scaledDelta.dx, scaledDelta.dy),
-          _adjustingRect!.bottomRight,
-        );
-        break;
-      case 1: // 上中
-        newRect = Rect.fromLTRB(
-          _adjustingRect!.left,
-          _adjustingRect!.top + scaledDelta.dy,
-          _adjustingRect!.right,
-          _adjustingRect!.bottom,
-        );
-        break;
-      case 2: // 右上
-        newRect = Rect.fromPoints(
-          _adjustingRect!.bottomLeft,
-          Offset(_adjustingRect!.right + scaledDelta.dx,
-              _adjustingRect!.top + scaledDelta.dy),
-        );
-        break;
-      case 3: // 右中
-        newRect = Rect.fromLTRB(
-          _adjustingRect!.left,
-          _adjustingRect!.top,
-          _adjustingRect!.right + scaledDelta.dx,
-          _adjustingRect!.bottom,
-        );
-        break;
-      case 4: // 右下
-        newRect = Rect.fromPoints(
-          _adjustingRect!.topLeft,
-          _adjustingRect!.bottomRight.translate(scaledDelta.dx, scaledDelta.dy),
-        );
-        break;
-      case 5: // 下中
-        newRect = Rect.fromLTRB(
-          _adjustingRect!.left,
-          _adjustingRect!.top,
-          _adjustingRect!.right,
-          _adjustingRect!.bottom + scaledDelta.dy,
-        );
-        break;
-      case 6: // 左下
-        newRect = Rect.fromPoints(
-          Offset(_adjustingRect!.left + scaledDelta.dx,
-              _adjustingRect!.bottom + scaledDelta.dy),
-          _adjustingRect!.topRight,
-        );
-        break;
-      case 7: // 左中
-        newRect = Rect.fromLTRB(
-          _adjustingRect!.left + scaledDelta.dx,
-          _adjustingRect!.top,
-          _adjustingRect!.right,
-          _adjustingRect!.bottom,
-        );
-        break;
-    }
-
-    _updateAdjustingRegion(newRect);
-  }
-
   /// 处理图片加载完成事件
   /// 更新图像数据并触发选区加载
   Future<void> _handleImageLoaded(WorkImageState imageState) async {
     if (!_mounted) return;
 
     final currentImageId = '${imageState.workId}-${imageState.currentPageId}';
-    final provider = ref.read(characterCollectionProvider);
+
     final notifier = ref.read(characterCollectionProvider.notifier);
 
     try {
@@ -1367,7 +1256,7 @@ class _ImageViewState extends ConsumerState<ImageView>
 
       // 1. 设置图像数据并加载选区数据
       notifier.setCurrentPageImage(imageState.imageData!);
-      await _tryLoadCharacterData();
+      // await _tryLoadCharacterData();
 
       // 2. 更新状态标记
       _lastImageId = currentImageId;
@@ -1526,12 +1415,8 @@ class _ImageViewState extends ConsumerState<ImageView>
     if (!_isAdjusting &&
         (event.logicalKey == LogicalKeyboardKey.delete ||
             event.logicalKey == LogicalKeyboardKey.backspace)) {
-      final selectedIds = ref.read(characterCollectionProvider).selectedIds;
-      if (selectedIds.isNotEmpty) {
-        // 显示确认对话框
-        _requestDeleteSelectedRegions();
-        return KeyEventResult.handled;
-      }
+      _requestDeleteSelectedRegions();
+      return KeyEventResult.handled;
     }
 
     return KeyEventResult.ignored;
@@ -1640,15 +1525,10 @@ class _ImageViewState extends ConsumerState<ImageView>
         _selectionCurrent = null;
       });
 
-      // 3. 不再需要在此处直接调用 _activateAdjustmentMode
-      //    状态同步将在 ref.listen 中处理
-      // if (newRegion != null && _mounted) {
-      //   AppLogger.debug('新选区创建成功，立即进入调整模式',
-      //       data: {'newRegionId': newRegion.id});
-      //   _activateAdjustmentMode(newRegion);
-      // } else {
-      //   AppLogger.warning('创建选区后未能获取新Region对象或组件已卸载');
-      // }
+      // Notify refresh
+      ref
+          .read(characterRefreshNotifierProvider.notifier)
+          .notifyEvent(RefreshEventType.regionUpdated);
     } catch (e, stack) {
       AppLogger.error('创建选区失败', error: e, stackTrace: stack);
       // 清理选区状态以防万一
@@ -1730,35 +1610,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     setState(() {
       _selectionCurrent = details.localPosition;
     });
-  }
-
-  // 检测点击是否在控制点上
-  int? _hitTestHandle(Offset position) {
-    if (_adjustingRect == null || _transformer == null) return null;
-
-    final viewportRect = _transformer!.imageRectToViewportRect(_adjustingRect!);
-    final handles = [
-      viewportRect.topLeft,
-      viewportRect.topCenter,
-      viewportRect.topRight,
-      viewportRect.centerRight,
-      viewportRect.bottomRight,
-      viewportRect.bottomCenter,
-      viewportRect.bottomLeft,
-      viewportRect.centerLeft,
-    ];
-
-    for (var i = 0; i < handles.length; i++) {
-      final handleRect = Rect.fromCenter(
-        center: handles[i],
-        width: 16,
-        height: 16,
-      );
-      if (handleRect.contains(position)) {
-        return i;
-      }
-    }
-    return null;
   }
 
   // 检测点击位置是否在选区内
@@ -1907,7 +1758,7 @@ class _ImageViewState extends ConsumerState<ImageView>
 
     // 只有保存标志为true的区域才需要确认
     bool confirmed = true;
-    if (region.isSaved) {
+    if (region.characterId != null) {
       // 显示确认对话框
       confirmed = await DeleteConfirmationDialog.show(context);
     }
@@ -1917,6 +1768,11 @@ class _ImageViewState extends ConsumerState<ImageView>
       if (_mounted) {
         await ref.read(characterCollectionProvider.notifier).deleteRegion(id);
 
+        // Notify refresh
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.characterDeleted);
+
         // 确保重置调整状态
         _resetAdjustmentState();
       }
@@ -1925,14 +1781,16 @@ class _ImageViewState extends ConsumerState<ImageView>
 
   // 请求删除选中的区域（显示确认对话框）
   Future<void> _requestDeleteSelectedRegions() async {
-    final state = ref.read(characterCollectionProvider);
-    final selectedIds = state.selectedIds.toList();
+    final collection = ref.read(characterCollectionProvider);
+    final selectedRegions =
+        collection.regions.where((r) => r.isSelected).toList();
+    final selectedIds = selectedRegions.map((r) => r.id).toList();
+
     if (selectedIds.isEmpty) return;
 
     // 检查是否有已保存的区域
-    final regions = state.regions;
     final savedRegions =
-        regions.where((r) => selectedIds.contains(r.id) && r.isSaved).toList();
+        selectedRegions.where((r) => r.characterId != null).toList();
 
     bool confirmed = true;
     if (savedRegions.isNotEmpty) {
@@ -1950,6 +1808,11 @@ class _ImageViewState extends ConsumerState<ImageView>
         await ref
             .read(characterCollectionProvider.notifier)
             .deleteBatchRegions(selectedIds);
+
+        // Notify refresh
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.characterDeleted);
 
         // 确保重置调整状态
         _resetAdjustmentState();
@@ -2007,20 +1870,6 @@ class _ImageViewState extends ConsumerState<ImageView>
       _hasCompletedSelection = false;
       _activeHandleIndex = null;
       _hoveredRegionId = null;
-    });
-  }
-
-  void _resetView({bool animate = true}) {
-    if (_transformer == null) return;
-
-    // 使用_setInitialScale来处理缩放
-    _setInitialScale(
-      imageSize: _transformer!.imageSize,
-      viewportSize: _transformer!.viewportSize,
-    );
-
-    setState(() {
-      _isZoomed = false;
     });
   }
 
@@ -2185,9 +2034,6 @@ class _ImageViewState extends ConsumerState<ImageView>
           _transformer!.viewportSize != viewportSize;
 
       if (needsUpdate) {
-        final oldScale = _transformer?.currentScale;
-        final oldTransformer = _transformer;
-
         _transformer = CoordinateTransformer(
           transformationController: _transformationController,
           imageSize: imageSize,
@@ -2195,12 +2041,9 @@ class _ImageViewState extends ConsumerState<ImageView>
           enableLogging: enableLogging,
         );
 
-        AppLogger.debug('更新CoordinateTransformer', data: {
+        AppLogger.debug('CoordinateTransformer已更新', data: {
           'imageSize': '${imageSize.width}x${imageSize.height}',
           'viewportSize': '${viewportSize.width}x${viewportSize.height}',
-          'previousScale': oldScale?.toStringAsFixed(3) ?? 'null',
-          'currentScale': _transformer!.currentScale.toStringAsFixed(3),
-          'reason': _getUpdateReason(imageSize, viewportSize, oldTransformer),
         });
       }
     } catch (e, stack) {

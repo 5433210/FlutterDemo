@@ -22,8 +22,9 @@ _$CharacterRegionImpl _$$CharacterRegionImplFromJson(
           : ProcessingOptions.fromJson(json['options'] as Map<String, dynamic>),
       erasePoints:
           const OffsetListConverter().fromJson(json['erasePoints'] as List?),
-      isSaved: json['isSaved'] as bool? ?? false,
       characterId: json['characterId'] as String?,
+      isSelected: json['isSelected'] as bool? ?? false,
+      isModified: json['isModified'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$CharacterRegionImplToJson(
@@ -38,6 +39,7 @@ Map<String, dynamic> _$$CharacterRegionImplToJson(
       'updateTime': instance.updateTime.toIso8601String(),
       'options': instance.options,
       'erasePoints': const OffsetListConverter().toJson(instance.erasePoints),
-      'isSaved': instance.isSaved,
       'characterId': instance.characterId,
+      'isSelected': instance.isSelected,
+      'isModified': instance.isModified,
     };
