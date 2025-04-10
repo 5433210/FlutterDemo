@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -37,6 +39,9 @@ class _PreviewPainter extends CustomPainter {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
   final Rect? dirtyRect;
+
+  // Add a cache for rendered paths to avoid redundant work
+  final Map<int, ui.Image> _pathCache = {};
 
   _PreviewPainter({
     required this.paths,
@@ -94,13 +99,18 @@ class _PreviewPainter extends CustomPainter {
   /// 绘制所有已完成的路径
   void _drawAllPaths(Canvas canvas) {
     if (paths.isNotEmpty) {
-      // 创建可重用的Paint对象以提高性能
-      final paint = Paint();
+      for (final pathInfo in paths) {
+        if (pathInfo.path.getBounds().isEmpty ||
+            !pathInfo.path.getBounds().isFinite) {
+          AppLogger.debug('跳过无效路径');
+          continue;
+        }
 
-      try {
-        _drawPathsWithPaint(canvas, paint);
-      } catch (e) {
-        debugPrint('绘制路径失败: ${e.toString()}');
+        try {
+          _drawEfficientSoftEdgePath(canvas, pathInfo);
+        } catch (e) {
+          AppLogger.error('绘制路径失败', error: e);
+        }
       }
     }
   }
@@ -109,48 +119,107 @@ class _PreviewPainter extends CustomPainter {
   void _drawCurrentPath(Canvas canvas) {
     if (currentPath != null) {
       try {
-        final paint = Paint()
-          ..color = currentPath!.brushColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = currentPath!.brushSize;
-
-        canvas.drawPath(currentPath!.path, paint);
+        // Current path should always be rendered freshly (not cached)
+        // since it's actively changing
+        _drawEfficientSoftEdgePath(canvas, currentPath!, useCache: false);
       } catch (e) {
         debugPrint('绘制当前路径失败: ${e.toString()}');
       }
     }
   }
 
-  /// 使用给定的Paint对象绘制所有路径
+  /// 高效绘制带软边缘效果的路径
   ///
-  /// 将绘制逻辑分离出来以提高代码可读性和可维护性
-  void _drawPathsWithPaint(Canvas canvas, Paint paint) {
-    // AppLogger.debug('绘制路径', data: {'pathCount': paths.length});
+  /// Uses an optimized approach with fewer draw operations and optional caching
+  void _drawEfficientSoftEdgePath(Canvas canvas, PathInfo pathInfo,
+      {bool useCache = true}) {
+    final path = pathInfo.path;
+    final color = pathInfo.brushColor;
+    final brushSize = pathInfo.brushSize;
 
-    for (final pathInfo in paths) {
-      if (pathInfo.path.getBounds().isEmpty ||
-          !pathInfo.path.getBounds().isFinite) {
-        AppLogger.debug('跳过无效路径');
-        continue;
-      }
+    // Skip empty or invalid paths
+    final bounds = path.getBounds();
+    if (bounds.isEmpty || !bounds.isFinite) return;
 
-      try {
-        // 重要：使用路径的实际笔刷大小和颜色，而不是全局设置
-        paint
-          ..color = pathInfo.brushColor
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = pathInfo.brushSize;
+    // Check if this path is already cached (for completed paths only)
+    final pathHash = useCache ? path.hashCode : -1;
+    if (useCache && _pathCache.containsKey(pathHash)) {
+      // Draw from cache if available
+      final cachedImage = _pathCache[pathHash]!;
+      canvas.drawImage(cachedImage, Offset.zero, Paint());
+      return;
+    }
 
-        canvas.drawPath(pathInfo.path, paint);
+    // For short straight line paths or single points, use simplified approach
+    if (_isSimplePath(path)) {
+      _drawSimplifiedPath(canvas, pathInfo);
+      return;
+    }
 
-        // AppLogger.debug('绘制路径', data: {
-        //   'color': pathInfo.brushColor.value.toRadixString(16),
-        //   'size': pathInfo.brushSize,
-        //   'bounds': pathInfo.path.getBounds().toString(),
-        // });
-      } catch (e) {
-        AppLogger.error('绘制路径失败', error: e);
-      }
+    // For complex paths, use a more efficient approach with minimal blur
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = brushSize
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal,
+          1.0); // Reduced blur to just 1.0 to match processing
+
+    // Draw the path with minimal blur
+    canvas.drawPath(path, paint);
+
+    // Optional: draw solid center for a more accurate representation
+    if (brushSize > 5.0) {
+      // Only for larger brushes
+      final centerPaint = Paint()
+        ..color = color.withOpacity(0.7) // More opaque center
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = brushSize * 0.85 // Larger solid center
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
+
+      canvas.drawPath(path, centerPaint);
+    }
+  }
+
+  /// Draws a simplified path for short segments
+  void _drawSimplifiedPath(Canvas canvas, PathInfo pathInfo) {
+    final bounds = pathInfo.path.getBounds();
+    final center = bounds.center;
+    final color = pathInfo.brushColor;
+    final radius = pathInfo.brushSize / 2;
+
+    // Create a more defined gradient with less blur for short paths
+    final gradient = ui.Gradient.radial(center, radius * 1.05, [
+      color.withOpacity(0.9),
+      color.withOpacity(0.7),
+      color.withOpacity(0.0),
+    ], [
+      0.0,
+      0.9, // Sharper transition
+      1.0
+    ]);
+
+    final paint = Paint()
+      ..shader = gradient
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(
+        center, radius * 1.05, paint); // Only slightly larger than radius
+  }
+
+  /// Determines if a path is simple enough for simplified rendering
+  bool _isSimplePath(Path path) {
+    try {
+      final metrics = path.computeMetrics();
+      if (metrics.isEmpty) return true;
+
+      final metric = metrics.first;
+      // A path is considered simple if it's very short
+      return metric.length < 10;
+    } catch (e) {
+      return true; // Handle as simple if we can't compute metrics
     }
   }
 }

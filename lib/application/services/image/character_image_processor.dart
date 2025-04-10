@@ -294,8 +294,8 @@ class CharacterImageProcessor {
           x = point.dx;
           y = point.dy;
         } else if (point is Map) {
-          x = (point['x'] as num).toDouble();
-          y = (point['y'] as num).toDouble();
+          x = (point['dx'] ?? point['x'] as num).toDouble();
+          y = (point['dy'] ?? point['y'] as num).toDouble();
         } else {
           continue;
         }
@@ -303,16 +303,53 @@ class CharacterImageProcessor {
         x = x.clamp(0, source.width - 1);
         y = y.clamp(0, source.height - 1);
 
-        for (var dy = -brushRadius; dy <= brushRadius; dy++) {
-          for (var dx = -brushRadius; dx <= brushRadius; dx++) {
-            if (dx * dx + dy * dy <= brushRadius * brushRadius) {
-              final px = (x + dx).round();
-              final py = (y + dy).round();
-              if (px >= 0 &&
-                  px < result.width &&
-                  py >= 0 &&
-                  py < result.height) {
-                result.setPixel(px, py, brushColor); // 使用路径的颜色
+        // Apply soft-edge brush with reduced blur radius (just 1 pixel)
+        // Use 1.05 instead of 1.2 to create a more subtle edge effect
+        for (var dy = -brushRadius * 1.05; dy <= brushRadius * 1.05; dy++) {
+          for (var dx = -brushRadius * 1.05; dx <= brushRadius * 1.05; dx++) {
+            // Calculate distance from brush center (squared for efficiency)
+            final distSquared = dx * dx + dy * dy;
+
+            // Skip pixels outside the brush radius (with minimal buffer for soft edge)
+            if (distSquared > brushRadius * brushRadius * 1.1)
+              continue; // Reduced from 1.44
+
+            final px = (x + dx).round();
+            final py = (y + dy).round();
+
+            if (px >= 0 && px < result.width && py >= 0 && py < result.height) {
+              // Calculate alpha blend factor based on distance from center
+              double alpha = 1.0;
+
+              // Apply soft edge blending only at the very edge (reduced blur area)
+              if (distSquared > brushRadius * brushRadius * 0.9) {
+                // Start fading closer to edge (was 0.7)
+                // Steeper falloff for a more defined edge with just a bit of blur
+                final dist = math.sqrt(distSquared);
+                alpha =
+                    1.0 - ((dist - brushRadius * 0.95) / (brushRadius * 0.1));
+                alpha = alpha.clamp(0.0, 1.0);
+              }
+
+              if (alpha > 0.1) {
+                // Higher threshold for less transparency
+                final originalPixel = result.getPixel(px, py);
+
+                // Blend between original and brush color based on alpha
+                final blendedR =
+                    (brushColor.r * alpha + originalPixel.r * (1 - alpha))
+                        .round()
+                        .clamp(0, 255);
+                final blendedG =
+                    (brushColor.g * alpha + originalPixel.g * (1 - alpha))
+                        .round()
+                        .clamp(0, 255);
+                final blendedB =
+                    (brushColor.b * alpha + originalPixel.b * (1 - alpha))
+                        .round()
+                        .clamp(0, 255);
+
+                result.setPixelRgb(px, py, blendedR, blendedG, blendedB);
               }
             }
           }

@@ -23,43 +23,43 @@ class BrushCursorPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size canvasSize) {
     // Use the full brush size as the diameter (not radius)
-    final radius = size;
+    final radius = size / 2;
 
-    // Draw a semi-transparent fill to show the exact area that will be erased
+    // Create a radial gradient with less blur to match processing
+    final radialGradient = RadialGradient(
+      colors: [
+        color.withOpacity(0.9), // Much more opaque center
+        color.withOpacity(0.7), // Gradual transition
+        color.withOpacity(0.0), // Edge - transparent
+      ],
+      stops: const [0.0, 0.9, 1.0], // Sharper transition at edge
+      radius: 1.05, // Just slightly larger for a minimal edge blur
+    );
+
+    // Draw brush area with minimal blur gradient
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.3) // Semi-transparent fill
+      ..shader = radialGradient.createShader(
+        Rect.fromCircle(center: position, radius: radius * 1.05),
+      )
       ..style = PaintingStyle.fill;
 
-    // Main outline with contrasting edge
-    final outlinePaint = Paint()
-      ..color = color
+    canvas.drawCircle(position, radius * 1.05, fillPaint);
+
+    // Optional subtle border for better visibility on various backgrounds
+    final borderPaint = Paint()
+      ..color = color.withOpacity(0.2)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 0.5;
 
-    // Inner outline (provides contrast against both light and dark backgrounds)
-    final innerPaint = Paint()
-      ..color = Colors.black.withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size / 10;
+    canvas.drawCircle(position, radius, borderPaint);
 
-    // Draw the brush area (fills exact area that will be erased)
-    canvas.drawCircle(position, radius, fillPaint);
-
-    // Draw crisp outer border
-    // canvas.drawCircle(position, radius, outlinePaint);
-
-    // Draw inner border for contrast
-    canvas.drawCircle(position, radius - 1.5, innerPaint);
-
-    // Draw crosshair for precise positioning - changed to transparent red
+    // Draw crosshair for precise positioning
     final crosshairPaint = Paint()
-      ..color =
-          Colors.red.withOpacity(0.7) // Changed from white to transparent red
+      ..color = Colors.red.withOpacity(0.7)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size / 10; // Slightly thicker for better visibility
+      ..strokeWidth = size / 20; // Slightly thinner than before
 
-    // Make crosshair size match the brush size - full diameter instead of half
-    final crosshairSize = radius; // Changed from math.max(6.0, radius / 2)
+    final crosshairSize = radius * 0.7; // Slightly smaller crosshair
 
     canvas.drawLine(
       Offset(position.dx - crosshairSize, position.dy),
