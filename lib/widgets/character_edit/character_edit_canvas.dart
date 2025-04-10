@@ -85,11 +85,19 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     final showContour =
         ref.watch(eraseStateProvider.select((state) => state.showContour));
 
+    // Improved outline toggling behavior
     ref.listen(eraseStateProvider.select((state) => state.showContour),
         (previous, current) {
-      if (current) {
-        print('轮廓状态变化，强制更新轮廓显示，当前值: $current');
+      if (previous != current) {
+        print('轮廓状态变化，从 $previous 到 $current, 强制更新轮廓显示');
+        // Force update outline regardless of toggle direction to ensure proper state
         _updateOutline();
+
+        // Set the outline in layer stack with appropriate visibility
+        if (_layerStackKey.currentState != null) {
+          final outline = current ? _outline : null;
+          _layerStackKey.currentState!.setOutline(outline);
+        }
       }
     });
 
@@ -264,7 +272,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
       }
 
-      if (widget.showOutline) {
+      // Initialize outline immediately if contour showing is enabled
+      if (widget.showOutline || ref.read(eraseStateProvider).showContour) {
         _updateOutline();
       }
 
@@ -464,6 +473,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
+  // Add a timeout helper function to prevent hanging during outline processing
+  Future<T> _timeoutFuture<T>(Future<T> future, Duration timeout) {
+    return future.timeout(timeout, onTimeout: () {
+      throw Exception('轮廓处理超时');
+    });
+  }
+
   Future<void> _updateOutline() async {
     if (_isProcessing) {
       print('轮廓正在处理中，跳过更新');
@@ -498,7 +514,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
       if (kDebugMode) {
         print(
-            '轮廓处理选项: inverted=${options.inverted}, showContour=${options.showContour}');
+            '轮廓处理选项: inverted=${options.inverted}, showContour=${options.showContour}, imageSize=${widget.image.width}x${widget.image.height}');
       }
 
       List<Map<String, dynamic>> erasePaths = [];
@@ -515,13 +531,18 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       }
 
       print('开始处理轮廓，传递 ${erasePaths.length} 个路径...');
-      final result = await imageProcessor.previewProcessing(
-        imageBytes,
-        fullImageRect,
-        options,
-        erasePaths,
-        rotation: widget.region?.rotation ?? 0.0,
-      );
+
+      // Use a timeout to prevent hanging if outline detection takes too long
+      final result = await _timeoutFuture(
+          imageProcessor.previewProcessing(
+            imageBytes,
+            fullImageRect,
+            options,
+            erasePaths,
+            rotation: widget.region?.rotation ?? 0.0,
+          ),
+          const Duration(seconds: 5));
+
       print('轮廓处理完成');
 
       if (mounted) {
@@ -532,17 +553,32 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
         if (_layerStackKey.currentState != null) {
           final showContour = ref.read(eraseStateProvider).showContour;
-          print('传递轮廓数据到 EraseLayerStack, 显示=$showContour');
-          _layerStackKey.currentState!
-              .setOutline(showContour ? _outline : null);
+          print(
+              '传递轮廓数据到 EraseLayerStack, 显示=$showContour, 轮廓数据是否存在=${_outline != null}');
+
+          // Only set outline if showing contours is enabled AND outline has valid data
+          if (showContour &&
+              _outline != null &&
+              _outline!.contourPoints.isNotEmpty) {
+            print('轮廓包含 ${_outline!.contourPoints.length} 个轮廓路径');
+            _layerStackKey.currentState!.setOutline(_outline);
+          } else {
+            // Clear outline when toggled off or outline is invalid
+            _layerStackKey.currentState!.setOutline(null);
+          }
         }
       }
-    } catch (e) {
+    } catch (e, stack) {
       print('轮廓检测失败: $e');
+      AppLogger.error('轮廓检测失败', error: e, stackTrace: stack);
       if (kDebugMode) {
-        print('错误堆栈: ${StackTrace.current}');
+        print('错误堆栈: $stack');
       }
-      setState(() => _isProcessing = false);
+
+      // Make sure to reset state on error
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
   }
 

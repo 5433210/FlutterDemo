@@ -140,17 +140,8 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
   /// 切换轮廓显示
   void toggleContour() {
-    final newValue = !state.showContour;
-    print('切换轮廓显示状态: $newValue');
-
-    // 更新状态并立即通知监听者
-    state = state.copyWith(showContour: newValue);
-
-    // 添加延迟，确保状态已更新
-    Future.delayed(Duration.zero, () {
-      // 确保状态更新被广播
-      _updateState();
-    });
+    state = state.copyWith(showContour: !state.showContour);
+    print('轮廓显示状态切换为: ${state.showContour}');
   }
 
   /// 切换图像反转模式

@@ -181,6 +181,51 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     print('EraseLayerStack 收到轮廓设置: ${outline != null}');
     if (outline != null) {
       print('轮廓包含 ${outline.contourPoints.length} 条路径');
+
+      // Validate the outline data
+      bool valid = true;
+      for (var contour in outline.contourPoints) {
+        if (contour.isEmpty) {
+          valid = false;
+          break;
+        }
+
+        // Check for invalid points
+        for (var point in contour) {
+          if (!point.dx.isFinite || !point.dy.isFinite) {
+            valid = false;
+            break;
+          }
+        }
+
+        if (!valid) break;
+      }
+
+      if (!valid) {
+        print('轮廓数据包含无效点，进行修复');
+        // Try to fix the outline by removing invalid contours
+        final fixedContours = outline.contourPoints.where((contour) {
+          if (contour.isEmpty) return false;
+
+          bool allValid = true;
+          for (var point in contour) {
+            if (!point.dx.isFinite || !point.dy.isFinite) {
+              allValid = false;
+              break;
+            }
+          }
+
+          return allValid;
+        }).toList();
+
+        outline = DetectedOutline(
+          boundingRect: outline.boundingRect,
+          contourPoints: fixedContours,
+        );
+
+        print('修复后轮廓包含 ${outline.contourPoints.length} 条路径');
+      }
+
       if (outline.contourPoints.isNotEmpty &&
           outline.contourPoints[0].isNotEmpty) {
         double minX = double.infinity, minY = double.infinity;

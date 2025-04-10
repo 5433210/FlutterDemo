@@ -351,11 +351,7 @@ class _UIPainter extends CustomPainter {
       return;
     }
 
-    // 减少日志冗长度
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      print('开始绘制轮廓');
-    }
-
+    // 检查轮廓数据是否有效
     if (outline!.contourPoints.isEmpty) {
       print('_drawOutline: 轮廓点集为空');
       return;
@@ -374,19 +370,19 @@ class _UIPainter extends CustomPainter {
     final offsetX = (size.width - imageSize!.width * scale) / 2;
     final offsetY = (size.height - imageSize!.height * scale) / 2;
 
-    // 增强轮廓线条清晰度
+    // 增强轮廓线条清晰度和可见性
     final mainStrokePaint = Paint()
-      ..color = Colors.blue.withOpacity(0.8) // 提高不透明度
+      ..color = Colors.blue.withOpacity(0.9) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2 / scale // 微微加粗轮廓线
+      ..strokeWidth = 1.5 / scale // 加粗轮廓线
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true; // 确保抗锯齿
 
     final outerStrokePaint = Paint()
-      ..color = Colors.white.withOpacity(0.8) // 提高不透明度
+      ..color = Colors.white.withOpacity(0.9) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.2 / scale // 加粗外边框
+      ..strokeWidth = 2.5 / scale // 加粗外边框
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true; // 确保抗锯齿
@@ -408,9 +404,21 @@ class _UIPainter extends CustomPainter {
 
       // 使用path来绘制复杂轮廓可获得更好的性能和质量
       final path = Path();
+
+      // 确保起点是有效的
+      if (!contour[0].dx.isFinite || !contour[0].dy.isFinite) {
+        print('轮廓点无效，跳过该轮廓');
+        continue;
+      }
+
       path.moveTo(contour[0].dx, contour[0].dy);
 
       for (int i = 1; i < contour.length; i++) {
+        // 验证点的有效性
+        if (!contour[i].dx.isFinite || !contour[i].dy.isFinite) {
+          print('发现无效轮廓点，继续使用前一个有效点');
+          continue;
+        }
         path.lineTo(contour[i].dx, contour[i].dy);
       }
       path.close();

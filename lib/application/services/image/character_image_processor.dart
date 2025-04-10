@@ -617,58 +617,75 @@ class CharacterImageProcessor {
   /// 检测轮廓
   static DetectedOutline _detectOutline(
       img.Image binaryImage, bool isInverted) {
-    final paddedImage = _addBorderToImage(binaryImage, isInverted);
+    try {
+      final paddedImage = _addBorderToImage(binaryImage, isInverted);
 
-    final width = paddedImage.width;
-    final height = paddedImage.height;
-    final visited = List.generate(
-        height, (y) => List.generate(width, (x) => false, growable: false),
-        growable: false);
+      final width = paddedImage.width;
+      final height = paddedImage.height;
+      final visited = List.generate(
+          height, (y) => List.generate(width, (x) => false, growable: false),
+          growable: false);
 
-    final allContours = <List<Offset>>[];
+      final allContours = <List<Offset>>[];
 
-    var startPoint = _findFirstContourPoint(paddedImage, isInverted);
-    if (startPoint != null) {
-      final outerContour =
-          _traceContour(paddedImage, visited, startPoint, isInverted);
-      if (outerContour.length >= 4) {
-        allContours.add(outerContour);
-      }
-    }
-
-    // Limit inner contour detection to inside the image (avoid border)
-    for (int y = 1; y < height - 1; y++) {
-      for (int x = 1; y < height - 1; x++) {
-        if (visited[y][x] ||
-            _isForegroundPixel(paddedImage.getPixel(x, y), isInverted)) {
-          continue;
+      // Find and trace the outer contour
+      var startPoint = _findFirstContourPoint(paddedImage, isInverted);
+      if (startPoint != null) {
+        final outerContour =
+            _traceContour(paddedImage, visited, startPoint, isInverted);
+        if (outerContour.length >= 4) {
+          allContours.add(outerContour);
         }
+      }
 
-        if (_isInnerContourPoint(paddedImage, x, y, isInverted)) {
-          final innerStart = Offset(x.toDouble(), y.toDouble());
-          final innerContour =
-              _traceContour(paddedImage, visited, innerStart, isInverted);
+      // Limit inner contour detection to safely inside the image boundaries
+      // Note: Changed from y < height - 1 to x < width - 1 in the inner loop condition
+      for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+          // Skip already visited pixels or foreground pixels
+          if (y >= visited.length ||
+              x >= visited[y].length ||
+              visited[y][x] ||
+              _isForegroundPixel(paddedImage.getPixel(x, y), isInverted)) {
+            continue;
+          }
 
-          if (innerContour.length >= 4) {
-            allContours.add(innerContour);
+          if (_isInnerContourPoint(paddedImage, x, y, isInverted)) {
+            final innerStart = Offset(x.toDouble(), y.toDouble());
+            final innerContour =
+                _traceContour(paddedImage, visited, innerStart, isInverted);
+
+            if (innerContour.length >= 4) {
+              allContours.add(innerContour);
+            }
           }
         }
       }
+
+      const borderWidth = 1;
+      final adjustedContours = allContours.map((contour) {
+        return contour
+            .map((point) =>
+                Offset(point.dx - borderWidth, point.dy - borderWidth))
+            .toList();
+      }).toList();
+
+      return DetectedOutline(
+        boundingRect: Rect.fromLTWH(
+            0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
+        contourPoints: adjustedContours,
+      );
+    } catch (e, stackTrace) {
+      print('轮廓检测异常: $e');
+      print('轮廓检测堆栈: $stackTrace');
+
+      // Return an empty outline instead of crashing
+      return DetectedOutline(
+        boundingRect: Rect.fromLTWH(
+            0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
+        contourPoints: [],
+      );
     }
-
-    const borderWidth = 1;
-    final adjustedContours = allContours.map((contour) {
-      return contour
-          .map(
-              (point) => Offset(point.dx - borderWidth, point.dy - borderWidth))
-          .toList();
-    }).toList();
-
-    return DetectedOutline(
-      boundingRect: Rect.fromLTWH(
-          0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
-      contourPoints: adjustedContours,
-    );
   }
 
   static Offset? _findFirstContourPoint(img.Image image, bool isInverted) {
@@ -717,40 +734,49 @@ class CharacterImageProcessor {
   }
 
   static bool _isContourPoint(img.Image image, int x, int y, bool isInverted) {
-    // Ensure coordinates are within image bounds
-    if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
-      return false;
-    }
-
-    if (!_isForegroundPixel(image.getPixel(x, y), isInverted)) {
-      return false;
-    }
-
-    if (x == 0 || x == image.width - 1 || y == 0 || y == image.height - 1) {
-      return true;
-    }
-
-    final neighbors = [
-      [-1, 0],
-      [1, 0],
-      [0, -1],
-      [0, 1]
-    ];
-
-    for (final dir in neighbors) {
-      final nx = x + dir[0];
-      final ny = y + dir[1];
-
-      if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
-        continue;
+    try {
+      // Ensure coordinates are within image bounds
+      if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        return false;
       }
 
-      if (!_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+      if (!_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+        return false;
+      }
+
+      // Point on the image border is always a contour point
+      if (x == 0 || x == image.width - 1 || y == 0 || y == image.height - 1) {
         return true;
       }
-    }
 
-    return false;
+      // Check if any neighbor is background
+      final neighbors = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1]
+      ];
+
+      for (final dir in neighbors) {
+        final nx = x + dir[0];
+        final ny = y + dir[1];
+
+        // Skip invalid neighbors
+        if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+          continue;
+        }
+
+        // If any neighbor is background, this is a contour point
+        if (!_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      print('检查轮廓点时出错: $e');
+      return false; // Safety fallback
+    }
   }
 
   static bool _isForegroundPixel(img.Pixel pixel, bool isInverted) {
@@ -793,76 +819,89 @@ class CharacterImageProcessor {
 
   static List<Offset> _traceContour(img.Image image, List<List<bool>> visited,
       Offset start, bool isInverted) {
-    final contour = <Offset>[];
-    var x = start.dx.toInt();
-    var y = start.dy.toInt();
-    final startX = x;
-    final startY = y;
+    try {
+      final contour = <Offset>[];
+      var x = start.dx.toInt();
+      var y = start.dy.toInt();
+      final startX = x;
+      final startY = y;
 
-    // Safety check - ensure starting point is valid
-    if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
-      return contour; // Return empty contour for invalid starting point
-    }
-
-    const directions = [
-      [1, 0],
-      [1, 1],
-      [0, 1],
-      [-1, 1],
-      [-1, 0],
-      [-1, -1],
-      [0, -1],
-      [1, -1],
-    ];
-
-    // Limit iterations to prevent infinite loops
-    int maxIterations = image.width * image.height;
-    int iterations = 0;
-
-    do {
-      contour.add(Offset(x.toDouble(), y.toDouble()));
-
-      // Mark as visited only if coordinates are valid
-      if (y >= 0 && y < visited.length && x >= 0 && x < visited[y].length) {
-        visited[y][x] = true;
+      // Safety check - ensure starting point is valid
+      if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        return contour; // Return empty contour for invalid starting point
       }
 
-      var found = false;
-      for (final dir in directions) {
-        final nx = x + dir[0];
-        final ny = y + dir[1];
+      const directions = [
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [-1, 1],
+        [-1, 0],
+        [-1, -1],
+        [0, -1],
+        [1, -1],
+      ];
 
-        // Safe boundary check for next point
-        if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
-          // Handle boundary specially
-          // ...existing code for handling boundary direction...
-          continue;
+      // Limit iterations to prevent infinite loops
+      int maxIterations = image.width * image.height;
+      int iterations = 0;
+
+      do {
+        contour.add(Offset(x.toDouble(), y.toDouble()));
+
+        // Mark as visited only if coordinates are valid
+        if (y >= 0 && y < visited.length && x >= 0 && x < visited[y].length) {
+          visited[y][x] = true;
         }
 
-        // Valid point is being checked
-        if (ny < visited.length && nx < visited[ny].length && visited[ny][nx]) {
-          if (nx == startX && ny == startY && contour.length > 3) {
-            contour.add(start);
-            return contour;
+        var found = false;
+        for (final dir in directions) {
+          final nx = x + dir[0];
+          final ny = y + dir[1];
+
+          // Safe boundary check for next point
+          if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+            continue;
           }
-          continue;
+
+          // Valid point check for visited array
+          if (ny < 0 ||
+              ny >= visited.length ||
+              nx < 0 ||
+              nx >= visited[ny].length) {
+            continue; // Skip invalid coordinates
+          }
+
+          // Check if this is the starting point and we've completed a loop
+          if (visited[ny][nx]) {
+            if (nx == startX && ny == startY && contour.length > 3) {
+              contour.add(start); // Close the loop
+              return contour;
+            }
+            continue; // Skip already visited pixels
+          }
+
+          // Only consider points that are part of a contour
+          if (_isContourPoint(image, nx, ny, isInverted)) {
+            x = nx;
+            y = ny;
+            found = true;
+            break;
+          }
         }
 
-        if (_isContourPoint(image, nx, ny, isInverted)) {
-          x = nx;
-          y = ny;
-          found = true;
-          break;
+        iterations++;
+        if (!found || iterations > maxIterations || contour.length > 10000) {
+          break; // Prevent infinite loops and excessively long contours
         }
-      }
+      } while (true);
 
-      iterations++;
-      if (!found || iterations > maxIterations || contour.length > 400000) {
-        break;
-      }
-    } while (true);
-
-    return contour;
+      return contour;
+    } catch (e, stackTrace) {
+      print('轮廓跟踪异常: $e');
+      print('轮廓跟踪堆栈: $stackTrace');
+      return []; // Return empty contour on error
+    }
   }
 }
 
