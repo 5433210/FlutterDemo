@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -41,9 +40,11 @@ void main() async {
     // 初始化 SharedPreferences
     final prefs = await SharedPreferences.getInstance();
 
-    // 创建ProviderContainer用于初始化阶段
+    // 创建ProviderContainer用于初始化阶段 - Use SilentObserver here too
     final container = ProviderContainer(
-      observers: [ProviderLogger()],
+      observers: [
+        SilentObserver()
+      ], // Replace ProviderLogger with SilentObserver
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],
@@ -53,7 +54,7 @@ void main() async {
     runApp(
       ProviderScope(
         parent: container,
-        observers: kDebugMode ? [FilteredProviderObserver()] : null,
+        observers: [SilentObserver()],
         child: KeyboardMonitor.wrapApp(const MyApp()),
       ),
     );
@@ -116,7 +117,7 @@ class FilteredProviderObserver extends ProviderObserver {
   }
 }
 
-/// Riverpod 日志记录器
+/// Riverpod 日志记录器 - This class won't be used anymore
 class ProviderLogger extends ProviderObserver {
   @override
   void didAddProvider(
@@ -151,5 +152,46 @@ class ProviderLogger extends ProviderObserver {
         tag: 'Riverpod',
       );
     }
+  }
+}
+
+/// Silent observer that disables Riverpod's default logging
+class SilentObserver extends ProviderObserver {
+  @override
+  void didAddProvider(
+    ProviderBase<Object?> provider,
+    Object? value,
+    ProviderContainer container,
+  ) {
+    // Do nothing - silence logging
+  }
+
+  @override
+  void didDisposeProvider(
+    ProviderBase<Object?> provider,
+    ProviderContainer container,
+  ) {
+    // Do nothing - silence logging
+  }
+
+  @override
+  void didUpdateProvider(
+    ProviderBase<Object?> provider,
+    Object? previousValue,
+    Object? newValue,
+    ProviderContainer container,
+  ) {
+    // Do nothing - silence logging
+  }
+
+  @override
+  void providerDidFail(
+    ProviderBase<Object?> provider,
+    Object error,
+    StackTrace stackTrace,
+    ProviderContainer container,
+  ) {
+    // Optional: You might want to still log critical errors
+    // print('Provider $provider failed with: $error');
   }
 }
