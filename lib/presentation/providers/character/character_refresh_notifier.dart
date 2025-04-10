@@ -22,5 +22,6 @@ enum RefreshEventType {
   characterSaved,
   characterDeleted,
   regionUpdated,
-  eraseDataReloaded, // Add new event type for erase data reload
+  eraseDataReloaded,
+  pageChanged, // Add new event type for page changes
 }

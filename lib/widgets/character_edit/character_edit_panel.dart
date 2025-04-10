@@ -148,6 +148,21 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     if (widget.selectedRegion.character != _characterController.text) {
       _characterController.text = widget.selectedRegion.character;
     }
+
+    // Force thumbnail refresh when region ID changes (page change or new selection)
+    if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
+        widget.selectedRegion.characterId !=
+            oldWidget.selectedRegion.characterId) {
+      setState(() {
+        _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
+      });
+      AppLogger.debug('Region changed - refreshing thumbnail', data: {
+        'oldRegionId': oldWidget.selectedRegion.id,
+        'newRegionId': widget.selectedRegion.id,
+        'timestamp': _thumbnailRefreshTimestamp,
+      });
+    }
+
     // Reload image if selected region or image data changes
     if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
         widget.imageData != oldWidget.imageData ||
@@ -488,54 +503,68 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     // 检查region是否存在，如果不存在则不显示缩略图
     final region = ref.watch(selectedRegionProvider);
     if (region == null) {
-      print('CharacterEditPanel - 没有选中的区域，不显示缩略图');
+      AppLogger.debug('CharacterEditPanel - 没有选中的区域，不显示缩略图');
       return const SizedBox.shrink();
     }
 
     // 检查region的characterId是否存在，如果不存在说明是新建选区，不显示缩略图
     if (region.characterId == null) {
-      print('CharacterEditPanel - 区域未关联字符，不显示缩略图');
+      AppLogger.debug('CharacterEditPanel - 区域未关联字符，不显示缩略图');
       return const SizedBox.shrink();
     }
 
+    // Add the region ID as part of the cache key to ensure different characters have different thumbnails
+    final cacheKey =
+        'thumbnail_${region.id}_${region.characterId}_$_thumbnailRefreshTimestamp';
+    AppLogger.debug('Building thumbnail with cache key',
+        data: {'cacheKey': cacheKey});
+
     return FutureBuilder<String?>(
+      key: ValueKey(cacheKey), // Force widget rebuild when key changes
       future: _getThumbnailPath(),
       builder: (context, snapshot) {
-        print('CharacterEditPanel - 构建缩略图预览');
+        AppLogger.debug('CharacterEditPanel - 构建缩略图预览', data: {
+          'hasError': snapshot.hasError,
+          'hasData': snapshot.hasData,
+          'connectionState': snapshot.connectionState.toString(),
+        });
 
         if (snapshot.hasError) {
-          print('CharacterEditPanel - 获取缩略图路径失败: ${snapshot.error}');
+          AppLogger.error('CharacterEditPanel - 获取缩略图路径失败',
+              error: snapshot.error);
           return _buildErrorWidget('加载缩略图失败');
         }
 
         if (!snapshot.hasData) {
-          print('CharacterEditPanel - 等待缩略图路径...');
+          AppLogger.debug('CharacterEditPanel - 等待缩略图路径...');
           return _buildLoadingWidget();
         }
 
         final thumbnailPath = snapshot.data!;
-        print('CharacterEditPanel - 获取到缩略图路径: $thumbnailPath');
+        AppLogger.debug('CharacterEditPanel - 获取到缩略图路径',
+            data: {'path': thumbnailPath});
 
         return FutureBuilder<bool>(
           future: File(thumbnailPath).exists(),
           builder: (context, existsSnapshot) {
             if (existsSnapshot.hasError) {
-              print(
-                  'CharacterEditPanel - 检查缩略图文件存在失败: ${existsSnapshot.error}');
+              AppLogger.error('CharacterEditPanel - 检查缩略图文件存在失败',
+                  error: existsSnapshot.error);
               return _buildErrorWidget('检查文件失败');
             }
 
             if (!existsSnapshot.hasData) {
-              print('CharacterEditPanel - 检查缩略图文件是否存在...');
+              AppLogger.debug('CharacterEditPanel - 检查缩略图文件是否存在...');
               return _buildLoadingWidget();
             }
 
             final exists = existsSnapshot.data!;
-            print(
-                'CharacterEditPanel - 缩略图文件${exists ? "存在" : "不存在"}: $thumbnailPath');
+            AppLogger.debug('CharacterEditPanel - 缩略图文件存在',
+                data: {'exists': exists});
 
             if (!exists) {
-              print('CharacterEditPanel - 缩略图文件不存在');
+              AppLogger.error('CharacterEditPanel - 缩略图文件不存在',
+                  data: {'path': thumbnailPath});
               return _buildErrorWidget('缩略图不存在');
             }
 
@@ -543,21 +572,23 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               future: File(thumbnailPath).length(),
               builder: (context, sizeSnapshot) {
                 if (sizeSnapshot.hasError) {
-                  print(
-                      'CharacterEditPanel - 获取缩略图文件大小失败: ${sizeSnapshot.error}');
+                  AppLogger.error('CharacterEditPanel - 获取缩略图文件大小失败',
+                      error: sizeSnapshot.error);
                   return _buildErrorWidget('获取文件大小失败');
                 }
 
                 if (!sizeSnapshot.hasData) {
-                  print('CharacterEditPanel - 获取缩略图文件大小...');
+                  AppLogger.debug('CharacterEditPanel - 获取缩略图文件大小...');
                   return _buildLoadingWidget();
                 }
 
                 final fileSize = sizeSnapshot.data!;
-                print('CharacterEditPanel - 缩略图文件大小: $fileSize 字节');
+                AppLogger.debug('CharacterEditPanel - 缩略图文件大小',
+                    data: {'fileSize': fileSize});
 
                 if (fileSize == 0) {
-                  print('CharacterEditPanel - 缩略图文件大小为0');
+                  AppLogger.error('CharacterEditPanel - 缩略图文件大小为0',
+                      data: {'path': thumbnailPath});
                   return _buildErrorWidget('缩略图文件为空');
                 }
 
@@ -568,14 +599,15 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                   height: 100,
                   fit: BoxFit.cover,
                   // Add the timestamp as a cache-busting key
-                  key: ValueKey(
-                      'thumbnail_${region.id}_$_thumbnailRefreshTimestamp'),
+                  key: ValueKey(cacheKey),
                   // Disable caching to ensure we always load the latest version
                   cacheWidth: null,
                   cacheHeight: null,
                   errorBuilder: (context, error, stackTrace) {
-                    print('CharacterEditPanel - 加载缩略图失败: $error');
-                    print('$stackTrace');
+                    AppLogger.error('CharacterEditPanel - 加载缩略图失败',
+                        error: error,
+                        stackTrace: stackTrace,
+                        data: {'path': thumbnailPath});
                     return _buildErrorWidget('加载图片失败');
                   },
                 );
@@ -806,40 +838,47 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   // 获取缩略图路径
   Future<String?> _getThumbnailPath() async {
     try {
-      print('获取缩略图路径');
+      AppLogger.debug('获取缩略图路径', data: {
+        'regionId': widget.selectedRegion.id,
+        'characterId': widget.selectedRegion.characterId,
+      });
 
       // 获取characterId，如果为空则使用region的id
       final String characterId =
           widget.selectedRegion.characterId ?? widget.selectedRegion.id;
-      print('使用的characterId: $characterId');
+
+      // For debugging - also log the workId and pageId
+      AppLogger.debug('缩略图上下文信息', data: {
+        'workId': widget.workId,
+        'pageId': widget.pageId,
+        'characterId': characterId,
+      });
 
       final path = await ref
           .read(characterCollectionProvider.notifier)
           .getThumbnailPath(characterId);
-      print('获取到缩略图路径: $path');
 
       if (path == null) {
-        print('缩略图路径为空');
+        AppLogger.error('缩略图路径为空', data: {'characterId': characterId});
         return null;
       }
 
       final file = File(path);
       final exists = await file.exists();
       if (!exists) {
-        print('缩略图文件不存在');
+        AppLogger.error('缩略图文件不存在', data: {'path': path});
         return null;
       }
 
       final fileSize = await file.length();
       if (fileSize == 0) {
-        print('缩略图文件大小为0');
+        AppLogger.error('缩略图文件大小为0', data: {'path': path});
         return null;
       }
 
       return path;
-    } catch (e) {
-      print('获取缩略图路径失败: $e');
-      AppLogger.error('获取缩略图路径失败', error: e, data: {
+    } catch (e, stack) {
+      AppLogger.error('获取缩略图路径失败', error: e, stackTrace: stack, data: {
         'characterId': widget.selectedRegion.characterId,
         'regionId': widget.selectedRegion.id,
       });

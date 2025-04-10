@@ -55,6 +55,9 @@ class ThumbnailList extends ConsumerWidget {
                           imageState.workId,
                           pageId: pageId,
                         );
+                    ref
+                        .read(characterCollectionProvider.notifier)
+                        .clearSelectedRegions(); // 清除选区
                   },
                 );
               },

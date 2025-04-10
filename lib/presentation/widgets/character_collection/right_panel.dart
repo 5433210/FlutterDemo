@@ -157,72 +157,8 @@ class _RightPanelState extends ConsumerState<RightPanel>
   Widget _buildGridTab() {
     return CharacterGridView(
       workId: widget.workId,
-      onCharacterSelected: (characterId) async {
-        try {
-          // 1. 获取当前页面状态
-          final currentState = ref.read(workImageProvider);
-          final currentPageId = currentState.currentPageId;
-          final currentWorkId = widget.workId;
-
-          // 2. 获取字符服务来查询字符详情
-          final characterService = ref.read(characterServiceProvider);
-          final character =
-              await characterService.getCharacterDetails(characterId);
-
-          if (character == null) {
-            throw Exception('找不到字符信息');
-          }
-
-          // 3. 检查字符是否在当前页面
-          final isOnCurrentPage = character.pageId == currentPageId &&
-              character.workId == currentWorkId;
-
-          if (!isOnCurrentPage) {
-            // 4. 如果不在当前页面，需要切换页面
-            // 4.1 显示加载提示
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('正在切换到字符所在页面...'),
-                duration: Duration(seconds: 1),
-              ),
-            );
-
-            // 4.2 加载目标页面
-            final imageProvider = ref.read(workImageProvider.notifier);
-            await imageProvider.loadWorkImage(
-                character.workId, character.pageId);
-
-            // 4.3 加载该页的字符区域数据
-            await ref.read(characterCollectionProvider.notifier).loadWorkData(
-                  character.workId,
-                  pageId: character.pageId,
-                  defaultSelectedRegionId: characterId,
-                );
-
-            // 4.4 切换到预览标签页
-            _tabController.animateTo(0);
-          } else {
-            // 5. 如果在当前页面，直接加载区域数据
-            await ref.read(characterCollectionProvider.notifier).loadWorkData(
-                  currentWorkId,
-                  pageId: currentPageId,
-                  defaultSelectedRegionId: characterId,
-                );
-
-            // 5.1 切换到预览标签页
-            _tabController.animateTo(0);
-          }
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('查找并切换页面失败: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      },
+      onCharacterSelected:
+          _handleCharacterSelected, // Extract to method for better organization
     );
   }
 
@@ -262,6 +198,83 @@ class _RightPanelState extends ConsumerState<RightPanel>
         indicatorColor: Theme.of(context).colorScheme.primary,
       ),
     );
+  }
+
+  Future<void> _handleCharacterSelected(String characterId) async {
+    try {
+      // 1. 获取当前页面状态
+      final currentState = ref.read(workImageProvider);
+      final currentPageId = currentState.currentPageId;
+      final currentWorkId = widget.workId;
+
+      // 2. 获取字符服务来查询字符详情
+      final characterService = ref.read(characterServiceProvider);
+      final character = await characterService.getCharacterDetails(characterId);
+
+      if (character == null) {
+        throw Exception('找不到字符信息');
+      }
+
+      // 3. 检查字符是否在当前页面
+      final isOnCurrentPage = character.pageId == currentPageId &&
+          character.workId == currentWorkId;
+
+      if (!isOnCurrentPage) {
+        // 4. 如果不在当前页面，需要切换页面
+        // 4.1 显示加载提示
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('正在切换到字符所在页面...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
+
+        // 4.2 加载目标页面
+        final imageProvider = ref.read(workImageProvider.notifier);
+        await imageProvider.loadWorkImage(character.workId, character.pageId);
+
+        // 4.3 加载该页的字符区域数据
+        await ref.read(characterCollectionProvider.notifier).loadWorkData(
+              character.workId,
+              pageId: character.pageId,
+              defaultSelectedRegionId: characterId,
+            );
+
+        // Notify about page change
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.pageChanged);
+
+        // 4.4 切换到预览标签页
+        _tabController.animateTo(0);
+      } else {
+        // 5. 如果在当前页面，直接加载区域数据
+        await ref.read(characterCollectionProvider.notifier).loadWorkData(
+              currentWorkId,
+              pageId: currentPageId,
+              defaultSelectedRegionId: characterId,
+            );
+
+        // Still notify, as we've changed the selected character
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.pageChanged);
+
+        // 5.1 切换到预览标签页
+        _tabController.animateTo(0);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('查找并切换页面失败: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _handleEditComplete(Map<String, dynamic> result) async {
