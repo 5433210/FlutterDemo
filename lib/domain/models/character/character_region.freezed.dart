@@ -24,16 +24,21 @@ mixin _$CharacterRegion {
   String get pageId => throw _privateConstructorUsedError;
   @RectConverter()
   Rect get rect => throw _privateConstructorUsedError;
-  double get rotation => throw _privateConstructorUsedError;
   String get character => throw _privateConstructorUsedError;
-  DateTime get createTime => throw _privateConstructorUsedError;
-  DateTime get updateTime => throw _privateConstructorUsedError;
-  ProcessingOptions get options => throw _privateConstructorUsedError;
-  @OffsetListConverter()
-  List<Offset>? get erasePoints => throw _privateConstructorUsedError;
   String? get characterId => throw _privateConstructorUsedError;
-  bool get isSelected => throw _privateConstructorUsedError; // New property
+  ProcessingOptions get options => throw _privateConstructorUsedError;
   bool get isModified => throw _privateConstructorUsedError;
+  bool get isSelected => throw _privateConstructorUsedError;
+  DateTime? get createTime => throw _privateConstructorUsedError;
+  DateTime? get updateTime => throw _privateConstructorUsedError;
+  double get rotation =>
+      throw _privateConstructorUsedError; // For backward compatibility - will be removed in future versions
+  @Deprecated('Use eraseData instead')
+  @OffsetListListConverter()
+  List<List<Offset>>? get erasePoints =>
+      throw _privateConstructorUsedError; // New format with brush properties
+  List<Map<String, dynamic>>? get eraseData =>
+      throw _privateConstructorUsedError;
 
   /// Serializes this CharacterRegion to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -55,15 +60,18 @@ abstract class $CharacterRegionCopyWith<$Res> {
       {String id,
       String pageId,
       @RectConverter() Rect rect,
-      double rotation,
       String character,
-      DateTime createTime,
-      DateTime updateTime,
-      ProcessingOptions options,
-      @OffsetListConverter() List<Offset>? erasePoints,
       String? characterId,
+      ProcessingOptions options,
+      bool isModified,
       bool isSelected,
-      bool isModified});
+      DateTime? createTime,
+      DateTime? updateTime,
+      double rotation,
+      @Deprecated('Use eraseData instead')
+      @OffsetListListConverter()
+      List<List<Offset>>? erasePoints,
+      List<Map<String, dynamic>>? eraseData});
 
   $ProcessingOptionsCopyWith<$Res> get options;
 }
@@ -86,15 +94,16 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
     Object? id = null,
     Object? pageId = null,
     Object? rect = null,
-    Object? rotation = null,
     Object? character = null,
-    Object? createTime = null,
-    Object? updateTime = null,
-    Object? options = null,
-    Object? erasePoints = freezed,
     Object? characterId = freezed,
-    Object? isSelected = null,
+    Object? options = null,
     Object? isModified = null,
+    Object? isSelected = null,
+    Object? createTime = freezed,
+    Object? updateTime = freezed,
+    Object? rotation = null,
+    Object? erasePoints = freezed,
+    Object? eraseData = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -109,42 +118,46 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
           ? _value.rect
           : rect // ignore: cast_nullable_to_non_nullable
               as Rect,
-      rotation: null == rotation
-          ? _value.rotation
-          : rotation // ignore: cast_nullable_to_non_nullable
-              as double,
       character: null == character
           ? _value.character
           : character // ignore: cast_nullable_to_non_nullable
               as String,
-      createTime: null == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updateTime: null == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      options: null == options
-          ? _value.options
-          : options // ignore: cast_nullable_to_non_nullable
-              as ProcessingOptions,
-      erasePoints: freezed == erasePoints
-          ? _value.erasePoints
-          : erasePoints // ignore: cast_nullable_to_non_nullable
-              as List<Offset>?,
       characterId: freezed == characterId
           ? _value.characterId
           : characterId // ignore: cast_nullable_to_non_nullable
               as String?,
-      isSelected: null == isSelected
-          ? _value.isSelected
-          : isSelected // ignore: cast_nullable_to_non_nullable
-              as bool,
+      options: null == options
+          ? _value.options
+          : options // ignore: cast_nullable_to_non_nullable
+              as ProcessingOptions,
       isModified: null == isModified
           ? _value.isModified
           : isModified // ignore: cast_nullable_to_non_nullable
               as bool,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      createTime: freezed == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateTime: freezed == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      rotation: null == rotation
+          ? _value.rotation
+          : rotation // ignore: cast_nullable_to_non_nullable
+              as double,
+      erasePoints: freezed == erasePoints
+          ? _value.erasePoints
+          : erasePoints // ignore: cast_nullable_to_non_nullable
+              as List<List<Offset>>?,
+      eraseData: freezed == eraseData
+          ? _value.eraseData
+          : eraseData // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
     ) as $Val);
   }
 
@@ -171,15 +184,18 @@ abstract class _$$CharacterRegionImplCopyWith<$Res>
       {String id,
       String pageId,
       @RectConverter() Rect rect,
-      double rotation,
       String character,
-      DateTime createTime,
-      DateTime updateTime,
-      ProcessingOptions options,
-      @OffsetListConverter() List<Offset>? erasePoints,
       String? characterId,
+      ProcessingOptions options,
+      bool isModified,
       bool isSelected,
-      bool isModified});
+      DateTime? createTime,
+      DateTime? updateTime,
+      double rotation,
+      @Deprecated('Use eraseData instead')
+      @OffsetListListConverter()
+      List<List<Offset>>? erasePoints,
+      List<Map<String, dynamic>>? eraseData});
 
   @override
   $ProcessingOptionsCopyWith<$Res> get options;
@@ -201,15 +217,16 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
     Object? id = null,
     Object? pageId = null,
     Object? rect = null,
-    Object? rotation = null,
     Object? character = null,
-    Object? createTime = null,
-    Object? updateTime = null,
-    Object? options = null,
-    Object? erasePoints = freezed,
     Object? characterId = freezed,
-    Object? isSelected = null,
+    Object? options = null,
     Object? isModified = null,
+    Object? isSelected = null,
+    Object? createTime = freezed,
+    Object? updateTime = freezed,
+    Object? rotation = null,
+    Object? erasePoints = freezed,
+    Object? eraseData = freezed,
   }) {
     return _then(_$CharacterRegionImpl(
       id: null == id
@@ -224,42 +241,46 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
           ? _value.rect
           : rect // ignore: cast_nullable_to_non_nullable
               as Rect,
-      rotation: null == rotation
-          ? _value.rotation
-          : rotation // ignore: cast_nullable_to_non_nullable
-              as double,
       character: null == character
           ? _value.character
           : character // ignore: cast_nullable_to_non_nullable
               as String,
-      createTime: null == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updateTime: null == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      options: null == options
-          ? _value.options
-          : options // ignore: cast_nullable_to_non_nullable
-              as ProcessingOptions,
-      erasePoints: freezed == erasePoints
-          ? _value._erasePoints
-          : erasePoints // ignore: cast_nullable_to_non_nullable
-              as List<Offset>?,
       characterId: freezed == characterId
           ? _value.characterId
           : characterId // ignore: cast_nullable_to_non_nullable
               as String?,
-      isSelected: null == isSelected
-          ? _value.isSelected
-          : isSelected // ignore: cast_nullable_to_non_nullable
-              as bool,
+      options: null == options
+          ? _value.options
+          : options // ignore: cast_nullable_to_non_nullable
+              as ProcessingOptions,
       isModified: null == isModified
           ? _value.isModified
           : isModified // ignore: cast_nullable_to_non_nullable
               as bool,
+      isSelected: null == isSelected
+          ? _value.isSelected
+          : isSelected // ignore: cast_nullable_to_non_nullable
+              as bool,
+      createTime: freezed == createTime
+          ? _value.createTime
+          : createTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateTime: freezed == updateTime
+          ? _value.updateTime
+          : updateTime // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      rotation: null == rotation
+          ? _value.rotation
+          : rotation // ignore: cast_nullable_to_non_nullable
+              as double,
+      erasePoints: freezed == erasePoints
+          ? _value._erasePoints
+          : erasePoints // ignore: cast_nullable_to_non_nullable
+              as List<List<Offset>>?,
+      eraseData: freezed == eraseData
+          ? _value._eraseData
+          : eraseData // ignore: cast_nullable_to_non_nullable
+              as List<Map<String, dynamic>>?,
     ));
   }
 }
@@ -271,16 +292,20 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       {required this.id,
       required this.pageId,
       @RectConverter() required this.rect,
-      this.rotation = 0.0,
       this.character = '',
-      required this.createTime,
-      required this.updateTime,
-      this.options = const ProcessingOptions(),
-      @OffsetListConverter() final List<Offset>? erasePoints,
       this.characterId,
+      this.options = const ProcessingOptions(),
+      this.isModified = false,
       this.isSelected = false,
-      this.isModified = false})
-      : _erasePoints = erasePoints;
+      this.createTime,
+      this.updateTime,
+      this.rotation = 0.0,
+      @Deprecated('Use eraseData instead')
+      @OffsetListListConverter()
+      final List<List<Offset>>? erasePoints,
+      final List<Map<String, dynamic>>? eraseData})
+      : _erasePoints = erasePoints,
+        _eraseData = eraseData;
 
   factory _$CharacterRegionImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharacterRegionImplFromJson(json);
@@ -294,21 +319,32 @@ class _$CharacterRegionImpl implements _CharacterRegion {
   final Rect rect;
   @override
   @JsonKey()
-  final double rotation;
-  @override
-  @JsonKey()
   final String character;
   @override
-  final DateTime createTime;
-  @override
-  final DateTime updateTime;
+  final String? characterId;
   @override
   @JsonKey()
   final ProcessingOptions options;
-  final List<Offset>? _erasePoints;
   @override
-  @OffsetListConverter()
-  List<Offset>? get erasePoints {
+  @JsonKey()
+  final bool isModified;
+  @override
+  @JsonKey()
+  final bool isSelected;
+  @override
+  final DateTime? createTime;
+  @override
+  final DateTime? updateTime;
+  @override
+  @JsonKey()
+  final double rotation;
+// For backward compatibility - will be removed in future versions
+  final List<List<Offset>>? _erasePoints;
+// For backward compatibility - will be removed in future versions
+  @override
+  @Deprecated('Use eraseData instead')
+  @OffsetListListConverter()
+  List<List<Offset>>? get erasePoints {
     final value = _erasePoints;
     if (value == null) return null;
     if (_erasePoints is EqualUnmodifiableListView) return _erasePoints;
@@ -316,19 +352,21 @@ class _$CharacterRegionImpl implements _CharacterRegion {
     return EqualUnmodifiableListView(value);
   }
 
+// New format with brush properties
+  final List<Map<String, dynamic>>? _eraseData;
+// New format with brush properties
   @override
-  final String? characterId;
-  @override
-  @JsonKey()
-  final bool isSelected;
-// New property
-  @override
-  @JsonKey()
-  final bool isModified;
+  List<Map<String, dynamic>>? get eraseData {
+    final value = _eraseData;
+    if (value == null) return null;
+    if (_eraseData is EqualUnmodifiableListView) return _eraseData;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
 
   @override
   String toString() {
-    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, rotation: $rotation, character: $character, createTime: $createTime, updateTime: $updateTime, options: $options, erasePoints: $erasePoints, characterId: $characterId, isSelected: $isSelected, isModified: $isModified)';
+    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, character: $character, characterId: $characterId, options: $options, isModified: $isModified, isSelected: $isSelected, createTime: $createTime, updateTime: $updateTime, rotation: $rotation, erasePoints: $erasePoints, eraseData: $eraseData)';
   }
 
   @override
@@ -339,23 +377,25 @@ class _$CharacterRegionImpl implements _CharacterRegion {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.pageId, pageId) || other.pageId == pageId) &&
             (identical(other.rect, rect) || other.rect == rect) &&
-            (identical(other.rotation, rotation) ||
-                other.rotation == rotation) &&
             (identical(other.character, character) ||
                 other.character == character) &&
+            (identical(other.characterId, characterId) ||
+                other.characterId == characterId) &&
+            (identical(other.options, options) || other.options == options) &&
+            (identical(other.isModified, isModified) ||
+                other.isModified == isModified) &&
+            (identical(other.isSelected, isSelected) ||
+                other.isSelected == isSelected) &&
             (identical(other.createTime, createTime) ||
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
                 other.updateTime == updateTime) &&
-            (identical(other.options, options) || other.options == options) &&
+            (identical(other.rotation, rotation) ||
+                other.rotation == rotation) &&
             const DeepCollectionEquality()
                 .equals(other._erasePoints, _erasePoints) &&
-            (identical(other.characterId, characterId) ||
-                other.characterId == characterId) &&
-            (identical(other.isSelected, isSelected) ||
-                other.isSelected == isSelected) &&
-            (identical(other.isModified, isModified) ||
-                other.isModified == isModified));
+            const DeepCollectionEquality()
+                .equals(other._eraseData, _eraseData));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -365,15 +405,16 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       id,
       pageId,
       rect,
-      rotation,
       character,
+      characterId,
+      options,
+      isModified,
+      isSelected,
       createTime,
       updateTime,
-      options,
+      rotation,
       const DeepCollectionEquality().hash(_erasePoints),
-      characterId,
-      isSelected,
-      isModified);
+      const DeepCollectionEquality().hash(_eraseData));
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.
@@ -397,15 +438,18 @@ abstract class _CharacterRegion implements CharacterRegion {
       {required final String id,
       required final String pageId,
       @RectConverter() required final Rect rect,
-      final double rotation,
       final String character,
-      required final DateTime createTime,
-      required final DateTime updateTime,
-      final ProcessingOptions options,
-      @OffsetListConverter() final List<Offset>? erasePoints,
       final String? characterId,
+      final ProcessingOptions options,
+      final bool isModified,
       final bool isSelected,
-      final bool isModified}) = _$CharacterRegionImpl;
+      final DateTime? createTime,
+      final DateTime? updateTime,
+      final double rotation,
+      @Deprecated('Use eraseData instead')
+      @OffsetListListConverter()
+      final List<List<Offset>>? erasePoints,
+      final List<Map<String, dynamic>>? eraseData}) = _$CharacterRegionImpl;
 
   factory _CharacterRegion.fromJson(Map<String, dynamic> json) =
       _$CharacterRegionImpl.fromJson;
@@ -418,24 +462,28 @@ abstract class _CharacterRegion implements CharacterRegion {
   @RectConverter()
   Rect get rect;
   @override
-  double get rotation;
-  @override
   String get character;
-  @override
-  DateTime get createTime;
-  @override
-  DateTime get updateTime;
-  @override
-  ProcessingOptions get options;
-  @override
-  @OffsetListConverter()
-  List<Offset>? get erasePoints;
   @override
   String? get characterId;
   @override
-  bool get isSelected; // New property
+  ProcessingOptions get options;
   @override
   bool get isModified;
+  @override
+  bool get isSelected;
+  @override
+  DateTime? get createTime;
+  @override
+  DateTime? get updateTime;
+  @override
+  double
+      get rotation; // For backward compatibility - will be removed in future versions
+  @override
+  @Deprecated('Use eraseData instead')
+  @OffsetListListConverter()
+  List<List<Offset>>? get erasePoints; // New format with brush properties
+  @override
+  List<Map<String, dynamic>>? get eraseData;
 
   /// Create a copy of CharacterRegion
   /// with the given fields replaced by the non-null parameter values.

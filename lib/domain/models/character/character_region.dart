@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../infrastructure/utils/json_converters.dart';
+import '../../../infrastructure/json/offset_converter.dart';
+import '../../../infrastructure/json/rect_converter.dart';
 import 'processing_options.dart';
 
 part 'character_region.freezed.dart';
@@ -15,40 +16,45 @@ class CharacterRegion with _$CharacterRegion {
     required String id,
     required String pageId,
     @RectConverter() required Rect rect,
-    @Default(0.0) double rotation,
     @Default('') String character,
-    required DateTime createTime,
-    required DateTime updateTime,
-    @Default(ProcessingOptions()) ProcessingOptions options,
-    @OffsetListConverter() List<Offset>? erasePoints,
     String? characterId,
-    @Default(false) bool isSelected, // New property
-    @Default(false) bool isModified, // New property
+    @Default(ProcessingOptions()) ProcessingOptions options,
+    @Default(false) bool isModified,
+    @Default(false) bool isSelected,
+    DateTime? createTime,
+    DateTime? updateTime,
+    @Default(0.0) double rotation,
+    // For backward compatibility - will be removed in future versions
+    @Deprecated('Use eraseData instead')
+    @OffsetListListConverter()
+    List<List<Offset>>? erasePoints,
+    // New format with brush properties
+    List<Map<String, dynamic>>? eraseData,
   }) = _CharacterRegion;
 
   factory CharacterRegion.create({
     required String pageId,
     required Rect rect,
-    double rotation = 0.0,
+    required ProcessingOptions options,
     String character = '',
-    ProcessingOptions? options,
-    String? characterId,
-    bool isSelected = false, // New parameter
-    bool isModified = true, // Default to true for new regions
+    bool isModified = false,
+    bool isSelected = false,
+    double rotation = 0.0,
+    List<Map<String, dynamic>>? eraseData,
   }) {
     final now = DateTime.now();
     return CharacterRegion(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       pageId: pageId,
       rect: rect,
-      rotation: rotation,
       character: character,
+      options: options,
+      isModified: isModified,
+      isSelected: isSelected,
       createTime: now,
       updateTime: now,
-      options: options ?? const ProcessingOptions(),
-      characterId: characterId,
-      isSelected: isSelected, // Set new property
-      isModified: isModified, // Set new property
+      rotation: rotation,
+      eraseData: eraseData,
     );
   }
 
@@ -68,20 +74,88 @@ extension CharacterRegionExt on CharacterRegion {
       'rect_height': rect.height,
       'rotation': rotation,
       'character': character,
-      'createTime': createTime.toIso8601String(),
-      'updateTime': updateTime.toIso8601String(),
+      'createTime': createTime?.toIso8601String(),
+      'updateTime': updateTime?.toIso8601String(),
       'options': jsonEncode(options.toJson()),
-      'erasePoints': erasePoints != null
-          ? jsonEncode(erasePoints!.map((p) => {'x': p.dx, 'y': p.dy}).toList())
-          : null,
+      'eraseData':
+          eraseData != null ? jsonEncode(_sanitizeEraseData(eraseData!)) : null,
       'characterId': characterId,
-      'isSelected': isSelected, // New field
-      'isModified': isModified, // New field
+      'isSelected': isSelected,
+      'isModified': isModified,
     };
+  }
+
+  // Helper method to ensure eraseData contains proper brush information
+  List<Map<String, dynamic>> _sanitizeEraseData(
+      List<Map<String, dynamic>> data) {
+    return data.map((pathData) {
+      // Ensure each path data has required fields
+      final sanitized = Map<String, dynamic>.from(pathData);
+
+      // Ensure brushSize exists
+      if (!sanitized.containsKey('brushSize')) {
+        sanitized['brushSize'] = options.brushSize;
+      }
+
+      // Ensure brushColor exists
+      if (!sanitized.containsKey('brushColor')) {
+        sanitized['brushColor'] = Colors.white.value;
+      }
+
+      // Ensure points are sanitized for serialization
+      if (sanitized.containsKey('points')) {
+        final pointsData = sanitized['points'];
+        if (pointsData is List) {
+          // Convert each point to a serializable format
+          final serializedPoints = pointsData.map((point) {
+            if (point is Map) {
+              return point;
+            } else if (point is Offset) {
+              return {'dx': point.dx, 'dy': point.dy};
+            } else {
+              return {'dx': 0.0, 'dy': 0.0}; // Fallback for invalid data
+            }
+          }).toList();
+          sanitized['points'] = serializedPoints;
+        }
+      }
+
+      return sanitized;
+    }).toList();
   }
 
   // 从数据库记录创建
   static CharacterRegion fromDbJson(Map<String, dynamic> json) {
+    final options =
+        ProcessingOptions.fromJson(jsonDecode(json['options'] as String));
+
+    List<Map<String, dynamic>>? eraseData;
+    if (json['eraseData'] != null) {
+      try {
+        final decoded = jsonDecode(json['eraseData'] as String) as List;
+        eraseData = decoded.map((item) {
+          final pathData = Map<String, dynamic>.from(item);
+
+          // Ensure brushSize is a double
+          if (pathData.containsKey('brushSize')) {
+            pathData['brushSize'] = (pathData['brushSize'] as num).toDouble();
+          } else {
+            pathData['brushSize'] = options.brushSize;
+          }
+
+          // Ensure brushColor is an int
+          if (!pathData.containsKey('brushColor')) {
+            pathData['brushColor'] = Colors.white.value;
+          }
+
+          return pathData;
+        }).toList();
+      } catch (e) {
+        print('Error decoding eraseData: $e');
+        eraseData = null;
+      }
+    }
+
     return CharacterRegion(
       id: json['id'] as String,
       pageId: json['pageId'] as String,
@@ -95,17 +169,11 @@ extension CharacterRegionExt on CharacterRegion {
       character: json['character'] as String,
       createTime: DateTime.parse(json['createTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
-      options:
-          ProcessingOptions.fromJson(jsonDecode(json['options'] as String)),
-      erasePoints: json['erasePoints'] != null
-          ? (jsonDecode(json['erasePoints'] as String) as List)
-              .map(
-                  (point) => Offset(point['x'] as double, point['y'] as double))
-              .toList()
-          : [],
+      options: options,
+      eraseData: eraseData,
       characterId: json['characterId'] as String?,
-      isSelected: json['isSelected'] as bool? ?? false, // New field
-      isModified: json['isModified'] as bool? ?? false, // New field
+      isSelected: json['isSelected'] as bool? ?? false,
+      isModified: json['isModified'] as bool? ?? false,
     );
   }
 }

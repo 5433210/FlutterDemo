@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../utils/migration/erase_data_migration.dart';
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
 import '../../domain/models/character/detected_outline.dart';
@@ -71,6 +72,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   /// 返回当前的坐标转换器
   CoordinateTransformer get transformer => _transformer;
+
   @override
   Widget build(BuildContext context) {
     if (kDebugMode && DebugFlags.enableEraseDebug) {
@@ -229,6 +231,43 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitToScreen();
+
+      // Load saved erase paths with migration support
+      if (widget.region != null) {
+        final eraseData = EraseDataMigration.migrateEraseData(widget.region!);
+
+        AppLogger.debug('擦除路径加载诊断', data: {
+          'hasRegion': widget.region != null,
+          'hasEraseData': widget.region?.eraseData != null,
+          'eraseDataCount': widget.region?.eraseData?.length ?? 0,
+          'hasErasePoints': widget.region?.erasePoints != null,
+          'erasePointsCount': widget.region?.erasePoints?.length ?? 0,
+          'migratedDataCount': eraseData?.length ?? 0,
+        });
+
+        if (eraseData != null && eraseData.isNotEmpty) {
+          AppLogger.debug('准备加载擦除路径数据', data: {
+            'pathCount': eraseData.length,
+            'firstPath': eraseData.first,
+            'formatType': widget.region!.eraseData != null
+                ? 'eraseData (new format)'
+                : 'erasePoints (migrated)',
+          });
+
+          ref
+              .read(eraseStateProvider.notifier)
+              .initializeWithSavedPaths(eraseData);
+
+          // Check if paths were successfully loaded
+          final pathRenderData = ref.read(pathRenderDataProvider);
+          AppLogger.debug('擦除路径加载结果', data: {
+            'completedPathCount': pathRenderData.completedPaths.length,
+          });
+        } else {
+          AppLogger.debug('没有有效的擦除路径数据可加载');
+        }
+      }
+
       if (widget.showOutline) {
         _updateOutline();
       }
@@ -260,28 +299,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         throw Exception('无法将图像转换为字节数组');
       }
 
-      final imageProcessor = ref.read(characterImageProcessorProvider);
-      final eraseState = ref.read(eraseStateProvider);
-
-      final options = ProcessingOptions(
-        inverted: eraseState.imageInvertMode,
-        threshold: 128.0,
-        noiseReduction: 0.5,
-        showContour: true,
-      );
-
-      final fullImageRect = Rect.fromLTWH(
-        0,
-        0,
-        widget.image.width.toDouble(),
-        widget.image.height.toDouble(),
-      );
-
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filename = 'contour_debug_$timestamp.png';
-
-      print('轮廓调试图已生成，文件名: $filename');
-      print('轮廓图显示了每条轮廓的起点(绿色)和终点(红色)，以及终止原因');
+      // ...existing code...
     } catch (e) {
       print('导出轮廓调试图失败: $e');
     } finally {
@@ -300,7 +318,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
 
         final stepLength = math.max(1.0, metric.length / 100);
-
         for (double distance = 0;
             distance <= metric.length;
             distance += stepLength) {
@@ -328,7 +345,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       try {
         final bounds = path.getBounds();
         points.add(bounds.center);
-        print('提取失败，使用路径中心点代替');
       } catch (e2) {
         print('无法获取路径边界: $e2');
       }
@@ -338,11 +354,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _fitToScreen() {
     if (!mounted) return;
-
     final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-
     final Size viewportSize = renderBox.size;
+
     final double imageWidth = widget.image.width.toDouble();
     final double imageHeight = widget.image.height.toDouble();
 
@@ -361,22 +376,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleEraseEnd() {
-    widget.onEraseEnd?.call();
     if (!_isAltKeyPressed) {
+      widget.onEraseEnd?.call();
       ref.read(eraseStateProvider.notifier).completePath();
     }
   }
 
   void _handleEraseStart(Offset position) {
-    widget.onEraseStart?.call(position);
     if (!_isAltKeyPressed) {
+      widget.onEraseStart?.call(position);
       ref.read(eraseStateProvider.notifier).startPath(position);
     }
   }
 
   void _handleEraseUpdate(Offset position, Offset delta) {
-    widget.onEraseUpdate?.call(position, delta);
     if (!_isAltKeyPressed) {
+      widget.onEraseUpdate?.call(position, delta);
       ref.read(eraseStateProvider.notifier).updatePath(position);
     }
   }
@@ -423,10 +438,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _handleTap(Offset position) {
     if (_isAltKeyPressed) return;
-
     ref.read(eraseStateProvider.notifier).startPath(position);
     ref.read(eraseStateProvider.notifier).completePath();
-
     widget.onEraseStart?.call(position);
     widget.onEraseEnd?.call();
   }
@@ -521,8 +534,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  /// 更新坐标转换器
-  /// [viewportSize] 视口尺寸
   void _updateTransformer(Size viewportSize) {
     if (!mounted) {
       AppLogger.warning('无法更新坐标转换器：组件未挂载');
@@ -541,14 +552,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         viewportSize: viewportSize,
         enableLogging: kDebugMode,
       );
-
-      // if (kDebugMode) {
-      //   AppLogger.debug('坐标转换器更新完成', data: {
-      //     'imageSize': '${imageSize.width}x${imageSize.height}',
-      //     'viewportSize': '${viewportSize.width}x${viewportSize.height}',
-      //     'scale': _transformer.currentScale.toStringAsFixed(3),
-      //   });
-      // }
     } catch (e, stack) {
       AppLogger.error('更新坐标转换器失败', error: e, stackTrace: stack, data: {
         'imageSize': '${widget.image.width}x${widget.image.height}',

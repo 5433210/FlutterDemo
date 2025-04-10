@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/models/character/path_info.dart';
 import '../../../utils/path/path_utils.dart';
 
 /// 存储路径及其属性的类
@@ -33,6 +34,9 @@ class PathManager {
   // 重做路径列表
   final List<PathEntry> _redoPaths = [];
 
+  // 撤销历史堆栈 - 添加缺失的字段
+  final List<List<PathEntry>> _undoStack = [];
+
   // 脏区域（需要重绘的区域）
   Rect? _dirtyBounds;
 
@@ -56,6 +60,17 @@ class PathManager {
 
   // 重做路径列表的只读访问
   List<PathEntry> get redoPaths => List.unmodifiable(_redoPaths);
+
+  /// Add a completed path without starting/completing sequence
+  void addCompletedPath(PathInfo path) {
+    _completedPaths.add(PathEntry(
+      path: path.path,
+      brushSize: path.brushSize,
+      brushColor: path.brushColor,
+      wasReversed: path.brushColor == Colors.black,
+    ));
+    _updateDirtyBounds();
+  }
 
   /// 清除所有路径
   void clear() {
@@ -112,6 +127,45 @@ class PathManager {
       'hasMixedColors': blackPaths > 0 && whitePaths > 0,
       'currentColor': _currentColor?.toString(),
     };
+  }
+
+  /// 使用现有路径初始化 - 修改接收类型为PathInfo以匹配EraseStateNotifier的调用
+  void initializeWithPaths(List<PathInfo> paths) {
+    _completedPaths.clear();
+    // 将PathInfo转换为PathEntry
+    _completedPaths.addAll(paths
+        .map((p) => PathEntry(
+              path: p.path,
+              brushSize: p.brushSize,
+              brushColor: p.brushColor,
+              wasReversed: p.brushColor == Colors.black,
+            ))
+        .toList());
+
+    // 更新脏区域
+    _updateDirtyBounds();
+  }
+
+  /// Initialize with saved paths
+  void initializeWithSavedPaths(List<PathInfo> paths) {
+    _completedPaths.clear();
+    // 将PathInfo转换为PathEntry
+    _completedPaths.addAll(paths
+        .map((p) => PathEntry(
+              path: p.path,
+              brushSize: p.brushSize,
+              brushColor: p.brushColor,
+              wasReversed: p.brushColor == Colors.black,
+            ))
+        .toList());
+
+    // Update history - 修复_redoStack为_redoPaths
+    _undoStack.clear();
+    _undoStack.add(_completedPaths.toList());
+    _redoPaths.clear();
+
+    // Recalculate dirty bounds
+    _updateDirtyBounds();
   }
 
   /// 重做上一个撤销的路径
@@ -276,9 +330,18 @@ class PathManager {
   }
 
   // 更新脏区域
-  void _updateDirtyBounds(Offset position) {
-    final pointBounds =
-        Rect.fromCircle(center: position, radius: _currentBrushSize / 2);
-    _dirtyBounds = _dirtyBounds?.expandToInclude(pointBounds) ?? pointBounds;
+  void _updateDirtyBounds([Offset? position]) {
+    if (position != null) {
+      final pointBounds =
+          Rect.fromCircle(center: position, radius: _currentBrushSize / 2);
+      _dirtyBounds = _dirtyBounds?.expandToInclude(pointBounds) ?? pointBounds;
+    } else {
+      Rect? bounds;
+      for (final entry in _completedPaths) {
+        bounds = bounds?.expandToInclude(entry.path.getBounds()) ??
+            entry.path.getBounds();
+      }
+      _dirtyBounds = bounds;
+    }
   }
 }

@@ -31,7 +31,7 @@ final eraseModeProvider = Provider<EraseMode>((ref) {
 final eraseStateProvider =
     StateNotifierProvider<EraseStateNotifier, EraseState>((ref) {
   final pathManager = ref.watch(pathManagerProvider);
-  return EraseStateNotifier(pathManager);
+  return EraseStateNotifier(pathManager, ref);
 });
 
 // PathManager的provider

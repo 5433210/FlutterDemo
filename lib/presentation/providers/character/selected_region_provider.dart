@@ -17,7 +17,7 @@ class SelectedRegionNotifier extends StateNotifier<CharacterRegion?> {
     if (state == null) return;
 
     final currentPoints = state!.erasePoints ?? [];
-    final updatedPoints = [...currentPoints, ...points];
+    final updatedPoints = [...currentPoints, points];
 
     state = state!.copyWith(erasePoints: updatedPoints);
   }

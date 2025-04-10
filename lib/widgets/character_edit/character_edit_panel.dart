@@ -371,6 +371,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
                 children: [
                   // 画布
                   CharacterEditCanvas(
+                    region: region,
                     key: _canvasKey,
                     image: loadedImageForCanvas,
                     showOutline: eraseState.showContour,
@@ -423,7 +424,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(height: 4),
+            const SizedBox(width: 4),
             Text(
               message,
               style: const TextStyle(fontSize: 12),
@@ -743,6 +744,45 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     }
   }
 
+  // 从Path提取Offset点集合并转换为可序列化格式
+  List<Map<String, double>> _extractPointsFromPath(Path path) {
+    List<Map<String, double>> serializablePoints = [];
+    try {
+      for (final metric in path.computeMetrics()) {
+        if (metric.length == 0) {
+          final pathBounds = path.getBounds();
+          serializablePoints
+              .add({'dx': pathBounds.center.dx, 'dy': pathBounds.center.dy});
+          continue;
+        }
+
+        // 采样路径上的点
+        final stepLength = math.max(1.0, metric.length / 100);
+        for (double distance = 0;
+            distance <= metric.length;
+            distance += stepLength) {
+          final tangent = metric.getTangentForOffset(distance);
+          if (tangent != null) {
+            serializablePoints
+                .add({'dx': tangent.position.dx, 'dy': tangent.position.dy});
+          }
+        }
+
+        // 确保包含最后一个点
+        if (metric.length > 0) {
+          final lastTangent = metric.getTangentForOffset(metric.length);
+          if (lastTangent != null) {
+            serializablePoints.add(
+                {'dx': lastTangent.position.dx, 'dy': lastTangent.position.dy});
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.error('从路径提取点集合失败', error: e);
+    }
+    return serializablePoints;
+  }
+
   // 获取缩略图路径
   Future<String?> _getThumbnailPath() async {
     try {
@@ -865,6 +905,40 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       // 创建处理结果
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
       final eraseState = ref.read(erase.eraseStateProvider);
+      final List<Map<String, dynamic>> eraseData = [];
+
+      if (pathRenderData.completedPaths.isNotEmpty) {
+        for (final path in pathRenderData.completedPaths) {
+          final points = _extractPointsFromPath(path.path);
+          if (points.isNotEmpty) {
+            eraseData.add({
+              'points': points,
+              'brushSize': path.brushSize,
+              'brushColor': path.brushColor.value,
+            });
+          }
+        }
+      }
+
+      // Verify erase data is properly structured
+      if (eraseData.isNotEmpty) {
+        // Log detailed information about first path for debugging
+        final firstPath = eraseData.first;
+        final points = firstPath['points'] as List<Map<String, double>>;
+
+        AppLogger.debug('验证擦除路径数据', data: {
+          'erasePaths': eraseData.length,
+          'firstPathBrushSize': firstPath['brushSize'],
+          'firstPathBrushColor':
+              (firstPath['brushColor'] as int).toRadixString(16),
+          'firstPathPointCount': points.length,
+          'firstPathSamplePoints': points
+              .take(3)
+              .map((p) =>
+                  '(${p['dx']?.toStringAsFixed(1)},${p['dy']?.toStringAsFixed(1)})')
+              .toList(),
+        });
+      }
 
       final processingOptions = ProcessingOptions(
         inverted: eraseState.isReversed,
@@ -882,12 +956,14 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         throw _SaveError('未选择任何区域');
       }
 
-      // 更新选区信息
+      // 更新选区信息，保存擦除路径数据
       final updatedRegion = selectedRegion.copyWith(
         pageId: widget.pageId,
         character: _characterController.text,
         options: processingOptions,
         isModified: true,
+        eraseData: eraseData.isNotEmpty ? eraseData : null,
+        erasePoints: null, // Clear old format data
       );
 
       // 创建缩略图

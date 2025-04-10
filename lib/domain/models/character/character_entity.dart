@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../infrastructure/json/character_region_converter.dart';
 import 'character_region.dart';
 
 part 'character_entity.freezed.dart';

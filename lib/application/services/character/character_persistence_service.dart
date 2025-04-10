@@ -289,6 +289,14 @@ class CharacterPersistenceService {
         updateTime: now,
       );
 
+      // 记录擦除路径数据状态
+      if (updatedRegion.erasePoints != null) {
+        AppLogger.debug('字符数据包含擦除路径', data: {
+          'characterId': id,
+          'erasePathsCount': updatedRegion.erasePoints!.length,
+        });
+      }
+
       // 更新区域数据
       await _repository.save(updatedEntity);
 

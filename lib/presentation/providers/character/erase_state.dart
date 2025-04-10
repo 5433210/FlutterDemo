@@ -11,6 +11,8 @@ enum EraseMode {
 
 /// 擦除工具状态
 class EraseState {
+  final List<List<PathInfo>> history;
+  final int historyIndex;
   // 已完成的路径
   final List<PathInfo> completedPaths;
 
@@ -43,6 +45,8 @@ class EraseState {
 
   // 构造函数
   const EraseState({
+    this.history = const [],
+    this.historyIndex = -1,
     this.completedPaths = const [],
     this.currentPath,
     this.dirtyBounds,
@@ -93,6 +97,8 @@ class EraseState {
 
   // 复制并修改部分属性
   EraseState copyWith({
+    List<List<PathInfo>>? history,
+    int? historyIndex,
     List<PathInfo>? completedPaths,
     PathInfo? currentPath,
     Rect? dirtyBounds,
@@ -105,6 +111,8 @@ class EraseState {
     List<PathInfo>? redoPaths,
   }) {
     return EraseState(
+      history: history ?? this.history,
+      historyIndex: historyIndex ?? this.historyIndex,
       completedPaths: completedPaths ?? this.completedPaths,
       currentPath: currentPath, // 允许设置为null
       dirtyBounds: dirtyBounds, // 允许设置为null

@@ -317,8 +317,6 @@ class CharacterRepositoryImpl implements CharacterRepository {
       createTime: DateTime.parse(map['createTime'] as String),
       updateTime: DateTime.parse(map['updateTime'] as String),
       isFavorite: (map['isFavorite'] as int) == 1,
-      tags: tags,
-      note: map['note'] as String?,
     );
   }
 
@@ -340,11 +338,9 @@ class CharacterRepositoryImpl implements CharacterRepository {
       'pageId': entity.pageId,
       'character': entity.character,
       'region': jsonEncode(entity.region.toJson()),
-      'createTime': entity.createTime.toIso8601String(),
-      'updateTime': entity.updateTime.toIso8601String(),
+      'createTime': entity.createTime?.toIso8601String(),
+      'updateTime': entity.updateTime?.toIso8601String(),
       'isFavorite': entity.isFavorite ? 1 : 0,
-      'tags': entity.tags.join(','),
-      'note': entity.note,
     };
   }
 }

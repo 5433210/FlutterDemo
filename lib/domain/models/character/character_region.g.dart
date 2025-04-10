@@ -13,18 +13,25 @@ _$CharacterRegionImpl _$$CharacterRegionImplFromJson(
       pageId: json['pageId'] as String,
       rect:
           const RectConverter().fromJson(json['rect'] as Map<String, dynamic>),
-      rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
       character: json['character'] as String? ?? '',
-      createTime: DateTime.parse(json['createTime'] as String),
-      updateTime: DateTime.parse(json['updateTime'] as String),
+      characterId: json['characterId'] as String?,
       options: json['options'] == null
           ? const ProcessingOptions()
           : ProcessingOptions.fromJson(json['options'] as Map<String, dynamic>),
-      erasePoints:
-          const OffsetListConverter().fromJson(json['erasePoints'] as List?),
-      characterId: json['characterId'] as String?,
-      isSelected: json['isSelected'] as bool? ?? false,
       isModified: json['isModified'] as bool? ?? false,
+      isSelected: json['isSelected'] as bool? ?? false,
+      createTime: json['createTime'] == null
+          ? null
+          : DateTime.parse(json['createTime'] as String),
+      updateTime: json['updateTime'] == null
+          ? null
+          : DateTime.parse(json['updateTime'] as String),
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+      erasePoints: _$JsonConverterFromJson<List<dynamic>, List<List<Offset>>>(
+          json['erasePoints'], const OffsetListListConverter().fromJson),
+      eraseData: (json['eraseData'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList(),
     );
 
 Map<String, dynamic> _$$CharacterRegionImplToJson(
@@ -33,13 +40,27 @@ Map<String, dynamic> _$$CharacterRegionImplToJson(
       'id': instance.id,
       'pageId': instance.pageId,
       'rect': const RectConverter().toJson(instance.rect),
-      'rotation': instance.rotation,
       'character': instance.character,
-      'createTime': instance.createTime.toIso8601String(),
-      'updateTime': instance.updateTime.toIso8601String(),
-      'options': instance.options,
-      'erasePoints': const OffsetListConverter().toJson(instance.erasePoints),
       'characterId': instance.characterId,
-      'isSelected': instance.isSelected,
+      'options': instance.options,
       'isModified': instance.isModified,
+      'isSelected': instance.isSelected,
+      'createTime': instance.createTime?.toIso8601String(),
+      'updateTime': instance.updateTime?.toIso8601String(),
+      'rotation': instance.rotation,
+      'erasePoints': _$JsonConverterToJson<List<dynamic>, List<List<Offset>>>(
+          instance.erasePoints, const OffsetListListConverter().toJson),
+      'eraseData': instance.eraseData,
     };
+
+Value? _$JsonConverterFromJson<Json, Value>(
+  Object? json,
+  Value? Function(Json json) fromJson,
+) =>
+    json == null ? null : fromJson(json as Json);
+
+Json? _$JsonConverterToJson<Json, Value>(
+  Value? value,
+  Json? Function(Value value) toJson,
+) =>
+    value == null ? null : toJson(value);

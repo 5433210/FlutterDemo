@@ -335,8 +335,8 @@ class CharacterService {
           character: entity.character,
           rect: entity.region.rect,
           thumbnailPath: thumbnailPath,
-          createdAt: entity.createTime,
-          updatedAt: entity.updateTime,
+          createdAt: entity.createTime ?? DateTime.now(),
+          updatedAt: entity.updateTime ?? DateTime.now(),
           isFavorite: false,
         );
       }).toList();
@@ -364,8 +364,8 @@ class CharacterService {
           character: entity.character,
           rect: entity.region.rect,
           thumbnailPath: thumbnailPath,
-          createdAt: entity.createTime,
-          updatedAt: entity.updateTime,
+          createdAt: entity.createTime ?? DateTime.now(),
+          updatedAt: entity.updateTime ?? DateTime.now(),
           isFavorite: false,
         );
       }).toList();

@@ -890,21 +890,21 @@ class CharacterCollectionNotifier
       // 获取旧区域以便比较是否有实际内容变化
       final oldRegion = state.regions[index];
 
-      // 检查擦除点是否有变化
-      bool hasErasePointsChanges =
-          _hasErasePointsChanged(oldRegion.erasePoints, region.erasePoints);
+      // 检查擦除数据是否有变化
+      bool hasEraseDataChanges =
+          _hasEraseDataChanged(oldRegion.eraseData, region.eraseData);
 
       // 检查是否有实际内容变化（例如位置、大小、旋转等）
       bool hasContentChanges = oldRegion.rect != region.rect ||
           oldRegion.rotation != region.rotation ||
           oldRegion.character != region.character ||
-          hasErasePointsChanges ||
+          hasEraseDataChanges ||
           oldRegion.options != region.options;
 
       AppLogger.debug('检查区域内容变化', data: {
         'regionId': region.id,
         'hasContentChanges': hasContentChanges,
-        'hasErasePointsChanges': hasErasePointsChanges,
+        'hasEraseDataChanges': hasEraseDataChanges,
         'oldRect': oldRegion.rect.toString(),
         'newRect': region.rect.toString(),
         'oldRotation': oldRegion.rotation,
@@ -938,18 +938,6 @@ class CharacterCollectionNotifier
       // 更新选中区域
       _selectedRegionNotifier.setRegion(updatedRegion);
     }
-  }
-
-  bool _areErasePointsEqual(List<Offset> points1, List<Offset> points2) {
-    if (points1.length != points2.length) return false;
-
-    for (int i = 0; i < points1.length; i++) {
-      if (points1[i].dx != points2[i].dx || points1[i].dy != points2[i].dy) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /// [Internal] Finds the region and updates the SelectedRegionNotifier.
@@ -1001,28 +989,28 @@ class CharacterCollectionNotifier
     }
   }
 
-  // 检查擦除点是否有变化
-  bool _hasErasePointsChanged(
-      List<Offset>? oldPoints, List<Offset>? newPoints) {
+  // 检查擦除路径数据是否有变化 - Update to handle eraseData instead of erasePoints
+  bool _hasEraseDataChanged(List<Map<String, dynamic>>? oldData,
+      List<Map<String, dynamic>>? newData) {
     // 如果一个为null而另一个不为null，则视为有变化
-    if ((oldPoints == null && newPoints != null) ||
-        (oldPoints != null && newPoints == null)) {
+    if ((oldData == null && newData != null) ||
+        (oldData != null && newData == null)) {
       return true;
     }
 
     // 如果两者都为null，则没有变化
-    if (oldPoints == null && newPoints == null) {
+    if (oldData == null && newData == null) {
       return false;
     }
 
-    // 如果点的数量不同，则有变化
-    if (oldPoints!.length != newPoints!.length) {
+    // 如果路径数量不同，则有变化
+    if (oldData!.length != newData!.length) {
       return true;
     }
 
-    // 简化判断：如果有擦除点，认为有变化
+    // 简化判断：如果有擦除数据，认为有变化
     // 实际应用中可能需要更精确的比较
-    if (oldPoints.isNotEmpty || newPoints.isNotEmpty) {
+    if (oldData.isNotEmpty || newData.isNotEmpty) {
       return true;
     }
     return false;
@@ -1053,12 +1041,11 @@ class CharacterCollectionNotifier
       return false;
     }
 
-    // 比较erasePoints
-    if (!_areErasePointsEqual(
-        original.erasePoints ?? [], current.erasePoints ?? [])) {
-      AppLogger.debug('Region changed: erasePoints', data: {
-        'original': original.erasePoints?.length ?? 0,
-        'current': current.erasePoints?.length ?? 0
+    // 比较eraseData - Updated from erasePoints to eraseData
+    if (_hasEraseDataChanged(original.eraseData, current.eraseData)) {
+      AppLogger.debug('Region changed: eraseData', data: {
+        'original': original.eraseData?.length ?? 0,
+        'current': current.eraseData?.length ?? 0
       });
       return false;
     }

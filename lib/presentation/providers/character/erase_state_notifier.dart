@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/path_info.dart';
+import '../../../infrastructure/logging/logger.dart';
 import 'erase_state.dart';
 import 'path_manager.dart';
 
 /// 擦除状态管理器
 class EraseStateNotifier extends StateNotifier<EraseState> {
   final PathManager _pathManager;
+  final Ref _ref;
 
-  EraseStateNotifier(this._pathManager) : super(EraseState.initial());
+  EraseStateNotifier(this._pathManager, this._ref)
+      : super(EraseState.initial());
 
   /// 清除所有路径
   void clear() {
@@ -46,6 +49,95 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     _pathManager.completePath();
     _updateState();
+  }
+
+  /// 初始化擦除状态，用于加载保存的擦除路径数据
+  void initializeWithSavedPaths(List<Map<String, dynamic>> eraseData) {
+    if (eraseData.isEmpty) {
+      AppLogger.debug('没有可加载的擦除路径数据');
+      return;
+    }
+
+    final paths = <PathInfo>[];
+    AppLogger.debug('开始加载擦除路径数据', data: {'eraseDataCount': eraseData.length});
+
+    for (final pathData in eraseData) {
+      // 提取路径点集合
+      final pointsData = pathData['points'] as List<dynamic>;
+      if (pointsData.isEmpty) {
+        AppLogger.debug('跳过空路径点集');
+        continue;
+      }
+
+      // 提取笔刷属性
+      final double brushSize =
+          (pathData['brushSize'] as num?)?.toDouble() ?? state.brushSize;
+      final int? brushColorValue = pathData['brushColor'] as int?;
+      final Color brushColor =
+          brushColorValue != null ? Color(brushColorValue) : state.brushColor;
+
+      AppLogger.debug('加载路径', data: {
+        'pointCount': pointsData.length,
+        'brushSize': brushSize,
+        'brushColor': brushColor.value.toRadixString(16),
+      });
+
+      // 创建路径
+      final path = Path();
+
+      // 获取第一个点并解析
+      Offset? firstPoint = _parsePoint(pointsData.first);
+      if (firstPoint == null) {
+        AppLogger.warning('无法解析第一个点，跳过路径');
+        continue;
+      }
+
+      path.moveTo(firstPoint.dx, firstPoint.dy);
+
+      // 添加其余点
+      bool hasValidPoints = true;
+      for (int i = 1; i < pointsData.length; i++) {
+        final point = _parsePoint(pointsData[i]);
+        if (point != null) {
+          path.lineTo(point.dx, point.dy);
+        } else {
+          AppLogger.warning('路径中存在无效点，位置: $i');
+          hasValidPoints = false;
+          break;
+        }
+      }
+
+      if (!hasValidPoints) {
+        AppLogger.warning('路径包含无效点，跳过路径');
+        continue;
+      }
+
+      // 创建PathInfo
+      paths.add(PathInfo(
+        path: path,
+        brushSize: brushSize,
+        brushColor: brushColor,
+      ));
+    }
+
+    AppLogger.debug('成功加载路径', data: {'pathCount': paths.length});
+
+    // 更新擦除状态
+    if (paths.isNotEmpty) {
+      state = state.copyWith(
+        history: [paths],
+        historyIndex: 0,
+        completedPaths: paths,
+      );
+
+      // 更新路径渲染数据
+      _pathManager.clear();
+      for (final path in paths) {
+        _pathManager.addCompletedPath(path);
+      }
+
+      _updatePathRenderData();
+    }
   }
 
   /// 重做上一个撤销的操作
@@ -175,6 +267,59 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     _pathManager.updatePath(position);
     _updateState();
+  }
+
+  // Helper method to parse points in various formats
+  Offset? _parsePoint(dynamic pointData) {
+    try {
+      if (pointData is Offset) {
+        return pointData;
+      } else if (pointData is Map) {
+        // Handle Map format with dx/dy keys (our serialized format)
+        if (pointData.containsKey('dx') && pointData.containsKey('dy')) {
+          return Offset(
+            (pointData['dx'] as num?)?.toDouble() ?? 0.0,
+            (pointData['dy'] as num?)?.toDouble() ?? 0.0,
+          );
+        }
+        // Handle Map format with x/y keys
+        else if (pointData.containsKey('x') && pointData.containsKey('y')) {
+          return Offset(
+            (pointData['x'] as num?)?.toDouble() ?? 0.0,
+            (pointData['y'] as num?)?.toDouble() ?? 0.0,
+          );
+        }
+      } else if (pointData is List && pointData.length >= 2) {
+        // Handle List format [x, y]
+        return Offset(
+          (pointData[0] as num).toDouble(),
+          (pointData[1] as num).toDouble(),
+        );
+      }
+    } catch (e) {
+      AppLogger.error('解析点失败', error: e, data: {'rawData': pointData});
+    }
+    return null;
+  }
+
+  /// 更新路径渲染数据提供器
+  void _updatePathRenderData() {
+    final completedPaths = _pathManager.completedPaths.map((pathEntry) {
+      return PathInfo(
+        path: pathEntry.path,
+        brushSize: pathEntry.brushSize,
+        brushColor: pathEntry.brushColor,
+      );
+    }).toList();
+
+    PathInfo? currentPath;
+    if (_pathManager.currentPath != null) {
+      currentPath = PathInfo(
+        path: _pathManager.currentPath!,
+        brushSize: state.brushSize,
+        brushColor: _pathManager.currentColor ?? state.brushColor,
+      );
+    }
   }
 
   void _updateState() {

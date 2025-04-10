@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/path_info.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../utils/debug/debug_flags.dart';
 import 'base_layer.dart';
 
@@ -124,23 +125,31 @@ class _PreviewPainter extends CustomPainter {
   ///
   /// 将绘制逻辑分离出来以提高代码可读性和可维护性
   void _drawPathsWithPaint(Canvas canvas, Paint paint) {
+    AppLogger.debug('绘制路径', data: {'pathCount': paths.length});
+
     for (final pathInfo in paths) {
       if (pathInfo.path.getBounds().isEmpty ||
           !pathInfo.path.getBounds().isFinite) {
-        debugPrint('跳过无效路径');
+        AppLogger.debug('跳过无效路径');
         continue;
       }
 
       try {
+        // 重要：使用路径的实际笔刷大小和颜色，而不是全局设置
         paint
           ..color = pathInfo.brushColor
-          ..style = PaintingStyle.stroke // 使用描边样式来应用线条粗细
+          ..style = PaintingStyle.stroke
           ..strokeWidth = pathInfo.brushSize;
 
         canvas.drawPath(pathInfo.path, paint);
+
+        AppLogger.debug('绘制路径', data: {
+          'color': pathInfo.brushColor.value.toRadixString(16),
+          'size': pathInfo.brushSize,
+          'bounds': pathInfo.path.getBounds().toString(),
+        });
       } catch (e) {
-        debugPrint('绘制单个路径失败: ${e.toString()}');
-        // 继续绘制其他路径
+        AppLogger.error('绘制路径失败', error: e);
       }
     }
   }
