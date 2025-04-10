@@ -261,7 +261,7 @@ class CharacterPersistenceService {
 
       final updatedEntity = characterEntity.copyWith(
         character: character,
-        region: updatedRegion,
+        region: updatedRegion.copyWith(isModified: false, isSelected: false),
         updateTime: now,
       );
 

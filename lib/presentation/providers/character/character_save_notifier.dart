@@ -1,82 +1,104 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/services/character/character_persistence_service.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_result.dart';
-import '../../../domain/models/common/result.dart';
+import '../../../infrastructure/logging/logger.dart';
+import 'character_collection_provider.dart';
+import 'erase_providers.dart';
 
+/// Save state notifier for managing character save operations
 final characterSaveNotifierProvider =
-    StateNotifierProvider<CharacterSaveNotifier, SaveState>((ref) {
-  final persistenceService = ref.watch(characterPersistenceServiceProvider);
-  return CharacterSaveNotifier(persistenceService);
-});
+    StateNotifierProvider<CharacterSaveNotifier, SaveState>(
+  (ref) => CharacterSaveNotifier(ref),
+);
 
 class CharacterSaveNotifier extends StateNotifier<SaveState> {
-  final CharacterPersistenceService _persistenceService;
+  final Ref _ref;
 
-  CharacterSaveNotifier(this._persistenceService) : super(const SaveState());
+  CharacterSaveNotifier(this._ref) : super(const SaveState());
 
-  Future<Result<String>> save(
-      CharacterRegion region, ProcessingResult result, String workId) async {
-    try {
-      // 开始保存，更新状态
-      state = state.copyWith(isSaving: true, error: null);
-
-      // 调用持久化服务保存
-      // 设置workId
-      final savedEntity = await _persistenceService.saveCharacter(
-        region,
-        result,
-        workId,
-      );
-
-      // 保存成功，更新状态，记录最后保存的characterId
-      state = state.copyWith(
-        isSaving: false,
-        lastSavedCharacterId: savedEntity.id,
-      );
-      return Result.success(savedEntity.id);
-    } catch (e) {
-      // 保存失败，更新错误状态
-      state = state.copyWith(
-        isSaving: false,
-        error: _getErrorMessage(e),
-      );
-      return Result.failure(e);
-    }
+  void clearError() {
+    state = state.copyWith(error: null);
   }
 
-  String _getErrorMessage(Object error) {
-    if (error is ValidationError) {
-      return '输入验证失败：${error.message}';
-    } else if (error is StorageError) {
-      return '保存失败：${error.message}';
-    } else {
-      return '保存失败，请重试';
+  /// Save character information and optional image data
+  Future<String?> saveCharacter({
+    required CharacterRegion region,
+    required String character,
+    required ProcessingResult? imageData,
+  }) async {
+    try {
+      state = state.copyWith(isSaving: true, error: null);
+
+      final collectionNotifier =
+          _ref.read(characterCollectionProvider.notifier);
+
+      // First, update the selected region with the new character
+      final updatedRegion = region.copyWith(character: character);
+      collectionNotifier.updateSelectedRegion(updatedRegion);
+
+      // Save the character
+      await collectionNotifier.saveCurrentRegion(imageData: imageData);
+
+      // Get the saved region to access its updated character ID
+      final savedRegion = _ref.read(characterCollectionProvider).selectedRegion;
+
+      // Important: After save, ensure erasePaths are reloaded with the new character ID
+      if (savedRegion != null &&
+          region.characterId == null &&
+          savedRegion.characterId != null) {
+        // This was the first save (new region becoming a character)
+        // Reload the erase data with the new character ID
+        AppLogger.debug('First save detected - refreshing erase state', data: {
+          'oldId': region.id,
+          'newCharacterId': savedRegion.characterId,
+          'hasEraseData': savedRegion.eraseData != null,
+          'eraseDataCount': savedRegion.eraseData?.length ?? 0
+        });
+
+        // Reload erase paths if they exist
+        if (savedRegion.eraseData != null &&
+            savedRegion.eraseData!.isNotEmpty) {
+          _ref
+              .read(eraseStateProvider.notifier)
+              .initializeWithSavedPaths(savedRegion.eraseData!);
+        }
+      }
+
+      state = state.copyWith(isSaving: false, lastSaved: DateTime.now());
+      return savedRegion?.characterId;
+    } catch (e) {
+      AppLogger.error('保存失败', error: e);
+      state = state.copyWith(
+        isSaving: false,
+        error: e.toString(),
+      );
+      return null;
     }
   }
 }
 
+/// State class for character save operations
 class SaveState {
   final bool isSaving;
   final String? error;
-  final String? lastSavedCharacterId;
+  final DateTime? lastSaved;
 
   const SaveState({
     this.isSaving = false,
     this.error,
-    this.lastSavedCharacterId,
+    this.lastSaved,
   });
 
   SaveState copyWith({
     bool? isSaving,
     String? error,
-    String? lastSavedCharacterId,
+    DateTime? lastSaved,
   }) {
     return SaveState(
       isSaving: isSaving ?? this.isSaving,
-      error: error ?? this.error,
-      lastSavedCharacterId: lastSavedCharacterId ?? this.lastSavedCharacterId,
+      error: error, // Pass null to clear error
+      lastSaved: lastSaved ?? this.lastSaved,
     );
   }
 }

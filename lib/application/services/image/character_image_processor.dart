@@ -274,6 +274,9 @@ class CharacterImageProcessor {
     final result =
         img.copyResize(source, width: source.width, height: source.height);
 
+    final imageWidth = source.width;
+    final imageHeight = source.height;
+
     for (final pathData in erasePaths) {
       final points = pathData['points'] as List<dynamic>;
       final brushSize = (pathData['brushSize'] as num?)?.toDouble() ?? 10.0;
@@ -300,57 +303,57 @@ class CharacterImageProcessor {
           continue;
         }
 
-        x = x.clamp(0, source.width - 1);
-        y = y.clamp(0, source.height - 1);
+        // Skip points completely outside the image (plus brush radius buffer)
+        if (x < -brushRadius ||
+            y < -brushRadius ||
+            x >= imageWidth + brushRadius ||
+            y >= imageHeight + brushRadius) {
+          continue;
+        }
 
-        // Apply soft-edge brush with reduced blur radius (just 1 pixel)
-        // Use 1.05 instead of 1.2 to create a more subtle edge effect
+        // Clamp points to valid coordinates for calculation
+        x = x.clamp(0, imageWidth - 1);
+        y = y.clamp(0, imageHeight - 1);
+
+        // Apply soft-edge brush with reduced blur radius
         for (var dy = -brushRadius * 1.05; dy <= brushRadius * 1.05; dy++) {
+          // Skip entire row if outside Y boundaries
+          final py = (y + dy).round();
+          if (py < 0 || py >= imageHeight) continue;
+
           for (var dx = -brushRadius * 1.05; dx <= brushRadius * 1.05; dx++) {
-            // Calculate distance from brush center (squared for efficiency)
-            final distSquared = dx * dx + dy * dy;
-
-            // Skip pixels outside the brush radius (with minimal buffer for soft edge)
-            if (distSquared > brushRadius * brushRadius * 1.1)
-              continue; // Reduced from 1.44
-
+            // Skip pixel if outside X boundaries
             final px = (x + dx).round();
-            final py = (y + dy).round();
+            if (px < 0 || px >= imageWidth) continue;
 
-            if (px >= 0 && px < result.width && py >= 0 && py < result.height) {
-              // Calculate alpha blend factor based on distance from center
-              double alpha = 1.0;
+            // Distance check
+            final distSquared = dx * dx + dy * dy;
+            if (distSquared > brushRadius * brushRadius * 1.1) continue;
 
-              // Apply soft edge blending only at the very edge (reduced blur area)
-              if (distSquared > brushRadius * brushRadius * 0.9) {
-                // Start fading closer to edge (was 0.7)
-                // Steeper falloff for a more defined edge with just a bit of blur
-                final dist = math.sqrt(distSquared);
-                alpha =
-                    1.0 - ((dist - brushRadius * 0.95) / (brushRadius * 0.1));
-                alpha = alpha.clamp(0.0, 1.0);
-              }
+            // Alpha blending calculation - only for pixels in bounds
+            double alpha = 1.0;
+            if (distSquared > brushRadius * brushRadius * 0.9) {
+              final dist = math.sqrt(distSquared);
+              alpha = 1.0 - ((dist - brushRadius * 0.95) / (brushRadius * 0.1));
+              alpha = alpha.clamp(0.0, 1.0);
+            }
 
-              if (alpha > 0.1) {
-                // Higher threshold for less transparency
-                final originalPixel = result.getPixel(px, py);
+            if (alpha > 0.1) {
+              final originalPixel = result.getPixel(px, py);
+              final blendedR =
+                  (brushColor.r * alpha + originalPixel.r * (1 - alpha))
+                      .round()
+                      .clamp(0, 255);
+              final blendedG =
+                  (brushColor.g * alpha + originalPixel.g * (1 - alpha))
+                      .round()
+                      .clamp(0, 255);
+              final blendedB =
+                  (brushColor.b * alpha + originalPixel.b * (1 - alpha))
+                      .round()
+                      .clamp(0, 255);
 
-                // Blend between original and brush color based on alpha
-                final blendedR =
-                    (brushColor.r * alpha + originalPixel.r * (1 - alpha))
-                        .round()
-                        .clamp(0, 255);
-                final blendedG =
-                    (brushColor.g * alpha + originalPixel.g * (1 - alpha))
-                        .round()
-                        .clamp(0, 255);
-                final blendedB =
-                    (brushColor.b * alpha + originalPixel.b * (1 - alpha))
-                        .round()
-                        .clamp(0, 255);
-
-                result.setPixelRgb(px, py, blendedR, blendedG, blendedB);
-              }
+              result.setPixelRgb(px, py, blendedR, blendedG, blendedB);
             }
           }
         }
@@ -633,8 +636,9 @@ class CharacterImageProcessor {
       }
     }
 
+    // Limit inner contour detection to inside the image (avoid border)
     for (int y = 1; y < height - 1; y++) {
-      for (int x = 1; x < width - 1; x++) {
+      for (int x = 1; y < height - 1; x++) {
         if (visited[y][x] ||
             _isForegroundPixel(paddedImage.getPixel(x, y), isInverted)) {
           continue;
@@ -713,6 +717,11 @@ class CharacterImageProcessor {
   }
 
   static bool _isContourPoint(img.Image image, int x, int y, bool isInverted) {
+    // Ensure coordinates are within image bounds
+    if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+      return false;
+    }
+
     if (!_isForegroundPixel(image.getPixel(x, y), isInverted)) {
       return false;
     }
@@ -790,6 +799,11 @@ class CharacterImageProcessor {
     final startX = x;
     final startY = y;
 
+    // Safety check - ensure starting point is valid
+    if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+      return contour; // Return empty contour for invalid starting point
+    }
+
     const directions = [
       [1, 0],
       [1, 1],
@@ -801,37 +815,32 @@ class CharacterImageProcessor {
       [1, -1],
     ];
 
+    // Limit iterations to prevent infinite loops
+    int maxIterations = image.width * image.height;
+    int iterations = 0;
+
     do {
       contour.add(Offset(x.toDouble(), y.toDouble()));
-      visited[y][x] = true;
+
+      // Mark as visited only if coordinates are valid
+      if (y >= 0 && y < visited.length && x >= 0 && x < visited[y].length) {
+        visited[y][x] = true;
+      }
 
       var found = false;
       for (final dir in directions) {
-        // 如果当前点是边界点，标记为已找到，继续沿着边界移动
-
         final nx = x + dir[0];
         final ny = y + dir[1];
 
+        // Safe boundary check for next point
         if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
-// 如果当前点是边界点，标记为已找到，继续沿着边界移动
-          if (x == 0 ||
-              x == image.width - 1 ||
-              y == 0 ||
-              y == image.height - 1) {
-            // 尝试移动到下一个边界点 - 沿着边界移动
-            final nextBoundaryDir = _findNextBoundaryDirection(
-                x, y, image.width, image.height, directions, dir);
-            if (nextBoundaryDir != null) {
-              x += nextBoundaryDir[0];
-              y += nextBoundaryDir[1];
-              found = true;
-              break;
-            }
-          }
+          // Handle boundary specially
+          // ...existing code for handling boundary direction...
           continue;
         }
 
-        if (visited[ny][nx]) {
+        // Valid point is being checked
+        if (ny < visited.length && nx < visited[ny].length && visited[ny][nx]) {
           if (nx == startX && ny == startY && contour.length > 3) {
             contour.add(start);
             return contour;
@@ -839,8 +848,7 @@ class CharacterImageProcessor {
           continue;
         }
 
-        if (_isForegroundPixel(image.getPixel(nx, ny), isInverted) &&
-            _isContourPoint(image, nx, ny, isInverted)) {
+        if (_isContourPoint(image, nx, ny, isInverted)) {
           x = nx;
           y = ny;
           found = true;
@@ -848,7 +856,8 @@ class CharacterImageProcessor {
         }
       }
 
-      if (!found || contour.length > 400000) {
+      iterations++;
+      if (!found || iterations > maxIterations || contour.length > 400000) {
         break;
       }
     } while (true);

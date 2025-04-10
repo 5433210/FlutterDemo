@@ -13,6 +13,7 @@ import '../../../domain/models/character/undo_action.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
 import 'character_refresh_notifier.dart';
+import 'erase_providers.dart';
 import 'selected_region_provider.dart';
 import 'tool_mode_provider.dart';
 
@@ -440,6 +441,37 @@ class CharacterCollectionNotifier
           'regionId': defaultSelectedRegionId,
         });
       }
+
+      // If we're selecting a specific region, load its erase data
+      if (defaultSelectedRegionId != null) {
+        final selectedRegion = regions.firstWhere(
+          (r) =>
+              r.id == defaultSelectedRegionId ||
+              r.characterId == defaultSelectedRegionId,
+          orElse: () => regions.isEmpty
+              ? CharacterRegion.create(
+                  pageId: '',
+                  rect: Rect.zero,
+                  options: const ProcessingOptions())
+              : regions.first,
+        );
+
+        AppLogger.debug('Selected region for eraser data', data: {
+          'regionId': selectedRegion.id,
+          'characterId': selectedRegion.characterId,
+          'hasEraseData': selectedRegion.eraseData != null,
+          'eraseDataCount': selectedRegion.eraseData?.length ?? 0,
+        });
+
+        // Initialize eraser state with this region's data
+        _ref.read(eraseStateProvider.notifier).clear();
+        if (selectedRegion.eraseData != null &&
+            selectedRegion.eraseData!.isNotEmpty) {
+          _ref
+              .read(eraseStateProvider.notifier)
+              .initializeWithSavedPaths(selectedRegion.eraseData!);
+        }
+      }
     } catch (e, stack) {
       AppLogger.error('加载选区数据失败', error: e, stackTrace: stack, data: {
         'workId': workId,
@@ -583,6 +615,9 @@ class CharacterCollectionNotifier
       });
 
       final exists = region.characterId != null;
+      final originalId = region.id; // Store original ID to detect first save
+      List<Map<String, dynamic>>? eraseData =
+          region.eraseData; // Store erase data before save
 
       if (exists) {
         // 更新现有区域
@@ -633,6 +668,7 @@ class CharacterCollectionNotifier
           region.options,
           // 如果提供了图像数据，就使用它，否则使用页面图像
           imageData?.originalCrop ?? _currentPageImage!,
+          eraseData,
           region.character,
           processingResult:
               imageData, // Pass the complete processing result if available
@@ -640,15 +676,18 @@ class CharacterCollectionNotifier
         AppLogger.debug('数据库操作完成，获取到 CharacterEntity',
             data: {'entityId': characterEntity.id});
 
-        // 更新为正确的ID并标记为已保存
+        // 更新为正确的ID并标记为已保存，保留擦除数据
         final newRegion = region.copyWith(
           id: characterEntity.id,
           isModified: false, // Not modified after save
           characterId: characterEntity.id, // 设置关联的Character ID
+          eraseData: eraseData, // Ensure erase data is preserved
         );
         AppLogger.debug('创建了新的 Region 对象', data: {
           'newRegionId': newRegion.id,
           'characterId': newRegion.characterId,
+          'hasEraseData': newRegion.eraseData != null,
+          'eraseDataCount': newRegion.eraseData?.length ?? 0,
         });
 
         // 更新区域列表
@@ -679,10 +718,34 @@ class CharacterCollectionNotifier
         _selectedRegionNotifier.setRegion(newRegion);
         AppLogger.debug('SelectedRegionProvider 更新完成...');
 
+        // Detect first-time save and handle erase data refresh
+        final isFirstSave = originalId != newRegion.id;
+        if (isFirstSave && eraseData != null && eraseData.isNotEmpty) {
+          AppLogger.debug('检测到首次保存，强制重新加载擦除数据', data: {
+            'originalId': originalId,
+            'newId': newRegion.id,
+            'eraseDataCount': eraseData.length,
+          });
+
+          // More robust approach with multiple attempts and stronger refresh
+          _reloadEraseDataWithRetry(eraseData, newRegion.id);
+        }
+
         // Notify about character save
         _ref
             .read(characterRefreshNotifierProvider.notifier)
             .notifyEvent(RefreshEventType.characterSaved);
+      }
+
+      // After save is complete, ensure we reload the current erase data
+      final savedRegion = _selectedRegionNotifier.getCurrentRegion();
+      if (savedRegion != null) {
+        AppLogger.debug('Region saved - checking erase data', data: {
+          'savedRegionId': savedRegion.id,
+          'characterId': savedRegion.characterId,
+          'hasEraseData': savedRegion.eraseData != null,
+          'eraseDataCount': savedRegion.eraseData?.length ?? 0,
+        });
       }
     } catch (e) {
       AppLogger.error('保存区域失败', error: e);
@@ -1051,6 +1114,45 @@ class CharacterCollectionNotifier
     }
 
     return true;
+  }
+
+  // New helper method to more aggressively reload erase data with retries
+  Future<void> _reloadEraseDataWithRetry(
+      List<Map<String, dynamic>> eraseData, String newId) async {
+    // Clear erase state immediately
+    _ref.read(eraseStateProvider.notifier).clear();
+
+    // Wait for state to be cleared
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // First attempt
+    AppLogger.debug('擦除数据重载 - 第1次尝试', data: {'pathCount': eraseData.length});
+    _ref.read(eraseStateProvider.notifier).initializeWithSavedPaths(eraseData);
+
+    // Force a full UI refresh and give time for rendering
+    await Future.delayed(const Duration(milliseconds: 250));
+
+    // Second attempt with path verification
+    _ref.read(eraseStateProvider.notifier).clear();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    AppLogger.debug('擦除数据重载 - 第2次尝试', data: {'pathCount': eraseData.length});
+    _ref.read(eraseStateProvider.notifier).initializeWithSavedPaths(eraseData);
+
+    // Final verification - check if paths are visible
+    await Future.delayed(const Duration(milliseconds: 100));
+    final pathRenderData = _ref.read(pathRenderDataProvider);
+
+    AppLogger.debug('擦除数据重载完成 - 路径状态', data: {
+      'characterId': newId,
+      'visiblePaths': pathRenderData.completedPaths.length,
+      'originalPathCount': eraseData.length
+    });
+
+    // Notify refresh to force UI update
+    _ref
+        .read(characterRefreshNotifierProvider.notifier)
+        .notifyEvent(RefreshEventType.eraseDataReloaded);
   }
 }
 

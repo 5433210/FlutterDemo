@@ -128,6 +128,7 @@ class CharacterService {
       double rotation,
       ProcessingOptions options,
       Uint8List imageData,
+      List<Map<String, dynamic>>? eraseData,
       String character,
       {ProcessingResult? processingResult}) async {
     try {
@@ -161,7 +162,9 @@ class CharacterService {
         rect: region,
         options: options,
         character: character,
+        eraseData: eraseData,
         isModified: false, // 新创建的字符区域默认为未修改
+        isSelected: false,
         rotation: rotation,
       );
 

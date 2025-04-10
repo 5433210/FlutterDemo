@@ -18,6 +18,7 @@ import '../../presentation/providers/character/character_edit_providers.dart';
 import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
+import '../../presentation/providers/character/erase_providers.dart';
 import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
@@ -180,6 +181,25 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     // Clear erase state on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(erase.eraseStateProvider.notifier).clear();
+
+      // Listen for all refresh events including erase data reload
+      ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
+        if (previous != current) {
+          final refreshEvent =
+              ref.read(characterRefreshNotifierProvider.notifier).lastEventType;
+
+          if (refreshEvent == RefreshEventType.eraseDataReloaded) {
+            // Force state refresh when erase data is reloaded
+            if (mounted) {
+              setState(() {
+                // Just trigger rebuild
+                _thumbnailRefreshTimestamp =
+                    DateTime.now().millisecondsSinceEpoch;
+              });
+            }
+          }
+        }
+      });
     });
   }
 
@@ -998,6 +1018,29 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       await collectionNotifier.saveCurrentRegion(
         imageData: processingResult,
       );
+
+      // Get the updated region to check if this was a first save
+      final savedRegion = ref.read(characterCollectionProvider).selectedRegion;
+      final isFirstSave = widget.selectedRegion.characterId == null &&
+          savedRegion?.characterId != null;
+
+      // After saving, if this was the first save, ensure erase data is reloaded
+      if (isFirstSave && eraseData.isNotEmpty) {
+        AppLogger.debug('First save completed - reloading erase state', data: {
+          'newCharacterId': savedRegion?.characterId,
+          'pathCount': eraseData.length,
+        });
+
+        // Force update erase view after a short delay to ensure data is saved
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            ref.read(eraseStateProvider.notifier).clear();
+            ref
+                .read(eraseStateProvider.notifier)
+                .initializeWithSavedPaths(eraseData);
+          }
+        });
+      }
 
       // Notify about character saved event
       ref

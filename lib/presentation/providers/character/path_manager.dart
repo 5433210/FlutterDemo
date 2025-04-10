@@ -3,26 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../domain/models/character/path_info.dart';
 import '../../../utils/path/path_utils.dart';
 
-/// 存储路径及其属性的类
-class PathEntry {
-  final Path path;
-  final double brushSize;
-  final Color brushColor;
-  final bool
-      wasReversed; // Track whether this path was created with reversed brush
-
-  const PathEntry({
-    required this.path,
-    required this.brushSize,
-    required this.brushColor,
-    required this.wasReversed, // Add this parameter
-  });
-}
-
 /// 路径管理器，负责管理绘制路径的状态
 class PathManager {
-  // 完成的路径列表 - 修改为存储PathEntry而不仅仅是Path
-  final List<PathEntry> _completedPaths = [];
+  // 完成的路径列表 - 修改为存储PathInfo而不仅仅是Path
+  final List<PathInfo> _completedPaths = [];
 
   // 当前正在绘制的路径
   Path? _currentPath;
@@ -32,10 +16,10 @@ class PathManager {
   double _currentBrushSize = 10.0;
 
   // 重做路径列表
-  final List<PathEntry> _redoPaths = [];
+  final List<PathInfo> _redoPaths = [];
 
   // 撤销历史堆栈 - 添加缺失的字段
-  final List<List<PathEntry>> _undoStack = [];
+  final List<List<PathInfo>> _undoStack = [];
 
   // 脏区域（需要重绘的区域）
   Rect? _dirtyBounds;
@@ -47,7 +31,7 @@ class PathManager {
   bool get canRedo => _redoPaths.isNotEmpty;
 
   // 已完成的路径的只读访问
-  List<PathEntry> get completedPaths => List.unmodifiable(_completedPaths);
+  List<PathInfo> get completedPaths => List.unmodifiable(_completedPaths);
 
   // 当前路径的颜色
   Color? get currentColor => _currentColor;
@@ -58,16 +42,21 @@ class PathManager {
   // 脏区域的只读访问
   Rect? get dirtyBounds => _dirtyBounds;
 
+  /// Checks if redo is available
+  bool get isRedoAvailable => _redoPaths.isNotEmpty;
+
+  /// Checks if undo is available
+  bool get isUndoAvailable => _undoStack.isNotEmpty;
+
   // 重做路径列表的只读访问
-  List<PathEntry> get redoPaths => List.unmodifiable(_redoPaths);
+  List<PathInfo> get redoPaths => List.unmodifiable(_redoPaths);
 
   /// Add a completed path without starting/completing sequence
   void addCompletedPath(PathInfo path) {
-    _completedPaths.add(PathEntry(
+    _completedPaths.add(PathInfo(
       path: path.path,
       brushSize: path.brushSize,
       brushColor: path.brushColor,
-      wasReversed: path.brushColor == Colors.black,
     ));
     _updateDirtyBounds();
   }
@@ -82,6 +71,12 @@ class PathManager {
     _redoPaths.clear();
   }
 
+  /// Clears only the undo and redo stacks, while preserving completed paths
+  void clearUndoRedo() {
+    _undoStack.clear();
+    _redoPaths.clear();
+  }
+
   /// 完成当前路径
   void completePath() {
     if (_currentPath != null) {
@@ -92,11 +87,10 @@ class PathManager {
       // rather than the technical color value
       final isReversed = color == Colors.black;
 
-      _completedPaths.add(PathEntry(
+      _completedPaths.add(PathInfo(
         path: _currentPath!,
         brushSize: _currentBrushSize,
         brushColor: color,
-        wasReversed: isReversed, // Save the reversal intent for later updates
       ));
 
       print('完成路径，颜色: $color, 反转状态: $isReversed');
@@ -106,6 +100,21 @@ class PathManager {
       _currentPoints.clear();
       _redoPaths.clear(); // 完成新路径时清除重做列表
     }
+  }
+
+  /// Returns the list of completed paths
+  List<PathInfo> getCompletedPaths() {
+    return _completedPaths;
+  }
+
+  /// Returns the current path being drawn
+  Path? getCurrentPath() {
+    return _currentPath;
+  }
+
+  /// Returns the dirty rectangle that needs to be repainted
+  Rect? getDirtyRect() {
+    return _dirtyBounds;
   }
 
   // 获取指定路径的颜色信息，用于调试和轮廓检测
@@ -132,13 +141,12 @@ class PathManager {
   /// 使用现有路径初始化 - 修改接收类型为PathInfo以匹配EraseStateNotifier的调用
   void initializeWithPaths(List<PathInfo> paths) {
     _completedPaths.clear();
-    // 将PathInfo转换为PathEntry
+    // 将PathInfo转换为PathInfo
     _completedPaths.addAll(paths
-        .map((p) => PathEntry(
+        .map((p) => PathInfo(
               path: p.path,
               brushSize: p.brushSize,
               brushColor: p.brushColor,
-              wasReversed: p.brushColor == Colors.black,
             ))
         .toList());
 
@@ -149,13 +157,12 @@ class PathManager {
   /// Initialize with saved paths
   void initializeWithSavedPaths(List<PathInfo> paths) {
     _completedPaths.clear();
-    // 将PathInfo转换为PathEntry
+    // 将PathInfo转换为PathInfo
     _completedPaths.addAll(paths
-        .map((p) => PathEntry(
+        .map((p) => PathInfo(
               path: p.path,
               brushSize: p.brushSize,
               brushColor: p.brushColor,
-              wasReversed: p.brushColor == Colors.black,
             ))
         .toList());
 
@@ -168,12 +175,56 @@ class PathManager {
     _updateDirtyBounds();
   }
 
+  /// Performs a redo operation
+  bool redo() {
+    if (_redoPaths.isEmpty) return false;
+
+    final path = _redoPaths.removeLast();
+    _completedPaths.add(path);
+    _undoStack.add(_completedPaths.toList());
+    return true;
+  }
+
   /// 重做上一个撤销的路径
   void redoPath() {
     if (_redoPaths.isNotEmpty) {
-      final pathEntry = _redoPaths.removeLast();
-      _completedPaths.add(pathEntry);
+      final PathInfo = _redoPaths.removeLast();
+      _completedPaths.add(PathInfo);
     }
+  }
+
+  /// Sets the completed paths list to a new list
+  void setCompletedPaths(List<PathInfo> paths) {
+    _completedPaths.clear();
+    _completedPaths.addAll(paths);
+  }
+
+  /// Sets the current path
+  void setCurrentPath(Path path) {
+    _currentPath = path;
+  }
+
+  /// Sets the dirty rectangle for repainting
+  void setDirtyRect(Rect rect) {
+    _dirtyBounds = rect;
+  }
+
+  /// Starts a new path at the given position
+  Path startNewPath(Offset position, double brushSize, Color brushColor) {
+    _currentPath = Path()..moveTo(position.dx, position.dy);
+    _currentBrushSize = brushSize;
+    _currentColor = brushColor;
+
+    // Initialize dirty rect to the position with brush size as dimensions
+    final halfBrushSize = brushSize / 2;
+    _dirtyBounds = Rect.fromLTWH(
+      position.dx - halfBrushSize,
+      position.dy - halfBrushSize,
+      brushSize,
+      brushSize,
+    );
+
+    return _currentPath!;
   }
 
   /// 开始新的路径
@@ -198,9 +249,21 @@ class PathManager {
   /// 撤销上一个路径
   void undo() {
     if (_completedPaths.isNotEmpty) {
-      final pathEntry = _completedPaths.removeLast();
-      _redoPaths.add(pathEntry); // 保存到重做列表
+      final PathInfo = _completedPaths.removeLast();
+      _redoPaths.add(PathInfo); // 保存到重做列表
     }
+  }
+
+  /// Performs an undo operation
+  bool undoPath() {
+    if (_undoStack.isEmpty) return false;
+
+    final lastPath = _undoStack.removeLast();
+    _redoPaths.addAll(lastPath);
+
+    // Remove the corresponding path from completed paths
+    _completedPaths.removeWhere((path) => path == lastPath);
+    return true;
   }
 
   /// 更新所有已完成路径的颜色 (用于图像反转或笔刷反转时同步更新)
@@ -229,17 +292,16 @@ class PathManager {
     print('图像反转状态更改为: $imageInverted, 更新所有已存在的路径');
 
     // 复制路径但反转颜色，以适应新的图像反转状态
-    final updatedPaths = <PathEntry>[];
+    final updatedPaths = <PathInfo>[];
 
     for (final entry in _completedPaths) {
       // 获取新颜色 - 在图像反转时，反转路径颜色，使其在视觉上保持一致
       final newColor = _invertColor(entry.brushColor);
 
-      updatedPaths.add(PathEntry(
+      updatedPaths.add(PathInfo(
         path: entry.path,
         brushSize: entry.brushSize,
         brushColor: newColor,
-        wasReversed: entry.wasReversed,
       ));
     }
 
@@ -255,6 +317,25 @@ class PathManager {
     if (_currentPath != null) {
       _currentColor = color;
       print('更新当前路径颜色: $color');
+    }
+  }
+
+  /// Updates the current path with a new point
+  void updateCurrentPathWithPoint(Offset position) {
+    if (_currentPath != null) {
+      _currentPath!.lineTo(position.dx, position.dy);
+
+      // Update dirty rect to include the new position
+      if (_dirtyBounds != null) {
+        final halfBrushSize = _currentBrushSize / 2;
+        final pointRect = Rect.fromLTWH(
+          position.dx - halfBrushSize,
+          position.dy - halfBrushSize,
+          _currentBrushSize,
+          _currentBrushSize,
+        );
+        _dirtyBounds = _dirtyBounds!.expandToInclude(pointRect);
+      }
     }
   }
 

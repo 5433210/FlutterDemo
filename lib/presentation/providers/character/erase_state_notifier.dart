@@ -11,12 +11,15 @@ import 'path_manager.dart';
 class EraseStateNotifier extends StateNotifier<EraseState> {
   final PathManager _pathManager;
   final Ref _ref;
+  // Default color used for erasing when no color is specified
+  final Color _defaultEraseColor = Colors.white;
 
   EraseStateNotifier(this._pathManager, this._ref)
       : super(EraseState.initial());
 
   /// 清除所有路径
   void clear() {
+    AppLogger.debug('清除所有路径');
     _pathManager.clear();
     _updateState();
   }
@@ -53,91 +56,58 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
   }
 
   /// 初始化擦除状态，用于加载保存的擦除路径数据
-  void initializeWithSavedPaths(List<Map<String, dynamic>> eraseData) {
-    if (eraseData.isEmpty) {
-      AppLogger.debug('没有可加载的擦除路径数据');
-      return;
-    }
+  void initializeWithSavedPaths(List<Map<String, dynamic>> savedPaths) {
+    AppLogger.debug('开始初始化擦除状态', data: {
+      'pathsCount': savedPaths.length,
+    });
 
-    final paths = <PathInfo>[];
-    AppLogger.debug('开始加载擦除路径数据', data: {'eraseDataCount': eraseData.length});
+    try {
+      clear(); // First make sure we start with a clean state
 
-    for (final pathData in eraseData) {
-      // 提取路径点集合
-      final pointsData = pathData['points'] as List<dynamic>;
-      if (pointsData.isEmpty) {
-        AppLogger.debug('跳过空路径点集');
-        continue;
-      }
+      // Create path objects from saved data
+      final paths = <PathInfo>[];
 
-      // 提取笔刷属性
-      final double brushSize =
-          (pathData['brushSize'] as num?)?.toDouble() ?? state.brushSize;
-      final int? brushColorValue = pathData['brushColor'] as int?;
-      final Color brushColor =
-          brushColorValue != null ? Color(brushColorValue) : state.brushColor;
+      for (final pathData in savedPaths) {
+        final points = pathData['points'] as List<dynamic>;
+        final brushSize = (pathData['brushSize'] as num?)?.toDouble() ?? 10.0;
+        final brushColorValue = pathData['brushColor'] as int?;
+        final color = brushColorValue != null
+            ? Color(brushColorValue)
+            : _defaultEraseColor;
 
-      AppLogger.debug('加载路径', data: {
-        'pointCount': pointsData.length,
-        'brushSize': brushSize,
-        'brushColor': brushColor.value.toRadixString(16),
-      });
+        // Create a path from points
+        final path = _createPathFromPoints(points);
 
-      // 创建路径
-      final path = Path();
-
-      // 获取第一个点并解析
-      Offset? firstPoint = _parsePoint(pointsData.first);
-      if (firstPoint == null) {
-        AppLogger.warning('无法解析第一个点，跳过路径');
-        continue;
-      }
-
-      path.moveTo(firstPoint.dx, firstPoint.dy);
-
-      // 添加其余点
-      bool hasValidPoints = true;
-      for (int i = 1; i < pointsData.length; i++) {
-        final point = _parsePoint(pointsData[i]);
-        if (point != null) {
-          path.lineTo(point.dx, point.dy);
-        } else {
-          AppLogger.warning('路径中存在无效点，位置: $i');
-          hasValidPoints = false;
-          break;
+        // Add to paths if valid
+        if (!path.getBounds().isEmpty) {
+          paths.add(PathInfo(
+            path: path,
+            brushSize: brushSize,
+            brushColor: color,
+          ));
         }
       }
 
-      if (!hasValidPoints) {
-        AppLogger.warning('路径包含无效点，跳过路径');
-        continue;
+      if (paths.isNotEmpty) {
+        AppLogger.debug('成功创建路径对象', data: {
+          'createdPaths': paths.length,
+        });
+
+        // Set the paths as completed
+        _pathManager.setCompletedPaths(paths);
+        _pathManager.clearUndoRedo();
+
+        // Notify listeners of change
+        _updateState();
+
+        AppLogger.debug('初始化擦除状态完成', data: {
+          'completedPathsCount': _pathManager.getCompletedPaths().length,
+        });
+      } else {
+        AppLogger.warning('从保存数据创建的路径为空');
       }
-
-      // 创建PathInfo
-      paths.add(PathInfo(
-        path: path,
-        brushSize: brushSize,
-        brushColor: brushColor,
-      ));
-    }
-
-    AppLogger.debug('成功加载路径', data: {'pathCount': paths.length});
-
-    // 更新擦除状态
-    if (paths.isNotEmpty) {
-      state = state.copyWith(
-        history: [paths],
-        historyIndex: 0,
-        completedPaths: paths,
-      );
-
-      // 更新路径渲染数据
-      _pathManager.clear();
-      for (final path in paths) {
-        _pathManager.addCompletedPath(path);
-      }
-
-      _updatePathRenderData();
+    } catch (e) {
+      AppLogger.error('初始化擦除状态失败', error: e);
     }
   }
 
@@ -282,6 +252,54 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
       path.lineTo(point.dx, point.dy);
     }
     return path;
+  }
+
+  /// Helper to create a path from saved points
+  Path _createPathFromPoints(List<dynamic> points) {
+    final path = Path();
+
+    if (points.isEmpty) return path;
+
+    try {
+      // Get the first point
+      final firstPoint = points.first;
+      double x, y;
+
+      if (firstPoint is Map<String, dynamic>) {
+        x = (firstPoint['dx'] ?? firstPoint['x'] as num).toDouble();
+        y = (firstPoint['dy'] ?? firstPoint['y'] as num).toDouble();
+      } else if (firstPoint is Offset) {
+        x = firstPoint.dx;
+        y = firstPoint.dy;
+      } else {
+        return path; // Invalid data
+      }
+
+      // Start the path
+      path.moveTo(x, y);
+
+      // Add line segments to all other points
+      for (int i = 1; i < points.length; i++) {
+        final point = points[i];
+
+        if (point is Map<String, dynamic>) {
+          x = (point['dx'] ?? point['x'] as num).toDouble();
+          y = (point['dy'] ?? point['y'] as num).toDouble();
+        } else if (point is Offset) {
+          x = point.dx;
+          y = point.dy;
+        } else {
+          continue; // Skip invalid points
+        }
+
+        path.lineTo(x, y);
+      }
+
+      return path;
+    } catch (e) {
+      AppLogger.error('创建路径失败', error: e);
+      return path;
+    }
   }
 
   // Helper method to parse points in various formats

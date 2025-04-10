@@ -379,7 +379,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleEraseStart(Offset position) {
-    if (!_isAltKeyPressed) {
+    // Only initiate erasing if the position is within image bounds
+    if (!_isAltKeyPressed && _isPointWithinImageBounds(position)) {
       widget.onEraseStart?.call(position);
       ref.read(eraseStateProvider.notifier).startPath(position);
     }
@@ -387,8 +388,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _handleEraseUpdate(Offset position, Offset delta) {
     if (!_isAltKeyPressed) {
-      widget.onEraseUpdate?.call(position, delta);
-      ref.read(eraseStateProvider.notifier).updatePath(position);
+      // Check if the position is within image bounds
+      if (_isPointWithinImageBounds(position)) {
+        widget.onEraseUpdate?.call(position, delta);
+        ref.read(eraseStateProvider.notifier).updatePath(position);
+      }
     }
   }
 
@@ -434,10 +438,22 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _handleTap(Offset position) {
     if (_isAltKeyPressed) return;
-    ref.read(eraseStateProvider.notifier).startPath(position);
-    ref.read(eraseStateProvider.notifier).completePath();
-    widget.onEraseStart?.call(position);
-    widget.onEraseEnd?.call();
+
+    // Only handle taps within image bounds
+    if (_isPointWithinImageBounds(position)) {
+      ref.read(eraseStateProvider.notifier).startPath(position);
+      ref.read(eraseStateProvider.notifier).completePath();
+      widget.onEraseStart?.call(position);
+      widget.onEraseEnd?.call();
+    }
+  }
+
+  // New helper method to check if a point is within the image boundaries
+  bool _isPointWithinImageBounds(Offset point) {
+    return point.dx >= 0 &&
+        point.dx < widget.image.width.toDouble() &&
+        point.dy >= 0 &&
+        point.dy < widget.image.height.toDouble();
   }
 
   void _onFocusChange() {

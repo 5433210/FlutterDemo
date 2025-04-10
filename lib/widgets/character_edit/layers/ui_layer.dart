@@ -172,35 +172,40 @@ class _UILayerState extends ConsumerState<UILayer> {
 
           GestureDetector(
             onTapUp: (details) {
-              if (widget.onTap != null) {
+              if (widget.onTap != null &&
+                  _isWithinImageBounds(details.localPosition)) {
                 _updateMousePosition(details.localPosition);
                 widget.onTap!(details.localPosition);
               }
             },
             onPanStart: (details) {
               _isDragging = true;
-              _updateMousePosition(details.localPosition);
+              if (_isWithinImageBounds(details.localPosition)) {
+                _updateMousePosition(details.localPosition);
 
-              if (kDebugMode && DebugFlags.enableEraseDebug) {
-                print(
-                    '手势开始: ${details.localPosition}, Alt键: ${widget.altKeyPressed}');
-              }
-              if (widget.onPointerDown != null) {
-                widget.onPointerDown!(details.localPosition);
+                if (kDebugMode && DebugFlags.enableEraseDebug) {
+                  print(
+                      '手势开始: ${details.localPosition}, Alt键: ${widget.altKeyPressed}');
+                }
+                if (widget.onPointerDown != null) {
+                  widget.onPointerDown!(details.localPosition);
+                }
               }
             },
             onPanUpdate: (details) {
-              // Update cursor position during dragging
-              _updateMousePosition(details.localPosition);
+              // Update cursor position during dragging if within bounds
+              if (_isWithinImageBounds(details.localPosition)) {
+                _updateMousePosition(details.localPosition);
 
-              if (kDebugMode &&
-                  DebugFlags.enableEraseDebug &&
-                  _updateCounter++ % 15 == 0) {
-                print(
-                    '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: ${widget.altKeyPressed}');
-              }
-              if (widget.onPointerMove != null) {
-                widget.onPointerMove!(details.localPosition, details.delta);
+                if (kDebugMode &&
+                    DebugFlags.enableEraseDebug &&
+                    _updateCounter++ % 15 == 0) {
+                  print(
+                      '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: ${widget.altKeyPressed}');
+                }
+                if (widget.onPointerMove != null) {
+                  widget.onPointerMove!(details.localPosition, details.delta);
+                }
               }
             },
             onPanEnd: (_) {
@@ -237,20 +242,33 @@ class _UILayerState extends ConsumerState<UILayer> {
   }
 
   void _handleMouseHover(PointerHoverEvent event) {
-    // Only process hover events if we're not dragging
-    // (prevents conflicts between hover and drag updates)
-    if (!_isDragging) {
+    // Only process hover events if we're not dragging and position is within image bounds
+    if (!_isDragging && _isWithinImageBounds(event.localPosition)) {
       _updateMousePosition(event.localPosition);
     }
   }
 
-  void _updateMousePosition(Offset position) {
-    setState(() {
-      _mousePosition = position;
-    });
+  // Helper to check if position is within image bounds
+  bool _isWithinImageBounds(Offset position) {
+    if (widget.imageSize == null)
+      return true; // If no image size is set, allow all positions
 
-    // Also update the provider so other components can access cursor position
-    ref.read(cursorPositionProvider.notifier).state = position;
+    return position.dx >= 0 &&
+        position.dx < widget.imageSize!.width &&
+        position.dy >= 0 &&
+        position.dy < widget.imageSize!.height;
+  }
+
+  void _updateMousePosition(Offset position) {
+    // Only update if position is within bounds
+    if (_isWithinImageBounds(position)) {
+      setState(() {
+        _mousePosition = position;
+      });
+
+      // Also update the provider so other components can access cursor position
+      ref.read(cursorPositionProvider.notifier).state = position;
+    }
   }
 }
 
