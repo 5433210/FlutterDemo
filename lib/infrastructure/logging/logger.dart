@@ -2,6 +2,7 @@ import 'dart:isolate';
 
 import 'package:flutter/widgets.dart';
 
+import '../../utils/config/logging_config.dart';
 import 'handlers/console_handler.dart';
 import 'handlers/file_handler.dart';
 import 'handlers/log_handler.dart';
@@ -31,6 +32,14 @@ class AppLogger {
   static ReceivePort? _isolateLogReceiver;
 
   static bool get hasHandlers => _handlers.isNotEmpty;
+
+  /// Component-specific debug logging
+  static void componentDebug(String component, String message,
+      {Map<String, dynamic>? data, String? tag}) {
+    if (shouldLog(component, LogLevel.debug)) {
+      debug(message, data: data, tag: tag ?? component);
+    }
+  }
 
   // 便利方法
   static void debug(dynamic message,
@@ -125,6 +134,26 @@ class AppLogger {
 
     for (final handler in _handlers) {
       handler.handle(entry);
+    }
+  }
+
+  /// Determines if a message should be logged based on component config
+  static bool shouldLog(String component, LogLevel level) {
+    if (level.index < _minLevel.index) return false;
+
+    // Check component-specific settings
+    switch (component) {
+      case 'Storage':
+        return LoggingConfig.verboseStorageLogging ||
+            level.index >= LogLevel.info.index;
+      case 'Thumbnail':
+        return LoggingConfig.verboseThumbnailLogging ||
+            level.index >= LogLevel.info.index;
+      case 'Database':
+        return LoggingConfig.verboseDatabaseLogging ||
+            level.index >= LogLevel.info.index;
+      default:
+        return true;
     }
   }
 

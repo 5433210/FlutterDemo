@@ -248,10 +248,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         if (eraseData != null && eraseData.isNotEmpty) {
           AppLogger.debug('准备加载擦除路径数据', data: {
             'pathCount': eraseData.length,
-            'firstPath': eraseData.first,
-            'formatType': widget.region!.eraseData != null
-                ? 'eraseData (new format)'
-                : 'erasePoints (migrated)',
           });
 
           ref

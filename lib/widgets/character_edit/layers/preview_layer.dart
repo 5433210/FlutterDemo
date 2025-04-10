@@ -125,7 +125,7 @@ class _PreviewPainter extends CustomPainter {
   ///
   /// 将绘制逻辑分离出来以提高代码可读性和可维护性
   void _drawPathsWithPaint(Canvas canvas, Paint paint) {
-    AppLogger.debug('绘制路径', data: {'pathCount': paths.length});
+    // AppLogger.debug('绘制路径', data: {'pathCount': paths.length});
 
     for (final pathInfo in paths) {
       if (pathInfo.path.getBounds().isEmpty ||
@@ -143,11 +143,11 @@ class _PreviewPainter extends CustomPainter {
 
         canvas.drawPath(pathInfo.path, paint);
 
-        AppLogger.debug('绘制路径', data: {
-          'color': pathInfo.brushColor.value.toRadixString(16),
-          'size': pathInfo.brushSize,
-          'bounds': pathInfo.path.getBounds().toString(),
-        });
+        // AppLogger.debug('绘制路径', data: {
+        //   'color': pathInfo.brushColor.value.toRadixString(16),
+        //   'size': pathInfo.brushSize,
+        //   'bounds': pathInfo.path.getBounds().toString(),
+        // });
       } catch (e) {
         AppLogger.error('绘制路径失败', error: e);
       }

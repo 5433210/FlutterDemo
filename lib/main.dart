@@ -7,11 +7,18 @@ import 'infrastructure/logging/log_level.dart';
 import 'infrastructure/logging/logger.dart';
 import 'infrastructure/providers/shared_preferences_provider.dart';
 import 'presentation/app.dart';
+import 'utils/config/logging_config.dart';
 import 'utils/keyboard/keyboard_monitor.dart';
 import 'utils/keyboard/keyboard_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize logging config - default to minimal logging
+  LoggingConfig.verboseStorageLogging = false;
+  LoggingConfig.verboseThumbnailLogging = false;
+  LoggingConfig.verboseDatabaseLogging = false;
+  LoggingConfig.enableDebugPrints = false; // Turn off noisy prints
 
   // 初始化键盘工具
   KeyboardUtils.initialize();
