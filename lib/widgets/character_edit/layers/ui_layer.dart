@@ -22,12 +22,83 @@ class BrushCursorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
-    final paint = Paint()
+    // Use the full brush size as the diameter (not radius)
+    final radius = size;
+
+    // Draw a semi-transparent fill to show the exact area that will be erased
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.3) // Semi-transparent fill
+      ..style = PaintingStyle.fill;
+
+    // Main outline with contrasting edge
+    final outlinePaint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
+      ..strokeWidth = 1.5;
 
-    canvas.drawCircle(position, size / 2, paint);
+    // Inner outline (provides contrast against both light and dark backgrounds)
+    final innerPaint = Paint()
+      ..color = Colors.black.withOpacity(0.5)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size / 10;
+
+    // Draw the brush area (fills exact area that will be erased)
+    canvas.drawCircle(position, radius, fillPaint);
+
+    // Draw crisp outer border
+    // canvas.drawCircle(position, radius, outlinePaint);
+
+    // Draw inner border for contrast
+    canvas.drawCircle(position, radius - 1.5, innerPaint);
+
+    // Draw crosshair for precise positioning - changed to transparent red
+    final crosshairPaint = Paint()
+      ..color =
+          Colors.red.withOpacity(0.7) // Changed from white to transparent red
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size / 10; // Slightly thicker for better visibility
+
+    // Make crosshair size match the brush size - full diameter instead of half
+    final crosshairSize = radius; // Changed from math.max(6.0, radius / 2)
+
+    canvas.drawLine(
+      Offset(position.dx - crosshairSize, position.dy),
+      Offset(position.dx + crosshairSize, position.dy),
+      crosshairPaint,
+    );
+
+    canvas.drawLine(
+      Offset(position.dx, position.dy - crosshairSize),
+      Offset(position.dx, position.dy + crosshairSize),
+      crosshairPaint,
+    );
+
+    // Show size indicator for larger brushes
+    if (size > 15) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: size.round().toString(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            shadows: [
+              Shadow(
+                offset: const Offset(1, 1),
+                blurRadius: 2,
+                color: Colors.black.withOpacity(0.8),
+              ),
+            ],
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        position.translate(-textPainter.width / 2, -textPainter.height / 2),
+      );
+    }
   }
 
   @override
@@ -74,6 +145,7 @@ class UILayer extends ConsumerStatefulWidget {
 class _UILayerState extends ConsumerState<UILayer> {
   Offset? _mousePosition;
   int _updateCounter = 0;
+  bool _isDragging = false;
 
   @override
   Widget build(BuildContext context) {
@@ -101,11 +173,14 @@ class _UILayerState extends ConsumerState<UILayer> {
           GestureDetector(
             onTapUp: (details) {
               if (widget.onTap != null) {
-                print('UI层执行点击回调: ${details.localPosition}');
+                _updateMousePosition(details.localPosition);
                 widget.onTap!(details.localPosition);
               }
             },
             onPanStart: (details) {
+              _isDragging = true;
+              _updateMousePosition(details.localPosition);
+
               if (kDebugMode && DebugFlags.enableEraseDebug) {
                 print(
                     '手势开始: ${details.localPosition}, Alt键: ${widget.altKeyPressed}');
@@ -115,6 +190,9 @@ class _UILayerState extends ConsumerState<UILayer> {
               }
             },
             onPanUpdate: (details) {
+              // Update cursor position during dragging
+              _updateMousePosition(details.localPosition);
+
               if (kDebugMode &&
                   DebugFlags.enableEraseDebug &&
                   _updateCounter++ % 15 == 0) {
@@ -126,10 +204,15 @@ class _UILayerState extends ConsumerState<UILayer> {
               }
             },
             onPanEnd: (_) {
+              _isDragging = false;
+
               if (kDebugMode && DebugFlags.enableEraseDebug) {
                 print('手势结束, Alt键: ${widget.altKeyPressed}');
               }
-              if (widget.cursorPosition != null && widget.onPointerUp != null) {
+              if (_mousePosition != null && widget.onPointerUp != null) {
+                widget.onPointerUp!(_mousePosition!);
+              } else if (widget.cursorPosition != null &&
+                  widget.onPointerUp != null) {
                 widget.onPointerUp!(widget.cursorPosition!);
               }
             },
@@ -139,13 +222,13 @@ class _UILayerState extends ConsumerState<UILayer> {
             ),
           ),
 
-          // 鼠标光标绘制
+          // Show cursor when we have a position and not in alt-key/pan mode
           if (_mousePosition != null && !widget.altKeyPressed)
             CustomPaint(
               painter: BrushCursorPainter(
                 position: _mousePosition!,
                 size: eraseState.brushSize,
-                color: eraseState.brushColor.withOpacity(0.5),
+                color: eraseState.brushColor,
               ),
             ),
         ],
@@ -154,11 +237,20 @@ class _UILayerState extends ConsumerState<UILayer> {
   }
 
   void _handleMouseHover(PointerHoverEvent event) {
+    // Only process hover events if we're not dragging
+    // (prevents conflicts between hover and drag updates)
+    if (!_isDragging) {
+      _updateMousePosition(event.localPosition);
+    }
+  }
+
+  void _updateMousePosition(Offset position) {
     setState(() {
-      _mousePosition = event.localPosition;
+      _mousePosition = position;
     });
 
-    ref.read(cursorPositionProvider.notifier).state = event.localPosition;
+    // Also update the provider so other components can access cursor position
+    ref.read(cursorPositionProvider.notifier).state = position;
   }
 }
 
@@ -189,13 +281,10 @@ class _UIPainter extends CustomPainter {
       _drawOutline(canvas, size);
     }
 
-    if (cursorPosition != null) {
-      if (altKeyPressed) {
-        _drawPanCursor(canvas, cursorPosition!);
-      } else {
-        _drawBrushCursor(canvas, cursorPosition!);
-      }
+    if (cursorPosition != null && altKeyPressed) {
+      _drawPanCursor(canvas, cursorPosition!);
     }
+    // Remove the _drawBrushCursor call here since we're using the separate BrushCursorPainter
   }
 
   @override
@@ -234,62 +323,6 @@ class _UIPainter extends CustomPainter {
       ..lineTo(arrowPoint2.dx, arrowPoint2.dy)
       ..close();
     canvas.drawPath(path, Paint()..color = Colors.blue);
-  }
-
-  void _drawBrushCursor(Canvas canvas, Offset position) {
-    final outlinePaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final innerPaint = Paint()
-      ..color = Colors.black.withOpacity(0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final erasePaint = Paint()
-      ..color = Colors.white.withOpacity(0.2)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(position, brushSize / 2, erasePaint);
-    canvas.drawCircle(position, brushSize / 2, outlinePaint);
-    canvas.drawCircle(position, brushSize / 2 - 1.5, innerPaint);
-
-    final crosshairPaint = Paint()
-      ..color = Colors.white.withOpacity(0.9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    canvas.drawLine(
-      Offset(position.dx - brushSize / 4, position.dy),
-      Offset(position.dx + brushSize / 4, position.dy),
-      crosshairPaint,
-    );
-
-    canvas.drawLine(
-      Offset(position.dx, position.dy - brushSize / 4),
-      Offset(position.dx, position.dy + brushSize / 4),
-      crosshairPaint,
-    );
-
-    if (brushSize > 15) {
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: brushSize.round().toString(),
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      textPainter.paint(
-        canvas,
-        position.translate(-textPainter.width / 2, -textPainter.height / 2),
-      );
-    }
   }
 
   void _drawOutline(Canvas canvas, Size size) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/path_info.dart';
 import '../../../infrastructure/logging/logger.dart';
+import 'erase_providers.dart'; // Add import for cursorPositionProvider
 import 'erase_state.dart';
 import 'path_manager.dart';
 
@@ -261,12 +262,26 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     _updateState();
   }
 
-  /// 更新当前路径
+  /// 更新路径
   void updatePath(Offset position) {
     if (state.mode != EraseMode.draw) return;
 
     _pathManager.updatePath(position);
     _updateState();
+    // Keep track of the latest position for cursor display
+    _ref.read(cursorPositionProvider.notifier).state = position;
+  }
+
+  /// 将点添加到路径中
+  Path _addPointToPath(Path path, Offset point) {
+    // If the path is empty or has no contours, move to the point
+    if (path.getBounds().isEmpty) {
+      path.moveTo(point.dx, point.dy);
+    } else {
+      // Otherwise, draw line to the new point
+      path.lineTo(point.dx, point.dy);
+    }
+    return path;
   }
 
   // Helper method to parse points in various formats
