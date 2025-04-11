@@ -3,13 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as crypto;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-
-final cacheManagerProvider = Provider<CacheManager>((ref) {
-  return CacheManager();
-});
 
 class CacheManager {
   // 内存缓存，用于快速访问

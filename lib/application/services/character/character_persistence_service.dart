@@ -1,30 +1,14 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../domain/models/character/character_entity.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../providers/repository_providers.dart';
 import '../storage/cache_manager.dart';
 import '../storage/character_storage_service.dart';
-
-final characterPersistenceServiceProvider =
-    Provider<CharacterPersistenceService>((ref) {
-  final repository = ref.watch(characterRepositoryProvider);
-  final storageService = ref.watch(characterStorageServiceProvider);
-  final cacheManager = ref.watch(cacheManagerProvider);
-
-  return CharacterPersistenceService(
-    repository: repository,
-    storageService: storageService,
-    cacheManager: cacheManager,
-  );
-});
 
 class CharacterPersistenceService {
   final CharacterRepository _repository;
@@ -39,35 +23,52 @@ class CharacterPersistenceService {
         _storageService = storageService,
         _cacheManager = cacheManager;
 
-  /// 从字符区域创建字符实体
-  Future<CharacterEntity> createFromRegion(
-    CharacterRegion region,
-    Uint8List originalImage,
-    Uint8List binaryImage,
-    Uint8List thumbnail,
-    String? svgOutline,
-  ) async {
+  // 保存字符数据
+  Future<CharacterEntity> createCharacter(
+      CharacterRegion region, ResultForSave result, String workId) async {
     try {
-      // 保存图片文件
-      await _storageService.saveOriginalImage(region.id, originalImage);
-      await _storageService.saveBinaryImage(region.id, binaryImage);
-      await _storageService.saveThumbnail(region.id, thumbnail);
+      // 保存原始长宽比图像
+      await _storageService.saveOriginalImage(region.id, result.originalCrop);
+      await _storageService.saveBinaryImage(region.id, result.binaryImage);
 
-      if (svgOutline != null) {
-        await _storageService.saveSvgOutline(region.id, svgOutline);
+      // 保存正方形图像
+      await _storageService.saveSquareBinary(region.id, result.squareBinary);
+      await _storageService.saveThumbnail(region.id, result.thumbnail);
+
+      // 保存SVG轮廓
+      if (result.svgOutline != null) {
+        await _storageService.saveSvgOutline(region.id, result.svgOutline!);
+      }
+
+      // 保存方形SVG轮廓
+      if (result.squareSvgOutline != null) {
+        await _storageService.saveSquareSvgOutline(
+            region.id, result.squareSvgOutline!);
+      }
+
+      // 保存透明PNG
+      if (result.transparentPng != null) {
+        await _storageService.saveTransparentPng(
+            region.id, result.transparentPng!);
+      }
+
+      // 保存方形透明PNG
+      if (result.squareTransparentPng != null) {
+        await _storageService.saveSquareTransparentPng(
+            region.id, result.squareTransparentPng!);
       }
 
       // 创建实体并保存到数据库
       final entity = CharacterEntity.create(
-        workId: 'temp', // TODO: 替换为实际的workId，暂时使用临时ID以满足外键约束
+        workId: workId,
         pageId: region.pageId,
-        region: region,
+        region: region.copyWith(characterId: region.id),
         character: region.character,
       );
 
       return await _repository.create(entity);
     } catch (e) {
-      print('从区域创建字符实体失败: $e');
+      print('保存字符失败: $e');
       rethrow;
     }
   }
@@ -79,59 +80,6 @@ class CharacterPersistenceService {
       _cacheManager.invalidate(id);
     } catch (e) {
       print('删除字符失败: $e');
-      rethrow;
-    }
-  }
-
-  /// 复制字形
-  Future<CharacterEntity> duplicateCharacter(String id, {String? newId}) async {
-    try {
-      // 获取原始字符
-      final original = await _repository.findById(id);
-      if (original == null) {
-        throw Exception('Character not found: $id');
-      }
-
-      final generatedId =
-          newId ?? DateTime.now().millisecondsSinceEpoch.toString();
-
-      // 复制文件
-      final originalImageData =
-          await getCharacterImage(id, CharacterImageType.original);
-      final binaryImageData =
-          await getCharacterImage(id, CharacterImageType.binary);
-      final thumbnailData =
-          await getCharacterImage(id, CharacterImageType.thumbnail);
-
-      if (originalImageData == null ||
-          binaryImageData == null ||
-          thumbnailData == null) {
-        throw Exception('Failed to load character images');
-      }
-
-      await _storageService.saveOriginalImage(generatedId, originalImageData);
-      await _storageService.saveBinaryImage(generatedId, binaryImageData);
-      await _storageService.saveThumbnail(generatedId, thumbnailData);
-
-      // 创建新实体
-      final now = DateTime.now();
-      final duplicated = original.copyWith(
-        id: generatedId,
-        createTime: now,
-        updateTime: now,
-        isFavorite: false,
-        region: original.region.copyWith(
-          id: generatedId,
-          createTime: now,
-          updateTime: now,
-        ),
-      );
-
-      // 保存到数据库
-      await _repository.create(duplicated);
-      return duplicated;
-    } catch (e) {
-      print('复制字符失败: $e');
       rethrow;
     }
   }
@@ -170,36 +118,9 @@ class CharacterPersistenceService {
     return await _storageService.getThumbnailPath(id);
   }
 
-  // 保存字符数据
-  Future<CharacterEntity> saveCharacter(
-      CharacterRegion region, ProcessingResult result, String workId) async {
-    try {
-      await _storageService.saveOriginalImage(region.id, result.originalCrop);
-      await _storageService.saveBinaryImage(region.id, result.binaryImage);
-      await _storageService.saveThumbnail(region.id, result.thumbnail);
-
-      if (result.svgOutline != null) {
-        await _storageService.saveSvgOutline(region.id, result.svgOutline!);
-      }
-
-      // 创建实体并保存到数据库
-      final entity = CharacterEntity.create(
-        workId: workId,
-        pageId: region.pageId,
-        region: region.copyWith(characterId: region.id),
-        character: region.character,
-      );
-
-      return await _repository.create(entity);
-    } catch (e) {
-      print('保存字符失败: $e');
-      rethrow;
-    }
-  }
-
   // 更新字符数据
   Future<void> updateCharacter(String id, CharacterRegion region,
-      ProcessingResult? newResult, String character) async {
+      ResultForSave? newResult, String character) async {
     try {
       // 使用更新后的字符内容和时间戳
       final now = DateTime.now();
@@ -213,12 +134,14 @@ class CharacterPersistenceService {
         // Explicitly check each component of the result
         bool hasValidOriginal = newResult.originalCrop.isNotEmpty;
         bool hasValidBinary = newResult.binaryImage.isNotEmpty;
+        bool hasValidSquareBinary = newResult.squareBinary.isNotEmpty;
         bool hasValidThumbnail = newResult.thumbnail.isNotEmpty;
 
         AppLogger.debug('更新字符图像文件检查', data: {
           'characterId': id,
           'hasValidOriginal': hasValidOriginal,
           'hasValidBinary': hasValidBinary,
+          'hasValidSquareBinary': hasValidSquareBinary,
           'hasValidThumbnail': hasValidThumbnail,
           'originalLength': newResult.originalCrop.length,
           'binaryLength': newResult.binaryImage.length,
@@ -227,20 +150,35 @@ class CharacterPersistenceService {
 
         if (hasValidOriginal && hasValidBinary && hasValidThumbnail) {
           try {
-            // Use await on each save operation to ensure they complete
+            // 保存原始长宽比图像
             await _storageService.saveOriginalImage(id, newResult.originalCrop);
             await _storageService.saveBinaryImage(id, newResult.binaryImage);
+
+            // 保存正方形图像
+            await _storageService.saveSquareBinary(id, newResult.squareBinary);
             await _storageService.saveThumbnail(id, newResult.thumbnail);
 
-            // Always save SVG outline if available, regardless of showContour setting
+            // 保存SVG轮廓
             if (newResult.svgOutline != null) {
               await _storageService.saveSvgOutline(id, newResult.svgOutline!);
-              AppLogger.debug('字符SVG轮廓保存成功', data: {
-                'characterId': id,
-                'svgLength': newResult.svgOutline!.length,
-              });
-            } else {
-              AppLogger.warning('处理结果中没有SVG轮廓数据', data: {'characterId': id});
+            }
+
+            // 保存方形SVG轮廓
+            if (newResult.squareSvgOutline != null) {
+              await _storageService.saveSquareSvgOutline(
+                  id, newResult.squareSvgOutline!);
+            }
+
+            // 保存透明PNG
+            if (newResult.transparentPng != null) {
+              await _storageService.saveTransparentPng(
+                  id, newResult.transparentPng!);
+            }
+
+            // 保存方形透明PNG
+            if (newResult.squareTransparentPng != null) {
+              await _storageService.saveSquareTransparentPng(
+                  id, newResult.squareTransparentPng!);
             }
 
             AppLogger.debug('字符图像文件更新成功', data: {'characterId': id});
@@ -272,26 +210,8 @@ class CharacterPersistenceService {
         updateTime: now,
       );
 
-      // 记录擦除路径数据状态
-      if (updatedRegion.erasePoints != null) {
-        AppLogger.debug('字符数据包含擦除路径', data: {
-          'characterId': id,
-          'erasePathsCount': updatedRegion.erasePoints!.length,
-        });
-      }
-
       // 更新区域数据
       await _repository.save(updatedEntity);
-
-      // 清除缓存
-      _cacheManager.invalidate(id);
-
-      // Also invalidate related cache keys
-      _cacheManager.invalidate('${id}_original');
-      _cacheManager.invalidate('${id}_binary');
-      _cacheManager.invalidate('${id}_thumbnail');
-
-      AppLogger.debug('字符数据更新完成，缓存已清除', data: {'characterId': id});
     } catch (e) {
       AppLogger.error('更新字符失败', error: e, data: {'characterId': id});
       throw Exception('更新字符失败: $e');

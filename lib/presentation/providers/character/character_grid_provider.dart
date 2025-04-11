@@ -3,6 +3,7 @@ import 'package:demo/presentation/providers/work_detail_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/repository_providers.dart';
+import '../../../application/providers/service_providers.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../viewmodels/states/character_grid_state.dart';
 

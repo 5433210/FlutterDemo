@@ -73,7 +73,7 @@ class CharacterImageProcessor {
   }
 
   /// 预览处理
-  Future<PreviewResult> previewProcessing(
+  Future<ResultForPreview> processForPreview(
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
@@ -130,34 +130,26 @@ class CharacterImageProcessor {
         finalImage = adjustedImage;
       }
 
+      // 二值化处理
       finalImage = _binarize(finalImage, params.options);
 
+      // 应用擦除路径
       if (params.erasePaths?.isNotEmpty == true) {
         finalImage =
             _applyErase(finalImage, params.erasePaths!, params.options);
-      } // 应用其他处理选项
+      }
 
+      // 应用降噪
       if (params.options.noiseReduction > 0.3) {
         finalImage = _denoise(finalImage, params.options.noiseReduction);
       }
 
-      final processedBytes = Uint8List.fromList(img.encodeJpg(finalImage));
-      final thumbnailBytes = _generateThumbnail(finalImage);
+      // 进行轮廓检测
       final outline = options.showContour
           ? _detectOutline(finalImage, options.inverted)
           : null;
 
-      final result = ProcessingResult(
-        originalCrop: processedBytes,
-        binaryImage: processedBytes,
-        thumbnail: thumbnailBytes,
-        svgOutline: outline != null
-            ? generateSvgOutline(outline, options.inverted)
-            : null,
-        boundingBox: outline?.boundingRect ?? params.region,
-      );
-
-      return PreviewResult(
+      return ResultForPreview(
         processedImage: finalImage,
         outline: outline,
       );
@@ -168,7 +160,7 @@ class CharacterImageProcessor {
   }
 
   /// 完整处理
-  Future<ProcessingResult> processCharacterRegion(
+  Future<ResultForSave> processForSave(
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
@@ -195,11 +187,16 @@ class CharacterImageProcessor {
         throw ImageProcessingException('图像解码失败');
       }
 
+      // 旋转裁剪获取原始比例图像
       final croppedImage =
           _rotateAndCropImage(sourceImage, params.region, params.rotation);
 
+      // 保存原始裁剪图像（PNG格式）
+      final originalCropBytes = Uint8List.fromList(img.encodePng(croppedImage));
+
       // 应用对比度和亮度调整
-      img.Image finalImage = croppedImage;
+      img.Image finalImage =
+          croppedImage.clone(); // Create a copy for binary processing
       if (params.options.contrast != 1.0 || params.options.brightness != 0.0) {
         final adjustedImage =
             img.Image(width: croppedImage.width, height: croppedImage.height);
@@ -227,37 +224,83 @@ class CharacterImageProcessor {
         finalImage = adjustedImage;
       }
 
-      // 应用二值化
-      finalImage = _binarize(finalImage, params.options);
+      // 二值化处理 - 创建带透明背景的二值图像
+      img.Image binaryImage = _binarize(finalImage, params.options);
 
       // 应用擦除路径
       if (params.erasePaths?.isNotEmpty == true) {
-        finalImage =
-            _applyErase(finalImage, params.erasePaths!, params.options);
+        binaryImage =
+            _applyErase(binaryImage, params.erasePaths!, params.options);
       }
 
-      // 应用其他处理选项
+      // 应用降噪
       if (params.options.noiseReduction > 0.3) {
-        finalImage = _denoise(finalImage, params.options.noiseReduction);
+        binaryImage = _denoise(binaryImage, params.options.noiseReduction);
       }
 
-      final processedBytes = Uint8List.fromList(img.encodeJpg(finalImage));
-      final thumbnailBytes = _generateThumbnail(finalImage);
-      final outline = options.showContour
-          ? _detectOutline(finalImage, options.inverted)
-          : null;
+      // 获取处理后的二值化图像数据 (确保为透明背景)
+      final binaryBytes =
+          _createTransparentBinary(binaryImage, options.inverted);
 
-      final result = ProcessingResult(
-        originalCrop: processedBytes,
-        binaryImage: processedBytes,
-        thumbnail: thumbnailBytes,
-        svgOutline: outline != null
-            ? generateSvgOutline(outline, options.inverted)
-            : null,
-        boundingBox: outline?.boundingRect ?? params.region,
+      // 进行轮廓检测
+      final outline = _detectOutline(binaryImage, options.inverted);
+
+      // 生成去背景透明图像 (使用二值图像作为参考改进背景去除)
+      Uint8List transparentPng = _createBetterTransparentPng(
+          croppedImage, binaryImage, outline, options.inverted);
+
+      // 生成正方形版本的图像 - 使用修正后的计算逻辑
+      Uint8List squareBinary;
+      String? squareSvgOutline;
+      Uint8List? squareTransparentPng;
+
+      if (outline.contourPoints.isNotEmpty) {
+        // 使用改进的方法创建正方形图像 - 确保保持正方形且图像居中
+        final squareResults = _createProperSquareImages(
+            originalImage: croppedImage,
+            binaryImage: binaryImage,
+            outline: outline,
+            options: params.options);
+
+        squareBinary = squareResults.binary;
+        squareSvgOutline = squareResults.svg;
+        squareTransparentPng = squareResults.transparent;
+
+        AppLogger.debug('正方形图像创建结果', data: {
+          'hasBinary': squareBinary.isNotEmpty,
+          'hasSvg': squareSvgOutline != null,
+          'hasTransparentPng': squareTransparentPng != null,
+          'binarySize': squareBinary.length,
+          'transparentSize': squareTransparentPng?.length,
+        });
+      } else {
+        // 如果没有轮廓，创建居中的方形二值化图像
+        squareBinary = _createProperSquareBinaryWithoutContour(
+            binaryImage, options.inverted);
+        squareSvgOutline = null;
+        squareTransparentPng =
+            _createProperSquareTransparentWithoutContour(croppedImage);
+      }
+
+      // 生成保持宽高比的缩略图 (100x100)
+      final thumbnailBytes = _generateProperThumbnail(squareBinary.isNotEmpty
+          ? img.decodeImage(squareBinary)!
+          : binaryImage);
+
+      // 创建处理结果，确保每个字段都有正确格式的图像
+      final result = ResultForSave(
+        originalCrop: originalCropBytes, // 原始裁剪图像 (PNG)
+        binaryImage: binaryBytes, // 二值化图像 (PNG)
+        thumbnail: thumbnailBytes, // 缩略图 (JPG)
+        svgOutline: generateSvgOutline(outline, options.inverted),
+        transparentPng: transparentPng,
+        squareBinary: squareBinary,
+        squareSvgOutline: squareSvgOutline,
+        squareTransparentPng: squareTransparentPng,
+        boundingBox: outline.boundingRect,
       );
 
-      await _cacheManager.put(cacheKey, result.toArchiveBytes());
+      await _cacheManager.put(cacheKey, await result.toArchiveBytes());
       return result;
     } catch (e) {
       AppLogger.error('图像处理失败', error: e);
@@ -390,59 +433,494 @@ class CharacterImageProcessor {
     return options.inverted ? img.invert(gray) : gray;
   }
 
-  /// 计算旋转后的矩形区域
-  Rect _calculateRotatedRect(Rect rect, double rotation) {
-    if (rotation == 0) return rect;
+  /// 改进的透明图像生成 - 使用二值图像辅助背景去除
+  Uint8List _createBetterTransparentPng(img.Image source, img.Image binaryImage,
+      DetectedOutline outline, bool isInverted) {
+    try {
+      // 创建一个新的带透明通道的图像
+      final result = img.Image(
+        width: source.width,
+        height: source.height,
+        numChannels: 4, // 4通道 - RGBA
+      );
 
-    final center = Offset(rect.center.dx, rect.center.dy);
-    final width = rect.width;
-    final height = rect.height;
+      // 先填充透明背景
+      img.fill(result, color: img.ColorRgba8(0, 0, 0, 0));
 
-    // 计算旋转后的四个角点
-    final points = [
-      _rotatePoint(Offset(rect.left, rect.top), center, rotation),
-      _rotatePoint(Offset(rect.right, rect.top), center, rotation),
-      _rotatePoint(Offset(rect.right, rect.bottom), center, rotation),
-      _rotatePoint(Offset(rect.left, rect.bottom), center, rotation),
-    ];
+      // 创建用于填充字符内部区域的掩码
+      final mask = img.Image(
+        width: source.width,
+        height: source.height,
+        numChannels: 1, // 1通道 - 只有透明度
+      );
 
-    // 计算新的边界
-    double minX = double.infinity;
-    double minY = double.infinity;
-    double maxX = -double.infinity;
-    double maxY = -double.infinity;
+      // 初始化掩码为完全透明
+      img.fill(mask, color: img.ColorRgb8(0, 0, 0));
 
-    for (final point in points) {
-      minX = math.min(minX, point.dx);
-      minY = math.min(minY, point.dy);
-      maxX = math.max(maxX, point.dx);
-      maxY = math.max(maxY, point.dy);
+      // 为每个轮廓创建填充路径
+      for (final contour in outline.contourPoints) {
+        if (contour.length < 3) continue;
+
+        // 计算当前轮廓的包围盒，限制扫描区域
+        double minX = double.infinity, minY = double.infinity;
+        double maxX = 0, maxY = 0;
+
+        for (final point in contour) {
+          if (!point.dx.isFinite || !point.dy.isFinite) continue;
+          minX = math.min(minX, point.dx);
+          minY = math.min(minY, point.dy);
+          maxX = math.max(maxX, point.dx);
+          maxY = math.max(maxY, point.dy);
+        }
+
+        // 确保坐标在图像范围内
+        int startY = math.max(0, minY.floor());
+        int endY = math.min(source.height - 1, maxY.ceil());
+
+        // 使用改进的填充算法
+        _fillPolygonImproved(mask, contour, startY, endY);
+      }
+
+      // 根据掩码和二值图像共同判断应用源图像像素
+      for (int y = 0; y < source.height; y++) {
+        for (int x = 0; x < source.width; x++) {
+          final maskValue = mask.getPixel(x, y).r; // 获取掩码值
+
+          if (maskValue > 0) {
+            // 同时检查二值图像，确认这真的是前景
+            final binaryPixel = binaryImage.getPixel(x, y);
+            final luminance = img.getLuminanceRgb(
+                binaryPixel.r, binaryPixel.g, binaryPixel.b);
+            final isForeground = isInverted ? luminance > 128 : luminance < 128;
+
+            if (isForeground) {
+              // 这确实是前景像素，保留原图像的颜色
+              final sourcePixel = source.getPixel(x, y);
+              result.setPixelRgba(
+                  x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
+            }
+          }
+        }
+      }
+
+      // 编码为PNG并返回
+      return Uint8List.fromList(img.encodePng(result));
+    } catch (e) {
+      AppLogger.error('创建透明PNG失败', error: e);
+      return Uint8List(0);
     }
-
-    return Rect.fromLTWH(minX, minY, maxX - minX, maxY - minY);
   }
 
-  /// 裁剪并调整大小
-  img.Image _cropAndResize(img.Image source, Rect region) {
-    final cropped = img.copyCrop(
-      source,
-      x: region.left.toInt().clamp(0, source.width - 1),
-      y: region.top.toInt().clamp(0, source.height - 1),
-      width: region.width.toInt().clamp(1, source.width),
-      height: region.height.toInt().clamp(1, source.height),
-    );
+  /// 改进版：没有轮廓时创建方形二值化图像
+  Uint8List _createProperSquareBinaryWithoutContour(
+      img.Image source, bool isInverted) {
+    try {
+      // 原图的长和宽
+      final sourceWidth = source.width;
+      final sourceHeight = source.height;
 
-    if (cropped.width > maxPreviewSize || cropped.height > maxPreviewSize) {
-      final ratio = maxPreviewSize / math.max(cropped.width, cropped.height);
-      return img.copyResize(
-        cropped,
-        width: (cropped.width * ratio).toInt(),
-        height: (cropped.height * ratio).toInt(),
-        interpolation: img.Interpolation.cubic,
+      // 确定正方形边长（取长和宽的较大值）
+      final squareSize = math.max(sourceWidth, sourceHeight);
+
+      // 创建一个空白的正方形图像，确保有透明通道
+      final square = img.Image(
+        width: squareSize,
+        height: squareSize,
+        numChannels: 4, // 4通道支持透明度
       );
-    }
 
-    return cropped;
+      // 填充完全透明背景
+      img.fill(square, color: img.ColorRgba8(0, 0, 0, 0));
+
+      // 计算居中偏移量
+      final offsetX = (squareSize - sourceWidth) ~/ 2;
+      final offsetY = (squareSize - sourceHeight) ~/ 2;
+
+      // 将原图复制到正方形图像中央，将背景像素设为透明
+      for (int y = 0; y < sourceHeight; y++) {
+        for (int x = 0; x < sourceWidth; x++) {
+          final pixel = source.getPixel(x, y);
+          final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+
+          // 确定像素是背景还是前景
+          final isBackground = isInverted
+              ? luminance < 128 // 反转模式下
+              : luminance > 128; // 正常模式下
+
+          if (!isBackground) {
+            // 只保留前景像素
+            final color = isInverted
+                ? img.ColorRgba8(255, 255, 255, 255) // 反转模式下，前景为白色
+                : img.ColorRgba8(0, 0, 0, 255); // 正常模式下，前景为黑色
+
+            // 确保坐标有效
+            if (x + offsetX >= 0 &&
+                x + offsetX < squareSize &&
+                y + offsetY >= 0 &&
+                y + offsetY < squareSize) {
+              square.setPixel(x + offsetX, y + offsetY, color);
+            }
+          }
+          // 背景像素默认为透明，不需要设置
+        }
+      }
+
+      // 确保返回PNG格式
+      return Uint8List.fromList(img.encodePng(square));
+    } catch (e) {
+      AppLogger.error('创建正方形二值化图像失败', error: e);
+      // 创建空白透明PNG作为回退
+      final fallbackImage =
+          img.Image(width: source.width, height: source.height, numChannels: 4);
+      img.fill(fallbackImage, color: img.ColorRgba8(0, 0, 0, 0));
+      return Uint8List.fromList(img.encodePng(fallbackImage));
+    }
+  }
+
+  /// 改进版：创建正方形格式的图像
+  _SquareImageResults _createProperSquareImages({
+    required img.Image originalImage,
+    required img.Image binaryImage,
+    required DetectedOutline outline,
+    required ProcessingOptions options,
+  }) {
+    try {
+      // 计算包含所有轮廓的最小矩形
+      double minX = double.infinity, minY = double.infinity;
+      double maxX = -double.infinity, maxY = -double.infinity;
+
+      if (outline.contourPoints.isEmpty) {
+        throw Exception('没有轮廓点');
+      }
+
+      // 找出所有轮廓的边界
+      for (final contour in outline.contourPoints) {
+        for (final point in contour) {
+          if (!point.dx.isFinite || !point.dy.isFinite) continue;
+          minX = math.min(minX, point.dx);
+          minY = math.min(minY, point.dy);
+          maxX = math.max(maxX, point.dx);
+          maxY = math.max(maxY, point.dy);
+        }
+      }
+
+      if (minX > maxX ||
+          minY > maxY ||
+          !minX.isFinite ||
+          !minY.isFinite ||
+          !maxX.isFinite ||
+          !maxY.isFinite) {
+        throw Exception('无法计算有效的轮廓边界');
+      }
+
+      // 确保坐标在图像范围内
+      minX = minX.clamp(0, originalImage.width - 1);
+      minY = minY.clamp(0, originalImage.height - 1);
+      maxX = maxX.clamp(0, originalImage.width - 1);
+      maxY = maxY.clamp(0, originalImage.height - 1);
+
+      // 计算内容区域的实际大小
+      final contentWidth = maxX - minX + 1;
+      final contentHeight = maxY - minY + 1;
+
+      // 使用较大的边作为正方形尺寸，确保完全包含内容
+      final squareSize = math.max(contentWidth, contentHeight).ceil();
+
+      // 创建正方形图像
+      final squareOriginal =
+          img.Image(width: squareSize, height: squareSize, numChannels: 4);
+      final squareBinary =
+          img.Image(width: squareSize, height: squareSize, numChannels: 4);
+
+      // 初始化为透明背景
+      img.fill(squareOriginal, color: img.ColorRgba8(0, 0, 0, 0));
+      img.fill(squareBinary, color: img.ColorRgba8(0, 0, 0, 0));
+
+      // 计算缩放比例，使用较小的缩放比例来避免放大失真
+      final scaleX = squareSize / contentWidth;
+      final scaleY = squareSize / contentHeight;
+      final scale = math.min(scaleX, scaleY); // 使用较小的缩放比例保持原始大小
+
+      // 计算缩放后的尺寸
+      final scaledWidth = (contentWidth * scale).round();
+      final scaledHeight = (contentHeight * scale).round();
+
+      // 计算居中偏移量
+      final centerOffsetX = (squareSize - scaledWidth) ~/ 2;
+      final centerOffsetY = (squareSize - scaledHeight) ~/ 2;
+
+      // 复制和缩放内容
+      for (int y = 0; y < scaledHeight; y++) {
+        for (int x = 0; x < scaledWidth; x++) {
+          // 计算源坐标时立即取整
+          final srcX = (minX + x / scale).round();
+          final srcY = (minY + y / scale).round();
+
+          // 计算目标坐标时确保是整数
+          final destX = (x + centerOffsetX).toInt();
+          final destY = (y + centerOffsetY).toInt();
+
+          if (srcX >= 0 &&
+              srcX < originalImage.width &&
+              srcY >= 0 &&
+              srcY < originalImage.height &&
+              destX >= 0 &&
+              destX < squareSize &&
+              destY >= 0 &&
+              destY < squareSize) {
+            squareOriginal.setPixelRgba(
+                destX,
+                destY,
+                originalImage.getPixel(srcX, srcY).r,
+                originalImage.getPixel(srcX, srcY).g,
+                originalImage.getPixel(srcX, srcY).b,
+                originalImage.getPixel(srcX, srcY).a);
+            squareBinary.setPixelRgba(
+                destX,
+                destY,
+                binaryImage.getPixel(srcX, srcY).r,
+                binaryImage.getPixel(srcX, srcY).g,
+                binaryImage.getPixel(srcX, srcY).b,
+                binaryImage.getPixel(srcX, srcY).a);
+          }
+        }
+      }
+
+      // 调整轮廓点集
+      // 调整轮廓点到新的坐标系统
+      final adjustedContours = outline.contourPoints.map((contour) {
+        return contour.map((point) {
+          final adjustedX = ((point.dx - minX) * scale + centerOffsetX)
+              .clamp(0.0, squareSize.toDouble());
+          final adjustedY = ((point.dy - minY) * scale + centerOffsetY)
+              .clamp(0.0, squareSize.toDouble());
+          return Offset(adjustedX, adjustedY);
+        }).toList();
+      }).toList();
+
+      // 创建新轮廓对象
+      final squareOutline = DetectedOutline(
+        boundingRect:
+            Rect.fromLTWH(0, 0, squareSize.toDouble(), squareSize.toDouble()),
+        contourPoints: adjustedContours,
+      );
+
+      // 生成SVG轮廓
+      final svgOutline = generateSvgOutline(squareOutline, options.inverted);
+
+      // 生成透明PNG
+      final transparentPng = _createBetterTransparentPng(
+          squareOriginal, squareBinary, squareOutline, options.inverted);
+
+      // 确保二值图像有透明背景
+      final transparentBinary =
+          _createTransparentBinary(squareBinary, options.inverted);
+
+      return _SquareImageResults(
+        binary: transparentBinary,
+        svg: svgOutline,
+        transparent: transparentPng,
+      );
+    } catch (e, stack) {
+      AppLogger.error('创建正方形图像失败', error: e, stackTrace: stack);
+
+      try {
+        final squareSize = math.max(originalImage.width, originalImage.height);
+        final square =
+            img.Image(width: squareSize, height: squareSize, numChannels: 4);
+        img.fill(square, color: img.ColorRgba8(0, 0, 0, 0));
+
+        final fallbackPng = Uint8List.fromList(img.encodePng(square));
+        return _SquareImageResults(
+          binary: fallbackPng,
+          svg: null,
+          transparent: fallbackPng,
+        );
+      } catch (fallbackError) {
+        AppLogger.error('创建应急图像失败', error: fallbackError);
+        final minimalImage = img.Image(width: 1, height: 1, numChannels: 4);
+        img.fill(minimalImage, color: img.ColorRgba8(0, 0, 0, 0));
+        final minimalPng = Uint8List.fromList(img.encodePng(minimalImage));
+
+        return _SquareImageResults(
+          binary: minimalPng,
+          svg: null,
+          transparent: minimalPng,
+        );
+      }
+    }
+  }
+
+  /// 创建透明背景的方形图像 (当没有轮廓时)
+  Uint8List _createProperSquareTransparentWithoutContour(img.Image source) {
+    try {
+      // 获取尺寸
+      final sourceWidth = source.width;
+      final sourceHeight = source.height;
+
+      // 计算正方形尺寸
+      final squareSize = math.max(sourceWidth, sourceHeight);
+
+      // 创建带透明通道的正方形图像
+      final square = img.Image(
+        width: squareSize,
+        height: squareSize,
+        numChannels: 4, // RGBA
+      );
+
+      // 填充透明背景
+      img.fill(square, color: img.ColorRgba8(0, 0, 0, 0));
+
+      // 计算偏移量以居中原图
+      final offsetX = (squareSize - sourceWidth) ~/ 2;
+      final offsetY = (squareSize - sourceHeight) ~/ 2;
+
+      // 复制原图到正方形画布上
+      for (int y = 0; y < sourceHeight; y++) {
+        final srcY = y;
+        final dstY = y + offsetY;
+        if (dstY < 0 || dstY >= squareSize) continue;
+
+        for (int x = 0; x < sourceWidth; x++) {
+          final srcX = x;
+          final dstX = x + offsetX;
+          if (dstX < 0 || dstX >= squareSize) continue;
+
+          final pixel = source.getPixel(srcX, srcY);
+          square.setPixelRgba(dstX, dstY, pixel.r, pixel.g, pixel.b, pixel.a);
+        }
+      }
+
+      return Uint8List.fromList(img.encodePng(square));
+    } catch (e) {
+      AppLogger.error('创建透明背景正方形图像失败', error: e);
+      return Uint8List.fromList(img.encodePng(source));
+    }
+  }
+
+  /// 生成透明背景二值化图像 - 改进版，处理不同的反转模式
+  Uint8List _createTransparentBinary(img.Image binaryImage, bool isInverted) {
+    try {
+      // 创建一个新的带透明通道的图像
+      final result = img.Image(
+        width: binaryImage.width,
+        height: binaryImage.height,
+        numChannels: 4, // 4通道 - RGBA
+      );
+
+      // 初始化为完全透明
+      img.fill(result, color: img.ColorRgba8(0, 0, 0, 0));
+
+      // 设置前景色
+      final foregroundColor = isInverted
+          ? img.ColorRgba8(255, 255, 255, 255) // 反转模式使用白色
+          : img.ColorRgba8(0, 0, 0, 255); // 正常模式使用黑色
+
+      // 遍历图像的每个像素
+      for (int y = 0; y < binaryImage.height; y++) {
+        for (int x = 0; x < binaryImage.width; x++) {
+          final pixel = binaryImage.getPixel(x, y);
+
+          // 使用Alpha通道判断是否为透明像素
+          if (pixel.a < 128) {
+            continue; // 保持透明
+          }
+
+          final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+
+          // 根据亮度和反转模式决定是否为前景
+          final isForeground = isInverted
+              ? luminance > 128 // 反转模式：亮色为前景
+              : luminance < 128; // 正常模式：暗色为前景
+
+          if (isForeground) {
+            result.setPixel(x, y, foregroundColor);
+          }
+          // 背景像素保持透明，不需要额外处理
+        }
+      }
+
+      // 编码为PNG
+      return Uint8List.fromList(img.encodePng(result));
+    } catch (e) {
+      AppLogger.error('创建透明背景二值化图像失败', error: e);
+      // 创建一个空白透明图像作为后备
+      final fallback = img.Image(
+        width: binaryImage.width,
+        height: binaryImage.height,
+        numChannels: 4,
+      );
+      img.fill(fallback, color: img.ColorRgba8(0, 0, 0, 0));
+      return Uint8List.fromList(img.encodePng(fallback));
+    }
+  }
+
+  /// 创建带透明背景的PNG图像 (优化版)
+  Uint8List _createTransparentPng(img.Image source, DetectedOutline outline) {
+    try {
+      // 创建一个新的带透明通道的图像
+      final result = img.Image(
+        width: source.width,
+        height: source.height,
+        numChannels: 4, // 4通道 - RGBA
+      );
+
+      // 先填充透明背景
+      img.fill(result, color: img.ColorRgba8(0, 0, 0, 0));
+
+      // 创建用于填充字符内部区域的掩码
+      final mask = img.Image(
+        width: source.width,
+        height: source.height,
+        numChannels: 1, // 1通道 - 只有透明度
+      );
+
+      // 初始化掩码为完全透明
+      img.fill(mask, color: img.ColorRgb8(0, 0, 0));
+
+      // 为每个轮廓创建填充路径
+      for (final contour in outline.contourPoints) {
+        if (contour.length < 3) continue;
+
+        // 计算当前轮廓的包围盒，限制扫描区域
+        double minX = double.infinity, minY = double.infinity;
+        double maxX = 0, maxY = 0;
+
+        for (final point in contour) {
+          minX = math.min(minX, point.dx);
+          minY = math.min(minY, point.dy);
+          maxX = math.max(maxX, point.dx);
+          maxY = math.max(maxY, point.dy);
+        }
+
+        // 确保坐标在图像范围内
+        int startX = math.max(0, minX.floor());
+        int startY = math.max(0, minY.floor());
+        int endX = math.min(source.width - 1, maxX.ceil());
+        int endY = math.min(source.height - 1, maxY.ceil());
+
+        // 使用扫描线填充算法
+        _fillPolygonScanline(mask, contour, startY, endY);
+      }
+
+      // 根据掩码应用源图像的像素值到结果图中，只保留内部区域
+      for (int y = 0; y < source.height; y++) {
+        for (int x = 0; x < source.width; x++) {
+          final maskValue = mask.getPixel(x, y).r; // 获取掩码值
+          if (maskValue > 0) {
+            final sourcePixel = source.getPixel(x, y);
+            result.setPixelRgba(
+                x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
+          }
+        }
+      }
+
+      // 编码为PNG并返回
+      return Uint8List.fromList(img.encodePng(result));
+    } catch (e) {
+      AppLogger.error('创建透明PNG失败', error: e);
+      return Uint8List(0);
+    }
   }
 
   /// 降噪处理
@@ -467,6 +945,99 @@ class CharacterImageProcessor {
     return blurred;
   }
 
+  /// 改进的多边形填充算法，确保更好的填充效果
+  void _fillPolygonImproved(
+      img.Image mask, List<Offset> polygon, int startY, int endY) {
+    // 确保多边形点集是闭合的
+    List<Offset> workingPolygon = [...polygon];
+    if (workingPolygon.length > 1 &&
+        workingPolygon.first != workingPolygon.last) {
+      workingPolygon.add(workingPolygon.first);
+    }
+
+    // 对每一行进行扫描
+    for (int y = startY; y <= endY; y++) {
+      // 找到这一行与所有多边形边的交点
+      List<double> intersections = [];
+
+      for (int i = 0; i < workingPolygon.length - 1; i++) {
+        final p1 = workingPolygon[i];
+        final p2 = workingPolygon[i + 1];
+
+        // 忽略水平线段或无效点
+        if (!p1.dy.isFinite || !p2.dy.isFinite || p1.dy == p2.dy) {
+          continue;
+        }
+
+        // 检查这条边是否与当前扫描线相交
+        if ((p1.dy <= y && p2.dy > y) || (p2.dy <= y && p1.dy > y)) {
+          // 计算交点的x坐标
+          double intersectX =
+              p1.dx + (y - p1.dy) * (p2.dx - p1.dx) / (p2.dy - p1.dy);
+          if (intersectX.isFinite) {
+            intersections.add(intersectX);
+          }
+        }
+      }
+
+      // 对交点进行排序
+      intersections.sort();
+
+      // 以配对的方式填充交点之间的区域（奇偶法则）
+      for (int i = 0; i < intersections.length - 1; i += 2) {
+        if (i + 1 < intersections.length) {
+          final startX = math.max(0, intersections[i].floor());
+          final endX = math.min(mask.width - 1, intersections[i + 1].ceil());
+
+          // 填充这一行在交点对之间的像素
+          for (int x = startX; x <= endX; x++) {
+            mask.setPixelRgb(x, y, 255, 255, 255); // 设置为白色 (不透明)
+          }
+        }
+      }
+    }
+  }
+
+  /// 使用扫描线算法填充多边形
+  void _fillPolygonScanline(
+      img.Image mask, List<Offset> polygon, int startY, int endY) {
+    // 对于每一行
+    for (int y = startY; y <= endY; y++) {
+      // 创建交点列表
+      List<int> intersections = [];
+
+      // 找出所有与当前扫描线相交的边
+      for (int i = 0; i < polygon.length; i++) {
+        final p1 = polygon[i];
+        final p2 = polygon[(i + 1) % polygon.length];
+
+        // 检查这条边是否跨越当前扫描线
+        if ((p1.dy <= y && p2.dy > y) || (p2.dy <= y && p1.dy > y)) {
+          // 计算交点的x坐标
+          // 使用线性插值公式: x = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+          final x = p1.dx + (y - p1.dy) * (p2.dx - p1.dx) / (p2.dy - p1.dy);
+          intersections.add(x.round());
+        }
+      }
+
+      // 对交点进行排序
+      intersections.sort();
+
+      // 以配对的方式填充交点之间的区域 (内部区域)
+      for (int i = 0; i < intersections.length - 1; i += 2) {
+        if (i + 1 < intersections.length) {
+          final startX = math.max(0, intersections[i]);
+          final endX = math.min(mask.width - 1, intersections[i + 1]);
+
+          // 填充这一行上在交点对之间的像素
+          for (int x = startX; x <= endX; x++) {
+            mask.setPixelRgb(x, y, 255, 255, 255); // 设置为白色 (不透明)
+          }
+        }
+      }
+    }
+  }
+
   /// 生成缓存键
   String _generateCacheKey(ProcessingParams params) {
     final regionKey =
@@ -481,17 +1052,117 @@ class CharacterImageProcessor {
     return '${params.imageData.hashCode}:$regionKey:$optionsKey:$eraseKey';
   }
 
-  /// 生成缩略图
-  Uint8List _generateThumbnail(img.Image source) {
-    final thumbnail = img.copyResize(
-      source,
-      width:
-          (source.width * 100 / math.max(source.width, source.height)).toInt(),
-      height:
-          (source.height * 100 / math.max(source.width, source.height)).toInt(),
-      interpolation: img.Interpolation.cubic,
-    );
-    return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
+  /// 生成保持比例的缩略图 (100x100像素，居中)
+  Uint8List _generateProperThumbnail(img.Image source) {
+    try {
+      // 创建纯白背景的100x100画布
+      final thumbnail = img.Image(width: 100, height: 100);
+      img.fill(thumbnail, color: img.ColorRgb8(255, 255, 255));
+
+      // 获取非透明区域的边界
+      int minX = source.width, minY = source.height;
+      int maxX = 0, maxY = 0;
+      bool hasContent = false;
+
+      for (int y = 0; y < source.height; y++) {
+        for (int x = 0; x < source.width; x++) {
+          final pixel = source.getPixel(x, y);
+          if (pixel.a > 128) {
+            // 非透明像素
+            minX = math.min(minX, x);
+            minY = math.min(minY, y);
+            maxX = math.max(maxX, x);
+            maxY = math.max(maxY, y);
+            hasContent = true;
+          }
+        }
+      }
+
+      if (!hasContent) {
+        // 如果没有内容，绘制边框
+        img.drawRect(thumbnail,
+            x1: 10,
+            y1: 10,
+            x2: 90,
+            y2: 90,
+            color: img.ColorRgb8(0, 0, 0),
+            thickness: 2);
+        return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 95));
+      }
+
+      // 计算内容区域的尺寸
+      final contentWidth = maxX - minX + 1;
+      final contentHeight = maxY - minY + 1;
+
+      // 计算合适的缩放比例，保持原始比例
+      final scaleX = 100.0 / contentWidth; // 使用100像素留出边距
+      final scaleY = 100.0 / contentHeight;
+      final scaleRatio = math.min(scaleX, scaleY); // 使用较小的比例避免失真
+
+      // 计算缩放后的尺寸
+      final scaledWidth = (contentWidth * scaleRatio).round();
+      final scaledHeight = (contentHeight * scaleRatio).round();
+
+      // 创建临时图像来存储内容
+      final contentImage = img.Image(
+        width: contentWidth,
+        height: contentHeight,
+        numChannels: 4,
+      );
+
+      // 复制内容区域
+      for (int y = 0; y < contentHeight; y++) {
+        for (int x = 0; x < contentWidth; x++) {
+          final srcPixel = source.getPixel(x + minX, y + minY);
+          if (srcPixel.a > 128) {
+            // 转换为黑色前景
+            contentImage.setPixelRgba(x, y, 0, 0, 0, 255);
+          }
+        }
+      }
+
+      // 缩放内容
+      final scaledContent = img.copyResize(
+        contentImage,
+        width: scaledWidth,
+        height: scaledHeight,
+        interpolation: img.Interpolation.cubic,
+      );
+
+      // 计算居中偏移，确保在100x100范围内居中
+      final centerX = (100 - scaledWidth) ~/ 2;
+      final centerY = (100 - scaledHeight) ~/ 2;
+
+      // 将缩放后的内容复制到缩略图中心
+      for (int y = 0; y < scaledHeight; y++) {
+        for (int x = 0; x < scaledWidth; x++) {
+          final pixel = scaledContent.getPixel(x, y);
+          if (pixel.a > 128) {
+            final destX = x + centerX;
+            final destY = y + centerY;
+            if (destX >= 0 && destX < 100 && destY >= 0 && destY < 100) {
+              thumbnail.setPixelRgba(destX, destY, 0, 0, 0, 255);
+            }
+          }
+        }
+      }
+
+      // 编码为JPEG，使用高质量设置
+      return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 95));
+    } catch (e) {
+      AppLogger.error('生成缩略图失败', error: e);
+      // 返回带框的空白缩略图
+      final fallback = img.Image(width: 100, height: 100);
+      img.fill(fallback, color: img.ColorRgb8(255, 255, 255));
+      img.drawRect(fallback,
+          x1: 10,
+          y1: 10,
+          x2: 90,
+          y2: 90,
+          color: img.ColorRgb8(0, 0, 0),
+          thickness: 2);
+      return Uint8List.fromList(img.encodeJpg(fallback, quality: 95));
+    }
   }
 
   /// 对图像进行基于选区中心的旋转和裁剪处理
@@ -586,17 +1257,6 @@ class CharacterImageProcessor {
     }
 
     return result;
-  }
-
-  Offset _rotatePoint(Offset point, Offset center, double rotation) {
-    final dx = point.dx - center.dx;
-    final dy = point.dy - center.dy;
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
-    return Offset(
-      center.dx + dx * cos - dy * sin,
-      center.dy + dx * sin + dy * cos,
-    );
   }
 
   static img.Image _addBorderToImage(img.Image source, bool isInverted) {
@@ -703,39 +1363,6 @@ class CharacterImageProcessor {
       }
     }
     return null;
-  }
-
-  /// 查找下一个边界方向
-  static List<int>? _findNextBoundaryDirection(int x, int y, int width,
-      int height, List<List<int>> allDirections, List<int> currentDir) {
-    // 确定当前是哪个边界
-    bool isLeftBoundary = x == 0;
-    bool isRightBoundary = x == width - 1;
-    bool isTopBoundary = y == 0;
-    bool isBottomBoundary = y == height - 1;
-
-    // 循环尝试各个方向，找到一个有效的边界点
-    int startIdx = allDirections.indexOf(currentDir);
-    for (int i = 0; i < allDirections.length; i++) {
-      int idx = (startIdx + i) % allDirections.length;
-      List<int> dir = allDirections[idx];
-
-      int nx = x + dir[0];
-      int ny = y + dir[1];
-
-      // 检查是否仍在边界上且是有效坐标
-      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-        // 确保新点至少有一边在边界上
-        if ((isLeftBoundary && nx == 0) ||
-            (isRightBoundary && nx == width - 1) ||
-            (isTopBoundary && ny == 0) ||
-            (isBottomBoundary && ny == height - 1)) {
-          return dir;
-        }
-      }
-    }
-
-    return null; // 没找到合适的边界方向
   }
 
   static bool _isContourPoint(img.Image image, int x, int y, bool isInverted) {
@@ -960,17 +1587,6 @@ class ImageProcessingException implements Exception {
   String toString() => 'ImageProcessingException: $message';
 }
 
-/// 预览结果
-class PreviewResult {
-  final img.Image processedImage;
-  final DetectedOutline? outline;
-
-  PreviewResult({
-    required this.processedImage,
-    this.outline,
-  });
-}
-
 /// 图像处理参数
 class ProcessingParams {
   final Uint8List imageData;
@@ -992,4 +1608,17 @@ class ProcessingParams {
       region.top >= 0 &&
       region.width > 0 &&
       region.height > 0;
+}
+
+/// 正方形图像生成结果
+class _SquareImageResults {
+  final Uint8List binary;
+  final String? svg;
+  final Uint8List? transparent;
+
+  _SquareImageResults({
+    required this.binary,
+    this.svg,
+    this.transparent,
+  });
 }

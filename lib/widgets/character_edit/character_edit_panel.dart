@@ -10,9 +10,7 @@ import 'package:image/image.dart' as img;
 
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
-import '../../domain/models/character/detected_outline.dart';
 import '../../domain/models/character/processing_options.dart';
-import '../../domain/models/character/processing_result.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/character_collection_provider.dart';
 import '../../presentation/providers/character/character_edit_providers.dart';
@@ -20,7 +18,6 @@ import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/erase_providers.dart';
-import '../../presentation/providers/character/erase_state.dart';
 import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
@@ -767,84 +764,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
   }
 
-  /// Calculate outline for SVG generation if needed
-  Future<DetectedOutline?> _calculateOutlineForSvg(
-      Uint8List imageData, EraseState eraseState) async {
-    try {
-      // Get image processor and create options for contour detection
-      final imageProcessor = ref.read(characterImageProcessorProvider);
-      final processingOptions = ProcessingOptions(
-        inverted: eraseState.imageInvertMode,
-        threshold: 128.0,
-        noiseReduction: 0.5,
-        showContour: true, // Force contour detection
-        brushSize: eraseState.brushSize,
-      );
-
-      // Create full image rectangle
-      final boundingRect = widget.selectedRegion.rect;
-
-      // Prepare erase data for contour calculation
-      final pathRenderData = ref.read(erase.pathRenderDataProvider);
-      List<Map<String, dynamic>> erasePaths = [];
-      if (pathRenderData.completedPaths.isNotEmpty) {
-        erasePaths = pathRenderData.completedPaths.map((p) {
-          final points = _extractPointsFromPath(p.path);
-          return {
-            'brushSize': p.brushSize,
-            'brushColor': p.brushColor.value,
-            'points': points,
-          };
-        }).toList();
-      }
-
-      // Process image for contour detection
-      final preview = await imageProcessor.previewProcessing(
-        imageData,
-        boundingRect,
-        processingOptions,
-        erasePaths,
-        rotation: 0.0,
-      );
-
-      return preview.outline;
-    } catch (e) {
-      AppLogger.error('计算SVG轮廓失败', error: e);
-      return null;
-    }
-  }
-
-  // 创建缩略图的辅助方法
-  Future<Uint8List?> _createThumbnail(Uint8List imageData) async {
-    try {
-      // 解码图像
-      final codec = await ui.instantiateImageCodec(imageData);
-      final frame = await codec.getNextFrame();
-      final image = frame.image;
-
-      // 计算合适的缩略图大小
-      final double ratio = 100 / math.max(image.width, image.height);
-      final int targetWidth = (image.width * ratio).round();
-      final int targetHeight = (image.height * ratio).round();
-
-      // 使用图像包重新调整大小
-      final img.Image? decodedImage = img.decodeImage(imageData);
-      if (decodedImage == null) return null;
-
-      final img.Image thumbnail = img.copyResize(
-        decodedImage,
-        width: targetWidth,
-        height: targetHeight,
-        interpolation: img.Interpolation.average,
-      );
-
-      return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
-    } catch (e) {
-      AppLogger.error('创建缩略图失败', error: e);
-      return null;
-    }
-  }
-
   // 从Path提取Offset点集合并转换为可序列化格式
   List<Map<String, double>> _extractPointsFromPath(Path path) {
     List<Map<String, double>> serializablePoints = [];
@@ -968,47 +887,9 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
 
     if (confirmed != true) return;
-    if (!mounted) return;
 
     try {
-      // 获取处理后的图像（带重试机制）
-      final processedImage = await _RetryStrategy.run(
-        operation: () async {
-          final canvasState = _canvasKey.currentState;
-          if (canvasState == null) {
-            throw _SaveError('无法获取画布状态');
-          }
-          return await canvasState.getProcessedImage();
-        },
-        operationName: '图像处理',
-      );
       if (!mounted) return;
-
-      // 确保画布状态有效并且图像已处理
-      if (processedImage == null) {
-        throw _SaveError('处理后的图像为空');
-      }
-
-      // 获取图像数据（带重试机制）
-      final imageData = await _RetryStrategy.run(
-        operation: () async {
-          return await processedImage.toByteData(
-              format: ui.ImageByteFormat.png);
-        },
-        operationName: '图像数据转换',
-      );
-
-      if (imageData == null) {
-        throw _SaveError('图像数据转换失败');
-      }
-
-      final uint8List = imageData.buffer.asUint8List();
-
-      AppLogger.debug('保存图像数据', data: {
-        'imageDataLength': uint8List.length,
-        'imageWidth': processedImage.width,
-        'imageHeight': processedImage.height,
-      });
 
       // Create processing result object
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
@@ -1069,58 +950,10 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         pageId: widget.pageId,
         character: _characterController.text,
         options: processingOptions,
-        isModified: true,
+        isModified: false,
         eraseData: eraseData.isNotEmpty ? eraseData : null,
         erasePoints: null, // Clear old format data
       );
-
-      // 创建缩略图
-      final thumbnail = await _createThumbnail(uint8List);
-
-      // Get the canvas state and outline for SVG generation
-      final canvasState = _canvasKey.currentState;
-      DetectedOutline? outline = canvasState?.outline;
-
-      // Ensure we have an outline for SVG generation
-      if (outline == null || outline.contourPoints.isEmpty) {
-        AppLogger.debug('保存时没有有效轮廓，重新计算轮廓');
-        // Force outline calculation if needed
-        outline = await _calculateOutlineForSvg(uint8List, eraseState);
-      }
-
-      // Generate SVG from outline
-      String? svgOutline;
-      if (outline != null && outline.contourPoints.isNotEmpty) {
-        final imageProcessor = ref.read(characterImageProcessorProvider);
-        svgOutline = imageProcessor.generateSvgOutline(
-            outline, eraseState.imageInvertMode);
-        AppLogger.debug('生成SVG轮廓数据', data: {
-          'svgLength': svgOutline.length,
-          'contourPaths': outline.contourPoints.length,
-        });
-      } else {
-        AppLogger.warning('未能生成SVG轮廓，轮廓数据无效');
-      }
-
-      // Create processing result with SVG outline
-      final processingResult = ProcessingResult(
-        originalCrop: uint8List,
-        binaryImage: uint8List,
-        thumbnail: thumbnail ?? uint8List,
-        svgOutline: svgOutline, // Include the SVG outline
-        boundingBox: selectedRegion.rect,
-      );
-
-      // 验证处理结果是否有效
-      if (!processingResult.isValid) {
-        AppLogger.error('处理结果无效', data: {
-          'originalCropLength': processingResult.originalCrop.length,
-          'binaryImageLength': processingResult.binaryImage.length,
-          'thumbnailLength': processingResult.thumbnail.length,
-          'hasBoundingBox': processingResult.boundingBox != null,
-        });
-        throw _SaveError('处理结果无效，无法保存');
-      }
 
       // 保存（带重试机制）
       final collectionNotifier = ref.read(characterCollectionProvider.notifier);
@@ -1129,9 +962,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       collectionNotifier.updateSelectedRegion(updatedRegion);
 
       // Now save the current region with the processed image data
-      await collectionNotifier.saveCurrentRegion(
-        imageData: processingResult,
-      );
+      await collectionNotifier.saveCurrentRegion(processingOptions);
 
       // Get the updated region to check if this was a first save
       final savedRegion = ref.read(characterCollectionProvider).selectedRegion;
@@ -1227,7 +1058,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   ) async {
     try {
       final imageProcessor = ref.read(characterImageProcessorProvider);
-      final preview = await imageProcessor.previewProcessing(
+      final preview = await imageProcessor.processForPreview(
         imageData,
         region.rect,
         processingOptions,
@@ -1275,31 +1106,6 @@ class _OpenInputIntent extends Intent {}
 class _RedoIntent extends Intent {}
 
 // 重试机制
-class _RetryStrategy {
-  static const int maxAttempts = 3;
-  static const Duration delayBetweenAttempts = Duration(seconds: 1);
-
-  static Future<T> run<T>({
-    required Future<T> Function() operation,
-    String? operationName,
-  }) async {
-    var attempt = 0;
-    while (true) {
-      try {
-        attempt++;
-        return await operation();
-      } catch (e) {
-        if (attempt >= maxAttempts) {
-          throw _SaveError(
-            '${operationName ?? '操作'}失败，已重试$maxAttempts次',
-            e is Exception ? e : Exception(e.toString()),
-          );
-        }
-        await Future.delayed(delayBetweenAttempts);
-      }
-    }
-  }
-}
 
 class _SaveError implements Exception {
   final String message;

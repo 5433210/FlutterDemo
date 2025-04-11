@@ -1,117 +1,127 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
-import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
-class ProcessingResult {
-  final Uint8List originalCrop;
-  final Uint8List binaryImage;
-  final Uint8List thumbnail;
-  final String? svgOutline;
-  final Rect boundingBox;
+import 'detected_outline.dart';
 
-  const ProcessingResult({
+/// 预览结果
+class ResultForPreview {
+  final img.Image processedImage;
+  final DetectedOutline? outline;
+
+  ResultForPreview({
+    required this.processedImage,
+    this.outline,
+  });
+}
+
+/// 图像处理结果
+class ResultForSave {
+  // 原始比例图像
+  final Uint8List originalCrop; // 原始裁剪图像
+  final Uint8List binaryImage; // 二值化图像
+  final String? svgOutline; // 轮廓SVG
+  final Uint8List? transparentPng; // 去背景透明图像
+
+  // 正方形格式图像
+  final Uint8List squareBinary; // 正方形二值化图像
+  final String? squareSvgOutline; // 正方形轮廓SVG
+  final Uint8List? squareTransparentPng; // 正方形去背景透明图像
+
+  // 缩略图
+  final Uint8List thumbnail; // 100x100缩略图
+
+  // 边界信息
+  final Rect? boundingBox; // 字符边界框
+
+  /// 创建处理结果
+  const ResultForSave({
     required this.originalCrop,
     required this.binaryImage,
     required this.thumbnail,
     this.svgOutline,
-    required this.boundingBox,
+    this.transparentPng,
+    required this.squareBinary,
+    this.squareSvgOutline,
+    this.squareTransparentPng,
+    this.boundingBox,
   });
 
-  // 创建空的结果
-  factory ProcessingResult.empty() {
-    return ProcessingResult(
-      originalCrop: Uint8List(0),
-      binaryImage: Uint8List(0),
-      thumbnail: Uint8List(0),
-      boundingBox: Rect.zero,
-    );
-  }
+  /// 检查处理结果是否包含有效数据
+  bool get isValid =>
+      originalCrop.isNotEmpty &&
+      binaryImage.isNotEmpty &&
+      thumbnail.isNotEmpty &&
+      squareBinary.isNotEmpty;
 
-  /// 判断处理结果是否有效
-  bool get isValid {
-    return originalCrop.isNotEmpty &&
-        binaryImage.isNotEmpty &&
-        thumbnail.isNotEmpty;
-  }
-
-  /// 将 ProcessingResult 序列化并压缩为 Uint8List
-  Uint8List toArchiveBytes() {
-    // 创建一个新的压缩档案
-    final archive = Archive();
-
-    // 添加二进制数据
-    archive.addFile(
-        ArchiveFile('original_crop.bin', originalCrop.length, originalCrop));
-    archive.addFile(
-        ArchiveFile('binary_image.bin', binaryImage.length, binaryImage));
-    archive.addFile(ArchiveFile('thumbnail.bin', thumbnail.length, thumbnail));
-
-    // 添加元数据
-    final metadata = {
-      'boundingBox': {
-        'x': boundingBox.left,
-        'y': boundingBox.top,
-        'width': boundingBox.width,
-        'height': boundingBox.height,
-      },
-      'svgOutline': svgOutline,
+  /// 转换为字节数组进行归档存储
+  Future<Uint8List> toArchiveBytes() async {
+    final archive = <String, dynamic>{
+      'originalCrop': base64Encode(originalCrop),
+      'binaryImage': base64Encode(binaryImage),
+      'thumbnail': base64Encode(thumbnail),
+      'squareBinary': base64Encode(squareBinary),
+      if (svgOutline != null) 'svgOutline': svgOutline,
+      if (transparentPng != null)
+        'transparentPng': base64Encode(transparentPng!),
+      if (squareSvgOutline != null) 'squareSvgOutline': squareSvgOutline,
+      if (squareTransparentPng != null)
+        'squareTransparentPng': base64Encode(squareTransparentPng!),
+      if (boundingBox != null)
+        'boundingBox': {
+          'x': boundingBox!.left,
+          'y': boundingBox!.top,
+          'width': boundingBox!.width,
+          'height': boundingBox!.height,
+        },
     };
 
-    final metadataBytes = utf8.encode(json.encode(metadata));
-    archive.addFile(
-        ArchiveFile('metadata.json', metadataBytes.length, metadataBytes));
-
-    // 压缩整个档案
-    return Uint8List.fromList(ZipEncoder().encode(archive) ?? []);
+    return Uint8List.fromList(utf8.encode(jsonEncode(archive)));
   }
 
-  /// 从压缩的字节数据中创建 ProcessingResult
-  static ProcessingResult fromArchiveBytes(Uint8List bytes) {
+  /// 从归档字节数组中恢复
+  static Future<ResultForSave> fromArchiveBytes(Uint8List bytes) async {
     try {
-      // 解压缩档案
-      final archive = ZipDecoder().decodeBytes(bytes);
+      final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
 
-      // 读取二进制数据
-      final originalCrop = _readFileBytes(archive, 'original_crop.bin');
-      final binaryImage = _readFileBytes(archive, 'binary_image.bin');
-      final thumbnail = _readFileBytes(archive, 'thumbnail.bin');
+      final originalCrop = base64Decode(json['originalCrop'] as String);
+      final binaryImage = base64Decode(json['binaryImage'] as String);
+      final thumbnail = base64Decode(json['thumbnail'] as String);
+      final squareBinary = json.containsKey('squareBinary')
+          ? base64Decode(json['squareBinary'] as String)
+          : thumbnail; // Fallback for older data
 
-      // 读取元数据
-      final metadataFile = archive.findFile('metadata.json');
-      if (metadataFile == null) throw Exception('缺少元数据文件');
+      Rect? boundingBox;
+      if (json.containsKey('boundingBox')) {
+        final boxData = json['boundingBox'] as Map<String, dynamic>;
+        boundingBox = Rect.fromLTWH(
+          (boxData['x'] as num).toDouble(),
+          (boxData['y'] as num).toDouble(),
+          (boxData['width'] as num).toDouble(),
+          (boxData['height'] as num).toDouble(),
+        );
+      }
 
-      final metadataString = utf8.decode(metadataFile.content as List<int>);
-      final metadata = json.decode(metadataString) as Map<String, dynamic>;
-
-      // 解析边界框数据
-      final boundingBoxData = metadata['boundingBox'] as Map<String, dynamic>;
-      final boundingBox = Rect.fromLTWH(
-        boundingBoxData['x'] as double,
-        boundingBoxData['y'] as double,
-        boundingBoxData['width'] as double,
-        boundingBoxData['height'] as double,
-      );
-
-      return ProcessingResult(
+      return ResultForSave(
         originalCrop: originalCrop,
         binaryImage: binaryImage,
         thumbnail: thumbnail,
-        svgOutline: metadata['svgOutline'] as String?,
+        svgOutline: json['svgOutline'] as String?,
+        transparentPng: json.containsKey('transparentPng')
+            ? base64Decode(json['transparentPng'] as String)
+            : null,
+        squareBinary: squareBinary,
+        squareSvgOutline: json['squareSvgOutline'] as String?,
+        squareTransparentPng: json.containsKey('squareTransparentPng')
+            ? base64Decode(json['squareTransparentPng'] as String)
+            : null,
         boundingBox: boundingBox,
       );
     } catch (e) {
-      throw Exception('无法从压缩数据中恢复处理结果: $e');
+      debugPrint('处理结果反序列化失败: $e');
+      rethrow;
     }
-  }
-
-  /// 从压缩档案中读取文件数据
-  static Uint8List _readFileBytes(Archive archive, String fileName) {
-    final file = archive.findFile(fileName);
-    if (file == null) {
-      throw Exception('找不到文件: $fileName');
-    }
-    return Uint8List.fromList(file.content as List<int>);
   }
 }

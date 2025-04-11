@@ -537,7 +537,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
       // Use a timeout to prevent hanging if outline detection takes too long
       final result = await _timeoutFuture(
-          imageProcessor.previewProcessing(
+          imageProcessor.processForPreview(
             imageBytes,
             fullImageRect,
             options,

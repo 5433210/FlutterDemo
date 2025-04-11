@@ -8,7 +8,6 @@ import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
 import '../../../domain/models/character/processing_options.dart';
-import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/models/character/undo_action.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
@@ -595,7 +594,7 @@ class CharacterCollectionNotifier
   }
 
   // 保存当前编辑的区域
-  Future<void> saveCurrentRegion({ProcessingResult? imageData}) async {
+  Future<void> saveCurrentRegion(ProcessingOptions options) async {
     AppLogger.debug('saveCurrentRegion 调用',
         data: {'currentId': state.currentId});
     if (state.currentId == null) return;
@@ -611,7 +610,6 @@ class CharacterCollectionNotifier
       AppLogger.debug('保存选区', data: {
         'regionId': region.id,
         'isModified': region.isModified,
-        'hasImageData': imageData != null,
       });
 
       final exists = region.characterId != null;
@@ -628,7 +626,8 @@ class CharacterCollectionNotifier
           region.id,
           region,
           region.character,
-          newResult: imageData, // Pass the image data for updating
+          options,
+          _currentPageImage!,
         );
 
         // 更新区域列表 - 设置 isModified = false
@@ -660,18 +659,15 @@ class CharacterCollectionNotifier
             data: {'imageDataLength': _currentPageImage!.length});
 
         // 提取并处理字符，明确设置isSaved为true
-        final characterEntity = await _characterService.extractCharacter(
+        final characterEntity = await _characterService.createCharacter(
           _currentWorkId ?? '',
           _currentPageId!,
           region.rect,
           region.rotation,
           region.options,
-          // 如果提供了图像数据，就使用它，否则使用页面图像
-          imageData?.originalCrop ?? _currentPageImage!,
+          _currentPageImage!,
           eraseData,
           region.character,
-          processingResult:
-              imageData, // Pass the complete processing result if available
         );
         AppLogger.debug('数据库操作完成，获取到 CharacterEntity',
             data: {'entityId': characterEntity.id});
