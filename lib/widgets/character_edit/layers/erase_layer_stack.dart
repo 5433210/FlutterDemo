@@ -106,7 +106,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     // 绘制背景层
     canvas.drawImage(widget.image, Offset.zero, Paint());
 
-    // 绘制预览层 - Use same optimized blur approach
+    // 绘制预览层 - Use anti-aliasing instead of blur
     final renderData = ref.read(pathRenderDataProvider);
     final paths = renderData.completedPaths ?? _paths;
 
@@ -122,55 +122,31 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
           continue;
         }
 
-        // Use optimized rendering approach with minimal blur
-        final blurPaint = Paint()
+        // Use anti-aliased clean stroke
+        final strokePaint = Paint()
           ..color = pathInfo.brushColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = pathInfo.brushSize
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round
-          ..maskFilter = const MaskFilter.blur(
-              BlurStyle.normal, 1.0); // Match reduced blur
+          ..isAntiAlias = true; // Enable anti-aliasing
+        // Remove maskFilter blur
 
-        canvas.drawPath(pathInfo.path, blurPaint);
-
-        // Draw solid center for better appearance
-        if (pathInfo.brushSize > 5.0) {
-          final centerPaint = Paint()
-            ..color = pathInfo.brushColor.withOpacity(0.7) // More opaque
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = pathInfo.brushSize * 0.85 // Larger solid center
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round;
-
-          canvas.drawPath(pathInfo.path, centerPaint);
-        }
+        canvas.drawPath(pathInfo.path, strokePaint);
       }
 
       // 绘制当前路径
       if (renderData.currentPath != null) {
-        final blurPaint = Paint()
+        final strokePaint = Paint()
           ..color = renderData.currentPath!.brushColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = renderData.currentPath!.brushSize
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round
-          ..maskFilter = const MaskFilter.blur(
-              BlurStyle.normal, 1.0); // Match reduced blur
+          ..isAntiAlias = true; // Enable anti-aliasing
+        // Remove maskFilter blur
 
-        canvas.drawPath(renderData.currentPath!.path, blurPaint);
-
-        // Draw solid center for better appearance
-        if (renderData.currentPath!.brushSize > 5.0) {
-          final centerPaint = Paint()
-            ..color = renderData.currentPath!.brushColor.withOpacity(0.7)
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = renderData.currentPath!.brushSize * 0.85
-            ..strokeCap = StrokeCap.round
-            ..strokeJoin = StrokeJoin.round;
-
-          canvas.drawPath(renderData.currentPath!.path, centerPaint);
-        }
+        canvas.drawPath(renderData.currentPath!.path, strokePaint);
       }
     } finally {
       canvas.restore();

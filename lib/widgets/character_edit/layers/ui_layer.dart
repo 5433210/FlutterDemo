@@ -25,31 +25,21 @@ class BrushCursorPainter extends CustomPainter {
     // Use the full brush size as the diameter (not radius)
     final radius = size / 2;
 
-    // Create a radial gradient with less blur to match processing
-    final radialGradient = RadialGradient(
-      colors: [
-        color.withOpacity(0.9), // Much more opaque center
-        color.withOpacity(0.7), // Gradual transition
-        color.withOpacity(0.0), // Edge - transparent
-      ],
-      stops: const [0.0, 0.9, 1.0], // Sharper transition at edge
-      radius: 1.05, // Just slightly larger for a minimal edge blur
-    );
-
-    // Draw brush area with minimal blur gradient
+    // Clean anti-aliased edge instead of radial gradient
     final fillPaint = Paint()
-      ..shader = radialGradient.createShader(
-        Rect.fromCircle(center: position, radius: radius * 1.05),
-      )
-      ..style = PaintingStyle.fill;
+      ..color = color.withOpacity(0.3) // Light fill
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    canvas.drawCircle(position, radius * 1.05, fillPaint);
+    // Draw brush area with anti-aliasing
+    canvas.drawCircle(position, radius, fillPaint);
 
-    // Optional subtle border for better visibility on various backgrounds
+    // Draw crisp edge
     final borderPaint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5;
+      ..strokeWidth = 1.0
+      ..isAntiAlias = true;
 
     canvas.drawCircle(position, radius, borderPaint);
 
@@ -57,7 +47,8 @@ class BrushCursorPainter extends CustomPainter {
     final crosshairPaint = Paint()
       ..color = Colors.red.withOpacity(0.7)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size / 20; // Slightly thinner than before
+      ..strokeWidth = size / 20
+      ..isAntiAlias = true;
 
     final crosshairSize = radius * 0.7; // Slightly smaller crosshair
 

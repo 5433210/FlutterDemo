@@ -265,7 +265,7 @@ class CharacterImageProcessor {
     }
   }
 
-  /// 应用擦除
+  /// 应用擦除 - 使用反锯齿边缘替代模糊
   img.Image _applyErase(
     img.Image source,
     List<Map<String, dynamic>> erasePaths,
@@ -303,7 +303,7 @@ class CharacterImageProcessor {
           continue;
         }
 
-        // Skip points completely outside the image (plus brush radius buffer)
+        // Skip points completely outside the image
         if (x < -brushRadius ||
             y < -brushRadius ||
             x >= imageWidth + brushRadius ||
@@ -315,31 +315,36 @@ class CharacterImageProcessor {
         x = x.clamp(0, imageWidth - 1);
         y = y.clamp(0, imageHeight - 1);
 
-        // Apply soft-edge brush with reduced blur radius
-        for (var dy = -brushRadius * 1.05; dy <= brushRadius * 1.05; dy++) {
+        // Apply sharp-edged brush with minimal anti-aliasing at edges
+        for (var dy = -brushRadius; dy <= brushRadius; dy++) {
           // Skip entire row if outside Y boundaries
           final py = (y + dy).round();
           if (py < 0 || py >= imageHeight) continue;
 
-          for (var dx = -brushRadius * 1.05; dx <= brushRadius * 1.05; dx++) {
+          for (var dx = -brushRadius; dx <= brushRadius; dx++) {
             // Skip pixel if outside X boundaries
             final px = (x + dx).round();
             if (px < 0 || px >= imageWidth) continue;
 
             // Distance check
             final distSquared = dx * dx + dy * dy;
-            if (distSquared > brushRadius * brushRadius * 1.1) continue;
+            if (distSquared > brushRadius * brushRadius) continue;
 
-            // Alpha blending calculation - only for pixels in bounds
+            // Calculate anti-aliasing only at the edge of the brush
             double alpha = 1.0;
-            if (distSquared > brushRadius * brushRadius * 0.9) {
-              final dist = math.sqrt(distSquared);
-              alpha = 1.0 - ((dist - brushRadius * 0.95) / (brushRadius * 0.1));
+            final dist = math.sqrt(distSquared);
+
+            // Only apply anti-aliasing within 1 pixel of the edge
+            if (dist > brushRadius - 1.0 && dist <= brushRadius) {
+              alpha = brushRadius - dist; // Linear gradient from 0 to 1
               alpha = alpha.clamp(0.0, 1.0);
             }
 
-            if (alpha > 0.1) {
+            // Apply the color with proper alpha
+            if (alpha > 0) {
               final originalPixel = result.getPixel(px, py);
+
+              // Simple alpha-blend without additional blur
               final blendedR =
                   (brushColor.r * alpha + originalPixel.r * (1 - alpha))
                       .round()

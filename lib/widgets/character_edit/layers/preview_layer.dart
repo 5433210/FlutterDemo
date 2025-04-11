@@ -124,7 +124,7 @@ class _PreviewPainter extends CustomPainter {
     }
   }
 
-  /// 简化的高效绘制方法 - 替换原来的复杂方法
+  /// 简化的高效绘制方法 - 移除模糊效果，改用反锯齿
   void _drawPath(Canvas canvas, PathInfo pathInfo) {
     final path = pathInfo.path;
     final color = pathInfo.brushColor;
@@ -134,28 +134,18 @@ class _PreviewPainter extends CustomPainter {
     final bounds = path.getBounds();
     if (bounds.isEmpty || !bounds.isFinite) return;
 
-    // Main outer glow - soft edge
-    final softPaint = Paint()
-      ..color =
-          color.withOpacity(0.7) // Increased opacity for better visibility
+    // Clean stroke with anti-aliasing
+    final strokePaint = Paint()
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = brushSize
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..maskFilter = const MaskFilter.blur(
-          BlurStyle.normal, 2.0); // Slightly stronger blur
+      ..isAntiAlias = true; // Enable anti-aliasing
+    // Remove maskFilter blur
 
-    // Inner stroke - for solid center
-    final solidPaint = Paint()
-      ..color = color.withOpacity(0.9) // More opaque for the center
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = brushSize * 0.7 // Smaller width for the solid center
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    // Draw the path with both effects
-    canvas.drawPath(path, softPaint); // Outer glow
-    canvas.drawPath(path, solidPaint); // Inner solid stroke
+    // Draw the path with anti-aliasing
+    canvas.drawPath(path, strokePaint);
 
     // For debugging - draw a dot at each endpoint
     if (kDebugMode && DebugFlags.enableEraseDebug) {
