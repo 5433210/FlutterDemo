@@ -822,6 +822,11 @@ class CharacterImageProcessor {
     return false;
   }
 
+  /// Calculate distance between two points (helper for logging)
+  static double _pointDistance(Offset a, Offset b) {
+    return math.sqrt(math.pow(a.dx - b.dx, 2) + math.pow(a.dy - b.dy, 2));
+  }
+
   static List<Offset> _traceContour(img.Image image, List<List<bool>> visited,
       Offset start, bool isInverted) {
     try {
@@ -833,6 +838,7 @@ class CharacterImageProcessor {
 
       // Safety check - ensure starting point is valid
       if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        print('轮廓跟踪终止: 起点 ($x,$y) 超出图像范围 ${image.width}x${image.height}');
         return contour; // Return empty contour for invalid starting point
       }
 
@@ -850,6 +856,7 @@ class CharacterImageProcessor {
       // Limit iterations to prevent infinite loops
       int maxIterations = image.width * image.height;
       int iterations = 0;
+      // print('开始跟踪轮廓: 起点 ($x,$y), 最大迭代次数: $maxIterations');
 
       do {
         contour.add(Offset(x.toDouble(), y.toDouble()));
@@ -881,9 +888,16 @@ class CharacterImageProcessor {
           if (visited[ny][nx]) {
             if (nx == startX && ny == startY && contour.length > 3) {
               contour.add(start); // Close the loop
+              print(
+                  '轮廓跟踪完成: 闭合回到起点 ($startX,$startY), 总点数: ${contour.length}, 迭代次数: $iterations');
               return contour;
             }
-            continue; // Skip already visited pixels
+            // Skip already visited pixels, but log for debugging
+            if (iterations % 100 == 0) {
+              // Only log occasionally to avoid spam
+              // print('轮廓跟踪中: 点 ($nx,$ny) 已被访问过，尝试其他方向');
+            }
+            continue;
           }
 
           // Only consider points that are part of a contour
@@ -896,10 +910,38 @@ class CharacterImageProcessor {
         }
 
         iterations++;
-        if (!found || iterations > maxIterations || contour.length > 10000) {
-          break; // Prevent infinite loops and excessively long contours
+
+        // Log diagnostic information if no next point is found
+        if (!found) {
+          if (contour.length > 4)
+            print(
+                '轮廓跟踪终止: 在点 ($x,$y) 未找到下一个轮廓点，已收集 ${contour.length} 个点，迭代次数: $iterations');
+          break;
+        }
+
+        // Check for exceeding iteration limit or contour size limit
+        if (iterations > maxIterations) {
+          print(
+              '轮廓跟踪终止: 超过最大迭代次数 $maxIterations，终止点 ($x,$y)，总点数: ${contour.length}');
+          break;
+        }
+
+        if (contour.length > 100000) {
+          print(
+              '轮廓跟踪终止: 轮廓点数过多 (${contour.length})，终止点 ($x,$y)，迭代次数: $iterations');
+          break;
         }
       } while (true);
+
+      // If we exited the loop without returning, log the final contour state
+      if (contour.isNotEmpty) {
+        final lastPoint = contour.last;
+        if (contour.length > 4)
+          print(
+              '轮廓跟踪结束: 结束点 (${lastPoint.dx.toInt()},${lastPoint.dy.toInt()}), 总点数: ${contour.length}, 距离起点: ${_pointDistance(lastPoint, start).toStringAsFixed(1)} 像素');
+      } else {
+        print('轮廓跟踪异常: 未能生成有效轮廓');
+      }
 
       return contour;
     } catch (e, stackTrace) {

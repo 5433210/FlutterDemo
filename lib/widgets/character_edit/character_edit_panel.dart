@@ -10,6 +10,7 @@ import 'package:image/image.dart' as img;
 
 import '../../application/services/image/character_image_processor.dart';
 import '../../domain/models/character/character_region.dart';
+import '../../domain/models/character/detected_outline.dart';
 import '../../domain/models/character/processing_options.dart';
 import '../../domain/models/character/processing_result.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -19,6 +20,7 @@ import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/erase_providers.dart';
+import '../../presentation/providers/character/erase_state.dart';
 import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
@@ -765,6 +767,53 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     );
   }
 
+  /// Calculate outline for SVG generation if needed
+  Future<DetectedOutline?> _calculateOutlineForSvg(
+      Uint8List imageData, EraseState eraseState) async {
+    try {
+      // Get image processor and create options for contour detection
+      final imageProcessor = ref.read(characterImageProcessorProvider);
+      final processingOptions = ProcessingOptions(
+        inverted: eraseState.imageInvertMode,
+        threshold: 128.0,
+        noiseReduction: 0.5,
+        showContour: true, // Force contour detection
+        brushSize: eraseState.brushSize,
+      );
+
+      // Create full image rectangle
+      final boundingRect = widget.selectedRegion.rect;
+
+      // Prepare erase data for contour calculation
+      final pathRenderData = ref.read(erase.pathRenderDataProvider);
+      List<Map<String, dynamic>> erasePaths = [];
+      if (pathRenderData.completedPaths.isNotEmpty) {
+        erasePaths = pathRenderData.completedPaths.map((p) {
+          final points = _extractPointsFromPath(p.path);
+          return {
+            'brushSize': p.brushSize,
+            'brushColor': p.brushColor.value,
+            'points': points,
+          };
+        }).toList();
+      }
+
+      // Process image for contour detection
+      final preview = await imageProcessor.previewProcessing(
+        imageData,
+        boundingRect,
+        processingOptions,
+        erasePaths,
+        rotation: widget.selectedRegion.rotation,
+      );
+
+      return preview.outline;
+    } catch (e) {
+      AppLogger.error('计算SVG轮廓失败', error: e);
+      return null;
+    }
+  }
+
   // 创建缩略图的辅助方法
   Future<Uint8List?> _createThumbnail(Uint8List imageData) async {
     try {
@@ -961,7 +1010,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         'imageHeight': processedImage.height,
       });
 
-      // 创建处理结果
+      // Create processing result object
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
       final eraseState = ref.read(erase.eraseStateProvider);
       final List<Map<String, dynamic>> eraseData = [];
@@ -1028,11 +1077,37 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       // 创建缩略图
       final thumbnail = await _createThumbnail(uint8List);
 
-      // 创建处理结果对象，包含所有必要的图像数据
+      // Get the canvas state and outline for SVG generation
+      final canvasState = _canvasKey.currentState;
+      DetectedOutline? outline = canvasState?.outline;
+
+      // Ensure we have an outline for SVG generation
+      if (outline == null || outline.contourPoints.isEmpty) {
+        AppLogger.debug('保存时没有有效轮廓，重新计算轮廓');
+        // Force outline calculation if needed
+        outline = await _calculateOutlineForSvg(uint8List, eraseState);
+      }
+
+      // Generate SVG from outline
+      String? svgOutline;
+      if (outline != null && outline.contourPoints.isNotEmpty) {
+        final imageProcessor = ref.read(characterImageProcessorProvider);
+        svgOutline = imageProcessor.generateSvgOutline(
+            outline, eraseState.imageInvertMode);
+        AppLogger.debug('生成SVG轮廓数据', data: {
+          'svgLength': svgOutline.length,
+          'contourPaths': outline.contourPoints.length,
+        });
+      } else {
+        AppLogger.warning('未能生成SVG轮廓，轮廓数据无效');
+      }
+
+      // Create processing result with SVG outline
       final processingResult = ProcessingResult(
         originalCrop: uint8List,
         binaryImage: uint8List,
         thumbnail: thumbnail ?? uint8List,
+        svgOutline: svgOutline, // Include the SVG outline
         boundingBox: selectedRegion.rect,
       );
 

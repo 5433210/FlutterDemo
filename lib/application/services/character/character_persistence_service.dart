@@ -232,8 +232,15 @@ class CharacterPersistenceService {
             await _storageService.saveBinaryImage(id, newResult.binaryImage);
             await _storageService.saveThumbnail(id, newResult.thumbnail);
 
+            // Always save SVG outline if available, regardless of showContour setting
             if (newResult.svgOutline != null) {
               await _storageService.saveSvgOutline(id, newResult.svgOutline!);
+              AppLogger.debug('字符SVG轮廓保存成功', data: {
+                'characterId': id,
+                'svgLength': newResult.svgOutline!.length,
+              });
+            } else {
+              AppLogger.warning('处理结果中没有SVG轮廓数据', data: {'characterId': id});
             }
 
             AppLogger.debug('字符图像文件更新成功', data: {'characterId': id});

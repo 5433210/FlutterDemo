@@ -70,6 +70,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   DetectedOutline? _outline;
 
+  // Add getter for the current outline to allow access from outside
+  DetectedOutline? get outline => _outline;
+
   /// 返回当前的坐标转换器
   CoordinateTransformer get transformer => _transformer;
 

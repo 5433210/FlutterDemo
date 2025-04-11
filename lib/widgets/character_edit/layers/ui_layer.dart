@@ -281,8 +281,8 @@ class _UIPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // Only print in extreme debug mode
     if (kDebugMode && DebugFlags.enableEraseDebug && false) {
-      print(
-          'UILayer绘制 - outline: ${outline != null}, imageSize: ${imageSize != null}');
+      // print(
+      //     'UILayer绘制 - outline: ${outline != null}, imageSize: ${imageSize != null}');
     }
 
     if (outline != null && imageSize != null) {
@@ -347,7 +347,7 @@ class _UIPainter extends CustomPainter {
       return;
     }
 
-    print('开始绘制轮廓, 共 ${outline!.contourPoints.length} 条路径');
+    // print('开始绘制轮廓, 共 ${outline!.contourPoints.length} 条路径');
 
     // 计算正确的缩放和偏移以确保轮廓与图像对齐
     final scaleX = size.width / imageSize!.width;
@@ -420,7 +420,7 @@ class _UIPainter extends CustomPainter {
       contourCount++;
     }
 
-    print('成功绘制了 $contourCount 个轮廓，共 $pointCount 个轮廓点');
+    // print('成功绘制了 $contourCount 个轮廓，共 $pointCount 个轮廓点');
 
     canvas.restore();
   }
