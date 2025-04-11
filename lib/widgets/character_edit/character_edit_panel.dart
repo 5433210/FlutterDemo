@@ -804,7 +804,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         boundingRect,
         processingOptions,
         erasePaths,
-        rotation: widget.selectedRegion.rotation,
+        rotation: 0.0,
       );
 
       return preview.outline;

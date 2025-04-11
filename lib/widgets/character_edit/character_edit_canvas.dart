@@ -542,7 +542,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             fullImageRect,
             options,
             erasePaths,
-            rotation: widget.region?.rotation ?? 0.0,
+            rotation: 0.0, // 图像内容已经旋转过，不需要再次旋转
           ),
           const Duration(seconds: 5));
 
