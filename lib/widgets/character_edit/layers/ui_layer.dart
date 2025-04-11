@@ -22,8 +22,7 @@ class BrushCursorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size canvasSize) {
-    // Use the full brush size as the diameter (not radius)
-    final radius = size / 2;
+    final radius = size;
 
     // Clean anti-aliased edge instead of radial gradient
     final fillPaint = Paint()
