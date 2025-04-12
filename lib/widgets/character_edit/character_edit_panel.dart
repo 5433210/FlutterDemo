@@ -5,6 +5,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
@@ -59,6 +60,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   final TextEditingController _characterController = TextEditingController();
   Timer? _progressTimer;
   final FocusNode _inputFocusNode = FocusNode();
+  final FocusNode _mainPanelFocusNode = FocusNode(); // 添加主面板的焦点节点
   bool _isEditing = false;
 
   // State for internal image loading
@@ -135,13 +137,30 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       }
     });
 
-    return Shortcuts(
-      shortcuts: _shortcuts,
-      child: Actions(
-        actions: _actions,
-        child: Focus(
-          autofocus: true,
-          child: _buildContent(),
+    return FocusScope(
+      autofocus: true,
+      child: Shortcuts(
+        shortcuts: _shortcuts,
+        child: Actions(
+          actions: _actions,
+          child: Focus(
+            focusNode: _mainPanelFocusNode, // 使用我们定义的主面板焦点节点
+            autofocus: true,
+            // Add key event handler to catch all key events and log them for debugging
+            onKeyEvent: (FocusNode node, KeyEvent event) {
+              AppLogger.debug('接收到键盘事件', data: {
+                'type': event.runtimeType.toString(),
+                'logicalKey': event.logicalKey.keyLabel,
+                'physicalKey': event.physicalKey.usbHidUsage.toString(),
+                'character': event.character,
+                'isControlPressed': HardwareKeyboard.instance.isControlPressed,
+                'isShiftPressed': HardwareKeyboard.instance.isShiftPressed,
+                'isAltPressed': HardwareKeyboard.instance.isAltPressed,
+              });
+              return KeyEventResult.ignored; // Let the event propagate
+            },
+            child: _buildContent(),
+          ),
         ),
       ),
     );
@@ -184,10 +203,13 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   @override
   void dispose() {
     try {
+      // Remove keyboard handler
+      ServicesBinding.instance.keyboard.removeHandler(_handleKeyboardEvent);
+
       _loadedImage?.dispose();
       _characterController.dispose();
       _inputFocusNode.dispose();
-      // Consider clearing providers related to THIS panel instance if needed
+      _mainPanelFocusNode.dispose(); // 确保释放主面板焦点节点资源
     } catch (e) {
       AppLogger.error('Character edit panel dispose error: $e');
     } finally {
@@ -200,6 +222,10 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     super.initState();
     _characterController.text = widget.selectedRegion.character;
     _initiateImageLoading();
+
+    // Set up keyboard listener for save shortcut
+    ServicesBinding.instance.keyboard.addHandler(_handleKeyboardEvent);
+
     // Clear erase state on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(erase.eraseStateProvider.notifier).clear();
@@ -373,7 +399,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.close, size: 16),
-                onPressed: () => setState(() => _isEditing = false),
+                onPressed: _restoreMainPanelFocus,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -392,7 +418,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               counterText: '',
               border: OutlineInputBorder(),
             ),
-            onSubmitted: (_) => setState(() => _isEditing = false),
+            onSubmitted: (_) => _restoreMainPanelFocus(),
           ),
         ],
       ),
@@ -990,6 +1016,103 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     ref.read(erase.eraseStateProvider.notifier).updatePath(position);
   }
 
+  // Global keyboard event handler for all shortcuts
+  bool _handleKeyboardEvent(KeyEvent event) {
+    if (!mounted) return false;
+
+    // Only process key down events
+    if (event is! KeyDownEvent) return false;
+
+    // Log the keyboard event for debugging
+    AppLogger.debug('全局键盘事件处理器收到事件', data: {
+      'keyEvent': event.runtimeType.toString(),
+      'logicalKey': event.logicalKey.keyLabel,
+      'isControlPressed': HardwareKeyboard.instance.isControlPressed,
+      'isShiftPressed': HardwareKeyboard.instance.isShiftPressed,
+    });
+
+    // // Handle Ctrl+S (save) shortcut
+    // if (HardwareKeyboard.instance.isControlPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyS) {
+    //   final saveState = ref.read(characterSaveNotifierProvider);
+    //   if (!saveState.isSaving) {
+    //     _handleSave();
+    //     return true; // Prevent further processing
+    //   }
+    // }
+
+    // // Handle Ctrl+Z (undo) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     !HardwareKeyboard.instance.isShiftPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyZ) {
+    //   final eraseState = ref.read(erase.eraseStateProvider);
+    //   if (eraseState.canUndo) {
+    //     ref.read(erase.eraseStateProvider.notifier).undo();
+    //     return true;
+    //   }
+    // }
+
+    // // Handle Ctrl+Shift+Z (redo) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     HardwareKeyboard.instance.isShiftPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyZ) {
+    //   final eraseState = ref.read(erase.eraseStateProvider);
+    //   if (eraseState.canRedo) {
+    //     ref.read(erase.eraseStateProvider.notifier).redo();
+    //     return true;
+    //   }
+    // }
+
+    // // Handle Ctrl+E (open input) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyE &&
+    //     !_isEditing) {
+    //   setState(() => _isEditing = true);
+    //   Future.delayed(const Duration(milliseconds: 50), () {
+    //     _inputFocusNode.requestFocus();
+    //   });
+    //   return true;
+    // }
+
+    // // Handle Ctrl+I (toggle invert) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     !HardwareKeyboard.instance.isShiftPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyI) {
+    //   ref.read(erase.eraseStateProvider.notifier).toggleReverse();
+    //   return true;
+    // }
+
+    // // Handle Ctrl+Shift+I (toggle image invert) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     HardwareKeyboard.instance.isShiftPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyI) {
+    //   ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+    //   return true;
+    // }
+
+    // // Handle Ctrl+O (toggle contour) shortcut
+    // else if (HardwareKeyboard.instance.isControlPressed &&
+    //     event.logicalKey == LogicalKeyboardKey.keyO) {
+    //   ref.read(erase.eraseStateProvider.notifier).toggleContour();
+    //   return true;
+    // }
+
+    // // Handle Ctrl+1~3 (brush size presets) shortcuts
+    // else if (HardwareKeyboard.instance.isControlPressed) {
+    //   // Check for digit keys 1-3
+    //   for (int i = 0; i < EditorShortcuts.brushSizePresets.length; i++) {
+    //     if (event.logicalKey == LogicalKeyboardKey.digit1) {
+    //       ref
+    //           .read(erase.eraseStateProvider.notifier)
+    //           .setBrushSize(EditorShortcuts.brushSizes[i]);
+    //       return true;
+    //     }
+    //   }
+    // }
+
+    return false; // Let other handlers process this event
+  }
+
   Future<void> _handleSave() async {
     // 验证输入
     final validation =
@@ -1219,6 +1342,28 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         _loadedImage = null;
       });
     }
+  }
+
+  // 确保在关闭或提交输入后触发主面板焦点
+  void _restoreMainPanelFocus() {
+    setState(() => _isEditing = false);
+    // 延迟执行以确保状态更新后再处理焦点
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // 使用单独的加延迟以确保UI渲染完成
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted) {
+            _mainPanelFocusNode.requestFocus();
+            AppLogger.debug('重新聚焦到主面板，激活键盘快捷键');
+
+            // 强制全局键盘事件处理的激活状态
+            ServicesBinding.instance.keyboard
+                .removeHandler(_handleKeyboardEvent);
+            ServicesBinding.instance.keyboard.addHandler(_handleKeyboardEvent);
+          }
+        });
+      }
+    });
   }
 }
 
