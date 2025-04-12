@@ -172,6 +172,40 @@ class _ImageViewState extends ConsumerState<ImageView>
             });
           }
 
+          // 添加处理：当窗口大小变化且处于adjusting状态时，更新选框
+          if (_isAdjusting && _originalRegion != null && _transformer != null) {
+            // 使用WidgetsBinding确保在布局完成后更新
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!_mounted) return;
+
+              // 重新计算选区在新窗口大小下的位置和尺寸
+              final newRect =
+                  _transformer!.imageRectToViewportRect(_originalRegion!.rect);
+
+              // 选区发生变化时更新UI
+              if (_adjustingRect == null ||
+                  (newRect.left - _adjustingRect!.left).abs() > 0.1 ||
+                  (newRect.top - _adjustingRect!.top).abs() > 0.1 ||
+                  (newRect.width - _adjustingRect!.width).abs() > 0.1 ||
+                  (newRect.height - _adjustingRect!.height).abs() > 0.1) {
+                setState(() {
+                  _adjustingRect = newRect;
+                  if (_guideLines != null) {
+                    _guideLines = _calculateGuideLines(newRect);
+                  }
+                });
+
+                AppLogger.debug('窗口大小变化，更新选区', data: {
+                  'scale': _transformer!.currentScale.toStringAsFixed(2),
+                  'rect':
+                      '${newRect.width.toStringAsFixed(1)}x${newRect.height.toStringAsFixed(1)}',
+                  'position':
+                      '${newRect.left.toStringAsFixed(1)},${newRect.top.toStringAsFixed(1)}'
+                });
+              }
+            });
+          }
+
           return Material(
             // 添加Material widget以支持elevation效果
             color: Colors.transparent,
