@@ -164,9 +164,9 @@ class CharacterImageProcessor {
     Uint8List imageData,
     Rect region,
     ProcessingOptions options,
-    List<Map<String, dynamic>>? erasePaths, {
-    double rotation = 0.0,
-  }) async {
+    List<Map<String, dynamic>>? erasePaths,
+    double rotation,
+  ) async {
     final params = ProcessingParams(
       imageData: imageData,
       region: region,

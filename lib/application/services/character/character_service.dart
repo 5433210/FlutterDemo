@@ -82,6 +82,7 @@ class CharacterService {
         region,
         options,
         eraseData, // 新创建的字符没有擦除点
+        rotation,
       );
 
       AppLogger.debug('字符区域处理完成', data: {
@@ -309,11 +310,11 @@ class CharacterService {
 
       // 如果提供了处理结果，就直接使用，否则处理图像
       final result = await _imageProcessor.processForSave(
-        imageData,
-        region.rect,
-        options,
-        region.eraseData, // 新创建的字符没有擦除点
-      );
+          imageData,
+          region.rect,
+          options,
+          region.eraseData, // 新创建的字符没有擦除点
+          region.rotation);
 
       // 更新字符和处理结果
       await _persistenceService.updateCharacter(
