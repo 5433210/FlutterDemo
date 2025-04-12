@@ -96,6 +96,8 @@ class _ImageViewState extends ConsumerState<ImageView>
   // 悬停的控制点索引
   int? _hoveredHandleIndex;
 
+  Size _lastViewportSize = Size.zero;
+
   @override
   Widget build(BuildContext context) {
     final imageState = ref.watch(workImageProvider);
@@ -177,31 +179,12 @@ class _ImageViewState extends ConsumerState<ImageView>
             // 使用WidgetsBinding确保在布局完成后更新
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!_mounted) return;
-
-              // 重新计算选区在新窗口大小下的位置和尺寸
-              final newRect =
-                  _transformer!.imageRectToViewportRect(_originalRegion!.rect);
-
-              // 选区发生变化时更新UI
-              if (_adjustingRect == null ||
-                  (newRect.left - _adjustingRect!.left).abs() > 0.1 ||
-                  (newRect.top - _adjustingRect!.top).abs() > 0.1 ||
-                  (newRect.width - _adjustingRect!.width).abs() > 0.1 ||
-                  (newRect.height - _adjustingRect!.height).abs() > 0.1) {
-                setState(() {
-                  _adjustingRect = newRect;
-                  if (_guideLines != null) {
-                    _guideLines = _calculateGuideLines(newRect);
-                  }
-                });
-
-                AppLogger.debug('窗口大小变化，更新选区', data: {
-                  'scale': _transformer!.currentScale.toStringAsFixed(2),
-                  'rect':
-                      '${newRect.width.toStringAsFixed(1)}x${newRect.height.toStringAsFixed(1)}',
-                  'position':
-                      '${newRect.left.toStringAsFixed(1)},${newRect.top.toStringAsFixed(1)}'
-                });
+              final currentViewportSize = viewportSize;
+              final hasViewportChanged =
+                  _lastViewportSize != currentViewportSize;
+              if (hasViewportChanged) {
+                _lastViewportSize = currentViewportSize;
+                _updateSelectionBoxAfterLayoutChange();
               }
             });
           }
@@ -2052,6 +2035,50 @@ class _ImageViewState extends ConsumerState<ImageView>
     });
 
     // 不再实时更新预览，而只在onPanEnd时更新右侧预览区
+  }
+
+  // 处理窗口大小变化时的选框更新
+  void _updateSelectionBoxAfterLayoutChange() {
+    if (!_isAdjusting || _originalRegion == null || _transformer == null)
+      return;
+
+    try {
+      // 重新计算选区在新窗口大小下的位置和尺寸
+      final newRect =
+          _transformer!.imageRectToViewportRect(_originalRegion!.rect);
+
+      // 定义最小变化阈值，低于此值不进行更新
+      const threshold = 0.1;
+
+      // 选区发生显著变化时才更新UI，避免不必要的重绘
+      final bool hasSignificantChange = _adjustingRect == null ||
+          (newRect.left - _adjustingRect!.left).abs() > threshold ||
+          (newRect.top - _adjustingRect!.top).abs() > threshold ||
+          (newRect.width - _adjustingRect!.width).abs() > threshold ||
+          (newRect.height - _adjustingRect!.height).abs() > threshold;
+
+      if (hasSignificantChange) {
+        setState(() {
+          _adjustingRect = newRect;
+          if (_guideLines != null) {
+            _guideLines = _calculateGuideLines(newRect);
+          }
+        });
+
+        AppLogger.debug('窗口大小变化，更新选区', data: {
+          'scale': _transformer!.currentScale.toStringAsFixed(2),
+          'rect':
+              '${newRect.width.toStringAsFixed(1)}x${newRect.height.toStringAsFixed(1)}',
+          'position':
+              '${newRect.left.toStringAsFixed(1)},${newRect.top.toStringAsFixed(1)}'
+        });
+      }
+    } catch (e) {
+      AppLogger.error('窗口大小变化时更新选区失败', error: e, data: {
+        'regionId': _adjustingRegionId,
+        'originalRect': _originalRegion?.rect.toString() ?? 'null'
+      });
+    }
   }
 
   /// 更新或创建CoordinateTransformer
