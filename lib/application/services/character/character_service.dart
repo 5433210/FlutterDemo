@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import '../../../domain/models/character/character_entity.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
+import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/viewmodels/character_collection_viewmodel.dart';
@@ -15,18 +17,18 @@ import '../../providers/repository_providers.dart';
 import '../../providers/service_providers.dart';
 import '../image/character_image_processor.dart';
 import '../storage/cache_manager.dart';
-import 'character_persistence_service.dart';
+import '../storage/character_storage_service.dart';
 
 final characterServiceProvider = Provider<CharacterService>((ref) {
   final repository = ref.watch(characterRepositoryProvider);
   final imageProcessor = ref.watch(characterImageProcessorProvider);
-  final persistenceService = ref.watch(characterPersistenceServiceProvider);
   final cacheManager = ref.watch(cacheManagerProvider);
+  final storageService = ref.watch(characterStorageServiceProvider);
 
   return CharacterService(
     repository: repository,
     imageProcessor: imageProcessor,
-    persistenceService: persistenceService,
+    storageService: storageService,
     cacheManager: cacheManager,
   );
 });
@@ -34,17 +36,17 @@ final characterServiceProvider = Provider<CharacterService>((ref) {
 class CharacterService {
   final CharacterRepository _repository;
   final CharacterImageProcessor _imageProcessor;
-  final CharacterPersistenceService _persistenceService;
+  final CharacterStorageService _storageService;
   final CacheManager _cacheManager;
 
   CharacterService({
     required CharacterRepository repository,
     required CharacterImageProcessor imageProcessor,
-    required CharacterPersistenceService persistenceService,
+    required CharacterStorageService storageService,
     required CacheManager cacheManager,
   })  : _repository = repository,
         _imageProcessor = imageProcessor,
-        _persistenceService = persistenceService,
+        _storageService = storageService,
         _cacheManager = cacheManager;
 
   /// 清理缓存
@@ -108,11 +110,9 @@ class CharacterService {
       });
 
       // 保存字符和图像
-      final characterEntity = await _persistenceService.createCharacter(
-        characterRegion,
-        result,
-        workId,
-      );
+      final characterEntity =
+          await _saveCharacterWithImages(characterRegion, result, workId);
+
       AppLogger.debug('字符和图像保存完成', data: {'characterId': characterEntity.id});
 
       // 缓存图像数据
@@ -144,7 +144,7 @@ class CharacterService {
 
       // 批量删除文件
       for (final id in ids) {
-        await _persistenceService.deleteCharacter(id);
+        await _deleteCharacterImages(id);
         _cacheManager.invalidate(id);
       }
     } catch (e) {
@@ -160,7 +160,7 @@ class CharacterService {
       await _repository.delete(id);
 
       // 删除相关文件
-      await _persistenceService.deleteCharacter(id);
+      await _deleteCharacterImages(id);
 
       // 清除缓存
       _cacheManager.invalidate(id);
@@ -195,18 +195,46 @@ class CharacterService {
         return cached;
       }
 
-      // 从仓库获取
-      final imageData = await _persistenceService.getCharacterImage(id, type);
-
-      // 缓存结果
-      if (imageData != null) {
-        await _cacheManager.put(cacheKey, imageData);
+      // 从文件系统获取
+      String? filePath;
+      switch (type) {
+        case CharacterImageType.original:
+          filePath = await _storageService.getOriginalImagePath(id);
+          break;
+        case CharacterImageType.binary:
+          filePath = await _storageService.getBinaryImagePath(id);
+          break;
+        case CharacterImageType.thumbnail:
+          filePath = await _storageService.getThumbnailPath(id);
+          break;
       }
 
-      return imageData;
+      final file = File(filePath);
+      if (await file.exists()) {
+        final imageData = await file.readAsBytes();
+
+        // 缓存结果
+        if (imageData.isNotEmpty) {
+          await _cacheManager.put(cacheKey, imageData);
+        }
+
+        return imageData;
+      }
+
+      return null;
     } catch (e) {
       print('获取字符图像失败: $e');
       rethrow;
+    }
+  }
+
+  /// 获取字符图像路径 (从CharacterPersistenceService集成的功能)
+  Future<String?> getCharacterImagePath(String id) async {
+    try {
+      return await _storageService.getOriginalImagePath(id);
+    } catch (e) {
+      AppLogger.error('获取字符图像路径失败', error: e, data: {'characterId': id});
+      return null;
     }
   }
 
@@ -214,8 +242,7 @@ class CharacterService {
   Future<String?> getCharacterThumbnailPath(String characterId) async {
     try {
       print('CharacterService - 获取缩略图路径: $characterId');
-      // 从持久化服务获取缩略图路径
-      return await _persistenceService.getThumbnailPath(characterId);
+      return await _storageService.getThumbnailPath(characterId);
     } catch (e) {
       AppLogger.error('获取缩略图路径失败',
           error: e, data: {'characterId': characterId});
@@ -241,8 +268,7 @@ class CharacterService {
       // 将字符实体转换为视图模型
       final futures = characters.map((entity) async {
         // 构建缩略图路径
-        final thumbnailPath =
-            await _persistenceService.getThumbnailPath(entity.id);
+        final thumbnailPath = await _storageService.getThumbnailPath(entity.id);
 
         return CharacterViewModel(
           id: entity.id,
@@ -270,8 +296,7 @@ class CharacterService {
 
       // 将结果转换为视图模型
       final futures = characters.map((entity) async {
-        final thumbnailPath =
-            await _persistenceService.getThumbnailPath(entity.id);
+        final thumbnailPath = await _storageService.getThumbnailPath(entity.id);
 
         return CharacterViewModel(
           id: entity.id,
@@ -317,7 +342,7 @@ class CharacterService {
           region.rotation);
 
       // 更新字符和处理结果
-      await _persistenceService.updateCharacter(
+      await _updateCharacterWithImages(
         id,
         region.copyWith(character: character),
         result,
@@ -332,7 +357,7 @@ class CharacterService {
         _cacheManager.invalidate('${id}_thumbnail'),
       ]);
 
-      final thumbnailPath = await _persistenceService.getThumbnailPath(id);
+      final thumbnailPath = await _storageService.getThumbnailPath(id);
       // Clear the UI image cache of the thumbnail file
       ImageCacheUtil.evictImage(thumbnailPath);
 
@@ -349,6 +374,166 @@ class CharacterService {
       AppLogger.error('更新字符失败',
           error: e, data: {'characterId': id, 'character': character});
       rethrow;
+    }
+  }
+
+  /// 删除字符图像文件 (从CharacterPersistenceService集成的功能)
+  Future<void> _deleteCharacterImages(String id) async {
+    try {
+      await _storageService.deleteCharacterImage(id);
+    } catch (e) {
+      AppLogger.error('删除字符图像文件失败', error: e, data: {'characterId': id});
+      rethrow;
+    }
+  }
+
+  /// 保存字符数据及相关图像 (从CharacterPersistenceService集成的功能)
+  Future<CharacterEntity> _saveCharacterWithImages(
+      CharacterRegion region, ResultForSave result, String workId) async {
+    try {
+      // 保存原始长宽比图像
+      await _storageService.saveOriginalImage(region.id, result.originalCrop);
+      await _storageService.saveBinaryImage(region.id, result.binaryImage);
+
+      // 保存正方形图像
+      await _storageService.saveSquareBinary(region.id, result.squareBinary);
+      await _storageService.saveThumbnail(region.id, result.thumbnail);
+
+      // 保存SVG轮廓
+      if (result.svgOutline != null) {
+        await _storageService.saveSvgOutline(region.id, result.svgOutline!);
+      }
+
+      // 保存方形SVG轮廓
+      if (result.squareSvgOutline != null) {
+        await _storageService.saveSquareSvgOutline(
+            region.id, result.squareSvgOutline!);
+      }
+
+      // 保存透明PNG
+      if (result.transparentPng != null) {
+        await _storageService.saveTransparentPng(
+            region.id, result.transparentPng!);
+      }
+
+      // 保存方形透明PNG
+      if (result.squareTransparentPng != null) {
+        await _storageService.saveSquareTransparentPng(
+            region.id, result.squareTransparentPng!);
+      }
+
+      // 创建实体并保存到数据库
+      final entity = CharacterEntity.create(
+        workId: workId,
+        pageId: region.pageId,
+        region: region.copyWith(characterId: region.id),
+        character: region.character,
+      );
+
+      return await _repository.create(entity);
+    } catch (e) {
+      AppLogger.error('保存字符失败', error: e);
+      rethrow;
+    }
+  }
+
+  /// 更新字符数据 (从CharacterPersistenceService集成的功能)
+  Future<void> _updateCharacterWithImages(String id, CharacterRegion region,
+      ResultForSave? newResult, String character) async {
+    try {
+      // 使用更新后的字符内容和时间戳
+      final now = DateTime.now();
+      final updatedRegion = region.copyWith(
+        character: character,
+        updateTime: now,
+      );
+
+      // 如果有新的处理结果，则更新图像文件
+      if (newResult != null) {
+        // Explicitly check each component of the result
+        bool hasValidOriginal = newResult.originalCrop.isNotEmpty;
+        bool hasValidBinary = newResult.binaryImage.isNotEmpty;
+        bool hasValidSquareBinary = newResult.squareBinary.isNotEmpty;
+        bool hasValidThumbnail = newResult.thumbnail.isNotEmpty;
+
+        AppLogger.debug('更新字符图像文件检查', data: {
+          'characterId': id,
+          'hasValidOriginal': hasValidOriginal,
+          'hasValidBinary': hasValidBinary,
+          'hasValidSquareBinary': hasValidSquareBinary,
+          'hasValidThumbnail': hasValidThumbnail,
+          'originalLength': newResult.originalCrop.length,
+          'binaryLength': newResult.binaryImage.length,
+          'thumbnailLength': newResult.thumbnail.length,
+        });
+
+        if (hasValidOriginal && hasValidBinary && hasValidThumbnail) {
+          try {
+            // 保存原始长宽比图像
+            await _storageService.saveOriginalImage(id, newResult.originalCrop);
+            await _storageService.saveBinaryImage(id, newResult.binaryImage);
+
+            // 保存正方形图像
+            await _storageService.saveSquareBinary(id, newResult.squareBinary);
+            await _storageService.saveThumbnail(id, newResult.thumbnail);
+
+            // 保存SVG轮廓
+            if (newResult.svgOutline != null) {
+              await _storageService.saveSvgOutline(id, newResult.svgOutline!);
+            }
+
+            // 保存方形SVG轮廓
+            if (newResult.squareSvgOutline != null) {
+              await _storageService.saveSquareSvgOutline(
+                  id, newResult.squareSvgOutline!);
+            }
+
+            // 保存透明PNG
+            if (newResult.transparentPng != null) {
+              await _storageService.saveTransparentPng(
+                  id, newResult.transparentPng!);
+            }
+
+            // 保存方形透明PNG
+            if (newResult.squareTransparentPng != null) {
+              await _storageService.saveSquareTransparentPng(
+                  id, newResult.squareTransparentPng!);
+            }
+
+            AppLogger.debug('字符图像文件更新成功', data: {'characterId': id});
+          } catch (e) {
+            AppLogger.error('保存图像文件失败', error: e, data: {'characterId': id});
+            throw Exception('保存图像文件失败: $e');
+          }
+        } else {
+          AppLogger.warning('处理结果包含无效数据，跳过图像更新', data: {
+            'characterId': id,
+            'originalValid': hasValidOriginal,
+            'binaryValid': hasValidBinary,
+            'thumbnailValid': hasValidThumbnail,
+          });
+        }
+      } else {
+        AppLogger.debug('没有新的图像数据，保持原有图像', data: {'characterId': id});
+      }
+
+      // Update character entity in the database
+      final characterEntity = await _repository.findById(id);
+      if (characterEntity == null) {
+        throw Exception('Character not found: $id');
+      }
+
+      final updatedEntity = characterEntity.copyWith(
+        character: character,
+        region: updatedRegion.copyWith(isModified: false, isSelected: false),
+        updateTime: now,
+      );
+
+      // 更新区域数据
+      await _repository.save(updatedEntity);
+    } catch (e) {
+      AppLogger.error('更新字符失败', error: e, data: {'characterId': id});
+      throw Exception('更新字符失败: $e');
     }
   }
 }

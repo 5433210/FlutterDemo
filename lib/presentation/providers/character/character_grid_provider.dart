@@ -1,4 +1,4 @@
-import 'package:demo/application/services/character/character_persistence_service.dart';
+import 'package:demo/application/services/storage/character_storage_service.dart';
 import 'package:demo/presentation/providers/work_detail_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,16 +11,17 @@ final characterGridProvider =
     StateNotifierProvider<CharacterGridNotifier, CharacterGridState>((ref) {
   final repository = ref.watch(characterRepositoryProvider);
   final workId = ref.watch(workDetailProvider).work?.id;
-  final persistenceService = ref.watch(characterPersistenceServiceProvider);
-  return CharacterGridNotifier(repository, workId!, persistenceService);
+  final storageService = ref.watch(characterStorageServiceProvider);
+
+  return CharacterGridNotifier(repository, workId!, storageService);
 });
 
 class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
   final CharacterRepository _repository;
-  final CharacterPersistenceService _persistenceService;
+  final CharacterStorageService _storageService;
   final String workId;
 
-  CharacterGridNotifier(this._repository, this.workId, this._persistenceService)
+  CharacterGridNotifier(this._repository, this.workId, this._storageService)
       : super(const CharacterGridState()) {
     // 初始化时加载数据
     loadCharacters();
@@ -70,7 +71,7 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
       // 获取缩略图路径
       for (int i = 0; i < viewModels.length; i++) {
         final vm = viewModels[i];
-        final path = await _persistenceService.getThumbnailPath(vm.id);
+        final path = await _storageService.getThumbnailPath(vm.id);
         viewModels[i] = vm.copyWith(thumbnailPath: path);
       }
 
