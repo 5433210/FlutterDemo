@@ -53,15 +53,24 @@ class EditorShortcuts {
     control: true,
   );
 
-  // 切换笔刷大小预设快捷键
-  static const List<SingleActivator> brushSizePresets = [
-    SingleActivator(LogicalKeyboardKey.digit1, control: true),
-    SingleActivator(LogicalKeyboardKey.digit2, control: true),
-    SingleActivator(LogicalKeyboardKey.digit3, control: true),
-  ];
+  // 增加笔刷大小快捷键
+  static const increaseBrushSize = SingleActivator(
+    LogicalKeyboardKey.equal, // 加号键
+    control: true,
+  );
 
-  // 笔刷大小预设值
-  static const List<double> brushSizes = [5.0, 15.0, 30.0];
+  // 减小笔刷大小快捷键
+  static const decreaseBrushSize = SingleActivator(
+    LogicalKeyboardKey.minus, // 减号键
+    control: true,
+  );
+
+  // 笔刷大小调整步长
+  static const double brushSizeStep = 5.0;
+
+  // 笔刷大小最小值和最大值
+  static const double minBrushSize = 1.0;
+  static const double maxBrushSize = 50.0;
 
   // 获取快捷键文本描述
   static String getShortcutLabel(SingleActivator shortcut) {

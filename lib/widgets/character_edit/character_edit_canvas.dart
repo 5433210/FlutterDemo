@@ -65,7 +65,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   bool _isProcessing = false;
 
+  // 跟踪Alt键当前状态的变量
   bool _isAltKeyPressed = false;
+
+  // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
+  late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
+
   DateTime _lastAltToggleTime = DateTime.now();
 
   DetectedOutline? _outline;
@@ -126,56 +131,86 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       }
     });
 
-    return Focus(
+    // 监听Alt键状态
+    _altKeyNotifier.addListener(() {
+      setState(() {
+        // 当ValueNotifier更新时，强制刷新UI
+      });
+    });
+
+    return RawKeyboardListener(
       focusNode: focusNode,
       autofocus: true,
-      onKeyEvent: _handleKeyEvent,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          if (!focusNode.hasFocus) focusNode.requestFocus();
-        },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            _updateTransformer(constraints.biggest);
+      onKey: (RawKeyEvent event) {
+        // 直接拦截原始键盘事件，确保Alt键状态稳定
+        final isAltKey = event.logicalKey == LogicalKeyboardKey.alt ||
+            event.logicalKey == LogicalKeyboardKey.altLeft ||
+            event.logicalKey == LogicalKeyboardKey.altRight;
 
-            return InteractiveViewer(
-              transformationController: _transformationController,
-              constrained: false,
-              boundaryMargin: const EdgeInsets.all(double.infinity),
-              minScale: 0.1,
-              maxScale: 5.0,
-              panEnabled: _isAltKeyPressed,
-              onInteractionUpdate: (details) {
+        if (isAltKey) {
+          if (event is RawKeyDownEvent) {
+            _setAltKeyPressed(true);
+          } else if (event is RawKeyUpEvent) {
+            _setAltKeyPressed(false);
+          }
+        }
+      },
+      child: MouseRegion(
+        cursor: _altKeyNotifier.value
+            ? SystemMouseCursors.grab
+            : SystemMouseCursors.precise,
+        child: Focus(
+          focusNode: FocusNode(), // 使用额外的FocusNode来捕获事件
+          onKeyEvent: _handleKeyEvent,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              if (!focusNode.hasFocus) focusNode.requestFocus();
+            },
+            child: LayoutBuilder(
+              builder: (context, constraints) {
                 _updateTransformer(constraints.biggest);
-              },
-              child: SizedBox(
-                width: widget.image.width.toDouble(),
-                height: widget.image.height.toDouble(),
-                child: EraseLayerStack(
-                  key: _layerStackKey,
-                  image: widget.image,
+
+                return InteractiveViewer(
                   transformationController: _transformationController,
-                  onEraseStart: _handleEraseStart,
-                  onEraseUpdate: _handleEraseUpdate,
-                  onEraseEnd: _handleEraseEnd,
-                  altKeyPressed: _isAltKeyPressed,
-                  brushSize: widget.brushSize,
-                  brushColor: widget.brushColor,
-                  imageInvertMode: widget.imageInvertMode,
-                  showOutline: widget.showOutline,
-                  onPan: (delta) {
-                    if (_isAltKeyPressed) {
-                      final matrix = _transformationController.value.clone();
-                      matrix.translate(delta.dx, delta.dy);
-                      _transformationController.value = matrix;
-                    }
+                  constrained: false,
+                  boundaryMargin: const EdgeInsets.all(double.infinity),
+                  minScale: 0.1,
+                  maxScale: 5.0,
+                  panEnabled: _altKeyNotifier.value, // 使用ValueNotifier来控制平移状态
+                  onInteractionUpdate: (details) {
+                    _updateTransformer(constraints.biggest);
                   },
-                  onTap: _handleTap,
-                ),
-              ),
-            );
-          },
+                  child: SizedBox(
+                    width: widget.image.width.toDouble(),
+                    height: widget.image.height.toDouble(),
+                    child: EraseLayerStack(
+                      key: _layerStackKey,
+                      image: widget.image,
+                      transformationController: _transformationController,
+                      onEraseStart: _handleEraseStart,
+                      onEraseUpdate: _handleEraseUpdate,
+                      onEraseEnd: _handleEraseEnd,
+                      altKeyPressed: _altKeyNotifier.value, // 使用ValueNotifier
+                      brushSize: widget.brushSize,
+                      brushColor: widget.brushColor,
+                      imageInvertMode: widget.imageInvertMode,
+                      showOutline: widget.showOutline,
+                      onPan: (delta) {
+                        if (_altKeyNotifier.value) {
+                          final matrix =
+                              _transformationController.value.clone();
+                          matrix.translate(delta.dx, delta.dy);
+                          _transformationController.value = matrix;
+                        }
+                      },
+                      onTap: _handleTap,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -189,6 +224,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   @override
   void dispose() {
+    // 移除所有键盘事件处理器
+    HardwareKeyboard.instance.removeHandler(_handleRawKeyEvent);
+    ServicesBinding.instance.keyboard.removeHandler(_handleKeyboardEvent);
+
+    // 清理ValueNotifier
+    _altKeyNotifier.dispose();
+
     focusNode.removeListener(_onFocusChange);
     _transformationController.dispose();
     super.dispose();
@@ -228,6 +270,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   void initState() {
     super.initState();
     focusNode.addListener(_onFocusChange);
+
+    // 设置增强的键盘监听系统，用于可靠地处理Alt键
+    _setupKeyboardListener();
 
     // 初始化坐标转换器
     _transformer = CoordinateTransformer(
@@ -408,6 +453,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
+  // 键盘事件全局处理器
+  bool _handleKeyboardEvent(KeyEvent event) {
+    // 使用统一的处理逻辑
+    return _processAltKeyEvent(event);
+  }
+
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event.logicalKey == LogicalKeyboardKey.alt ||
         event.logicalKey == LogicalKeyboardKey.altLeft ||
@@ -448,6 +499,34 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     return KeyEventResult.ignored;
   }
 
+  // 直接处理原始键盘事件，专门用于处理Alt键
+  bool _handleRawKeyEvent(KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.alt ||
+        event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      final now = DateTime.now();
+      final bool isDown = event is KeyDownEvent;
+
+      // 防止事件重复触发
+      if (_isAltKeyPressed != isDown &&
+          now.difference(_lastAltToggleTime) > _altToggleDebounce) {
+        setState(() {
+          _isAltKeyPressed = isDown;
+          _lastAltToggleTime = now;
+        });
+
+        AppLogger.debug('Alt键状态变化', data: {
+          'isDown': isDown,
+          'eventType': event.runtimeType.toString()
+        });
+      }
+
+      return true; // 已处理事件
+    }
+
+    return false; // 让其他处理程序处理此事件
+  }
+
   void _handleTap(Offset position) {
     if (_isAltKeyPressed) return;
 
@@ -474,6 +553,168 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         _isAltKeyPressed = false;
       });
     }
+  }
+
+  // 每帧检查，确保Alt状态与硬件状态同步
+  void _onFrameCallback() {
+    if (!mounted) return;
+
+    // 检查是否需要执行额外同步
+    if (_isAltKeyPressed) {
+      final bool isAltActuallyPressed = HardwareKeyboard.instance.isAltPressed;
+      if (!isAltActuallyPressed) {
+        _setAltKeyPressed(false);
+        AppLogger.debug('帧回调检测到Alt键已释放', data: {
+          'time': DateTime.now().toIso8601String(),
+        });
+      }
+    }
+
+    // 继续在下一帧检查
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
+  }
+
+  // 统一处理Alt键事件的方法
+  bool _processAltKeyEvent(KeyEvent event) {
+    // 检查是否是Alt相关的键
+    final bool isAltKey = event.logicalKey == LogicalKeyboardKey.alt ||
+        event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight;
+
+    if (isAltKey) {
+      final bool isKeyDown = event is KeyDownEvent;
+      final bool isKeyUp = event is KeyUpEvent;
+
+      if (isKeyDown || isKeyUp) {
+        _setAltKeyPressed(isKeyDown);
+
+        // 记录更详细的日志便于调试
+        AppLogger.debug('Alt键事件处理', data: {
+          'event': event.runtimeType.toString(),
+          'isDown': isKeyDown,
+          'source': 'processAltKeyEvent',
+        });
+
+        return true; // 已处理此事件
+      }
+    }
+
+    return false; // 让其他处理器处理此事件
+  }
+
+  // 统一设置Alt键状态的方法，确保各种监听器间状态一致
+  void _setAltKeyPressed(bool isPressed) {
+    final now = DateTime.now();
+
+    // 防抖动：确保Alt键状态变化不会太频繁
+    if (_isAltKeyPressed != isPressed ||
+        now.difference(_lastAltToggleTime) >
+            const Duration(milliseconds: 500)) {
+      // 更新状态和时间戳
+      _isAltKeyPressed = isPressed;
+      _lastAltToggleTime = now;
+
+      // 通过ValueNotifier通知UI更新
+      if (_altKeyNotifier.value != isPressed) {
+        _altKeyNotifier.value = isPressed;
+      }
+
+      // 强制请求焦点以确保继续接收键盘事件
+      if (isPressed && !focusNode.hasFocus) {
+        focusNode.requestFocus();
+      }
+
+      // 记录日志以便调试
+      AppLogger.debug('Alt键状态已更新', data: {
+        'isPressed': isPressed,
+        'timestamp': now.millisecondsSinceEpoch,
+      });
+
+      // 确保UI更新
+      if (mounted) {
+        setState(() {});
+      }
+
+      // 在Alt键释放后强制执行一次额外检查，以确保状态正确
+      if (!isPressed) {
+        // 延迟50ms后再检查一次，捕获可能的不同步状态
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted && _altKeyNotifier.value != isPressed) {
+            _altKeyNotifier.value = isPressed;
+            AppLogger.debug('Alt键状态释放后强制同步', data: {
+              'isPressed': isPressed,
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+            setState(() {});
+          }
+        });
+      }
+    }
+  }
+
+  // 监听键盘状态变化，用于Alt键释放检测
+  void _setupKeyboardListener() {
+    // 添加全局键盘状态监听器
+    HardwareKeyboard.instance.addHandler(_handleRawKeyEvent);
+
+    // 特别添加对Alt键的监听
+    // 这个监听器会在窗口失焦或系统级别的事件发生时也能捕获Alt键释放
+    ServicesBinding.instance.keyboard.addHandler(_handleKeyboardEvent);
+
+    // 另外在应用程序空闲时检查Alt键状态
+    // 这能捕获因为切换窗口等导致的未被捕获的键盘释放事件
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startKeyboardStateChecking();
+    });
+  }
+
+  // 定时检查Alt键的实际状态，防止状态不同步
+  void _startKeyboardStateChecking() {
+    // 创建多个定时检查，以不同频率进行状态同步
+
+    // 1. 更快速的检查 - 每50ms检查一次，主要用于立即捕获按键释放
+    Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      // 检查Alt键的实际状态
+      final bool isAltActuallyPressed = HardwareKeyboard.instance.isAltPressed;
+
+      // 更积极地纠正状态不一致
+      if (_isAltKeyPressed != isAltActuallyPressed) {
+        _setAltKeyPressed(isAltActuallyPressed);
+        AppLogger.debug('快速检测器发现Alt键状态不一致', data: {
+          'UIState': _isAltKeyPressed,
+          'actualState': isAltActuallyPressed,
+          'time': DateTime.now().toIso8601String(),
+        });
+      }
+    });
+
+    // 2. 鼠标移动时的强制状态检查
+    // 当用户移动鼠标时，特别是在Alt释放后可能没有捕获到事件时
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // 当有用户交互时，添加一次性检查
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _isAltKeyPressed) {
+            final bool isAltActuallyPressed =
+                HardwareKeyboard.instance.isAltPressed;
+            if (!isAltActuallyPressed) {
+              _setAltKeyPressed(false);
+              AppLogger.debug('延迟检测到Alt键状态修正', data: {
+                'time': DateTime.now().toIso8601String(),
+              });
+            }
+          }
+        });
+      }
+
+      // 继续下一帧检查
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
+    });
   }
 
   // Add a timeout helper function to prevent hanging during outline processing

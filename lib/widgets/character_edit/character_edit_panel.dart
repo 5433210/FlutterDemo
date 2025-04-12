@@ -55,6 +55,11 @@ class CharacterEditPanel extends ConsumerStatefulWidget {
   ConsumerState<CharacterEditPanel> createState() => _CharacterEditPanelState();
 }
 
+class _ChangeBrushSizeIntent extends Intent {
+  final bool increase;
+  const _ChangeBrushSizeIntent(this.increase);
+}
+
 class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   final GlobalKey<CharacterEditCanvasState> _canvasKey = GlobalKey();
   final TextEditingController _characterController = TextEditingController();
@@ -115,9 +120,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         EditorShortcuts.toggleImageInvert: const _ToggleImageInvertIntent(),
         EditorShortcuts.toggleContour: const _ToggleContourIntent(),
         EditorShortcuts.togglePanMode: const _TogglePanModeIntent(),
-        for (var i = 0; i < EditorShortcuts.brushSizePresets.length; i++)
-          EditorShortcuts.brushSizePresets[i]:
-              _SetBrushSizeIntent(EditorShortcuts.brushSizes[i]),
       };
 
   @override
@@ -1004,6 +1006,32 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     }
   }
 
+  // Helper method to adjust brush size
+  void _handleChangeBrushSize(bool increase) {
+    final eraseState = ref.read(erase.eraseStateProvider);
+    final eraseNotifier = ref.read(erase.eraseStateProvider.notifier);
+
+    double newSize = eraseState.brushSize;
+    if (increase) {
+      newSize += EditorShortcuts.brushSizeStep;
+      if (newSize > EditorShortcuts.maxBrushSize) {
+        newSize = EditorShortcuts.maxBrushSize;
+      }
+    } else {
+      newSize -= EditorShortcuts.brushSizeStep;
+      if (newSize < EditorShortcuts.minBrushSize) {
+        newSize = EditorShortcuts.minBrushSize;
+      }
+    }
+
+    eraseNotifier.setBrushSize(newSize);
+    AppLogger.debug('调整笔刷大小', data: {
+      'operation': increase ? '增加' : '减少',
+      'oldSize': eraseState.brushSize,
+      'newSize': newSize,
+    });
+  }
+
   void _handleEraseEnd() {
     ref.read(erase.eraseStateProvider.notifier).completePath();
   }
@@ -1020,95 +1048,39 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   bool _handleKeyboardEvent(KeyEvent event) {
     if (!mounted) return false;
 
-    // Only process key down events
-    if (event is! KeyDownEvent) return false;
+    // Handle Alt key for panning
+    if (event.logicalKey == LogicalKeyboardKey.alt ||
+        event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      bool isDown = event is KeyDownEvent;
+      bool isUp = event is KeyUpEvent;
 
-    // Log the keyboard event for debugging
-    AppLogger.debug('全局键盘事件处理器收到事件', data: {
-      'keyEvent': event.runtimeType.toString(),
-      'logicalKey': event.logicalKey.keyLabel,
-      'isControlPressed': HardwareKeyboard.instance.isControlPressed,
-      'isShiftPressed': HardwareKeyboard.instance.isShiftPressed,
-    });
+      if (isDown || isUp) {
+        // Pass the Alt key status to the canvas
+        if (_canvasKey.currentState != null) {
+          // This will be handled by the canvas's key event handler
+          AppLogger.debug('Alt 键状态变更', data: {'isDown': isDown});
+        }
+      }
 
-    // // Handle Ctrl+S (save) shortcut
-    // if (HardwareKeyboard.instance.isControlPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyS) {
-    //   final saveState = ref.read(characterSaveNotifierProvider);
-    //   if (!saveState.isSaving) {
-    //     _handleSave();
-    //     return true; // Prevent further processing
-    //   }
-    // }
+      // Don't consume the event, let it reach the canvas
+      return false;
+    }
 
-    // // Handle Ctrl+Z (undo) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     !HardwareKeyboard.instance.isShiftPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyZ) {
-    //   final eraseState = ref.read(erase.eraseStateProvider);
-    //   if (eraseState.canUndo) {
-    //     ref.read(erase.eraseStateProvider.notifier).undo();
-    //     return true;
-    //   }
-    // }
-
-    // // Handle Ctrl+Shift+Z (redo) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     HardwareKeyboard.instance.isShiftPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyZ) {
-    //   final eraseState = ref.read(erase.eraseStateProvider);
-    //   if (eraseState.canRedo) {
-    //     ref.read(erase.eraseStateProvider.notifier).redo();
-    //     return true;
-    //   }
-    // }
-
-    // // Handle Ctrl+E (open input) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyE &&
-    //     !_isEditing) {
-    //   setState(() => _isEditing = true);
-    //   Future.delayed(const Duration(milliseconds: 50), () {
-    //     _inputFocusNode.requestFocus();
-    //   });
-    //   return true;
-    // }
-
-    // // Handle Ctrl+I (toggle invert) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     !HardwareKeyboard.instance.isShiftPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyI) {
-    //   ref.read(erase.eraseStateProvider.notifier).toggleReverse();
-    //   return true;
-    // }
-
-    // // Handle Ctrl+Shift+I (toggle image invert) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     HardwareKeyboard.instance.isShiftPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyI) {
-    //   ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
-    //   return true;
-    // }
-
-    // // Handle Ctrl+O (toggle contour) shortcut
-    // else if (HardwareKeyboard.instance.isControlPressed &&
-    //     event.logicalKey == LogicalKeyboardKey.keyO) {
-    //   ref.read(erase.eraseStateProvider.notifier).toggleContour();
-    //   return true;
-    // }
-
-    // // Handle Ctrl+1~3 (brush size presets) shortcuts
-    // else if (HardwareKeyboard.instance.isControlPressed) {
-    //   // Check for digit keys 1-3
-    //   for (int i = 0; i < EditorShortcuts.brushSizePresets.length; i++) {
-    //     if (event.logicalKey == LogicalKeyboardKey.digit1) {
-    //       ref
-    //           .read(erase.eraseStateProvider.notifier)
-    //           .setBrushSize(EditorShortcuts.brushSizes[i]);
-    //       return true;
-    //     }
-    //   }
-    // }
+    // Handle brush size adjustment with Ctrl+ and Ctrl-
+    if (event is KeyDownEvent && HardwareKeyboard.instance.isControlPressed) {
+      if (event.logicalKey == LogicalKeyboardKey.equal ||
+          (event.logicalKey == LogicalKeyboardKey.add)) {
+        // Ctrl+ to increase brush size
+        _handleChangeBrushSize(true);
+        return true;
+      } else if (event.logicalKey == LogicalKeyboardKey.minus ||
+          event.logicalKey == LogicalKeyboardKey.underscore) {
+        // Ctrl- to decrease brush size
+        _handleChangeBrushSize(false);
+        return true;
+      }
+    }
 
     return false; // Let other handlers process this event
   }
