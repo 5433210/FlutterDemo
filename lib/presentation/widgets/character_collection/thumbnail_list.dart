@@ -62,20 +62,21 @@ class ThumbnailList extends ConsumerWidget {
                         pageId: pageId,
                         index: index + 1,
                         isSelected: isSelected,
-                        onTap: () {
+                        onTap: () async {
                           final notifier = ref.read(workImageProvider.notifier);
                           // 切换页面
-                          notifier.changePage(pageId);
+                          await notifier.changePage(pageId);
                           // 加载该页的选区
-                          ref
+                          await ref
                               .read(characterCollectionProvider.notifier)
                               .loadWorkData(
                                 imageState.workId,
                                 pageId: pageId,
                               );
+                          // 清除选区
                           ref
                               .read(characterCollectionProvider.notifier)
-                              .clearSelectedRegions(); // 清除选区
+                              .clearSelectedRegions();
                         },
                       );
                     },
@@ -93,8 +94,27 @@ class ThumbnailList extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.arrow_back_ios, size: 18),
                   onPressed: imageState.hasPrevious
-                      ? () =>
-                          ref.read(workImageProvider.notifier).previousPage()
+                      ? () async {
+                          // 先切换页面
+                          await ref
+                              .read(workImageProvider.notifier)
+                              .previousPage();
+
+                          // 获取切换后的最新状态
+                          final updatedState = ref.read(workImageProvider);
+
+                          // 加载该页的选区
+                          await ref
+                              .read(characterCollectionProvider.notifier)
+                              .loadWorkData(
+                                updatedState.workId,
+                                pageId: updatedState.currentPageId,
+                              );
+                          // 清除选区
+                          ref
+                              .read(characterCollectionProvider.notifier)
+                              .clearSelectedRegions();
+                        }
                       : null,
                   tooltip: '上一页',
                 ),
@@ -103,7 +123,25 @@ class ThumbnailList extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.arrow_forward_ios, size: 18),
                   onPressed: imageState.hasNext
-                      ? () => ref.read(workImageProvider.notifier).nextPage()
+                      ? () async {
+                          // 先切换页面
+                          await ref.read(workImageProvider.notifier).nextPage();
+
+                          // 获取切换后的最新状态
+                          final updatedState = ref.read(workImageProvider);
+
+                          // 加载该页的选区
+                          await ref
+                              .read(characterCollectionProvider.notifier)
+                              .loadWorkData(
+                                updatedState.workId,
+                                pageId: updatedState.currentPageId,
+                              );
+                          // 清除选区
+                          ref
+                              .read(characterCollectionProvider.notifier)
+                              .clearSelectedRegions();
+                        }
                       : null,
                   tooltip: '下一页',
                 ),

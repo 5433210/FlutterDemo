@@ -490,16 +490,20 @@ class _CharacterCollectionPageState
   }
 
   // 导航到下一页
-  void _navigateToNextPage() {
+  void _navigateToNextPage() async {
     final imageState = ref.read(workImageProvider);
 
     if (imageState.hasNext) {
-      ref.read(workImageProvider.notifier).nextPage();
+      // 先执行页面切换
+      await ref.read(workImageProvider.notifier).nextPage();
+
+      // 获取切换后的最新状态
+      final updatedState = ref.read(workImageProvider);
 
       // 加载新页面的选区数据
-      ref.read(characterCollectionProvider.notifier).loadWorkData(
-            imageState.workId,
-            pageId: ref.read(workImageProvider).currentPageId,
+      await ref.read(characterCollectionProvider.notifier).loadWorkData(
+            updatedState.workId,
+            pageId: updatedState.currentPageId,
           );
 
       // 清除选区
@@ -508,16 +512,20 @@ class _CharacterCollectionPageState
   }
 
   // 导航到上一页
-  void _navigateToPreviousPage() {
+  void _navigateToPreviousPage() async {
     final imageState = ref.read(workImageProvider);
 
     if (imageState.hasPrevious) {
-      ref.read(workImageProvider.notifier).previousPage();
+      // 先执行页面切换
+      await ref.read(workImageProvider.notifier).previousPage();
+
+      // 获取切换后的最新状态
+      final updatedState = ref.read(workImageProvider);
 
       // 加载新页面的选区数据
-      ref.read(characterCollectionProvider.notifier).loadWorkData(
-            imageState.workId,
-            pageId: ref.read(workImageProvider).currentPageId,
+      await ref.read(characterCollectionProvider.notifier).loadWorkData(
+            updatedState.workId,
+            pageId: updatedState.currentPageId,
           );
 
       // 清除选区

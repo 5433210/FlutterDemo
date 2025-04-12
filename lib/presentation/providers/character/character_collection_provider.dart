@@ -999,55 +999,6 @@ class CharacterCollectionNotifier
     }
   }
 
-  /// [Internal] Finds the region and updates the SelectedRegionNotifier.
-  /// Does NOT update the main collection state. Returns null if not found or error.
-  CharacterRegion? _findAndSetSelectedRegion(String? id) {
-    try {
-      AppLogger.debug('[Internal] Finding region', data: {'targetId': id});
-      if (id == null) {
-        _selectedRegionNotifier.clearRegion();
-        AppLogger.debug('[Internal] Cleared selected region notifier');
-        return null;
-      }
-
-      // Find region using where + firstOrNull pattern (emulated)
-      final matchingRegions = state.regions.where((r) => r.id == id).toList();
-      final CharacterRegion? region =
-          matchingRegions.isNotEmpty ? matchingRegions.first : null;
-
-      if (region == null) {
-        // Update error state if region not found
-        state = state.copyWith(error: '查找区域失败: ID $id 未找到');
-        _selectedRegionNotifier.clearRegion(); // Ensure notifier is cleared
-        return null;
-      }
-
-      _selectedRegionNotifier.setRegion(region);
-      AppLogger.debug('[Internal] Set selected region notifier',
-          data: {'regionId': id});
-      return region;
-    } catch (e, stack) {
-      AppLogger.error('[Internal] Finding region failed',
-          error: e, stackTrace: stack, data: {'targetId': id});
-      _selectedRegionNotifier.clearRegion();
-      state = state.copyWith(error: '查找区域时发生错误: ${e.toString()}');
-      return null;
-    }
-  }
-
-  // 新增: 查找原始区域数据 (用于比较是否有实际修改)
-  CharacterRegion? _findOriginalRegion(String id) {
-    try {
-      // 这里应该是从数据库或缓存中获取原始区域数据
-      // 目前简单实现，仅返回当前state中的region
-      final regions = state.regions.where((r) => r.id == id).toList();
-      return regions.isNotEmpty ? regions.first : null;
-    } catch (e) {
-      AppLogger.error('查找原始区域数据失败', error: e, data: {'id': id});
-      return null;
-    }
-  }
-
   // 检查擦除路径数据是否有变化 - Update to handle eraseData instead of erasePoints
   bool _hasEraseDataChanged(List<Map<String, dynamic>>? oldData,
       List<Map<String, dynamic>>? newData) {
@@ -1073,43 +1024,6 @@ class CharacterCollectionNotifier
       return true;
     }
     return false;
-  }
-
-  // 新增: 检查两个区域是否实际内容相同 (没有实质性修改)
-  bool _isRegionUnchanged(CharacterRegion original, CharacterRegion current) {
-    // 比较rect
-    if (original.rect != current.rect) {
-      AppLogger.debug('Region changed: rect', data: {
-        'original': original.rect.toString(),
-        'current': current.rect.toString()
-      });
-      return false;
-    }
-
-    // 比较rotation
-    if (original.rotation != current.rotation) {
-      AppLogger.debug('Region changed: rotation',
-          data: {'original': original.rotation, 'current': current.rotation});
-      return false;
-    }
-
-    // 比较character
-    if (original.character != current.character) {
-      AppLogger.debug('Region changed: character',
-          data: {'original': original.character, 'current': current.character});
-      return false;
-    }
-
-    // 比较eraseData - Updated from erasePoints to eraseData
-    if (_hasEraseDataChanged(original.eraseData, current.eraseData)) {
-      AppLogger.debug('Region changed: eraseData', data: {
-        'original': original.eraseData?.length ?? 0,
-        'current': current.eraseData?.length ?? 0
-      });
-      return false;
-    }
-
-    return true;
   }
 
   // New helper method to more aggressively reload erase data with retries
