@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,30 +36,50 @@ class ThumbnailList extends ConsumerWidget {
 
           // 缩略图列表
           Expanded(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: imageState.pageIds.length,
-              itemBuilder: (context, index) {
-                final pageId = imageState.pageIds[index];
-                final isSelected = pageId == imageState.currentPageId;
-
-                return _ThumbnailItem(
-                  pageId: pageId,
-                  index: index + 1,
-                  isSelected: isSelected,
-                  onTap: () {
-                    final notifier = ref.read(workImageProvider.notifier);
-                    // 切换页面
-                    notifier.changePage(pageId);
-                    // 加载该页的选区
-                    ref.read(characterCollectionProvider.notifier).loadWorkData(
-                          imageState.workId,
-                          pageId: pageId,
-                        );
-                    ref
-                        .read(characterCollectionProvider.notifier)
-                        .clearSelectedRegions(); // 清除选区
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final ScrollController controller = ScrollController();
+                return Listener(
+                  onPointerSignal: (pointerSignal) {
+                    if (pointerSignal is PointerScrollEvent) {
+                      final double scrollAmount = pointerSignal.scrollDelta.dy;
+                      controller.position.moveTo(
+                        controller.offset + scrollAmount,
+                        curve: Curves.linear,
+                        duration: const Duration(milliseconds: 100),
+                      );
+                    }
                   },
+                  child: ListView.builder(
+                    controller: controller,
+                    scrollDirection: Axis.horizontal,
+                    itemCount: imageState.pageIds.length,
+                    itemBuilder: (context, index) {
+                      final pageId = imageState.pageIds[index];
+                      final isSelected = pageId == imageState.currentPageId;
+
+                      return _ThumbnailItem(
+                        pageId: pageId,
+                        index: index + 1,
+                        isSelected: isSelected,
+                        onTap: () {
+                          final notifier = ref.read(workImageProvider.notifier);
+                          // 切换页面
+                          notifier.changePage(pageId);
+                          // 加载该页的选区
+                          ref
+                              .read(characterCollectionProvider.notifier)
+                              .loadWorkData(
+                                imageState.workId,
+                                pageId: pageId,
+                              );
+                          ref
+                              .read(characterCollectionProvider.notifier)
+                              .clearSelectedRegions(); // 清除选区
+                        },
+                      );
+                    },
+                  ),
                 );
               },
             ),

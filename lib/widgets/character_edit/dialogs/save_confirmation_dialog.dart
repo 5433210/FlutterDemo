@@ -7,12 +7,19 @@ Future<bool?> showSaveConfirmationDialog(
 }) {
   return showDialog<bool>(
     context: context,
+    barrierDismissible: false, // 防止误触背景关闭
+    useRootNavigator: false, // 使用最近的导航器以提高性能
     builder: (context) => SaveConfirmationDialog(
       character: character,
       showPreview: previewWidget != null,
       previewWidget: previewWidget,
-      onConfirm: () => Navigator.of(context).pop(true),
-      onCancel: () => Navigator.of(context).pop(false),
+      onConfirm: () async {
+        // 立即关闭对话框
+        Navigator.of(context).pop(true);
+      },
+      onCancel: () {
+        Navigator.of(context).pop(false);
+      },
     ),
   );
 }

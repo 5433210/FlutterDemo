@@ -17,7 +17,6 @@ import '../../presentation/providers/character/character_edit_providers.dart';
 import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
-import '../../presentation/providers/character/erase_providers.dart';
 import '../../presentation/providers/character/selected_region_provider.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/save_confirmation_dialog.dart';
@@ -58,6 +57,8 @@ class CharacterEditPanel extends ConsumerStatefulWidget {
 class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   final GlobalKey<CharacterEditCanvasState> _canvasKey = GlobalKey();
   final TextEditingController _characterController = TextEditingController();
+  Timer? _progressTimer;
+  final FocusNode _inputFocusNode = FocusNode();
   bool _isEditing = false;
 
   // State for internal image loading
@@ -75,8 +76,14 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         _RedoIntent: CallbackAction(
             onInvoke: (_) =>
                 ref.read(erase.eraseStateProvider.notifier).redo()),
-        _OpenInputIntent:
-            CallbackAction(onInvoke: (_) => setState(() => _isEditing = true)),
+        _OpenInputIntent: CallbackAction(onInvoke: (_) {
+          setState(() => _isEditing = true);
+          // 确保聚焦到输入框
+          Future.delayed(const Duration(milliseconds: 50), () {
+            _inputFocusNode.requestFocus();
+          });
+          return null;
+        }),
         _ToggleInvertIntent: CallbackAction(
             onInvoke: (_) =>
                 ref.read(erase.eraseStateProvider.notifier).toggleReverse()),
@@ -98,14 +105,14 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       };
 
   Map<SingleActivator, Intent> get _shortcuts => {
-        EditorShortcuts.save: _SaveIntent(),
-        EditorShortcuts.undo: _UndoIntent(),
-        EditorShortcuts.redo: _RedoIntent(),
-        EditorShortcuts.openInput: _OpenInputIntent(),
-        EditorShortcuts.toggleInvert: _ToggleInvertIntent(),
-        EditorShortcuts.toggleImageInvert: _ToggleImageInvertIntent(),
-        EditorShortcuts.toggleContour: _ToggleContourIntent(),
-        EditorShortcuts.togglePanMode: _TogglePanModeIntent(),
+        EditorShortcuts.save: const _SaveIntent(),
+        EditorShortcuts.undo: const _UndoIntent(),
+        EditorShortcuts.redo: const _RedoIntent(),
+        EditorShortcuts.openInput: const _OpenInputIntent(),
+        EditorShortcuts.toggleInvert: const _ToggleInvertIntent(),
+        EditorShortcuts.toggleImageInvert: const _ToggleImageInvertIntent(),
+        EditorShortcuts.toggleContour: const _ToggleContourIntent(),
+        EditorShortcuts.togglePanMode: const _TogglePanModeIntent(),
         for (var i = 0; i < EditorShortcuts.brushSizePresets.length; i++)
           EditorShortcuts.brushSizePresets[i]:
               _SetBrushSizeIntent(EditorShortcuts.brushSizes[i]),
@@ -179,6 +186,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     try {
       _loadedImage?.dispose();
       _characterController.dispose();
+      _inputFocusNode.dispose();
       // Consider clearing providers related to THIS panel instance if needed
     } catch (e) {
       AppLogger.error('Character edit panel dispose error: $e');
@@ -215,6 +223,34 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         }
       });
     });
+  }
+
+  Future<ui.Image?> loadAndProcessImage(
+    CharacterRegion region,
+    Uint8List imageData,
+    ProcessingOptions processingOptions,
+  ) async {
+    try {
+      final imageProcessor = ref.read(characterImageProcessorProvider);
+      final preview = await imageProcessor.processForPreview(
+        imageData,
+        region.rect,
+        processingOptions,
+        null,
+        rotation: region.rotation,
+      );
+
+      final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
+      final completer = Completer<ui.Image>();
+      ui.decodeImageFromList(bytes, completer.complete);
+      _loadedImage?.dispose(); // Dispose previous loaded image
+      _loadedImage = await completer.future;
+      return _loadedImage;
+    } catch (e, stack) {
+      AppLogger.error('Error loading/processing character image in panel',
+          error: e, stackTrace: stack);
+      return null;
+    }
   }
 
   Widget _buildBottomButtons(SaveState saveState) {
@@ -260,8 +296,15 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             children: [
               if (!_isEditing)
                 TextButton.icon(
-                  onPressed:
-                      isSaving ? null : () => setState(() => _isEditing = true),
+                  onPressed: isSaving
+                      ? null
+                      : () {
+                          setState(() => _isEditing = true);
+                          // 确保聚焦到输入框
+                          Future.delayed(const Duration(milliseconds: 50), () {
+                            _inputFocusNode.requestFocus();
+                          });
+                        },
                   icon: const Icon(Icons.edit, size: 18),
                   label: Text(ShortcutTooltipBuilder.build(
                     '输入汉字',
@@ -339,6 +382,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           const SizedBox(height: 12),
           TextField(
             controller: _characterController,
+            focusNode: _inputFocusNode,
             autofocus: true,
             maxLength: 1,
             textAlign: TextAlign.center,
@@ -360,88 +404,157 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     final eraseState = ref.watch(erase.eraseStateProvider);
     final processedImageNotifier = ref.watch(processedImageProvider.notifier);
 
-    return FutureBuilder<ui.Image?>(
-      future: _imageLoadingFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _buildLoadingState();
-        }
+    return Stack(
+      children: [
+        FutureBuilder<ui.Image?>(
+          future: _imageLoadingFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildLoadingState();
+            }
 
-        if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
-          processedImageNotifier
-              .setError('图像加载失败: ${snapshot.error ?? "未知错误"}');
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data == null) {
+              processedImageNotifier
+                  .setError('图像加载失败: ${snapshot.error ?? "未知错误"}');
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline,
+                        color: Colors.red, size: 48),
+                    const SizedBox(height: 16),
+                    Text(
+                      '无法加载或处理字符图像',
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${snapshot.error ?? "未知错误"}',
+                      style:
+                          TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final loadedImageForCanvas = snapshot.data!;
+            final region = ref.watch(selectedRegionProvider);
+
+            return Column(
               children: [
-                const Icon(Icons.error_outline, color: Colors.red, size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  '无法加载或处理字符图像',
-                  style: TextStyle(color: Colors.red.shade700),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${snapshot.error ?? "未知错误"}',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
+                // 顶部工具栏
+                _buildToolbar(),
 
-        final loadedImageForCanvas = snapshot.data!;
-        final region = ref.watch(selectedRegionProvider);
+                // 主要内容区域
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // 画布
+                      CharacterEditCanvas(
+                        region: region,
+                        key: _canvasKey,
+                        image: loadedImageForCanvas,
+                        showOutline: eraseState.showContour,
+                        invertMode: eraseState.isReversed,
+                        imageInvertMode: eraseState.imageInvertMode,
+                        brushSize: eraseState.brushSize,
+                        brushColor: eraseState.brushColor,
+                        onEraseStart: _handleEraseStart,
+                        onEraseUpdate: _handleEraseUpdate,
+                        onEraseEnd: _handleEraseEnd,
+                      ),
 
-        return Column(
-          children: [
-            // 顶部工具栏
-            _buildToolbar(),
+                      // 缩略图预览
+                      if (region != null)
+                        Positioned(
+                          right: 16,
+                          top: 16,
+                          child: _buildThumbnailPreview(),
+                        ),
 
-            // 主要内容区域
-            Expanded(
-              child: Stack(
-                children: [
-                  // 画布
-                  CharacterEditCanvas(
-                    region: region,
-                    key: _canvasKey,
-                    image: loadedImageForCanvas,
-                    showOutline: eraseState.showContour,
-                    invertMode: eraseState.isReversed,
-                    imageInvertMode: eraseState.imageInvertMode,
-                    brushSize: eraseState.brushSize,
-                    brushColor: eraseState.brushColor,
-                    onEraseStart: _handleEraseStart,
-                    onEraseUpdate: _handleEraseUpdate,
-                    onEraseEnd: _handleEraseEnd,
+                      // 字符输入悬浮窗
+                      if (_isEditing)
+                        Positioned(
+                          left: 16,
+                          top: 16,
+                          child: _buildCharacterInput(),
+                        ),
+                    ],
                   ),
+                ),
 
-                  // 缩略图预览
-                  if (region != null)
-                    Positioned(
-                      right: 16,
-                      top: 16,
-                      child: _buildThumbnailPreview(),
-                    ),
+                // 底部按钮
+                _buildBottomButtons(saveState),
+              ],
+            );
+          },
+        ),
 
-                  // 字符输入悬浮窗
-                  if (_isEditing)
-                    Positioned(
-                      left: 16,
-                      top: 16,
-                      child: _buildCharacterInput(),
+        // 保存时的加载遮罩
+        if (saveState.isSaving)
+          Container(
+            color: Colors.black54,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
                     ),
-                ],
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 24),
+                    Text(
+                      _getSaveStatusText(saveState.progress),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (saveState.progress != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 200,
+                            child: LinearProgressIndicator(
+                              value: saveState.progress!,
+                              backgroundColor: Colors.grey[200],
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${(saveState.progress! * 100).toInt()}%',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.grey[600],
+                                ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-
-            // 底部按钮
-            _buildBottomButtons(saveState),
-          ],
-        );
-      },
+          ),
+      ],
     );
   }
 
@@ -803,6 +916,17 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     return serializablePoints;
   }
 
+  String _getSaveStatusText(double? progress) {
+    if (progress == null) return '准备保存...';
+
+    if (progress <= 0.2) return '初始化...';
+    if (progress <= 0.4) return '处理擦除数据...';
+    if (progress <= 0.6) return '保存到存储...';
+    if (progress <= 0.8) return '处理图像...';
+    if (progress < 1.0) return '完成保存...';
+    return '保存完成';
+  }
+
   // 获取缩略图路径
   Future<String?> _getThumbnailPath() async {
     try {
@@ -867,45 +991,91 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   }
 
   Future<void> _handleSave() async {
-    // 输入验证
+    // 验证输入
     final validation =
         _CharacterInputValidator.validateCharacter(_characterController.text);
     if (!validation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(validation.error!)),
       );
-      setState(() {
-        _isEditing = true;
-      });
+      setState(() => _isEditing = true);
       return;
     }
 
-    // 显示确认对话框
-    final confirmed = await showSaveConfirmationDialog(
-      context,
-      character: _characterController.text,
-    );
-
-    if (confirmed != true) return;
+    // 预先初始化保存状态
+    final saveNotifier = ref.read(characterSaveNotifierProvider.notifier);
+    final collectionNotifier = ref.read(characterCollectionProvider.notifier);
 
     try {
+      // 显示确认对话框
+      final confirmed = await showSaveConfirmationDialog(
+        context,
+        character: _characterController.text,
+      );
+
+      // 处理对话框结果
+      if (confirmed != true) {
+        AppLogger.debug('用户取消保存操作');
+        _progressTimer?.cancel();
+        saveNotifier.finishSaving();
+        return;
+      }
+
+      // 立即开始保存流程，确保对话框消失后马上显示进度
+      if (!mounted) {
+        AppLogger.debug('组件已卸载，取消保存');
+        _progressTimer?.cancel();
+        saveNotifier.finishSaving();
+        return;
+      }
+
+      // 立即更新UI状态，确保对话框关闭后立即显示进度
+      AppLogger.debug('开始执行保存操作');
+      saveNotifier.startSaving();
+
+      // 使用 microtask 确保在视觉渲染前更新状态
+      await Future.microtask(() {});
       if (!mounted) return;
 
-      // Create processing result object
+      // 立即显示更清晰的进度
+      saveNotifier.updateProgress(0.15);
+
+      // 获取当前状态数据，在传给compute之前先收集所有必要数据
       final pathRenderData = ref.read(erase.pathRenderDataProvider);
       final eraseState = ref.read(erase.eraseStateProvider);
+      final completedPaths = pathRenderData.completedPaths;
+
+      // Create processing result object
       final List<Map<String, dynamic>> eraseData = [];
 
-      if (pathRenderData.completedPaths.isNotEmpty) {
-        for (final path in pathRenderData.completedPaths) {
-          final points = _extractPointsFromPath(path.path);
-          if (points.isNotEmpty) {
-            eraseData.add({
-              'points': points,
-              'brushSize': path.brushSize,
-              'brushColor': path.brushColor.value,
-            });
-          }
+      // 确保传给compute的数据是可序列化的
+      if (completedPaths.isNotEmpty) {
+        try {
+          // 使用计算工作独立线程处理路径数据，避免UI阻塞
+          // 确保只传递基本数据类型到compute函数
+          final pathDataFuture =
+              compute<List<Map<String, dynamic>>, List<Map<String, dynamic>>>(
+            (pathsData) {
+              return pathsData;
+            },
+            completedPaths.map((path) {
+              final points = _extractPointsFromPath(path.path);
+              return {
+                'points': points,
+                'brushSize': path.brushSize,
+                'brushColor': path.brushColor.value,
+              };
+            }).toList(),
+          );
+
+          // 在计算完成前先更新UI进度
+          saveNotifier.updateProgress(0.2);
+
+          // 等待路径数据处理完成
+          eraseData.addAll(await pathDataFuture);
+        } catch (e) {
+          AppLogger.error('路径数据处理失败: $e');
+          // 即使处理路径失败，也继续尝试保存没有擦除数据的字符
         }
       }
 
@@ -942,7 +1112,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       // 从selectedRegionProvider获取当前选区
       final selectedRegion = ref.read(selectedRegionProvider);
       if (selectedRegion == null) {
-        throw _SaveError('未选择任何区域');
+        throw const _SaveError('未选择任何区域');
       }
 
       // 更新选区信息，保存擦除路径数据
@@ -955,89 +1125,89 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         erasePoints: null, // Clear old format data
       );
 
-      // 保存（带重试机制）
-      final collectionNotifier = ref.read(characterCollectionProvider.notifier);
-
-      // Update the region first
-      collectionNotifier.updateSelectedRegion(updatedRegion);
-
-      // Now save the current region with the processed image data
-      await collectionNotifier.saveCurrentRegion(processingOptions);
-
-      // Get the updated region to check if this was a first save
-      final savedRegion = ref.read(characterCollectionProvider).selectedRegion;
-      final isFirstSave = widget.selectedRegion.characterId == null &&
-          savedRegion?.characterId != null;
-
-      // After saving, if this was the first save, ensure erase data is reloaded
-      if (isFirstSave && eraseData.isNotEmpty) {
-        AppLogger.debug('First save completed - reloading erase state', data: {
-          'newCharacterId': savedRegion?.characterId,
-          'pathCount': eraseData.length,
-        });
-
-        // Force update erase view after a short delay to ensure data is saved
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted) {
-            ref.read(eraseStateProvider.notifier).clear();
-            ref
-                .read(eraseStateProvider.notifier)
-                .initializeWithSavedPaths(eraseData);
-          }
-        });
-      }
-
-      // Notify about character saved event
-      ref
-          .read(characterRefreshNotifierProvider.notifier)
-          .notifyEvent(RefreshEventType.characterSaved);
-
-      if (mounted) {
-        // Force thumbnail to update right after saving
-        setState(() {
-          _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('保存成功: ${_characterController.text}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Check if this was a new character or an edit of an existing one
-        final isNewCharacter = widget.selectedRegion.characterId == null;
-
-        widget.onEditComplete({
-          'character': _characterController.text,
-          'characterId': updatedRegion.characterId,
-          'isNewCharacter': isNewCharacter, // Add this flag
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
+      // 直接开始保存流程
+      Timer? progressTimer;
 
       try {
-        final errorMessage = e is _SaveError ? e.toString() : '保存失败：$e';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+        // 快速响应的进度更新逻辑
+        var progress = 0.25; // 更高的初始进度，更好的视觉反馈
+        const updateInterval = Duration(milliseconds: 24); // 更高频率的更新
+
+        _progressTimer = Timer.periodic(
+          updateInterval,
+          (timer) {
+            if (!mounted) {
+              timer.cancel();
+              return;
+            }
+
+            // 动态调整进度增量
+            double increment;
+            if (progress < 0.3) {
+              increment = 0.03; // 开始时更快增长
+            } else if (progress < 0.7) {
+              increment = 0.01; // 中间段平稳增长
+            } else {
+              increment = 0.005; // 接近完成时放缓
+            }
+
+            if (progress < 0.95) {
+              progress += increment;
+              saveNotifier.updateProgress(progress);
+            }
+          },
         );
+
+        // 优化保存流程，减少感知延迟
+        try {
+          // 立即更新UI反馈
+          saveNotifier.updateProgress(0.3);
+
+          // 同步更新选区（这个操作很快）
+          collectionNotifier.updateSelectedRegion(updatedRegion);
+          saveNotifier.updateProgress(0.4);
+
+          // 执行耗时的保存操作
+          await Future.any([
+            Future.sync(() async {
+              await collectionNotifier.saveCurrentRegion(processingOptions);
+              saveNotifier.updateProgress(0.98);
+            }),
+            Future.delayed(const Duration(seconds: 30))
+                .then((_) => throw const _SaveError('保存操作超时')),
+          ]);
+        } on _SaveError {
+          AppLogger.error('保存超时');
+          rethrow;
+        }
+        saveNotifier.updateProgress(0.98);
+        saveNotifier.finishSaving();
+        ref
+            .read(characterRefreshNotifierProvider.notifier)
+            .notifyEvent(RefreshEventType.characterSaved);
       } catch (e) {
-        // 双重异常捕获
-        debugPrint('显示错误信息时发生异常: $e');
+        final notifier = ref.read(characterSaveNotifierProvider.notifier);
+        notifier.setError(e.toString());
+        rethrow;
       }
+    } catch (e) {
+      AppLogger.error('保存字符失败', error: e);
+      // 取消进度条更新计时器
+      _progressTimer?.cancel();
+      // 通知UI保存失败
+      saveNotifier.setError(e.toString());
+      // 返回编辑模式
+      setState(() => _isEditing = true);
+    } finally {
+      _progressTimer?.cancel();
     }
   }
 
   void _initiateImageLoading() {
     if (widget.imageData != null) {
       setState(() {
-        // Cancel previous future?
         _loadedImage = null; // Clear current image while loading
-        _imageLoadingFuture = _loadAndProcessImage(
+        _imageLoadingFuture = loadAndProcessImage(
           widget.selectedRegion,
           widget.imageData!,
           widget.processingOptions,
@@ -1048,34 +1218,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         _imageLoadingFuture = Future.value(null); // Set future to null result
         _loadedImage = null;
       });
-    }
-  }
-
-  Future<ui.Image?> _loadAndProcessImage(
-    CharacterRegion region,
-    Uint8List imageData,
-    ProcessingOptions processingOptions,
-  ) async {
-    try {
-      final imageProcessor = ref.read(characterImageProcessorProvider);
-      final preview = await imageProcessor.processForPreview(
-        imageData,
-        region.rect,
-        processingOptions,
-        null,
-        rotation: region.rotation,
-      );
-
-      final bytes = Uint8List.fromList(img.encodePng(preview.processedImage));
-      final completer = Completer<ui.Image>();
-      ui.decodeImageFromList(bytes, completer.complete);
-      _loadedImage?.dispose(); // Dispose previous loaded image
-      _loadedImage = await completer.future;
-      return _loadedImage;
-    } catch (e, stack) {
-      AppLogger.error('Error loading/processing character image in panel',
-          error: e, stackTrace: stack);
-      return null;
     }
   }
 }
@@ -1101,37 +1243,48 @@ class _CharacterInputValidator {
   }
 }
 
-class _OpenInputIntent extends Intent {}
+class _OpenInputIntent extends Intent {
+  const _OpenInputIntent();
+}
 
-class _RedoIntent extends Intent {}
-
-// 重试机制
+class _RedoIntent extends Intent {
+  const _RedoIntent();
+}
 
 class _SaveError implements Exception {
   final String message;
   final Exception? cause;
 
-  _SaveError(this.message, [this.cause]);
+  const _SaveError(this.message, [this.cause]);
 
   @override
   String toString() => cause != null ? '$message: $cause' : message;
 }
 
-// Intent类定义
-class _SaveIntent extends Intent {}
+class _SaveIntent extends Intent {
+  const _SaveIntent();
+}
 
 class _SetBrushSizeIntent extends Intent {
   final double size;
   const _SetBrushSizeIntent(this.size);
 }
 
-class _ToggleContourIntent extends Intent {}
+class _ToggleContourIntent extends Intent {
+  const _ToggleContourIntent();
+}
 
-class _ToggleImageInvertIntent extends Intent {}
+class _ToggleImageInvertIntent extends Intent {
+  const _ToggleImageInvertIntent();
+}
 
-class _ToggleInvertIntent extends Intent {}
+class _ToggleInvertIntent extends Intent {
+  const _ToggleInvertIntent();
+}
 
-class _TogglePanModeIntent extends Intent {}
+class _TogglePanModeIntent extends Intent {
+  const _TogglePanModeIntent();
+}
 
 class _ToolbarButton {
   final IconData icon;
@@ -1149,7 +1302,9 @@ class _ToolbarButton {
   });
 }
 
-class _UndoIntent extends Intent {}
+class _UndoIntent extends Intent {
+  const _UndoIntent();
+}
 
 // 验证器
 class _ValidationResult {
