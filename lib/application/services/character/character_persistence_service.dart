@@ -76,8 +76,7 @@ class CharacterPersistenceService {
   // 删除字符数据
   Future<void> deleteCharacter(String id) async {
     try {
-      await _repository.delete(id);
-      _cacheManager.invalidate(id);
+      await _storageService.deleteCharacterImage(id);
     } catch (e) {
       print('删除字符失败: $e');
       rethrow;

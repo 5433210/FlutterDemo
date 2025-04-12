@@ -1,12 +1,14 @@
 import 'dart:math' as Math;
-import 'dart:typed_data';
 
+import 'package:demo/presentation/providers/character/selected_region_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../../widgets/character_collection/image_preview_panel.dart';
 import '../../widgets/character_collection/navigation_bar.dart';
@@ -25,6 +27,27 @@ class CharacterCollectionPage extends ConsumerStatefulWidget {
   @override
   ConsumerState<CharacterCollectionPage> createState() =>
       _CharacterCollectionPageState();
+}
+
+// 快捷键定义
+class CollectionShortcuts {
+  // 工具选择快捷键
+  static const panTool = SingleActivator(LogicalKeyboardKey.keyV);
+  static const selectTool = SingleActivator(LogicalKeyboardKey.keyS);
+  static const multiSelectTool = SingleActivator(LogicalKeyboardKey.keyM);
+
+  // 编辑操作
+  static const delete = SingleActivator(LogicalKeyboardKey.delete);
+  static const deleteAlt = SingleActivator(LogicalKeyboardKey.keyD);
+
+  // 导航
+  static const nextPage = SingleActivator(LogicalKeyboardKey.arrowRight);
+  static const prevPage = SingleActivator(LogicalKeyboardKey.arrowLeft);
+
+  // 其他
+  static const escape = SingleActivator(LogicalKeyboardKey.escape);
+  static const enter = SingleActivator(LogicalKeyboardKey.enter);
+  static const save = SingleActivator(LogicalKeyboardKey.keyS, control: true);
 }
 
 // 加载覆盖层组件 (已存在但为完整性添加)
@@ -75,56 +98,104 @@ class _CharacterCollectionPageState
           }
         }
       },
-      child: Scaffold(
-        body: Column(
-          children: [
-            // 导航栏
-            CharacterNavigationBar(
-              workId: widget.workId,
-              onBack: () => _onBackPressed(),
+      child: Shortcuts(
+        shortcuts: const <ShortcutActivator, Intent>{
+          // 工具选择快捷键
+          CollectionShortcuts.panTool: _PanToolIntent(),
+          CollectionShortcuts.selectTool: _SelectToolIntent(),
+          CollectionShortcuts.multiSelectTool: _MultiSelectToolIntent(),
+
+          // 编辑操作
+          CollectionShortcuts.delete: _DeleteIntent(),
+          CollectionShortcuts.deleteAlt: _DeleteIntent(),
+
+          // 导航
+          CollectionShortcuts.nextPage: _NextPageIntent(),
+          CollectionShortcuts.prevPage: _PreviousPageIntent(),
+
+          // 其他
+          CollectionShortcuts.escape: _EscapeIntent(),
+          CollectionShortcuts.save: _SaveIntent(),
+        },
+        child: Actions(
+          actions: <Type, Action<Intent>>{
+            _PanToolIntent: CallbackAction<_PanToolIntent>(
+              onInvoke: (intent) => _changeTool(Tool.pan),
             ),
-
-            // 主体内容
-            Expanded(
-              child: Stack(
-                children: [
-                  if (_isImageValid)
-                    Row(
-                      children: [
-                        // 左侧图片预览区
-                        const Expanded(
-                          flex: 6,
-                          child: ImagePreviewPanel(),
-                        ),
-
-                        // 右侧面板
-                        Expanded(
-                          flex: 4,
-                          child: RightPanel(workId: widget.workId),
-                        ),
-                      ],
-                    )
-                  else
-                    _buildImageErrorState(),
-
-                  // 使用Stack显示加载覆盖层和错误消息
-                  if (collectionState.loading ||
-                      collectionState.processing ||
-                      imageState.loading)
-                    const Positioned.fill(child: LoadingOverlay()),
-
-                  // 错误提示
-                  if (collectionState.error != null)
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 20,
-                      child: _buildErrorMessage(collectionState.error!),
-                    ),
-                ],
-              ),
+            _SelectToolIntent: CallbackAction<_SelectToolIntent>(
+              onInvoke: (intent) => _changeTool(Tool.select),
             ),
-          ],
+            _MultiSelectToolIntent: CallbackAction<_MultiSelectToolIntent>(
+              onInvoke: (intent) => _changeTool(Tool.multiSelect),
+            ),
+            _DeleteIntent: CallbackAction<_DeleteIntent>(
+              onInvoke: (intent) => _deleteSelectedRegion(),
+            ),
+            _NextPageIntent: CallbackAction<_NextPageIntent>(
+              onInvoke: (intent) => _navigateToNextPage(),
+            ),
+            _PreviousPageIntent: CallbackAction<_PreviousPageIntent>(
+              onInvoke: (intent) => _navigateToPreviousPage(),
+            ),
+            _EscapeIntent: CallbackAction<_EscapeIntent>(
+              onInvoke: (intent) => _clearSelections(),
+            ),
+            _SaveIntent: CallbackAction<_SaveIntent>(
+              onInvoke: (intent) => _saveSelectedRegions(),
+            ),
+          },
+          child: Scaffold(
+            body: Column(
+              children: [
+                // 导航栏
+                CharacterNavigationBar(
+                  workId: widget.workId,
+                  onBack: () => _onBackPressed(),
+                ),
+
+                // 主体内容
+                Expanded(
+                  child: Stack(
+                    children: [
+                      if (_isImageValid)
+                        Row(
+                          children: [
+                            // 左侧图片预览区
+                            const Expanded(
+                              flex: 6,
+                              child: ImagePreviewPanel(),
+                            ),
+
+                            // 右侧面板
+                            Expanded(
+                              flex: 4,
+                              child: RightPanel(workId: widget.workId),
+                            ),
+                          ],
+                        )
+                      else
+                        _buildImageErrorState(),
+
+                      // 使用Stack显示加载覆盖层和错误消息
+                      if (collectionState.loading ||
+                          collectionState.processing ||
+                          imageState.loading)
+                        const Positioned.fill(child: LoadingOverlay()),
+
+                      // 错误提示
+                      if (collectionState.error != null)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 20,
+                          child: _buildErrorMessage(collectionState.error!),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -140,7 +211,7 @@ class _CharacterCollectionPageState
     });
   }
 
-  // 构建错误消息显示
+// 构建错误消息显示
   Widget _buildErrorMessage(String error) {
     return Center(
       child: Container(
@@ -160,7 +231,7 @@ class _CharacterCollectionPageState
     );
   }
 
-  // 显示图像加载错误状态
+// 显示图像加载错误状态
   Widget _buildImageErrorState() {
     return Center(
       child: Container(
@@ -205,7 +276,17 @@ class _CharacterCollectionPageState
     );
   }
 
-  // 检查是否有未保存的修改，显示确认对话框
+// 实现工具切换方法
+  void _changeTool(Tool tool) {
+    ref.read(toolModeProvider.notifier).setMode(tool);
+
+    // 如果是多选模式，清除所有选区
+    if (tool == Tool.multiSelect) {
+      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
+    }
+  }
+
+// 检查是否有未保存的修改，显示确认对话框
   Future<bool> _checkUnsavedChanges() async {
     final state = ref.read(characterCollectionProvider);
     final notifier = ref.read(characterCollectionProvider.notifier);
@@ -251,6 +332,51 @@ class _CharacterCollectionPageState
 
     // 没有未保存的修改，可以直接离开
     return true;
+  }
+
+// 清除所有选区
+  void _clearSelections() {
+    ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
+  }
+
+  // 删除选中的区域
+  Future<void> _deleteSelectedRegion() async {
+    final provider = ref.read(selectedRegionProvider);
+    final notifier = ref.read(characterCollectionProvider.notifier);
+
+    // 检查是否有选中的区域
+    if (provider == null) {
+      return;
+    }
+
+    bool shouldDelete = true;
+
+    // 确认删除
+
+    shouldDelete = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('确认删除'),
+            content: Text('确定要删除选中的“${provider.character}”字区域吗？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('删除'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldDelete) {
+      // 执行删除操作时同时删除文件系统中的图片文件
+      await notifier.deleteRegion(provider.id);
+    }
   }
 
   // 加载字符数据
@@ -363,6 +489,42 @@ class _CharacterCollectionPageState
     }
   }
 
+  // 导航到下一页
+  void _navigateToNextPage() {
+    final imageState = ref.read(workImageProvider);
+
+    if (imageState.hasNext) {
+      ref.read(workImageProvider.notifier).nextPage();
+
+      // 加载新页面的选区数据
+      ref.read(characterCollectionProvider.notifier).loadWorkData(
+            imageState.workId,
+            pageId: ref.read(workImageProvider).currentPageId,
+          );
+
+      // 清除选区
+      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
+    }
+  }
+
+  // 导航到上一页
+  void _navigateToPreviousPage() {
+    final imageState = ref.read(workImageProvider);
+
+    if (imageState.hasPrevious) {
+      ref.read(workImageProvider.notifier).previousPage();
+
+      // 加载新页面的选区数据
+      ref.read(characterCollectionProvider.notifier).loadWorkData(
+            imageState.workId,
+            pageId: ref.read(workImageProvider).currentPageId,
+          );
+
+      // 清除选区
+      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
+    }
+  }
+
   // 处理返回按钮点击
   void _onBackPressed() {
     _checkUnsavedChanges().then((canPop) {
@@ -376,6 +538,9 @@ class _CharacterCollectionPageState
   Future<bool> _onWillPop() async {
     return await _checkUnsavedChanges();
   }
+
+  // 保存所有修改过的区域
+  Future<void> _saveSelectedRegions() async {}
 
   // 验证图像数据是否有效
   Future<bool> _validateImageData(Uint8List imageData) async {
@@ -415,4 +580,37 @@ class _CharacterCollectionPageState
       return false;
     }
   }
+}
+
+class _DeleteIntent extends Intent {
+  const _DeleteIntent();
+}
+
+class _EscapeIntent extends Intent {
+  const _EscapeIntent();
+}
+
+class _MultiSelectToolIntent extends Intent {
+  const _MultiSelectToolIntent();
+}
+
+class _NextPageIntent extends Intent {
+  const _NextPageIntent();
+}
+
+// 添加Intent类型
+class _PanToolIntent extends Intent {
+  const _PanToolIntent();
+}
+
+class _PreviousPageIntent extends Intent {
+  const _PreviousPageIntent();
+}
+
+class _SaveIntent extends Intent {
+  const _SaveIntent();
+}
+
+class _SelectToolIntent extends Intent {
+  const _SelectToolIntent();
 }
