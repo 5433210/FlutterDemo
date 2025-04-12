@@ -231,6 +231,13 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
     // Clear erase state on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(erase.eraseStateProvider.notifier).clear();
+      //根据实际情况设置反转模式
+      if ((widget.selectedRegion.options.inverted &&
+              !ref.read(erase.eraseStateProvider).imageInvertMode) ||
+          (!widget.selectedRegion.options.inverted &&
+              ref.read(erase.eraseStateProvider).imageInvertMode)) {
+        ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+      }
 
       // Listen for all refresh events including erase data reload
       ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
@@ -827,6 +834,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               },
               isActive: eraseState.isReversed,
               shortcut: EditorShortcuts.toggleInvert,
+              badgeText: eraseState.isReversed ? '开' : null,
             ),
             _ToolbarButton(
               icon: Icons.flip,
@@ -836,6 +844,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               },
               isActive: eraseState.imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
+              badgeText: eraseState.imageInvertMode ? '开' : null,
             ),
             _ToolbarButton(
               icon: Icons.border_all,
@@ -875,28 +884,56 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
             child: Tooltip(
               message:
                   ShortcutTooltipBuilder.build(button.tooltip, button.shortcut),
-              child: IconButton(
-                icon: Icon(
-                  button.icon,
-                  size: 20,
-                  color: button.isActive
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.shade700,
-                ),
-                onPressed: button.onPressed,
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-                style: IconButton.styleFrom(
-                  backgroundColor: button.isActive
-                      ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
-                      : null,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.horizontal(
-                      left: Radius.circular(isFirst ? 4 : 0),
-                      right: Radius.circular(isLast ? 4 : 0),
+              child: Stack(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      button.icon,
+                      size: 20,
+                      color: button.isActive
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey.shade700,
+                    ),
+                    onPressed: button.onPressed,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    style: IconButton.styleFrom(
+                      backgroundColor: button.isActive
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1)
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.horizontal(
+                          left: Radius.circular(isFirst ? 4 : 0),
+                          right: Radius.circular(isLast ? 4 : 0),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  if (button.badgeText != null)
+                    Positioned(
+                      right: 4,
+                      top: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          button.badgeText!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           );
@@ -1195,7 +1232,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
       }
 
       final processingOptions = ProcessingOptions(
-        inverted: eraseState.isReversed,
+        inverted: eraseState.imageInvertMode,
         threshold: 128.0,
         noiseReduction: 0.5,
         showContour: eraseState.showContour,
@@ -1409,6 +1446,7 @@ class _ToolbarButton {
   final VoidCallback? onPressed;
   final bool isActive;
   final SingleActivator shortcut;
+  final String? badgeText;
 
   const _ToolbarButton({
     required this.icon,
@@ -1416,6 +1454,7 @@ class _ToolbarButton {
     required this.onPressed,
     this.isActive = false,
     required this.shortcut,
+    this.badgeText,
   });
 }
 
