@@ -447,58 +447,30 @@ class CharacterImageProcessor {
       // 先填充透明背景
       img.fill(result, color: img.ColorRgba8(0, 0, 0, 0));
 
-      // 创建用于填充字符内部区域的掩码
-      final mask = img.Image(
-        width: source.width,
-        height: source.height,
-        numChannels: 1, // 1通道 - 只有透明度
-      );
-
-      // 初始化掩码为完全透明
-      img.fill(mask, color: img.ColorRgb8(0, 0, 0));
-
-      // 为每个轮廓创建填充路径
-      for (final contour in outline.contourPoints) {
-        if (contour.length < 3) continue;
-
-        // 计算当前轮廓的包围盒，限制扫描区域
-        double minX = double.infinity, minY = double.infinity;
-        double maxX = 0, maxY = 0;
-
-        for (final point in contour) {
-          if (!point.dx.isFinite || !point.dy.isFinite) continue;
-          minX = math.min(minX, point.dx);
-          minY = math.min(minY, point.dy);
-          maxX = math.max(maxX, point.dx);
-          maxY = math.max(maxY, point.dy);
-        }
-
-        // 确保坐标在图像范围内
-        int startY = math.max(0, minY.floor());
-        int endY = math.min(source.height - 1, maxY.ceil());
-
-        // 使用改进的填充算法
-        _fillPolygonImproved(mask, contour, startY, endY);
-      }
-
       // 根据掩码和二值图像共同判断应用源图像像素
       for (int y = 0; y < source.height; y++) {
         for (int x = 0; x < source.width; x++) {
-          final maskValue = mask.getPixel(x, y).r; // 获取掩码值
+          final binaryPixel = binaryImage.getPixel(x, y);
+          final luminance =
+              img.getLuminanceRgb(binaryPixel.r, binaryPixel.g, binaryPixel.b);
+          final isForeground = isInverted ? luminance > 128 : luminance < 128;
 
-          if (maskValue > 0) {
-            // 同时检查二值图像，确认这真的是前景
-            final binaryPixel = binaryImage.getPixel(x, y);
-            final luminance = img.getLuminanceRgb(
-                binaryPixel.r, binaryPixel.g, binaryPixel.b);
-            final isForeground = isInverted ? luminance > 128 : luminance < 128;
-
-            if (isForeground) {
-              // 这确实是前景像素，保留原图像的颜色
+          if (isInverted) {
+            // 反转模式下：非前景区域应显示原图，前景区域应该透明
+            if (!isForeground) {
               final sourcePixel = source.getPixel(x, y);
               result.setPixelRgba(
                   x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
             }
+            // 前景区域保持透明
+          } else {
+            // 正常模式下：前景区域显示原图，非前景区域应该透明
+            if (isForeground) {
+              final sourcePixel = source.getPixel(x, y);
+              result.setPixelRgba(
+                  x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
+            }
+            // 非前景区域保持透明
           }
         }
       }
@@ -626,7 +598,7 @@ class CharacterImageProcessor {
       // 使用较大的边作为正方形尺寸，确保完全包含内容
       final squareSize = math.max(contentWidth, contentHeight).ceil();
 
-      // 创建正方形图像
+      // 创建正方形图像 - 确保有透明通道
       final squareOriginal =
           img.Image(width: squareSize, height: squareSize, numChannels: 4);
       final squareBinary =
@@ -668,20 +640,18 @@ class CharacterImageProcessor {
               destX < squareSize &&
               destY >= 0 &&
               destY < squareSize) {
-            squareOriginal.setPixelRgba(
-                destX,
-                destY,
-                originalImage.getPixel(srcX, srcY).r,
-                originalImage.getPixel(srcX, srcY).g,
-                originalImage.getPixel(srcX, srcY).b,
-                originalImage.getPixel(srcX, srcY).a);
-            squareBinary.setPixelRgba(
-                destX,
-                destY,
-                binaryImage.getPixel(srcX, srcY).r,
-                binaryImage.getPixel(srcX, srcY).g,
-                binaryImage.getPixel(srcX, srcY).b,
-                binaryImage.getPixel(srcX, srcY).a);
+            final srcPixel = originalImage.getPixel(srcX, srcY);
+            final binaryPixel = binaryImage.getPixel(srcX, srcY);
+            // 只复制非透明像素
+            if (srcPixel.a > 0) {
+              squareOriginal.setPixelRgba(
+                  destX, destY, srcPixel.r, srcPixel.g, srcPixel.b, srcPixel.a);
+            }
+            // 同样，只复制非透明像素
+            if (binaryPixel.a > 0) {
+              squareBinary.setPixelRgba(destX, destY, binaryPixel.r,
+                  binaryPixel.g, binaryPixel.b, binaryPixel.a);
+            }
           }
         }
       }
@@ -708,7 +678,7 @@ class CharacterImageProcessor {
       // 生成SVG轮廓
       final svgOutline = generateSvgOutline(squareOutline, options.inverted);
 
-      // 生成透明PNG
+      // 生成透明PNG - 确保使用改进的方法处理反转模式下的透明区域
       final transparentPng = _createBetterTransparentPng(
           squareOriginal, squareBinary, squareOutline, options.inverted);
 
@@ -768,14 +738,14 @@ class CharacterImageProcessor {
         numChannels: 4, // RGBA
       );
 
-      // 填充透明背景
+      // 填充透明背景 - 确保整个图像初始化为透明
       img.fill(square, color: img.ColorRgba8(0, 0, 0, 0));
 
       // 计算偏移量以居中原图
       final offsetX = (squareSize - sourceWidth) ~/ 2;
       final offsetY = (squareSize - sourceHeight) ~/ 2;
 
-      // 复制原图到正方形画布上
+      // 复制原图到正方形画布上，只复制非透明像素
       for (int y = 0; y < sourceHeight; y++) {
         final srcY = y;
         final dstY = y + offsetY;
@@ -787,14 +757,24 @@ class CharacterImageProcessor {
           if (dstX < 0 || dstX >= squareSize) continue;
 
           final pixel = source.getPixel(srcX, srcY);
-          square.setPixelRgba(dstX, dstY, pixel.r, pixel.g, pixel.b, pixel.a);
+          // 只复制非透明像素，确保扩展部分保持透明
+          if (pixel.a > 0) {
+            square.setPixelRgba(dstX, dstY, pixel.r, pixel.g, pixel.b, pixel.a);
+          }
         }
       }
 
       return Uint8List.fromList(img.encodePng(square));
     } catch (e) {
       AppLogger.error('创建透明背景正方形图像失败', error: e);
-      return Uint8List.fromList(img.encodePng(source));
+      // 创建一个完全透明的图像作为后备
+      final fallback = img.Image(
+        width: source.width,
+        height: source.height,
+        numChannels: 4,
+      );
+      img.fill(fallback, color: img.ColorRgba8(0, 0, 0, 0));
+      return Uint8List.fromList(img.encodePng(fallback));
     }
   }
 
@@ -811,11 +791,6 @@ class CharacterImageProcessor {
       // 初始化为完全透明
       img.fill(result, color: img.ColorRgba8(0, 0, 0, 0));
 
-      // 设置前景色
-      final foregroundColor = isInverted
-          ? img.ColorRgba8(255, 255, 255, 255) // 反转模式使用白色
-          : img.ColorRgba8(0, 0, 0, 255); // 正常模式使用黑色
-
       // 遍历图像的每个像素
       for (int y = 0; y < binaryImage.height; y++) {
         for (int x = 0; x < binaryImage.width; x++) {
@@ -828,15 +803,21 @@ class CharacterImageProcessor {
 
           final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
 
-          // 根据亮度和反转模式决定是否为前景
-          final isForeground = isInverted
-              ? luminance > 128 // 反转模式：亮色为前景
-              : luminance < 128; // 正常模式：暗色为前景
-
-          if (isForeground) {
-            result.setPixel(x, y, foregroundColor);
+          if (isInverted) {
+            // 反转模式：亮色(白色)应该是透明的，暗色(黑色)应该是黑色
+            if (luminance <= 128) {
+              // 暗色像素设为黑色
+              result.setPixelRgba(x, y, 0, 0, 0, 255);
+            }
+            // 亮色像素保持透明，不需要处理
+          } else {
+            // 正常模式：暗色为前景(黑色)，亮色为背景(透明)
+            if (luminance < 128) {
+              // 暗色像素设为黑色
+              result.setPixelRgba(x, y, 0, 0, 0, 255);
+            }
+            // 亮色像素保持透明，不需要处理
           }
-          // 背景像素保持透明，不需要额外处理
         }
       }
 
@@ -1055,7 +1036,7 @@ class CharacterImageProcessor {
   /// 生成保持比例的缩略图 (100x100像素，居中)
   Uint8List _generateProperThumbnail(img.Image source) {
     try {
-      // 创建纯白背景的100x100画布
+      // 创建纯白或全黑背景的100x100画布
       final thumbnail = img.Image(width: 100, height: 100);
       img.fill(thumbnail, color: img.ColorRgb8(255, 255, 255));
 
@@ -1095,8 +1076,8 @@ class CharacterImageProcessor {
       final contentHeight = maxY - minY + 1;
 
       // 计算合适的缩放比例，保持原始比例
-      final scaleX = 100.0 / contentWidth; // 使用100像素留出边距
-      final scaleY = 100.0 / contentHeight;
+      final scaleX = 80.0 / contentWidth; // 使用80像素留出边距
+      final scaleY = 80.0 / contentHeight;
       final scaleRatio = math.min(scaleX, scaleY); // 使用较小的比例避免失真
 
       // 计算缩放后的尺寸
@@ -1115,8 +1096,14 @@ class CharacterImageProcessor {
         for (int x = 0; x < contentWidth; x++) {
           final srcPixel = source.getPixel(x + minX, y + minY);
           if (srcPixel.a > 128) {
-            // 转换为黑色前景
-            contentImage.setPixelRgba(x, y, 0, 0, 0, 255);
+            // 检查原始像素亮度并保持颜色
+            final luminance =
+                img.getLuminanceRgb(srcPixel.r, srcPixel.g, srcPixel.b);
+            if (luminance < 128) {
+              contentImage.setPixelRgba(x, y, 0, 0, 0, 255);
+            } else {
+              contentImage.setPixelRgba(x, y, 255, 255, 255, 255);
+            }
           }
         }
       }
@@ -1141,7 +1128,8 @@ class CharacterImageProcessor {
             final destX = x + centerX;
             final destY = y + centerY;
             if (destX >= 0 && destX < 100 && destY >= 0 && destY < 100) {
-              thumbnail.setPixelRgba(destX, destY, 0, 0, 0, 255);
+              thumbnail.setPixelRgba(
+                  destX, destY, pixel.r, pixel.g, pixel.b, 255);
             }
           }
         }
