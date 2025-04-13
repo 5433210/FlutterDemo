@@ -457,7 +457,8 @@ class CharacterImageProcessor {
 
           if (isInverted) {
             // 反转模式下：非前景区域应显示原图，前景区域应该透明
-            if (!isForeground) {
+            if (!isForeground && binaryPixel.a > 128) {
+              //排除透明区域
               final sourcePixel = source.getPixel(x, y);
               result.setPixelRgba(
                   x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
@@ -465,7 +466,8 @@ class CharacterImageProcessor {
             // 前景区域保持透明
           } else {
             // 正常模式下：前景区域显示原图，非前景区域应该透明
-            if (isForeground) {
+            if (isForeground && binaryPixel.a > 128) {
+              //排除透明区域
               final sourcePixel = source.getPixel(x, y);
               result.setPixelRgba(
                   x, y, sourcePixel.r, sourcePixel.g, sourcePixel.b, 255);
