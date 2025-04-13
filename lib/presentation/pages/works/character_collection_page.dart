@@ -207,6 +207,11 @@ class _CharacterCollectionPageState
 
     // 加载初始数据当页面首次创建时
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 清空上次遗留的选区数据
+      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
+      ref.read(selectedRegionProvider.notifier).clearRegion();
+      ref.read(selectedRegionProvider.notifier).clearErasePoints();
+
       _loadInitialData();
     });
   }
