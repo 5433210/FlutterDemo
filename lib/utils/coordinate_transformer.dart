@@ -130,83 +130,85 @@ class CoordinateTransformer {
 
   /// 图像矩形转换为视口矩形
   Rect imageRectToViewportRect(Rect imageRect) {
-    if (enableLogging) {
-      AppLogger.debug('【坐标转换】将图像矩形转换为视口矩形', data: {
-        'imageRect':
-            '${imageRect.left},${imageRect.top},${imageRect.width}x${imageRect.height}',
-        'imageSize': '${imageSize.width}x${imageSize.height}',
-        'viewportSize': '${viewportSize.width}x${viewportSize.height}',
-      });
-    }
+    // if (enableLogging) {
+    //   AppLogger.debug('【坐标转换】将图像矩形转换为视口矩形', data: {
+    //     'imageRect':
+    //         '${imageRect.left},${imageRect.top},${imageRect.width}x${imageRect.height}',
+    //     'imageSize': '${imageSize.width}x${imageSize.height}',
+    //     'viewportSize': '${viewportSize.width}x${viewportSize.height}',
+    //   });
+    // }
 
-    try {
-      // 1. 检查输入矩形是否有效
-      if (imageRect.isEmpty || imageRect.width < 0 || imageRect.height < 0) {
-        throw ArgumentError('无效的输入矩形: $imageRect');
-      }
+    // try {
+    //   // 1. 检查输入矩形是否有效
+    //   if (imageRect.isEmpty || imageRect.width < 0 || imageRect.height < 0) {
+    //     throw ArgumentError('无效的输入矩形: $imageRect');
+    //   }
 
-      // 2. 确保输入矩形在图像范围内
-      final clampedImageRect = Rect.fromLTRB(
-        imageRect.left.clamp(0.0, imageSize.width),
-        imageRect.top.clamp(0.0, imageSize.height),
-        imageRect.right.clamp(0.0, imageSize.width),
-        imageRect.bottom.clamp(0.0, imageSize.height),
-      );
+    //   // 2. 确保输入矩形在图像范围内
+    //   final clampedImageRect = Rect.fromLTRB(
+    //     imageRect.left.clamp(0.0, imageSize.width),
+    //     imageRect.top.clamp(0.0, imageSize.height),
+    //     imageRect.right.clamp(0.0, imageSize.width),
+    //     imageRect.bottom.clamp(0.0, imageSize.height),
+    //   );
 
-      // 3. 转换矩形的角点
-      final topLeft = imageToViewportCoordinate(clampedImageRect.topLeft);
-      final bottomRight =
-          imageToViewportCoordinate(clampedImageRect.bottomRight);
+    //   // 3. 转换矩形的角点
+    //   final topLeft = imageToViewportCoordinate(clampedImageRect.topLeft);
+    //   final bottomRight =
+    //       imageToViewportCoordinate(clampedImageRect.bottomRight);
 
-      // 4. 创建视口矩形并确保在视口范围内
-      final viewportRect = Rect.fromPoints(topLeft, bottomRight)
-          .intersect(Offset.zero & viewportSize);
+    //   // 4. 创建视口矩形并确保在视口范围内
+    //   final viewportRect = Rect.fromPoints(topLeft, bottomRight)
+    //       .intersect(Offset.zero & viewportSize);
 
-      if (enableLogging) {
-        AppLogger.debug('【坐标转换】转换结果', data: {
-          'viewportRect':
-              '${viewportRect.left},${viewportRect.top},${viewportRect.width}x${viewportRect.height}',
-          'actualScale': actualScale.toStringAsFixed(3),
-        });
-      }
+    //   if (enableLogging) {
+    //     AppLogger.debug('【坐标转换】转换结果', data: {
+    //       'viewportRect':
+    //           '${viewportRect.left},${viewportRect.top},${viewportRect.width}x${viewportRect.height}',
+    //       'actualScale': actualScale.toStringAsFixed(3),
+    //     });
+    //   }
 
-      return viewportRect;
-    } catch (e) {
-      AppLogger.error('【坐标转换】图像矩形转换失败', error: e);
-      // 发生错误时返回一个安全的默认值 - 视口中心的1x1矩形
-      return Rect.fromCenter(
-        center: Offset(viewportSize.width / 2, viewportSize.height / 2),
-        width: 1,
-        height: 1,
-      );
-    }
+    //   return viewportRect;
+    // } catch (e) {
+    //   AppLogger.error('【坐标转换】图像矩形转换失败', error: e);
+    //   // 发生错误时返回一个安全的默认值 - 视口中心的1x1矩形
+    //   return Rect.fromCenter(
+    //     center: Offset(viewportSize.width / 2, viewportSize.height / 2),
+    //     width: 1,
+    //     height: 1,
+    //   );
+    // }
+    return imageRect; // 直接返回图像矩形 - 可能需要根据实际需求进行调整
   }
 
   /// 图像坐标转换为视口坐标
   Offset imageToViewportCoordinate(Offset imageCoord) {
-    if (enableLogging) {
-      AppLogger.debug('【坐标转换】将图像坐标转换为视口坐标: ${imageCoord.dx},${imageCoord.dy}');
-    }
+    // if (enableLogging) {
+    //   AppLogger.debug('【坐标转换】将图像坐标转换为视口坐标: ${imageCoord.dx},${imageCoord.dy}');
+    // }
 
-    // 1. 应用缩放
-    final acScale = actualScale;
-    final scaledOffset = Offset(
-      imageCoord.dx * acScale,
-      imageCoord.dy * acScale,
-    );
+    // // 1. 应用缩放
+    // final acScale = actualScale;
+    // final scaledOffset = Offset(
+    //   imageCoord.dx * acScale,
+    //   imageCoord.dy * acScale,
+    // );
 
-    // 2. 应用平移，得到最终视口坐标
-    final viewportRect = Offset(
-        scaledOffset.dx + currentOffset.dx, scaledOffset.dy + currentOffset.dy);
+    // // 2. 应用平移，得到最终视口坐标
+    // final viewportRect = Offset(
+    //     scaledOffset.dx + currentOffset.dx, scaledOffset.dy + currentOffset.dy);
 
-    if (enableLogging) {
-      AppLogger.debug('【坐标转换】视图→视口: '
-          '(${imageCoord.dx.toStringAsFixed(1)},${imageCoord.dy.toStringAsFixed(1)}) → '
-          '(${viewportRect.dx.toStringAsFixed(1)},${viewportRect.dy.toStringAsFixed(1)})'
-          ' [scale=$acScale, offset=${currentOffset.dx.toStringAsFixed(1)},${currentOffset.dy.toStringAsFixed(1)}]');
-    }
+    // if (enableLogging) {
+    //   AppLogger.debug('【坐标转换】视图→视口: '
+    //       '(${imageCoord.dx.toStringAsFixed(1)},${imageCoord.dy.toStringAsFixed(1)}) → '
+    //       '(${viewportRect.dx.toStringAsFixed(1)},${viewportRect.dy.toStringAsFixed(1)})'
+    //       ' [scale=$acScale, offset=${currentOffset.dx.toStringAsFixed(1)},${currentOffset.dy.toStringAsFixed(1)}]');
+    // }
 
-    return viewportRect;
+    // return viewportRect;
+    return imageCoord; // 直接返回图像坐标 - 可能需要根据实际需求进行调整
   }
 
   /// 记录坐标转换过程 - 用于调试
@@ -293,45 +295,46 @@ class CoordinateTransformer {
   /// 视口坐标转换为图像坐标
   /// 按照公式: Xview = (Xviewport/ActualScaleX) - ActualOffsetX
   Offset viewportToViewCoordinate(Offset viewportPoint) {
-    try {
-      if (enableLogging) {
-        AppLogger.debug(
-            '【坐标转换】将视口坐标转换为图像坐标: ${viewportPoint.dx},${viewportPoint.dy}');
-      }
+    // try {
+    //   if (enableLogging) {
+    //     AppLogger.debug(
+    //         '【坐标转换】将视口坐标转换为图像坐标: ${viewportPoint.dx},${viewportPoint.dy}');
+    //   }
 
-      // 计算实际缩放比例
-      final actualScale = currentScale * baseScale;
+    //   // 计算实际缩放比例
+    //   final actualScale = currentScale * baseScale;
 
-      // 计算实际偏移量
-      final actualOffset = Offset(
-        currentOffset.dx / actualScale,
-        currentOffset.dy / actualScale,
-      );
+    //   // 计算实际偏移量
+    //   final actualOffset = Offset(
+    //     currentOffset.dx / actualScale,
+    //     currentOffset.dy / actualScale,
+    //   );
 
-      AppLogger.debug('【坐标转换】计算参数', data: {
-        'currentScale': currentScale.toStringAsFixed(3),
-        'baseScale': baseScale.toStringAsFixed(3),
-        'actualScale': actualScale.toStringAsFixed(3),
-        'currentOffset': '${currentOffset.dx},${currentOffset.dy}',
-        'actualOffset': '${actualOffset.dx},${actualOffset.dy}',
-      });
+    //   AppLogger.debug('【坐标转换】计算参数', data: {
+    //     'currentScale': currentScale.toStringAsFixed(3),
+    //     'baseScale': baseScale.toStringAsFixed(3),
+    //     'actualScale': actualScale.toStringAsFixed(3),
+    //     'currentOffset': '${currentOffset.dx},${currentOffset.dy}',
+    //     'actualOffset': '${actualOffset.dx},${actualOffset.dy}',
+    //   });
 
-      // 应用转换公式: Xview = (Xviewport/ActualScaleX) - ActualOffsetX
-      final viewCoordinate = Offset(
-        viewportPoint.dx / actualScale - actualOffset.dx,
-        viewportPoint.dy / actualScale - actualOffset.dy,
-      );
+    //   // 应用转换公式: Xview = (Xviewport/ActualScaleX) - ActualOffsetX
+    //   final viewCoordinate = Offset(
+    //     viewportPoint.dx / actualScale - actualOffset.dx,
+    //     viewportPoint.dy / actualScale - actualOffset.dy,
+    //   );
 
-      AppLogger.debug('【坐标转换】转换结果', data: {
-        'viewportPoint': '${viewportPoint.dx},${viewportPoint.dy}',
-        'viewCoordinate': '${viewCoordinate.dx},${viewCoordinate.dy}',
-      });
+    //   AppLogger.debug('【坐标转换】转换结果', data: {
+    //     'viewportPoint': '${viewportPoint.dx},${viewportPoint.dy}',
+    //     'viewCoordinate': '${viewCoordinate.dx},${viewCoordinate.dy}',
+    //   });
 
-      return viewCoordinate;
-    } catch (e) {
-      AppLogger.error('【坐标转换】视口坐标转换为图像坐标失败', error: e);
-      return Offset.zero;
-    }
+    //   return viewCoordinate;
+    // } catch (e) {
+    //   AppLogger.error('【坐标转换】视口坐标转换为图像坐标失败', error: e);
+    //   return Offset.zero;
+    // }
+    return viewportPoint; // 直接返回视口坐标 - 可能需要根据实际需求进行调整
   }
 
   Rect viewRectToImageRect(Rect viewRect) {

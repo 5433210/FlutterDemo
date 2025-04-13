@@ -512,133 +512,140 @@ class _ImageViewState extends ConsumerState<ImageView>
     final isSelectMode = toolMode == Tool.select;
     final characterCollection = ref.watch(characterCollectionProvider);
 
-    return MouseRegion(
-      cursor: _getCursor(),
-      onHover: (event) {
-        // 更新悬停状态
-        if (_isAdjusting && _adjustingRect != null) {
-          final handleIndex = _getHandleIndexFromPosition(event.localPosition);
-          setState(() {
-            _hoveredHandleIndex = handleIndex;
-          });
-        } else {
-          final hitRegion = _hitTestRegion(event.localPosition, regions);
-          setState(() {
-            _hoveredRegionId = hitRegion?.id;
-          });
-        }
-      },
-      onExit: (_) {
-        setState(() {
-          _hoveredHandleIndex = null;
-        });
-      },
-      child: GestureDetector(
-        onTapUp: _onTapUp,
-        onDoubleTap: () {
-          // 双击不再需要确认调整
-        },
-        // Always allow selection start, handle adjustment cancellation inside
-        onPanStart: isPanMode ? _handlePanStart : _handleSelectionStart,
-        onPanUpdate: isPanMode ? _handlePanUpdate : _handleSelectionUpdate,
-        onPanEnd: isPanMode ? _handlePanEnd : _handleSelectionEnd,
-        child: Listener(
-          onPointerSignal: _handlePointerSignal,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              InteractiveViewer(
-                constrained: false,
-                transformationController: _transformationController,
-                minScale: 0.1,
-                maxScale: 10.0,
-                scaleEnabled: true,
-                panEnabled: isPanMode && !_isAdjusting,
-                boundaryMargin: const EdgeInsets.all(double.infinity),
-                onInteractionStart: _handleInteractionStart,
-                onInteractionUpdate: _handleInteractionUpdate,
-                onInteractionEnd: _handleInteractionEnd,
-                alignment: Alignment.topLeft,
-                child: Stack(
-                  children: [
-                    Image.memory(
-                      imageState.imageData!,
-                      fit: BoxFit.contain,
-                      alignment: Alignment.topLeft,
-                      filterQuality: FilterQuality.high,
-                      gaplessPlayback: true,
-                      frameBuilder: _buildImageFrame,
-                      errorBuilder: _buildErrorWidget,
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        InteractiveViewer(
+          constrained: false,
+          transformationController: _transformationController,
+          minScale: 0.1,
+          maxScale: 10.0,
+          scaleEnabled: true,
+          panEnabled: isPanMode && !_isAdjusting,
+          boundaryMargin: const EdgeInsets.all(double.infinity),
+          onInteractionStart: _handleInteractionStart,
+          onInteractionUpdate: _handleInteractionUpdate,
+          onInteractionEnd: _handleInteractionEnd,
+          alignment: Alignment.topLeft,
+          child: MouseRegion(
+            cursor: _getCursor(),
+            onHover: (event) {
+              // 更新悬停状态
+              if (_isAdjusting && _adjustingRect != null) {
+                final handleIndex =
+                    _getHandleIndexFromPosition(event.localPosition);
+                setState(() {
+                  _hoveredHandleIndex = handleIndex;
+                });
+              } else {
+                final hitRegion = _hitTestRegion(event.localPosition, regions);
+                setState(() {
+                  _hoveredRegionId = hitRegion?.id;
+                });
+              }
+            },
+            onExit: (_) {
+              setState(() {
+                _hoveredHandleIndex = null;
+              });
+            },
+            child: Listener(
+              // onPointerSignal: _handlePointerSignal,
+              child: Stack(
+                children: [
+                  Image.memory(
+                    imageState.imageData!,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.topLeft,
+                    filterQuality: FilterQuality.high,
+                    gaplessPlayback: true,
+                    frameBuilder: _buildImageFrame,
+                    errorBuilder: _buildErrorWidget,
+                  ),
+
+                  // 绘制所有区域
+                  if (_transformer != null && regions.isNotEmpty)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        ignoring: _isAdjusting,
+                        child: GestureDetector(
+                          onTapUp: _onTapUp,
+                          // Always allow selection start, handle adjustment cancellation inside
+                          onPanStart: isPanMode
+                              ? _handlePanStart
+                              : _handleSelectionStart,
+                          onPanUpdate: isPanMode
+                              ? _handlePanUpdate
+                              : _handleSelectionUpdate,
+                          onPanEnd:
+                              isPanMode ? _handlePanEnd : _handleSelectionEnd,
+                          child: CustomPaint(
+                            painter: RegionsPainter(
+                              regions: regions,
+                              transformer: _transformer!,
+                              hoveredId: _hoveredRegionId,
+                              adjustingRegionId: _adjustingRegionId,
+                              currentTool: toolMode,
+                              isAdjusting: characterCollection.isAdjusting,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
+
+                  // **Adjustment Layer GestureDetector**
+                  if (_isAdjusting && _adjustingRegionId != null)
+                    Positioned.fill(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior
+                            .opaque, // Capture hits within bounds
+                        onTapUp: _onTapUp,
+                        onPanStart:
+                            _handleAdjustmentPanStart, // Use dedicated handler
+                        onPanUpdate:
+                            _handleAdjustmentPanUpdate, // Use dedicated handler
+                        onPanEnd:
+                            _handleAdjustmentPanEnd, // Use dedicated handler
+                        child: CustomPaint(
+                          painter: AdjustableRegionPainter(
+                            region: _originalRegion!,
+                            transformer: _transformer!,
+                            isActive: true,
+                            isAdjusting: true,
+                            activeHandleIndex: _activeHandleIndex,
+                            currentRotation: _currentRotation,
+                            guideLines: _guideLines,
+                            viewportRect: _adjustingRect,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // 添加框选层
+                  if (isSelectMode && !_isAdjusting)
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTapUp: _onTapUp,
+                        onPanStart: _handleSelectionStart,
+                        onPanUpdate: _handleSelectionUpdate,
+                        onPanEnd: _handleSelectionEnd,
+                        child: CustomPaint(
+                          painter: ActiveSelectionPainter(
+                            startPoint: _selectionStart ?? Offset.zero,
+                            endPoint: _selectionCurrent ?? Offset.zero,
+                            viewportSize:
+                                _transformer?.viewportSize ?? Size.zero,
+                            isActive: _selectionStart != null,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-
-              // 绘制所有区域
-              if (_transformer != null && regions.isNotEmpty)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    ignoring: _isAdjusting,
-                    child: CustomPaint(
-                      painter: RegionsPainter(
-                        regions: regions,
-                        transformer: _transformer!,
-                        hoveredId: _hoveredRegionId,
-                        adjustingRegionId: _adjustingRegionId,
-                        currentTool: toolMode,
-                        isAdjusting: characterCollection.isAdjusting,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // **Adjustment Layer GestureDetector**
-              if (_isAdjusting && _adjustingRegionId != null)
-                Positioned.fill(
-                  child: GestureDetector(
-                    behavior:
-                        HitTestBehavior.opaque, // Capture hits within bounds
-                    onPanStart:
-                        _handleAdjustmentPanStart, // Use dedicated handler
-                    onPanUpdate:
-                        _handleAdjustmentPanUpdate, // Use dedicated handler
-                    onPanEnd: _handleAdjustmentPanEnd, // Use dedicated handler
-                    child: CustomPaint(
-                      painter: AdjustableRegionPainter(
-                        region: _originalRegion!,
-                        transformer: _transformer!,
-                        isActive: true,
-                        isAdjusting: true,
-                        activeHandleIndex: _activeHandleIndex,
-                        currentRotation: _currentRotation,
-                        guideLines: _guideLines,
-                        viewportRect: _adjustingRect,
-                      ),
-                    ),
-                  ),
-                ),
-
-              // 添加框选层
-              if (isSelectMode && !_isAdjusting)
-                Positioned.fill(
-                  child: GestureDetector(
-                    onPanStart: _handleSelectionStart,
-                    onPanUpdate: _handleSelectionUpdate,
-                    onPanEnd: _handleSelectionEnd,
-                    child: CustomPaint(
-                      painter: ActiveSelectionPainter(
-                        startPoint: _selectionStart ?? Offset.zero,
-                        endPoint: _selectionCurrent ?? Offset.zero,
-                        viewportSize: _transformer?.viewportSize ?? Size.zero,
-                        isActive: _selectionStart != null,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -1372,49 +1379,49 @@ class _ImageViewState extends ConsumerState<ImageView>
     }
   }
 
-  void _handlePointerSignal(PointerSignalEvent event) {
-    if (event is! PointerScrollEvent) return;
+  // void _handlePointerSignal(PointerSignalEvent event) {
+  //   if (event is! PointerScrollEvent) return;
 
-    try {
-      // 获取鼠标相对于视口的位置
-      final box = context.findRenderObject() as RenderBox;
-      final localPosition = box.globalToLocal(event.position);
-      final delta = event.scrollDelta.dy;
+  //   try {
+  //     // 获取鼠标相对于视口的位置
+  //     final box = context.findRenderObject() as RenderBox;
+  //     final localPosition = box.globalToLocal(event.position);
+  //     final delta = event.scrollDelta.dy;
 
-      // 计算目标缩放比例
-      final currentScale = _transformer?.currentScale ?? 1.0;
-      final baseScale = _transformer?.baseScale ?? 1.0;
-      var targetScale = (currentScale - delta * 0.001).clamp(0.1, 10.0);
+  //     // 计算目标缩放比例
+  //     final currentScale = _transformer?.currentScale ?? 1.0;
+  //     final baseScale = _transformer?.baseScale ?? 1.0;
+  //     var targetScale = (currentScale - delta * 0.001).clamp(0.1, 10.0);
 
-      if (targetScale < baseScale * 0.2) {
-        targetScale = baseScale * 0.2;
-      }
+  //     if (targetScale < baseScale * 0.2) {
+  //       targetScale = baseScale * 0.2;
+  //     }
 
-      final scaleChange = targetScale / currentScale;
+  //     final scaleChange = targetScale / currentScale;
 
-      if (delta.abs() > 0) {
-        setState(() {
-          // 获取当前变换矩阵并应用缩放
-          final matrix = Matrix4.copy(_transformationController.value);
+  //     if (delta.abs() > 0) {
+  //       setState(() {
+  //         // 获取当前变换矩阵并应用缩放
+  //         final matrix = Matrix4.copy(_transformationController.value);
 
-          // 移动原点到鼠标位置
-          matrix.translate(localPosition.dx, localPosition.dy);
-          matrix.scale(scaleChange, scaleChange);
-          matrix.translate(-localPosition.dx, -localPosition.dy);
+  //         // 移动原点到鼠标位置
+  //         matrix.translate(localPosition.dx, localPosition.dy);
+  //         matrix.scale(scaleChange, scaleChange);
+  //         matrix.translate(-localPosition.dx, -localPosition.dy);
 
-          _transformationController.value = matrix;
-          _isZoomed = targetScale > 1.05;
-        });
+  //         _transformationController.value = matrix;
+  //         _isZoomed = targetScale > 1.05;
+  //       });
 
-        AppLogger.debug('缩放变换', data: {
-          'scale': targetScale,
-          'mousePosition': '${localPosition.dx},${localPosition.dy}'
-        });
-      }
-    } catch (e) {
-      AppLogger.error('滚轮缩放失败', error: e);
-    }
-  }
+  //       AppLogger.debug('缩放变换', data: {
+  //         'scale': targetScale,
+  //         'mousePosition': '${localPosition.dx},${localPosition.dy}'
+  //       });
+  //     }
+  //   } catch (e) {
+  //     AppLogger.error('滚轮缩放失败', error: e);
+  //   }
+  // }
 
   Future<void> _handleRegionCreated(Rect rect) async {
     try {
