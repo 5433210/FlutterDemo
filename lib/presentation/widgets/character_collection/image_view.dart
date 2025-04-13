@@ -13,9 +13,7 @@ import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
-import '../../providers/debug/debug_options_provider.dart';
 import 'adjustable_region_painter.dart';
-import 'debug_overlay.dart';
 import 'delete_confirmation_dialog.dart';
 import 'regions_painter.dart';
 import 'selection_painters.dart';
@@ -29,29 +27,6 @@ class ImageView extends ConsumerStatefulWidget {
   ConsumerState<ImageView> createState() => _ImageViewState();
 }
 
-class _DebugModeToggle extends ConsumerWidget {
-  final bool enabled;
-
-  const _DebugModeToggle({
-    required this.enabled,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return FloatingActionButton.small(
-      onPressed: () =>
-          ref.read(debugOptionsProvider.notifier).toggleDebugMode(),
-      tooltip: 'Alt+D',
-      backgroundColor: enabled ? Colors.blue : Colors.black87,
-      child: Icon(
-        enabled ? Icons.bug_report : Icons.bug_report_outlined,
-        color: Colors.white,
-        size: 20,
-      ),
-    );
-  }
-}
-
 class _ImageViewState extends ConsumerState<ImageView>
     with SingleTickerProviderStateMixin {
   final TransformationController _transformationController =
@@ -59,8 +34,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   final FocusNode _focusNode = FocusNode();
   CoordinateTransformer? _transformer;
 
-  late final AnimationController _debugPanelController;
-  late final Animation<double> _debugPanelAnimation;
   AnimationController? _animationController;
   Timer? _transformationDebouncer;
   String? _lastImageId;
@@ -105,7 +78,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     final characterCollection = ref.watch(characterCollectionProvider);
     final regions = characterCollection.regions;
     // No need to access selectedIds and modifiedIds directly as they're now part of region properties
-    final debugOptions = ref.watch(debugOptionsProvider);
 
     // 处理工具模式变化
     final lastToolMode = _isInSelectionMode
@@ -143,7 +115,6 @@ class _ImageViewState extends ConsumerState<ImageView>
           _updateTransformer(
             imageSize: imageSize,
             viewportSize: viewportSize,
-            enableLogging: debugOptions.enableLogging,
           );
 
           // 首次加载且图像和transformer都准备好时设置初始缩放
@@ -202,14 +173,8 @@ class _ImageViewState extends ConsumerState<ImageView>
                     regions,
                     viewportSize,
                   ),
-                  if (_transformer != null && debugOptions.enabled)
-                    _buildDebugLayer(
-                      debugOptions,
-                      regions,
-                      viewportSize,
-                    ),
                   _buildSelectionToolLayer(),
-                  _buildUILayer(debugOptions),
+                  _buildUILayer(),
                 ],
               ),
             ),
@@ -253,21 +218,12 @@ class _ImageViewState extends ConsumerState<ImageView>
     _transformationController.removeListener(_onTransformationChanged);
     _transformationController.dispose();
     _focusNode.dispose();
-    _debugPanelController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _debugPanelController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _debugPanelAnimation = CurvedAnimation(
-      parent: _debugPanelController,
-      curve: Curves.easeInOut,
-    );
 
     // 添加变换矩阵变化监听
     _transformationController.addListener(_onTransformationChanged);
@@ -485,55 +441,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     return newRect;
   }
 
-  void _animateMatrix(Matrix4 targetMatrix) {
-    _animationController?.dispose();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    final animation = Matrix4Tween(
-      begin: _transformationController.value,
-      end: targetMatrix,
-    ).animate(CurvedAnimation(
-      parent: _animationController!,
-      curve: Curves.easeInOut,
-    ));
-
-    animation.addListener(() {
-      _transformationController.value = animation.value;
-    });
-
-    _animationController!.forward();
-  }
-
-  Widget _buildDebugLayer(
-    DebugOptions debugOptions,
-    List<CharacterRegion> regions,
-    Size viewportSize,
-  ) {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: CustomPaint(
-          painter: DebugOverlay(
-            transformer: _transformer!,
-            showGrid: debugOptions.showGrid,
-            showCoordinates: debugOptions.showCoordinates,
-            showDetails: debugOptions.showDetails,
-            showImageInfo: debugOptions.showImageInfo,
-            showRegionCenter: debugOptions.showRegionCenter,
-            gridSize: debugOptions.gridSize,
-            textScale: debugOptions.textScale,
-            opacity: debugOptions.opacity,
-            regions: regions,
-            // selectedIds is no longer needed, regions have isSelected property
-          ),
-          size: viewportSize,
-        ),
-      ),
-    );
-  }
-
   /// 构建错误显示
   Widget _buildErrorWidget(
     BuildContext context,
@@ -603,7 +510,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     final toolMode = ref.watch(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
     final isSelectMode = toolMode == Tool.select;
-    final isMultiSelectMode = toolMode == Tool.multiSelect;
     final characterCollection = ref.watch(characterCollectionProvider);
 
     return MouseRegion(
@@ -642,6 +548,7 @@ class _ImageViewState extends ConsumerState<ImageView>
             fit: StackFit.expand,
             children: [
               InteractiveViewer(
+                constrained: false,
                 transformationController: _transformationController,
                 minScale: 0.1,
                 maxScale: 10.0,
@@ -761,17 +668,9 @@ class _ImageViewState extends ConsumerState<ImageView>
     );
   }
 
-  Widget _buildUILayer(DebugOptions debugOptions) {
+  Widget _buildUILayer() {
     return Stack(
       children: [
-        // 调试模式切换按钮
-        if (debugOptions.enabled)
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: _DebugModeToggle(enabled: debugOptions.enabled),
-          ),
-
         // 选区工具栏
         if (_hasCompletedSelection && _lastCompletedSelection != null)
           Positioned(
@@ -1360,13 +1259,6 @@ class _ImageViewState extends ConsumerState<ImageView>
       return KeyEventResult.ignored;
     }
 
-    // Debug模式切换 (Alt+D)
-    if (event.logicalKey == LogicalKeyboardKey.keyD &&
-        HardwareKeyboard.instance.isAltPressed) {
-      ref.read(debugOptionsProvider.notifier).toggleDebugMode();
-      return KeyEventResult.handled;
-    }
-
     // ESC键退出调整模式
     if (event.logicalKey == LogicalKeyboardKey.escape && _isAdjusting) {
       // 退出调整模式
@@ -1412,6 +1304,7 @@ class _ImageViewState extends ConsumerState<ImageView>
         case LogicalKeyboardKey.delete:
         case LogicalKeyboardKey.backspace:
           if (_adjustingRegionId != null) {
+            // 显示确认对话框
             // 显示确认对话框
             _requestDeleteRegion(_adjustingRegionId!);
             return KeyEventResult.handled;
@@ -2086,7 +1979,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   void _updateTransformer({
     required Size imageSize,
     required Size viewportSize,
-    required bool enableLogging,
   }) {
     try {
       final needsUpdate = _transformer == null ||
@@ -2098,7 +1990,6 @@ class _ImageViewState extends ConsumerState<ImageView>
           transformationController: _transformationController,
           imageSize: imageSize,
           viewportSize: viewportSize,
-          enableLogging: enableLogging,
         );
 
         AppLogger.debug('CoordinateTransformer已更新', data: {
