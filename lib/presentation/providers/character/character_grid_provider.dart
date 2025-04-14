@@ -160,9 +160,28 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
         break;
     }
 
-    // Update filtered list
+    // Calculate pagination
+    const itemsPerPage = 16;
+    final totalPages = (filtered.length / itemsPerPage).ceil();
+    final validCurrentPage = state.currentPage > totalPages
+        ? (totalPages > 0 ? totalPages : 1)
+        : state.currentPage;
+
+    // Apply pagination to limit items shown
+    final startIndex = (validCurrentPage - 1) * itemsPerPage;
+    final endIndex = startIndex + itemsPerPage;
+
+    // Create paged list - but ensure we don't exceed the bounds
+    final pagedList = startIndex < filtered.length
+        ? filtered.sublist(
+            startIndex, endIndex > filtered.length ? filtered.length : endIndex)
+        : <CharacterViewModel>[];
+
+    // Update filtered list with paginated results
     state = state.copyWith(
-      filteredCharacters: filtered,
+      filteredCharacters: pagedList,
+      totalPages: totalPages > 0 ? totalPages : 1,
+      currentPage: validCurrentPage,
     );
   }
 
