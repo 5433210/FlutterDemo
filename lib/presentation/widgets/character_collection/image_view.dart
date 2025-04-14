@@ -2,17 +2,26 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'
+    show
+        HardwareKeyboard,
+        KeyDownEvent,
+        KeyRepeatEvent,
+        KeyUpEvent,
+        LogicalKeyboardKey,
+        RawKeyDownEvent,
+        ServicesBinding;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/character_region.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../utils/coordinate_transformer.dart';
+import '../../../utils/focus/focus_persistence.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'adjustable_region_painter.dart';
-import 'delete_confirmation_dialog.dart';
 import 'regions_painter.dart';
 import 'selection_painters.dart';
 import 'selection_toolbar.dart';
@@ -26,7 +35,7 @@ class ImageView extends ConsumerStatefulWidget {
 }
 
 class _ImageViewState extends ConsumerState<ImageView>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, FocusPersistenceMixin {
   final TransformationController _transformationController =
       TransformationController();
   final FocusNode _focusNode = FocusNode();
@@ -41,9 +50,10 @@ class _ImageViewState extends ConsumerState<ImageView>
 
   bool _isPanning = false;
   bool _isZoomed = false;
+  // Alt键状态跟踪
+  bool _isAltKeyPressed = false;
   // 选区相关
   Offset? _selectionStart;
-
   Offset? _selectionCurrent;
   Rect? _lastCompletedSelection;
   bool _hasCompletedSelection = false;
@@ -95,9 +105,33 @@ class _ImageViewState extends ConsumerState<ImageView>
 
     final imageSize = Size(imageState.imageWidth, imageState.imageHeight);
 
-    return Focus(
+    return RawKeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
+      onKey: (RawKeyEvent event) {
+        // Check if Alt key is pressed or released
+        bool isAlt = false;
+
+        if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+            event.logicalKey == LogicalKeyboardKey.altRight) {
+          isAlt = true;
+        } else if (event.isAltPressed) {
+          isAlt = true;
+        }
+
+        if (isAlt) {
+          final bool isPressed = event is RawKeyDownEvent;
+          if (_isAltKeyPressed != isPressed) {
+            setState(() {
+              _isAltKeyPressed = isPressed;
+            });
+            AppLogger.debug('Alt键状态变化', data: {
+              'isPressed': isPressed,
+              'eventType': event.runtimeType.toString(),
+            });
+          }
+        }
+      },
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewportSize =
@@ -215,7 +249,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   @override
   void initState() {
     super.initState();
-
     // 添加变换矩阵变化监听
     _transformationController.addListener(_onTransformationChanged);
 
@@ -535,27 +568,22 @@ class _ImageViewState extends ConsumerState<ImageView>
                 // 绘制所有区域
                 if (_transformer != null && regions.isNotEmpty)
                   Positioned.fill(
-                    child: IgnorePointer(
-                      ignoring: _isAdjusting,
-                      child: GestureDetector(
-                        onTapUp: _onTapUp,
-                        // Always allow selection start, handle adjustment cancellation inside
-                        onPanStart:
-                            isPanMode ? _handlePanStart : _handleSelectionStart,
-                        onPanUpdate: isPanMode
-                            ? _handlePanUpdate
-                            : _handleSelectionUpdate,
-                        onPanEnd:
-                            isPanMode ? _handlePanEnd : _handleSelectionEnd,
-                        child: CustomPaint(
-                          painter: RegionsPainter(
-                            regions: regions,
-                            transformer: _transformer!,
-                            hoveredId: _hoveredRegionId,
-                            adjustingRegionId: _adjustingRegionId,
-                            currentTool: toolMode,
-                            isAdjusting: characterCollection.isAdjusting,
-                          ),
+                    child: GestureDetector(
+                      onTapUp: _onTapUp,
+                      // Always allow selection start, handle adjustment cancellation inside
+                      onPanStart:
+                          isPanMode ? _handlePanStart : _handleSelectionStart,
+                      onPanUpdate:
+                          isPanMode ? _handlePanUpdate : _handleSelectionUpdate,
+                      onPanEnd: isPanMode ? _handlePanEnd : _handleSelectionEnd,
+                      child: CustomPaint(
+                        painter: RegionsPainter(
+                          regions: regions,
+                          transformer: _transformer!,
+                          hoveredId: _hoveredRegionId,
+                          adjustingRegionId: _adjustingRegionId,
+                          currentTool: toolMode,
+                          isAdjusting: characterCollection.isAdjusting,
                         ),
                       ),
                     ),
@@ -1281,6 +1309,15 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _handleSelectionEnd(DragEndDetails details) {
+    // If we were temporarily panning with Alt key, end the pan mode
+    if (_isAltKeyPressed) {
+      setState(() {
+        _isPanning = false;
+        _lastPanPosition = null;
+      });
+      return;
+    }
+
     if (!_isInSelectionMode ||
         _selectionStart == null ||
         _selectionCurrent == null) {
@@ -1321,6 +1358,15 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _handleSelectionStart(DragStartDetails details) {
+    // If Alt key is pressed, enable temporary panning even in selection mode
+    if (_isAltKeyPressed) {
+      setState(() {
+        _isPanning = true;
+        _lastPanPosition = details.localPosition;
+      });
+      return;
+    }
+
     // If starting a new selection while adjusting, cancel the current adjustment first.
     if (_isAdjusting) {
       _cancelAdjustment();
@@ -1344,6 +1390,16 @@ class _ImageViewState extends ConsumerState<ImageView>
   }
 
   void _handleSelectionUpdate(DragUpdateDetails details) {
+    // If Alt key is pressed, handle panning even in selection mode
+    if (_isAltKeyPressed && _lastPanPosition != null) {
+      final delta = details.localPosition - _lastPanPosition!;
+      final matrix = _transformationController.value.clone();
+      matrix.translate(delta.dx, delta.dy);
+      _transformationController.value = matrix;
+      _lastPanPosition = details.localPosition;
+      return;
+    }
+
     if (!_isInSelectionMode || _selectionStart == null) return;
 
     setState(() {
@@ -1423,6 +1479,7 @@ class _ImageViewState extends ConsumerState<ImageView>
     final characterCollection = ref.read(characterCollectionProvider);
     final regions = characterCollection.regions; // 获取区域列表
     final hitRegion = _hitTestRegion(details.localPosition, regions);
+    final isInPanMode = ref.read(toolModeProvider) == Tool.pan;
 
     AppLogger.debug('画布点击 (_onTapDown)', data: {
       'position':
@@ -1433,20 +1490,30 @@ class _ImageViewState extends ConsumerState<ImageView>
       'toolMode': _isInSelectionMode ? Tool.select.toString() : 'null',
     });
 
-    if (characterCollection.isAdjusting && hitRegion == null) {
-      // 如果正在调整区域且点击空白，则取消调整
-      AppLogger.debug('点击空白处且isAdjusting为true，调用_handleBlankAreaTap()');
-      _handleBlankAreaTap();
-      return;
-    }
-    if (characterCollection.currentTool == Tool.pan && hitRegion == null) {
-      // 如果点击空白处且当前处于Pan模式，清除选择状态
-      ref.read(characterCollectionProvider.notifier).selectRegion(null);
-      return;
-    }
+    // if (characterCollection.isAdjusting && hitRegion == null) {
+    //   // 如果正在调整区域且点击空白，则取消调整
+    //   AppLogger.debug('点击空白处且isAdjusting为true，调用_handleBlankAreaTap()');
+    //   _handleBlankAreaTap();
+    //   return;
+    // }
+
     if (hitRegion != null) {
       // 如果点击了区域，处理区域点击事件
-      _handleRegionTap(hitRegion.id);
+      if (isInPanMode) {
+        // 在拖拽工具模式下实现多选功能
+        ref
+            .read(characterCollectionProvider.notifier)
+            .toggleSelection(hitRegion.id);
+      } else {
+        // 在选择工具模式下的标准点击行为
+        _handleRegionTap(hitRegion.id);
+      }
+      return;
+    }
+
+    // 如果点击空白处且当前处于Pan模式，清除选择状态
+    if (hitRegion == null) {
+      ref.read(characterCollectionProvider.notifier).clearSelections();
       return;
     }
   }
@@ -1489,76 +1556,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     });
   }
 
-  // 请求删除单个区域（显示确认对话框）
-  Future<void> _requestDeleteRegion(String id) async {
-    final regions = ref.read(characterCollectionProvider).regions;
-    final region = regions.firstWhere((r) => r.id == id,
-        orElse: () => throw Exception('找不到区域'));
-
-    // 只有保存标志为true的区域才需要确认
-    bool confirmed = true;
-    if (region.characterId != null) {
-      // 显示确认对话框
-      confirmed = await DeleteConfirmationDialog.show(context);
-    }
-
-    if (confirmed) {
-      // 用户确认删除，执行删除操作
-      if (_mounted) {
-        await ref.read(characterCollectionProvider.notifier).deleteRegion(id);
-
-        // Notify refresh
-        ref
-            .read(characterRefreshNotifierProvider.notifier)
-            .notifyEvent(RefreshEventType.characterDeleted);
-
-        // 确保重置调整状态
-        _resetAdjustmentState();
-      }
-    }
-  }
-
-  // 请求删除选中的区域（显示确认对话框）
-  Future<void> _requestDeleteSelectedRegions() async {
-    final collection = ref.read(characterCollectionProvider);
-    final selectedRegions =
-        collection.regions.where((r) => r.isSelected).toList();
-    final selectedIds = selectedRegions.map((r) => r.id).toList();
-
-    if (selectedIds.isEmpty) return;
-
-    // 检查是否有已保存的区域
-    final savedRegions =
-        selectedRegions.where((r) => r.characterId != null).toList();
-
-    bool confirmed = true;
-    if (savedRegions.isNotEmpty) {
-      // 只有当选中的区域中有已保存的区域时才显示确认对话框
-      confirmed = await DeleteConfirmationDialog.show(
-        context,
-        count: savedRegions.length,
-        isBatch: savedRegions.length > 1,
-      );
-    }
-
-    if (confirmed) {
-      // 用户确认删除，执行删除操作
-      if (_mounted) {
-        await ref
-            .read(characterCollectionProvider.notifier)
-            .deleteBatchRegions(selectedIds);
-
-        // Notify refresh
-        ref
-            .read(characterRefreshNotifierProvider.notifier)
-            .notifyEvent(RefreshEventType.characterDeleted);
-
-        // 确保重置调整状态
-        _resetAdjustmentState();
-      }
-    }
-  }
-
   // Helper to reset adjustment-specific state
   void _resetAdjustmentState() {
     setState(() {
@@ -1578,15 +1575,15 @@ class _ImageViewState extends ConsumerState<ImageView>
   void _resetSelectionState() {
     if (_isAdjusting) {
       // 避免在build过程中修改provider状态
-      if (_originalRegion != null) {
-        Future(() {
-          if (_mounted) {
-            ref
-                .read(characterCollectionProvider.notifier)
-                .updateSelectedRegion(_originalRegion!);
-          }
-        });
-      }
+      // if (_originalRegion != null) {
+      //   Future(() {
+      //     if (_mounted) {
+      //       ref
+      //           .read(characterCollectionProvider.notifier)
+      //           .updateSelectedRegion(_originalRegion!);
+      //     }
+      //   });
+      // }
 
       setState(() {
         _isAdjusting = false;

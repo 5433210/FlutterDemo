@@ -109,9 +109,8 @@ class CharacterCollectionNotifier
         .map((r) => r.isSelected ? r.copyWith(isSelected: false) : r)
         .toList();
 
-    state = state.copyWith(
-      regions: updatedRegions,
-    );
+    state = state.copyWith(regions: updatedRegions, isAdjusting: false);
+    _selectedRegionNotifier.clearRegion();
   }
 
   // 清理所有状态
@@ -287,6 +286,16 @@ class CharacterCollectionNotifier
     }
   }
 
+  /// 删除所有选中的区域
+  Future<void> deleteSelectedRegions() async {
+    final selectedRegions = state.regions.where((r) => r.isSelected).toList();
+    final selectedIds = selectedRegions.map((r) => r.id).toList();
+
+    if (selectedIds.isEmpty) return;
+
+    await deleteBatchRegions(selectedIds);
+  }
+
   /// 完成当前的调整操作
   void finishCurrentAdjustment() {
     if (!state.isAdjusting || state.currentId == null) return;
@@ -334,6 +343,83 @@ class CharacterCollectionNotifier
     } catch (e) {
       AppLogger.error('获取缩略图路径失败', error: e);
       return null;
+    }
+  }
+
+  /// 处理区域点击事件
+  /// 支持多选功能：在拖拽工具模式下，添加或删除选择的区域
+  void handleRegionClick(String id) {
+    final toolMode = _ref.read(toolModeProvider.notifier).currentMode;
+
+    // 获取点击的区域
+    final clickedRegion = state.regions.firstWhere(
+      (r) => r.id == id,
+      orElse: () => null as CharacterRegion,
+    );
+
+    // 工具模式处理逻辑
+    switch (toolMode) {
+      case Tool.pan:
+        // 在拖拽工具模式下实现多选功能
+        final isSelected = clickedRegion.isSelected;
+
+        // 更新区域列表，切换当前区域的选中状态
+        final updatedRegions = state.regions.map((r) {
+          if (r.id == id) {
+            return r.copyWith(isSelected: !isSelected);
+          }
+          return r;
+        }).toList();
+
+        // 设置选中区域到Provider
+        if (!isSelected) {
+          // 如果区域变为选中状态，设置当前区域到SelectedRegionProvider
+          _selectedRegionNotifier
+              .setRegion(clickedRegion.copyWith(isSelected: true));
+        } else if (isSelected) {
+          // 如果区域变为未选中状态，清除SelectedRegionProvider状态
+          _selectedRegionNotifier.clearRegion();
+        }
+
+        // 更新状态
+        state = state.copyWith(
+          regions: updatedRegions,
+          currentId: !isSelected ? id : null,
+        );
+        break;
+
+      case Tool.select:
+
+        //反选
+        if (clickedRegion.id ==
+            _selectedRegionNotifier.getCurrentRegion()?.id) {
+          clearSelections();
+          break;
+        }
+        //只能有一个被选中的区域
+        clearSelections();
+
+        // 选择工具模式下点击区域进入调整模式
+        // 更新所有区域，确保只有当前区域被选中
+        final updatedRegions = state.regions.map((r) {
+          return r.copyWith(isSelected: r.id == id);
+        }).toList();
+
+        // 设置选中区域到Provider
+        _selectedRegionNotifier
+            .setRegion(clickedRegion.copyWith(isSelected: true));
+
+        // 更新状态为调整模式
+        state = state.copyWith(
+          regions: updatedRegions,
+          currentId: id,
+          isAdjusting: true,
+        );
+        break;
+
+      default:
+        // 其他工具模式下的逻辑
+        break;
     }
   }
 
@@ -891,6 +977,11 @@ class CharacterCollectionNotifier
     // Find the region and update its isSelected property
     final updatedRegions = state.regions.map((r) {
       if (r.id == id) {
+        if (r.isSelected) {
+          _selectedRegionNotifier.clearRegion();
+        } else {
+          _selectedRegionNotifier.setRegion(r.copyWith(isSelected: true));
+        }
         return r.copyWith(isSelected: !r.isSelected);
       }
       return r;

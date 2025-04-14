@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
+import 'delete_confirmation_dialog.dart';
 
 /// 预览工具栏
 class PreviewToolbar extends ConsumerWidget {
@@ -54,16 +55,32 @@ class PreviewToolbar extends ConsumerWidget {
               tooltip: '删除选中区域(Ctrl+D)',
               isEnabled: hasSelection,
               onPressed: hasSelection
-                  ? () {
+                  ? () async {
                       final selectedIds = ref
                           .read(characterCollectionProvider)
                           .regions
                           .where((e) => e.isSelected)
                           .map((e) => e.id)
                           .toList();
-                      ref
-                          .read(characterCollectionProvider.notifier)
-                          .deleteBatchRegions(selectedIds);
+
+                      // 检查是否有选中的区域
+                      if (selectedIds.isEmpty) {
+                        return;
+                      }
+
+                      // 使用DeleteConfirmationDialog显示确认对话框（支持Enter确认和Esc取消）
+                      bool shouldDelete = await DeleteConfirmationDialog.show(
+                        context,
+                        count: selectedIds.length,
+                        isBatch: false,
+                      );
+
+                      if (shouldDelete) {
+                        // 执行删除操作时同时删除文件系统中的图片文件
+                        ref
+                            .read(characterCollectionProvider.notifier)
+                            .deleteBatchRegions(selectedIds);
+                      }
                     }
                   : null,
             ),

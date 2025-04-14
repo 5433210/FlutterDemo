@@ -125,7 +125,7 @@ class _CharacterCollectionPageState
               onInvoke: (intent) => _changeTool(Tool.select),
             ),
             _DeleteIntent: CallbackAction<_DeleteIntent>(
-              onInvoke: (intent) => _deleteSelectedRegion(),
+              onInvoke: (intent) => _deleteSelectedRegions(),
             ),
             _NextPageIntent: CallbackAction<_NextPageIntent>(
               onInvoke: (intent) => _navigateToNextPage(),
@@ -337,25 +337,31 @@ class _CharacterCollectionPageState
   }
 
 // 删除选中的区域
-  Future<void> _deleteSelectedRegion() async {
-    final provider = ref.read(selectedRegionProvider);
-    final notifier = ref.read(characterCollectionProvider.notifier);
+  Future<void> _deleteSelectedRegions() async {
+    final selectedIds = ref
+        .read(characterCollectionProvider)
+        .regions
+        .where((e) => e.isSelected)
+        .map((e) => e.id)
+        .toList();
 
     // 检查是否有选中的区域
-    if (provider == null) {
+    if (selectedIds.isEmpty) {
       return;
     }
 
     // 使用DeleteConfirmationDialog显示确认对话框（支持Enter确认和Esc取消）
     bool shouldDelete = await DeleteConfirmationDialog.show(
       context,
-      count: 1,
+      count: selectedIds.length,
       isBatch: false,
     );
 
     if (shouldDelete) {
       // 执行删除操作时同时删除文件系统中的图片文件
-      await notifier.deleteRegion(provider.id);
+      ref
+          .read(characterCollectionProvider.notifier)
+          .deleteBatchRegions(selectedIds);
     }
   }
 
