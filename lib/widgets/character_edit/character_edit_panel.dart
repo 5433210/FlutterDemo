@@ -67,6 +67,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   final FocusNode _inputFocusNode = FocusNode();
   final FocusNode _mainPanelFocusNode = FocusNode(); // 添加主面板的焦点节点
   bool _isEditing = false;
+  bool _isNewSelection = false; // 标记是否为新创建的选区
 
   // State for internal image loading
   Future<ui.Image?>? _imageLoadingFuture;
@@ -223,6 +224,11 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
   void initState() {
     super.initState();
     _characterController.text = widget.selectedRegion.character;
+
+    // Check if this is a new selection (empty character and no characterId)
+    _isNewSelection = widget.selectedRegion.character.isEmpty &&
+        widget.selectedRegion.characterId == null;
+
     _initiateImageLoading();
 
     // Set up keyboard listener for save shortcut
@@ -237,6 +243,17 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           (!widget.selectedRegion.options.inverted &&
               ref.read(erase.eraseStateProvider).imageInvertMode)) {
         ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
+      }
+
+      // Automatically open character input for new selections
+      if (_isNewSelection) {
+        setState(() => _isEditing = true);
+        // Use a short delay to ensure rendering is complete before focusing
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _inputFocusNode.requestFocus();
+          }
+        });
       }
 
       // Listen for all refresh events including erase data reload
@@ -428,6 +445,21 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               border: OutlineInputBorder(),
             ),
             onSubmitted: (_) => _restoreMainPanelFocus(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => _restoreMainPanelFocus(),
+                child: const Text('取消'),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () => _restoreMainPanelFocus(),
+                child: const Text('确定'),
+              ),
+            ],
           ),
         ],
       ),
@@ -827,6 +859,15 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           // 工具按钮组
           _buildToolbarButtonGroup([
             _ToolbarButton(
+              icon: Icons.pan_tool,
+              tooltip: '平移图像(长按alt键)',
+              onPressed: () {
+                ref.read(erase.eraseStateProvider.notifier).togglePanMode();
+              },
+              isActive: eraseState.isPanMode,
+              shortcut: EditorShortcuts.togglePanMode,
+            ),
+            _ToolbarButton(
               icon: Icons.invert_colors,
               tooltip: '反转模式',
               onPressed: () {
@@ -834,7 +875,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               },
               isActive: eraseState.isReversed,
               shortcut: EditorShortcuts.toggleInvert,
-              badgeText: eraseState.isReversed ? '开' : null,
             ),
             _ToolbarButton(
               icon: Icons.flip,
@@ -844,7 +884,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
               },
               isActive: eraseState.imageInvertMode,
               shortcut: EditorShortcuts.toggleImageInvert,
-              badgeText: eraseState.imageInvertMode ? '开' : null,
             ),
             _ToolbarButton(
               icon: Icons.border_all,
@@ -1355,10 +1394,50 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
 
   // 确保在关闭或提交输入后触发主面板焦点
   void _restoreMainPanelFocus() {
+    // Save the current input value before closing
+    final currentText = _characterController.text;
+
     setState(() => _isEditing = false);
     // 延迟执行以确保状态更新后再处理焦点
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        // Update the region with the new text if it changed
+        final selectedRegion = ref.read(selectedRegionProvider);
+        if (selectedRegion != null &&
+            currentText.isNotEmpty &&
+            selectedRegion.character != currentText) {
+          // Update the region with the new text
+          final updatedRegion = selectedRegion.copyWith(
+            character: currentText,
+            isModified: true,
+          );
+          ref
+              .read(characterCollectionProvider.notifier)
+              .updateSelectedRegion(updatedRegion);
+
+          // Provide immediate visual feedback when character is changed
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('字符已更新为: $currentText'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              width: 200,
+              action: SnackBarAction(
+                label: '撤销',
+                onPressed: () {
+                  if (mounted) {
+                    _characterController.text = selectedRegion.character;
+                    ref
+                        .read(characterCollectionProvider.notifier)
+                        .updateSelectedRegion(selectedRegion);
+                  }
+                },
+              ),
+            ),
+          );
+        }
+
         // 使用单独的加延迟以确保UI渲染完成
         Future.delayed(const Duration(milliseconds: 50), () {
           if (mounted) {

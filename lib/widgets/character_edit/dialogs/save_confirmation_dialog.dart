@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 Future<bool?> showSaveConfirmationDialog(
   BuildContext context, {
@@ -24,7 +25,7 @@ Future<bool?> showSaveConfirmationDialog(
   );
 }
 
-class SaveConfirmationDialog extends StatelessWidget {
+class SaveConfirmationDialog extends StatefulWidget {
   final String character;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
@@ -41,36 +42,87 @@ class SaveConfirmationDialog extends StatelessWidget {
   });
 
   @override
+  State<SaveConfirmationDialog> createState() => _SaveConfirmationDialogState();
+}
+
+class _SaveConfirmationDialogState extends State<SaveConfirmationDialog> {
+  // 创建一个专用的FocusNode
+  final FocusNode _dialogFocusNode = FocusNode();
+
+  @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('确认保存'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('确定要保存汉字"$character"吗？'),
-          if (showPreview && previewWidget != null) ...[
-            const SizedBox(height: 16),
-            const Text('预览效果：'),
+    return RawKeyboardListener(
+      focusNode: _dialogFocusNode,
+      autofocus: true,
+      onKey: (RawKeyEvent event) {
+        _handleKeyEvent(event);
+      },
+      child: AlertDialog(
+        title: const Text('确认保存'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('确定要保存汉字"${widget.character}"吗？'),
             const SizedBox(height: 8),
-            SizedBox(
-              width: 200,
-              height: 200,
-              child: previewWidget!,
-            ),
+            const Text('提示: 按 Enter 确认，Esc 取消',
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            if (widget.showPreview && widget.previewWidget != null) ...[
+              const SizedBox(height: 16),
+              const Text('预览效果：'),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 200,
+                height: 200,
+                child: widget.previewWidget!,
+              ),
+            ],
           ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: widget.onCancel,
+            child: const Text('取消'),
+          ),
+          ElevatedButton(
+            onPressed: widget.onConfirm,
+            child: const Text('确定'),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: onCancel,
-          child: const Text('取消'),
-        ),
-        ElevatedButton(
-          onPressed: onConfirm,
-          child: const Text('确定'),
-        ),
-      ],
     );
+  }
+
+  @override
+  void dispose() {
+    // 释放资源
+    _dialogFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 在初始化后强制聚焦到对话框
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _dialogFocusNode.requestFocus();
+      }
+    });
+  }
+
+  // 处理键盘事件的方法
+  bool _handleKeyEvent(RawKeyEvent event) {
+    if (event is RawKeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+        widget.onConfirm();
+        return true;
+      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+        widget.onCancel();
+        return true;
+      }
+    }
+    return false;
   }
 }

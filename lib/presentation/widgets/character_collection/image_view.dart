@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,9 +64,6 @@ class _ImageViewState extends ConsumerState<ImageView>
   bool _mounted = true;
 
   Offset? _lastPanPosition;
-
-  // 悬停的控制点索引
-  int? _hoveredHandleIndex;
 
   Size _lastViewportSize = Size.zero;
 
@@ -164,7 +160,6 @@ class _ImageViewState extends ConsumerState<ImageView>
             // 添加Material widget以支持elevation效果
             color: Colors.transparent,
             child: Listener(
-              onPointerHover: _handleMouseMove,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -527,75 +522,68 @@ class _ImageViewState extends ConsumerState<ImageView>
           onInteractionUpdate: _handleInteractionUpdate,
           onInteractionEnd: _handleInteractionEnd,
           alignment: Alignment.topLeft,
-          child: MouseRegion(
-            cursor: _getCursor(),
-            onHover: (event) {
-              // 更新悬停状态
-              if (_isAdjusting && _adjustingRect != null) {
-                final handleIndex =
-                    _getHandleIndexFromPosition(event.localPosition);
-                setState(() {
-                  _hoveredHandleIndex = handleIndex;
-                });
-              } else {
-                final hitRegion = _hitTestRegion(event.localPosition, regions);
-                setState(() {
-                  _hoveredRegionId = hitRegion?.id;
-                });
-              }
-            },
-            onExit: (_) {
-              setState(() {
-                _hoveredHandleIndex = null;
-              });
-            },
-            child: Listener(
-              // onPointerSignal: _handlePointerSignal,
-              child: Stack(
-                children: [
-                  Image.memory(
-                    imageState.imageData!,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.topLeft,
-                    filterQuality: FilterQuality.high,
-                    gaplessPlayback: true,
-                    frameBuilder: _buildImageFrame,
-                    errorBuilder: _buildErrorWidget,
-                  ),
+          child: Listener(
+            // onPointerSignal: _handlePointerSignal,
+            child: Stack(
+              children: [
+                Image.memory(
+                  imageState.imageData!,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.topLeft,
+                  filterQuality: FilterQuality.high,
+                  gaplessPlayback: true,
+                  frameBuilder: _buildImageFrame,
+                  errorBuilder: _buildErrorWidget,
+                ),
 
-                  // 绘制所有区域
-                  if (_transformer != null && regions.isNotEmpty)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        ignoring: _isAdjusting,
-                        child: GestureDetector(
-                          onTapUp: _onTapUp,
-                          // Always allow selection start, handle adjustment cancellation inside
-                          onPanStart: isPanMode
-                              ? _handlePanStart
-                              : _handleSelectionStart,
-                          onPanUpdate: isPanMode
-                              ? _handlePanUpdate
-                              : _handleSelectionUpdate,
-                          onPanEnd:
-                              isPanMode ? _handlePanEnd : _handleSelectionEnd,
-                          child: CustomPaint(
-                            painter: RegionsPainter(
-                              regions: regions,
-                              transformer: _transformer!,
-                              hoveredId: _hoveredRegionId,
-                              adjustingRegionId: _adjustingRegionId,
-                              currentTool: toolMode,
-                              isAdjusting: characterCollection.isAdjusting,
-                            ),
+                // 绘制所有区域
+                if (_transformer != null && regions.isNotEmpty)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      ignoring: _isAdjusting,
+                      child: GestureDetector(
+                        onTapUp: _onTapUp,
+                        // Always allow selection start, handle adjustment cancellation inside
+                        onPanStart:
+                            isPanMode ? _handlePanStart : _handleSelectionStart,
+                        onPanUpdate: isPanMode
+                            ? _handlePanUpdate
+                            : _handleSelectionUpdate,
+                        onPanEnd:
+                            isPanMode ? _handlePanEnd : _handleSelectionEnd,
+                        child: CustomPaint(
+                          painter: RegionsPainter(
+                            regions: regions,
+                            transformer: _transformer!,
+                            hoveredId: _hoveredRegionId,
+                            adjustingRegionId: _adjustingRegionId,
+                            currentTool: toolMode,
+                            isAdjusting: characterCollection.isAdjusting,
                           ),
                         ),
                       ),
                     ),
+                  ),
 
-                  // **Adjustment Layer GestureDetector**
-                  if (_isAdjusting && _adjustingRegionId != null)
-                    Positioned.fill(
+                // **Adjustment Layer GestureDetector**
+                if (_isAdjusting && _adjustingRegionId != null)
+                  Positioned.fill(
+                    child: MouseRegion(
+                      cursor: _getCursor(),
+                      onHover: (event) {
+                        final handleIndex =
+                            _getHandleIndexFromPosition(event.localPosition);
+
+                        setState(() {
+                          _activeHandleIndex = handleIndex;
+                        });
+                      },
+                      onExit: (_) {
+                        setState(() {
+                          _activeHandleIndex =
+                              null; // Reset active handle index on exit
+                        });
+                      },
                       child: GestureDetector(
                         behavior: HitTestBehavior
                             .opaque, // Capture hits within bounds
@@ -620,28 +608,27 @@ class _ImageViewState extends ConsumerState<ImageView>
                         ),
                       ),
                     ),
+                  ),
 
-                  // 添加框选层
-                  if (isSelectMode && !_isAdjusting)
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTapUp: _onTapUp,
-                        onPanStart: _handleSelectionStart,
-                        onPanUpdate: _handleSelectionUpdate,
-                        onPanEnd: _handleSelectionEnd,
-                        child: CustomPaint(
-                          painter: ActiveSelectionPainter(
-                            startPoint: _selectionStart ?? Offset.zero,
-                            endPoint: _selectionCurrent ?? Offset.zero,
-                            viewportSize:
-                                _transformer?.viewportSize ?? Size.zero,
-                            isActive: _selectionStart != null,
-                          ),
+                // 添加框选层
+                if (isSelectMode && !_isAdjusting)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTapUp: _onTapUp,
+                      onPanStart: _handleSelectionStart,
+                      onPanUpdate: _handleSelectionUpdate,
+                      onPanEnd: _handleSelectionEnd,
+                      child: CustomPaint(
+                        painter: ActiveSelectionPainter(
+                          startPoint: _selectionStart ?? Offset.zero,
+                          endPoint: _selectionCurrent ?? Offset.zero,
+                          viewportSize: _transformer?.viewportSize ?? Size.zero,
+                          isActive: _selectionStart != null,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -703,9 +690,7 @@ class _ImageViewState extends ConsumerState<ImageView>
             top: _calculateIndicatorPosition().dy,
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 150),
-              opacity: _hoveredHandleIndex != null || _activeHandleIndex != null
-                  ? 1.0
-                  : 0.7,
+              opacity: _activeHandleIndex != null ? 1.0 : 0.7,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 decoration: BoxDecoration(
@@ -719,8 +704,7 @@ class _ImageViewState extends ConsumerState<ImageView>
                     ),
                   ],
                   border: Border.all(
-                    color: _hoveredHandleIndex != null ||
-                            _activeHandleIndex != null
+                    color: _activeHandleIndex != null
                         ? Colors.blue
                         : Colors.blue.withOpacity(0.7),
                     width: 1,
@@ -908,31 +892,7 @@ class _ImageViewState extends ConsumerState<ImageView>
         // 根据不同控制点返回不同光标
         switch (_activeHandleIndex) {
           case -1: // 旋转控制点
-            return SystemMouseCursors.alias; // 用于旋转的光标
-          case 0: // 左上角
-          case 4: // 右下角
-            return SystemMouseCursors.resizeUpLeftDownRight;
-          case 2: // 右上角
-          case 6: // 左下角
-            return SystemMouseCursors.resizeUpRightDownLeft;
-          case 1: // 上边中点
-          case 5: // 下边中点
-            return SystemMouseCursors.resizeUpDown;
-          case 3: // 右边中点
-          case 7: // 左边中点
-            return SystemMouseCursors.resizeLeftRight;
-          case 8: // 移动整个选区
-            return SystemMouseCursors.move;
-          default:
-            return SystemMouseCursors.basic;
-        }
-      }
-
-      // 检查当前悬停位置是否在某个控制点上
-      if (_hoveredHandleIndex != null) {
-        switch (_hoveredHandleIndex) {
-          case -1: // 旋转控制点
-            return SystemMouseCursors.alias; // 用于旋转的光标
+            return SystemMouseCursors.grab; // 使用更适合旋转的光标
           case 0: // 左上角
           case 4: // 右下角
             return SystemMouseCursors.resizeUpLeftDownRight;
@@ -1077,7 +1037,7 @@ class _ImageViewState extends ConsumerState<ImageView>
       _guideLines = null;
       _isRotating = false;
       _rotationCenter = null;
-      _hoveredHandleIndex = null;
+
       // 不重置_isAdjusting和_adjustingRect，保持调整状态
     });
 
@@ -1338,16 +1298,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     return KeyEventResult.ignored;
   }
 
-  // 处理鼠标移动，更新悬停状态
-  void _handleMouseMove(PointerHoverEvent event) {
-    if (_isAdjusting && _adjustingRect != null) {
-      final handleIndex = _getHandleIndexFromPosition(event.localPosition);
-      setState(() {
-        _hoveredHandleIndex = handleIndex;
-      });
-    }
-  }
-
   void _handlePanEnd(DragEndDetails details) {
     if (ref.read(toolModeProvider) != Tool.pan) return;
 
@@ -1378,50 +1328,6 @@ class _ImageViewState extends ConsumerState<ImageView>
       _lastPanPosition = details.localPosition;
     }
   }
-
-  // void _handlePointerSignal(PointerSignalEvent event) {
-  //   if (event is! PointerScrollEvent) return;
-
-  //   try {
-  //     // 获取鼠标相对于视口的位置
-  //     final box = context.findRenderObject() as RenderBox;
-  //     final localPosition = box.globalToLocal(event.position);
-  //     final delta = event.scrollDelta.dy;
-
-  //     // 计算目标缩放比例
-  //     final currentScale = _transformer?.currentScale ?? 1.0;
-  //     final baseScale = _transformer?.baseScale ?? 1.0;
-  //     var targetScale = (currentScale - delta * 0.001).clamp(0.1, 10.0);
-
-  //     if (targetScale < baseScale * 0.2) {
-  //       targetScale = baseScale * 0.2;
-  //     }
-
-  //     final scaleChange = targetScale / currentScale;
-
-  //     if (delta.abs() > 0) {
-  //       setState(() {
-  //         // 获取当前变换矩阵并应用缩放
-  //         final matrix = Matrix4.copy(_transformationController.value);
-
-  //         // 移动原点到鼠标位置
-  //         matrix.translate(localPosition.dx, localPosition.dy);
-  //         matrix.scale(scaleChange, scaleChange);
-  //         matrix.translate(-localPosition.dx, -localPosition.dy);
-
-  //         _transformationController.value = matrix;
-  //         _isZoomed = targetScale > 1.05;
-  //       });
-
-  //       AppLogger.debug('缩放变换', data: {
-  //         'scale': targetScale,
-  //         'mousePosition': '${localPosition.dx},${localPosition.dy}'
-  //       });
-  //     }
-  //   } catch (e) {
-  //     AppLogger.error('滚轮缩放失败', error: e);
-  //   }
-  // }
 
   Future<void> _handleRegionCreated(Rect rect) async {
     try {
@@ -1748,7 +1654,6 @@ class _ImageViewState extends ConsumerState<ImageView>
       _isRotating = false;
       _currentRotation = 0.0;
       _rotationCenter = null;
-      _hoveredHandleIndex = null; // Important reset
     });
   }
 

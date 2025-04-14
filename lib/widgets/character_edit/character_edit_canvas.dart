@@ -88,10 +88,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
     }
 
-    final eraseState = ref.watch(eraseStateProvider);
-    final pathRenderData = ref.watch(pathRenderDataProvider);
-    final showContour =
-        ref.watch(eraseStateProvider.select((state) => state.showContour));
+    // Watch pan mode from erase state provider
+    final isPanMode =
+        ref.watch(eraseStateProvider.select((state) => state.isPanMode));
 
     // Improved outline toggling behavior
     ref.listen(eraseStateProvider.select((state) => state.showContour),
@@ -156,7 +155,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         }
       },
       child: MouseRegion(
-        cursor: _altKeyNotifier.value
+        cursor: _altKeyNotifier.value || isPanMode
             ? SystemMouseCursors.grab
             : SystemMouseCursors.precise,
         child: Focus(
@@ -177,7 +176,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                   boundaryMargin: const EdgeInsets.all(double.infinity),
                   minScale: 0.1,
                   maxScale: 5.0,
-                  panEnabled: _altKeyNotifier.value, // 使用ValueNotifier来控制平移状态
+                  // Enable pan mode if either Alt is pressed or pan mode is toggled on
+                  panEnabled: _altKeyNotifier.value || isPanMode,
                   onInteractionUpdate: (details) {
                     _updateTransformer(constraints.biggest);
                   },
@@ -191,17 +191,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                       onEraseStart: _handleEraseStart,
                       onEraseUpdate: _handleEraseUpdate,
                       onEraseEnd: _handleEraseEnd,
-                      altKeyPressed: _altKeyNotifier.value, // 使用ValueNotifier
+                      // Pass both alt key state and pan mode to EraseLayerStack
+                      altKeyPressed: _altKeyNotifier.value || isPanMode,
                       brushSize: widget.brushSize,
                       brushColor: widget.brushColor,
                       imageInvertMode: widget.imageInvertMode,
                       showOutline: widget.showOutline,
                       onPan: (delta) {
-                        if (_altKeyNotifier.value) {
-                          final matrix =
-                              _transformationController.value.clone();
-                          matrix.translate(delta.dx, delta.dy);
-                          _transformationController.value = matrix;
+                        if (_altKeyNotifier.value || isPanMode) {
+                          _transformationController.value
+                              .translate(delta.dx, delta.dy);
                         }
                       },
                       onTap: _handleTap,
@@ -428,6 +427,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     _transformationController.value = matrix;
   }
 
+  // Helper to extract the current scale factor from the transformation matrix
+  double _getMatrixScale(Matrix4 matrix) {
+    // The scale is in the diagonal elements of the matrix
+    // We use the average of the x and y scale factors
+    final scaleX = matrix.getMaxScaleOnAxis();
+    return scaleX > 0 ? scaleX : 1.0;
+  }
+
   void _handleEraseEnd() {
     if (!_isAltKeyPressed) {
       widget.onEraseEnd?.call();
@@ -528,7 +535,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleTap(Offset position) {
-    if (_isAltKeyPressed) return;
+    if (_isAltKeyPressed || ref.read(eraseStateProvider).isPanMode) {
+      // Alt键按下或处于平移模式时不处理点击事件
+      return;
+    }
 
     // Only handle taps within image bounds
     if (_isPointWithinImageBounds(position)) {

@@ -57,6 +57,8 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     final renderData = ref.watch(pathRenderDataProvider);
     final eraseState = ref.watch(eraseStateProvider);
     final showContour = eraseState.showContour;
+    // Check if we're in pan mode from eraseStateProvider
+    final isPanMode = eraseState.isPanMode;
 
     if (_outline != null) {
       print('EraseLayerStack 轮廓数据存在, 路径数量: ${_outline!.contourPoints.length}');
@@ -92,7 +94,8 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
               widget.image.width.toDouble(),
               widget.image.height.toDouble(),
             ),
-            altKeyPressed: widget.altKeyPressed,
+            // Pass both altKeyPressed and isPanMode - either one enables pan mode
+            altKeyPressed: widget.altKeyPressed || isPanMode,
             brushSize: widget.brushSize,
             cursorPosition: _getCursorPosition(),
           ),
@@ -253,12 +256,17 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   }
 
   void _handlePointerDown(Offset position) {
-    if (widget.altKeyPressed) return;
+    final isPanMode = ref.read(eraseStateProvider).isPanMode;
+    if (widget.altKeyPressed || isPanMode) {
+      // Store the initial position for panning
+      return;
+    }
     widget.onEraseStart?.call(position);
   }
 
   void _handlePointerMove(Offset position, Offset delta) {
-    if (widget.altKeyPressed) {
+    final isPanMode = ref.read(eraseStateProvider).isPanMode;
+    if (widget.altKeyPressed || isPanMode) {
       widget.onPan?.call(delta);
       return;
     }
@@ -266,11 +274,15 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   }
 
   void _handlePointerUp(Offset position) {
+    if (widget.altKeyPressed || ref.read(eraseStateProvider).isPanMode) {
+      return;
+    }
     widget.onEraseEnd?.call();
   }
 
   void _handleTap(Offset position) {
-    if (widget.altKeyPressed) return;
+    final isPanMode = ref.read(eraseStateProvider).isPanMode;
+    if (widget.altKeyPressed || isPanMode) return;
 
     widget.onEraseStart?.call(position);
     widget.onEraseEnd?.call();
