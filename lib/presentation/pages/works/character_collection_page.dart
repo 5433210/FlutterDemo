@@ -10,6 +10,7 @@ import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
+import '../../widgets/character_collection/delete_confirmation_dialog.dart';
 import '../../widgets/character_collection/image_preview_panel.dart';
 import '../../widgets/character_collection/navigation_bar.dart';
 import '../../widgets/character_collection/right_panel.dart';
@@ -32,13 +33,13 @@ class CharacterCollectionPage extends ConsumerStatefulWidget {
 // 快捷键定义
 class CollectionShortcuts {
   // 工具选择快捷键
-  static const panTool = SingleActivator(LogicalKeyboardKey.keyV);
-  static const selectTool = SingleActivator(LogicalKeyboardKey.keyS);
-  static const multiSelectTool = SingleActivator(LogicalKeyboardKey.keyM);
+  static const panTool =
+      SingleActivator(LogicalKeyboardKey.keyV, control: true);
+  static const selectTool =
+      SingleActivator(LogicalKeyboardKey.keyB, control: true);
 
   // 编辑操作
-  static const delete = SingleActivator(LogicalKeyboardKey.delete);
-  static const deleteAlt = SingleActivator(LogicalKeyboardKey.keyD);
+  static const delete = SingleActivator(LogicalKeyboardKey.keyD, control: true);
 
   // 导航
   static const nextPage = SingleActivator(LogicalKeyboardKey.arrowRight);
@@ -103,11 +104,9 @@ class _CharacterCollectionPageState
           // 工具选择快捷键
           CollectionShortcuts.panTool: _PanToolIntent(),
           CollectionShortcuts.selectTool: _SelectToolIntent(),
-          CollectionShortcuts.multiSelectTool: _MultiSelectToolIntent(),
 
           // 编辑操作
           CollectionShortcuts.delete: _DeleteIntent(),
-          CollectionShortcuts.deleteAlt: _DeleteIntent(),
 
           // 导航
           CollectionShortcuts.nextPage: _NextPageIntent(),
@@ -124,9 +123,6 @@ class _CharacterCollectionPageState
             ),
             _SelectToolIntent: CallbackAction<_SelectToolIntent>(
               onInvoke: (intent) => _changeTool(Tool.select),
-            ),
-            _MultiSelectToolIntent: CallbackAction<_MultiSelectToolIntent>(
-              onInvoke: (intent) => _changeTool(Tool.multiSelect),
             ),
             _DeleteIntent: CallbackAction<_DeleteIntent>(
               onInvoke: (intent) => _deleteSelectedRegion(),
@@ -284,11 +280,7 @@ class _CharacterCollectionPageState
 // 实现工具切换方法
   void _changeTool(Tool tool) {
     ref.read(toolModeProvider.notifier).setMode(tool);
-
-    // 如果是多选模式，清除所有选区
-    if (tool == Tool.multiSelect) {
-      ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
-    }
+    AppLogger.debug('切换工具模式', data: {'tool': tool.toString()});
   }
 
 // 检查是否有未保存的修改，显示确认对话框
@@ -344,7 +336,7 @@ class _CharacterCollectionPageState
     ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
   }
 
-  // 删除选中的区域
+// 删除选中的区域
   Future<void> _deleteSelectedRegion() async {
     final provider = ref.read(selectedRegionProvider);
     final notifier = ref.read(characterCollectionProvider.notifier);
@@ -354,29 +346,12 @@ class _CharacterCollectionPageState
       return;
     }
 
-    bool shouldDelete = true;
-
-    // 确认删除
-
-    shouldDelete = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('确认删除'),
-            content: Text('确定要删除选中的“${provider.character}”字区域吗？'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('取消'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('删除'),
-              ),
-            ],
-          ),
-        ) ??
-        false;
+    // 使用DeleteConfirmationDialog显示确认对话框（支持Enter确认和Esc取消）
+    bool shouldDelete = await DeleteConfirmationDialog.show(
+      context,
+      count: 1,
+      isBatch: false,
+    );
 
     if (shouldDelete) {
       // 执行删除操作时同时删除文件系统中的图片文件
@@ -601,10 +576,6 @@ class _DeleteIntent extends Intent {
 
 class _EscapeIntent extends Intent {
   const _EscapeIntent();
-}
-
-class _MultiSelectToolIntent extends Intent {
-  const _MultiSelectToolIntent();
 }
 
 class _NextPageIntent extends Intent {

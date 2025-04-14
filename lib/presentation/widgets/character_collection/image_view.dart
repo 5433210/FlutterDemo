@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/character_region.dart';
@@ -76,9 +75,7 @@ class _ImageViewState extends ConsumerState<ImageView>
     // No need to access selectedIds and modifiedIds directly as they're now part of region properties
 
     // 处理工具模式变化
-    final lastToolMode = _isInSelectionMode
-        ? Tool.select
-        : (_isPanning ? Tool.pan : Tool.multiSelect);
+    final lastToolMode = _isInSelectionMode ? Tool.select : Tool.pan;
     _isInSelectionMode = toolMode == Tool.select;
     _isPanning = toolMode == Tool.pan;
 
@@ -101,7 +98,6 @@ class _ImageViewState extends ConsumerState<ImageView>
     return Focus(
       focusNode: _focusNode,
       autofocus: true,
-      onKeyEvent: _handleKeyEvent,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewportSize =
@@ -920,8 +916,6 @@ class _ImageViewState extends ConsumerState<ImageView>
             : SystemMouseCursors.grab;
       case Tool.select:
         return SystemMouseCursors.precise;
-      case Tool.multiSelect:
-        return SystemMouseCursors.click;
       default:
         return SystemMouseCursors.basic;
     }
@@ -1219,83 +1213,6 @@ class _ImageViewState extends ConsumerState<ImageView>
         _isZoomed = scale > 1.05;
       });
     });
-  }
-
-  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) {
-      return KeyEventResult.ignored;
-    }
-
-    // ESC键退出调整模式
-    if (event.logicalKey == LogicalKeyboardKey.escape && _isAdjusting) {
-      // 退出调整模式
-      _cancelAdjustment();
-      return KeyEventResult.handled;
-    }
-
-    // 工具切换快捷键
-    if (!HardwareKeyboard.instance.isControlPressed &&
-        !HardwareKeyboard.instance.isAltPressed) {
-      switch (event.logicalKey) {
-        case LogicalKeyboardKey.keyV:
-          ref.read(toolModeProvider.notifier).setMode(Tool.pan);
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.keyR:
-          ref.read(toolModeProvider.notifier).setMode(Tool.select);
-          return KeyEventResult.handled;
-        case LogicalKeyboardKey.keyM:
-          ref.read(toolModeProvider.notifier).setMode(Tool.multiSelect);
-          return KeyEventResult.handled;
-      }
-    }
-
-    // 选区操作快捷键
-    if (_adjustingRegionId != null) {
-      // 微调 (Shift 时移动距离更大)
-      final delta = HardwareKeyboard.instance.isShiftPressed ? 10.0 : 1.0;
-      Rect? newRect;
-
-      switch (event.logicalKey) {
-        case LogicalKeyboardKey.arrowLeft:
-          newRect = _adjustingRect?.translate(-delta, 0);
-          break;
-        case LogicalKeyboardKey.arrowRight:
-          newRect = _adjustingRect?.translate(delta, 0);
-          break;
-        case LogicalKeyboardKey.arrowUp:
-          newRect = _adjustingRect?.translate(0, -delta);
-          break;
-        case LogicalKeyboardKey.arrowDown:
-          newRect = _adjustingRect?.translate(0, delta);
-          break;
-        case LogicalKeyboardKey.delete:
-        case LogicalKeyboardKey.backspace:
-          if (_adjustingRegionId != null) {
-            // 显示确认对话框
-            // 显示确认对话框
-            _requestDeleteRegion(_adjustingRegionId!);
-            return KeyEventResult.handled;
-          }
-          break;
-        default:
-          break;
-      }
-
-      if (newRect != null) {
-        _updateAdjustingRegion(newRect);
-        return KeyEventResult.handled;
-      }
-    }
-
-    // 删除已选中区域 (Delete/Backspace)
-    if (!_isAdjusting &&
-        (event.logicalKey == LogicalKeyboardKey.delete ||
-            event.logicalKey == LogicalKeyboardKey.backspace)) {
-      _requestDeleteSelectedRegions();
-      return KeyEventResult.handled;
-    }
-
-    return KeyEventResult.ignored;
   }
 
   void _handlePanEnd(DragEndDetails details) {

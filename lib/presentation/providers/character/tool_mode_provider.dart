@@ -14,13 +14,7 @@ enum Tool {
   pan,
 
   /// 框选工具模式
-  select,
-
-  /// 多选工具模式
-  multiSelect,
-
-  /// 擦除模式
-  erase;
+  select;
 
   IconData get icon {
     switch (this) {
@@ -28,23 +22,15 @@ enum Tool {
         return Icons.pan_tool;
       case Tool.select:
         return Icons.crop_square;
-      case Tool.multiSelect:
-        return Icons.select_all;
-      case Tool.erase:
-        return Icons.auto_fix_normal;
     }
   }
 
   String get tooltip {
     switch (this) {
       case Tool.pan:
-        return '拖拽工具 (V)';
+        return '拖拽工具 (Ctrl+V)';
       case Tool.select:
-        return '框选工具 (R)';
-      case Tool.multiSelect:
-        return '多选工具 (M)';
-      case Tool.erase:
-        return '擦除工具 (E)';
+        return '框选工具 (Ctrl+B)';
     }
   }
 }
@@ -60,12 +46,6 @@ class ToolModeNotifier extends StateNotifier<Tool> {
 
   /// 获取前一个模式
   Tool get previousMode => _previousMode;
-
-  /// 切换到擦除模式
-  void eraseMode() {
-    _previousMode = state;
-    state = Tool.erase;
-  }
 
   /// 切换到平移模式
   void panMode() {

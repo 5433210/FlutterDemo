@@ -1098,10 +1098,7 @@ extension StateManagement on CharacterCollectionNotifier {
       case Tool.select:
         _handleSelectModeClick(id);
         break;
-      case Tool.multiSelect:
-        // 多选模式已废弃，降级为Pan模式处理
-        _handlePanModeClick(id);
-        break;
+
       default:
         // 其他工具模式默认处理为Pan模式
         _handlePanModeClick(id);

@@ -29,7 +29,7 @@ class PreviewToolbar extends ConsumerWidget {
             // 工具按钮组
             _ToolButton(
               icon: Icons.pan_tool,
-              tooltip: '拖拽工具 (V)',
+              tooltip: '拖拽工具 (Ctrl+V)',
               isSelected: toolMode == Tool.pan,
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.pan),
@@ -37,7 +37,7 @@ class PreviewToolbar extends ConsumerWidget {
             const SizedBox(width: 4),
             _ToolButton(
               icon: Icons.crop_square,
-              tooltip: '框选工具 (S)',
+              tooltip: '框选工具 (Ctrl+B)',
               isSelected: toolMode == Tool.select,
               onPressed: () =>
                   ref.read(toolModeProvider.notifier).setMode(Tool.select),
@@ -51,7 +51,7 @@ class PreviewToolbar extends ConsumerWidget {
             // 删除按钮
             _ToolButton(
               icon: Icons.delete,
-              tooltip: '删除选中区域（D或Del）',
+              tooltip: '删除选中区域(Ctrl+D)',
               isEnabled: hasSelection,
               onPressed: hasSelection
                   ? () {

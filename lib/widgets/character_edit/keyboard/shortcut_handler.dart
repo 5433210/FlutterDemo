@@ -15,11 +15,10 @@ class EditorShortcuts {
     control: true,
   );
 
-  // 重做快捷键
+  // 重做快捷键 (更改为ctrl+y)
   static const redo = SingleActivator(
-    LogicalKeyboardKey.keyZ,
+    LogicalKeyboardKey.keyY,
     control: true,
-    shift: true,
   );
 
   // 打开汉字输入框快捷键
@@ -28,17 +27,16 @@ class EditorShortcuts {
     control: true,
   );
 
-  // 切换反转模式快捷键
+  // 切换反转模式快捷键 (更改为ctrl+r)
   static const toggleInvert = SingleActivator(
-    LogicalKeyboardKey.keyI,
+    LogicalKeyboardKey.keyR,
     control: true,
   );
 
-  // 切换图像反转快捷键
+  // 切换图像反转快捷键 (更改为ctrl+i)
   static const toggleImageInvert = SingleActivator(
     LogicalKeyboardKey.keyI,
     control: true,
-    shift: true,
   );
 
   // 切换轮廓显示快捷键
@@ -47,7 +45,7 @@ class EditorShortcuts {
     control: true,
   );
 
-  // 切换平移模式快捷键
+  // 切换平移模式快捷键 (更改为ctrl+p)
   static const togglePanMode = SingleActivator(
     LogicalKeyboardKey.keyP,
     control: true,
