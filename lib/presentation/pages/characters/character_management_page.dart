@@ -441,13 +441,14 @@ class _CharacterManagementPageState
         .toggleFavorite(characterId);
 
     // 刷新详情面板数据
-    if (ref.read(characterManagementProvider).selectedCharacterId ==
-        characterId) {
-      ref.refresh(characterDetailProvider(characterId));
-    }
+    // if (ref.read(characterManagementProvider).selectedCharacterId ==
+    //     characterId) {
+    ref.refresh(characterDetailProvider(characterId));
+    // }
 
     // 刷新列表状态以更新卡片显示
-    ref.invalidate(characterManagementProvider);
+    // ref.invalidate(characterManagementProvider);
+    // await ref.read(characterDetailProvider(characterId).)
   }
 
   void _showDeleteConfirmation() {

@@ -425,54 +425,82 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
 
   Widget _buildHeader(WidgetRef ref, ThemeData theme, CharacterView character) {
     return Row(
+      mainAxisSize: MainAxisSize.max, // Take all available width
       children: [
+        // Close button - keep compact
         IconButton(
           onPressed: onClose,
           icon: const Icon(Icons.close),
           tooltip: '关闭详情',
-        ),
-        const SizedBox(width: AppSizes.spacingSmall),
-        Text(
-          '字符详情',
-          style: theme.textTheme.titleLarge,
-        ),
-        const Spacer(),
-        if (onEdit != null)
-          IconButton(
-            onPressed: () {
-              final characterView = ref
-                  .read(characterDetailProvider(characterId))
-                  .value
-                  ?.character;
-              if (characterView != null) {
-                Navigator.pushNamed(
-                  context,
-                  '/collection',
-                  arguments: {
-                    'workId': characterView.workId,
-                    'selectCharacterId': characterId,
-                  },
-                );
-              } else {
-                onEdit?.call();
-              }
-            },
-            icon: const Icon(Icons.edit),
-            tooltip: '修改',
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 36,
           ),
-        if (onToggleFavorite != null)
-          IconButton(
-            onPressed: () {
-              onToggleFavorite?.call();
-              // Force refresh the character detail to update the favorite state
-              ref.invalidate(characterDetailProvider(characterId));
-            },
-            icon: Icon(
-              character.isFavorite ? Icons.star : Icons.star_border,
-              color: character.isFavorite ? theme.colorScheme.primary : null,
-            ),
-            tooltip: character.isFavorite ? '取消收藏' : '收藏',
+        ),
+
+        // Title - allow ellipsis if needed
+        Expanded(
+          child: Text(
+            '字符详情',
+            style: theme.textTheme.titleMedium, // Use smaller text style
+            overflow: TextOverflow.ellipsis,
           ),
+        ),
+
+        // Action buttons in a Row with minimal spacing
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onEdit != null)
+              IconButton(
+                onPressed: () {
+                  final characterView = ref
+                      .read(characterDetailProvider(characterId))
+                      .value
+                      ?.character;
+                  if (characterView != null) {
+                    Navigator.pushNamed(
+                      context,
+                      '/collection',
+                      arguments: {
+                        'workId': characterView.workId,
+                        'selectCharacterId': characterId,
+                      },
+                    );
+                  } else {
+                    onEdit?.call();
+                  }
+                },
+                icon: const Icon(Icons.edit),
+                tooltip: '修改',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            if (onToggleFavorite != null)
+              IconButton(
+                onPressed: () {
+                  onToggleFavorite?.call();
+                  // Force refresh the character detail to update the favorite state
+                  // ref.invalidate(characterDetailProvider(characterId));
+                },
+                icon: Icon(
+                  character.isFavorite ? Icons.star : Icons.star_border,
+                  color:
+                      character.isFavorite ? theme.colorScheme.primary : null,
+                ),
+                tooltip: character.isFavorite ? '取消收藏' : '收藏',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+          ],
+        ),
       ],
     );
   }
