@@ -333,6 +333,13 @@ class SQLiteDatabase implements DatabaseInterface {
           tag: 'Database',
         );
       },
+      onDowngrade: (db, oldVersion, newVersion) => {
+        AppLogger.warning(
+          '数据库降级: 当前版本 v$oldVersion, 目标版本 v$newVersion',
+          tag: 'Database',
+        ),
+        throw Exception('数据库降级不支持'),
+      },
     );
     return SQLiteDatabase._(db);
   }

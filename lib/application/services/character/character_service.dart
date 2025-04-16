@@ -317,6 +317,34 @@ class CharacterService {
     }
   }
 
+  /// 切换收藏状态
+  Future<bool> toggleFavorite(String id) async {
+    try {
+      // 获取字符实体
+      final character = await _repository.findById(id);
+      if (character == null) {
+        AppLogger.error('切换收藏状态失败：找不到字符', data: {'characterId': id});
+        return false;
+      }
+
+      // 切换收藏状态
+      final updatedCharacter = character.copyWith(
+        isFavorite: !character.isFavorite,
+      );
+
+      // 保存更新后的字符
+      await _repository.save(updatedCharacter);
+
+      AppLogger.info('字符收藏状态已更新',
+          data: {'characterId': id, 'isFavorite': updatedCharacter.isFavorite});
+
+      return true;
+    } catch (e) {
+      AppLogger.error('切换收藏状态失败', error: e, data: {'characterId': id});
+      return false;
+    }
+  }
+
   /// 更新字符
   Future<void> updateCharacter(
     String id,

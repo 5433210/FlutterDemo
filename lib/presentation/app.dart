@@ -1,3 +1,4 @@
+import 'package:demo/presentation/pages/characters/character_management_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,6 +79,11 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.characterList:
         return MaterialPageRoute(
           builder: (context) => const CharacterListPage(),
+        );
+
+      case AppRoutes.characterManagement:
+        return MaterialPageRoute(
+          builder: (context) => const CharacterManagementPage(),
         );
 
       case AppRoutes.practiceList:

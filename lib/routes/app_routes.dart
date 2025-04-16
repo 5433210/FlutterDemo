@@ -25,4 +25,5 @@ class AppRoutes {
   static const settings = '/settings';
   static const String workEdit = '/work/edit';
   static const String workExtract = '/work/extract';
+  static const String characterManagement = '/character_management';
 }

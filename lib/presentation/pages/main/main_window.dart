@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../presentation/pages/characters/character_list_page.dart';
 import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
 import '../../../presentation/pages/works/work_browse_page.dart';
@@ -8,6 +7,8 @@ import '../../../presentation/pages/works/work_detail_page.dart';
 import '../../../presentation/widgets/navigation/side_nav.dart';
 import '../../../presentation/widgets/window/title_bar.dart';
 import '../../../routes/app_routes.dart';
+import '../characters/character_management_page.dart'
+    show CharacterManagementPage;
 
 class MainWindow extends StatefulWidget {
   const MainWindow({super.key});
@@ -87,7 +88,7 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
           },
         );
       case 1:
-        return const CharacterListPage();
+        return const CharacterManagementPage();
       case 2:
         return const PracticeListPage();
       case 3:

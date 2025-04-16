@@ -193,4 +193,29 @@ const migrations = [
     datetime('now')
   );
   ''',
+
+  /// 版本 7: 添加CharacterView视图
+  '''
+  CREATE VIEW IF NOT EXISTS CharacterView AS
+  SELECT 
+    c.id,
+    c.character,
+    c.isFavorite,    
+    c.createTime AS collectionTime,
+    c.updateTime,
+    c.pageId,
+    c.workId,
+    c.tags,
+    c.region,
+    c.note,
+    w.style,
+    w.tool,
+    w.title,
+    w.author,
+    w.creationDate As creationTime
+  FROM 
+    characters c
+  LEFT JOIN 
+    works w ON c.workId = w.id;
+  ''',
 ];
