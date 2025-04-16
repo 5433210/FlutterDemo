@@ -82,6 +82,18 @@ class KeyboardUtils {
   static bool _handleKeyEvent(KeyEvent event) {
     LogicalKeyboardKey key = event.logicalKey;
 
+    // Windows平台上的修饰键处理修复
+    if (_isWindows && event is KeyDownEvent) {
+      bool isModifierKey = _isModifierKey(key);
+
+      // 检查是否已经标记为按下状态，但又收到了KeyDown事件（可能是平台报告错误）
+      if (isModifierKey && (_keyStates[key] ?? false)) {
+        // 对于修饰键，我们接受重复的KeyDown事件，避免Flutter抛出异常
+        // 直接返回true，拦截事件，防止传递给Flutter默认处理程序
+        return true;
+      }
+    }
+
     // 处理键盘事件
     if (event is KeyDownEvent) {
       _updateKeyState(key, true);
@@ -112,6 +124,22 @@ class KeyboardUtils {
       _rawKeyStates.remove(event.logicalKey);
       _updateKeyState(event.logicalKey, false);
     }
+  }
+
+  /// 检查一个键是否是修饰键
+  static bool _isModifierKey(LogicalKeyboardKey key) {
+    return key == LogicalKeyboardKey.control ||
+        key == LogicalKeyboardKey.controlLeft ||
+        key == LogicalKeyboardKey.controlRight ||
+        key == LogicalKeyboardKey.alt ||
+        key == LogicalKeyboardKey.altLeft ||
+        key == LogicalKeyboardKey.altRight ||
+        key == LogicalKeyboardKey.shift ||
+        key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight ||
+        key == LogicalKeyboardKey.meta ||
+        key == LogicalKeyboardKey.metaLeft ||
+        key == LogicalKeyboardKey.metaRight;
   }
 
   /// 设置定时检查Alt键状态的机制，解决Windows平台上的问题

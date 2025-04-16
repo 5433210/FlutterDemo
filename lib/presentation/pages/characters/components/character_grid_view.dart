@@ -1,3 +1,5 @@
+import 'package:demo/application/services/services.dart';
+import 'package:demo/domain/models/character/character_image_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -107,22 +109,30 @@ class CharacterGridView extends ConsumerWidget {
         final character = characters[index];
         final isSelected = selectedCharacters.contains(character.id);
 
-        return CharacterCard(
-          character: character,
-          isSelected: isSelected,
-          isBatchMode: isBatchMode,
-          onTap: () {
-            if (isBatchMode) {
-              // In batch mode, tapping toggles selection
-              onCharacterTap(character.id);
-            } else {
-              // In normal mode, tapping opens details
-              onCharacterTap(character.id);
-            }
+        // Use FutureBuilder to handle the async operation
+        return FutureBuilder<String>(
+          future: ref.read(characterServiceProvider).getCharacterImagePath(
+              character.id, CharacterImageType.thumbnail),
+          builder: (context, snapshot) {
+            return CharacterCard(
+              character: character,
+              thumbnailPath: snapshot.data,
+              isSelected: isSelected,
+              isBatchMode: isBatchMode,
+              onTap: () {
+                if (isBatchMode) {
+                  // In batch mode, tapping toggles selection
+                  onCharacterTap(character.id);
+                } else {
+                  // In normal mode, tapping opens details
+                  onCharacterTap(character.id);
+                }
+              },
+              onToggleFavorite: onToggleFavorite != null
+                  ? () => onToggleFavorite!(character.id)
+                  : null,
+            );
           },
-          onToggleFavorite: onToggleFavorite != null
-              ? () => onToggleFavorite!(character.id)
-              : null,
         );
       },
     );

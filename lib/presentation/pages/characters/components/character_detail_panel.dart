@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +10,7 @@ import '../../../../theme/app_sizes.dart';
 import '../../../providers/character/character_detail_provider.dart';
 import '../../../widgets/common/zoomable_image_view.dart';
 
-class CharacterDetailPanel extends ConsumerWidget {
+class CharacterDetailPanel extends ConsumerStatefulWidget {
   final String characterId;
   final VoidCallback onClose;
   final VoidCallback? onEdit;
@@ -24,7 +25,20 @@ class CharacterDetailPanel extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CharacterDetailPanel> createState() =>
+      _CharacterDetailPanelState();
+}
+
+class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
+  final ScrollController _formatScrollController = ScrollController();
+
+  String get characterId => widget.characterId;
+  VoidCallback get onClose => widget.onClose;
+  VoidCallback? get onEdit => widget.onEdit;
+  VoidCallback? get onToggleFavorite => widget.onToggleFavorite;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final detailAsync = ref.watch(characterDetailProvider(characterId));
     final selectedFormat = ref.watch(selectedFormatProvider);
@@ -49,19 +63,35 @@ class CharacterDetailPanel extends ConsumerWidget {
                 ? formats[selectedFormat]
                 : formats.first;
 
+            // Get the current format's image path
+            Future<String> currentImagePathFuture =
+                currentFormat.resolvePath(characterId);
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header with actions
-                _buildHeader(theme, character),
+                _buildHeader(ref, theme, character),
 
                 const Divider(),
 
-                // Image preview
+                // Image preview - now using the selected format's image
                 Expanded(
                   flex: 3,
-                  child: _buildImagePreview(
-                      theme, character, state.transparentPath),
+                  child: FutureBuilder<String>(
+                    future: currentImagePathFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+
+                      final imagePath = snapshot.data;
+
+                      return _buildImagePreview(theme, character, imagePath);
+                    },
+                  ),
                 ),
 
                 // Format thumbnails
@@ -89,6 +119,22 @@ class CharacterDetailPanel extends ConsumerWidget {
                           iconData: Icons.text_format,
                         ),
 
+                        if (character.tool != null)
+                          _buildInfoItem(
+                            theme,
+                            title: '书写工具',
+                            content: character.tool?.label ?? '未知',
+                            iconData: Icons.brush,
+                          ),
+
+                        if (character.style != null)
+                          _buildInfoItem(
+                            theme,
+                            title: '书法风格',
+                            content: character.style?.label ?? '未知',
+                            iconData: Icons.style,
+                          ),
+
                         _buildInfoItem(
                           theme,
                           title: '收集时间',
@@ -111,7 +157,13 @@ class CharacterDetailPanel extends ConsumerWidget {
                           iconData: Icons.book,
                           isLink: true,
                           onTap: () {
-                            // Navigate to work details
+                            if (character.workId.isNotEmpty) {
+                              Navigator.pushNamed(
+                                context,
+                                '/works/detail',
+                                arguments: {'workId': character.workId},
+                              );
+                            }
                           },
                         ),
 
@@ -185,7 +237,10 @@ class CharacterDetailPanel extends ConsumerWidget {
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: InkWell(
                                     onTap: () {
-                                      // Navigate to related character
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/characters/${relatedChar.id}',
+                                      );
                                     },
                                     child: Column(
                                       children: [
@@ -249,49 +304,126 @@ class CharacterDetailPanel extends ConsumerWidget {
     );
   }
 
+  @override
+  void dispose() {
+    _formatScrollController.dispose();
+    super.dispose();
+  }
+
   Widget _buildFormatSelector(
       WidgetRef ref, ThemeData theme, int selectedFormat) {
-    // Here we would use ThumbnailStrip in a real implementation
-    // Since we don't have the actual image paths, we'll use a simplified version
-    return SizedBox(
-      height: 60,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 5, // Simplified with 5 fixed formats
-        itemBuilder: (context, index) {
-          final bool isSelected = index == selectedFormat;
+    final detailState = ref.watch(characterDetailProvider(characterId));
 
-          return GestureDetector(
-            onTap: () =>
-                ref.read(selectedFormatProvider.notifier).state = index,
-            child: Container(
-              width: 60,
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outline,
-                  width: isSelected ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: Text(
-                  ['原图', '二值', '透明', '方形', '轮廓'][index],
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isSelected ? theme.colorScheme.primary : null,
-                  ),
-                ),
-              ),
+    return detailState.maybeWhen(
+      data: (state) {
+        if (state == null) return const SizedBox(height: 90);
+
+        final formats = state.availableFormats;
+
+        return Container(
+          height: 90,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+              },
             ),
-          );
-        },
-      ),
+            child: ListView.builder(
+              controller: _formatScrollController,
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: formats.length,
+              itemBuilder: (context, index) {
+                final label = index < formats.length
+                    ? formats[index].name
+                    : 'Format $index';
+                final isSelected = index == selectedFormat;
+                final format = formats[index];
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: InkWell(
+                    onTap: () {
+                      ref.read(selectedFormatProvider.notifier).state = index;
+                    },
+                    borderRadius: BorderRadius.circular(4),
+                    child: Container(
+                      width: 80,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.outline,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Image thumbnail
+                          Expanded(
+                              child: FutureBuilder<String>(
+                            future: format.resolvePath(characterId),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                    child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                ));
+                              }
+
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: Image.file(
+                                  File(snapshot.data ?? ''),
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Text(
+                                        state.character?.character ?? '',
+                                        style: theme.textTheme.bodyLarge,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          )),
+                          const SizedBox(height: 4),
+                          // Format label
+                          Text(
+                            label,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color:
+                                  isSelected ? theme.colorScheme.primary : null,
+                              fontWeight: isSelected ? FontWeight.bold : null,
+                            ),
+                            textAlign: TextAlign.center,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+      orElse: () => const SizedBox(height: 90),
     );
   }
 
-  Widget _buildHeader(ThemeData theme, CharacterView character) {
+  Widget _buildHeader(WidgetRef ref, ThemeData theme, CharacterView character) {
     return Row(
       children: [
         IconButton(
@@ -307,13 +439,34 @@ class CharacterDetailPanel extends ConsumerWidget {
         const Spacer(),
         if (onEdit != null)
           IconButton(
-            onPressed: onEdit,
+            onPressed: () {
+              final characterView = ref
+                  .read(characterDetailProvider(characterId))
+                  .value
+                  ?.character;
+              if (characterView != null) {
+                Navigator.pushNamed(
+                  context,
+                  '/collection',
+                  arguments: {
+                    'workId': characterView.workId,
+                    'selectCharacterId': characterId,
+                  },
+                );
+              } else {
+                onEdit?.call();
+              }
+            },
             icon: const Icon(Icons.edit),
             tooltip: '修改',
           ),
         if (onToggleFavorite != null)
           IconButton(
-            onPressed: onToggleFavorite,
+            onPressed: () {
+              onToggleFavorite?.call();
+              // Force refresh the character detail to update the favorite state
+              ref.invalidate(characterDetailProvider(characterId));
+            },
             icon: Icon(
               character.isFavorite ? Icons.star : Icons.star_border,
               color: character.isFavorite ? theme.colorScheme.primary : null,

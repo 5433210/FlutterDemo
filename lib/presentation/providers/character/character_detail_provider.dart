@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../application/providers/repository_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_view.dart';
 import '../../../infrastructure/logging/logger.dart';
 
@@ -29,16 +30,16 @@ final characterDetailProvider =
         await characterViewRepository.getRelatedCharacters(characterId);
 
     // Get image paths
-    final thumbnailPath =
-        await characterService.getCharacterThumbnailPath(characterId);
-    final transparentPath =
-        await characterService.getCharacterImagePath(characterId);
+    final thumbnailPath = await characterService.getCharacterImagePath(
+        characterId, CharacterImageType.thumbnail);
+    final transparentPath = await characterService.getCharacterImagePath(
+        characterId, CharacterImageType.transparent);
 
     return CharacterDetailState(
       character: character,
       relatedCharacters: relatedCharacters,
       selectedFormat: 0,
-      availableFormats: _getAvailableFormats(character.id),
+      availableFormats: _getAvailableFormats(character.id, characterService),
       thumbnailPath: thumbnailPath,
       transparentPath: transparentPath,
       isLoading: false,
@@ -57,37 +58,57 @@ final characterDetailProvider =
 final selectedFormatProvider = StateProvider<int>((ref) => 0);
 
 /// Available character image formats
-List<CharacterFormatInfo> _getAvailableFormats(String characterId) {
+List<CharacterFormatInfo> _getAvailableFormats(
+    String characterId, CharacterService characterService) {
   return [
     CharacterFormatInfo(
-      format: CharacterImageFormat.original,
+      format: CharacterImageType.original,
       name: '原始图像',
       description: '未经处理的原始图像',
-      pathResolver: (id) => '${id}_original',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.original),
     ),
     CharacterFormatInfo(
-      format: CharacterImageFormat.binary,
+      format: CharacterImageType.binary,
       name: '二值化',
       description: '黑白二值化图像',
-      pathResolver: (id) => '${id}_binary',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.binary),
     ),
     CharacterFormatInfo(
-      format: CharacterImageFormat.transparent,
+      format: CharacterImageType.transparent,
       name: '透明背景',
       description: '去背景的透明PNG图像',
-      pathResolver: (id) => '${id}_transparent',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.transparent),
     ),
     CharacterFormatInfo(
-      format: CharacterImageFormat.squareBinary,
+      format: CharacterImageType.squareBinary,
       name: '方形二值化',
       description: '规整为正方形的二值化图像',
-      pathResolver: (id) => '${id}_square_binary',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.squareBinary),
     ),
     CharacterFormatInfo(
-      format: CharacterImageFormat.squareTransparent,
+      format: CharacterImageType.squareTransparent,
       name: '方形透明',
       description: '规整为正方形的透明PNG图像',
-      pathResolver: (id) => '${id}_square_transparent',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.squareTransparent),
+    ),
+    CharacterFormatInfo(
+      format: CharacterImageType.outline,
+      name: '轮廓图像',
+      description: '仅显示轮廓',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.outline),
+    ),
+    CharacterFormatInfo(
+      format: CharacterImageType.squareOutline,
+      name: '方形轮廓',
+      description: '规整为正方形的轮廓图像',
+      pathResolver: (id) async => await characterService.getCharacterImagePath(
+          id, CharacterImageType.squareOutline),
     ),
   ];
 }
@@ -119,10 +140,10 @@ class CharacterDetailState {
 @freezed
 class CharacterFormatInfo with _$CharacterFormatInfo {
   const factory CharacterFormatInfo({
-    required CharacterImageFormat format,
+    required CharacterImageType format,
     required String name,
     required String description,
-    @JsonKey(ignore: true) String Function(String)? pathResolver,
+    @JsonKey(ignore: true) Future<String> Function(String)? pathResolver,
   }) = _CharacterFormatInfo;
 
   factory CharacterFormatInfo.fromJson(Map<String, dynamic> json) =>
@@ -130,34 +151,28 @@ class CharacterFormatInfo with _$CharacterFormatInfo {
 
   const CharacterFormatInfo._();
 
-  String resolvePath(String characterId) {
+  Future<String> resolvePath(String characterId) async {
     if (pathResolver == null) {
       // Default path resolution if no custom resolver provided
       switch (format) {
-        case CharacterImageFormat.original:
-          return '${characterId}_original';
-        case CharacterImageFormat.binary:
-          return '${characterId}_binary';
-        case CharacterImageFormat.transparent:
-          return '${characterId}_transparent';
-        case CharacterImageFormat.squareBinary:
-          return '${characterId}_square_binary';
-        case CharacterImageFormat.squareTransparent:
-          return '${characterId}_square_transparent';
-        default:
-          return '${characterId}_original';
+        case CharacterImageType.original:
+          return '$characterId-original';
+        case CharacterImageType.binary:
+          return '$characterId-binary';
+        case CharacterImageType.transparent:
+          return '$characterId-transparent';
+        case CharacterImageType.squareBinary:
+          return '$characterId-square-binary';
+        case CharacterImageType.squareTransparent:
+          return '$characterId-square-transparent';
+        case CharacterImageType.outline:
+          return '$characterId-outline';
+        case CharacterImageType.squareOutline:
+          return '$characterId-square-outline';
+        case CharacterImageType.thumbnail:
+          return '$characterId-thumbnail';
       }
     }
     return pathResolver!(characterId);
   }
-}
-
-/// Image format types
-@JsonEnum()
-enum CharacterImageFormat {
-  original,
-  binary,
-  transparent,
-  squareBinary,
-  squareTransparent,
 }

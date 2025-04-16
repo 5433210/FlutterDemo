@@ -116,28 +116,4 @@ class CharacterView with _$CharacterView {
   }
 
   const CharacterView._(); // Private constructor for getter methods
-
-  /// Get binary image path for this character
-  String get binaryPath => 'characters/$id/${id}_binary.png';
-
-  /// Get original image path for this character
-  String get originalPath => 'characters/$id/${id}_original.png';
-
-  /// Get outline path for this character
-  String get outlinePath => 'characters/$id/${id}_outline.svg';
-
-  /// Get square binary image path for this character
-  String get squareBinaryPath => 'characters/$id/${id}_square_binary.png';
-
-  String get squareOutlinePath => 'characters/$id/${id}_square_outline.svg';
-
-  /// Get square transparent image path for this character
-  String get squareTransparentPath =>
-      'characters/$id/${id}_square_transparent.png';
-
-  /// Get thumbnail path for this character
-  String get thumbnailPath => 'characters/$id/${id}_thumbnail.jpg';
-
-  /// Get transparent image path for this character
-  String get transparentPath => 'characters/$id/${id}_transparent.png';
 }

@@ -52,7 +52,8 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
       // This query needs to be adjusted based on how tags are stored
       // Assuming tags are stored in a JSON array column
       final result = await _database.rawQuery(
-        'SELECT DISTINCT value AS tag FROM Characters, json_each(Characters.tags)',
+        '''SELECT DISTINCT value AS tag
+           FROM $_viewName, json_each($_viewName.tags)''',
       );
 
       return result.map((row) => row['tag'] as String).toList();
@@ -111,7 +112,9 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
 
       // Execute count query for total records
       final countResult = await _database.rawQuery(
-        'SELECT COUNT(*) as count FROM $_viewName $query',
+        '''SELECT COUNT(*) as count
+           FROM $_viewName
+           $query''',
         args,
       );
       final totalCount = (countResult.first['count'] as int?) ?? 0;
@@ -142,13 +145,13 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     try {
       // Get total count
       final totalCountResult = await _database.rawQuery(
-        'SELECT COUNT(*) as count FROM Characters',
+        'SELECT COUNT(*) as count FROM $_viewName',
       );
       final totalCount = (totalCountResult.first['count'] as int?) ?? 0;
 
       // Get favorite count
       final favoriteCountResult = await _database.rawQuery(
-        'SELECT COUNT(*) as count FROM Characters WHERE isFavorite = 1',
+        'SELECT COUNT(*) as count FROM $_viewName WHERE isFavorite = 1',
       );
       final favoriteCount = (favoriteCountResult.first['count'] as int?) ?? 0;
 
@@ -252,7 +255,7 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
 
     // Search text filter
     if (filter.searchText != null && filter.searchText!.isNotEmpty) {
-      conditions.add('(character LIKE ? OR workName LIKE ? OR author LIKE ?)');
+      conditions.add('(character LIKE ? OR title LIKE ? OR author LIKE ?)');
       final searchPattern = '%${filter.searchText}%';
       args.addAll([searchPattern, searchPattern, searchPattern]);
     }
@@ -271,39 +274,45 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     // Writing tools filter
     if (filter.tool != null) {
       conditions.add('tool = ?');
-      args.add(filter.tool);
+      args.add(filter.tool!.value);
     }
 
     // Calligraphy styles filter
     if (filter.style != null) {
       conditions.add('style = ?');
-      args.add(filter.style);
+      args.add(filter.style!.value);
     }
 
     // Creation date filter
     final creationDateRange = filter.creationDateRange;
     if (creationDateRange != null) {
-      conditions.add('creationTime >= ?');
+      conditions.add('date(creationTime) >= date(?)');
       args.add(creationDateRange.start.toIso8601String());
-      conditions.add('creationTime <= ?');
+      conditions.add('date(creationTime) <= date(?)');
       args.add(creationDateRange.end.toIso8601String());
     }
 
     // Collection date filter
     final collectionDateRange = filter.collectionDateRange;
     if (collectionDateRange != null) {
-      conditions.add('collectionTime >= ?');
+      conditions.add('date(collectionTime) >= date(?)');
       args.add(collectionDateRange.start.toIso8601String());
-      conditions.add('collectionTime <= ?');
+      conditions.add('date(collectionTime) <= date(?)');
       args.add(collectionDateRange.end.toIso8601String());
     }
 
     // Tags filter
     if (filter.tags.isNotEmpty) {
-      // This assumes tags are stored as JSON and can be searched with JSON functions
-      // May need adjustment based on actual database implementation
-      conditions.addAll(filter.tags.map((_) => 'tags LIKE ?'));
-      args.addAll(filter.tags.map((tag) => '%$tag%'));
+      conditions.add('(');
+      for (int i = 0; i < filter.tags.length; i++) {
+        if (i > 0) {
+          conditions.add('OR');
+        }
+        conditions.add(
+            'json_array_length(tags) > 0 AND json_type(tags) = \'array\' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)');
+        args.add(filter.tags[i]);
+      }
+      conditions.add(')');
     }
 
     if (conditions.isEmpty) {
@@ -316,9 +325,10 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   /// Get calligraphy style counts
   Future<Map<String, int>> _getCalligraphyStyleCounts() async {
     try {
-      // This query needs to be adjusted based on how styles are stored
       final result = await _database.rawQuery(
-        'SELECT calligraphyStyle AS style, COUNT(*) AS count FROM Characters GROUP BY calligraphyStyle',
+        '''SELECT style, COUNT(*) AS count
+           FROM $_viewName
+           GROUP BY style''',
       );
 
       final styleCounts = <String, int>{};
@@ -337,24 +347,16 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
 
   /// Get SQL field name from sort field enum
   String _getSortFieldName(SortField field) {
-    switch (field) {
-      case SortField.author:
-        return 'author';
-      case SortField.createTime:
-        return 'collectionTime';
-      case SortField.creationDate:
-        return 'creationTime';
-      case SortField.title:
-        return 'title';
-      case SortField.updateTime:
-        return 'updateTime';
-      case SortField.style:
-        return 'style';
-      case SortField.tool:
-        return 'tool';
-      default:
-        return 'collectionTime';
-    }
+    final fieldMap = {
+      SortField.author: 'author',
+      SortField.createTime: 'collectionTime',
+      SortField.creationDate: 'creationTime',
+      SortField.title: 'title',
+      SortField.updateTime: 'updateTime',
+      SortField.style: 'style',
+      SortField.tool: 'tool',
+    };
+    return fieldMap[field] ?? 'collectionTime';
   }
 
   /// Get tag usage counts
@@ -362,7 +364,9 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
     try {
       // This query needs to be adjusted based on how tags are stored
       final result = await _database.rawQuery(
-        'SELECT value AS tag, COUNT(*) AS count FROM Characters, json_each(Characters.tags) GROUP BY value',
+        '''SELECT value AS tag, COUNT(*) AS count
+           FROM $_viewName, json_each($_viewName.tags)
+           GROUP BY value''',
       );
 
       final tagCounts = <String, int>{};
@@ -380,9 +384,10 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   /// Get writing tool counts
   Future<Map<String, int>> _getWritingToolCounts() async {
     try {
-      // This query needs to be adjusted based on how writing tools are stored
       final result = await _database.rawQuery(
-        'SELECT writingTool AS tool, COUNT(*) AS count FROM Characters GROUP BY writingTool',
+        '''SELECT tool, COUNT(*) AS count
+           FROM $_viewName
+           GROUP BY tool''',
       );
 
       final toolCounts = <String, int>{};

@@ -1,6 +1,5 @@
 import 'package:demo/domain/enums/work_style.dart';
 import 'package:demo/domain/enums/work_tool.dart';
-import 'package:demo/presentation/pages/works/components/filter/sort_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -49,9 +48,6 @@ class CharacterFilterPanel extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(context, onToggleExpand),
-          const Divider(),
-
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -123,7 +119,7 @@ class CharacterFilterPanel extends ConsumerWidget {
           children: styles.map((style) {
             final isSelected = filter.style == style;
             return FilterChip(
-              label: Text(style.name),
+              label: Text(style.label),
               selected: isSelected,
               onSelected: (selected) {
                 if (selected) {
@@ -267,27 +263,27 @@ class CharacterFilterPanel extends ConsumerWidget {
 
   Widget _buildSortItem(SortField field, String label, ThemeData theme,
       CharacterFilter filter, CharacterFilterNotifier notifier) {
-    final bool selected = filter.sortOption.field == field;
+    final selected = filter.sortOption.field == field;
 
     return Material(
       color:
           selected ? theme.colorScheme.secondaryContainer : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppSizes.s),
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppSizes.s),
         onTap: () {
-          // 如果点击当前选中的项，重置为默认排序
+          // If clicking the currently selected sort field, toggle descending/ascending
           if (selected) {
-            notifier.updateSortOption(SortSection.defaultSortOption);
+            notifier.updateSortOption(
+              filter.sortOption
+                  .copyWith(descending: !filter.sortOption.descending),
+            );
           } else {
-            // 选择新的排序字段
+            // Otherwise, select the new sort field and keep current direction
             notifier.updateSortOption(
               filter.sortOption.copyWith(field: field),
             );
           }
         },
-        child: Container(
-          width: double.infinity,
+        child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSizes.m,
             vertical: AppSizes.s,
@@ -301,10 +297,14 @@ class CharacterFilterPanel extends ConsumerWidget {
                   value: field,
                   groupValue: selected ? field : null,
                   onChanged: (_) {
-                    // 如果点击当前选中的项，重置为默认排序
+                    // If clicking the currently selected sort field, toggle descending/ascending
                     if (selected) {
-                      notifier.updateSortOption(SortSection.defaultSortOption);
+                      notifier.updateSortOption(
+                        filter.sortOption.copyWith(
+                            descending: !filter.sortOption.descending),
+                      );
                     } else {
+                      // Otherwise, select the new sort field and keep current direction
                       notifier.updateSortOption(
                         filter.sortOption.copyWith(field: field),
                       );

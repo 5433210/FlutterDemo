@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
 import '../../../application/services/character/character_service.dart';
+import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
 import '../../../domain/models/character/processing_options.dart';
@@ -339,7 +340,8 @@ class CharacterCollectionNotifier
   // 获取缩略图路径
   Future<String?> getThumbnailPath(String regionId) async {
     try {
-      return await _characterService.getCharacterThumbnailPath(regionId);
+      return await _characterService.getCharacterImagePath(
+          regionId, CharacterImageType.thumbnail);
     } catch (e) {
       AppLogger.error('获取缩略图路径失败', error: e);
       return null;

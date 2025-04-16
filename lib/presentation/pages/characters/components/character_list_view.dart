@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:demo/application/services/services.dart';
+import 'package:demo/domain/models/character/character_image_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -105,80 +107,84 @@ class CharacterListView extends ConsumerWidget {
         final character = characters[index];
         final isSelected = selectedCharacters.contains(character.id);
 
-        return ListTile(
-          selected: isSelected,
-          selectedTileColor:
-              theme.colorScheme.primaryContainer.withOpacity(0.3),
-          leading: _buildThumbnail(character, theme),
-          title: Row(
-            children: [
-              Text(
-                character.character,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: AppSizes.spacingSmall),
-              if (character.isFavorite)
-                Icon(
-                  Icons.star,
-                  color: theme.colorScheme.primary,
-                  size: 16,
-                ),
-            ],
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('作品: ${character.title}'),
-              if (character.author != null) Text('作者: ${character.author}'),
-              Text('收集时间: ${_formatDateTime(character.collectionTime)}'),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isBatchMode)
-                Checkbox(
-                  value: isSelected,
-                  onChanged: (_) => onCharacterSelect(character.id),
-                )
-              else ...[
-                IconButton(
-                  onPressed: () => onToggleFavorite(character.id),
-                  icon: Icon(
-                    character.isFavorite ? Icons.star : Icons.star_border,
-                    color:
-                        character.isFavorite ? theme.colorScheme.primary : null,
+        return FutureBuilder<String>(
+          future: ref.read(characterServiceProvider).getCharacterImagePath(
+              character.id, CharacterImageType.thumbnail),
+          builder: (context, snapshot) {
+            final thumbnailPath = snapshot.data ?? '';
+
+            return ListTile(
+              selected: isSelected,
+              selectedTileColor:
+                  theme.colorScheme.primaryContainer.withOpacity(0.3),
+              leading: _buildThumbnail(character, thumbnailPath, theme),
+              title: Row(
+                children: [
+                  Text(
+                    character.character,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  tooltip: character.isFavorite ? '取消收藏' : '收藏',
-                ),
-                IconButton(
-                  onPressed: () => onEdit(character.id),
-                  icon: const Icon(Icons.edit),
-                  tooltip: '编辑',
-                ),
-                IconButton(
-                  onPressed: () => onDelete(character.id),
-                  icon: const Icon(Icons.delete_outline),
-                  tooltip: '删除',
-                  color: theme.colorScheme.error,
-                ),
-              ],
-            ],
-          ),
-          onTap: () {
-            if (isBatchMode) {
-              onCharacterSelect(character.id);
-            } else {
-              onCharacterSelect(character.id);
-            }
+                  const SizedBox(width: AppSizes.spacingSmall),
+                  if (character.isFavorite)
+                    Icon(
+                      Icons.star,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
+                ],
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('作品: ${character.title}'),
+                  if (character.author != null) Text('作者: ${character.author}'),
+                  Text('收集时间: ${_formatDateTime(character.collectionTime)}'),
+                ],
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isBatchMode)
+                    Checkbox(
+                      value: isSelected,
+                      onChanged: (_) => onCharacterSelect(character.id),
+                    )
+                  else ...[
+                    IconButton(
+                      onPressed: () => onToggleFavorite(character.id),
+                      icon: Icon(
+                        character.isFavorite ? Icons.star : Icons.star_border,
+                        color: character.isFavorite
+                            ? theme.colorScheme.primary
+                            : null,
+                      ),
+                      tooltip: character.isFavorite ? '取消收藏' : '收藏',
+                    ),
+                    IconButton(
+                      onPressed: () => onEdit(character.id),
+                      icon: const Icon(Icons.edit),
+                      tooltip: '编辑',
+                    ),
+                    IconButton(
+                      onPressed: () => onDelete(character.id),
+                      icon: const Icon(Icons.delete_outline),
+                      tooltip: '删除',
+                      color: theme.colorScheme.error,
+                    ),
+                  ],
+                ],
+              ),
+              onTap: () {
+                if (isBatchMode) {
+                  onCharacterSelect(character.id);
+                } else {
+                  onCharacterSelect(character.id);
+                }
+              },
+            );
           },
-          isThreeLine: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.spacingMedium,
-            vertical: AppSizes.spacingSmall,
-          ),
         );
       },
     );
@@ -200,8 +206,9 @@ class CharacterListView extends ConsumerWidget {
     );
   }
 
-  Widget _buildThumbnail(CharacterView character, ThemeData theme) {
-    if (character.thumbnailPath.isEmpty) {
+  Widget _buildThumbnail(
+      CharacterView character, String thumbnailPath, ThemeData theme) {
+    if (thumbnailPath.isEmpty) {
       return Container(
         width: 50,
         height: 50,
@@ -210,14 +217,14 @@ class CharacterListView extends ConsumerWidget {
           child: Text(
             character.character,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ),
       );
     }
 
-    final file = File(character.thumbnailPath);
+    final file = File(thumbnailPath);
     return SizedBox(
       width: 50,
       height: 50,
@@ -227,11 +234,14 @@ class CharacterListView extends ConsumerWidget {
           final fileExists = snapshot.data ?? false;
 
           if (fileExists) {
-            return Image.file(
-              file,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) =>
-                  _buildErrorThumbnail(character, theme),
+            return Container(
+              color: theme.colorScheme.surfaceContainerLowest,
+              child: Image.file(
+                file,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) =>
+                    _buildErrorThumbnail(character, theme),
+              ),
             );
           }
 

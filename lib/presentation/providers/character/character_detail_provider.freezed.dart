@@ -20,11 +20,11 @@ CharacterFormatInfo _$CharacterFormatInfoFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$CharacterFormatInfo {
-  CharacterImageFormat get format => throw _privateConstructorUsedError;
+  CharacterImageType get format => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
-  String Function(String)? get pathResolver =>
+  Future<String> Function(String)? get pathResolver =>
       throw _privateConstructorUsedError;
 
   /// Serializes this CharacterFormatInfo to a JSON map.
@@ -44,10 +44,10 @@ abstract class $CharacterFormatInfoCopyWith<$Res> {
       _$CharacterFormatInfoCopyWithImpl<$Res, CharacterFormatInfo>;
   @useResult
   $Res call(
-      {CharacterImageFormat format,
+      {CharacterImageType format,
       String name,
       String description,
-      @JsonKey(ignore: true) String Function(String)? pathResolver});
+      @JsonKey(ignore: true) Future<String> Function(String)? pathResolver});
 }
 
 /// @nodoc
@@ -74,7 +74,7 @@ class _$CharacterFormatInfoCopyWithImpl<$Res, $Val extends CharacterFormatInfo>
       format: null == format
           ? _value.format
           : format // ignore: cast_nullable_to_non_nullable
-              as CharacterImageFormat,
+              as CharacterImageType,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -86,7 +86,7 @@ class _$CharacterFormatInfoCopyWithImpl<$Res, $Val extends CharacterFormatInfo>
       pathResolver: freezed == pathResolver
           ? _value.pathResolver
           : pathResolver // ignore: cast_nullable_to_non_nullable
-              as String Function(String)?,
+              as Future<String> Function(String)?,
     ) as $Val);
   }
 }
@@ -100,10 +100,10 @@ abstract class _$$CharacterFormatInfoImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {CharacterImageFormat format,
+      {CharacterImageType format,
       String name,
       String description,
-      @JsonKey(ignore: true) String Function(String)? pathResolver});
+      @JsonKey(ignore: true) Future<String> Function(String)? pathResolver});
 }
 
 /// @nodoc
@@ -128,7 +128,7 @@ class __$$CharacterFormatInfoImplCopyWithImpl<$Res>
       format: null == format
           ? _value.format
           : format // ignore: cast_nullable_to_non_nullable
-              as CharacterImageFormat,
+              as CharacterImageType,
       name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
@@ -140,7 +140,7 @@ class __$$CharacterFormatInfoImplCopyWithImpl<$Res>
       pathResolver: freezed == pathResolver
           ? _value.pathResolver
           : pathResolver // ignore: cast_nullable_to_non_nullable
-              as String Function(String)?,
+              as Future<String> Function(String)?,
     ));
   }
 }
@@ -159,14 +159,14 @@ class _$CharacterFormatInfoImpl extends _CharacterFormatInfo {
       _$$CharacterFormatInfoImplFromJson(json);
 
   @override
-  final CharacterImageFormat format;
+  final CharacterImageType format;
   @override
   final String name;
   @override
   final String description;
   @override
   @JsonKey(ignore: true)
-  final String Function(String)? pathResolver;
+  final Future<String> Function(String)? pathResolver;
 
   @override
   String toString() {
@@ -210,10 +210,11 @@ class _$CharacterFormatInfoImpl extends _CharacterFormatInfo {
 
 abstract class _CharacterFormatInfo extends CharacterFormatInfo {
   const factory _CharacterFormatInfo(
-          {required final CharacterImageFormat format,
+          {required final CharacterImageType format,
           required final String name,
           required final String description,
-          @JsonKey(ignore: true) final String Function(String)? pathResolver}) =
+          @JsonKey(ignore: true)
+          final Future<String> Function(String)? pathResolver}) =
       _$CharacterFormatInfoImpl;
   const _CharacterFormatInfo._() : super._();
 
@@ -221,14 +222,14 @@ abstract class _CharacterFormatInfo extends CharacterFormatInfo {
       _$CharacterFormatInfoImpl.fromJson;
 
   @override
-  CharacterImageFormat get format;
+  CharacterImageType get format;
   @override
   String get name;
   @override
   String get description;
   @override
   @JsonKey(ignore: true)
-  String Function(String)? get pathResolver;
+  Future<String> Function(String)? get pathResolver;
 
   /// Create a copy of CharacterFormatInfo
   /// with the given fields replaced by the non-null parameter values.

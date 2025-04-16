@@ -196,20 +196,7 @@ class CharacterService {
       }
 
       // 从文件系统获取
-      String? filePath;
-      switch (type) {
-        case CharacterImageType.original:
-          filePath = await _storageService.getOriginalImagePath(id);
-          break;
-        case CharacterImageType.binary:
-          filePath = await _storageService.getBinaryImagePath(id);
-          break;
-        case CharacterImageType.thumbnail:
-          filePath = await _storageService.getThumbnailPath(id);
-          break;
-      }
-
-      final file = File(filePath);
+      final file = File(await getCharacterImagePath(id, type));
       if (await file.exists()) {
         final imageData = await file.readAsBytes();
 
@@ -228,25 +215,25 @@ class CharacterService {
     }
   }
 
-  /// 获取字符图像路径 (从CharacterPersistenceService集成的功能)
-  Future<String?> getCharacterImagePath(String id) async {
-    try {
-      return await _storageService.getOriginalImagePath(id);
-    } catch (e) {
-      AppLogger.error('获取字符图像路径失败', error: e, data: {'characterId': id});
-      return null;
-    }
-  }
-
-  /// 获取字符缩略图路径
-  Future<String?> getCharacterThumbnailPath(String characterId) async {
-    try {
-      print('CharacterService - 获取缩略图路径: $characterId');
-      return await _storageService.getThumbnailPath(characterId);
-    } catch (e) {
-      AppLogger.error('获取缩略图路径失败',
-          error: e, data: {'characterId': characterId});
-      return null;
+  Future<String> getCharacterImagePath(
+      String characterId, CharacterImageType type) async {
+    switch (type) {
+      case CharacterImageType.original:
+        return _storageService.getOriginalImagePath(characterId);
+      case CharacterImageType.binary:
+        return _storageService.getBinaryImagePath(characterId);
+      case CharacterImageType.thumbnail:
+        return _storageService.getThumbnailPath(characterId);
+      case CharacterImageType.squareBinary:
+        return _storageService.getSquareBinaryPath(characterId);
+      case CharacterImageType.squareTransparent:
+        return _storageService.getSquareTransparentPngPath(characterId);
+      case CharacterImageType.outline:
+        return _storageService.getSvgOutlinePath(characterId);
+      case CharacterImageType.squareOutline:
+        return _storageService.getSquareSvgOutlinePath(characterId);
+      case CharacterImageType.transparent:
+        return _storageService.getTransparentPngPath(characterId);
     }
   }
 

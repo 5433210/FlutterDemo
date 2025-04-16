@@ -9,7 +9,7 @@ part of 'character_detail_provider.dart';
 _$CharacterFormatInfoImpl _$$CharacterFormatInfoImplFromJson(
         Map<String, dynamic> json) =>
     _$CharacterFormatInfoImpl(
-      format: $enumDecode(_$CharacterImageFormatEnumMap, json['format']),
+      format: $enumDecode(_$CharacterImageTypeEnumMap, json['format']),
       name: json['name'] as String,
       description: json['description'] as String,
     );
@@ -17,15 +17,18 @@ _$CharacterFormatInfoImpl _$$CharacterFormatInfoImplFromJson(
 Map<String, dynamic> _$$CharacterFormatInfoImplToJson(
         _$CharacterFormatInfoImpl instance) =>
     <String, dynamic>{
-      'format': _$CharacterImageFormatEnumMap[instance.format]!,
+      'format': _$CharacterImageTypeEnumMap[instance.format]!,
       'name': instance.name,
       'description': instance.description,
     };
 
-const _$CharacterImageFormatEnumMap = {
-  CharacterImageFormat.original: 'original',
-  CharacterImageFormat.binary: 'binary',
-  CharacterImageFormat.transparent: 'transparent',
-  CharacterImageFormat.squareBinary: 'squareBinary',
-  CharacterImageFormat.squareTransparent: 'squareTransparent',
+const _$CharacterImageTypeEnumMap = {
+  CharacterImageType.original: 'original',
+  CharacterImageType.binary: 'binary',
+  CharacterImageType.thumbnail: 'thumbnail',
+  CharacterImageType.squareBinary: 'squareBinary',
+  CharacterImageType.squareTransparent: 'squareTransparent',
+  CharacterImageType.transparent: 'transparent',
+  CharacterImageType.outline: 'outline',
+  CharacterImageType.squareOutline: 'squareOutline',
 };

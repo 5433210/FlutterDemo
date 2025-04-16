@@ -8,4 +8,19 @@ enum CharacterImageType {
 
   /// 缩略图
   thumbnail,
+
+  /// 方形二值化图像
+  squareBinary,
+
+  /// 方形透明图像
+  squareTransparent,
+
+  /// 透明背景图像
+  transparent,
+
+  /// 轮廓图像
+  outline,
+
+  /// 方形轮廓图像
+  squareOutline,
 }

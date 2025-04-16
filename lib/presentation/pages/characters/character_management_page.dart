@@ -107,7 +107,7 @@ class _CharacterManagementPageState
                   duration: const Duration(milliseconds: 300),
                   width:
                       (state.selectedCharacterId != null && state.isDetailOpen)
-                          ? 350
+                          ? 550
                           : 0,
                   clipBehavior: Clip.antiAlias,
                   decoration: const BoxDecoration(),
@@ -305,15 +305,34 @@ class _CharacterManagementPageState
           const SizedBox(width: AppSizes.spacingLarge),
 
           // Page size selector
-          DropdownButton<int>(
-            value: state.pageSize,
-            items: [10, 20, 50, 100].map((size) {
-              return DropdownMenuItem<int>(
-                value: size,
-                child: Text('$size 项/页'),
-              );
-            }).toList(),
-            onChanged: _handlePageSizeChange,
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.colorScheme.outline),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: PopupMenuButton<int>(
+              initialValue: state.pageSize,
+              onSelected: _handlePageSizeChange,
+              itemBuilder: (context) => [10, 20, 50, 100]
+                  .map((size) => PopupMenuItem<int>(
+                        value: size,
+                        height: 36,
+                        child: Text('$size 项/页'),
+                      ))
+                  .toList(),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${state.pageSize} 项/页'),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_drop_down, size: 18),
+                  ],
+                ),
+              ),
+            ),
           ),
 
           const SizedBox(width: AppSizes.spacingMedium),
@@ -415,6 +434,12 @@ class _CharacterManagementPageState
     await ref
         .read(characterManagementProvider.notifier)
         .toggleFavorite(characterId);
+
+    // Refresh character detail to ensure UI consistency
+    // ref.refresh(characterDetailProvider(characterId));
+
+    // Refresh list of characters to ensure the list view is updated too
+    // ref.invalidate(characterManagementProvider);
   }
 
   void _showDeleteConfirmation() {

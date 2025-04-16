@@ -7,6 +7,7 @@ import '../../../../theme/app_sizes.dart';
 
 class CharacterCard extends StatelessWidget {
   final CharacterView character;
+  final String? thumbnailPath;
   final bool isSelected;
   final bool isBatchMode;
   final VoidCallback onTap;
@@ -21,6 +22,7 @@ class CharacterCard extends StatelessWidget {
     this.onToggleFavorite,
     this.isBatchMode = false,
     this.isInSelectionMode = false,
+    this.thumbnailPath,
   });
 
   @override
@@ -39,150 +41,166 @@ class CharacterCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Character preview image area
-            AspectRatio(
-              aspectRatio: 1.0,
-              child: Stack(
-                children: [
-                  // Character image
-                  Positioned.fill(
-                    child: _buildCharacterImage(theme),
-                  ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+              minWidth: 200, minHeight: 280, maxHeight: 280),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Character image container with strict aspect ratio and explicit height
+              Expanded(
+                flex: 4, // Image takes more space
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppSizes.cardRadius - 1),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Character image
+                        _buildCharacterImage(theme),
 
-                  // Selection indicator for batch mode
-                  if (isBatchMode)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.surfaceContainerHighest,
-                          border: Border.all(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline,
-                            width: 2,
+                        // Selection indicator for batch mode
+                        if (isBatchMode)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.surfaceContainerHighest,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.outline,
+                                  width: 2,
+                                ),
+                              ),
+                              child: isSelected
+                                  ? Icon(
+                                      Icons.check,
+                                      color: theme.colorScheme.onPrimary,
+                                      size: 14,
+                                    )
+                                  : null,
+                            ),
                           ),
-                        ),
-                        child: isSelected
-                            ? Icon(
-                                Icons.check,
-                                color: theme.colorScheme.onPrimary,
-                                size: 14,
-                              )
-                            : null,
-                      ),
-                    ),
 
-                  // Favorite indicator (not in batch mode)
-                  if (!isBatchMode && character.isFavorite)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.star,
-                          color: theme.colorScheme.primary,
-                          size: 16,
-                        ),
-                      ),
+                        // Favorite indicator (not in batch mode)
+                        if (!isBatchMode && character.isFavorite)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.surface.withOpacity(0.7),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.star,
+                                color: theme.colorScheme.primary,
+                                size: 16,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                ],
+                  ),
+                ),
               ),
-            ),
 
-            // Character information - Wrap in Expanded to prevent overflow
-            Flexible(
-              fit: FlexFit.tight,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.spacingSmall),
+              // Text information - strictly sized and constrained
+              Container(
+                height: 72,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.spacingSmall, vertical: 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min, // Use minimum space needed
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Character text
+                    // Character text with overflow protection
                     Text(
                       character.character,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
-                      overflow: TextOverflow.ellipsis,
                       maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
 
-                    const SizedBox(height: 2), // Reduced vertical spacing
+                    const SizedBox(height: 1), // Minimal spacing
 
-                    // Work name
+                    // Title with overflow protection
                     Text(
                       character.title,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 11, // Smaller font to fit
                       ),
-                      overflow: TextOverflow.ellipsis,
                       maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
 
-                    // Author name if available
+                    // Author with overflow protection
                     if (character.author != null &&
                         character.author!.isNotEmpty)
                       Text(
                         character.author!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11, // Slightly smaller font for author
+                          color: theme.colorScheme.onSurfaceVariant
+                              .withOpacity(0.8),
+                          fontSize: 10, // Even smaller font for author
                         ),
-                        overflow: TextOverflow.ellipsis,
                         maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCharacterImage(ThemeData theme) {
-    if (character.thumbnailPath.isEmpty) {
+    if (thumbnailPath == null || thumbnailPath!.isEmpty) {
       return Container(
         color: theme.colorScheme.surfaceContainerLowest,
         child: Center(
           child: Text(
             character.character,
             style: theme.textTheme.displayMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
         ),
       );
     }
 
-    final file = File(character.thumbnailPath);
+    final file = File(thumbnailPath!);
     return FutureBuilder<bool>(
       future: file.exists(),
       builder: (context, snapshot) {
         final fileExists = snapshot.data ?? false;
 
         if (fileExists) {
-          return Image.file(
-            file,
-            fit: BoxFit.contain,
-            errorBuilder: (ctx, error, _) => _buildErrorImage(theme),
+          return Container(
+            color: theme.colorScheme.surfaceContainerLowest,
+            child: Image.file(
+              file,
+              fit: BoxFit.contain,
+              errorBuilder: (ctx, error, _) => _buildErrorImage(theme),
+            ),
           );
         }
 
@@ -194,24 +212,22 @@ class CharacterCard extends StatelessWidget {
   Widget _buildErrorImage(ThemeData theme) {
     return Container(
       color: theme.colorScheme.surfaceContainerLowest,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              character.character,
-              style: theme.textTheme.displayMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-              ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            character.character,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
-            const SizedBox(height: 8),
-            Icon(
-              Icons.broken_image,
-              color: theme.colorScheme.error,
-              size: 16,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            Icons.broken_image,
+            color: theme.colorScheme.error,
+            size: 16,
+          ),
+        ],
       ),
     );
   }
