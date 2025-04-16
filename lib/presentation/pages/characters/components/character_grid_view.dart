@@ -87,50 +87,55 @@ class CharacterGridView extends ConsumerWidget {
       );
     }
 
-    // Calculate responsive grid settings
-    final width = MediaQuery.of(context).size.width;
-    int crossAxisCount = 2;
+    // Calculate grid settings based on available width
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Each card has a minimum width of 280 pixels
+        const minCardWidth = 180.0;
+        final availableWidth = constraints.maxWidth;
 
-    if (width > 600) crossAxisCount = 3;
-    if (width > 900) crossAxisCount = 4;
-    if (width > 1200) crossAxisCount = 5;
-    if (width > 1500) crossAxisCount = 6;
+        // Calculate how many cards can fit in the available width
+        int crossAxisCount = (availableWidth / minCardWidth).floor();
+        // Ensure at least 1 card and no more than 6 cards per row
+        crossAxisCount = crossAxisCount.clamp(1, 6);
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: AppSizes.spacingMedium,
-        mainAxisSpacing: AppSizes.spacingMedium,
-        childAspectRatio: 0.8, // Card is slightly taller than wide
-      ),
-      itemCount: characters.length,
-      itemBuilder: (context, index) {
-        final character = characters[index];
-        final isSelected = selectedCharacters.contains(character.id);
+        return GridView.builder(
+          padding: const EdgeInsets.all(AppSizes.spacingMedium),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: AppSizes.spacingMedium,
+            mainAxisSpacing: AppSizes.spacingMedium,
+            childAspectRatio: 0.71, // Match card's aspect ratio (280/390)
+          ),
+          itemCount: characters.length,
+          itemBuilder: (context, index) {
+            final character = characters[index];
+            final isSelected = selectedCharacters.contains(character.id);
 
-        // Use FutureBuilder to handle the async operation
-        return FutureBuilder<String>(
-          future: ref.read(characterServiceProvider).getCharacterImagePath(
-              character.id, CharacterImageType.thumbnail),
-          builder: (context, snapshot) {
-            return CharacterCard(
-              character: character,
-              thumbnailPath: snapshot.data,
-              isSelected: isSelected,
-              isBatchMode: isBatchMode,
-              onTap: () {
-                if (isBatchMode) {
-                  // In batch mode, tapping toggles selection
-                  onCharacterTap(character.id);
-                } else {
-                  // In normal mode, tapping opens details
-                  onCharacterTap(character.id);
-                }
+            // Use FutureBuilder to handle the async operation
+            return FutureBuilder<String>(
+              future: ref.read(characterServiceProvider).getCharacterImagePath(
+                  character.id, CharacterImageType.thumbnail),
+              builder: (context, snapshot) {
+                return CharacterCard(
+                  character: character,
+                  thumbnailPath: snapshot.data,
+                  isSelected: isSelected,
+                  isBatchMode: isBatchMode,
+                  onTap: () {
+                    if (isBatchMode) {
+                      // In batch mode, tapping toggles selection
+                      onCharacterTap(character.id);
+                    } else {
+                      // In normal mode, tapping opens details
+                      onCharacterTap(character.id);
+                    }
+                  },
+                  onToggleFavorite: onToggleFavorite != null
+                      ? () => onToggleFavorite!(character.id)
+                      : null,
+                );
               },
-              onToggleFavorite: onToggleFavorite != null
-                  ? () => onToggleFavorite!(character.id)
-                  : null,
             );
           },
         );

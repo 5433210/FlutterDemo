@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/character_filter.dart';
 import '../../../theme/app_sizes.dart';
+import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
@@ -397,12 +398,16 @@ class _CharacterManagementPageState
   }
 
   void _handleEditCharacter(String characterId) {
-    // TODO: Implement navigation to character editing page
-    // This could navigate to a dedicated edit page or an edit mode within this page
+    final state = ref.read(characterManagementProvider);
+    final character = state.characters.firstWhere((c) => c.id == characterId);
 
-    // Placeholder implementation showing a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('编辑字符: $characterId')),
+    Navigator.pushNamed(
+      context,
+      '/works/${character.workId}/collection',
+      arguments: {
+        'regionId': character.region.id,
+        'action': 'edit',
+      },
     );
   }
 
@@ -435,11 +440,14 @@ class _CharacterManagementPageState
         .read(characterManagementProvider.notifier)
         .toggleFavorite(characterId);
 
-    // Refresh character detail to ensure UI consistency
-    // ref.refresh(characterDetailProvider(characterId));
+    // 刷新详情面板数据
+    if (ref.read(characterManagementProvider).selectedCharacterId ==
+        characterId) {
+      ref.refresh(characterDetailProvider(characterId));
+    }
 
-    // Refresh list of characters to ensure the list view is updated too
-    // ref.invalidate(characterManagementProvider);
+    // 刷新列表状态以更新卡片显示
+    ref.invalidate(characterManagementProvider);
   }
 
   void _showDeleteConfirmation() {
