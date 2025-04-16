@@ -160,8 +160,11 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
                             if (character.workId.isNotEmpty) {
                               Navigator.pushNamed(
                                 context,
-                                '/works/detail',
-                                arguments: {'workId': character.workId},
+                                '/work_detail',
+                                arguments: {
+                                  'workId': character.workId,
+                                  'pageId': character.pageId
+                                },
                               );
                             }
                           },
@@ -424,85 +427,112 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
   }
 
   Widget _buildHeader(WidgetRef ref, ThemeData theme, CharacterView character) {
-    return Row(
-      mainAxisSize: MainAxisSize.max, // Take all available width
-      children: [
-        // Close button - keep compact
-        IconButton(
-          onPressed: onClose,
-          icon: const Icon(Icons.close),
-          tooltip: '关闭详情',
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(
-            minWidth: 36,
-            minHeight: 36,
-          ),
-        ),
+    // Use a smaller icon size
+    const double iconSize = 16.0;
 
-        // Title - allow ellipsis if needed
-        Expanded(
-          child: Text(
-            '字符详情',
-            style: theme.textTheme.titleMedium, // Use smaller text style
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
+    return LayoutBuilder(builder: (context, constraints) {
+      // Get available width for layout decisions
+      final availableWidth = constraints.maxWidth;
 
-        // Action buttons in a Row with minimal spacing
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (onEdit != null)
-              IconButton(
-                onPressed: () {
-                  final characterView = ref
-                      .read(characterDetailProvider(characterId))
-                      .value
-                      ?.character;
-                  if (characterView != null) {
-                    Navigator.pushNamed(
-                      context,
-                      '/collection',
-                      arguments: {
-                        'workId': characterView.workId,
-                        'selectCharacterId': characterId,
-                      },
-                    );
-                  } else {
-                    onEdit?.call();
-                  }
-                },
-                icon: const Icon(Icons.edit),
-                tooltip: '修改',
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+      // Determine if we have very limited space
+      final isVeryNarrow = availableWidth < 100;
+
+      return Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Close button with smaller size
+          SizedBox(
+            width: 24,
+            height: 24,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              onPressed: onClose,
+              icon: const Icon(Icons.close, size: iconSize),
+              tooltip: '关闭详情',
+              constraints: const BoxConstraints.tightFor(width: 24, height: 24),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+
+          // Title with flexible width
+          if (!isVeryNarrow)
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: Text(
+                  '字符详情',
+                  style: theme.textTheme.bodyMedium, // Even smaller text
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ),
-            if (onToggleFavorite != null)
-              IconButton(
-                onPressed: () {
-                  onToggleFavorite?.call();
-                  // Force refresh the character detail to update the favorite state
-                  // ref.invalidate(characterDetailProvider(characterId));
-                },
-                icon: Icon(
-                  character.isFavorite ? Icons.star : Icons.star_border,
-                  color:
-                      character.isFavorite ? theme.colorScheme.primary : null,
+            ),
+
+          // Action buttons in a tight row
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onEdit != null)
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      final characterView = ref
+                          .read(characterDetailProvider(characterId))
+                          .value
+                          ?.character;
+                      if (characterView != null) {
+                        Navigator.pushNamed(
+                          context,
+                          '/character_collection',
+                          arguments: {
+                            'workId': characterView.workId,
+                            'pageId': characterView.pageId,
+                            'characterId': characterView.id,
+                          },
+                        );
+                      } else {
+                        onEdit?.call();
+                      }
+                    },
+                    icon: const Icon(Icons.edit, size: iconSize),
+                    tooltip: '修改',
+                    constraints:
+                        const BoxConstraints.tightFor(width: 24, height: 24),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-                tooltip: character.isFavorite ? '取消收藏' : '收藏',
-                visualDensity: VisualDensity.compact,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+              if (onToggleFavorite != null)
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      onToggleFavorite?.call();
+                      ref.invalidate(characterDetailProvider(characterId));
+                    },
+                    icon: Icon(
+                      character.isFavorite ? Icons.star : Icons.star_border,
+                      size: iconSize,
+                      color: character.isFavorite
+                          ? theme.colorScheme.primary
+                          : null,
+                    ),
+                    tooltip: character.isFavorite ? '取消收藏' : '收藏',
+                    constraints:
+                        const BoxConstraints.tightFor(width: 24, height: 24),
+                    visualDensity: VisualDensity.compact,
+                  ),
                 ),
-              ),
-          ],
-        ),
-      ],
-    );
+            ],
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildImagePreview(

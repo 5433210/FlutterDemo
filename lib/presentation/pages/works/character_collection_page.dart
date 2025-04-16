@@ -18,11 +18,13 @@ import '../../widgets/character_collection/right_panel.dart';
 class CharacterCollectionPage extends ConsumerStatefulWidget {
   final String workId;
   final String initialPageId;
+  final String? initialCharacterId;
 
   const CharacterCollectionPage({
     Key? key,
     required this.workId,
     required this.initialPageId,
+    this.initialCharacterId,
   }) : super(key: key);
 
   @override
@@ -372,6 +374,11 @@ class _CharacterCollectionPageState
             widget.workId,
             pageId: widget.initialPageId,
           );
+      if (widget.initialCharacterId != null) {
+        ref.read(characterCollectionProvider.notifier).selectRegion(
+              widget.initialCharacterId!,
+            );
+      }
     } catch (e) {
       AppLogger.error('加载字符数据失败',
           tag: 'CharacterCollectionPage',

@@ -1,4 +1,5 @@
 import 'package:demo/presentation/pages/characters/character_management_page.dart';
+import 'package:demo/presentation/pages/works/character_collection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,9 +70,22 @@ class MyApp extends ConsumerWidget {
         );
 
       case AppRoutes.workDetail:
-        if (args is String) {
+        if (args is Map<String, String>) {
           return MaterialPageRoute(
-            builder: (context) => WorkDetailPage(workId: args),
+            builder: (context) => WorkDetailPage(
+                workId: args['workId']!, initialPageId: args['pageId']!),
+          );
+        }
+        break;
+
+      case AppRoutes.characterCollection:
+        if (args is Map<String, String>) {
+          return MaterialPageRoute(
+            builder: (context) => CharacterCollectionPage(
+              workId: args['workId']!,
+              initialPageId: args['pageId']!,
+              initialCharacterId: args['characterId']!,
+            ),
           );
         }
         break;

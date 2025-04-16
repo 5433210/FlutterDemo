@@ -22,10 +22,12 @@ import 'components/work_images_management_view.dart';
 
 class WorkDetailPage extends ConsumerStatefulWidget {
   final String workId;
+  final String? initialPageId;
 
   const WorkDetailPage({
     super.key,
     required this.workId,
+    this.initialPageId,
   });
 
   @override
@@ -645,6 +647,16 @@ class _WorkDetailPageState extends ConsumerState<WorkDetailPage>
     if (work != null) {
       final storageService = ref.read(workStorageProvider);
       await storageService.verifyWorkImages(widget.workId);
+      if (work.images.isNotEmpty) {
+        for (var image in work.images) {
+          if (image.id == widget.initialPageId) {
+            ref.read(workDetailProvider.notifier).selectImage(
+                  work.images.indexOf(image),
+                );
+            break;
+          }
+        }
+      }
     }
 
     _checkForUnfinishedEditSession();

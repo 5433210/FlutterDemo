@@ -108,7 +108,7 @@ class _CharacterManagementPageState
                   duration: const Duration(milliseconds: 300),
                   width:
                       (state.selectedCharacterId != null && state.isDetailOpen)
-                          ? 550
+                          ? 600
                           : 0,
                   clipBehavior: Clip.antiAlias,
                   decoration: const BoxDecoration(),
