@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../domain/models/character/character_view.dart';
@@ -558,11 +559,24 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
         final fileExists = snapshot.data ?? false;
 
         if (fileExists) {
-          return ZoomableImageView(
-            imagePath: imagePath,
-            enableMouseWheel: true,
-            showControls: true,
-          );
+          // Check if the file is an SVG format
+          if (imagePath.toLowerCase().endsWith('.svg')) {
+            // Use SvgPicture for SVG files
+            return SvgPicture.file(
+              file,
+              fit: BoxFit.contain,
+              placeholderBuilder: (context) => const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          } else {
+            // Use ZoomableImageView for regular image files (PNG, JPG)
+            return ZoomableImageView(
+              imagePath: imagePath,
+              enableMouseWheel: true,
+              showControls: true,
+            );
+          }
         }
 
         return Container(
