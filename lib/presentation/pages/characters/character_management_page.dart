@@ -13,7 +13,6 @@ import 'components/character_detail_panel.dart';
 import 'components/character_filter_panel.dart';
 import 'components/character_grid_view.dart';
 import 'components/character_list_view.dart';
-import 'components/character_toolbar.dart';
 
 /// Character management page
 class CharacterManagementPage extends ConsumerStatefulWidget {
@@ -33,21 +32,12 @@ class _CharacterManagementPageState
   Widget build(BuildContext context) {
     final state = ref.watch(characterManagementProvider);
     final filter = ref.watch(characterFilterProvider);
+    final theme = Theme.of(context);
 
     return PageLayout(
+      toolbar: _buildToolbar(theme, state),
       body: Column(
         children: [
-          // Toolbar with search and batch controls
-          CharacterToolbar(
-            onSearch: _handleSearch,
-            onDelete: _showDeleteConfirmation,
-            isBatchMode: state.isBatchMode,
-            onToggleBatchMode: _toggleBatchMode,
-            selectedCount: state.selectedCharacters.length,
-            onToggleViewMode: _toggleViewMode,
-            viewMode: state.viewMode,
-          ),
-
           // Main content with filter, list and detail panels
           Expanded(
             child: Row(
@@ -327,7 +317,10 @@ class _CharacterManagementPageState
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${state.pageSize} 项/页'),
+                    Text('${state.pageSize} 项/页',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        )),
                     const SizedBox(width: 4),
                     const Icon(Icons.arrow_drop_down, size: 18),
                   ],
@@ -343,6 +336,161 @@ class _CharacterManagementPageState
             '总计: ${state.totalCount} 个字符',
             style: Theme.of(context).textTheme.bodySmall,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToolbar(ThemeData theme, CharacterManagementState state) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: kToolbarHeight + 8,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withOpacity(0.98),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+        border: Border(
+          bottom: BorderSide(
+            color: theme.dividerColor.withOpacity(0.15),
+            width: 1,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.only(
+        left: AppSizes.spacingMedium,
+        right: AppSizes.spacingMedium,
+        top: 4,
+        bottom: 4,
+      ),
+      child: Row(
+        children: [
+          // Left side: Title
+          Text(
+            '集字管理',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+          const Spacer(),
+
+          // Search box
+          SizedBox(
+            width: 220,
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: '搜索字符、作品或作者',
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.outline.withOpacity(0.5),
+                  ),
+                ),
+              ),
+              onChanged: _handleSearch,
+              textInputAction: TextInputAction.search,
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Right side actions
+          Container(
+            height: 36,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            width: 1,
+            color: theme.dividerColor.withOpacity(0.2),
+          ),
+
+          // Actions section
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Batch mode toggle
+              IconButton(
+                onPressed: _toggleBatchMode,
+                icon: Icon(
+                  state.isBatchMode ? Icons.cancel : Icons.check_box_outlined,
+                  color: state.isBatchMode ? theme.colorScheme.primary : null,
+                ),
+                tooltip: state.isBatchMode ? '退出批量模式' : '批量操作',
+                visualDensity: VisualDensity.compact,
+              ),
+
+              // View mode toggle
+              IconButton(
+                onPressed: _toggleViewMode,
+                icon: Icon(
+                  state.viewMode == ViewMode.grid
+                      ? Icons.view_list
+                      : Icons.grid_view,
+                  color: theme.colorScheme.onSurface,
+                ),
+                tooltip: state.viewMode == ViewMode.grid ? '列表视图' : '网格视图',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+
+          // Filter toggle - styled as a button similar to WorkBrowsePage
+          FilledButton.icon(
+            onPressed: _toggleFilterPanel,
+            icon: const Icon(Icons.filter_list, size: 18),
+            label: const Text('筛选'),
+            style: FilledButton.styleFrom(
+              backgroundColor: _isFilterPanelExpanded
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.secondaryContainer,
+              foregroundColor: _isFilterPanelExpanded
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.onSecondaryContainer,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              elevation: 0,
+              textStyle: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+
+          if (state.isBatchMode && state.selectedCharacters.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: _showDeleteConfirmation,
+              icon: const Icon(Icons.delete, size: 18),
+              label: Text('删除 (${state.selectedCharacters.length})'),
+              style: FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.errorContainer,
+                foregroundColor: theme.colorScheme.onErrorContainer,
+                visualDensity: VisualDensity.compact,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 0,
+                textStyle: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
