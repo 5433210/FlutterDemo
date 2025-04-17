@@ -6,43 +6,40 @@ part of 'practice_page.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$PageSizeImpl _$$PageSizeImplFromJson(Map<String, dynamic> json) =>
-    _$PageSizeImpl(
-      unit: json['unit'] as String? ?? 'mm',
-      resUnit: json['resUnit'] as String? ?? 'dpi',
-      resUnitValue: (json['resUnitValue'] as num?)?.toInt() ?? 300,
-      width: (json['width'] as num?)?.toDouble() ?? 210.0,
-      height: (json['height'] as num?)?.toDouble() ?? 297.0,
-    );
-
-Map<String, dynamic> _$$PageSizeImplToJson(_$PageSizeImpl instance) =>
-    <String, dynamic>{
-      'unit': instance.unit,
-      'resUnit': instance.resUnit,
-      'resUnitValue': instance.resUnitValue,
-      'width': instance.width,
-      'height': instance.height,
-    };
-
 _$PracticePageImpl _$$PracticePageImplFromJson(Map<String, dynamic> json) =>
     _$PracticePageImpl(
-      index: (json['index'] as num).toInt(),
-      size: json['size'] == null
-          ? const PageSize()
-          : PageSize.fromJson(json['size'] as Map<String, dynamic>),
+      id: json['id'] as String,
+      name: json['name'] as String? ?? '',
+      index: (json['index'] as num?)?.toInt() ?? 0,
+      width: (json['width'] as num?)?.toDouble() ?? 210.0,
+      height: (json['height'] as num?)?.toDouble() ?? 297.0,
+      backgroundType: json['backgroundType'] as String? ?? 'color',
+      backgroundImage: json['backgroundImage'] as String?,
+      backgroundColor: json['backgroundColor'] as String? ?? '#FFFFFF',
+      backgroundTexture: json['backgroundTexture'] as String?,
+      backgroundOpacity: (json['backgroundOpacity'] as num?)?.toDouble() ?? 1.0,
+      margin: json['margin'] == null
+          ? const EdgeInsets.all(20.0)
+          : const EdgeInsetsConverter()
+              .fromJson(json['margin'] as Map<String, dynamic>),
       layers: (json['layers'] as List<dynamic>?)
               ?.map((e) => PracticeLayer.fromJson(e as Map<String, dynamic>))
               .toList() ??
-          const [],
-      createTime: DateTime.parse(json['create_time'] as String),
-      updateTime: DateTime.parse(json['update_time'] as String),
+          const <PracticeLayer>[],
     );
 
 Map<String, dynamic> _$$PracticePageImplToJson(_$PracticePageImpl instance) =>
     <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
       'index': instance.index,
-      'size': instance.size,
+      'width': instance.width,
+      'height': instance.height,
+      'backgroundType': instance.backgroundType,
+      'backgroundImage': instance.backgroundImage,
+      'backgroundColor': instance.backgroundColor,
+      'backgroundTexture': instance.backgroundTexture,
+      'backgroundOpacity': instance.backgroundOpacity,
+      'margin': const EdgeInsetsConverter().toJson(instance.margin),
       'layers': instance.layers,
-      'create_time': instance.createTime.toIso8601String(),
-      'update_time': instance.updateTime.toIso8601String(),
     };

@@ -1,98 +1,132 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'practice_element.dart';
 import 'practice_layer.dart';
 
 part 'practice_page.freezed.dart';
 part 'practice_page.g.dart';
 
-/// 页面尺寸
-@freezed
-class PageSize with _$PageSize {
-  const factory PageSize({
-    /// 尺寸单位 (例如: 'mm')
-    @Default('mm') String unit,
-
-    /// 分辨率单位 (例如: 'dpi')
-    @Default('dpi') String resUnit,
-
-    /// 分辨率单位值
-    @Default(300) int resUnitValue,
-
-    /// 宽度 (默认A4宽度210mm)
-    @Default(210.0) double width,
-
-    /// 高度 (默认A4高度297mm)
-    @Default(297.0) double height,
-  }) = _PageSize;
-
-  /// 从JSON创建实例
-  factory PageSize.fromJson(Map<String, dynamic> json) =>
-      _$PageSizeFromJson(json);
-
-  const PageSize._();
-}
-
-/// 字帖页面信息
 @freezed
 class PracticePage with _$PracticePage {
   const factory PracticePage({
-    /// 页面序号
-    required int index,
-
-    /// 页面尺寸
-    @Default(PageSize()) PageSize size,
-
-    /// 页面图层列表
-    @Default([]) List<PracticeLayer> layers,
-
-    /// 创建时间
-    @JsonKey(name: 'create_time') required DateTime createTime,
-
-    /// 更新时间
-    @JsonKey(name: 'update_time') required DateTime updateTime,
+    required String id,
+    @Default('') String name,
+    @Default(0) int index,
+    @Default(210.0) double width,
+    @Default(297.0) double height,
+    @Default('color') String backgroundType,
+    String? backgroundImage,
+    @Default('#FFFFFF') String backgroundColor,
+    String? backgroundTexture,
+    @Default(1.0) double backgroundOpacity,
+    @EdgeInsetsConverter() @Default(EdgeInsets.all(20.0)) EdgeInsets margin,
+    @Default(<PracticeLayer>[]) List<PracticeLayer> layers,
   }) = _PracticePage;
 
-  /// 创建新页面
-  factory PracticePage.create(int index, {PageSize? size}) {
-    final now = DateTime.now();
-    return PracticePage(
-      index: index,
-      size: size ?? const PageSize(),
-      createTime: now,
-      updateTime: now,
-    );
-  }
+  factory PracticePage.defaultPage() => const PracticePage(
+        id: 'default',
+        name: 'Default Page',
+        index: 0,
+        width: 210.0, // A4 width in mm
+        height: 297.0, // A4 height in mm
+        backgroundType: 'color',
+        backgroundColor: '#FFFFFF',
+        backgroundOpacity: 1.0,
+        margin: EdgeInsets.all(20.0),
+        layers: [],
+      );
 
-  /// 从JSON创建实例
   factory PracticePage.fromJson(Map<String, dynamic> json) =>
       _$PracticePageFromJson(json);
 
+  // Helper methods to make operations easier for the UI
   const PracticePage._();
 
-  /// 获取图层数量
-  int get layerCount => layers.length;
+  PracticePage addElement(String layerId, PracticeElement element) {
+    final updatedLayers = layers.map((layer) {
+      if (layer.id == layerId) {
+        return layer.copyWith(elements: [...layer.elements, element]);
+      }
+      return layer;
+    }).toList();
 
-  /// 添加图层
-  PracticePage addLayer(PracticeLayer layer) {
-    return copyWith(
-      layers: [...layers, layer],
-      updateTime: DateTime.now(),
-    );
+    return copyWith(layers: updatedLayers);
   }
 
-  /// 删除图层
+  PracticePage addLayer(PracticeLayer layer) {
+    return copyWith(layers: [...layers, layer]);
+  }
+
+  List<PracticeElement> getAllElements() {
+    final allElements = <PracticeElement>[];
+    for (final layer in layers) {
+      allElements.addAll(layer.elements);
+    }
+    return allElements;
+  }
+
+  PracticeLayer? getLayer(String layerId) {
+    try {
+      return layers.firstWhere((layer) => layer.id == layerId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  PracticePage moveLayer(String layerId, int newIndex) {
+    final currentLayers = [...layers];
+    final currentIndex =
+        currentLayers.indexWhere((layer) => layer.id == layerId);
+    if (currentIndex < 0) return this;
+
+    final layer = currentLayers.removeAt(currentIndex);
+    currentLayers.insert(newIndex, layer);
+    return copyWith(layers: currentLayers);
+  }
+
+  PracticePage removeElement(String layerId, String elementId) {
+    final updatedLayers = layers.map((layer) {
+      if (layer.id == layerId) {
+        final updatedElements =
+            layer.elements.where((element) => element.id != elementId).toList();
+        return layer.copyWith(elements: updatedElements);
+      }
+      return layer;
+    }).toList();
+
+    return copyWith(layers: updatedLayers);
+  }
+
   PracticePage removeLayer(String layerId) {
     return copyWith(
-      layers: layers.where((l) => l.id != layerId).toList(),
-      updateTime: DateTime.now(),
+      layers: layers.where((layer) => layer.id != layerId).toList(),
     );
   }
 
-  /// 更新图层
-  PracticePage updateLayer(PracticeLayer layer) {
+  PracticePage setSize(double width, double height) {
+    return copyWith(width: width, height: height);
+  }
+
+  PracticePage updateElement(String layerId, PracticeElement updatedElement) {
+    final updatedLayers = layers.map((layer) {
+      if (layer.id == layerId) {
+        final updatedElements = layer.elements.map((element) {
+          return element.id == updatedElement.id ? updatedElement : element;
+        }).toList();
+        return layer.copyWith(elements: updatedElements);
+      }
+      return layer;
+    }).toList();
+
+    return copyWith(layers: updatedLayers);
+  }
+
+  PracticePage updateLayer(PracticeLayer updatedLayer) {
     return copyWith(
-      layers: layers.map((l) => l.id == layer.id ? layer : l).toList(),
-      updateTime: DateTime.now(),
+      layers: layers
+          .map((layer) => layer.id == updatedLayer.id ? updatedLayer : layer)
+          .toList(),
     );
   }
 }

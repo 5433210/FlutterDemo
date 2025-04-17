@@ -20,41 +20,15 @@ PracticeLayer _$PracticeLayerFromJson(Map<String, dynamic> json) {
 
 /// @nodoc
 mixin _$PracticeLayer {
-  /// 图层ID
   String get id => throw _privateConstructorUsedError;
-
-  /// 图层类型
-  PracticeLayerType get type => throw _privateConstructorUsedError;
-
-  /// 图片路径
-  String get imagePath => throw _privateConstructorUsedError;
-
-  /// 图层名称
-  String? get name => throw _privateConstructorUsedError;
-
-  /// 图层描述
-  String? get description => throw _privateConstructorUsedError;
-
-  /// 图层可见性
-  bool get visible => throw _privateConstructorUsedError;
-
-  /// 图层锁定状态
-  bool get locked => throw _privateConstructorUsedError;
-
-  /// 图层不透明度
-  double get opacity => throw _privateConstructorUsedError;
-
-  /// 图层顺序
+  String get name => throw _privateConstructorUsedError;
   int get order => throw _privateConstructorUsedError;
-
-  /// 图层元素列表
+  bool get isVisible => throw _privateConstructorUsedError;
+  bool get isLocked => throw _privateConstructorUsedError;
+  @PracticeElementConverter()
   List<PracticeElement> get elements => throw _privateConstructorUsedError;
-
-  /// 图层创建时间
-  DateTime get createTime => throw _privateConstructorUsedError;
-
-  /// 图层更新时间
-  DateTime get updateTime => throw _privateConstructorUsedError;
+  double get opacity => throw _privateConstructorUsedError;
+  String? get backgroundImage => throw _privateConstructorUsedError;
 
   /// Serializes this PracticeLayer to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -74,17 +48,13 @@ abstract class $PracticeLayerCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      PracticeLayerType type,
-      String imagePath,
-      String? name,
-      String? description,
-      bool visible,
-      bool locked,
-      double opacity,
+      String name,
       int order,
-      List<PracticeElement> elements,
-      DateTime createTime,
-      DateTime updateTime});
+      bool isVisible,
+      bool isLocked,
+      @PracticeElementConverter() List<PracticeElement> elements,
+      double opacity,
+      String? backgroundImage});
 }
 
 /// @nodoc
@@ -103,67 +73,47 @@ class _$PracticeLayerCopyWithImpl<$Res, $Val extends PracticeLayer>
   @override
   $Res call({
     Object? id = null,
-    Object? type = null,
-    Object? imagePath = null,
-    Object? name = freezed,
-    Object? description = freezed,
-    Object? visible = null,
-    Object? locked = null,
-    Object? opacity = null,
+    Object? name = null,
     Object? order = null,
+    Object? isVisible = null,
+    Object? isLocked = null,
     Object? elements = null,
-    Object? createTime = null,
-    Object? updateTime = null,
+    Object? opacity = null,
+    Object? backgroundImage = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as PracticeLayerType,
-      imagePath: null == imagePath
-          ? _value.imagePath
-          : imagePath // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: freezed == name
+      name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
-      locked: null == locked
-          ? _value.locked
-          : locked // ignore: cast_nullable_to_non_nullable
-              as bool,
-      opacity: null == opacity
-          ? _value.opacity
-          : opacity // ignore: cast_nullable_to_non_nullable
-              as double,
+              as String,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
               as int,
+      isVisible: null == isVisible
+          ? _value.isVisible
+          : isVisible // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isLocked: null == isLocked
+          ? _value.isLocked
+          : isLocked // ignore: cast_nullable_to_non_nullable
+              as bool,
       elements: null == elements
           ? _value.elements
           : elements // ignore: cast_nullable_to_non_nullable
               as List<PracticeElement>,
-      createTime: null == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updateTime: null == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+      opacity: null == opacity
+          ? _value.opacity
+          : opacity // ignore: cast_nullable_to_non_nullable
+              as double,
+      backgroundImage: freezed == backgroundImage
+          ? _value.backgroundImage
+          : backgroundImage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -178,17 +128,13 @@ abstract class _$$PracticeLayerImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      PracticeLayerType type,
-      String imagePath,
-      String? name,
-      String? description,
-      bool visible,
-      bool locked,
-      double opacity,
+      String name,
       int order,
-      List<PracticeElement> elements,
-      DateTime createTime,
-      DateTime updateTime});
+      bool isVisible,
+      bool isLocked,
+      @PracticeElementConverter() List<PracticeElement> elements,
+      double opacity,
+      String? backgroundImage});
 }
 
 /// @nodoc
@@ -205,156 +151,100 @@ class __$$PracticeLayerImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? type = null,
-    Object? imagePath = null,
-    Object? name = freezed,
-    Object? description = freezed,
-    Object? visible = null,
-    Object? locked = null,
-    Object? opacity = null,
+    Object? name = null,
     Object? order = null,
+    Object? isVisible = null,
+    Object? isLocked = null,
     Object? elements = null,
-    Object? createTime = null,
-    Object? updateTime = null,
+    Object? opacity = null,
+    Object? backgroundImage = freezed,
   }) {
     return _then(_$PracticeLayerImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      type: null == type
-          ? _value.type
-          : type // ignore: cast_nullable_to_non_nullable
-              as PracticeLayerType,
-      imagePath: null == imagePath
-          ? _value.imagePath
-          : imagePath // ignore: cast_nullable_to_non_nullable
-              as String,
-      name: freezed == name
+      name: null == name
           ? _value.name
           : name // ignore: cast_nullable_to_non_nullable
-              as String?,
-      description: freezed == description
-          ? _value.description
-          : description // ignore: cast_nullable_to_non_nullable
-              as String?,
-      visible: null == visible
-          ? _value.visible
-          : visible // ignore: cast_nullable_to_non_nullable
-              as bool,
-      locked: null == locked
-          ? _value.locked
-          : locked // ignore: cast_nullable_to_non_nullable
-              as bool,
-      opacity: null == opacity
-          ? _value.opacity
-          : opacity // ignore: cast_nullable_to_non_nullable
-              as double,
+              as String,
       order: null == order
           ? _value.order
           : order // ignore: cast_nullable_to_non_nullable
               as int,
+      isVisible: null == isVisible
+          ? _value.isVisible
+          : isVisible // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isLocked: null == isLocked
+          ? _value.isLocked
+          : isLocked // ignore: cast_nullable_to_non_nullable
+              as bool,
       elements: null == elements
           ? _value._elements
           : elements // ignore: cast_nullable_to_non_nullable
               as List<PracticeElement>,
-      createTime: null == createTime
-          ? _value.createTime
-          : createTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
-      updateTime: null == updateTime
-          ? _value.updateTime
-          : updateTime // ignore: cast_nullable_to_non_nullable
-              as DateTime,
+      opacity: null == opacity
+          ? _value.opacity
+          : opacity // ignore: cast_nullable_to_non_nullable
+              as double,
+      backgroundImage: freezed == backgroundImage
+          ? _value.backgroundImage
+          : backgroundImage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$PracticeLayerImpl extends _PracticeLayer {
+class _$PracticeLayerImpl implements _PracticeLayer {
   const _$PracticeLayerImpl(
       {required this.id,
-      required this.type,
-      required this.imagePath,
-      this.name,
-      this.description,
-      this.visible = true,
-      this.locked = false,
+      required this.name,
+      required this.order,
+      this.isVisible = true,
+      this.isLocked = false,
+      @PracticeElementConverter()
+      final List<PracticeElement> elements = const <PracticeElement>[],
       this.opacity = 1.0,
-      this.order = 0,
-      final List<PracticeElement> elements = const [],
-      required this.createTime,
-      required this.updateTime})
-      : _elements = elements,
-        super._();
+      this.backgroundImage})
+      : _elements = elements;
 
   factory _$PracticeLayerImpl.fromJson(Map<String, dynamic> json) =>
       _$$PracticeLayerImplFromJson(json);
 
-  /// 图层ID
   @override
   final String id;
-
-  /// 图层类型
   @override
-  final PracticeLayerType type;
-
-  /// 图片路径
+  final String name;
   @override
-  final String imagePath;
-
-  /// 图层名称
-  @override
-  final String? name;
-
-  /// 图层描述
-  @override
-  final String? description;
-
-  /// 图层可见性
-  @override
-  @JsonKey()
-  final bool visible;
-
-  /// 图层锁定状态
-  @override
-  @JsonKey()
-  final bool locked;
-
-  /// 图层不透明度
-  @override
-  @JsonKey()
-  final double opacity;
-
-  /// 图层顺序
-  @override
-  @JsonKey()
   final int order;
-
-  /// 图层元素列表
-  final List<PracticeElement> _elements;
-
-  /// 图层元素列表
   @override
   @JsonKey()
+  final bool isVisible;
+  @override
+  @JsonKey()
+  final bool isLocked;
+  final List<PracticeElement> _elements;
+  @override
+  @JsonKey()
+  @PracticeElementConverter()
   List<PracticeElement> get elements {
     if (_elements is EqualUnmodifiableListView) return _elements;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_elements);
   }
 
-  /// 图层创建时间
   @override
-  final DateTime createTime;
-
-  /// 图层更新时间
+  @JsonKey()
+  final double opacity;
   @override
-  final DateTime updateTime;
+  final String? backgroundImage;
 
   @override
   String toString() {
-    return 'PracticeLayer(id: $id, type: $type, imagePath: $imagePath, name: $name, description: $description, visible: $visible, locked: $locked, opacity: $opacity, order: $order, elements: $elements, createTime: $createTime, updateTime: $updateTime)';
+    return 'PracticeLayer(id: $id, name: $name, order: $order, isVisible: $isVisible, isLocked: $isLocked, elements: $elements, opacity: $opacity, backgroundImage: $backgroundImage)';
   }
 
   @override
@@ -363,21 +253,16 @@ class _$PracticeLayerImpl extends _PracticeLayer {
         (other.runtimeType == runtimeType &&
             other is _$PracticeLayerImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.type, type) || other.type == type) &&
-            (identical(other.imagePath, imagePath) ||
-                other.imagePath == imagePath) &&
             (identical(other.name, name) || other.name == name) &&
-            (identical(other.description, description) ||
-                other.description == description) &&
-            (identical(other.visible, visible) || other.visible == visible) &&
-            (identical(other.locked, locked) || other.locked == locked) &&
-            (identical(other.opacity, opacity) || other.opacity == opacity) &&
             (identical(other.order, order) || other.order == order) &&
+            (identical(other.isVisible, isVisible) ||
+                other.isVisible == isVisible) &&
+            (identical(other.isLocked, isLocked) ||
+                other.isLocked == isLocked) &&
             const DeepCollectionEquality().equals(other._elements, _elements) &&
-            (identical(other.createTime, createTime) ||
-                other.createTime == createTime) &&
-            (identical(other.updateTime, updateTime) ||
-                other.updateTime == updateTime));
+            (identical(other.opacity, opacity) || other.opacity == opacity) &&
+            (identical(other.backgroundImage, backgroundImage) ||
+                other.backgroundImage == backgroundImage));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -385,17 +270,13 @@ class _$PracticeLayerImpl extends _PracticeLayer {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      type,
-      imagePath,
       name,
-      description,
-      visible,
-      locked,
-      opacity,
       order,
+      isVisible,
+      isLocked,
       const DeepCollectionEquality().hash(_elements),
-      createTime,
-      updateTime);
+      opacity,
+      backgroundImage);
 
   /// Create a copy of PracticeLayer
   /// with the given fields replaced by the non-null parameter values.
@@ -413,72 +294,37 @@ class _$PracticeLayerImpl extends _PracticeLayer {
   }
 }
 
-abstract class _PracticeLayer extends PracticeLayer {
+abstract class _PracticeLayer implements PracticeLayer {
   const factory _PracticeLayer(
       {required final String id,
-      required final PracticeLayerType type,
-      required final String imagePath,
-      final String? name,
-      final String? description,
-      final bool visible,
-      final bool locked,
+      required final String name,
+      required final int order,
+      final bool isVisible,
+      final bool isLocked,
+      @PracticeElementConverter() final List<PracticeElement> elements,
       final double opacity,
-      final int order,
-      final List<PracticeElement> elements,
-      required final DateTime createTime,
-      required final DateTime updateTime}) = _$PracticeLayerImpl;
-  const _PracticeLayer._() : super._();
+      final String? backgroundImage}) = _$PracticeLayerImpl;
 
   factory _PracticeLayer.fromJson(Map<String, dynamic> json) =
       _$PracticeLayerImpl.fromJson;
 
-  /// 图层ID
   @override
   String get id;
-
-  /// 图层类型
   @override
-  PracticeLayerType get type;
-
-  /// 图片路径
-  @override
-  String get imagePath;
-
-  /// 图层名称
-  @override
-  String? get name;
-
-  /// 图层描述
-  @override
-  String? get description;
-
-  /// 图层可见性
-  @override
-  bool get visible;
-
-  /// 图层锁定状态
-  @override
-  bool get locked;
-
-  /// 图层不透明度
-  @override
-  double get opacity;
-
-  /// 图层顺序
+  String get name;
   @override
   int get order;
-
-  /// 图层元素列表
   @override
+  bool get isVisible;
+  @override
+  bool get isLocked;
+  @override
+  @PracticeElementConverter()
   List<PracticeElement> get elements;
-
-  /// 图层创建时间
   @override
-  DateTime get createTime;
-
-  /// 图层更新时间
+  double get opacity;
   @override
-  DateTime get updateTime;
+  String? get backgroundImage;
 
   /// Create a copy of PracticeLayer
   /// with the given fields replaced by the non-null parameter values.

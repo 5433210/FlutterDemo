@@ -9,7 +9,6 @@ import '../../providers/practice_detail_provider.dart';
 import '../../widgets/common/detail_toolbar.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/page_layout.dart';
-import 'components/practice_page_viewer.dart';
 
 class PracticeDetailPage extends ConsumerStatefulWidget {
   final String practiceId;
@@ -109,19 +108,19 @@ class _PracticeDetailPageState extends ConsumerState<PracticeDetailPage> {
       );
     }
 
-    return Column(
+    return const Column(
       children: [
-        // 页面选择器（如果有多页）
-        if (pages.length > 1) _buildPageSelector(practice),
+        // // 页面选择器（如果有多页）
+        // if (pages.length > 1) _buildPageSelector(practice),
 
-        // 页面内容查看器
-        Expanded(
-          child: PracticePageViewer(
-            page: pages[_currentPageIndex], // 当前页
-            readOnly: true,
-            onLayerToggle: _handleLayerToggle,
-          ),
-        ),
+        // // 页面内容查看器
+        // Expanded(
+        //   child: PracticePageViewer(
+        //     page: pages[_currentPageIndex], // 当前页
+        //     readOnly: true,
+        //     onLayerToggle: _handleLayerToggle,
+        //   ),
+        // ),
       ],
     );
   }

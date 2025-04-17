@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
 class PracticeToolPanel extends StatelessWidget {
-  final Function(String) onToolSelected;
+  final VoidCallback onAddTextElement;
+  final VoidCallback onAddImageElement;
+  final VoidCallback onAddCollectionElement;
+  final Function(String)? onToolSelected;
 
   const PracticeToolPanel({
     super.key,
-    required this.onToolSelected,
+    required this.onAddTextElement,
+    required this.onAddImageElement,
+    required this.onAddCollectionElement,
+    this.onToolSelected,
   });
 
   @override
@@ -23,19 +29,19 @@ class PracticeToolPanel extends StatelessWidget {
               context,
               icon: Icons.crop_landscape,
               label: '页面大小',
-              onPressed: () => onToolSelected('page_size'),
+              onPressed: () => onToolSelected?.call('page_size'),
             ),
             _buildToolButton(
               context,
               icon: Icons.space_bar,
               label: '页边距',
-              onPressed: () => onToolSelected('margins'),
+              onPressed: () => onToolSelected?.call('margins'),
             ),
             _buildToolButton(
               context,
               icon: Icons.grid_on,
               label: '背景',
-              onPressed: () => onToolSelected('background'),
+              onPressed: () => onToolSelected?.call('background'),
             ),
           ],
         ),
@@ -50,19 +56,19 @@ class PracticeToolPanel extends StatelessWidget {
               context,
               icon: Icons.font_download,
               label: '集字填充',
-              onPressed: () => onToolSelected('chars'),
+              onPressed: onAddCollectionElement,
             ),
             _buildToolButton(
               context,
               icon: Icons.text_fields,
               label: '文本',
-              onPressed: () => onToolSelected('text'),
+              onPressed: onAddTextElement,
             ),
             _buildToolButton(
               context,
               icon: Icons.image,
               label: '图片',
-              onPressed: () => onToolSelected('image'),
+              onPressed: onAddImageElement,
             ),
           ],
         ),
@@ -77,13 +83,13 @@ class PracticeToolPanel extends StatelessWidget {
               context,
               icon: Icons.grid_4x4,
               label: '参考线',
-              onPressed: () => onToolSelected('guides'),
+              onPressed: () => onToolSelected?.call('guides'),
             ),
             _buildToolButton(
               context,
               icon: Icons.straighten,
               label: '标尺',
-              onPressed: () => onToolSelected('ruler'),
+              onPressed: () => onToolSelected?.call('ruler'),
             ),
           ],
         ),
