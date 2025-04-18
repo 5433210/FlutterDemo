@@ -14,8 +14,7 @@ _$PracticeLayerImpl _$$PracticeLayerImplFromJson(Map<String, dynamic> json) =>
       isVisible: json['isVisible'] as bool? ?? true,
       isLocked: json['isLocked'] as bool? ?? false,
       elements: (json['elements'] as List<dynamic>?)
-              ?.map((e) => const PracticeElementConverter()
-                  .fromJson(e as Map<String, dynamic>))
+              ?.map((e) => PracticeElement.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const <PracticeElement>[],
       opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
@@ -29,9 +28,7 @@ Map<String, dynamic> _$$PracticeLayerImplToJson(_$PracticeLayerImpl instance) =>
       'order': instance.order,
       'isVisible': instance.isVisible,
       'isLocked': instance.isLocked,
-      'elements': instance.elements
-          .map(const PracticeElementConverter().toJson)
-          .toList(),
+      'elements': instance.elements,
       'opacity': instance.opacity,
       'backgroundImage': instance.backgroundImage,
     };

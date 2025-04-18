@@ -7,6 +7,32 @@ import 'practice_layer.dart';
 part 'practice_page.freezed.dart';
 part 'practice_page.g.dart';
 
+/// Converter for EdgeInsets to JSON and back
+class EdgeInsetsConverter
+    implements JsonConverter<EdgeInsets, Map<String, dynamic>> {
+  const EdgeInsetsConverter();
+
+  @override
+  EdgeInsets fromJson(Map<String, dynamic> json) {
+    return EdgeInsets.only(
+      left: (json['left'] as num?)?.toDouble() ?? 0.0,
+      top: (json['top'] as num?)?.toDouble() ?? 0.0,
+      right: (json['right'] as num?)?.toDouble() ?? 0.0,
+      bottom: (json['bottom'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson(EdgeInsets edgeInsets) {
+    return {
+      'left': edgeInsets.left,
+      'top': edgeInsets.top,
+      'right': edgeInsets.right,
+      'bottom': edgeInsets.bottom,
+    };
+  }
+}
+
 @freezed
 class PracticePage with _$PracticePage {
   const factory PracticePage({

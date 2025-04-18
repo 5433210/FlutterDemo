@@ -1,6 +1,193 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'practice_element_base.dart';
+
+part 'practice_element.freezed.dart';
+
+// Convert Alignment to string
+String _alignmentToString(Alignment alignment) {
+  if (alignment == Alignment.topLeft) return 'topLeft';
+  if (alignment == Alignment.topCenter) return 'topCenter';
+  if (alignment == Alignment.topRight) return 'topRight';
+  if (alignment == Alignment.centerLeft) return 'centerLeft';
+  if (alignment == Alignment.centerRight) return 'centerRight';
+  if (alignment == Alignment.bottomLeft) return 'bottomLeft';
+  if (alignment == Alignment.bottomCenter) return 'bottomCenter';
+  if (alignment == Alignment.bottomRight) return 'bottomRight';
+  return 'center';
+}
+
+// Convert BoxFit to string
+String _boxFitToString(BoxFit fit) {
+  switch (fit) {
+    case BoxFit.fill:
+      return 'fill';
+    case BoxFit.cover:
+      return 'cover';
+    case BoxFit.fitWidth:
+      return 'fitWidth';
+    case BoxFit.fitHeight:
+      return 'fitHeight';
+    case BoxFit.none:
+      return 'none';
+    case BoxFit.scaleDown:
+      return 'scaleDown';
+    default:
+      return 'contain';
+  }
+}
+
+// Convert EdgeInsets for crop to map
+Map<String, dynamic> _cropToMap(EdgeInsets crop) {
+  return {
+    'left': crop.left,
+    'top': crop.top,
+    'right': crop.right,
+    'bottom': crop.bottom,
+  };
+}
+
+// Default crop map
+Map<String, dynamic> _defaultCropMap() {
+  return {
+    'left': 0.0,
+    'top': 0.0,
+    'right': 0.0,
+    'bottom': 0.0,
+  };
+}
+
+// Default padding map
+Map<String, dynamic> _defaultPaddingMap() {
+  return {
+    'left': 8.0,
+    'top': 8.0,
+    'right': 8.0,
+    'bottom': 8.0,
+  };
+}
+
+// Convert EdgeInsets to map
+Map<String, dynamic> _paddingToMap(EdgeInsets padding) {
+  return {
+    'left': padding.left,
+    'top': padding.top,
+    'right': padding.right,
+    'bottom': padding.bottom,
+  };
+}
+
+// Parse Alignment from string
+Alignment _parseAlignment(String value) {
+  switch (value) {
+    case 'topLeft':
+      return Alignment.topLeft;
+    case 'topCenter':
+      return Alignment.topCenter;
+    case 'topRight':
+      return Alignment.topRight;
+    case 'centerLeft':
+      return Alignment.centerLeft;
+    case 'centerRight':
+      return Alignment.centerRight;
+    case 'bottomLeft':
+      return Alignment.bottomLeft;
+    case 'bottomCenter':
+      return Alignment.bottomCenter;
+    case 'bottomRight':
+      return Alignment.bottomRight;
+    default:
+      return Alignment.center;
+  }
+}
+
+// Parse BoxFit from string
+BoxFit _parseBoxFit(String value) {
+  switch (value) {
+    case 'fill':
+      return BoxFit.fill;
+    case 'cover':
+      return BoxFit.cover;
+    case 'fitWidth':
+      return BoxFit.fitWidth;
+    case 'fitHeight':
+      return BoxFit.fitHeight;
+    case 'none':
+      return BoxFit.none;
+    case 'scaleDown':
+      return BoxFit.scaleDown;
+    default:
+      return BoxFit.contain;
+  }
+}
+
+// Parse character images from list
+List<Map<String, dynamic>> _parseCharacterImages(List<dynamic> list) {
+  return list
+      .whereType<Map<String, dynamic>>()
+      .map((map) => Map<String, dynamic>.from(map))
+      .toList();
+}
+
+// Parse EdgeInsets for crop from map
+EdgeInsets _parseCrop(Map<String, dynamic> map) {
+  return EdgeInsets.only(
+    left: (map['left'] as num?)?.toDouble() ?? 0.0,
+    top: (map['top'] as num?)?.toDouble() ?? 0.0,
+    right: (map['right'] as num?)?.toDouble() ?? 0.0,
+    bottom: (map['bottom'] as num?)?.toDouble() ?? 0.0,
+  );
+}
+
+// Parse EdgeInsets from map
+EdgeInsets _parsePadding(Map<String, dynamic> map) {
+  return EdgeInsets.only(
+    left: (map['left'] as num?)?.toDouble() ?? 0.0,
+    top: (map['top'] as num?)?.toDouble() ?? 0.0,
+    right: (map['right'] as num?)?.toDouble() ?? 0.0,
+    bottom: (map['bottom'] as num?)?.toDouble() ?? 0.0,
+  );
+}
+
+/// Helper functions for parsing and serializing
+
+// Parse TextAlign from string
+TextAlign _parseTextAlign(String value) {
+  switch (value) {
+    case 'center':
+      return TextAlign.center;
+    case 'right':
+      return TextAlign.right;
+    case 'justify':
+      return TextAlign.justify;
+    case 'start':
+      return TextAlign.start;
+    case 'end':
+      return TextAlign.end;
+    default:
+      return TextAlign.left;
+  }
+}
+
+// Convert TextAlign to string
+String _textAlignToString(TextAlign align) {
+  switch (align) {
+    case TextAlign.center:
+      return 'center';
+    case TextAlign.right:
+      return 'right';
+    case TextAlign.justify:
+      return 'justify';
+    case TextAlign.start:
+      return 'start';
+    case TextAlign.end:
+      return 'end';
+    default:
+      return 'left';
+  }
+}
+
 /// Collection direction enum
 enum CollectionDirection {
   horizontal,
@@ -9,767 +196,445 @@ enum CollectionDirection {
   verticalReversed
 }
 
-/// 集字内容元素
-class CollectionElement extends PracticeElement {
-  String characters;
-  CollectionDirection direction;
-  CollectionDirection flowDirection;
-  double characterSpacing;
-  double lineSpacing;
-  EdgeInsets padding;
-  String fontColor;
-  String backgroundColor;
-  double characterSize;
-  String defaultImageType;
-  List<Map<String, dynamic>> characterImages;
-  Alignment alignment;
+/// 字帖编辑内容元素
+@Freezed(makeCollectionsUnmodifiable: false)
+class PracticeElement with _$PracticeElement {
+  /// 集字元素
+  const factory PracticeElement.collection({
+    // 基础属性
+    required String id,
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+    @Default(0.0) double rotation,
+    required String layerId,
+    @Default(false) bool isLocked,
+    @Default(1.0) double opacity,
 
-  CollectionElement({
-    required super.id,
-    required super.x,
-    required super.y,
-    required super.width,
-    required super.height,
-    super.rotation,
-    required super.layerId,
-    super.isLocked,
-    super.opacity,
-    this.characters = '',
-    this.direction = CollectionDirection.horizontal,
-    this.flowDirection = CollectionDirection.horizontal,
-    this.characterSpacing = 10.0,
-    this.lineSpacing = 10.0,
-    this.padding = const EdgeInsets.all(8.0),
-    this.fontColor = '#000000',
-    this.backgroundColor = '#FFFFFF',
-    this.characterSize = 50.0,
-    this.defaultImageType = 'standard',
-    this.characterImages = const [],
-    this.alignment = Alignment.center,
-  }) : super(type: 'collection');
+    // 集字特有属性
+    @Default('') String characters,
+    @Default(CollectionDirection.horizontal) CollectionDirection direction,
+    @Default(CollectionDirection.horizontal) CollectionDirection flowDirection,
+    @Default(10.0) double characterSpacing,
+    @Default(10.0) double lineSpacing,
+    @Default(EdgeInsets.all(8.0)) EdgeInsets padding,
+    @Default('#000000') String fontColor,
+    @Default('#FFFFFF') String backgroundColor,
+    @Default(50.0) double characterSize,
+    @Default('standard') String defaultImageType,
+    @Default([]) List<Map<String, dynamic>> characterImages,
+    @Default(Alignment.center) Alignment alignment,
+  }) = CollectionElement;
 
-  factory CollectionElement.fromMap(Map<String, dynamic> map) {
-    return CollectionElement(
-      id: map['id'] as String? ?? '',
-      x: (map['x'] as num?)?.toDouble() ?? 0.0,
-      y: (map['y'] as num?)?.toDouble() ?? 0.0,
-      width: (map['width'] as num?)?.toDouble() ?? 300.0,
-      height: (map['height'] as num?)?.toDouble() ?? 200.0,
-      rotation: (map['rotation'] as num?)?.toDouble() ?? 0.0,
-      layerId: map['layerId'] as String? ?? '',
-      isLocked: map['isLocked'] as bool? ?? false,
-      opacity: (map['opacity'] as num?)?.toDouble() ?? 1.0,
-      characters: map['characters'] as String? ?? '',
-      direction: CollectionDirectionExt.fromString(
-          map['direction'] as String? ?? 'horizontal'),
-      flowDirection: CollectionDirectionExt.fromString(
-          map['flowDirection'] as String? ?? 'horizontal'),
-      characterSpacing: (map['characterSpacing'] as num?)?.toDouble() ?? 10.0,
-      lineSpacing: (map['lineSpacing'] as num?)?.toDouble() ?? 10.0,
-      padding: _parsePadding(
-          map['padding'] as Map<String, dynamic>? ?? _defaultPaddingMap()),
-      fontColor: map['fontColor'] as String? ?? '#000000',
-      backgroundColor: map['backgroundColor'] as String? ?? '#FFFFFF',
-      characterSize: (map['characterSize'] as num?)?.toDouble() ?? 50.0,
-      defaultImageType: map['defaultImageType'] as String? ?? 'standard',
-      characterImages:
-          _parseCharacterImages(map['characterImages'] as List<dynamic>? ?? []),
-      alignment: _parseAlignment(map['alignment'] as String? ?? 'center'),
-    );
-  }
-
-  @override
-  CollectionElement copyWith({
-    String? id,
-    String? type,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? layerId,
-    bool? isLocked,
-    double? opacity,
-    String? characters,
-    CollectionDirection? direction,
-    CollectionDirection? flowDirection,
-    double? characterSpacing,
-    double? lineSpacing,
-    EdgeInsets? padding,
-    String? fontColor,
-    String? backgroundColor,
-    double? characterSize,
-    String? defaultImageType,
-    List<Map<String, dynamic>>? characterImages,
-    Alignment? alignment,
-  }) {
-    return CollectionElement(
-      id: id ?? this.id,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      rotation: rotation ?? this.rotation,
-      layerId: layerId ?? this.layerId,
-      isLocked: isLocked ?? this.isLocked,
-      opacity: opacity ?? this.opacity,
-      characters: characters ?? this.characters,
-      direction: direction ?? this.direction,
-      flowDirection: flowDirection ?? this.flowDirection,
-      characterSpacing: characterSpacing ?? this.characterSpacing,
-      lineSpacing: lineSpacing ?? this.lineSpacing,
-      padding: padding ?? this.padding,
-      fontColor: fontColor ?? this.fontColor,
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      characterSize: characterSize ?? this.characterSize,
-      defaultImageType: defaultImageType ?? this.defaultImageType,
-      characterImages: characterImages ?? this.characterImages,
-      alignment: alignment ?? this.alignment,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'type': type,
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-      'rotation': rotation,
-      'layerId': layerId,
-      'isLocked': isLocked,
-      'opacity': opacity,
-      'characters': characters,
-      'direction': direction.toShortString(),
-      'flowDirection': flowDirection.toShortString(),
-      'characterSpacing': characterSpacing,
-      'lineSpacing': lineSpacing,
-      'padding': _paddingToMap(padding),
-      'fontColor': fontColor,
-      'backgroundColor': backgroundColor,
-      'characterSize': characterSize,
-      'defaultImageType': defaultImageType,
-      'characterImages': characterImages,
-      'alignment': _alignmentToString(alignment),
-    };
-  }
-
-  static String _alignmentToString(Alignment alignment) {
-    if (alignment == Alignment.topLeft) return 'topLeft';
-    if (alignment == Alignment.topCenter) return 'topCenter';
-    if (alignment == Alignment.topRight) return 'topRight';
-    if (alignment == Alignment.centerLeft) return 'centerLeft';
-    if (alignment == Alignment.centerRight) return 'centerRight';
-    if (alignment == Alignment.bottomLeft) return 'bottomLeft';
-    if (alignment == Alignment.bottomCenter) return 'bottomCenter';
-    if (alignment == Alignment.bottomRight) return 'bottomRight';
-    return 'center';
-  }
-
-  static Map<String, dynamic> _defaultPaddingMap() {
-    return {
-      'left': 8.0,
-      'top': 8.0,
-      'right': 8.0,
-      'bottom': 8.0,
-    };
-  }
-
-  static Map<String, dynamic> _paddingToMap(EdgeInsets padding) {
-    return {
-      'left': padding.left,
-      'top': padding.top,
-      'right': padding.right,
-      'bottom': padding.bottom,
-    };
-  }
-
-  static Alignment _parseAlignment(String align) {
-    switch (align) {
-      case 'topLeft':
-        return Alignment.topLeft;
-      case 'topCenter':
-        return Alignment.topCenter;
-      case 'topRight':
-        return Alignment.topRight;
-      case 'centerLeft':
-        return Alignment.centerLeft;
-      case 'centerRight':
-        return Alignment.centerRight;
-      case 'bottomLeft':
-        return Alignment.bottomLeft;
-      case 'bottomCenter':
-        return Alignment.bottomCenter;
-      case 'bottomRight':
-        return Alignment.bottomRight;
-      default:
-        return Alignment.center;
-    }
-  }
-
-  static List<Map<String, dynamic>> _parseCharacterImages(List<dynamic> list) {
-    return list.map((item) => item as Map<String, dynamic>).toList();
-  }
-
-  static EdgeInsets _parsePadding(Map<String, dynamic> map) {
-    return EdgeInsets.only(
-      left: (map['left'] as num?)?.toDouble() ?? 8.0,
-      top: (map['top'] as num?)?.toDouble() ?? 8.0,
-      right: (map['right'] as num?)?.toDouble() ?? 8.0,
-      bottom: (map['bottom'] as num?)?.toDouble() ?? 8.0,
-    );
-  }
-}
-
-/// JSON converter for EdgeInsets
-class EdgeInsetsConverter
-    implements JsonConverter<EdgeInsets, Map<String, dynamic>> {
-  const EdgeInsetsConverter();
-
-  @override
-  EdgeInsets fromJson(Map<String, dynamic> json) {
-    return EdgeInsets.only(
-      left: (json['left'] as num?)?.toDouble() ?? 0.0,
-      top: (json['top'] as num?)?.toDouble() ?? 0.0,
-      right: (json['right'] as num?)?.toDouble() ?? 0.0,
-      bottom: (json['bottom'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toJson(EdgeInsets insets) {
-    return {
-      'left': insets.left,
-      'top': insets.top,
-      'right': insets.right,
-      'bottom': insets.bottom,
-    };
-  }
-}
-
-/// 组合内容元素
-class GroupElement extends PracticeElement {
-  List<PracticeElement> children;
-
-  GroupElement({
-    required super.id,
-    required super.x,
-    required super.y,
-    required super.width,
-    required super.height,
-    super.rotation,
-    required super.layerId,
-    super.isLocked,
-    super.opacity,
-    this.children = const [],
-  }) : super(type: 'group');
-
-  factory GroupElement.fromMap(Map<String, dynamic> map) {
-    final List<dynamic> childrenMaps = map['children'] as List<dynamic>? ?? [];
-    final List<PracticeElement> parsedChildren = childrenMaps.map((childMap) {
-      final childMapTyped = childMap as Map<String, dynamic>;
-      // 更新相对坐标
-      final relativeX = (childMapTyped['relativeX'] as num?)?.toDouble() ?? 0.0;
-      final relativeY = (childMapTyped['relativeY'] as num?)?.toDouble() ?? 0.0;
-      childMapTyped['x'] = relativeX;
-      childMapTyped['y'] = relativeY;
-      return PracticeElement.fromMap(childMapTyped);
-    }).toList();
-
-    return GroupElement(
-      id: map['id'] as String? ?? '',
-      x: (map['x'] as num?)?.toDouble() ?? 0.0,
-      y: (map['y'] as num?)?.toDouble() ?? 0.0,
-      width: (map['width'] as num?)?.toDouble() ?? 100.0,
-      height: (map['height'] as num?)?.toDouble() ?? 100.0,
-      rotation: (map['rotation'] as num?)?.toDouble() ?? 0.0,
-      layerId: map['layerId'] as String? ?? '',
-      isLocked: map['isLocked'] as bool? ?? false,
-      opacity: (map['opacity'] as num?)?.toDouble() ?? 1.0,
-      children: parsedChildren,
-    );
-  }
-
-  @override
-  GroupElement copyWith({
-    String? id,
-    String? type,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? layerId,
-    bool? isLocked,
-    double? opacity,
-    List<PracticeElement>? children,
-  }) {
-    return GroupElement(
-      id: id ?? this.id,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      rotation: rotation ?? this.rotation,
-      layerId: layerId ?? this.layerId,
-      isLocked: isLocked ?? this.isLocked,
-      opacity: opacity ?? this.opacity,
-      children: children ?? this.children,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'type': type,
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-      'rotation': rotation,
-      'layerId': layerId,
-      'isLocked': isLocked,
-      'opacity': opacity,
-      'children': children.map((child) {
-        // 转换为相对坐标
-        final childMap = child.toMap();
-        childMap['relativeX'] = child.x;
-        childMap['relativeY'] = child.y;
-        return childMap;
-      }).toList(),
-    };
-  }
-}
-
-/// 图片内容元素
-class ImageElement extends PracticeElement {
-  String imageUrl;
-  EdgeInsets crop;
-  bool flipHorizontal;
-  bool flipVertical;
-  BoxFit fit;
-
-  ImageElement({
-    required super.id,
-    required super.x,
-    required super.y,
-    required super.width,
-    required super.height,
-    super.rotation,
-    required super.layerId,
-    super.isLocked,
-    super.opacity,
-    this.imageUrl = '',
-    this.crop = EdgeInsets.zero,
-    this.flipHorizontal = false,
-    this.flipVertical = false,
-    this.fit = BoxFit.contain,
-  }) : super(type: 'image');
-
-  factory ImageElement.fromMap(Map<String, dynamic> map) {
-    return ImageElement(
-      id: map['id'] as String? ?? '',
-      x: (map['x'] as num?)?.toDouble() ?? 0.0,
-      y: (map['y'] as num?)?.toDouble() ?? 0.0,
-      width: (map['width'] as num?)?.toDouble() ?? 100.0,
-      height: (map['height'] as num?)?.toDouble() ?? 100.0,
-      rotation: (map['rotation'] as num?)?.toDouble() ?? 0.0,
-      layerId: map['layerId'] as String? ?? '',
-      isLocked: map['isLocked'] as bool? ?? false,
-      opacity: (map['opacity'] as num?)?.toDouble() ?? 1.0,
-      imageUrl: map['imageUrl'] as String? ?? '',
-      crop:
-          _parseCrop(map['crop'] as Map<String, dynamic>? ?? _defaultCropMap()),
-      flipHorizontal: map['flipHorizontal'] as bool? ?? false,
-      flipVertical: map['flipVertical'] as bool? ?? false,
-      fit: _parseBoxFit(map['fit'] as String? ?? 'contain'),
-    );
-  }
-
-  @override
-  ImageElement copyWith({
-    String? id,
-    String? type,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? layerId,
-    bool? isLocked,
-    double? opacity,
-    String? imageUrl,
-    EdgeInsets? crop,
-    bool? flipHorizontal,
-    bool? flipVertical,
-    BoxFit? fit,
-  }) {
-    return ImageElement(
-      id: id ?? this.id,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      rotation: rotation ?? this.rotation,
-      layerId: layerId ?? this.layerId,
-      isLocked: isLocked ?? this.isLocked,
-      opacity: opacity ?? this.opacity,
-      imageUrl: imageUrl ?? this.imageUrl,
-      crop: crop ?? this.crop,
-      flipHorizontal: flipHorizontal ?? this.flipHorizontal,
-      flipVertical: flipVertical ?? this.flipVertical,
-      fit: fit ?? this.fit,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'type': type,
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-      'rotation': rotation,
-      'layerId': layerId,
-      'isLocked': isLocked,
-      'opacity': opacity,
-      'imageUrl': imageUrl,
-      'crop': _cropToMap(crop),
-      'flipHorizontal': flipHorizontal,
-      'flipVertical': flipVertical,
-      'fit': _boxFitToString(fit),
-    };
-  }
-
-  static String _boxFitToString(BoxFit fit) {
-    switch (fit) {
-      case BoxFit.fill:
-        return 'fill';
-      case BoxFit.cover:
-        return 'cover';
-      case BoxFit.fitWidth:
-        return 'fitWidth';
-      case BoxFit.fitHeight:
-        return 'fitHeight';
-      case BoxFit.none:
-        return 'none';
-      case BoxFit.scaleDown:
-        return 'scaleDown';
-      default:
-        return 'contain';
-    }
-  }
-
-  static Map<String, dynamic> _cropToMap(EdgeInsets crop) {
-    return {
-      'left': crop.left,
-      'top': crop.top,
-      'right': crop.right,
-      'bottom': crop.bottom,
-    };
-  }
-
-  static Map<String, dynamic> _defaultCropMap() {
-    return {
-      'left': 0.0,
-      'top': 0.0,
-      'right': 0.0,
-      'bottom': 0.0,
-    };
-  }
-
-  static BoxFit _parseBoxFit(String fit) {
-    switch (fit) {
-      case 'fill':
-        return BoxFit.fill;
-      case 'cover':
-        return BoxFit.cover;
-      case 'fitWidth':
-        return BoxFit.fitWidth;
-      case 'fitHeight':
-        return BoxFit.fitHeight;
-      case 'none':
-        return BoxFit.none;
-      case BoxFit.scaleDown:
-        return BoxFit.scaleDown;
-      default:
-        return BoxFit.contain;
-    }
-  }
-
-  static EdgeInsets _parseCrop(Map<String, dynamic> map) {
-    return EdgeInsets.only(
-      left: (map['left'] as num?)?.toDouble() ?? 0.0,
-      top: (map['top'] as num?)?.toDouble() ?? 0.0,
-      right: (map['right'] as num?)?.toDouble() ?? 0.0,
-      bottom: (map['bottom'] as num?)?.toDouble() ?? 0.0,
-    );
-  }
-}
-
-/// 字帖编辑内容元素基类
-abstract class PracticeElement {
-  String id;
-  String type;
-  double x;
-  double y;
-  double width;
-  double height;
-  double rotation;
-  String layerId;
-  bool isLocked;
-  double opacity;
-
-  PracticeElement({
-    required this.id,
-    required this.type,
-    required this.x,
-    required this.y,
-    required this.width,
-    required this.height,
-    this.rotation = 0.0,
-    required this.layerId,
-    this.isLocked = false,
-    this.opacity = 1.0,
-  });
-
-  // 复制并更新属性
-  PracticeElement copyWith({
-    String? id,
-    String? type,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? layerId,
-    bool? isLocked,
-    double? opacity,
-  });
-
-  // 转换为Map，用于序列化
-  Map<String, dynamic> toMap();
-
-  // 从Map创建实例
-  static PracticeElement fromMap(Map<String, dynamic> map) {
-    final type = map['type'] as String? ?? '';
+  /// 从JSON创建实例
+  factory PracticeElement.fromJson(Map<String, dynamic> json) {
+    final type = json['type'] as String? ?? '';
 
     switch (type) {
       case 'text':
-        return TextElement.fromMap(map);
+        return PracticeElement.text(
+          id: json['id'] as String? ?? '',
+          x: (json['x'] as num?)?.toDouble() ?? 0.0,
+          y: (json['y'] as num?)?.toDouble() ?? 0.0,
+          width: (json['width'] as num?)?.toDouble() ?? 100.0,
+          height: (json['height'] as num?)?.toDouble() ?? 100.0,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          layerId: json['layerId'] as String? ?? '',
+          isLocked: json['isLocked'] as bool? ?? false,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          text: json['text'] as String? ?? '',
+          fontSize: (json['fontSize'] as num?)?.toDouble() ?? 14.0,
+          fontFamily: json['fontFamily'] as String? ?? 'Arial',
+          fontColor: json['fontColor'] as String? ?? '#000000',
+          backgroundColor: json['backgroundColor'] as String? ?? '#FFFFFF',
+          textAlign: _parseTextAlign(json['textAlign'] as String? ?? 'left'),
+          lineSpacing: (json['lineSpacing'] as num?)?.toDouble() ?? 1.0,
+          letterSpacing: (json['letterSpacing'] as num?)?.toDouble() ?? 0.0,
+          padding: _parsePadding(
+              json['padding'] as Map<String, dynamic>? ?? _defaultPaddingMap()),
+        );
       case 'image':
-        return ImageElement.fromMap(map);
+        return PracticeElement.image(
+          id: json['id'] as String? ?? '',
+          x: (json['x'] as num?)?.toDouble() ?? 0.0,
+          y: (json['y'] as num?)?.toDouble() ?? 0.0,
+          width: (json['width'] as num?)?.toDouble() ?? 100.0,
+          height: (json['height'] as num?)?.toDouble() ?? 100.0,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          layerId: json['layerId'] as String? ?? '',
+          isLocked: json['isLocked'] as bool? ?? false,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          imageUrl: json['imageUrl'] as String? ?? '',
+          crop: _parseCrop(
+              json['crop'] as Map<String, dynamic>? ?? _defaultCropMap()),
+          flipHorizontal: json['flipHorizontal'] as bool? ?? false,
+          flipVertical: json['flipVertical'] as bool? ?? false,
+          fit: _parseBoxFit(json['fit'] as String? ?? 'contain'),
+        );
       case 'collection':
-        return CollectionElement.fromMap(map);
+        return PracticeElement.collection(
+          id: json['id'] as String? ?? '',
+          x: (json['x'] as num?)?.toDouble() ?? 0.0,
+          y: (json['y'] as num?)?.toDouble() ?? 0.0,
+          width: (json['width'] as num?)?.toDouble() ?? 300.0,
+          height: (json['height'] as num?)?.toDouble() ?? 200.0,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          layerId: json['layerId'] as String? ?? '',
+          isLocked: json['isLocked'] as bool? ?? false,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          characters: json['characters'] as String? ?? '',
+          direction: CollectionDirectionExt.fromString(
+              json['direction'] as String? ?? 'horizontal'),
+          flowDirection: CollectionDirectionExt.fromString(
+              json['flowDirection'] as String? ?? 'horizontal'),
+          characterSpacing:
+              (json['characterSpacing'] as num?)?.toDouble() ?? 10.0,
+          lineSpacing: (json['lineSpacing'] as num?)?.toDouble() ?? 10.0,
+          padding: _parsePadding(
+              json['padding'] as Map<String, dynamic>? ?? _defaultPaddingMap()),
+          fontColor: json['fontColor'] as String? ?? '#000000',
+          backgroundColor: json['backgroundColor'] as String? ?? '#FFFFFF',
+          characterSize: (json['characterSize'] as num?)?.toDouble() ?? 50.0,
+          defaultImageType: json['defaultImageType'] as String? ?? 'standard',
+          characterImages: _parseCharacterImages(
+              json['characterImages'] as List<dynamic>? ?? []),
+          alignment: _parseAlignment(json['alignment'] as String? ?? 'center'),
+        );
       case 'group':
-        return GroupElement.fromMap(map);
+        final List<dynamic> childrenJson =
+            json['children'] as List<dynamic>? ?? [];
+        final List<PracticeElement> parsedChildren = [];
+
+        for (final childJson in childrenJson) {
+          if (childJson is Map<String, dynamic>) {
+            try {
+              parsedChildren.add(PracticeElement.fromJson(childJson));
+            } catch (e) {
+              // Skip invalid children
+            }
+          }
+        }
+
+        return PracticeElement.group(
+          id: json['id'] as String? ?? '',
+          x: (json['x'] as num?)?.toDouble() ?? 0.0,
+          y: (json['y'] as num?)?.toDouble() ?? 0.0,
+          width: (json['width'] as num?)?.toDouble() ?? 100.0,
+          height: (json['height'] as num?)?.toDouble() ?? 100.0,
+          rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
+          layerId: json['layerId'] as String? ?? '',
+          isLocked: json['isLocked'] as bool? ?? false,
+          opacity: (json['opacity'] as num?)?.toDouble() ?? 1.0,
+          children: parsedChildren,
+        );
       default:
         throw Exception('Unknown element type: $type');
     }
   }
-}
 
-/// JSON converter for PracticeElement
-class PracticeElementConverter
-    implements JsonConverter<PracticeElement, Map<String, dynamic>> {
-  const PracticeElementConverter();
+  /// 组合元素
+  const factory PracticeElement.group({
+    // 基础属性
+    required String id,
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+    @Default(0.0) double rotation,
+    required String layerId,
+    @Default(false) bool isLocked,
+    @Default(1.0) double opacity,
 
-  @override
-  PracticeElement fromJson(Map<String, dynamic> json) {
-    return PracticeElement.fromMap(json);
-  }
+    // 组合特有属性
+    @Default([]) List<PracticeElement> children,
+  }) = GroupElement;
 
-  @override
-  Map<String, dynamic> toJson(PracticeElement element) {
-    return element.toMap();
-  }
-}
+  /// 图片元素
+  const factory PracticeElement.image({
+    // 基础属性
+    required String id,
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+    @Default(0.0) double rotation,
+    required String layerId,
+    @Default(false) bool isLocked,
+    @Default(1.0) double opacity,
 
-/// 文本内容元素
-class TextElement extends PracticeElement {
-  String text;
-  double fontSize;
-  String fontFamily;
-  String fontColor;
-  String backgroundColor;
-  TextAlign textAlign;
-  double lineSpacing;
-  double letterSpacing;
-  EdgeInsets padding;
+    // 图片特有属性
+    @Default('') String imageUrl,
+    @Default(EdgeInsets.zero) EdgeInsets crop,
+    @Default(false) bool flipHorizontal,
+    @Default(false) bool flipVertical,
+    @Default(BoxFit.contain) BoxFit fit,
+  }) = ImageElement;
 
-  TextElement({
-    required super.id,
-    required super.x,
-    required super.y,
-    required super.width,
-    required super.height,
-    super.rotation,
-    required super.layerId,
-    super.isLocked,
-    super.opacity,
-    this.text = '',
-    this.fontSize = 14.0,
-    this.fontFamily = 'Arial',
-    this.fontColor = '#000000',
-    this.backgroundColor = '#FFFFFF',
-    this.textAlign = TextAlign.left,
-    this.lineSpacing = 1.0,
-    this.letterSpacing = 0.0,
-    this.padding = const EdgeInsets.all(8.0),
-  }) : super(type: 'text');
+  /// 文本元素
+  const factory PracticeElement.text({
+    // 基础属性
+    required String id,
+    required double x,
+    required double y,
+    required double width,
+    required double height,
+    @Default(0.0) double rotation,
+    required String layerId,
+    @Default(false) bool isLocked,
+    @Default(1.0) double opacity,
 
-  factory TextElement.fromMap(Map<String, dynamic> map) {
-    return TextElement(
-      id: map['id'] as String? ?? '',
-      x: (map['x'] as num?)?.toDouble() ?? 0.0,
-      y: (map['y'] as num?)?.toDouble() ?? 0.0,
-      width: (map['width'] as num?)?.toDouble() ?? 100.0,
-      height: (map['height'] as num?)?.toDouble() ?? 50.0,
-      rotation: (map['rotation'] as num?)?.toDouble() ?? 0.0,
-      layerId: map['layerId'] as String? ?? '',
-      isLocked: map['isLocked'] as bool? ?? false,
-      opacity: (map['opacity'] as num?)?.toDouble() ?? 1.0,
-      text: map['text'] as String? ?? '',
-      fontSize: (map['fontSize'] as num?)?.toDouble() ?? 14.0,
-      fontFamily: map['fontFamily'] as String? ?? 'Arial',
-      fontColor: map['fontColor'] as String? ?? '#000000',
-      backgroundColor: map['backgroundColor'] as String? ?? '#FFFFFF',
-      textAlign: _parseTextAlign(map['textAlign'] as String? ?? 'left'),
-      lineSpacing: (map['lineSpacing'] as num?)?.toDouble() ?? 1.0,
-      letterSpacing: (map['letterSpacing'] as num?)?.toDouble() ?? 0.0,
-      padding: _parsePadding(
-          map['padding'] as Map<String, dynamic>? ?? _defaultPaddingMap()),
+    // 文本特有属性
+    @Default('') String text,
+    @Default(14.0) double fontSize,
+    @Default('Arial') String fontFamily,
+    @Default('#000000') String fontColor,
+    @Default('#FFFFFF') String backgroundColor,
+    @Default(TextAlign.left) TextAlign textAlign,
+    @Default(1.0) double lineSpacing,
+    @Default(0.0) double letterSpacing,
+    @Default(EdgeInsets.all(8.0)) EdgeInsets padding,
+  }) = TextElement;
+
+  /// 私有构造函数，用于添加扩展方法
+  const PracticeElement._();
+
+  /// 获取元素基础属性
+  PracticeElementBase get base => PracticeElementBase(
+        id: id,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        rotation: rotation,
+        layerId: layerId,
+        isLocked: isLocked,
+        opacity: opacity,
+      );
+
+  /// 获取元素的中心点
+  Offset get center => base.center;
+
+  /// 获取元素的边界矩形
+  Rect get rect => base.rect;
+
+  /// 获取元素的变换矩阵
+  Matrix4 get transform => base.transform;
+
+  /// 获取元素类型
+  String get type => when(
+        text: (_,
+                __,
+                ___,
+                ____,
+                _____,
+                ______,
+                _______,
+                ________,
+                _________,
+                __________,
+                ___________,
+                ____________,
+                _____________,
+                ______________,
+                _______________,
+                ________________,
+                _________________,
+                __________________) =>
+            'text',
+        image: (_,
+                __,
+                ___,
+                ____,
+                _____,
+                ______,
+                _______,
+                ________,
+                _________,
+                __________,
+                ___________,
+                ____________,
+                _____________,
+                ______________) =>
+            'image',
+        collection: (_,
+                __,
+                ___,
+                ____,
+                _____,
+                ______,
+                _______,
+                ________,
+                _________,
+                __________,
+                ___________,
+                ____________,
+                _____________,
+                ______________,
+                _______________,
+                ________________,
+                _________________,
+                __________________,
+                ___________________,
+                ____________________,
+                _____________________) =>
+            'collection',
+        group: (_, __, ___, ____, _____, ______, _______, ________, _________,
+                __________) =>
+            'group',
+      );
+
+  /// 检查点是否在元素内
+  bool containsPoint(Offset point) => base.containsPoint(point);
+
+  /// 转换为JSON
+  Map<String, dynamic> toJson() {
+    return when(
+      text: (id,
+          x,
+          y,
+          width,
+          height,
+          rotation,
+          layerId,
+          isLocked,
+          opacity,
+          text,
+          fontSize,
+          fontFamily,
+          fontColor,
+          backgroundColor,
+          textAlign,
+          lineSpacing,
+          letterSpacing,
+          padding) {
+        return {
+          'id': id,
+          'type': 'text',
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+          'rotation': rotation,
+          'layerId': layerId,
+          'isLocked': isLocked,
+          'opacity': opacity,
+          'text': text,
+          'fontSize': fontSize,
+          'fontFamily': fontFamily,
+          'fontColor': fontColor,
+          'backgroundColor': backgroundColor,
+          'textAlign': _textAlignToString(textAlign),
+          'lineSpacing': lineSpacing,
+          'letterSpacing': letterSpacing,
+          'padding': _paddingToMap(padding),
+        };
+      },
+      image: (id, x, y, width, height, rotation, layerId, isLocked, opacity,
+          imageUrl, crop, flipHorizontal, flipVertical, fit) {
+        return {
+          'id': id,
+          'type': 'image',
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+          'rotation': rotation,
+          'layerId': layerId,
+          'isLocked': isLocked,
+          'opacity': opacity,
+          'imageUrl': imageUrl,
+          'crop': _cropToMap(crop),
+          'flipHorizontal': flipHorizontal,
+          'flipVertical': flipVertical,
+          'fit': _boxFitToString(fit),
+        };
+      },
+      collection: (
+        id,
+        x,
+        y,
+        width,
+        height,
+        rotation,
+        layerId,
+        isLocked,
+        opacity,
+        characters,
+        direction,
+        flowDirection,
+        characterSpacing,
+        lineSpacing,
+        padding,
+        fontColor,
+        backgroundColor,
+        characterSize,
+        defaultImageType,
+        characterImages,
+        alignment,
+      ) {
+        return {
+          'id': id,
+          'type': 'collection',
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+          'rotation': rotation,
+          'layerId': layerId,
+          'isLocked': isLocked,
+          'opacity': opacity,
+          'characters': characters,
+          'direction': direction.toShortString(),
+          'flowDirection': flowDirection.toShortString(),
+          'characterSpacing': characterSpacing,
+          'lineSpacing': lineSpacing,
+          'padding': _paddingToMap(padding),
+          'fontColor': fontColor,
+          'backgroundColor': backgroundColor,
+          'characterSize': characterSize,
+          'defaultImageType': defaultImageType,
+          'characterImages': characterImages,
+          'alignment': _alignmentToString(alignment),
+        };
+      },
+      group: (id, x, y, width, height, rotation, layerId, isLocked, opacity,
+          children) {
+        return {
+          'id': id,
+          'type': 'group',
+          'x': x,
+          'y': y,
+          'width': width,
+          'height': height,
+          'rotation': rotation,
+          'layerId': layerId,
+          'isLocked': isLocked,
+          'opacity': opacity,
+          'children': children.map((child) {
+            // 转换为相对坐标
+            final childMap = child.toMap();
+            childMap['relativeX'] = child.x;
+            childMap['relativeY'] = child.y;
+            return childMap;
+          }).toList(),
+        };
+      },
     );
   }
 
-  @override
-  TextElement copyWith({
-    String? id,
-    String? type,
-    double? x,
-    double? y,
-    double? width,
-    double? height,
-    double? rotation,
-    String? layerId,
-    bool? isLocked,
-    double? opacity,
-    String? text,
-    double? fontSize,
-    String? fontFamily,
-    String? fontColor,
-    String? backgroundColor,
-    TextAlign? textAlign,
-    double? lineSpacing,
-    double? letterSpacing,
-    EdgeInsets? padding,
-  }) {
-    return TextElement(
-      id: id ?? this.id,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      rotation: rotation ?? this.rotation,
-      layerId: layerId ?? this.layerId,
-      isLocked: isLocked ?? this.isLocked,
-      opacity: opacity ?? this.opacity,
-      text: text ?? this.text,
-      fontSize: fontSize ?? this.fontSize,
-      fontFamily: fontFamily ?? this.fontFamily,
-      fontColor: fontColor ?? this.fontColor,
-      backgroundColor: backgroundColor ?? this.backgroundColor,
-      textAlign: textAlign ?? this.textAlign,
-      lineSpacing: lineSpacing ?? this.lineSpacing,
-      letterSpacing: letterSpacing ?? this.letterSpacing,
-      padding: padding ?? this.padding,
-    );
-  }
-
-  @override
+  /// 转换为Map
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'type': type,
-      'x': x,
-      'y': y,
-      'width': width,
-      'height': height,
-      'rotation': rotation,
-      'layerId': layerId,
-      'isLocked': isLocked,
-      'opacity': opacity,
-      'text': text,
-      'fontSize': fontSize,
-      'fontFamily': fontFamily,
-      'fontColor': fontColor,
-      'backgroundColor': backgroundColor,
-      'textAlign': _textAlignToString(textAlign),
-      'lineSpacing': lineSpacing,
-      'letterSpacing': letterSpacing,
-      'padding': _paddingToMap(padding),
-    };
+    return toJson();
   }
 
-  static Map<String, dynamic> _defaultPaddingMap() {
-    return {
-      'left': 8.0,
-      'top': 8.0,
-      'right': 8.0,
-      'bottom': 8.0,
-    };
-  }
-
-  static Map<String, dynamic> _paddingToMap(EdgeInsets padding) {
-    return {
-      'left': padding.left,
-      'top': padding.top,
-      'right': padding.right,
-      'bottom': padding.bottom,
-    };
-  }
-
-  static EdgeInsets _parsePadding(Map<String, dynamic> map) {
-    return EdgeInsets.only(
-      left: (map['left'] as num?)?.toDouble() ?? 8.0,
-      top: (map['top'] as num?)?.toDouble() ?? 8.0,
-      right: (map['right'] as num?)?.toDouble() ?? 8.0,
-      bottom: (map['bottom'] as num?)?.toDouble() ?? 8.0,
-    );
-  }
-
-  static TextAlign _parseTextAlign(String align) {
-    switch (align) {
-      case 'center':
-        return TextAlign.center;
-      case 'right':
-        return TextAlign.right;
-      case 'justify':
-        return TextAlign.justify;
-      default:
-        return TextAlign.left;
-    }
-  }
-
-  static String _textAlignToString(TextAlign align) {
-    switch (align) {
-      case TextAlign.center:
-        return 'center';
-      case TextAlign.right:
-        return 'right';
-      case TextAlign.justify:
-        return 'justify';
-      default:
-        return 'left';
-    }
+  /// 从Map创建实例 (向后兼容)
+  static PracticeElement fromMap(Map<String, dynamic> map) {
+    return PracticeElement.fromJson(map);
   }
 }
 
+/// Extension for CollectionDirection
 extension CollectionDirectionExt on CollectionDirection {
   String toShortString() {
     switch (this) {
@@ -784,8 +649,10 @@ extension CollectionDirectionExt on CollectionDirection {
     }
   }
 
-  static CollectionDirection fromString(String dir) {
-    switch (dir) {
+  static CollectionDirection fromString(String value) {
+    switch (value) {
+      case 'horizontal':
+        return CollectionDirection.horizontal;
       case 'vertical':
         return CollectionDirection.vertical;
       case 'horizontalReversed':

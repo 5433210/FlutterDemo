@@ -12,9 +12,7 @@ class PracticeLayer with _$PracticeLayer {
     required int order,
     @Default(true) bool isVisible,
     @Default(false) bool isLocked,
-    @Default(<PracticeElement>[])
-    @PracticeElementConverter()
-    List<PracticeElement> elements,
+    @Default(<PracticeElement>[]) List<PracticeElement> elements,
     @Default(1.0) double opacity,
     String? backgroundImage,
   }) = _PracticeLayer;

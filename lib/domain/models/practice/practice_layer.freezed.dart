@@ -25,7 +25,6 @@ mixin _$PracticeLayer {
   int get order => throw _privateConstructorUsedError;
   bool get isVisible => throw _privateConstructorUsedError;
   bool get isLocked => throw _privateConstructorUsedError;
-  @PracticeElementConverter()
   List<PracticeElement> get elements => throw _privateConstructorUsedError;
   double get opacity => throw _privateConstructorUsedError;
   String? get backgroundImage => throw _privateConstructorUsedError;
@@ -52,7 +51,7 @@ abstract class $PracticeLayerCopyWith<$Res> {
       int order,
       bool isVisible,
       bool isLocked,
-      @PracticeElementConverter() List<PracticeElement> elements,
+      List<PracticeElement> elements,
       double opacity,
       String? backgroundImage});
 }
@@ -132,7 +131,7 @@ abstract class _$$PracticeLayerImplCopyWith<$Res>
       int order,
       bool isVisible,
       bool isLocked,
-      @PracticeElementConverter() List<PracticeElement> elements,
+      List<PracticeElement> elements,
       double opacity,
       String? backgroundImage});
 }
@@ -205,7 +204,6 @@ class _$PracticeLayerImpl implements _PracticeLayer {
       required this.order,
       this.isVisible = true,
       this.isLocked = false,
-      @PracticeElementConverter()
       final List<PracticeElement> elements = const <PracticeElement>[],
       this.opacity = 1.0,
       this.backgroundImage})
@@ -229,7 +227,6 @@ class _$PracticeLayerImpl implements _PracticeLayer {
   final List<PracticeElement> _elements;
   @override
   @JsonKey()
-  @PracticeElementConverter()
   List<PracticeElement> get elements {
     if (_elements is EqualUnmodifiableListView) return _elements;
     // ignore: implicit_dynamic_type
@@ -301,7 +298,7 @@ abstract class _PracticeLayer implements PracticeLayer {
       required final int order,
       final bool isVisible,
       final bool isLocked,
-      @PracticeElementConverter() final List<PracticeElement> elements,
+      final List<PracticeElement> elements,
       final double opacity,
       final String? backgroundImage}) = _$PracticeLayerImpl;
 
@@ -319,7 +316,6 @@ abstract class _PracticeLayer implements PracticeLayer {
   @override
   bool get isLocked;
   @override
-  @PracticeElementConverter()
   List<PracticeElement> get elements;
   @override
   double get opacity;
