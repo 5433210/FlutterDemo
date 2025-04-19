@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
 import 'practice_property_panel_collection.dart';
+import 'practice_property_panel_group.dart';
 import 'practice_property_panel_image.dart';
 import 'practice_property_panel_layer.dart';
+import 'practice_property_panel_multi.dart';
 import 'practice_property_panel_page.dart';
 import 'practice_property_panel_text.dart';
 
@@ -293,7 +295,7 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Map<String, dynamic> element,
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
   }) {
-    return _GroupPropertyPanel(
+    return GroupPropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
@@ -334,7 +336,7 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required List<String> selectedIds,
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
   }) {
-    return _MultiSelectionPropertyPanel(
+    return MultiSelectionPropertyPanel(
       controller: controller,
       selectedIds: selectedIds,
       onElementPropertiesChanged: onElementPropertiesChanged,
@@ -365,41 +367,5 @@ abstract class PracticePropertyPanel extends StatelessWidget {
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
     );
-  }
-}
-
-class _GroupPropertyPanel extends PracticePropertyPanel {
-  final Map<String, dynamic> element;
-
-  final Function(Map<String, dynamic>) onElementPropertiesChanged;
-  // 前向声明，实际实现在 practice_property_panel_group.dart
-  const _GroupPropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.element,
-    required this.onElementPropertiesChanged,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_group.dart 中');
-  }
-}
-
-class _MultiSelectionPropertyPanel extends PracticePropertyPanel {
-  final List<String> selectedIds;
-
-  final Function(Map<String, dynamic>) onElementPropertiesChanged;
-  // 前向声明，实际实现在 practice_property_panel_multi.dart
-  const _MultiSelectionPropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.selectedIds,
-    required this.onElementPropertiesChanged,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_multi.dart 中');
   }
 }

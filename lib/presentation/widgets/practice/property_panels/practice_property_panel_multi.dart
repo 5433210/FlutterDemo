@@ -182,10 +182,11 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
     // 获取选中元素
     final elements = <Map<String, dynamic>>[];
     for (final id in selectedIds) {
-      final element = controller.state.getElementById(id);
-      if (element != null) {
-        elements.add(element);
-      }
+      final element = controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      elements.add(element);
     }
 
     if (elements.length <= 1) return;
@@ -197,7 +198,7 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
       case 'left':
         // 左对齐，使用最小的 x 值
         alignValue = elements
-            .map((e) => e['x'] as double)
+            .map((e) => (e['x'] as num).toDouble())
             .reduce((a, b) => a < b ? a : b);
         for (final element in elements) {
           element['x'] = alignValue;
@@ -206,26 +207,29 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
       case 'center':
         // 水平居中，使用平均中心点
         final centerX = elements
-                .map((e) => (e['x'] as double) + (e['width'] as double) / 2)
+                .map((e) =>
+                    (e['x'] as num).toDouble() +
+                    (e['width'] as num).toDouble() / 2)
                 .reduce((a, b) => a + b) /
             elements.length;
         for (final element in elements) {
-          element['x'] = centerX - (element['width'] as double) / 2;
+          element['x'] = centerX - (element['width'] as num).toDouble() / 2;
         }
         break;
       case 'right':
         // 右对齐，使用最大的右边界
         alignValue = elements
-            .map((e) => (e['x'] as double) + (e['width'] as double))
+            .map((e) =>
+                (e['x'] as num).toDouble() + (e['width'] as num).toDouble())
             .reduce((a, b) => a > b ? a : b);
         for (final element in elements) {
-          element['x'] = alignValue - (element['width'] as double);
+          element['x'] = alignValue - (element['width'] as num).toDouble();
         }
         break;
       case 'top':
         // 顶对齐，使用最小的 y 值
         alignValue = elements
-            .map((e) => e['y'] as double)
+            .map((e) => (e['y'] as num).toDouble())
             .reduce((a, b) => a < b ? a : b);
         for (final element in elements) {
           element['y'] = alignValue;
@@ -234,20 +238,23 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
       case 'middle':
         // 垂直居中，使用平均中心点
         final centerY = elements
-                .map((e) => (e['y'] as double) + (e['height'] as double) / 2)
+                .map((e) =>
+                    (e['y'] as num).toDouble() +
+                    (e['height'] as num).toDouble() / 2)
                 .reduce((a, b) => a + b) /
             elements.length;
         for (final element in elements) {
-          element['y'] = centerY - (element['height'] as double) / 2;
+          element['y'] = centerY - (element['height'] as num).toDouble() / 2;
         }
         break;
       case 'bottom':
         // 底对齐，使用最大的底边界
         alignValue = elements
-            .map((e) => (e['y'] as double) + (e['height'] as double))
+            .map((e) =>
+                (e['y'] as num).toDouble() + (e['height'] as num).toDouble())
             .reduce((a, b) => a > b ? a : b);
         for (final element in elements) {
-          element['y'] = alignValue - (element['height'] as double);
+          element['y'] = alignValue - (element['height'] as num).toDouble();
         }
         break;
     }
@@ -278,10 +285,11 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
     // 获取选中元素
     final elements = <Map<String, dynamic>>[];
     for (final id in selectedIds) {
-      final element = controller.state.getElementById(id);
-      if (element != null) {
-        elements.add(element);
-      }
+      final element = controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      elements.add(element);
     }
 
     if (elements.length <= 2) return;
@@ -289,15 +297,16 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
     if (direction == 'horizontal') {
       // 水平分布
       // 按 x 坐标排序
-      elements.sort((a, b) => (a['x'] as double).compareTo(b['x'] as double));
+      elements.sort((a, b) =>
+          ((a['x'] as num).toDouble()).compareTo((b['x'] as num).toDouble()));
 
       // 计算总宽度和间距
-      final firstX = elements.first['x'] as double;
-      final lastX = elements.last['x'] as double;
-      final lastWidth = elements.last['width'] as double;
+      final firstX = (elements.first['x'] as num).toDouble();
+      final lastX = (elements.last['x'] as num).toDouble();
+      final lastWidth = (elements.last['width'] as num).toDouble();
       final totalWidth = (lastX + lastWidth) - firstX;
-      final totalElementWidth =
-          elements.fold<double>(0, (sum, e) => sum + (e['width'] as double));
+      final totalElementWidth = elements.fold<double>(
+          0, (sum, e) => sum + (e['width'] as num).toDouble());
       final spacing = (totalWidth - totalElementWidth) / (elements.length - 1);
 
       // 重新分布元素
@@ -305,20 +314,21 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
       for (int i = 0; i < elements.length; i++) {
         final element = elements[i];
         element['x'] = currentX;
-        currentX += (element['width'] as double) + spacing;
+        currentX += (element['width'] as num).toDouble() + spacing;
       }
     } else if (direction == 'vertical') {
       // 垂直分布
       // 按 y 坐标排序
-      elements.sort((a, b) => (a['y'] as double).compareTo(b['y'] as double));
+      elements.sort((a, b) =>
+          ((a['y'] as num).toDouble()).compareTo((b['y'] as num).toDouble()));
 
       // 计算总高度和间距
-      final firstY = elements.first['y'] as double;
-      final lastY = elements.last['y'] as double;
-      final lastHeight = elements.last['height'] as double;
+      final firstY = (elements.first['y'] as num).toDouble();
+      final lastY = (elements.last['y'] as num).toDouble();
+      final lastHeight = (elements.last['height'] as num).toDouble();
       final totalHeight = (lastY + lastHeight) - firstY;
-      final totalElementHeight =
-          elements.fold<double>(0, (sum, e) => sum + (e['height'] as double));
+      final totalElementHeight = elements.fold<double>(
+          0, (sum, e) => sum + (e['height'] as num).toDouble());
       final spacing =
           (totalHeight - totalElementHeight) / (elements.length - 1);
 
@@ -327,7 +337,7 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
       for (int i = 0; i < elements.length; i++) {
         final element = elements[i];
         element['y'] = currentY;
-        currentY += (element['height'] as double) + spacing;
+        currentY += (element['height'] as num).toDouble() + spacing;
       }
     }
 
@@ -337,44 +347,8 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
 
   // 组合元素
   void _groupElements() {
-    // 实现组合逻辑
-    if (selectedIds.length <= 1) return; // 至少需要两个元素
-
-    // 获取选中元素
-    final elements = <Map<String, dynamic>>[];
-    for (final id in selectedIds) {
-      final element = controller.state.getElementById(id);
-      if (element != null) {
-        elements.add(Map<String, dynamic>.from(element));
-      }
-    }
-
-    if (elements.isEmpty) return;
-
-    // 计算组合元素的边界框
-    double minX = double.infinity;
-    double minY = double.infinity;
-    double maxX = double.negativeInfinity;
-    double maxY = double.negativeInfinity;
-
-    for (final element in elements) {
-      final x = element['x'] as double;
-      final y = element['y'] as double;
-      final width = element['width'] as double;
-      final height = element['height'] as double;
-
-      minX = minX < x ? minX : x;
-      minY = minY < y ? minY : y;
-      maxX = maxX > (x + width) ? maxX : (x + width);
-      maxY = maxY > (y + height) ? maxY : (y + height);
-    }
-
-    // 创建组合元素
-    // 注意：这里只是一个简化的实现，实际中可能需要更复杂的逻辑
-    // 如处理元素的相对位置、旋转等
-
-    // 标记为未保存状态
-    controller.state.hasUnsavedChanges = true;
+    // 直接调用控制器的组合方法
+    controller.groupSelectedElements();
   }
 
   // 移动到图层
@@ -385,10 +359,11 @@ class MultiSelectionPropertyPanel extends PracticePropertyPanel {
     // 获取选中元素
     final elements = <Map<String, dynamic>>[];
     for (final id in selectedIds) {
-      final element = controller.state.getElementById(id);
-      if (element != null) {
-        elements.add(element);
-      }
+      final element = controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      elements.add(element);
     }
 
     if (elements.isEmpty) return;

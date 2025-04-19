@@ -659,11 +659,10 @@ class PracticeEditController extends ChangeNotifier {
     for (final id in _state.selectedElementIds) {
       final element = elements.firstWhere(
         (e) => e['id'] == id,
-        orElse: () => null,
+        orElse: () => <String, dynamic>{},
       );
-      if (element != null) {
-        selectedElements
-            .add(Map<String, dynamic>.from(element as Map<String, dynamic>));
+      if (element.isNotEmpty) {
+        selectedElements.add(Map<String, dynamic>.from(element));
       }
     }
 

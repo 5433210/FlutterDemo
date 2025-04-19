@@ -25,7 +25,8 @@ class GroupPropertyPanel extends PracticePropertyPanel {
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
 
     // 组内元素数量
-    final children = element['children'] as List<dynamic>? ?? [];
+    final content = element['content'] as Map<String, dynamic>? ?? {};
+    final children = content['children'] as List<dynamic>? ?? [];
 
     return ListView(
       children: [
@@ -75,7 +76,7 @@ class GroupPropertyPanel extends PracticePropertyPanel {
                   ElevatedButton(
                     onPressed: () {
                       // 取消组合
-                      // 这个功能通常在工具栏中实现
+                      controller.ungroupElements(element['id'] as String);
                     },
                     child: const Text('取消组合'),
                   ),
