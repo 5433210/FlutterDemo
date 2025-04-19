@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerState, ConsumerStatefulWidget;
 
+import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/practice/control_handlers.dart';
 import '../../widgets/practice/edit_toolbar.dart';
 import '../../widgets/practice/element_operations.dart';
@@ -343,6 +344,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 boundaryMargin: const EdgeInsets.all(100),
                 minScale: 0.1,
                 maxScale: 5.0,
+                constrained: false, // 添加这一行，使内容不受约束
                 child: Stack(
                   children: [
                     // 页面背景
@@ -545,8 +547,11 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 构建左侧面板
   Widget _buildLeftPanel() {
-    return SizedBox(
-      width: 250,
+    return ResizablePanel(
+      initialWidth: 250,
+      minWidth: 150,
+      maxWidth: 400,
+      isLeftPanel: true,
       child: Column(
         children: [
           // 内容控件区
@@ -695,8 +700,11 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       );
     }
 
-    return SizedBox(
-      width: 300,
+    return ResizablePanel(
+      initialWidth: 300,
+      minWidth: 200,
+      maxWidth: 500,
+      isLeftPanel: false,
       child: panel,
     );
   }

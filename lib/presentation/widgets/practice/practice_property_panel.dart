@@ -124,6 +124,37 @@ class PracticePropertyPanel extends StatelessWidget {
     required Function(double) onHeightChanged,
     required Function(double) onRotationChanged,
   }) {
+    // 使用静态变量保存控制器实例，以保持焦点
+    final Map<String, TextEditingController> controllers = {};
+
+    // 初始化或更新控制器
+    void initController(String key, String value) {
+      if (!controllers.containsKey(key)) {
+        controllers[key] = TextEditingController(text: value);
+      } else if (controllers[key]!.text != value) {
+        // 只在值变化时更新，避免光标重置
+        final selection = controllers[key]!.selection;
+        controllers[key]!.text = value;
+        // 保持原有光标位置
+        if (selection.start <= value.length && selection.end <= value.length) {
+          controllers[key]!.selection = selection;
+        }
+      }
+    }
+
+    // 初始化所有控制器
+    final String xStr = x.toStringAsFixed(0);
+    final String yStr = y.toStringAsFixed(0);
+    final String widthStr = width.toStringAsFixed(0);
+    final String heightStr = height.toStringAsFixed(0);
+    final String rotationStr = rotation.toStringAsFixed(0);
+
+    initController('x', xStr);
+    initController('y', yStr);
+    initController('width', widthStr);
+    initController('height', heightStr);
+    initController('rotation', rotationStr);
+
     return materialExpansionTile(
       title: Text(title),
       initiallyExpanded: true,
@@ -143,8 +174,7 @@ class PracticePropertyPanel extends StatelessWidget {
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                       ),
-                      controller:
-                          TextEditingController(text: x.toStringAsFixed(0)),
+                      controller: controllers['x'],
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
                         final newValue = double.tryParse(value);
@@ -163,8 +193,7 @@ class PracticePropertyPanel extends StatelessWidget {
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                       ),
-                      controller:
-                          TextEditingController(text: y.toStringAsFixed(0)),
+                      controller: controllers['y'],
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
                         final newValue = double.tryParse(value);
@@ -188,8 +217,7 @@ class PracticePropertyPanel extends StatelessWidget {
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                       ),
-                      controller:
-                          TextEditingController(text: width.toStringAsFixed(0)),
+                      controller: controllers['width'],
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
                         final newValue = double.tryParse(value);
@@ -208,8 +236,7 @@ class PracticePropertyPanel extends StatelessWidget {
                         contentPadding: EdgeInsets.symmetric(
                             horizontal: 8.0, vertical: 8.0),
                       ),
-                      controller: TextEditingController(
-                          text: height.toStringAsFixed(0)),
+                      controller: controllers['height'],
                       keyboardType: TextInputType.number,
                       onChanged: (value) {
                         final newValue = double.tryParse(value);
@@ -231,8 +258,7 @@ class PracticePropertyPanel extends StatelessWidget {
                       EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
                   suffixText: '°',
                 ),
-                controller:
-                    TextEditingController(text: rotation.toStringAsFixed(0)),
+                controller: controllers['rotation'],
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   final newValue = double.tryParse(value);
@@ -254,6 +280,9 @@ class PracticePropertyPanel extends StatelessWidget {
     required double opacity,
     required Function(double) onOpacityChanged,
   }) {
+    // 使用静态变量保存当前值，以便在拖动结束时记录操作
+    double currentOpacity = 0.0;
+
     return materialExpansionTile(
       title: Text(title),
       initiallyExpanded: true,
@@ -264,23 +293,43 @@ class PracticePropertyPanel extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('透明度'),
-              Row(
-                children: [
-                  Expanded(
-                    child: Slider(
-                      value: opacity,
-                      min: 0.0,
-                      max: 1.0,
-                      divisions: 100,
-                      label: '${(opacity * 100).toStringAsFixed(0)}%',
-                      onChanged: onOpacityChanged,
-                    ),
-                  ),
-                  SizedBox(
-                    width: 50,
-                    child: Text('${(opacity * 100).toStringAsFixed(0)}%'),
-                  ),
-                ],
+              StatefulBuilder(
+                builder: (context, setState) {
+                  // 初始化当前值
+                  if (currentOpacity != opacity) {
+                    currentOpacity = opacity;
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: currentOpacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          label:
+                              '${(currentOpacity * 100).toStringAsFixed(0)}%',
+                          // 在拖动过程中只更新UI，不记录操作
+                          onChanged: (value) {
+                            setState(() {
+                              currentOpacity = value;
+                            });
+                          },
+                          // 在拖动结束时记录操作
+                          onChangeEnd: (value) {
+                            onOpacityChanged(value);
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text(
+                            '${(currentOpacity * 100).toStringAsFixed(0)}%'),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -695,7 +744,14 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
 
     // 图片特有属性
-    final imageUrl = element['imageUrl'] as String? ?? '';
+    final content = element['content'] as Map<String, dynamic>;
+    final imageUrl = content['imageUrl'] as String? ?? '';
+
+    // 裁剪属性
+    final cropTop = (content['cropTop'] as num?)?.toDouble() ?? 0.0;
+    final cropBottom = (content['cropBottom'] as num?)?.toDouble() ?? 0.0;
+    final cropLeft = (content['cropLeft'] as num?)?.toDouble() ?? 0.0;
+    final cropRight = (content['cropRight'] as num?)?.toDouble() ?? 0.0;
 
     return ListView(
       children: [
@@ -708,25 +764,128 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
         ),
 
         // 几何属性部分
-        buildGeometrySection(
-          title: '几何属性',
-          x: x,
-          y: y,
-          width: width,
-          height: height,
-          rotation: rotation,
-          onXChanged: (value) => _updateProperty('x', value),
-          onYChanged: (value) => _updateProperty('y', value),
-          onWidthChanged: (value) => _updateProperty('width', value),
-          onHeightChanged: (value) => _updateProperty('height', value),
-          onRotationChanged: (value) => _updateProperty('rotation', value),
+        materialExpansionTile(
+          title: const Text('几何属性'),
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // X和Y位置
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildNumberField(
+                          label: 'X',
+                          value: x,
+                          onChanged: (value) => _updateProperty('x', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: 'Y',
+                          value: y,
+                          onChanged: (value) => _updateProperty('y', value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  // 宽度和高度
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '宽度',
+                          value: width,
+                          onChanged: (value) => _updateProperty('width', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '高度',
+                          value: height,
+                          onChanged: (value) =>
+                              _updateProperty('height', value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  // 旋转角度
+                  _buildNumberField(
+                    label: '旋转',
+                    value: rotation,
+                    suffix: '°',
+                    onChanged: (value) => _updateProperty('rotation', value),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
 
         // 视觉属性部分
-        buildVisualSection(
-          title: '视觉设置',
-          opacity: opacity,
-          onOpacityChanged: (value) => _updateProperty('opacity', value),
+        materialExpansionTile(
+          title: const Text('视觉设置'),
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 透明度滑块
+                  const Text('透明度:'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: StatefulBuilder(
+                          builder: (context, setState) {
+                            return Slider(
+                              value: opacity,
+                              min: 0.0,
+                              max: 1.0,
+                              divisions: 100,
+                              label: '${(opacity * 100).toStringAsFixed(0)}%',
+                              onChanged: (value) {
+                                setState(() {});
+                              },
+                              onChangeEnd: (value) {
+                                _updateProperty('opacity', value);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text('${(opacity * 100).toStringAsFixed(0)}%'),
+                      ),
+                    ],
+                  ),
+                  // 所属图层下拉框
+                  const Text('所属图层:'),
+                  DropdownButton<String>(
+                    value: element['layerId'] as String? ?? '',
+                    isExpanded: true,
+                    items: _buildLayerItems(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        _updateProperty('layerId', value);
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
 
         // 图片选择部分
@@ -744,7 +903,7 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: onSelectImage,
+                          onPressed: () => _selectImageFromLocal(context),
                           child: const Text('选择图片'),
                         ),
                       ),
@@ -752,7 +911,7 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            // 从作品中选择
+                            // 从作品选择
                           },
                           child: const Text('从作品选择'),
                         ),
@@ -809,7 +968,7 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
         // 图片变换部分
         materialExpansionTile(
           title: const Text('图片变换'),
-          initiallyExpanded: false,
+          initiallyExpanded: true,
           children: [
             Padding(
               padding:
@@ -817,20 +976,76 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('旋转'),
+                  // 裁剪设置
+                  const Text('裁剪:'),
+                  const SizedBox(height: 8.0),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton(
-                        onPressed: () =>
-                            _updateProperty('rotation', (rotation - 90) % 360),
-                        child: const Text('-90°'),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '上',
+                          value: cropTop,
+                          onChanged: (value) =>
+                              _updateContentProperty('cropTop', value),
+                        ),
                       ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '下',
+                          value: cropBottom,
+                          onChanged: (value) =>
+                              _updateContentProperty('cropBottom', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '左',
+                          value: cropLeft,
+                          onChanged: (value) =>
+                              _updateContentProperty('cropLeft', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '右',
+                          value: cropRight,
+                          onChanged: (value) =>
+                              _updateContentProperty('cropRight', value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 旋转按钮
+                  const Text('旋转:'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildNumberField(
+                          label: '',
+                          value: rotation,
+                          suffix: '°',
+                          onChanged: (value) =>
+                              _updateProperty('rotation', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
                       ElevatedButton(
                         onPressed: () =>
                             _updateProperty('rotation', (rotation + 90) % 360),
                         child: const Text('+90°'),
                       ),
+                      const SizedBox(width: 8.0),
+                      ElevatedButton(
+                        onPressed: () =>
+                            _updateProperty('rotation', (rotation - 90) % 360),
+                        child: const Text('-90°'),
+                      ),
+                      const SizedBox(width: 8.0),
                       ElevatedButton(
                         onPressed: () =>
                             _updateProperty('rotation', (rotation + 180) % 360),
@@ -839,26 +1054,46 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-                  const Text('翻转'),
+
+                  // 翻转按钮
+                  const Text('翻转:'),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // 水平翻转实现
-                            // 这里需要更复杂的实现，可能涉及图片处理
-                          },
+                          onPressed: () => _updateContentProperty(
+                              'flipHorizontal',
+                              !(content['flipHorizontal'] as bool? ?? false)),
                           child: const Text('水平翻转'),
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () {
-                            // 垂直翻转实现
-                            // 这里需要更复杂的实现，可能涉及图片处理
-                          },
+                          onPressed: () => _updateContentProperty(
+                              'flipVertical',
+                              !(content['flipVertical'] as bool? ?? false)),
                           child: const Text('垂直翻转'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 应用和重置按钮
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _applyTransform,
+                          child: const Text('应用变换'),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _resetTransform,
+                          child: const Text('重置变换'),
                         ),
                       ),
                     ],
@@ -870,6 +1105,88 @@ class _ImagePropertyPanel extends PracticePropertyPanel {
         ),
       ],
     );
+  }
+
+  // 应用变换
+  void _applyTransform() {
+    // 实际应用变换的逻辑应该在这里实现
+    // 这里可能需要调用图片处理服务
+  }
+
+  // 构建图层选项
+  List<DropdownMenuItem<String>> _buildLayerItems() {
+    final layers = controller.state.layers;
+    return layers.map((layer) {
+      final layerId = layer['id'] as String;
+      final layerName = layer['name'] as String? ?? '图层1';
+      return DropdownMenuItem<String>(
+        value: layerId,
+        child: Text(layerName),
+      );
+    }).toList();
+  }
+
+  // 构建数字输入字段
+  Widget _buildNumberField({
+    required String label,
+    required double value,
+    String? suffix,
+    required Function(double) onChanged,
+  }) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // 在StatefulBuilder中创建控制器，保持光标位置
+        final controller =
+            TextEditingController(text: value.toStringAsFixed(0));
+
+        return TextField(
+          decoration: InputDecoration(
+            labelText: label,
+            border: const OutlineInputBorder(),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            suffixText: suffix,
+          ),
+          controller: controller,
+          keyboardType: TextInputType.number,
+          onEditingComplete: () {
+            final newValue = double.tryParse(controller.text);
+            if (newValue != null) {
+              onChanged(newValue);
+            }
+            FocusScope.of(context).unfocus(); // 失去焦点
+          },
+        );
+      },
+    );
+  }
+
+  // 重置变换
+  void _resetTransform() {
+    final content =
+        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+    content['cropTop'] = 0.0;
+    content['cropBottom'] = 0.0;
+    content['cropLeft'] = 0.0;
+    content['cropRight'] = 0.0;
+    content['flipHorizontal'] = false;
+    content['flipVertical'] = false;
+    _updateProperty('content', content);
+    _updateProperty('rotation', 0.0);
+  }
+
+  // 从本地选择图片
+  Future<void> _selectImageFromLocal(BuildContext context) async {
+    // 调用onSelectImage回调，该回调应该在上层实现文件选择功能
+    onSelectImage();
+  }
+
+  // 更新内容属性
+  void _updateContentProperty(String key, dynamic value) {
+    final content =
+        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+    content[key] = value;
+    _updateProperty('content', content);
   }
 
   void _updateProperty(String key, dynamic value) {
@@ -1311,17 +1628,7 @@ class _TextPropertyPanel extends PracticePropertyPanel {
                 children: [
                   // 文本内容
                   const Text('文本内容'),
-                  TextField(
-                    decoration: const InputDecoration(
-                      hintText: '输入文本内容',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: TextEditingController(text: text),
-                    maxLines: 5,
-                    onChanged: (value) {
-                      _updateProperty('text', value);
-                    },
-                  ),
+                  _buildTextContentField(text),
 
                   const SizedBox(height: 16.0),
 
@@ -1412,6 +1719,37 @@ class _TextPropertyPanel extends PracticePropertyPanel {
           ],
         ),
       ],
+    );
+  }
+
+  // 构建文本内容输入字段，保持焦点并实时更新
+  Widget _buildTextContentField(String initialText) {
+    // 使用静态变量保存控制器实例，以保持焦点
+    final TextEditingController textController = TextEditingController();
+
+    // 只在初始值变化时更新控制器，避免光标重置
+    if (textController.text != initialText) {
+      final selection = textController.selection;
+      textController.text = initialText;
+
+      // 保持原有光标位置
+      if (selection.start <= initialText.length &&
+          selection.end <= initialText.length) {
+        textController.selection = selection;
+      }
+    }
+
+    return TextField(
+      decoration: const InputDecoration(
+        hintText: '输入文本内容',
+        border: OutlineInputBorder(),
+      ),
+      controller: textController,
+      maxLines: 5,
+      onChanged: (value) {
+        // 实时更新文本内容
+        _updateProperty('text', value);
+      },
     );
   }
 
