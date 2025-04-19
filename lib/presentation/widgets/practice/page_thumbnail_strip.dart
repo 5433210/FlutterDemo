@@ -1,9 +1,10 @@
 import 'dart:ui';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 /// 页面缩略图条
-class PageThumbnailStrip extends StatelessWidget {
+class PageThumbnailStrip extends StatefulWidget {
   final List<Map<String, dynamic>> pages;
   final int currentPageIndex;
   final Function(int) onPageSelected;
@@ -22,6 +23,25 @@ class PageThumbnailStrip extends StatelessWidget {
   });
 
   @override
+  State<PageThumbnailStrip> createState() => _PageThumbnailStripState();
+}
+
+class _PageThumbnailStripState extends State<PageThumbnailStrip> {
+  // 滚动控制器
+  final ScrollController _scrollController = ScrollController();
+
+  // 滚动乘数
+  final double _scrollMultiplier = 3.0;
+
+  // 滚动动画时长
+  final Duration _scrollAnimationDuration = const Duration(milliseconds: 200);
+
+  // 拖动滚动相关变量
+  bool _isDraggingStrip = false;
+  double _dragStartX = 0.0;
+  double _scrollStartOffset = 0.0;
+
+  @override
   Widget build(BuildContext context) {
     return Container(
       height: 120,
@@ -29,41 +49,56 @@ class PageThumbnailStrip extends StatelessWidget {
       child: Material(
         // Add Material widget
         color: Colors.grey.shade200,
-        child: Row(
-          children: [
-            // 页面缩略图列表
-            Expanded(
-              child: onReorderPages != null
-                  ? _buildReorderablePageList(context)
-                  : _buildSimplePageList(),
-            ),
+        child: GestureDetector(
+          // 添加拖动滚动支持
+          onHorizontalDragStart: _handleDragStart,
+          onHorizontalDragUpdate: _handleDragUpdate,
+          onHorizontalDragEnd: _handleDragEnd,
+          child: Listener(
+            onPointerSignal: _handlePointerSignal,
+            child: Row(
+              children: [
+                // 页面缩略图列表
+                Expanded(
+                  child: widget.onReorderPages != null
+                      ? _buildReorderablePageList(context)
+                      : _buildSimplePageList(),
+                ),
 
-            // 添加页面按钮
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onAddPage,
-                  child: Container(
-                    width: 60,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.add, size: 24, color: Colors.grey),
+                // 添加页面按钮
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: widget.onAddPage,
+                      child: Container(
+                        width: 60,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade400),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.add, size: 24, color: Colors.grey),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   /// 构建页面缩略图
@@ -95,8 +130,13 @@ class PageThumbnailStrip extends StatelessWidget {
 
       if (backgroundType == 'color' && backgroundColor.isNotEmpty) {
         try {
-          color = Color(int.parse(backgroundColor.replaceAll('#', '0xFF')))
-              .withOpacity(backgroundOpacity);
+          final colorValue = int.parse(backgroundColor.replaceAll('#', '0xFF'));
+          color = Color.fromRGBO(
+            (colorValue >> 16) & 0xFF,
+            (colorValue >> 8) & 0xFF,
+            colorValue & 0xFF,
+            backgroundOpacity,
+          );
         } catch (e) {
           // 如果解析失败，使用默认白色
           color = Colors.white;
@@ -118,6 +158,7 @@ class PageThumbnailStrip extends StatelessWidget {
   Widget _buildReorderablePageList(BuildContext context) {
     return ReorderableListView.builder(
       scrollDirection: Axis.horizontal,
+      scrollController: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       proxyDecorator: (child, index, animation) {
         // Add nice visual effect during drag
@@ -143,20 +184,20 @@ class PageThumbnailStrip extends StatelessWidget {
         );
       },
       onReorder: (oldIndex, newIndex) {
-        if (onReorderPages != null) {
-          onReorderPages!(oldIndex, newIndex);
+        if (widget.onReorderPages != null) {
+          widget.onReorderPages!(oldIndex, newIndex);
         }
       },
-      itemCount: pages.length,
+      itemCount: widget.pages.length,
       itemBuilder: (context, index) {
-        final page = pages[index];
-        final isSelected = index == currentPageIndex;
+        final page = widget.pages[index];
+        final isSelected = index == widget.currentPageIndex;
 
         return Padding(
           key: ValueKey('page_${page['id']}'),
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () => onPageSelected(index),
+            onTap: () => widget.onPageSelected(index),
             child: MouseRegion(
               cursor: SystemMouseCursors.grab,
               child: Stack(
@@ -186,7 +227,7 @@ class PageThumbnailStrip extends StatelessWidget {
                     child: IconButton(
                       icon: const Icon(Icons.cancel, size: 18),
                       color: Colors.red.shade400,
-                      onPressed: () => onDeletePage(index),
+                      onPressed: () => widget.onDeletePage(index),
                       splashRadius: 18,
                       tooltip: '删除页面',
                     ),
@@ -200,8 +241,8 @@ class PageThumbnailStrip extends StatelessWidget {
                     child: Container(
                       height: 20,
                       color: isSelected
-                          ? Colors.blue.withOpacity(0.7)
-                          : Colors.grey.withOpacity(0.6),
+                          ? Colors.blue.withAlpha(179) // 0.7 opacity
+                          : Colors.grey.withAlpha(153), // 0.6 opacity
                       alignment: Alignment.center,
                       child: Text(
                         '${index + 1}',
@@ -225,16 +266,17 @@ class PageThumbnailStrip extends StatelessWidget {
   Widget _buildSimplePageList() {
     return ListView.builder(
       scrollDirection: Axis.horizontal,
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: pages.length,
+      itemCount: widget.pages.length,
       itemBuilder: (context, index) {
-        final page = pages[index];
-        final isSelected = index == currentPageIndex;
+        final page = widget.pages[index];
+        final isSelected = index == widget.currentPageIndex;
 
         return Padding(
           padding: const EdgeInsets.only(right: 16),
           child: GestureDetector(
-            onTap: () => onPageSelected(index),
+            onTap: () => widget.onPageSelected(index),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -251,7 +293,7 @@ class PageThumbnailStrip extends StatelessWidget {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: Colors.blue.withOpacity(0.3),
+                              color: Colors.blue.withAlpha(77), // 0.3 opacity
                               spreadRadius: 1,
                               blurRadius: 4,
                             )
@@ -275,12 +317,12 @@ class PageThumbnailStrip extends StatelessWidget {
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
-                    if (pages.length > 1)
+                    if (widget.pages.length > 1)
                       IconButton(
                         icon: const Icon(Icons.close, size: 14),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        onPressed: () => onDeletePage(index),
+                        onPressed: () => widget.onDeletePage(index),
                       ),
                   ],
                 ),
@@ -290,5 +332,62 @@ class PageThumbnailStrip extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// 处理拖动结束
+  void _handleDragEnd(DragEndDetails details) {
+    setState(() {
+      _isDraggingStrip = false;
+    });
+  }
+
+  /// 处理拖动开始
+  void _handleDragStart(DragStartDetails details) {
+    if (!_scrollController.hasClients) return;
+
+    setState(() {
+      _isDraggingStrip = true;
+      _dragStartX = details.globalPosition.dx;
+      _scrollStartOffset = _scrollController.offset;
+    });
+  }
+
+  /// 处理拖动更新
+  void _handleDragUpdate(DragUpdateDetails details) {
+    if (!_scrollController.hasClients || !_isDraggingStrip) return;
+
+    // 计算拖动距离
+    final dragDelta = _dragStartX - details.globalPosition.dx;
+
+    // 计算新的滚动位置，并限制在有效范围内
+    final newOffset = (_scrollStartOffset + dragDelta)
+        .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+    // 直接跳转到新位置（无动画）
+    _scrollController.jumpTo(newOffset);
+  }
+
+  /// 处理鼠标滚轮事件
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      // 如果滚动控制器未就绪，直接返回
+      if (!_scrollController.hasClients) return;
+
+      // 计算滚动增量，将垂直滚动转换为水平滚动
+      final delta = event.scrollDelta;
+      final adjustedDelta =
+          (delta.dx != 0 ? delta.dx : delta.dy) * _scrollMultiplier;
+
+      // 计算新的滚动位置，并限制在有效范围内
+      final newOffset = (_scrollController.offset + adjustedDelta)
+          .clamp(0.0, _scrollController.position.maxScrollExtent);
+
+      // 使用动画滚动到新位置
+      _scrollController.animateTo(
+        newOffset,
+        duration: _scrollAnimationDuration,
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 }

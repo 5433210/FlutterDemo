@@ -496,3 +496,31 @@ class UpdateLayerPropertyOperation implements UndoableOperation {
     updateLayer(layerId, oldProperties);
   }
 }
+
+/// 更新页面属性操作
+class UpdatePagePropertyOperation implements UndoableOperation {
+  final int pageIndex;
+  final Map<String, dynamic> oldProperties;
+  final Map<String, dynamic> newProperties;
+  final Function(int, Map<String, dynamic>) updatePage;
+
+  UpdatePagePropertyOperation({
+    required this.pageIndex,
+    required this.oldProperties,
+    required this.newProperties,
+    required this.updatePage,
+  });
+
+  @override
+  String get description => '修改页面属性';
+
+  @override
+  void execute() {
+    updatePage(pageIndex, newProperties);
+  }
+
+  @override
+  void undo() {
+    updatePage(pageIndex, oldProperties);
+  }
+}

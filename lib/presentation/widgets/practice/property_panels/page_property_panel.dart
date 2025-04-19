@@ -130,17 +130,37 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
           _buildSection(
             title: '背景设置',
             children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: '背景颜色',
-                  prefixText: '#',
-                  border: OutlineInputBorder(),
-                ),
-                controller: _backgroundColorController,
-                onChanged: (value) {
-                  // Update properties immediately when background color changes
-                  _updatePageProperties();
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: '背景颜色',
+                        prefixText: '#',
+                        border: OutlineInputBorder(),
+                      ),
+                      controller: _backgroundColorController,
+                      onChanged: (value) {
+                        // Update properties immediately when background color changes
+                        _updatePageProperties();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _showColorPicker,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: _hexToColor(_backgroundColorController.text),
+                        border: Border.all(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(Icons.colorize, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 12.0),
               Row(
@@ -232,6 +252,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     );
   }
 
+  /// 将十六进制颜色字符串转换为Color对象
+  Color _hexToColor(String hexString) {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
+  }
+
   // 初始化值
   void _initializeValues() {
     final page = widget.page;
@@ -258,6 +286,89 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
       _backgroundColorController = TextEditingController(text: 'FFFFFF');
       _backgroundOpacity = 1.0;
     }
+  }
+
+  /// 显示颜色选择器
+  void _showColorPicker() {
+    // 预设颜色列表
+    final presetColors = [
+      Colors.black,
+      Colors.white,
+      Colors.red,
+      Colors.pink,
+      Colors.purple,
+      Colors.deepPurple,
+      Colors.indigo,
+      Colors.blue,
+      Colors.lightBlue,
+      Colors.cyan,
+      Colors.teal,
+      Colors.green,
+      Colors.lightGreen,
+      Colors.lime,
+      Colors.yellow,
+      Colors.amber,
+      Colors.orange,
+      Colors.deepOrange,
+      Colors.brown,
+      Colors.grey,
+      Colors.blueGrey,
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择颜色'),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: presetColors.length,
+            itemBuilder: (context, index) {
+              return InkWell(
+                onTap: () {
+                  // 转换为十六进制字符串
+                  final color = presetColors[index];
+                  final hexColor =
+                      '#${color.r.round().toRadixString(16).padLeft(2, '0')}${color.g.round().toRadixString(16).padLeft(2, '0')}${color.b.round().toRadixString(16).padLeft(2, '0')}'
+                          .toUpperCase();
+                  setState(() {
+                    _backgroundColorController.text =
+                        hexColor.substring(1); // 移除#前缀
+                  });
+                  _updatePageProperties();
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: presetColors[index],
+                    border: Border.all(
+                      color: presetColors[index] == Colors.white
+                          ? Colors.grey
+                          : presetColors[index],
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+        ],
+      ),
+    );
   }
 
   // 更新页面属性 - 最终更新，记录撤销/重做历史

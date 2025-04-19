@@ -21,6 +21,10 @@ class PracticeEditState {
   // 状态标志
   bool hasUnsavedChanges = false;
 
+  // 撤销/重做状态
+  bool canUndo = false;
+  bool canRedo = false;
+
   /// 获取当前页面
   Map<String, dynamic>? get currentPage {
     if (currentPageIndex >= 0 && currentPageIndex < pages.length) {

@@ -4,16 +4,15 @@ import 'package:flutter/material.dart';
 class ElementRenderers {
   /// 构建集字元素
   static Widget buildCollectionElement(Map<String, dynamic> element) {
-    final content = element['content'] as String? ?? '';
-    final direction = element['direction'] as String? ?? 'horizontal';
-    final flowDirection =
-        element['flowDirection'] as String? ?? 'top-to-bottom';
-    final fontSize = (element['fontSize'] as num?)?.toDouble() ?? 36.0;
-    final fontColor = _parseColor(element['fontColor'] as String? ?? '#000000');
+    final content = element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+    final direction = content['direction'] as String? ?? 'horizontal';
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 24.0;
+    final fontColor = _parseColor(content['fontColor'] as String? ?? '#000000');
     final backgroundColor =
-        _parseColor(element['backgroundColor'] as String? ?? '#FFFFFF');
-    final lineSpacing = (element['lineSpacing'] as num?)?.toDouble() ?? 10.0;
-    final letterSpacing = (element['letterSpacing'] as num?)?.toDouble() ?? 5.0;
+        _parseColor(content['backgroundColor'] as String? ?? '#FFFFFF');
+    final charSpacing = (content['charSpacing'] as num?)?.toDouble() ?? 10.0;
+    final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
 
     return Container(
       color: backgroundColor,
@@ -21,13 +20,13 @@ class ElementRenderers {
       height: double.infinity,
       padding: const EdgeInsets.all(8.0),
       child: _buildCharacterGrid(
-        content: content,
+        content: characters,
         direction: direction,
-        flowDirection: flowDirection,
+        flowDirection: 'top-to-bottom', // Default value
         fontSize: fontSize,
         fontColor: fontColor,
         lineSpacing: lineSpacing,
-        letterSpacing: letterSpacing,
+        letterSpacing: charSpacing,
       ),
     );
   }
@@ -49,7 +48,8 @@ class ElementRenderers {
 
   /// 构建图片元素
   static Widget buildImageElement(Map<String, dynamic> element) {
-    final imageUrl = element['imageUrl'] as String? ?? '';
+    final content = element['content'] as Map<String, dynamic>;
+    final imageUrl = content['imageUrl'] as String? ?? '';
 
     if (imageUrl.isEmpty) {
       return Container(
@@ -87,14 +87,15 @@ class ElementRenderers {
 
   /// 构建文本元素
   static Widget buildTextElement(Map<String, dynamic> element) {
-    final text = element['text'] as String? ?? '';
-    final fontSize = (element['fontSize'] as num?)?.toDouble() ?? 16.0;
-    final fontFamily = element['fontFamily'] as String? ?? 'sans-serif';
-    final fontColor = _parseColor(element['fontColor'] as String? ?? '#000000');
+    final content = element['content'] as Map<String, dynamic>;
+    final text = content['text'] as String? ?? '';
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
+    final fontFamily = content['fontFamily'] as String? ?? 'sans-serif';
+    final fontColor = _parseColor(content['textColor'] as String? ?? '#000000');
     final backgroundColor =
-        _parseColor(element['backgroundColor'] as String? ?? 'transparent');
+        _parseColor(content['backgroundColor'] as String? ?? 'transparent');
     final textAlign =
-        _parseTextAlign(element['textAlign'] as String? ?? 'left');
+        _parseTextAlign(content['alignment'] as String? ?? 'left');
 
     return Container(
       color: backgroundColor,

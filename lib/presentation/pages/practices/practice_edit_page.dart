@@ -222,7 +222,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           width: 70,
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.8),
+            color: Colors.blue.withAlpha(204), // 0.8 opacity
             borderRadius: BorderRadius.circular(4.0),
           ),
           child: Column(
@@ -269,10 +269,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               _controller.addTextElement();
               break;
             case 'image':
-              _showImageUrlDialog(context);
+              // 直接添加空图片元素，不显示对话框
+              _controller.addEmptyImageElementAt(100.0, 100.0);
               break;
             case 'collection':
-              _showCollectionDialog(context);
+              // 直接添加空集字元素，不显示对话框
+              _controller.addEmptyCollectionElementAt(100.0, 100.0);
               break;
           }
         },
@@ -322,28 +324,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             _controller.addTextElementAt(x, y);
             break;
           case 'image':
-            _showImageUrlDialog(context).then((value) {
-              // 对话框完成后处理位置调整
-              if (_controller.state.selectedElementIds.isNotEmpty) {
-                final id = _controller.state.selectedElementIds.first;
-                _controller.updateElementProperties(id, {
-                  'x': x,
-                  'y': y,
-                });
-              }
-            });
+            // 直接添加空图片元素，不显示对话框
+            _controller.addEmptyImageElementAt(x, y);
             break;
           case 'collection':
-            _showCollectionDialog(context).then((value) {
-              // 对话框完成后处理位置调整
-              if (_controller.state.selectedElementIds.isNotEmpty) {
-                final id = _controller.state.selectedElementIds.first;
-                _controller.updateElementProperties(id, {
-                  'x': x,
-                  'y': y,
-                });
-              }
-            });
+            // 直接添加空集字元素，不显示对话框
+            _controller.addEmptyCollectionElementAt(x, y);
             break;
         }
       },
@@ -487,7 +473,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         break;
       default:
         content = Container(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey.withAlpha(51), // 0.2 opacity
           child: const Center(child: Text('未知元素')),
         );
     }
@@ -669,7 +655,13 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 _controller.updateElementProperties(id, properties);
               },
               onUpdateChars: (chars) {
-                final updatedProps = {'content': chars};
+                // Get the current content map
+                final content = Map<String, dynamic>.from(
+                    element['content'] as Map<String, dynamic>);
+                // Update the characters property
+                content['characters'] = chars;
+                // Update the element with the modified content map
+                final updatedProps = {'content': content};
                 _controller.updateElementProperties(id, updatedProps);
               },
             );
@@ -732,7 +724,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           width: 70,
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+            color: isSelected ? Colors.blue.withAlpha(26) : null, // 0.1 opacity
             border: Border.all(
               color: isSelected ? Colors.blue : Colors.grey.shade300,
               width: 1.0,

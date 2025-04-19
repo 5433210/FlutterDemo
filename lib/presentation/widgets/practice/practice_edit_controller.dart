@@ -20,7 +20,12 @@ class PracticeEditController extends ChangeNotifier {
   /// 构造函数
   PracticeEditController() {
     _undoRedoManager = UndoRedoManager(
-      onStateChanged: notifyListeners,
+      onStateChanged: () {
+        // 更新撤销/重做状态
+        _state.canUndo = _undoRedoManager.canUndo;
+        _state.canRedo = _undoRedoManager.canRedo;
+        notifyListeners();
+      },
     );
 
     // 初始化默认数据
@@ -83,6 +88,56 @@ class PracticeEditController extends ChangeNotifier {
         'lineSpacing': 10.0,
         'gridLines': false,
         'showBackground': true,
+      },
+    };
+
+    _addElement(element);
+  }
+
+  /// 添加空集字元素在指定位置（不显示对话框）
+  void addEmptyCollectionElementAt(double x, double y) {
+    final element = {
+      'id': 'collection_${_uuid.v4()}',
+      'type': 'collection',
+      'x': x,
+      'y': y,
+      'width': 400.0,
+      'height': 200.0,
+      'rotation': 0.0,
+      'layerId': _state.layers.first['id'],
+      'opacity': 1.0,
+      'content': {
+        'characters': '',
+        'fontSize': 24.0,
+        'fontColor': '#000000',
+        'backgroundColor': '#FFFFFF',
+        'direction': 'horizontal',
+        'charSpacing': 10.0,
+        'lineSpacing': 10.0,
+        'gridLines': false,
+        'showBackground': true,
+      },
+    };
+
+    _addElement(element);
+  }
+
+  /// 添加空图片元素在指定位置（不显示对话框）
+  void addEmptyImageElementAt(double x, double y) {
+    final element = {
+      'id': 'image_${_uuid.v4()}',
+      'type': 'image',
+      'x': x,
+      'y': y,
+      'width': 200.0,
+      'height': 200.0,
+      'rotation': 0.0,
+      'layerId': _state.layers.first['id'],
+      'opacity': 1.0,
+      'content': {
+        'imageUrl': '',
+        'fit': 'contain',
+        'aspectRatio': 1.0,
       },
     };
 
@@ -189,19 +244,41 @@ class PracticeEditController extends ChangeNotifier {
       // Create a new page with default properties
       final newPage = {
         'id': 'page_${DateTime.now().millisecondsSinceEpoch}',
+        'name': '页面${_state.pages.length + 1}',
+        'width': 595.0, // A4纸宽度
+        'height': 842.0, // A4纸高度
         'backgroundColor': '#FFFFFF',
         'backgroundOpacity': 1.0,
         'elements': <Map<String, dynamic>>[],
       };
 
-      _state.pages.add(newPage);
-      _state.currentPageIndex = _state.pages.length - 1;
-      // Clear element and layer selections to show page properties
-      _state.selectedElementIds.clear();
-      _state.selectedElement = null;
-      _state.selectedLayerId = null;
-      _state.hasUnsavedChanges = true;
-      notifyListeners();
+      final operation = AddPageOperation(
+        page: newPage,
+        addPage: (p) {
+          _state.pages.add(p);
+          _state.currentPageIndex = _state.pages.length - 1;
+          // Clear element and layer selections to show page properties
+          _state.selectedElementIds.clear();
+          _state.selectedElement = null;
+          _state.selectedLayerId = null;
+          _state.hasUnsavedChanges = true;
+          notifyListeners();
+        },
+        removePage: (id) {
+          final index = _state.pages.indexWhere((p) => p['id'] == id);
+          if (index >= 0) {
+            _state.pages.removeAt(index);
+            if (_state.currentPageIndex >= _state.pages.length) {
+              _state.currentPageIndex =
+                  _state.pages.isEmpty ? -1 : _state.pages.length - 1;
+            }
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
+        },
+      );
+
+      _undoRedoManager.addOperation(operation);
     }
   }
 
@@ -1351,24 +1428,47 @@ class PracticeEditController extends ChangeNotifier {
   void updatePageProperties(Map<String, dynamic> properties) {
     if (_state.currentPageIndex >= 0 &&
         _state.currentPageIndex < _state.pages.length) {
-      final page = _state.pages[_state.currentPageIndex];
-      // 更新页面属性
-      properties.forEach((key, value) {
-        page[key] = value;
-      });
+      final pageIndex = _state.currentPageIndex;
+      final page = _state.pages[pageIndex];
 
-      // Make sure the background color is properly set
+      // Make sure the background color is properly formatted
       if (properties.containsKey('backgroundColor')) {
-        // Ensure the color is properly formatted
         String backgroundColor = properties['backgroundColor'] as String;
         if (!backgroundColor.startsWith('#')) {
           backgroundColor = '#$backgroundColor';
-          page['backgroundColor'] = backgroundColor;
+          properties['backgroundColor'] = backgroundColor;
         }
       }
 
-      _state.hasUnsavedChanges = true;
-      notifyListeners();
+      // Create a copy of the old properties that will be modified
+      final oldProperties = <String, dynamic>{};
+      properties.forEach((key, value) {
+        if (page.containsKey(key)) {
+          oldProperties[key] = page[key];
+        }
+      });
+
+      // Create the operation
+      final operation = UpdatePagePropertyOperation(
+        pageIndex: pageIndex,
+        oldProperties: oldProperties,
+        newProperties: Map<String, dynamic>.from(properties),
+        updatePage: (index, props) {
+          if (index >= 0 && index < _state.pages.length) {
+            final page = _state.pages[index];
+            // Update page properties
+            props.forEach((key, value) {
+              page[key] = value;
+            });
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
+        },
+      );
+
+      // Add the operation to the undo/redo manager
+      _undoRedoManager.addOperation(operation);
     }
   }
 

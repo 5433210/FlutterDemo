@@ -330,7 +330,8 @@ class _CollectionPropertyPanel extends PracticePropertyPanel {
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
 
     // 集字特有属性
-    final content = element['content'] as String? ?? '';
+    final content = element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
     final direction = element['direction'] as String? ?? 'horizontal';
     final flowDirection =
         element['flowDirection'] as String? ?? 'top-to-bottom';
@@ -489,7 +490,7 @@ class _CollectionPropertyPanel extends PracticePropertyPanel {
                       hintText: '输入要展示的汉字',
                       border: OutlineInputBorder(),
                     ),
-                    controller: TextEditingController(text: content),
+                    controller: TextEditingController(text: characters),
                     maxLines: 3,
                     onChanged: (value) {
                       onUpdateChars(value);
@@ -547,7 +548,8 @@ class _CollectionPropertyPanel extends PracticePropertyPanel {
                         crossAxisSpacing: 8.0,
                         mainAxisSpacing: 8.0,
                       ),
-                      itemCount: content.characters.length,
+                      itemCount:
+                          characters.isEmpty ? 0 : characters.characters.length,
                       itemBuilder: (context, index) {
                         return Container(
                           decoration: BoxDecoration(
@@ -555,7 +557,7 @@ class _CollectionPropertyPanel extends PracticePropertyPanel {
                           ),
                           child: Center(
                             child: Text(
-                              content.characters.elementAt(index),
+                              characters.characters.elementAt(index),
                               style: const TextStyle(fontSize: 20),
                             ),
                           ),
