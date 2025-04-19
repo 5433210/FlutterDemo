@@ -3,7 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
+import 'practice_property_panel_collection.dart';
+import 'practice_property_panel_image.dart';
+import 'practice_property_panel_layer.dart';
 import 'practice_property_panel_page.dart';
+import 'practice_property_panel_text.dart';
 
 /// 属性面板组件基类
 abstract class PracticePropertyPanel extends StatelessWidget {
@@ -275,7 +279,7 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
     required Function(String) onUpdateChars,
   }) {
-    return _CollectionPropertyPanel(
+    return CollectionPropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
@@ -303,7 +307,7 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
     required VoidCallback onSelectImage,
   }) {
-    return _ImagePropertyPanel(
+    return ImagePropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
@@ -317,7 +321,7 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Map<String, dynamic> layer,
     required Function(Map<String, dynamic>) onLayerPropertiesChanged,
   }) {
-    return _LayerPropertyPanel(
+    return LayerPropertyPanel(
       controller: controller,
       layer: layer,
       onLayerPropertiesChanged: onLayerPropertiesChanged,
@@ -356,31 +360,11 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Map<String, dynamic> element,
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
   }) {
-    return _TextPropertyPanel(
+    return TextPropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
     );
-  }
-}
-
-class _CollectionPropertyPanel extends PracticePropertyPanel {
-  final Map<String, dynamic> element;
-
-  final Function(Map<String, dynamic>) onElementPropertiesChanged;
-  final Function(String) onUpdateChars;
-  // 前向声明，实际实现在 practice_property_panel_collection.dart
-  const _CollectionPropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.element,
-    required this.onElementPropertiesChanged,
-    required this.onUpdateChars,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_collection.dart 中');
   }
 }
 
@@ -402,44 +386,6 @@ class _GroupPropertyPanel extends PracticePropertyPanel {
   }
 }
 
-class _ImagePropertyPanel extends PracticePropertyPanel {
-  final Map<String, dynamic> element;
-
-  final Function(Map<String, dynamic>) onElementPropertiesChanged;
-  final VoidCallback onSelectImage;
-  // 前向声明，实际实现在 practice_property_panel_image.dart
-  const _ImagePropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.element,
-    required this.onElementPropertiesChanged,
-    required this.onSelectImage,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_image.dart 中');
-  }
-}
-
-class _LayerPropertyPanel extends PracticePropertyPanel {
-  final Map<String, dynamic> layer;
-
-  final Function(Map<String, dynamic>) onLayerPropertiesChanged;
-  // 前向声明，实际实现在 practice_property_panel_layer.dart
-  const _LayerPropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.layer,
-    required this.onLayerPropertiesChanged,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_layer.dart 中');
-  }
-}
-
 class _MultiSelectionPropertyPanel extends PracticePropertyPanel {
   final List<String> selectedIds;
 
@@ -455,25 +401,5 @@ class _MultiSelectionPropertyPanel extends PracticePropertyPanel {
   @override
   Widget build(BuildContext context) {
     throw UnimplementedError('实现在 practice_property_panel_multi.dart 中');
-  }
-}
-
-// 导入各个面板类的前向声明
-
-class _TextPropertyPanel extends PracticePropertyPanel {
-  final Map<String, dynamic> element;
-
-  final Function(Map<String, dynamic>) onElementPropertiesChanged;
-  // 前向声明，实际实现在 practice_property_panel_text.dart
-  const _TextPropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
-    required this.element,
-    required this.onElementPropertiesChanged,
-  }) : super(key: key, controller: controller);
-
-  @override
-  Widget build(BuildContext context) {
-    throw UnimplementedError('实现在 practice_property_panel_text.dart 中');
   }
 }

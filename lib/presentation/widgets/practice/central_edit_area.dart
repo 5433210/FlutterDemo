@@ -65,6 +65,12 @@ class _CentralEditAreaState extends State<CentralEditArea> {
   final TransformationController _transformationController =
       TransformationController();
 
+  // 容器大小
+  Size _containerSize = Size.zero;
+
+  // 页面大小
+  Size _pageSize = const Size(595, 842); // 默认A4大小
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -101,25 +107,38 @@ class _CentralEditAreaState extends State<CentralEditArea> {
                   top: 16,
                   child: Column(
                     children: [
+                      // 重置缩放按钮
                       FloatingActionButton(
-                        heroTag: 'add_text',
+                        heroTag: 'reset_zoom',
                         mini: true,
-                        onPressed: widget.onAddTextElement,
-                        child: const Icon(Icons.text_fields),
+                        onPressed: _resetZoomToFit,
+                        child: const Icon(Icons.fit_screen),
                       ),
-                      const SizedBox(height: 8),
-                      FloatingActionButton(
-                        heroTag: 'add_image',
-                        mini: true,
-                        child: const Icon(Icons.image),
-                        onPressed: () => _showImageUrlDialog(context),
-                      ),
-                      const SizedBox(height: 8),
-                      FloatingActionButton(
-                        heroTag: 'add_collection',
-                        mini: true,
-                        child: const Icon(Icons.grid_view),
-                        onPressed: () => _showCollectionDialog(context),
+                      const SizedBox(height: 16),
+                      // 元素添加按钮组
+                      Column(
+                        children: [
+                          FloatingActionButton(
+                            heroTag: 'add_text',
+                            mini: true,
+                            onPressed: widget.onAddTextElement,
+                            child: const Icon(Icons.text_fields),
+                          ),
+                          const SizedBox(height: 8),
+                          FloatingActionButton(
+                            heroTag: 'add_image',
+                            mini: true,
+                            child: const Icon(Icons.image),
+                            onPressed: () => _showImageUrlDialog(context),
+                          ),
+                          const SizedBox(height: 8),
+                          FloatingActionButton(
+                            heroTag: 'add_collection',
+                            mini: true,
+                            child: const Icon(Icons.grid_view),
+                            onPressed: () => _showCollectionDialog(context),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -144,6 +163,11 @@ class _CentralEditAreaState extends State<CentralEditArea> {
 
     // 添加键盘监听
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+
+    // 延迟执行，确保在布局完成后调用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resetZoomToFit();
+    });
   }
 
   /// 将选中元素置于顶层
@@ -167,7 +191,7 @@ class _CentralEditAreaState extends State<CentralEditArea> {
     final currentPageIndex = widget.controller.state.currentPageIndex;
     widget.controller.state.pages[currentPageIndex]['elements'] = elements;
     widget.controller
-        .notifyListeners(); // Update the UI after changing elements order
+        .updateElementsOrder(); // Update the UI after changing elements order
   }
 
   /// 构建编辑画布
@@ -188,45 +212,69 @@ class _CentralEditAreaState extends State<CentralEditArea> {
       onPanEnd: (details) => _handlePanEnd(details),
       child: Container(
         color: Colors.grey.shade200,
-        child: Center(
-          child: InteractiveViewer(
-            transformationController: _transformationController,
-            boundaryMargin: const EdgeInsets.all(100),
-            minScale: 0.1,
-            maxScale: 5.0,
-            child: Stack(
-              children: [
-                // 页面背景
-                Container(
-                  width: 595, // A4 宽度 (72dpi)
-                  height: 842, // A4 高度 (72dpi)
-                  color: PageOperations.getPageBackgroundColor(currentPage),
-                  child: Stack(
-                    children: [
-                      // 网格
-                      if (widget.controller.state.gridVisible &&
-                          !widget.isPreviewMode)
-                        CustomPaint(
-                          size: const Size(595, 842),
-                          painter: GridPainter(gridSize: widget.gridSize),
-                        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // 更新容器大小
+            if (_containerSize != constraints.biggest) {
+              // 延迟执行，避免在构建过程中修改状态
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  _containerSize = constraints.biggest;
+                  // 如果是初始化，重置缩放
+                  if (_transformationController.value == Matrix4.identity()) {
+                    _resetZoomToFit();
+                  }
+                });
+              });
+            }
 
-                      // 元素
-                      for (final element in elements) _buildElement(element),
+            return InteractiveViewer(
+              transformationController: _transformationController,
+              boundaryMargin:
+                  const EdgeInsets.all(double.infinity), // 无限边界，允许自由平移
+              constrained: false, // 不受约束，允许内容超出边界
+              minScale: 0.1,
+              maxScale: 15.0, // 最大缩放15倍
+              panEnabled: true, // 启用平移
+              scaleEnabled: true, // 启用缩放
+              onInteractionEnd: (details) {
+                // 交互结束时更新状态
+                setState(() {});
+              },
+              child: Stack(
+                children: [
+                  // 页面背景
+                  Container(
+                    width: _pageSize.width, // 页面宽度
+                    height: _pageSize.height, // 页面高度
+                    color: PageOperations.getPageBackgroundColor(currentPage),
+                    child: Stack(
+                      children: [
+                        // 网格
+                        if (widget.controller.state.gridVisible &&
+                            !widget.isPreviewMode)
+                          CustomPaint(
+                            size: _pageSize,
+                            painter: GridPainter(gridSize: widget.gridSize),
+                          ),
 
-                      // 选择框
-                      if (_selectionManager.isSelecting &&
-                          !widget.isPreviewMode)
-                        CustomPaint(
-                          size: const Size(595, 842),
-                          painter: _SelectionPainter(_selectionManager),
-                        ),
-                    ],
+                        // 元素
+                        for (final element in elements) _buildElement(element),
+
+                        // 选择框
+                        if (_selectionManager.isSelecting &&
+                            !widget.isPreviewMode)
+                          CustomPaint(
+                            size: _pageSize,
+                            painter: _SelectionPainter(_selectionManager),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -559,6 +607,44 @@ class _CentralEditAreaState extends State<CentralEditArea> {
     final currentPageIndex = widget.controller.state.currentPageIndex;
     widget.controller.state.pages[currentPageIndex]['elements'] = elements;
     widget.controller.updateElementsOrder();
+  }
+
+  /// 重置缩放以适应容器
+  void _resetZoomToFit() {
+    final currentPage = widget.controller.state.currentPage;
+    if (currentPage == null) return;
+
+    // 获取页面大小
+    final pageWidth = (currentPage['width'] as num?)?.toDouble() ?? 595.0;
+    final pageHeight = (currentPage['height'] as num?)?.toDouble() ?? 842.0;
+    _pageSize = Size(pageWidth, pageHeight);
+
+    // 获取容器大小
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+
+    _containerSize = renderBox.size;
+
+    // 计算缩放比例，使页面适应容器
+    final containerWidth = _containerSize.width;
+    final containerHeight = _containerSize.height;
+
+    final scaleX = containerWidth / pageWidth;
+    final scaleY = containerHeight / pageHeight;
+
+    // 选择较小的缩放比例，确保页面完全显示
+    final scale = scaleX < scaleY ? scaleX * 0.9 : scaleY * 0.9;
+
+    // 计算平移使页面居中
+    final dx = (containerWidth - pageWidth * scale) / 2;
+    final dy = (containerHeight - pageHeight * scale) / 2;
+
+    // 设置变换矩阵
+    final matrix = Matrix4.identity()
+      ..translate(dx, dy)
+      ..scale(scale, scale);
+
+    _transformationController.value = matrix;
   }
 
   /// 选择矩形区域内的元素
