@@ -1,417 +1,308 @@
 import 'package:flutter/material.dart';
 
-import '../../../../domain/models/practice/practice_page.dart';
-import 'property_panel_base.dart';
+import '../practice_edit_controller.dart';
 
 /// 页面属性面板
-class PagePropertyPanel extends StatelessWidget {
-  final PracticePage page;
-  final Function(PracticePage) onPageChanged;
+class PagePropertyPanel extends StatefulWidget {
+  final PracticeEditController controller;
+  final Map<String, dynamic>? page;
+  final Function(Map<String, dynamic>) onPagePropertiesChanged;
 
   const PagePropertyPanel({
     Key? key,
+    required this.controller,
     required this.page,
-    required this.onPageChanged,
+    required this.onPagePropertiesChanged,
   }) : super(key: key);
+
+  @override
+  State<PagePropertyPanel> createState() => _PagePropertyPanelState();
+}
+
+class _PagePropertyPanelState extends State<PagePropertyPanel> {
+  // 背景颜色控制器
+  late TextEditingController _backgroundColorController;
+
+  // 页面尺寸
+  late double _pageWidth;
+  late double _pageHeight;
+
+  // 背景透明度
+  late double _backgroundOpacity;
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 页面属性标题
-            const Text(
-              '页面属性',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '页面属性',
+            style: TextStyle(
+              fontSize: 18.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16.0),
+
+          // 尺寸设置
+          _buildSection(
+            title: '页面尺寸',
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: '宽度',
+                        suffix: Text('px'),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      controller:
+                          TextEditingController(text: _pageWidth.toString()),
+                      onChanged: (value) {
+                        final width = double.tryParse(value);
+                        if (width != null && width > 0) {
+                          setState(() {
+                            _pageWidth = width;
+                          });
+                          _updatePageProperties();
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  Expanded(
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        labelText: '高度',
+                        suffix: Text('px'),
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      controller:
+                          TextEditingController(text: _pageHeight.toString()),
+                      onChanged: (value) {
+                        final height = double.tryParse(value);
+                        if (height != null && height > 0) {
+                          setState(() {
+                            _pageHeight = height;
+                          });
+                          _updatePageProperties();
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // 尺寸设置
-            const PropertyGroupTitle(title: '页面尺寸'),
-
-            // 预设尺寸选择
-            DropdownPropertyRow(
-              label: '预设尺寸',
-              value: _getSizePreset(),
-              options: const ['A4', 'A5', 'Square', 'Custom'],
-              displayLabels: const {
-                'A4': 'A4 (210 × 297 mm)',
-                'A5': 'A5 (148 × 210 mm)',
-                'Square': '方形 (210 × 210 mm)',
-                'Custom': '自定义尺寸',
-              },
-              onChanged: (value) {
-                if (value != null) {
-                  switch (value) {
-                    case 'A4':
-                      onPageChanged(page.setSize(210, 297));
-                      break;
-                    case 'A5':
-                      onPageChanged(page.setSize(148, 210));
-                      break;
-                    case 'Square':
-                      onPageChanged(page.setSize(210, 210));
-                      break;
-                    case 'Custom':
-                      // 自定义尺寸，保持当前值
-                      break;
-                  }
-                }
-              },
-            ),
-
-            // 宽度高度
-            Row(
-              children: [
-                const SizedBox(
-                  width: 100,
-                  child: Text(
-                    '宽度',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    initialValue: page.width.toString(),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(),
-                      suffix: Text('mm'),
-                    ),
-                    onChanged: (value) {
-                      final width = double.tryParse(value);
-                      if (width != null && width > 0) {
-                        onPageChanged(page.copyWith(width: width));
-                      }
+              const SizedBox(height: 12.0),
+              Row(
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _pageWidth = 595.0; // A4 width (72dpi)
+                        _pageHeight = 842.0; // A4 height (72dpi)
+                      });
+                      _updatePageProperties();
                     },
+                    child: const Text('A4'),
                   ),
-                ),
-                const SizedBox(width: 16),
-                const SizedBox(
-                  width: 100,
-                  child: Text(
-                    '高度',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                SizedBox(
-                  width: 80,
-                  child: TextFormField(
-                    initialValue: page.height.toString(),
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      isDense: true,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      border: OutlineInputBorder(),
-                      suffix: Text('mm'),
-                    ),
-                    onChanged: (value) {
-                      final height = double.tryParse(value);
-                      if (height != null && height > 0) {
-                        onPageChanged(page.copyWith(height: height));
-                      }
+                  const SizedBox(width: 8.0),
+                  OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        _pageWidth = 612.0; // Letter width (72dpi)
+                        _pageHeight = 792.0; // Letter height (72dpi)
+                      });
+                      _updatePageProperties();
                     },
+                    child: const Text('Letter'),
                   ),
+                ],
+              ),
+            ],
+          ),
+
+          // 背景设置
+          _buildSection(
+            title: '背景设置',
+            children: [
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: '背景颜色',
+                  prefixText: '#',
+                  border: OutlineInputBorder(),
                 ),
-              ],
-            ),
-            const Divider(),
-
-            // 页边距设置
-            const PropertyGroupTitle(title: '页边距'),
-            _buildMarginControls(page.margin, (margin) {
-              onPageChanged(page.copyWith(margin: margin));
-            }),
-
-            // 背景设置
-            const PropertyGroupTitle(title: '背景设置'),
-
-            // 背景类型
-            DropdownPropertyRow(
-              label: '背景类型',
-              value: page.backgroundType,
-              options: const ['color', 'image', 'texture'],
-              displayLabels: const {
-                'color': '纯色',
-                'image': '图片',
-                'texture': '纹理',
-              },
-              onChanged: (value) {
-                if (value != null) {
-                  onPageChanged(page.copyWith(backgroundType: value));
-                }
-              },
-            ),
-
-            // 根据背景类型显示对应设置
-            if (page.backgroundType == 'color')
-              ColorPropertyRow(
-                label: '背景颜色',
-                color: _parseColor(page.backgroundColor),
-                onChanged: (color) {
-                  onPageChanged(page.copyWith(
-                      backgroundColor:
-                          '#${color.value.toRadixString(16).substring(2).toUpperCase()}'));
+                controller: _backgroundColorController,
+                onChanged: (value) {
+                  // Update properties immediately when background color changes
+                  _updatePageProperties();
                 },
               ),
-
-            if (page.backgroundType == 'image') _buildBackgroundImageSelector(),
-
-            if (page.backgroundType == 'texture') _buildTextureSelector(),
-
-            // 背景透明度
-            SliderPropertyRow(
-              label: '透明度',
-              value: page.backgroundOpacity,
-              min: 0.0,
-              max: 1.0,
-              onChanged: (value) {
-                onPageChanged(page.copyWith(backgroundOpacity: value));
-              },
-              valueLabel: '${(page.backgroundOpacity * 100).toInt()}%',
-            ),
-
-            // 预览
-            const PropertyGroupTitle(title: '预览'),
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                color: Colors.grey.withOpacity(0.1),
-              ),
-              child: Center(
-                child: AspectRatio(
-                  aspectRatio: page.width / page.height,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: _parseColor(page.backgroundColor)
-                          .withOpacity(page.backgroundOpacity),
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.all(page.margin.top),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border:
-                              Border.all(color: Colors.grey.withOpacity(0.5)),
-                        ),
-                        child: const Center(
-                          child: Text('内容区域'),
-                        ),
-                      ),
+              const SizedBox(height: 12.0),
+              Row(
+                children: [
+                  const Text('透明度:'),
+                  Expanded(
+                    child: Slider(
+                      value: _backgroundOpacity,
+                      min: 0.0,
+                      max: 1.0,
+                      divisions: 100,
+                      label: '${(_backgroundOpacity * 100).round()}%',
+                      onChanged: (value) {
+                        setState(() {
+                          _backgroundOpacity = value;
+                        });
+                        // Update UI during sliding but mark as interactive
+                        _updatePagePropertiesInteractive();
+                      },
+                      onChangeEnd: (value) {
+                        // Record in undo/redo stack only when sliding ends
+                        _updatePageProperties();
+                      },
                     ),
                   ),
-                ),
+                  SizedBox(
+                    width: 40,
+                    child: Text(
+                      '${(_backgroundOpacity * 100).round()}%',
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  // 构建背景图片选择器
-  Widget _buildBackgroundImageSelector() {
-    return Row(
-      children: [
-        const SizedBox(
-          width: 100,
-          child: Text(
-            '背景图片',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(
-          child: TextFormField(
-            initialValue: page.backgroundImage ?? '',
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              border: OutlineInputBorder(),
-              hintText: '图片URL或本地路径',
-            ),
-            onChanged: (value) {
-              onPageChanged(page.copyWith(backgroundImage: value));
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        TextButton(
-          onPressed: () {
-            // 这里应该打开文件选择器
-            // 简化实现，使用一个示例图片
-            onPageChanged(
-                page.copyWith(backgroundImage: 'assets/images/background.jpg'));
-          },
-          child: const Text('浏览...'),
-        ),
-      ],
-    );
+  @override
+  void didUpdateWidget(covariant PagePropertyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.page != oldWidget.page) {
+      _initializeValues();
+    }
   }
 
-  // 构建边距控制UI
-  Widget _buildMarginControls(
-      EdgeInsets margin, Function(EdgeInsets) onChanged) {
-    return Column(
-      children: [
-        TextPropertyRow(
-          label: '上边距',
-          value: margin.top.toString(),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            final top = double.tryParse(value) ?? margin.top;
-            onChanged(EdgeInsets.only(
-              top: top,
-              left: margin.left,
-              right: margin.right,
-              bottom: margin.bottom,
-            ));
-          },
-        ),
-        TextPropertyRow(
-          label: '右边距',
-          value: margin.right.toString(),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            final right = double.tryParse(value) ?? margin.right;
-            onChanged(EdgeInsets.only(
-              top: margin.top,
-              left: margin.left,
-              right: right,
-              bottom: margin.bottom,
-            ));
-          },
-        ),
-        TextPropertyRow(
-          label: '下边距',
-          value: margin.bottom.toString(),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            final bottom = double.tryParse(value) ?? margin.bottom;
-            onChanged(EdgeInsets.only(
-              top: margin.top,
-              left: margin.left,
-              right: margin.right,
-              bottom: bottom,
-            ));
-          },
-        ),
-        TextPropertyRow(
-          label: '左边距',
-          value: margin.left.toString(),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            final left = double.tryParse(value) ?? margin.left;
-            onChanged(EdgeInsets.only(
-              top: margin.top,
-              left: left,
-              right: margin.right,
-              bottom: margin.bottom,
-            ));
-          },
-          divider: false,
-        ),
-      ],
-    );
+  @override
+  void dispose() {
+    _backgroundColorController.dispose();
+    super.dispose();
   }
 
-  // 构建纹理选择器
-  Widget _buildTextureSelector() {
-    final textures = [
-      {'name': '无纹理', 'value': ''},
-      {'name': '米字格', 'value': 'grid_mi'},
-      {'name': '田字格', 'value': 'grid_tian'},
-      {'name': '回字格', 'value': 'grid_hui'},
-      {'name': '九宫格', 'value': 'grid_nine'},
-    ];
+  @override
+  void initState() {
+    super.initState();
+    _initializeValues();
+  }
 
+  // 构建面板分区
+  Widget _buildSection({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const SizedBox(
-              width: 100,
-              child: Text(
-                '纹理样式',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Expanded(
-              child: DropdownButton<String>(
-                value: page.backgroundTexture ?? '',
-                isExpanded: true,
-                hint: const Text('选择纹理'),
-                items: textures.map((texture) {
-                  return DropdownMenuItem<String>(
-                    value: texture['value']!,
-                    child: Text(texture['name']!),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  onPageChanged(page.copyWith(backgroundTexture: value));
-                },
-              ),
-            ),
-          ],
-        ),
-        const Divider(),
-
-        // 纹理预览
-        if (page.backgroundTexture != null &&
-            page.backgroundTexture!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Row(
-              children: [
-                const SizedBox(
-                  width: 100,
-                  child: Text(
-                    '纹理预览',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    image: DecorationImage(
-                      image: AssetImage(
-                          'assets/textures/${page.backgroundTexture}.png'),
-                      repeat: ImageRepeat.repeat,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(4.0),
           ),
+          child: Row(
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        ...children,
+        const SizedBox(height: 16.0),
       ],
     );
   }
 
-  // 确定当前页面尺寸对应哪个预设
-  String _getSizePreset() {
-    if (page.width == 210 && page.height == 297) return 'A4';
-    if (page.width == 148 && page.height == 210) return 'A5';
-    if (page.width == 210 && page.height == 210) return 'Square';
-    return 'Custom';
+  // 初始化值
+  void _initializeValues() {
+    final page = widget.page;
+    if (page != null) {
+      // 初始化尺寸
+      _pageWidth = (page['width'] as num?)?.toDouble() ?? 595.0;
+      _pageHeight = (page['height'] as num?)?.toDouble() ?? 842.0;
+
+      // 初始化背景颜色
+      String backgroundColor =
+          (page['backgroundColor'] as String?) ?? '#FFFFFF';
+      if (backgroundColor.startsWith('#')) {
+        backgroundColor = backgroundColor.substring(1);
+      }
+      _backgroundColorController = TextEditingController(text: backgroundColor);
+
+      // 初始化透明度
+      _backgroundOpacity =
+          (page['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
+    } else {
+      // 默认值
+      _pageWidth = 595.0;
+      _pageHeight = 842.0;
+      _backgroundColorController = TextEditingController(text: 'FFFFFF');
+      _backgroundOpacity = 1.0;
+    }
   }
 
-  // 颜色字符串转Color对象
-  Color _parseColor(String colorString) {
-    return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+  // 更新页面属性 - 最终更新，记录撤销/重做历史
+  void _updatePageProperties() {
+    String backgroundColor = _backgroundColorController.text;
+    if (!backgroundColor.startsWith('#')) {
+      backgroundColor = '#$backgroundColor';
+    }
+
+    final properties = {
+      'width': _pageWidth,
+      'height': _pageHeight,
+      'backgroundColor': backgroundColor,
+      'backgroundOpacity': _backgroundOpacity,
+    };
+
+    widget.onPagePropertiesChanged(properties);
+  }
+
+  // 更新页面属性 - 交互式更新，不记录撤销/重做历史
+  void _updatePagePropertiesInteractive() {
+    String backgroundColor = _backgroundColorController.text;
+    if (!backgroundColor.startsWith('#')) {
+      backgroundColor = '#$backgroundColor';
+    }
+
+    final properties = {
+      'width': _pageWidth,
+      'height': _pageHeight,
+      'backgroundColor': backgroundColor,
+      'backgroundOpacity': _backgroundOpacity,
+    };
+
+    // Call the controller's method with isInteractive flag
+    if (widget.controller.state.currentPageIndex >= 0) {
+      final page = widget.controller.state.currentPage;
+      if (page != null) {
+        // Update the page properties directly without recording in undo/redo stack
+        properties.forEach((key, value) {
+          page[key] = value;
+        });
+        // Force a UI update without recording in undo/redo stack
+        widget.controller.state.hasUnsavedChanges = true; // Mark as unsaved
+        setState(() {}); // Update the UI
+      }
+    }
   }
 }

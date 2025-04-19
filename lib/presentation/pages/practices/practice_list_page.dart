@@ -1,11 +1,10 @@
+import 'package:demo/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 
 // 添加
 import '../../../theme/app_sizes.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/page_toolbar.dart';
-import 'practice_detail_page.dart';
-import 'practice_edit_page.dart'; // 添加
 
 class PracticeListPage extends StatefulWidget {
   const PracticeListPage({super.key});
@@ -34,8 +33,8 @@ class _PracticeListPageState extends State<PracticeListPage> {
             tooltip: _isGridView ? '列表视图' : '网格视图',
           ),
         ],
-        trailing: [
-          const SizedBox(
+        trailing: const [
+          SizedBox(
             width: 240,
             child: SearchBar(
               hintText: '搜索练习...',
@@ -132,21 +131,13 @@ class _PracticeListPageState extends State<PracticeListPage> {
     );
   }
 
-  void _navigateToEditPage([String? practiceId]) {
-    Navigator.push(
+  void _navigateToEditPage([String? practiceId]) async {
+    await Navigator.pushNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => PracticeEditPage(practiceId: practiceId),
-      ),
+      AppRoutes.practiceEdit,
+      arguments: practiceId,
     );
   }
 
-  void _navigateToPracticeDetail(BuildContext context, String practiceId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PracticeDetailPage(practiceId: practiceId),
-      ),
-    );
-  }
+  void _navigateToPracticeDetail(BuildContext context, String practiceId) {}
 }

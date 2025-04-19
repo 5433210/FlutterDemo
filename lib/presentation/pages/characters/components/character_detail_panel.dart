@@ -348,72 +348,76 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: InkWell(
-                    onTap: () {
-                      ref.read(selectedFormatProvider.notifier).state = index;
-                    },
-                    borderRadius: BorderRadius.circular(4),
-                    child: Container(
-                      width: 80,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline,
-                          width: isSelected ? 2 : 1,
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Image thumbnail
-                          Expanded(
-                              child: FutureBuilder<String>(
-                            future: format.resolvePath(characterId),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                    child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                ));
-                              }
-
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: Image.file(
-                                  File(snapshot.data ?? ''),
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Center(
-                                      child: Text(
-                                        state.character?.character ?? '',
-                                        style: theme.textTheme.bodyLarge,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                          )),
-                          const SizedBox(height: 4),
-                          // Format label
-                          Text(
-                            label,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color:
-                                  isSelected ? theme.colorScheme.primary : null,
-                              fontWeight: isSelected ? FontWeight.bold : null,
-                            ),
-                            textAlign: TextAlign.center,
-                            overflow: TextOverflow.ellipsis,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        ref.read(selectedFormatProvider.notifier).state = index;
+                      },
+                      borderRadius: BorderRadius.circular(4),
+                      child: Container(
+                        width: 80,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outline,
+                            width: isSelected ? 2 : 1,
                           ),
-                        ],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Image thumbnail
+                            Expanded(
+                                child: FutureBuilder<String>(
+                              future: format.resolvePath(characterId),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ));
+                                }
+
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(2),
+                                  child: Image.file(
+                                    File(snapshot.data ?? ''),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Text(
+                                          state.character?.character ?? '',
+                                          style: theme.textTheme.bodyLarge,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            )),
+                            const SizedBox(height: 4),
+                            // Format label
+                            Text(
+                              label,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : null,
+                                fontWeight: isSelected ? FontWeight.bold : null,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -562,8 +566,8 @@ class _CharacterDetailPanelState extends ConsumerState<CharacterDetailPanel> {
           // Check if the file is an SVG format
           if (imagePath.toLowerCase().endsWith('.svg')) {
             // Use SvgPicture for SVG files
-            return SvgPicture.file(
-              file,
+            return SvgPicture.asset(
+              imagePath,
               fit: BoxFit.contain,
               placeholderBuilder: (context) => const Center(
                 child: CircularProgressIndicator(),

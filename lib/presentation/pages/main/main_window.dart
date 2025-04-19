@@ -1,6 +1,6 @@
+import 'package:demo/presentation/pages/practices/practice_edit_page.dart';
 import 'package:flutter/material.dart';
 
-import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
 import '../../../presentation/pages/works/work_browse_page.dart';
 import '../../../presentation/pages/works/work_detail_page.dart';
@@ -9,6 +9,7 @@ import '../../../presentation/widgets/window/title_bar.dart';
 import '../../../routes/app_routes.dart';
 import '../characters/character_management_page.dart'
     show CharacterManagementPage;
+import '../practices/practice_list_page.dart';
 
 class MainWindow extends StatefulWidget {
   const MainWindow({super.key});
@@ -90,7 +91,29 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
       case 1:
         return const CharacterManagementPage();
       case 2:
-        return const PracticeListPage();
+        return Navigator(
+          key: ValueKey('practice_navigator_$_selectedIndex'),
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.practiceEdit) {
+              String practiceId;
+              if (settings.arguments != null) {
+                practiceId = settings.arguments as String;
+              } else {
+                practiceId = '';
+              }
+
+              return MaterialPageRoute<bool>(
+                // 指定返回值类型为bool
+                builder: (context) => PracticeEditPage(
+                  practiceId: practiceId,
+                ),
+              );
+            }
+            return MaterialPageRoute(
+              builder: (context) => const PracticeListPage(),
+            );
+          },
+        );
       case 3:
         return const SettingsPage();
       default:

@@ -1,131 +1,208 @@
 import 'package:flutter/material.dart';
 
-/// 编辑工具栏组件
+import 'practice_edit_controller.dart';
+
+/// 编辑工具栏
 class EditToolbar extends StatelessWidget {
+  final PracticeEditController controller;
   final bool gridVisible;
   final bool snapEnabled;
-  final bool hasSelection;
-  final bool isGroupSelection;
-  final bool hasMultiSelection;
-  final Function(String) onToolSelected;
-  final VoidCallback? onCopy;
-  final VoidCallback? onPaste;
-  final VoidCallback? onDelete;
-  final VoidCallback? onGroup;
-  final VoidCallback? onUngroup;
   final VoidCallback onToggleGrid;
-  final Function(double) onSetGridSize;
-  final Function(bool) onToggleSnap;
+  final VoidCallback onToggleSnap;
+  final VoidCallback onCopy;
+  final VoidCallback onPaste;
+  final VoidCallback onGroupElements;
+  final VoidCallback onUngroupElements;
+  final VoidCallback onBringToFront;
+  final VoidCallback onSendToBack;
+  final VoidCallback onMoveUp;
+  final VoidCallback onMoveDown;
+  final VoidCallback onDelete;
 
   const EditToolbar({
-    super.key,
+    Key? key,
+    required this.controller,
     required this.gridVisible,
     required this.snapEnabled,
-    required this.hasSelection,
-    required this.isGroupSelection,
-    required this.hasMultiSelection,
-    required this.onToolSelected,
-    this.onCopy,
-    this.onPaste,
-    this.onDelete,
-    this.onGroup,
-    this.onUngroup,
     required this.onToggleGrid,
-    required this.onSetGridSize,
     required this.onToggleSnap,
-  });
+    required this.onCopy,
+    required this.onPaste,
+    required this.onGroupElements,
+    required this.onUngroupElements,
+    required this.onBringToFront,
+    required this.onSendToBack,
+    required this.onMoveUp,
+    required this.onMoveDown,
+    required this.onDelete,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final hasSelection = controller.state.selectedElementIds.isNotEmpty;
+    final isMultiSelected = controller.state.selectedElementIds.length > 1;
+    final hasSelectedGroup =
+        hasSelection && !isMultiSelected && _isSelectedElementGroup();
+
     return Container(
       height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            .withOpacity(0.3),
+        color: Colors.white,
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerColor),
+          bottom: BorderSide(color: Colors.grey.shade300),
         ),
       ),
       child: Row(
         children: [
           // 编辑操作组
-          IconButton(
-            icon: const Icon(Icons.pan_tool),
-            tooltip: '页面平移',
-            onPressed: () => onToolSelected('pan'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.content_copy),
-            tooltip: '复制',
-            onPressed: hasSelection ? onCopy : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.content_paste),
-            tooltip: '粘贴',
-            onPressed: onPaste,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: '删除',
-            onPressed: hasSelection ? onDelete : null,
-          ),
-
-          const VerticalDivider(),
-
-          // 组合操作
-          IconButton(
-            icon: const Icon(Icons.group_work),
-            tooltip: '组合',
-            onPressed: hasMultiSelection ? onGroup : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.group_work_outlined),
-            tooltip: '取消组合',
-            onPressed: isGroupSelection ? onUngroup : null,
-          ),
-
-          const VerticalDivider(),
-
-          // 辅助功能组
-          Row(
+          _buildToolbarGroup(
+            title: '编辑操作',
             children: [
-              const Text('网格: ', style: TextStyle(fontSize: 14)),
-              IconButton(
-                icon: Icon(gridVisible ? Icons.grid_on : Icons.grid_off),
-                tooltip: '显示网格',
-                onPressed: onToggleGrid,
+              _buildToolbarButton(
+                icon: Icons.copy,
+                tooltip: '复制',
+                onPressed: hasSelection ? onCopy : null,
               ),
-              const SizedBox(width: 8),
-              DropdownButton<double>(
-                value: 20.0, // 假设网格默认大小是20
-                items: const [
-                  DropdownMenuItem(value: 10.0, child: Text('10px')),
-                  DropdownMenuItem(value: 20.0, child: Text('20px')),
-                  DropdownMenuItem(value: 50.0, child: Text('50px')),
-                ],
-                onChanged:
-                    gridVisible ? (value) => onSetGridSize(value!) : null,
+              _buildToolbarButton(
+                icon: Icons.paste,
+                tooltip: '粘贴',
+                onPressed: onPaste,
+              ),
+              _buildToolbarButton(
+                icon: Icons.delete,
+                tooltip: '删除',
+                onPressed: hasSelection ? onDelete : null,
+              ),
+              _buildToolbarButton(
+                icon: Icons.group,
+                tooltip: '组合',
+                onPressed: isMultiSelected ? onGroupElements : null,
+              ),
+              _buildToolbarButton(
+                icon: Icons.format_shapes,
+                tooltip: '取消组合',
+                onPressed: hasSelectedGroup ? onUngroupElements : null,
               ),
             ],
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
+          const VerticalDivider(),
+          const SizedBox(width: 8),
 
-          // 吸附开关
-          Row(
+          // 层级操作组
+          _buildToolbarGroup(
+            title: '层级操作',
             children: [
-              const Text('吸附: ', style: TextStyle(fontSize: 14)),
-              Switch(
-                value: snapEnabled,
-                onChanged: onToggleSnap,
+              _buildToolbarButton(
+                icon: Icons.vertical_align_top,
+                tooltip: '置于顶层',
+                onPressed: hasSelection ? onBringToFront : null,
+              ),
+              _buildToolbarButton(
+                icon: Icons.vertical_align_bottom,
+                tooltip: '置于底层',
+                onPressed: hasSelection ? onSendToBack : null,
+              ),
+              _buildToolbarButton(
+                icon: Icons.arrow_upward,
+                tooltip: '上移一层',
+                onPressed: hasSelection ? onMoveUp : null,
+              ),
+              _buildToolbarButton(
+                icon: Icons.arrow_downward,
+                tooltip: '下移一层',
+                onPressed: hasSelection ? onMoveDown : null,
+              ),
+            ],
+          ),
+
+          const SizedBox(width: 8),
+          const VerticalDivider(),
+          const SizedBox(width: 8),
+
+          // 辅助功能组
+          _buildToolbarGroup(
+            title: '辅助功能',
+            children: [
+              _buildToolbarButton(
+                icon: gridVisible ? Icons.grid_on : Icons.grid_off,
+                tooltip: gridVisible ? '隐藏网格' : '显示网格',
+                onPressed: onToggleGrid,
+                isActive: gridVisible,
+              ),
+              _buildToolbarButton(
+                icon: Icons
+                    .format_line_spacing, // Alternative icon for snapping/alignment
+                tooltip: snapEnabled ? '禁用吸附' : '启用吸附',
+                onPressed: onToggleSnap,
+                isActive: snapEnabled,
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  /// 构建工具栏按钮
+  Widget _buildToolbarButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        icon: Icon(
+          icon,
+          color: isActive ? Colors.blue : null,
+          size: 20,
+        ),
+        onPressed: onPressed,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(
+          minWidth: 40,
+          minHeight: 40,
+        ),
+      ),
+    );
+  }
+
+  /// 构建工具栏分组
+  Widget _buildToolbarGroup({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 工具组标题
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 工具按钮组
+        ...children,
+      ],
+    );
+  }
+
+  /// 检查选中的元素是否为组合元素
+  bool _isSelectedElementGroup() {
+    if (controller.state.selectedElementIds.isEmpty) return false;
+
+    final id = controller.state.selectedElementIds.first;
+    final element = controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == id,
+      orElse: () => {'type': ''},
+    );
+
+    return element['type'] == 'group';
   }
 }

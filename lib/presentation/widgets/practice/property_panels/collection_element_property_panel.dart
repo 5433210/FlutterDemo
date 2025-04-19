@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/practice/practice_element.dart';
+import '../collection_manager.dart';
 import 'property_panel_base.dart';
 
 /// 集字内容元素的属性面板
-class CollectionElementPropertyPanel extends StatelessWidget {
+class CollectionElementPropertyPanel extends StatefulWidget {
   final CollectionElement element;
   final Function(PracticeElement) onElementChanged;
 
@@ -13,6 +14,40 @@ class CollectionElementPropertyPanel extends StatelessWidget {
     required this.element,
     required this.onElementChanged,
   }) : super(key: key);
+
+  @override
+  State<CollectionElementPropertyPanel> createState() =>
+      _CollectionElementPropertyPanelState();
+}
+
+class _CollectionElementPropertyPanelState
+    extends State<CollectionElementPropertyPanel> {
+  // 集字管理器
+  final CollectionManager _collectionManager = CollectionManager();
+
+  // 当前选中的字符索引
+  int? _selectedCharIndex;
+
+  // 当前选中的风格
+  String? _selectedStyle;
+
+  // 当前选中的工具
+  String? _selectedTool;
+
+  // 候选集字项
+  List<Map<String, dynamic>> _candidateItems = [];
+
+  // 是否正在加载候选项
+  bool _isLoadingCandidates = false;
+
+  // 搜索关键词
+  String _searchKeyword = '';
+
+  // 搜索控制器
+  final TextEditingController _searchController = TextEditingController();
+
+  // 获取元素
+  CollectionElement get element => widget.element;
 
   @override
   Widget build(BuildContext context) {
@@ -163,9 +198,9 @@ class CollectionElementPropertyPanel extends StatelessWidget {
               label: '字体颜色',
               color: _parseColor(element.fontColor),
               onChanged: (color) {
-                onElementChanged(element.copyWith(
-                    fontColor:
-                        '#${color.value.toRadixString(16).substring(2).toUpperCase()}'));
+                // 将Color转换为十六进制字符串
+                final hexColor = '#${color.toString().substring(10, 16)}';
+                onElementChanged(element.copyWith(fontColor: hexColor));
               },
             ),
 
@@ -174,9 +209,9 @@ class CollectionElementPropertyPanel extends StatelessWidget {
               label: '背景颜色',
               color: _parseColor(element.backgroundColor),
               onChanged: (color) {
-                onElementChanged(element.copyWith(
-                    backgroundColor:
-                        '#${color.value.toRadixString(16).substring(2).toUpperCase()}'));
+                // 将Color转换为十六进制字符串
+                final hexColor = '#${color.toString().substring(10, 16)}';
+                onElementChanged(element.copyWith(backgroundColor: hexColor));
               },
             ),
 
@@ -251,22 +286,137 @@ class CollectionElementPropertyPanel extends StatelessWidget {
                   style: TextStyle(fontStyle: FontStyle.italic),
                 ),
               ),
-              // 简化的候选集字UI，实际应用中会更复杂
+              // 候选集字筛选工具栏
+              Row(
+                children: [
+                  // 风格筛选
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: '风格',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: _selectedStyle,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('全部风格'),
+                        ),
+                        ..._collectionManager
+                            .getCollectionStyles()
+                            .map((style) {
+                          return DropdownMenuItem<String>(
+                            value: style,
+                            child: Text(style),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedStyle = value;
+                          _loadCandidateItems();
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // 工具筛选
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: '工具',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: _selectedTool,
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('全部工具'),
+                        ),
+                        ..._collectionManager.getCollectionTools().map((tool) {
+                          return DropdownMenuItem<String>(
+                            value: tool,
+                            child: Text(tool),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedTool = value;
+                          _loadCandidateItems();
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 搜索框
+              TextField(
+                controller: _searchController,
+                decoration: const InputDecoration(
+                  labelText: '搜索',
+                  hintText: '输入关键词搜索',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _loadCandidateItems(),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 候选集字列表
               Container(
-                height: 100,
+                height: 300,
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Center(
-                  child: Text('候选集字加载中...'),
-                ),
+                child: _isLoadingCandidates
+                    ? const Center(child: CircularProgressIndicator())
+                    : _candidateItems.isEmpty
+                        ? const Center(child: Text('没有找到匹配的集字内容'))
+                        : _buildCandidateItemsGrid(),
               ),
             ],
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 初始加载候选集字项
+    if (_candidateItems.isEmpty && element.characters.isNotEmpty) {
+      _loadCandidateItems();
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchKeyword = _searchController.text;
+      });
+    });
+  }
+
+  // 更新元素
+  void onElementChanged(PracticeElement updatedElement) {
+    widget.onElementChanged(updatedElement);
   }
 
   // 对齐方式转字符串
@@ -280,6 +430,82 @@ class CollectionElementPropertyPanel extends StatelessWidget {
     if (alignment == Alignment.bottomCenter) return 'bottomCenter';
     if (alignment == Alignment.bottomRight) return 'bottomRight';
     return 'center';
+  }
+
+  // 构建候选集字项网格
+  Widget _buildCandidateItemsGrid() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 5,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 1,
+      ),
+      itemCount: _candidateItems.length,
+      itemBuilder: (context, index) {
+        final item = _candidateItems[index];
+
+        return InkWell(
+          onTap: () => _selectCandidateItem(item),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.withAlpha(128)),
+              color: Colors.white,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // 字符图片
+                Center(
+                  child: item.containsKey('imageUrl')
+                      ? Image.network(
+                          item['imageUrl'] as String,
+                          fit: BoxFit.contain,
+                        )
+                      : Text(
+                          item['character'] as String,
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                ),
+
+                // 字符信息
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    color: Colors.black54,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          item['character'] as String,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${item['style']} - ${item['author']}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // 构建字符预览网格
@@ -305,48 +531,79 @@ class CollectionElementPropertyPanel extends StatelessWidget {
           orElse: () => <String, dynamic>{},
         );
 
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.withOpacity(0.5)),
-            color: Colors.white,
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // 字符图片或占位符
-              Center(
-                child: charImage.isNotEmpty && charImage.containsKey('imageUrl')
-                    ? Image.network(
-                        charImage['imageUrl'] as String,
-                        fit: BoxFit.contain,
-                      )
-                    : Text(
-                        char,
-                        style: TextStyle(
-                          fontSize: 32,
-                          color: _parseColor(element.fontColor),
-                        ),
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _selectedCharIndex = index;
+            });
+            _loadCandidateItems();
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: _selectedCharIndex == index
+                      ? Colors.blue
+                      : Colors.grey.withAlpha(128)),
+              color: Colors.white,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // 字符图片或占位符
+                Center(
+                  child:
+                      charImage.isNotEmpty && charImage.containsKey('imageUrl')
+                          ? Image.network(
+                              charImage['imageUrl'] as String,
+                              fit: BoxFit.contain,
+                            )
+                          : Text(
+                              char,
+                              style: TextStyle(
+                                fontSize: 32,
+                                color: _parseColor(element.fontColor),
+                              ),
+                            ),
+                ),
+                // 字符信息
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    color: Colors.black54,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Text(
+                      char,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
                       ),
-              ),
-              // 字符信息
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.black54,
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text(
-                    char,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
                     ),
                   ),
                 ),
-              ),
-            ],
+
+                // 选中标记
+                if (_selectedCharIndex == index)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(
+                        Icons.check,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },
@@ -419,6 +676,39 @@ class CollectionElementPropertyPanel extends StatelessWidget {
     );
   }
 
+  // 加载候选集字项
+  Future<void> _loadCandidateItems() async {
+    if (element.characters.isEmpty) return;
+
+    setState(() {
+      _isLoadingCandidates = true;
+    });
+
+    try {
+      // 如果有选中的字符索引，只加载该字符的候选项
+      final query = _selectedCharIndex != null
+          ? element.characters.split('')[_selectedCharIndex!]
+          : element.characters;
+
+      final items = await _collectionManager.getCollectionItems(
+        query,
+        style: _selectedStyle,
+        tool: _selectedTool,
+        limit: 20,
+        offset: 0,
+      );
+
+      setState(() {
+        _candidateItems = items;
+        _isLoadingCandidates = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCandidates = false;
+      });
+    }
+  }
+
   // 字符串转对齐方式
   Alignment _parseAlignment(String align) {
     switch (align) {
@@ -446,5 +736,65 @@ class CollectionElementPropertyPanel extends StatelessWidget {
   // 颜色字符串转Color对象
   Color _parseColor(String colorString) {
     return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+  }
+
+  // 选择候选集字项
+  void _selectCandidateItem(Map<String, dynamic> item) {
+    if (_selectedCharIndex == null) {
+      // 如果没有选中字符，则替换所有字符
+      final characters = element.characters.split('');
+      final characterImages =
+          List<Map<String, dynamic>>.from(element.characterImages);
+
+      // 更新所有字符的图片
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+        if (char == item['character']) {
+          // 查找字符在图片列表中的索引
+          final index =
+              characterImages.indexWhere((img) => img['character'] == char);
+
+          if (index >= 0) {
+            // 如果存在，则替换
+            characterImages[index] = item;
+          } else {
+            // 如果不存在，则添加
+            characterImages.add(item);
+          }
+        }
+      }
+
+      // 更新元素
+      onElementChanged(element.copyWith(characterImages: characterImages));
+    } else {
+      // 如果有选中字符，则只替换该字符
+      final characters = element.characters.split('');
+      final characterImages =
+          List<Map<String, dynamic>>.from(element.characterImages);
+
+      if (_selectedCharIndex! < characters.length) {
+        final char = characters[_selectedCharIndex!];
+
+        // 查找字符在图片列表中的索引
+        final index =
+            characterImages.indexWhere((img) => img['character'] == char);
+
+        if (index >= 0) {
+          // 如果存在，则替换
+          characterImages[index] = item;
+        } else {
+          // 如果不存在，则添加
+          characterImages.add(item);
+        }
+
+        // 更新元素
+        onElementChanged(element.copyWith(characterImages: characterImages));
+      }
+    }
+
+    // 清除选中状态
+    setState(() {
+      _selectedCharIndex = null;
+    });
   }
 }

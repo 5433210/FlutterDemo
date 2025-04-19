@@ -1,125 +1,115 @@
-import 'package:flutter/material.dart';
-import '../../../domain/models/practice/practice_element.dart';
-import '../../../domain/models/practice/practice_page.dart';
-
-/// 编辑状态数据类
+/// 字帖编辑状态类
 class PracticeEditState {
-  // 基本状态
-  bool hasUnsavedChanges;
-  List<Map<String, dynamic>> layers;
+  // 页面相关
+  List<Map<String, dynamic>> pages = [];
+  int currentPageIndex = -1;
+  bool isPageThumbnailsVisible = true;
+
+  // 图层相关
+  List<dynamic> layers = [];
+  String? selectedLayerId;
+
+  // 元素选择相关
+  List<String> selectedElementIds = [];
   Map<String, dynamic>? selectedElement;
-  bool isPageThumbnailsVisible;
-  List<Map<String, dynamic>> pages;
-  int currentPageIndex;
-  double currentZoom;
 
-  // 工具状态
-  bool gridVisible;
-  bool snapEnabled;
-  
-  // 选中元素状态
-  List<String> selectedElementIds;
+  // 辅助功能相关
+  bool gridVisible = false;
+  bool snapEnabled = false;
+  double gridSize = 20.0;
 
-  // 构造函数
-  PracticeEditState({
-    this.hasUnsavedChanges = false,
-    List<Map<String, dynamic>>? layers,
-    this.selectedElement,
-    this.isPageThumbnailsVisible = true,
-    List<Map<String, dynamic>>? pages,
-    this.currentPageIndex = 0,
-    this.currentZoom = 1.0,
-    this.gridVisible = false,
-    this.snapEnabled = true,
-    List<String>? selectedElementIds,
-  }) : 
-    layers = layers ?? [],
-    pages = pages ?? [],
-    selectedElementIds = selectedElementIds ?? [];
+  // 状态标志
+  bool hasUnsavedChanges = false;
 
-  // 获取当前页面
+  /// 获取当前页面
   Map<String, dynamic>? get currentPage {
-    return currentPageIndex < pages.length ? pages[currentPageIndex] : null;
+    if (currentPageIndex >= 0 && currentPageIndex < pages.length) {
+      return pages[currentPageIndex];
+    }
+    return null;
   }
 
-  // 获取当前页面的元素列表
+  /// 获取当前页面的元素列表
   List<Map<String, dynamic>> get currentPageElements {
-    if (currentPage == null) return [];
-    
-    final elements = currentPage!['elements'] as List<dynamic>? ?? [];
-    return elements.map((e) => e as Map<String, dynamic>).toList();
-  }
-
-  // 创建副本
-  PracticeEditState copy() {
-    return PracticeEditState(
-      hasUnsavedChanges: hasUnsavedChanges,
-      layers: List.from(layers),
-      selectedElement: selectedElement != null 
-          ? Map<String, dynamic>.from(selectedElement!) 
-          : null,
-      isPageThumbnailsVisible: isPageThumbnailsVisible,
-      pages: List.from(pages),
-      currentPageIndex: currentPageIndex,
-      currentZoom: currentZoom,
-      gridVisible: gridVisible,
-      snapEnabled: snapEnabled,
-      selectedElementIds: List.from(selectedElementIds),
-    );
-  }
-
-  // 将 PracticeElement 转换为 Map
-  static Map<String, dynamic>? practiceElementToMap(PracticeElement? element) {
-    if (element == null) return null;
-    return element.toMap();
-  }
-
-  // 将 Map 转换为 PracticeElement
-  static PracticeElement? mapToPracticeElement(Map<String, dynamic>? map) {
-    if (map == null) return null;
-    
-    try {
-      return PracticeElement.fromMap(map);
-    } catch (e) {
-      debugPrint('Error converting element: $e');
-      return null;
+    if (currentPage != null) {
+      final elements = currentPage!['elements'] as List<dynamic>;
+      return List<Map<String, dynamic>>.from(elements);
     }
+    return [];
   }
 
-  // 将 PracticePage 转换为 Map
-  static Map<String, dynamic> practicePageToMap(PracticePage page) {
-    return {
-      'id': page.id,
-      'name': page.name,
-      'index': page.index,
-      'width': page.width,
-      'height': page.height,
-      'backgroundType': page.backgroundType,
-      'backgroundImage': page.backgroundImage,
-      'backgroundColor': page.backgroundColor,
-      'backgroundTexture': page.backgroundTexture,
-      'backgroundOpacity': page.backgroundOpacity,
-    };
+  /// 检查是否有未保存的更改
+  bool get hasChanges => hasUnsavedChanges;
+
+  /// 根据ID查找元素
+  Map<String, dynamic>? getElementById(String id) {
+    if (currentPage == null) return null;
+
+    final elements = currentPageElements;
+    final index = elements.indexWhere((e) => e['id'] == id);
+    if (index >= 0) {
+      return elements[index];
+    }
+
+    // 检查组合元素内的子元素
+    for (final element in elements) {
+      if (element['type'] == 'group') {
+        final content = element['content'] as Map<String, dynamic>;
+        final children = content['children'] as List<dynamic>;
+        for (final child in children) {
+          final childMap = child as Map<String, dynamic>;
+          if (childMap['id'] == id) {
+            return childMap;
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
-  // 将 Map 转换为 PracticePage
-  static PracticePage mapToPracticePage(Map<String, dynamic> map) {
-    try {
-      return PracticePage(
-        id: map['id'] as String? ?? 'default',
-        name: map['name'] as String? ?? '',
-        index: (map['index'] as int?) ?? 0,
-        width: (map['width'] as num?)?.toDouble() ?? 210.0,
-        height: (map['height'] as num?)?.toDouble() ?? 297.0,
-        backgroundType: map['backgroundType'] as String? ?? 'color',
-        backgroundImage: map['backgroundImage'] as String?,
-        backgroundColor: map['backgroundColor'] as String? ?? '#FFFFFF',
-        backgroundTexture: map['backgroundTexture'] as String?,
-        backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 1.0,
+  /// 获取指定ID的图层
+  Map<String, dynamic>? getLayerById(String id) {
+    final index = layers.indexWhere((l) => l['id'] == id);
+    if (index >= 0) {
+      return layers[index] as Map<String, dynamic>;
+    }
+    return null;
+  }
+
+  /// 获取选中的元素列表
+  List<Map<String, dynamic>> getSelectedElements() {
+    final result = <Map<String, dynamic>>[];
+    if (currentPage == null) return result;
+
+    final elements = currentPageElements;
+    for (final id in selectedElementIds) {
+      final element = elements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
       );
-    } catch (e) {
-      debugPrint('Error converting page: $e');
-      return PracticePage.defaultPage();
+      if (element.isNotEmpty) {
+        result.add(element);
+      }
     }
+
+    return result;
+  }
+
+  /// 检查指定图层是否锁定
+  bool isLayerLocked(String layerId) {
+    final layer = getLayerById(layerId);
+    return layer != null && (layer['isLocked'] as bool? ?? false);
+  }
+
+  /// 检查指定图层是否可见
+  bool isLayerVisible(String layerId) {
+    final layer = getLayerById(layerId);
+    return layer != null && (layer['isVisible'] as bool? ?? true);
+  }
+
+  /// 标记已保存
+  void markSaved() {
+    hasUnsavedChanges = false;
   }
 }
