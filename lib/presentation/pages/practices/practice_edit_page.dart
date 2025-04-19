@@ -954,36 +954,49 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  /// 显示图片URL输入对话框
+  /// 选择本地图片
   Future<void> _showImageUrlDialog(BuildContext context) async {
-    String imageUrl = '';
+    // 在实际应用中，这里应该使用文件选择器
+    // 例如使用 file_picker 或 image_picker 插件
+    // 以下是一个模拟实现，展示文件选择对话框
 
-    final result = await showDialog<bool>(
+    final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('添加图片'),
-        content: TextField(
-          decoration: const InputDecoration(
-            labelText: '图片URL',
-            hintText: '输入图片URL',
-          ),
-          onChanged: (value) => imageUrl = value,
+        title: const Text('选择图片'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('请选择要添加的图片文件'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () =>
+                  Navigator.pop(context, 'file://sample_image.jpg'),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.folder_open),
+                  SizedBox(width: 8),
+                  Text('浏览文件...'),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(context, null),
             child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('添加'),
           ),
         ],
       ),
     );
 
-    if (result == true && imageUrl.isNotEmpty) {
-      _controller.addImageElement(imageUrl);
+    if (result != null) {
+      // 在实际应用中，这里应该处理选择的文件
+      // 并将其转换为可用的URL或路径
+      _controller.addImageElement(result);
     }
   }
 }

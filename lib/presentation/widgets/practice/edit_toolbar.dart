@@ -52,95 +52,99 @@ class EditToolbar extends StatelessWidget {
           bottom: BorderSide(color: Colors.grey.shade300),
         ),
       ),
-      child: Row(
-        children: [
-          // 编辑操作组
-          _buildToolbarGroup(
-            title: '编辑操作',
-            children: [
-              _buildToolbarButton(
-                icon: Icons.copy,
-                tooltip: '复制',
-                onPressed: hasSelection ? onCopy : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.paste,
-                tooltip: '粘贴',
-                onPressed: onPaste,
-              ),
-              _buildToolbarButton(
-                icon: Icons.delete,
-                tooltip: '删除',
-                onPressed: hasSelection ? onDelete : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.group,
-                tooltip: '组合',
-                onPressed: isMultiSelected ? onGroupElements : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.format_shapes,
-                tooltip: '取消组合',
-                onPressed: hasSelectedGroup ? onUngroupElements : null,
-              ),
-            ],
-          ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 编辑操作组
+            _buildToolbarGroup(
+              title: '编辑操作',
+              children: [
+                _buildToolbarButton(
+                  icon: Icons.copy,
+                  tooltip: '复制',
+                  onPressed: hasSelection ? onCopy : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.paste,
+                  tooltip: '粘贴',
+                  onPressed: onPaste,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.delete,
+                  tooltip: '删除',
+                  onPressed: hasSelection ? onDelete : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.group,
+                  tooltip: '组合',
+                  onPressed: isMultiSelected ? onGroupElements : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.format_shapes,
+                  tooltip: '取消组合',
+                  onPressed: hasSelectedGroup ? onUngroupElements : null,
+                ),
+              ],
+            ),
 
-          const SizedBox(width: 8),
-          const VerticalDivider(),
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
+            const VerticalDivider(),
+            const SizedBox(width: 8),
 
-          // 层级操作组
-          _buildToolbarGroup(
-            title: '层级操作',
-            children: [
-              _buildToolbarButton(
-                icon: Icons.vertical_align_top,
-                tooltip: '置于顶层',
-                onPressed: hasSelection ? onBringToFront : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.vertical_align_bottom,
-                tooltip: '置于底层',
-                onPressed: hasSelection ? onSendToBack : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.arrow_upward,
-                tooltip: '上移一层',
-                onPressed: hasSelection ? onMoveUp : null,
-              ),
-              _buildToolbarButton(
-                icon: Icons.arrow_downward,
-                tooltip: '下移一层',
-                onPressed: hasSelection ? onMoveDown : null,
-              ),
-            ],
-          ),
+            // 层级操作组
+            _buildToolbarGroup(
+              title: '层级操作',
+              children: [
+                _buildToolbarButton(
+                  icon: Icons.vertical_align_top,
+                  tooltip: '置于顶层',
+                  onPressed: hasSelection ? onBringToFront : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.vertical_align_bottom,
+                  tooltip: '置于底层',
+                  onPressed: hasSelection ? onSendToBack : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.arrow_upward,
+                  tooltip: '上移一层',
+                  onPressed: hasSelection ? onMoveUp : null,
+                ),
+                _buildToolbarButton(
+                  icon: Icons.arrow_downward,
+                  tooltip: '下移一层',
+                  onPressed: hasSelection ? onMoveDown : null,
+                ),
+              ],
+            ),
 
-          const SizedBox(width: 8),
-          const VerticalDivider(),
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
+            const VerticalDivider(),
+            const SizedBox(width: 8),
 
-          // 辅助功能组
-          _buildToolbarGroup(
-            title: '辅助功能',
-            children: [
-              _buildToolbarButton(
-                icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                tooltip: gridVisible ? '隐藏网格' : '显示网格',
-                onPressed: onToggleGrid,
-                isActive: gridVisible,
-              ),
-              _buildToolbarButton(
-                icon: Icons
-                    .format_line_spacing, // Alternative icon for snapping/alignment
-                tooltip: snapEnabled ? '禁用吸附' : '启用吸附',
-                onPressed: onToggleSnap,
-                isActive: snapEnabled,
-              ),
-            ],
-          ),
-        ],
+            // 辅助功能组
+            _buildToolbarGroup(
+              title: '辅助功能',
+              children: [
+                _buildToolbarButton(
+                  icon: gridVisible ? Icons.grid_on : Icons.grid_off,
+                  tooltip: gridVisible ? '隐藏网格' : '显示网格',
+                  onPressed: onToggleGrid,
+                  isActive: gridVisible,
+                ),
+                _buildToolbarButton(
+                  icon: Icons
+                      .format_line_spacing, // Alternative icon for snapping/alignment
+                  tooltip: snapEnabled ? '禁用吸附' : '启用吸附',
+                  onPressed: onToggleSnap,
+                  isActive: snapEnabled,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
