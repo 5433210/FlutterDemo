@@ -248,7 +248,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     // 根据控制点类型选择光标
     MouseCursor cursor;
     if (isRotation) {
-      cursor = SystemMouseCursors.grabbing;
+      cursor = SystemMouseCursors.grab;
     } else {
       switch (controlPointIndex) {
         case 0: // 左上角
@@ -272,159 +272,159 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       }
     }
 
-    return MouseRegion(
-      cursor: cursor,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque, // 确保手势检测器完全捕获所有事件
-        // 添加点击事件处理，阻止事件冒泡
-        onTap: () {
-          // 阻止点击事件传递到元素上
-          debugPrint('Control point $controlPointIndex tapped at $position');
-        },
-        onPanStart: (details) {
-          // 阻止事件冒泡
-          // 使用 setState 来标记正在拖动，这将禁用 InteractiveViewer 的平移
-          debugPrint('\n=== 开始操作控制点 $controlPointIndex (元素 $elementId) ===');
-          debugPrint('控制点类型: ${isRotation ? "旋转控制点" : "大小调整控制点"}');
-          debugPrint('开始位置: ${details.localPosition}');
+    return Container(
+      width: size.width,
+      height: size.height,
+      decoration: BoxDecoration(
+        color: isRotation
+            ? Colors.blue // 旋转控制点使用蓝色
+            : Colors.white, // 其他控制点使用白色
+        border: Border.all(
+          color: isRotation ? Colors.white : Colors.blue,
+          width: isRotation ? 1 : 1,
+        ),
+        shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
+        boxShadow: isRotation
+            ? [
+                BoxShadow(
+                  color: Colors.black.withAlpha(76), // 0.3 的不透明度
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : null,
+      ),
+      child: MouseRegion(
+        cursor: cursor,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque, // 确保手势检测器完全捕获所有事件
+          // 添加点击事件处理，阻止事件冒泡
+          onTap: () {
+            // 阻止点击事件传递到元素上
+            debugPrint('Control point $controlPointIndex tapped at $position');
+          },
+          onPanStart: (details) {
+            // 阻止事件冒泡
+            // 使用 setState 来标记正在拖动，这将禁用 InteractiveViewer 的平移
+            debugPrint('\n=== 开始操作控制点 $controlPointIndex (元素 $elementId) ===');
+            debugPrint('控制点类型: ${isRotation ? "旋转控制点" : "大小调整控制点"}');
+            debugPrint('开始位置: ${details.localPosition}');
 
-          setState(() {
-            _isDragging = true;
-            _dragStart = details.localPosition;
+            setState(() {
+              _isDragging = true;
+              _dragStart = details.localPosition;
 
-            // 如果是旋转控制点，记录元素中心点
+              // 如果是旋转控制点，记录元素中心点
+              if (isRotation) {
+                final element = _controller.state.currentPageElements
+                    .firstWhere((e) => e['id'] == elementId);
+                final x = (element['x'] as num).toDouble();
+                final y = (element['y'] as num).toDouble();
+                final width = (element['width'] as num).toDouble();
+                final height = (element['height'] as num).toDouble();
+
+                // 计算元素中心点
+                _elementStartPosition = Offset(x + width / 2, y + height / 2);
+              }
+            });
+
+            // 添加防止事件冒泡的处理
+            details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
+          },
+          onPanUpdate: (details) {
+            // 阻止事件冒泡
+            // 已经在 InteractiveViewer 中禁用了平移
+
+            // 打印控制点更新操作的日志
+            debugPrint('控制点 $controlPointIndex 移动: ${details.delta}');
+
             if (isRotation) {
+              // 旋转控制点的处理
               final element = _controller.state.currentPageElements
                   .firstWhere((e) => e['id'] == elementId);
+              final currentRotation = (element['rotation'] as num).toDouble();
+
+              // 计算旋转角度
+              final center = _elementStartPosition;
+              final startPoint = details.globalPosition - details.delta;
+              final currentPoint = details.globalPosition;
+
+              final deltaAngle = ControlHandlers.calculateRotation(
+                center,
+                startPoint,
+                currentPoint,
+              );
+
+              // 更新旋转角度
+              final newRotation = (currentRotation + deltaAngle) % 360;
+              _controller.updateElementProperty(
+                  elementId, 'rotation', newRotation);
+            } else {
+              // 大小调整控制点的处理
+              final element = _controller.state.currentPageElements
+                  .firstWhere((e) => e['id'] == elementId);
+
+              // 计算新的几何属性
+              final currentGeometry = {
+                'x': (element['x'] as num).toDouble(),
+                'y': (element['y'] as num).toDouble(),
+                'width': (element['width'] as num).toDouble(),
+                'height': (element['height'] as num).toDouble(),
+              };
+
+              final newGeometry = ControlHandlers.calculateNewGeometry(
+                currentGeometry,
+                controlPointIndex,
+                details.delta,
+              );
+
+              // 更新元素属性
+              if (newGeometry.isNotEmpty) {
+                // 确保宽高不为负数
+                if (newGeometry.containsKey('width') &&
+                    (newGeometry['width'] as double) <= 10) {
+                  newGeometry['width'] = 10.0;
+                }
+                if (newGeometry.containsKey('height') &&
+                    (newGeometry['height'] as double) <= 10) {
+                  newGeometry['height'] = 10.0;
+                }
+
+                _controller.updateElementProperties(elementId, newGeometry);
+              }
+            }
+
+            // 添加防止事件冒泡的处理
+            details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
+          },
+          onPanEnd: (details) {
+            // 打印控制点操作结束的日志
+            debugPrint('\n=== 结束操作控制点 $controlPointIndex (元素 $elementId) ===');
+
+            // 获取元素的当前状态
+            final element = _controller.state.currentPageElements
+                .firstWhere((e) => e['id'] == elementId);
+
+            if (isRotation) {
+              final rotation = (element['rotation'] as num).toDouble();
+              debugPrint('旋转后的角度: $rotation度');
+            } else {
               final x = (element['x'] as num).toDouble();
               final y = (element['y'] as num).toDouble();
               final width = (element['width'] as num).toDouble();
               final height = (element['height'] as num).toDouble();
-
-              // 计算元素中心点
-              _elementStartPosition = Offset(x + width / 2, y + height / 2);
+              debugPrint('调整后的尺寸: 宽=$width, 高=$height');
+              debugPrint('调整后的位置: x=$x, y=$y');
             }
-          });
 
-          // 添加防止事件冒泡的处理
-          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
-        },
-        onPanUpdate: (details) {
-          // 阻止事件冒泡
-          // 已经在 InteractiveViewer 中禁用了平移
+            setState(() {
+              _isDragging = false;
+            });
 
-          // 打印控制点更新操作的日志
-          debugPrint('控制点 $controlPointIndex 移动: ${details.delta}');
-
-          if (isRotation) {
-            // 旋转控制点的处理
-            final element = _controller.state.currentPageElements
-                .firstWhere((e) => e['id'] == elementId);
-            final currentRotation = (element['rotation'] as num).toDouble();
-
-            // 计算旋转角度
-            final center = _elementStartPosition;
-            final startPoint = details.globalPosition - details.delta;
-            final currentPoint = details.globalPosition;
-
-            final deltaAngle = ControlHandlers.calculateRotation(
-              center,
-              startPoint,
-              currentPoint,
-            );
-
-            // 更新旋转角度
-            final newRotation = (currentRotation + deltaAngle) % 360;
-            _controller.updateElementProperty(
-                elementId, 'rotation', newRotation);
-          } else {
-            // 大小调整控制点的处理
-            final element = _controller.state.currentPageElements
-                .firstWhere((e) => e['id'] == elementId);
-
-            // 计算新的几何属性
-            final currentGeometry = {
-              'x': (element['x'] as num).toDouble(),
-              'y': (element['y'] as num).toDouble(),
-              'width': (element['width'] as num).toDouble(),
-              'height': (element['height'] as num).toDouble(),
-            };
-
-            final newGeometry = ControlHandlers.calculateNewGeometry(
-              currentGeometry,
-              controlPointIndex,
-              details.delta,
-            );
-
-            // 更新元素属性
-            if (newGeometry.isNotEmpty) {
-              // 确保宽高不为负数
-              if (newGeometry.containsKey('width') &&
-                  (newGeometry['width'] as double) <= 10) {
-                newGeometry['width'] = 10.0;
-              }
-              if (newGeometry.containsKey('height') &&
-                  (newGeometry['height'] as double) <= 10) {
-                newGeometry['height'] = 10.0;
-              }
-
-              _controller.updateElementProperties(elementId, newGeometry);
-            }
-          }
-
-          // 添加防止事件冒泡的处理
-          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
-        },
-        onPanEnd: (details) {
-          // 打印控制点操作结束的日志
-          debugPrint('\n=== 结束操作控制点 $controlPointIndex (元素 $elementId) ===');
-
-          // 获取元素的当前状态
-          final element = _controller.state.currentPageElements
-              .firstWhere((e) => e['id'] == elementId);
-
-          if (isRotation) {
-            final rotation = (element['rotation'] as num).toDouble();
-            debugPrint('旋转后的角度: $rotation度');
-          } else {
-            final x = (element['x'] as num).toDouble();
-            final y = (element['y'] as num).toDouble();
-            final width = (element['width'] as num).toDouble();
-            final height = (element['height'] as num).toDouble();
-            debugPrint('调整后的尺寸: 宽=$width, 高=$height');
-            debugPrint('调整后的位置: x=$x, y=$y');
-          }
-
-          setState(() {
-            _isDragging = false;
-          });
-
-          // 添加防止事件冒泡的处理
-          details.primaryVelocity; // 访问属性以避免未使用的变量警告
-        },
-        child: Container(
-          width: size.width,
-          height: size.height,
-          decoration: BoxDecoration(
-            color: isRotation
-                ? Colors.blue // 旋转控制点使用蓝色
-                : Colors.white, // 其他控制点使用白色
-            border: Border.all(
-              color: isRotation ? Colors.white : Colors.blue,
-              width: isRotation ? 1 : 1,
-            ),
-            shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
-            boxShadow: isRotation
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(76), // 0.3 的不透明度
-                      spreadRadius: 1,
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
+            // 添加防止事件冒泡的处理
+            details.primaryVelocity; // 访问属性以避免未使用的变量警告
+          },
         ),
       ),
     );
@@ -550,24 +550,24 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         ),
 
         // 旋转控制柄 - 连接线
-        Positioned(
-          left: width / 2 - 1,
-          top: -rotationHandleDistance + 14, // 从旋转手柄底部开始
-          child: Container(
-            width: 2,
-            height: rotationHandleDistance - 14, // 连接线高度
-            color: Colors.blue,
-          ),
-        ),
+        // Positioned(
+        //   left: width / 2 - 1,
+        //   top: -rotationHandleDistance + 14, // 从旋转手柄底部开始
+        //   child: Container(
+        //     width: 2,
+        //     height: rotationHandleDistance - 14, // 连接线高度
+        //     color: Colors.blue,
+        //   ),
+        // ),
 
         // 旋转控制柄 - 手柄
         Positioned(
           left: width / 2 - 7,
-          top: -rotationHandleDistance - 7,
+          top: -7,
           child: _buildControlPointDetector(
             elementId,
             8,
-            Offset(width / 2 - 7, -rotationHandleDistance - 7), // 使用实际位置
+            Offset(width / 2 - 7, -7), // 使用实际位置
             const Size(14, 14),
             isRotation: true,
           ),
@@ -718,141 +718,137 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             scaleFactor: 200.0, // 增大缩放因子，减小缩放幅度
             constrained: false, // 添加这一行，使内容不受约束
 
-            child: MouseRegion(
-              child: GestureDetector(
-                onTapDown: (details) => _handleTapDown(details, elements),
-                onPanStart: (details) {
-                  // 只在非预览模式下允许拖拽
-                  if (_isPreviewMode) return;
+            child: GestureDetector(
+              onTapUp: (details) => _handleTapDown(details, elements),
+              onPanStart: (details) {
+                // 只在非预览模式下允许拖拽
+                if (_isPreviewMode) return;
 
-                  // 如果有选中的元素，开始拖拽
-                  if (_controller.state.selectedElementIds.isNotEmpty) {
-                    setState(() {
-                      _isDragging = true;
-                      _dragStart = details.localPosition;
+                // 如果有选中的元素，开始拖拽
+                if (_controller.state.selectedElementIds.isNotEmpty) {
+                  setState(() {
+                    _isDragging = true;
+                    _dragStart = details.localPosition;
 
-                      // 记录所有选中元素的起始位置
-                      for (final elementId
-                          in _controller.state.selectedElementIds) {
-                        final element = _controller.state.currentPageElements
-                            .firstWhere((e) => e['id'] == elementId);
-                        if (element['isLocked'] == true) continue;
-                        _elementStartPosition = Offset(
-                          (element['x'] as num).toDouble(),
-                          (element['y'] as num).toDouble(),
-                        );
-                      }
-                    });
-                    debugPrint('开始拖拽: ${details.localPosition}');
-                  }
-                },
-                onPanUpdate: (details) {
-                  // 只在拖拽状态且非预览模式下更新位置
-                  if (!_isDragging || _isPreviewMode) return;
-
-                  if (_controller.state.selectedElementIds.isNotEmpty) {
-                    final dx = details.localPosition.dx - _dragStart.dx;
-                    final dy = details.localPosition.dy - _dragStart.dy;
-
-                    // 更新所有选中元素的位置
+                    // 记录所有选中元素的起始位置
                     for (final elementId
                         in _controller.state.selectedElementIds) {
                       final element = _controller.state.currentPageElements
                           .firstWhere((e) => e['id'] == elementId);
-                      final layerId = element['layerId'] as String?;
-                      if (layerId != null) {
-                        final layer = _controller.state.getLayerById(layerId);
-                        if (layer != null) {
-                          if (layer['isLocked'] == true) return;
-                          if (layer['isVisible'] == false) return;
-                        }
-                      }
-
-                      // 计算新位置
-                      double newX = _elementStartPosition.dx + dx;
-                      double newY = _elementStartPosition.dy + dy;
-
-                      // 吸附到网格（如果启用）
-                      if (_controller.state.snapEnabled) {
-                        newX = (newX / _gridSize).round() * _gridSize;
-                        newY = (newY / _gridSize).round() * _gridSize;
-                      }
-
-                      // 更新元素位置
-                      _controller.updateElementProperties(elementId, {
-                        'x': newX,
-                        'y': newY,
-                      });
+                      if (element['isLocked'] == true) continue;
+                      _elementStartPosition = Offset(
+                        (element['x'] as num).toDouble(),
+                        (element['y'] as num).toDouble(),
+                      );
                     }
-                    debugPrint('拖拽更新: dx=$dx, dy=$dy');
-                  }
-                },
-                onPanEnd: (details) {
-                  if (_isDragging) {
-                    setState(() {
-                      _isDragging = false;
+                  });
+                  debugPrint('开始拖拽: ${details.localPosition}');
+                }
+              },
+              onPanUpdate: (details) {
+                // 只在拖拽状态且非预览模式下更新位置
+                if (!_isDragging || _isPreviewMode) return;
+
+                if (_controller.state.selectedElementIds.isNotEmpty) {
+                  final dx = details.localPosition.dx - _dragStart.dx;
+                  final dy = details.localPosition.dy - _dragStart.dy;
+
+                  // 更新所有选中元素的位置
+                  for (final elementId
+                      in _controller.state.selectedElementIds) {
+                    final element = _controller.state.currentPageElements
+                        .firstWhere((e) => e['id'] == elementId);
+                    final layerId = element['layerId'] as String?;
+                    if (layerId != null) {
+                      final layer = _controller.state.getLayerById(layerId);
+                      if (layer != null) {
+                        if (layer['isLocked'] == true) return;
+                        if (layer['isVisible'] == false) return;
+                      }
+                    }
+
+                    // 计算新位置
+                    double newX = _elementStartPosition.dx + dx;
+                    double newY = _elementStartPosition.dy + dy;
+
+                    // 吸附到网格（如果启用）
+                    if (_controller.state.snapEnabled) {
+                      newX = (newX / _gridSize).round() * _gridSize;
+                      newY = (newY / _gridSize).round() * _gridSize;
+                    }
+
+                    // 更新元素位置
+                    _controller.updateElementProperties(elementId, {
+                      'x': newX,
+                      'y': newY,
                     });
-
-                    // 打印结束位置信息
-                    for (final elementId
-                        in _controller.state.selectedElementIds) {
-                      final element = _controller.state.currentPageElements
-                          .firstWhere((e) => e['id'] == elementId);
-                      debugPrint(
-                          '元素 $elementId 结束位置: (${element['x']}, ${element['y']})');
-                    }
                   }
-                },
-                child: Stack(
-                  children: [
-                    // 页面背景
-                    Container(
-                      width:
-                          (currentPage['width'] as num?)?.toDouble() ?? 595.0,
-                      height:
-                          (currentPage['height'] as num?)?.toDouble() ?? 842.0,
-                      color: PageOperations.getPageBackgroundColor(currentPage),
-                      child: Stack(
-                        children: [
-                          // 网格
-                          if (_controller.state.gridVisible)
-                            CustomPaint(
-                              size: Size(
-                                (currentPage['width'] as num?)?.toDouble() ??
-                                    595.0,
+                  debugPrint('拖拽更新: dx=$dx, dy=$dy');
+                }
+              },
+              onPanEnd: (details) {
+                if (_isDragging) {
+                  setState(() {
+                    _isDragging = false;
+                  });
+
+                  // 打印结束位置信息
+                  for (final elementId
+                      in _controller.state.selectedElementIds) {
+                    final element = _controller.state.currentPageElements
+                        .firstWhere((e) => e['id'] == elementId);
+                    debugPrint(
+                        '元素 $elementId 结束位置: (${element['x']}, ${element['y']})');
+                  }
+                }
+              },
+              child: Stack(
+                children: [
+                  // 页面背景
+                  Container(
+                    width: (currentPage['width'] as num?)?.toDouble() ?? 595.0,
+                    height:
+                        (currentPage['height'] as num?)?.toDouble() ?? 842.0,
+                    color: PageOperations.getPageBackgroundColor(currentPage),
+                    child: Stack(
+                      children: [
+                        // 网格
+                        if (_controller.state.gridVisible)
+                          CustomPaint(
+                            size: Size(
+                              (currentPage['width'] as num?)?.toDouble() ??
+                                  595.0,
+                              (currentPage['height'] as num?)?.toDouble() ??
+                                  842.0,
+                            ),
+                            painter: GridPainter(gridSize: _gridSize),
+                          ),
+
+                        // 元素
+                        // 根据图层顺序排序元素
+                        ..._sortElementsByLayerOrder(elements)
+                            .map((element) => _buildElement(element)),
+
+                        // 拖拽指示
+                        if (candidateData.isNotEmpty)
+                          Container(
+                            width: (currentPage['width'] as num?)?.toDouble() ??
+                                595.0,
+                            height:
                                 (currentPage['height'] as num?)?.toDouble() ??
                                     842.0,
-                              ),
-                              painter: GridPainter(gridSize: _gridSize),
-                            ),
-
-                          // 元素
-                          // 根据图层顺序排序元素
-                          ..._sortElementsByLayerOrder(elements)
-                              .map((element) => _buildElement(element)),
-
-                          // 拖拽指示
-                          if (candidateData.isNotEmpty)
-                            Container(
-                              width:
-                                  (currentPage['width'] as num?)?.toDouble() ??
-                                      595.0,
-                              height:
-                                  (currentPage['height'] as num?)?.toDouble() ??
-                                      842.0,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.blue,
-                                  width: 1,
-                                  style: BorderStyle.solid,
-                                ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.blue,
+                                width: 1,
+                                style: BorderStyle.solid,
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1345,7 +1341,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 处理点击事件
   void _handleTapDown(
-      TapDownDetails details, List<Map<String, dynamic>> elements) {
+      TapUpDetails details, List<Map<String, dynamic>> elements) {
     // 如果点击在空白处，取消选择
     bool hitElement = false;
 
