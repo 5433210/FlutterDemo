@@ -1155,8 +1155,13 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 _controller.updateLayerProperties(layerId, properties);
               },
             );
-            return SizedBox(
-              width: 300,
+
+            // 返回可调整宽度的面板
+            return ResizablePanel(
+              initialWidth: 300,
+              minWidth: 200,
+              maxWidth: 500,
+              isLeftPanel: false,
               child: panel,
             );
           }
