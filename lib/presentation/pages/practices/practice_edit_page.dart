@@ -241,7 +241,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   Widget _buildControlPointDetector(
     String elementId,
     int controlPointIndex,
-    Offset position, // 注意：这个参数在当前实现中没有被使用
+    Offset position,
     Size size, {
     bool isRotation = false,
   }) {
@@ -275,18 +275,15 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     return MouseRegion(
       cursor: cursor,
       child: GestureDetector(
-        behavior: HitTestBehavior.opaque, // 关键修改：确保手势检测器捕获所有事件
+        behavior: HitTestBehavior.opaque, // 确保手势检测器完全捕获所有事件
         // 添加点击事件处理，阻止事件冒泡
         onTap: () {
           // 阻止点击事件传递到元素上
-          // 打印位置信息以进行调试
           debugPrint('Control point $controlPointIndex tapped at $position');
         },
         onPanStart: (details) {
           // 阻止事件冒泡
           // 使用 setState 来标记正在拖动，这将禁用 InteractiveViewer 的平移
-
-          // 打印控制点操作开始的日志
           debugPrint('\n=== 开始操作控制点 $controlPointIndex (元素 $elementId) ===');
           debugPrint('控制点类型: ${isRotation ? "旋转控制点" : "大小调整控制点"}');
           debugPrint('开始位置: ${details.localPosition}');
@@ -308,6 +305,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               _elementStartPosition = Offset(x + width / 2, y + height / 2);
             }
           });
+
+          // 添加防止事件冒泡的处理
+          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
         },
         onPanUpdate: (details) {
           // 阻止事件冒泡
@@ -371,6 +371,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               _controller.updateElementProperties(elementId, newGeometry);
             }
           }
+
+          // 添加防止事件冒泡的处理
+          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
         },
         onPanEnd: (details) {
           // 打印控制点操作结束的日志
@@ -395,6 +398,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           setState(() {
             _isDragging = false;
           });
+
+          // 添加防止事件冒泡的处理
+          details.primaryVelocity; // 访问属性以避免未使用的变量警告
         },
         child: Container(
           width: size.width,
@@ -712,55 +718,141 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             scaleFactor: 200.0, // 增大缩放因子，减小缩放幅度
             constrained: false, // 添加这一行，使内容不受约束
 
-            child: GestureDetector(
-              onTapDown: (details) => _handleTapDown(details, elements),
-              child: Stack(
-                children: [
-                  // 页面背景
-                  Container(
-                    width: (currentPage['width'] as num?)?.toDouble() ?? 595.0,
-                    height:
-                        (currentPage['height'] as num?)?.toDouble() ?? 842.0,
-                    color: PageOperations.getPageBackgroundColor(currentPage),
-                    child: Stack(
-                      children: [
-                        // 网格
-                        if (_controller.state.gridVisible)
-                          CustomPaint(
-                            size: Size(
-                              (currentPage['width'] as num?)?.toDouble() ??
-                                  595.0,
-                              (currentPage['height'] as num?)?.toDouble() ??
-                                  842.0,
-                            ),
-                            painter: GridPainter(gridSize: _gridSize),
-                          ),
+            child: MouseRegion(
+              child: GestureDetector(
+                onTapDown: (details) => _handleTapDown(details, elements),
+                onPanStart: (details) {
+                  // 只在非预览模式下允许拖拽
+                  if (_isPreviewMode) return;
 
-                        // 元素
-                        // 根据图层顺序排序元素
-                        ..._sortElementsByLayerOrder(elements)
-                            .map((element) => _buildElement(element)),
+                  // 如果有选中的元素，开始拖拽
+                  if (_controller.state.selectedElementIds.isNotEmpty) {
+                    setState(() {
+                      _isDragging = true;
+                      _dragStart = details.localPosition;
 
-                        // 拖拽指示
-                        if (candidateData.isNotEmpty)
-                          Container(
-                            width: (currentPage['width'] as num?)?.toDouble() ??
-                                595.0,
-                            height:
+                      // 记录所有选中元素的起始位置
+                      for (final elementId
+                          in _controller.state.selectedElementIds) {
+                        final element = _controller.state.currentPageElements
+                            .firstWhere((e) => e['id'] == elementId);
+                        if (element['isLocked'] == true) continue;
+                        _elementStartPosition = Offset(
+                          (element['x'] as num).toDouble(),
+                          (element['y'] as num).toDouble(),
+                        );
+                      }
+                    });
+                    debugPrint('开始拖拽: ${details.localPosition}');
+                  }
+                },
+                onPanUpdate: (details) {
+                  // 只在拖拽状态且非预览模式下更新位置
+                  if (!_isDragging || _isPreviewMode) return;
+
+                  if (_controller.state.selectedElementIds.isNotEmpty) {
+                    final dx = details.localPosition.dx - _dragStart.dx;
+                    final dy = details.localPosition.dy - _dragStart.dy;
+
+                    // 更新所有选中元素的位置
+                    for (final elementId
+                        in _controller.state.selectedElementIds) {
+                      final element = _controller.state.currentPageElements
+                          .firstWhere((e) => e['id'] == elementId);
+                      final layerId = element['layerId'] as String?;
+                      if (layerId != null) {
+                        final layer = _controller.state.getLayerById(layerId);
+                        if (layer != null) {
+                          if (layer['isLocked'] == true) return;
+                          if (layer['isVisible'] == false) return;
+                        }
+                      }
+
+                      // 计算新位置
+                      double newX = _elementStartPosition.dx + dx;
+                      double newY = _elementStartPosition.dy + dy;
+
+                      // 吸附到网格（如果启用）
+                      if (_controller.state.snapEnabled) {
+                        newX = (newX / _gridSize).round() * _gridSize;
+                        newY = (newY / _gridSize).round() * _gridSize;
+                      }
+
+                      // 更新元素位置
+                      _controller.updateElementProperties(elementId, {
+                        'x': newX,
+                        'y': newY,
+                      });
+                    }
+                    debugPrint('拖拽更新: dx=$dx, dy=$dy');
+                  }
+                },
+                onPanEnd: (details) {
+                  if (_isDragging) {
+                    setState(() {
+                      _isDragging = false;
+                    });
+
+                    // 打印结束位置信息
+                    for (final elementId
+                        in _controller.state.selectedElementIds) {
+                      final element = _controller.state.currentPageElements
+                          .firstWhere((e) => e['id'] == elementId);
+                      debugPrint(
+                          '元素 $elementId 结束位置: (${element['x']}, ${element['y']})');
+                    }
+                  }
+                },
+                child: Stack(
+                  children: [
+                    // 页面背景
+                    Container(
+                      width:
+                          (currentPage['width'] as num?)?.toDouble() ?? 595.0,
+                      height:
+                          (currentPage['height'] as num?)?.toDouble() ?? 842.0,
+                      color: PageOperations.getPageBackgroundColor(currentPage),
+                      child: Stack(
+                        children: [
+                          // 网格
+                          if (_controller.state.gridVisible)
+                            CustomPaint(
+                              size: Size(
+                                (currentPage['width'] as num?)?.toDouble() ??
+                                    595.0,
                                 (currentPage['height'] as num?)?.toDouble() ??
                                     842.0,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.blue,
-                                width: 1,
-                                style: BorderStyle.solid,
+                              ),
+                              painter: GridPainter(gridSize: _gridSize),
+                            ),
+
+                          // 元素
+                          // 根据图层顺序排序元素
+                          ..._sortElementsByLayerOrder(elements)
+                              .map((element) => _buildElement(element)),
+
+                          // 拖拽指示
+                          if (candidateData.isNotEmpty)
+                            Container(
+                              width:
+                                  (currentPage['width'] as num?)?.toDouble() ??
+                                      595.0,
+                              height:
+                                  (currentPage['height'] as num?)?.toDouble() ??
+                                      842.0,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.blue,
+                                  width: 1,
+                                  style: BorderStyle.solid,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -888,159 +980,79 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 元素本身
-
-            GestureDetector(
-              // onTap: () => (debugPrint('tap')),
-              onPanStart: (_isPreviewMode ||
-                      isLocked ||
-                      isLayerLocked) // 预览模式、元素锁定或图层锁定状态下禁用拖动
-                  ? null
-                  : (event) {
-                      // 如果元素未选中，先选中它
-                      if (!isSelected) {
-                        _controller.selectElement(id,
-                            isMultiSelect: _isCtrlPressed || _isShiftPressed);
-                      }
-
-                      // 开始拖动
-                      debugPrint('\n=== 开始拖动元素 $id ===');
-                      debugPrint(
-                          '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
-                      debugPrint(
-                          '当前选中元素IDs: ${_controller.state.selectedElementIds}');
-                      debugPrint('当前元素位置: ($x, $y)');
-
-                      setState(() {
-                        _isDragging = true;
-                        _dragStart = event.localPosition;
-                        _elementStartPosition = Offset(x, y);
-                      });
-                    },
-              onPanUpdate: (_isPreviewMode ||
-                      isLocked ||
-                      isLayerLocked ||
-                      !_isDragging) // 预览模式、元素锁定、图层锁定或非拖动状态下禁用移动
-                  ? null
-                  : (event) {
-                      // 打印拖动状态信息
-                      debugPrint('\n=== 拖动元素 $id ===');
-                      debugPrint('_isDragging: $_isDragging');
-                      debugPrint('_dragStart: $_dragStart');
-                      debugPrint(
-                          '_elementStartPosition: $_elementStartPosition');
-                      final dx = event.localPosition.dx - _dragStart.dx;
-                      final dy = event.localPosition.dy - _dragStart.dy;
-                      final newX = _elementStartPosition.dx + dx;
-                      final newY = _elementStartPosition.dy + dy;
-
-                      // 打印元素拖动更新的日志
-                      debugPrint(
-                          '元素 $id 拖动: 偏移量=($dx, $dy), 新位置=($newX, $newY)');
-
-                      _controller.updateElementProperties(id, {
-                        'x': newX,
-                        'y': newY,
-                      });
-                    },
-              onPanEnd: (_isPreviewMode ||
-                      isLocked ||
-                      isLayerLocked ||
-                      !_isDragging) // 预览模式、元素锁定、图层锁定或非拖动状态下禁用松开事件
-                  ? null
-                  : (event) {
-                      // 打印拖动结束状态信息
-                      debugPrint('\n=== 拖动结束元素 $id ===');
-                      debugPrint('_isDragging: $_isDragging');
-                      debugPrint('_dragStart: $_dragStart');
-                      debugPrint(
-                          '_elementStartPosition: $_elementStartPosition');
-                      // 结束拖动
-                      final newX = (element['x'] as num).toDouble();
-                      final newY = (element['y'] as num).toDouble();
-                      debugPrint('\n=== 结束拖动元素 $id ===');
-                      debugPrint('新元素位置: ($newX, $newY)');
-                      debugPrint('拖动偏移量: (${newX - x}, ${newY - y})');
-
-                      setState(() {
-                        _isDragging = false;
-                      });
-                    },
-              child: Opacity(
-                // 元素或图层隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
-                opacity: isHidden || isLayerHidden
-                    ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
-                    : opacity, // 正常状态
-                child: Container(
-                  width: width,
-                  height: height,
-                  padding: const EdgeInsets.all(0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      // 根据规范设置边框颜色和宽度
-                      color: hasError
-                          ? Colors.red // 错误状态：红色边框
-                          : isLocked || isLayerLocked
-                              ? Colors.orange // 锁定状态：橙色边框
-                              : !_isPreviewMode && isSelected
-                                  ? Colors.blue // 编辑状态或选中状态：蓝色边框
-                                  : Colors.grey
-                                      .withAlpha(179), // 普通状态：灰色边框，70%不透明度
-                      width: 1.0, // 所有状态都是1px
-                      style: (isHidden || isLayerHidden) && !_isPreviewMode
-                          ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
-                          : BorderStyle.solid, // 隐藏状态使用半透明
-                    ),
+            // Main element widget
+            Opacity(
+              // 元素或图层隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
+              opacity: isHidden || isLayerHidden
+                  ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
+                  : opacity, // 正常状态
+              child: Container(
+                width: width,
+                height: height,
+                padding: const EdgeInsets.all(0),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    // 根据规范设置边框颜色和宽度
+                    color: hasError
+                        ? Colors.red // 错误状态：红色边框
+                        : isLocked || isLayerLocked
+                            ? Colors.orange // 锁定状态：橙色边框
+                            : !_isPreviewMode && isSelected
+                                ? Colors.blue // 编辑状态或选中状态：蓝色边框
+                                : Colors.grey
+                                    .withAlpha(179), // 普通状态：灰色边框，70%不透明度
+                    width: 1.0, // 所有状态都是1px
+                    style: (isHidden || isLayerHidden) && !_isPreviewMode
+                        ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
+                        : BorderStyle.solid, // 隐藏状态使用半透明
                   ),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // 元素内容
-                      content,
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    // 元素内容
+                    content,
 
-                      // 锁定图标
-                      if ((isLocked || isLayerLocked) && !_isPreviewMode)
-                        Positioned(
-                          right: 4,
-                          top: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(179), // 0.7 的不透明度
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: Icon(
-                              isLayerLocked
-                                  ? Icons.layers_outlined
-                                  : Icons.lock,
-                              color: Colors.orange,
-                              size: 16,
-                            ),
+                    // 锁定图标
+                    if ((isLocked || isLayerLocked) && !_isPreviewMode)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(179), // 0.7 的不透明度
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Icon(
+                            isLayerLocked ? Icons.layers_outlined : Icons.lock,
+                            color: Colors.orange,
+                            size: 16,
                           ),
                         ),
+                      ),
 
-                      // 错误图标
-                      if (hasError && !_isPreviewMode)
-                        Positioned(
-                          right: (isLocked || isLayerLocked)
-                              ? 26
-                              : 4, // 如果同时有锁定图标，则错开一点
-                          top: 4,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(179), // 0.7 的不透明度
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: const Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                              size: 16,
-                            ),
+                    // 错误图标
+                    if (hasError && !_isPreviewMode)
+                      Positioned(
+                        right: (isLocked || isLayerLocked)
+                            ? 26
+                            : 4, // 如果同时有锁定图标，则错开一点
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(179), // 0.7 的不透明度
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 16,
                           ),
                         ),
-                    ],
-                  ),
+                      ),
+                  ],
                 ),
               ),
             ),
