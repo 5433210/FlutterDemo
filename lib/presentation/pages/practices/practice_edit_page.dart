@@ -40,9 +40,6 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   // 当前工具
   String _currentTool = 'select';
 
-  // 网格大小
-  final double _gridSize = 20.0;
-
   // 剪贴板
   Map<String, dynamic>? _clipboardElement;
 
@@ -784,8 +781,10 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
                     // 吸附到网格（如果启用）
                     if (_controller.state.snapEnabled) {
-                      newX = (newX / _gridSize).round() * _gridSize;
-                      newY = (newY / _gridSize).round() * _gridSize;
+                      newX = (newX / _controller.state.gridSize).round() *
+                          _controller.state.gridSize;
+                      newY = (newY / _controller.state.gridSize).round() *
+                          _controller.state.gridSize;
                     }
 
                     // 更新元素位置 - 拖动过程中不应用吸附
@@ -842,7 +841,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                               (currentPage['height'] as num?)?.toDouble() ??
                                   842.0,
                             ),
-                            painter: GridPainter(gridSize: _gridSize),
+                            painter: GridPainter(
+                                gridSize: _controller.state.gridSize),
                           ),
 
                         // 元素

@@ -1,32 +1,45 @@
 import 'package:flutter/material.dart';
 
+import '../../../widgets/common/color_picker_dialog.dart';
 import '../practice_edit_controller.dart';
-import 'practice_property_panel_base.dart';
 
 /// 页面属性面板
-class PagePropertyPanel extends PracticePropertyPanel {
+class PagePropertyPanel extends StatefulWidget {
   final Map<String, dynamic>? page;
   final Function(Map<String, dynamic>) onPagePropertiesChanged;
+  final PracticeEditController controller;
 
   const PagePropertyPanel({
     Key? key,
-    required PracticeEditController controller,
+    required this.controller,
     required this.page,
     required this.onPagePropertiesChanged,
-  }) : super(key: key, controller: controller);
+  }) : super(key: key);
+
+  @override
+  State<PagePropertyPanel> createState() => _PagePropertyPanelState();
+}
+
+class _PagePropertyPanelState extends State<PagePropertyPanel> {
+  // 宽度和高度输入控制器
+  late TextEditingController _widthController;
+  late TextEditingController _heightController;
+  late FocusNode _widthFocusNode;
+  late FocusNode _heightFocusNode;
 
   @override
   Widget build(BuildContext context) {
-    if (page == null) {
+    if (widget.page == null) {
       return const Center(child: Text('未选择页面'));
     }
 
-    final width = (page!['width'] as num?)?.toDouble() ?? 595.0;
-    final height = (page!['height'] as num?)?.toDouble() ?? 842.0;
-    final orientation = page!['orientation'] as String? ?? 'portrait';
-    final backgroundColor = page!['backgroundColor'] as String? ?? '#ffffff';
-    final gridVisible = page!['gridVisible'] as bool? ?? false;
-    final gridSize = (page!['gridSize'] as num?)?.toDouble() ?? 20.0;
+    final width = (widget.page!['width'] as num?)?.toDouble() ?? 595.0;
+    final height = (widget.page!['height'] as num?)?.toDouble() ?? 842.0;
+    final orientation = widget.page!['orientation'] as String? ?? 'portrait';
+    final backgroundColor =
+        widget.page!['backgroundColor'] as String? ?? '#ffffff';
+    final gridVisible = widget.page!['gridVisible'] as bool? ?? false;
+    final gridSize = (widget.page!['gridSize'] as num?)?.toDouble() ?? 20.0;
 
     return ListView(
       children: [
@@ -39,7 +52,7 @@ class PagePropertyPanel extends PracticePropertyPanel {
         ),
 
         // 页面尺寸设置
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('页面尺寸'),
           initiallyExpanded: true,
           children: [
@@ -80,12 +93,19 @@ class PagePropertyPanel extends PracticePropertyPanel {
                           groupValue: orientation,
                           onChanged: (value) {
                             if (value != null && value != orientation) {
+                              final Map<String, dynamic> updates = {
+                                'orientation': value
+                              };
+                              // 如果当前宽度大于高度，交换宽高
                               if (width > height) {
-                                // 如果当前宽度大于高度，交换宽高
-                                _updateProperty('width', height);
-                                _updateProperty('height', width);
+                                updates['width'] = height;
+                                updates['height'] = width;
+
+                                // 更新控制器的值
+                                _widthController.text = height.toString();
+                                _heightController.text = width.toString();
                               }
-                              _updateProperty('orientation', value);
+                              widget.onPagePropertiesChanged(updates);
                             }
                           },
                         ),
@@ -97,12 +117,19 @@ class PagePropertyPanel extends PracticePropertyPanel {
                           groupValue: orientation,
                           onChanged: (value) {
                             if (value != null && value != orientation) {
+                              final Map<String, dynamic> updates = {
+                                'orientation': value
+                              };
+                              // 如果当前宽度小于高度，交换宽高
                               if (width < height) {
-                                // 如果当前宽度小于高度，交换宽高
-                                _updateProperty('width', height);
-                                _updateProperty('height', width);
+                                updates['width'] = height;
+                                updates['height'] = width;
+
+                                // 更新控制器的值
+                                _widthController.text = height.toString();
+                                _heightController.text = width.toString();
                               }
-                              _updateProperty('orientation', value);
+                              widget.onPagePropertiesChanged(updates);
                             }
                           },
                         ),
@@ -121,17 +148,14 @@ class PagePropertyPanel extends PracticePropertyPanel {
                             labelText: '宽度',
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
+                              horizontal: 8.0,
+                              vertical: 8.0,
+                            ),
                           ),
-                          controller:
-                              TextEditingController(text: width.toString()),
+                          controller: _widthController,
+                          focusNode: _widthFocusNode,
                           keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            final newValue = double.tryParse(value);
-                            if (newValue != null && newValue > 0) {
-                              _updateProperty('width', newValue);
-                            }
-                          },
+                          onSubmitted: _updateWidth,
                         ),
                       ),
                       const SizedBox(width: 8.0),
@@ -141,17 +165,14 @@ class PagePropertyPanel extends PracticePropertyPanel {
                             labelText: '高度',
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
+                              horizontal: 8.0,
+                              vertical: 8.0,
+                            ),
                           ),
-                          controller:
-                              TextEditingController(text: height.toString()),
+                          controller: _heightController,
+                          focusNode: _heightFocusNode,
                           keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            final newValue = double.tryParse(value);
-                            if (newValue != null && newValue > 0) {
-                              _updateProperty('height', newValue);
-                            }
-                          },
+                          onSubmitted: _updateHeight,
                         ),
                       ),
                     ],
@@ -163,7 +184,7 @@ class PagePropertyPanel extends PracticePropertyPanel {
         ),
 
         // 背景设置
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('背景设置'),
           initiallyExpanded: true,
           children: [
@@ -176,13 +197,17 @@ class PagePropertyPanel extends PracticePropertyPanel {
                   const Text('背景颜色'),
                   Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: hexToColor(backgroundColor),
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4.0),
+                      GestureDetector(
+                        onTap: () =>
+                            _showEnhancedColorPicker(context, backgroundColor),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: hexToColor(backgroundColor),
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8.0),
@@ -190,17 +215,18 @@ class PagePropertyPanel extends PracticePropertyPanel {
                         child: TextField(
                           decoration: const InputDecoration(
                             labelText: '颜色代码',
+                            prefixText: '#',
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 8.0, vertical: 8.0),
                           ),
-                          controller:
-                              TextEditingController(text: backgroundColor),
-                          onChanged: (value) {
-                            if (value.startsWith('#') && value.length <= 7) {
-                              _updateProperty('backgroundColor', value);
-                            }
-                          },
+                          controller: TextEditingController(
+                              text: backgroundColor.startsWith('#')
+                                  ? backgroundColor.substring(1)
+                                  : backgroundColor),
+                          readOnly: true, // 设置为只读
+                          onTap: () => _showEnhancedColorPicker(
+                              context, backgroundColor),
                         ),
                       ),
                     ],
@@ -212,7 +238,7 @@ class PagePropertyPanel extends PracticePropertyPanel {
         ),
 
         // 网格设置
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('网格设置'),
           initiallyExpanded: true,
           children: [
@@ -225,10 +251,16 @@ class PagePropertyPanel extends PracticePropertyPanel {
                   Row(
                     children: [
                       Checkbox(
-                        value: gridVisible,
+                        value:
+                            widget.controller.state.gridVisible, // 从控制器直接获取当前状态
                         onChanged: (value) {
                           if (value != null) {
-                            _updateProperty('gridVisible', value);
+                            // 更新页面属性
+                            widget.onPagePropertiesChanged(
+                                {'gridVisible': value});
+                            // 同步更新控制器的网格显示状态
+                            widget.controller.state.gridVisible = value;
+                            widget.controller.notifyListeners(); // 通知监听器更新UI
                           }
                         },
                       ),
@@ -237,17 +269,35 @@ class PagePropertyPanel extends PracticePropertyPanel {
                   ),
                   const SizedBox(height: 8.0),
                   const Text('网格大小'),
-                  Slider(
-                    value: gridSize,
-                    min: 5.0,
-                    max: 50.0,
-                    divisions: 9,
-                    label: gridSize.toStringAsFixed(0),
-                    onChanged: (value) {
-                      _updateProperty('gridSize', value);
-                    },
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Slider(
+                        value: widget.controller.state.gridSize, // 从控制器获取当前值
+                        min: 5.0,
+                        max: 50.0,
+                        divisions: 9,
+                        label:
+                            widget.controller.state.gridSize.toStringAsFixed(0),
+                        onChanged: (value) {
+                          setState(() {
+                            // 更新页面属性
+                            widget.onPagePropertiesChanged({'gridSize': value});
+                            // 同步更新控制器的网格大小
+                            widget.controller.state.gridSize = value;
+                            widget.controller.notifyListeners(); // 通知监听器更新UI
+                          });
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16.0),
+                        child: Text(
+                          '${widget.controller.state.gridSize.toStringAsFixed(0)} 像素',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text('${gridSize.toStringAsFixed(0)} 像素'),
                 ],
               ),
             ),
@@ -257,14 +307,157 @@ class PagePropertyPanel extends PracticePropertyPanel {
     );
   }
 
+  @override
+  void didUpdateWidget(PagePropertyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当页面属性更新时，更新输入框的值
+    if (widget.page != null && oldWidget.page != widget.page) {
+      _widthController.text =
+          ((widget.page!['width'] as num?)?.toDouble() ?? 595.0).toString();
+      _heightController.text =
+          ((widget.page!['height'] as num?)?.toDouble() ?? 842.0).toString();
+    }
+  }
+
+  @override
+  void dispose() {
+    _widthController.dispose();
+    _heightController.dispose();
+    _widthFocusNode.removeListener(_handleWidthFocusChange);
+    _heightFocusNode.removeListener(_handleHeightFocusChange);
+    _widthFocusNode.dispose();
+    _heightFocusNode.dispose();
+    widget.controller.removeListener(_handleControllerChange);
+    super.dispose();
+  }
+
+  /// 将十六进制颜色字符串转换为Color对象
+  @override
+  Color hexToColor(String hexString) {
+    try {
+      // 处理空字符串或无效输入
+      if (hexString.isEmpty) {
+        debugPrint('Empty color string, returning default white');
+        return Colors.white;
+      }
+
+      // 验证字符串是否包含有效的十六进制字符
+      // 先移除 # 前缀
+      String cleanHexString = hexString.replaceFirst('#', '');
+
+      // 检查是否包含非十六进制字符
+      final validHexPattern = RegExp(r'^[0-9A-Fa-f]+$');
+      if (!validHexPattern.hasMatch(cleanHexString)) {
+        // 如果包含无效字符，尝试提取有效部分
+        final hexCharsOnly = RegExp(r'[0-9A-Fa-f]+')
+            .allMatches(cleanHexString)
+            .map((m) => m.group(0))
+            .join('');
+
+        if (hexCharsOnly.isEmpty) {
+          debugPrint(
+              'No valid hex characters found in "$hexString", returning default white');
+          return Colors.white;
+        }
+
+        // 使用提取的有效字符
+        cleanHexString = hexCharsOnly;
+        debugPrint(
+            'Extracted valid hex characters: "$cleanHexString" from "$hexString"');
+      }
+
+      // 处理不同长度的十六进制字符串
+      if (cleanHexString.length == 3) {
+        // 将 RGB 转换为 RRGGBB
+        cleanHexString = cleanHexString.split('').map((e) => e + e).join('');
+      }
+
+      // 确保字符串长度正确
+      if (cleanHexString.length > 8) {
+        cleanHexString = cleanHexString.substring(0, 8);
+      } else if (cleanHexString.length < 6) {
+        // 如果字符串太短，填充为有效的颜色
+        cleanHexString = cleanHexString.padRight(6, 'F');
+      }
+
+      // 添加透明度通道（如果需要）
+      if (cleanHexString.length == 6) {
+        cleanHexString = 'FF$cleanHexString'; // 添加完全不透明的 alpha 通道
+      }
+
+      // 解析颜色
+      final colorValue = int.parse(cleanHexString, radix: 16);
+      return Color(colorValue);
+    } catch (e) {
+      debugPrint('Error parsing color: $e');
+      debugPrint('Problematic color string: "$hexString"');
+      // 出错时返回默认颜色
+      return Colors.white;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 初始化控制器和焦点节点
+    _widthController = TextEditingController();
+    _heightController = TextEditingController();
+    _widthFocusNode = FocusNode();
+    _heightFocusNode = FocusNode();
+
+    // 设置初始值
+    if (widget.page != null) {
+      _widthController.text =
+          ((widget.page!['width'] as num?)?.toDouble() ?? 595.0).toString();
+      _heightController.text =
+          ((widget.page!['height'] as num?)?.toDouble() ?? 842.0).toString();
+    }
+
+    // 添加焦点监听器
+    _widthFocusNode.addListener(_handleWidthFocusChange);
+    _heightFocusNode.addListener(_handleHeightFocusChange);
+
+    // 监听控制器状态变化，用于同步网格状态
+    widget.controller.addListener(_handleControllerChange);
+  }
+
+  /// 将颜色转换为十六进制字符串
+  String _colorToHex(Color color) {
+    return '#${color.value.toRadixString(16).substring(2).toUpperCase()}';
+  }
+
   /// 获取页面尺寸预设
   String _getPageSizePreset(double width, double height) {
-    if ((width - 595).abs() < 1 && (height - 842).abs() < 1) {
+    double portraitWidth = width;
+    double portraitHeight = height;
+
+    // 确保比较时使用纵向尺寸
+    if (width > height) {
+      portraitWidth = height;
+      portraitHeight = width;
+    }
+
+    if ((portraitWidth - 595).abs() < 1 && (portraitHeight - 842).abs() < 1) {
       return 'A4';
-    } else if ((width - 420).abs() < 1 && (height - 595).abs() < 1) {
+    } else if ((portraitWidth - 420).abs() < 1 &&
+        (portraitHeight - 595).abs() < 1) {
       return 'A5';
     } else {
       return 'custom';
+    }
+  }
+
+  // 处理控制器状态变化
+  void _handleControllerChange() {
+    // 只在控制器的网格状态变化时重建UI
+    setState(() {});
+  }
+
+  // 处理高度焦点变化
+  void _handleHeightFocusChange() {
+    if (!_heightFocusNode.hasFocus) {
+      _updateHeight(_heightController.text);
     }
   }
 
@@ -296,12 +489,66 @@ class PagePropertyPanel extends PracticePropertyPanel {
       height = temp;
     }
 
-    _updateProperty('width', width);
-    _updateProperty('height', height);
+    // 更新控制器的值
+    _widthController.text = width.toString();
+    _heightController.text = height.toString();
+
+    // 一次性更新所有属性
+    widget.onPagePropertiesChanged({
+      'width': width,
+      'height': height,
+    });
   }
 
-  void _updateProperty(String key, dynamic value) {
-    final updates = {key: value};
-    onPagePropertiesChanged(updates);
+  // 处理宽度焦点变化
+  void _handleWidthFocusChange() {
+    if (!_widthFocusNode.hasFocus) {
+      _updateWidth(_widthController.text);
+    }
+  }
+
+  /// 显示增强的颜色选择器
+  void _showEnhancedColorPicker(BuildContext context, String colorStr) {
+    final color = hexToColor(colorStr);
+
+    showDialog(
+      context: context,
+      builder: (context) => ColorPickerDialog(
+        initialColor: color,
+        onColorSelected: (selectedColor) {
+          // 将颜色转换为十六进制字符串
+          final hexColor = _colorToHex(selectedColor);
+          widget.onPagePropertiesChanged({'backgroundColor': hexColor});
+        },
+      ),
+    );
+  }
+
+  // 更新高度
+  void _updateHeight(String value) {
+    final newValue = double.tryParse(value);
+    if (newValue != null && newValue > 0) {
+      widget.onPagePropertiesChanged({'height': newValue});
+    } else {
+      // 如果输入无效，恢复原来的值
+      if (widget.page != null) {
+        _heightController.text =
+            ((widget.page!['height'] as num?)?.toDouble() ?? 842.0).toString();
+      }
+    }
+  }
+
+  // 更新宽度
+  void _updateWidth(String value) {
+    final newValue = double.tryParse(value);
+    if (newValue != null && newValue > 0) {
+      widget.onPagePropertiesChanged({'width': newValue});
+    } else {
+      // 如果输入无效，恢复原来的值
+      if (widget.page != null) {
+        _widthController.text =
+            ((widget.page!['width'] as num?)?.toDouble() ?? 595.0).toString();
+      }
+    }
   }
 }
