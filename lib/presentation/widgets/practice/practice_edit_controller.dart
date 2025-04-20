@@ -1332,10 +1332,13 @@ class PracticeEditController extends ChangeNotifier {
 
     // 如果启用了吸附功能，这里可以添加吸附逻辑
     if (state.snapEnabled) {
-      // 简单的网格吸附示例 (假设gridSize已定义)
-      const gridSize = 10.0; // 可以从state获取或设为参数
+      // 使用 state 中的 gridSize
+      final gridSize = state.gridSize;
       newX = (newX / gridSize).round() * gridSize;
       newY = (newY / gridSize).round() * gridSize;
+
+      // 打印吸附信息
+      debugPrint("吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)");
     }
 
     // 更新元素位置
@@ -1353,6 +1356,31 @@ class PracticeEditController extends ChangeNotifier {
     if (elementIndex >= 0) {
       final element = elements[elementIndex] as Map<String, dynamic>;
       final oldProperties = Map<String, dynamic>.from(element);
+
+      // 处理吸附功能
+      if (_state.snapEnabled &&
+          (properties.containsKey('x') || properties.containsKey('y'))) {
+        final gridSize = _state.gridSize;
+
+        // 获取新的位置
+        double newX = properties.containsKey('x')
+            ? (properties['x'] as num).toDouble()
+            : (element['x'] as num).toDouble();
+        double newY = properties.containsKey('y')
+            ? (properties['y'] as num).toDouble()
+            : (element['y'] as num).toDouble();
+
+        // 吸附到网格
+        newX = (newX / gridSize).round() * gridSize;
+        newY = (newY / gridSize).round() * gridSize;
+
+        // 更新属性中的位置
+        if (properties.containsKey('x')) properties['x'] = newX;
+        if (properties.containsKey('y')) properties['y'] = newY;
+
+        // 打印吸附信息
+        debugPrint('吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)');
+      }
 
       // 更新属性
       final newProperties = {...element};
@@ -1374,19 +1402,11 @@ class PracticeEditController extends ChangeNotifier {
               properties.containsKey('y') ||
               properties.containsKey('width') ||
               properties.containsKey('height'))) {
-        // 获取组合控件的旧尺寸和位置
-        final oldX = (oldProperties['x'] as num).toDouble();
-        final oldY = (oldProperties['y'] as num).toDouble();
+        // 获取组合控件的旧尺寸
         final oldWidth = (oldProperties['width'] as num).toDouble();
         final oldHeight = (oldProperties['height'] as num).toDouble();
 
-        // 获取新的尺寸和位置
-        final newX = properties.containsKey('x')
-            ? (properties['x'] as num).toDouble()
-            : oldX;
-        final newY = properties.containsKey('y')
-            ? (properties['y'] as num).toDouble()
-            : oldY;
+        // 获取新的尺寸
         final newWidth = properties.containsKey('width')
             ? (properties['width'] as num).toDouble()
             : oldWidth;
@@ -1394,9 +1414,7 @@ class PracticeEditController extends ChangeNotifier {
             ? (properties['height'] as num).toDouble()
             : oldHeight;
 
-        // 计算位置偏移量和缩放比例
-        final deltaX = newX - oldX;
-        final deltaY = newY - oldY;
+        // 计算缩放比例
         final scaleX = oldWidth > 0 ? newWidth / oldWidth : 1.0;
         final scaleY = oldHeight > 0 ? newHeight / oldHeight : 1.0;
 
@@ -1414,17 +1432,33 @@ class PracticeEditController extends ChangeNotifier {
           final childWidth = (child['width'] as num).toDouble();
           final childHeight = (child['height'] as num).toDouble();
 
-          // 根据缩放比例调整子元素位置和大小
+          // 根据组合控件的变形调整子元素
+          // 处理位置变化
           if (properties.containsKey('x') || properties.containsKey('y')) {
-            // 如果仅是位置变化，保持相对位置关系
-            child['x'] = childX;
-            child['y'] = childY;
-          } else {
-            // 如果是缩放，按比例调整子元素位置和大小
+            // 当组合控件移动时，子元素保持相对位置不变
+            // 不需要更新子元素的相对坐标，因为它们是相对于组合控件的左上角的
+          }
+
+          // 处理大小变化
+          if (properties.containsKey('width') ||
+              properties.containsKey('height')) {
+            // 当组合控件缩放时，子元素按比例缩放
             child['x'] = childX * scaleX;
             child['y'] = childY * scaleY;
             child['width'] = childWidth * scaleX;
             child['height'] = childHeight * scaleY;
+          }
+
+          // 处理旋转
+          if (properties.containsKey('rotation')) {
+            // 当组合控件旋转时，子元素的旋转角度也需要更新
+            final oldRotation = (oldProperties['rotation'] as num).toDouble();
+            final newRotation = (properties['rotation'] as num).toDouble();
+            final deltaRotation = newRotation - oldRotation;
+
+            // 更新子元素的旋转角度
+            final childRotation = (child['rotation'] as num? ?? 0.0).toDouble();
+            child['rotation'] = (childRotation + deltaRotation) % 360.0;
           }
         }
       }

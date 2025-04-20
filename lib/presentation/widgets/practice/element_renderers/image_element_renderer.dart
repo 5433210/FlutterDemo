@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 /// 图片元素渲染器
 class ImageElementRenderer extends StatelessWidget {
   final Map<String, dynamic> element;
+  final bool isSelected;
   final double scale;
 
   const ImageElementRenderer({
     Key? key,
     required this.element,
+    this.isSelected = false,
     this.scale = 1.0,
   }) : super(key: key);
 
@@ -42,14 +44,11 @@ class ImageElementRenderer extends StatelessWidget {
         boxFit = BoxFit.contain;
     }
 
+    Widget imageWidget;
     if (imageUrl.isEmpty) {
-      return _buildEmptyImage();
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      child: Image.network(
+      imageWidget = _buildEmptyImage();
+    } else {
+      imageWidget = Image.network(
         imageUrl,
         fit: boxFit,
         loadingBuilder: (context, child, loadingProgress) {
@@ -59,7 +58,21 @@ class ImageElementRenderer extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) {
           return _buildErrorImage(error.toString());
         },
-      ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: isSelected
+          ? BoxDecoration(
+              border: Border.all(
+                color: Colors.blue.withOpacity(0.5),
+                width: 1.0,
+              ),
+            )
+          : null,
+      child: imageWidget,
     );
   }
 

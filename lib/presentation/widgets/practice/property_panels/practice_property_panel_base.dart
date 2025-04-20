@@ -222,14 +222,20 @@ abstract class PracticePropertyPanel extends StatelessWidget {
       // 保存当前光标位置
       final selection = _numberControllers[key]!.selection;
 
-      // 更新文本
-      _numberControllers[key]!.value = TextEditingValue(
-        text: valueStr,
-        selection: TextSelection(
-          baseOffset: selection.baseOffset.clamp(0, valueStr.length),
-          extentOffset: selection.extentOffset.clamp(0, valueStr.length),
-        ),
-      );
+      // 更新文本，添加安全检查
+      try {
+        _numberControllers[key]!.value = TextEditingValue(
+          text: valueStr,
+          selection: TextSelection(
+            baseOffset: selection.baseOffset.clamp(0, valueStr.length),
+            extentOffset: selection.extentOffset.clamp(0, valueStr.length),
+          ),
+        );
+      } catch (e) {
+        // 如果控制器已经被销毁，则从Map中移除
+        _numberControllers.remove(key);
+        debugPrint('移除已销毁的控制器: $key');
+      }
     }
 
     return TextField(
@@ -265,11 +271,17 @@ abstract class PracticePropertyPanel extends StatelessWidget {
       return;
     }
 
-    // 设置新的定时器
+    // 设置新的定时器，并添加安全检查
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-      if (numValue != null) {
-        onChanged(numValue);
-        _lastProcessedValue = text;
+      try {
+        if (numValue != null) {
+          onChanged(numValue);
+          _lastProcessedValue = text;
+        }
+      } catch (e) {
+        // 如果回调失败，则取消定时器
+        _debounceTimer?.cancel();
+        debugPrint('定时器回调失败: $e');
       }
     });
   }

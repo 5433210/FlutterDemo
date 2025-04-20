@@ -24,9 +24,18 @@ class GroupElementRenderer extends StatelessWidget {
     final width = (element['width'] as num).toDouble() * scale;
     final height = (element['height'] as num).toDouble() * scale;
 
-    return SizedBox(
+    // 简化组合控件结构，只使用一个Container
+    return Container(
       width: width,
       height: height,
+      // 如果选中则显示蓝色边框，否则显示灰色边框
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.5),
+          width: isSelected ? 2.0 : 1.0,
+        ),
+      ),
+      // 直接使用Stack渲染子元素
       child: Stack(
         clipBehavior: Clip.none,
         children: children.map<Widget>((child) {
@@ -46,30 +55,35 @@ class GroupElementRenderer extends StatelessWidget {
     final double rotation = (child['rotation'] as num? ?? 0.0).toDouble();
     final double opacity = (child['opacity'] as num? ?? 1.0).toDouble();
 
+    // 根据不同类型创建不同的渲染器
     Widget childWidget;
     switch (type) {
       case 'text':
         childWidget = TextElementRenderer(
           element: child,
           scale: scale,
+          isSelected: isSelected,
         );
         break;
       case 'image':
         childWidget = ImageElementRenderer(
           element: child,
           scale: scale,
+          isSelected: isSelected,
         );
         break;
       case 'collection':
         childWidget = CollectionElementRenderer(
           element: child,
           scale: scale,
+          isSelected: isSelected,
         );
         break;
       case 'group':
         childWidget = GroupElementRenderer(
           element: child,
           scale: scale,
+          isSelected: isSelected,
         );
         break;
       default:
@@ -83,6 +97,23 @@ class GroupElementRenderer extends StatelessWidget {
         );
     }
 
+    // 使用DecoratedBox来添加边框，这样不会影响元素尺寸和位置
+    final decoratedChild = DecoratedBox(
+      decoration: BoxDecoration(
+        border: isSelected
+            ? Border.all(
+                color: Colors.blue.withOpacity(0.5),
+                width: 1.0,
+              )
+            : Border.all(
+                color: Colors.transparent,
+                width: 0,
+              ),
+      ),
+      child: childWidget,
+    );
+
+    // 简化Positioned结构
     return Positioned(
       left: x,
       top: y,
@@ -90,19 +121,10 @@ class GroupElementRenderer extends StatelessWidget {
       height: height,
       child: Transform.rotate(
         angle: rotation * (3.14159265359 / 180),
+        alignment: Alignment.center,
         child: Opacity(
           opacity: opacity,
-          child: Container(
-            decoration: isSelected
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: Colors.blue.withOpacity(0.5),
-                      width: 1.0,
-                    ),
-                  )
-                : null,
-            child: childWidget,
-          ),
+          child: decoratedChild,
         ),
       ),
     );

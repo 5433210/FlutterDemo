@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 /// 集字元素渲染器
 class CollectionElementRenderer extends StatelessWidget {
   final Map<String, dynamic> element;
+  final bool isSelected;
   final double scale;
 
   const CollectionElementRenderer({
     Key? key,
     required this.element,
+    this.isSelected = false,
     this.scale = 1.0,
   }) : super(key: key);
 
@@ -35,10 +37,21 @@ class CollectionElementRenderer extends StatelessWidget {
     final width = (element['width'] as num).toDouble() * scale;
     final height = (element['height'] as num).toDouble() * scale;
 
+    // 使用Container包装，以便在选中时显示蓝色边框
     return Container(
       width: width,
       height: height,
-      color: backgroundColor,
+      decoration: isSelected
+          ? BoxDecoration(
+              border: Border.all(
+                color: Colors.blue.withOpacity(0.5),
+                width: 1.0,
+              ),
+              color: backgroundColor,
+            )
+          : BoxDecoration(
+              color: backgroundColor,
+            ),
       child: direction == 'horizontal'
           ? _buildHorizontalLayout(characters, fontSize, fontColor, charSpacing,
               lineSpacing, showGrid)

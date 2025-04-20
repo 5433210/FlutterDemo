@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 class TextElementRenderer extends StatelessWidget {
   final Map<String, dynamic> element;
   final bool isEditing;
+  final bool isSelected;
   final double scale;
 
   const TextElementRenderer({
     Key? key,
     required this.element,
     this.isEditing = false,
+    this.isSelected = false,
     this.scale = 1.0,
   }) : super(key: key);
 
@@ -51,6 +53,14 @@ class TextElementRenderer extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       padding: const EdgeInsets.all(4),
+      decoration: isSelected
+          ? BoxDecoration(
+              border: Border.all(
+                color: Colors.blue.withOpacity(0.5),
+                width: 1.0,
+              ),
+            )
+          : null,
       child: isEditing
           ? TextField(
               controller: TextEditingController(text: text),

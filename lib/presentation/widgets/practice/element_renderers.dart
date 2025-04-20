@@ -32,17 +32,87 @@ class ElementRenderers {
   }
 
   /// 构建组合元素
-  static Widget buildGroupElement(Map<String, dynamic> element) {
-    // 组合元素需要处理子元素的渲染，这里简化为显示一个组合标识
-    return Container(
-      color: Colors.transparent,
-      width: double.infinity,
-      height: double.infinity,
-      alignment: Alignment.center,
-      child: const Text(
-        '组合元素',
-        style: TextStyle(color: Colors.grey),
-      ),
+  static Widget buildGroupElement(Map<String, dynamic> element,
+      {bool isSelected = false}) {
+    final content = element['content'] as Map<String, dynamic>;
+    final List<dynamic> children = content['children'] as List<dynamic>;
+
+    // 使用Stack来渲染所有子元素
+    return Stack(
+      children: [
+        // 先渲染子元素
+        Stack(
+          clipBehavior: Clip.none,
+          children: children.map<Widget>((child) {
+            final String type = child['type'] as String;
+            final double x = (child['x'] as num).toDouble();
+            final double y = (child['y'] as num).toDouble();
+            final double width = (child['width'] as num).toDouble();
+            final double height = (child['height'] as num).toDouble();
+            final double rotation =
+                (child['rotation'] as num? ?? 0.0).toDouble();
+            final double opacity = (child['opacity'] as num? ?? 1.0).toDouble();
+
+            // 根据子元素类型渲染不同的内容
+            Widget childWidget;
+            switch (type) {
+              case 'text':
+                childWidget = buildTextElement(child);
+                break;
+              case 'image':
+                childWidget = buildImageElement(child);
+                break;
+              case 'collection':
+                childWidget = buildCollectionElement(child);
+                break;
+              case 'group':
+                // 递归处理嵌套组合，并传递选中状态
+                childWidget = buildGroupElement(child, isSelected: isSelected);
+                break;
+              default:
+                childWidget = Container(
+                  color: Colors.grey.withAlpha(51), // 0.2 的不透明度
+                  child: Center(child: Text('未知元素类型: $type')),
+                );
+            }
+
+            // 当组合被选中时，为子元素添加边框显示选中状态
+            // 不再在这里添加边框，而是在Positioned中直接处理
+
+            // 使用Positioned和Transform确保子元素在正确的位置和角度
+            return Positioned(
+              left: x - 1, //消除1像素边框宽度的影响
+              top: y - 1, //消除1像素边框宽度的影响
+              width: width,
+              height: height,
+              child: Transform.rotate(
+                angle: rotation * (3.14159265359 / 180),
+                // 添加原点参数，确保旋转以元素中心为原点
+                alignment: Alignment.center,
+                child: Opacity(
+                  opacity: opacity,
+                  child: isSelected
+                      // 如果组合被选中，为子元素添加边框
+                      ? Container(
+                          width: width,
+                          height: height,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Colors.blue.withAlpha(179), // 0.7 的不透明度
+                              width: 1.0,
+                            ),
+                          ),
+                          child: childWidget,
+                        )
+                      : childWidget,
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+
+        // 不再添加组合控件的边框，因为在 practice_edit_page.dart 中已经添加了边框
+      ],
     );
   }
 

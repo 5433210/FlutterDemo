@@ -405,7 +405,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 : Colors.white, // 其他控制点使用白色
             border: Border.all(
               color: isRotation ? Colors.white : Colors.blue,
-              width: isRotation ? 2 : 1,
+              width: isRotation ? 1 : 1,
             ),
             shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
             boxShadow: isRotation
@@ -751,7 +751,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: Colors.blue,
-                                width: 2,
+                                width: 1,
                                 style: BorderStyle.solid,
                               ),
                             ),
@@ -852,7 +852,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         content = ElementRenderers.buildCollectionElement(element);
         break;
       case 'group':
-        content = ElementRenderers.buildGroupElement(element);
+        content =
+            ElementRenderers.buildGroupElement(element, isSelected: isSelected);
         break;
       default:
         content = Container(
@@ -866,6 +867,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       top: y,
       child: Transform.rotate(
         angle: rotation * 3.1415926 / 180,
+        // 添加原点参数，确保旋转以元素中心为原点
+        alignment: Alignment.center,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -951,6 +954,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 child: Container(
                   width: width,
                   height: height,
+                  padding: const EdgeInsets.all(0),
                   decoration: BoxDecoration(
                     border: Border.all(
                       // 根据规范设置边框颜色和宽度
@@ -962,7 +966,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                                   ? Colors.blue // 编辑状态或选中状态：蓝色边框
                                   : Colors.grey, // 普通状态：灰色边框
                       width: !_isPreviewMode && isSelected
-                          ? 2.0
+                          ? 1.0
                           : 1.0, // 编辑/选中状态为2px，普通状态为1px
                       style: isHidden && !_isPreviewMode
                           ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
@@ -970,6 +974,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     ),
                   ),
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       // 元素内容
                       content,
@@ -1429,6 +1434,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             debugPrint(
                 '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
             debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
+            debugPrint('元素起点：${element['x']}, ${element['y']}');
+            debugPrint('元素尺寸: ${element['width']}x${element['height']}');
             debugPrint('\n');
           });
         }

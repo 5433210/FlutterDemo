@@ -7,7 +7,7 @@ import 'practice_property_panel_base.dart';
 class TextPropertyPanel extends PracticePropertyPanel {
   // 文本控制器静态变量
   static final TextEditingController _textController = TextEditingController();
-  
+
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
 
@@ -182,14 +182,19 @@ class TextPropertyPanel extends PracticePropertyPanel {
       // 保存当前光标位置
       final selection = _textController.selection;
 
-      // 更新文本，保持光标位置
-      _textController.value = TextEditingValue(
-        text: initialText,
-        selection: TextSelection(
-          baseOffset: selection.baseOffset.clamp(0, initialText.length),
-          extentOffset: selection.extentOffset.clamp(0, initialText.length),
-        ),
-      );
+      // 更新文本，保持光标位置，并添加安全检查
+      try {
+        _textController.value = TextEditingValue(
+          text: initialText,
+          selection: TextSelection(
+            baseOffset: selection.baseOffset.clamp(0, initialText.length),
+            extentOffset: selection.extentOffset.clamp(0, initialText.length),
+          ),
+        );
+      } catch (e) {
+        // 如果控制器已经被销毁，则初始化一个新的
+        debugPrint('文本控制器已销毁，初始化新控制器');
+      }
     }
 
     return TextField(
