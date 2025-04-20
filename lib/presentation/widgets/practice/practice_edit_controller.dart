@@ -1149,20 +1149,40 @@ class PracticeEditController extends ChangeNotifier {
       final index = elements.indexWhere((e) => e['id'] == groupId);
 
       if (index >= 0 && elements[index]['type'] == 'group') {
-        final group = elements[index];
-        final groupElements = group['elements'] as List<dynamic>;
+        final group = elements[index] as Map<String, dynamic>;
+        final content = group['content'] as Map<String, dynamic>;
+        final groupChildren = content['children'] as List<dynamic>;
+
+        // 获取组合元素坐标
+        final groupX = (group['x'] as num).toDouble();
+        final groupY = (group['y'] as num).toDouble();
 
         // 删除组
         elements.removeAt(index);
 
-        // 添加组中的所有元素
-        for (final element in groupElements) {
-          elements.add(element);
+        // 添加组中的所有元素（调整为全局坐标）
+        final newElementIds = <String>[];
+        for (final childElement in groupChildren) {
+          final child =
+              Map<String, dynamic>.from(childElement as Map<String, dynamic>);
+
+          // 计算全局坐标
+          final childX = (child['x'] as num).toDouble() + groupX;
+          final childY = (child['y'] as num).toDouble() + groupY;
+
+          // 创建新元素
+          final newElement = {
+            ...child,
+            'x': childX,
+            'y': childY,
+          };
+
+          elements.add(newElement);
+          newElementIds.add(newElement['id'] as String);
         }
 
         // 更新选中的元素
-        _state.selectedElementIds =
-            groupElements.map<String>((e) => e['id'] as String).toList();
+        _state.selectedElementIds = newElementIds;
         _state.selectedElement = null;
         _state.hasUnsavedChanges = true;
 
@@ -1347,6 +1367,67 @@ class PracticeEditController extends ChangeNotifier {
           newProperties[key] = value;
         }
       });
+
+      // 处理组合控件的子元素调整
+      if (element['type'] == 'group' &&
+          (properties.containsKey('x') ||
+              properties.containsKey('y') ||
+              properties.containsKey('width') ||
+              properties.containsKey('height'))) {
+        // 获取组合控件的旧尺寸和位置
+        final oldX = (oldProperties['x'] as num).toDouble();
+        final oldY = (oldProperties['y'] as num).toDouble();
+        final oldWidth = (oldProperties['width'] as num).toDouble();
+        final oldHeight = (oldProperties['height'] as num).toDouble();
+
+        // 获取新的尺寸和位置
+        final newX = properties.containsKey('x')
+            ? (properties['x'] as num).toDouble()
+            : oldX;
+        final newY = properties.containsKey('y')
+            ? (properties['y'] as num).toDouble()
+            : oldY;
+        final newWidth = properties.containsKey('width')
+            ? (properties['width'] as num).toDouble()
+            : oldWidth;
+        final newHeight = properties.containsKey('height')
+            ? (properties['height'] as num).toDouble()
+            : oldHeight;
+
+        // 计算位置偏移量和缩放比例
+        final deltaX = newX - oldX;
+        final deltaY = newY - oldY;
+        final scaleX = oldWidth > 0 ? newWidth / oldWidth : 1.0;
+        final scaleY = oldHeight > 0 ? newHeight / oldHeight : 1.0;
+
+        // 获取子元素列表
+        final content = newProperties['content'] as Map<String, dynamic>;
+        final children = content['children'] as List<dynamic>;
+
+        // 更新每个子元素的位置和大小
+        for (int i = 0; i < children.length; i++) {
+          final child = children[i] as Map<String, dynamic>;
+
+          // 获取子元素的当前位置和大小
+          final childX = (child['x'] as num).toDouble();
+          final childY = (child['y'] as num).toDouble();
+          final childWidth = (child['width'] as num).toDouble();
+          final childHeight = (child['height'] as num).toDouble();
+
+          // 根据缩放比例调整子元素位置和大小
+          if (properties.containsKey('x') || properties.containsKey('y')) {
+            // 如果仅是位置变化，保持相对位置关系
+            child['x'] = childX;
+            child['y'] = childY;
+          } else {
+            // 如果是缩放，按比例调整子元素位置和大小
+            child['x'] = childX * scaleX;
+            child['y'] = childY * scaleY;
+            child['width'] = childWidth * scaleX;
+            child['height'] = childHeight * scaleY;
+          }
+        }
+      }
 
       final operation = ElementPropertyOperation(
         elementId: id,
