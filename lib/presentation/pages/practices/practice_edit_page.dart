@@ -852,6 +852,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         content = ElementRenderers.buildCollectionElement(element);
         break;
       case 'group':
+        // 将组合控件的选中状态传递给子元素
         content =
             ElementRenderers.buildGroupElement(element, isSelected: isSelected);
         break;
@@ -964,10 +965,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                               ? Colors.orange // 锁定状态：橙色边框
                               : !_isPreviewMode && isSelected
                                   ? Colors.blue // 编辑状态或选中状态：蓝色边框
-                                  : Colors.grey, // 普通状态：灰色边框
-                      width: !_isPreviewMode && isSelected
-                          ? 1.0
-                          : 1.0, // 编辑/选中状态为2px，普通状态为1px
+                                  : Colors.grey
+                                      .withAlpha(179), // 普通状态：灰色边框，70%不透明度
+                      width: 1.0, // 所有状态都是1px
                       style: isHidden && !_isPreviewMode
                           ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
                           : BorderStyle.solid, // 隐藏状态使用半透明

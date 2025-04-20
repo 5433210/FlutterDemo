@@ -15,10 +15,10 @@ class ElementRenderers {
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
 
     return Container(
-      color: backgroundColor,
       width: double.infinity,
       height: double.infinity,
       padding: const EdgeInsets.all(8.0),
+      color: backgroundColor,
       child: _buildCharacterGrid(
         content: characters,
         direction: direction,
@@ -91,20 +91,21 @@ class ElementRenderers {
                 alignment: Alignment.center,
                 child: Opacity(
                   opacity: opacity,
-                  child: isSelected
-                      // 如果组合被选中，为子元素添加边框
-                      ? Container(
-                          width: width,
-                          height: height,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: Colors.blue.withAlpha(179), // 0.7 的不透明度
-                              width: 1.0,
-                            ),
-                          ),
-                          child: childWidget,
-                        )
-                      : childWidget,
+                  // 无论组合是否被选中，都为子元素添加边框
+                  child: Container(
+                    width: width,
+                    height: height,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        // 根据组合选中状态决定边框颜色
+                        color: isSelected
+                            ? Colors.blue.withAlpha(179) // 选中状态：蓝色边框，70% 的不透明度
+                            : Colors.grey.withAlpha(179), // 默认状态：灰色边框，70% 的不透明度
+                        width: 1.0,
+                      ),
+                    ),
+                    child: childWidget,
+                  ),
                 ),
               ),
             );
@@ -123,10 +124,10 @@ class ElementRenderers {
 
     if (imageUrl.isEmpty) {
       return Container(
-        color: Colors.grey.shade200,
         width: double.infinity,
         height: double.infinity,
         alignment: Alignment.center,
+        color: Colors.grey.shade200,
         child: const Icon(Icons.image, size: 48, color: Colors.grey),
       );
     }
@@ -138,10 +139,10 @@ class ElementRenderers {
       height: double.infinity,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          color: Colors.grey.shade200,
           width: double.infinity,
           height: double.infinity,
           alignment: Alignment.center,
+          color: Colors.grey.shade200,
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -168,10 +169,10 @@ class ElementRenderers {
         _parseTextAlign(content['alignment'] as String? ?? 'left');
 
     return Container(
-      color: backgroundColor,
       width: double.infinity,
       height: double.infinity,
       alignment: Alignment.center,
+      color: backgroundColor,
       child: Text(
         text,
         style: TextStyle(
