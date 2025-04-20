@@ -7,80 +7,85 @@ class ControlHandlers {
   /// 构建变换控制点
   static Widget buildTransformControls(double width, double height) {
     const controlPointSize = 8.0;
-    const rotationHandleDistance = 25.0;
+    const rotationHandleDistance = 35.0; // 增加旋转控制柄距离
 
-    return Stack(
-      children: [
-        // 四个角落的调整控制点
-        // 左上角
-        Positioned(
-          left: -controlPointSize / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.topLeft),
-        ),
-        // 右上角
-        Positioned(
-          right: -controlPointSize / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.topRight),
-        ),
-        // 左下角
-        Positioned(
-          left: -controlPointSize / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.bottomLeft),
-        ),
-        // 右下角
-        Positioned(
-          right: -controlPointSize / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.bottomRight),
-        ),
-
-        // 四条边中间的调整控制点
-        // 上边中间
-        Positioned(
-          left: (width - controlPointSize) / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.top),
-        ),
-        // 右边中间
-        Positioned(
-          right: -controlPointSize / 2,
-          top: (height - controlPointSize) / 2,
-          child: _buildControlPoint(ControlPointPosition.right),
-        ),
-        // 下边中间
-        Positioned(
-          left: (width - controlPointSize) / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPoint(ControlPointPosition.bottom),
-        ),
-        // 左边中间
-        Positioned(
-          left: -controlPointSize / 2,
-          top: (height - controlPointSize) / 2,
-          child: _buildControlPoint(ControlPointPosition.left),
-        ),
-
-        // 旋转控制柄
-        Positioned(
-          left: (width - controlPointSize) / 2,
-          top: -rotationHandleDistance,
-          child: Column(
-            children: [
-              // 旋转手柄
-              _buildRotationHandle(),
-              // 连接线
-              Container(
-                width: 1,
-                height: rotationHandleDistance - controlPointSize,
-                color: Colors.blue,
-              ),
-            ],
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        clipBehavior: Clip.none, // 关键修改：禁用裁剪，允许控制点超出边界
+        children: [
+          // 四个角落的调整控制点
+          // 左上角
+          Positioned(
+            left: -controlPointSize / 2,
+            top: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.topLeft),
           ),
-        ),
-      ],
+          // 右上角
+          Positioned(
+            right: -controlPointSize / 2,
+            top: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.topRight),
+          ),
+          // 左下角
+          Positioned(
+            left: -controlPointSize / 2,
+            bottom: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.bottomLeft),
+          ),
+          // 右下角
+          Positioned(
+            right: -controlPointSize / 2,
+            bottom: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.bottomRight),
+          ),
+
+          // 四条边中间的调整控制点
+          // 上边中间
+          Positioned(
+            left: (width - controlPointSize) / 2,
+            top: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.top),
+          ),
+          // 右边中间
+          Positioned(
+            right: -controlPointSize / 2,
+            top: (height - controlPointSize) / 2,
+            child: _buildControlPoint(ControlPointPosition.right),
+          ),
+          // 下边中间
+          Positioned(
+            left: (width - controlPointSize) / 2,
+            bottom: -controlPointSize / 2,
+            child: _buildControlPoint(ControlPointPosition.bottom),
+          ),
+          // 左边中间
+          Positioned(
+            left: -controlPointSize / 2,
+            top: (height - controlPointSize) / 2,
+            child: _buildControlPoint(ControlPointPosition.left),
+          ),
+
+          // 旋转控制柄 - 增强显示效果
+          Positioned(
+            left: (width - 14) / 2, // 使用旋转手柄的实际宽度
+            top: -rotationHandleDistance,
+            child: Column(
+              children: [
+                // 旋转手柄
+                _buildRotationHandle(),
+                // 连接线
+                Container(
+                  width: 2, // 增加线宽
+                  height: rotationHandleDistance - 14, // 调整高度以匹配旋转手柄大小
+                  color: Colors.blue,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -192,16 +197,32 @@ class ControlHandlers {
   /// 构建控制点
   static Widget _buildControlPoint(ControlPointPosition position) {
     final cursor = _getCursorForPosition(position);
+    const controlPointSize = 8.0;
+    // 增加点击区域，但保持视觉大小不变
+    const hitAreaExpansion = 6.0;
 
     return MouseRegion(
       cursor: cursor,
-      child: Container(
-        width: 8,
-        height: 8,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.blue, width: 1),
-          shape: BoxShape.rectangle,
+      child: GestureDetector(
+        // 添加事件处理以防止事件冒泡
+        onPanStart: (details) {
+          // 消耗事件，防止冒泡到父级
+          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
+        },
+        child: Container(
+          width: controlPointSize + hitAreaExpansion,
+          height: controlPointSize + hitAreaExpansion,
+          color: Colors.transparent, // 扩展区域透明
+          padding: const EdgeInsets.all(hitAreaExpansion / 2),
+          child: Container(
+            width: controlPointSize,
+            height: controlPointSize,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.blue, width: 1),
+              shape: BoxShape.rectangle,
+            ),
+          ),
         ),
       ),
     );
@@ -209,14 +230,40 @@ class ControlHandlers {
 
   /// 构建旋转控制柄
   static Widget _buildRotationHandle() {
+    const controlSize = 14.0;
+    const hitAreaExpansion = 8.0;
+
     return MouseRegion(
       cursor: SystemMouseCursors.grabbing,
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(
-          color: Colors.blue,
-          shape: BoxShape.circle,
+      child: GestureDetector(
+        // 添加事件处理以防止事件冒泡
+        onPanStart: (details) {
+          // 消耗事件，防止冒泡到父级
+          details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
+        },
+        child: Container(
+          width: controlSize + hitAreaExpansion,
+          height: controlSize + hitAreaExpansion,
+          color: Colors.transparent, // 扩展区域透明
+          padding: const EdgeInsets.all(hitAreaExpansion / 2),
+          child: Container(
+            width: controlSize,
+            height: controlSize,
+            decoration: BoxDecoration(
+              color: Colors.blue,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2), // 添加白色边框
+              boxShadow: [
+                // 添加阴影效果
+                BoxShadow(
+                  color: Colors.black.withAlpha(76), // 0.3 的不透明度
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -226,15 +273,19 @@ class ControlHandlers {
   static MouseCursor _getCursorForPosition(ControlPointPosition position) {
     switch (position) {
       case ControlPointPosition.topLeft:
-      case ControlPointPosition.bottomRight:
         return SystemMouseCursors.resizeUpLeft;
+      case ControlPointPosition.bottomRight:
+        return SystemMouseCursors.resizeDownRight; // 修正：右下角应该是resizeDownRight
       case ControlPointPosition.topRight:
+        return SystemMouseCursors.resizeUpRight;
       case ControlPointPosition.bottomLeft:
-        return SystemMouseCursors.resizeDownRight;
+        return SystemMouseCursors.resizeDownLeft; // 修正：左下角应该是resizeDownLeft
       case ControlPointPosition.top:
+        return SystemMouseCursors.resizeUpDown;
       case ControlPointPosition.bottom:
         return SystemMouseCursors.resizeUpDown;
       case ControlPointPosition.left:
+        return SystemMouseCursors.resizeLeftRight;
       case ControlPointPosition.right:
         return SystemMouseCursors.resizeLeftRight;
     }

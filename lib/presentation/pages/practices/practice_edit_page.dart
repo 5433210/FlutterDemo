@@ -1,6 +1,5 @@
 import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:demo/presentation/widgets/practice/top_navigation_bar.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show
@@ -242,15 +241,56 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   Widget _buildControlPointDetector(
     String elementId,
     int controlPointIndex,
-    Offset position,
+    Offset position, // 注意：这个参数在当前实现中没有被使用
     Size size, {
     bool isRotation = false,
   }) {
-    return Positioned(
-      left: position.dx,
-      top: position.dy,
+    // 根据控制点类型选择光标
+    MouseCursor cursor;
+    if (isRotation) {
+      cursor = SystemMouseCursors.grabbing;
+    } else {
+      switch (controlPointIndex) {
+        case 0: // 左上角
+        case 4: // 右下角
+          cursor = SystemMouseCursors.resizeUpLeft;
+          break;
+        case 2: // 右上角
+        case 6: // 左下角
+          cursor = SystemMouseCursors.resizeUpRight;
+          break;
+        case 1: // 上中
+        case 5: // 下中
+          cursor = SystemMouseCursors.resizeUpDown;
+          break;
+        case 3: // 右中
+        case 7: // 左中
+          cursor = SystemMouseCursors.resizeLeftRight;
+          break;
+        default:
+          cursor = SystemMouseCursors.basic;
+      }
+    }
+
+    return MouseRegion(
+      cursor: cursor,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque, // 关键修改：确保手势检测器捕获所有事件
+        // 添加点击事件处理，阻止事件冒泡
+        onTap: () {
+          // 阻止点击事件传递到元素上
+          // 打印位置信息以进行调试
+          debugPrint('Control point $controlPointIndex tapped at $position');
+        },
         onPanStart: (details) {
+          // 阻止事件冒泡
+          // 使用 setState 来标记正在拖动，这将禁用 InteractiveViewer 的平移
+
+          // 打印控制点操作开始的日志
+          debugPrint('\n=== 开始操作控制点 $controlPointIndex (元素 $elementId) ===');
+          debugPrint('控制点类型: ${isRotation ? "旋转控制点" : "大小调整控制点"}');
+          debugPrint('开始位置: ${details.localPosition}');
+
           setState(() {
             _isDragging = true;
             _dragStart = details.localPosition;
@@ -270,6 +310,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           });
         },
         onPanUpdate: (details) {
+          // 阻止事件冒泡
+          // 已经在 InteractiveViewer 中禁用了平移
+
+          // 打印控制点更新操作的日志
+          debugPrint('控制点 $controlPointIndex 移动: ${details.delta}');
+
           if (isRotation) {
             // 旋转控制点的处理
             final element = _controller.state.currentPageElements
@@ -327,6 +373,25 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           }
         },
         onPanEnd: (details) {
+          // 打印控制点操作结束的日志
+          debugPrint('\n=== 结束操作控制点 $controlPointIndex (元素 $elementId) ===');
+
+          // 获取元素的当前状态
+          final element = _controller.state.currentPageElements
+              .firstWhere((e) => e['id'] == elementId);
+
+          if (isRotation) {
+            final rotation = (element['rotation'] as num).toDouble();
+            debugPrint('旋转后的角度: $rotation度');
+          } else {
+            final x = (element['x'] as num).toDouble();
+            final y = (element['y'] as num).toDouble();
+            final width = (element['width'] as num).toDouble();
+            final height = (element['height'] as num).toDouble();
+            debugPrint('调整后的尺寸: 宽=$width, 高=$height');
+            debugPrint('调整后的位置: x=$x, y=$y');
+          }
+
           setState(() {
             _isDragging = false;
           });
@@ -334,7 +399,26 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         child: Container(
           width: size.width,
           height: size.height,
-          color: Colors.transparent,
+          decoration: BoxDecoration(
+            color: isRotation
+                ? Colors.blue // 旋转控制点使用蓝色
+                : Colors.white, // 其他控制点使用白色
+            border: Border.all(
+              color: isRotation ? Colors.white : Colors.blue,
+              width: isRotation ? 2 : 1,
+            ),
+            shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
+            boxShadow: isRotation
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(76), // 0.3 的不透明度
+                      spreadRadius: 1,
+                      blurRadius: 2,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
         ),
       ),
     );
@@ -342,81 +426,147 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 构建控制点
   Widget _buildControlPoints(String elementId, double width, double height) {
-    return GestureDetector(
-      // 阻止点击事件传递到元素上
-      onTap: () {},
-      child: Stack(
-        children: [
-          // 使用现有的控制点渲染器
-          ControlHandlers.buildTransformControls(width, height),
+    const controlPointSize = 8.0;
+    const rotationHandleDistance = 35.0;
 
-          // 添加对各个控制点的手势检测
-          // 左上角
-          _buildControlPointDetector(
+    return Stack(
+      clipBehavior: Clip.none, // 关键修改：禁用裁剪，允许控制点超出边界
+      children: [
+        // 不再添加边框，但仍需要一个容器来确保布局正确
+        Container(
+          width: width,
+          height: height,
+          color: Colors.transparent, // 透明容器，仅用于布局
+        ),
+
+        // 左上角
+        Positioned(
+          left: -controlPointSize / 2,
+          top: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             0,
-            const Offset(-4, -4),
-            const Size(8, 8),
+            const Offset(
+                -controlPointSize / 2, -controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 上中
-          _buildControlPointDetector(
+        ),
+
+        // 上中
+        Positioned(
+          left: (width - controlPointSize) / 2,
+          top: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             1,
-            Offset(width / 2 - 4, -4),
-            const Size(8, 8),
+            Offset((width - controlPointSize) / 2,
+                -controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 右上角
-          _buildControlPointDetector(
+        ),
+
+        // 右上角
+        Positioned(
+          right: -controlPointSize / 2,
+          top: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             2,
-            Offset(width - 4, -4),
-            const Size(8, 8),
+            Offset(
+                width + controlPointSize / 2, -controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 右中
-          _buildControlPointDetector(
+        ),
+
+        // 右中
+        Positioned(
+          right: -controlPointSize / 2,
+          top: (height - controlPointSize) / 2,
+          child: _buildControlPointDetector(
             elementId,
             3,
-            Offset(width - 4, height / 2 - 4),
-            const Size(8, 8),
+            Offset(width + controlPointSize / 2,
+                (height - controlPointSize) / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 右下角
-          _buildControlPointDetector(
+        ),
+
+        // 右下角
+        Positioned(
+          right: -controlPointSize / 2,
+          bottom: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             4,
-            Offset(width - 4, height - 4),
-            const Size(8, 8),
+            Offset(width + controlPointSize / 2,
+                height + controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 下中
-          _buildControlPointDetector(
+        ),
+
+        // 下中
+        Positioned(
+          left: (width - controlPointSize) / 2,
+          bottom: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             5,
-            Offset(width / 2 - 4, height - 4),
-            const Size(8, 8),
+            Offset((width - controlPointSize) / 2,
+                height + controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 左下角
-          _buildControlPointDetector(
+        ),
+
+        // 左下角
+        Positioned(
+          left: -controlPointSize / 2,
+          bottom: -controlPointSize / 2,
+          child: _buildControlPointDetector(
             elementId,
             6,
-            Offset(-4, height - 4),
-            const Size(8, 8),
+            Offset(
+                -controlPointSize / 2, height + controlPointSize / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 左中
-          _buildControlPointDetector(
+        ),
+
+        // 左中
+        Positioned(
+          left: -controlPointSize / 2,
+          top: (height - controlPointSize) / 2,
+          child: _buildControlPointDetector(
             elementId,
             7,
-            Offset(-4, height / 2 - 4),
-            const Size(8, 8),
+            Offset(-controlPointSize / 2,
+                (height - controlPointSize) / 2), // 使用实际位置
+            const Size(controlPointSize, controlPointSize),
           ),
-          // 旋转控制点
-          _buildControlPointDetector(
+        ),
+
+        // 旋转控制柄 - 连接线
+        Positioned(
+          left: width / 2 - 1,
+          top: -rotationHandleDistance + 14, // 从旋转手柄底部开始
+          child: Container(
+            width: 2,
+            height: rotationHandleDistance - 14, // 连接线高度
+            color: Colors.blue,
+          ),
+        ),
+
+        // 旋转控制柄 - 手柄
+        Positioned(
+          left: width / 2 - 7,
+          top: -rotationHandleDistance - 7,
+          child: _buildControlPointDetector(
             elementId,
             8,
-            Offset(width / 2 - 5, -30),
-            const Size(10, 10),
+            Offset(width / 2 - 7, -rotationHandleDistance - 7), // 使用实际位置
+            const Size(14, 14),
             isRotation: true,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -521,8 +671,10 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         // 这里简化处理，使用一个估计的位置
 
         // 计算A4页面中心位置
-        const pageWidth = 595.0; // A4 宽度 (72dpi)
-        const pageHeight = 842.0; // A4 高度 (72dpi)
+        final pageWidth = (currentPage['width'] as num?)?.toDouble() ??
+            842.0; // A4 宽度 (72dpi)
+        final pageHeight = (currentPage['height'] as num?)?.toDouble() ??
+            842.0; // A4 高度 (72dpi)
 
         // 使用相对位置，如果坐标在可见范围内，则使用实际位置
         // 否则默认放在页面中心
@@ -549,18 +701,19 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         }
       },
       builder: (context, candidateData, rejectedData) {
-        return GestureDetector(
-          onTapDown: (details) => _handleTapDown(details, elements),
-          child: Container(
-            color: Colors.grey.shade200,
-            child: InteractiveViewer(
-              boundaryMargin: const EdgeInsets.all(double.infinity),
-              panEnabled: true,
-              scaleEnabled: true,
-              minScale: 0.1,
-              maxScale: 15.0,
-              scaleFactor: 200.0, // 增大缩放因子，减小缩放幅度
-              constrained: false, // 添加这一行，使内容不受约束
+        return Container(
+          color: Colors.grey.shade200,
+          child: InteractiveViewer(
+            boundaryMargin: const EdgeInsets.all(double.infinity),
+            panEnabled: !_isDragging, // 当拖动控件时禁用平移
+            scaleEnabled: true,
+            minScale: 0.1,
+            maxScale: 15.0,
+            scaleFactor: 200.0, // 增大缩放因子，减小缩放幅度
+            constrained: false, // 添加这一行，使内容不受约束
+
+            child: GestureDetector(
+              onTapDown: (details) => _handleTapDown(details, elements),
               child: Stack(
                 children: [
                   // 页面背景
@@ -584,13 +737,17 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                           ),
 
                         // 元素
+
                         for (final element in elements) _buildElement(element),
 
                         // 拖拽指示
                         if (candidateData.isNotEmpty)
                           Container(
-                            width: 595,
-                            height: 842,
+                            width: (currentPage['width'] as num?)?.toDouble() ??
+                                595.0,
+                            height:
+                                (currentPage['height'] as num?)?.toDouble() ??
+                                    842.0,
                             decoration: BoxDecoration(
                               border: Border.all(
                                 color: Colors.blue,
@@ -649,7 +806,10 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       onMoveDown: _moveElementDown,
       onDelete: () {
         if (_controller.state.selectedElementIds.isNotEmpty) {
-          for (final id in _controller.state.selectedElementIds) {
+          // 创建一个副本以避免 ConcurrentModificationError
+          final idsToDelete =
+              List<String>.from(_controller.state.selectedElementIds);
+          for (final id in idsToDelete) {
             _controller.deleteElement(id);
           }
         }
@@ -670,6 +830,13 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
     // 检查元素是否被选中
     final isSelected = _controller.state.selectedElementIds.contains(id);
+
+    // 检查元素是否被锁定或隐藏
+    final isLocked = element['locked'] == true;
+    final isHidden = element['hidden'] == true;
+
+    // 检查元素是否处于错误状态
+    final hasError = element['hasError'] == true;
 
     Widget content;
 
@@ -697,70 +864,166 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     return Positioned(
       left: x,
       top: y,
-      child: GestureDetector(
-        onTap: _isPreviewMode
-            ? null // 预览模式下禁用选择
-            : () => _controller.selectElement(id,
-                isMultiSelect: _isCtrlPressed || _isShiftPressed),
-        onPanStart: _isPreviewMode
-            ? null // 预览模式下禁用拖动
-            : (details) {
-                // 如果元素未选中，先选中它
-                if (!isSelected) {
-                  _controller.selectElement(id,
-                      isMultiSelect: _isCtrlPressed || _isShiftPressed);
-                }
+      child: Transform.rotate(
+        angle: rotation * 3.1415926 / 180,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 元素本身
 
-                setState(() {
-                  _isDragging = true;
-                  _dragStart = details.localPosition;
-                  _elementStartPosition = Offset(x, y);
-                });
-              },
-        onPanUpdate: _isPreviewMode || !_isDragging
-            ? null
-            : (details) {
-                final dx = details.localPosition.dx - _dragStart.dx;
-                final dy = details.localPosition.dy - _dragStart.dy;
-                final newX = _elementStartPosition.dx + dx;
-                final newY = _elementStartPosition.dy + dy;
+            GestureDetector(
+              // onTap: () => (debugPrint('tap')),
+              onPanStart: (_isPreviewMode || isLocked) // 预览模式或锁定状态下禁用拖动
+                  ? null
+                  : (event) {
+                      // 如果元素未选中，先选中它
+                      if (!isSelected) {
+                        _controller.selectElement(id,
+                            isMultiSelect: _isCtrlPressed || _isShiftPressed);
+                      }
 
-                _controller.updateElementProperties(id, {
-                  'x': newX,
-                  'y': newY,
-                });
-              },
-        onPanEnd: _isPreviewMode || !_isDragging
-            ? null
-            : (details) {
-                setState(() {
-                  _isDragging = false;
-                });
-              },
-        child: Transform.rotate(
-          angle: rotation * 3.1415926 / 180,
-          child: Opacity(
-            opacity: opacity,
-            child: Container(
-              width: width,
-              height: height,
-              decoration: !_isPreviewMode && isSelected
-                  ? BoxDecoration(
-                      border: Border.all(color: Colors.blue, width: 2),
-                    )
-                  : null,
-              child: Stack(
-                children: [
-                  // 元素内容
-                  content,
+                      // 开始拖动
+                      debugPrint('\n=== 开始拖动元素 $id ===');
+                      debugPrint(
+                          '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
+                      debugPrint(
+                          '当前选中元素IDs: ${_controller.state.selectedElementIds}');
+                      debugPrint('当前元素位置: ($x, $y)');
 
-                  // 如果选中且不在预览模式，显示控制点
-                  if (!_isPreviewMode && isSelected)
-                    _buildControlPoints(id, width, height),
-                ],
+                      setState(() {
+                        _isDragging = true;
+                        _dragStart = event.localPosition;
+                        _elementStartPosition = Offset(x, y);
+                      });
+                    },
+              onPanUpdate: (_isPreviewMode ||
+                      isLocked ||
+                      !_isDragging) // 预览模式、锁定状态或非拖动状态下禁用移动
+                  ? null
+                  : (event) {
+                      // 打印拖动状态信息
+                      debugPrint('\n=== 拖动元素 $id ===');
+                      debugPrint('_isDragging: $_isDragging');
+                      debugPrint('_dragStart: $_dragStart');
+                      debugPrint(
+                          '_elementStartPosition: $_elementStartPosition');
+                      final dx = event.localPosition.dx - _dragStart.dx;
+                      final dy = event.localPosition.dy - _dragStart.dy;
+                      final newX = _elementStartPosition.dx + dx;
+                      final newY = _elementStartPosition.dy + dy;
+
+                      // 打印元素拖动更新的日志
+                      debugPrint(
+                          '元素 $id 拖动: 偏移量=($dx, $dy), 新位置=($newX, $newY)');
+
+                      _controller.updateElementProperties(id, {
+                        'x': newX,
+                        'y': newY,
+                      });
+                    },
+              onPanEnd: (_isPreviewMode ||
+                      isLocked ||
+                      !_isDragging) // 预览模式、锁定状态或非拖动状态下禁用松开事件
+                  ? null
+                  : (event) {
+                      // 打印拖动结束状态信息
+                      debugPrint('\n=== 拖动结束元素 $id ===');
+                      debugPrint('_isDragging: $_isDragging');
+                      debugPrint('_dragStart: $_dragStart');
+                      debugPrint(
+                          '_elementStartPosition: $_elementStartPosition');
+                      // 结束拖动
+                      final newX = (element['x'] as num).toDouble();
+                      final newY = (element['y'] as num).toDouble();
+                      debugPrint('\n=== 结束拖动元素 $id ===');
+                      debugPrint('新元素位置: ($newX, $newY)');
+                      debugPrint('拖动偏移量: (${newX - x}, ${newY - y})');
+
+                      setState(() {
+                        _isDragging = false;
+                      });
+                    },
+              child: Opacity(
+                // 隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
+                opacity: isHidden
+                    ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
+                    : opacity, // 正常状态
+                child: Container(
+                  width: width,
+                  height: height,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      // 根据规范设置边框颜色和宽度
+                      color: hasError
+                          ? Colors.red // 错误状态：红色边框
+                          : isLocked
+                              ? Colors.orange // 锁定状态：橙色边框
+                              : !_isPreviewMode && isSelected
+                                  ? Colors.blue // 编辑状态或选中状态：蓝色边框
+                                  : Colors.grey, // 普通状态：灰色边框
+                      width: !_isPreviewMode && isSelected
+                          ? 2.0
+                          : 1.0, // 编辑/选中状态为2px，普通状态为1px
+                      style: isHidden && !_isPreviewMode
+                          ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
+                          : BorderStyle.solid, // 隐藏状态使用半透明
+                    ),
+                  ),
+                  child: Stack(
+                    children: [
+                      // 元素内容
+                      content,
+
+                      // 锁定图标
+                      if (isLocked && !_isPreviewMode)
+                        Positioned(
+                          right: 4,
+                          top: 4,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(179), // 0.7 的不透明度
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                            child: const Icon(
+                              Icons.lock,
+                              color: Colors.orange,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+
+                      // 错误图标
+                      if (hasError && !_isPreviewMode)
+                        Positioned(
+                          right: isLocked ? 26 : 4, // 如果同时有锁定图标，则错开一点
+                          top: 4,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(179), // 0.7 的不透明度
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                            child: const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
+
+            // 只在编辑状态下显示控制点（单选元素、不在预览模式、非锁定状态）
+            if (!_isPreviewMode &&
+                isSelected &&
+                !isLocked &&
+                _controller.state.selectedElementIds.length == 1)
+              _buildControlPoints(id, width, height),
+          ],
         ),
       ),
     );
@@ -1027,37 +1290,6 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     return false;
   }
 
-  /// 处理鼠标滚轮事件
-  void _handlePointerSignal(PointerSignalEvent event) {
-    if (event is PointerScrollEvent) {
-      // 计算缩放增量，使用更小的值来减小缩放幅度
-      final double delta = event.scrollDelta.dy * 0.003;
-
-      // 获取当前缩放比例
-      final double currentScale =
-          _transformationController.value.getMaxScaleOnAxis();
-
-      // 计算新的缩放比例，并限制在最小和最大缩放比例之间
-      final double newScale = (currentScale - delta).clamp(0.1, 15.0);
-
-      // 获取鼠标在屏幕上的位置
-      final RenderBox renderBox = context.findRenderObject() as RenderBox;
-      final Offset localFocalPoint = renderBox.globalToLocal(event.position);
-
-      // 使用更简单的方法实现以鼠标位置为中心的缩放
-      final Matrix4 zoomMatrix = Matrix4.identity()
-        ..translate(localFocalPoint.dx, localFocalPoint.dy)
-        ..scale(newScale / currentScale)
-        ..translate(-localFocalPoint.dx, -localFocalPoint.dy);
-
-      // 将缩放矩阵与当前变换矩阵相乘
-      final Matrix4 newMatrix = zoomMatrix * _transformationController.value;
-
-      // 应用新的变换矩阵
-      _transformationController.value = newMatrix;
-    }
-  }
-
   /// 处理点击事件
   void _handleTapDown(
       TapDownDetails details, List<Map<String, dynamic>> elements) {
@@ -1072,28 +1304,167 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       final y = (element['y'] as num).toDouble();
       final width = (element['width'] as num).toDouble();
       final height = (element['height'] as num).toDouble();
+      final isLocked = element['locked'] == true;
+      final isHidden = element['hidden'] == true;
+
+      // 如果元素被隐藏且在预览模式下，跳过该元素
+      if (isHidden && _isPreviewMode) continue;
+
       // 注意：旋转角度在简单碰撞检测中暂未使用，但在更复杂的检测中会用到
 
-      // 简单的矩形碰撞检测
-      // 注意：对于旋转的元素，这种检测不是完全准确的
-      // 实际应用中应该使用更复杂的旋转矩形检测
-      if (details.localPosition.dx >= x &&
+      // 计算边框宽度，用于边框点击检测
+      final isSelected = _controller.state.selectedElementIds.contains(id);
+      final borderWidth = !_isPreviewMode && isSelected ? 2.0 : 1.0;
+
+      // 判断是否点击在元素内部
+      final bool isInside = details.localPosition.dx >= x &&
           details.localPosition.dx <= x + width &&
           details.localPosition.dy >= y &&
-          details.localPosition.dy <= y + height) {
+          details.localPosition.dy <= y + height;
+
+      // 判断是否点击在边框上
+      // 只在边框附近小范围内扩展点击区域
+      final bool isOnBorder = !isInside &&
+          (
+              // 左边框
+              (details.localPosition.dx >= x - borderWidth &&
+                      details.localPosition.dx <= x &&
+                      details.localPosition.dy >= y &&
+                      details.localPosition.dy <= y + height) ||
+                  // 右边框
+                  (details.localPosition.dx >= x + width &&
+                      details.localPosition.dx <= x + width + borderWidth &&
+                      details.localPosition.dy >= y &&
+                      details.localPosition.dy <= y + height) ||
+                  // 上边框
+                  (details.localPosition.dy >= y - borderWidth &&
+                      details.localPosition.dy <= y &&
+                      details.localPosition.dx >= x &&
+                      details.localPosition.dx <= x + width) ||
+                  // 下边框
+                  (details.localPosition.dy >= y + height &&
+                      details.localPosition.dy <= y + height + borderWidth &&
+                      details.localPosition.dx >= x &&
+                      details.localPosition.dx <= x + width));
+
+      // 打印调试信息
+      if (isOnBorder) {
+        debugPrint(
+            'Click on border of element $id at ${details.localPosition}');
+      }
+
+      // 如果点击在元素内部或边框上
+      if (isInside || isOnBorder) {
         hitElement = true;
 
-        // 使用Ctrl或Shift键进行多选
-        _controller.selectElement(id,
-            isMultiSelect: _isCtrlPressed || _isShiftPressed);
+        // 如果元素被锁定，只允许选中，不允许编辑
+        if (isLocked) {
+          // 锁定元素只能选中，不能编辑
+          _controller.selectElement(id,
+              isMultiSelect: _isCtrlPressed || _isShiftPressed);
+        } else {
+          // 根据状态图实现状态转换
+          final isCurrentlySelected =
+              _controller.state.selectedElementIds.contains(id);
+          final isMultipleSelected =
+              _controller.state.selectedElementIds.length > 1;
+
+          // 打印当前状态信息
+          debugPrint('\n=== 点击元素 $id 前的状态 ===');
+          debugPrint(
+              '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
+          debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
+          debugPrint('当前元素是否选中: $isCurrentlySelected');
+          debugPrint('当前是否多选状态: $isMultipleSelected');
+          debugPrint('是否按下Ctrl或Shift键: ${_isCtrlPressed || _isShiftPressed}');
+
+          if (_isCtrlPressed || _isShiftPressed) {
+            // Ctrl+点击：多选状态
+            debugPrint('→ 进入多选状态 (按下Ctrl或Shift键)');
+            _controller.selectElement(id, isMultiSelect: true);
+          } else if (isCurrentlySelected && isMultipleSelected) {
+            // 已选中且当前是多选状态：取消其他选择，进入编辑状态
+            debugPrint('→ 从多选状态转为编辑状态 (取消其他选择)');
+            _controller.state.selectedElementIds = [id];
+            _controller.state.selectedElement = element;
+
+            // 关键修改: 无论如何都启用拖拽
+            setState(() {
+              _isDragging = true;
+              _dragStart = details.localPosition;
+              _elementStartPosition = Offset(x, y);
+              debugPrint('→ 设置拖拽状态，准备移动元素');
+            });
+          } else if (!isCurrentlySelected) {
+            // 未选中：选中并进入编辑状态
+            debugPrint('→ 从普通状态转为编辑状态 (选中元素)');
+            _controller.selectElement(id, isMultiSelect: false);
+
+            // 关键修改: 同时启用拖拽
+            setState(() {
+              _isDragging = true;
+              _dragStart = details.localPosition;
+              _elementStartPosition = Offset(x, y);
+              debugPrint('→ 设置拖拽状态，准备移动元素');
+            });
+          } else {
+            // 如果已经在编辑状态，保持不变并启用拖拽
+            debugPrint('→ 保持编辑状态不变 (已经选中)');
+
+            // 关键修改：即使元素已经被选中，也设置拖拽状态，以便能够拖动元素
+            setState(() {
+              _isDragging = true;
+              _dragStart = details.localPosition;
+              _elementStartPosition = Offset(x, y);
+
+              debugPrint('→ 设置拖拽状态，准备移动元素');
+              debugPrint('  拖拽起始点: $_dragStart');
+              debugPrint('  元素起始位置: $_elementStartPosition');
+            });
+          }
+
+          // 打印状态变化后的信息
+          Future.microtask(() {
+            debugPrint('=== 点击元素 $id 后的状态 ===');
+            debugPrint(
+                '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
+            debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
+            debugPrint('\n');
+          });
+        }
+
         break;
       }
     }
 
-    if (!hitElement && !(_isCtrlPressed || _isShiftPressed)) {
-      // 点击空白处且没有按下Ctrl或Shift键，取消选择
-      _controller.clearSelection();
-      setState(() {});
+    if (!hitElement) {
+      // 打印点击空白区域的状态信息
+      debugPrint('\n=== 点击空白区域 ===');
+      debugPrint('当前选中元素数量: ${_controller.state.selectedElementIds.length}');
+      debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
+      debugPrint('是否按下Ctrl或Shift键: ${_isCtrlPressed || _isShiftPressed}');
+
+      if (!(_isCtrlPressed || _isShiftPressed)) {
+        // 点击空白处且没有按下Ctrl或Shift键，取消选择
+        debugPrint('→ 取消所有选择，进入普通状态');
+        _controller.clearSelection();
+        setState(() {
+          // 重置拖拽状态
+          _isDragging = false;
+          debugPrint('→ 重置拖拽状态');
+        });
+
+        // 打印状态变化后的信息
+        Future.microtask(() {
+          debugPrint('=== 点击空白区域后的状态 ===');
+          debugPrint(
+              '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
+          debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
+          debugPrint('\n');
+        });
+      } else {
+        debugPrint('→ 保持当前选择状态 (按下Ctrl或Shift键)');
+      }
     }
   }
 
