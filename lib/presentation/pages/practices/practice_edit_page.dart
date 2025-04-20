@@ -391,7 +391,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                   newGeometry['height'] = 10.0;
                 }
 
-                _controller.updateElementProperties(elementId, newGeometry);
+                _controller.updateElementPropertiesDuringDrag(
+                    elementId, newGeometry);
               }
             }
 
@@ -409,21 +410,31 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             if (isRotation) {
               final rotation = (element['rotation'] as num).toDouble();
               debugPrint('旋转后的角度: $rotation度');
+
+              // 旋转结束时应用吸附
+              _controller.updateElementProperty(
+                  elementId, 'rotation', rotation);
             } else {
+              // 获取当前尺寸和位置
               final x = (element['x'] as num).toDouble();
               final y = (element['y'] as num).toDouble();
               final width = (element['width'] as num).toDouble();
               final height = (element['height'] as num).toDouble();
               debugPrint('调整后的尺寸: 宽=$width, 高=$height');
               debugPrint('调整后的位置: x=$x, y=$y');
+
+              // 在拖动结束时应用吸附
+              _controller.updateElementProperties(elementId, {
+                'x': x,
+                'y': y,
+                'width': width,
+                'height': height,
+              });
             }
 
             setState(() {
               _isDragging = false;
             });
-
-            // 添加防止事件冒泡的处理
-            details.primaryVelocity; // 访问属性以避免未使用的变量警告
           },
         ),
       ),
@@ -777,8 +788,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       newY = (newY / _gridSize).round() * _gridSize;
                     }
 
-                    // 更新元素位置
-                    _controller.updateElementProperties(elementId, {
+                    // 更新元素位置 - 拖动过程中不应用吸附
+                    _controller.updateElementPropertiesDuringDrag(elementId, {
                       'x': newX,
                       'y': newY,
                     });
@@ -792,13 +803,23 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     _isDragging = false;
                   });
 
-                  // 打印结束位置信息
+                  // 在拖动结束时应用吸附
                   for (final elementId
                       in _controller.state.selectedElementIds) {
                     final element = _controller.state.currentPageElements
                         .firstWhere((e) => e['id'] == elementId);
-                    debugPrint(
-                        '元素 $elementId 结束位置: (${element['x']}, ${element['y']})');
+
+                    // 获取当前位置
+                    final x = (element['x'] as num).toDouble();
+                    final y = (element['y'] as num).toDouble();
+
+                    // 应用吸附
+                    _controller.updateElementProperties(elementId, {
+                      'x': x,
+                      'y': y,
+                    });
+
+                    debugPrint('元素 $elementId 结束位置: ($x, $y)');
                   }
                 }
               },

@@ -27,6 +27,9 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
   late double _pageWidth;
   late double _pageHeight;
 
+  // 页面方向
+  late String _pageOrientation;
+
   // 背景透明度
   late double _backgroundOpacity;
 
@@ -103,8 +106,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                   OutlinedButton(
                     onPressed: () {
                       setState(() {
-                        _pageWidth = 595.0; // A4 width (72dpi)
-                        _pageHeight = 842.0; // A4 height (72dpi)
+                        // 设置A4尺寸，根据方向决定宽高
+                        if (_pageOrientation == 'portrait') {
+                          _pageWidth = 595.0; // A4 width (72dpi)
+                          _pageHeight = 842.0; // A4 height (72dpi)
+                        } else {
+                          _pageWidth = 842.0; // A4 height as width
+                          _pageHeight = 595.0; // A4 width as height
+                        }
                       });
                       _updatePageProperties();
                     },
@@ -114,12 +123,67 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                   OutlinedButton(
                     onPressed: () {
                       setState(() {
-                        _pageWidth = 612.0; // Letter width (72dpi)
-                        _pageHeight = 792.0; // Letter height (72dpi)
+                        // 设置Letter尺寸，根据方向决定宽高
+                        if (_pageOrientation == 'portrait') {
+                          _pageWidth = 612.0; // Letter width (72dpi)
+                          _pageHeight = 792.0; // Letter height (72dpi)
+                        } else {
+                          _pageWidth = 792.0; // Letter height as width
+                          _pageHeight = 612.0; // Letter width as height
+                        }
                       });
                       _updatePageProperties();
                     },
                     child: const Text('Letter'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // 页面方向设置
+          _buildSection(
+            title: '页面方向',
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('纵向'),
+                      value: 'portrait',
+                      groupValue: _pageOrientation,
+                      onChanged: (value) {
+                        setState(() {
+                          _pageOrientation = value!;
+                          // 如果当前宽度大于高度，交换宽高
+                          if (_pageWidth > _pageHeight) {
+                            final temp = _pageWidth;
+                            _pageWidth = _pageHeight;
+                            _pageHeight = temp;
+                          }
+                        });
+                        _updatePageProperties();
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      title: const Text('横向'),
+                      value: 'landscape',
+                      groupValue: _pageOrientation,
+                      onChanged: (value) {
+                        setState(() {
+                          _pageOrientation = value!;
+                          // 如果当前宽度小于高度，交换宽高
+                          if (_pageWidth < _pageHeight) {
+                            final temp = _pageWidth;
+                            _pageWidth = _pageHeight;
+                            _pageHeight = temp;
+                          }
+                        });
+                        _updatePageProperties();
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -268,6 +332,9 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
       _pageWidth = (page['width'] as num?)?.toDouble() ?? 595.0;
       _pageHeight = (page['height'] as num?)?.toDouble() ?? 842.0;
 
+      // 初始化页面方向
+      _pageOrientation = (page['orientation'] as String?) ?? 'portrait';
+
       // 初始化背景颜色
       String backgroundColor =
           (page['backgroundColor'] as String?) ?? '#FFFFFF';
@@ -283,6 +350,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
       // 默认值
       _pageWidth = 595.0;
       _pageHeight = 842.0;
+      _pageOrientation = 'portrait';
       _backgroundColorController = TextEditingController(text: 'FFFFFF');
       _backgroundOpacity = 1.0;
     }
@@ -381,6 +449,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     final properties = {
       'width': _pageWidth,
       'height': _pageHeight,
+      'orientation': _pageOrientation,
       'backgroundColor': backgroundColor,
       'backgroundOpacity': _backgroundOpacity,
     };
@@ -398,6 +467,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     final properties = {
       'width': _pageWidth,
       'height': _pageHeight,
+      'orientation': _pageOrientation,
       'backgroundColor': backgroundColor,
       'backgroundOpacity': _backgroundOpacity,
     };

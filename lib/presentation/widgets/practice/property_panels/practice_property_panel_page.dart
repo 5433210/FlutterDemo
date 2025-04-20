@@ -23,6 +23,7 @@ class PagePropertyPanel extends PracticePropertyPanel {
 
     final width = (page!['width'] as num?)?.toDouble() ?? 595.0;
     final height = (page!['height'] as num?)?.toDouble() ?? 842.0;
+    final orientation = page!['orientation'] as String? ?? 'portrait';
     final backgroundColor = page!['backgroundColor'] as String? ?? '#ffffff';
     final gridVisible = page!['gridVisible'] as bool? ?? false;
     final gridSize = (page!['gridSize'] as num?)?.toDouble() ?? 20.0;
@@ -54,17 +55,59 @@ class PagePropertyPanel extends PracticePropertyPanel {
                     value: _getPageSizePreset(width, height),
                     isExpanded: true,
                     items: const [
-                      DropdownMenuItem(value: 'A4', child: Text('A4 (210×297mm)')),
+                      DropdownMenuItem(
+                          value: 'A4', child: Text('A4 (210×297mm)')),
                       DropdownMenuItem(
                           value: 'A5', child: Text('A5 (148×210mm)')),
-                      DropdownMenuItem(
-                          value: 'custom', child: Text('自定义尺寸')),
+                      DropdownMenuItem(value: 'custom', child: Text('自定义尺寸')),
                     ],
                     onChanged: (value) {
                       if (value != null) {
-                        _handlePageSizePresetChange(value);
+                        _handlePageSizePresetChange(value, orientation);
                       }
                     },
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 页面方向设置
+                  const Text('页面方向'),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: const Text('纵向'),
+                          value: 'portrait',
+                          groupValue: orientation,
+                          onChanged: (value) {
+                            if (value != null && value != orientation) {
+                              if (width > height) {
+                                // 如果当前宽度大于高度，交换宽高
+                                _updateProperty('width', height);
+                                _updateProperty('height', width);
+                              }
+                              _updateProperty('orientation', value);
+                            }
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: const Text('横向'),
+                          value: 'landscape',
+                          groupValue: orientation,
+                          onChanged: (value) {
+                            if (value != null && value != orientation) {
+                              if (width < height) {
+                                // 如果当前宽度小于高度，交换宽高
+                                _updateProperty('width', height);
+                                _updateProperty('height', width);
+                              }
+                              _updateProperty('orientation', value);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16.0),
 
@@ -226,20 +269,35 @@ class PagePropertyPanel extends PracticePropertyPanel {
   }
 
   /// 处理页面尺寸预设变更
-  void _handlePageSizePresetChange(String preset) {
+  void _handlePageSizePresetChange(String preset, String orientation) {
+    double width, height;
+
     switch (preset) {
       case 'A4':
-        _updateProperty('width', 595.0);
-        _updateProperty('height', 842.0);
+        width = 595.0; // A4 width (72dpi)
+        height = 842.0; // A4 height (72dpi)
         break;
       case 'A5':
-        _updateProperty('width', 420.0);
-        _updateProperty('height', 595.0);
+        width = 420.0; // A5 width (72dpi)
+        height = 595.0; // A5 height (72dpi)
         break;
       case 'custom':
         // 不做任何操作，让用户自行输入
-        break;
+        return;
+      default:
+        return;
     }
+
+    // 根据方向调整宽高
+    if (orientation == 'landscape') {
+      // 横向时交换宽高
+      final temp = width;
+      width = height;
+      height = temp;
+    }
+
+    _updateProperty('width', width);
+    _updateProperty('height', height);
   }
 
   void _updateProperty(String key, dynamic value) {

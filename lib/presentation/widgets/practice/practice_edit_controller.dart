@@ -1492,7 +1492,7 @@ class PracticeEditController extends ChangeNotifier {
     updateElementProperties(id, {'x': newX, 'y': newY});
   }
 
-  /// 更新元素属性
+  /// 更新元素属性 - 拖动结束时使用，应用吸附并记录撤销/重做
   void updateElementProperties(String id, Map<String, dynamic> properties) {
     if (_state.currentPageIndex >= _state.pages.length) return;
 
@@ -1505,28 +1505,81 @@ class PracticeEditController extends ChangeNotifier {
       final oldProperties = Map<String, dynamic>.from(element);
 
       // 处理吸附功能
-      if (_state.snapEnabled &&
-          (properties.containsKey('x') || properties.containsKey('y'))) {
+      if (_state.snapEnabled) {
         final gridSize = _state.gridSize;
+        bool hasSnapped = false;
 
-        // 获取新的位置
-        double newX = properties.containsKey('x')
-            ? (properties['x'] as num).toDouble()
-            : (element['x'] as num).toDouble();
-        double newY = properties.containsKey('y')
-            ? (properties['y'] as num).toDouble()
-            : (element['y'] as num).toDouble();
+        // 处理位置吸附 (x, y)
+        if (properties.containsKey('x') || properties.containsKey('y')) {
+          // 获取新的位置
+          double newX = properties.containsKey('x')
+              ? (properties['x'] as num).toDouble()
+              : (element['x'] as num).toDouble();
+          double newY = properties.containsKey('y')
+              ? (properties['y'] as num).toDouble()
+              : (element['y'] as num).toDouble();
 
-        // 吸附到网格
-        newX = (newX / gridSize).round() * gridSize;
-        newY = (newY / gridSize).round() * gridSize;
+          // 吸附到网格
+          double snappedX = (newX / gridSize).round() * gridSize;
+          double snappedY = (newY / gridSize).round() * gridSize;
 
-        // 更新属性中的位置
-        if (properties.containsKey('x')) properties['x'] = newX;
-        if (properties.containsKey('y')) properties['y'] = newY;
+          // 更新属性中的位置
+          if (properties.containsKey('x')) {
+            properties['x'] = snappedX;
+            if (snappedX != newX) {
+              hasSnapped = true;
+            }
+          }
+          if (properties.containsKey('y')) {
+            properties['y'] = snappedY;
+            if (snappedY != newY) {
+              hasSnapped = true;
+            }
+          }
 
-        // 打印吸附信息
-        debugPrint('吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)');
+          if (hasSnapped) {
+            debugPrint('吸附功能生效: 将元素 $id 的位置吸附到网格 ($snappedX, $snappedY)');
+          }
+        }
+
+        // 处理大小吸附 (width, height)
+        if (properties.containsKey('width') ||
+            properties.containsKey('height')) {
+          // 获取新的尺寸
+          double newWidth = properties.containsKey('width')
+              ? (properties['width'] as num).toDouble()
+              : (element['width'] as num).toDouble();
+          double newHeight = properties.containsKey('height')
+              ? (properties['height'] as num).toDouble()
+              : (element['height'] as num).toDouble();
+
+          // 吸附到网格
+          double snappedWidth = (newWidth / gridSize).round() * gridSize;
+          double snappedHeight = (newHeight / gridSize).round() * gridSize;
+
+          // 确保最小尺寸
+          snappedWidth = math.max(snappedWidth, 10.0);
+          snappedHeight = math.max(snappedHeight, 10.0);
+
+          // 更新属性中的尺寸
+          if (properties.containsKey('width')) {
+            properties['width'] = snappedWidth;
+            if (snappedWidth != newWidth) {
+              hasSnapped = true;
+            }
+          }
+          if (properties.containsKey('height')) {
+            properties['height'] = snappedHeight;
+            if (snappedHeight != newHeight) {
+              hasSnapped = true;
+            }
+          }
+
+          if (hasSnapped) {
+            debugPrint(
+                '吸附功能生效: 将元素 $id 的尺寸吸附到网格 (宽=$snappedWidth, 高=$snappedHeight)');
+          }
+        }
       }
 
       // 更新属性
@@ -1637,6 +1690,52 @@ class PracticeEditController extends ChangeNotifier {
       );
 
       _undoRedoManager.addOperation(operation);
+    }
+  }
+
+  /// 更新元素属性 - 拖动过程中使用，不应用吸附
+  void updateElementPropertiesDuringDrag(
+      String id, Map<String, dynamic> properties) {
+    if (_state.currentPageIndex >= _state.pages.length) return;
+
+    final page = _state.pages[_state.currentPageIndex];
+    final elements = page['elements'] as List<dynamic>;
+    final elementIndex = elements.indexWhere((e) => e['id'] == id);
+
+    if (elementIndex >= 0) {
+      final element = elements[elementIndex] as Map<String, dynamic>;
+
+      // 确保大小不小于最小值
+      if (properties.containsKey('width')) {
+        double width = (properties['width'] as num).toDouble();
+        properties['width'] = math.max(width, 10.0);
+      }
+      if (properties.containsKey('height')) {
+        double height = (properties['height'] as num).toDouble();
+        properties['height'] = math.max(height, 10.0);
+      }
+
+      // 直接更新元素属性，不应用吸附，不记录撤销/重做
+      properties.forEach((key, value) {
+        if (key == 'content' && element.containsKey('content')) {
+          // 对于content对象，合并而不是替换
+          final content = element['content'] as Map<String, dynamic>;
+          final newContent = value as Map<String, dynamic>;
+          newContent.forEach((contentKey, contentValue) {
+            content[contentKey] = contentValue;
+          });
+        } else {
+          element[key] = value;
+        }
+      });
+
+      // 如果是当前选中的元素，更新selectedElement
+      if (_state.selectedElementIds.contains(id)) {
+        _state.selectedElement = element;
+      }
+
+      // 通知监听器更新UI
+      notifyListeners();
     }
   }
 
@@ -1818,6 +1917,7 @@ class PracticeEditController extends ChangeNotifier {
       'index': 0,
       'width': 595.0, // A4纸宽度
       'height': 842.0, // A4纸高度
+      'orientation': 'portrait', // 默认纵向
       'backgroundColor': '#FFFFFF',
       'backgroundOpacity': 1.0,
       'elements': <Map<String, dynamic>>[],

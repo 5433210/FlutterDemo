@@ -41,6 +41,7 @@ class PracticePage with _$PracticePage {
     @Default(0) int index,
     @Default(210.0) double width,
     @Default(297.0) double height,
+    @Default('portrait') String orientation, // 添加方向属性，默认为纵向
     @Default('color') String backgroundType,
     String? backgroundImage,
     @Default('#FFFFFF') String backgroundColor,
@@ -56,6 +57,7 @@ class PracticePage with _$PracticePage {
         index: 0,
         width: 210.0, // A4 width in mm
         height: 297.0, // A4 height in mm
+        orientation: 'portrait', // 默认纵向
         backgroundType: 'color',
         backgroundColor: '#FFFFFF',
         backgroundOpacity: 1.0,
