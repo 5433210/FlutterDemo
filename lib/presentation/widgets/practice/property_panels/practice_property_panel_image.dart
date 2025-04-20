@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
+import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
 
 /// 图片内容属性面板
@@ -25,6 +26,13 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     final height = (element['height'] as num).toDouble();
     final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final layerId = element['layerId'] as String?;
+
+    // 获取图层信息
+    Map<String, dynamic>? layer;
+    if (layerId != null) {
+      layer = controller.state.getLayerById(layerId);
+    }
 
     // 图片特有属性
     final content = element['content'] as Map<String, dynamic>;
@@ -153,23 +161,14 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                       ),
                     ],
                   ),
-                  // 所属图层下拉框
-                  const Text('所属图层:'),
-                  DropdownButton<String>(
-                    value: element['layerId'] as String? ?? '',
-                    isExpanded: true,
-                    items: _buildLayerItems(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        _updateProperty('layerId', value);
-                      }
-                    },
-                  ),
                 ],
               ),
             ),
           ],
         ),
+
+        // 图层信息部分
+        LayerInfoPanel(layer: layer),
 
         // 图片选择部分
         materialExpansionTile(

@@ -737,8 +737,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                           ),
 
                         // 元素
-
-                        for (final element in elements) _buildElement(element),
+                        // 根据图层顺序排序元素
+                        ..._sortElementsByLayerOrder(elements)
+                            .map((element) => _buildElement(element)),
 
                         // 拖拽指示
                         if (candidateData.isNotEmpty)
@@ -835,6 +836,20 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final isLocked = element['locked'] == true;
     final isHidden = element['hidden'] == true;
 
+    // 检查元素所在图层的锁定和隐藏状态
+    final layerId = element['layerId'] as String?;
+    bool isLayerLocked = false;
+    bool isLayerHidden = false;
+
+    if (layerId != null) {
+      final layer = _controller.state.getLayerById(layerId);
+      if (layer != null) {
+        isLayerLocked = layer['isLocked'] == true;
+        isLayerHidden =
+            layer['isVisible'] == false; // 注意这里的逻辑：isVisible=false 意味着隐藏
+      }
+    }
+
     // 检查元素是否处于错误状态
     final hasError = element['hasError'] == true;
 
@@ -877,7 +892,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
             GestureDetector(
               // onTap: () => (debugPrint('tap')),
-              onPanStart: (_isPreviewMode || isLocked) // 预览模式或锁定状态下禁用拖动
+              onPanStart: (_isPreviewMode ||
+                      isLocked ||
+                      isLayerLocked) // 预览模式、元素锁定或图层锁定状态下禁用拖动
                   ? null
                   : (event) {
                       // 如果元素未选中，先选中它
@@ -902,7 +919,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     },
               onPanUpdate: (_isPreviewMode ||
                       isLocked ||
-                      !_isDragging) // 预览模式、锁定状态或非拖动状态下禁用移动
+                      isLayerLocked ||
+                      !_isDragging) // 预览模式、元素锁定、图层锁定或非拖动状态下禁用移动
                   ? null
                   : (event) {
                       // 打印拖动状态信息
@@ -927,7 +945,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     },
               onPanEnd: (_isPreviewMode ||
                       isLocked ||
-                      !_isDragging) // 预览模式、锁定状态或非拖动状态下禁用松开事件
+                      isLayerLocked ||
+                      !_isDragging) // 预览模式、元素锁定、图层锁定或非拖动状态下禁用松开事件
                   ? null
                   : (event) {
                       // 打印拖动结束状态信息
@@ -948,8 +967,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       });
                     },
               child: Opacity(
-                // 隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
-                opacity: isHidden
+                // 元素或图层隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
+                opacity: isHidden || isLayerHidden
                     ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
                     : opacity, // 正常状态
                 child: Container(
@@ -961,14 +980,14 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       // 根据规范设置边框颜色和宽度
                       color: hasError
                           ? Colors.red // 错误状态：红色边框
-                          : isLocked
+                          : isLocked || isLayerLocked
                               ? Colors.orange // 锁定状态：橙色边框
                               : !_isPreviewMode && isSelected
                                   ? Colors.blue // 编辑状态或选中状态：蓝色边框
                                   : Colors.grey
                                       .withAlpha(179), // 普通状态：灰色边框，70%不透明度
                       width: 1.0, // 所有状态都是1px
-                      style: isHidden && !_isPreviewMode
+                      style: (isHidden || isLayerHidden) && !_isPreviewMode
                           ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
                           : BorderStyle.solid, // 隐藏状态使用半透明
                     ),
@@ -980,7 +999,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       content,
 
                       // 锁定图标
-                      if (isLocked && !_isPreviewMode)
+                      if ((isLocked || isLayerLocked) && !_isPreviewMode)
                         Positioned(
                           right: 4,
                           top: 4,
@@ -990,8 +1009,10 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                               color: Colors.white.withAlpha(179), // 0.7 的不透明度
                               borderRadius: BorderRadius.circular(2),
                             ),
-                            child: const Icon(
-                              Icons.lock,
+                            child: Icon(
+                              isLayerLocked
+                                  ? Icons.layers_outlined
+                                  : Icons.lock,
                               color: Colors.orange,
                               size: 16,
                             ),
@@ -1001,7 +1022,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       // 错误图标
                       if (hasError && !_isPreviewMode)
                         Positioned(
-                          right: isLocked ? 26 : 4, // 如果同时有锁定图标，则错开一点
+                          right: (isLocked || isLayerLocked)
+                              ? 26
+                              : 4, // 如果同时有锁定图标，则错开一点
                           top: 4,
                           child: Container(
                             padding: const EdgeInsets.all(2),
@@ -1026,6 +1049,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             if (!_isPreviewMode &&
                 isSelected &&
                 !isLocked &&
+                !isLayerLocked && // 添加图层锁定检查
                 _controller.state.selectedElementIds.length == 1)
               _buildControlPoints(id, width, height),
           ],
@@ -1076,125 +1100,137 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 构建右侧属性面板
   Widget _buildRightPanel() {
-    Widget panel;
+    return AnimatedBuilder(
+      animation: _controller, // 关键修改：监听控制器的变化
+      builder: (context, _) {
+        // 创建一个唯一的key，确保在选择变化时面板能够重新构建
+        final selectedKey = _controller.state.selectedElementIds.isEmpty
+            ? _controller.state.selectedLayerId != null
+                ? 'layer_panel_${_controller.state.selectedLayerId}'
+                : 'page_panel'
+            : 'element_panel_${_controller.state.selectedElementIds.join('_')}';
 
-    // 检查是否选中了图层
-    if (_controller.state.selectedLayerId != null) {
-      // 选中图层时显示图层属性
-      final layerId = _controller.state.selectedLayerId!;
-      final layer = _controller.state.getLayerById(layerId);
-      if (layer != null) {
-        panel = PracticePropertyPanel.forLayer(
-          controller: _controller,
-          layer: layer,
-          onLayerPropertiesChanged: (properties) {
-            // 更新图层属性
-            _controller.updateLayerProperties(layerId, properties);
-          },
-        );
-        return SizedBox(
-          width: 300,
+        Widget panel;
+
+        // 检查是否选中了图层
+        if (_controller.state.selectedLayerId != null) {
+          // 选中图层时显示图层属性
+          final layerId = _controller.state.selectedLayerId!;
+          final layer = _controller.state.getLayerById(layerId);
+          if (layer != null) {
+            panel = PracticePropertyPanel.forLayer(
+              controller: _controller,
+              layer: layer,
+              onLayerPropertiesChanged: (properties) {
+                // 更新图层属性
+                _controller.updateLayerProperties(layerId, properties);
+              },
+            );
+            return SizedBox(
+              width: 300,
+              child: panel,
+            );
+          }
+        }
+
+        // 根据选中元素类型显示不同的属性面板
+        if (_controller.state.selectedElementIds.isEmpty) {
+          // 未选中元素时显示页面属性
+          panel = PracticePropertyPanel.forPage(
+            controller: _controller,
+            page: _controller.state.currentPage,
+            onPagePropertiesChanged: (properties) {
+              if (_controller.state.currentPageIndex >= 0) {
+                _controller.updatePageProperties(properties);
+              }
+            },
+          );
+        } else if (_controller.state.selectedElementIds.length == 1) {
+          // 单选元素时根据类型显示属性
+          final id = _controller.state.selectedElementIds.first;
+          final element = ElementOperations.findElementById(
+              _controller.state.currentPageElements, id);
+
+          if (element != null) {
+            switch (element['type']) {
+              case 'text':
+                panel = PracticePropertyPanel.forText(
+                  controller: _controller,
+                  element: element,
+                  onElementPropertiesChanged: (properties) {
+                    _controller.updateElementProperties(id, properties);
+                  },
+                );
+                break;
+              case 'image':
+                panel = PracticePropertyPanel.forImage(
+                  controller: _controller,
+                  element: element,
+                  onElementPropertiesChanged: (properties) {
+                    _controller.updateElementProperties(id, properties);
+                  },
+                  onSelectImage: () async {
+                    // 实现选择图片的逻辑
+                    await _showImageUrlDialog(context);
+                  },
+                );
+                break;
+              case 'collection':
+                panel = PracticePropertyPanel.forCollection(
+                  controller: _controller,
+                  element: element,
+                  onElementPropertiesChanged: (properties) {
+                    _controller.updateElementProperties(id, properties);
+                  },
+                  onUpdateChars: (chars) {
+                    // Get the current content map
+                    final content = Map<String, dynamic>.from(
+                        element['content'] as Map<String, dynamic>);
+                    // Update the characters property
+                    content['characters'] = chars;
+                    // Update the element with the modified content map
+                    final updatedProps = {'content': content};
+                    _controller.updateElementProperties(id, updatedProps);
+                  },
+                );
+                break;
+              case 'group':
+                panel = PracticePropertyPanel.forGroup(
+                  controller: _controller,
+                  element: element,
+                  onElementPropertiesChanged: (properties) {
+                    _controller.updateElementProperties(id, properties);
+                  },
+                );
+                break;
+              default:
+                panel = const Center(child: Text('不支持的元素类型'));
+            }
+          } else {
+            panel = const Center(child: Text('找不到选中的元素'));
+          }
+        } else {
+          // 多选元素时显示组合属性
+          panel = PracticePropertyPanel.forMultiSelection(
+            controller: _controller,
+            selectedIds: _controller.state.selectedElementIds,
+            onElementPropertiesChanged: (properties) {
+              // 将属性应用到所有选中的元素
+              for (final id in _controller.state.selectedElementIds) {
+                _controller.updateElementProperties(id, properties);
+              }
+            },
+          );
+        }
+
+        return ResizablePanel(
+          initialWidth: 300,
+          minWidth: 200,
+          maxWidth: 500,
+          isLeftPanel: false,
           child: panel,
         );
-      }
-    }
-
-    // 根据选中元素类型显示不同的属性面板
-    if (_controller.state.selectedElementIds.isEmpty) {
-      // 未选中元素时显示页面属性
-      panel = PracticePropertyPanel.forPage(
-        controller: _controller,
-        page: _controller.state.currentPage,
-        onPagePropertiesChanged: (properties) {
-          if (_controller.state.currentPageIndex >= 0) {
-            _controller.updatePageProperties(properties);
-          }
-        },
-      );
-    } else if (_controller.state.selectedElementIds.length == 1) {
-      // 单选元素时根据类型显示属性
-      final id = _controller.state.selectedElementIds.first;
-      final element = ElementOperations.findElementById(
-          _controller.state.currentPageElements, id);
-
-      if (element != null) {
-        switch (element['type']) {
-          case 'text':
-            panel = PracticePropertyPanel.forText(
-              controller: _controller,
-              element: element,
-              onElementPropertiesChanged: (properties) {
-                _controller.updateElementProperties(id, properties);
-              },
-            );
-            break;
-          case 'image':
-            panel = PracticePropertyPanel.forImage(
-              controller: _controller,
-              element: element,
-              onElementPropertiesChanged: (properties) {
-                _controller.updateElementProperties(id, properties);
-              },
-              onSelectImage: () async {
-                // 实现选择图片的逻辑
-                await _showImageUrlDialog(context);
-              },
-            );
-            break;
-          case 'collection':
-            panel = PracticePropertyPanel.forCollection(
-              controller: _controller,
-              element: element,
-              onElementPropertiesChanged: (properties) {
-                _controller.updateElementProperties(id, properties);
-              },
-              onUpdateChars: (chars) {
-                // Get the current content map
-                final content = Map<String, dynamic>.from(
-                    element['content'] as Map<String, dynamic>);
-                // Update the characters property
-                content['characters'] = chars;
-                // Update the element with the modified content map
-                final updatedProps = {'content': content};
-                _controller.updateElementProperties(id, updatedProps);
-              },
-            );
-            break;
-          case 'group':
-            panel = PracticePropertyPanel.forGroup(
-              controller: _controller,
-              element: element,
-              onElementPropertiesChanged: (properties) {
-                _controller.updateElementProperties(id, properties);
-              },
-            );
-            break;
-          default:
-            panel = const Center(child: Text('不支持的元素类型'));
-        }
-      } else {
-        panel = const Center(child: Text('找不到选中的元素'));
-      }
-    } else {
-      // 多选元素时显示组合属性
-      panel = PracticePropertyPanel.forMultiSelection(
-        controller: _controller,
-        selectedIds: _controller.state.selectedElementIds,
-        onElementPropertiesChanged: (properties) {
-          // 将属性应用到所有选中的元素
-          for (final id in _controller.state.selectedElementIds) {
-            _controller.updateElementProperties(id, properties);
-          }
-        },
-      );
-    }
-
-    return ResizablePanel(
-      initialWidth: 300,
-      minWidth: 200,
-      maxWidth: 500,
-      isLeftPanel: false,
-      child: panel,
+      },
     );
   }
 
@@ -1365,8 +1401,14 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         // 如果元素被锁定，只允许选中，不允许编辑
         if (isLocked) {
           // 锁定元素只能选中，不能编辑
+          // 清除图层选择，确保属性面板能切换到元素属性
+          _controller.state.selectedLayerId = null;
+
           _controller.selectElement(id,
               isMultiSelect: _isCtrlPressed || _isShiftPressed);
+
+          // 强制触发UI更新，确保属性面板切换
+          setState(() {});
         } else {
           // 根据状态图实现状态转换
           final isCurrentlySelected =
@@ -1386,7 +1428,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           if (_isCtrlPressed || _isShiftPressed) {
             // Ctrl+点击：多选状态
             debugPrint('→ 进入多选状态 (按下Ctrl或Shift键)');
+            // 清除图层选择，确保属性面板能切换到元素属性
+            _controller.state.selectedLayerId = null;
+
             _controller.selectElement(id, isMultiSelect: true);
+            // 强制触发UI更新，确保属性面板切换
+            setState(() {});
           } else if (isCurrentlySelected && isMultipleSelected) {
             // 已选中且当前是多选状态：取消其他选择，进入编辑状态
             debugPrint('→ 从多选状态转为编辑状态 (取消其他选择)');
@@ -1403,7 +1450,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           } else if (!isCurrentlySelected) {
             // 未选中：选中并进入编辑状态
             debugPrint('→ 从普通状态转为编辑状态 (选中元素)');
+            // 清除图层选择，确保属性面板能切换到元素属性
+            _controller.state.selectedLayerId = null;
+
             _controller.selectElement(id, isMultiSelect: false);
+            // 强制触发UI更新，确保属性面板切换
+            setState(() {});
 
             // 关键修改: 同时启用拖拽
             setState(() {
@@ -1626,5 +1678,41 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       // 并将其转换为可用的URL或路径
       _controller.addImageElement(result);
     }
+  }
+
+  /// 根据图层顺序排序元素
+  List<Map<String, dynamic>> _sortElementsByLayerOrder(
+      List<Map<String, dynamic>> elements) {
+    // 获取图层列表
+    final layers = _controller.state.layers;
+
+    // 创建图层顺序映射
+    // 注意：图层在列表中的索引越大，表示越靠上层，应该越后绘制
+    final layerOrderMap = <String, int>{};
+    for (int i = 0; i < layers.length; i++) {
+      final layer = layers[i];
+      final layerId = layer['id'] as String;
+      layerOrderMap[layerId] = i; // 使用图层在列表中的索引作为排序依据
+    }
+
+    // 对元素进行排序
+    final sortedElements = List<Map<String, dynamic>>.from(elements);
+    sortedElements.sort((a, b) {
+      final aLayerId = a['layerId'] as String?;
+      final bLayerId = b['layerId'] as String?;
+
+      // 如果元素没有图层ID，则放到最后
+      if (aLayerId == null && bLayerId == null) return 0;
+      if (aLayerId == null) return 1;
+      if (bLayerId == null) return -1;
+
+      // 根据图层顺序排序
+      // 图层索引越大（越靠上层），应该越后绘制
+      final aOrder = layerOrderMap[aLayerId] ?? 0;
+      final bOrder = layerOrderMap[bLayerId] ?? 0;
+      return aOrder.compareTo(bOrder); // 索引小的先绘制，索引大的后绘制
+    });
+
+    return sortedElements;
   }
 }

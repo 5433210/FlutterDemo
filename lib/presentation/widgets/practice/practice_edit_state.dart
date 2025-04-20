@@ -6,7 +6,6 @@ class PracticeEditState {
   bool isPageThumbnailsVisible = true;
 
   // 图层相关
-  List<dynamic> layers = [];
   String? selectedLayerId;
 
   // 元素选择相关
@@ -45,6 +44,15 @@ class PracticeEditState {
   /// 检查是否有未保存的更改
   bool get hasChanges => hasUnsavedChanges;
 
+  /// 获取当前页面的图层列表
+  List<Map<String, dynamic>> get layers {
+    if (currentPage != null && currentPage!.containsKey('layers')) {
+      final layersList = currentPage!['layers'] as List<dynamic>;
+      return List<Map<String, dynamic>>.from(layersList);
+    }
+    return [];
+  }
+
   /// 根据ID查找元素
   Map<String, dynamic>? getElementById(String id) {
     if (currentPage == null) return null;
@@ -76,7 +84,7 @@ class PracticeEditState {
   Map<String, dynamic>? getLayerById(String id) {
     final index = layers.indexWhere((l) => l['id'] == id);
     if (index >= 0) {
-      return layers[index] as Map<String, dynamic>;
+      return layers[index];
     }
     return null;
   }

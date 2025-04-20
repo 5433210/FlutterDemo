@@ -134,13 +134,24 @@ class PracticeLayerPanel extends StatelessWidget {
       return const Center(child: Text('没有图层'));
     }
 
+    // 将图层列表反转，使顶层显示在最上面
+    // 这样图层面板中的顺序与渲染顺序一致：顶部的图层在渲染时最后绘制
+    final reversedLayers = layers.reversed.toList();
+
     return Builder(
       builder: (BuildContext context) {
         return ReorderableListView(
-          onReorder: onReorderLayer,
+          onReorder: (oldIndex, newIndex) {
+            // 由于我们反转了图层列表，需要调整索引
+            final actualOldIndex = layers.length - 1 - oldIndex;
+            final actualNewIndex = layers.length -
+                1 -
+                (newIndex > oldIndex ? newIndex - 1 : newIndex);
+            onReorderLayer(actualOldIndex, actualNewIndex);
+          },
           children: [
-            for (int i = 0; i < layers.length; i++)
-              _buildLayerItem(context, layers[i], i),
+            for (int i = 0; i < reversedLayers.length; i++)
+              _buildLayerItem(context, reversedLayers[i], i),
           ],
         );
       },

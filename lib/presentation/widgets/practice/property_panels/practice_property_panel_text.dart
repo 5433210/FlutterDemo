@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
+import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
 
 /// 文本内容属性面板
@@ -26,6 +27,13 @@ class TextPropertyPanel extends PracticePropertyPanel {
     final height = (element['height'] as num).toDouble();
     final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final layerId = element['layerId'] as String?;
+
+    // 获取图层信息
+    Map<String, dynamic>? layer;
+    if (layerId != null) {
+      layer = controller.state.getLayerById(layerId);
+    }
 
     // 文本特有属性
     final text = element['text'] as String? ?? '';
@@ -67,6 +75,9 @@ class TextPropertyPanel extends PracticePropertyPanel {
           opacity: opacity,
           onOpacityChanged: (value) => _updateProperty('opacity', value),
         ),
+
+        // 图层信息部分
+        LayerInfoPanel(layer: layer),
 
         // 文本设置部分
         materialExpansionTile(

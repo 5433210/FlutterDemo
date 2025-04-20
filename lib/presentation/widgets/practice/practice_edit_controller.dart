@@ -48,7 +48,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'characters': characters,
@@ -76,7 +76,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'characters': characters,
@@ -104,7 +104,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 400.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'characters': '',
@@ -132,7 +132,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 200.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'imageUrl': '',
@@ -154,7 +154,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 200.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'imageUrl': imageUrl,
@@ -176,7 +176,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 200.0,
       'height': 200.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'imageUrl': imageUrl,
@@ -190,6 +190,8 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加图层
   void addLayer() {
+    if (_state.currentPage == null) return;
+
     final layerIndex = _state.layers.length;
     final layer = {
       'id': _uuid.v4(),
@@ -203,16 +205,28 @@ class PracticeEditController extends ChangeNotifier {
     final operation = AddLayerOperation(
       layer: layer,
       addLayer: (l) {
-        _state.layers.add(l);
-        _state.hasUnsavedChanges = true;
-        notifyListeners();
-      },
-      removeLayer: (id) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers.removeAt(index);
+        // 获取当前页面的图层列表
+        if (_state.currentPage != null) {
+          if (!_state.currentPage!.containsKey('layers')) {
+            _state.currentPage!['layers'] = <Map<String, dynamic>>[];
+          }
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          layers.add(l);
           _state.hasUnsavedChanges = true;
           notifyListeners();
+        }
+      },
+      removeLayer: (id) {
+        // 从当前页面的图层列表中移除
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers.removeAt(index);
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
     );
@@ -222,6 +236,8 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加新图层
   void addNewLayer() {
+    if (_state.currentPage == null) return;
+
     // 创建新图层
     final newLayer = {
       'id': _uuid.v4(),
@@ -232,8 +248,12 @@ class PracticeEditController extends ChangeNotifier {
       'opacity': 1.0,
     };
 
-    // 添加到图层列表
-    _state.layers.add(newLayer);
+    // 添加到当前页面的图层列表
+    if (!_state.currentPage!.containsKey('layers')) {
+      _state.currentPage!['layers'] = <Map<String, dynamic>>[];
+    }
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    layers.add(newLayer);
     _state.hasUnsavedChanges = true;
 
     notifyListeners();
@@ -241,6 +261,16 @@ class PracticeEditController extends ChangeNotifier {
 
   void addNewPage() {
     if (_state.pages.isNotEmpty) {
+      // 创建默认图层
+      final defaultLayer = {
+        'id': _uuid.v4(),
+        'name': '图层1',
+        'order': 0,
+        'isVisible': true,
+        'isLocked': false,
+        'opacity': 1.0,
+      };
+
       // Create a new page with default properties
       final newPage = {
         'id': 'page_${DateTime.now().millisecondsSinceEpoch}',
@@ -250,6 +280,7 @@ class PracticeEditController extends ChangeNotifier {
         'backgroundColor': '#FFFFFF',
         'backgroundOpacity': 1.0,
         'elements': <Map<String, dynamic>>[],
+        'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
       };
 
       final operation = AddPageOperation(
@@ -285,6 +316,17 @@ class PracticeEditController extends ChangeNotifier {
   /// 添加页面
   void addPage() {
     final pageIndex = _state.pages.length;
+
+    // 创建默认图层
+    final defaultLayer = {
+      'id': _uuid.v4(),
+      'name': '图层1',
+      'order': 0,
+      'isVisible': true,
+      'isLocked': false,
+      'opacity': 1.0,
+    };
+
     final page = {
       'id': _uuid.v4(),
       'name': '页面${pageIndex + 1}',
@@ -294,6 +336,7 @@ class PracticeEditController extends ChangeNotifier {
       'backgroundColor': '#FFFFFF',
       'backgroundOpacity': 1.0,
       'elements': <Map<String, dynamic>>[],
+      'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
     };
 
     final operation = AddPageOperation(
@@ -331,7 +374,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 200.0,
       'height': 100.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'text': '双击编辑文本',
@@ -358,7 +401,7 @@ class PracticeEditController extends ChangeNotifier {
       'width': 200.0,
       'height': 100.0,
       'rotation': 0.0,
-      'layerId': _state.layers.first['id'],
+      'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
       'content': {
         'text': '双击编辑文本',
@@ -384,7 +427,13 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 删除所有图层
   void deleteAllLayers() {
-    if (_state.layers.length <= 1) return;
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    if (layers.length <= 1) return;
 
     // 创建默认图层
     final defaultLayer = {
@@ -397,8 +446,8 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     // 所有当前图层
-    final oldLayers = List<Map<String, dynamic>>.from(_state.layers
-        .map((l) => Map<String, dynamic>.from(l as Map<String, dynamic>)));
+    final oldLayers = List<Map<String, dynamic>>.from(
+        layers.map((l) => Map<String, dynamic>.from(l)));
 
     // 查找所有元素
     final allElements = <Map<String, dynamic>>[];
@@ -418,39 +467,47 @@ class PracticeEditController extends ChangeNotifier {
         // 自定义操作：删除所有图层并添加默认图层
         _createCustomOperation(
           execute: () {
-            _state.layers.clear();
-            _state.layers.add(defaultLayer);
+            if (_state.currentPage != null &&
+                _state.currentPage!.containsKey('layers')) {
+              final layers = _state.currentPage!['layers'] as List<dynamic>;
+              layers.clear();
+              layers.add(defaultLayer);
 
-            // 清空元素
-            if (_state.currentPageIndex >= 0 &&
-                _state.currentPageIndex < _state.pages.length) {
-              final page = _state.pages[_state.currentPageIndex];
-              final elements = page['elements'] as List<dynamic>;
-              elements.clear();
+              // 清空元素
+              if (_state.currentPageIndex >= 0 &&
+                  _state.currentPageIndex < _state.pages.length) {
+                final page = _state.pages[_state.currentPageIndex];
+                final elements = page['elements'] as List<dynamic>;
+                elements.clear();
+              }
+
+              // 清除选择
+              _state.selectedElementIds.clear();
+              _state.selectedElement = null;
+
+              _state.hasUnsavedChanges = true;
+              notifyListeners();
             }
-
-            // 清除选择
-            _state.selectedElementIds.clear();
-            _state.selectedElement = null;
-
-            _state.hasUnsavedChanges = true;
-            notifyListeners();
           },
           undo: () {
-            _state.layers.clear();
-            _state.layers.addAll(oldLayers);
+            if (_state.currentPage != null &&
+                _state.currentPage!.containsKey('layers')) {
+              final layers = _state.currentPage!['layers'] as List<dynamic>;
+              layers.clear();
+              layers.addAll(oldLayers);
 
-            // 恢复元素
-            if (_state.currentPageIndex >= 0 &&
-                _state.currentPageIndex < _state.pages.length) {
-              final page = _state.pages[_state.currentPageIndex];
-              final elements = page['elements'] as List<dynamic>;
-              elements.clear();
-              elements.addAll(allElements);
+              // 恢复元素
+              if (_state.currentPageIndex >= 0 &&
+                  _state.currentPageIndex < _state.pages.length) {
+                final page = _state.pages[_state.currentPageIndex];
+                final elements = page['elements'] as List<dynamic>;
+                elements.clear();
+                elements.addAll(allElements);
+              }
+
+              _state.hasUnsavedChanges = true;
+              notifyListeners();
             }
-
-            _state.hasUnsavedChanges = true;
-            notifyListeners();
           },
           description: '删除所有图层',
         ),
@@ -484,6 +541,8 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 删除图层
   void deleteLayer(String layerId) {
+    if (_state.currentPage == null) return;
+
     final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex < 0) return;
     if (_state.layers.length <= 1) return; // 不允许删除最后一个图层
@@ -510,36 +569,44 @@ class PracticeEditController extends ChangeNotifier {
       layerIndex: layerIndex,
       elementsOnLayer: elementsOnLayer,
       insertLayer: (l, index) {
-        _state.layers.insert(index, l);
-        _state.hasUnsavedChanges = true;
-        notifyListeners();
-      },
-      removeLayer: (id) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers.removeAt(index);
-
-          // 删除图层上的所有元素
-          if (_state.currentPageIndex >= 0 &&
-              _state.currentPageIndex < _state.pages.length) {
-            final page = _state.pages[_state.currentPageIndex];
-            final elements = page['elements'] as List<dynamic>;
-            elements.removeWhere((e) => e['layerId'] == id);
-
-            // 清除相关选择
-            _state.selectedElementIds.removeWhere((elementId) {
-              final elementIndex =
-                  elements.indexWhere((e) => e['id'] == elementId);
-              return elementIndex < 0;
-            });
-
-            if (_state.selectedElementIds.isEmpty) {
-              _state.selectedElement = null;
-            }
-          }
-
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          layers.insert(index, l);
           _state.hasUnsavedChanges = true;
           notifyListeners();
+        }
+      },
+      removeLayer: (id) {
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers.removeAt(index);
+
+            // 删除图层上的所有元素
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+              elements.removeWhere((e) => e['layerId'] == id);
+
+              // 清除相关选择
+              _state.selectedElementIds.removeWhere((elementId) {
+                final elementIndex =
+                    elements.indexWhere((e) => e['id'] == elementId);
+                return elementIndex < 0;
+              });
+
+              if (_state.selectedElementIds.isEmpty) {
+                _state.selectedElement = null;
+              }
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
       addElements: (elements) {
@@ -768,10 +835,16 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 重命名图层
   void renameLayer(String layerId, String newName) {
-    final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex < 0) return;
 
-    final layer = _state.layers[layerIndex] as Map<String, dynamic>;
+    final layer = layers[layerIndex];
     final oldProperties = Map<String, dynamic>.from(layer);
     final newProperties =
         Map<String, dynamic>.from({...layer, 'name': newName});
@@ -781,11 +854,15 @@ class PracticeEditController extends ChangeNotifier {
       oldProperties: oldProperties,
       newProperties: newProperties,
       updateLayer: (id, props) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers[index] = props;
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers[index] = props;
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
     );
@@ -795,25 +872,46 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 重新排序图层
   void reorderLayer(int oldIndex, int newIndex) {
-    if (oldIndex < 0 ||
-        oldIndex >= _state.layers.length ||
-        newIndex < 0 ||
-        newIndex >= _state.layers.length) {
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
       return;
     }
 
-    final layer = _state.layers.removeAt(oldIndex);
-    _state.layers.insert(newIndex, layer);
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+
+    if (oldIndex < 0 ||
+        oldIndex >= layers.length ||
+        newIndex < 0 ||
+        newIndex >= layers.length) {
+      return;
+    }
+
+    final layer = layers.removeAt(oldIndex);
+    layers.insert(newIndex, layer);
+
+    // 更新图层的顺序属性，确保渲染顺序正确
+    for (int i = 0; i < layers.length; i++) {
+      final layer = layers[i];
+      layer['order'] = i;
+    }
+
     _state.hasUnsavedChanges = true;
     notifyListeners();
   }
 
   /// 重新排序图层
   void reorderLayers(int oldIndex, int newIndex) {
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+
     if (oldIndex < 0 ||
         newIndex < 0 ||
-        oldIndex >= _state.layers.length ||
-        newIndex >= _state.layers.length) {
+        oldIndex >= layers.length ||
+        newIndex >= layers.length) {
       return;
     }
 
@@ -821,13 +919,17 @@ class PracticeEditController extends ChangeNotifier {
       oldIndex: oldIndex,
       newIndex: newIndex,
       reorderLayer: (oldIndex, newIndex) {
-        final layer = _state.layers.removeAt(oldIndex);
-        _state.layers.insert(newIndex, layer);
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final layer = layers.removeAt(oldIndex);
+          layers.insert(newIndex, layer);
 
-        // 更新order属性
-        for (int i = 0; i < _state.layers.length; i++) {
-          final layer = _state.layers[i] as Map<String, dynamic>;
-          layer['order'] = i;
+          // 更新order属性
+          for (int i = 0; i < layers.length; i++) {
+            final layer = layers[i];
+            layer['order'] = i;
+          }
         }
 
         _state.hasUnsavedChanges = true;
@@ -977,16 +1079,27 @@ class PracticeEditController extends ChangeNotifier {
       state.selectedElementIds.clear();
       state.selectedElement = null;
       state.selectedLayerId = null;
+
+      // 确保图层面板显示当前页面的图层
+      // 这里我们可以添加页面特定的图层加载逻辑
+      // 目前我们使用全局图层，但将来可能需要每个页面有自己的图层
+
       notifyListeners();
     }
   }
 
   /// 设置图层锁定状态
   void setLayerLocked(String layerId, bool isLocked) {
-    final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex < 0) return;
 
-    final layer = _state.layers[layerIndex] as Map<String, dynamic>;
+    final layer = layers[layerIndex];
     final oldProperties = Map<String, dynamic>.from(layer);
     final newProperties =
         Map<String, dynamic>.from({...layer, 'isLocked': isLocked});
@@ -996,11 +1109,15 @@ class PracticeEditController extends ChangeNotifier {
       oldProperties: oldProperties,
       newProperties: newProperties,
       updateLayer: (id, props) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers[index] = props;
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers[index] = props;
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
     );
@@ -1010,10 +1127,16 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 设置图层可见性
   void setLayerVisibility(String layerId, bool isVisible) {
-    final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex < 0) return;
 
-    final layer = _state.layers[layerIndex] as Map<String, dynamic>;
+    final layer = layers[layerIndex];
     final oldProperties = Map<String, dynamic>.from(layer);
     final newProperties =
         Map<String, dynamic>.from({...layer, 'isVisible': isVisible});
@@ -1023,11 +1146,15 @@ class PracticeEditController extends ChangeNotifier {
       oldProperties: oldProperties,
       newProperties: newProperties,
       updateLayer: (id, props) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers[index] = props;
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers[index] = props;
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
     );
@@ -1037,9 +1164,15 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 显示所有图层
   void showAllLayers() {
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
     final operations = <UndoableOperation>[];
 
-    for (final layer in _state.layers) {
+    for (final layer in layers) {
       final layerId = layer['id'] as String;
       final isVisible = layer['isVisible'] as bool? ?? true;
 
@@ -1054,10 +1187,14 @@ class PracticeEditController extends ChangeNotifier {
             oldProperties: oldProperties,
             newProperties: newProperties,
             updateLayer: (id, props) {
-              final index = _state.layers.indexWhere((l) => l['id'] == id);
-              if (index >= 0) {
-                _state.layers[index] = props;
-                _state.hasUnsavedChanges = true;
+              if (_state.currentPage != null &&
+                  _state.currentPage!.containsKey('layers')) {
+                final layers = _state.currentPage!['layers'] as List<dynamic>;
+                final index = layers.indexWhere((l) => l['id'] == id);
+                if (index >= 0) {
+                  layers[index] = props;
+                  _state.hasUnsavedChanges = true;
+                }
               }
             },
           ),
@@ -1107,10 +1244,15 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 切换图层锁定状态
   void toggleLayerLock(String layerId, bool isLocked) {
-    final layerIndex =
-        _state.layers.indexWhere((layer) => layer['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((layer) => layer['id'] == layerId);
     if (layerIndex >= 0) {
-      _state.layers[layerIndex]['isLocked'] = isLocked;
+      layers[layerIndex]['isLocked'] = isLocked;
       _state.hasUnsavedChanges = true;
       notifyListeners();
     }
@@ -1118,10 +1260,15 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 切换图层可见性
   void toggleLayerVisibility(String layerId, bool isVisible) {
-    final layerIndex =
-        _state.layers.indexWhere((layer) => layer['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((layer) => layer['id'] == layerId);
     if (layerIndex >= 0) {
-      _state.layers[layerIndex]['isVisible'] = isVisible;
+      layers[layerIndex]['isVisible'] = isVisible;
       _state.hasUnsavedChanges = true;
       notifyListeners();
     }
@@ -1338,7 +1485,7 @@ class PracticeEditController extends ChangeNotifier {
       newY = (newY / gridSize).round() * gridSize;
 
       // 打印吸附信息
-      debugPrint("吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)");
+      debugPrint('吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)');
     }
 
     // 更新元素位置
@@ -1510,14 +1657,20 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 更新图层属性
   void updateLayerProperties(String layerId, Map<String, dynamic> properties) {
-    final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
+    if (_state.currentPage == null ||
+        !_state.currentPage!.containsKey('layers')) {
+      return;
+    }
+
+    final layers = _state.currentPage!['layers'] as List<dynamic>;
+    final layerIndex = layers.indexWhere((l) => l['id'] == layerId);
     if (layerIndex < 0) return;
 
-    final layer = _state.layers[layerIndex] as Map<String, dynamic>;
+    final layer = layers[layerIndex];
     final oldProperties = Map<String, dynamic>.from(layer);
 
     // 更新属性
-    final newProperties = {...layer};
+    final newProperties = <String, dynamic>{...layer};
     properties.forEach((key, value) {
       newProperties[key] = value;
     });
@@ -1527,11 +1680,15 @@ class PracticeEditController extends ChangeNotifier {
       oldProperties: oldProperties,
       newProperties: newProperties,
       updateLayer: (id, props) {
-        final index = _state.layers.indexWhere((l) => l['id'] == id);
-        if (index >= 0) {
-          _state.layers[index] = props;
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
+        if (_state.currentPage != null &&
+            _state.currentPage!.containsKey('layers')) {
+          final layers = _state.currentPage!['layers'] as List<dynamic>;
+          final index = layers.indexWhere((l) => l['id'] == id);
+          if (index >= 0) {
+            layers[index] = props;
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
         }
       },
     );
@@ -1644,18 +1801,6 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 初始化默认数据
   void _initDefaultData() {
-    // 创建默认页面
-    final defaultPage = {
-      'id': _uuid.v4(),
-      'name': '页面1',
-      'index': 0,
-      'width': 595.0, // A4纸宽度
-      'height': 842.0, // A4纸高度
-      'backgroundColor': '#FFFFFF',
-      'backgroundOpacity': 1.0,
-      'elements': <Map<String, dynamic>>[],
-    };
-
     // 创建默认图层
     final defaultLayer = {
       'id': _uuid.v4(),
@@ -1666,9 +1811,21 @@ class PracticeEditController extends ChangeNotifier {
       'opacity': 1.0,
     };
 
+    // 创建默认页面
+    final defaultPage = {
+      'id': _uuid.v4(),
+      'name': '页面1',
+      'index': 0,
+      'width': 595.0, // A4纸宽度
+      'height': 842.0, // A4纸高度
+      'backgroundColor': '#FFFFFF',
+      'backgroundOpacity': 1.0,
+      'elements': <Map<String, dynamic>>[],
+      'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
+    };
+
     // 添加到状态中
     _state.pages.add(defaultPage);
-    _state.layers.add(defaultLayer);
     _state.currentPageIndex = 0;
 
     // 通知监听器

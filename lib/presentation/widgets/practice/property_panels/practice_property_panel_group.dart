@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
+import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
 
 /// 组合内容属性面板
@@ -23,6 +24,13 @@ class GroupPropertyPanel extends PracticePropertyPanel {
     final height = (element['height'] as num).toDouble();
     final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
     final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final layerId = element['layerId'] as String?;
+
+    // 获取图层信息
+    Map<String, dynamic>? layer;
+    if (layerId != null) {
+      layer = controller.state.getLayerById(layerId);
+    }
 
     // 组内元素数量
     final content = element['content'] as Map<String, dynamic>? ?? {};
@@ -59,6 +67,9 @@ class GroupPropertyPanel extends PracticePropertyPanel {
           opacity: opacity,
           onOpacityChanged: (value) => _updateProperty('opacity', value),
         ),
+
+        // 图层信息部分
+        LayerInfoPanel(layer: layer),
 
         // 组合信息部分
         materialExpansionTile(
