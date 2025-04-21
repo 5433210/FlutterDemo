@@ -51,6 +51,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   bool _isDragging = false;
   Offset _dragStart = Offset.zero;
   Offset _elementStartPosition = Offset.zero;
+  final Map<String, Offset> _elementStartPositions = {};
 
   // 键盘状态
   bool _isCtrlPressed = false;
@@ -759,12 +760,15 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     _dragStart = details.localPosition;
 
                     // 记录所有选中元素的起始位置
+                    _elementStartPositions.clear(); // 清空之前的记录
                     for (final elementId
                         in _controller.state.selectedElementIds) {
                       final element = _controller.state.currentPageElements
                           .firstWhere((e) => e['id'] == elementId);
                       if (element['isLocked'] == true) continue;
-                      _elementStartPosition = Offset(
+
+                      // 保存每个元素的初始位置
+                      _elementStartPositions[elementId] = Offset(
                         (element['x'] as num).toDouble(),
                         (element['y'] as num).toDouble(),
                       );
@@ -803,14 +807,20 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     if (layerId != null) {
                       final layer = _controller.state.getLayerById(layerId);
                       if (layer != null) {
-                        if (layer['isLocked'] == true) return;
-                        if (layer['isVisible'] == false) return;
+                        if (layer['isLocked'] == true) continue;
+                        if (layer['isVisible'] == false) continue;
                       }
                     }
 
+                    if (element['isLocked'] == true) continue;
+
+                    // 获取元素的初始位置
+                    final startPosition = _elementStartPositions[elementId];
+                    if (startPosition == null) continue;
+
                     // 计算新位置
-                    double newX = _elementStartPosition.dx + dx;
-                    double newY = _elementStartPosition.dy + dy;
+                    double newX = startPosition.dx + dx;
+                    double newY = startPosition.dy + dy;
 
                     // 吸附到网格（如果启用）
                     if (_controller.state.snapEnabled) {

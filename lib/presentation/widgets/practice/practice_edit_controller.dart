@@ -714,6 +714,108 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  void duplicateLayer(String layerId) {
+    if (_state.currentPage == null) return;
+
+    final layerIndex = _state.layers.indexWhere((l) => l['id'] == layerId);
+    if (layerIndex < 0) return;
+
+    final originalLayer = _state.layers[layerIndex];
+
+    // Create a duplicate layer with a new ID
+    final newLayerId = _uuid.v4();
+    final duplicatedLayer = {
+      ...Map<String, dynamic>.from(originalLayer),
+      'id': newLayerId,
+      'name': '${originalLayer['name']} (复制)',
+      'order': _state.layers.length, // Place at the end of the layers list
+    };
+
+    // Find all elements on the original layer
+    final elementsOnLayer = <Map<String, dynamic>>[];
+    if (_state.currentPageIndex >= 0 &&
+        _state.currentPageIndex < _state.pages.length) {
+      final page = _state.pages[_state.currentPageIndex];
+      final pageElements = page['elements'] as List<dynamic>;
+
+      // Create copies of all elements in the layer with new IDs
+      for (final element in pageElements) {
+        if (element['layerId'] == layerId) {
+          final elementCopy =
+              Map<String, dynamic>.from(element as Map<String, dynamic>);
+          // Create new ID for the element
+          final String elementType = elementCopy['type'] as String;
+          elementCopy['id'] = '${elementType}_${_uuid.v4()}';
+          elementCopy['layerId'] = newLayerId;
+
+          // Offset the position slightly to make it visible
+          elementCopy['x'] = (elementCopy['x'] as num).toDouble() + 20;
+          elementCopy['y'] = (elementCopy['y'] as num).toDouble() + 20;
+
+          elementsOnLayer.add(elementCopy);
+        }
+      }
+    }
+
+    final operation = BatchOperation(
+      operations: [
+        // Add the new layer
+        AddLayerOperation(
+          layer: duplicatedLayer,
+          addLayer: (l) {
+            if (_state.currentPage != null) {
+              final layers = _state.currentPage!['layers'] as List<dynamic>;
+              layers.add(l);
+              _state.hasUnsavedChanges = true;
+            }
+          },
+          removeLayer: (id) {
+            if (_state.currentPage != null) {
+              final layers = _state.currentPage!['layers'] as List<dynamic>;
+              layers.removeWhere((l) => l['id'] == id);
+              _state.hasUnsavedChanges = true;
+            }
+          },
+        ),
+
+        // Add all duplicated elements
+        _createCustomOperation(
+          execute: () {
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+              elements.addAll(elementsOnLayer);
+
+              // Select the new layer
+              _state.selectedLayerId = newLayerId;
+              _state.hasUnsavedChanges = true;
+            }
+            notifyListeners();
+          },
+          undo: () {
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+
+              // Remove all elements from the duplicated layer
+              final elementIds = elementsOnLayer.map((e) => e['id']).toList();
+              elements.removeWhere((e) => elementIds.contains(e['id']));
+
+              _state.hasUnsavedChanges = true;
+            }
+            notifyListeners();
+          },
+          description: '添加复制图层中的元素',
+        ),
+      ],
+      operationDescription: '复制图层',
+    );
+
+    _undoRedoManager.addOperation(operation);
+  }
+
   /// 组合选中的元素
   void groupSelectedElements() {
     if (_state.selectedElementIds.length <= 1) return;
