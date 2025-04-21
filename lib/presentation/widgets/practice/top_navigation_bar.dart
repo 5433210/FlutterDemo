@@ -27,8 +27,13 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 构建标题文本：如果有标题则显示"字帖编辑 - xxx"，否则显示"字帖编辑"
+    final titleText = controller.practiceTitle != null
+        ? '字帖编辑 - ${controller.practiceTitle}'
+        : '字帖编辑';
+
     return AppBar(
-      title: Text(controller.practiceTitle ?? '字帖编辑'),
+      title: Text(titleText),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         tooltip: '返回',

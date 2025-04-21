@@ -67,6 +67,9 @@ class PracticeEditController extends ChangeNotifier {
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
+      'isLocked': false, // 锁定标志
+      'isHidden': false, // 隐藏标志
+      'name': '集字元素', // 默认名称
       'content': {
         'characters': characters,
         'fontSize': 24.0,
@@ -173,6 +176,9 @@ class PracticeEditController extends ChangeNotifier {
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
+      'isLocked': false, // 锁定标志
+      'isHidden': false, // 隐藏标志
+      'name': '图片元素', // 默认名称
       'content': {
         'imageUrl': imageUrl,
         'fit': 'contain',
@@ -360,6 +366,9 @@ class PracticeEditController extends ChangeNotifier {
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
       'opacity': 1.0,
+      'isLocked': false, // 锁定标志
+      'isHidden': false, // 隐藏标志
+      'name': '文本元素', // 默认名称
       'content': {
         'text': '双击编辑文本',
         'fontFamily': 'sans-serif',
@@ -1239,11 +1248,14 @@ class PracticeEditController extends ChangeNotifier {
     }
 
     try {
+      // 确保页面数据准备好被保存
+      final pagesToSave = List<Map<String, dynamic>>.from(_state.pages);
+
       // 保存字帖
       final result = await _practiceService.savePractice(
         id: _practiceId,
         title: saveTitle,
-        pages: _state.pages,
+        pages: pagesToSave,
       );
 
       // 更新ID和标题

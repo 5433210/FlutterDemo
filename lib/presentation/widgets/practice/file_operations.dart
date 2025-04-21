@@ -111,22 +111,93 @@ class FileOperations {
 
     // 如果已经有字帖ID和标题，直接保存
     if (controller.practiceTitle != null) {
-      final result = await controller.savePractice();
+      // 确保将当前的页面内容传递给保存方法
+      final result =
+          await controller.savePractice(title: controller.practiceTitle);
 
       if (result) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('保存失败')),
-        );
+        // 如果保存失败，可能是因为检查到同名字帖，询问是否覆盖
+        final shouldOverwrite =
+            await _confirmOverwrite(context, controller.practiceTitle!);
+        if (shouldOverwrite) {
+          final overwriteResult =
+              await controller.saveOverwriteExisting(controller.practiceTitle!);
+          if (overwriteResult) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('保存失败')),
+            );
+          }
+        }
       }
       return;
     }
 
-    // 如果没有标题，调用另存为
-    await saveAs(context, pages, layers, controller);
-    return;
+    // 如果没有标题，显示保存对话框让用户输入标题
+    final title = await showDialog<String>(
+      context: context,
+      builder: (context) => PracticeSaveDialog(
+        initialTitle: '',
+        isSaveAs: false,
+        checkTitleExists: controller.checkTitleExists,
+      ),
+    );
+
+    if (title == null || title.isEmpty) return;
+
+    // 调用控制器的savePractice方法（会自动处理新字帖）
+    final result = await controller.savePractice(title: title);
+
+    if (result) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('字帖 "$title" 已保存')),
+      );
+    } else {
+      // 如果保存失败，可能是因为检查到同名字帖，询问是否覆盖
+      final shouldOverwrite = await _confirmOverwrite(context, title);
+      if (shouldOverwrite) {
+        final overwriteResult = await controller.saveOverwriteExisting(title);
+        if (overwriteResult) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存失败')),
+          );
+        }
+      }
+    }
+  }
+
+  /// 确认是否覆盖现有字帖
+  static Future<bool> _confirmOverwrite(
+      BuildContext context, String title) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认覆盖'),
+        content: Text('已存在名为"$title"的字帖，是否覆盖？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('覆盖'),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
   }
 }

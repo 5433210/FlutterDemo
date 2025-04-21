@@ -3,7 +3,7 @@ class PracticeEditState {
   // 页面相关
   List<Map<String, dynamic>> pages = [];
   int currentPageIndex = -1;
-  bool isPageThumbnailsVisible = true;
+  bool isPageThumbnailsVisible = false; // 将默认值设为false，隐藏页面缩略图
 
   // 图层相关
   String? selectedLayerId;

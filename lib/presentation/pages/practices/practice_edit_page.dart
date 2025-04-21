@@ -46,7 +46,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   Map<String, dynamic>? _clipboardElement;
 
   // 预览模式
-  final bool _isPreviewMode = false;
+  bool _isPreviewMode = false;
 
   // 拖拽状态
   bool _isDragging = false;
@@ -64,8 +64,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   // 缩放控制器
   late TransformationController _transformationController;
 
-  // 控制页面缩略图显示
-  final bool _showThumbnails = true;
+  // 控制页面缩略图显示状态
+  bool _showThumbnails = false; // 现在是一个状态变量，而不是getter
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -76,13 +77,13 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           isPreviewMode: _isPreviewMode,
           onTogglePreviewMode: () {
             setState(() {
-              // Toggle preview mode functionality
+              _isPreviewMode = !_isPreviewMode; // 切换预览模式
             });
           },
           showThumbnails: _showThumbnails,
           onThumbnailToggle: (bool value) {
             setState(() {
-              // Toggle thumbnails functionality
+              _showThumbnails = value; // 更新缩略图显示状态
             });
           },
         ),
@@ -93,6 +94,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   @override
   void dispose() {
+    // 清空撤销/重做栈
+    _controller.undoRedoManager.clearHistory();
+
     // 移除键盘监听
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     _focusNode.dispose();
