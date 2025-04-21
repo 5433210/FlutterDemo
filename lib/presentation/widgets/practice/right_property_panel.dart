@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../domain/models/practice/practice_element.dart';
 import '../../../domain/models/practice/practice_page.dart';
 import 'practice_edit_controller.dart';
+import 'practice_service.dart';
 import 'property_panels/collection_element_property_panel.dart';
 import 'property_panels/group_element_property_panel.dart';
 import 'property_panels/image_element_property_panel.dart';
@@ -30,12 +32,16 @@ class RightPropertyPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 获取 PracticeService 实例
+    final practiceService =
+        Provider.of<PracticeService>(context, listen: false);
+
     // 如果没有选中元素，显示页面属性
     if (selectedElement == null) {
       return PagePropertyPanel(
         page: page.toJson(), // Convert PracticePage to Map<String, dynamic>
-        controller:
-            PracticeEditController(), // Create a new controller instance
+        controller: PracticeEditController(
+            practiceService), // Pass the required service
         onPagePropertiesChanged: (updatedPageData) {
           // Convert the map to a PracticePage object
           final updatedPage = PracticePage.fromJson(updatedPageData);

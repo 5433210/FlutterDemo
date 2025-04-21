@@ -3,8 +3,10 @@ import 'package:path/path.dart' as path;
 
 import '../../infrastructure/image/image_processor.dart';
 import '../../infrastructure/image/image_processor_impl.dart';
+import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
+import '../../presentation/widgets/practice/practice_service.dart';
 import '../services/restoration/state_restoration_service.dart';
 import '../services/storage/cache_manager.dart';
 import '../services/storage/character_storage_service.dart';
@@ -28,6 +30,12 @@ final imageProcessorProvider = Provider<ImageProcessor>((ref) {
   final storage = ref.watch(initializedStorageProvider);
   return ImageProcessorImpl(
       cachePath: path.join(storage.getAppDataPath(), 'cache'));
+});
+
+final practiceServiceProvider = Provider<PracticeService>((ref) {
+  // Get the database interface from another provider
+
+  return PracticeService(ref.watch(initializedDatabaseProvider));
 });
 
 final stateRestorationServiceProvider = Provider<StateRestorationService>(

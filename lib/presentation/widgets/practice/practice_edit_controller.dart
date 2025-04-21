@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import 'practice_edit_state.dart';
+import 'practice_service.dart';
 import 'undo_redo_manager.dart';
 
 /// 字帖编辑控制器
@@ -17,8 +18,15 @@ class PracticeEditController extends ChangeNotifier {
   // UUID生成器
   final Uuid _uuid = const Uuid();
 
+  // 字帖ID和标题
+  String? _practiceId;
+  String? _practiceTitle;
+
+  // 服务实例
+  final PracticeService _practiceService;
+
   /// 构造函数
-  PracticeEditController() {
+  PracticeEditController(this._practiceService) {
     _undoRedoManager = UndoRedoManager(
       onStateChanged: () {
         // 更新撤销/重做状态
@@ -31,6 +39,15 @@ class PracticeEditController extends ChangeNotifier {
     // 初始化默认数据
     _initDefaultData();
   }
+
+  /// 检查字帖是否已保存过
+  bool get isSaved => _practiceId != null;
+
+  /// 获取当前字帖ID
+  String? get practiceId => _practiceId;
+
+  /// 获取当前字帖标题
+  String? get practiceTitle => _practiceTitle;
 
   /// 获取当前状态
   PracticeEditState get state => _state;
@@ -207,7 +224,7 @@ class PracticeEditController extends ChangeNotifier {
       addLayer: (l) {
         // 获取当前页面的图层列表
         if (_state.currentPage != null) {
-          if (!_state.currentPage!.containsKey('layers')) {
+          if (!_state.currentPage!['layers'].containsKey('layers')) {
             _state.currentPage!['layers'] = <Map<String, dynamic>>[];
           }
           final layers = _state.currentPage!['layers'] as List<dynamic>;
@@ -314,54 +331,21 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 添加页面
-  void addPage() {
-    final pageIndex = _state.pages.length;
+  void addPage(Map<String, dynamic> page) {
+    _state.pages.add(page);
+    _state.currentPageIndex = _state.pages.length - 1;
 
-    // 创建默认图层
-    final defaultLayer = {
-      'id': _uuid.v4(),
-      'name': '图层1',
-      'order': 0,
-      'isVisible': true,
-      'isLocked': false,
-      'opacity': 1.0,
-    };
+    // 标记为未保存
+    _state.markUnsaved();
 
-    final page = {
-      'id': _uuid.v4(),
-      'name': '页面${pageIndex + 1}',
-      'index': pageIndex,
-      'width': 595.0, // A4纸宽度
-      'height': 842.0, // A4纸高度
-      'backgroundColor': '#FFFFFF',
-      'backgroundOpacity': 1.0,
-      'elements': <Map<String, dynamic>>[],
-      'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
-    };
+    notifyListeners();
 
-    final operation = AddPageOperation(
-      page: page,
-      addPage: (p) {
-        _state.pages.add(p);
-        _state.currentPageIndex = _state.pages.length - 1;
-        _state.hasUnsavedChanges = true;
-        notifyListeners();
-      },
-      removePage: (id) {
-        final index = _state.pages.indexWhere((p) => p['id'] == id);
-        if (index >= 0) {
-          _state.pages.removeAt(index);
-          if (_state.currentPageIndex >= _state.pages.length) {
-            _state.currentPageIndex =
-                _state.pages.isEmpty ? -1 : _state.pages.length - 1;
-          }
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
-        }
-      },
-    );
-
-    _undoRedoManager.addOperation(operation);
+    // 记录操作以便撤销
+    _undoRedoManager.addOperation(_createCustomOperation(
+      execute: () => _state.pages.removeLast(),
+      undo: () => _state.pages.add(page),
+      description: '添加页面',
+    ));
   }
 
   /// 添加文本元素
@@ -416,6 +400,31 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+  }
+
+  /// 检查标题是否已存在
+  Future<bool> checkTitleExists(String title) async {
+    // 使用PracticeService查询相同标题的字帖
+    if (_practiceTitle == title) {
+      // 如果是当前字帖的标题，不算冲突
+      return false;
+    }
+
+    try {
+      // 查询是否有相同标题的字帖
+      final results = await _practiceService.query(
+        'title',
+        '=',
+        title,
+      );
+
+      // 返回查询结果是否非空
+      return results.isNotEmpty;
+    } catch (e) {
+      debugPrint('检查标题是否存在时出错: $e');
+      // 发生错误时假设标题不存在
+      return false;
+    }
   }
 
   /// 清除所有选择
@@ -625,35 +634,30 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 删除页面
-  void deletePage(int pageIndex) {
-    if (pageIndex < 0 || pageIndex >= _state.pages.length) return;
-    if (_state.pages.length <= 1) return; // 不允许删除最后一个页面
+  void deletePage(int index) {
+    if (index < 0 || index >= _state.pages.length) return;
 
-    final page = _state.pages[pageIndex];
+    final deletedPage = _state.pages[index];
+    _state.pages.removeAt(index);
 
-    final operation = DeletePageOperation(
-      page: Map<String, dynamic>.from(page),
-      pageIndex: pageIndex,
-      insertPage: (p, index) {
-        _state.pages.insert(index, p);
-        _state.hasUnsavedChanges = true;
-        notifyListeners();
-      },
-      removePage: (id) {
-        final index = _state.pages.indexWhere((p) => p['id'] == id);
-        if (index >= 0) {
-          _state.pages.removeAt(index);
-          if (_state.currentPageIndex >= _state.pages.length) {
-            _state.currentPageIndex =
-                _state.pages.isEmpty ? -1 : _state.pages.length - 1;
-          }
-          _state.hasUnsavedChanges = true;
-          notifyListeners();
-        }
-      },
-    );
+    // 更新当前页面索引
+    if (_state.pages.isEmpty) {
+      _state.currentPageIndex = -1;
+    } else if (_state.currentPageIndex >= _state.pages.length) {
+      _state.currentPageIndex = _state.pages.length - 1;
+    }
 
-    _undoRedoManager.addOperation(operation);
+    // 标记为未保存
+    _state.markUnsaved();
+
+    notifyListeners();
+
+    // 记录操作以便撤销
+    _undoRedoManager.addOperation(_createCustomOperation(
+      execute: () => _state.pages.insert(index, deletedPage),
+      undo: () => _state.pages.removeAt(index),
+      description: '删除页面',
+    ));
   }
 
   /// 删除选中的元素
@@ -928,6 +932,40 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.addOperation(operation);
   }
 
+  /// 加载字帖
+  Future<bool> loadPractice(String id) async {
+    try {
+      final practice = await _practiceService.loadPractice(id);
+      if (practice == null) return false;
+
+      // 更新字帖数据
+      _practiceId = practice['id'] as String;
+      _practiceTitle = practice['title'] as String;
+      _state.pages = List<Map<String, dynamic>>.from(practice['pages'] as List);
+
+      // 如果有页面，选择第一个页面
+      if (_state.pages.isNotEmpty) {
+        _state.currentPageIndex = 0;
+      } else {
+        _state.currentPageIndex = -1;
+      }
+
+      // 清除选择
+      _state.selectedElementIds.clear();
+      _state.selectedElement = null;
+      _state.selectedLayerId = null;
+
+      // 标记为已保存
+      _state.markSaved();
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      print('加载字帖失败: $e');
+      return false;
+    }
+  }
+
   /// 重做操作
   void redo() {
     if (_undoRedoManager.canRedo) {
@@ -1088,6 +1126,139 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 另存为新字帖
+  /// 始终提示用户输入标题
+  /// 返回是否保存成功
+  Future<bool> saveAsNewPractice(String title) async {
+    // 如果没有页面，则不保存
+    if (_state.pages.isEmpty) return false;
+
+    if (title.isEmpty) {
+      return false;
+    }
+
+    // 检查标题是否存在
+    final exists = await _practiceService.isTitleExists(title);
+    if (exists) {
+      // 标题已存在，返回特殊值通知调用者需要确认覆盖
+      return false;
+    }
+
+    try {
+      // 另存为新字帖（不使用现有ID）
+      final result = await _practiceService.savePractice(
+        id: null, // 生成新ID
+        title: title,
+        pages: _state.pages,
+      );
+
+      // 更新ID和标题
+      _practiceId = result['id'] as String;
+      _practiceTitle = title;
+
+      // 标记为已保存
+      _state.markSaved();
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      print('保存字帖失败: $e');
+      return false;
+    }
+  }
+
+  /// 覆盖保存现有字帖
+  Future<bool> saveOverwriteExisting(String title) async {
+    // 如果没有页面，则不保存
+    if (_state.pages.isEmpty) return false;
+
+    try {
+      // 查询现有字帖
+      final results = await _practiceService.query(
+        'title',
+        '=',
+        title,
+      );
+
+      if (results.isEmpty) {
+        return false;
+      }
+
+      final existingId = results.first['id'] as String;
+
+      // 覆盖保存
+      final result = await _practiceService.savePractice(
+        id: existingId,
+        title: title,
+        pages: _state.pages,
+      );
+
+      // 更新ID和标题
+      _practiceId = result['id'] as String;
+      _practiceTitle = title;
+
+      // 标记为已保存
+      _state.markSaved();
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      print('覆盖保存字帖失败: $e');
+      return false;
+    }
+  }
+
+  /// 保存字帖
+  /// 如果字帖未保存过，则提示用户输入标题
+  /// 返回是否保存成功
+  /// 返回false且标题已存在时可能需要覆盖确认
+  Future<bool> savePractice({String? title}) async {
+    // 如果没有页面，则不保存
+    if (_state.pages.isEmpty) return false;
+
+    // 如果未提供标题且从未保存过，返回false表示需要提示用户输入标题
+    if (title == null && _practiceId == null) {
+      return false;
+    }
+
+    // 使用当前标题或传入的新标题
+    final saveTitle = title ?? _practiceTitle;
+    if (saveTitle == null || saveTitle.isEmpty) {
+      return false;
+    }
+
+    // 如果是新标题（非当前标题），检查标题是否存在
+    if (title != null && title != _practiceTitle) {
+      final exists = await _practiceService.isTitleExists(title);
+      if (exists) {
+        // 标题已存在，返回特殊值通知调用者需要确认覆盖
+        return false;
+      }
+    }
+
+    try {
+      // 保存字帖
+      final result = await _practiceService.savePractice(
+        id: _practiceId,
+        title: saveTitle,
+        pages: _state.pages,
+      );
+
+      // 更新ID和标题
+      _practiceId = result['id'] as String;
+      _practiceTitle = saveTitle;
+
+      // 标记为已保存
+      _state.markSaved();
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      print('保存字帖失败: $e');
+      return false;
+    }
   }
 
   /// 选择元素
@@ -1895,6 +2066,26 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 更新页面
+  void updatePage(int index, Map<String, dynamic> updatedPage) {
+    if (index < 0 || index >= _state.pages.length) return;
+
+    final oldPage = Map<String, dynamic>.from(_state.pages[index]);
+    _state.pages[index] = updatedPage;
+
+    // 标记为未保存
+    _state.markUnsaved();
+
+    notifyListeners();
+
+    // 记录操作以便撤销
+    _undoRedoManager.addOperation(_createCustomOperation(
+      execute: () => _state.pages[index] = updatedPage,
+      undo: () => _state.pages[index] = oldPage,
+      description: '更新页面',
+    ));
   }
 
   void updatePageProperties(Map<String, dynamic> properties) {

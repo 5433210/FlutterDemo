@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../dialogs/practice_save_dialog.dart';
+import 'practice_edit_controller.dart';
+
 /// 文件操作工具类
 class FileOperations {
   /// 导出字帖
@@ -56,65 +59,74 @@ class FileOperations {
   }
 
   /// 另存为
-  static Future<void> saveAs(
-    BuildContext context,
-    List<Map<String, dynamic>> pages,
-    List<Map<String, dynamic>> layers,
-  ) async {
+  static Future<void> saveAs(BuildContext context,
+      List<Map<String, dynamic>> pages, List<Map<String, dynamic>> layers,
+      [PracticeEditController? controller]) async {
+    if (controller == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法保存：缺少控制器')),
+      );
+      return;
+    }
+
+    // 使用现有的保存对话框
     final title = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('另存为'),
-        content: const TextField(
-          decoration: InputDecoration(
-            labelText: '字帖标题',
-            hintText: '请输入字帖标题',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              // Get the TextField directly from the content
-              final textField = context
-                  .findAncestorWidgetOfExactType<AlertDialog>()!
-                  .content as TextField;
-              Navigator.pop(context, textField.controller!.text);
-            },
-            child: const Text('保存'),
-          ),
-        ],
+      builder: (context) => PracticeSaveDialog(
+        initialTitle: controller.practiceTitle,
+        isSaveAs: true,
+        checkTitleExists: controller.checkTitleExists,
       ),
     );
 
     if (title == null || title.isEmpty) return;
 
-    // 这里应该实现实际的保存逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('字帖 "$title" 已保存 (功能待实现)')),
-    );
+    // 调用控制器的saveAsNewPractice方法
+    final result = await controller.saveAsNewPractice(title);
+
+    if (result) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('字帖 "$title" 已保存')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('保存失败')),
+      );
+    }
   }
 
   /// 保存字帖
   static Future<void> savePractice(
-    BuildContext context,
-    List<Map<String, dynamic>> pages,
-    List<Map<String, dynamic>> layers,
-    String? practiceId,
-  ) async {
-    if (practiceId == null) {
-      // 如果没有ID，调用另存为
-      await saveAs(context, pages, layers);
+      BuildContext context,
+      List<Map<String, dynamic>> pages,
+      List<Map<String, dynamic>> layers,
+      String? practiceId,
+      [PracticeEditController? controller]) async {
+    if (controller == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法保存：缺少控制器')),
+      );
       return;
     }
 
-    // 这里应该实现实际的保存逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('字帖已保存 (功能待实现)')),
-    );
+    // 如果已经有字帖ID和标题，直接保存
+    if (controller.practiceTitle != null) {
+      final result = await controller.savePractice();
+
+      if (result) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保存失败')),
+        );
+      }
+      return;
+    }
+
+    // 如果没有标题，调用另存为
+    await saveAs(context, pages, layers, controller);
+    return;
   }
 }

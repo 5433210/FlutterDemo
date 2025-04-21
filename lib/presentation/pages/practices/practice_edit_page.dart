@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
     show ConsumerState, ConsumerStatefulWidget;
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
+import '../../../application/providers/service_providers.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/practice/control_handlers.dart';
 import '../../widgets/practice/edit_toolbar.dart';
@@ -106,7 +107,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   @override
   void initState() {
     super.initState();
-    _controller = PracticeEditController();
+    // Create or get the PracticeService instance
+    final practiceService = ref.read(practiceServiceProvider);
+    _controller = PracticeEditController(practiceService);
 
     // 初始化键盘监听器
     _focusNode = FocusNode();

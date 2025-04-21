@@ -28,7 +28,12 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('字帖编辑'),
+      title: Text(controller.practiceTitle ?? '字帖编辑'),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        tooltip: '返回',
+        onPressed: () => _handleBackButton(context),
+      ),
       actions: [
         // 文件操作组
         _buildFileOperationsGroup(context),
@@ -131,6 +136,54 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  /// 处理返回按钮
+  Future<void> _handleBackButton(BuildContext context) async {
+    // 检查是否有未保存的修改
+    if (controller.state.hasUnsavedChanges) {
+      // 显示确认对话框
+      final bool? result = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('未保存的修改'),
+            content: const Text('你有未保存的修改，确定要离开吗？'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('取消'),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('离开'),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+              TextButton(
+                child: const Text('保存并离开'),
+                onPressed: () async {
+                  // 保存修改
+                  await _savePractice(context);
+                  // 返回true表示确认离开
+                  Navigator.of(context).pop(true);
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      // 如果用户确认要离开，则返回
+      if (result == true) {
+        Navigator.of(context).pop();
+      }
+    } else {
+      // 没有未保存的修改，直接返回
+      Navigator.of(context).pop();
+    }
+  }
+
   /// 打印字帖
   Future<void> _printPractice(BuildContext context) async {
     await FileOperations.printPractice(
@@ -145,6 +198,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       context,
       controller.state.pages,
       controller.state.layers.cast<Map<String, dynamic>>(),
+      controller,
     );
   }
 
@@ -155,6 +209,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       controller.state.pages,
       controller.state.layers.cast<Map<String, dynamic>>(),
       practiceId,
+      controller,
     );
   }
 }

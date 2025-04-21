@@ -124,4 +124,9 @@ class PracticeEditState {
   void markSaved() {
     hasUnsavedChanges = false;
   }
+
+  /// 标记有未保存的更改
+  void markUnsaved() {
+    hasUnsavedChanges = true;
+  }
 }
