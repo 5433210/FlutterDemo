@@ -551,9 +551,6 @@ class _LayerPropertyPanelContentState
 
   // 构建图层元素列表
   Widget _buildLayerElementsList(List<Map<String, dynamic>> elements) {
-    // 用于存储当前正在编辑的元素ID
-    final editingElementId = _editingElementId;
-
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -565,8 +562,8 @@ class _LayerPropertyPanelContentState
         final id = element['id'] as String;
         final isSelected =
             widget.controller.state.selectedElementIds.contains(id);
-        final isLocked = element['locked'] == true;
-        final isHidden = element['hidden'] == true;
+        final isLocked = element['isLocked'] as bool? ?? false;
+        final isHidden = element['isHidden'] as bool? ?? false;
 
         // 获取元素名称，如果没有则使用类型+序号
         String typeName;
@@ -589,7 +586,7 @@ class _LayerPropertyPanelContentState
 
         final String defaultName = '$typeName ${index + 1}';
         final String elementName = element['name'] as String? ?? defaultName;
-        final bool isEditing = editingElementId == id;
+        final bool isEditing = _editingElementId == id;
 
         // 根据元素类型显示不同的图标
         IconData iconData;
@@ -611,7 +608,7 @@ class _LayerPropertyPanelContentState
         }
 
         return Container(
-          color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+          color: isSelected ? Colors.blue.withAlpha(25) : null,
           child: ListTile(
             leading: Icon(iconData),
             title: isEditing
@@ -813,34 +810,36 @@ class _LayerPropertyPanelContentState
   // 切换所有元素的锁定状态
   void _toggleAllElementsLock(List<Map<String, dynamic>> elements) {
     // 检查当前是否所有元素都是锁定的
-    final allLocked = elements.every((element) => element['locked'] == true);
+    final allLocked = elements.every((element) => element['isLocked'] == true);
 
     // 对所有元素执行相反的操作
     for (final element in elements) {
       final elementId = element['id'] as String;
-      widget.controller.updateElementProperty(elementId, 'locked', !allLocked);
+      widget.controller
+          .updateElementProperty(elementId, 'isLocked', !allLocked);
     }
   }
 
   // 切换所有元素的可见性
   void _toggleAllElementsVisibility(List<Map<String, dynamic>> elements) {
     // 检查当前是否所有元素都是可见的
-    final allVisible = elements.every((element) => element['hidden'] != true);
+    final allVisible = elements.every((element) => element['isHidden'] != true);
 
     // 对所有元素执行相反的操作
     for (final element in elements) {
       final elementId = element['id'] as String;
-      widget.controller.updateElementProperty(elementId, 'hidden', allVisible);
+      widget.controller
+          .updateElementProperty(elementId, 'isHidden', allVisible);
     }
   }
 
   // 切换元素锁定状态
   void _toggleElementLock(String elementId, bool lock) {
-    widget.controller.updateElementProperty(elementId, 'locked', lock);
+    widget.controller.updateElementProperty(elementId, 'isLocked', lock);
   }
 
   // 切换元素可见性
   void _toggleElementVisibility(String elementId, bool hidden) {
-    widget.controller.updateElementProperty(elementId, 'hidden', hidden);
+    widget.controller.updateElementProperty(elementId, 'isHidden', hidden);
   }
 }

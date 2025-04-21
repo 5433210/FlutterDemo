@@ -22,9 +22,13 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
 
   // List to store practices data
   List<Map<String, dynamic>> _practices = [];
+  final List<Map<String, dynamic>> _filteredPractices = [];
 
   // Loading state
   bool _isLoading = true;
+
+  // Search controller
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +47,28 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
             tooltip: _isGridView ? '列表视图' : '网格视图',
           ),
         ],
-        trailing: const [
+        trailing: [
           SizedBox(
             width: 240,
             child: SearchBar(
+              controller: _searchController,
               hintText: '搜索练习...',
-              leading: Icon(Icons.search),
-              padding: WidgetStatePropertyAll(
+              leading: const Icon(Icons.search),
+              padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
               ),
+              onChanged: _searchPractices,
+              trailing: [
+                _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchPractices('');
+                        },
+                      )
+                    : const SizedBox.shrink(),
+              ],
             ),
           ),
         ],
@@ -60,6 +77,12 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
           ? const Center(child: CircularProgressIndicator())
           : (_isGridView ? _buildGridView() : _buildListView()),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -78,9 +101,9 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
         crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
         childAspectRatio: 1,
       ),
-      itemCount: _practices.length,
+      itemCount: _filteredPractices.length,
       itemBuilder: (context, index) {
-        final practice = _practices[index];
+        final practice = _filteredPractices[index];
         return Card(
           child: InkWell(
             onTap: () {
@@ -129,9 +152,9 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   Widget _buildListView() {
     return ListView.builder(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      itemCount: _practices.length,
+      itemCount: _filteredPractices.length,
       itemBuilder: (context, index) {
-        final practice = _practices[index];
+        final practice = _filteredPractices[index];
         return Card(
           child: ListTile(
             leading: Container(
@@ -200,6 +223,8 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
 
       setState(() {
         _practices = practices;
+        _filteredPractices.clear();
+        _filteredPractices.addAll(practices);
         _isLoading = false;
       });
     } catch (e) {
@@ -229,5 +254,21 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
 
   void _navigateToPracticeDetail(BuildContext context, String practiceId) {
     _navigateToEditPage(practiceId);
+  }
+
+  // Search practices by title
+  void _searchPractices(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredPractices.clear();
+        _filteredPractices.addAll(_practices);
+      } else {
+        _filteredPractices.clear();
+        _filteredPractices.addAll(_practices.where((practice) {
+          final title = practice['title'] as String? ?? '';
+          return title.toLowerCase().contains(query.toLowerCase());
+        }));
+      }
+    });
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../practice_edit_controller.dart';
+import 'element_common_property_panel.dart';
 import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
 
@@ -66,6 +67,13 @@ class GroupPropertyPanel extends PracticePropertyPanel {
           title: '视觉设置',
           opacity: opacity,
           onOpacityChanged: (value) => _updateProperty('opacity', value),
+        ),
+
+        // 基本属性部分
+        ElementCommonPropertyPanel(
+          element: element,
+          onElementPropertiesChanged: onElementPropertiesChanged,
+          controller: controller,
         ),
 
         // 图层信息部分
