@@ -74,6 +74,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       child: PageLayout(
         toolbar: TopNavigationBar(
           controller: _controller,
+          practiceId: widget.practiceId,
           isPreviewMode: _isPreviewMode,
           onTogglePreviewMode: () {
             setState(() {
@@ -90,6 +91,17 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         body: _buildBody(context),
       ),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // 在didChangeDependencies中加载字帖，而不是在initState中
+    // 这样可以安全地使用context
+    if (widget.practiceId != null) {
+      _loadPractice(widget.practiceId!);
+    }
   }
 
   @override
@@ -123,11 +135,6 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
     // 添加键盘监听
     HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-
-    // 如果有ID，加载现有字帖
-    if (widget.practiceId != null) {
-      _loadPractice(widget.practiceId!);
-    }
   }
 
   /// 将元素置于顶层
@@ -1091,6 +1098,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final layerId = element['layerId'] as String?;
     bool isLayerLocked = false;
     bool isLayerHidden = false;
+    double layerOpacity = 1.0;
 
     if (layerId != null) {
       final layer = _controller.state.getLayerById(layerId);
@@ -1098,6 +1106,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         isLayerLocked = layer['isLocked'] == true;
         isLayerHidden =
             layer['isVisible'] == false; // 注意这里的逻辑：isVisible=false 意味着隐藏
+        layerOpacity = (layer['opacity'] as num?)?.toDouble() ?? 1.0; // 获取图层透明度
       }
     }
 
@@ -1142,9 +1151,10 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             // Main element widget
             Opacity(
               // 元素或图层隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
+              // 应用图层透明度和元素透明度的组合
               opacity: isHidden || isLayerHidden
                   ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
-                  : opacity, // 正常状态
+                  : opacity * layerOpacity, // 正常状态，元素透明度与图层透明度相乘
               child: Container(
                 width: width,
                 height: height,
@@ -1702,10 +1712,53 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  // 加载字帖
+  /// 加载字帖
   Future<void> _loadPractice(String id) async {
-    // 这里应该实现实际的加载逻辑
-    // 例如，从数据库或文件系统加载数据
+    // 首先检查是否已经加载过该ID的字帖，避免重复加载
+    if (_controller.practiceId == id) {
+      debugPrint('字帖已经加载，跳过重复加载: $id');
+      return;
+    }
+
+    try {
+      debugPrint('开始加载字帖: $id');
+
+      // 调用控制器的loadPractice方法
+      final success = await _controller.loadPractice(id);
+
+      if (success) {
+        // 加载成功，更新UI
+        if (mounted) {
+          setState(() {
+            // 重置缩放和平移
+            _transformationController.value = Matrix4.identity();
+          });
+
+          // 显示成功提示
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('字帖 "${_controller.practiceTitle}" 加载成功')),
+          );
+
+          debugPrint('字帖加载成功: ${_controller.practiceTitle}');
+        }
+      } else {
+        // 加载失败
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('加载字帖失败：字帖不存在或已被删除')),
+          );
+          debugPrint('字帖加载失败: 字帖不存在或已被删除');
+        }
+      }
+    } catch (e) {
+      // 处理异常
+      debugPrint('加载字帖失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('加载字帖失败: $e')),
+        );
+      }
+    }
   }
 
   /// 将元素下移一层

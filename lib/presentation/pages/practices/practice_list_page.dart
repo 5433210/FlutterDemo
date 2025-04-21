@@ -222,6 +222,9 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
       AppRoutes.practiceEdit,
       arguments: practiceId,
     );
+
+    // 在返回时刷新字帖列表
+    _loadPractices();
   }
 
   void _navigateToPracticeDetail(BuildContext context, String practiceId) {

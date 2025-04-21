@@ -1249,7 +1249,27 @@ class PracticeEditController extends ChangeNotifier {
 
     try {
       // 确保页面数据准备好被保存
-      final pagesToSave = List<Map<String, dynamic>>.from(_state.pages);
+      // 创建页面的深拷贝，确保所有内容都被保存
+      final pagesToSave = _state.pages.map((page) {
+        // 创建页面的深拷贝
+        final pageCopy = Map<String, dynamic>.from(page);
+
+        // 确保元素列表被正确拷贝
+        if (page.containsKey('elements')) {
+          final elements = page['elements'] as List<dynamic>;
+          pageCopy['elements'] =
+              elements.map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+
+        // 确保图层列表被正确拷贝
+        if (page.containsKey('layers')) {
+          final layers = page['layers'] as List<dynamic>;
+          pageCopy['layers'] =
+              layers.map((l) => Map<String, dynamic>.from(l)).toList();
+        }
+
+        return pageCopy;
+      }).toList();
 
       // 保存字帖
       final result = await _practiceService.savePractice(
@@ -1266,9 +1286,10 @@ class PracticeEditController extends ChangeNotifier {
       _state.markSaved();
       notifyListeners();
 
+      debugPrint('字帖保存成功: $saveTitle');
       return true;
     } catch (e) {
-      print('保存字帖失败: $e');
+      debugPrint('保存字帖失败: $e');
       return false;
     }
   }
