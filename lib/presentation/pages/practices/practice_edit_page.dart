@@ -801,18 +801,28 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                   // 更新所有选中元素的位置
                   for (final elementId
                       in _controller.state.selectedElementIds) {
+                    // 获取元素
                     final element = _controller.state.currentPageElements
                         .firstWhere((e) => e['id'] == elementId);
+
+                    // 检查元素锁定状态 - 如果元素被锁定，跳过移动
+                    if (element['locked'] == true) {
+                      debugPrint('元素 $elementId 已锁定，无法移动');
+                      continue;
+                    }
+
+                    // 检查图层锁定状态
                     final layerId = element['layerId'] as String?;
                     if (layerId != null) {
                       final layer = _controller.state.getLayerById(layerId);
                       if (layer != null) {
-                        if (layer['isLocked'] == true) continue;
+                        if (layer['isLocked'] == true) {
+                          debugPrint('元素 $elementId 所在图层已锁定，无法移动');
+                          continue;
+                        }
                         if (layer['isVisible'] == false) continue;
                       }
                     }
-
-                    if (element['isLocked'] == true) continue;
 
                     // 获取元素的初始位置
                     final startPosition = _elementStartPositions[elementId];

@@ -46,8 +46,11 @@ class _LayerPropertyPanelContent extends StatefulWidget {
 class _LayerPropertyPanelContentState
     extends State<_LayerPropertyPanelContent> {
   late TextEditingController _nameController;
+  late TextEditingController _elementNameController;
+  String? _editingElementId;
   bool _isEditingName = false;
   final FocusNode _nameFocusNode = FocusNode();
+  final FocusNode _elementNameFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -384,6 +387,8 @@ class _LayerPropertyPanelContentState
     _nameFocusNode.removeListener(_onFocusChange);
     _nameController.dispose();
     _nameFocusNode.dispose();
+    _elementNameController.dispose();
+    _elementNameFocusNode.dispose();
     super.dispose();
   }
 
@@ -392,7 +397,19 @@ class _LayerPropertyPanelContentState
     super.initState();
     final name = widget.layer['name'] as String? ?? '图层1';
     _nameController = TextEditingController(text: name);
+    _elementNameController = TextEditingController();
     _nameFocusNode.addListener(_onFocusChange);
+  }
+
+  void _applyElementNameChange() {
+    final newName = _elementNameController.text.trim();
+    if (newName.isNotEmpty && _editingElementId != null) {
+      widget.controller
+          .updateElementProperty(_editingElementId!, 'name', newName);
+      setState(() {
+        _editingElementId = null;
+      });
+    }
   }
 
   void _applyNameChange() {
@@ -534,6 +551,9 @@ class _LayerPropertyPanelContentState
 
   // 构建图层元素列表
   Widget _buildLayerElementsList(List<Map<String, dynamic>> elements) {
+    // 用于存储当前正在编辑的元素ID
+    final editingElementId = _editingElementId;
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -548,37 +568,85 @@ class _LayerPropertyPanelContentState
         final isLocked = element['locked'] == true;
         final isHidden = element['hidden'] == true;
 
-        // 根据元素类型显示不同的图标
-        IconData iconData;
+        // 获取元素名称，如果没有则使用类型+序号
         String typeName;
         switch (type) {
           case 'text':
-            iconData = Icons.text_fields;
             typeName = '文本';
             break;
           case 'image':
-            iconData = Icons.image;
             typeName = '图片';
             break;
           case 'collection':
-            iconData = Icons.collections;
             typeName = '集字';
             break;
           case 'group':
-            iconData = Icons.group_work;
             typeName = '组';
             break;
           default:
-            iconData = Icons.question_mark;
             typeName = '未知';
+        }
+
+        final String defaultName = '$typeName ${index + 1}';
+        final String elementName = element['name'] as String? ?? defaultName;
+        final bool isEditing = editingElementId == id;
+
+        // 根据元素类型显示不同的图标
+        IconData iconData;
+        switch (type) {
+          case 'text':
+            iconData = Icons.text_fields;
+            break;
+          case 'image':
+            iconData = Icons.image;
+            break;
+          case 'collection':
+            iconData = Icons.collections;
+            break;
+          case 'group':
+            iconData = Icons.group_work;
+            break;
+          default:
+            iconData = Icons.question_mark;
         }
 
         return Container(
           color: isSelected ? Colors.blue.withOpacity(0.1) : null,
           child: ListTile(
             leading: Icon(iconData),
-            title: Text('$typeName ${index + 1}'),
-            subtitle: Text(element['id'] as String,
+            title: isEditing
+                ? TextField(
+                    controller: _elementNameController,
+                    focusNode: _elementNameFocusNode,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding:
+                          EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (_) => _applyElementNameChange(),
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          elementName,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 16),
+                        tooltip: '重命名',
+                        onPressed: () =>
+                            _startEditingElementName(id, elementName),
+                        constraints: const BoxConstraints(
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+            subtitle: Text(type,
                 style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
             selected: isSelected,
             dense: true,
@@ -732,6 +800,14 @@ class _LayerPropertyPanelContentState
         ],
       ),
     );
+  }
+
+  void _startEditingElementName(String elementId, String currentName) {
+    setState(() {
+      _editingElementId = elementId;
+      _elementNameController.text = currentName;
+    });
+    Future.microtask(() => _elementNameFocusNode.requestFocus());
   }
 
   // 切换所有元素的锁定状态
