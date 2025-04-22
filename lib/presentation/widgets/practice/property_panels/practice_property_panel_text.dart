@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -393,24 +394,54 @@ class TextPropertyPanel extends PracticePropertyPanel {
                       ),
                       const SizedBox(width: 8.0),
                       // 字体颜色选择器
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: getFontColor(),
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4.0),
-                        ),
-                        child: InkWell(
-                          onTap: () =>
-                              _showColorPicker(context, fontColor, (color) {
-                            // 转换颜色为十六进制
-                            final hexColor =
-                                '#${(color.r.round() << 16 | color.g.round() << 8 | color.b.round()).toRadixString(16).padLeft(6, '0').toUpperCase()}';
-                            _updateContentProperty('fontColor', hexColor);
-                          }),
-                          child:
-                              const Icon(Icons.colorize, color: Colors.white),
+                      Tooltip(
+                        message: '点击选择字体颜色',
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: getFontColor(),
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(4.0),
+                              onTap: () {
+                                _showColorPicker(context, fontColor, (color) {
+                                  // 转换颜色为十六进制
+                                  String hexColor;
+                                  if (color.a == 0) {
+                                    hexColor = 'transparent';
+                                  } else {
+                                    // 将 0-1 范围的浮点数转换为 0-255 范围的整数
+                                    final r = (color.r * 255).round();
+                                    final g = (color.g * 255).round();
+                                    final b = (color.b * 255).round();
+                                    hexColor =
+                                        '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}'
+                                            .toUpperCase();
+                                    developer.log(
+                                        '颜色转换: R=$r, G=$g, B=$b -> $hexColor');
+                                  }
+
+                                  // 打印调试信息
+                                  developer.log('设置字体颜色: $hexColor');
+
+                                  // 更新属性
+                                  // 调用 _updateContentProperty 会自动通知外部更新
+                                  _updateContentProperty('fontColor', hexColor);
+                                });
+                              },
+                              child: Icon(
+                                Icons.colorize,
+                                color: getFontColor().computeLuminance() > 0.5
+                                    ? Colors.black
+                                    : Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -471,33 +502,66 @@ class TextPropertyPanel extends PracticePropertyPanel {
                       ),
                       const SizedBox(width: 8.0),
                       // 背景颜色选择器
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: getBackgroundColor(),
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4.0),
-                        ),
-                        child: InkWell(
-                          onTap: () => _showColorPicker(
-                              context,
-                              backgroundColor == 'transparent'
-                                  ? '#00FFFFFF'
-                                  : backgroundColor, (color) {
-                            if (color.a == 0) {
-                              _updateContentProperty(
-                                  'backgroundColor', 'transparent');
-                            } else {
-                              _updateContentProperty('backgroundColor',
-                                  '#${(color.r.round() << 16 | color.g.round() << 8 | color.b.round()).toRadixString(16).padLeft(6, '0').toUpperCase()}');
-                            }
-                          }),
-                          child: backgroundColor == 'transparent'
-                              ? const Icon(Icons.format_color_reset,
-                                  color: Colors.grey)
-                              : const Icon(Icons.format_color_fill,
-                                  color: Colors.white),
+                      Tooltip(
+                        message: '点击选择背景颜色',
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: getBackgroundColor(),
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4.0),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(4.0),
+                              onTap: () {
+                                _showColorPicker(
+                                  context,
+                                  backgroundColor == 'transparent'
+                                      ? '#00FFFFFF'
+                                      : backgroundColor,
+                                  (color) {
+                                    // 检查是否是透明色
+                                    String hexColor;
+                                    if (color.a == 0) {
+                                      hexColor = 'transparent';
+                                    } else {
+                                      // 将 0-1 范围的浮点数转换为 0-255 范围的整数
+                                      final r = (color.r * 255).round();
+                                      final g = (color.g * 255).round();
+                                      final b = (color.b * 255).round();
+                                      hexColor =
+                                          '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}'
+                                              .toUpperCase();
+                                      developer.log(
+                                          '颜色转换: R=$r, G=$g, B=$b -> $hexColor');
+                                    }
+
+                                    // 打印调试信息
+                                    developer.log('设置背景颜色: $hexColor');
+
+                                    // 更新属性
+                                    // 调用 _updateContentProperty 会自动通知外部更新
+                                    _updateContentProperty(
+                                        'backgroundColor', hexColor);
+                                  },
+                                );
+                              },
+                              child: backgroundColor == 'transparent'
+                                  ? const Icon(Icons.format_color_reset,
+                                      color: Colors.grey)
+                                  : Icon(
+                                      Icons.format_color_fill,
+                                      color: getBackgroundColor()
+                                                  .computeLuminance() >
+                                              0.5
+                                          ? Colors.black
+                                          : Colors.white,
+                                    ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -1042,8 +1106,7 @@ class TextPropertyPanel extends PracticePropertyPanel {
 
     // 生成所有列的数据
     final allColumns = <Widget>[];
-// 为每一行创建列，并记录每行的起始位置
-    int lineStartIndex = 0;
+    // 为每一行创建列，并记录每行的起始位置
     for (final line in lines) {
       final chars = line.characters.toList();
       int charIdx = 0;
@@ -1372,6 +1435,9 @@ class TextPropertyPanel extends PracticePropertyPanel {
   // 颜色选择器对话框
   Future<void> _showColorPicker(BuildContext context, String initialColor,
       Function(Color) onColorSelected) async {
+    // 打印调试信息
+    developer.log('打开颜色选择器，初始颜色: $initialColor');
+
     Color currentColor;
     if (initialColor == 'transparent') {
       currentColor = Colors.transparent;
@@ -1379,12 +1445,12 @@ class TextPropertyPanel extends PracticePropertyPanel {
       try {
         currentColor = Color(int.parse(initialColor.replaceFirst('#', '0xFF')));
       } catch (e) {
+        developer.log('解析颜色失败: $e');
         currentColor = Colors.black;
       }
     }
 
     // 构建颜色选择器
-    // 在实际应用中，你应该使用专门的颜色选择器库
     final List<Color> colors = [
       Colors.black,
       Colors.white,
@@ -1426,28 +1492,45 @@ class TextPropertyPanel extends PracticePropertyPanel {
               ),
               itemCount: colors.length,
               itemBuilder: (context, index) {
+                final color = colors[index];
+                // 使用颜色的 ARGB 值进行比较
+                // 将浮点数转换为整数进行比较，以避免浮点数精度问题
+                final bool isSelected = (color.r * 255).round() ==
+                        (currentColor.r * 255).round() &&
+                    (color.g * 255).round() == (currentColor.g * 255).round() &&
+                    (color.b * 255).round() == (currentColor.b * 255).round() &&
+                    (color.a * 255).round() == (currentColor.a * 255).round();
+
                 return InkWell(
                   onTap: () {
-                    onColorSelected(colors[index]);
+                    // 打印调试信息
+                    developer.log('选择颜色: $color');
+                    developer.log(
+                        '颜色组件: R=${color.r}, G=${color.g}, B=${color.b}, A=${color.a}');
+
+                    // 调用回调函数
+                    onColorSelected(color);
                     Navigator.of(context).pop();
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      color: colors[index],
+                      color: color,
                       border: Border.all(
-                        color: Colors.grey,
-                        width: 1,
+                        color: isSelected ? Colors.blue : Colors.grey,
+                        width: isSelected ? 2 : 1,
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Center(
-                      child: colors[index] == currentColor
+                      child: isSelected
                           ? Icon(
                               Icons.check,
-                              color: colors[index] == Colors.white ||
-                                      colors[index] == Colors.transparent
+                              color: (color == Colors.white ||
+                                      color == Colors.transparent ||
+                                      color.computeLuminance() > 0.7)
                                   ? Colors.black
                                   : Colors.white,
+                              size: 20,
                             )
                           : null,
                     ),
