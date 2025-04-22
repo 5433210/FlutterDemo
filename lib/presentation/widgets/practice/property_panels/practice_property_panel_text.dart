@@ -1066,21 +1066,27 @@ class TextPropertyPanel extends PracticePropertyPanel {
             mainAxisAlignment: _getVerticalMainAlignment(textAlign),
             children: [
               Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: _getVerticalMainAlignment(textAlign),
-                  children: columnChars.map((char) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: effectiveLetterSpacing,
-                      ),
-                      child: Text(
-                        char,
-                        style: style,
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }).toList(),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: _getVerticalMainAlignment(textAlign),
+                    children: columnChars.map((char) {
+                      // 确保 letterSpacing 不为负值
+                      final effectivePadding = effectiveLetterSpacing > 0
+                          ? effectiveLetterSpacing
+                          : 0.0;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: effectivePadding,
+                        ),
+                        child: Text(
+                          char,
+                          style: style,
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],
@@ -1235,14 +1241,8 @@ class TextPropertyPanel extends PracticePropertyPanel {
           );
         }
 
-        // 外层使用水平滚动视图包裹内容
-        // 创建静态的ScrollController以避免重复创建
-        final scrollController = ScrollController();
-
-        // 根据书写模式获取对齐方式
-        final alignment = writingMode == 'vertical-r'
-            ? Alignment.topRight
-            : Alignment.topLeft;
+        // 注意：这里不需要使用 ScrollController 和对齐方式
+        // 因为内容已经在 _buildVerticalTextLayout 中处理了
 
         return Container(
           alignment: Alignment.centerRight,

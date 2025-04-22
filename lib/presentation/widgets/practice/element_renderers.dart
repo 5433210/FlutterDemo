@@ -471,21 +471,27 @@ class ElementRenderers {
             mainAxisAlignment: _getVerticalMainAlignment(textAlign),
             children: [
               Flexible(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: _getVerticalMainAlignment(textAlign),
-                  children: columnChars.map((char) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: effectiveLetterSpacing,
-                      ),
-                      child: Text(
-                        char,
-                        style: style,
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  }).toList(),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: _getVerticalMainAlignment(textAlign),
+                    children: columnChars.map((char) {
+                      // 确保 letterSpacing 不为负值
+                      final effectivePadding = effectiveLetterSpacing > 0
+                          ? effectiveLetterSpacing
+                          : 0.0;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: effectivePadding,
+                        ),
+                        child: Text(
+                          char,
+                          style: style,
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ],
@@ -503,7 +509,7 @@ class ElementRenderers {
             width: 1,
             height: constraints.maxHeight,
             margin: const EdgeInsets.symmetric(horizontal: 8.0),
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withAlpha(77),
           ),
         );
       }
@@ -534,20 +540,6 @@ class ElementRenderers {
     return (maxHeight / effectiveCharHeight).floor();
   }
 
-  /// 获取行间书写方向的变换矩阵
-  static Matrix4 _getBlockDirectionTransform(String direction) {
-    switch (direction) {
-      case 'right-to-left':
-        return Matrix4.identity()..scale(-1.0, 1.0, 1.0);
-      case 'top-to-bottom':
-        return Matrix4.identity(); // 默认不变
-      case 'bottom-to-top':
-        return Matrix4.identity()..scale(1.0, -1.0, 1.0);
-      default:
-        return Matrix4.identity();
-    }
-  }
-
   /// 获取图片适应模式
   static BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
@@ -561,52 +553,6 @@ class ElementRenderers {
         return BoxFit.none;
       default:
         return BoxFit.contain;
-    }
-  }
-
-  /// 获取垂直文本的水平主轴对齐方式
-  static MainAxisAlignment _getHorizontalMainAlignment(
-      TextAlign textAlign, bool isRightToLeft) {
-    if (isRightToLeft) {
-      // 对于从右到左的竖排文本
-      switch (textAlign) {
-        case TextAlign.left:
-          return MainAxisAlignment.end;
-        case TextAlign.right:
-          return MainAxisAlignment.start;
-        case TextAlign.center:
-        case TextAlign.justify:
-          return MainAxisAlignment.center;
-        default:
-          return MainAxisAlignment.end;
-      }
-    } else {
-      // 对于从左到右的竖排文本
-      switch (textAlign) {
-        case TextAlign.left:
-          return MainAxisAlignment.start;
-        case TextAlign.right:
-          return MainAxisAlignment.end;
-        case TextAlign.center:
-        case TextAlign.justify:
-          return MainAxisAlignment.center;
-        default:
-          return MainAxisAlignment.start;
-      }
-    }
-  }
-
-  /// 获取行内书写方向的旋转
-  static int _getRotationQuarterTurns(String direction) {
-    switch (direction) {
-      case 'vertical-rl': // 从右向左
-        return 3; // 顺时针旋转270度（或逆时针90度）
-      case 'vertical-lr': // 从左向右(竖排)
-        return 1; // 顺时针旋转90度
-      case 'sideways-rl': // 从下到上
-        return 2; // 旋转180度
-      default:
-        return 0; // 水平方向，不旋转
     }
   }
 
@@ -639,30 +585,6 @@ class ElementRenderers {
         return Alignment.center; // justify使用center，实际布局由内部控制
       default:
         return Alignment.topCenter;
-    }
-  }
-
-  /// 获取垂直文本的交叉轴对齐方式
-  static CrossAxisAlignment _getVerticalCrossAlignment(
-      TextAlign textAlign, bool isRightToLeft) {
-    // 在垂直文本中，交叉轴控制字符在列中的对齐
-    switch (textAlign) {
-      case TextAlign.center:
-        return CrossAxisAlignment.center;
-      case TextAlign.right:
-        // 根据书写方向翻转左右对齐
-        return isRightToLeft
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.end;
-      case TextAlign.left:
-        // 根据书写方向翻转左右对齐
-        return isRightToLeft
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start;
-      case TextAlign.justify:
-        return CrossAxisAlignment.center; // Justify handled separately
-      default:
-        return CrossAxisAlignment.center;
     }
   }
 

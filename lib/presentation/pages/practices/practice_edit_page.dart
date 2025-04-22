@@ -1720,6 +1720,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       return;
     }
 
+    // 在开始异步操作前保存一个引用
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     try {
       debugPrint('开始加载字帖: $id');
 
@@ -1734,8 +1737,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             _transformationController.value = Matrix4.identity();
           });
 
-          // 显示成功提示
-          ScaffoldMessenger.of(context).showSnackBar(
+          // 使用保存的引用显示成功提示
+          scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('字帖 "${_controller.practiceTitle}" 加载成功')),
           );
 
@@ -1744,7 +1747,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       } else {
         // 加载失败
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          // 使用保存的引用显示失败提示
+          scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('加载字帖失败：字帖不存在或已被删除')),
           );
           debugPrint('字帖加载失败: 字帖不存在或已被删除');
@@ -1754,7 +1758,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       // 处理异常
       debugPrint('加载字帖失败: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        // 使用保存的引用显示异常提示
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('加载字帖失败: $e')),
         );
       }
