@@ -32,7 +32,10 @@ class LayerInfoPanel extends StatelessWidget {
                         style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   Expanded(
-                    child: Text(layer!['name'] as String? ?? '未命名图层'),
+                    child: Text(
+                      layer!['name'] as String? ?? '未命名图层',
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -56,9 +59,12 @@ class LayerInfoPanel extends StatelessWidget {
                         : Colors.grey,
                   ),
                   const SizedBox(width: 8),
-                  Text((layer!['isVisible'] as bool? ?? true)
-                      ? '可见'
-                      : '隐藏'),
+                  Flexible(
+                    child: Text(
+                      (layer!['isVisible'] as bool? ?? true) ? '可见' : '隐藏',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8.0),
@@ -81,9 +87,12 @@ class LayerInfoPanel extends StatelessWidget {
                         : Colors.grey,
                   ),
                   const SizedBox(width: 8),
-                  Text((layer!['isLocked'] as bool? ?? false)
-                      ? '已锁定'
-                      : '未锁定'),
+                  Flexible(
+                    child: Text(
+                      (layer!['isLocked'] as bool? ?? false) ? '已锁定' : '未锁定',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ],

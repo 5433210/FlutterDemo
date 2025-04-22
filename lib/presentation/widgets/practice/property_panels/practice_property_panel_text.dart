@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
 import 'layer_info_panel.dart';
@@ -20,9 +21,6 @@ class ColumnData {
 class TextPropertyPanel extends PracticePropertyPanel {
   // 文本控制器静态变量
   static final TextEditingController _textController = TextEditingController();
-  // 字号控制器
-  static final TextEditingController _fontSizeController =
-      TextEditingController();
 
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
@@ -69,10 +67,7 @@ class TextPropertyPanel extends PracticePropertyPanel {
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
 
-    // 初始化字号控制器
-    if (_fontSizeController.text != fontSize.toString()) {
-      _fontSizeController.text = fontSize.toString();
-    }
+    // 字号现在使用 EditableNumberField 控件显示和编辑
 
     // 颜色转换
     Color getFontColor() {
@@ -122,17 +117,23 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildNumberField(
+                        child: EditableNumberField(
                           label: 'X',
                           value: x,
+                          suffix: 'px',
+                          min: 0,
+                          max: 10000,
                           onChanged: (value) => _updateProperty('x', value),
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       Expanded(
-                        child: _buildNumberField(
+                        child: EditableNumberField(
                           label: 'Y',
                           value: y,
+                          suffix: 'px',
+                          min: 0,
+                          max: 10000,
                           onChanged: (value) => _updateProperty('y', value),
                         ),
                       ),
@@ -143,17 +144,23 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildNumberField(
+                        child: EditableNumberField(
                           label: '宽度',
                           value: width,
+                          suffix: 'px',
+                          min: 10,
+                          max: 10000,
                           onChanged: (value) => _updateProperty('width', value),
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       Expanded(
-                        child: _buildNumberField(
+                        child: EditableNumberField(
                           label: '高度',
                           value: height,
+                          suffix: 'px',
+                          min: 10,
+                          max: 10000,
                           onChanged: (value) =>
                               _updateProperty('height', value),
                         ),
@@ -162,10 +169,13 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   ),
                   const SizedBox(height: 8.0),
                   // 旋转角度
-                  _buildNumberField(
+                  EditableNumberField(
                     label: '旋转',
                     value: rotation,
                     suffix: '°',
+                    min: -360,
+                    max: 360,
+                    decimalPlaces: 1,
                     onChanged: (value) => _updateProperty('rotation', value),
                   ),
                 ],
@@ -185,60 +195,39 @@ class TextPropertyPanel extends PracticePropertyPanel {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 透明度滑块
-                  const Text('透明度:'),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: StatefulBuilder(
-                          builder: (context, setState) {
-                            return Slider(
-                              value: opacity,
-                              min: 0.0,
-                              max: 1.0,
-                              divisions: 100,
-                              label: '${(opacity * 100).toStringAsFixed(0)}%',
-                              onChanged: (value) {
-                                setState(() {});
-                                _updateProperty('opacity', value);
-                              },
-                              onChangeEnd: (value) {
-                                _updateProperty('opacity', value);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text('${(opacity * 100).toStringAsFixed(0)}%'),
-                      ),
-                    ],
+                  // 透明度
+                  const Text('透明度:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  EditableNumberField(
+                    label: '透明度',
+                    value: opacity * 100, // 转换为百分比
+                    suffix: '%',
+                    min: 0,
+                    max: 100,
+                    decimalPlaces: 0,
+                    onChanged: (value) {
+                      // 转换回 0-1 范围
+                      _updateProperty('opacity', value / 100);
+                    },
                   ),
 
                   const SizedBox(height: 16.0),
 
                   // 内边距设置
-                  const Text('内边距:'),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: padding,
-                          min: 0.0,
-                          max: 30.0,
-                          divisions: 30,
-                          label: padding.toStringAsFixed(0),
-                          onChanged: (value) {
-                            _updateContentProperty('padding', value);
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text('${padding.toStringAsFixed(0)}px'),
-                      ),
-                    ],
+                  const Text('内边距:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  EditableNumberField(
+                    label: '内边距',
+                    value: padding,
+                    suffix: 'px',
+                    min: 0,
+                    max: 100,
+                    decimalPlaces: 0,
+                    onChanged: (value) {
+                      _updateContentProperty('padding', value);
+                    },
                   ),
                 ],
               ),
@@ -374,21 +363,14 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: _fontSizeController,
-                          decoration: const InputDecoration(
-                            labelText: '字号',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12.0, vertical: 8.0),
-                          ),
-                          keyboardType: TextInputType.number,
+                        child: EditableNumberField(
+                          label: '字号',
+                          value: fontSize,
+                          suffix: 'px',
+                          min: 1,
+                          max: 200,
                           onChanged: (value) {
-                            // 尝试解析字体大小
-                            final newValue = double.tryParse(value);
-                            if (newValue != null && newValue > 0) {
-                              _updateContentProperty('fontSize', newValue);
-                            }
+                            _updateContentProperty('fontSize', value);
                           },
                         ),
                       ),
@@ -573,7 +555,9 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('字体样式:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  Row(
+                  Wrap(
+                    spacing: 8.0, // 水平间距
+                    runSpacing: 8.0, // 垂直间距
                     children: [
                       // 加粗按钮
                       ElevatedButton.icon(
@@ -590,7 +574,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
                               fontWeight == 'bold' ? 'normal' : 'bold');
                         },
                       ),
-                      const SizedBox(width: 8.0),
                       // 斜体按钮
                       ElevatedButton.icon(
                         icon: const Icon(Icons.format_italic),
@@ -611,7 +594,9 @@ class TextPropertyPanel extends PracticePropertyPanel {
 
                   const SizedBox(height: 8.0),
 
-                  Row(
+                  Wrap(
+                    spacing: 8.0, // 水平间距
+                    runSpacing: 8.0, // 垂直间距
                     children: [
                       // 下划线按钮
                       ElevatedButton.icon(
@@ -625,7 +610,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
                           _updateContentProperty('underline', !underline);
                         },
                       ),
-                      const SizedBox(width: 8.0),
                       // 删除线按钮
                       ElevatedButton.icon(
                         icon: const Icon(Icons.strikethrough_s),
@@ -647,51 +631,54 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('水平对齐:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  ToggleButtons(
-                    isSelected: [
-                      textAlign == 'left',
-                      textAlign == 'center',
-                      textAlign == 'right',
-                      textAlign == 'justify',
-                    ],
-                    onPressed: (index) {
-                      String newAlign;
-                      switch (index) {
-                        case 0:
-                          newAlign = 'left';
-                          break;
-                        case 1:
-                          newAlign = 'center';
-                          break;
-                        case 2:
-                          newAlign = 'right';
-                          break;
-                        case 3:
-                          newAlign = 'justify';
-                          break;
-                        default:
-                          newAlign = 'left';
-                      }
-                      _updateContentProperty('textAlign', newAlign);
-                    },
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.align_horizontal_left),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.align_horizontal_center),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.align_horizontal_right),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.format_align_justify),
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ToggleButtons(
+                      isSelected: [
+                        textAlign == 'left',
+                        textAlign == 'center',
+                        textAlign == 'right',
+                        textAlign == 'justify',
+                      ],
+                      onPressed: (index) {
+                        String newAlign;
+                        switch (index) {
+                          case 0:
+                            newAlign = 'left';
+                            break;
+                          case 1:
+                            newAlign = 'center';
+                            break;
+                          case 2:
+                            newAlign = 'right';
+                            break;
+                          case 3:
+                            newAlign = 'justify';
+                            break;
+                          default:
+                            newAlign = 'left';
+                        }
+                        _updateContentProperty('textAlign', newAlign);
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_left),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_center),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_right),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.format_align_justify),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 16.0),
@@ -700,51 +687,54 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('垂直对齐:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  ToggleButtons(
-                    isSelected: [
-                      verticalAlign == 'top',
-                      verticalAlign == 'middle',
-                      verticalAlign == 'bottom',
-                      verticalAlign == 'justify',
-                    ],
-                    onPressed: (index) {
-                      String newAlign;
-                      switch (index) {
-                        case 0:
-                          newAlign = 'top';
-                          break;
-                        case 1:
-                          newAlign = 'middle';
-                          break;
-                        case 2:
-                          newAlign = 'bottom';
-                          break;
-                        case 3:
-                          newAlign = 'justify';
-                          break;
-                        default:
-                          newAlign = 'top';
-                      }
-                      _updateContentProperty('verticalAlign', newAlign);
-                    },
-                    children: const [
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.vertical_align_top),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.vertical_align_center),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.vertical_align_bottom),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Icon(Icons.format_align_justify),
-                      ),
-                    ],
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ToggleButtons(
+                      isSelected: [
+                        verticalAlign == 'top',
+                        verticalAlign == 'middle',
+                        verticalAlign == 'bottom',
+                        verticalAlign == 'justify',
+                      ],
+                      onPressed: (index) {
+                        String newAlign;
+                        switch (index) {
+                          case 0:
+                            newAlign = 'top';
+                            break;
+                          case 1:
+                            newAlign = 'middle';
+                            break;
+                          case 2:
+                            newAlign = 'bottom';
+                            break;
+                          case 3:
+                            newAlign = 'justify';
+                            break;
+                          default:
+                            newAlign = 'top';
+                        }
+                        _updateContentProperty('verticalAlign', newAlign);
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_top),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_center),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_bottom),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.format_align_justify),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 16.0),
@@ -788,25 +778,17 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   // 字间距设置
                   const Text('字间距:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: letterSpacing,
-                          min: -5.0,
-                          max: 20.0,
-                          divisions: 50,
-                          label: letterSpacing.toStringAsFixed(1),
-                          onChanged: (value) {
-                            _updateContentProperty('letterSpacing', value);
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text('${letterSpacing.toStringAsFixed(1)}px'),
-                      ),
-                    ],
+                  const SizedBox(height: 8.0),
+                  EditableNumberField(
+                    label: '字间距',
+                    value: letterSpacing,
+                    suffix: 'px',
+                    min: -5.0,
+                    max: 20.0,
+                    decimalPlaces: 1,
+                    onChanged: (value) {
+                      _updateContentProperty('letterSpacing', value);
+                    },
                   ),
 
                   const SizedBox(height: 16.0),
@@ -814,25 +796,17 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   // 行间距设置
                   const Text('行高倍数:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Slider(
-                          value: lineHeight,
-                          min: 0.5,
-                          max: 3.0,
-                          divisions: 25,
-                          label: lineHeight.toStringAsFixed(1),
-                          onChanged: (value) {
-                            _updateContentProperty('lineHeight', value);
-                          },
-                        ),
-                      ),
-                      SizedBox(
-                        width: 50,
-                        child: Text('${lineHeight.toStringAsFixed(1)}x'),
-                      ),
-                    ],
+                  const SizedBox(height: 8.0),
+                  EditableNumberField(
+                    label: '行高倍数',
+                    value: lineHeight,
+                    suffix: 'x',
+                    min: 0.5,
+                    max: 3.0,
+                    decimalPlaces: 1,
+                    onChanged: (value) {
+                      _updateContentProperty('lineHeight', value);
+                    },
                   ),
                 ],
               ),
@@ -1023,32 +997,7 @@ class TextPropertyPanel extends PracticePropertyPanel {
     );
   }
 
-  // 辅助方法：构建数字输入字段
-  Widget _buildNumberField({
-    required String label,
-    required double value,
-    String suffix = '',
-    required Function(double) onChanged,
-  }) {
-    final controller = TextEditingController(text: value.toString());
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        suffix: Text(suffix),
-        border: const OutlineInputBorder(),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      ),
-      keyboardType: TextInputType.number,
-      onChanged: (value) {
-        final newValue = double.tryParse(value);
-        if (newValue != null) {
-          onChanged(newValue);
-        }
-      },
-    );
-  }
+  // 注意：原来的 _buildNumberField 方法已经被 EditableNumberField 控件替代
 
   // 辅助方法：构建文本内容输入字段
   Widget _buildTextContentField(String initialText) {
