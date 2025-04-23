@@ -190,13 +190,89 @@ class TextRenderer {
 
     // 处理从右到左的文本
     if (isRightToLeft) {
-      // 对于横排右书，我们需要手动反转字符顺序
-      // 因为 textDirection 属性对汉字无效
-      // 行的顺序保持不变，从上到下显示
-      // 注意：对于两端对齐的文本，我们在 JustifiedTextRenderer 中手动反转字符顺序
-      // 对于普通的 Text 组件，我们也需要手动反转字符顺序
-      text = String.fromCharCodes(text.runes.toList().reversed);
+      final lines = splitTextToLines(text);
+      final reversedLines = <String>[];
+
+      // Create a TextPainter to measure text width
+      final textPainter = TextPainter(
+        textDirection: TextDirection.rtl,
+        maxLines: 1,
+        text: const TextSpan(text: ''), // Initialize with empty text
+      );
+
+      final maxWidth = constraints.maxWidth - padding * 2;
+
+      for (final line in lines) {
+        // First reverse the characters in the line
+        final reversedLine = String.fromCharCodes(line.runes.toList().reversed);
+
+        // Check if the line needs to be split due to width constraints
+        textPainter.text = TextSpan(text: reversedLine, style: style);
+        textPainter.layout(maxWidth: double.infinity);
+
+        if (textPainter.width <= maxWidth) {
+          // Line fits, no need to split
+          reversedLines.add(reversedLine);
+        } else {
+          // Line needs splitting but we need to maintain top-to-bottom order
+          final tempLines = <String>[];
+          final words = reversedLine.split(' ');
+          String currentLine = '';
+
+          for (final word in words) {
+            textPainter.text = TextSpan(
+              text: currentLine.isEmpty ? word : '$currentLine $word',
+              style: style,
+            );
+            textPainter.layout(maxWidth: double.infinity);
+
+            if (textPainter.width <= maxWidth) {
+              currentLine = currentLine.isEmpty ? word : '$currentLine $word';
+            } else {
+              if (currentLine.isNotEmpty) {
+                tempLines.insert(0, currentLine);
+                currentLine = word;
+              } else {
+                // Single word is too long, need to split characters
+                int endIndex = 0;
+                String partialWord = '';
+
+                for (int i = 0; i < word.length; i++) {
+                  textPainter.text = TextSpan(
+                    text: '$partialWord${word[i]}',
+                    style: style,
+                  );
+                  textPainter.layout(maxWidth: double.infinity);
+
+                  if (textPainter.width <= maxWidth) {
+                    partialWord = '$partialWord${word[i]}';
+                    endIndex = i + 1;
+                  } else {
+                    break;
+                  }
+                }
+
+                if (partialWord.isNotEmpty) {
+                  tempLines.insert(0, partialWord);
+                  currentLine = word.substring(endIndex);
+                }
+              }
+            }
+          }
+
+          if (currentLine.isNotEmpty) {
+            tempLines.insert(0, currentLine);
+          }
+
+          // Add all split lines in original order
+          reversedLines.addAll(tempLines);
+        }
+      }
+
+      text = reversedLines.join('\n');
     }
+
+    developer.log('text: $text');
 
     // 对于水平方向的 justify，我们需要确保文本能换行
     if (textAlign == 'justify') {
@@ -247,8 +323,8 @@ class TextRenderer {
             text,
             style: style,
             textAlign: textAlignEnum,
-            textDirection:
-                isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+            // textDirection:
+            //     isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
           ),
         ),
       ),
@@ -716,12 +792,12 @@ class TextRenderer {
           );
         }
 
-        if (isRightToLeft) {
-          allColumns.insert(newLineIndex, columnWidget);
-        } else {
-          allColumns.add(columnWidget);
-        }
-
+        // if (isRightToLeft) {
+        //   allColumns.insert(newLineIndex, columnWidget);
+        // } else {
+        //   allColumns.add(columnWidget);
+        // }
+        allColumns.add(columnWidget);
         currentIndex++;
         charIdx += charsInThisColumn;
       }
@@ -834,7 +910,7 @@ class TextRenderer {
         controller: scrollController,
         scrollDirection: Axis.horizontal,
         child: Row(
-          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+          // textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
           mainAxisSize: MainAxisSize.min,
           children: columns,
         ),
