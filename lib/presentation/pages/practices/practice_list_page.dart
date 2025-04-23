@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:demo/routes/app_routes.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -197,15 +197,20 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   // Helper method to get first page preview image if available
   Uint8List? _getFirstPagePreview(Map<String, dynamic> practice) {
     // If there's a thumbnail field with image data, use it
-    if (practice.containsKey('thumbnail') &&
-        practice['thumbnail'] != null &&
-        practice['thumbnail'] is String &&
-        practice['thumbnail'].isNotEmpty) {
-      try {
-        return base64Decode(practice['thumbnail']);
-      } catch (e) {
-        // Failed to decode thumbnail
-        return null;
+    if (practice.containsKey('thumbnail') && practice['thumbnail'] != null) {
+      // Handle case where thumbnail is already a Uint8List
+      if (practice['thumbnail'] is Uint8List) {
+        return practice['thumbnail'];
+      }
+      // Handle case where thumbnail is a base64 encoded string
+      else if (practice['thumbnail'] is String &&
+          practice['thumbnail'].isNotEmpty) {
+        try {
+          return base64Decode(practice['thumbnail']);
+        } catch (e) {
+          debugPrint('Failed to decode thumbnail: $e');
+          return null;
+        }
       }
     }
     return null;

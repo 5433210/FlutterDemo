@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/persistence/database_interface.dart';
@@ -47,6 +48,7 @@ class PracticeService {
       'tags': practice['tags'],
       'createTime': practice['createTime'],
       'updateTime': practice['updateTime'],
+      'thumbnail': practice['thumbnail'],
     };
   }
 
@@ -74,12 +76,14 @@ class PracticeService {
   /// - id: 字帖ID，为null时创建新字帖
   /// - title: 字帖标题
   /// - pages: 字帖页面数据
+  /// - thumbnail: 缩略图数据
   ///
   /// 返回包含id的Map
   Future<Map<String, dynamic>> savePractice({
     String? id,
     required String title,
     required List<Map<String, dynamic>> pages,
+    Uint8List? thumbnail,
   }) async {
     final now = DateTime.now().toIso8601String();
     final practiceId = id ?? _uuid.v4();
@@ -93,7 +97,10 @@ class PracticeService {
       'title': title,
       'pages': pagesJson,
       'updateTime': now,
+      'thumbnail': thumbnail != null ? base64Encode(thumbnail) : null,
     };
+
+    debugPrint('缩略图数据: ${thumbnail != null ? '已生成' : '无缩略图'}');
 
     // 如果是新建的字帖，添加创建时间
     if (id == null) {

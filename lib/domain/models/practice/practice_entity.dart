@@ -1,9 +1,34 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'practice_page.dart';
 
 part 'practice_entity.freezed.dart';
 part 'practice_entity.g.dart';
+
+/// 将 Base64 字符串转换为 Uint8List
+Uint8List? _uint8ListFromJson(String? base64String) {
+  if (base64String == null) return null;
+  try {
+    return base64Decode(base64String);
+  } catch (e) {
+    print('Error decoding base64 string: $e');
+    return null;
+  }
+}
+
+/// 将 Uint8List 转换为 Base64 字符串
+String? _uint8ListToJson(Uint8List? data) {
+  if (data == null) return null;
+  try {
+    return base64Encode(data);
+  } catch (e) {
+    print('Error encoding Uint8List to base64: $e');
+    return null;
+  }
+}
 
 /// 字帖练习实体
 @freezed
@@ -24,6 +49,10 @@ class PracticeEntity with _$PracticeEntity {
 
     /// 状态
     @Default('active') String status,
+
+    /// 缩略图数据
+    @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
+    Uint8List? thumbnail,
 
     /// 创建时间
     required DateTime createTime,

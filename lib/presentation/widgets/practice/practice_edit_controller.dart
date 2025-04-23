@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
@@ -988,7 +990,7 @@ class PracticeEditController extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      print('加载字帖失败: $e');
+      debugPrint('加载字帖失败: $e');
       return false;
     }
   }
@@ -1191,7 +1193,7 @@ class PracticeEditController extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      print('保存字帖失败: $e');
+      debugPrint('保存字帖失败: $e');
       return false;
     }
   }
@@ -1232,7 +1234,7 @@ class PracticeEditController extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      print('覆盖保存字帖失败: $e');
+      debugPrint('覆盖保存字帖失败: $e');
       return false;
     }
   }
@@ -1266,6 +1268,9 @@ class PracticeEditController extends ChangeNotifier {
     }
 
     try {
+      // 生成缩略图
+      final thumbnail = await _generateThumbnail();
+
       // 确保页面数据准备好被保存
       // 创建页面的深拷贝，确保所有内容都被保存
       final pagesToSave = _state.pages.map((page) {
@@ -1294,6 +1299,7 @@ class PracticeEditController extends ChangeNotifier {
         id: _practiceId,
         title: saveTitle,
         pages: pagesToSave,
+        thumbnail: thumbnail,
       );
 
       // 更新ID和标题
@@ -2242,6 +2248,93 @@ class PracticeEditController extends ChangeNotifier {
     );
   }
 
+  /// 生成字帖缩略图
+  Future<Uint8List?> _generateThumbnail() async {
+    if (_state.pages.isEmpty) return null;
+
+    try {
+      // 获取第一页作为缩略图
+      final firstPage = _state.pages.first;
+
+      // 直接在这里生成缩略图，不依赖外部类
+      final pageWidth = (firstPage['width'] as num?)?.toDouble() ?? 595.0;
+      final pageHeight = (firstPage['height'] as num?)?.toDouble() ?? 842.0;
+
+      // 缩略图尺寸
+      const thumbWidth = 300.0;
+      const thumbHeight = 400.0;
+
+      // 计算缩放比例
+      final scaleX = thumbWidth / pageWidth;
+      final scaleY = thumbHeight / pageHeight;
+      final scale = math.min(scaleX, scaleY);
+
+      // 创建一个简单的图像
+      final recorder = ui.PictureRecorder();
+      final canvas = Canvas(recorder);
+
+      // 绘制背景
+      final bgColor =
+          _parseColor(firstPage['backgroundColor'] as String? ?? '#FFFFFF');
+      final paint = Paint()..color = bgColor;
+      canvas.drawRect(
+          const Rect.fromLTWH(0, 0, thumbWidth, thumbHeight), paint);
+
+      // 绘制边框
+      final borderPaint = Paint()
+        ..color = Colors.grey
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+      canvas.drawRect(
+          const Rect.fromLTWH(0, 0, thumbWidth, thumbHeight), borderPaint);
+
+      // 绘制标题
+      final textStyle = ui.TextStyle(
+        color: Colors.black,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+      );
+
+      // 绘制标题背景
+      final bgPaint = Paint()..color = const Color.fromRGBO(255, 255, 255, 0.7);
+      const textBgRect =
+          Rect.fromLTWH(10, thumbHeight - 40, thumbWidth - 20, 30);
+      canvas.drawRect(textBgRect, bgPaint);
+
+      final paragraphBuilder = ui.ParagraphBuilder(ui.ParagraphStyle(
+        textAlign: TextAlign.center,
+      ))
+        ..pushStyle(textStyle)
+        ..addText(_practiceTitle ?? '');
+
+      final paragraph = paragraphBuilder.build()
+        ..layout(const ui.ParagraphConstraints(width: thumbWidth - 20));
+
+      // 将标题放在底部
+      canvas.drawParagraph(
+          paragraph, Offset(10, thumbHeight - paragraph.height - 10));
+
+      // 完成绘制
+      final picture = recorder.endRecording();
+      final img =
+          await picture.toImage(thumbWidth.toInt(), thumbHeight.toInt());
+      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData != null) {
+        final thumbnailData = byteData.buffer.asUint8List();
+        debugPrint('缩略图生成成功: 大小 ${thumbnailData.length} 字节');
+        return thumbnailData;
+      }
+
+      debugPrint('缩略图生成失败: byteData 为 null');
+      return null;
+    } catch (e, stack) {
+      debugPrint('生成缩略图失败: $e');
+      debugPrint('堆栈跟踪: $stack');
+      return null;
+    }
+  }
+
   /// 初始化默认数据
   void _initDefaultData() {
     // 创建默认图层
@@ -2274,6 +2367,18 @@ class PracticeEditController extends ChangeNotifier {
 
     // 通知监听器
     notifyListeners();
+  }
+
+  /// 解析颜色字符串
+  Color _parseColor(String colorStr) {
+    if (colorStr.startsWith('#')) {
+      String hexColor = colorStr.substring(1);
+      if (hexColor.length == 6) {
+        hexColor = 'FF$hexColor'; // 添加透明度
+      }
+      return Color(int.parse(hexColor, radix: 16));
+    }
+    return Colors.white; // 默认颜色
   }
 }
 

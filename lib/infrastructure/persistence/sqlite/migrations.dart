@@ -82,7 +82,7 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_work_images_workId ON work_images(workId);
   CREATE INDEX IF NOT EXISTS idx_work_images_index ON work_images(workId, indexInWork);
   CREATE INDEX IF NOT EXISTS idx_work_images_original_path ON work_images(workId, original_path);
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_work_images_unique_path 
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_work_images_unique_path
   ON work_images(workId, original_path)
   WHERE original_path IS NOT NULL;
   ''',
@@ -95,13 +95,13 @@ const migrations = [
 
   // 版本 2: 添加触发器
   '''
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert 
+  CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert
   AFTER INSERT ON work_images
   BEGIN
-    UPDATE works 
+    UPDATE works
     SET imageCount = (
-      SELECT COUNT(*) 
-      FROM work_images 
+      SELECT COUNT(*)
+      FROM work_images
       WHERE workId = NEW.workId
     )
     WHERE id = NEW.workId;
@@ -109,13 +109,13 @@ const migrations = [
   ''',
 
   '''
-  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete 
+  CREATE TRIGGER IF NOT EXISTS update_work_image_count_delete
   AFTER DELETE ON work_images
   BEGIN
-    UPDATE works 
+    UPDATE works
     SET imageCount = (
-      SELECT COUNT(*) 
-      FROM work_images 
+      SELECT COUNT(*)
+      FROM work_images
       WHERE workId = OLD.workId
     )
     WHERE id = OLD.workId;
@@ -123,10 +123,10 @@ const migrations = [
   ''',
 
   '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert 
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_insert
   AFTER INSERT ON work_images
   BEGIN
-    UPDATE works 
+    UPDATE works
     SET firstImageId = (
       SELECT id
       FROM work_images
@@ -140,10 +140,10 @@ const migrations = [
   ''',
 
   '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update 
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_update
   AFTER UPDATE OF indexInWork ON work_images
   BEGIN
-    UPDATE works 
+    UPDATE works
     SET firstImageId = (
       SELECT id
       FROM work_images
@@ -157,10 +157,10 @@ const migrations = [
   ''',
 
   '''
-  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete 
+  CREATE TRIGGER IF NOT EXISTS update_work_first_image_on_delete
   AFTER DELETE ON work_images
   BEGIN
-    UPDATE works 
+    UPDATE works
     SET firstImageId = (
       SELECT id FROM work_images WHERE workId = OLD.workId ORDER BY indexInWork ASC LIMIT 1
     ),
@@ -197,10 +197,10 @@ const migrations = [
   /// 版本 7: 添加CharacterView视图
   '''
   CREATE VIEW IF NOT EXISTS CharacterView AS
-  SELECT 
+  SELECT
     c.id,
     c.character,
-    c.isFavorite,    
+    c.isFavorite,
     c.createTime AS collectionTime,
     c.updateTime,
     c.pageId,
@@ -213,9 +213,14 @@ const migrations = [
     w.title,
     w.author,
     w.creationDate As creationTime
-  FROM 
+  FROM
     characters c
-  LEFT JOIN 
+  LEFT JOIN
     works w ON c.workId = w.id;
+  ''',
+
+  /// 版本 8: 为 practices 表添加缩略图字段
+  '''
+  ALTER TABLE practices ADD COLUMN thumbnail BLOB;
   ''',
 ];

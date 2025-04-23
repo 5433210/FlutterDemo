@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
+import 'justified_text_renderer.dart';
 import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
+import 'vertically_justified_text.dart';
 
 // 列数据类，用于存储列的Widget和字符
 class ColumnData {
@@ -822,16 +824,19 @@ class TextPropertyPanel extends PracticePropertyPanel {
       String text, TextStyle style, String textAlign) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 对于 justify 对齐，我们需要使用单个 Text 组件包含所有文本
+        // 对于 justify 对齐，我们使用自定义的两端对齐渲染器
         if (textAlign == 'justify') {
           return SingleChildScrollView(
-            child: SizedBox(
-              width: constraints.maxWidth,
-              child: Text(
-                text,
-                style: style,
-                textAlign: _getTextAlign(textAlign),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _splitTextToLines(text).map((line) {
+                return JustifiedTextRenderer(
+                  text: line,
+                  style: style,
+                  lineHeight: style.height ?? 1.2,
+                  maxWidth: constraints.maxWidth,
+                );
+              }).toList(),
             ),
           );
         }
@@ -862,23 +867,20 @@ class TextPropertyPanel extends PracticePropertyPanel {
       String text, TextStyle style, String textAlign) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 对于 justify 对齐，我们需要使用单个 Text 组件包含所有文本
+        // 对于 justify 对齐，我们使用自定义的两端对齐渲染器
         if (textAlign == 'justify') {
-          // 反转整个文本，但保持换行符
-          final lines = _splitTextToLines(text);
-          final reversedLines = lines
-              .map((line) => String.fromCharCodes(line.runes.toList().reversed))
-              .toList();
-          final reversedText = reversedLines.join('\n');
-
           return SingleChildScrollView(
-            child: SizedBox(
-              width: constraints.maxWidth,
-              child: Text(
-                reversedText,
-                style: style,
-                textAlign: _getTextAlign(textAlign),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: _splitTextToLines(text).map((line) {
+                return JustifiedTextRenderer(
+                  text: line,
+                  style: style,
+                  lineHeight: style.height ?? 1.2,
+                  maxWidth: constraints.maxWidth,
+                  isRightToLeft: true, // 横排右书模式
+                );
+              }).toList(),
             ),
           );
         }
@@ -965,11 +967,48 @@ class TextPropertyPanel extends PracticePropertyPanel {
               alignment = Alignment.bottomCenter;
               break;
             case 'justify':
-              // 对于垂直对齐为 justify 时，我们使用特殊处理
-              return SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: child,
+              // 对于垂直对齐为 justify 时，我们需要将行均匀分布
+              final lines = _splitTextToLines(text);
+              if (lines.length <= 1) {
+                // 如果只有一行或没有文本，则使用居中对齐
+                return Container(
+                  width: constraints.maxWidth,
+                  height: constraints.maxHeight,
+                  alignment: Alignment.center,
+                  child: child,
+                );
+              }
+
+              // 对于多行文本，我们使用垂直两端对齐组件
+              final horizontalAlign = _getTextAlign(textAlign);
+
+              // 创建文本样式
+              Color parsedFontColor;
+              try {
+                parsedFontColor =
+                    Color(int.parse(fontColor.replaceFirst('#', '0xFF')));
+              } catch (e) {
+                parsedFontColor = Colors.black;
+              }
+
+              final textStyle = TextStyle(
+                fontSize: fontSize,
+                fontFamily: fontFamily,
+                fontWeight:
+                    fontWeight == 'bold' ? FontWeight.bold : FontWeight.normal,
+                fontStyle:
+                    fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
+                color: parsedFontColor,
+                letterSpacing: letterSpacing,
+                height: lineHeight,
+              );
+
+              return VerticallyJustifiedText(
+                lines: lines,
+                style: textStyle,
+                horizontalAlign: horizontalAlign,
+                maxHeight: constraints.maxHeight,
+                maxWidth: constraints.maxWidth,
               );
             default:
               alignment = Alignment.topCenter;

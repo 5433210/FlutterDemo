@@ -18,6 +18,7 @@ _$PracticeEntityImpl _$$PracticeEntityImplFromJson(Map<String, dynamic> json) =>
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
       status: json['status'] as String? ?? 'active',
+      thumbnail: _uint8ListFromJson(json['thumbnail'] as String?),
       createTime: DateTime.parse(json['createTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
     );
@@ -30,6 +31,7 @@ Map<String, dynamic> _$$PracticeEntityImplToJson(
       'pages': instance.pages,
       'tags': instance.tags,
       'status': instance.status,
+      'thumbnail': _uint8ListToJson(instance.thumbnail),
       'createTime': instance.createTime.toIso8601String(),
       'updateTime': instance.updateTime.toIso8601String(),
     };
