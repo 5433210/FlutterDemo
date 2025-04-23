@@ -9,6 +9,7 @@ import 'element_common_property_panel.dart';
 import 'justified_text_renderer.dart';
 import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
+import 'vertical_column_justified_text.dart';
 import 'vertically_justified_text.dart';
 
 // 列数据类，用于存储列的Widget和字符
@@ -1111,42 +1112,92 @@ class TextPropertyPanel extends PracticePropertyPanel {
         final columnChars = chars.sublist(charIdx, charIdx + charsInThisColumn);
 
         // 创建当前列的Widget
-        final columnWidget = Container(
-          width: charHeight * 1.5, // 设置固定宽度，基于字体大小
-          height: constraints.maxHeight,
-          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-          alignment: _getVerticalAlignment(verticalAlign),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: _getVerticalMainAlignment(textAlign),
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: _getVerticalMainAlignment(textAlign),
-                    children: columnChars.map((char) {
-                      // 确保 letterSpacing 不为负值
-                      final effectivePadding = effectiveLetterSpacing > 0
-                          ? effectiveLetterSpacing
-                          : 0.0;
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          bottom: effectivePadding,
-                        ),
-                        child: Text(
-                          char,
-                          style: style,
-                          textAlign: TextAlign.center,
-                        ),
-                      );
-                    }).toList(),
+        Widget columnWidget;
+
+        // 如果是水平两端对齐（在竖排文本中对应垂直方向）
+        if (textAlign == 'justify' && columnChars.length > 1) {
+          // 使用竖排文本两端对齐组件
+          columnWidget = VerticalColumnJustifiedText(
+            characters: columnChars,
+            style: style,
+            maxHeight: constraints.maxHeight,
+            columnWidth: charHeight * 3.0, // 增加容器宽度，使对齐效果更明显
+            verticalAlign: verticalAlign, // 传递垂直对齐方式
+            isRightToLeft: isRightToLeft,
+          );
+        } else {
+          // 其他对齐方式使用普通容器
+          // 打印调试信息
+          developer.log('创建列容器: 垂直对齐=$verticalAlign, 水平对齐=$textAlign');
+
+          // 对于垂直对齐，我们需要修改容器结构
+          // 不使用 SingleChildScrollView 包裹 Column，因为这会导致 mainAxisAlignment 失效
+          columnWidget = Container(
+            width: charHeight, // 增加容器宽度，使对齐效果更明显
+            height: constraints.maxHeight,
+            margin: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: _getVerticalMainAlignment(verticalAlign),
+              children: columnChars.map((char) {
+                // 确保 letterSpacing 不为负值
+                final effectivePadding =
+                    effectiveLetterSpacing > 0 ? effectiveLetterSpacing : 0.0;
+
+                // 处理水平对齐
+                Widget charWidget;
+
+                // 对于两端对齐，我们需要特殊处理
+                if (textAlign == 'justify') {
+                  // 对于单个字符，两端对齐没有意义，使用居中对齐
+                  // 使用更宽的容器，使对齐效果更明显
+                  charWidget = SizedBox(
+                    width: charHeight, // 增加容器宽度
+                    child: Center(
+                      child: Text(
+                        char,
+                        style: style,
+                      ),
+                    ),
+                  );
+                } else {
+                  // 对于其他对齐方式，我们使用 Container 和 Alignment 来实现
+                  Alignment alignment;
+                  switch (textAlign) {
+                    case 'left':
+                      alignment = Alignment.centerLeft;
+                      break;
+                    case 'center':
+                      alignment = Alignment.center;
+                      break;
+                    case 'right':
+                      alignment = Alignment.centerRight;
+                      break;
+                    default:
+                      alignment = Alignment.center;
+                  }
+
+                  // 使用更宽的容器，使对齐效果更明显
+                  charWidget = Container(
+                    width: charHeight, // 增加容器宽度
+                    alignment: alignment,
+                    child: Text(
+                      char,
+                      style: style,
+                    ),
+                  );
+                }
+
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: effectivePadding,
                   ),
-                ),
-              ),
-            ],
-          ),
-        );
+                  child: charWidget,
+                );
+              }).toList(),
+            ),
+          );
+        }
 
         // 按照书写方向决定列的添加位置
         if (isRightToLeft) {
@@ -1209,23 +1260,35 @@ class TextPropertyPanel extends PracticePropertyPanel {
       }
     });
 
-    return SizedBox(
-      width: constraints.maxWidth,
-      child: Align(
-        alignment: isRightToLeft ? Alignment.centerRight : Alignment.centerLeft,
-        child: SingleChildScrollView(
-          controller: scrollController,
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            textDirection:
-                isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: _getRowCrossAlignment(verticalAlign),
-            children: columns,
-          ),
+    // 打印调试信息
+    developer.log(
+        '垂直对齐方式: $verticalAlign, 水平对齐方式: $textAlign, 列数: ${columns.length}');
+
+    // 对于水平两端对齐，我们需要特殊处理
+    if (textAlign == 'justify' && columns.length > 1) {
+      // 对于水平两端对齐，我们需要确保列在整个预览区域内平均分布
+      // 并且首尾两排紧贴预览区边缘
+      return SizedBox(
+        width: constraints.maxWidth,
+        child: Row(
+          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+          mainAxisAlignment:
+              MainAxisAlignment.spaceBetween, // 使用 spaceBetween 实现两端对齐
+          children: columns,
         ),
-      ),
-    );
+      );
+    } else {
+      // 对于其他对齐方式，我们使用原来的实现
+      return SingleChildScrollView(
+        controller: scrollController,
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+          mainAxisSize: MainAxisSize.min,
+          children: columns,
+        ),
+      );
+    }
   }
 
   // 构建垂直文本预览
@@ -1296,18 +1359,105 @@ class TextPropertyPanel extends PracticePropertyPanel {
           );
         }
 
-        // 注意：这里不需要使用 ScrollController 和对齐方式
-        // 因为内容已经在 _buildVerticalTextLayout 中处理了
+        // 在整个预览区域内应用对齐效果
+        // 根据水平和垂直对齐方式决定容器的对齐方式
+        Alignment containerAlignment;
 
-        return Container(
-          alignment: Alignment.centerRight,
-          width: constraints.maxWidth,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(4.0),
-          ),
-          child: ClipRect(clipBehavior: Clip.hardEdge, child: contentWidget),
-        );
+        // 先处理水平对齐
+        Alignment horizontalAlignment;
+        switch (textAlign) {
+          case 'left':
+            horizontalAlignment = Alignment.centerLeft;
+            break;
+          case 'center':
+            horizontalAlignment = Alignment.center;
+            break;
+          case 'right':
+            horizontalAlignment = Alignment.centerRight;
+            break;
+          case 'justify':
+            // 对于水平两端对齐，我们需要特殊处理
+            // 在竖排文本中，水平两端对齐意味着列之间应该平均分布
+            // 而列内的文字应该按照垂直对齐方式来对齐
+            horizontalAlignment = Alignment.center; // 使用居中对齐，因为我们将在外部容器中处理两端对齐
+            break;
+          default:
+            horizontalAlignment = Alignment.centerLeft;
+        }
+
+        // 再处理垂直对齐
+        Alignment verticalAlignment;
+        switch (verticalAlign) {
+          case 'top':
+            verticalAlignment = Alignment.topCenter;
+            break;
+          case 'middle':
+            verticalAlignment = Alignment.center;
+            break;
+          case 'bottom':
+            verticalAlignment = Alignment.bottomCenter;
+            break;
+          case 'justify':
+            // 对于垂直两端对齐，我们使用居中对齐
+            verticalAlignment = Alignment.center;
+            break;
+          default:
+            verticalAlignment = Alignment.topCenter;
+        }
+
+        // 组合水平和垂直对齐
+        if (horizontalAlignment == Alignment.centerLeft) {
+          if (verticalAlignment == Alignment.topCenter) {
+            containerAlignment = Alignment.topLeft;
+          } else if (verticalAlignment == Alignment.bottomCenter) {
+            containerAlignment = Alignment.bottomLeft;
+          } else {
+            containerAlignment = Alignment.centerLeft;
+          }
+        } else if (horizontalAlignment == Alignment.centerRight) {
+          if (verticalAlignment == Alignment.topCenter) {
+            containerAlignment = Alignment.topRight;
+          } else if (verticalAlignment == Alignment.bottomCenter) {
+            containerAlignment = Alignment.bottomRight;
+          } else {
+            containerAlignment = Alignment.centerRight;
+          }
+        } else {
+          // center
+          containerAlignment = verticalAlignment;
+        }
+
+        // 打印调试信息
+        developer.log(
+            '预览区域对齐方式: 水平=$textAlign, 垂直=$verticalAlign, 容器对齐=$containerAlignment');
+
+        // 对于水平两端对齐，我们需要特殊处理
+        if (textAlign == 'justify') {
+          // 对于水平两端对齐，我们需要将列在整个预览区域内平均分布
+          // 而列内的文字应该按照垂直对齐方式来对齐
+          return Container(
+            width: constraints.maxWidth,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+            child: ClipRect(
+              clipBehavior: Clip.hardEdge,
+              child: contentWidget,
+            ),
+          );
+        } else {
+          // 对于其他对齐方式，我们使用原来的实现
+          return Container(
+            alignment: containerAlignment, // 在整个预览区域内应用水平对齐
+            width: constraints.maxWidth,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+            child: ClipRect(clipBehavior: Clip.hardEdge, child: contentWidget),
+          );
+        }
       },
     );
   }
@@ -1346,33 +1496,20 @@ class TextPropertyPanel extends PracticePropertyPanel {
 
   // 辅助方法：获取列对齐方式
   CrossAxisAlignment _getColumnAlignment(String textAlign) {
-    switch (textAlign) {
-      case 'left':
-        return CrossAxisAlignment.start;
-      case 'center':
-        return CrossAxisAlignment.center;
-      case 'right':
-        return CrossAxisAlignment.end;
-      case 'justify':
-        return CrossAxisAlignment.stretch;
-      default:
-        return CrossAxisAlignment.start;
-    }
-  }
+    // 打印调试信息
+    developer.log('获取列对齐方式: $textAlign');
 
-  // 获取行的交叉轴对齐方式 (用于垂直文本中的行对齐)
-  CrossAxisAlignment _getRowCrossAlignment(String verticalAlign) {
-    switch (verticalAlign) {
-      case 'top': // 在垂直模式中对应左对齐
+    switch (textAlign) {
+      case 'left': // 左对齐
         return CrossAxisAlignment.start;
-      case 'middle':
+      case 'center': // 水平居中
         return CrossAxisAlignment.center;
-      case 'bottom': // 在垂直模式中对应右对齐
+      case 'right': // 右对齐
         return CrossAxisAlignment.end;
-      case 'justify':
+      case 'justify': // 两端对齐
         return CrossAxisAlignment.stretch;
       default:
-        return CrossAxisAlignment.center;
+        return CrossAxisAlignment.start;
     }
   }
 
@@ -1392,32 +1529,19 @@ class TextPropertyPanel extends PracticePropertyPanel {
     }
   }
 
-  // 获取垂直对齐方式（用于Container的alignment属性）
-  Alignment _getVerticalAlignment(String textAlign) {
-    switch (textAlign) {
-      case 'left': // 在垂直模式中对应顶部对齐
-        return Alignment.topCenter;
-      case 'center':
-        return Alignment.center;
-      case 'right': // 在垂直模式中对应底部对齐
-        return Alignment.bottomCenter;
-      case 'justify':
-        return Alignment.center; // justify使用center，实际布局由内部控制
-      default:
-        return Alignment.topCenter;
-    }
-  }
-
   // 获取垂直方向主轴对齐方式
-  MainAxisAlignment _getVerticalMainAlignment(String textAlign) {
-    switch (textAlign) {
-      case 'left': // 在垂直模式中对应顶部对齐
+  MainAxisAlignment _getVerticalMainAlignment(String verticalAlign) {
+    // 打印调试信息
+    developer.log('获取垂直方向主轴对齐方式: $verticalAlign');
+
+    switch (verticalAlign) {
+      case 'top': // 顶部对齐
         return MainAxisAlignment.start;
-      case 'center':
+      case 'middle': // 垂直居中
         return MainAxisAlignment.center;
-      case 'right': // 在垂直模式中对应底部对齐
+      case 'bottom': // 底部对齐
         return MainAxisAlignment.end;
-      case 'justify':
+      case 'justify': // 两端对齐
         return MainAxisAlignment.spaceBetween;
       default:
         return MainAxisAlignment.start;
@@ -1551,10 +1675,17 @@ class TextPropertyPanel extends PracticePropertyPanel {
 
   // 更新内容属性
   void _updateContentProperty(String key, dynamic value) {
+    // 打印调试信息
+    developer.log('更新内容属性: $key = $value');
+    developer.log('当前书写模式: ${element['content']['writingMode']}');
+
     final content = Map<String, dynamic>.from(
         element['content'] as Map<String, dynamic>? ?? {});
     content[key] = value;
     _updateProperty('content', content);
+
+    // 打印更新后的内容
+    developer.log('更新后的内容: $content');
   }
 
   void _updateProperty(String key, dynamic value) {
