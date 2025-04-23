@@ -9,7 +9,7 @@ class VerticalColumnJustifiedText extends StatelessWidget {
   final TextStyle style;
   final double maxHeight;
   final double columnWidth;
-  final bool isRightToLeft; // 是否从右到左显示（竖排左书）
+  final bool isRightToLeft; // 是否从右到左显示（竖排左书，列从左到右排列）
   final String verticalAlign; // 垂直对齐方式
 
   const VerticalColumnJustifiedText({
@@ -19,7 +19,7 @@ class VerticalColumnJustifiedText extends StatelessWidget {
     required this.maxHeight,
     required this.columnWidth,
     required this.verticalAlign, // 垂直对齐方式
-    this.isRightToLeft = false, // 默认为从左到右（竖排右书）
+    this.isRightToLeft = false, // 默认为从左到右（竖排右书，列从右到左排列）
   }) : super(key: key);
 
   @override

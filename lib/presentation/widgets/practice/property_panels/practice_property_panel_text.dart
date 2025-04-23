@@ -1,16 +1,13 @@
 import 'dart:developer' as developer;
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
+import '../text_renderer.dart';
 import 'element_common_property_panel.dart';
-import 'justified_text_renderer.dart';
 import 'layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
-import 'vertical_column_justified_text.dart';
-import 'vertically_justified_text.dart';
 
 // 列数据类，用于存储列的Widget和字符
 class ColumnData {
@@ -820,94 +817,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
     );
   }
 
-  // 辅助方法：横排左书（从左到右）
-  Widget _buildHorizontalLeftToRight(
-      String text, TextStyle style, String textAlign) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 对于 justify 对齐，我们使用自定义的两端对齐渲染器
-        if (textAlign == 'justify') {
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _splitTextToLines(text).map((line) {
-                return JustifiedTextRenderer(
-                  text: line,
-                  style: style,
-                  lineHeight: style.height ?? 1.2,
-                  maxWidth: constraints.maxWidth,
-                );
-              }).toList(),
-            ),
-          );
-        }
-
-        // 对于其他对齐方式，我们使用每行一个 Text 组件
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: _getColumnAlignment(textAlign),
-            mainAxisSize: MainAxisSize.min,
-            children: _splitTextToLines(text).map((line) {
-              return SizedBox(
-                width: constraints.maxWidth, // 使用父容器的实际宽度
-                child: Text(
-                  line,
-                  style: style,
-                  textAlign: _getTextAlign(textAlign),
-                ),
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
-  // 辅助方法：横排右书（从右到左）
-  Widget _buildHorizontalRightToLeft(
-      String text, TextStyle style, String textAlign) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // 对于 justify 对齐，我们使用自定义的两端对齐渲染器
-        if (textAlign == 'justify') {
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: _splitTextToLines(text).map((line) {
-                return JustifiedTextRenderer(
-                  text: line,
-                  style: style,
-                  lineHeight: style.height ?? 1.2,
-                  maxWidth: constraints.maxWidth,
-                  isRightToLeft: true, // 横排右书模式
-                );
-              }).toList(),
-            ),
-          );
-        }
-
-        // 对于其他对齐方式，我们使用每行一个 Text 组件
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: _getColumnAlignment(textAlign),
-            mainAxisSize: MainAxisSize.min,
-            children: _splitTextToLines(text).map((line) {
-              // 反转每一行文本，实现从右到左阅读
-              return SizedBox(
-                width: constraints.maxWidth, // 使用父容器的实际宽度
-                child: Text(
-                  String.fromCharCodes(line.runes.toList().reversed),
-                  style: style,
-                  textAlign: _getTextAlign(textAlign),
-                ),
-              );
-            }).toList(),
-          ),
-        );
-      },
-    );
-  }
-
   // 构建水平文本预览
   Widget _buildHorizontalTextPreview({
     required String text,
@@ -924,119 +833,37 @@ class TextPropertyPanel extends PracticePropertyPanel {
     required String verticalAlign,
     required String writingMode,
   }) {
-    // 创建文本装饰列表
-    final List<TextDecoration> decorations = [];
-    if (underline) decorations.add(TextDecoration.underline);
-    if (lineThrough) decorations.add(TextDecoration.lineThrough);
-
-    // 解析颜色
-    Color parsedFontColor;
-    try {
-      parsedFontColor = Color(int.parse(fontColor.replaceFirst('#', '0xFF')));
-    } catch (e) {
-      parsedFontColor = Colors.black;
-    }
-
-    // 创建基本文本样式
-    final TextStyle textStyle = TextStyle(
+    // 创建文本样式
+    final TextStyle textStyle = TextRenderer.createTextStyle(
       fontSize: fontSize,
       fontFamily: fontFamily,
-      fontWeight: fontWeight == 'bold' ? FontWeight.bold : FontWeight.normal,
-      fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
-      color: parsedFontColor,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+      fontColor: fontColor,
       letterSpacing: letterSpacing,
-      height: lineHeight,
-      decoration: decorations.isEmpty
-          ? TextDecoration.none
-          : TextDecoration.combine(decorations),
+      lineHeight: lineHeight,
+      underline: underline,
+      lineThrough: lineThrough,
     );
 
+    // 使用共享的文本渲染器
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 创建包含垂直对齐的容器
-        Widget buildAlignedContainer(Widget child) {
-          // 处理垂直对齐
-          Alignment alignment;
-          switch (verticalAlign) {
-            case 'top':
-              alignment = Alignment.topCenter;
-              break;
-            case 'middle':
-              alignment = Alignment.center;
-              break;
-            case 'bottom':
-              alignment = Alignment.bottomCenter;
-              break;
-            case 'justify':
-              // 对于垂直对齐为 justify 时，我们需要将行均匀分布
-              final lines = _splitTextToLines(text);
-              if (lines.length <= 1) {
-                // 如果只有一行或没有文本，则使用居中对齐
-                return Container(
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  alignment: Alignment.center,
-                  child: child,
-                );
-              }
+        // 打印调试信息
+        developer.log(
+            '水平文本预览参数: textAlign=$textAlign, verticalAlign=$verticalAlign, writingMode=$writingMode');
+        developer.log(
+            '水平文本预览约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
 
-              // 对于多行文本，我们使用垂直两端对齐组件
-              final horizontalAlign = _getTextAlign(textAlign);
-
-              // 创建文本样式
-              Color parsedFontColor;
-              try {
-                parsedFontColor =
-                    Color(int.parse(fontColor.replaceFirst('#', '0xFF')));
-              } catch (e) {
-                parsedFontColor = Colors.black;
-              }
-
-              final textStyle = TextStyle(
-                fontSize: fontSize,
-                fontFamily: fontFamily,
-                fontWeight:
-                    fontWeight == 'bold' ? FontWeight.bold : FontWeight.normal,
-                fontStyle:
-                    fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
-                color: parsedFontColor,
-                letterSpacing: letterSpacing,
-                height: lineHeight,
-              );
-
-              // 判断是否为横排右书
-              final isRightToLeft = writingMode == 'horizontal-r';
-
-              return VerticallyJustifiedText(
-                lines: lines,
-                style: textStyle,
-                horizontalAlign: horizontalAlign,
-                maxHeight: constraints.maxHeight,
-                maxWidth: constraints.maxWidth,
-                isRightToLeft: isRightToLeft,
-              );
-            default:
-              alignment = Alignment.topCenter;
-          }
-
-          return Container(
-            width: constraints.maxWidth,
-            height: constraints.maxHeight,
-            alignment: alignment,
-            child: child,
-          );
-        }
-
-        // 根据书写模式选择不同的渲染方式
-        Widget textWidget;
-        if (writingMode == 'horizontal-r') {
-          textWidget = _buildHorizontalRightToLeft(text, textStyle, textAlign);
-        } else {
-          textWidget = _buildHorizontalLeftToRight(text, textStyle, textAlign);
-        }
-
-        // 应用垂直对齐
-        return buildAlignedContainer(textWidget);
+        return TextRenderer.renderHorizontalText(
+          text: text,
+          style: textStyle,
+          textAlign: textAlign,
+          verticalAlign: verticalAlign,
+          writingMode: writingMode,
+          constraints: constraints,
+          backgroundColor: Colors.transparent,
+        );
       },
     );
   }
@@ -1065,232 +892,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
     );
   }
 
-  // 统一的垂直文本布局方法，处理从右到左和从左到右两种模式
-  Widget _buildVerticalTextLayout({
-    required String text,
-    required TextStyle style,
-    required String verticalAlign,
-    required String textAlign,
-    required BoxConstraints constraints,
-    required bool isRightToLeft,
-  }) {
-    if (text.isEmpty) {
-      text = '预览文本内容\n第二行文本\n第三行文本';
-    }
-
-    // 处理行和字符
-    List<String> lines = text.split('\n');
-
-    // 如果是从右到左模式，反转行顺序
-    if (isRightToLeft) {
-      lines = lines.reversed.toList();
-    }
-
-    // 计算每列可容纳的最大字符数
-    final charHeight = style.fontSize ?? 16.0;
-    final effectiveLineHeight = style.height ?? 1.2;
-    final effectiveLetterSpacing = style.letterSpacing ?? 0.0;
-    final maxCharsPerColumn = _calculateMaxCharsPerColumn(
-      constraints.maxHeight,
-      charHeight,
-      effectiveLineHeight,
-      effectiveLetterSpacing,
-    );
-
-    // 生成所有列的数据
-    final allColumns = <Widget>[];
-    // 为每一行创建列，并记录每行的起始位置
-    for (final line in lines) {
-      final chars = line.characters.toList();
-      int charIdx = 0;
-      final lineStartIndex = allColumns.length; // 记录这一行的起始位置
-
-      while (charIdx < chars.length) {
-        // 计算当前列要显示多少字符
-        final charsInThisColumn =
-            math.min(maxCharsPerColumn, chars.length - charIdx);
-        final columnChars = chars.sublist(charIdx, charIdx + charsInThisColumn);
-
-        // 创建当前列的Widget
-        Widget columnWidget;
-
-        // 如果是水平两端对齐（在竖排文本中对应垂直方向）
-        if (textAlign == 'justify' && columnChars.length > 1) {
-          // 使用竖排文本两端对齐组件
-          columnWidget = VerticalColumnJustifiedText(
-            characters: columnChars,
-            style: style,
-            maxHeight: constraints.maxHeight,
-            columnWidth: charHeight * 3.0, // 增加容器宽度，使对齐效果更明显
-            verticalAlign: verticalAlign, // 传递垂直对齐方式
-            isRightToLeft: isRightToLeft,
-          );
-        } else {
-          // 其他对齐方式使用普通容器
-          // 打印调试信息
-          developer.log('创建列容器: 垂直对齐=$verticalAlign, 水平对齐=$textAlign');
-
-          // 对于垂直对齐，我们需要修改容器结构
-          // 不使用 SingleChildScrollView 包裹 Column，因为这会导致 mainAxisAlignment 失效
-          columnWidget = Container(
-            width: charHeight, // 增加容器宽度，使对齐效果更明显
-            height: constraints.maxHeight,
-            margin: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: _getVerticalMainAlignment(verticalAlign),
-              children: columnChars.map((char) {
-                // 确保 letterSpacing 不为负值
-                final effectivePadding =
-                    effectiveLetterSpacing > 0 ? effectiveLetterSpacing : 0.0;
-
-                // 处理水平对齐
-                Widget charWidget;
-
-                // 对于两端对齐，我们需要特殊处理
-                if (textAlign == 'justify') {
-                  // 对于单个字符，两端对齐没有意义，使用居中对齐
-                  // 使用更宽的容器，使对齐效果更明显
-                  charWidget = SizedBox(
-                    width: charHeight, // 增加容器宽度
-                    child: Center(
-                      child: Text(
-                        char,
-                        style: style,
-                      ),
-                    ),
-                  );
-                } else {
-                  // 对于其他对齐方式，我们使用 Container 和 Alignment 来实现
-                  Alignment alignment;
-                  switch (textAlign) {
-                    case 'left':
-                      alignment = Alignment.centerLeft;
-                      break;
-                    case 'center':
-                      alignment = Alignment.center;
-                      break;
-                    case 'right':
-                      alignment = Alignment.centerRight;
-                      break;
-                    default:
-                      alignment = Alignment.center;
-                  }
-
-                  // 使用更宽的容器，使对齐效果更明显
-                  charWidget = Container(
-                    width: charHeight, // 增加容器宽度
-                    alignment: alignment,
-                    child: Text(
-                      char,
-                      style: style,
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: effectivePadding,
-                  ),
-                  child: charWidget,
-                );
-              }).toList(),
-            ),
-          );
-        }
-
-        // 按照书写方向决定列的添加位置
-        if (isRightToLeft) {
-          // 竖排左书：将新列插入到这一行的起始位置，确保超长的部分出现在左侧
-          allColumns.insert(lineStartIndex, columnWidget);
-        } else {
-          // 竖排右书：新列添加到末尾，保持从左到右的顺序
-          allColumns.add(columnWidget);
-        }
-        charIdx += charsInThisColumn;
-      }
-
-      // 在每行末尾添加分隔符，除非是最后一行
-      // if (line != lines.last) {
-      //   allColumns.add(
-      //     Container(
-      //       width: 1,
-      //       height: constraints.maxHeight,
-      //       margin: const EdgeInsets.symmetric(horizontal: 8.0),
-      //       color: Colors.grey.withAlpha(77),
-      //     ),
-      //   );
-      // }
-    }
-
-    // 确保有内容显示，即使没有文本
-    if (allColumns.isEmpty) {
-      return SizedBox(
-        width: constraints.maxWidth,
-        height: constraints.maxHeight,
-        child: const Center(
-          child: Text(
-            '暂无内容',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    // 根据书写方向确定列的排列顺序
-    // 根据书写方向确定列的排列顺序：
-    // 竖排左书(isRightToLeft=true) - 从右向左显示
-    // 竖排右书(isRightToLeft=false) - 从左向右显示
-    final List<Widget> columns =
-        !isRightToLeft ? allColumns.reversed.toList() : allColumns;
-
-    // 创建ScrollController，用于控制滚动位置
-    final ScrollController scrollController = ScrollController();
-
-    // 布局完成后设置滚动位置
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (scrollController.hasClients) {
-        if (isRightToLeft) {
-          // 竖排左书，滚动到最右侧
-          scrollController.jumpTo(0);
-        } else {
-          // 竖排右书，滚动到最左侧
-          scrollController.jumpTo(scrollController.position.maxScrollExtent);
-        }
-      }
-    });
-
-    // 打印调试信息
-    developer.log(
-        '垂直对齐方式: $verticalAlign, 水平对齐方式: $textAlign, 列数: ${columns.length}');
-
-    // 对于水平两端对齐，我们需要特殊处理
-    if (textAlign == 'justify' && columns.length > 1) {
-      // 对于水平两端对齐，我们需要确保列在整个预览区域内平均分布
-      // 并且首尾两排紧贴预览区边缘
-      return SizedBox(
-        width: constraints.maxWidth,
-        child: Row(
-          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween, // 使用 spaceBetween 实现两端对齐
-          children: columns,
-        ),
-      );
-    } else {
-      // 对于其他对齐方式，我们使用原来的实现
-      return SingleChildScrollView(
-        controller: scrollController,
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-          mainAxisSize: MainAxisSize.min,
-          children: columns,
-        ),
-      );
-    }
-  }
-
   // 构建垂直文本预览
   Widget _buildVerticalTextPreview({
     required String text,
@@ -1307,157 +908,37 @@ class TextPropertyPanel extends PracticePropertyPanel {
     required String verticalAlign,
     required String writingMode,
   }) {
-    // 创建文本装饰列表
-    final List<TextDecoration> decorations = [];
-    if (underline) decorations.add(TextDecoration.underline);
-    if (lineThrough) decorations.add(TextDecoration.lineThrough);
-
-    // 解析颜色
-    Color parsedFontColor;
-    try {
-      parsedFontColor = Color(int.parse(fontColor.replaceFirst('#', '0xFF')));
-    } catch (e) {
-      parsedFontColor = Colors.black;
-    }
-
-    // 创建基本文本样式
-    final TextStyle textStyle = TextStyle(
+    // 创建文本样式
+    final TextStyle textStyle = TextRenderer.createTextStyle(
       fontSize: fontSize,
       fontFamily: fontFamily,
-      fontWeight: fontWeight == 'bold' ? FontWeight.bold : FontWeight.normal,
-      fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
-      color: parsedFontColor,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+      fontColor: fontColor,
       letterSpacing: letterSpacing,
-      height: lineHeight,
-      decoration: decorations.isEmpty
-          ? TextDecoration.none
-          : TextDecoration.combine(decorations),
+      lineHeight: lineHeight,
+      underline: underline,
+      lineThrough: lineThrough,
     );
 
+    // 使用共享的文本渲染器
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 根据书写模式选择不同的渲染方式
-        Widget contentWidget;
-        if (writingMode == 'vertical-r') {
-          contentWidget = _buildVerticalTextLayout(
-            text: text,
-            style: textStyle,
-            verticalAlign: verticalAlign,
-            textAlign: textAlign,
-            constraints: constraints,
-            isRightToLeft: false,
-          );
-        } else {
-          // vertical-l
-          contentWidget = _buildVerticalTextLayout(
-            text: text,
-            style: textStyle,
-            verticalAlign: verticalAlign,
-            textAlign: textAlign,
-            constraints: constraints,
-            isRightToLeft: true,
-          );
-        }
-
-        // 在整个预览区域内应用对齐效果
-        // 根据水平和垂直对齐方式决定容器的对齐方式
-        Alignment containerAlignment;
-
-        // 先处理水平对齐
-        Alignment horizontalAlignment;
-        switch (textAlign) {
-          case 'left':
-            horizontalAlignment = Alignment.centerLeft;
-            break;
-          case 'center':
-            horizontalAlignment = Alignment.center;
-            break;
-          case 'right':
-            horizontalAlignment = Alignment.centerRight;
-            break;
-          case 'justify':
-            // 对于水平两端对齐，我们需要特殊处理
-            // 在竖排文本中，水平两端对齐意味着列之间应该平均分布
-            // 而列内的文字应该按照垂直对齐方式来对齐
-            horizontalAlignment = Alignment.center; // 使用居中对齐，因为我们将在外部容器中处理两端对齐
-            break;
-          default:
-            horizontalAlignment = Alignment.centerLeft;
-        }
-
-        // 再处理垂直对齐
-        Alignment verticalAlignment;
-        switch (verticalAlign) {
-          case 'top':
-            verticalAlignment = Alignment.topCenter;
-            break;
-          case 'middle':
-            verticalAlignment = Alignment.center;
-            break;
-          case 'bottom':
-            verticalAlignment = Alignment.bottomCenter;
-            break;
-          case 'justify':
-            // 对于垂直两端对齐，我们使用居中对齐
-            verticalAlignment = Alignment.center;
-            break;
-          default:
-            verticalAlignment = Alignment.topCenter;
-        }
-
-        // 组合水平和垂直对齐
-        if (horizontalAlignment == Alignment.centerLeft) {
-          if (verticalAlignment == Alignment.topCenter) {
-            containerAlignment = Alignment.topLeft;
-          } else if (verticalAlignment == Alignment.bottomCenter) {
-            containerAlignment = Alignment.bottomLeft;
-          } else {
-            containerAlignment = Alignment.centerLeft;
-          }
-        } else if (horizontalAlignment == Alignment.centerRight) {
-          if (verticalAlignment == Alignment.topCenter) {
-            containerAlignment = Alignment.topRight;
-          } else if (verticalAlignment == Alignment.bottomCenter) {
-            containerAlignment = Alignment.bottomRight;
-          } else {
-            containerAlignment = Alignment.centerRight;
-          }
-        } else {
-          // center
-          containerAlignment = verticalAlignment;
-        }
-
         // 打印调试信息
         developer.log(
-            '预览区域对齐方式: 水平=$textAlign, 垂直=$verticalAlign, 容器对齐=$containerAlignment');
+            '垂直文本预览参数: textAlign=$textAlign, verticalAlign=$verticalAlign, writingMode=$writingMode');
+        developer.log(
+            '垂直文本预览约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
 
-        // 对于水平两端对齐，我们需要特殊处理
-        if (textAlign == 'justify') {
-          // 对于水平两端对齐，我们需要将列在整个预览区域内平均分布
-          // 而列内的文字应该按照垂直对齐方式来对齐
-          return Container(
-            width: constraints.maxWidth,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: ClipRect(
-              clipBehavior: Clip.hardEdge,
-              child: contentWidget,
-            ),
-          );
-        } else {
-          // 对于其他对齐方式，我们使用原来的实现
-          return Container(
-            alignment: containerAlignment, // 在整个预览区域内应用水平对齐
-            width: constraints.maxWidth,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: ClipRect(clipBehavior: Clip.hardEdge, child: contentWidget),
-          );
-        }
+        return TextRenderer.renderVerticalText(
+          text: text,
+          style: textStyle,
+          textAlign: textAlign,
+          verticalAlign: verticalAlign,
+          writingMode: writingMode,
+          constraints: constraints,
+          backgroundColor: Colors.transparent,
+        );
       },
     );
   }
@@ -1482,70 +963,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
         _updateContentProperty('writingMode', mode);
       },
     );
-  }
-
-  // 计算每列最多可容纳的字符数
-  int _calculateMaxCharsPerColumn(double maxHeight, double charHeight,
-      double lineHeight, double letterSpacing) {
-    // 计算单个字符的有效高度（包括行高和字间距）
-    final effectiveCharHeight = charHeight * lineHeight + letterSpacing;
-
-    // 计算可容纳的最大字符数（向下取整）
-    return (maxHeight / effectiveCharHeight).floor();
-  }
-
-  // 辅助方法：获取列对齐方式
-  CrossAxisAlignment _getColumnAlignment(String textAlign) {
-    // 打印调试信息
-    developer.log('获取列对齐方式: $textAlign');
-
-    switch (textAlign) {
-      case 'left': // 左对齐
-        return CrossAxisAlignment.start;
-      case 'center': // 水平居中
-        return CrossAxisAlignment.center;
-      case 'right': // 右对齐
-        return CrossAxisAlignment.end;
-      case 'justify': // 两端对齐
-        return CrossAxisAlignment.stretch;
-      default:
-        return CrossAxisAlignment.start;
-    }
-  }
-
-  // 辅助方法：获取文本对齐方式
-  TextAlign _getTextAlign(String textAlign) {
-    switch (textAlign) {
-      case 'left':
-        return TextAlign.left;
-      case 'center':
-        return TextAlign.center;
-      case 'right':
-        return TextAlign.right;
-      case 'justify':
-        return TextAlign.justify;
-      default:
-        return TextAlign.left;
-    }
-  }
-
-  // 获取垂直方向主轴对齐方式
-  MainAxisAlignment _getVerticalMainAlignment(String verticalAlign) {
-    // 打印调试信息
-    developer.log('获取垂直方向主轴对齐方式: $verticalAlign');
-
-    switch (verticalAlign) {
-      case 'top': // 顶部对齐
-        return MainAxisAlignment.start;
-      case 'middle': // 垂直居中
-        return MainAxisAlignment.center;
-      case 'bottom': // 底部对齐
-        return MainAxisAlignment.end;
-      case 'justify': // 两端对齐
-        return MainAxisAlignment.spaceBetween;
-      default:
-        return MainAxisAlignment.start;
-    }
   }
 
   // 颜色选择器对话框
@@ -1666,11 +1083,6 @@ class TextPropertyPanel extends PracticePropertyPanel {
         );
       },
     );
-  }
-
-  // 辅助方法：将文本分割为行
-  List<String> _splitTextToLines(String text) {
-    return text.split('\n');
   }
 
   // 更新内容属性

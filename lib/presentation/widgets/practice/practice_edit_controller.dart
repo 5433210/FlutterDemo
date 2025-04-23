@@ -312,8 +312,10 @@ class PracticeEditController extends ChangeNotifier {
       final newPage = {
         'id': 'page_${DateTime.now().millisecondsSinceEpoch}',
         'name': '页面${_state.pages.length + 1}',
-        'width': 595.0, // A4纸宽度
-        'height': 842.0, // A4纸高度
+        'width': 210.0, // A4纸宽度（毫米）
+        'height': 297.0, // A4纸高度（毫米）
+        'orientation': 'portrait', // 默认纵向
+        'dpi': 300, // 默认DPI
         'backgroundColor': '#FFFFFF',
         'backgroundOpacity': 1.0,
         'elements': <Map<String, dynamic>>[],
@@ -2352,9 +2354,10 @@ class PracticeEditController extends ChangeNotifier {
       'id': _uuid.v4(),
       'name': '页面1',
       'index': 0,
-      'width': 595.0, // A4纸宽度
-      'height': 842.0, // A4纸高度
+      'width': 210.0, // A4纸宽度（毫米）
+      'height': 297.0, // A4纸高度（毫米）
       'orientation': 'portrait', // 默认纵向
+      'dpi': 300, // 默认DPI
       'backgroundColor': '#FFFFFF',
       'backgroundOpacity': 1.0,
       'elements': <Map<String, dynamic>>[],

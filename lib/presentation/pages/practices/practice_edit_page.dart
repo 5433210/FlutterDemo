@@ -974,50 +974,46 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               child: Stack(
                 children: [
                   // 页面背景
-                  Container(
-                    width: (currentPage['width'] as num?)?.toDouble() ?? 595.0,
-                    height:
-                        (currentPage['height'] as num?)?.toDouble() ?? 842.0,
-                    color: PageOperations.getPageBackgroundColor(currentPage),
-                    child: Stack(
-                      children: [
-                        // 网格
-                        if (_controller.state.gridVisible)
-                          CustomPaint(
-                            size: Size(
-                              (currentPage['width'] as num?)?.toDouble() ??
-                                  595.0,
-                              (currentPage['height'] as num?)?.toDouble() ??
-                                  842.0,
+                  Builder(builder: (context) {
+                    // 计算像素尺寸
+                    final pixelSize = _calculatePixelSize(currentPage);
+
+                    return Container(
+                      width: pixelSize.width,
+                      height: pixelSize.height,
+                      color: PageOperations.getPageBackgroundColor(currentPage),
+                      child: Stack(
+                        children: [
+                          // 网格
+                          if (_controller.state.gridVisible)
+                            CustomPaint(
+                              size: pixelSize,
+                              painter: GridPainter(
+                                  gridSize: _controller.state.gridSize),
                             ),
-                            painter: GridPainter(
-                                gridSize: _controller.state.gridSize),
-                          ),
 
-                        // 元素
-                        // 根据图层顺序排序元素
-                        ..._sortElementsByLayerOrder(elements)
-                            .map((element) => _buildElement(element)),
+                          // 元素
+                          // 根据图层顺序排序元素
+                          ..._sortElementsByLayerOrder(elements)
+                              .map((element) => _buildElement(element)),
 
-                        // 拖拽指示
-                        if (candidateData.isNotEmpty)
-                          Container(
-                            width: (currentPage['width'] as num?)?.toDouble() ??
-                                595.0,
-                            height:
-                                (currentPage['height'] as num?)?.toDouble() ??
-                                    842.0,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.blue,
-                                width: 1,
-                                style: BorderStyle.solid,
+                          // 拖拽指示
+                          if (candidateData.isNotEmpty)
+                            Container(
+                              width: pixelSize.width,
+                              height: pixelSize.height,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Colors.blue,
+                                  width: 1,
+                                  style: BorderStyle.solid,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -1285,11 +1281,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       animation: _controller, // 关键修改：监听控制器的变化
       builder: (context, _) {
         // 创建一个唯一的key，确保在选择变化时面板能够重新构建
-        final selectedKey = _controller.state.selectedElementIds.isEmpty
-            ? _controller.state.selectedLayerId != null
-                ? 'layer_panel_${_controller.state.selectedLayerId}'
-                : 'page_panel'
-            : 'element_panel_${_controller.state.selectedElementIds.join('_')}';
+        // 注意：这个key已经不再使用，因为我们现在使用AnimatedBuilder来监听控制器的变化
 
         Widget panel;
 
@@ -1471,6 +1463,24 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         ),
       ),
     );
+  }
+
+  /// 计算毫米到像素的转换
+  Size _calculatePixelSize(Map<String, dynamic> page) {
+    // 获取页面尺寸（毫米）
+    final width = (page['width'] as num?)?.toDouble() ?? 210.0;
+    final height = (page['height'] as num?)?.toDouble() ?? 297.0;
+    final dpi = (page['dpi'] as num?)?.toInt() ?? 300;
+
+    // 毫米转英寸，1英寸 = 25.4毫米
+    final widthInches = width / 25.4;
+    final heightInches = height / 25.4;
+
+    // 计算像素尺寸
+    final widthPixels = (widthInches * dpi).round().toDouble();
+    final heightPixels = (heightInches * dpi).round().toDouble();
+
+    return Size(widthPixels, heightPixels);
   }
 
   /// 复制选中的元素

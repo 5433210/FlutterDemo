@@ -26,6 +26,7 @@ mixin _$PracticePage {
   double get width => throw _privateConstructorUsedError;
   double get height => throw _privateConstructorUsedError;
   String get orientation => throw _privateConstructorUsedError; // 添加方向属性，默认为纵向
+  int get dpi => throw _privateConstructorUsedError; // 添加DPI属性，默认为300dpi
   String get backgroundType => throw _privateConstructorUsedError;
   String? get backgroundImage => throw _privateConstructorUsedError;
   String get backgroundColor => throw _privateConstructorUsedError;
@@ -58,6 +59,7 @@ abstract class $PracticePageCopyWith<$Res> {
       double width,
       double height,
       String orientation,
+      int dpi,
       String backgroundType,
       String? backgroundImage,
       String backgroundColor,
@@ -88,6 +90,7 @@ class _$PracticePageCopyWithImpl<$Res, $Val extends PracticePage>
     Object? width = null,
     Object? height = null,
     Object? orientation = null,
+    Object? dpi = null,
     Object? backgroundType = null,
     Object? backgroundImage = freezed,
     Object? backgroundColor = null,
@@ -121,6 +124,10 @@ class _$PracticePageCopyWithImpl<$Res, $Val extends PracticePage>
           ? _value.orientation
           : orientation // ignore: cast_nullable_to_non_nullable
               as String,
+      dpi: null == dpi
+          ? _value.dpi
+          : dpi // ignore: cast_nullable_to_non_nullable
+              as int,
       backgroundType: null == backgroundType
           ? _value.backgroundType
           : backgroundType // ignore: cast_nullable_to_non_nullable
@@ -168,6 +175,7 @@ abstract class _$$PracticePageImplCopyWith<$Res>
       double width,
       double height,
       String orientation,
+      int dpi,
       String backgroundType,
       String? backgroundImage,
       String backgroundColor,
@@ -196,6 +204,7 @@ class __$$PracticePageImplCopyWithImpl<$Res>
     Object? width = null,
     Object? height = null,
     Object? orientation = null,
+    Object? dpi = null,
     Object? backgroundType = null,
     Object? backgroundImage = freezed,
     Object? backgroundColor = null,
@@ -229,6 +238,10 @@ class __$$PracticePageImplCopyWithImpl<$Res>
           ? _value.orientation
           : orientation // ignore: cast_nullable_to_non_nullable
               as String,
+      dpi: null == dpi
+          ? _value.dpi
+          : dpi // ignore: cast_nullable_to_non_nullable
+              as int,
       backgroundType: null == backgroundType
           ? _value.backgroundType
           : backgroundType // ignore: cast_nullable_to_non_nullable
@@ -271,6 +284,7 @@ class _$PracticePageImpl extends _PracticePage {
       this.width = 210.0,
       this.height = 297.0,
       this.orientation = 'portrait',
+      this.dpi = 300,
       this.backgroundType = 'color',
       this.backgroundImage,
       this.backgroundColor = '#FFFFFF',
@@ -304,6 +318,10 @@ class _$PracticePageImpl extends _PracticePage {
 // 添加方向属性，默认为纵向
   @override
   @JsonKey()
+  final int dpi;
+// 添加DPI属性，默认为300dpi
+  @override
+  @JsonKey()
   final String backgroundType;
   @override
   final String? backgroundImage;
@@ -330,7 +348,7 @@ class _$PracticePageImpl extends _PracticePage {
 
   @override
   String toString() {
-    return 'PracticePage(id: $id, name: $name, index: $index, width: $width, height: $height, orientation: $orientation, backgroundType: $backgroundType, backgroundImage: $backgroundImage, backgroundColor: $backgroundColor, backgroundTexture: $backgroundTexture, backgroundOpacity: $backgroundOpacity, margin: $margin, layers: $layers)';
+    return 'PracticePage(id: $id, name: $name, index: $index, width: $width, height: $height, orientation: $orientation, dpi: $dpi, backgroundType: $backgroundType, backgroundImage: $backgroundImage, backgroundColor: $backgroundColor, backgroundTexture: $backgroundTexture, backgroundOpacity: $backgroundOpacity, margin: $margin, layers: $layers)';
   }
 
   @override
@@ -345,6 +363,7 @@ class _$PracticePageImpl extends _PracticePage {
             (identical(other.height, height) || other.height == height) &&
             (identical(other.orientation, orientation) ||
                 other.orientation == orientation) &&
+            (identical(other.dpi, dpi) || other.dpi == dpi) &&
             (identical(other.backgroundType, backgroundType) ||
                 other.backgroundType == backgroundType) &&
             (identical(other.backgroundImage, backgroundImage) ||
@@ -369,6 +388,7 @@ class _$PracticePageImpl extends _PracticePage {
       width,
       height,
       orientation,
+      dpi,
       backgroundType,
       backgroundImage,
       backgroundColor,
@@ -401,6 +421,7 @@ abstract class _PracticePage extends PracticePage {
       final double width,
       final double height,
       final String orientation,
+      final int dpi,
       final String backgroundType,
       final String? backgroundImage,
       final String backgroundColor,
@@ -425,6 +446,8 @@ abstract class _PracticePage extends PracticePage {
   double get height;
   @override
   String get orientation; // 添加方向属性，默认为纵向
+  @override
+  int get dpi; // 添加DPI属性，默认为300dpi
   @override
   String get backgroundType;
   @override

@@ -36,9 +36,25 @@ class JustifiedTextRenderer extends StatelessWidget {
       wrappedLines.addAll(brokenLines);
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: wrappedLines.map((line) => _buildJustifiedLine(line)).toList(),
+    // 使用 FittedBox 自动缩放内容，确保它适合容器
+    return SizedBox(
+      width: maxWidth,
+      child: FittedBox(
+        // 使用 BoxFit.scaleDown 只在需要时缩小，不放大
+        fit: BoxFit.scaleDown,
+        // 对齐方式
+        alignment: isRightToLeft ? Alignment.centerRight : Alignment.centerLeft,
+        // 允许内容溢出容器
+        clipBehavior: Clip.none,
+        child: SizedBox(
+          width: maxWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children:
+                wrappedLines.map((line) => _buildJustifiedLine(line)).toList(),
+          ),
+        ),
+      ),
     );
   }
 
@@ -87,14 +103,19 @@ class JustifiedTextRenderer extends StatelessWidget {
     final result = <Widget>[];
 
     for (int i = 0; i < characters.length; i++) {
-      // 添加字符
+      // 添加字符，使用 Flexible 包裹每个字符
+      // 这样 Flutter 可以自动调整字符大小，防止溢出
       result.add(
-        SizedBox(
-          width: charWidths[i],
-          child: Text(
-            characters[i],
-            style: style,
-            textAlign: TextAlign.center,
+        Flexible(
+          // 使用 FlexFit.loose 允许字符收缩
+          fit: FlexFit.loose,
+          child: SizedBox(
+            width: charWidths[i],
+            child: Text(
+              characters[i],
+              style: style,
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       );
@@ -102,7 +123,11 @@ class JustifiedTextRenderer extends StatelessWidget {
       // 在最后一个字符后不添加间距
       if (i < characters.length - 1) {
         result.add(
-          SizedBox(width: spaceBetweenChars),
+          Flexible(
+            // 使用 FlexFit.loose 允许间距收缩
+            fit: FlexFit.loose,
+            child: SizedBox(width: spaceBetweenChars),
+          ),
         );
       }
     }
@@ -114,7 +139,8 @@ class JustifiedTextRenderer extends StatelessWidget {
   Widget _buildJustifiedLine(String line) {
     // 如果行为空或只有一个字符，则不需要两端对齐
     if (line.isEmpty || line.length == 1) {
-      // 对于横排右书，需要反转字符顺序
+      // 对于横排右书，我们需要反转字符顺序
+      // 因为 textDirection 属性对汉字无效
       final displayText = isRightToLeft
           ? String.fromCharCodes(line.runes.toList().reversed)
           : line;
@@ -123,14 +149,18 @@ class JustifiedTextRenderer extends StatelessWidget {
         displayText,
         style: style,
         textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
+        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
       );
     }
 
     // 获取字符列表
     var characters = line.characters.toList();
 
-    // 对于横排右书，不需要反转字符顺序
-    // 因为我们会使用 TextDirection.rtl 来控制显示方向
+    // 对于横排右书，我们需要反转字符顺序
+    // 因为 textDirection 属性对汉字无效
+    if (isRightToLeft) {
+      characters = characters.reversed.toList();
+    }
 
     // 计算每个字符的宽度
     final charWidths = _calculateCharWidths(characters, style);
@@ -141,7 +171,8 @@ class JustifiedTextRenderer extends StatelessWidget {
 
     // 如果没有额外空间或额外空间为负，则使用普通文本显示
     if (extraSpace <= 0) {
-      // 对于横排右书，需要反转字符顺序
+      // 对于横排右书，我们需要反转字符顺序
+      // 因为 textDirection 属性对汉字无效
       final displayText = isRightToLeft
           ? String.fromCharCodes(line.runes.toList().reversed)
           : line;
@@ -150,21 +181,43 @@ class JustifiedTextRenderer extends StatelessWidget {
         displayText,
         style: style,
         textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
+        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
       );
     }
 
-    // 计算字符间距 (n-1个间隔)
-    final spaceBetweenChars = extraSpace / (characters.length - 1);
+    // 使用 LayoutBuilder 动态获取可用空间
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 计算字符间距 (n-1个间隔)
+        // 使用实际可用宽度计算，而不是传入的 maxWidth
+        final availableWidth = constraints.maxWidth;
+        final extraSpace = availableWidth - totalCharsWidth;
 
-    // 构建两端对齐的行
-    return SizedBox(
-      width: maxWidth,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-        children: _buildJustifiedCharacters(
-            characters, spaceBetweenChars, charWidths),
-      ),
+        // 确保 extraSpace 不为负值
+        final effectiveExtraSpace = extraSpace > 0 ? extraSpace : 0;
+
+        // 计算字符间距，使用安全系数防止溢出
+        const safetyFactor = 0.95; // 使用 95% 的可用空间
+        final spaceBetweenChars =
+            (effectiveExtraSpace * safetyFactor) / (characters.length - 1);
+
+        // 构建两端对齐的行
+        return Container(
+          width: availableWidth,
+          // 添加剪裁以防止溢出
+          clipBehavior: Clip.hardEdge,
+          decoration: const BoxDecoration(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // 不使用 textDirection 属性，因为它对汉字无效
+            // 我们已经手动反转了字符顺序
+            // 使用 MainAxisSize.max 确保 Row 占据所有可用空间
+            mainAxisSize: MainAxisSize.max,
+            children: _buildJustifiedCharacters(
+                characters, spaceBetweenChars, charWidths),
+          ),
+        );
+      },
     );
   }
 

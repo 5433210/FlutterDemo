@@ -6,25 +6,25 @@ import 'package:flutter/services.dart';
 class EditableNumberField extends StatelessWidget {
   /// 字段标签
   final String label;
-  
+
   /// 当前值
   final double value;
-  
+
   /// 值变化回调
   final Function(double) onChanged;
-  
+
   /// 单位后缀（可选）
   final String? suffix;
-  
+
   /// 最小值（可选）
   final double? min;
-  
+
   /// 最大值（可选）
   final double? max;
-  
+
   /// 小数位数（默认为0，表示整数）
   final int decimalPlaces;
-  
+
   /// 构造函数
   const EditableNumberField({
     Key? key,
@@ -43,10 +43,10 @@ class EditableNumberField extends StatelessWidget {
     final displayValue = decimalPlaces > 0
         ? value.toStringAsFixed(decimalPlaces)
         : value.toStringAsFixed(0);
-    
+
     // 构建显示文本
     final displayText = suffix != null ? '$displayValue $suffix' : displayValue;
-    
+
     return Row(
       children: [
         // 只读文本框
@@ -66,7 +66,7 @@ class EditableNumberField extends StatelessWidget {
             ),
           ),
         ),
-        
+
         // 编辑按钮
         IconButton(
           icon: const Icon(Icons.edit),
@@ -77,6 +77,35 @@ class EditableNumberField extends StatelessWidget {
     );
   }
 
+  /// 应用新值
+  void _applyValue(BuildContext context, String text, Function dispose) {
+    // 尝试解析值
+    final newValue = double.tryParse(text);
+
+    // 验证值
+    if (newValue == null) {
+      _showErrorSnackBar(context, '请输入有效的数字');
+      return;
+    }
+
+    // 检查最小值
+    if (min != null && newValue < min!) {
+      _showErrorSnackBar(context, '$label不能小于${min!}');
+      return;
+    }
+
+    // 检查最大值
+    if (max != null && newValue > max!) {
+      _showErrorSnackBar(context, '$label不能大于${max!}');
+      return;
+    }
+
+    // 应用新值
+    dispose();
+    Navigator.of(context).pop();
+    onChanged(newValue);
+  }
+
   /// 显示编辑对话框
   void _showEditDialog(BuildContext context) {
     // 创建文本控制器并设置初始值
@@ -85,96 +114,80 @@ class EditableNumberField extends StatelessWidget {
           ? value.toStringAsFixed(decimalPlaces)
           : value.toStringAsFixed(0),
     );
-    
+
     // 创建焦点节点，用于自动聚焦
     final focusNode = FocusNode();
-    
+
+    // 标记对话框是否已关闭
+    bool isDialogClosed = false;
+
     // 在对话框关闭时释放资源
     void dispose() {
-      controller.dispose();
-      focusNode.dispose();
+      if (!isDialogClosed) {
+        isDialogClosed = true;
+        controller.dispose();
+        focusNode.dispose();
+      }
     }
-    
+
     // 显示对话框
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('编辑$label'),
-          content: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            keyboardType: TextInputType.numberWithOptions(
-              decimal: decimalPlaces > 0,
-              signed: min != null && min! < 0,
+      barrierDismissible: false, // 阻止点击外部关闭对话框
+      builder: (BuildContext dialogContext) {
+        // 在对话框关闭时自动释放资源
+        return PopScope(
+          canPop: true,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) {
+              dispose();
+            }
+          },
+          child: AlertDialog(
+            title: Text('编辑$label'),
+            content: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              keyboardType: TextInputType.numberWithOptions(
+                decimal: decimalPlaces > 0,
+                signed: min != null && min! < 0,
+              ),
+              inputFormatters: [
+                // 根据小数位数决定使用哪种格式化器
+                if (decimalPlaces > 0)
+                  FilteringTextInputFormatter.allow(RegExp(r'^\-?\d*\.?\d*')),
+                if (decimalPlaces == 0) FilteringTextInputFormatter.digitsOnly,
+              ],
+              decoration: InputDecoration(
+                labelText: label,
+                hintText: '请输入$label',
+                suffix: suffix != null ? Text(suffix!) : null,
+              ),
+              autofocus: true,
+              onSubmitted: (_) =>
+                  _applyValue(dialogContext, controller.text, dispose),
             ),
-            inputFormatters: [
-              // 根据小数位数决定使用哪种格式化器
-              if (decimalPlaces > 0)
-                FilteringTextInputFormatter.allow(RegExp(r'^\-?\d*\.?\d*')),
-              if (decimalPlaces == 0)
-                FilteringTextInputFormatter.digitsOnly,
+            actions: <Widget>[
+              TextButton(
+                child: const Text('取消'),
+                onPressed: () {
+                  dispose();
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                child: const Text('确定'),
+                onPressed: () =>
+                    _applyValue(dialogContext, controller.text, dispose),
+              ),
             ],
-            decoration: InputDecoration(
-              labelText: label,
-              hintText: '请输入$label',
-              suffix: suffix != null ? Text(suffix!) : null,
-            ),
-            autofocus: true,
-            onSubmitted: (_) => _applyValue(context, controller.text, dispose),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('取消'),
-              onPressed: () {
-                dispose();
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('确定'),
-              onPressed: () => _applyValue(context, controller.text, dispose),
-            ),
-          ],
         );
       },
-    );
-    
-    // 对话框显示后自动聚焦
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (focusNode.canRequestFocus) {
-        focusNode.requestFocus();
-      }
+    ).then((_) {
+      // 确保对话框关闭后资源被释放
+      dispose();
     });
-  }
-
-  /// 应用新值
-  void _applyValue(BuildContext context, String text, Function dispose) {
-    // 尝试解析值
-    final newValue = double.tryParse(text);
-    
-    // 验证值
-    if (newValue == null) {
-      _showErrorSnackBar(context, '请输入有效的数字');
-      return;
-    }
-    
-    // 检查最小值
-    if (min != null && newValue < min!) {
-      _showErrorSnackBar(context, '$label不能小于${min!}');
-      return;
-    }
-    
-    // 检查最大值
-    if (max != null && newValue > max!) {
-      _showErrorSnackBar(context, '$label不能大于${max!}');
-      return;
-    }
-    
-    // 应用新值
-    dispose();
-    Navigator.of(context).pop();
-    onChanged(newValue);
   }
 
   /// 显示错误提示
