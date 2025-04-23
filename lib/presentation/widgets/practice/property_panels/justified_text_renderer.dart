@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 /// 自定义两端对齐文本渲染器
@@ -20,232 +23,257 @@ class JustifiedTextRenderer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 分割文本为行
+    if (text.isEmpty) {
+      return SizedBox(width: maxWidth);
+    }
+
+    // 分割文本为段落
     final paragraphs = text.split('\n');
-    final List<String> wrappedLines = [];
 
-    // 对每个段落进行自动断行处理
-    for (final paragraph in paragraphs) {
-      if (paragraph.isEmpty) {
-        wrappedLines.add('');
-        continue;
-      }
-
-      // 将长段落根据宽度自动断行
-      final brokenLines = _breakTextIntoLines(paragraph, style, maxWidth);
-      wrappedLines.addAll(brokenLines);
-    }
-
-    // 使用 FittedBox 自动缩放内容，确保它适合容器
-    return SizedBox(
-      width: maxWidth,
-      child: FittedBox(
-        // 使用 BoxFit.scaleDown 只在需要时缩小，不放大
-        fit: BoxFit.scaleDown,
-        // 对齐方式
-        alignment: isRightToLeft ? Alignment.centerRight : Alignment.centerLeft,
-        // 允许内容溢出容器
-        clipBehavior: Clip.none,
-        child: SizedBox(
-          width: maxWidth,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children:
-                wrappedLines.map((line) => _buildJustifiedLine(line)).toList(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 将长文本根据宽度自动断行
-  List<String> _breakTextIntoLines(
-      String text, TextStyle style, double maxWidth) {
-    if (text.isEmpty) return [''];
-
-    final List<String> lines = [];
-    final characters = text.characters.toList();
-
-    // 当前行的字符列表
-    List<String> currentLine = [];
-    // 当前行的宽度
-    double currentLineWidth = 0.0;
-
-    for (final char in characters) {
-      // 计算当前字符的宽度
-      final charWidth = _calculateTextWidth(char, style);
-
-      // 如果添加当前字符后超出最大宽度，则开始新行
-      if (currentLineWidth + charWidth > maxWidth && currentLine.isNotEmpty) {
-        // 将当前行添加到行列表中
-        lines.add(currentLine.join());
-        // 重置当前行
-        currentLine = [];
-        currentLineWidth = 0.0;
-      }
-
-      // 添加字符到当前行
-      currentLine.add(char);
-      currentLineWidth += charWidth;
-    }
-
-    // 添加最后一行
-    if (currentLine.isNotEmpty) {
-      lines.add(currentLine.join());
-    }
-
-    return lines;
-  }
-
-  /// 构建两端对齐的字符列表
-  List<Widget> _buildJustifiedCharacters(List<String> characters,
-      double spaceBetweenChars, List<double> charWidths) {
-    final result = <Widget>[];
-
-    for (int i = 0; i < characters.length; i++) {
-      // 添加字符，使用 Flexible 包裹每个字符
-      // 这样 Flutter 可以自动调整字符大小，防止溢出
-      result.add(
-        Flexible(
-          // 使用 FlexFit.loose 允许字符收缩
-          fit: FlexFit.loose,
-          child: SizedBox(
-            width: charWidths[i],
-            child: Text(
-              characters[i],
-              style: style,
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      );
-
-      // 在最后一个字符后不添加间距
-      if (i < characters.length - 1) {
-        result.add(
-          Flexible(
-            // 使用 FlexFit.loose 允许间距收缩
-            fit: FlexFit.loose,
-            child: SizedBox(width: spaceBetweenChars),
-          ),
-        );
-      }
-    }
-
-    return result;
-  }
-
-  /// 构建单行两端对齐文本
-  Widget _buildJustifiedLine(String line) {
-    // 如果行为空或只有一个字符，则不需要两端对齐
-    if (line.isEmpty || line.length == 1) {
-      // 对于横排右书，我们需要反转字符顺序
-      // 因为 textDirection 属性对汉字无效
-      final displayText = isRightToLeft
-          ? String.fromCharCodes(line.runes.toList().reversed)
-          : line;
-
-      return Text(
-        displayText,
-        style: style,
-        textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
-        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-      );
-    }
-
-    // 获取字符列表
-    var characters = line.characters.toList();
-
-    // 对于横排右书，我们需要反转字符顺序
-    // 因为 textDirection 属性对汉字无效
-    if (isRightToLeft) {
-      characters = characters.reversed.toList();
-    }
-
-    // 计算每个字符的宽度
-    final charWidths = _calculateCharWidths(characters, style);
-    final totalCharsWidth = charWidths.reduce((a, b) => a + b);
-
-    // 计算需要分配的额外空间
-    final extraSpace = maxWidth - totalCharsWidth;
-
-    // 如果没有额外空间或额外空间为负，则使用普通文本显示
-    if (extraSpace <= 0) {
-      // 对于横排右书，我们需要反转字符顺序
-      // 因为 textDirection 属性对汉字无效
-      final displayText = isRightToLeft
-          ? String.fromCharCodes(line.runes.toList().reversed)
-          : line;
-
-      return Text(
-        displayText,
-        style: style,
-        textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
-        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-      );
-    }
-
-    // 使用 LayoutBuilder 动态获取可用空间
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 计算字符间距 (n-1个间隔)
-        // 使用实际可用宽度计算，而不是传入的 maxWidth
-        final availableWidth = constraints.maxWidth;
-        final extraSpace = availableWidth - totalCharsWidth;
+        // 使用可用宽度，但不超过maxWidth
+        final availableWidth = constraints.maxWidth > 0
+            ? math.min(constraints.maxWidth, maxWidth)
+            : maxWidth;
 
-        // 确保 extraSpace 不为负值
-        final effectiveExtraSpace = extraSpace > 0 ? extraSpace : 0;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: paragraphs.map((paragraph) {
+            // 空段落显示为空行
+            if (paragraph.isEmpty) {
+              return SizedBox(
+                height: style.fontSize! * lineHeight,
+              );
+            }
 
-        // 计算字符间距，使用安全系数防止溢出
-        const safetyFactor = 0.95; // 使用 95% 的可用空间
-        final spaceBetweenChars =
-            (effectiveExtraSpace * safetyFactor) / (characters.length - 1);
-
-        // 构建两端对齐的行
-        return Container(
-          width: availableWidth,
-          // 添加剪裁以防止溢出
-          clipBehavior: Clip.hardEdge,
-          decoration: const BoxDecoration(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            // 不使用 textDirection 属性，因为它对汉字无效
-            // 我们已经手动反转了字符顺序
-            // 使用 MainAxisSize.max 确保 Row 占据所有可用空间
-            mainAxisSize: MainAxisSize.max,
-            children: _buildJustifiedCharacters(
-                characters, spaceBetweenChars, charWidths),
-          ),
+            // 处理段落
+            return _JustifiedParagraph(
+              text: paragraph,
+              style: style,
+              lineHeight: lineHeight,
+              maxWidth: availableWidth,
+              isRightToLeft: isRightToLeft,
+            );
+          }).toList(),
         );
       },
     );
   }
+}
 
-  /// 计算每个字符的宽度
-  List<double> _calculateCharWidths(List<String> characters, TextStyle style) {
-    final List<double> widths = [];
+/// 处理单行的两端对齐
+class _JustifiedLine extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final double lineHeight;
+  final double maxWidth;
+  final bool isRightToLeft;
 
-    for (final char in characters) {
-      // 计算单个字符的宽度
-      final width = _calculateTextWidth(char, style);
-      widths.add(width);
+  const _JustifiedLine({
+    required this.text,
+    required this.style,
+    required this.lineHeight,
+    required this.maxWidth,
+    required this.isRightToLeft,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 如果行是空的或只有一个字符，不需要两端对齐
+    if (text.isEmpty || text.length == 1 || text.trim().isEmpty) {
+      return Container(
+        height: style.fontSize! * lineHeight,
+        alignment: isRightToLeft ? Alignment.centerRight : Alignment.centerLeft,
+        child: Text(
+          isRightToLeft ? _reverseString(text) : text,
+          style: style,
+          textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
+        ),
+      );
     }
 
-    return widths;
+    return CustomPaint(
+      size: Size(maxWidth, style.fontSize! * lineHeight),
+      painter: _JustifiedTextPainter(
+        text: text,
+        style: style,
+        maxWidth: maxWidth,
+        isRightToLeft: isRightToLeft,
+      ),
+    );
   }
 
-  /// 计算文本的实际宽度
-  double _calculateTextWidth(String text, TextStyle style) {
-    if (text.isEmpty) return 0.0;
+  String _reverseString(String text) {
+    return String.fromCharCodes(text.runes.toList().reversed);
+  }
+}
 
-    // 使用TextPainter计算实际文本宽度
+/// 处理单个段落的两端对齐
+class _JustifiedParagraph extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final double lineHeight;
+  final double maxWidth;
+  final bool isRightToLeft;
+
+  const _JustifiedParagraph({
+    required this.text,
+    required this.style,
+    required this.lineHeight,
+    required this.maxWidth,
+    required this.isRightToLeft,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 计算段落需要的行数和每行的文本
+    final lines = _breakTextIntoLines(text, style, maxWidth);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: lines.map((line) {
+        return _JustifiedLine(
+          text: line,
+          style: style,
+          lineHeight: lineHeight,
+          maxWidth: maxWidth,
+          isRightToLeft: isRightToLeft,
+        );
+      }).toList(),
+    );
+  }
+
+  /// 将文本分解成多行，考虑到字符宽度和可用空间
+  List<String> _breakTextIntoLines(
+      String text, TextStyle style, double maxWidth) {
     final textPainter = TextPainter(
       text: TextSpan(text: text, style: style),
       textDirection: TextDirection.ltr,
-      // 使用textScaler替代已弃用的textScaleFactor
-      textScaler: TextScaler.noScaling,
-    )..layout();
+      maxLines: null,
+    );
 
+    textPainter.layout(maxWidth: maxWidth);
+
+    // 获取TextPainter自动计算的行边界
+    final List<ui.LineMetrics> lines = textPainter.computeLineMetrics();
+    final List<String> textLines = [];
+
+    // 根据行边界提取每行文本
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      final start = textPainter
+          .getPositionForOffset(Offset(0, line.baseline - line.ascent))
+          .offset;
+      final end = i < lines.length - 1
+          ? textPainter
+                  .getPositionForOffset(
+                      Offset(0, lines[i + 1].baseline - lines[i + 1].ascent))
+                  .offset -
+              1
+          : text.length;
+
+      if (start < end && end <= text.length) {
+        textLines.add(text.substring(start, end));
+      }
+    }
+
+    return textLines;
+  }
+}
+
+/// 自定义绘制器，用于精确控制字符位置以实现两端对齐
+class _JustifiedTextPainter extends CustomPainter {
+  final String text;
+  final TextStyle style;
+  final double maxWidth;
+  final bool isRightToLeft;
+
+  const _JustifiedTextPainter({
+    required this.text,
+    required this.style,
+    required this.maxWidth,
+    required this.isRightToLeft,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final String displayText = text.trim();
+    if (displayText.isEmpty) return;
+
+    // 计算字符宽度和总宽度
+    final List<double> charWidths = [];
+    double totalWidth = 0;
+
+    // 获取字符列表，并根据方向设置
+    final characters = displayText.characters.toList();
+    final displayChars =
+        isRightToLeft ? characters.reversed.toList() : characters;
+
+    // 计算每个字符的宽度
+    for (final char in displayChars) {
+      final width = _measureTextWidth(char, style);
+      charWidths.add(width);
+      totalWidth += width;
+    }
+
+    // 计算需要分配的额外空间
+    final double extraSpace = size.width - totalWidth;
+
+    // 如果没有足够的空间或只有一个字符，直接绘制不对齐
+    if (extraSpace <= 0 || displayChars.length <= 1) {
+      final textPainter = TextPainter(
+        text: TextSpan(text: displayText, style: style),
+        textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+        textAlign: isRightToLeft ? TextAlign.right : TextAlign.left,
+      );
+      textPainter.layout(maxWidth: size.width);
+      textPainter.paint(
+          canvas, Offset(0, (size.height - textPainter.height) / 2));
+      return;
+    }
+
+    // 计算间距
+    final double spacing = extraSpace / (displayChars.length - 1);
+
+    // 绘制每个字符，带有计算好的间距
+    double xPos = 0;
+    for (int i = 0; i < displayChars.length; i++) {
+      final char = displayChars[i];
+      final width = charWidths[i];
+
+      final textPainter = TextPainter(
+        text: TextSpan(text: char, style: style),
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
+      );
+      textPainter.layout();
+
+      // 将字符绘制在计算好的位置上
+      textPainter.paint(
+          canvas, Offset(xPos, (size.height - textPainter.height) / 2));
+
+      // 更新下一个字符的位置
+      xPos += width + (i < displayChars.length - 1 ? spacing : 0);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_JustifiedTextPainter oldDelegate) {
+    return oldDelegate.text != text ||
+        oldDelegate.style != style ||
+        oldDelegate.maxWidth != maxWidth ||
+        oldDelegate.isRightToLeft != isRightToLeft;
+  }
+
+  /// 测量文本宽度的辅助方法
+  double _measureTextWidth(String text, TextStyle style) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: TextScaler.noScaling,
+    );
+    textPainter.layout();
     return textPainter.width;
   }
 }

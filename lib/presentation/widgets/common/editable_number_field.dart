@@ -100,10 +100,17 @@ class EditableNumberField extends StatelessWidget {
       return;
     }
 
-    // 应用新值
+    // 先调用dispose释放资源
     dispose();
-    Navigator.of(context).pop();
-    onChanged(newValue);
+
+    // 使用Future.microtask确保在当前build周期结束后再执行导航和回调
+    // 这样可以避免在build过程中修改widget树
+    Future.microtask(() {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        onChanged(newValue);
+      }
+    });
   }
 
   /// 显示编辑对话框
@@ -118,15 +125,20 @@ class EditableNumberField extends StatelessWidget {
     // 创建焦点节点，用于自动聚焦
     final focusNode = FocusNode();
 
-    // 标记对话框是否已关闭
-    bool isDialogClosed = false;
+    // 标记对话框是否已关闭，使用ValueNotifier跟踪状态
+    final isDialogClosed = ValueNotifier<bool>(false);
 
     // 在对话框关闭时释放资源
     void dispose() {
-      if (!isDialogClosed) {
-        isDialogClosed = true;
+      if (!isDialogClosed.value) {
+        isDialogClosed.value = true;
         controller.dispose();
-        focusNode.dispose();
+        // 使用Future.microtask延迟FocusNode的处理，避免在build过程中处理
+        Future.microtask(() {
+          if (focusNode.canRequestFocus) {
+            focusNode.dispose();
+          }
+        });
       }
     }
 
@@ -145,27 +157,38 @@ class EditableNumberField extends StatelessWidget {
           },
           child: AlertDialog(
             title: Text('编辑$label'),
-            content: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              keyboardType: TextInputType.numberWithOptions(
-                decimal: decimalPlaces > 0,
-                signed: min != null && min! < 0,
-              ),
-              inputFormatters: [
-                // 根据小数位数决定使用哪种格式化器
-                if (decimalPlaces > 0)
-                  FilteringTextInputFormatter.allow(RegExp(r'^\-?\d*\.?\d*')),
-                if (decimalPlaces == 0) FilteringTextInputFormatter.digitsOnly,
-              ],
-              decoration: InputDecoration(
-                labelText: label,
-                hintText: '请输入$label',
-                suffix: suffix != null ? Text(suffix!) : null,
-              ),
-              autofocus: true,
-              onSubmitted: (_) =>
-                  _applyValue(dialogContext, controller.text, dispose),
+            content: ValueListenableBuilder<bool>(
+              valueListenable: isDialogClosed,
+              builder: (context, closed, child) {
+                // 如果对话框已关闭，返回一个空容器，避免使用已释放的FocusNode
+                if (closed) {
+                  return Container();
+                }
+                return TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  keyboardType: TextInputType.numberWithOptions(
+                    decimal: decimalPlaces > 0,
+                    signed: min != null && min! < 0,
+                  ),
+                  inputFormatters: [
+                    // 根据小数位数决定使用哪种格式化器
+                    if (decimalPlaces > 0)
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\-?\d*\.?\d*')),
+                    if (decimalPlaces == 0)
+                      FilteringTextInputFormatter.digitsOnly,
+                  ],
+                  decoration: InputDecoration(
+                    labelText: label,
+                    hintText: '请输入$label',
+                    suffix: suffix != null ? Text(suffix!) : null,
+                  ),
+                  autofocus: true,
+                  onSubmitted: (_) =>
+                      _applyValue(dialogContext, controller.text, dispose),
+                );
+              },
             ),
             actions: <Widget>[
               TextButton(

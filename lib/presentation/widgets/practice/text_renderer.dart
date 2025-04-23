@@ -18,6 +18,133 @@ class TextRenderer {
     return (maxHeight / effectiveCharHeight).floor();
   }
 
+  static String convertLTRHorizontalFittedText(String text,
+      BoxConstraints constraints, double padding, TextStyle style) {
+    final lines = splitTextToLines(text);
+    final fittedLines = <String>[];
+
+    // Create a TextPainter to measure text width
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      text: const TextSpan(text: ''), // Initialize with empty text
+    );
+
+    final maxWidth = constraints.maxWidth - padding * 2;
+
+    for (final line in lines) {
+      // Check if the line needs to be split due to width constraints
+      textPainter.text = TextSpan(text: line, style: style);
+      textPainter.layout(maxWidth: double.infinity);
+
+      if (textPainter.width <= maxWidth) {
+        // Line fits, no need to split
+        fittedLines.add(line);
+      } else {
+        // Line needs splitting
+        String currentLine = '';
+
+        for (int i = 0; i < line.length; i++) {
+          final char = line[i];
+          final testLine = currentLine + char;
+
+          textPainter.text = TextSpan(
+            text: testLine,
+            style: style,
+          );
+          textPainter.layout(maxWidth: double.infinity);
+
+          if (textPainter.width <= maxWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine.isNotEmpty) {
+              fittedLines.add(currentLine);
+              currentLine = char;
+            }
+          }
+        }
+
+        if (currentLine.isNotEmpty) {
+          fittedLines.add(currentLine);
+        }
+      }
+    }
+
+    text = fittedLines.join('\n');
+    developer.log('text: $text');
+    return text;
+  }
+
+  static String convertRTLHorizontalFittedText(String text,
+      BoxConstraints constraints, double padding, TextStyle style) {
+    final lines = splitTextToLines(text);
+    final reversedLines = <String>[];
+
+    // Create a TextPainter to measure text width
+    final textPainter = TextPainter(
+      textDirection: TextDirection.rtl,
+      maxLines: 1,
+      text: const TextSpan(text: ''), // Initialize with empty text
+    );
+
+    final maxWidth = constraints.maxWidth - padding * 2;
+
+    for (final line in lines) {
+      // First reverse the characters in the line for RTL rendering
+      final reversedLine = String.fromCharCodes(line.runes.toList().reversed);
+
+      // Check if the line needs to be split due to width constraints
+      textPainter.text = TextSpan(text: reversedLine, style: style);
+      textPainter.layout(maxWidth: double.infinity);
+
+      if (textPainter.width <= maxWidth) {
+        // Line fits, no need to split
+        reversedLines.add(reversedLine);
+      } else {
+        // Line needs splitting for RTL text
+        String currentLine = '';
+        List<String> segmentedLines = [];
+
+        // Process character by character for RTL text, starting from the end
+        for (int i = reversedLine.length - 1; i >= 0; i--) {
+          final char = reversedLine[i];
+          final testLine =
+              char + currentLine; // Add new chars at beginning for RTL
+
+          textPainter.text = TextSpan(
+            text: testLine,
+            style: style,
+          );
+          textPainter.layout(maxWidth: double.infinity);
+
+          if (textPainter.width <= maxWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine.isNotEmpty) {
+              segmentedLines.insert(0, currentLine);
+              currentLine = char;
+            } else {
+              // Single character is too wide, add it anyway
+              segmentedLines.insert(0, char);
+              currentLine = '';
+            }
+          }
+        }
+
+        if (currentLine.isNotEmpty) {
+          segmentedLines.insert(0, currentLine);
+        }
+
+        // Add lines in reverse order to maintain correct RTL reading order
+        reversedLines.addAll(segmentedLines.reversed);
+      }
+    }
+
+    text = reversedLines.join('\n');
+    developer.log('text: $text');
+    return text;
+  }
+
   /// 创建文本样式
   static TextStyle createTextStyle({
     required double fontSize,
@@ -147,27 +274,6 @@ class TextRenderer {
     final isRightToLeft = writingMode == 'horizontal-r';
     final textAlignEnum = getTextAlign(textAlign);
 
-    // 打印转换后的对齐方式
-    developer
-        .log('水平文本对齐方式转换: textAlign=$textAlign -> ${textAlignEnum.toString()}');
-
-    // 如果垂直对齐是两端对齐，我们需要特殊处理
-    if (verticalAlign == 'justify' && splitTextToLines(text).length > 1) {
-      // 打印调试信息
-      developer.log(
-          '水平文本垂直两端对齐: textAlign=$textAlign, verticalAlign=$verticalAlign');
-
-      return _buildVerticalJustifiedText(
-        text: text,
-        style: style,
-        textAlign: textAlignEnum,
-        isRightToLeft: isRightToLeft,
-        constraints: constraints,
-        padding: padding,
-        backgroundColor: backgroundColor,
-      );
-    }
-
     // 设置垂直对齐
     Alignment alignment;
     switch (verticalAlign) {
@@ -181,103 +287,36 @@ class TextRenderer {
         alignment = Alignment.bottomCenter;
         break;
       case 'justify':
-        // 如果只有一行文本，则使用居中对齐
+        // 如果垂直对齐是两端对齐，且有多行文本，使用特殊处理
+        if (splitTextToLines(text).length > 1) {
+          return _buildVerticalJustifiedText(
+            text: text,
+            style: style,
+            textAlign: textAlignEnum,
+            isRightToLeft: isRightToLeft,
+            constraints: constraints,
+            padding: padding,
+            backgroundColor: backgroundColor,
+          );
+        }
+        // 单行文本使用居中对齐
         alignment = Alignment.center;
         break;
       default:
         alignment = Alignment.topCenter;
     }
 
-    // 处理从右到左的文本
-    if (isRightToLeft) {
-      final lines = splitTextToLines(text);
-      final reversedLines = <String>[];
+    // 处理从右到左的文本和自动换行
+    text = isRightToLeft
+        ? convertRTLHorizontalFittedText(text, constraints, padding, style)
+        : convertLTRHorizontalFittedText(text, constraints, padding, style);
 
-      // Create a TextPainter to measure text width
-      final textPainter = TextPainter(
-        textDirection: TextDirection.rtl,
-        maxLines: 1,
-        text: const TextSpan(text: ''), // Initialize with empty text
-      );
-
-      final maxWidth = constraints.maxWidth - padding * 2;
-
-      for (final line in lines) {
-        // First reverse the characters in the line
-        final reversedLine = String.fromCharCodes(line.runes.toList().reversed);
-
-        // Check if the line needs to be split due to width constraints
-        textPainter.text = TextSpan(text: reversedLine, style: style);
-        textPainter.layout(maxWidth: double.infinity);
-
-        if (textPainter.width <= maxWidth) {
-          // Line fits, no need to split
-          reversedLines.add(reversedLine);
-        } else {
-          // Line needs splitting but we need to maintain top-to-bottom order
-          final tempLines = <String>[];
-          final words = reversedLine.split(' ');
-          String currentLine = '';
-
-          for (final word in words) {
-            textPainter.text = TextSpan(
-              text: currentLine.isEmpty ? word : '$currentLine $word',
-              style: style,
-            );
-            textPainter.layout(maxWidth: double.infinity);
-
-            if (textPainter.width <= maxWidth) {
-              currentLine = currentLine.isEmpty ? word : '$currentLine $word';
-            } else {
-              if (currentLine.isNotEmpty) {
-                tempLines.insert(0, currentLine);
-                currentLine = word;
-              } else {
-                // Single word is too long, need to split characters
-                int endIndex = 0;
-                String partialWord = '';
-
-                for (int i = 0; i < word.length; i++) {
-                  textPainter.text = TextSpan(
-                    text: '$partialWord${word[i]}',
-                    style: style,
-                  );
-                  textPainter.layout(maxWidth: double.infinity);
-
-                  if (textPainter.width <= maxWidth) {
-                    partialWord = '$partialWord${word[i]}';
-                    endIndex = i + 1;
-                  } else {
-                    break;
-                  }
-                }
-
-                if (partialWord.isNotEmpty) {
-                  tempLines.insert(0, partialWord);
-                  currentLine = word.substring(endIndex);
-                }
-              }
-            }
-          }
-
-          if (currentLine.isNotEmpty) {
-            tempLines.insert(0, currentLine);
-          }
-
-          // Add all split lines in original order
-          reversedLines.addAll(tempLines);
-        }
-      }
-
-      text = reversedLines.join('\n');
-    }
-
-    developer.log('text: $text');
-
-    // 对于水平方向的 justify，我们需要确保文本能换行
+    // 对于水平两端对齐，使用我们的 JustifiedTextRenderer
     if (textAlign == 'justify') {
-      // 打印调试信息
-      developer.log('水平两端对齐渲染: verticalAlign=$verticalAlign');
+      developer.log('使用JustifiedTextRenderer渲染水平两端对齐文本');
+
+      // 分割文本为行
+      final lines = splitTextToLines(text);
 
       return Container(
         width: constraints.maxWidth,
@@ -286,30 +325,24 @@ class TextRenderer {
         color: backgroundColor,
         alignment: alignment,
         child: SingleChildScrollView(
-          child: SizedBox(
-            width: constraints.maxWidth - padding * 2, // 确保占据整个容器宽度
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch, // 确保子元素占据整个宽度
-              children: splitTextToLines(text).map((line) {
-                return JustifiedTextRenderer(
-                  text: line,
-                  style: style,
-                  lineHeight: style.height ?? 1.2,
-                  maxWidth: constraints.maxWidth - padding * 2,
-                  isRightToLeft: isRightToLeft,
-                );
-              }).toList(),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: lines.map((line) {
+              // 对于每行文本使用JustifiedTextRenderer
+              return JustifiedTextRenderer(
+                text: line,
+                style: style,
+                lineHeight: style.height ?? 1.2,
+                maxWidth: constraints.maxWidth - padding * 2,
+                isRightToLeft: isRightToLeft,
+              );
+            }).toList(),
           ),
         ),
       );
     }
 
     // 正常的水平文本渲染
-    // 打印调试信息
-    developer
-        .log('普通水平文本渲染: verticalAlign=$verticalAlign, alignment=$alignment');
-
     return Container(
       width: constraints.maxWidth,
       height: constraints.maxHeight,
@@ -317,15 +350,13 @@ class TextRenderer {
       color: backgroundColor,
       alignment: alignment,
       child: SingleChildScrollView(
-        child: SizedBox(
-          width: constraints.maxWidth - padding * 2, // 确保文本占据整个容器宽度
-          child: Text(
-            text,
-            style: style,
-            textAlign: textAlignEnum,
-            // textDirection:
-            //     isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
-          ),
+        child: Text(
+          softWrap: false,
+          overflow: TextOverflow.clip,
+          text,
+          style: style,
+          textAlign: textAlignEnum,
+          textDirection: isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
         ),
       ),
     );
@@ -550,7 +581,9 @@ class TextRenderer {
         '垂直两端对齐文本样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
     developer.log('垂直两端对齐文本行数: ${splitTextToLines(text).length}');
 
-    final lines = splitTextToLines(text);
+    final lines = splitTextToLines(isRightToLeft
+        ? convertRTLHorizontalFittedText(text, constraints, padding, style)
+        : convertLTRHorizontalFittedText(text, constraints, padding, style));
 
     // 计算行高
     final lineHeight = style.fontSize! * (style.height ?? 1.2);
@@ -574,27 +607,22 @@ class TextRenderer {
           mainAxisAlignment: MainAxisAlignment.spaceBetween, // 使用两端对齐
           crossAxisAlignment: CrossAxisAlignment.stretch, // 确保子元素占据整个宽度
           children: lines.map((line) {
-            // 对于横排右书，我们需要手动反转字符顺序
-            // 因为 textDirection 属性对汉字无效
-            final displayText = isRightToLeft
-                ? String.fromCharCodes(line.runes.toList().reversed)
-                : line;
-
             // 如果水平对齐也是两端对齐，则使用 JustifiedTextRenderer
             if (textAlign == TextAlign.justify) {
               return JustifiedTextRenderer(
-                text: displayText,
+                text: line,
                 style: style,
                 lineHeight: style.height ?? 1.2,
                 maxWidth: constraints.maxWidth - padding * 2,
-                isRightToLeft: isRightToLeft,
+                isRightToLeft: false,
               );
             } else {
               // 否则使用普通的 Text 组件
               return SizedBox(
                 width: constraints.maxWidth - padding * 2, // 确保占据整个容器宽度
                 child: Text(
-                  displayText,
+                  softWrap: false,
+                  line,
                   style: style,
                   textAlign: textAlign,
                   textDirection:
@@ -616,16 +644,10 @@ class TextRenderer {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch, // 确保子元素占据整个宽度
             children: lines.map((line) {
-              // 对于横排右书，我们需要手动反转字符顺序
-              // 因为 textDirection 属性对汉字无效
-              final displayText = isRightToLeft
-                  ? String.fromCharCodes(line.runes.toList().reversed)
-                  : line;
-
               // 如果水平对齐也是两端对齐，则使用 JustifiedTextRenderer
               if (textAlign == TextAlign.justify) {
                 return JustifiedTextRenderer(
-                  text: displayText,
+                  text: line,
                   style: style,
                   lineHeight: style.height ?? 1.2,
                   maxWidth: constraints.maxWidth - padding * 2,
@@ -636,7 +658,8 @@ class TextRenderer {
                 return SizedBox(
                   width: constraints.maxWidth - padding * 2, // 确保占据整个容器宽度
                   child: Text(
-                    displayText,
+                    softWrap: false,
+                    line,
                     style: style,
                     textAlign: textAlign,
                     textDirection:
@@ -748,6 +771,7 @@ class TextRenderer {
                     width: columnWidth, // 使用与列相同的宽度
                     child: Center(
                       child: Text(
+                        softWrap: false,
                         char,
                         style: style,
                       ),
@@ -775,6 +799,7 @@ class TextRenderer {
                     width: columnWidth, // 使用与列相同的宽度
                     alignment: alignment,
                     child: Text(
+                      softWrap: false,
                       char,
                       style: style,
                     ),
@@ -792,11 +817,6 @@ class TextRenderer {
           );
         }
 
-        // if (isRightToLeft) {
-        //   allColumns.insert(newLineIndex, columnWidget);
-        // } else {
-        //   allColumns.add(columnWidget);
-        // }
         allColumns.add(columnWidget);
         currentIndex++;
         charIdx += charsInThisColumn;
@@ -829,33 +849,6 @@ class TextRenderer {
       columns = allColumns.reversed.toList();
     }
 
-    // // 打印每一列的字符内容
-    // for (int i = 0; i < allColumns.length; i++) {
-    //   int startChar = 0;
-    //   List<String> columnChars = [];
-
-    //   // 遍历字符统计
-    //   for (final line in lines) {
-    //     final chars = line.characters.toList();
-    //     int charIdx = 0;
-
-    //     while (charIdx < chars.length) {
-    //       final charsInThisColumn =
-    //           math.min(maxCharsPerColumn, chars.length - charIdx);
-
-    //       if (i ==
-    //           (isRightToLeft ? startChar : allColumns.length - 1 - startChar)) {
-    //         columnChars
-    //             .addAll(chars.sublist(charIdx, charIdx + charsInThisColumn));
-    //       }
-
-    //       charIdx += charsInThisColumn;
-    //       startChar++;
-    //     }
-    //   }
-
-    //   developer.log('列 $i 的内容: ${columnChars.join(",")}');
-    // }
     // 创建ScrollController，用于控制滚动位置
     final ScrollController scrollController = ScrollController();
 
@@ -893,8 +886,8 @@ class TextRenderer {
             clipBehavior: Clip.hardEdge,
             decoration: const BoxDecoration(),
             child: Row(
-              textDirection:
-                  isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+              // textDirection:
+              //     isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
               mainAxisAlignment:
                   MainAxisAlignment.spaceBetween, // 使用 spaceBetween 实现两端对齐
               // 使用 MainAxisSize.max 确保 Row 占据所有可用空间
