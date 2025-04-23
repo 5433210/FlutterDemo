@@ -1003,12 +1003,16 @@ class TextPropertyPanel extends PracticePropertyPanel {
                 height: lineHeight,
               );
 
+              // 判断是否为横排右书
+              final isRightToLeft = writingMode == 'horizontal-r';
+
               return VerticallyJustifiedText(
                 lines: lines,
                 style: textStyle,
                 horizontalAlign: horizontalAlign,
                 maxHeight: constraints.maxHeight,
                 maxWidth: constraints.maxWidth,
+                isRightToLeft: isRightToLeft,
               );
             default:
               alignment = Alignment.topCenter;

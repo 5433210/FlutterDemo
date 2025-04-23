@@ -8,6 +8,7 @@ class VerticallyJustifiedText extends StatelessWidget {
   final TextAlign horizontalAlign;
   final double maxHeight;
   final double maxWidth;
+  final bool isRightToLeft; // 是否从右到左显示（横排右书）
 
   const VerticallyJustifiedText({
     Key? key,
@@ -16,20 +17,28 @@ class VerticallyJustifiedText extends StatelessWidget {
     required this.horizontalAlign,
     required this.maxHeight,
     required this.maxWidth,
+    this.isRightToLeft = false, // 默认为从左到右（横排左书）
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     // 如果没有文本或只有一行，则使用普通文本显示
     if (lines.isEmpty || lines.length == 1) {
+      // 对于横排右书，需要反转字符顺序
+      final displayText = isRightToLeft && lines.isNotEmpty
+          ? String.fromCharCodes(lines.first.runes.toList().reversed)
+          : (lines.isEmpty ? '' : lines.first);
+
       return SizedBox(
         width: maxWidth,
         height: maxHeight,
         child: Center(
           child: Text(
-            lines.isEmpty ? '' : lines.first,
+            displayText,
             style: style,
-            textAlign: horizontalAlign,
+            textAlign: isRightToLeft ? TextAlign.right : horizontalAlign,
+            textDirection:
+                isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
           ),
         ),
       );
@@ -66,21 +75,32 @@ class VerticallyJustifiedText extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: _getCrossAxisAlignment(horizontalAlign),
         children: lines.map((line) {
+          // 对于横排右书，需要处理字符顺序
+          String displayText = line;
+          if (isRightToLeft && horizontalAlign != TextAlign.justify) {
+            // 对于非两端对齐，反转字符顺序
+            displayText = String.fromCharCodes(line.runes.toList().reversed);
+          }
+
           // 如果是水平两端对齐，使用自定义的两端对齐渲染器
           if (horizontalAlign == TextAlign.justify && line.length > 1) {
             return SizedBox(
               width: maxWidth,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                textDirection:
+                    isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
                 children: _buildJustifiedCharacters(line, style),
               ),
             );
           } else {
             // 其他对齐方式使用普通 Text 组件
             return Text(
-              line,
+              displayText,
               style: style,
-              textAlign: horizontalAlign,
+              textAlign: isRightToLeft ? TextAlign.right : horizontalAlign,
+              textDirection:
+                  isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
             );
           }
         }).toList(),
