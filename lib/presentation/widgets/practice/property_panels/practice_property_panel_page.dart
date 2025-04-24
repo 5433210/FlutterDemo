@@ -25,6 +25,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
   late TextEditingController _widthController;
   late TextEditingController _heightController;
   late TextEditingController _dpiController;
+  late TextEditingController _backgroundColorController; // 添加背景颜色控制器
   late FocusNode _widthFocusNode;
   late FocusNode _heightFocusNode;
   late FocusNode _dpiFocusNode;
@@ -39,8 +40,6 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     final height = (widget.page!['height'] as num?)?.toDouble() ?? 842.0;
     final orientation = widget.page!['orientation'] as String? ?? 'portrait';
     final dpi = (widget.page!['dpi'] as num?)?.toInt() ?? 300;
-    final backgroundColor =
-        widget.page!['backgroundColor'] as String? ?? '#ffffff';
 
     return ListView(
       children: [
@@ -227,13 +226,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                   Row(
                     children: [
                       GestureDetector(
-                        onTap: () =>
-                            _showEnhancedColorPicker(context, backgroundColor),
+                        onTap: () => _showEnhancedColorPicker(
+                            context, '#${_backgroundColorController.text}'),
                         child: Container(
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: hexToColor(backgroundColor),
+                            color: hexToColor(
+                                '#${_backgroundColorController.text}'),
                             border: Border.all(color: Colors.grey),
                             borderRadius: BorderRadius.circular(4.0),
                           ),
@@ -249,13 +249,10 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                             contentPadding: EdgeInsets.symmetric(
                                 horizontal: 8.0, vertical: 8.0),
                           ),
-                          controller: TextEditingController(
-                              text: backgroundColor.startsWith('#')
-                                  ? backgroundColor.substring(1)
-                                  : backgroundColor),
+                          controller: _backgroundColorController,
                           readOnly: true, // 设置为只读
                           onTap: () => _showEnhancedColorPicker(
-                              context, backgroundColor),
+                              context, '#${_backgroundColorController.text}'),
                         ),
                       ),
                     ],
@@ -347,6 +344,13 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
           ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
       _dpiController.text =
           ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
+
+      // 更新背景颜色控制器
+      final backgroundColor =
+          widget.page!['backgroundColor'] as String? ?? '#FFFFFF';
+      _backgroundColorController.text = backgroundColor.startsWith('#')
+          ? backgroundColor.substring(1)
+          : backgroundColor;
     }
   }
 
@@ -355,6 +359,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     _widthController.dispose();
     _heightController.dispose();
     _dpiController.dispose();
+    _backgroundColorController.dispose(); // 释放背景颜色控制器
     _widthFocusNode.removeListener(_handleWidthFocusChange);
     _heightFocusNode.removeListener(_handleHeightFocusChange);
     _dpiFocusNode.removeListener(_handleDpiFocusChange);
@@ -437,6 +442,7 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
     _widthController = TextEditingController();
     _heightController = TextEditingController();
     _dpiController = TextEditingController();
+    _backgroundColorController = TextEditingController();
     _widthFocusNode = FocusNode();
     _heightFocusNode = FocusNode();
     _dpiFocusNode = FocusNode();
@@ -449,6 +455,13 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
           ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
       _dpiController.text =
           ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
+
+      // 设置背景颜色初始值
+      final backgroundColor =
+          widget.page!['backgroundColor'] as String? ?? '#FFFFFF';
+      _backgroundColorController.text = backgroundColor.startsWith('#')
+          ? backgroundColor.substring(1)
+          : backgroundColor;
     }
 
     // 添加焦点监听器
@@ -600,8 +613,24 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
             final hexColor = _colorToHex(selectedColor);
             debugPrint('转换后的颜色字符串: $hexColor');
 
-            // 更新页面属性
-            widget.onPagePropertiesChanged({'backgroundColor': hexColor});
+            // 获取当前的不透明度
+            final backgroundOpacity =
+                (widget.page!['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
+
+            // 更新页面属性，同时确保设置背景类型和不透明度
+            widget.onPagePropertiesChanged({
+              'backgroundColor': hexColor,
+              'backgroundType': 'color',
+              'backgroundOpacity': backgroundOpacity,
+            });
+
+            // 更新颜色代码控制器
+            _backgroundColorController.text =
+                hexColor.startsWith('#') ? hexColor.substring(1) : hexColor;
+
+            // 强制刷新控制器状态，确保画布更新
+            // 使用setState触发UI更新
+            setState(() {});
           },
         ),
       );

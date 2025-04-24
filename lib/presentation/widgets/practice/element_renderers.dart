@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:demo/presentation/widgets/practice/text_renderer.dart';
 import 'package:flutter/material.dart';
 
@@ -164,28 +166,7 @@ class ElementRenderers {
             flipHorizontal ? -1.0 : 1.0,
             flipVertical ? -1.0 : 1.0,
           ),
-        child: Image.network(
-          imageUrl,
-          fit: _getFitMode(fitMode),
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: double.infinity,
-              height: double.infinity,
-              alignment: Alignment.center,
-              color: Colors.grey.shade200,
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                  SizedBox(height: 8),
-                  Text('加载图片失败', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            );
-          },
-        ),
+        child: _buildImageWidget(imageUrl, fitMode),
       ),
     );
   }
@@ -358,6 +339,66 @@ class ElementRenderers {
             ),
           );
         }).toList(),
+      );
+    }
+  }
+
+  /// 构建图片小部件，根据URL类型选择不同的加载方式
+  static Widget _buildImageWidget(String imageUrl, String fitMode) {
+    final BoxFit fit = _getFitMode(fitMode);
+
+    // 检查是否是本地文件路径
+    if (imageUrl.startsWith('file://')) {
+      // 提取文件路径（去掉file://前缀）
+      final filePath = imageUrl.substring(7);
+
+      // 使用File.image加载本地文件
+      return Image.file(
+        File(filePath),
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('加载本地图片失败: $error');
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            alignment: Alignment.center,
+            color: Colors.grey.shade200,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                SizedBox(height: 8),
+                Text('加载本地图片失败', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        },
+      );
+    } else {
+      // 使用网络图片加载
+      return Image.network(
+        imageUrl,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            alignment: Alignment.center,
+            color: Colors.grey.shade200,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 48, color: Colors.grey),
+                SizedBox(height: 8),
+                Text('加载网络图片失败', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          );
+        },
       );
     }
   }

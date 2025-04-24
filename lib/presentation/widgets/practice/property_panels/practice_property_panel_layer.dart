@@ -651,6 +651,21 @@ class _LayerPropertyPanelContentState
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // 元素属性按钮
+                IconButton(
+                  icon: const Icon(
+                    Icons.tune,
+                    color: Colors.green,
+                    size: 18,
+                  ),
+                  tooltip: '元素属性',
+                  onPressed: () => _showElementProperties(id),
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+
                 // 可见性切换
                 IconButton(
                   icon: Icon(
@@ -797,6 +812,19 @@ class _LayerPropertyPanelContentState
         ],
       ),
     );
+  }
+
+  // 显示元素属性面板
+  void _showElementProperties(String elementId) {
+    // 选择元素并切换到元素属性面板
+    widget.controller.selectElement(elementId);
+
+    // 清除图层选择，确保显示元素属性面板而不是图层属性面板
+    // 直接修改控制器状态，而不是调用selectLayer方法
+    widget.controller.state.selectedLayerId = null;
+
+    // 通知UI更新
+    setState(() {});
   }
 
   void _startEditingElementName(String elementId, String currentName) {

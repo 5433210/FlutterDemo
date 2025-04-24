@@ -1,5 +1,6 @@
 import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:demo/presentation/widgets/practice/top_navigation_bar.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show
@@ -1879,47 +1880,76 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 选择本地图片
   Future<void> _showImageUrlDialog(BuildContext context) async {
-    // 在实际应用中，这里应该使用文件选择器
-    // 例如使用 file_picker 或 image_picker 插件
-    // 以下是一个模拟实现，展示文件选择对话框
+    try {
+      // 使用file_picker打开文件选择对话框
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        dialogTitle: '选择图片',
+        lockParentWindow: true,
+      );
 
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('选择图片'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('请选择要添加的图片文件'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () =>
-                  Navigator.pop(context, 'file://sample_image.jpg'),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.folder_open),
-                  SizedBox(width: 8),
-                  Text('浏览文件...'),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, null),
-            child: const Text('取消'),
-          ),
-        ],
-      ),
-    );
+      // 如果用户取消了选择，result将为null
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
 
-    if (result != null) {
-      // 在实际应用中，这里应该处理选择的文件
-      // 并将其转换为可用的URL或路径
-      _controller.addImageElement(result);
+      // 获取选择的文件路径
+      final file = result.files.first;
+      final filePath = file.path;
+
+      if (filePath == null || filePath.isEmpty) {
+        // 显示错误消息
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('无法获取文件路径')),
+          );
+        }
+        return;
+      }
+
+      // 将文件路径转换为可用的URL格式
+      final fileUrl = 'file://$filePath';
+      debugPrint('选择的图片路径: $fileUrl');
+
+      // 更新或添加图片元素
+      if (_controller.state.selectedElementIds.isNotEmpty) {
+        // 如果有选中的元素，更新它的图片URL
+        final elementId = _controller.state.selectedElementIds.first;
+        final element = _controller.state.currentPageElements.firstWhere(
+          (e) => e['id'] == elementId,
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (element.isNotEmpty && element['type'] == 'image') {
+          // 更新现有图片元素的URL
+          final content = Map<String, dynamic>.from(
+              element['content'] as Map<String, dynamic>);
+          content['imageUrl'] = fileUrl;
+          _controller.updateElementProperties(elementId, {'content': content});
+
+          // 显示成功消息
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('图片已更新')),
+            );
+          }
+        } else {
+          // 添加新图片元素
+          _controller.addImageElement(fileUrl);
+        }
+      } else {
+        // 添加新图片元素
+        _controller.addImageElement(fileUrl);
+      }
+    } catch (e) {
+      // 显示错误消息
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('选择图片时出错: $e')),
+        );
+      }
+      debugPrint('选择图片时出错: $e');
     }
   }
 
