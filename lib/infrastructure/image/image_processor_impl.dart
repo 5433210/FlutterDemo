@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'dart:ui';
@@ -21,55 +22,6 @@ class ImageProcessorImpl implements ImageProcessor {
 
   @override
   String get thumbnailCachePath => path.join(_cachePath, 'thumbnails');
-
-  @override
-  Future<File> adjustImageColors(
-    File input, {
-    double brightness = 0.0,
-    double contrast = 0.0,
-    double saturation = 0.0,
-  }) async {
-    try {
-      final bytes = await input.readAsBytes();
-      final image = img.decodeImage(bytes);
-      if (image == null) throw Exception('Failed to decode image');
-
-      var adjusted = image;
-
-      if (brightness != 0.0) {
-        adjusted = img.colorOffset(adjusted,
-            red: brightness.round(),
-            green: brightness.round(),
-            blue: brightness.round());
-      }
-
-      if (contrast != 0.0) {
-        adjusted = img.contrast(adjusted, contrast: contrast);
-      }
-
-      // Note: The image package might not have direct saturation adjustment,
-      // this is a simplified example
-
-      final outPath = await _createTempFilePath('adjusted_');
-      final outFile = File(outPath);
-      await outFile.writeAsBytes(img.encodePng(adjusted));
-
-      return outFile;
-    } catch (e, stack) {
-      AppLogger.error(
-        '调整图片颜色失败',
-        error: e,
-        stackTrace: stack,
-        data: {
-          'input': input.path,
-          'brightness': brightness,
-          'contrast': contrast,
-          'saturation': saturation,
-        },
-      );
-      rethrow;
-    }
-  }
 
   @override
   Future<Uint8List> applyEraseMask(
@@ -126,40 +78,25 @@ class ImageProcessorImpl implements ImageProcessor {
   }
 
   @override
-  Future<Uint8List> binarizeImage(
-      Uint8List input, double threshold, bool invertColors) async {
-    try {
-      final image = img.decodeImage(input);
-      if (image == null) throw Exception('Failed to decode image');
+  img.Image binarizeImage(
+      img.Image source, double threshold, bool invertColors) {
+    final gray = img.grayscale(source);
 
-      final binarized = img.copyRotate(image, angle: 0); // Create a copy
-      for (var y = 0; y < binarized.height; y++) {
-        for (var x = 0; x < binarized.width; x++) {
-          final pixel = binarized.getPixel(x, y);
-          final intensity = img.getLuminance(pixel);
-          bool isWhite = intensity > threshold;
-
-          // Apply inversion if needed
-          if (invertColors) isWhite = !isWhite;
-
-          if (isWhite) {
-            binarized.setPixel(x, y, img.ColorRgb8(255, 255, 255));
-          } else {
-            binarized.setPixel(x, y, img.ColorRgb8(0, 0, 0));
-          }
-        }
+    for (int y = 0; y < gray.height; y++) {
+      for (int x = 0; x < gray.width; x++) {
+        final pixel = gray.getPixel(x, y);
+        final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+        gray.setPixel(
+          x,
+          y,
+          luminance > threshold
+              ? img.ColorRgb8(255, 255, 255)
+              : img.ColorRgb8(0, 0, 0),
+        );
       }
-
-      return Uint8List.fromList(img.encodePng(binarized));
-    } catch (e, stack) {
-      AppLogger.error(
-        '二值化图片失败',
-        error: e,
-        stackTrace: stack,
-        data: {'threshold': threshold, 'invertColors': invertColors},
-      );
-      rethrow;
     }
+
+    return invertColors ? img.invert(gray) : gray;
   }
 
   @override
@@ -341,67 +278,95 @@ class ImageProcessorImpl implements ImageProcessor {
   }
 
   @override
-  Future<Uint8List> denoiseImage(Uint8List input, double strength) async {
-    try {
-      final image = img.decodeImage(input);
-      if (image == null) throw Exception('Failed to decode image');
+  img.Image denoiseImage(img.Image source, double strength) {
+    final radius = (strength * 5).clamp(1.0, 3.0);
+    final blurred = img.gaussianBlur(source, radius: radius.toInt());
 
-      // Apply a simple blur as denoising
-      // You might want to implement a more advanced denoising algorithm
-      final denoised = img.gaussianBlur(image, radius: strength.round());
-
-      return Uint8List.fromList(img.encodePng(denoised));
-    } catch (e, stack) {
-      AppLogger.error(
-        '图像降噪失败',
-        error: e,
-        stackTrace: stack,
-        data: {'strength': strength},
-      );
-      rethrow;
+    for (int y = 0; y < blurred.height; y++) {
+      for (int x = 0; x < blurred.width; x++) {
+        final pixel = blurred.getPixel(x, y);
+        final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+        blurred.setPixel(
+          x,
+          y,
+          luminance > 128
+              ? img.ColorRgb8(255, 255, 255)
+              : img.ColorRgb8(0, 0, 0),
+        );
+      }
     }
+
+    return blurred;
   }
 
+  /// 检测轮廓
   @override
-  Future<DetectedOutline> detectOutline(Uint8List input) async {
+  DetectedOutline detectOutline(img.Image binaryImage, bool isInverted) {
     try {
-      final image = img.decodeImage(input);
-      if (image == null) throw Exception('Failed to decode image');
+      final paddedImage = _addBorderToImage(binaryImage, isInverted);
 
-      // Simple outline detection implementation
-      // In a real application, you'd need a more sophisticated algorithm
-      List<List<Offset>> contourPoints = [];
-      List<Offset> currentContour = [];
+      final width = paddedImage.width;
+      final height = paddedImage.height;
+      final visited = List.generate(
+          height, (y) => List.generate(width, (x) => false, growable: false),
+          growable: false);
 
-      // This is a placeholder implementation
-      // Find edges along the borders of the image as a simple contour
-      for (int x = 0; x < image.width; x += 5) {
-        currentContour.add(Offset(x.toDouble(), 0));
-      }
-      for (int y = 0; y < image.height; y += 5) {
-        currentContour.add(Offset(image.width.toDouble(), y.toDouble()));
-      }
-      for (int x = image.width; x > 0; x -= 5) {
-        currentContour.add(Offset(x.toDouble(), image.height.toDouble()));
-      }
-      for (int y = image.height; y > 0; y -= 5) {
-        currentContour.add(Offset(0, y.toDouble()));
+      final allContours = <List<Offset>>[];
+
+      // Find and trace the outer contour
+      var startPoint = _findFirstContourPoint(paddedImage, isInverted);
+      if (startPoint != null) {
+        final outerContour =
+            _traceContour(paddedImage, visited, startPoint, isInverted);
+        if (outerContour.length >= 4) {
+          allContours.add(outerContour);
+        }
       }
 
-      contourPoints.add(currentContour);
+      // Limit inner contour detection to safely inside the image boundaries
+      // Note: Changed from y < height - 1 to x < width - 1 in the inner loop condition
+      for (int y = 1; y < height - 1; y++) {
+        for (int x = 1; x < width - 1; x++) {
+          // Skip already visited pixels or foreground pixels
+          if (y >= visited.length ||
+              x >= visited[y].length ||
+              visited[y][x] ||
+              _isForegroundPixel(paddedImage.getPixel(x, y), isInverted)) {
+            continue;
+          }
+
+          if (_isInnerContourPoint(paddedImage, x, y, isInverted)) {
+            final innerStart = Offset(x.toDouble(), y.toDouble());
+            final innerContour =
+                _traceContour(paddedImage, visited, innerStart, isInverted);
+
+            if (innerContour.length >= 4) {
+              allContours.add(innerContour);
+            }
+          }
+        }
+      }
+
+      const borderWidth = 1;
+      final adjustedContours = allContours.map((contour) {
+        return contour
+            .map((point) =>
+                Offset(point.dx - borderWidth, point.dy - borderWidth))
+            .toList();
+      }).toList();
 
       return DetectedOutline(
-        contourPoints: contourPoints,
         boundingRect: Rect.fromLTWH(
-            0, 0, image.width.toDouble(), image.height.toDouble()),
+            0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
+        contourPoints: adjustedContours,
       );
-    } catch (e, stack) {
-      AppLogger.error(
-        '检测轮廓失败',
-        error: e,
-        stackTrace: stack,
+    } catch (e) {
+      // Return an empty outline instead of crashing
+      return DetectedOutline(
+        boundingRect: Rect.fromLTWH(
+            0, 0, binaryImage.width.toDouble(), binaryImage.height.toDouble()),
+        contourPoints: [],
       );
-      rethrow;
     }
   }
 
@@ -536,6 +501,92 @@ class ImageProcessorImpl implements ImageProcessor {
   }
 
   @override
+  img.Image rotateAndCropImage(
+      img.Image sourceImage, Rect region, double rotation) {
+    final center =
+        Offset(region.left + region.width / 2, region.top + region.height / 2);
+
+    if (rotation == 0) {
+      return img.copyCrop(
+        sourceImage,
+        x: region.left.round(),
+        y: region.top.round(),
+        width: region.width.round(),
+        height: region.height.round(),
+      );
+    }
+
+    // 创建目标图像
+    final result =
+        img.Image(width: region.width.round(), height: region.height.round());
+
+    // 创建变换矩阵
+    final cos = math.cos(rotation);
+    final sin = math.sin(rotation);
+
+    // 使用仿射变换进行旋转裁剪
+    for (int y = 0; y < result.height; y++) {
+      for (int x = 0; x < result.width; x++) {
+        // 将目标坐标映射回源图像坐标
+        final srcX = cos * (x - region.width / 2) -
+            sin * (y - region.height / 2) +
+            center.dx;
+        final srcY = sin * (x - region.width / 2) +
+            cos * (y - region.height / 2) +
+            center.dy;
+
+        // 双线性插值获取像素值
+        if (srcX >= 0 &&
+            srcX < sourceImage.width - 1 &&
+            srcY >= 0 &&
+            srcY < sourceImage.height - 1) {
+          // 获取周围四个像素点
+          final x0 = srcX.floor();
+          final y0 = srcY.floor();
+          final x1 = x0 + 1;
+          final y1 = y0 + 1;
+
+          // 计算插值权重
+          final wx = srcX - x0;
+          final wy = srcY - y0;
+
+          // 获取四个角的像素值
+          final p00 = sourceImage.getPixel(x0, y0);
+          final p01 = sourceImage.getPixel(x0, y1);
+          final p10 = sourceImage.getPixel(x1, y0);
+          final p11 = sourceImage.getPixel(x1, y1);
+
+          // 进行双线性插值
+          final r = ((1 - wx) * (1 - wy) * p00.r +
+                  wx * (1 - wy) * p10.r +
+                  (1 - wx) * wy * p01.r +
+                  wx * wy * p11.r)
+              .round();
+          final g = ((1 - wx) * (1 - wy) * p00.g +
+                  wx * (1 - wy) * p10.g +
+                  (1 - wx) * wy * p01.g +
+                  wx * wy * p11.g)
+              .round();
+          final b = ((1 - wx) * (1 - wy) * p00.b +
+                  wx * (1 - wy) * p10.b +
+                  (1 - wx) * wy * p01.b +
+                  wx * wy * p11.b)
+              .round();
+          final a = ((1 - wx) * (1 - wy) * p00.a +
+                  wx * (1 - wy) * p10.a +
+                  (1 - wx) * wy * p01.a +
+                  wx * wy * p11.a)
+              .round();
+
+          result.setPixelRgba(x, y, r, g, b, a);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  @override
   Future<File> rotateImage(File input, int degrees) async {
     try {
       final bytes = await input.readAsBytes();
@@ -570,7 +621,8 @@ class ImageProcessorImpl implements ImageProcessor {
     try {
       // 尝试解码图像以验证数据有效性
       final codec = await ui.instantiateImageCodec(data);
-      final frame = await codec.getNextFrame();
+      await codec.getNextFrame();
+
       return true;
     } catch (e) {
       AppLogger.warning('图像数据验证失败',
@@ -589,5 +641,227 @@ class ImageProcessorImpl implements ImageProcessor {
       tempPath,
       '$prefix${DateTime.now().millisecondsSinceEpoch}.tmp',
     );
+  }
+
+  static img.Image _addBorderToImage(img.Image source, bool isInverted) {
+    const borderWidth = 1;
+    final width = source.width + borderWidth * 2;
+    final height = source.height + borderWidth * 2;
+    final result = img.Image(width: width, height: height);
+
+    isInverted
+        ? img.fill(result, color: img.ColorRgb8(0, 0, 0))
+        : img.fill(result, color: img.ColorRgb8(255, 255, 255));
+
+    for (int y = 0; y < source.height; y++) {
+      for (int x = 0; x < source.width; x++) {
+        result.setPixel(
+            x + borderWidth, y + borderWidth, source.getPixel(x, y));
+      }
+    }
+
+    return result;
+  }
+
+  static Offset? _findFirstContourPoint(img.Image image, bool isInverted) {
+    for (int y = 0; y < image.height; y++) {
+      for (int x = 0; x < image.width; x++) {
+        if (_isForegroundPixel(image.getPixel(x, y), isInverted) &&
+            _isContourPoint(image, x, y, isInverted)) {
+          return Offset(x.toDouble(), y.toDouble());
+        }
+      }
+    }
+    return null;
+  }
+
+  static bool _isContourPoint(img.Image image, int x, int y, bool isInverted) {
+    try {
+      // Ensure coordinates are within image bounds
+      if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        return false;
+      }
+
+      if (!_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+        return false;
+      }
+
+      // Point on the image border is always a contour point
+      if (x == 0 || x == image.width - 1 || y == 0 || y == image.height - 1) {
+        return true;
+      }
+
+      // Check if any neighbor is background
+      final neighbors = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1]
+      ];
+
+      for (final dir in neighbors) {
+        final nx = x + dir[0];
+        final ny = y + dir[1];
+
+        // Skip invalid neighbors
+        if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+          continue;
+        }
+
+        // If any neighbor is background, this is a contour point
+        if (!_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (e) {
+      return false; // Safety fallback
+    }
+  }
+
+  static bool _isForegroundPixel(img.Pixel pixel, bool isInverted) {
+    final luminance = img.getLuminanceRgb(pixel.r, pixel.g, pixel.b);
+    return isInverted ? luminance >= 128 : luminance < 128;
+  }
+
+  static bool _isInnerContourPoint(
+      img.Image image, int x, int y, bool isInverted) {
+    if (_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+      return false;
+    }
+
+    final neighbors = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ];
+
+    for (final dir in neighbors) {
+      final nx = x + dir[0];
+      final ny = y + dir[1];
+
+      if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+        continue;
+      }
+
+      if (_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  static List<Offset> _traceContour(img.Image image, List<List<bool>> visited,
+      Offset start, bool isInverted) {
+    try {
+      final contour = <Offset>[];
+      var x = start.dx.toInt();
+      var y = start.dy.toInt();
+      final startX = x;
+      final startY = y;
+
+      // Safety check - ensure starting point is valid
+      if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        return contour; // Return empty contour for invalid starting point
+      }
+
+      const directions = [
+        [1, 0],
+        [1, 1],
+        [0, 1],
+        [-1, 1],
+        [-1, 0],
+        [-1, -1],
+        [0, -1],
+        [1, -1],
+      ];
+
+      // Limit iterations to prevent infinite loops
+      int maxIterations = image.width * image.height;
+      int iterations = 0;
+      // print('开始跟踪轮廓: 起点 ($x,$y), 最大迭代次数: $maxIterations');
+
+      do {
+        contour.add(Offset(x.toDouble(), y.toDouble()));
+
+        // Mark as visited only if coordinates are valid
+        if (y >= 0 && y < visited.length && x >= 0 && x < visited[y].length) {
+          visited[y][x] = true;
+        }
+
+        var found = false;
+        for (final dir in directions) {
+          final nx = x + dir[0];
+          final ny = y + dir[1];
+
+          // Safe boundary check for next point
+          if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+            continue;
+          }
+
+          // Valid point check for visited array
+          if (ny < 0 ||
+              ny >= visited.length ||
+              nx < 0 ||
+              nx >= visited[ny].length) {
+            continue; // Skip invalid coordinates
+          }
+
+          // Check if this is the starting point and we've completed a loop
+          if (visited[ny][nx]) {
+            if (nx == startX && ny == startY && contour.length > 3) {
+              contour.add(start); // Close the loop
+              return contour;
+            }
+            // Skip already visited pixels, but log for debugging
+            if (iterations % 100 == 0) {
+              // Only log occasionally to avoid spam
+              // print('轮廓跟踪中: 点 ($nx,$ny) 已被访问过，尝试其他方向');
+            }
+            continue;
+          }
+
+          // Only consider points that are part of a contour
+          if (_isContourPoint(image, nx, ny, isInverted)) {
+            x = nx;
+            y = ny;
+            found = true;
+            break;
+          }
+        }
+
+        iterations++;
+
+        // Log diagnostic information if no next point is found
+        if (!found) {
+          if (contour.length > 4) break;
+        }
+
+        // Check for exceeding iteration limit or contour size limit
+        if (iterations > maxIterations) {
+          break;
+        }
+
+        if (contour.length > 100000) {
+          break;
+        }
+      } while (true);
+
+      // If we exited the loop without returning, log the final contour state
+      if (contour.isNotEmpty) {
+        if (contour.length > 4) {}
+      } else {}
+
+      return contour;
+    } catch (e) {
+      return []; // Return empty contour on error
+    }
   }
 }

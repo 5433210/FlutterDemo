@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../practice_edit_controller.dart';
 import 'practice_property_panel_collection.dart';
@@ -320,12 +321,14 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Map<String, dynamic> element,
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
     required VoidCallback onSelectImage,
+    required WidgetRef ref,
   }) {
     return ImagePropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
       onSelectImage: onSelectImage,
+      ref: ref,
     );
   }
 

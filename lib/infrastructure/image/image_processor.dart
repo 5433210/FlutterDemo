@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 
 import '../../domain/models/character/detected_outline.dart';
 
@@ -18,8 +19,7 @@ abstract class ImageProcessor {
       Uint8List image, List<List<Offset>> erasePaths, double brushSize);
 
   /// 二值化图像
-  Future<Uint8List> binarizeImage(
-      Uint8List image, double threshold, bool inverted);
+  img.Image binarizeImage(img.Image source, double threshold, bool inverted);
 
   /// 清理临时文件
   Future<void> cleanupTempFiles();
@@ -42,10 +42,10 @@ abstract class ImageProcessor {
   Future<Uint8List> cropImage(Uint8List sourceImage, Rect region);
 
   /// 降噪处理
-  Future<Uint8List> denoiseImage(Uint8List binaryImage, double noiseReduction);
+  img.Image denoiseImage(img.Image source, double strength);
 
   /// 检测轮廓
-  Future<DetectedOutline> detectOutline(Uint8List binaryImage);
+  DetectedOutline detectOutline(img.Image binaryImage, bool isInverted);
 
   /// 优化图片
   ///
@@ -70,6 +70,15 @@ abstract class ImageProcessor {
     required int width,
     required int height,
   });
+
+  /// 对图像进行基于选区中心的旋转和裁剪处理
+  ///
+  /// [sourceImage] 源图像
+  /// [region] 选区矩形
+  /// [rotation] 旋转角度
+  /// 返回处理后的图像
+  img.Image rotateAndCropImage(
+      img.Image sourceImage, Rect region, double rotation);
 
   /// 旋转图片
   ///

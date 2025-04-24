@@ -1352,6 +1352,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     // 实现选择图片的逻辑
                     await _showImageUrlDialog(context);
                   },
+                  ref: ref,
                 );
                 break;
               case 'collection':
@@ -1926,6 +1927,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
           content['imageUrl'] = fileUrl;
+          // 设置isTransformApplied为true，确保立即显示图片
+          content['isTransformApplied'] = true;
           _controller.updateElementProperties(elementId, {'content': content});
 
           // 显示成功消息

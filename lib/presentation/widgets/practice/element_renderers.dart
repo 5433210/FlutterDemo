@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:demo/presentation/widgets/practice/text_renderer.dart';
 import 'package:flutter/material.dart';
@@ -124,19 +126,27 @@ class ElementRenderers {
   static Widget buildImageElement(Map<String, dynamic> element) {
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
-
-    // 获取图片变换属性
-    final flipHorizontal = content['flipHorizontal'] as bool? ?? false;
-    final flipVertical = content['flipVertical'] as bool? ?? false;
+    final transformedImageUrl = content['transformedImageUrl'] as String?;
     final fitMode = content['fitMode'] as String? ?? 'contain';
 
-    // 裁剪属性
-    final cropTop = (content['cropTop'] as num?)?.toDouble() ?? 0.0;
-    final cropBottom = (content['cropBottom'] as num?)?.toDouble() ?? 0.0;
-    final cropLeft = (content['cropLeft'] as num?)?.toDouble() ?? 0.0;
-    final cropRight = (content['cropRight'] as num?)?.toDouble() ?? 0.0;
+    // 新增支持：直接存储图像数据
+    final String? base64ImageData = content['base64ImageData'] as String?;
+    final Uint8List? rawImageData = content['rawImageData'] as Uint8List?;
 
-    if (imageUrl.isEmpty) {
+    // 处理transformedImageData，可能是Uint8List或List<int>
+    Uint8List? transformedImageData;
+    final dynamic rawTransformedData = content['transformedImageData'];
+    if (rawTransformedData is Uint8List) {
+      transformedImageData = rawTransformedData;
+    } else if (rawTransformedData is List<int>) {
+      transformedImageData = Uint8List.fromList(rawTransformedData);
+    }
+
+    // 如果图片URL为空且没有图像数据，显示占位符
+    if (imageUrl.isEmpty &&
+        base64ImageData == null &&
+        rawImageData == null &&
+        transformedImageData == null) {
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -146,27 +156,16 @@ class ElementRenderers {
       );
     }
 
-    // 创建裁剪区域
-    EdgeInsets cropPadding = EdgeInsets.only(
-      top: cropTop,
-      bottom: cropBottom,
-      left: cropLeft,
-      right: cropRight,
-    );
-
-    // 应用裁剪和变换
-    return Container(
+    // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
+    return SizedBox(
       width: double.infinity,
       height: double.infinity,
-      padding: cropPadding,
-      child: Transform(
-        alignment: Alignment.center,
-        transform: Matrix4.identity()
-          ..scale(
-            flipHorizontal ? -1.0 : 1.0,
-            flipVertical ? -1.0 : 1.0,
-          ),
-        child: _buildImageWidget(imageUrl, fitMode),
+      child: _buildImageWidget(
+        imageUrl: transformedImageUrl ?? imageUrl,
+        fitMode: fitMode,
+        transformedImageData: transformedImageData,
+        base64ImageData: base64ImageData,
+        rawImageData: rawImageData,
       ),
     );
   }
@@ -343,9 +342,154 @@ class ElementRenderers {
     }
   }
 
-  /// 构建图片小部件，根据URL类型选择不同的加载方式
-  static Widget _buildImageWidget(String imageUrl, String fitMode) {
+  /// 构建裁剪后的本地文件图像 - 这个方法现在已不再需要
+  static Widget _buildCroppedFileImage(
+    File file,
+    BoxFit fit,
+    double rectX,
+    double rectY,
+    double rectWidth,
+    double rectHeight,
+    double containerWidth,
+    double containerHeight,
+  ) {
+    // 此方法已不再使用
+    return Container(
+      width: rectWidth,
+      height: rectHeight,
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
+      ),
+    );
+  }
+
+  /// 构建裁剪后的图像 - 这个方法现在已不再需要，因为变换已在应用变换时处理完毕
+  static Widget _buildCroppedImage({
+    required Map<String, dynamic> croppedImageInfo,
+    required String fitMode,
+    required double width,
+    required double height,
+    required double containerWidth,
+    required double containerHeight,
+  }) {
+    // 此方法已不再使用，但保留方法签名以防止编译错误
+    // 实际的图像变换已经在用户点击"应用变换"按钮时处理，
+    // 并将结果保存在content['transformedImageUrl']中
+
+    return Container(
+      width: width,
+      height: height,
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
+      ),
+    );
+  }
+
+  /// 构建裁剪后的网络图像 - 这个方法现在已不再需要
+  static Widget _buildCroppedNetworkImage(
+    String imageUrl,
+    BoxFit fit,
+    double rectX,
+    double rectY,
+    double rectWidth,
+    double rectHeight,
+    double containerWidth,
+    double containerHeight,
+  ) {
+    // 此方法已不再使用
+    return Container(
+      width: rectWidth,
+      height: rectHeight,
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
+      ),
+    );
+  }
+
+  /// 构建图像加载错误的占位Widget
+  static Widget _buildImageErrorWidget(String errorMessage) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      color: Colors.grey.shade200,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.broken_image, size: 48, color: Colors.grey),
+          const SizedBox(height: 8),
+          Text(errorMessage, style: const TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  /// 构建图片小部件，根据数据类型选择不同的加载方式
+  static Widget _buildImageWidget({
+    required String imageUrl,
+    required String fitMode,
+    Uint8List? transformedImageData,
+    Uint8List? rawImageData,
+    String? base64ImageData,
+  }) {
     final BoxFit fit = _getFitMode(fitMode);
+
+    // 优先使用转换后的图像数据
+    if (transformedImageData != null) {
+      return Image.memory(
+        transformedImageData,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('加载内存图片数据失败: $error');
+          return _buildImageErrorWidget('加载内存图片数据失败');
+        },
+      );
+    }
+
+    // 其次使用原始图像数据（raw形式）
+    if (rawImageData != null) {
+      return Image.memory(
+        rawImageData,
+        fit: fit,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          debugPrint('加载原始图片数据失败: $error');
+          return _buildImageErrorWidget('加载原始图片数据失败');
+        },
+      );
+    }
+
+    // 再次使用Base64编码的图像数据
+    if (base64ImageData != null && base64ImageData.isNotEmpty) {
+      try {
+        // 解码Base64数据为二进制
+        final Uint8List decodedBytes = base64Decode(base64ImageData);
+        return Image.memory(
+          decodedBytes,
+          fit: fit,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('解码Base64图片数据失败: $error');
+            return _buildImageErrorWidget('解码Base64图片数据失败');
+          },
+        );
+      } catch (e) {
+        debugPrint('Base64解码错误: $e');
+        return _buildImageErrorWidget('Base64图片数据格式错误');
+      }
+    }
+
+    // 最后使用URL（文件或网络）
+    if (imageUrl.isEmpty) {
+      return _buildImageErrorWidget('没有可用的图像数据');
+    }
 
     // 检查是否是本地文件路径
     if (imageUrl.startsWith('file://')) {
@@ -360,20 +504,7 @@ class ElementRenderers {
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
           debugPrint('加载本地图片失败: $error');
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            alignment: Alignment.center,
-            color: Colors.grey.shade200,
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                SizedBox(height: 8),
-                Text('加载本地图片失败', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          );
+          return _buildImageErrorWidget('加载本地图片失败');
         },
       );
     } else {
@@ -384,20 +515,7 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            alignment: Alignment.center,
-            color: Colors.grey.shade200,
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.broken_image, size: 48, color: Colors.grey),
-                SizedBox(height: 8),
-                Text('加载网络图片失败', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          );
+          return _buildImageErrorWidget('加载网络图片失败');
         },
       );
     }
