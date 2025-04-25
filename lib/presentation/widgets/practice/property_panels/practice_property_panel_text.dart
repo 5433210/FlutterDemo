@@ -402,9 +402,28 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('字体设置:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
+                  // 字号设置
+                  const Text('字号:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
                   Row(
                     children: [
                       Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: fontSize,
+                          min: 1,
+                          max: 100,
+                          divisions: 99,
+                          label: '${fontSize.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('fontSize', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
                         child: EditableNumberField(
                           label: '字号',
                           value: fontSize,
@@ -416,7 +435,14 @@ class TextPropertyPanel extends PracticePropertyPanel {
                           },
                         ),
                       ),
-                      const SizedBox(width: 8.0),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 字体颜色和背景颜色
+                  Row(
+                    children: [
                       // 字体颜色选择器
                       Tooltip(
                         message: '点击选择字体颜色',
