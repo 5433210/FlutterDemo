@@ -128,6 +128,7 @@ class ElementRenderers {
     final imageUrl = content['imageUrl'] as String? ?? '';
     final transformedImageUrl = content['transformedImageUrl'] as String?;
     final fitMode = content['fitMode'] as String? ?? 'contain';
+    final backgroundColor = content['backgroundColor'] as String?;
 
     // 新增支持：直接存储图像数据
     final String? base64ImageData = content['base64ImageData'] as String?;
@@ -142,6 +143,25 @@ class ElementRenderers {
       transformedImageData = Uint8List.fromList(rawTransformedData);
     }
 
+    // 解析背景颜色
+    Color? bgColor;
+    if (backgroundColor != null && backgroundColor.isNotEmpty) {
+      try {
+        // 处理带#前缀的颜色代码
+        final colorStr = backgroundColor.startsWith('#')
+            ? backgroundColor.substring(1)
+            : backgroundColor;
+
+        // 添加FF前缀表示完全不透明
+        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
+
+        // 解析颜色
+        bgColor = Color(int.parse(fullColorStr, radix: 16));
+      } catch (e) {
+        debugPrint('解析背景颜色失败: $e');
+      }
+    }
+
     // 如果图片URL为空且没有图像数据，显示占位符
     if (imageUrl.isEmpty &&
         base64ImageData == null &&
@@ -151,15 +171,16 @@ class ElementRenderers {
         width: double.infinity,
         height: double.infinity,
         alignment: Alignment.center,
-        color: Colors.grey.shade200,
+        color: bgColor ?? Colors.grey.shade200,
         child: const Icon(Icons.image, size: 48, color: Colors.grey),
       );
     }
 
     // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
-    return SizedBox(
+    return Container(
       width: double.infinity,
       height: double.infinity,
+      color: bgColor, // 应用背景颜色
       child: _buildImageWidget(
         imageUrl: transformedImageUrl ?? imageUrl,
         fitMode: fitMode,

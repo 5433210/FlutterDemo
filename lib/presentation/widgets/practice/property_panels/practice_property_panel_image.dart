@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
+import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
@@ -352,6 +353,25 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                         child: Text('${(opacity * 100).toStringAsFixed(0)}%'),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 背景颜色选择器
+                  const Text('背景颜色:'),
+                  const SizedBox(height: 8.0),
+                  ColorPaletteWidget(
+                    initialColor: _getBackgroundColor(),
+                    labelText: '背景颜色',
+                    onColorChanged: (color) {
+                      // 将颜色转换为十六进制字符串
+                      final hexColor =
+                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                      debugPrint('选择的背景颜色: $hexColor');
+
+                      // 更新内容属性
+                      _updateContentProperty('backgroundColor', hexColor);
+                    },
                   ),
                 ],
               ),
@@ -1628,6 +1648,32 @@ class ImagePropertyPanel extends PracticePropertyPanel {
           math.min(imageSize.height, containerSize.height),
         );
     }
+  }
+
+  // 获取背景颜色
+  Color _getBackgroundColor() {
+    final content = element['content'] as Map<String, dynamic>;
+    final backgroundColor = content['backgroundColor'] as String?;
+
+    if (backgroundColor != null && backgroundColor.isNotEmpty) {
+      try {
+        // 处理带#前缀的颜色代码
+        final colorStr = backgroundColor.startsWith('#')
+            ? backgroundColor.substring(1)
+            : backgroundColor;
+
+        // 添加FF前缀表示完全不透明
+        final fullColorStr = colorStr.length == 6 ? 'FF$colorStr' : colorStr;
+
+        // 解析颜色
+        return Color(int.parse(fullColorStr, radix: 16));
+      } catch (e) {
+        debugPrint('解析背景颜色失败: $e');
+      }
+    }
+
+    // 默认返回透明色
+    return Colors.transparent;
   }
 
   // 获取适应模式
