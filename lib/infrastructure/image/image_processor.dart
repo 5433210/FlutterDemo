@@ -14,6 +14,16 @@ abstract class ImageProcessor {
   /// 缩略图缓存目录
   String get thumbnailCachePath;
 
+  /// 应用颜色变换
+  ///
+  /// 对图像应用颜色变换
+  /// [sourceImage] 源图像
+  /// [color] 目标颜色
+  /// [opacity] 不透明度
+  /// [invert] 是否反转颜色
+  img.Image applyColorTransform(
+      img.Image sourceImage, Color color, double opacity, bool invert);
+
   /// 应用擦除区域
   Future<Uint8List> applyEraseMask(
       Uint8List image, List<List<Offset>> erasePaths, double brushSize);
@@ -52,6 +62,15 @@ abstract class ImageProcessor {
   /// 优化图片质量和大小
   Future<File> optimizeImage(File input);
 
+  /// 处理集字图像
+  ///
+  /// 根据变换参数处理集字图像
+  /// [sourceImage] 源图像数据
+  /// [format] 图像格式（png-binary, png-transparent, svg-outline）
+  /// [transform] 变换参数
+  Future<Uint8List> processCharacterImage(
+      Uint8List sourceImage, String format, Map<String, dynamic> transform);
+
   /// 处理图片
   ///
   /// 按指定尺寸和质量处理图片
@@ -61,6 +80,18 @@ abstract class ImageProcessor {
     required int maxHeight,
     required int quality,
   });
+
+  /// 处理SVG轮廓
+  ///
+  /// 处理SVG轮廓图像
+  /// [svgContent] SVG内容
+  /// [color] 目标颜色
+  /// [opacity] 不透明度
+  /// [scale] 缩放比例
+  /// [rotation] 旋转角度
+  /// [invert] 是否反转颜色
+  Future<Uint8List> processSvgOutline(String svgContent, Color color,
+      double opacity, double scale, double rotation, bool invert);
 
   /// 调整图片大小
   ///

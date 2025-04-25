@@ -1,11 +1,13 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
-import 'dart:ui';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as path;
+import 'package:xml/xml.dart';
 
 import '../../domain/models/character/detected_outline.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -22,6 +24,82 @@ class ImageProcessorImpl implements ImageProcessor {
 
   @override
   String get thumbnailCachePath => path.join(_cachePath, 'thumbnails');
+
+  @override
+  img.Image applyColorTransform(
+      img.Image sourceImage, Color color, double opacity, bool invert) {
+    try {
+      // 创建新图像
+      final resultImage = img.Image(
+        width: sourceImage.width,
+        height: sourceImage.height,
+      );
+
+      // 应用颜色、不透明度和反转
+      for (int y = 0; y < sourceImage.height; y++) {
+        for (int x = 0; x < sourceImage.width; x++) {
+          final pixel = sourceImage.getPixel(x, y);
+          final r = pixel.r;
+          final g = pixel.g;
+          final b = pixel.b;
+          final a = pixel.a;
+
+          if (a > 0) {
+            // 计算亮度（简化版）
+            final brightness = (r + g + b) / 3;
+
+            // 应用反转
+            int newR, newG, newB, newA;
+
+            if (invert) {
+              // 反转颜色
+              if (brightness < 128) {
+                // 原来是深色（如黑色），变为浅色（使用指定颜色）
+                newR = color.red;
+                newG = color.green;
+                newB = color.blue;
+                newA = (a * opacity).round();
+              } else {
+                // 原来是浅色（如白色），变为透明
+                newR = newG = newB = 0;
+                newA = 0;
+              }
+            } else {
+              // 不反转，但应用颜色
+              if (brightness < 128) {
+                // 深色部分应用指定颜色
+                newR = color.red;
+                newG = color.green;
+                newB = color.blue;
+                newA = (a * opacity).round();
+              } else {
+                // 浅色部分保持原样或变透明（取决于图像类型）
+                newR = newG = newB = 255;
+                newA = (a * opacity).round();
+              }
+            }
+
+            resultImage.setPixel(x, y, img.ColorRgba8(newR, newG, newB, newA));
+          }
+        }
+      }
+
+      return resultImage;
+    } catch (e, stack) {
+      AppLogger.error(
+        '应用颜色变换失败',
+        error: e,
+        stackTrace: stack,
+        data: {
+          'color': color.toString(),
+          'opacity': opacity,
+          'invert': invert,
+        },
+      );
+      // 返回原图像作为降级处理
+      return sourceImage;
+    }
+  }
 
   @override
   Future<Uint8List> applyEraseMask(
@@ -401,6 +479,42 @@ class ImageProcessorImpl implements ImageProcessor {
   }
 
   @override
+  Future<Uint8List> processCharacterImage(Uint8List sourceImage, String format,
+      Map<String, dynamic> transform) async {
+    try {
+      // 解析变换参数
+      final scale = transform['scale'] as double? ?? 1.0;
+      final rotation = transform['rotation'] as double? ?? 0.0;
+      final colorStr = transform['color'] as String? ?? '#000000';
+      final opacity = transform['opacity'] as double? ?? 1.0;
+      final invert = transform['invert'] as bool? ?? false;
+
+      // 解析颜色
+      final color = _parseColor(colorStr);
+
+      // 根据不同格式选择不同的处理方法
+      if (format == 'png-binary' || format == 'png-transparent') {
+        return _processPngImage(
+            sourceImage, color, opacity, scale, rotation, invert);
+      } else if (format == 'svg-outline') {
+        final svgString = utf8.decode(sourceImage);
+        return processSvgOutline(
+            svgString, color, opacity, scale, rotation, invert);
+      } else {
+        throw Exception('Unsupported image format: $format');
+      }
+    } catch (e, stack) {
+      AppLogger.error(
+        '处理集字图像失败',
+        error: e,
+        stackTrace: stack,
+        data: {'format': format, 'transform': transform.toString()},
+      );
+      rethrow;
+    }
+  }
+
+  @override
   Future<File> processImage(
     File input, {
     required int maxWidth,
@@ -445,6 +559,64 @@ class ImageProcessorImpl implements ImageProcessor {
           'maxWidth': maxWidth,
           'maxHeight': maxHeight,
           'quality': quality,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Uint8List> processSvgOutline(String svgContent, Color color,
+      double opacity, double scale, double rotation, bool invert) async {
+    try {
+      // 创建一个XML解析器
+      final document = XmlDocument.parse(svgContent);
+
+      // 获取SVG根元素
+      final svgElement = document.rootElement;
+
+      // 应用颜色和反转
+      _applySvgColor(svgElement, color, invert);
+
+      // 应用不透明度
+      if (opacity < 1.0) {
+        svgElement.setAttribute('opacity', opacity.toString());
+      }
+
+      // 应用缩放和旋转
+      if (scale != 1.0 || rotation != 0.0) {
+        final transformList = <String>[];
+        if (scale != 1.0) {
+          transformList.add('scale($scale)');
+        }
+        if (rotation != 0.0) {
+          transformList.add('rotate($rotation)');
+        }
+
+        final existingTransform = svgElement.getAttribute('transform') ?? '';
+        final newTransform = existingTransform.isEmpty
+            ? transformList.join(' ')
+            : '$existingTransform ${transformList.join(' ')}';
+
+        svgElement.setAttribute('transform', newTransform);
+      }
+
+      // 将修改后的SVG转换回字符串
+      final modifiedSvgString = document.toXmlString();
+
+      // 将SVG转换为PNG
+      return _svgToPng(modifiedSvgString);
+    } catch (e, stack) {
+      AppLogger.error(
+        '处理SVG轮廓失败',
+        error: e,
+        stackTrace: stack,
+        data: {
+          'color': color.toString(),
+          'opacity': opacity,
+          'scale': scale,
+          'rotation': rotation,
+          'invert': invert,
         },
       );
       rethrow;
@@ -667,6 +839,33 @@ class ImageProcessorImpl implements ImageProcessor {
     }
   }
 
+  // 在SVG中应用颜色和反转
+  void _applySvgColor(XmlElement element, Color color, bool invert) {
+    // 移除fill和stroke属性
+    element.removeAttribute('fill');
+    element.removeAttribute('stroke');
+
+    // 颜色字符串
+    final colorStr = '#${color.value.toRadixString(16).substring(2)}';
+
+    // 添加新的颜色
+    if (invert) {
+      // 反转颜色：轮廓填充为背景色，背景为透明
+      element.setAttribute('fill', 'none');
+      element.setAttribute('stroke', colorStr);
+      element.setAttribute('stroke-width', '1');
+    } else {
+      // 正常颜色：轮廓填充为指定颜色
+      element.setAttribute('fill', colorStr);
+      element.setAttribute('stroke', 'none');
+    }
+
+    // 递归处理子元素
+    for (final child in element.childElements) {
+      _applySvgColor(child, color, invert);
+    }
+  }
+
   /// 创建临时文件路径
   Future<String> _createTempFilePath(String prefix) async {
     final dir = Directory(tempPath);
@@ -677,6 +876,220 @@ class ImageProcessorImpl implements ImageProcessor {
       tempPath,
       '$prefix${DateTime.now().millisecondsSinceEpoch}.tmp',
     );
+  }
+
+  // 解析颜色
+  Color _parseColor(String colorStr) {
+    try {
+      if (colorStr.startsWith('#')) {
+        String hexColor = colorStr.substring(1);
+
+        // 处理不同长度的十六进制颜色
+        if (hexColor.length == 3) {
+          // 将 #RGB 转换为 #RRGGBB
+          hexColor = hexColor.split('').map((c) => '$c$c').join('');
+        }
+
+        if (hexColor.length == 6) {
+          // 添加完全不透明的alpha通道
+          hexColor = 'FF$hexColor';
+        } else if (hexColor.length == 8) {
+          // 已经包含alpha通道
+        } else {
+          return Colors.black;
+        }
+
+        return Color(int.parse(hexColor, radix: 16));
+      }
+      return Colors.black;
+    } catch (e) {
+      AppLogger.error('解析颜色失败: $colorStr', error: e);
+      return Colors.black;
+    }
+  }
+
+  // 处理PNG图片
+  Future<Uint8List> _processPngImage(Uint8List sourceImage, Color color,
+      double opacity, double scale, double rotation, bool invert) async {
+    try {
+      // 解码图像
+      final image = img.decodeImage(sourceImage);
+      if (image == null) {
+        throw Exception('Failed to decode PNG image');
+      }
+
+      // 应用缩放
+      final scaledImage = img.copyResize(
+        image,
+        width: (image.width * scale).round(),
+        height: (image.height * scale).round(),
+      );
+
+      // 应用旋转
+      final rotatedImage = rotation != 0.0
+          ? img.copyRotate(scaledImage, angle: rotation)
+          : scaledImage;
+
+      // 应用颜色变换
+      final resultImage =
+          applyColorTransform(rotatedImage, color, opacity, invert);
+
+      // 编码为PNG
+      return Uint8List.fromList(img.encodePng(resultImage));
+    } catch (e, stack) {
+      AppLogger.error(
+        '处理PNG图像失败',
+        error: e,
+        stackTrace: stack,
+        data: {
+          'color': color.toString(),
+          'opacity': opacity,
+          'scale': scale,
+          'rotation': rotation,
+          'invert': invert,
+        },
+      );
+      rethrow;
+    }
+  }
+
+  // 将SVG转换为PNG
+  Future<Uint8List> _svgToPng(String svgString) async {
+    try {
+      // 解析SVG文档
+      final document = XmlDocument.parse(svgString);
+      final svgElement = document.rootElement;
+
+      // 获取SVG的宽度和高度
+      final widthAttr = svgElement.getAttribute('width');
+      final heightAttr = svgElement.getAttribute('height');
+
+      // 解析宽度和高度，默认为100
+      final width = widthAttr != null ? double.tryParse(widthAttr) ?? 100 : 100;
+      final height =
+          heightAttr != null ? double.tryParse(heightAttr) ?? 100 : 100;
+
+      // 创建一个PNG图像
+      final image = img.Image(width: width.toInt(), height: height.toInt());
+
+      // 填充白色背景
+      img.fill(image, color: img.ColorRgb8(255, 255, 255));
+
+      // 获取路径元素
+      final pathElements = svgElement.findAllElements('path');
+
+      // 如果有路径元素，尝试绘制简单的轮廓
+      if (pathElements.isNotEmpty) {
+        for (final pathElement in pathElements) {
+          final dAttr = pathElement.getAttribute('d');
+          if (dAttr != null) {
+            // 解析路径数据
+            final pathData = dAttr.split(' ');
+
+            // 简单的路径解析和绘制
+            int? lastX, lastY;
+
+            for (int i = 0; i < pathData.length; i++) {
+              final cmd = pathData[i];
+
+              if (cmd == 'M' && i + 2 < pathData.length) {
+                // 移动到点
+                final coords = pathData[i + 1].split(',');
+                if (coords.length == 2) {
+                  lastX = double.tryParse(coords[0])?.toInt();
+                  lastY = double.tryParse(coords[1])?.toInt();
+                  i += 1;
+                }
+              } else if (cmd == 'L' && i + 2 < pathData.length) {
+                // 画线到点
+                final coords = pathData[i + 1].split(',');
+                if (coords.length == 2 && lastX != null && lastY != null) {
+                  final x = double.tryParse(coords[0])?.toInt();
+                  final y = double.tryParse(coords[1])?.toInt();
+
+                  if (x != null && y != null) {
+                    // 绘制线段
+                    img.drawLine(
+                      image,
+                      x1: lastX,
+                      y1: lastY,
+                      x2: x,
+                      y2: y,
+                      color: img.ColorRgb8(0, 0, 0),
+                      thickness: 1,
+                    );
+
+                    lastX = x;
+                    lastY = y;
+                  }
+                  i += 1;
+                }
+              }
+            }
+          }
+        }
+      } else {
+        // 如果没有路径元素，绘制一个简单的占位图形
+        final centerX = width ~/ 2;
+        final centerY = height ~/ 2;
+        final radius = math.min(width, height) ~/ 4;
+
+        // 绘制一个圆形
+        img.drawCircle(
+          image,
+          x: centerX,
+          y: centerY,
+          radius: radius,
+          color: img.ColorRgb8(0, 0, 0),
+        );
+      }
+
+      // 编码为PNG
+      return Uint8List.fromList(img.encodePng(image));
+    } catch (e, stack) {
+      AppLogger.error(
+        '将SVG转换为PNG失败',
+        error: e,
+        stackTrace: stack,
+      );
+
+      // 创建一个简单的占位图像
+      final image = img.Image(width: 100, height: 100);
+      img.fill(image, color: img.ColorRgb8(240, 240, 240));
+
+      // 绘制一个简单的图形表示错误
+      img.drawRect(
+        image,
+        x1: 20,
+        y1: 20,
+        x2: 80,
+        y2: 80,
+        color: img.ColorRgb8(200, 200, 200),
+        thickness: 2,
+      );
+
+      // 绘制一个X
+      img.drawLine(
+        image,
+        x1: 30,
+        y1: 30,
+        x2: 70,
+        y2: 70,
+        color: img.ColorRgb8(150, 150, 150),
+        thickness: 2,
+      );
+      img.drawLine(
+        image,
+        x1: 70,
+        y1: 30,
+        x2: 30,
+        y2: 70,
+        color: img.ColorRgb8(150, 150, 150),
+        thickness: 2,
+      );
+
+      return Uint8List.fromList(img.encodePng(image));
+    }
   }
 
   static img.Image _addBorderToImage(img.Image source, bool isInverted) {

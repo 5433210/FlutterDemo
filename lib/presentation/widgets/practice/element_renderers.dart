@@ -2,14 +2,19 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
-import 'package:demo/presentation/widgets/practice/text_renderer.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../application/providers/service_providers.dart';
+import 'text_renderer.dart';
 
 /// 元素渲染器，负责渲染不同类型的元素
 class ElementRenderers {
   /// 构建集字元素
-  static Widget buildCollectionElement(Map<String, dynamic> element) {
+  static Widget buildCollectionElement(Map<String, dynamic> element,
+      {WidgetRef? ref}) {
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
@@ -26,7 +31,21 @@ class ElementRenderers {
     final verticalAlign = content['verticalAlign'] as String? ?? 'top';
 
     // 获取集字图片列表（实际应用中应该从数据库或其他存储中获取）
-    final characterImages = content['characterImages'] as List<dynamic>? ?? [];
+    final characterImages = content['characterImages'];
+
+    // 添加调试信息
+    debugPrint('集字图片列表类型: ${characterImages?.runtimeType}');
+    if (characterImages != null) {
+      if (characterImages is Map) {
+        debugPrint('集字图片列表是Map类型，键: ${(characterImages).keys.join(", ")}');
+      } else if (characterImages is List) {
+        debugPrint('集字图片列表是List类型，长度: ${(characterImages).length}');
+      } else {
+        debugPrint('集字图片列表是其他类型');
+      }
+    } else {
+      debugPrint('集字图片列表为空');
+    }
 
     return Container(
       width: double.infinity,
@@ -48,7 +67,7 @@ class ElementRenderers {
               lineSpacing: lineSpacing,
               textAlign: textAlign,
               verticalAlign: verticalAlign,
-              characterImages: characterImages,
+              characterImages: characterImages is List ? characterImages : [],
               constraints: BoxConstraints(
                 maxWidth: availableWidth,
                 maxHeight: availableHeight,
@@ -56,6 +75,7 @@ class ElementRenderers {
               padding: padding,
               fontColor: fontColorStr,
               backgroundColor: backgroundColorStr,
+              ref: ref,
             ),
           );
         },
@@ -65,7 +85,7 @@ class ElementRenderers {
 
   /// 构建组合元素
   static Widget buildGroupElement(Map<String, dynamic> element,
-      {bool isSelected = false}) {
+      {bool isSelected = false, WidgetRef? ref}) {
     final content = element['content'] as Map<String, dynamic>;
     final List<dynamic> children = content['children'] as List<dynamic>;
 
@@ -95,11 +115,12 @@ class ElementRenderers {
                 childWidget = buildImageElement(child);
                 break;
               case 'collection':
-                childWidget = buildCollectionElement(child);
+                childWidget = buildCollectionElement(child, ref: ref);
                 break;
               case 'group':
                 // 递归处理嵌套组合，并传递选中状态
-                childWidget = buildGroupElement(child, isSelected: isSelected);
+                childWidget =
+                    buildGroupElement(child, isSelected: isSelected, ref: ref);
                 break;
               default:
                 childWidget = Container(
@@ -318,11 +339,12 @@ class ElementRenderers {
     required double lineSpacing,
     required String textAlign,
     required String verticalAlign,
-    required List<dynamic> characterImages,
+    required List<dynamic> characterImages, // 可以是字符图片列表或空列表
     required BoxConstraints constraints,
     required double padding,
     String fontColor = '#000000',
     String backgroundColor = 'transparent',
+    WidgetRef? ref,
   }) {
     if (characters.isEmpty) {
       return const Center(
@@ -385,6 +407,7 @@ class ElementRenderers {
         positions: positions,
         fontSize: fontSize,
         characterImages: characterImages,
+        ref: ref,
       ),
     );
   }
@@ -935,8 +958,7 @@ class ElementRenderers {
       final colorValue = int.parse(hexString, radix: 16);
       final color = Color(colorValue);
 
-      debugPrint(
-          '颜色解析结果: $colorStr -> $color (R:${color.red}, G:${color.green}, B:${color.blue})');
+      debugPrint('颜色解析结果: $colorStr -> $color');
 
       return color;
     } catch (e) {
@@ -971,12 +993,14 @@ class _CollectionPainter extends CustomPainter {
   final List<_CharacterPosition> positions;
   final double fontSize;
   final List<dynamic> characterImages;
+  final WidgetRef? ref;
 
   _CollectionPainter({
     required this.characters,
     required this.positions,
     required this.fontSize,
     required this.characterImages,
+    this.ref,
   });
 
   @override
@@ -1006,9 +1030,7 @@ class _CollectionPainter extends CustomPainter {
 
   /// 绘制字符图片
   void _drawCharacterImage(
-      Canvas canvas, _CharacterPosition position, dynamic charImage) {
-    // 获取图片数据 (实际应用中应该使用这些数据来加载图片)
-
+      Canvas canvas, _CharacterPosition position, dynamic charImage) async {
     // 创建绘制区域
     final rect = Rect.fromLTWH(
       position.x,
@@ -1023,33 +1045,57 @@ class _CollectionPainter extends CustomPainter {
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
-    } else {
-      // 绘制默认占位符背景
-      final paint = Paint()
-        ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, paint);
     }
 
-    // 绘制字符文本作为占位符
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: position.char,
-        style: TextStyle(
-          fontSize: position.size * 0.7,
-          color: position.fontColor,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      Offset(
-        position.x + (position.size - textPainter.width) / 2,
-        position.y + (position.size - textPainter.height) / 2,
-      ),
-    );
+    // 检查是否有字符图像信息
+    if (charImage != null &&
+        charImage['characterId'] != null &&
+        charImage['type'] != null &&
+        charImage['format'] != null) {
+      // 获取字符图像数据
+      final characterId = charImage['characterId'] as String;
+      final type = charImage['type'] as String;
+      final format = charImage['format'] as String;
+
+      // 加载图像数据
+      Uint8List? imageData;
+      if (ref != null) {
+        try {
+          final characterImageService =
+              ref!.read(characterImageServiceProvider);
+          imageData = await characterImageService.getCharacterImage(
+              characterId, type, format);
+        } catch (e) {
+          debugPrint('加载字符图像失败: $e');
+        }
+      }
+
+      if (imageData != null) {
+        // 解码图像
+        ui.decodeImageFromList(imageData, (ui.Image image) {
+          // 创建绘制图像的Paint
+          final paint = Paint()
+            ..filterQuality = FilterQuality.high
+            ..isAntiAlias = true;
+
+          // 计算图像绘制区域，保持宽高比
+          final srcRect = Rect.fromLTWH(
+              0, 0, image.width.toDouble(), image.height.toDouble());
+
+          // 绘制图像
+          canvas.drawImageRect(
+            image,
+            srcRect,
+            rect,
+            paint,
+          );
+        });
+      } else {
+        _drawPlaceholder(canvas, position);
+      }
+    } else {
+      _drawPlaceholder(canvas, position);
+    }
   }
 
   /// 绘制字符文本
@@ -1097,14 +1143,125 @@ class _CollectionPainter extends CustomPainter {
     );
   }
 
+  /// 绘制占位符
+  void _drawPlaceholder(Canvas canvas, _CharacterPosition position) {
+    // 创建绘制区域
+    final rect = Rect.fromLTWH(
+      position.x,
+      position.y,
+      position.size,
+      position.size,
+    );
+
+    // 绘制默认占位符背景
+    final paint = Paint()
+      ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, paint);
+
+    // 绘制字符文本作为占位符
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: position.char,
+        style: TextStyle(
+          fontSize: position.size * 0.7,
+          color: position.fontColor,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        position.x + (position.size - textPainter.width) / 2,
+        position.y + (position.size - textPainter.height) / 2,
+      ),
+    );
+  }
+
   /// 查找字符对应的图片
   dynamic _findCharacterImage(String char) {
-    // 在characterImages中查找对应字符的图片
-    for (final image in characterImages) {
-      if (image['character'] == char) {
-        return image;
+    try {
+      debugPrint(
+          '查找字符图像: $char, characterImages类型: ${characterImages.runtimeType}');
+
+      // 检查 characterImages 是否是 Map 类型
+      if (characterImages is Map<String, dynamic>) {
+        debugPrint('characterImages是Map类型');
+        // 如果是 Map 类型，则直接查找字符索引
+        final charImages = characterImages as Map<String, dynamic>;
+
+        // 查找当前字符在集字内容中的索引
+        int charIndex = -1;
+        for (int i = 0; i < characters.length; i++) {
+          if (characters[i] == char) {
+            charIndex = i;
+            break;
+          }
+        }
+
+        debugPrint('字符索引: $charIndex');
+
+        // 如果找到了字符索引，则查找对应的图像信息
+        if (charIndex >= 0 && charImages.containsKey('characterImages')) {
+          final images = charImages['characterImages'] as Map<String, dynamic>?;
+          debugPrint('characterImages中的images: ${images?.keys.join(", ")}');
+
+          if (images != null && images.containsKey('$charIndex')) {
+            final imageInfo = images['$charIndex'] as Map<String, dynamic>;
+            debugPrint('找到图像信息: $imageInfo');
+
+            return {
+              'characterId': imageInfo['characterId'],
+              'type': imageInfo['type'],
+              'format': imageInfo['format'],
+            };
+          }
+        }
+      } else {
+        final charImagesList = characterImages;
+        debugPrint('characterImages是List类型，长度: ${charImagesList.length}');
+
+        // 如果是 List 类型，则遍历查找
+        for (final image in charImagesList) {
+          if (image is Map<String, dynamic>) {
+            // 检查是否有字符信息
+            if (image.containsKey('character') && image['character'] == char) {
+              debugPrint('找到匹配的字符: ${image['character']}');
+
+              // 检查是否有字符图像信息
+              if (image.containsKey('characterId') &&
+                  image.containsKey('type') &&
+                  image.containsKey('format')) {
+                debugPrint('找到图像信息: $image');
+
+                return {
+                  'characterId': image['characterId'],
+                  'type': image['type'],
+                  'format': image['format'],
+                };
+              }
+            } else if (image.containsKey('characterId') &&
+                image.containsKey('type') &&
+                image.containsKey('format')) {
+              // 如果没有字符信息，但有图像信息，也返回
+              debugPrint('找到图像信息（无字符匹配）: $image');
+
+              return {
+                'characterId': image['characterId'],
+                'type': image['type'],
+                'format': image['format'],
+              };
+            }
+          }
+        }
       }
+    } catch (e) {
+      debugPrint('查找字符图像失败: $e');
     }
+
+    debugPrint('未找到字符图像: $char');
     return null;
   }
 }

@@ -1,12 +1,21 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../../../application/providers/service_providers.dart';
+import '../../../../application/services/character/character_service.dart';
+import '../../../../domain/models/character/character_entity.dart';
+import '../../../../domain/models/character/character_region.dart';
+import '../../../../domain/models/character/processing_options.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
 import 'layer_info_panel.dart';
 
 /// 集字内容属性面板
-class CollectionPropertyPanel extends StatefulWidget {
+class CollectionPropertyPanel extends ConsumerStatefulWidget {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final Function(String) onUpdateChars;
@@ -21,16 +30,18 @@ class CollectionPropertyPanel extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<CollectionPropertyPanel> createState() =>
+  ConsumerState<CollectionPropertyPanel> createState() =>
       _CollectionPropertyPanelState();
 }
 
-class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
+class _CollectionPropertyPanelState
+    extends ConsumerState<CollectionPropertyPanel> {
   // 当前选中的字符索引
   int _selectedCharIndex = 0;
 
   // 当前选中字符的候选集字列表
-  List<Map<String, dynamic>> _candidateCharacters = [];
+  List<CharacterEntity> _candidateCharacters = [];
+  bool _isLoadingCharacters = false;
 
   // 文本控制器
   final TextEditingController _textController = TextEditingController();
@@ -640,6 +651,7 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
   @override
   void initState() {
     super.initState();
+    _initCharacterImages();
     // 初始化文本控制器
     final content = widget.element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
@@ -650,16 +662,47 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
 
   // 构建候选集字
   Widget _buildCandidateCharacters() {
+    debugPrint('构建候选集字面板，候选集字数量: ${_candidateCharacters.length}');
+
     if (_candidateCharacters.isEmpty) {
+      debugPrint('没有候选集字，显示提示信息');
       return Container(
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(4.0),
         ),
-        child: const Center(
-          child: Text('无候选集字', style: TextStyle(color: Colors.grey)),
-        ),
+        child: _isLoadingCharacters
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Center(
+                    child: Text('无候选集字', style: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('当前作品ID: ${widget.controller.practiceId ?? "未设置"}',
+                      style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          _loadCandidateCharacters();
+                        },
+                        child: const Text('重新加载'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          _showAddCharacterDialog();
+                        },
+                        child: const Text('手动添加'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
       );
     }
 
@@ -669,46 +712,332 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
         ? characters[_selectedCharIndex]
         : '';
 
+    debugPrint(
+        '当前选中字符: "$selectedChar", 索引: $_selectedCharIndex, 总字符: "$characters"');
+
+    // 过滤出与当前选中字符匹配的候选集字
+    final matchingCharacters = _candidateCharacters
+        .where((entity) => entity.character == selectedChar)
+        .toList();
+
+    debugPrint('匹配的候选集字数量: ${matchingCharacters.length}');
+
+    if (matchingCharacters.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(4.0),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Center(
+              child: Text('无匹配的候选集字', style: TextStyle(color: Colors.grey)),
+            ),
+            const SizedBox(height: 8),
+            Text('当前选中字符: "$selectedChar"',
+                style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            if (_candidateCharacters.isNotEmpty)
+              Text(
+                  '可用字符: ${_candidateCharacters.map((e) => e.character).join(", ")}',
+                  style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                _showAddCharacterDialog();
+              },
+              child: const Text('手动添加此字符'),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(4.0),
       ),
-      child: Wrap(
-        spacing: 8.0,
-        runSpacing: 8.0,
-        children: List.generate(
-          _candidateCharacters.length,
-          (index) => Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Text(
-                    '$selectedChar${_getSubscript(index + 1)}',
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-                Positioned(
-                  right: 2,
-                  bottom: 2,
-                  child: Icon(
-                    Icons.check_circle,
-                    size: 16,
-                    color: index == 0 ? Colors.green : Colors.transparent,
-                  ),
-                ),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8.0),
+            child:
+                Text('候选集字列表', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          Wrap(
+            spacing: 8.0,
+            runSpacing: 8.0,
+            children: List.generate(
+              matchingCharacters.length,
+              (index) {
+                final entity = matchingCharacters[index];
+
+                // 检查当前元素是否已经选中
+                final content =
+                    widget.element['content'] as Map<String, dynamic>;
+                final characterImages =
+                    content['characterImages'] as Map<String, dynamic>? ?? {};
+                final imageInfo = characterImages['$_selectedCharIndex']
+                    as Map<String, dynamic>?;
+                final isSelected =
+                    imageInfo != null && imageInfo['characterId'] == entity.id;
+
+                return FutureBuilder<Map<String, String>?>(
+                  future: ref
+                      .read(characterImageServiceProvider)
+                      .getAvailableFormat(entity.id),
+                  builder: (context, snapshot) {
+                    return GestureDetector(
+                      onTap: () => _selectCandidateCharacter(entity),
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color:
+                                isSelected ? Colors.blue : Colors.grey.shade300,
+                            width: isSelected ? 2.0 : 1.0,
+                          ),
+                          borderRadius: BorderRadius.circular(4.0),
+                        ),
+                        child: Stack(
+                          children: [
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting)
+                              const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            else if (snapshot.hasData && snapshot.data != null)
+                              FutureBuilder<Uint8List?>(
+                                future: ref
+                                    .read(characterImageServiceProvider)
+                                    .getCharacterImage(
+                                      entity.id,
+                                      snapshot.data!['type']!,
+                                      snapshot.data!['format']!,
+                                    ),
+                                builder: (context, imageSnapshot) {
+                                  if (imageSnapshot.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      ),
+                                    );
+                                  } else if (imageSnapshot.hasData &&
+                                      imageSnapshot.data != null) {
+                                    return Center(
+                                      child: Image.memory(
+                                        imageSnapshot.data!,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    );
+                                  } else {
+                                    return Center(
+                                      child: Text(
+                                        '${entity.character}${_getSubscript(index + 1)}',
+                                        style: const TextStyle(fontSize: 20),
+                                      ),
+                                    );
+                                  }
+                                },
+                              )
+                            else
+                              Center(
+                                child: Text(
+                                  '${entity.character}${_getSubscript(index + 1)}',
+                                  style: const TextStyle(fontSize: 20),
+                                ),
+                              ),
+                            if (isSelected)
+                              const Positioned(
+                                right: 2,
+                                bottom: 2,
+                                child: Icon(
+                                  Icons.check_circle,
+                                  size: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
-        ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  _showAddCharacterDialog();
+                },
+                child: const Text('添加新候选字'),
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+  }
+
+  // 构建字符图像
+  Widget _buildCharacterImage(String character,
+      {bool isSelected = false, int? index}) {
+    // 检查元素内容中是否已有字符图像信息
+    final content = widget.element['content'] as Map<String, dynamic>? ?? {};
+    final characterImages =
+        content['characterImages'] as Map<String, dynamic>? ?? {};
+    final idx = index ?? _selectedCharIndex;
+
+    debugPrint('构建字符图像: $character, 索引: $idx, 选中: $isSelected');
+
+    // 如果有该索引的字符图像信息，则使用它
+    if (characterImages.containsKey('$idx')) {
+      final imageInfo = characterImages['$idx'] as Map<String, dynamic>;
+      final characterId = imageInfo['characterId'] as String?;
+      final type = imageInfo['type'] as String?;
+      final format = imageInfo['format'] as String?;
+
+      debugPrint(
+          '使用已有字符图像信息: characterId=$characterId, type=$type, format=$format');
+
+      if (characterId != null && type != null && format != null) {
+        return FutureBuilder<Uint8List?>(
+          future: Future.any([
+            ref
+                .read(characterImageServiceProvider)
+                .getCharacterImage(characterId, type, format),
+            // 添加3秒超时
+            Future.delayed(const Duration(seconds: 3), () => null),
+          ]),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)));
+            }
+
+            if (!snapshot.hasData || snapshot.data == null) {
+              debugPrint('无法加载字符图像: $characterId, $type, $format');
+              return _buildDefaultCharacterText(character, isSelected);
+            }
+
+            debugPrint(
+                '成功加载字符图像: $characterId, $type, $format, 大小: ${snapshot.data!.length} 字节');
+            return Image.memory(
+              snapshot.data!,
+              fit: BoxFit.contain,
+              color: isSelected ? Colors.blue : null,
+              colorBlendMode: isSelected ? BlendMode.srcATop : null,
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('图像渲染错误: $error');
+                return _buildDefaultCharacterText(character, isSelected);
+              },
+            );
+          },
+        );
+      }
+    }
+
+    // 如果没有匹配的候选集字，则显示文本
+    final matchingCharacters = _candidateCharacters
+        .where((entity) => entity.character == character)
+        .toList();
+
+    if (matchingCharacters.isEmpty) {
+      debugPrint('没有匹配的候选集字: $character');
+      return _buildDefaultCharacterText(character, isSelected);
+    }
+
+    // 使用第一个匹配的字符实体
+    final entity = matchingCharacters.first;
+    debugPrint('使用候选集字: ${entity.id}, 字符: ${entity.character}');
+
+    // 使用 CharacterImageService 加载图像
+    return FutureBuilder<Map<String, String>?>(
+      future: Future.any([
+        ref.read(characterImageServiceProvider).getAvailableFormat(entity.id),
+        // 添加2秒超时
+        Future.delayed(const Duration(seconds: 2), () => null),
+      ]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+              child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2)));
+        }
+
+        if (!snapshot.hasData || snapshot.data == null) {
+          debugPrint('无法获取可用格式: ${entity.id}');
+          return _buildDefaultCharacterText(character, isSelected);
+        }
+
+        final format = snapshot.data!;
+        debugPrint('获取到可用格式: ${format['type']}, ${format['format']}');
+
+        return FutureBuilder<Uint8List?>(
+          future: Future.any([
+            ref.read(characterImageServiceProvider).getCharacterImage(
+                entity.id, format['type']!, format['format']!),
+            // 添加3秒超时
+            Future.delayed(const Duration(seconds: 3), () => null),
+          ]),
+          builder: (context, imageSnapshot) {
+            if (imageSnapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2)));
+            }
+
+            if (!imageSnapshot.hasData || imageSnapshot.data == null) {
+              debugPrint(
+                  '无法加载字符图像: ${entity.id}, ${format['type']}, ${format['format']}');
+              return _buildDefaultCharacterText(character, isSelected);
+            }
+
+            debugPrint(
+                '成功加载字符图像: ${entity.id}, ${format['type']}, ${format['format']}, 大小: ${imageSnapshot.data!.length} 字节');
+
+            // 更新元素内容中的字符图像信息
+            _updateCharacterImage(
+                idx, entity.id, format['type']!, format['format']!);
+
+            return Image.memory(
+              imageSnapshot.data!,
+              fit: BoxFit.contain,
+              color: isSelected ? Colors.blue : null,
+              colorBlendMode: isSelected ? BlendMode.srcATop : null,
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('图像渲染错误: $error');
+                return _buildDefaultCharacterText(character, isSelected);
+              },
+            );
+          },
+        );
+      },
     );
   }
 
@@ -752,22 +1081,26 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
                 ),
                 borderRadius: BorderRadius.circular(4.0),
               ),
-              child: Center(
-                child: Text(
+              child: _buildCharacterImage(
                   characters.characters.elementAt(index),
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: _selectedCharIndex == index
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: _selectedCharIndex == index
-                        ? Colors.blue
-                        : Colors.black,
-                  ),
-                ),
-              ),
+                  isSelected: _selectedCharIndex == index,
+                  index: index),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  // 构建默认字符文本
+  Widget _buildDefaultCharacterText(String character, bool isSelected) {
+    return Center(
+      child: Text(
+        character,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.blue : Colors.black,
         ),
       ),
     );
@@ -830,17 +1163,29 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
 
     try {
       // 将 RGB 值转换为十六进制
-      final r = color.red.toRadixString(16).padLeft(2, '0');
-      final g = color.green.toRadixString(16).padLeft(2, '0');
-      final b = color.blue.toRadixString(16).padLeft(2, '0');
-      final colorCode = '$r$g$b'.toUpperCase();
+      final colorValue = color.toString();
+      // 从 Color(0xFFFFFFFF) 格式中提取十六进制值
+      final hexCode = colorValue.split('(0x')[1].split(')')[0];
+      // 移除前两位的透明度值
+      final colorCode = hexCode.length > 6 ? hexCode.substring(2) : hexCode;
 
-      debugPrint(
-          'Converting color to hex: $color (R:${color.red}, G:${color.green}, B:${color.blue}) -> #$colorCode');
+      debugPrint('Converting color to hex: $color -> #$colorCode');
       return '#$colorCode'; // 包含 # 前缀
     } catch (e) {
       debugPrint('Error converting color to hex: $e');
       return '#000000'; // 出错时返回默认黑色
+    }
+  }
+
+  // 获取默认字符图像格式
+  Future<Map<String, String>?> _getDefaultCharacterImageFormat(
+      String characterId) async {
+    try {
+      final characterImageService = ref.read(characterImageServiceProvider);
+      return await characterImageService.getAvailableFormat(characterId);
+    } catch (e) {
+      debugPrint('获取默认字符图像格式失败: $e');
+      return null;
     }
   }
 
@@ -912,27 +1257,185 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
     }
   }
 
-  // 加载候选集字
-  void _loadCandidateCharacters() {
-    final content = widget.element['content'] as Map<String, dynamic>;
-    final characters = content['characters'] as String? ?? '';
+  // 初始化字符图像
+  Future<void> _initCharacterImages() async {
+    try {
+      final content = widget.element['content'] as Map<String, dynamic>? ?? {};
+      final characters = content['characters'] as String? ?? '';
 
-    if (characters.isNotEmpty && _selectedCharIndex < characters.length) {
-      // 这里应该从数据库加载候选集字
-      // 暂时使用模拟数据
+      if (characters.isEmpty) {
+        return;
+      }
+
+      // 检查是否已有字符图像信息
+      if (content.containsKey('characterImages')) {
+        return;
+      }
+
+      // 创建字符图像信息
+      final characterImages = <String, dynamic>{};
+
+      // 获取候选集字
+      await _loadCandidateCharacters();
+
+      // 为每个字符查找匹配的候选集字
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+        final matchingCharacters = _candidateCharacters
+            .where((entity) => entity.character == char)
+            .toList();
+
+        if (matchingCharacters.isNotEmpty) {
+          final entity = matchingCharacters.first;
+          final format = await _getDefaultCharacterImageFormat(entity.id);
+
+          if (format != null) {
+            characterImages['$i'] = {
+              'characterId': entity.id,
+              'type': format['type'],
+              'format': format['format'],
+            };
+          }
+        }
+      }
+
+      // 更新元素内容
+      if (characterImages.isNotEmpty) {
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = characterImages;
+        _updateProperty('content', updatedContent);
+      }
+    } catch (e) {
+      debugPrint('初始化字符图像失败: $e');
+    }
+  }
+
+  // 加载候选集字
+  Future<void> _loadCandidateCharacters() async {
+    try {
       setState(() {
-        _candidateCharacters = List.generate(
-            6,
-            (index) => {
-                  'id': 'char_$index',
-                  'character': characters[_selectedCharIndex],
-                  'thumbnailPath': '', // 实际应该是真实路径
-                });
+        _isLoadingCharacters = true;
       });
-    } else {
+
+      // 使用CharacterService获取所有字符
+      final characterService = ref.read(characterServiceProvider);
+
+      // 获取当前选中的字符
+      final content = widget.element['content'] as Map<String, dynamic>;
+      final characters = content['characters'] as String? ?? '';
+
+      if (characters.isEmpty) {
+        debugPrint('集字内容为空，无法加载候选集字');
+        setState(() {
+          _candidateCharacters = [];
+          _isLoadingCharacters = false;
+        });
+        return;
+      }
+
+      final selectedChar = _selectedCharIndex < characters.length
+          ? characters[_selectedCharIndex]
+          : '';
+
+      if (selectedChar.isEmpty) {
+        debugPrint('当前选中字符为空，无法加载候选集字');
+        setState(() {
+          _candidateCharacters = [];
+          _isLoadingCharacters = false;
+        });
+        return;
+      }
+
+      debugPrint('开始搜索字符: "$selectedChar"');
+
+      // 搜索字符库中匹配的字符
+      final matchingCharacters =
+          await characterService.searchCharacters(selectedChar);
+      debugPrint('搜索到 ${matchingCharacters.length} 个匹配的字符视图模型');
+
+      if (matchingCharacters.isEmpty) {
+        debugPrint('没有找到匹配的字符，尝试添加一个临时字符');
+
+        // 如果没有找到匹配的字符，可以考虑添加一个临时字符
+        setState(() {
+          _candidateCharacters = [];
+          _isLoadingCharacters = false;
+        });
+        return;
+      }
+
+      // 转换为CharacterEntity列表
+      debugPrint('开始获取字符详情...');
+      final futures = matchingCharacters.map((viewModel) async {
+        debugPrint('获取字符详情: ${viewModel.id}, 字符: ${viewModel.character}');
+        return await characterService.getCharacterDetails(viewModel.id);
+      }).toList();
+
+      final results = await Future.wait(futures);
+      final entities = results.whereType<CharacterEntity>().toList();
+      debugPrint('获取到 ${entities.length} 个字符实体');
+
+      for (final entity in entities) {
+        debugPrint('字符实体: ${entity.id}, 字符: ${entity.character}');
+      }
+
+      setState(() {
+        _candidateCharacters = entities;
+        _isLoadingCharacters = false;
+      });
+    } catch (e, stack) {
+      debugPrint('加载候选集字失败: $e');
+      debugPrint('堆栈: $stack');
       setState(() {
         _candidateCharacters = [];
+        _isLoadingCharacters = false;
       });
+    }
+  }
+
+  // 选择候选集字
+  Future<void> _selectCandidateCharacter(CharacterEntity entity) async {
+    debugPrint('选择候选集字: ${entity.id}, 字符: ${entity.character}');
+
+    try {
+      // 获取字符图像格式
+      final characterImageService = ref.read(characterImageServiceProvider);
+      final format = await characterImageService.getAvailableFormat(entity.id);
+
+      if (format == null) {
+        debugPrint('无法获取字符图像格式: ${entity.id}');
+        return;
+      }
+
+      // 更新元素的字符图像信息
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>? ?? {});
+
+      // 获取当前选中字符的索引
+      final characters = content['characters'] as String? ?? '';
+      if (_selectedCharIndex < 0 || _selectedCharIndex >= characters.length) {
+        debugPrint('无效的字符索引: $_selectedCharIndex');
+        return;
+      }
+
+      // 更新字符图像信息
+      final characterImages =
+          content['characterImages'] as Map<String, dynamic>? ?? {};
+      characterImages['$_selectedCharIndex'] = {
+        'characterId': entity.id,
+        'type': format['type'],
+        'format': format['format'],
+      };
+
+      content['characterImages'] = characterImages;
+      _updateProperty('content', content);
+
+      // 刷新UI
+      setState(() {});
+
+      debugPrint('已更新字符图像信息: ${entity.id}, 索引: $_selectedCharIndex');
+    } catch (e) {
+      debugPrint('选择候选集字失败: $e');
     }
   }
 
@@ -941,12 +1444,145 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
     final content = widget.element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
 
+    debugPrint('选择字符，索引: $index, 总字符: "$characters"');
+
     if (index >= 0 && index < characters.length) {
+      final selectedChar = characters[index];
+      debugPrint('选中字符: "$selectedChar"');
+
       setState(() {
         _selectedCharIndex = index;
       });
+
+      // 检查候选集字中是否有匹配的字符
+      final matchingChars = _candidateCharacters
+          .where((entity) => entity.character == selectedChar)
+          .toList();
+
+      debugPrint('匹配的候选集字数量: ${matchingChars.length}');
+      if (matchingChars.isNotEmpty) {
+        debugPrint(
+            '匹配的候选集字: ${matchingChars.map((e) => "${e.character}(${e.id})").join(", ")}');
+      }
+
       _loadCandidateCharacters();
+    } else {
+      debugPrint('无效的字符索引: $index, 字符长度: ${characters.length}');
     }
+  }
+
+  /// 显示添加字符对话框
+  void _showAddCharacterDialog() {
+    // 获取当前选中的字符
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+    final selectedChar = _selectedCharIndex < characters.length
+        ? characters[_selectedCharIndex]
+        : '';
+
+    final TextEditingController charController =
+        TextEditingController(text: selectedChar);
+    final TextEditingController idController = TextEditingController();
+
+    // 生成一个随机ID
+    const uuid = Uuid();
+    final randomId = uuid.v4();
+    idController.text = randomId;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('手动添加候选集字'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: charController,
+              decoration: const InputDecoration(
+                labelText: '字符',
+                hintText: '输入单个字符',
+              ),
+              maxLength: 1,
+            ),
+            TextField(
+              controller: idController,
+              decoration: const InputDecoration(
+                labelText: '字符ID',
+                hintText: '自动生成的ID',
+              ),
+              enabled: false, // 禁用编辑，使用自动生成的ID
+            ),
+            const SizedBox(height: 16),
+            const Text('注意：这将创建一个临时的字符实体，仅用于当前会话。'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final char = charController.text;
+              if (char.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('字符不能为空')),
+                );
+                return;
+              }
+
+              final id = idController.text;
+
+              // 创建一个临时的字符实体
+              final entity = CharacterEntity(
+                id: id,
+                workId: widget.controller.practiceId ?? 'temp',
+                pageId: 'temp',
+                character: char,
+                region: CharacterRegion.create(
+                  pageId: 'temp',
+                  rect: const Rect.fromLTWH(0, 0, 100, 100),
+                  options: const ProcessingOptions(),
+                  character: char,
+                ),
+                createTime: DateTime.now(),
+                updateTime: DateTime.now(),
+              );
+
+              debugPrint('创建临时字符实体: ${entity.id}, 字符: ${entity.character}');
+
+              // 添加到候选集字列表
+              setState(() {
+                // 检查是否已存在相同字符的实体
+                final existingIndex =
+                    _candidateCharacters.indexWhere((e) => e.character == char);
+
+                if (existingIndex >= 0) {
+                  // 如果已存在，则替换
+                  _candidateCharacters[existingIndex] = entity;
+                  debugPrint('替换现有字符实体');
+                } else {
+                  // 如果不存在，则添加
+                  _candidateCharacters.add(entity);
+                  debugPrint('添加新字符实体');
+                }
+              });
+
+              Navigator.of(context).pop();
+
+              // 如果当前选中的字符与添加的字符匹配，则自动选择该字符
+              if (selectedChar == char) {
+                debugPrint('自动选择新添加的字符实体');
+                _selectCandidateCharacter(entity);
+              }
+            },
+            child: const Text('添加'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 显示颜色选择器对话框
@@ -1036,6 +1672,35 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
         ],
       ),
     );
+  }
+
+  // 更新字符图像信息
+  void _updateCharacterImage(
+      int index, String characterId, String type, String format) {
+    try {
+      final content = widget.element['content'] as Map<String, dynamic>;
+      Map<String, dynamic> characterImages;
+
+      if (content.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+      } else {
+        characterImages = {};
+      }
+
+      characterImages['$index'] = {
+        'characterId': characterId,
+        'type': type,
+        'format': format,
+      };
+
+      final updatedContent = Map<String, dynamic>.from(content);
+      updatedContent['characterImages'] = characterImages;
+
+      _updateProperty('content', updatedContent);
+    } catch (e) {
+      debugPrint('更新字符图像信息失败: $e');
+    }
   }
 
   // 更新内容属性
