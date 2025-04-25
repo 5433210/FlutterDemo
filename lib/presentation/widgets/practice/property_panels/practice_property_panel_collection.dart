@@ -4,40 +4,55 @@ import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
 import 'layer_info_panel.dart';
-import 'practice_property_panel_base.dart';
 
 /// 集字内容属性面板
-class CollectionPropertyPanel extends PracticePropertyPanel {
+class CollectionPropertyPanel extends StatefulWidget {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final Function(String) onUpdateChars;
+  final PracticeEditController controller;
 
   const CollectionPropertyPanel({
     Key? key,
-    required PracticeEditController controller,
+    required this.controller,
     required this.element,
     required this.onElementPropertiesChanged,
     required this.onUpdateChars,
-  }) : super(key: key, controller: controller);
+  }) : super(key: key);
+
+  @override
+  State<CollectionPropertyPanel> createState() =>
+      _CollectionPropertyPanelState();
+}
+
+class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
+  // 当前选中的字符索引
+  int _selectedCharIndex = 0;
+
+  // 当前选中字符的候选集字列表
+  List<Map<String, dynamic>> _candidateCharacters = [];
+
+  // 文本控制器
+  final TextEditingController _textController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    final x = (element['x'] as num).toDouble();
-    final y = (element['y'] as num).toDouble();
-    final width = (element['width'] as num).toDouble();
-    final height = (element['height'] as num).toDouble();
-    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-    final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
-    final layerId = element['layerId'] as String?;
+    final x = (widget.element['x'] as num).toDouble();
+    final y = (widget.element['y'] as num).toDouble();
+    final width = (widget.element['width'] as num).toDouble();
+    final height = (widget.element['height'] as num).toDouble();
+    final rotation = (widget.element['rotation'] as num?)?.toDouble() ?? 0.0;
+    final opacity = (widget.element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final layerId = widget.element['layerId'] as String?;
 
     // 获取图层信息
     Map<String, dynamic>? layer;
     if (layerId != null) {
-      layer = controller.state.getLayerById(layerId);
+      layer = widget.controller.state.getLayerById(layerId);
     }
 
     // 集字特有属性
-    final content = element['content'] as Map<String, dynamic>;
+    final content = widget.element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 36.0;
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
@@ -51,16 +66,16 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
       children: [
         // 基本属性部分 (放在最顶部)
         ElementCommonPropertyPanel(
-          element: element,
-          onElementPropertiesChanged: onElementPropertiesChanged,
-          controller: controller,
+          element: widget.element,
+          onElementPropertiesChanged: widget.onElementPropertiesChanged,
+          controller: widget.controller,
         ),
 
         // 图层信息部分
         LayerInfoPanel(layer: layer),
 
         // 几何属性部分
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('几何属性'),
           initiallyExpanded: true,
           children: [
@@ -142,7 +157,7 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
         ),
 
         // 视觉属性部分
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('视觉设置'),
           initiallyExpanded: true,
           children: [
@@ -235,7 +250,7 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
         ),
 
         // 内容设置部分
-        materialExpansionTile(
+        ExpansionTile(
           title: const Text('内容设置'),
           initiallyExpanded: true,
           children: [
@@ -249,57 +264,23 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
                   const Text('汉字内容:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  TextField(
-                    decoration: const InputDecoration(
-                      hintText: '输入要展示的汉字',
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: TextEditingController(text: characters),
-                    maxLines: 3,
-                    onChanged: (value) {
-                      onUpdateChars(value);
-                    },
-                  ),
+                  _buildTextContentField(characters),
 
                   const SizedBox(height: 16.0),
 
-                  // 集字预览（简化版）
+                  // 集字预览
                   const Text('集字预览:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  Container(
-                    padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4.0),
-                    ),
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 5,
-                        childAspectRatio: 1.0,
-                        crossAxisSpacing: 8.0,
-                        mainAxisSpacing: 8.0,
-                      ),
-                      itemCount:
-                          characters.isEmpty ? 0 : characters.characters.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: Center(
-                            child: Text(
-                              characters.characters.elementAt(index),
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  _buildCharacterPreview(characters),
+
+                  const SizedBox(height: 16.0),
+
+                  // 候选集字
+                  const Text('候选集字:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  _buildCandidateCharacters(),
 
                   const SizedBox(height: 16.0),
 
@@ -380,8 +361,8 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
 
                   const SizedBox(height: 16.0),
 
-                  // 行间距设置
-                  const Text('行间距:',
+                  // 行（列）间距设置
+                  const Text('行（列）间距:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
                   Row(
@@ -403,7 +384,7 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
                       Expanded(
                         flex: 2,
                         child: EditableNumberField(
-                          label: '行间距',
+                          label: '行（列）间距',
                           value: lineSpacing,
                           suffix: 'px',
                           min: 0,
@@ -573,6 +554,191 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
     );
   }
 
+  @override
+  void didUpdateWidget(CollectionPropertyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.element != widget.element) {
+      // 更新文本控制器
+      final content = widget.element['content'] as Map<String, dynamic>;
+      final characters = content['characters'] as String? ?? '';
+      if (_textController.text != characters) {
+        _textController.text = characters;
+      }
+
+      _loadCandidateCharacters();
+    }
+  }
+
+  @override
+  void dispose() {
+    // 释放文本控制器
+    _textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化文本控制器
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+    _textController.text = characters;
+
+    _loadCandidateCharacters();
+  }
+
+  // 构建候选集字
+  Widget _buildCandidateCharacters() {
+    if (_candidateCharacters.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(4.0),
+        ),
+        child: const Center(
+          child: Text('无候选集字', style: TextStyle(color: Colors.grey)),
+        ),
+      );
+    }
+
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+    final selectedChar = _selectedCharIndex < characters.length
+        ? characters[_selectedCharIndex]
+        : '';
+
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: List.generate(
+          _candidateCharacters.length,
+          (index) => Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4.0),
+            ),
+            child: Stack(
+              children: [
+                Center(
+                  child: Text(
+                    '$selectedChar${_getSubscript(index + 1)}',
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                ),
+                Positioned(
+                  right: 2,
+                  bottom: 2,
+                  child: Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: index == 0 ? Colors.green : Colors.transparent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 构建集字预览
+  Widget _buildCharacterPreview(String characters) {
+    if (characters.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(4.0),
+        ),
+        child: const Center(
+          child: Text('无集字内容', style: TextStyle(color: Colors.grey)),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(4.0),
+      ),
+      child: Wrap(
+        spacing: 8.0,
+        runSpacing: 8.0,
+        children: List.generate(
+          characters.characters.length,
+          (index) => GestureDetector(
+            onTap: () => _selectCharacter(index),
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedCharIndex == index
+                      ? Colors.blue
+                      : Colors.grey.shade300,
+                  width: _selectedCharIndex == index ? 2.0 : 1.0,
+                ),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Center(
+                child: Text(
+                  characters.characters.elementAt(index),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: _selectedCharIndex == index
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: _selectedCharIndex == index
+                        ? Colors.blue
+                        : Colors.black,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 构建文本内容输入字段
+  Widget _buildTextContentField(String initialText) {
+    // 确保控制器内容与初始文本一致
+    if (_textController.text != initialText) {
+      _textController.text = initialText;
+    }
+
+    return TextField(
+      controller: _textController,
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      ),
+      keyboardType: TextInputType.multiline,
+      maxLines: 5,
+      minLines: 3,
+      onChanged: (value) {
+        widget.onUpdateChars(value);
+        // 重置选中的字符索引
+        setState(() {
+          _selectedCharIndex = 0;
+        });
+        _loadCandidateCharacters();
+      },
+    );
+  }
+
   // 构建书写模式按钮
   Widget _buildWritingModeButton({
     required String mode,
@@ -595,10 +761,72 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
     );
   }
 
+  // 获取下标
+  String _getSubscript(int number) {
+    const Map<String, String> subscripts = {
+      '0': '₀',
+      '1': '₁',
+      '2': '₂',
+      '3': '₃',
+      '4': '₄',
+      '5': '₅',
+      '6': '₆',
+      '7': '₇',
+      '8': '₈',
+      '9': '₉',
+    };
+
+    final String numberStr = number.toString();
+    final StringBuffer result = StringBuffer();
+
+    for (int i = 0; i < numberStr.length; i++) {
+      result.write(subscripts[numberStr[i]] ?? numberStr[i]);
+    }
+
+    return result.toString();
+  }
+
+  // 加载候选集字
+  void _loadCandidateCharacters() {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+
+    if (characters.isNotEmpty && _selectedCharIndex < characters.length) {
+      // 这里应该从数据库加载候选集字
+      // 暂时使用模拟数据
+      setState(() {
+        _candidateCharacters = List.generate(
+            6,
+            (index) => {
+                  'id': 'char_$index',
+                  'character': characters[_selectedCharIndex],
+                  'thumbnailPath': '', // 实际应该是真实路径
+                });
+      });
+    } else {
+      setState(() {
+        _candidateCharacters = [];
+      });
+    }
+  }
+
+  // 选择字符
+  void _selectCharacter(int index) {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+
+    if (index >= 0 && index < characters.length) {
+      setState(() {
+        _selectedCharIndex = index;
+      });
+      _loadCandidateCharacters();
+    }
+  }
+
   // 更新内容属性
   void _updateContentProperty(String key, dynamic value) {
     final content = Map<String, dynamic>.from(
-        element['content'] as Map<String, dynamic>? ?? {});
+        widget.element['content'] as Map<String, dynamic>? ?? {});
     content[key] = value;
     _updateProperty('content', content);
   }
@@ -606,6 +834,6 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
   // 更新属性
   void _updateProperty(String key, dynamic value) {
     final updates = {key: value};
-    onElementPropertiesChanged(updates);
+    widget.onElementPropertiesChanged(updates);
   }
 }

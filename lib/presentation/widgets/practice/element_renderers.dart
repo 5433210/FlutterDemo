@@ -31,6 +31,10 @@ class ElementRenderers {
       color: backgroundColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          // 计算考虑内边距后的可用空间
+          final availableWidth = constraints.maxWidth - padding * 2;
+          final availableHeight = constraints.maxHeight - padding * 2;
+
           return Padding(
             padding: EdgeInsets.all(padding),
             child: _buildCollectionLayout(
@@ -42,7 +46,10 @@ class ElementRenderers {
               textAlign: textAlign,
               verticalAlign: verticalAlign,
               characterImages: characterImages,
-              constraints: constraints,
+              constraints: BoxConstraints(
+                maxWidth: availableWidth,
+                maxHeight: availableHeight,
+              ),
               padding: padding,
             ),
           );
@@ -319,8 +326,28 @@ class ElementRenderers {
     final availableWidth = constraints.maxWidth;
     final availableHeight = constraints.maxHeight;
 
-    // 字符列表
-    final charList = characters.characters.toList();
+    // 处理换行符并创建字符列表
+    List<String> charList = [];
+    List<bool> isNewLineList = []; // 标记每个字符是否是换行符后的第一个字符
+
+    // 按行分割文本
+    final lines = characters.split('\n');
+    for (int i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      // 添加当前行的所有字符
+      final lineChars = line.characters.toList();
+      charList.addAll(lineChars);
+
+      // 为当前行的字符添加标记（第一个字符是换行后的第一个字符，如果不是第一行）
+      isNewLineList.addAll(
+          List.generate(lineChars.length, (index) => index == 0 && i > 0));
+
+      // 如果不是最后一行，添加一个换行标记
+      if (i < lines.length - 1) {
+        isNewLineList.add(true);
+        charList.add('\n'); // 添加换行符作为占位符
+      }
+    }
 
     // 确定布局方向
     final isHorizontal = writingMode.startsWith('horizontal');
@@ -338,6 +365,7 @@ class ElementRenderers {
       verticalAlign: verticalAlign,
       availableWidth: availableWidth,
       availableHeight: availableHeight,
+      isNewLineList: isNewLineList,
     );
 
     // 创建自定义绘制器
@@ -476,6 +504,7 @@ class ElementRenderers {
     required String verticalAlign,
     required double availableWidth,
     required double availableHeight,
+    List<bool>? isNewLineList,
   }) {
     final List<_CharacterPosition> positions = [];
 
@@ -493,12 +522,41 @@ class ElementRenderers {
               .floor();
       if (charsPerRow <= 0) return positions;
 
-      // 计算行数
-      final rowCount = (charList.length / charsPerRow).ceil();
+      // 创建一个新的字符列表，去除换行符，但记录每个字符的行号
+      List<String> processedChars = [];
+      List<int> rowIndices = []; // 每个字符所在的行号
+
+      if (isNewLineList != null && isNewLineList.isNotEmpty) {
+        // 使用换行标记处理
+        int currentRow = 0;
+        for (int i = 0; i < charList.length; i++) {
+          if (charList[i] == '\n') {
+            // 遇到换行符，增加行号但不添加到处理后的字符列表
+            currentRow++;
+          } else {
+            // 普通字符，添加到处理后的字符列表
+            processedChars.add(charList[i]);
+            rowIndices.add(currentRow);
+          }
+        }
+      } else {
+        // 没有换行标记，按照原来的逻辑处理
+        processedChars = List.from(charList);
+        for (int i = 0; i < processedChars.length; i++) {
+          rowIndices.add(i ~/ charsPerRow);
+        }
+      }
+
+      // 计算行数（使用最大行号+1）
+      final rowCount = rowIndices.isEmpty
+          ? 0
+          : rowIndices.reduce((a, b) => a > b ? a : b) + 1;
 
       // 计算实际使用的高度
-      final usedHeight = min(
-          availableHeight, rowCount * charSize + (rowCount - 1) * lineSpacing);
+      // 使用用户设置的行间距
+      double effectiveLineSpacing = lineSpacing;
+      final usedHeight = min(availableHeight,
+          rowCount * charSize + (rowCount - 1) * effectiveLineSpacing);
 
       // 计算起始位置（考虑对齐方式）
       double startY = 0;
@@ -515,7 +573,7 @@ class ElementRenderers {
         case 'justify':
           // 如果行数大于1，则均匀分布
           if (rowCount > 1) {
-            lineSpacing =
+            effectiveLineSpacing =
                 (availableHeight - rowCount * charSize) / (rowCount - 1);
           }
           startY = 0;
@@ -523,14 +581,27 @@ class ElementRenderers {
       }
 
       // 遍历每个字符，计算位置
-      for (int i = 0; i < charList.length; i++) {
-        final rowIndex = i ~/ charsPerRow;
-        final colIndex = i % charsPerRow;
+      for (int i = 0; i < processedChars.length; i++) {
+        final rowIndex = rowIndices[i];
+
+        // 计算每行的字符数和当前字符在行中的位置
+        int charsInCurrentRow = 0;
+        int colIndexInRow = 0;
+
+        // 计算当前行的字符数和当前字符在行中的位置
+        for (int j = 0; j < processedChars.length; j++) {
+          if (rowIndices[j] == rowIndex) {
+            charsInCurrentRow++;
+            if (j < i) {
+              colIndexInRow++;
+            }
+          }
+        }
+
+        final colIndex = colIndexInRow;
 
         // 计算行的起始X位置（考虑水平对齐）
-        final charsInThisRow = (rowIndex == rowCount - 1)
-            ? (charList.length - rowIndex * charsPerRow)
-            : charsPerRow;
+        final charsInThisRow = charsInCurrentRow;
         final rowWidth =
             charsInThisRow * charSize + (charsInThisRow - 1) * letterSpacing;
 
@@ -555,18 +626,26 @@ class ElementRenderers {
 
               // 为这一行的每个字符重新计算位置
               for (int j = 0; j < charsInThisRow; j++) {
-                final index = rowIndex * charsPerRow + j;
                 final x = isLeftToRight
                     ? startX + j * (charSize + justifiedLetterSpacing)
                     : availableWidth -
                         startX -
                         (j + 1) * charSize -
                         j * justifiedLetterSpacing;
-                final y = startY + rowIndex * (charSize + lineSpacing);
+                final y = startY + rowIndex * (charSize + effectiveLineSpacing);
 
-                if (index < charList.length) {
+                // 找到对应的字符
+                int actualIndex = -1;
+                for (int k = 0; k < processedChars.length; k++) {
+                  if (rowIndices[k] == rowIndex && k % charsInThisRow == j) {
+                    actualIndex = k;
+                    break;
+                  }
+                }
+
+                if (actualIndex >= 0 && actualIndex < processedChars.length) {
                   positions.add(_CharacterPosition(
-                    char: charList[index],
+                    char: processedChars[actualIndex],
                     x: x,
                     y: y,
                     size: charSize,
@@ -588,12 +667,14 @@ class ElementRenderers {
             charsInThisRow == 1) {
           final x = isLeftToRight
               ? startX + colIndex * (charSize + letterSpacing)
-              : startX +
-                  (charsInThisRow - colIndex - 1) * (charSize + letterSpacing);
-          final y = startY + rowIndex * (charSize + lineSpacing);
+              : availableWidth -
+                  startX -
+                  (colIndex + 1) * charSize -
+                  colIndex * letterSpacing;
+          final y = startY + rowIndex * (charSize + effectiveLineSpacing);
 
           positions.add(_CharacterPosition(
-            char: charList[i],
+            char: processedChars[i],
             x: x,
             y: y,
             size: charSize,
@@ -603,63 +684,112 @@ class ElementRenderers {
     } else {
       // 垂直布局
 
-      // 计算每列可容纳的字符数
-      final charsPerCol =
-          ((availableHeight + letterSpacing) / (charSize + letterSpacing))
-              .floor();
-      if (charsPerCol <= 0) return positions;
+      // 创建一个新的字符列表，去除换行符
+      List<String> processedChars = [];
+      List<int> colIndices = []; // 每个字符所在的列号
 
-      // 计算列数
-      final colCount = (charList.length / charsPerCol).ceil();
+      if (isNewLineList != null && isNewLineList.isNotEmpty) {
+        // 使用换行标记处理
+        int currentCol = 0;
+        for (int i = 0; i < charList.length; i++) {
+          if (charList[i] == '\n') {
+            // 遇到换行符，增加列号但不添加到处理后的字符列表
+            currentCol++;
+          } else {
+            // 普通字符，添加到处理后的字符列表
+            processedChars.add(charList[i]);
+            colIndices.add(currentCol);
+          }
+        }
+      } else {
+        // 没有换行标记，按照原来的逻辑处理
+        // 计算每列可容纳的字符数
+        final charsPerCol =
+            ((availableHeight + letterSpacing) / (charSize + letterSpacing))
+                .floor();
+        if (charsPerCol <= 0) return positions;
+
+        processedChars = List.from(charList);
+        for (int i = 0; i < processedChars.length; i++) {
+          colIndices.add(i ~/ charsPerCol);
+        }
+      }
+
+      // 计算列数（使用最大列号+1）
+      final colCount = colIndices.isEmpty
+          ? 0
+          : colIndices.reduce((a, b) => a > b ? a : b) + 1;
 
       // 计算实际使用的宽度
-      final usedWidth = min(
-          availableWidth, colCount * charSize + (colCount - 1) * lineSpacing);
+      // 使用用户设置的行间距
+      double effectiveLineSpacing = lineSpacing;
+      final usedWidth = min(availableWidth,
+          colCount * charSize + (colCount - 1) * effectiveLineSpacing);
 
       // 计算起始位置（考虑对齐方式）
       double startX = 0;
       switch (textAlign) {
         case 'left':
-          startX = isLeftToRight ? 0 : availableWidth - usedWidth;
+          startX = isLeftToRight ? 0 : 0; // 竖排右起时，左对齐应该是从左边开始
           break;
         case 'center':
           startX = (availableWidth - usedWidth) / 2;
           break;
         case 'right':
-          startX = isLeftToRight ? availableWidth - usedWidth : 0;
+          startX = isLeftToRight
+              ? availableWidth - usedWidth
+              : availableWidth - usedWidth; // 竖排右起时，右对齐应该是从右边开始
           break;
         case 'justify':
           // 如果列数大于1，则均匀分布
           if (colCount > 1) {
-            lineSpacing =
+            effectiveLineSpacing =
                 (availableWidth - colCount * charSize) / (colCount - 1);
           }
           startX = 0;
           break;
       }
 
+      // 定义每列可容纳的字符数（用于计算）
+      const charsPerCol = 10; // 默认值，实际上我们会使用colIndices
+
       // 遍历每个字符，计算位置
-      for (int i = 0; i < charList.length; i++) {
-        final colIndex = i ~/ charsPerCol;
-        final rowIndex = i % charsPerCol;
+      for (int i = 0; i < processedChars.length; i++) {
+        final colIndex = colIndices[i];
+
+        // 计算每列的字符数和当前字符在列中的位置
+        int charsInCurrentCol = 0;
+        int rowIndexInCol = 0;
+
+        // 计算当前列的字符数和当前字符在列中的位置
+        for (int j = 0; j < processedChars.length; j++) {
+          if (colIndices[j] == colIndex) {
+            charsInCurrentCol++;
+            if (j < i) {
+              rowIndexInCol++;
+            }
+          }
+        }
+
+        final rowIndex = rowIndexInCol;
 
         // 计算列的起始Y位置（考虑垂直对齐）
-        final charsInThisCol = (colIndex == colCount - 1)
-            ? (charList.length - colIndex * charsPerCol)
-            : charsPerCol;
+        final charsInThisCol = charsInCurrentCol;
         final colHeight =
             charsInThisCol * charSize + (charsInThisCol - 1) * letterSpacing;
 
         double startY = 0;
         switch (verticalAlign) {
           case 'top':
-            startY = isLeftToRight ? 0 : availableHeight - colHeight;
+            startY = isLeftToRight ? 0 : 0; // 竖排右起时，上对齐应该是从上边开始
             break;
           case 'middle':
             startY = (availableHeight - colHeight) / 2;
             break;
           case 'bottom':
-            startY = isLeftToRight ? availableHeight - colHeight : 0;
+            startY = isLeftToRight
+                ? availableHeight - colHeight
+                : availableHeight - colHeight; // 竖排右起时，下对齐应该是从下边开始
             break;
           case 'justify':
             // 如果字符数大于1，则均匀分布
@@ -671,18 +801,32 @@ class ElementRenderers {
 
               // 为这一列的每个字符重新计算位置
               for (int j = 0; j < charsInThisCol; j++) {
-                final index = colIndex * charsPerCol + j;
-                final x = startX + colIndex * (charSize + lineSpacing);
+                // 竖排左起时，列间方向应该从左往右；竖排右起时，列间方向应该从右往左
+                final x = isLeftToRight
+                    ? startX + colIndex * (charSize + effectiveLineSpacing)
+                    : availableWidth -
+                        startX -
+                        (colIndex + 1) * charSize -
+                        colIndex * effectiveLineSpacing;
                 final y = isLeftToRight
                     ? startY + j * (charSize + justifiedLetterSpacing)
-                    : availableHeight -
-                        startY -
-                        (j + 1) * charSize -
-                        j * justifiedLetterSpacing;
+                    : startY +
+                        j *
+                            (charSize +
+                                justifiedLetterSpacing); // 竖排右起时，文字方向应该从上往下
 
-                if (index < charList.length) {
+                // 找到对应的字符
+                int actualIndex = -1;
+                for (int k = 0; k < processedChars.length; k++) {
+                  if (colIndices[k] == colIndex && k % charsInThisCol == j) {
+                    actualIndex = k;
+                    break;
+                  }
+                }
+
+                if (actualIndex >= 0 && actualIndex < processedChars.length) {
                   positions.add(_CharacterPosition(
-                    char: charList[index],
+                    char: processedChars[actualIndex],
                     x: x,
                     y: y,
                     size: charSize,
@@ -702,14 +846,20 @@ class ElementRenderers {
         if (verticalAlign != 'justify' ||
             charsInThisCol == charsPerCol ||
             charsInThisCol == 1) {
-          final x = startX + colIndex * (charSize + lineSpacing);
+          // 竖排左起时，列间方向应该从左往右；竖排右起时，列间方向应该从右往左
+          final x = isLeftToRight
+              ? startX + colIndex * (charSize + effectiveLineSpacing)
+              : availableWidth -
+                  startX -
+                  (colIndex + 1) * charSize -
+                  colIndex * effectiveLineSpacing;
           final y = isLeftToRight
               ? startY + rowIndex * (charSize + letterSpacing)
               : startY +
-                  (charsInThisCol - rowIndex - 1) * (charSize + letterSpacing);
+                  rowIndex * (charSize + letterSpacing); // 竖排右起时，文字方向应该从上往下
 
           positions.add(_CharacterPosition(
-            char: charList[i],
+            char: processedChars[i],
             x: x,
             y: y,
             size: charSize,
