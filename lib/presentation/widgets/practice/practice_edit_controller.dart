@@ -318,6 +318,10 @@ class PracticeEditController extends ChangeNotifier {
         'dpi': 300, // 默认DPI
         'backgroundColor': '#FFFFFF',
         'backgroundOpacity': 1.0,
+        'background': {
+          'type': 'color',
+          'value': '#FFFFFF',
+        },
         'elements': <Map<String, dynamic>>[],
         'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
       };
@@ -2163,6 +2167,14 @@ class PracticeEditController extends ChangeNotifier {
 
         // 调试信息
         debugPrint('更新页面背景颜色: $backgroundColor');
+
+        // 确保同时更新新格式的背景属性
+        if (!properties.containsKey('background')) {
+          properties['background'] = {
+            'type': 'color',
+            'value': backgroundColor,
+          };
+        }
       }
 
       // Create a copy of the old properties that will be modified
@@ -2382,6 +2394,10 @@ class PracticeEditController extends ChangeNotifier {
       'dpi': 300, // 默认DPI
       'backgroundColor': '#FFFFFF',
       'backgroundOpacity': 1.0,
+      'background': {
+        'type': 'color',
+        'value': '#FFFFFF',
+      },
       'elements': <Map<String, dynamic>>[],
       'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层
     };
