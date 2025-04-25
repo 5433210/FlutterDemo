@@ -741,7 +741,7 @@ class TextRenderer {
         } else {
           // 其他对齐方式使用普通容器
           // 打印调试信息
-          developer.log('创建列容器: 垂直对齐=$verticalAlign, 水平对齐=$textAlign');
+          // developer.log('创建列容器: 垂直对齐=$verticalAlign, 水平对齐=$textAlign');
 
           // 对于垂直对齐，我们需要修改容器结构
           // 不使用 SingleChildScrollView 包裹 Column，因为这会导致 mainAxisAlignment 失效
