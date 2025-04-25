@@ -199,17 +199,38 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('透明度:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  EditableNumberField(
-                    label: '透明度',
-                    value: opacity * 100, // 转换为百分比
-                    suffix: '%',
-                    min: 0,
-                    max: 100,
-                    decimalPlaces: 0,
-                    onChanged: (value) {
-                      // 转换回 0-1 范围
-                      _updateProperty('opacity', value / 100);
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: opacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          label: '${(opacity * 100).round()}%',
+                          onChanged: (value) {
+                            _updateProperty('opacity', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '透明度',
+                          value: opacity * 100, // 转换为百分比
+                          suffix: '%',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 0,
+                          onChanged: (value) {
+                            // 转换回 0-1 范围
+                            _updateProperty('opacity', value / 100);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 16.0),
@@ -218,16 +239,37 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('内边距:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  EditableNumberField(
-                    label: '内边距',
-                    value: padding,
-                    suffix: 'px',
-                    min: 0,
-                    max: 100,
-                    decimalPlaces: 0,
-                    onChanged: (value) {
-                      _updateContentProperty('padding', value);
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: padding,
+                          min: 0,
+                          max: 50,
+                          divisions: 50,
+                          label: '${padding.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('padding', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '内边距',
+                          value: padding,
+                          suffix: 'px',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 0,
+                          onChanged: (value) {
+                            _updateContentProperty('padding', value);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
