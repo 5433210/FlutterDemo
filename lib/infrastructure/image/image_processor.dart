@@ -76,9 +76,12 @@ abstract class ImageProcessor {
   /// [sourceImage] 源图像
   /// [region] 选区矩形
   /// [rotation] 旋转角度
+  /// [flipHorizontal] 是否水平翻转
+  /// [flipVertical] 是否垂直翻转
   /// 返回处理后的图像
   img.Image rotateAndCropImage(
-      img.Image sourceImage, Rect region, double rotation);
+      img.Image sourceImage, Rect region, double rotation,
+      {bool? flipHorizontal, bool? flipVertical});
 
   /// 旋转图片
   ///

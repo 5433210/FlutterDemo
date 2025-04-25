@@ -502,11 +502,35 @@ class ImageProcessorImpl implements ImageProcessor {
 
   @override
   img.Image rotateAndCropImage(
-      img.Image sourceImage, Rect region, double rotation) {
+      img.Image sourceImage, Rect region, double rotation,
+      {bool? flipHorizontal, bool? flipVertical}) {
     final center =
         Offset(region.left + region.width / 2, region.top + region.height / 2);
 
-    if (rotation == 0) {
+    // 检查是否只需要翻转而不需要旋转
+    if (rotation == 0 && (flipHorizontal == true || flipVertical == true)) {
+      // 裁剪图像
+      var result = img.copyCrop(
+        sourceImage,
+        x: region.left.round(),
+        y: region.top.round(),
+        width: region.width.round(),
+        height: region.height.round(),
+      );
+
+      // 应用翻转
+      if (flipHorizontal == true) {
+        result = img.flip(result, direction: img.FlipDirection.horizontal);
+      }
+      if (flipVertical == true) {
+        result = img.flip(result, direction: img.FlipDirection.vertical);
+      }
+
+      return result;
+    }
+
+    // 如果没有任何变换，直接裁剪
+    if (rotation == 0 && flipHorizontal != true && flipVertical != true) {
       return img.copyCrop(
         sourceImage,
         x: region.left.round(),
@@ -520,19 +544,31 @@ class ImageProcessorImpl implements ImageProcessor {
     final result =
         img.Image(width: region.width.round(), height: region.height.round());
 
-    // 创建变换矩阵
-    final cos = math.cos(rotation);
-    final sin = math.sin(rotation);
+    // 创建变换矩阵 - 转换旋转角度为弧度
+    final radians = rotation * math.pi / 180.0;
+    final cos = math.cos(radians);
+    final sin = math.sin(radians);
 
-    // 使用仿射变换进行旋转裁剪
+    // 使用仿射变换进行旋转和翻转裁剪
     for (int y = 0; y < result.height; y++) {
       for (int x = 0; x < result.width; x++) {
-        // 将目标坐标映射回源图像坐标
-        final srcX = cos * (x - region.width / 2) -
-            sin * (y - region.height / 2) +
+        // 应用翻转 - 计算翻转后的坐标
+        double xFlipped = x.toDouble();
+        double yFlipped = y.toDouble();
+
+        if (flipHorizontal == true) {
+          xFlipped = result.width - 1 - x.toDouble();
+        }
+        if (flipVertical == true) {
+          yFlipped = result.height - 1 - y.toDouble();
+        }
+
+        // 将目标坐标映射回源图像坐标 - 应用旋转变换
+        final srcX = cos * (xFlipped - region.width / 2) -
+            sin * (yFlipped - region.height / 2) +
             center.dx;
-        final srcY = sin * (x - region.width / 2) +
-            cos * (y - region.height / 2) +
+        final srcY = sin * (xFlipped - region.width / 2) +
+            cos * (yFlipped - region.height / 2) +
             center.dy;
 
         // 双线性插值获取像素值

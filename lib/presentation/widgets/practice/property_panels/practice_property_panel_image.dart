@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
 import 'package:demo/providers.dart';
 import 'package:flutter/material.dart';
@@ -45,36 +44,6 @@ class DashedDecoration extends Decoration {
   }
 }
 
-class ImagePreview extends StatefulWidget {
-  final String imageUrl;
-  final String fitMode;
-  final double cropTop;
-  final double cropBottom;
-  final double cropLeft;
-  final double cropRight;
-  final bool flipHorizontal;
-  final bool flipVertical;
-  final double contentRotation;
-  final bool isTransformApplied;
-
-  const ImagePreview({
-    Key? key,
-    required this.imageUrl,
-    required this.fitMode,
-    required this.cropTop,
-    required this.cropBottom,
-    required this.cropLeft,
-    required this.cropRight,
-    required this.flipHorizontal,
-    required this.flipVertical,
-    required this.contentRotation,
-    required this.isTransformApplied,
-  }) : super(key: key);
-
-  @override
-  State<ImagePreview> createState() => _ImagePreviewState();
-}
-
 /// 图片内容属性面板
 class ImagePropertyPanel extends PracticePropertyPanel {
   final Map<String, dynamic> element;
@@ -113,39 +82,49 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       (element['content']['cropLeft'] as num?)?.toDouble() ?? 0.0;
 
   double get maxCropHeight {
-    // 首先尝试获取原始图片尺寸
-    final imageSize = this.imageSize;
-    if (imageSize != null) {
-      return imageSize.height;
+    // 最大裁剪值应该基于渲染尺寸（UI展示的图像）
+    final renderSize = this.renderSize;
+    if (renderSize != null) {
+      // 使用渲染高度的一半作为UI上的最大裁剪值
+      return renderSize.height / 2;
     }
 
-    // 如果原始图片尺寸不可用，则使用属性中记录的尺寸
+    // 兜底逻辑，如果渲染尺寸不可用
+    final imageSize = this.imageSize;
+    if (imageSize != null) {
+      return imageSize.height / 2;
+    }
+
     final content = element['content'] as Map<String, dynamic>;
     final height = content['originalHeight'] as num?;
     if (height != null) {
-      return height.toDouble();
+      return height.toDouble() / 2;
     }
 
-    // 如果都没有，返回一个默认值
     return 0.0;
   }
 
-  // 获取最大裁剪值
+  // 获取最大裁剪值（UI）
   double get maxCropWidth {
-    // 首先尝试获取原始图片尺寸
-    final imageSize = this.imageSize;
-    if (imageSize != null) {
-      return imageSize.width;
+    // 最大裁剪值应该基于渲染尺寸（UI展示的图像）
+    final renderSize = this.renderSize;
+    if (renderSize != null) {
+      // 使用渲染宽度的一半作为UI上的最大裁剪值
+      return renderSize.width / 2;
     }
 
-    // 如果原始图片尺寸不可用，则使用属性中记录的尺寸
+    // 兜底逻辑，如果渲染尺寸不可用
+    final imageSize = this.imageSize;
+    if (imageSize != null) {
+      return imageSize.width / 2;
+    }
+
     final content = element['content'] as Map<String, dynamic>;
     final width = content['originalWidth'] as num?;
     if (width != null) {
-      return width.toDouble();
+      return width.toDouble() / 2;
     }
 
-    // 如果都没有，返回一个默认值
     return 0.0;
   }
 
@@ -241,9 +220,12 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                     padding: const EdgeInsets.all(8.0),
                     margin: const EdgeInsets.only(bottom: 12.0),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color:
+                          Colors.blue.withAlpha(26), // 0.1 opacity = 26 alpha
                       borderRadius: BorderRadius.circular(4.0),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      border: Border.all(
+                          color: Colors.blue
+                              .withAlpha(77)), // 0.3 opacity = 77 alpha
                     ),
                     child: const Row(
                       children: [
@@ -451,9 +433,12 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                     padding: const EdgeInsets.all(8.0),
                     margin: const EdgeInsets.only(bottom: 8.0),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color:
+                          Colors.amber.withAlpha(26), // 0.1 opacity = 26 alpha
                       borderRadius: BorderRadius.circular(4.0),
-                      border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                      border: Border.all(
+                          color: Colors.amber
+                              .withAlpha(128)), // 0.5 opacity = 128 alpha
                     ),
                     child: const Text(
                       '注意: 长时间显示重复日志属于正常现象，不影响功能',
@@ -461,7 +446,7 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  ImagePreview(
+                  _buildImagePreviewWithTransformBox(
                     imageUrl: imageUrl,
                     fitMode: fitMode,
                     cropTop: cropTop,
@@ -495,9 +480,12 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                     padding: const EdgeInsets.all(8.0),
                     margin: const EdgeInsets.only(bottom: 12.0),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withOpacity(0.1),
+                      color:
+                          Colors.amber.withAlpha(26), // 0.1 opacity = 26 alpha
                       borderRadius: BorderRadius.circular(4.0),
-                      border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                      border: Border.all(
+                          color: Colors.amber
+                              .withAlpha(77)), // 0.3 opacity = 77 alpha
                     ),
                     child: const Row(
                       children: [
@@ -646,15 +634,19 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                   Row(
                     children: [
                       Expanded(
-                        child: StatefulBuilder(
-                          builder: (context, setState) {
-                            // 获取图片内容旋转值
-                            final contentRotation =
-                                (content['rotation'] as num?)?.toDouble() ??
+                        child: Builder(
+                          builder: (context) {
+                            // 获取最新的内容旋转值
+                            final currentContent =
+                                element['content'] as Map<String, dynamic>;
+                            final currentRotation =
+                                (currentContent['rotation'] as num?)
+                                        ?.toDouble() ??
                                     0.0;
                             // 确保旋转值在滑块范围内
                             final safeRotation =
-                                contentRotation.clamp(-180.0, 180.0);
+                                currentRotation.clamp(-180.0, 180.0);
+
                             return Slider(
                               value: safeRotation,
                               min: -180.0,
@@ -662,7 +654,7 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                               divisions: 360,
                               label: '${safeRotation.toStringAsFixed(0)}°',
                               onChanged: (value) {
-                                setState(() {});
+                                // 直接更新content属性
                                 _updateContentProperty('rotation', value);
                               },
                             );
@@ -671,8 +663,19 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                       ),
                       SizedBox(
                         width: 60,
-                        child: Text(
-                            '${(content['rotation'] as num?)?.toDouble() ?? 0.0}°'),
+                        child: Builder(
+                          builder: (context) {
+                            // 确保显示最新的旋转值
+                            final currentContent =
+                                element['content'] as Map<String, dynamic>;
+                            final currentRotation =
+                                (currentContent['rotation'] as num?)
+                                        ?.toDouble() ??
+                                    0.0;
+                            return Text(
+                                '${currentRotation.toStringAsFixed(0)}°');
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -789,18 +792,25 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       final content =
           Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
 
-      // 根据裁剪方向计算最大值
+      // 重要：这里的裁剪值是UI坐标系中的值（基于渲染尺寸）
+      // 用户操作的是界面上的滑块，滑块的最大值应该基于渲染尺寸
       double maxValue;
       if (key == 'cropTop' || key == 'cropBottom') {
-        maxValue = imageSize.height / 2;
+        // 使用渲染高度的一半作为UI裁剪最大值
+        maxValue = renderSize.height / 2;
       } else {
-        maxValue = imageSize.width / 2;
+        // 使用渲染宽度的一半作为UI裁剪最大值
+        maxValue = renderSize.width / 2;
       }
 
       // 确保裁剪值在有效范围内
       final safeValue = value.clamp(0.0, maxValue);
 
-      // 更新裁剪值
+      // 记录实际裁剪值（UI坐标系）
+      debugPrint('设置UI裁剪值 $key = $safeValue (最大值: $maxValue)');
+
+      // 更新裁剪值 - 注意这是保存在元素属性中的UI坐标系值
+      // 真正转换为图像坐标系是在应用变换时进行
       content[key] = safeValue;
 
       // 更新属性
@@ -869,11 +879,13 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     final renderSize = this.renderSize;
 
     if (imageSize != null && renderSize != null) {
-      // 限制裁剪值不超过图片尺寸的一半
+      // 使用与getter相同的逻辑，裁剪值最大为渲染尺寸的一半
       final maxCropWidth = renderSize.width / 2;
       final maxCropHeight = renderSize.height / 2;
 
-      // 确保裁剪值在有效范围内
+      debugPrint('应用变换时的最大裁剪值: 宽=$maxCropWidth, 高=$maxCropHeight');
+
+      // 获取用户通过滑块设置的裁剪值
       final safeCropTop =
           (content['cropTop'] as num?)?.toDouble().clamp(0.0, maxCropHeight) ??
               0.0;
@@ -895,21 +907,11 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       // 内容旋转属性
       final contentRotation = (content['rotation'] as num?)?.toDouble() ?? 0.0;
 
-      // 更新裁剪值
-      content['cropTop'] = safeCropTop;
-      content['cropBottom'] = safeCropBottom;
-      content['cropLeft'] = safeCropLeft;
-      content['cropRight'] = safeCropRight;
-
-      // 判断是否是初始状态（没有裁剪）
-      final bool noCropping = safeCropLeft == 0 &&
-          safeCropRight == 0 &&
-          safeCropTop == 0 &&
-          safeCropBottom == 0;
-
-      // 判断是否有其他变换
-      final bool hasOtherTransforms =
-          flipHorizontal || flipVertical || contentRotation != 0.0;
+      // 保存原始裁剪值，用于显示在成功消息中
+      final originalCropLeft = safeCropLeft;
+      final originalCropTop = safeCropTop;
+      final originalCropRight = safeCropRight;
+      final originalCropBottom = safeCropBottom;
 
       // 保存变换区域信息 - 这些参数将用于在画布上绘制时提取变换区域
       content['transformRect'] = {
@@ -921,20 +923,66 @@ class ImagePropertyPanel extends PracticePropertyPanel {
         'originalHeight': renderSize.height,
       };
 
-      // 如果没有任何变换，则直接标记应用变换并返回
-      if (noCropping && !hasOtherTransforms) {
-        // 标记已应用变换，但不需要实际生成变换后的图像
+      // 保存用户设置的原始裁剪值
+      content['cropTop'] = originalCropTop;
+      content['cropBottom'] = originalCropBottom;
+      content['cropLeft'] = originalCropLeft;
+      content['cropRight'] = originalCropRight;
+
+      // 判断是否有其他变换
+      final bool hasOtherTransforms =
+          flipHorizontal || flipVertical || contentRotation != 0.0;
+
+      // 检查是否有无效的裁剪值（裁剪值过大导致裁剪区域太小或不存在）
+      final bool invalidCropping =
+          safeCropLeft + safeCropRight >= imageSize.width ||
+              safeCropTop + safeCropBottom >= imageSize.height;
+
+      if (invalidCropping) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('无法应用变换：裁剪值过大，导致裁剪区域无效'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      // 判断是否是初始状态（没有裁剪和其他变换）
+      final bool noCropping = safeCropLeft == 0 &&
+          safeCropRight == 0 &&
+          safeCropTop == 0 &&
+          safeCropBottom == 0;
+      final bool isInitialState = noCropping && !hasOtherTransforms;
+
+      // 即使没有变换，也允许用户应用变换操作，以支持历史回退
+      if (isInitialState) {
+        // 标记已应用变换，但使用原始图像
         content['isTransformApplied'] = true;
         // 确保删除任何之前的变换图像数据
         content.remove('transformedImageData');
         content.remove('transformedImageUrl');
 
+        // 记录变换区域信息，即使使用原始图像
+        content['transformRect'] = {
+          'x': 0,
+          'y': 0,
+          'width': renderSize.width,
+          'height': renderSize.height,
+          'originalWidth': renderSize.width,
+          'originalHeight': renderSize.height,
+        };
+
         // 更新内容
         _updateProperty('content', content);
 
+        // 通知控制器元素已更新，触发画布重绘
+        controller.notifyListeners();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('无需应用变换：使用原始图像'),
+            content: Text('已应用变换：使用原始图像'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -944,6 +992,141 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       // 使用 Future 处理异步操作
       Future(() async {
         try {
+          // 添加详细的调试日志，记录尺寸信息
+          debugPrint('=== 开始应用变换 ===');
+          debugPrint(
+              '原始图片尺寸: ${imageSize.width}x${imageSize.height}, 渲染尺寸: ${renderSize.width}x${renderSize.height}');
+          debugPrint(
+              '用户设置的裁剪值: 左=$originalCropLeft, 上=$originalCropTop, 右=$originalCropRight, 下=$originalCropBottom');
+          debugPrint('最大裁剪值: maxWidth=$maxCropWidth, maxHeight=$maxCropHeight');
+
+          // 计算比例因子 - 原始图像尺寸与渲染尺寸的比例
+          final scaleX = imageSize.width / renderSize.width;
+          final scaleY = imageSize.height / renderSize.height;
+          final scale = math.min(scaleX, scaleY); // 保持宽高比
+          debugPrint('缩放比例: scaleX=$scaleX, scaleY=$scaleY, 取最小值=$scale');
+
+          // =====================================================================
+          // 重要说明：裁剪值的处理涉及两个坐标系
+          // 1. UI坐标系：用户在界面上通过滑块设置的值，基于渲染尺寸（renderSize）
+          // 2. 图像坐标系：实际应用裁剪的像素位置，基于原始图像尺寸（imageSize）
+          //
+          // 需要将UI坐标系中的裁剪值转换为图像坐标系中的裁剪区域
+          // =====================================================================
+
+          // 改用这种方式计算裁剪区域
+          // 第一步：获取UI坐标系中的裁剪值（通过滑块设置的值）
+          final displayedWidth = renderSize.width;
+          final displayedHeight = renderSize.height;
+
+          // 这些值是在UI上设置的，基于renderSize
+          final cropLeft = originalCropLeft; // UI左边裁剪量
+          final cropTop = originalCropTop; // UI上边裁剪量
+          final cropRight = originalCropRight; // UI右边裁剪量
+          final cropBottom = originalCropBottom; // UI下边裁剪量
+
+          debugPrint(
+              '原始裁剪值(UI坐标系): 左=$cropLeft, 上=$cropTop, 右=$cropRight, 下=$cropBottom');
+          debugPrint('渲染区域尺寸: 宽=$displayedWidth, 高=$displayedHeight');
+
+          // 验证UI裁剪值是否合理
+          if (cropLeft + cropRight >= displayedWidth ||
+              cropTop + cropBottom >= displayedHeight) {
+            debugPrint('警告: 裁剪值总和超过了渲染区域的尺寸，可能会导致计算错误');
+          }
+
+          // 第二步：将UI坐标系裁剪值转换为图像坐标系裁剪值
+
+          // 重要说明: 这里的转换需要与预览画布中的线框计算保持一致
+          // 预览计算考虑了图像在画布中的偏移和缩放，我们在实际裁剪时也需要同样处理
+
+          // 使用比例因子将UI上的裁剪值转换为原始图像上的像素数
+          final widthRatio = imageSize.width / displayedWidth; // 宽度比例因子
+          final heightRatio = imageSize.height / displayedHeight; // 高度比例因子
+          debugPrint('坐标转换比例: 宽度=$widthRatio, 高度=$heightRatio');
+
+          // 使用相同的计算方法将UI裁剪值转换为图像坐标
+          // 注意：这里的计算必须与预览线框计算保持一致，否则会导致裁剪结果与预览不符
+          final cropAreaLeft = cropLeft * widthRatio;
+          final cropAreaTop = cropTop * heightRatio;
+          final cropAreaRight = cropRight * widthRatio;
+          final cropAreaBottom = cropBottom * heightRatio;
+
+          // 计算裁剪矩形在原始图像上的位置
+          var left = cropAreaLeft;
+          var top = cropAreaTop;
+          var right = imageSize.width - cropAreaRight;
+          var bottom = imageSize.height - cropAreaBottom;
+
+          debugPrint(
+              '原始UI裁剪值转换后: 左=$cropAreaLeft, 上=$cropAreaTop, 右=$cropAreaRight, 下=$cropAreaBottom');
+          debugPrint('转换后的裁剪区域(图像坐标系): 左=$left, 上=$top, 右=$right, 下=$bottom');
+          debugPrint('裁剪区域大小: 宽=${right - left}, 高=${bottom - top}');
+
+          // 确保裁剪矩形有合理的最小尺寸（至少为原始图像尺寸的1%）
+          final minWidth = imageSize.width * 0.01;
+          final minHeight = imageSize.height * 0.01;
+
+          if (right - left < minWidth) {
+            // 如果宽度太小，增加右边界
+            right = left + minWidth;
+            // 确保不超出图像边界
+            if (right > imageSize.width) {
+              right = imageSize.width;
+              left = right - minWidth;
+            }
+          }
+
+          if (bottom - top < minHeight) {
+            // 如果高度太小，增加底部边界
+            bottom = top + minHeight;
+            // 确保不超出图像边界
+            if (bottom > imageSize.height) {
+              bottom = imageSize.height;
+              top = bottom - minHeight;
+            }
+          }
+
+          debugPrint('调整后的裁剪区域: 左=$left, 上=$top, 右=$right, 下=$bottom');
+          debugPrint('调整后裁剪区域大小: 宽=${right - left}, 高=${bottom - top}');
+
+          // 确保裁剪矩形有效（宽度和高度至少为1像素）
+          if (right <= left) {
+            right = left + 1;
+          }
+          if (bottom <= top) {
+            bottom = top + 1;
+          }
+
+          final cropRect = Rect.fromLTRB(left, top, right, bottom);
+
+          debugPrint(
+              '转换后的实际裁剪矩形: left=${cropRect.left}, top=${cropRect.top}, right=${cropRect.right}, bottom=${cropRect.bottom}');
+          debugPrint(
+              '裁剪区域尺寸: width=${cropRect.width}, height=${cropRect.height}');
+
+          final effectiveCropLeft = cropRect.left;
+          final effectiveCropTop = cropRect.top;
+          final effectiveCropRight = imageSize.width - cropRect.right;
+          final effectiveCropBottom = imageSize.height - cropRect.bottom;
+
+          debugPrint(
+              '有效裁剪值(像素): 左=$effectiveCropLeft, 上=$effectiveCropTop, 右=$effectiveCropRight, 下=$effectiveCropBottom');
+
+          // 计算裁剪区域相对于原始图像的百分比
+          final percentLeft =
+              (effectiveCropLeft / imageSize.width * 100).toStringAsFixed(2);
+          final percentTop =
+              (effectiveCropTop / imageSize.height * 100).toStringAsFixed(2);
+          final percentRight =
+              (effectiveCropRight / imageSize.width * 100).toStringAsFixed(2);
+          final percentBottom =
+              (effectiveCropBottom / imageSize.height * 100).toStringAsFixed(2);
+
+          debugPrint(
+              '裁剪百分比: 左=$percentLeft%, 上=$percentTop%, 右=$percentRight%, 下=$percentBottom%');
+          debugPrint('=== 裁剪参数准备完成 ===');
+
           // 异步加载图像
           Uint8List? imageData = await _loadImageFromUrl(imageUrl);
 
@@ -977,16 +1160,14 @@ class ImagePropertyPanel extends PracticePropertyPanel {
           }
 
           // 使用转换后的 Image 对象
-          final croppedImage = ref
-              .read(imageProcessorProvider)
-              .rotateAndCropImage(
-                  image,
-                  Rect.fromLTRB(
-                      safeCropLeft,
-                      safeCropTop,
-                      imageSize.width - safeCropRight,
-                      imageSize.height - safeCropBottom),
-                  contentRotation);
+          final croppedImage =
+              ref.read(imageProcessorProvider).rotateAndCropImage(
+                    image,
+                    cropRect,
+                    contentRotation,
+                    flipHorizontal: flipHorizontal,
+                    flipVertical: flipVertical,
+                  );
 
           final transformedImageData =
               Uint8List.fromList(img.encodePng(croppedImage));
@@ -1001,7 +1182,7 @@ class ImagePropertyPanel extends PracticePropertyPanel {
             message += ' (无裁剪，但应用了其他变换)';
           } else {
             message +=
-                ' (裁剪: 左${safeCropLeft.toInt()}px, 上${safeCropTop.toInt()}px, 右${safeCropRight.toInt()}px, 下${safeCropBottom.toInt()}px)';
+                ' (裁剪: 左${originalCropLeft.toInt()}px, 上${originalCropTop.toInt()}px, 右${originalCropRight.toInt()}px, 下${originalCropBottom.toInt()}px)';
           }
 
           // 关闭加载对话框并更新UI
@@ -1022,13 +1203,15 @@ class ImagePropertyPanel extends PracticePropertyPanel {
           debugPrint('应用变换时出错: $e');
 
           // 显示错误信息
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('应用变换失败: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('应用变换失败: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       });
     } else {
@@ -1122,6 +1305,8 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       child: imageUrl.isNotEmpty
           ? LayoutBuilder(
               builder: (context, constraints) {
+                debugPrint(
+                    'LayoutBuilder约束: ${constraints.maxWidth}x${constraints.maxHeight}');
                 return Stack(
                   children: [
                     // 原始图片显示
@@ -1154,19 +1339,19 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                       ),
                     ),
 
-                    // 只有在图像尺寸信息可用时才显示变换预览矩形线框
-                    if (isImageLoaded)
-                      _buildTransformPreviewRect(
-                        containerConstraints: constraints,
-                        cropTop: cropTop,
-                        cropBottom: cropBottom,
-                        cropLeft: cropLeft,
-                        cropRight: cropRight,
-                        contentRotation: contentRotation,
-                        flipHorizontal: flipHorizontal,
-                        flipVertical: flipVertical,
-                        fitMode: previewFitMode,
-                      ),
+                    // 无论图像尺寸信息是否可用，都尝试显示变换预览矩形线框
+                    // 在_buildTransformPreviewRect方法中会根据条件判断是否实际绘制
+                    _buildTransformPreviewRect(
+                      containerConstraints: constraints,
+                      cropTop: cropTop,
+                      cropBottom: cropBottom,
+                      cropLeft: cropLeft,
+                      cropRight: cropRight,
+                      contentRotation: contentRotation,
+                      flipHorizontal: flipHorizontal,
+                      flipVertical: flipVertical,
+                      fitMode: previewFitMode,
+                    ),
                   ],
                 );
               },
@@ -1245,8 +1430,11 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                                 ? 'fill'
                                 : 'none');
 
-                // 调用回调
-                onImageSizeAvailable(imageSize, renderSize);
+                // 使用WidgetsBinding.instance.addPostFrameCallback避免在构建过程中调用setState
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // 调用回调
+                  onImageSizeAvailable(imageSize, renderSize);
+                });
               },
               onError: (exception, stackTrace) {
                 debugPrint('图片加载错误: $exception');
@@ -1330,8 +1518,11 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                               ? 'fill'
                               : 'none');
 
-              // 调用回调
-              onImageSizeAvailable(imageSize, renderSize);
+              // 使用WidgetsBinding.instance.addPostFrameCallback避免在构建过程中调用setState
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                // 调用回调
+                onImageSizeAvailable(imageSize, renderSize);
+              });
             },
             onError: (exception, stackTrace) {
               debugPrint('图片加载错误: $exception');
@@ -1399,22 +1590,27 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     final currentRenderSize = renderSize;
 
     if (currentImageSize == null || currentRenderSize == null) {
+      debugPrint('图片尺寸或渲染尺寸为null，不显示裁剪框');
       return const SizedBox();
     }
 
-    return CustomPaint(
-      painter: _TransformPreviewPainter(
-        imageSize: currentImageSize,
-        renderSize: currentRenderSize,
-        cropTop: cropTop,
-        cropBottom: cropBottom,
-        cropLeft: cropLeft,
-        cropRight: cropRight,
-        flipHorizontal: flipHorizontal,
-        flipVertical: flipVertical,
-        contentRotation: contentRotation,
-        isTransformApplied:
-            element['content']['isTransformApplied'] as bool? ?? false,
+    return SizedBox(
+      width: containerConstraints.maxWidth,
+      height: containerConstraints.maxHeight,
+      child: CustomPaint(
+        painter: _TransformPreviewPainter(
+          imageSize: currentImageSize,
+          renderSize: currentRenderSize,
+          cropTop: cropTop,
+          cropBottom: cropBottom,
+          cropLeft: cropLeft,
+          cropRight: cropRight,
+          flipHorizontal: flipHorizontal,
+          flipVertical: flipVertical,
+          contentRotation: contentRotation,
+          isTransformApplied:
+              element['content']['isTransformApplied'] as bool? ?? false,
+        ),
       ),
     );
   }
@@ -1462,28 +1658,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     }
   }
 
-  // 修改_forceUpdateCropSliders方法
-  void _forceUpdateCropSliders(Map<String, dynamic> content) {
-    final cropTop = (content['cropTop'] as num?)?.toDouble() ?? 0.0;
-    final cropBottom = (content['cropBottom'] as num?)?.toDouble() ?? 0.0;
-    final cropLeft = (content['cropLeft'] as num?)?.toDouble() ?? 0.0;
-    final cropRight = (content['cropRight'] as num?)?.toDouble() ?? 0.0;
-
-    // debugPrint(
-    //     '强制更新裁剪滑块: top=$cropTop, bottom=$cropBottom, left=$cropLeft, right=$cropRight, isLoaded=${_imageSizeStateHolder.isImageLoaded}');
-
-    // 确保图片加载状态为true
-    if (!isImageLoaded) {
-      updateImageState(imageSize, renderSize);
-    }
-
-    // 设置裁剪值通知器
-    updateCropValue('cropTop', cropTop);
-    updateCropValue('cropBottom', cropBottom);
-    updateCropValue('cropLeft', cropLeft);
-    updateCropValue('cropRight', cropRight);
-  }
-
   // 获取适应模式
   BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
@@ -1498,32 +1672,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
       default:
         return BoxFit.contain;
     }
-  }
-
-  // 获取图片尺寸的辅助方法
-  Future<Size> _getImageSize(ImageProvider provider) async {
-    final Completer<Size> completer = Completer<Size>();
-    final ImageStream stream = provider.resolve(const ImageConfiguration());
-
-    final ImageStreamListener listener = ImageStreamListener(
-      (ImageInfo imageInfo, bool synchronousCall) {
-        final Size size = Size(
-          imageInfo.image.width.toDouble(),
-          imageInfo.image.height.toDouble(),
-        );
-        completer.complete(size);
-      },
-      onError: (exception, stackTrace) {
-        completer.complete(const Size(0, 0));
-      },
-    );
-
-    stream.addListener(listener);
-
-    return completer.future.then((Size size) {
-      stream.removeListener(listener);
-      return size;
-    });
   }
 
   // 从URL加载图像数据
@@ -1579,81 +1727,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     return null;
   }
 
-  // 修改图片尺寸监听方法
-  void _onImageSizeAvailable(Size imageSize, Size renderSize) {
-    updateImageSizeInfo(imageSize, renderSize);
-  }
-
-  // 预加载并测量图片尺寸
-  void _preloadAndMeasureImage(
-      String imageUrl, Function(Size) onSizeAvailable) {
-    if (imageUrl.startsWith('file://')) {
-      // 修正Windows路径格式
-      String filePath = imageUrl.substring(7); // 移除 'file://' 前缀
-
-      // 将URL编码的字符转换回原始字符
-      // try {
-      //   filePath = Uri.decodeComponent(filePath);
-      // } catch (e) {
-      //   debugPrint('URI解码失败，尝试手动替换: $e');
-      //   // 手动替换常见的编码字符
-      //   filePath = filePath
-      //       .replaceAll('%20', ' ')
-      //       .replaceAll('%2F', '/')
-      //       .replaceAll('%3A', ':')
-      //       .replaceAll('%5C', '\\')
-      //       .replaceAll('%25', '%');
-      // }
-
-      // // 确保使用正确的路径分隔符
-      // if (Platform.isWindows && filePath.startsWith('/')) {
-      //   filePath = filePath.substring(1); // 移除开头的斜杠
-      //   filePath = filePath.replaceAll('/', '\\'); // 替换路径分隔符
-      // }
-
-      debugPrint('预加载图片路径: $filePath');
-
-      try {
-        final file = File(filePath);
-        if (!file.existsSync()) {
-          debugPrint('文件不存在: $filePath');
-          onSizeAvailable(const Size(0, 0));
-          return;
-        }
-
-        // 使用dart:ui的Image类来获取图片尺寸
-        final bytes = file.readAsBytesSync();
-        ui.instantiateImageCodec(bytes).then((codec) {
-          return codec.getNextFrame();
-        }).then((frame) {
-          final image = frame.image;
-          onSizeAvailable(
-              Size(image.width.toDouble(), image.height.toDouble()));
-        }).catchError((error) {
-          debugPrint('解码图片失败: $error');
-          onSizeAvailable(const Size(0, 0));
-        });
-      } catch (e) {
-        debugPrint('读取文件失败: $e');
-        onSizeAvailable(const Size(0, 0));
-      }
-    } else {
-      // 处理网络图片
-      final imageProvider = NetworkImage(imageUrl);
-      _getImageSize(imageProvider).then((Size imageSize) {
-        if (imageSize.width > 0 && imageSize.height > 0) {
-          onSizeAvailable(imageSize);
-        } else {
-          debugPrint('获取图片尺寸失败: 宽度或高度为0');
-          onSizeAvailable(const Size(0, 0));
-        }
-      }).catchError((error) {
-        debugPrint('获取图片尺寸时出错: $error');
-        onSizeAvailable(const Size(0, 0));
-      });
-    }
-  }
-
   // 重置变换
   void _resetTransform(BuildContext context) {
     final content =
@@ -1697,21 +1770,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     onSelectImage();
   }
 
-  void _updateContentProperties() {
-    final selectedElement = controller.state.getSelectedElements().first;
-    final content = Map<String, dynamic>.from(
-        selectedElement['content'] as Map<String, dynamic>);
-
-    // 更新裁剪值
-    content['cropTop'] = topCrop;
-    content['cropBottom'] = bottomCrop;
-    content['cropLeft'] = leftCrop;
-    content['cropRight'] = rightCrop;
-
-    // 更新内容
-    _updatePropertySafely('content', content);
-  }
-
   // 更新内容属性
   void _updateContentProperty(String key, dynamic value) {
     final content =
@@ -1739,27 +1797,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
     if (currentImageSize != null && currentRenderSize != null) {
       updateImageState(currentImageSize, currentRenderSize);
     }
-  }
-
-  // 添加一个安全的属性更新方法
-  void _updatePropertySafely(String key, dynamic value) {
-    // debugPrint('开始更新属性: $key = $value');
-    // debugPrint('更新前状态: isImageLoaded=${_imageSizeStateHolder.isImageLoaded}');
-    // debugPrint(
-    //     '更新前裁剪值: left=${_imageSizeStateHolder.leftCropNotifier.value}, right=${_imageSizeStateHolder.rightCropNotifier.value}');
-
-    // 在更新前强制保持图片加载状态
-    forceKeepLoadedState();
-
-    // 更新属性
-    _updateProperty('content', value);
-
-    // 更新后再次检查并保持状态
-    forceKeepLoadedState();
-
-    // debugPrint('更新后状态: isImageLoaded=${_imageSizeStateHolder.isImageLoaded}');
-    // debugPrint(
-    //     '更新后裁剪值: left=${_imageSizeStateHolder.leftCropNotifier.value}, right=${_imageSizeStateHolder.rightCropNotifier.value}');
   }
 }
 
@@ -1833,492 +1870,6 @@ class _DashedDecorationPainter extends BoxPainter {
   }
 }
 
-class _ImagePreviewState extends State<ImagePreview>
-    with AutomaticKeepAliveClientMixin {
-  Size? _imageSize;
-  Size? _renderSize;
-  bool _isLoading = false;
-  bool _isTransformApplied = false;
-  final bool _isPreloading = false; // 添加预加载标志
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Stack(
-          children: [
-            _buildImageWithSizeListener(
-              imageUrl: widget.imageUrl,
-              fitMode: _getFitMode(),
-              onImageSizeAvailable: _onImageSizeAvailable,
-            ),
-            if (_imageSize != null && _renderSize != null)
-              _buildTransformPreviewRect(
-                containerConstraints: constraints,
-                cropTop: widget.cropTop,
-                cropBottom: widget.cropBottom,
-                cropLeft: widget.cropLeft,
-                cropRight: widget.cropRight,
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _isTransformApplied = widget.isTransformApplied;
-  }
-
-  // 构建带尺寸监听的图片
-  Widget _buildImageWithSizeListener({
-    required String imageUrl,
-    required BoxFit fitMode,
-    required Function(Size, Size) onImageSizeAvailable,
-  }) {
-    // 判断是否是本地文件路径
-    if (imageUrl.startsWith('file://')) {
-      try {
-        // 修正Windows路径格式
-        String filePath = imageUrl.substring(7); // 移除 'file://' 前缀
-
-        debugPrint('处理后的文件路径: $filePath');
-
-        final file = File(filePath);
-        if (!file.existsSync()) {
-          debugPrint('文件不存在: $filePath');
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, color: Colors.red, size: 48),
-                const SizedBox(height: 8),
-                Text(
-                  '文件不存在: $filePath',
-                  style: const TextStyle(color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
-        }
-
-        return LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final imageProvider = FileImage(file);
-
-            // 预加载图片并获取其尺寸
-            final imageStream = imageProvider.resolve(ImageConfiguration(
-              size: constraints.biggest,
-            ));
-
-            imageStream.addListener(ImageStreamListener(
-              (ImageInfo info, bool _) {
-                final imageSize = Size(
-                  info.image.width.toDouble(),
-                  info.image.height.toDouble(),
-                );
-
-                // 计算渲染尺寸
-                final renderSize = _calculateRenderSize(
-                    imageSize,
-                    constraints.biggest,
-                    fitMode == BoxFit.contain
-                        ? 'contain'
-                        : fitMode == BoxFit.cover
-                            ? 'cover'
-                            : fitMode == BoxFit.fill
-                                ? 'fill'
-                                : 'none');
-
-                // 调用回调
-                onImageSizeAvailable(imageSize, renderSize);
-              },
-              onError: (exception, stackTrace) {
-                debugPrint('图片加载错误: $exception');
-              },
-            ));
-
-            return Image(
-              image: imageProvider,
-              fit: fitMode,
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                if (frame == null) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                return child;
-              },
-              errorBuilder: (context, error, stackTrace) {
-                debugPrint('图片加载错误: $error');
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, color: Colors.red, size: 48),
-                      const SizedBox(height: 8),
-                      Text(
-                        '无法加载图片: ${error.toString().substring(0, math.min(error.toString().length, 50))}...',
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          },
-        );
-      } catch (e) {
-        debugPrint('处理文件路径时出错: $e');
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, color: Colors.red, size: 48),
-              const SizedBox(height: 8),
-              Text(
-                '处理文件路径时出错: ${e.toString()}',
-                style: const TextStyle(color: Colors.red),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      }
-    } else {
-      return LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final imageProvider = NetworkImage(imageUrl);
-
-          // 预加载图片并获取其尺寸
-          final imageStream = imageProvider.resolve(ImageConfiguration(
-            size: constraints.biggest,
-          ));
-
-          imageStream.addListener(ImageStreamListener(
-            (ImageInfo info, bool _) {
-              final imageSize = Size(
-                info.image.width.toDouble(),
-                info.image.height.toDouble(),
-              );
-
-              // 计算渲染尺寸
-              final renderSize = _calculateRenderSize(
-                  imageSize,
-                  constraints.biggest,
-                  fitMode == BoxFit.contain
-                      ? 'contain'
-                      : fitMode == BoxFit.cover
-                          ? 'cover'
-                          : fitMode == BoxFit.fill
-                              ? 'fill'
-                              : 'none');
-
-              // 调用回调
-              onImageSizeAvailable(imageSize, renderSize);
-            },
-            onError: (exception, stackTrace) {
-              debugPrint('图片加载错误: $exception');
-            },
-          ));
-
-          return Image(
-            image: imageProvider,
-            fit: fitMode,
-            frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-              if (frame == null) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              return child;
-            },
-            errorBuilder: (context, error, stackTrace) {
-              debugPrint('图片加载错误: $error');
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error, color: Colors.red, size: 48),
-                    const SizedBox(height: 8),
-                    Text(
-                      '无法加载图片: ${error.toString().substring(0, math.min(error.toString().length, 50))}...',
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      );
-    }
-  }
-
-  // 构建变换预览矩形
-  Widget _buildTransformPreviewRect({
-    required BoxConstraints containerConstraints,
-    required double cropTop,
-    required double cropBottom,
-    required double cropLeft,
-    required double cropRight,
-  }) {
-    if (_imageSize == null || _renderSize == null) {
-      return const SizedBox();
-    }
-
-    return CustomPaint(
-      painter: _TransformPreviewPainter(
-        imageSize: _imageSize!,
-        renderSize: _renderSize!,
-        cropTop: cropTop,
-        cropBottom: cropBottom,
-        cropLeft: cropLeft,
-        cropRight: cropRight,
-        flipHorizontal: widget.flipHorizontal,
-        flipVertical: widget.flipVertical,
-        contentRotation: widget.contentRotation,
-        isTransformApplied: _isTransformApplied,
-      ),
-    );
-  }
-
-  // 获取适应模式
-  BoxFit _getFitMode() {
-    switch (widget.fitMode) {
-      case 'contain':
-        return BoxFit.contain;
-      case 'cover':
-        return BoxFit.cover;
-      case 'fill':
-        return BoxFit.fill;
-      case 'none':
-        return BoxFit.none;
-      default:
-        return BoxFit.contain;
-    }
-  }
-
-  // 获取图片尺寸的辅助方法
-  Future<Size> _getImageSize(ImageProvider provider) async {
-    final Completer<Size> completer = Completer<Size>();
-    final ImageStream stream = provider.resolve(const ImageConfiguration());
-
-    final ImageStreamListener listener = ImageStreamListener(
-      (ImageInfo imageInfo, bool synchronousCall) {
-        final Size size = Size(
-          imageInfo.image.width.toDouble(),
-          imageInfo.image.height.toDouble(),
-        );
-        completer.complete(size);
-      },
-      onError: (exception, stackTrace) {
-        completer.complete(const Size(0, 0));
-      },
-    );
-
-    stream.addListener(listener);
-
-    return completer.future.then((Size size) {
-      stream.removeListener(listener);
-      return size;
-    });
-  }
-
-  // 图片尺寸可用时的回调
-  void _onImageSizeAvailable(Size imageSize, Size renderSize) {
-    _updateImageSizeInfo(imageSize, renderSize);
-  }
-
-  // 预加载并测量图片尺寸
-  void _preloadAndMeasureImage(
-      String imageUrl, Function(Size) onSizeAvailable) {
-    if (imageUrl.startsWith('file://')) {
-      // 修正Windows路径格式
-      String filePath = imageUrl.substring(7); // 移除 'file://' 前缀
-
-      // 将URL编码的字符转换回原始字符
-      // try {
-      //   filePath = Uri.decodeComponent(filePath);
-      // } catch (e) {
-      //   debugPrint('URI解码失败，尝试手动替换: $e');
-      //   // 手动替换常见的编码字符
-      //   filePath = filePath
-      //       .replaceAll('%20', ' ')
-      //       .replaceAll('%2F', '/')
-      //       .replaceAll('%3A', ':')
-      //       .replaceAll('%5C', '\\')
-      //       .replaceAll('%25', '%');
-      // }
-
-      // // 确保使用正确的路径分隔符
-      // if (Platform.isWindows && filePath.startsWith('/')) {
-      //   filePath = filePath.substring(1); // 移除开头的斜杠
-      //   filePath = filePath.replaceAll('/', '\\'); // 替换路径分隔符
-      // }
-
-      debugPrint('预加载图片路径: $filePath');
-
-      try {
-        final file = File(filePath);
-        if (!file.existsSync()) {
-          debugPrint('文件不存在: $filePath');
-          onSizeAvailable(const Size(0, 0));
-          return;
-        }
-
-        // 使用dart:ui的Image类来获取图片尺寸
-        final bytes = file.readAsBytesSync();
-        ui.instantiateImageCodec(bytes).then((codec) {
-          return codec.getNextFrame();
-        }).then((frame) {
-          final image = frame.image;
-          onSizeAvailable(
-              Size(image.width.toDouble(), image.height.toDouble()));
-        }).catchError((error) {
-          debugPrint('解码图片失败: $error');
-          onSizeAvailable(const Size(0, 0));
-        });
-      } catch (e) {
-        debugPrint('读取文件失败: $e');
-        onSizeAvailable(const Size(0, 0));
-      }
-    } else {
-      // 处理网络图片
-      final imageProvider = NetworkImage(imageUrl);
-      _getImageSize(imageProvider).then((Size imageSize) {
-        if (imageSize.width > 0 && imageSize.height > 0) {
-          onSizeAvailable(imageSize);
-        } else {
-          debugPrint('获取图片尺寸失败: 宽度或高度为0');
-          onSizeAvailable(const Size(0, 0));
-        }
-      }).catchError((error) {
-        debugPrint('获取图片尺寸时出错: $error');
-        onSizeAvailable(const Size(0, 0));
-      });
-    }
-  }
-
-  // 更新图片尺寸信息
-  void _updateImageSizeInfo(Size imageSize, Size renderSize) {
-    if (mounted) {
-      setState(() {
-        _imageSize = imageSize;
-        _renderSize = renderSize;
-        _isLoading = false;
-      });
-    }
-  }
-
-  // 根据适应模式计算图片实际渲染尺寸
-  Size _calculateRenderSize(
-      Size imageSize, Size containerSize, String fitMode) {
-    final imageRatio = imageSize.width / imageSize.height;
-    final containerRatio = containerSize.width / containerSize.height;
-
-    switch (fitMode) {
-      case 'contain':
-        if (imageRatio > containerRatio) {
-          return Size(
-            containerSize.width,
-            containerSize.width / imageRatio,
-          );
-        } else {
-          return Size(
-            containerSize.height * imageRatio,
-            containerSize.height,
-          );
-        }
-      case 'cover':
-        if (imageRatio > containerRatio) {
-          return Size(
-            containerSize.height * imageRatio,
-            containerSize.height,
-          );
-        } else {
-          return Size(
-            containerSize.width,
-            containerSize.width / imageRatio,
-          );
-        }
-      case 'fill':
-        return containerSize;
-      case 'none':
-        return imageSize;
-      default:
-        return Size(
-          math.min(imageSize.width, containerSize.width),
-          math.min(imageSize.height, containerSize.height),
-        );
-    }
-  }
-}
-
-// 用于监听子部件尺寸变化的部件
-class _SizeReportingWidget extends StatefulWidget {
-  final Widget child;
-  final Function(Size size) onSizeChange;
-
-  const _SizeReportingWidget({
-    required this.child,
-    required this.onSizeChange,
-  });
-
-  @override
-  _SizeReportingWidgetState createState() => _SizeReportingWidgetState();
-}
-
-class _SizeReportingWidgetState extends State<_SizeReportingWidget> {
-  final _widgetKey = GlobalKey();
-  Size? _oldSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<SizeChangedLayoutNotification>(
-      onNotification: (_) {
-        _notifySize();
-        return true;
-      },
-      child: SizeChangedLayoutNotifier(
-        child: Container(
-          key: _widgetKey,
-          child: widget.child,
-        ),
-      ),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _notifySize());
-  }
-
-  void _notifySize() {
-    final context = _widgetKey.currentContext;
-    if (context == null) return;
-
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null) return;
-
-    final size = box.size;
-    if (_oldSize != size) {
-      _oldSize = size;
-      widget.onSizeChange(size);
-    }
-  }
-}
-
 class _TransformPreviewPainter extends CustomPainter {
   final Size imageSize;
   final Size renderSize;
@@ -2346,26 +1897,211 @@ class _TransformPreviewPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (!isTransformApplied) {
+    // 如果画布尺寸为0，无法绘制
+    if (size.width <= 0 || size.height <= 0) {
+      debugPrint('画布尺寸为0，无法绘制裁剪框');
       return;
     }
 
-    final paint = Paint()
-      ..color = Colors.red.withOpacity(0.3)
-      ..style = PaintingStyle.fill;
+    debugPrint('=== 绘制裁剪预览框 ===');
+    debugPrint('预览画布尺寸: ${size.width}x${size.height}');
+    debugPrint(
+        '图像尺寸: ${imageSize.width}x${imageSize.height}, 渲染尺寸: ${renderSize.width}x${renderSize.height}');
+    debugPrint('裁剪值: 上=$cropTop, 下=$cropBottom, 左=$cropLeft, 右=$cropRight');
+    debugPrint('旋转角度: $contentRotation°');
 
-    final rect = Rect.fromLTRB(
-      cropLeft,
-      cropTop,
-      imageSize.width - cropRight,
-      imageSize.height - cropBottom,
-    );
+    // ============ 第1步：绘制整个画布的蓝色边框 ============
+    final imageBorderPaint = Paint()
+      ..color = Colors.blue.withAlpha(128)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
 
-    canvas.drawRect(rect, paint);
+    final canvasRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.drawRect(canvasRect, imageBorderPaint);
+    debugPrint('绘制画布边框(蓝色): $canvasRect');
+
+    // ============ 第2步：计算图像在画布上的显示位置 ============
+    // 计算原始图像缩放到画布大小的比例
+    final scaleX = size.width / imageSize.width;
+    final scaleY = size.height / imageSize.height;
+    final scale = math.min(scaleX, scaleY); // 保持宽高比
+
+    // 计算图像在画布上的实际尺寸
+    final scaledImageWidth = imageSize.width * scale;
+    final scaledImageHeight = imageSize.height * scale;
+
+    // 计算图像在画布上的居中偏移量
+    final offsetX = (size.width - scaledImageWidth) / 2;
+    final offsetY = (size.height - scaledImageHeight) / 2;
+
+    // 创建图像在画布上的实际矩形区域
+    final actualImageRect =
+        Rect.fromLTWH(offsetX, offsetY, scaledImageWidth, scaledImageHeight);
+
+    debugPrint('缩放比例: scaleX=$scaleX, scaleY=$scaleY, 取最小值=$scale');
+    debugPrint('缩放后的图像尺寸: ${scaledImageWidth}x$scaledImageHeight');
+    debugPrint('图像偏移量: X=$offsetX, Y=$offsetY');
+    debugPrint('实际图像区域(绿色): $actualImageRect');
+
+    // 绘制图像区域的绿色边框
+    final greenBorderPaint = Paint()
+      ..color = Colors.green.withAlpha(179)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+    canvas.drawRect(actualImageRect, greenBorderPaint);
+
+    // ============ 第3步：计算裁剪区域 ============
+    // 计算UI坐标（渲染尺寸）到画布坐标（预览画布尺寸）的缩放比例
+    // 注意：这不同于原始图像到画布的缩放比例
+
+    // 获取图像实际显示区域的尺寸
+    final displayWidth = actualImageRect.width;
+    final displayHeight = actualImageRect.height;
+
+    // 计算渲染尺寸到实际显示区域的比例
+    // 这个比例用于将UI裁剪值（基于渲染尺寸）转换为画布上实际显示区域的坐标
+    final uiToDisplayScaleX = displayWidth / renderSize.width;
+    final uiToDisplayScaleY = displayHeight / renderSize.height;
+
+    debugPrint('渲染尺寸: 宽=${renderSize.width}, 高=${renderSize.height}');
+    debugPrint('实际显示尺寸: 宽=$displayWidth, 高=$displayHeight');
+    debugPrint('UI到显示区域的缩放比例: X=$uiToDisplayScaleX, Y=$uiToDisplayScaleY');
+    debugPrint(
+        '图像偏移量(画布坐标): X=${actualImageRect.left}, Y=${actualImageRect.top}');
+
+    // 重要：这里的关键是正确处理图像在画布中的偏移和缩放
+    // 1. 先将UI裁剪值按照比例缩放到实际显示大小
+    // 2. 然后考虑图像在画布中的偏移量（当图像不填满画布时会居中显示）
+
+    // 修正：根据缩放比例将UI裁剪值转换为画布上的实际裁剪区域
+    // 相对于图像实际显示区域的左上角计算裁剪区域
+    final cropRectLeft = actualImageRect.left + (cropLeft * uiToDisplayScaleX);
+    final cropRectTop = actualImageRect.top + (cropTop * uiToDisplayScaleY);
+    final cropRectRight =
+        actualImageRect.right - (cropRight * uiToDisplayScaleX);
+    final cropRectBottom =
+        actualImageRect.bottom - (cropBottom * uiToDisplayScaleY);
+
+    // 创建裁剪矩形
+    final cropRect =
+        Rect.fromLTRB(cropRectLeft, cropRectTop, cropRectRight, cropRectBottom);
+
+    debugPrint(
+        '裁剪区域计算: Left=$cropRectLeft, Top=$cropRectTop, Right=$cropRectRight, Bottom=$cropRectBottom');
+    debugPrint('最终裁剪区域: $cropRect, 宽=${cropRect.width}, 高=${cropRect.height}');
+
+    // ============ 第4步：绘制裁剪区域和遮罩 ============
+    // 只有当裁剪矩形有效时才绘制
+    if (cropRect.width > 0 && cropRect.height > 0) {
+      // 获取裁剪区域中心点（用于旋转）
+      final centerX = cropRect.center.dx;
+      final centerY = cropRect.center.dy;
+
+      // 创建一个Path来表示旋转后的裁剪区域
+      Path rotatedCropPath = Path();
+
+      if (contentRotation != 0) {
+        // 旋转角度转弧度
+        final rotationRadians = contentRotation * (math.pi / 180.0);
+
+        // 创建变换矩阵
+        final matrix4 = Matrix4.identity()
+          ..translate(centerX, centerY)
+          ..rotateZ(rotationRadians)
+          ..translate(-centerX, -centerY);
+
+        // 创建裁剪区域路径并应用旋转变换
+        rotatedCropPath.addRect(cropRect);
+        rotatedCropPath = rotatedCropPath.transform(matrix4.storage);
+      } else {
+        // 无旋转，直接使用原始矩形
+        rotatedCropPath.addRect(cropRect);
+      }
+
+      // 绘制遮罩层 - 不会随旋转而旋转
+      final maskPaint = Paint()
+        ..color = Colors.black.withAlpha(128)
+        ..style = PaintingStyle.fill;
+
+      // 创建遮罩路径：整个图像区域减去旋转后的裁剪区域
+      final maskPath = Path()..addRect(actualImageRect);
+      maskPath.addPath(rotatedCropPath, Offset.zero);
+      maskPath.fillType = PathFillType.evenOdd;
+
+      canvas.drawPath(maskPath, maskPaint);
+      debugPrint('绘制裁剪区域外的半透明遮罩');
+
+      // 绘制旋转的裁剪框和标记点
+      canvas.save();
+
+      if (contentRotation != 0) {
+        // 应用旋转变换
+        canvas.translate(centerX, centerY);
+        canvas.rotate(contentRotation * (math.pi / 180.0));
+        canvas.translate(-centerX, -centerY);
+      }
+
+      // 绘制裁剪区域的红色边框
+      final borderPaint = Paint()
+        ..color = Colors.red
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawRect(cropRect, borderPaint);
+      debugPrint('绘制裁剪区域红色边框');
+
+      // 绘制四个角落的标记
+      const cornerSize = 8.0;
+      final cornerPaint = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.fill;
+
+      // 左上角
+      canvas.drawRect(
+          Rect.fromLTWH(cropRect.left - cornerSize / 2,
+              cropRect.top - cornerSize / 2, cornerSize, cornerSize),
+          cornerPaint);
+
+      // 右上角
+      canvas.drawRect(
+          Rect.fromLTWH(cropRect.right - cornerSize / 2,
+              cropRect.top - cornerSize / 2, cornerSize, cornerSize),
+          cornerPaint);
+
+      // 左下角
+      canvas.drawRect(
+          Rect.fromLTWH(cropRect.left - cornerSize / 2,
+              cropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
+          cornerPaint);
+
+      // 右下角
+      canvas.drawRect(
+          Rect.fromLTWH(cropRect.right - cornerSize / 2,
+              cropRect.bottom - cornerSize / 2, cornerSize, cornerSize),
+          cornerPaint);
+
+      debugPrint('绘制四个红色角标');
+
+      // 恢复画布状态
+      canvas.restore();
+    } else {
+      debugPrint('裁剪矩形无效，宽度或高度小于等于0');
+    }
+
+    debugPrint('=== 裁剪预览框绘制完成 ===');
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(covariant _TransformPreviewPainter oldDelegate) {
+    return imageSize != oldDelegate.imageSize ||
+        renderSize != oldDelegate.renderSize ||
+        cropTop != oldDelegate.cropTop ||
+        cropBottom != oldDelegate.cropBottom ||
+        cropLeft != oldDelegate.cropLeft ||
+        cropRight != oldDelegate.cropRight ||
+        flipHorizontal != oldDelegate.flipHorizontal ||
+        flipVertical != oldDelegate.flipVertical ||
+        contentRotation != oldDelegate.contentRotation ||
+        isTransformApplied != oldDelegate.isTransformApplied;
   }
 }
