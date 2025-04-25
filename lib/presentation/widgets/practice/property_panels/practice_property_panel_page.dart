@@ -617,6 +617,12 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
             final backgroundOpacity =
                 (widget.page!['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
 
+            // 先更新颜色代码控制器，确保UI显示正确的颜色代码
+            setState(() {
+              _backgroundColorController.text =
+                  hexColor.startsWith('#') ? hexColor.substring(1) : hexColor;
+            });
+
             // 更新页面属性，同时确保设置背景类型和不透明度
             widget.onPagePropertiesChanged({
               'backgroundColor': hexColor,
@@ -624,13 +630,8 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
               'backgroundOpacity': backgroundOpacity,
             });
 
-            // 更新颜色代码控制器
-            _backgroundColorController.text =
-                hexColor.startsWith('#') ? hexColor.substring(1) : hexColor;
-
             // 强制刷新控制器状态，确保画布更新
-            // 使用setState触发UI更新
-            setState(() {});
+            // 使用updatePageProperties方法会自动触发notifyListeners
           },
         ),
       );

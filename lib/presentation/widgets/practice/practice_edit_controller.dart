@@ -2160,6 +2160,9 @@ class PracticeEditController extends ChangeNotifier {
           backgroundColor = '#$backgroundColor';
           properties['backgroundColor'] = backgroundColor;
         }
+
+        // 调试信息
+        debugPrint('更新页面背景颜色: $backgroundColor');
       }
 
       // Create a copy of the old properties that will be modified
@@ -2181,6 +2184,11 @@ class PracticeEditController extends ChangeNotifier {
             // Update page properties
             props.forEach((key, value) {
               page[key] = value;
+
+              // 调试信息
+              if (key == 'backgroundColor') {
+                debugPrint('页面背景颜色已更新为: $value');
+              }
             });
 
             _state.hasUnsavedChanges = true;
@@ -2188,6 +2196,9 @@ class PracticeEditController extends ChangeNotifier {
           }
         },
       );
+
+      // 立即执行操作，确保属性立即更新
+      operation.execute();
 
       // Add the operation to the undo/redo manager
       _undoRedoManager.addOperation(operation);
