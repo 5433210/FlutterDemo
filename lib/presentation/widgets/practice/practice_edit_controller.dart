@@ -2279,17 +2279,19 @@ class PracticeEditController extends ChangeNotifier {
       final firstPage = _state.pages.first;
 
       // 直接在这里生成缩略图，不依赖外部类
-      final pageWidth = (firstPage['width'] as num?)?.toDouble() ?? 595.0;
-      final pageHeight = (firstPage['height'] as num?)?.toDouble() ?? 842.0;
+      // 注意：这里获取页面尺寸但当前未使用，保留注释以便未来可能的优化
+      // final pageWidth = (firstPage['width'] as num?)?.toDouble() ?? 595.0;
+      // final pageHeight = (firstPage['height'] as num?)?.toDouble() ?? 842.0;
 
       // 缩略图尺寸
       const thumbWidth = 300.0;
       const thumbHeight = 400.0;
 
-      // 计算缩放比例
-      final scaleX = thumbWidth / pageWidth;
-      final scaleY = thumbHeight / pageHeight;
-      final scale = math.min(scaleX, scaleY);
+      // 注意：这里可以计算缩放比例用于缩放缩略图，但当前实现使用固定尺寸
+      // 保留注释以便未来可能的优化
+      // final scaleX = thumbWidth / pageWidth;
+      // final scaleY = thumbHeight / pageHeight;
+      // final scale = math.min(scaleX, scaleY);
 
       // 创建一个简单的图像
       final recorder = ui.PictureRecorder();
