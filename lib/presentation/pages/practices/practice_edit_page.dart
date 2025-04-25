@@ -73,20 +73,25 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     return WillPopScope(
       onWillPop: () async => true,
       child: PageLayout(
-        toolbar: TopNavigationBar(
-          controller: _controller,
-          practiceId: widget.practiceId,
-          isPreviewMode: _isPreviewMode,
-          onTogglePreviewMode: () {
-            setState(() {
-              _isPreviewMode = !_isPreviewMode; // 切换预览模式
-            });
-          },
-          showThumbnails: _showThumbnails,
-          onThumbnailToggle: (bool value) {
-            setState(() {
-              _showThumbnails = value; // 更新缩略图显示状态
-            });
+        toolbar: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return TopNavigationBar(
+              controller: _controller,
+              practiceId: widget.practiceId,
+              isPreviewMode: _isPreviewMode,
+              onTogglePreviewMode: () {
+                setState(() {
+                  _isPreviewMode = !_isPreviewMode; // 切换预览模式
+                });
+              },
+              showThumbnails: _showThumbnails,
+              onThumbnailToggle: (bool value) {
+                setState(() {
+                  _showThumbnails = value; // 更新缩略图显示状态
+                });
+              },
+            );
           },
         ),
         body: _buildBody(context),
