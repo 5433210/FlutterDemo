@@ -847,16 +847,37 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('字间距:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  EditableNumberField(
-                    label: '字间距',
-                    value: letterSpacing,
-                    suffix: 'px',
-                    min: -5.0,
-                    max: 20.0,
-                    decimalPlaces: 1,
-                    onChanged: (value) {
-                      _updateContentProperty('letterSpacing', value);
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: letterSpacing,
+                          min: -5.0,
+                          max: 20.0,
+                          divisions: 250,
+                          label: '${letterSpacing.toStringAsFixed(1)}px',
+                          onChanged: (value) {
+                            _updateContentProperty('letterSpacing', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '字间距',
+                          value: letterSpacing,
+                          suffix: 'px',
+                          min: -5.0,
+                          max: 20.0,
+                          decimalPlaces: 1,
+                          onChanged: (value) {
+                            _updateContentProperty('letterSpacing', value);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(height: 16.0),
@@ -865,16 +886,37 @@ class TextPropertyPanel extends PracticePropertyPanel {
                   const Text('行高倍数:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  EditableNumberField(
-                    label: '行高倍数',
-                    value: lineHeight,
-                    suffix: 'x',
-                    min: 0.5,
-                    max: 3.0,
-                    decimalPlaces: 1,
-                    onChanged: (value) {
-                      _updateContentProperty('lineHeight', value);
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: lineHeight,
+                          min: 0.5,
+                          max: 3.0,
+                          divisions: 25,
+                          label: '${lineHeight.toStringAsFixed(1)}x',
+                          onChanged: (value) {
+                            _updateContentProperty('lineHeight', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '行高倍数',
+                          value: lineHeight,
+                          suffix: 'x',
+                          min: 0.5,
+                          max: 3.0,
+                          decimalPlaces: 1,
+                          onChanged: (value) {
+                            _updateContentProperty('lineHeight', value);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
