@@ -14,8 +14,11 @@ class ElementRenderers {
     final characters = content['characters'] as String? ?? '';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 24.0;
-    final backgroundColor =
-        _parseColor(content['backgroundColor'] as String? ?? '#FFFFFF');
+    final fontColorStr = content['fontColor'] as String? ?? '#000000';
+    final backgroundColorStr =
+        content['backgroundColor'] as String? ?? '#FFFFFF';
+    final backgroundColor = _parseColor(backgroundColorStr);
+    // 这里不需要解析颜色，因为我们直接传递颜色字符串给 _buildCollectionLayout
     final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
@@ -51,6 +54,8 @@ class ElementRenderers {
                 maxHeight: availableHeight,
               ),
               padding: padding,
+              fontColor: fontColorStr,
+              backgroundColor: backgroundColorStr,
             ),
           );
         },
@@ -316,6 +321,8 @@ class ElementRenderers {
     required List<dynamic> characterImages,
     required BoxConstraints constraints,
     required double padding,
+    String fontColor = '#000000',
+    String backgroundColor = 'transparent',
   }) {
     if (characters.isEmpty) {
       return const Center(
@@ -366,6 +373,8 @@ class ElementRenderers {
       availableWidth: availableWidth,
       availableHeight: availableHeight,
       isNewLineList: isNewLineList,
+      fontColor: _parseColor(fontColor),
+      backgroundColor: _parseColor(backgroundColor),
     );
 
     // 创建自定义绘制器
@@ -505,6 +514,8 @@ class ElementRenderers {
     required double availableWidth,
     required double availableHeight,
     List<bool>? isNewLineList,
+    Color fontColor = Colors.black,
+    Color backgroundColor = Colors.transparent,
   }) {
     final List<_CharacterPosition> positions = [];
 
@@ -649,6 +660,8 @@ class ElementRenderers {
                     x: x,
                     y: y,
                     size: charSize,
+                    fontColor: fontColor,
+                    backgroundColor: backgroundColor,
                   ));
                 }
               }
@@ -678,6 +691,8 @@ class ElementRenderers {
             x: x,
             y: y,
             size: charSize,
+            fontColor: fontColor,
+            backgroundColor: backgroundColor,
           ));
         }
       }
@@ -830,6 +845,8 @@ class ElementRenderers {
                     x: x,
                     y: y,
                     size: charSize,
+                    fontColor: fontColor,
+                    backgroundColor: backgroundColor,
                   ));
                 }
               }
@@ -863,6 +880,8 @@ class ElementRenderers {
             x: x,
             y: y,
             size: charSize,
+            fontColor: fontColor,
+            backgroundColor: backgroundColor,
           ));
         }
       }
@@ -902,14 +921,26 @@ class ElementRenderers {
           // #AARRGGBB format
           buffer.write(colorStr.substring(1));
         } else {
+          debugPrint('Invalid color format: $colorStr');
           return Colors.black; // Invalid format
         }
       } else {
         buffer.write('ff'); // Default full opacity
         buffer.write(colorStr);
       }
-      return Color(int.parse(buffer.toString(), radix: 16));
+
+      final hexString = buffer.toString();
+      debugPrint('解析颜色: $colorStr -> 0x$hexString');
+
+      final colorValue = int.parse(hexString, radix: 16);
+      final color = Color(colorValue);
+
+      debugPrint(
+          '颜色解析结果: $colorStr -> $color (R:${color.red}, G:${color.green}, B:${color.blue})');
+
+      return color;
     } catch (e) {
+      debugPrint('Error parsing color: $e, colorStr: $colorStr');
       return Colors.black;
     }
   }
@@ -921,12 +952,16 @@ class _CharacterPosition {
   final double x;
   final double y;
   final double size;
+  final Color fontColor;
+  final Color backgroundColor;
 
   _CharacterPosition({
     required this.char,
     required this.x,
     required this.y,
     required this.size,
+    this.fontColor = Colors.black,
+    this.backgroundColor = Colors.transparent,
   });
 }
 
@@ -982,11 +1017,19 @@ class _CollectionPainter extends CustomPainter {
       position.size,
     );
 
-    // 绘制占位符
-    final paint = Paint()
-      ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(rect, paint);
+    // 绘制背景
+    if (position.backgroundColor != Colors.transparent) {
+      final bgPaint = Paint()
+        ..color = position.backgroundColor
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, bgPaint);
+    } else {
+      // 绘制默认占位符背景
+      final paint = Paint()
+        ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, paint);
+    }
 
     // 绘制字符文本作为占位符
     final textPainter = TextPainter(
@@ -994,7 +1037,7 @@ class _CollectionPainter extends CustomPainter {
         text: position.char,
         style: TextStyle(
           fontSize: position.size * 0.7,
-          color: Colors.black,
+          color: position.fontColor,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -1019,11 +1062,19 @@ class _CollectionPainter extends CustomPainter {
       position.size,
     );
 
-    // 绘制占位符背景
-    final paint = Paint()
-      ..color = Colors.grey.withAlpha(26) // 约等于 0.1 不透明度
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(rect, paint);
+    // 绘制背景
+    if (position.backgroundColor != Colors.transparent) {
+      final bgPaint = Paint()
+        ..color = position.backgroundColor
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, bgPaint);
+    } else {
+      // 绘制默认占位符背景
+      final paint = Paint()
+        ..color = Colors.grey.withAlpha(26) // 约等于 0.1 不透明度
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, paint);
+    }
 
     // 绘制字符文本
     final textPainter = TextPainter(
@@ -1031,7 +1082,7 @@ class _CollectionPainter extends CustomPainter {
         text: position.char,
         style: TextStyle(
           fontSize: position.size * 0.7,
-          color: Colors.black,
+          color: position.fontColor,
         ),
       ),
       textDirection: TextDirection.ltr,

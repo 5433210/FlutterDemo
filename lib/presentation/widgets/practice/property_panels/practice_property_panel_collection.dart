@@ -61,6 +61,9 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
     final verticalAlign = content['verticalAlign'] as String? ?? 'top';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
+    final fontColor = content['fontColor'] as String? ?? '#000000';
+    final backgroundColor =
+        content['backgroundColor'] as String? ?? 'transparent';
 
     return ListView(
       children: [
@@ -167,6 +170,64 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 字体颜色和背景颜色
+                  const Text('颜色设置:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      const Text('字体颜色:'),
+                      const SizedBox(width: 8.0),
+                      GestureDetector(
+                        onTap: () {
+                          _showColorPicker(
+                            context,
+                            fontColor,
+                            (color) {
+                              _updateContentProperty(
+                                  'fontColor', _colorToHex(color));
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: _hexToColor(fontColor),
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16.0),
+                      const Text('背景颜色:'),
+                      const SizedBox(width: 8.0),
+                      GestureDetector(
+                        onTap: () {
+                          _showColorPicker(
+                            context,
+                            backgroundColor,
+                            (color) {
+                              _updateContentProperty(
+                                  'backgroundColor', _colorToHex(color));
+                            },
+                          );
+                        },
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: _hexToColor(backgroundColor),
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
                   // 透明度
                   const Text('透明度:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -761,6 +822,28 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
     );
   }
 
+  /// 将颜色转换为十六进制字符串
+  String _colorToHex(Color color) {
+    if (color == Colors.transparent) {
+      return 'transparent';
+    }
+
+    try {
+      // 将 RGB 值转换为十六进制
+      final r = color.red.toRadixString(16).padLeft(2, '0');
+      final g = color.green.toRadixString(16).padLeft(2, '0');
+      final b = color.blue.toRadixString(16).padLeft(2, '0');
+      final colorCode = '$r$g$b'.toUpperCase();
+
+      debugPrint(
+          'Converting color to hex: $color (R:${color.red}, G:${color.green}, B:${color.blue}) -> #$colorCode');
+      return '#$colorCode'; // 包含 # 前缀
+    } catch (e) {
+      debugPrint('Error converting color to hex: $e');
+      return '#000000'; // 出错时返回默认黑色
+    }
+  }
+
   // 获取下标
   String _getSubscript(int number) {
     const Map<String, String> subscripts = {
@@ -784,6 +867,49 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
     }
 
     return result.toString();
+  }
+
+  /// 将十六进制颜色字符串转换为Color对象
+  Color _hexToColor(String hexString) {
+    if (hexString == 'transparent') {
+      return Colors.transparent;
+    }
+
+    try {
+      final buffer = StringBuffer();
+      if (hexString.startsWith('#')) {
+        if (hexString.length == 7) {
+          // #RRGGBB format
+          buffer.write('ff'); // Add full opacity
+          buffer.write(hexString.substring(1));
+        } else if (hexString.length == 9) {
+          // #AARRGGBB format
+          buffer.write(hexString.substring(1));
+        } else {
+          debugPrint('Invalid color format: $hexString');
+          return Colors.black; // Invalid format
+        }
+      } else {
+        if (hexString.length == 6) {
+          buffer.write('ff'); // Add full opacity
+          buffer.write(hexString);
+        } else {
+          debugPrint('Invalid color format: $hexString');
+          return Colors.black;
+        }
+      }
+
+      final hexValue = buffer.toString();
+      final colorValue = int.parse(hexValue, radix: 16);
+      final color = Color(colorValue);
+
+      debugPrint('Parsed color: $hexString -> 0x$hexValue -> $color');
+
+      return color;
+    } catch (e) {
+      debugPrint('解析颜色失败: $e, hexString: $hexString');
+      return Colors.black;
+    }
   }
 
   // 加载候选集字
@@ -821,6 +947,95 @@ class _CollectionPropertyPanelState extends State<CollectionPropertyPanel> {
       });
       _loadCandidateCharacters();
     }
+  }
+
+  /// 显示颜色选择器对话框
+  void _showColorPicker(
+    BuildContext context,
+    String initialColor,
+    Function(Color) onColorSelected,
+  ) {
+    // 预设颜色列表
+    final presetColors = [
+      Colors.black,
+      Colors.white,
+      Colors.red,
+      Colors.pink,
+      Colors.purple,
+      Colors.deepPurple,
+      Colors.indigo,
+      Colors.blue,
+      Colors.lightBlue,
+      Colors.cyan,
+      Colors.teal,
+      Colors.green,
+      Colors.lightGreen,
+      Colors.lime,
+      Colors.yellow,
+      Colors.amber,
+      Colors.orange,
+      Colors.deepOrange,
+      Colors.brown,
+      Colors.grey,
+      Colors.blueGrey,
+      Colors.transparent,
+    ];
+
+    // 解析初始颜色（仅用于调试）
+    debugPrint('显示颜色选择器，初始颜色: $initialColor');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('选择颜色'),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: GridView.builder(
+            shrinkWrap: true,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 5,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1,
+            ),
+            itemCount: presetColors.length,
+            itemBuilder: (context, index) {
+              return InkWell(
+                onTap: () {
+                  onColorSelected(presetColors[index]);
+                  Navigator.of(context).pop();
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: presetColors[index],
+                    border: Border.all(
+                      color: presetColors[index] == Colors.white ||
+                              presetColors[index] == Colors.transparent
+                          ? Colors.grey
+                          : presetColors[index],
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: presetColors[index] == Colors.transparent
+                      ? const Center(
+                          child: Text('透明', style: TextStyle(fontSize: 10)))
+                      : null,
+                ),
+              );
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            child: const Text('取消'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   // 更新内容属性
