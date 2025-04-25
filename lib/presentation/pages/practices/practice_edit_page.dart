@@ -741,7 +741,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           color: Colors.grey.shade200,
           child: InteractiveViewer(
             boundaryMargin: const EdgeInsets.all(double.infinity),
-            panEnabled: !_isDragging, // Disable pan when dragging elements
+            panEnabled:
+                _isPreviewMode || !_isDragging, // 预览模式下始终启用平移，编辑模式下拖拽元素时禁用
             scaleEnabled: true,
             minScale: 0.1,
             maxScale: 15.0,
@@ -753,28 +754,45 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               onSecondaryTapUp: (details) =>
                   _handleSecondaryTapUp(details, elements),
               onPanStart: (details) {
-                // 只在非预览模式下允许拖拽
-                if (_isPreviewMode) return;
-
                 // 判断点击位置是否在元素上
                 bool hitElement = false;
-                for (int i = elements.length - 1; i >= 0; i--) {
-                  final element = elements[i];
-                  final x = (element['x'] as num).toDouble();
-                  final y = (element['y'] as num).toDouble();
-                  final width = (element['width'] as num).toDouble();
-                  final height = (element['height'] as num).toDouble();
 
-                  if (details.localPosition.dx >= x &&
-                      details.localPosition.dx <= x + width &&
-                      details.localPosition.dy >= y &&
-                      details.localPosition.dy <= y + height) {
-                    hitElement = true;
-                    break;
+                // 在预览模式下，不需要检查元素点击
+                if (!_isPreviewMode) {
+                  for (int i = elements.length - 1; i >= 0; i--) {
+                    final element = elements[i];
+                    final x = (element['x'] as num).toDouble();
+                    final y = (element['y'] as num).toDouble();
+                    final width = (element['width'] as num).toDouble();
+                    final height = (element['height'] as num).toDouble();
+
+                    if (details.localPosition.dx >= x &&
+                        details.localPosition.dx <= x + width &&
+                        details.localPosition.dy >= y &&
+                        details.localPosition.dy <= y + height) {
+                      hitElement = true;
+                      break;
+                    }
                   }
                 }
 
-                // 如果有选中的元素并且点击在元素上，开始拖拽元素
+                // 在预览模式下，或者点击在空白区域时，记录初始点击位置用于手动平移
+                if (_isPreviewMode ||
+                    (_controller.state.selectedElementIds.isEmpty ||
+                        !hitElement)) {
+                  setState(() {
+                    _dragStart = details.localPosition;
+                    // 记录当前变换矩阵的状态
+                    _elementStartPosition = Offset(
+                      _transformationController.value.getTranslation().x,
+                      _transformationController.value.getTranslation().y,
+                    );
+                  });
+                  debugPrint('开始平移画布: ${details.localPosition}');
+                  return;
+                }
+
+                // 如果有选中的元素并且点击在元素上，开始拖拽元素（仅在非预览模式下）
                 if (_controller.state.selectedElementIds.isNotEmpty &&
                     hitElement) {
                   setState(() {
@@ -797,23 +815,39 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     }
                   });
                   debugPrint('开始拖拽元素: ${details.localPosition}');
-                } else {
-                  // 点击在空白区域，记录初始点击位置用于手动平移
-                  setState(() {
-                    _dragStart = details.localPosition;
-                    // 记录当前变换矩阵的状态
-                    _elementStartPosition = Offset(
-                      _transformationController.value.getTranslation().x,
-                      _transformationController.value.getTranslation().y,
-                    );
-                  });
-                  debugPrint('开始平移画布: ${details.localPosition}');
                 }
               },
               onPanUpdate: (details) {
-                // 只在非预览模式下处理
-                if (_isPreviewMode) return;
+                // 在预览模式下，只处理画布平移
+                if (_isPreviewMode) {
+                  // 平移画布
+                  final dx = details.localPosition.dx - _dragStart.dx;
+                  final dy = details.localPosition.dy - _dragStart.dy;
 
+                  // 创建新的变换矩阵
+                  final Matrix4 newMatrix = Matrix4.identity();
+                  // 设置与当前相同的缩放因子
+                  final scale =
+                      _transformationController.value.getMaxScaleOnAxis();
+                  newMatrix.setEntry(0, 0, scale);
+                  newMatrix.setEntry(1, 1, scale);
+                  newMatrix.setEntry(2, 2, scale);
+
+                  // 设置新的平移值
+                  newMatrix.setTranslation(Vector3(
+                    _elementStartPosition.dx + dx,
+                    _elementStartPosition.dy + dy,
+                    0.0,
+                  ));
+
+                  // 应用新变换
+                  _transformationController.value = newMatrix;
+
+                  debugPrint('预览模式平移画布: dx=$dx, dy=$dy');
+                  return;
+                }
+
+                // 非预览模式下的处理
                 if (_isDragging &&
                     _controller.state.selectedElementIds.isNotEmpty) {
                   // 拖拽元素
@@ -897,6 +931,68 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 }
               },
               onPanEnd: (details) {
+                // 在预览模式下，只处理画布平移结束
+                if (_isPreviewMode) {
+                  // 平移结束时可以应用惯性效果
+                  final velocity = details.velocity;
+                  final speed = velocity.pixelsPerSecond.distance;
+
+                  if (speed > 100) {
+                    // 应用惯性效果
+                    final Vector3 translation =
+                        _transformationController.value.getTranslation();
+                    final double dx = -velocity.pixelsPerSecond.dx / 10;
+                    final double dy = -velocity.pixelsPerSecond.dy / 10;
+
+                    // 应用动画效果
+                    final Matrix4 newMatrix = Matrix4.identity();
+                    final scale =
+                        _transformationController.value.getMaxScaleOnAxis();
+                    newMatrix.setEntry(0, 0, scale);
+                    newMatrix.setEntry(1, 1, scale);
+                    newMatrix.setEntry(2, 2, scale);
+                    newMatrix.setTranslation(Vector3(
+                      translation.x + dx,
+                      translation.y + dy,
+                      0.0,
+                    ));
+
+                    // 使用动画应用新变换
+                    const duration = Duration(milliseconds: 300);
+                    final Animatable<Matrix4> tween = Matrix4Tween(
+                      begin: _transformationController.value,
+                      end: newMatrix,
+                    );
+
+                    // 创建动画控制器
+                    final animController = AnimationController(
+                      vsync: Navigator.of(context),
+                      duration: duration,
+                    );
+
+                    // 添加动画监听
+                    Animation<Matrix4> animation = tween.animate(
+                      CurvedAnimation(
+                        parent: animController,
+                        curve: Curves.decelerate,
+                      ),
+                    );
+
+                    animation.addListener(() {
+                      _transformationController.value = animation.value;
+                    });
+
+                    // 启动动画
+                    animController.forward().then((_) {
+                      animController.dispose();
+                    });
+                  }
+
+                  debugPrint('预览模式平移结束: 速度=$speed');
+                  return;
+                }
+
+                // 非预览模式下的处理
                 if (_isDragging) {
                   setState(() {
                     _isDragging = false;
