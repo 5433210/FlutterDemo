@@ -745,6 +745,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             transformationController: _transformationController,
             child: GestureDetector(
               onTapUp: (details) => _handleTapUp(details, elements),
+              onSecondaryTapUp: (details) =>
+                  _handleSecondaryTapUp(details, elements),
               onPanStart: (details) {
                 // 只在非预览模式下允许拖拽
                 if (_isPreviewMode) return;
@@ -1527,6 +1529,50 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
     // 返回false表示不拦截事件，允许其他处理程序处理
     return false;
+  }
+
+  /// 处理右键点击事件
+  void _handleSecondaryTapUp(
+      TapUpDetails details, List<Map<String, dynamic>> elements) {
+    // 检查是否点击在选中的元素上
+    bool hitSelectedElement = false;
+
+    // 从后往前检查（后添加的元素在上层）
+    for (int i = elements.length - 1; i >= 0; i--) {
+      final element = elements[i];
+      final id = element['id'] as String;
+      final x = (element['x'] as num).toDouble();
+      final y = (element['y'] as num).toDouble();
+      final width = (element['width'] as num).toDouble();
+      final height = (element['height'] as num).toDouble();
+
+      // 判断是否点击在元素内部
+      final bool isInside = details.localPosition.dx >= x &&
+          details.localPosition.dx <= x + width &&
+          details.localPosition.dy >= y &&
+          details.localPosition.dy <= y + height;
+
+      // 如果点击在元素内部且该元素已被选中
+      if (isInside && _controller.state.selectedElementIds.contains(id)) {
+        hitSelectedElement = true;
+        debugPrint('\n=== 右键点击选中的元素 $id ===');
+        debugPrint('取消选中元素');
+
+        // 取消选择
+        _controller.clearSelection();
+        setState(() {
+          // 重置拖拽状态
+          _isDragging = false;
+        });
+
+        break;
+      }
+    }
+
+    // 如果没有点击在选中的元素上，则不做任何操作
+    if (!hitSelectedElement) {
+      debugPrint('\n=== 右键点击非选中元素或空白区域 ===');
+    }
   }
 
   /// 处理点击事件
