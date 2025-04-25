@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../dialogs/practice_title_edit_dialog.dart';
 import 'file_operations.dart';
 import 'practice_edit_controller.dart';
 
@@ -33,7 +34,18 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
         : '字帖编辑';
 
     return AppBar(
-      title: Text(titleText),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(titleText),
+          if (controller.practiceTitle != null)
+            IconButton(
+              icon: const Icon(Icons.edit, size: 18),
+              tooltip: '编辑标题',
+              onPressed: () => _editTitle(context),
+            ),
+        ],
+      ),
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         tooltip: '返回',
@@ -133,6 +145,26 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
+  /// 编辑标题
+  Future<void> _editTitle(BuildContext context) async {
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (context) => PracticeTitleEditDialog(
+        initialTitle: controller.practiceTitle,
+        checkTitleExists: controller.checkTitleExists,
+      ),
+    );
+
+    if (newTitle != null && newTitle.isNotEmpty) {
+      controller.updatePracticeTitle(newTitle);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('标题已更新为 "$newTitle"')),
+        );
+      }
+    }
+  }
+
   /// 导出字帖
   Future<void> _exportPractice(BuildContext context) async {
     await FileOperations.exportPractice(
@@ -170,8 +202,10 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
                 onPressed: () async {
                   // 保存修改
                   await _savePractice(context);
-                  // 返回true表示确认离开
-                  Navigator.of(context).pop(true);
+                  if (context.mounted) {
+                    // 返回true表示确认离开
+                    Navigator.of(context).pop(true);
+                  }
                 },
               ),
             ],
@@ -180,7 +214,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       );
 
       // 如果用户确认要离开，则返回
-      if (result == true) {
+      if (result == true && context.mounted) {
         Navigator.of(context).pop();
       }
     } else {

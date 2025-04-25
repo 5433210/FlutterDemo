@@ -2194,6 +2194,15 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  /// 更新字帖标题
+  void updatePracticeTitle(String newTitle) {
+    if (_practiceTitle != newTitle) {
+      _practiceTitle = newTitle;
+      _state.hasUnsavedChanges = true;
+      notifyListeners();
+    }
+  }
+
   /// 添加元素的通用方法
   void _addElement(Map<String, dynamic> element) {
     final operation = AddElementOperation(
