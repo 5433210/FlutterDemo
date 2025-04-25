@@ -26,8 +26,8 @@ mixin _$PracticeEntity {
   /// 标题
   String get title => throw _privateConstructorUsedError;
 
-  /// 页面列表
-  List<PracticePage> get pages => throw _privateConstructorUsedError;
+  /// 页面列表 - 存储完整的页面内容
+  List<Map<String, dynamic>> get pages => throw _privateConstructorUsedError;
 
   /// 标签列表
   List<String> get tags => throw _privateConstructorUsedError;
@@ -64,7 +64,7 @@ abstract class $PracticeEntityCopyWith<$Res> {
   $Res call(
       {String id,
       String title,
-      List<PracticePage> pages,
+      List<Map<String, dynamic>> pages,
       List<String> tags,
       String status,
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
@@ -109,7 +109,7 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
       pages: null == pages
           ? _value.pages
           : pages // ignore: cast_nullable_to_non_nullable
-              as List<PracticePage>,
+              as List<Map<String, dynamic>>,
       tags: null == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -145,7 +145,7 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
   $Res call(
       {String id,
       String title,
-      List<PracticePage> pages,
+      List<Map<String, dynamic>> pages,
       List<String> tags,
       String status,
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
@@ -188,7 +188,7 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
       pages: null == pages
           ? _value._pages
           : pages // ignore: cast_nullable_to_non_nullable
-              as List<PracticePage>,
+              as List<Map<String, dynamic>>,
       tags: null == tags
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -219,7 +219,7 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   const _$PracticeEntityImpl(
       {required this.id,
       required this.title,
-      final List<PracticePage> pages = const [],
+      final List<Map<String, dynamic>> pages = const [],
       final List<String> tags = const [],
       this.status = 'active',
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
@@ -241,13 +241,13 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   @override
   final String title;
 
-  /// 页面列表
-  final List<PracticePage> _pages;
+  /// 页面列表 - 存储完整的页面内容
+  final List<Map<String, dynamic>> _pages;
 
-  /// 页面列表
+  /// 页面列表 - 存储完整的页面内容
   @override
   @JsonKey()
-  List<PracticePage> get pages {
+  List<Map<String, dynamic>> get pages {
     if (_pages is EqualUnmodifiableListView) return _pages;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_pages);
@@ -334,7 +334,7 @@ abstract class _PracticeEntity extends PracticeEntity {
   const factory _PracticeEntity(
       {required final String id,
       required final String title,
-      final List<PracticePage> pages,
+      final List<Map<String, dynamic>> pages,
       final List<String> tags,
       final String status,
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
@@ -354,9 +354,9 @@ abstract class _PracticeEntity extends PracticeEntity {
   @override
   String get title;
 
-  /// 页面列表
+  /// 页面列表 - 存储完整的页面内容
   @override
-  List<PracticePage> get pages;
+  List<Map<String, dynamic>> get pages;
 
   /// 标签列表
   @override

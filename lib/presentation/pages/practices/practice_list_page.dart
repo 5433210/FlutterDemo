@@ -24,14 +24,32 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   List<Map<String, dynamic>> _practices = [];
   final List<Map<String, dynamic>> _filteredPractices = [];
 
-  // Loading state
+  // Loading and error states
   bool _isLoading = true;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   // Search controller
   final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    // 如果有错误且是第一次构建后显示，使用WidgetsBinding.instance.addPostFrameCallback
+    if (_hasError) {
+      // 使用addPostFrameCallback确保在构建完成后显示SnackBar
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(_errorMessage)),
+          );
+          // 重置错误状态，避免重复显示
+          setState(() {
+            _hasError = false;
+          });
+        }
+      });
+    }
+
     return PageLayout(
       toolbar: PageToolbar(
         leading: [
@@ -184,13 +202,29 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   }
 
   // Helper method to format date time string
-  String _formatDateTime(String? dateTimeStr) {
-    if (dateTimeStr == null) return '';
+  String _formatDateTime(dynamic dateTimeValue) {
+    if (dateTimeValue == null) return '';
+
     try {
-      final dateTime = DateTime.parse(dateTimeStr);
+      DateTime dateTime;
+
+      if (dateTimeValue is String) {
+        // 处理字符串格式的日期
+        dateTime = DateTime.parse(dateTimeValue);
+      } else if (dateTimeValue is DateTime) {
+        // 直接使用DateTime对象
+        dateTime = dateTimeValue;
+      } else {
+        // 其他类型，返回空字符串
+        return '';
+      }
+
+      // 格式化为 YYYY-MM-DD
       return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
     } catch (e) {
-      return dateTimeStr;
+      debugPrint('格式化日期时间失败: $e');
+      // 如果是字符串，直接返回；否则返回空字符串
+      return dateTimeValue is String ? dateTimeValue : '';
     }
   }
 
@@ -220,28 +254,56 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   Future<void> _loadPractices() async {
     setState(() {
       _isLoading = true;
+      _hasError = false; // 重置错误状态
     });
 
     try {
       final practiceService = ref.read(practiceServiceProvider);
-      final practices = await practiceService.getAllPractices();
+      final practicesResult = await practiceService.getAllPractices();
 
-      setState(() {
-        _practices = practices;
-        _filteredPractices.clear();
-        _filteredPractices.addAll(practices);
-        _isLoading = false;
-      });
-    } catch (e) {
-      // Handle error
-      setState(() {
-        _isLoading = false;
-      });
+      // 将PracticeEntity列表转换为Map<String, dynamic>列表，使用安全的方式处理
+      final List<Map<String, dynamic>> practicesMap = [];
+
+      for (final practice in practicesResult) {
+        try {
+          // 手动构建基本信息，避免复杂对象序列化问题
+          final Map<String, dynamic> practiceMap = {
+            'id': practice.id,
+            'title': practice.title,
+            'status': practice.status,
+            'createTime': practice.createTime.toIso8601String(),
+            'updateTime': practice.updateTime.toIso8601String(),
+            'thumbnail': practice.thumbnail,
+            'pageCount': practice.pages.length,
+          };
+          practicesMap.add(practiceMap);
+        } catch (e) {
+          debugPrint('转换练习实体失败: $e');
+          // 继续处理下一个实体
+        }
+      }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('加载字帖失败: $e')),
-        );
+        setState(() {
+          _practices = practicesMap;
+          _filteredPractices.clear();
+          _filteredPractices.addAll(practicesMap);
+          _isLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      // Handle error with more details
+      debugPrint('加载字帖失败: $e');
+      debugPrint('堆栈跟踪: $stackTrace');
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasError = true; // 设置错误状态
+          _errorMessage = '加载字帖失败: $e'; // 保存错误信息
+        });
+
+        // 不在initState中使用ScaffoldMessenger，而是在build方法中显示错误
       }
     }
   }

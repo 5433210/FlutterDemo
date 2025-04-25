@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-
-import 'practice_page.dart';
 
 part 'practice_entity.freezed.dart';
 part 'practice_entity.g.dart';
@@ -14,7 +12,7 @@ Uint8List? _uint8ListFromJson(String? base64String) {
   try {
     return base64Decode(base64String);
   } catch (e) {
-    print('Error decoding base64 string: $e');
+    debugPrint('Error decoding base64 string: $e');
     return null;
   }
 }
@@ -25,7 +23,7 @@ String? _uint8ListToJson(Uint8List? data) {
   try {
     return base64Encode(data);
   } catch (e) {
-    print('Error encoding Uint8List to base64: $e');
+    debugPrint('Error encoding Uint8List to base64: $e');
     return null;
   }
 }
@@ -41,8 +39,8 @@ class PracticeEntity with _$PracticeEntity {
     /// 标题
     required String title,
 
-    /// 页面列表
-    @Default([]) List<PracticePage> pages,
+    /// 页面列表 - 存储完整的页面内容
+    @Default([]) List<Map<String, dynamic>> pages,
 
     /// 标签列表
     @Default([]) List<String> tags,
@@ -86,13 +84,17 @@ class PracticeEntity with _$PracticeEntity {
   const PracticeEntity._();
 
   /// 获取下一个可用的页面索引
-  int get nextPageIndex => pages.isEmpty ? 0 : pages.last.index + 1;
+  int get nextPageIndex {
+    if (pages.isEmpty) return 0;
+    final lastPage = pages.last;
+    return (lastPage['index'] as int?) ?? 0 + 1;
+  }
 
   /// 获取页面数量
   int get pageCount => pages.length;
 
   /// 添加页面
-  PracticeEntity addPage(PracticePage page) {
+  PracticeEntity addPage(Map<String, dynamic> page) {
     return copyWith(
       pages: [...pages, page],
       updateTime: DateTime.now(),
@@ -102,7 +104,7 @@ class PracticeEntity with _$PracticeEntity {
   /// 删除页面
   PracticeEntity removePage(int index) {
     return copyWith(
-      pages: pages.where((p) => p.index != index).toList(),
+      pages: pages.where((p) => (p['index'] as int?) != index).toList(),
       updateTime: DateTime.now(),
     );
   }
@@ -112,9 +114,14 @@ class PracticeEntity with _$PracticeEntity {
   String toString() => 'PracticeEntity(id: $id, title: $title)';
 
   /// 更新页面
-  PracticeEntity updatePage(PracticePage page) {
+  PracticeEntity updatePage(Map<String, dynamic> page) {
+    final pageIndex = page['index'] as int?;
+    if (pageIndex == null) return this;
+
     return copyWith(
-      pages: pages.map((p) => p.index == page.index ? page : p).toList(),
+      pages: pages
+          .map((p) => (p['index'] as int?) == pageIndex ? page : p)
+          .toList(),
       updateTime: DateTime.now(),
     );
   }

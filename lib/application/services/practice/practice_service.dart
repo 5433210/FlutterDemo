@@ -1,11 +1,17 @@
+import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
+
 import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/models/practice/practice_filter.dart';
 import '../../../domain/repositories/practice_repository.dart';
 
 /// 字帖练习服务
 class PracticeService {
+  // 领域层仓库
   final PracticeRepository _repository;
 
+  /// 构造函数
   const PracticeService({
     required PracticeRepository repository,
   }) : _repository = repository;
@@ -54,9 +60,60 @@ class PracticeService {
     return _repository.get(id);
   }
 
+  /// 检查标题是否已存在
+  ///
+  /// 如果提供了 excludeId，则排除该ID的记录
+  Future<bool> isTitleExists(String title, {String? excludeId}) {
+    return _repository.isTitleExists(title, excludeId: excludeId);
+  }
+
+  /// 加载字帖（包含解析后的页面数据）
+  Future<Map<String, dynamic>?> loadPractice(String id) {
+    return _repository.loadPractice(id);
+  }
+
+  /// 根据字段查询字帖记录
+  Future<List<Map<String, dynamic>>> queryByField(
+    String field,
+    String operator,
+    dynamic value,
+  ) {
+    return _repository.queryByField(field, operator, value);
+  }
+
   /// 查询字帖练习
   Future<List<PracticeEntity>> queryPractices(PracticeFilter filter) {
     return _repository.query(filter);
+  }
+
+  /// 保存字帖
+  ///
+  /// 参数:
+  /// - id: 字帖ID，为null时创建新字帖
+  /// - title: 字帖标题
+  /// - pages: 字帖页面数据
+  /// - thumbnail: 缩略图数据
+  ///
+  /// 返回包含id的Map
+  Future<Map<String, dynamic>> savePractice({
+    String? id,
+    required String title,
+    required List<Map<String, dynamic>> pages,
+    Uint8List? thumbnail,
+  }) {
+    // 确保每个页面都有ID
+    for (final page in pages) {
+      if (!page.containsKey('id') || page['id'] == null) {
+        page['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+      }
+    }
+
+    return _repository.savePracticeRaw(
+      id: id,
+      title: title,
+      pages: pages,
+      thumbnail: thumbnail,
+    );
   }
 
   /// 搜索字帖练习

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../application/providers/initialization_providers.dart';
 import '../presentation/pages/characters/character_list_page.dart';
-import '../presentation/pages/practices/practice_detail_page.dart';
 import '../presentation/pages/practices/practice_edit_page.dart';
 import '../presentation/pages/practices/practice_list_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
@@ -111,16 +110,6 @@ class MyApp extends ConsumerWidget {
             practiceId: args as String?,
           ),
         );
-
-      case AppRoutes.practiceDetail:
-        if (args is String) {
-          return MaterialPageRoute(
-            builder: (context) => PracticeDetailPage(
-              practiceId: args,
-            ),
-          );
-        }
-        break;
 
       case AppRoutes.settings:
         return MaterialPageRoute(

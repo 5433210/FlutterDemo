@@ -11,7 +11,7 @@ _$PracticeEntityImpl _$$PracticeEntityImplFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       title: json['title'] as String,
       pages: (json['pages'] as List<dynamic>?)
-              ?.map((e) => PracticePage.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => e as Map<String, dynamic>)
               .toList() ??
           const [],
       tags:

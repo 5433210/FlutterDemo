@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/practice/practice_entity.dart';
 import '../models/practice/practice_filter.dart';
 
@@ -33,14 +35,35 @@ abstract class PracticeRepository {
   /// 获取某些标签的练习
   Future<List<PracticeEntity>> getByTags(Set<String> tags);
 
+  /// 检查标题是否存在
+  Future<bool> isTitleExists(String title, {String? excludeId});
+
+  /// 加载字帖（包含解析后的页面数据）
+  Future<Map<String, dynamic>?> loadPractice(String id);
+
   /// 查询练习
   Future<List<PracticeEntity>> query(PracticeFilter filter);
+
+  /// 根据字段查询
+  Future<List<Map<String, dynamic>>> queryByField(
+    String field,
+    String operator,
+    dynamic value,
+  );
 
   /// 更新练习
   Future<PracticeEntity> save(PracticeEntity practice);
 
   /// 批量更新
   Future<List<PracticeEntity>> saveMany(List<PracticeEntity> practices);
+
+  /// 保存字帖（原始数据版本）
+  Future<Map<String, dynamic>> savePracticeRaw({
+    String? id,
+    required String title,
+    required List<Map<String, dynamic>> pages,
+    Uint8List? thumbnail,
+  });
 
   /// 搜索练习
   Future<List<PracticeEntity>> search(String query, {int? limit});

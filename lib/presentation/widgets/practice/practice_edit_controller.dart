@@ -5,8 +5,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../application/services/practice/practice_service.dart';
 import 'practice_edit_state.dart';
-import 'practice_service.dart';
 import 'undo_redo_manager.dart';
 
 /// 字帖编辑控制器
@@ -436,22 +436,15 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 检查标题是否已存在
   Future<bool> checkTitleExists(String title) async {
-    // 使用PracticeService查询相同标题的字帖
+    // 如果是当前字帖的标题，不算冲突
     if (_practiceTitle == title) {
-      // 如果是当前字帖的标题，不算冲突
       return false;
     }
 
     try {
-      // 查询是否有相同标题的字帖
-      final results = await _practiceService.query(
-        'title',
-        '=',
-        title,
-      );
-
-      // 返回查询结果是否非空
-      return results.isNotEmpty;
+      // 查询是否有相同标题的字帖，排除当前ID
+      return await _practiceService.isTitleExists(title,
+          excludeId: _practiceId);
     } catch (e) {
       debugPrint('检查标题是否存在时出错: $e');
       // 发生错误时假设标题不存在
@@ -1165,8 +1158,12 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 另存为新字帖
   /// 始终提示用户输入标题
-  /// 返回是否保存成功
-  Future<bool> saveAsNewPractice(String title) async {
+  /// 返回值:
+  /// - true: 保存成功
+  /// - false: 保存失败
+  /// - 'title_exists': 标题已存在，需要确认是否覆盖
+  Future<dynamic> saveAsNewPractice(String title,
+      {bool forceOverwrite = false}) async {
     // 如果没有页面，则不保存
     if (_state.pages.isEmpty) return false;
 
@@ -1174,19 +1171,51 @@ class PracticeEditController extends ChangeNotifier {
       return false;
     }
 
-    // 检查标题是否存在
-    final exists = await _practiceService.isTitleExists(title);
-    if (exists) {
-      // 标题已存在，返回特殊值通知调用者需要确认覆盖
-      return false;
+    // 如果不是强制覆盖，检查标题是否存在
+    if (!forceOverwrite) {
+      final exists = await checkTitleExists(title);
+      if (exists) {
+        // 标题已存在，返回特殊值通知调用者需要确认覆盖
+        return 'title_exists';
+      }
     }
 
     try {
+      debugPrint('开始另存为新字帖: $title');
+
+      // 生成缩略图
+      final thumbnail = await _generateThumbnail();
+      debugPrint(
+          '缩略图生成完成: ${thumbnail != null ? '${thumbnail.length} 字节' : '无缩略图'}');
+
+      // 确保页面数据准备好被保存
+      final pagesToSave = _state.pages.map((page) {
+        // 创建页面的深拷贝
+        final pageCopy = Map<String, dynamic>.from(page);
+
+        // 确保元素列表被正确拷贝
+        if (page.containsKey('elements')) {
+          final elements = page['elements'] as List<dynamic>;
+          pageCopy['elements'] =
+              elements.map((e) => Map<String, dynamic>.from(e)).toList();
+        }
+
+        // 确保图层列表被正确拷贝
+        if (page.containsKey('layers')) {
+          final layers = page['layers'] as List<dynamic>;
+          pageCopy['layers'] =
+              layers.map((l) => Map<String, dynamic>.from(l)).toList();
+        }
+
+        return pageCopy;
+      }).toList();
+
       // 另存为新字帖（不使用现有ID）
       final result = await _practiceService.savePractice(
         id: null, // 生成新ID
         title: title,
-        pages: _state.pages,
+        pages: pagesToSave,
+        thumbnail: thumbnail,
       );
 
       // 更新ID和标题
@@ -1197,59 +1226,22 @@ class PracticeEditController extends ChangeNotifier {
       _state.markSaved();
       notifyListeners();
 
+      debugPrint('字帖另存为成功: $title, ID: $_practiceId');
       return true;
     } catch (e) {
-      debugPrint('保存字帖失败: $e');
-      return false;
-    }
-  }
-
-  /// 覆盖保存现有字帖
-  Future<bool> saveOverwriteExisting(String title) async {
-    // 如果没有页面，则不保存
-    if (_state.pages.isEmpty) return false;
-
-    try {
-      // 查询现有字帖
-      final results = await _practiceService.query(
-        'title',
-        '=',
-        title,
-      );
-
-      if (results.isEmpty) {
-        return false;
-      }
-
-      final existingId = results.first['id'] as String;
-
-      // 覆盖保存
-      final result = await _practiceService.savePractice(
-        id: existingId,
-        title: title,
-        pages: _state.pages,
-      );
-
-      // 更新ID和标题
-      _practiceId = result['id'] as String;
-      _practiceTitle = title;
-
-      // 标记为已保存
-      _state.markSaved();
-      notifyListeners();
-
-      return true;
-    } catch (e) {
-      debugPrint('覆盖保存字帖失败: $e');
+      debugPrint('另存为字帖失败: $e');
       return false;
     }
   }
 
   /// 保存字帖
   /// 如果字帖未保存过，则提示用户输入标题
-  /// 返回是否保存成功
-  /// 返回false且标题已存在时可能需要覆盖确认
-  Future<bool> savePractice({String? title}) async {
+  /// 返回值:
+  /// - true: 保存成功
+  /// - false: 保存失败或需要提示用户输入标题
+  /// - 'title_exists': 标题已存在，需要确认是否覆盖
+  Future<dynamic> savePractice(
+      {String? title, bool forceOverwrite = false}) async {
     // 如果没有页面，则不保存
     if (_state.pages.isEmpty) return false;
 
@@ -1265,17 +1257,21 @@ class PracticeEditController extends ChangeNotifier {
     }
 
     // 如果是新标题（非当前标题），检查标题是否存在
-    if (title != null && title != _practiceTitle) {
-      final exists = await _practiceService.isTitleExists(title);
+    if (!forceOverwrite && title != null && title != _practiceTitle) {
+      final exists = await checkTitleExists(title);
       if (exists) {
         // 标题已存在，返回特殊值通知调用者需要确认覆盖
-        return false;
+        return 'title_exists';
       }
     }
 
     try {
+      debugPrint('开始保存字帖: $saveTitle, ID: $_practiceId');
+
       // 生成缩略图
       final thumbnail = await _generateThumbnail();
+      debugPrint(
+          '缩略图生成完成: ${thumbnail != null ? '${thumbnail.length} 字节' : '无缩略图'}');
 
       // 确保页面数据准备好被保存
       // 创建页面的深拷贝，确保所有内容都被保存
@@ -1300,9 +1296,9 @@ class PracticeEditController extends ChangeNotifier {
         return pageCopy;
       }).toList();
 
-      // 保存字帖
+      // 保存字帖 - 使用现有ID或创建新ID
       final result = await _practiceService.savePractice(
-        id: _practiceId,
+        id: _practiceId, // 如果是null，将创建新字帖
         title: saveTitle,
         pages: pagesToSave,
         thumbnail: thumbnail,
@@ -1316,7 +1312,7 @@ class PracticeEditController extends ChangeNotifier {
       _state.markSaved();
       notifyListeners();
 
-      debugPrint('字帖保存成功: $saveTitle');
+      debugPrint('字帖保存成功: $saveTitle, ID: $_practiceId');
       return true;
     } catch (e) {
       debugPrint('保存字帖失败: $e');

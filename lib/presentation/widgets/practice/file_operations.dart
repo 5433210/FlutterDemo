@@ -84,14 +84,38 @@ class FileOperations {
     // 调用控制器的saveAsNewPractice方法
     final result = await controller.saveAsNewPractice(title);
 
-    if (result) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('字帖 "$title" 已保存')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('保存失败')),
-      );
+    // 检查context是否仍然有效
+    if (context.mounted) {
+      if (result == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('字帖 "$title" 已保存')),
+        );
+      } else if (result == 'title_exists') {
+        // 如果标题已存在，询问是否覆盖
+        final shouldOverwrite = await _confirmOverwrite(context, title);
+        if (shouldOverwrite && context.mounted) {
+          // 强制覆盖保存
+          final overwriteResult = await controller.saveAsNewPractice(
+            title,
+            forceOverwrite: true,
+          );
+
+          if (overwriteResult == true && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
+            );
+          } else if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('保存失败，请稍后重试')),
+            );
+          }
+        }
+      } else {
+        // 如果保存失败，显示错误消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保存失败，请稍后重试')),
+        );
+      }
     }
   }
 
@@ -109,32 +133,45 @@ class FileOperations {
       return;
     }
 
-    // 如果已经有字帖ID和标题，直接保存
+    // 如果已经有字帖标题，直接保存
     if (controller.practiceTitle != null) {
       // 确保将当前的页面内容传递给保存方法
       final result =
           await controller.savePractice(title: controller.practiceTitle);
 
-      if (result) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
-        );
-      } else {
-        // 如果保存失败，可能是因为检查到同名字帖，询问是否覆盖
-        final shouldOverwrite =
-            await _confirmOverwrite(context, controller.practiceTitle!);
-        if (shouldOverwrite) {
-          final overwriteResult =
-              await controller.saveOverwriteExisting(controller.practiceTitle!);
-          if (overwriteResult) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+      // 检查context是否仍然有效
+      if (context.mounted) {
+        if (result == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('字帖 "${controller.practiceTitle}" 已保存')),
+          );
+        } else if (result == 'title_exists') {
+          // 如果标题已存在，询问是否覆盖
+          final shouldOverwrite =
+              await _confirmOverwrite(context, controller.practiceTitle!);
+          if (shouldOverwrite && context.mounted) {
+            // 强制覆盖保存
+            final overwriteResult = await controller.savePractice(
+              title: controller.practiceTitle,
+              forceOverwrite: true,
             );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('保存失败')),
-            );
+
+            if (overwriteResult == true && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text('字帖 "${controller.practiceTitle}" 已覆盖保存')),
+              );
+            } else if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('保存失败，请稍后重试')),
+              );
+            }
           }
+        } else {
+          // 如果保存失败，显示错误消息
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存失败，请稍后重试')),
+          );
         }
       }
       return;
@@ -146,6 +183,7 @@ class FileOperations {
       builder: (context) => PracticeSaveDialog(
         initialTitle: '',
         isSaveAs: false,
+        // 检查标题是否存在
         checkTitleExists: controller.checkTitleExists,
       ),
     );
@@ -155,24 +193,37 @@ class FileOperations {
     // 调用控制器的savePractice方法（会自动处理新字帖）
     final result = await controller.savePractice(title: title);
 
-    if (result) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('字帖 "$title" 已保存')),
-      );
-    } else {
-      // 如果保存失败，可能是因为检查到同名字帖，询问是否覆盖
-      final shouldOverwrite = await _confirmOverwrite(context, title);
-      if (shouldOverwrite) {
-        final overwriteResult = await controller.saveOverwriteExisting(title);
-        if (overwriteResult) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
+    // 检查context是否仍然有效
+    if (context.mounted) {
+      if (result == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('字帖 "$title" 已保存')),
+        );
+      } else if (result == 'title_exists') {
+        // 如果标题已存在，询问是否覆盖
+        final shouldOverwrite = await _confirmOverwrite(context, title);
+        if (shouldOverwrite && context.mounted) {
+          // 强制覆盖保存
+          final overwriteResult = await controller.savePractice(
+            title: title,
+            forceOverwrite: true,
           );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('保存失败')),
-          );
+
+          if (overwriteResult == true && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('字帖 "$title" 已覆盖保存')),
+            );
+          } else if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('保存失败，请稍后重试')),
+            );
+          }
         }
+      } else {
+        // 如果保存失败，显示错误消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('保存失败，请稍后重试')),
+        );
       }
     }
   }
