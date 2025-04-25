@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../widgets/common/color_picker_dialog.dart';
+import '../../../../presentation/widgets/common/color_palette_widget.dart';
 import '../practice_edit_controller.dart';
 
 /// 页面属性面板
@@ -223,39 +223,37 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('背景颜色'),
-                  Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => _showEnhancedColorPicker(
-                            context, '#${_backgroundColorController.text}'),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: hexToColor(
-                                '#${_backgroundColorController.text}'),
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: '颜色代码',
-                            prefixText: '#',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
-                          ),
-                          controller: _backgroundColorController,
-                          readOnly: true, // 设置为只读
-                          onTap: () => _showEnhancedColorPicker(
-                              context, '#${_backgroundColorController.text}'),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 8.0),
+                  ColorPaletteWidget(
+                    initialColor:
+                        hexToColor('#${_backgroundColorController.text}'),
+                    labelText: '背景颜色',
+                    onColorChanged: (color) {
+                      // 将颜色转换为十六进制字符串
+                      final hexColor = _colorToHex(color);
+                      debugPrint('选择的背景颜色: $hexColor');
+
+                      // 获取当前的不透明度
+                      final backgroundOpacity =
+                          (widget.page!['backgroundOpacity'] as num?)
+                                  ?.toDouble() ??
+                              1.0;
+
+                      // 更新页面属性
+                      widget.onPagePropertiesChanged({
+                        'backgroundColor': hexColor,
+                        'backgroundType': 'color',
+                        'backgroundOpacity': backgroundOpacity,
+                      });
+
+                      // 更新颜色代码控制器
+                      setState(() {
+                        _backgroundColorController.text =
+                            hexColor.startsWith('#')
+                                ? hexColor.substring(1)
+                                : hexColor;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -589,58 +587,6 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
   void _handleWidthFocusChange() {
     if (!_widthFocusNode.hasFocus) {
       _updateWidth(_widthController.text);
-    }
-  }
-
-  /// 显示增强的颜色选择器
-  void _showEnhancedColorPicker(BuildContext context, String colorStr) {
-    try {
-      // 调试信息
-      debugPrint('打开颜色选择器，初始颜色: $colorStr');
-
-      // 解析颜色
-      final color = hexToColor(colorStr);
-
-      showDialog(
-        context: context,
-        builder: (context) => ColorPickerDialog(
-          initialColor: color,
-          onColorSelected: (selectedColor) {
-            // 调试信息
-            debugPrint('选择的颜色: $selectedColor');
-
-            // 将颜色转换为十六进制字符串
-            final hexColor = _colorToHex(selectedColor);
-            debugPrint('转换后的颜色字符串: $hexColor');
-
-            // 获取当前的不透明度
-            final backgroundOpacity =
-                (widget.page!['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
-
-            // 先更新颜色代码控制器，确保UI显示正确的颜色代码
-            setState(() {
-              _backgroundColorController.text =
-                  hexColor.startsWith('#') ? hexColor.substring(1) : hexColor;
-            });
-
-            // 更新页面属性，同时确保设置背景类型和不透明度
-            widget.onPagePropertiesChanged({
-              'backgroundColor': hexColor,
-              'backgroundType': 'color',
-              'backgroundOpacity': backgroundOpacity,
-            });
-
-            // 强制刷新控制器状态，确保画布更新
-            // 使用updatePageProperties方法会自动触发notifyListeners
-          },
-        ),
-      );
-    } catch (e) {
-      // 如果出错，显示错误信息
-      debugPrint('打开颜色选择器时出错: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('打开颜色选择器时出错: $e')),
-      );
     }
   }
 
