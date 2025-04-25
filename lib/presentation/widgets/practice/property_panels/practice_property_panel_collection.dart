@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
 import 'layer_info_panel.dart';
@@ -38,46 +39,17 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
     // 集字特有属性
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
-    final direction = element['direction'] as String? ?? 'horizontal';
-    final flowDirection =
-        element['flowDirection'] as String? ?? 'top-to-bottom';
-    final fontSize = (element['fontSize'] as num?)?.toDouble() ?? 36.0;
-    final lineSpacing = (element['lineSpacing'] as num?)?.toDouble() ?? 10.0;
-    final letterSpacing = (element['letterSpacing'] as num?)?.toDouble() ?? 5.0;
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 36.0;
+    final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
+    final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
+    final textAlign = content['textAlign'] as String? ?? 'left';
+    final verticalAlign = content['verticalAlign'] as String? ?? 'top';
+    final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
+    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
 
     return ListView(
       children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            '集字内容属性',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-
-        // 几何属性部分
-        buildGeometrySection(
-          title: '几何属性',
-          x: x,
-          y: y,
-          width: width,
-          height: height,
-          rotation: rotation,
-          onXChanged: (value) => _updateProperty('x', value),
-          onYChanged: (value) => _updateProperty('y', value),
-          onWidthChanged: (value) => _updateProperty('width', value),
-          onHeightChanged: (value) => _updateProperty('height', value),
-          onRotationChanged: (value) => _updateProperty('rotation', value),
-        ),
-
-        // 视觉属性部分
-        buildVisualSection(
-          title: '视觉设置',
-          opacity: opacity,
-          onOpacityChanged: (value) => _updateProperty('opacity', value),
-        ),
-
-        // 基本属性部分
+        // 基本属性部分 (放在最顶部)
         ElementCommonPropertyPanel(
           element: element,
           onElementPropertiesChanged: onElementPropertiesChanged,
@@ -87,9 +59,9 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
         // 图层信息部分
         LayerInfoPanel(layer: layer),
 
-        // 书写设置部分
+        // 几何属性部分
         materialExpansionTile(
-          title: const Text('书写设置'),
+          title: const Text('几何属性'),
           initiallyExpanded: true,
           children: [
             Padding(
@@ -98,83 +70,159 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 书写方向
-                  const Text('书写方向'),
-                  DropdownButton<String>(
-                    value: direction,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'horizontal', child: Text('左往右')),
-                      DropdownMenuItem(value: 'vertical', child: Text('右往左')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        _updateProperty('direction', value);
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 8.0),
-
-                  // 行间方向
-                  const Text('行间方向'),
-                  DropdownButton<String>(
-                    value: flowDirection,
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(
-                          value: 'top-to-bottom', child: Text('上往下')),
-                      DropdownMenuItem(
-                          value: 'bottom-to-top', child: Text('下往上')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        _updateProperty('flowDirection', value);
-                      }
-                    },
-                  ),
-
-                  const SizedBox(height: 8.0),
-
-                  // 间距设置
+                  // X和Y位置
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: '行间距',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
-                          ),
-                          controller: TextEditingController(
-                              text: lineSpacing.toString()),
-                          keyboardType: TextInputType.number,
+                        child: EditableNumberField(
+                          label: 'X',
+                          value: x,
+                          suffix: 'px',
+                          min: 0,
+                          max: 10000,
+                          onChanged: (value) => _updateProperty('x', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: EditableNumberField(
+                          label: 'Y',
+                          value: y,
+                          suffix: 'px',
+                          min: 0,
+                          max: 10000,
+                          onChanged: (value) => _updateProperty('y', value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  // 宽度和高度
+                  Row(
+                    children: [
+                      Expanded(
+                        child: EditableNumberField(
+                          label: '宽度',
+                          value: width,
+                          suffix: 'px',
+                          min: 10,
+                          max: 10000,
+                          onChanged: (value) => _updateProperty('width', value),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: EditableNumberField(
+                          label: '高度',
+                          value: height,
+                          suffix: 'px',
+                          min: 10,
+                          max: 10000,
+                          onChanged: (value) =>
+                              _updateProperty('height', value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  // 旋转角度
+                  EditableNumberField(
+                    label: '旋转',
+                    value: rotation,
+                    suffix: '°',
+                    min: -360,
+                    max: 360,
+                    decimalPlaces: 1,
+                    onChanged: (value) => _updateProperty('rotation', value),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        // 视觉属性部分
+        materialExpansionTile(
+          title: const Text('视觉设置'),
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 透明度
+                  const Text('透明度:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: opacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          label: '${(opacity * 100).round()}%',
                           onChanged: (value) {
-                            final newValue = double.tryParse(value);
-                            if (newValue != null) {
-                              _updateProperty('lineSpacing', newValue);
-                            }
+                            _updateProperty('opacity', value);
                           },
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: '字间距',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
-                          ),
-                          controller: TextEditingController(
-                              text: letterSpacing.toString()),
-                          keyboardType: TextInputType.number,
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '透明度',
+                          value: opacity * 100, // 转换为百分比
+                          suffix: '%',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 0,
                           onChanged: (value) {
-                            final newValue = double.tryParse(value);
-                            if (newValue != null) {
-                              _updateProperty('letterSpacing', newValue);
-                            }
+                            // 转换回 0-1 范围
+                            _updateProperty('opacity', value / 100);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 内边距设置
+                  const Text('内边距:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: padding,
+                          min: 0,
+                          max: 50,
+                          divisions: 50,
+                          label: '${padding.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('padding', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '内边距',
+                          value: padding,
+                          suffix: 'px',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 0,
+                          onChanged: (value) {
+                            _updateContentProperty('padding', value);
                           },
                         ),
                       ),
@@ -198,7 +246,9 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 汉字内容
-                  const Text('汉字内容'),
+                  const Text('汉字内容:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
                   TextField(
                     decoration: const InputDecoration(
                       hintText: '输入要展示的汉字',
@@ -213,38 +263,9 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
 
                   const SizedBox(height: 16.0),
 
-                  // 字体设置
-                  const Text('字体设置'),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: '字号',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 8.0, vertical: 8.0),
-                          ),
-                          controller:
-                              TextEditingController(text: fontSize.toString()),
-                          keyboardType: TextInputType.number,
-                          onChanged: (value) {
-                            final newValue = double.tryParse(value);
-                            if (newValue != null && newValue > 0) {
-                              _updateProperty('fontSize', newValue);
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      // 这里可以添加颜色选择器
-                    ],
-                  ),
-
-                  const SizedBox(height: 16.0),
-
                   // 集字预览（简化版）
-                  const Text('集字预览'),
+                  const Text('集字预览:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
                   Container(
                     padding: const EdgeInsets.all(8.0),
@@ -279,6 +300,270 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
                       },
                     ),
                   ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 字号设置
+                  const Text('字号:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: fontSize,
+                          min: 1,
+                          max: 100,
+                          divisions: 99,
+                          label: '${fontSize.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('fontSize', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '字号',
+                          value: fontSize,
+                          suffix: 'px',
+                          min: 1,
+                          max: 200,
+                          onChanged: (value) {
+                            _updateContentProperty('fontSize', value);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 字间距设置
+                  const Text('字间距:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: letterSpacing,
+                          min: 0,
+                          max: 50,
+                          divisions: 50,
+                          label: '${letterSpacing.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('letterSpacing', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '字间距',
+                          value: letterSpacing,
+                          suffix: 'px',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 1,
+                          onChanged: (value) {
+                            _updateContentProperty('letterSpacing', value);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 行间距设置
+                  const Text('行间距:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: lineSpacing,
+                          min: 0,
+                          max: 50,
+                          divisions: 50,
+                          label: '${lineSpacing.round()}px',
+                          onChanged: (value) {
+                            _updateContentProperty('lineSpacing', value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: '行间距',
+                          value: lineSpacing,
+                          suffix: 'px',
+                          min: 0,
+                          max: 100,
+                          decimalPlaces: 1,
+                          onChanged: (value) {
+                            _updateContentProperty('lineSpacing', value);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 水平对齐方式
+                  const Text('水平对齐:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ToggleButtons(
+                      isSelected: [
+                        textAlign == 'left',
+                        textAlign == 'center',
+                        textAlign == 'right',
+                        textAlign == 'justify',
+                      ],
+                      onPressed: (index) {
+                        String newAlign;
+                        switch (index) {
+                          case 0:
+                            newAlign = 'left';
+                            break;
+                          case 1:
+                            newAlign = 'center';
+                            break;
+                          case 2:
+                            newAlign = 'right';
+                            break;
+                          case 3:
+                            newAlign = 'justify';
+                            break;
+                          default:
+                            newAlign = 'left';
+                        }
+                        _updateContentProperty('textAlign', newAlign);
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_left),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_center),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.align_horizontal_right),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.format_align_justify),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 垂直对齐
+                  const Text('垂直对齐:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ToggleButtons(
+                      isSelected: [
+                        verticalAlign == 'top',
+                        verticalAlign == 'middle',
+                        verticalAlign == 'bottom',
+                        verticalAlign == 'justify',
+                      ],
+                      onPressed: (index) {
+                        String newAlign;
+                        switch (index) {
+                          case 0:
+                            newAlign = 'top';
+                            break;
+                          case 1:
+                            newAlign = 'middle';
+                            break;
+                          case 2:
+                            newAlign = 'bottom';
+                            break;
+                          case 3:
+                            newAlign = 'justify';
+                            break;
+                          default:
+                            newAlign = 'top';
+                        }
+                        _updateContentProperty('verticalAlign', newAlign);
+                      },
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_top),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_center),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.vertical_align_bottom),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10.0),
+                          child: Icon(Icons.format_align_justify),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 书写方向
+                  const Text('书写方向:',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Wrap(
+                    spacing: 8.0,
+                    children: [
+                      _buildWritingModeButton(
+                        mode: 'horizontal-l',
+                        label: '横排左书',
+                        currentMode: writingMode,
+                        icon: Icons.format_textdirection_l_to_r,
+                      ),
+                      _buildWritingModeButton(
+                        mode: 'vertical-r',
+                        label: '竖排右书',
+                        currentMode: writingMode,
+                        icon: Icons.format_textdirection_r_to_l,
+                      ),
+                      _buildWritingModeButton(
+                        mode: 'horizontal-r',
+                        label: '横排右书',
+                        currentMode: writingMode,
+                        icon: Icons.keyboard_double_arrow_left,
+                      ),
+                      _buildWritingModeButton(
+                        mode: 'vertical-l',
+                        label: '竖排左书',
+                        currentMode: writingMode,
+                        icon: Icons.keyboard_double_arrow_right,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -288,6 +573,37 @@ class CollectionPropertyPanel extends PracticePropertyPanel {
     );
   }
 
+  // 构建书写模式按钮
+  Widget _buildWritingModeButton({
+    required String mode,
+    required String label,
+    required String currentMode,
+    required IconData icon,
+  }) {
+    final isSelected = currentMode == mode;
+
+    return ElevatedButton.icon(
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected ? Colors.blue : null,
+        foregroundColor: isSelected ? Colors.white : null,
+      ),
+      onPressed: () {
+        _updateContentProperty('writingMode', mode);
+      },
+    );
+  }
+
+  // 更新内容属性
+  void _updateContentProperty(String key, dynamic value) {
+    final content = Map<String, dynamic>.from(
+        element['content'] as Map<String, dynamic>? ?? {});
+    content[key] = value;
+    _updateProperty('content', content);
+  }
+
+  // 更新属性
   void _updateProperty(String key, dynamic value) {
     final updates = {key: value};
     onElementPropertiesChanged(updates);
