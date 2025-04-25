@@ -506,8 +506,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
 
-                  // 上下裁剪滑块
-                  const Text('上下裁剪:'),
                   Row(
                     children: [
                       Expanded(
@@ -530,25 +528,11 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                           ],
                         ),
                       ),
-                      SizedBox(
-                        width: 120,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                                '上: ${cropTop.toStringAsFixed(0)}/${maxCropHeight.toStringAsFixed(0)}px'),
-                            Text(
-                                '下: ${cropBottom.toStringAsFixed(0)}/${maxCropHeight.toStringAsFixed(0)}px'),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
 
                   const SizedBox(height: 16.0),
 
-                  // 左右裁剪滑块
-                  const Text('左右裁剪:'),
                   Row(
                     children: [
                       Expanded(
@@ -568,18 +552,6 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                               value: cropRight,
                               max: maxCropWidth,
                             ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(
-                        width: 120,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                                '左: ${cropLeft.toStringAsFixed(0)}/${maxCropWidth.toStringAsFixed(0)}px'),
-                            Text(
-                                '右: ${cropRight.toStringAsFixed(0)}/${maxCropWidth.toStringAsFixed(0)}px'),
                           ],
                         ),
                       ),
