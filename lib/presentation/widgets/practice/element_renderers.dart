@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:demo/presentation/widgets/practice/text_renderer.dart';
@@ -11,27 +12,41 @@ class ElementRenderers {
   static Widget buildCollectionElement(Map<String, dynamic> element) {
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
-    final direction = content['direction'] as String? ?? 'horizontal';
+    final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 24.0;
-    final fontColor = _parseColor(content['fontColor'] as String? ?? '#000000');
     final backgroundColor =
         _parseColor(content['backgroundColor'] as String? ?? '#FFFFFF');
-    final charSpacing = (content['charSpacing'] as num?)?.toDouble() ?? 10.0;
+    final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
+    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
+    final textAlign = content['textAlign'] as String? ?? 'left';
+    final verticalAlign = content['verticalAlign'] as String? ?? 'top';
+
+    // 获取集字图片列表（实际应用中应该从数据库或其他存储中获取）
+    final characterImages = content['characterImages'] as List<dynamic>? ?? [];
 
     return Container(
       width: double.infinity,
       height: double.infinity,
-      padding: const EdgeInsets.all(8.0),
       color: backgroundColor,
-      child: _buildCharacterGrid(
-        content: characters,
-        direction: direction,
-        flowDirection: 'top-to-bottom', // Default value
-        fontSize: fontSize,
-        fontColor: fontColor,
-        lineSpacing: lineSpacing,
-        letterSpacing: charSpacing,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Padding(
+            padding: EdgeInsets.all(padding),
+            child: _buildCollectionLayout(
+              characters: characters,
+              writingMode: writingMode,
+              fontSize: fontSize,
+              letterSpacing: letterSpacing,
+              lineSpacing: lineSpacing,
+              textAlign: textAlign,
+              verticalAlign: verticalAlign,
+              characterImages: characterImages,
+              constraints: constraints,
+              padding: padding,
+            ),
+          );
+        },
       ),
     );
   }
@@ -282,150 +297,57 @@ class ElementRenderers {
     );
   }
 
-  /// 构建集字网格
-  static Widget _buildCharacterGrid({
-    required String content,
-    required String direction,
-    required String flowDirection,
+  /// 构建集字布局
+  static Widget _buildCollectionLayout({
+    required String characters,
+    required String writingMode,
     required double fontSize,
-    required Color fontColor,
-    required double lineSpacing,
     required double letterSpacing,
+    required double lineSpacing,
+    required String textAlign,
+    required String verticalAlign,
+    required List<dynamic> characterImages,
+    required BoxConstraints constraints,
+    required double padding,
   }) {
-    if (content.isEmpty) {
+    if (characters.isEmpty) {
       return const Center(
           child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
     }
 
-    // 按照方向布局
-    final isHorizontal = direction == 'horizontal';
-    final characters = content.characters.toList();
+    // 获取可用区域大小
+    final availableWidth = constraints.maxWidth;
+    final availableHeight = constraints.maxHeight;
 
-    if (isHorizontal) {
-      // 水平布局
-      final isTopToBottom = flowDirection == 'top-to-bottom';
+    // 字符列表
+    final charList = characters.characters.toList();
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        verticalDirection:
-            isTopToBottom ? VerticalDirection.down : VerticalDirection.up,
-        children: _splitIntoChunks(characters).map((row) {
-          return Padding(
-            padding: EdgeInsets.only(bottom: lineSpacing),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: row.map((char) {
-                return Padding(
-                  padding: EdgeInsets.only(right: letterSpacing),
-                  child: Text(
-                    char,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      color: fontColor,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          );
-        }).toList(),
-      );
-    } else {
-      // 垂直布局 (从右往左)
-      final isTopToBottom = flowDirection == 'top-to-bottom';
+    // 确定布局方向
+    final isHorizontal = writingMode.startsWith('horizontal');
+    final isLeftToRight = writingMode.endsWith('l');
 
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: _splitIntoChunks(characters, isVertical: true).map((column) {
-          return Padding(
-            padding: EdgeInsets.only(left: lineSpacing),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              verticalDirection:
-                  isTopToBottom ? VerticalDirection.down : VerticalDirection.up,
-              children: column.map((char) {
-                return Padding(
-                  padding: EdgeInsets.only(bottom: letterSpacing),
-                  child: Text(
-                    char,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      color: fontColor,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          );
-        }).toList(),
-      );
-    }
-  }
-
-  /// 构建裁剪后的本地文件图像 - 这个方法现在已不再需要
-  static Widget _buildCroppedFileImage(
-    File file,
-    BoxFit fit,
-    double rectX,
-    double rectY,
-    double rectWidth,
-    double rectHeight,
-    double containerWidth,
-    double containerHeight,
-  ) {
-    // 此方法已不再使用
-    return Container(
-      width: rectWidth,
-      height: rectHeight,
-      color: Colors.grey.shade200,
-      child: const Center(
-        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
-      ),
+    // 计算每个字符的位置
+    final List<_CharacterPosition> positions = _calculateCharacterPositions(
+      charList: charList,
+      isHorizontal: isHorizontal,
+      isLeftToRight: isLeftToRight,
+      fontSize: fontSize,
+      letterSpacing: letterSpacing,
+      lineSpacing: lineSpacing,
+      textAlign: textAlign,
+      verticalAlign: verticalAlign,
+      availableWidth: availableWidth,
+      availableHeight: availableHeight,
     );
-  }
 
-  /// 构建裁剪后的图像 - 这个方法现在已不再需要，因为变换已在应用变换时处理完毕
-  static Widget _buildCroppedImage({
-    required Map<String, dynamic> croppedImageInfo,
-    required String fitMode,
-    required double width,
-    required double height,
-    required double containerWidth,
-    required double containerHeight,
-  }) {
-    // 此方法已不再使用，但保留方法签名以防止编译错误
-    // 实际的图像变换已经在用户点击"应用变换"按钮时处理，
-    // 并将结果保存在content['transformedImageUrl']中
-
-    return Container(
-      width: width,
-      height: height,
-      color: Colors.grey.shade200,
-      child: const Center(
-        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
-      ),
-    );
-  }
-
-  /// 构建裁剪后的网络图像 - 这个方法现在已不再需要
-  static Widget _buildCroppedNetworkImage(
-    String imageUrl,
-    BoxFit fit,
-    double rectX,
-    double rectY,
-    double rectWidth,
-    double rectHeight,
-    double containerWidth,
-    double containerHeight,
-  ) {
-    // 此方法已不再使用
-    return Container(
-      width: rectWidth,
-      height: rectHeight,
-      color: Colors.grey.shade200,
-      child: const Center(
-        child: Text('图像处理方法已更新', style: TextStyle(color: Colors.grey)),
+    // 创建自定义绘制器
+    return CustomPaint(
+      size: Size(availableWidth, availableHeight),
+      painter: _CollectionPainter(
+        characters: charList,
+        positions: positions,
+        fontSize: fontSize,
+        characterImages: characterImages,
       ),
     );
   }
@@ -542,6 +464,263 @@ class ElementRenderers {
     }
   }
 
+  /// 计算字符位置
+  static List<_CharacterPosition> _calculateCharacterPositions({
+    required List<String> charList,
+    required bool isHorizontal,
+    required bool isLeftToRight,
+    required double fontSize,
+    required double letterSpacing,
+    required double lineSpacing,
+    required String textAlign,
+    required String verticalAlign,
+    required double availableWidth,
+    required double availableHeight,
+  }) {
+    final List<_CharacterPosition> positions = [];
+
+    if (charList.isEmpty) return positions;
+
+    // 字符尺寸（假设是正方形）
+    final charSize = fontSize;
+
+    if (isHorizontal) {
+      // 水平布局
+
+      // 计算每行可容纳的字符数
+      final charsPerRow =
+          ((availableWidth + letterSpacing) / (charSize + letterSpacing))
+              .floor();
+      if (charsPerRow <= 0) return positions;
+
+      // 计算行数
+      final rowCount = (charList.length / charsPerRow).ceil();
+
+      // 计算实际使用的高度
+      final usedHeight = min(
+          availableHeight, rowCount * charSize + (rowCount - 1) * lineSpacing);
+
+      // 计算起始位置（考虑对齐方式）
+      double startY = 0;
+      switch (verticalAlign) {
+        case 'top':
+          startY = 0;
+          break;
+        case 'middle':
+          startY = (availableHeight - usedHeight) / 2;
+          break;
+        case 'bottom':
+          startY = availableHeight - usedHeight;
+          break;
+        case 'justify':
+          // 如果行数大于1，则均匀分布
+          if (rowCount > 1) {
+            lineSpacing =
+                (availableHeight - rowCount * charSize) / (rowCount - 1);
+          }
+          startY = 0;
+          break;
+      }
+
+      // 遍历每个字符，计算位置
+      for (int i = 0; i < charList.length; i++) {
+        final rowIndex = i ~/ charsPerRow;
+        final colIndex = i % charsPerRow;
+
+        // 计算行的起始X位置（考虑水平对齐）
+        final charsInThisRow = (rowIndex == rowCount - 1)
+            ? (charList.length - rowIndex * charsPerRow)
+            : charsPerRow;
+        final rowWidth =
+            charsInThisRow * charSize + (charsInThisRow - 1) * letterSpacing;
+
+        double startX = 0;
+        switch (textAlign) {
+          case 'left':
+            startX = isLeftToRight ? 0 : availableWidth - rowWidth;
+            break;
+          case 'center':
+            startX = (availableWidth - rowWidth) / 2;
+            break;
+          case 'right':
+            startX = isLeftToRight ? availableWidth - rowWidth : 0;
+            break;
+          case 'justify':
+            // 如果字符数大于1，则均匀分布
+            if (charsInThisRow > 1 && charsInThisRow < charsPerRow) {
+              final justifiedLetterSpacing =
+                  (availableWidth - charsInThisRow * charSize) /
+                      (charsInThisRow - 1);
+              startX = 0;
+
+              // 为这一行的每个字符重新计算位置
+              for (int j = 0; j < charsInThisRow; j++) {
+                final index = rowIndex * charsPerRow + j;
+                final x = isLeftToRight
+                    ? startX + j * (charSize + justifiedLetterSpacing)
+                    : availableWidth -
+                        startX -
+                        (j + 1) * charSize -
+                        j * justifiedLetterSpacing;
+                final y = startY + rowIndex * (charSize + lineSpacing);
+
+                if (index < charList.length) {
+                  positions.add(_CharacterPosition(
+                    char: charList[index],
+                    x: x,
+                    y: y,
+                    size: charSize,
+                  ));
+                }
+              }
+
+              // 跳过这一行的常规处理
+              continue;
+            } else {
+              startX = isLeftToRight ? 0 : availableWidth - rowWidth;
+            }
+            break;
+        }
+
+        // 计算字符位置
+        if (textAlign != 'justify' ||
+            charsInThisRow == charsPerRow ||
+            charsInThisRow == 1) {
+          final x = isLeftToRight
+              ? startX + colIndex * (charSize + letterSpacing)
+              : startX +
+                  (charsInThisRow - colIndex - 1) * (charSize + letterSpacing);
+          final y = startY + rowIndex * (charSize + lineSpacing);
+
+          positions.add(_CharacterPosition(
+            char: charList[i],
+            x: x,
+            y: y,
+            size: charSize,
+          ));
+        }
+      }
+    } else {
+      // 垂直布局
+
+      // 计算每列可容纳的字符数
+      final charsPerCol =
+          ((availableHeight + letterSpacing) / (charSize + letterSpacing))
+              .floor();
+      if (charsPerCol <= 0) return positions;
+
+      // 计算列数
+      final colCount = (charList.length / charsPerCol).ceil();
+
+      // 计算实际使用的宽度
+      final usedWidth = min(
+          availableWidth, colCount * charSize + (colCount - 1) * lineSpacing);
+
+      // 计算起始位置（考虑对齐方式）
+      double startX = 0;
+      switch (textAlign) {
+        case 'left':
+          startX = isLeftToRight ? 0 : availableWidth - usedWidth;
+          break;
+        case 'center':
+          startX = (availableWidth - usedWidth) / 2;
+          break;
+        case 'right':
+          startX = isLeftToRight ? availableWidth - usedWidth : 0;
+          break;
+        case 'justify':
+          // 如果列数大于1，则均匀分布
+          if (colCount > 1) {
+            lineSpacing =
+                (availableWidth - colCount * charSize) / (colCount - 1);
+          }
+          startX = 0;
+          break;
+      }
+
+      // 遍历每个字符，计算位置
+      for (int i = 0; i < charList.length; i++) {
+        final colIndex = i ~/ charsPerCol;
+        final rowIndex = i % charsPerCol;
+
+        // 计算列的起始Y位置（考虑垂直对齐）
+        final charsInThisCol = (colIndex == colCount - 1)
+            ? (charList.length - colIndex * charsPerCol)
+            : charsPerCol;
+        final colHeight =
+            charsInThisCol * charSize + (charsInThisCol - 1) * letterSpacing;
+
+        double startY = 0;
+        switch (verticalAlign) {
+          case 'top':
+            startY = isLeftToRight ? 0 : availableHeight - colHeight;
+            break;
+          case 'middle':
+            startY = (availableHeight - colHeight) / 2;
+            break;
+          case 'bottom':
+            startY = isLeftToRight ? availableHeight - colHeight : 0;
+            break;
+          case 'justify':
+            // 如果字符数大于1，则均匀分布
+            if (charsInThisCol > 1 && charsInThisCol < charsPerCol) {
+              final justifiedLetterSpacing =
+                  (availableHeight - charsInThisCol * charSize) /
+                      (charsInThisCol - 1);
+              startY = 0;
+
+              // 为这一列的每个字符重新计算位置
+              for (int j = 0; j < charsInThisCol; j++) {
+                final index = colIndex * charsPerCol + j;
+                final x = startX + colIndex * (charSize + lineSpacing);
+                final y = isLeftToRight
+                    ? startY + j * (charSize + justifiedLetterSpacing)
+                    : availableHeight -
+                        startY -
+                        (j + 1) * charSize -
+                        j * justifiedLetterSpacing;
+
+                if (index < charList.length) {
+                  positions.add(_CharacterPosition(
+                    char: charList[index],
+                    x: x,
+                    y: y,
+                    size: charSize,
+                  ));
+                }
+              }
+
+              // 跳过这一列的常规处理
+              continue;
+            } else {
+              startY = isLeftToRight ? 0 : availableHeight - colHeight;
+            }
+            break;
+        }
+
+        // 计算字符位置
+        if (verticalAlign != 'justify' ||
+            charsInThisCol == charsPerCol ||
+            charsInThisCol == 1) {
+          final x = startX + colIndex * (charSize + lineSpacing);
+          final y = isLeftToRight
+              ? startY + rowIndex * (charSize + letterSpacing)
+              : startY +
+                  (charsInThisCol - rowIndex - 1) * (charSize + letterSpacing);
+
+          positions.add(_CharacterPosition(
+            char: charList[i],
+            x: x,
+            y: y,
+            size: charSize,
+          ));
+        }
+      }
+    }
+
+    return positions;
+  }
+
   /// 获取图片适应模式
   static BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
@@ -584,22 +763,147 @@ class ElementRenderers {
       return Colors.black;
     }
   }
+}
 
-  /// 将字符列表分割成多行
-  static List<List<String>> _splitIntoChunks(List<String> items,
-      {bool isVertical = false}) {
-    if (items.isEmpty) return [];
+/// 字符位置类
+class _CharacterPosition {
+  final String char;
+  final double x;
+  final double y;
+  final double size;
 
-    // 简单实现：每行/列固定数量的字符，可以根据实际需求优化
-    final chunkSize = isVertical ? 10 : 20;
+  _CharacterPosition({
+    required this.char,
+    required this.x,
+    required this.y,
+    required this.size,
+  });
+}
 
-    // 创建分组
-    final List<List<String>> chunks = [];
-    for (var i = 0; i < items.length; i += chunkSize) {
-      final end = (i + chunkSize < items.length) ? i + chunkSize : items.length;
-      chunks.add(items.sublist(i, end));
+/// 集字绘制器
+class _CollectionPainter extends CustomPainter {
+  final List<String> characters;
+  final List<_CharacterPosition> positions;
+  final double fontSize;
+  final List<dynamic> characterImages;
+
+  _CollectionPainter({
+    required this.characters,
+    required this.positions,
+    required this.fontSize,
+    required this.characterImages,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制每个字符
+    for (final position in positions) {
+      // 查找字符对应的图片
+      final charImage = _findCharacterImage(position.char);
+
+      if (charImage != null) {
+        // 绘制图片
+        _drawCharacterImage(canvas, position, charImage);
+      } else {
+        // 找不到图片，绘制文本作为占位符
+        _drawCharacterText(canvas, position);
+      }
     }
+  }
 
-    return chunks;
+  @override
+  bool shouldRepaint(_CollectionPainter oldDelegate) {
+    return oldDelegate.characters != characters ||
+        oldDelegate.positions != positions ||
+        oldDelegate.fontSize != fontSize ||
+        oldDelegate.characterImages != characterImages;
+  }
+
+  /// 绘制字符图片
+  void _drawCharacterImage(
+      Canvas canvas, _CharacterPosition position, dynamic charImage) {
+    // 获取图片数据 (实际应用中应该使用这些数据来加载图片)
+
+    // 创建绘制区域
+    final rect = Rect.fromLTWH(
+      position.x,
+      position.y,
+      position.size,
+      position.size,
+    );
+
+    // 绘制占位符
+    final paint = Paint()
+      ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, paint);
+
+    // 绘制字符文本作为占位符
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: position.char,
+        style: TextStyle(
+          fontSize: position.size * 0.7,
+          color: Colors.black,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        position.x + (position.size - textPainter.width) / 2,
+        position.y + (position.size - textPainter.height) / 2,
+      ),
+    );
+  }
+
+  /// 绘制字符文本
+  void _drawCharacterText(Canvas canvas, _CharacterPosition position) {
+    // 创建绘制区域
+    final rect = Rect.fromLTWH(
+      position.x,
+      position.y,
+      position.size,
+      position.size,
+    );
+
+    // 绘制占位符背景
+    final paint = Paint()
+      ..color = Colors.grey.withAlpha(26) // 约等于 0.1 不透明度
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, paint);
+
+    // 绘制字符文本
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: position.char,
+        style: TextStyle(
+          fontSize: position.size * 0.7,
+          color: Colors.black,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    textPainter.paint(
+      canvas,
+      Offset(
+        position.x + (position.size - textPainter.width) / 2,
+        position.y + (position.size - textPainter.height) / 2,
+      ),
+    );
+  }
+
+  /// 查找字符对应的图片
+  dynamic _findCharacterImage(String char) {
+    // 在characterImages中查找对应字符的图片
+    for (final image in characterImages) {
+      if (image['character'] == char) {
+        return image;
+      }
+    }
+    return null;
   }
 }

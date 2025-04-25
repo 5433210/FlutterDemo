@@ -816,25 +816,25 @@ class TextPropertyPanel extends PracticePropertyPanel {
                     children: [
                       _buildWritingModeButton(
                         mode: 'horizontal-l',
-                        label: '横排左书',
+                        label: '横排左起',
                         currentMode: writingMode,
                         icon: Icons.format_textdirection_l_to_r,
                       ),
                       _buildWritingModeButton(
                         mode: 'vertical-r',
-                        label: '竖排右书',
+                        label: '竖排右起',
                         currentMode: writingMode,
                         icon: Icons.format_textdirection_r_to_l,
                       ),
                       _buildWritingModeButton(
                         mode: 'horizontal-r',
-                        label: '横排右书',
+                        label: '横排右起',
                         currentMode: writingMode,
                         icon: Icons.keyboard_double_arrow_left,
                       ),
                       _buildWritingModeButton(
                         mode: 'vertical-l',
-                        label: '竖排左书',
+                        label: '竖排左起',
                         currentMode: writingMode,
                         icon: Icons.keyboard_double_arrow_right,
                       ),

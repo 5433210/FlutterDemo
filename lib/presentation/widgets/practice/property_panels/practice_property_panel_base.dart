@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../practice_edit_controller.dart';
-import 'practice_property_panel_collection.dart';
+import 'practice_property_panel_collection_fixed.dart';
 import 'practice_property_panel_group.dart';
 import 'practice_property_panel_image.dart';
 import 'practice_property_panel_layer.dart';
