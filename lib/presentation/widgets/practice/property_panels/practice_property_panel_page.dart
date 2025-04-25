@@ -239,11 +239,18 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                                   ?.toDouble() ??
                               1.0;
 
-                      // 更新页面属性
+                      // 更新页面属性 - 同时更新旧格式和新格式
                       widget.onPagePropertiesChanged({
+                        // 旧格式属性
                         'backgroundColor': hexColor,
                         'backgroundType': 'color',
                         'backgroundOpacity': backgroundOpacity,
+
+                        // 新格式属性
+                        'background': {
+                          'type': 'color',
+                          'value': hexColor,
+                        },
                       });
 
                       // 更新颜色代码控制器
