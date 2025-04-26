@@ -19,6 +19,7 @@ class ContentSettingsPanel extends ConsumerWidget {
   final Function(CharacterEntity) onCandidateCharacterSelected;
   final Function(bool) onInvertDisplayToggled;
   final Function(String, dynamic) onContentPropertyChanged;
+  final Function(int, bool) onCharacterInvertToggled; // 新增：当前字符反转切换回调
   final VoidCallback onClearImageCache;
 
   const ContentSettingsPanel({
@@ -33,6 +34,7 @@ class ContentSettingsPanel extends ConsumerWidget {
     required this.onCandidateCharacterSelected,
     required this.onInvertDisplayToggled,
     required this.onContentPropertyChanged,
+    required this.onCharacterInvertToggled, // 新增参数
     required this.onClearImageCache,
   }) : super(key: key);
 
@@ -87,6 +89,7 @@ class ContentSettingsPanel extends ConsumerWidget {
                 invertDisplay: invertDisplay,
                 onCharacterSelected: onCandidateCharacterSelected,
                 onInvertDisplayToggled: onInvertDisplayToggled,
+                onCharacterInvertToggled: onCharacterInvertToggled, // 传递新回调
               ),
 
               const SizedBox(height: 16.0),

@@ -102,6 +102,7 @@ class _CollectionPropertyPanelState
           onCharacterSelected: _selectCharacter,
           onCandidateCharacterSelected: _selectCandidateCharacter,
           onInvertDisplayToggled: _onInvertDisplayToggled,
+          onCharacterInvertToggled: _onCharacterInvertToggled,
           onContentPropertyChanged: _updateContentProperty,
           onClearImageCache: _clearImageCache,
         ),
@@ -241,6 +242,18 @@ class _CollectionPropertyPanelState
     });
   }
 
+  // 新增：获取字符显示标签
+  String _getCharacterLabel(int charIndex) {
+    final content = widget.element['content'] as Map<String, dynamic>;
+    final characters = content['characters'] as String? ?? '';
+
+    if (charIndex >= 0 && charIndex < characters.length) {
+      return '"${characters[charIndex]}"';
+    }
+
+    return '未知';
+  }
+
   // 初始化字符图像 (由原面板拆分而来的方法)
   Future<void> _initCharacterImages() async {
     try {
@@ -357,12 +370,17 @@ class _CollectionPropertyPanelState
     }
   }
 
+  // 新增：处理当前字符的反转状态
+  void _onCharacterInvertToggled(int charIndex, bool invertState) {
+    // 使用单字符变换属性更新方法处理反转状态
+    _updateSingleCharacterTransformProperty(charIndex, 'invert', invertState);
+  }
+
   // 切换反转显示
   void _onInvertDisplayToggled(bool value) {
     setState(() {
       _invertCandidateDisplay = value;
     });
-    _updateCharacterTransformProperty('invert', value);
   }
 
   // 处理文本变化
@@ -458,6 +476,22 @@ class _CollectionPropertyPanelState
         'drawingFormat': drawingFormat,
       };
 
+      // 如果之前的图像信息存在transform属性，则保留它
+      final existingInfo = characterImages['$index'] as Map<String, dynamic>?;
+      if (existingInfo != null && existingInfo.containsKey('transform')) {
+        imageInfo['transform'] = Map<String, dynamic>.from(
+            existingInfo['transform'] as Map<String, dynamic>);
+      } else {
+        // 否则创建默认的transform属性
+        imageInfo['transform'] = {
+          'scale': 1.0,
+          'rotation': 0.0,
+          'color': content['fontColor'] ?? '#000000',
+          'opacity': 1.0,
+          'invert': false,
+        };
+      }
+
       // 如果是临时字符，添加isTemporary标记
       if (isTemporary) {
         imageInfo['isTemporary'] = true;
@@ -528,89 +562,6 @@ class _CollectionPropertyPanelState
     }
   }
 
-  // 更新字符变换属性
-  void _updateCharacterTransformProperty(String propertyName, dynamic value) {
-    final content = Map<String, dynamic>.from(
-        widget.element['content'] as Map<String, dynamic>);
-
-    // 检查是否有characterImages
-    if (content.containsKey('characterImages')) {
-      var characterImages = content['characterImages'];
-
-      // 如果characterImages是List，则转换为Map形式
-      if (characterImages is List) {
-        final updatedCharacterImages = <String, Map<String, dynamic>>{};
-        for (int i = 0; i < characterImages.length; i++) {
-          final charInfo = characterImages[i];
-          if (charInfo is Map<String, dynamic> &&
-              charInfo.containsKey('character')) {
-            // 确保transform属性存在
-            if (!charInfo.containsKey('transform')) {
-              charInfo['transform'] = {
-                'scale': 1.0,
-                'rotation': 0.0,
-                'color': content['fontColor'] ?? '#000000',
-                'opacity': 1.0,
-                'invert': false,
-              };
-            } else if (charInfo['transform'] is Map<String, dynamic>) {
-              // 确保transform属性中包含所有必要的字段
-              final transform = charInfo['transform'] as Map<String, dynamic>;
-              if (!transform.containsKey('scale')) transform['scale'] = 1.0;
-              if (!transform.containsKey('rotation'))
-                transform['rotation'] = 0.0;
-              if (!transform.containsKey('color'))
-                transform['color'] = content['fontColor'] ?? '#000000';
-              if (!transform.containsKey('opacity')) transform['opacity'] = 1.0;
-              if (!transform.containsKey('invert')) transform['invert'] = false;
-            }
-
-            // 更新指定的属性
-            if (charInfo['transform'] is Map<String, dynamic>) {
-              (charInfo['transform'] as Map<String, dynamic>)[propertyName] =
-                  value;
-            }
-
-            updatedCharacterImages['$i'] = Map<String, dynamic>.from(charInfo);
-          }
-        }
-        content['characterImages'] = updatedCharacterImages;
-      }
-      // 如果characterImages已经是Map形式
-      else if (characterImages is Map) {
-        characterImages.forEach((key, charInfo) {
-          if (charInfo is Map<String, dynamic>) {
-            // 确保transform属性存在
-            if (!charInfo.containsKey('transform')) {
-              charInfo['transform'] = {
-                'scale': 1.0,
-                'rotation': 0.0,
-                'color': content['fontColor'] ?? '#000000',
-                'opacity': 1.0,
-                'invert': false,
-              };
-            } else if (charInfo['transform'] is Map<String, dynamic>) {
-              // 更新指定的属性
-              (charInfo['transform'] as Map<String, dynamic>)[propertyName] =
-                  value;
-            }
-          }
-        });
-      }
-    }
-
-    widget.onElementPropertiesChanged({'content': content});
-
-    // 提示更新成功
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            '已${value ? '开启' : '关闭'}字符${propertyName == 'invert' ? '颜色反转' : propertyName}'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
-
   // 更新内容属性
   void _updateContentProperty(String key, dynamic value) {
     final content = Map<String, dynamic>.from(
@@ -623,5 +574,84 @@ class _CollectionPropertyPanelState
   void _updateProperty(String key, dynamic value) {
     final updates = {key: value};
     widget.onElementPropertiesChanged(updates);
+  }
+
+  // 新增：更新单个字符的变换属性
+  void _updateSingleCharacterTransformProperty(
+      int charIndex, String propertyName, dynamic value) {
+    final content = Map<String, dynamic>.from(
+        widget.element['content'] as Map<String, dynamic>);
+
+    // 检查是否有characterImages
+    if (!content.containsKey('characterImages')) {
+      // 如果没有characterImages，创建一个空的Map
+      content['characterImages'] = <String, dynamic>{};
+    }
+
+    var characterImages = content['characterImages'] as Map<String, dynamic>;
+
+    // 检查当前字符的图像信息是否存在
+    if (!characterImages.containsKey('$charIndex')) {
+      // 如果当前索引还没有图像信息，则跳过
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('请先选择候选集字，然后再设置反转属性'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 获取字符图像信息
+    var charInfo = characterImages['$charIndex'] as Map<String, dynamic>;
+
+    // 确保transform属性存在
+    if (!charInfo.containsKey('transform')) {
+      charInfo['transform'] = {
+        'scale': 1.0,
+        'rotation': 0.0,
+        'color': content['fontColor'] ?? '#000000',
+        'opacity': 1.0,
+        'invert': false,
+      };
+    }
+
+    // 更新指定的属性
+    var transform = charInfo['transform'] as Map<String, dynamic>;
+    transform[propertyName] = value;
+
+    // 更新字符图像信息
+    characterImages['$charIndex'] = charInfo;
+
+    // 更新元素内容
+    widget.onElementPropertiesChanged({'content': content});
+
+    // 刷新UI
+    setState(() {});
+
+    // 提示更新成功
+    String propertyLabel = propertyName;
+    switch (propertyName) {
+      case 'invert':
+        propertyLabel = '颜色反转';
+        break;
+      case 'scale':
+        propertyLabel = '缩放';
+        break;
+      case 'rotation':
+        propertyLabel = '旋转';
+        break;
+      case 'opacity':
+        propertyLabel = '透明度';
+        break;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            '已${value ? '开启' : '关闭'}字符 ${_getCharacterLabel(charIndex)} 的$propertyLabel'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
   }
 }

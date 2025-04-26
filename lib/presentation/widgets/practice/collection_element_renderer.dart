@@ -539,10 +539,11 @@ class _CollectionPainter extends CustomPainter {
       // 使用Future.microtask确保在下一个微任务中执行，避免在构造函数中执行异步操作
       Future.microtask(() {
         // 遍历所有字符位置
+        var positionIndex = 0;
         for (final position in positions) {
           // 查找字符对应的图片信息
-          final charImage = _findCharacterImage(position.char);
-
+          final charImage = _findCharacterImage(position.char, positionIndex);
+          positionIndex++;
           // 如果找到了图片信息，则加载图片
           if (charImage != null) {
             final characterId = charImage['characterId'].toString();
@@ -572,9 +573,11 @@ class _CollectionPainter extends CustomPainter {
     debugPrint('characterImages类型: ${characterImages.runtimeType}');
 
     // 绘制每个字符
+    var positionIndex = 0;
     for (final position in positions) {
       // 查找字符对应的图片
-      final charImage = _findCharacterImage(position.char);
+      final charImage = _findCharacterImage(position.char, positionIndex);
+      positionIndex++;
 
       if (charImage != null) {
         debugPrint('找到字符 ${position.char} 的图片: $charImage');
@@ -649,8 +652,23 @@ class _CollectionPainter extends CustomPainter {
       final type = charImage['type'] as String;
       final format = charImage['format'] as String;
 
-      // 获取是否需要反转显示
-      final bool invertDisplay = charImage['invert'] == true;
+      // 获取是否需要反转显示 - 先检查transform属性
+      bool invertDisplay = false;
+      if (charImage.containsKey('transform') &&
+          charImage['transform'] is Map<String, dynamic>) {
+        final transform = charImage['transform'] as Map<String, dynamic>;
+        invertDisplay = transform['invert'] == true;
+
+        if (invertDisplay) {
+          debugPrint('⚠️ 检测到字符需要反转: $characterId (transform.invert=true)');
+        }
+      } else if (charImage.containsKey('invert')) {
+        // 直接检查invert属性
+        invertDisplay = charImage['invert'] == true;
+        if (invertDisplay) {
+          debugPrint('⚠️ 检测到字符需要反转: $characterId (invert=true)');
+        }
+      }
 
       // 获取图片路径
       String imagePath = '';
@@ -736,53 +754,103 @@ class _CollectionPainter extends CustomPainter {
           debugPrint('📦 从全局缓存复制到本地缓存: $cacheKey');
         }
 
+        // 准备绘制
         final paint = Paint()
           ..filterQuality = FilterQuality.high
           ..isAntiAlias = true;
 
-        // 应用颜色混合效果，将黑色替换为字体颜色
-        // 如果图片是二值化的(binary)且类型包含binary，则应用颜色替换
-        if (type.contains('binary') && format.contains('binary')) {
-          // 根据字体颜色创建ColorFilter（仅当颜色不是黑色时应用）
-          if (position.fontColor != Colors.black) {
-            debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
-            // 使用ColorFilter.matrix来替换图像中的黑色为字体颜色
-            // 这里使用颜色矩阵变换来实现黑色像素替换为字体颜色
-            final List<double> matrix = [
-              // 保留原始R通道的r分量，其他分量为0
-              0, 0, 0, 0, position.fontColor.red.toDouble(),
-              // 保留原始G通道的g分量，其他分量为0
-              0, 0, 0, 0, position.fontColor.green.toDouble(),
-              // 保留原始B通道的b分量，其他分量为0
-              0, 0, 0, 0, position.fontColor.blue.toDouble(),
-              // 保留原始Alpha通道
-              0, 0, 0, 1, 0,
-            ];
-            paint.colorFilter = ColorFilter.matrix(matrix);
-          }
-        }
-
-        // 如果需要反转显示，使用反转颜色的ColorFilter
         if (invertDisplay) {
-          debugPrint('  - 应用颜色反转');
-          paint.colorFilter = const ColorFilter.matrix([
-            -1, 0, 0, 0, 255, // 反转红色通道
-            0, -1, 0, 0, 255, // 反转绿色通道
-            0, 0, -1, 0, 255, // 反转蓝色通道
-            0, 0, 0, 1, 0, // 保持Alpha通道不变
+          // 创建反转效果
+          debugPrint('🔄 应用颜色反转效果（黑色转透明，透明转黑色）');
+
+          // 为反转创建特定的Paint
+          Paint invertPaint = Paint();
+
+          // 设置图像颜色反转
+          // 在二值图像中，这会将黑色变为白色，白色变为黑色
+          invertPaint.colorFilter = const ColorFilter.matrix([
+            -1, 0, 0, 0, 255, // 红色通道反转
+            0, -1, 0, 0, 255, // 绿色通道反转
+            0, 0, -1, 0, 255, // 蓝色通道反转
+            0, 0, 0, 1, 0 // Alpha通道保持不变
           ]);
+
+          // 创建反转图像的临时图像
+          final recorder = ui.PictureRecorder();
+          final invertCanvas = Canvas(recorder);
+
+          // 绘制反转的原始图像到临时画布
+          final srcRect = Rect.fromLTWH(
+              0, 0, image.width.toDouble(), image.height.toDouble());
+          invertCanvas.drawImageRect(
+            image,
+            srcRect,
+            rect,
+            invertPaint,
+          );
+
+          // 捕获反转后的图像
+          final picture = recorder.endRecording();
+
+          // 将反转后的图像绘制到原始画布
+          canvas.saveLayer(rect, Paint());
+          canvas.drawPicture(picture);
+
+          // 如果有字体颜色，应用字体颜色
+          if (position.fontColor != Colors.black) {
+            // 创建一个用于应用字体颜色的Paint
+            final colorPaint = Paint()
+              ..color = position.fontColor
+              ..blendMode = BlendMode.srcIn;
+
+            canvas.drawRect(rect, colorPaint);
+          }
+
+          canvas.restore();
+        } else {
+          // 标准绘制（无反转）
+          // 应用颜色混合效果，将黑色替换为字体颜色
+          if (type.contains('binary') && format.contains('binary')) {
+            // 根据字体颜色创建ColorFilter（仅当颜色不是黑色时应用）
+            if (position.fontColor != Colors.black) {
+              debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
+              // 使用ColorFilter.matrix来替换图像中的黑色为字体颜色
+              final List<double> matrix = [
+                0,
+                0,
+                0,
+                0,
+                position.fontColor.red.toDouble(),
+                0,
+                0,
+                0,
+                0,
+                position.fontColor.green.toDouble(),
+                0,
+                0,
+                0,
+                0,
+                position.fontColor.blue.toDouble(),
+                0,
+                0,
+                0,
+                1,
+                0,
+              ];
+              paint.colorFilter = ColorFilter.matrix(matrix);
+            }
+          }
+
+          // 绘制原始图像
+          final srcRect = Rect.fromLTWH(
+              0, 0, image.width.toDouble(), image.height.toDouble());
+          canvas.drawImageRect(
+            image,
+            srcRect,
+            rect,
+            paint,
+          );
         }
-
-        final srcRect = Rect.fromLTWH(
-            0, 0, image.width.toDouble(), image.height.toDouble());
-
-        // 绘制图像
-        canvas.drawImageRect(
-          image,
-          srcRect,
-          rect,
-          paint,
-        );
 
         debugPrint('✅ 图像绘制完成: ${image.width}x${image.height}');
       }
@@ -938,7 +1006,7 @@ class _CollectionPainter extends CustomPainter {
   }
 
   /// 查找字符对应的图片
-  dynamic _findCharacterImage(String char) {
+  dynamic _findCharacterImage(String char, int positionIndex) {
     try {
       debugPrint('🔍 查找字符 "$char" 的图片:');
       debugPrint('  - characterImages类型: ${characterImages.runtimeType}');
@@ -966,7 +1034,7 @@ class _CollectionPainter extends CustomPainter {
         // 查找当前字符在集字内容中的索引
         int charIndex = -1;
         for (int i = 0; i < characters.length; i++) {
-          if (characters[i] == char) {
+          if (characters[i] == char && i == positionIndex) {
             charIndex = i;
             break;
           }
@@ -985,6 +1053,7 @@ class _CollectionPainter extends CustomPainter {
               'characterId': imageInfo['characterId'],
               'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
               'format': imageInfo['drawingFormat'] ?? 'png-binary',
+              'transform': imageInfo['transform'],
             };
           }
           debugPrint('  - 在charImages中未找到索引 "$charIndex" 的图像信息');
