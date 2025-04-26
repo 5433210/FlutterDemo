@@ -293,14 +293,29 @@ class CandidateCharactersPanel extends ConsumerWidget {
 
                         return Center(
                           child: shouldInvert
-                              ? ColorFiltered(
-                                  colorFilter: const ColorFilter.matrix([
-                                    -1, 0, 0, 0, 255, // 红色通道反转
-                                    0, -1, 0, 0, 255, // 绿色通道反转
-                                    0, 0, -1, 0, 255, // 蓝色通道反转
-                                    0, 0, 0, 1, 0, // 透明度保持不变
-                                  ]),
-                                  child: imageWidget,
+                              ? Stack(
+                                  children: [
+                                    ColorFiltered(
+                                        colorFilter: const ColorFilter.matrix(
+                                          [
+                                            -1, 0, 0, 0, 255, // Red channel
+                                            0, -1, 0, 0, 255, // Green channel
+                                            0, 0, -1, 0, 255, // Blue channel
+                                            0, 0, 0, 1, 0, // Alpha channel
+                                          ],
+                                        ),
+                                        child: Stack(
+                                          children: [
+                                            // Step 1: Convert transparent to white (white background)
+                                            Container(
+                                              color: Colors.white,
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                            ),
+                                            imageWidget,
+                                          ],
+                                        )),
+                                  ],
                                 )
                               : imageWidget,
                         );
