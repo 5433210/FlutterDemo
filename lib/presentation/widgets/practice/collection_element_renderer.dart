@@ -219,6 +219,7 @@ class CollectionElementRenderer {
 
         // 计算水平起始位置
         double startX;
+        double effectiveLetterSpacing = letterSpacing;
         switch (textAlign) {
           case 'left':
             startX = isLeftToRight ? 0 : availableWidth - rowWidth;
@@ -230,6 +231,16 @@ class CollectionElementRenderer {
             startX = isLeftToRight ? availableWidth - rowWidth : 0;
             break;
           case 'justify':
+            // 两端对齐：如果字符数大于1，则均匀分布字符间距
+            if (charsInCurrentRow > 1) {
+              effectiveLetterSpacing =
+                  (availableWidth - charsInCurrentRow * charSize) /
+                      (charsInCurrentRow - 1);
+              debugPrint(
+                  '水平两端对齐: 行 $rowIndex, 字符数 $charsInCurrentRow, 有效间距 $effectiveLetterSpacing');
+            }
+            startX = isLeftToRight ? 0 : 0;
+            break;
           default:
             startX = isLeftToRight ? 0 : availableWidth - rowWidth;
         }
@@ -242,11 +253,11 @@ class CollectionElementRenderer {
 
         // 计算最终位置
         final x = isLeftToRight
-            ? startX + colIndexInRow * (charSize + letterSpacing)
+            ? startX + colIndexInRow * (charSize + effectiveLetterSpacing)
             : availableWidth -
                 startX -
                 (colIndexInRow + 1) * charSize -
-                colIndexInRow * letterSpacing;
+                colIndexInRow * effectiveLetterSpacing;
         final y = startY + rowIndex * (charSize + effectiveLineSpacing);
 
         positions.add(_CharacterPosition(
@@ -335,9 +346,10 @@ class CollectionElementRenderer {
 
         // 计算垂直起始位置
         double startY;
+        double effectiveLetterSpacing = letterSpacing;
         switch (verticalAlign) {
           case 'top':
-            startY = isLeftToRight ? 0 : 0;
+            startY = 0;
             break;
           case 'middle':
             startY = (availableHeight - colHeight) / 2;
@@ -346,6 +358,16 @@ class CollectionElementRenderer {
             startY = availableHeight - colHeight;
             break;
           case 'justify':
+            // 垂直两端对齐：如果字符数大于1，则均匀分布字符间距
+            if (charsInCurrentCol > 1) {
+              effectiveLetterSpacing =
+                  (availableHeight - charsInCurrentCol * charSize) /
+                      (charsInCurrentCol - 1);
+              debugPrint(
+                  '垂直两端对齐: 列 $colIndex, 字符数 $charsInCurrentCol, 有效间距 $effectiveLetterSpacing');
+            }
+            startY = 0;
+            break;
           default:
             startY = 0;
         }
@@ -363,7 +385,7 @@ class CollectionElementRenderer {
                 startX -
                 (colIndex + 1) * charSize -
                 colIndex * effectiveLineSpacing;
-        final y = startY + rowIndexInCol * (charSize + letterSpacing);
+        final y = startY + rowIndexInCol * (charSize + effectiveLetterSpacing);
 
         positions.add(_CharacterPosition(
           char: processedChars[i],
