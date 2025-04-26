@@ -572,6 +572,11 @@ class _CollectionPainter extends CustomPainter {
     debugPrint('开始绘制集字元素，字符数量: ${positions.length}');
     debugPrint('characterImages类型: ${characterImages.runtimeType}');
 
+    // 添加裁剪区域，限制在画布范围内
+    final clipRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    debugPrint('⚠️ 添加集字元素裁剪区域: $clipRect');
+    canvas.clipRect(clipRect);
+
     // 绘制每个字符
     var positionIndex = 0;
     for (final position in positions) {
