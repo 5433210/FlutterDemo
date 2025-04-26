@@ -759,100 +759,68 @@ class _CollectionPainter extends CustomPainter {
           ..filterQuality = FilterQuality.high
           ..isAntiAlias = true;
 
+        // 获取图像源矩形
+        final srcRect = Rect.fromLTWH(
+            0, 0, image.width.toDouble(), image.height.toDouble());
+
+        // 检查是否需要应用颜色处理
+        final bool needsColorProcessing =
+            position.fontColor != Colors.black || invertDisplay;
+
+        // 如果不需要任何颜色处理，直接绘制原始图像
+        if (!needsColorProcessing) {
+          canvas.drawImageRect(image, srcRect, rect, paint);
+          debugPrint('✅ 图像绘制完成: ${image.width}x${image.height} (无颜色处理)');
+          return;
+        }
+
+        // 需要进行颜色处理
+        debugPrint(
+            '🎨 应用颜色处理: fontColor=${position.fontColor}, invertDisplay=$invertDisplay');
+
+        // 使用单次绘制操作处理颜色
+        canvas.saveLayer(rect, Paint());
+
         if (invertDisplay) {
-          // 创建反转效果
+          // 反转处理：黑色变透明，透明变黑色，然后应用字体颜色
           debugPrint('🔄 应用颜色反转效果（黑色转透明，透明转黑色）');
 
-          // 为反转创建特定的Paint
-          Paint invertPaint = Paint();
+          // 使用更有效的方法实现反转效果
+          debugPrint('  - 使用反转填充方法');
 
-          // 设置图像颜色反转
-          // 在二值图像中，这会将黑色变为白色，白色变为黑色
-          invertPaint.colorFilter = const ColorFilter.matrix([
-            -1, 0, 0, 0, 255, // 红色通道反转
-            0, -1, 0, 0, 255, // 绿色通道反转
-            0, 0, -1, 0, 255, // 蓝色通道反转
-            0, 0, 0, 1, 0 // Alpha通道保持不变
-          ]);
+          // 步骤1：首先用字体颜色填充整个区域
+          canvas.drawRect(rect, Paint()..color = position.fontColor);
 
-          // 创建反转图像的临时图像
-          final recorder = ui.PictureRecorder();
-          final invertCanvas = Canvas(recorder);
+          // 步骤2：使用原始图像作为遮罩，通过BlendMode.dstOut混合模式实现反转
+          // 这会使原图中黑色部分将字体颜色"挖空"（变透明），而原来透明的部分保持字体颜色
+          final maskPaint = Paint()..blendMode = BlendMode.dstOut;
+          canvas.drawImageRect(image, srcRect, rect, maskPaint);
+        } else {
+          // 标准处理：直接将黑色替换为字体颜色
+          if (type.contains('binary') && format.contains('binary')) {
+            debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
 
-          // 绘制反转的原始图像到临时画布
-          final srcRect = Rect.fromLTWH(
-              0, 0, image.width.toDouble(), image.height.toDouble());
-          invertCanvas.drawImageRect(
-            image,
-            srcRect,
-            rect,
-            invertPaint,
-          );
+            // 使用更高效的方法进行颜色替换
+            // 1. 首先绘制原始图像
+            canvas.drawImageRect(image, srcRect, rect, Paint());
 
-          // 捕获反转后的图像
-          final picture = recorder.endRecording();
-
-          // 将反转后的图像绘制到原始画布
-          canvas.saveLayer(rect, Paint());
-          canvas.drawPicture(picture);
-
-          // 如果有字体颜色，应用字体颜色
-          if (position.fontColor != Colors.black) {
-            // 创建一个用于应用字体颜色的Paint
+            // 2. 使用BlendMode.srcIn将黑色部分替换为字体颜色
+            // 这种方法比使用ColorFilter.matrix更高效
             final colorPaint = Paint()
               ..color = position.fontColor
               ..blendMode = BlendMode.srcIn;
 
             canvas.drawRect(rect, colorPaint);
+          } else {
+            // 非二值图像，直接绘制
+            canvas.drawImageRect(image, srcRect, rect, paint);
           }
-
-          canvas.restore();
-        } else {
-          // 标准绘制（无反转）
-          // 应用颜色混合效果，将黑色替换为字体颜色
-          if (type.contains('binary') && format.contains('binary')) {
-            // 根据字体颜色创建ColorFilter（仅当颜色不是黑色时应用）
-            if (position.fontColor != Colors.black) {
-              debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
-              // 使用ColorFilter.matrix来替换图像中的黑色为字体颜色
-              final List<double> matrix = [
-                0,
-                0,
-                0,
-                0,
-                position.fontColor.red.toDouble(),
-                0,
-                0,
-                0,
-                0,
-                position.fontColor.green.toDouble(),
-                0,
-                0,
-                0,
-                0,
-                position.fontColor.blue.toDouble(),
-                0,
-                0,
-                0,
-                1,
-                0,
-              ];
-              paint.colorFilter = ColorFilter.matrix(matrix);
-            }
-          }
-
-          // 绘制原始图像
-          final srcRect = Rect.fromLTWH(
-              0, 0, image.width.toDouble(), image.height.toDouble());
-          canvas.drawImageRect(
-            image,
-            srcRect,
-            rect,
-            paint,
-          );
         }
 
-        debugPrint('✅ 图像绘制完成: ${image.width}x${image.height}');
+        // 完成绘制
+        canvas.restore();
+
+        debugPrint('✅ 图像绘制完成: ${image.width}x${image.height} (应用了颜色处理)');
       }
     }
   }
@@ -1024,11 +992,21 @@ class _CollectionPainter extends CustomPainter {
           debugPrint('✅ 直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
           // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-          return {
+          final result = {
             'characterId': imageInfo['characterId'],
             'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
             'format': imageInfo['drawingFormat'] ?? 'png-binary',
           };
+
+          // 添加transform属性（如果有）
+          if (imageInfo.containsKey('transform')) {
+            result['transform'] = imageInfo['transform'];
+          } else if (imageInfo.containsKey('invert') &&
+              imageInfo['invert'] == true) {
+            result['invert'] = true;
+          }
+
+          return result;
         }
 
         // 查找当前字符在集字内容中的索引
@@ -1071,11 +1049,21 @@ class _CollectionPainter extends CustomPainter {
                   '✅ 在characterImages子Map中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
               // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-              return {
+              final result = {
                 'characterId': imageInfo['characterId'],
                 'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
                 'format': imageInfo['drawingFormat'] ?? 'png-binary',
               };
+
+              // 添加transform属性（如果有）
+              if (imageInfo.containsKey('transform')) {
+                result['transform'] = imageInfo['transform'];
+              } else if (imageInfo.containsKey('invert') &&
+                  imageInfo['invert'] == true) {
+                result['invert'] = true;
+              }
+
+              return result;
             }
 
             if (images != null && images.containsKey('$charIndex')) {
@@ -1084,11 +1072,21 @@ class _CollectionPainter extends CustomPainter {
                   '✅ 在characterImages子Map中找到索引 $charIndex 的图像信息: $imageInfo');
 
               // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-              return {
+              final result = {
                 'characterId': imageInfo['characterId'],
                 'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
                 'format': imageInfo['drawingFormat'] ?? 'png-binary',
               };
+
+              // 添加transform属性（如果有）
+              if (imageInfo.containsKey('transform')) {
+                result['transform'] = imageInfo['transform'];
+              } else if (imageInfo.containsKey('invert') &&
+                  imageInfo['invert'] == true) {
+                result['invert'] = true;
+              }
+
+              return result;
             }
           }
 
@@ -1108,12 +1106,22 @@ class _CollectionPainter extends CustomPainter {
                     '✅ 在content.characterImages中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
                 // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-                return {
+                final result = {
                   'characterId': imageInfo['characterId'],
                   'type':
                       imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
                   'format': imageInfo['drawingFormat'] ?? 'png-binary',
                 };
+
+                // 添加transform属性（如果有）
+                if (imageInfo.containsKey('transform')) {
+                  result['transform'] = imageInfo['transform'];
+                } else if (imageInfo.containsKey('invert') &&
+                    imageInfo['invert'] == true) {
+                  result['invert'] = true;
+                }
+
+                return result;
               }
 
               if (images != null && images.containsKey('$charIndex')) {
@@ -1122,12 +1130,22 @@ class _CollectionPainter extends CustomPainter {
                     '✅ 在content.characterImages中找到索引 $charIndex 的图像信息: $imageInfo');
 
                 // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-                return {
+                final result = {
                   'characterId': imageInfo['characterId'],
                   'type':
                       imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
                   'format': imageInfo['drawingFormat'] ?? 'png-binary',
                 };
+
+                // 添加transform属性（如果有）
+                if (imageInfo.containsKey('transform')) {
+                  result['transform'] = imageInfo['transform'];
+                } else if (imageInfo.containsKey('invert') &&
+                    imageInfo['invert'] == true) {
+                  result['invert'] = true;
+                }
+
+                return result;
               }
             }
           }
@@ -1152,13 +1170,23 @@ class _CollectionPainter extends CustomPainter {
               if (image.containsKey('characterId')) {
                 debugPrint('✅ 在List中找到字符 "$char" 的图像信息: $image');
                 // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-                return {
+                final result = {
                   'characterId': image['characterId'],
                   'type':
                       image['drawingType'] ?? image['type'] ?? 'square-binary',
                   'format':
                       image['drawingFormat'] ?? image['format'] ?? 'png-binary',
                 };
+
+                // 添加transform属性（如果有）
+                if (image.containsKey('transform')) {
+                  result['transform'] = image['transform'];
+                } else if (image.containsKey('invert') &&
+                    image['invert'] == true) {
+                  result['invert'] = true;
+                }
+
+                return result;
               }
             }
           }
