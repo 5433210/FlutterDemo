@@ -649,6 +649,9 @@ class _CollectionPainter extends CustomPainter {
       final type = charImage['type'] as String;
       final format = charImage['format'] as String;
 
+      // 获取是否需要反转显示
+      final bool invertDisplay = charImage['invert'] == true;
+
       // 获取图片路径
       String imagePath = '';
       if (ref != null) {
@@ -708,6 +711,8 @@ class _CollectionPainter extends CustomPainter {
       debugPrint('  - 字符ID: $characterId');
       debugPrint('  - 图片类型: $type');
       debugPrint('  - 图片格式: $format');
+      // 显示反转信息
+      debugPrint('  - 是否反转显示: $invertDisplay');
       if (imagePath.isNotEmpty) {
         debugPrint('  - 图片路径: $imagePath');
       }
@@ -735,6 +740,39 @@ class _CollectionPainter extends CustomPainter {
           ..filterQuality = FilterQuality.high
           ..isAntiAlias = true;
 
+        // 应用颜色混合效果，将黑色替换为字体颜色
+        // 如果图片是二值化的(binary)且类型包含binary，则应用颜色替换
+        if (type.contains('binary') && format.contains('binary')) {
+          // 根据字体颜色创建ColorFilter（仅当颜色不是黑色时应用）
+          if (position.fontColor != Colors.black) {
+            debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
+            // 使用ColorFilter.matrix来替换图像中的黑色为字体颜色
+            // 这里使用颜色矩阵变换来实现黑色像素替换为字体颜色
+            final List<double> matrix = [
+              // 保留原始R通道的r分量，其他分量为0
+              0, 0, 0, 0, position.fontColor.red.toDouble(),
+              // 保留原始G通道的g分量，其他分量为0
+              0, 0, 0, 0, position.fontColor.green.toDouble(),
+              // 保留原始B通道的b分量，其他分量为0
+              0, 0, 0, 0, position.fontColor.blue.toDouble(),
+              // 保留原始Alpha通道
+              0, 0, 0, 1, 0,
+            ];
+            paint.colorFilter = ColorFilter.matrix(matrix);
+          }
+        }
+
+        // 如果需要反转显示，使用反转颜色的ColorFilter
+        if (invertDisplay) {
+          debugPrint('  - 应用颜色反转');
+          paint.colorFilter = const ColorFilter.matrix([
+            -1, 0, 0, 0, 255, // 反转红色通道
+            0, -1, 0, 0, 255, // 反转绿色通道
+            0, 0, -1, 0, 255, // 反转蓝色通道
+            0, 0, 0, 1, 0, // 保持Alpha通道不变
+          ]);
+        }
+
         final srcRect = Rect.fromLTWH(
             0, 0, image.width.toDouble(), image.height.toDouble());
 
@@ -748,61 +786,6 @@ class _CollectionPainter extends CustomPainter {
 
         debugPrint('✅ 图像绘制完成: ${image.width}x${image.height}');
       }
-      // 然后检查本地缓存
-      else if (_imageCache.containsKey(cacheKey)) {
-        debugPrint('✅ 使用本地缓存的图像: $cacheKey');
-        // 使用本地缓存的图像
-        final image = _imageCache[cacheKey]!;
-
-        // 同时更新全局缓存
-        if (!GlobalImageCache.contains(cacheKey)) {
-          GlobalImageCache.add(cacheKey, image);
-          debugPrint('📦 从本地缓存复制到全局缓存: $cacheKey');
-        }
-
-        final paint = Paint()
-          ..filterQuality = FilterQuality.high
-          ..isAntiAlias = true;
-
-        final srcRect = Rect.fromLTWH(
-            0, 0, image.width.toDouble(), image.height.toDouble());
-
-        // 绘制图像
-        canvas.drawImageRect(
-          image,
-          srcRect,
-          rect,
-          paint,
-        );
-
-        debugPrint('✅ 图像绘制完成: ${image.width}x${image.height}');
-      } else {
-        debugPrint('⚠️ 缓存中没有图像: $cacheKey，绘制占位符并启动异步加载');
-        debugPrint('  - 字符: "${position.char}"');
-        debugPrint('  - 位置: (${position.x}, ${position.y})');
-        debugPrint('  - 尺寸: ${position.size}x${position.size}');
-
-        // 如果缓存中没有图像，则绘制占位符并启动异步加载
-        _drawPlaceholder(canvas, position);
-
-        // 检查是否已经在加载中
-        if (!_loadingImages.contains(cacheKey) && ref != null) {
-          debugPrint('🔄 开始加载图像: $cacheKey');
-          _loadAndCacheImage(characterId, type, format);
-        } else if (_loadingImages.contains(cacheKey)) {
-          debugPrint('⏳ 图像正在加载中: $cacheKey');
-        } else if (ref == null) {
-          debugPrint('❌ 无法加载图像: ref 为 null');
-        }
-      }
-    } else if (charImage != null && charImage['isTemporary'] == true) {
-      // 如果是临时字符，显示特殊日志并绘制占位符
-      debugPrint('⚠️ 字符 "${position.char}" 是临时字符，绘制占位符');
-      debugPrint('  - 临时字符ID: ${charImage['characterId']}');
-      _drawPlaceholder(canvas, position);
-    } else {
-      debugPrint('⚠️ 字符 "${position.char}" 没有有效的图像信息，绘制占位符');
-      _drawPlaceholder(canvas, position);
     }
   }
 
