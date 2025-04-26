@@ -24,6 +24,8 @@ class VisualPropertiesPanel extends StatelessWidget {
     final backgroundColor =
         content['backgroundColor'] as String? ?? 'transparent';
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
+    final enableSoftLineBreak =
+        content['enableSoftLineBreak'] as bool? ?? false;
 
     return ExpansionTile(
       title: const Text('视觉设置'),
@@ -163,6 +165,30 @@ class VisualPropertiesPanel extends StatelessWidget {
                         onContentPropertyChanged('padding', value);
                       },
                     ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16.0),
+
+              // 软回车设置
+              const Text('自动换行设置:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8.0),
+              Row(
+                children: [
+                  Switch(
+                    value: enableSoftLineBreak,
+                    onChanged: (value) {
+                      onContentPropertyChanged('enableSoftLineBreak', value);
+                    },
+                  ),
+                  const SizedBox(width: 8.0),
+                  const Text('启用软回车（自动换行）'),
+                  const Spacer(),
+                  const Tooltip(
+                    message: '启用后，集字元素在显示时会自动换行，超出元素区域的文字将自动换到新的一行（列）',
+                    child: Icon(Icons.info_outline, size: 16.0),
                   ),
                 ],
               ),

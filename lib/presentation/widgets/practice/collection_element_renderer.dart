@@ -25,11 +25,13 @@ class CollectionElementRenderer {
     required double padding,
     String fontColor = '#000000',
     String backgroundColor = 'transparent',
+    bool enableSoftLineBreak = false,
     WidgetRef? ref,
   }) {
     // 添加调试日志，查看传入的颜色值
     debugPrint('集字布局 - 传入的字体颜色: $fontColor');
     debugPrint('集字布局 - 传入的背景颜色: $backgroundColor');
+    debugPrint('集字布局 - 启用软回车: $enableSoftLineBreak');
 
     if (characters.isEmpty) {
       return const Center(
@@ -89,6 +91,7 @@ class CollectionElementRenderer {
       isNewLineList: isNewLineList,
       fontColor: parsedFontColor,
       backgroundColor: parsedBackgroundColor,
+      enableSoftLineBreak: enableSoftLineBreak,
     );
 
     // 使用StatefulBuilder来支持重绘
@@ -134,6 +137,7 @@ class CollectionElementRenderer {
     List<bool>? isNewLineList,
     Color fontColor = Colors.black,
     Color backgroundColor = Colors.transparent,
+    bool enableSoftLineBreak = false,
   }) {
     final List<_CharacterPosition> positions = [];
 
@@ -157,21 +161,50 @@ class CollectionElementRenderer {
       if (isNewLineList != null && isNewLineList.isNotEmpty) {
         // 使用换行标记处理
         int currentRow = 0;
+        int charCountInCurrentRow = 0; // 当前行已有字符数
+
         for (int i = 0; i < charList.length; i++) {
           if (charList[i] == '\n') {
             // 遇到换行符，增加行号但不添加到处理后的字符列表
             currentRow++;
+            charCountInCurrentRow = 0;
           } else {
-            // 普通字符，添加到处理后的字符列表
+            // 普通字符
             processedChars.add(charList[i]);
+
+            // 如果启用软回车且当前行字符数已达到最大值，则自动换行
+            if (enableSoftLineBreak &&
+                charCountInCurrentRow >= charsPerRow &&
+                charsPerRow > 0) {
+              currentRow++;
+              charCountInCurrentRow = 0;
+            }
+
             rowIndices.add(currentRow);
+            charCountInCurrentRow++;
           }
         }
       } else {
         // 没有换行标记，按照原来的逻辑处理
         processedChars = List.from(charList);
-        for (int i = 0; i < processedChars.length; i++) {
-          rowIndices.add(i ~/ charsPerRow);
+        if (enableSoftLineBreak && charsPerRow > 0) {
+          // 启用软回车时，按照每行最大字符数自动分配行号
+          for (int i = 0; i < processedChars.length; i++) {
+            rowIndices.add(i ~/ charsPerRow);
+          }
+        } else {
+          // 不启用软回车时，所有字符在同一行
+          rowIndices = List.filled(processedChars.length, 0);
+        }
+      }
+
+      // 如果启用了软回车，在调试模式下显示行分布信息
+      if (enableSoftLineBreak) {
+        debugPrint('启用软回车 - 行分布情况:');
+        int maxRow = rowIndices.isEmpty ? 0 : rowIndices.reduce(max);
+        for (int row = 0; row <= maxRow; row++) {
+          int charsInRow = rowIndices.where((r) => r == row).length;
+          debugPrint('  - 第${row + 1}行: $charsInRow 个字符');
         }
       }
 
@@ -271,6 +304,11 @@ class CollectionElementRenderer {
       }
     } else {
       // 垂直布局的计算逻辑
+      // 计算每列可容纳的字符数（如果启用软回车）
+      final charsPerCol =
+          ((availableHeight + letterSpacing) / (charSize + letterSpacing))
+              .floor();
+
       // 创建一个新的字符列表，去除换行符
       List<String> processedChars = [];
       List<int> colIndices = []; // 每个字符所在的列号
@@ -278,27 +316,50 @@ class CollectionElementRenderer {
       if (isNewLineList != null && isNewLineList.isNotEmpty) {
         // 使用换行标记处理
         int currentCol = 0;
+        int charCountInCurrentCol = 0; // 当前列已有字符数
+
         for (int i = 0; i < charList.length; i++) {
           if (charList[i] == '\n') {
             // 遇到换行符，增加列号但不添加到处理后的字符列表
             currentCol++;
+            charCountInCurrentCol = 0;
           } else {
-            // 普通字符，添加到处理后的字符列表
+            // 普通字符
             processedChars.add(charList[i]);
+
+            // 如果启用软回车且当前列字符数已达到最大值，则自动换列
+            if (enableSoftLineBreak &&
+                charCountInCurrentCol >= charsPerCol &&
+                charsPerCol > 0) {
+              currentCol++;
+              charCountInCurrentCol = 0;
+            }
+
             colIndices.add(currentCol);
+            charCountInCurrentCol++;
           }
         }
       } else {
         // 没有换行标记，按照原来的逻辑处理
-        // 计算每列可容纳的字符数
-        final charsPerCol =
-            ((availableHeight + letterSpacing) / (charSize + letterSpacing))
-                .floor();
-        if (charsPerCol <= 0) return positions;
-
         processedChars = List.from(charList);
-        for (int i = 0; i < processedChars.length; i++) {
-          colIndices.add(i ~/ charsPerCol);
+        if (enableSoftLineBreak && charsPerCol > 0) {
+          // 启用软回车时，按照每列最大字符数自动分配列号
+          for (int i = 0; i < processedChars.length; i++) {
+            colIndices.add(i ~/ charsPerCol);
+          }
+        } else {
+          // 不启用软回车时，所有字符在同一列
+          colIndices = List.filled(processedChars.length, 0);
+        }
+      }
+
+      // 如果启用了软回车，在调试模式下显示列分布信息
+      if (enableSoftLineBreak) {
+        debugPrint('启用软回车 - 列分布情况:');
+        int maxCol = colIndices.isEmpty ? 0 : colIndices.reduce(max);
+        for (int col = 0; col <= maxCol; col++) {
+          int charsInCol = colIndices.where((c) => c == col).length;
+          debugPrint('  - 第${col + 1}列: $charsInCol 个字符');
         }
       }
 

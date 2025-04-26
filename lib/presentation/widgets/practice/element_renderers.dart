@@ -26,6 +26,8 @@ class ElementRenderers {
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
     final textAlign = content['textAlign'] as String? ?? 'left';
     final verticalAlign = content['verticalAlign'] as String? ?? 'top';
+    final enableSoftLineBreak =
+        content['enableSoftLineBreak'] as bool? ?? false;
 
     // 获取集字图片列表（实际应用中应该从数据库或其他存储中获取）
     final characterImages = content['characterImages'];
@@ -46,6 +48,8 @@ class ElementRenderers {
 
     // 添加 ref 调试信息
     debugPrint('buildCollectionElement: ref=${ref != null ? "非空" : "为空"}');
+    // 添加软回车调试信息
+    debugPrint('集字元素软回车设置: $enableSoftLineBreak');
 
     return Container(
       width: double.infinity,
@@ -75,6 +79,7 @@ class ElementRenderers {
               padding: padding,
               fontColor: fontColorStr,
               backgroundColor: backgroundColorStr,
+              enableSoftLineBreak: enableSoftLineBreak,
               ref: ref,
             ),
           );
