@@ -292,13 +292,15 @@ class CollectionElementRenderer {
       double startX = 0;
       switch (textAlign) {
         case 'left':
-          startX = isLeftToRight ? 0 : 0;
+          // 对于竖排右起（isLeftToRight=false），左对齐应该是靠右
+          startX = isLeftToRight ? 0 : availableWidth - usedWidth;
           break;
         case 'center':
           startX = (availableWidth - usedWidth) / 2;
           break;
         case 'right':
-          startX = availableWidth - usedWidth;
+          // 对于竖排右起（isLeftToRight=false），右对齐应该是靠左
+          startX = isLeftToRight ? availableWidth - usedWidth : 0;
           break;
         case 'justify':
           if (colCount > 1) {
