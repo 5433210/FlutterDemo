@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -47,6 +48,15 @@ class _CollectionPropertyPanelState
 
   // 文本控制器
   final TextEditingController _textController = TextEditingController();
+
+  // 防抖定时器
+  Timer? _debounceTimer;
+
+  // 是否有待处理的更新
+  bool _hasPendingUpdates = false;
+
+  // 最后一次输入的文本
+  String _lastInputText = '';
 
   @override
   Widget build(BuildContext context) {
@@ -659,11 +669,46 @@ class _CollectionPropertyPanelState
       // 如果字符内容发生变化，则重新加载候选集字并更新字符图像
       if (oldCharacters != characters) {
         debugPrint('字符内容已变更: "$oldCharacters" -> "$characters"');
-        _loadCandidateCharacters().then((_) {
-          _updateCharacterImagesForNewText(characters);
+
+        // 记录最后一次输入的文本
+        _lastInputText = characters;
+
+        // 使用防抖处理，延迟处理输入
+        if (_debounceTimer?.isActive ?? false) {
+          _debounceTimer!.cancel();
+        }
+
+        // 设置待处理标志
+        _hasPendingUpdates = true;
+
+        // 延迟300毫秒处理输入
+        _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+          // 确保组件仍然挂载
+          if (!mounted) return;
+
+          // 使用最后一次输入的文本
+          final textToProcess = _lastInputText;
+
+          // 异步处理输入
+          Future(() async {
+            // 清理多余的字符图像信息
+            _cleanupCharacterImages(textToProcess);
+
+            // 加载候选集字
+            await _loadCandidateCharacters();
+
+            // 为新输入的字符自动设置图片
+            await _updateCharacterImagesForNewText(textToProcess);
+
+            // 清除待处理标志
+            _hasPendingUpdates = false;
+          });
         });
       } else {
-        _loadCandidateCharacters();
+        // 如果字符内容没有变化，只加载候选集字
+        Future(() async {
+          await _loadCandidateCharacters();
+        });
       }
     }
   }
@@ -672,6 +717,12 @@ class _CollectionPropertyPanelState
   void dispose() {
     // 释放文本控制器
     _textController.dispose();
+
+    // 取消防抖定时器
+    if (_debounceTimer?.isActive ?? false) {
+      _debounceTimer!.cancel();
+    }
+
     super.dispose();
   }
 
@@ -1152,14 +1203,47 @@ class _CollectionPropertyPanelState
       maxLines: 5,
       minLines: 3,
       onChanged: (value) {
+        // 立即更新字符内容，确保UI响应
         widget.onUpdateChars(value);
+
+        // 记录最后一次输入的文本
+        _lastInputText = value;
+
         // 重置选中的字符索引
         setState(() {
           _selectedCharIndex = 0;
         });
-        // 加载候选集字并为新输入的字符自动设置图片
-        _loadCandidateCharacters().then((_) {
-          _updateCharacterImagesForNewText(value);
+
+        // 使用防抖处理，延迟处理输入
+        if (_debounceTimer?.isActive ?? false) {
+          _debounceTimer!.cancel();
+        }
+
+        // 设置待处理标志
+        _hasPendingUpdates = true;
+
+        // 延迟300毫秒处理输入
+        _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+          // 确保组件仍然挂载
+          if (!mounted) return;
+
+          // 使用最后一次输入的文本
+          final textToProcess = _lastInputText;
+
+          // 异步处理输入
+          Future(() async {
+            // 清理多余的字符图像信息
+            _cleanupCharacterImages(textToProcess);
+
+            // 加载候选集字
+            await _loadCandidateCharacters();
+
+            // 为新输入的字符自动设置图片
+            await _updateCharacterImagesForNewText(textToProcess);
+
+            // 清除待处理标志
+            _hasPendingUpdates = false;
+          });
         });
       },
     );
@@ -1185,6 +1269,54 @@ class _CollectionPropertyPanelState
         _updateContentProperty('writingMode', mode);
       },
     );
+  }
+
+  // 清理多余的字符图像信息
+  void _cleanupCharacterImages(String characters) {
+    try {
+      final content = widget.element['content'] as Map<String, dynamic>? ?? {};
+      if (!content.containsKey('characterImages')) {
+        return;
+      }
+
+      final characterImages = Map<String, dynamic>.from(
+          content['characterImages'] as Map<String, dynamic>? ?? {});
+
+      // 记录需要保留的键
+      final Set<String> validKeys = {};
+
+      // 为每个字符添加有效键
+      for (int i = 0; i < characters.length; i++) {
+        validKeys.add('$i');
+      }
+
+      // 找出需要删除的键
+      final List<String> keysToRemove = [];
+      for (final key in characterImages.keys) {
+        if (!validKeys.contains(key)) {
+          keysToRemove.add(key);
+        }
+      }
+
+      // 如果有需要删除的键，则更新元素内容
+      if (keysToRemove.isNotEmpty) {
+        debugPrint('清理多余的字符图像信息，删除键: $keysToRemove');
+
+        // 删除多余的键
+        for (final key in keysToRemove) {
+          characterImages.remove(key);
+        }
+
+        // 更新元素内容
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = characterImages;
+        _updateProperty('content', updatedContent);
+
+        debugPrint('已清理多余的字符图像信息，剩余键: ${characterImages.keys.toList()}');
+      }
+    } catch (e) {
+      debugPrint('清理字符图像信息失败: $e');
+    }
   }
 
   // 清除图片缓存
@@ -1907,15 +2039,36 @@ class _CollectionPropertyPanelState
       final content = Map<String, dynamic>.from(
           widget.element['content'] as Map<String, dynamic>? ?? {});
 
+      // 检查每个字符是否已有图像信息
+      bool hasUpdates = false;
+
       // 获取现有的字符图像信息
       Map<String, dynamic> characterImages = {};
       if (content.containsKey('characterImages')) {
         characterImages = Map<String, dynamic>.from(
             content['characterImages'] as Map<String, dynamic>);
-      }
 
-      // 检查每个字符是否已有图像信息
-      bool hasUpdates = false;
+        // 清理多余的字符图像信息
+        final Set<String> validKeys = {};
+        for (int i = 0; i < newText.length; i++) {
+          validKeys.add('$i');
+        }
+
+        final List<String> keysToRemove = [];
+        for (final key in characterImages.keys) {
+          if (!validKeys.contains(key)) {
+            keysToRemove.add(key);
+          }
+        }
+
+        if (keysToRemove.isNotEmpty) {
+          debugPrint('清理多余的字符图像信息，删除键: $keysToRemove');
+          for (final key in keysToRemove) {
+            characterImages.remove(key);
+          }
+          hasUpdates = true;
+        }
+      }
 
       for (int i = 0; i < newText.length; i++) {
         // 如果该索引已有图像信息，则跳过
