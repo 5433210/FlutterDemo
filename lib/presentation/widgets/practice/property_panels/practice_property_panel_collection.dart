@@ -8,8 +8,6 @@ import 'package:uuid/uuid.dart';
 import '../../../../application/providers/service_providers.dart';
 import '../../../../application/services/character/character_service.dart';
 import '../../../../domain/models/character/character_entity.dart';
-import '../../../../domain/models/character/character_region.dart';
-import '../../../../domain/models/character/processing_options.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 import 'element_common_property_panel.dart';
@@ -51,9 +49,6 @@ class _CollectionPropertyPanelState
 
   // 防抖定时器
   Timer? _debounceTimer;
-
-  // 是否有待处理的更新
-  bool _hasPendingUpdates = false;
 
   // 最后一次输入的文本
   String _lastInputText = '';
@@ -678,8 +673,7 @@ class _CollectionPropertyPanelState
           _debounceTimer!.cancel();
         }
 
-        // 设置待处理标志
-        _hasPendingUpdates = true;
+        // 不再使用待处理标志
 
         // 延迟300毫秒处理输入
         _debounceTimer = Timer(const Duration(milliseconds: 300), () {
@@ -700,8 +694,7 @@ class _CollectionPropertyPanelState
             // 为新输入的字符自动设置图片
             await _updateCharacterImagesForNewText(textToProcess);
 
-            // 清除待处理标志
-            _hasPendingUpdates = false;
+            // 不再使用待处理标志
           });
         });
       } else {
@@ -761,24 +754,7 @@ class _CollectionPropertyPanelState
                   const SizedBox(height: 8),
                   Text('当前作品ID: ${widget.controller.practiceId ?? "未设置"}',
                       style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          _loadCandidateCharacters();
-                        },
-                        child: const Text('重新加载'),
-                      ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          _showAddCharacterDialog();
-                        },
-                        child: const Text('手动添加'),
-                      ),
-                    ],
-                  ),
+                  // 删除了重新加载和手动添加按钮
                 ],
               ),
       );
@@ -820,13 +796,7 @@ class _CollectionPropertyPanelState
               Text(
                   '可用字符: ${_candidateCharacters.map((e) => e.character).join(", ")}',
                   style: const TextStyle(fontSize: 10, color: Colors.grey)),
-            const SizedBox(height: 8),
-            ElevatedButton(
-              onPressed: () {
-                _showAddCharacterDialog();
-              },
-              child: const Text('手动添加此字符'),
-            ),
+            // 删除了手动添加此字符按钮
           ],
         ),
       );
@@ -958,18 +928,7 @@ class _CollectionPropertyPanelState
               },
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  _showAddCharacterDialog();
-                },
-                child: const Text('添加新候选字'),
-              ),
-            ],
-          ),
+          // 删除了添加新候选字按钮
         ],
       ),
     );
@@ -1219,8 +1178,7 @@ class _CollectionPropertyPanelState
           _debounceTimer!.cancel();
         }
 
-        // 设置待处理标志
-        _hasPendingUpdates = true;
+        // 不再使用待处理标志
 
         // 延迟300毫秒处理输入
         _debounceTimer = Timer(const Duration(milliseconds: 300), () {
@@ -1241,8 +1199,7 @@ class _CollectionPropertyPanelState
             // 为新输入的字符自动设置图片
             await _updateCharacterImagesForNewText(textToProcess);
 
-            // 清除待处理标志
-            _hasPendingUpdates = false;
+            // 不再使用待处理标志
           });
         });
       },
@@ -1755,119 +1712,7 @@ class _CollectionPropertyPanelState
     }
   }
 
-  /// 显示添加字符对话框
-  void _showAddCharacterDialog() {
-    // 获取当前选中的字符
-    final content = widget.element['content'] as Map<String, dynamic>;
-    final characters = content['characters'] as String? ?? '';
-    final selectedChar = _selectedCharIndex < characters.length
-        ? characters[_selectedCharIndex]
-        : '';
-
-    final TextEditingController charController =
-        TextEditingController(text: selectedChar);
-    final TextEditingController idController = TextEditingController();
-
-    // 生成一个随机ID
-    const uuid = Uuid();
-    final randomId = uuid.v4();
-    idController.text = randomId;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('手动添加候选集字'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: charController,
-              decoration: const InputDecoration(
-                labelText: '字符',
-                hintText: '输入单个字符',
-              ),
-              maxLength: 1,
-            ),
-            TextField(
-              controller: idController,
-              decoration: const InputDecoration(
-                labelText: '字符ID',
-                hintText: '自动生成的ID',
-              ),
-              enabled: false, // 禁用编辑，使用自动生成的ID
-            ),
-            const SizedBox(height: 16),
-            const Text('注意：这将创建一个临时的字符实体，仅用于当前会话。'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final char = charController.text;
-              if (char.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('字符不能为空')),
-                );
-                return;
-              }
-
-              final id = idController.text;
-
-              // 创建一个临时的字符实体
-              final entity = CharacterEntity(
-                id: id,
-                workId: widget.controller.practiceId ?? 'temp',
-                pageId: 'temp',
-                character: char,
-                region: CharacterRegion.create(
-                  pageId: 'temp',
-                  rect: const Rect.fromLTWH(0, 0, 100, 100),
-                  options: const ProcessingOptions(),
-                  character: char,
-                ),
-                createTime: DateTime.now(),
-                updateTime: DateTime.now(),
-              );
-
-              debugPrint('创建临时字符实体: ${entity.id}, 字符: ${entity.character}');
-
-              // 添加到候选集字列表
-              setState(() {
-                // 检查是否已存在相同字符的实体
-                final existingIndex =
-                    _candidateCharacters.indexWhere((e) => e.character == char);
-
-                if (existingIndex >= 0) {
-                  // 如果已存在，则替换
-                  _candidateCharacters[existingIndex] = entity;
-                  debugPrint('替换现有字符实体');
-                } else {
-                  // 如果不存在，则添加
-                  _candidateCharacters.add(entity);
-                  debugPrint('添加新字符实体');
-                }
-              });
-
-              Navigator.of(context).pop();
-
-              // 如果当前选中的字符与添加的字符匹配，则自动选择该字符
-              if (selectedChar == char) {
-                debugPrint('自动选择新添加的字符实体');
-                _selectCandidateCharacter(entity, isTemporary: true);
-              }
-            },
-            child: const Text('添加'),
-          ),
-        ],
-      ),
-    );
-  }
+  // 删除了 _showAddCharacterDialog 方法
 
   /// 显示颜色选择器对话框
   void _showColorPicker(
