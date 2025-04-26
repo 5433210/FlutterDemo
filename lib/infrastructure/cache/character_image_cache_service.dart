@@ -55,6 +55,40 @@ class CharacterImageCacheService {
     }
   }
 
+  /// 清除所有缓存
+  Future<void> clearAllCache() async {
+    try {
+      debugPrint('开始清除所有字符图像缓存');
+      final cacheDirPath =
+          path.join(_storage.getAppDataPath(), 'cache', 'characters');
+
+      // 检查缓存目录是否存在
+      if (!await _storage.directoryExists(cacheDirPath)) {
+        debugPrint('缓存目录不存在，无需清除');
+        return;
+      }
+
+      // 获取所有缓存文件
+      final files = await _storage.listDirectoryFiles(cacheDirPath);
+      debugPrint('找到 ${files.length} 个缓存文件');
+
+      // 删除所有缓存文件
+      int deletedCount = 0;
+      for (final filePath in files) {
+        try {
+          await _storage.deleteFile(filePath);
+          deletedCount++;
+        } catch (e) {
+          debugPrint('删除缓存文件失败: $filePath, 错误: $e');
+        }
+      }
+
+      debugPrint('成功删除 $deletedCount 个缓存文件');
+    } catch (e) {
+      debugPrint('清除所有缓存失败: $e');
+    }
+  }
+
   /// 获取缓存图片
   Future<Uint8List?> getCachedImage(
       String characterId, String type, Map<String, dynamic> transform) async {

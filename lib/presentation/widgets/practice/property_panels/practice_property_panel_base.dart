@@ -293,12 +293,14 @@ abstract class PracticePropertyPanel extends StatelessWidget {
     required Map<String, dynamic> element,
     required Function(Map<String, dynamic>) onElementPropertiesChanged,
     required Function(String) onUpdateChars,
+    WidgetRef? ref,
   }) {
     return CollectionPropertyPanel(
       controller: controller,
       element: element,
       onElementPropertiesChanged: onElementPropertiesChanged,
       onUpdateChars: onUpdateChars,
+      ref: ref,
     );
   }
 

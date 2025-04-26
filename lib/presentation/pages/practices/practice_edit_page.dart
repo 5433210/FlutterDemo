@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:demo/presentation/widgets/practice/top_navigation_bar.dart';
 import 'package:file_picker/file_picker.dart';
@@ -14,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../application/providers/service_providers.dart';
+import '../../../infrastructure/providers/storage_providers.dart';
 import '../../widgets/common/resizable_panel.dart';
+import '../../widgets/practice/collection_element_renderer.dart';
 import '../../widgets/practice/control_handlers.dart';
 import '../../widgets/practice/edit_toolbar.dart';
 import '../../widgets/practice/element_operations.dart';
@@ -1224,7 +1228,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         content = ElementRenderers.buildImageElement(element);
         break;
       case 'collection':
-        content = ElementRenderers.buildCollectionElement(element);
+        content = ElementRenderers.buildCollectionElement(element, ref: ref);
         break;
       case 'group':
         // 将组合控件的选中状态传递给子元素
@@ -1475,6 +1479,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     final updatedProps = {'content': content};
                     _controller.updateElementProperties(id, updatedProps);
                   },
+                  ref: ref,
                 );
                 break;
               case 'group':
@@ -1604,6 +1609,33 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     } else {
       // 多选复制暂不支持
     }
+  }
+
+  /// 获取图片路径
+  String _getImagePath(String characterId, String type, String format) {
+    final storage = ref.read(initializedStorageProvider);
+
+    // 根据类型和格式构建文件名
+    String fileName;
+    switch (type) {
+      case 'square-binary':
+        fileName = '$characterId-square-binary.png';
+        break;
+      case 'square-transparent':
+        fileName = '$characterId-square-transparent.png';
+        break;
+      case 'square-outline':
+        fileName = '$characterId-square-outline.svg';
+        break;
+      case 'thumbnail':
+        fileName = '$characterId-thumbnail.jpg';
+        break;
+      default:
+        fileName = '$characterId-$type.$format';
+    }
+
+    // 构建完整路径
+    return '${storage.getAppDataPath()}/characters/$characterId/$fileName';
   }
 
   /// 处理键盘事件
@@ -1902,6 +1934,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           );
 
           debugPrint('字帖加载成功: ${_controller.practiceTitle}');
+
+          // 预加载所有集字元素的图片
+          _preloadAllCollectionImages();
         }
       } else {
         // 加载失败
@@ -2001,6 +2036,226 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     _controller.state.hasUnsavedChanges = true;
 
     setState(() {});
+  }
+
+  /// 预加载所有集字元素的图片
+  void _preloadAllCollectionImages() {
+    debugPrint('===== 开始预加载所有集字元素的图片... =====');
+
+    // 获取当前页面的所有元素
+    final elements = _controller.state.currentPageElements;
+    debugPrint('当前页面元素数量: ${elements.length}');
+
+    // 获取字符图像服务
+    final characterImageService = ref.read(characterImageServiceProvider);
+
+    // 计数器
+    int collectionElementCount = 0;
+    int totalCharactersCount = 0;
+
+    // 遍历所有元素，找出集字元素
+    for (final element in elements) {
+      if (element['type'] == 'collection') {
+        collectionElementCount++;
+
+        // 获取集字元素的内容
+        final content = element['content'] as Map<String, dynamic>?;
+        if (content == null) {
+          debugPrint('⚠️ 集字元素内容为空: ${element['id']}');
+          continue;
+        }
+
+        // 获取字符图像信息
+        final characterImages =
+            content['characterImages'] as Map<String, dynamic>?;
+        if (characterImages == null) {
+          debugPrint('⚠️ 集字元素字符图像信息为空: ${element['id']}');
+          continue;
+        }
+
+        // 获取字符列表
+        final characters = content['characters'] as String?;
+        if (characters == null || characters.isEmpty) {
+          debugPrint('⚠️ 集字元素字符列表为空: ${element['id']}');
+          continue;
+        }
+
+        final id = element['id'] as String;
+        final elementWidth = (element['width'] as num).toDouble();
+        final elementHeight = (element['height'] as num).toDouble();
+
+        debugPrint('🔍 预加载集字元素 $id 的图片');
+        debugPrint(
+            '  - 元素尺寸: ${elementWidth.toStringAsFixed(1)}x${elementHeight.toStringAsFixed(1)}');
+        debugPrint('  - 字符列表: $characters (${characters.length}个字符)');
+        debugPrint('  - 字符图像信息: ${characterImages.length}个字符有图像信息');
+        debugPrint('  - characterImages键: ${characterImages.keys.toList()}');
+
+        // 打印characterImages的详细内容
+        debugPrint('  - characterImages详细内容:');
+        characterImages.forEach((key, value) {
+          debugPrint('    - 键: "$key", 值: $value');
+        });
+
+        totalCharactersCount += characters.length;
+
+        // 使用 Future.microtask 确保在下一个微任务中执行，避免阻塞UI
+        Future.microtask(() {
+          // 预加载每个字符的图片
+          for (int i = 0; i < characters.length; i++) {
+            final char = characters[i];
+
+            debugPrint('🔍 处理字符 "$char" (索引: $i):');
+
+            // 尝试多种方式查找字符对应的图片信息
+            Map<String, dynamic>? charImage;
+
+            // 1. 直接使用字符作为键
+            if (characterImages.containsKey(char)) {
+              charImage = characterImages[char] as Map<String, dynamic>;
+              debugPrint('  - 直接使用字符作为键找到图像信息');
+            }
+            // 2. 使用索引作为键
+            else if (characterImages.containsKey('$i')) {
+              charImage = characterImages['$i'] as Map<String, dynamic>;
+              debugPrint('  - 使用索引 "$i" 作为键找到图像信息');
+            }
+            // 3. 遍历所有键查找可能匹配的图像信息
+            else {
+              debugPrint('  - 尝试遍历所有键查找可能匹配的图像信息');
+
+              // 首先尝试查找精确匹配的字符
+              bool foundExactMatch = false;
+              for (final key in characterImages.keys) {
+                final value = characterImages[key];
+                if (value is Map<String, dynamic> &&
+                    value.containsKey('characterId') &&
+                    (value.containsKey('character') &&
+                        value['character'] == char)) {
+                  charImage = value;
+                  debugPrint('  - 在键 "$key" 中找到匹配字符 "$char" 的图像信息');
+                  foundExactMatch = true;
+                  break;
+                }
+              }
+
+              // 如果没有找到精确匹配，则尝试查找任何可用的字符作为替代
+              if (!foundExactMatch) {
+                // 记录所有可能的替代字符
+                final List<Map<String, dynamic>> possibleSubstitutes = [];
+
+                for (final key in characterImages.keys) {
+                  final value = characterImages[key];
+                  if (value is Map<String, dynamic> &&
+                      value.containsKey('characterId')) {
+                    possibleSubstitutes.add({
+                      'key': key,
+                      'value': value,
+                    });
+                  }
+                }
+
+                // 如果找到了可能的替代字符，选择第一个
+                if (possibleSubstitutes.isNotEmpty) {
+                  final substitute = possibleSubstitutes.first;
+                  charImage = substitute['value'] as Map<String, dynamic>;
+                  final substituteKey = substitute['key'] as String;
+                  debugPrint('⚠️ 未找到字符 "$char" 的精确匹配，使用替代字符:');
+                  debugPrint('  - 替代键: $substituteKey');
+
+                  // 如果替代字符有character属性，显示它
+                  if (charImage.containsKey('character')) {
+                    debugPrint('  - 替代字符: ${charImage['character']}');
+                  }
+                }
+              }
+            }
+
+            if (charImage != null && charImage.containsKey('characterId')) {
+              final characterId = charImage['characterId'].toString();
+              final type = charImage['type'] as String? ??
+                  charImage['drawingType'] as String? ??
+                  'square-binary';
+              final format = charImage['format'] as String? ??
+                  charImage['drawingFormat'] as String? ??
+                  'png-binary';
+
+              // 获取图片路径
+              final imagePath = _getImagePath(characterId, type, format);
+
+              // 检查是否是替代字符
+              final bool isSubstitute = charImage.containsKey('character') &&
+                  charImage['character'] != char;
+
+              if (isSubstitute) {
+                debugPrint('⚠️ 预加载替代字符 "$char" 的图片:');
+                debugPrint('  - 原始字符: $char');
+                if (charImage.containsKey('character')) {
+                  debugPrint('  - 替代字符: ${charImage['character']}');
+                }
+              } else {
+                debugPrint('📥 预加载字符 "$char" 的图片:');
+              }
+
+              debugPrint('  - 字符ID: $characterId');
+              debugPrint('  - 图片类型: $type');
+              debugPrint('  - 图片格式: $format');
+              debugPrint('  - 图片路径: $imagePath');
+
+              // 预加载图片
+              characterImageService
+                  .getCharacterImage(
+                characterId,
+                type,
+                format,
+              )
+                  .then((imageData) {
+                if (imageData != null) {
+                  debugPrint('✅ 字符 "$char" 图片加载成功: ${imageData.length} 字节');
+
+                  // 解码图像并添加到全局缓存
+                  final cacheKey = '$characterId-$type-$format';
+                  // 同时添加标准化的缓存键
+                  final standardCacheKey =
+                      '$characterId-square-binary-png-binary';
+
+                  ui.decodeImageFromList(imageData, (ui.Image image) {
+                    // 添加到全局缓存 - 使用两种键
+                    GlobalImageCache.add(cacheKey, image);
+                    if (cacheKey != standardCacheKey) {
+                      GlobalImageCache.add(standardCacheKey, image);
+                      debugPrint('📦 同时添加到标准缓存键: $standardCacheKey');
+                    }
+                  });
+                } else {
+                  debugPrint('❌ 字符 "$char" 图片加载失败');
+                }
+              }).catchError((error) {
+                debugPrint('❌ 字符 "$char" 图片加载出错: $error');
+              });
+            } else {
+              debugPrint('⚠️ 字符 "$char" 没有对应的图片信息');
+            }
+          }
+
+          // 强制重绘元素
+          setState(() {});
+        });
+      }
+    }
+
+    debugPrint('===== 预加载统计 =====');
+    debugPrint('集字元素数量: $collectionElementCount');
+    debugPrint('总字符数量: $totalCharactersCount');
+    debugPrint('======================');
+
+    // 添加延迟重绘，确保预加载的图片能够被渲染
+    Future.delayed(const Duration(milliseconds: 500), () {
+      debugPrint('🔄 延迟重绘，确保预加载的图片能够被渲染');
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   /// 将元素置于底层

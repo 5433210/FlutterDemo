@@ -20,6 +20,7 @@ class CollectionPropertyPanel extends ConsumerStatefulWidget {
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final Function(String) onUpdateChars;
   final PracticeEditController controller;
+  final WidgetRef? ref;
 
   const CollectionPropertyPanel({
     Key? key,
@@ -27,6 +28,7 @@ class CollectionPropertyPanel extends ConsumerStatefulWidget {
     required this.element,
     required this.onElementPropertiesChanged,
     required this.onUpdateChars,
+    this.ref,
   }) : super(key: key);
 
   @override
@@ -356,6 +358,19 @@ class _CollectionPropertyPanelState
 
                   const SizedBox(height: 16.0),
 
+                  // 清除图片缓存按钮
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.cleaning_services),
+                    label: const Text('清除图片缓存'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[100],
+                      foregroundColor: Colors.red[900],
+                    ),
+                    onPressed: _clearImageCache,
+                  ),
+
+                  const SizedBox(height: 16.0),
+
                   // 字号设置
                   const Text('字号:',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -633,11 +648,23 @@ class _CollectionPropertyPanelState
       // 更新文本控制器
       final content = widget.element['content'] as Map<String, dynamic>;
       final characters = content['characters'] as String? ?? '';
+      final oldContent = oldWidget.element['content'] as Map<String, dynamic>;
+      final oldCharacters = oldContent['characters'] as String? ?? '';
+
+      // 仅在文本实际变化时更新控制器，避免光标位置重置
       if (_textController.text != characters) {
         _textController.text = characters;
       }
 
-      _loadCandidateCharacters();
+      // 如果字符内容发生变化，则重新加载候选集字并更新字符图像
+      if (oldCharacters != characters) {
+        debugPrint('字符内容已变更: "$oldCharacters" -> "$characters"');
+        _loadCandidateCharacters().then((_) {
+          _updateCharacterImagesForNewText(characters);
+        });
+      } else {
+        _loadCandidateCharacters();
+      }
     }
   }
 
@@ -972,10 +999,12 @@ class _CollectionPropertyPanelState
     final entity = matchingCharacters.first;
     debugPrint('使用候选集字: ${entity.id}, 字符: ${entity.character}');
 
-    // 使用 CharacterImageService 加载图像
+    // 使用 CharacterImageService 加载图像，优先使用缩略图
     return FutureBuilder<Map<String, String>?>(
       future: Future.any([
-        ref.read(characterImageServiceProvider).getAvailableFormat(entity.id),
+        ref
+            .read(characterImageServiceProvider)
+            .getAvailableFormat(entity.id, preferThumbnail: true),
         // 添加2秒超时
         Future.delayed(const Duration(seconds: 2), () => null),
       ]),
@@ -1128,7 +1157,10 @@ class _CollectionPropertyPanelState
         setState(() {
           _selectedCharIndex = 0;
         });
-        _loadCandidateCharacters();
+        // 加载候选集字并为新输入的字符自动设置图片
+        _loadCandidateCharacters().then((_) {
+          _updateCharacterImagesForNewText(value);
+        });
       },
     );
   }
@@ -1155,6 +1187,78 @@ class _CollectionPropertyPanelState
     );
   }
 
+  // 清除图片缓存
+  void _clearImageCache() {
+    // 使用更简单的方法，避免复杂的异步操作和对话框管理
+    // showDialog(
+    //   context: context,
+    //   barrierDismissible: false,
+    //   builder: (BuildContext dialogContext) {
+    //     // 创建一个简单的加载对话框
+    //     return const AlertDialog(
+    //       content: Column(
+    //         mainAxisSize: MainAxisSize.min,
+    //         children: [
+    //           CircularProgressIndicator(),
+    //           SizedBox(height: 16),
+    //           Text('正在清除图片缓存...'),
+    //         ],
+    //       ),
+    //     );
+
+    //     // 注意：不使用PopScope或WillPopScope，允许用户通过返回键关闭对话框
+    //   },
+    // );
+
+    // 在对话框显示后，执行清除缓存操作
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      try {
+        // 清除缓存
+        final characterImageService = ref.read(characterImageServiceProvider);
+        await characterImageService.clearAllImageCache();
+
+        // 确保组件仍然挂载
+        if (!mounted) return;
+
+        // // 关闭加载对话框
+        // if (Navigator.canPop(context)) {
+        //   Navigator.of(context).pop();
+        // }
+
+        // 显示成功消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('图片缓存已清除'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // 刷新UI
+        setState(() {});
+      } catch (e) {
+        // 确保组件仍然挂载
+        if (!mounted) return;
+
+        // // 关闭加载对话框
+        // if (Navigator.canPop(context)) {
+        //   Navigator.of(context).pop();
+        // }
+
+        // 显示错误消息
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('清除图片缓存失败: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        debugPrint('清除图片缓存失败: $e');
+      }
+    });
+  }
+
   /// 将颜色转换为十六进制字符串
   String _colorToHex(Color color) {
     if (color == Colors.transparent) {
@@ -1179,9 +1283,22 @@ class _CollectionPropertyPanelState
 
   // 获取默认字符图像格式
   Future<Map<String, String>?> _getDefaultCharacterImageFormat(
-      String characterId) async {
+      String characterId,
+      {bool preferThumbnail = false}) async {
     try {
       final characterImageService = ref.read(characterImageServiceProvider);
+
+      // 如果优先使用缩略图，则直接检查缩略图格式
+      if (preferThumbnail) {
+        // 检查是否有缩略图格式
+        bool hasThumbnail = await characterImageService.hasCharacterImage(
+            characterId, 'thumbnail', 'jpg');
+        if (hasThumbnail) {
+          return {'type': 'thumbnail', 'format': 'jpg'};
+        }
+      }
+
+      // 否则使用默认格式
       return await characterImageService.getAvailableFormat(characterId);
     } catch (e) {
       debugPrint('获取默认字符图像格式失败: $e');
@@ -1287,13 +1404,48 @@ class _CollectionPropertyPanelState
 
         if (matchingCharacters.isNotEmpty) {
           final entity = matchingCharacters.first;
-          final format = await _getDefaultCharacterImageFormat(entity.id);
+          // 获取缩略图格式用于预览
+          final format = await _getDefaultCharacterImageFormat(entity.id,
+              preferThumbnail: true);
+
+          // 在属性面板中使用缩略图，但在集字元素绘制时优先使用方形二值化图，其次是方形SVG轮廓
+          final characterImageService = ref.read(characterImageServiceProvider);
+
+          // 检查是否有方形二值化图格式
+          bool hasSquareBinary = await characterImageService.hasCharacterImage(
+              entity.id, 'square-binary', 'png-binary');
+
+          // 检查是否有方形SVG轮廓格式
+          bool hasSquareOutline = await characterImageService.hasCharacterImage(
+              entity.id, 'square-outline', 'svg-outline');
+
+          // 确定绘制格式
+          String drawingType;
+          String drawingFormat;
+
+          if (hasSquareBinary) {
+            // 优先使用方形二值化图
+            drawingType = 'square-binary';
+            drawingFormat = 'png-binary';
+          } else if (hasSquareOutline) {
+            // 其次使用方形SVG轮廓
+            drawingType = 'square-outline';
+            drawingFormat = 'svg-outline';
+          } else {
+            // 默认使用方形二值化图
+            drawingType = 'square-binary';
+            drawingFormat = 'png-binary';
+          }
 
           if (format != null) {
             characterImages['$i'] = {
               'characterId': entity.id,
+              // 使用缩略图格式用于预览
               'type': format['type'],
               'format': format['format'],
+              // 添加绘制时使用的格式
+              'drawingType': drawingType,
+              'drawingFormat': drawingFormat,
             };
           }
         }
@@ -1394,8 +1546,10 @@ class _CollectionPropertyPanelState
   }
 
   // 选择候选集字
-  Future<void> _selectCandidateCharacter(CharacterEntity entity) async {
-    debugPrint('选择候选集字: ${entity.id}, 字符: ${entity.character}');
+  Future<void> _selectCandidateCharacter(CharacterEntity entity,
+      {bool isTemporary = false}) async {
+    debugPrint(
+        '选择候选集字: ${entity.id}, 字符: ${entity.character}, 是否临时: $isTemporary');
 
     try {
       // 获取字符图像格式
@@ -1418,22 +1572,20 @@ class _CollectionPropertyPanelState
         return;
       }
 
-      // 更新字符图像信息
-      final characterImages =
-          content['characterImages'] as Map<String, dynamic>? ?? {};
-      characterImages['$_selectedCharIndex'] = {
-        'characterId': entity.id,
-        'type': format['type'],
-        'format': format['format'],
-      };
-
-      content['characterImages'] = characterImages;
-      _updateProperty('content', content);
+      // 使用 _updateCharacterImage 方法更新字符图像信息
+      await _updateCharacterImage(
+        _selectedCharIndex,
+        entity.id,
+        format['type'] ?? 'square-binary',
+        format['format'] ?? 'png-binary',
+        isTemporary: isTemporary,
+      );
 
       // 刷新UI
       setState(() {});
 
-      debugPrint('已更新字符图像信息: ${entity.id}, 索引: $_selectedCharIndex');
+      debugPrint(
+          '已更新字符图像信息: ${entity.id}, 索引: $_selectedCharIndex, 是否临时: $isTemporary');
     } catch (e) {
       debugPrint('选择候选集字失败: $e');
     }
@@ -1575,7 +1727,7 @@ class _CollectionPropertyPanelState
               // 如果当前选中的字符与添加的字符匹配，则自动选择该字符
               if (selectedChar == char) {
                 debugPrint('自动选择新添加的字符实体');
-                _selectCandidateCharacter(entity);
+                _selectCandidateCharacter(entity, isTemporary: true);
               }
             },
             child: const Text('添加'),
@@ -1675,8 +1827,9 @@ class _CollectionPropertyPanelState
   }
 
   // 更新字符图像信息
-  void _updateCharacterImage(
-      int index, String characterId, String type, String format) {
+  Future<void> _updateCharacterImage(
+      int index, String characterId, String type, String format,
+      {bool isTemporary = false}) async {
     try {
       final content = widget.element['content'] as Map<String, dynamic>;
       Map<String, dynamic> characterImages;
@@ -1688,16 +1841,180 @@ class _CollectionPropertyPanelState
         characterImages = {};
       }
 
-      characterImages['$index'] = {
+      // 在属性面板中使用缩略图，但在集字元素绘制时优先使用方形二值化图，其次是方形SVG轮廓
+      final characterImageService = ref.read(characterImageServiceProvider);
+
+      // 检查是否有方形二值化图格式
+      bool hasSquareBinary = await characterImageService.hasCharacterImage(
+          characterId, 'square-binary', 'png-binary');
+
+      // 检查是否有方形SVG轮廓格式
+      bool hasSquareOutline = await characterImageService.hasCharacterImage(
+          characterId, 'square-outline', 'svg-outline');
+
+      // 确定绘制格式
+      String drawingType;
+      String drawingFormat;
+
+      if (hasSquareBinary) {
+        // 优先使用方形二值化图
+        drawingType = 'square-binary';
+        drawingFormat = 'png-binary';
+      } else if (hasSquareOutline) {
+        // 其次使用方形SVG轮廓
+        drawingType = 'square-outline';
+        drawingFormat = 'svg-outline';
+      } else {
+        // 默认使用方形二值化图
+        drawingType = 'square-binary';
+        drawingFormat = 'png-binary';
+      }
+
+      // 创建字符图像信息
+      final Map<String, dynamic> imageInfo = {
         'characterId': characterId,
+        // 使用缩略图格式用于预览
         'type': type,
         'format': format,
+        // 添加绘制时使用的格式
+        'drawingType': drawingType,
+        'drawingFormat': drawingFormat,
       };
+
+      // 如果是临时字符，添加isTemporary标记
+      if (isTemporary) {
+        imageInfo['isTemporary'] = true;
+        debugPrint('添加临时字符标记: characterId=$characterId, index=$index');
+      }
+
+      characterImages['$index'] = imageInfo;
 
       final updatedContent = Map<String, dynamic>.from(content);
       updatedContent['characterImages'] = characterImages;
 
       _updateProperty('content', updatedContent);
+    } catch (e) {
+      debugPrint('更新字符图像信息失败: $e');
+    }
+  }
+
+  // 为新输入的文本更新字符图像
+  Future<void> _updateCharacterImagesForNewText(String newText) async {
+    try {
+      debugPrint('为新输入的文本更新字符图像: $newText');
+
+      // 获取当前内容
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>? ?? {});
+
+      // 获取现有的字符图像信息
+      Map<String, dynamic> characterImages = {};
+      if (content.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+      }
+
+      // 检查每个字符是否已有图像信息
+      bool hasUpdates = false;
+
+      for (int i = 0; i < newText.length; i++) {
+        // 如果该索引已有图像信息，则跳过
+        if (characterImages.containsKey('$i')) {
+          continue;
+        }
+
+        final char = newText[i];
+        debugPrint('处理新字符: $char, 索引: $i');
+
+        // 查找匹配的候选集字
+        final matchingCharacters = _candidateCharacters
+            .where((entity) => entity.character == char)
+            .toList();
+
+        if (matchingCharacters.isNotEmpty) {
+          // 使用第一个匹配的字符实体
+          final entity = matchingCharacters.first;
+          debugPrint('找到匹配的候选集字: ${entity.id}, 字符: ${entity.character}');
+
+          // 获取缩略图格式用于预览
+          final characterImageService = ref.read(characterImageServiceProvider);
+          final previewFormat = await characterImageService
+              .getAvailableFormat(entity.id, preferThumbnail: true);
+
+          // 检查是否有方形二值化图格式
+          bool hasSquareBinary = await characterImageService.hasCharacterImage(
+              entity.id, 'square-binary', 'png-binary');
+
+          // 检查是否有方形SVG轮廓格式
+          bool hasSquareOutline = await characterImageService.hasCharacterImage(
+              entity.id, 'square-outline', 'svg-outline');
+
+          // 确定绘制格式
+          String drawingType;
+          String drawingFormat;
+
+          if (hasSquareBinary) {
+            // 优先使用方形二值化图
+            drawingType = 'square-binary';
+            drawingFormat = 'png-binary';
+          } else if (hasSquareOutline) {
+            // 其次使用方形SVG轮廓
+            drawingType = 'square-outline';
+            drawingFormat = 'svg-outline';
+          } else {
+            // 默认使用方形二值化图
+            drawingType = 'square-binary';
+            drawingFormat = 'png-binary';
+          }
+
+          if (previewFormat != null) {
+            characterImages['$i'] = {
+              'characterId': entity.id,
+              // 使用缩略图格式用于预览
+              'type': previewFormat['type'],
+              'format': previewFormat['format'],
+              // 添加绘制时使用的格式
+              'drawingType': drawingType,
+              'drawingFormat': drawingFormat,
+            };
+            hasUpdates = true;
+            debugPrint('已为字符 $char 设置图像信息');
+          }
+        } else {
+          debugPrint('未找到字符 $char 的匹配候选集字，创建临时字符图像信息');
+
+          // 生成一个临时ID
+          const uuid = Uuid();
+          final tempId = uuid.v4();
+
+          // 创建临时字符图像信息，添加isTemporary标记
+          characterImages['$i'] = {
+            'characterId': tempId,
+            'type': 'square-binary',
+            'format': 'png-binary',
+            'drawingType': 'square-binary',
+            'drawingFormat': 'png-binary',
+            'isTemporary': true, // 添加临时标记
+          };
+
+          debugPrint('已为字符 $char 创建临时字符图像信息:');
+          debugPrint('  - 临时ID: $tempId');
+          debugPrint('  - 索引: $i');
+
+          hasUpdates = true;
+        }
+      }
+
+      // 如果有更新，则更新元素内容
+      if (hasUpdates) {
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = characterImages;
+        _updateProperty('content', updatedContent);
+        debugPrint('已更新字符图像信息');
+
+        // 刷新UI
+        setState(() {});
+      }
     } catch (e) {
       debugPrint('更新字符图像信息失败: $e');
     }

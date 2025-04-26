@@ -19,10 +19,41 @@ class CharacterImageService {
         _cacheService = cacheService,
         _imageProcessor = imageProcessor;
 
-  /// 获取可用的图片格式
-  Future<Map<String, String>?> getAvailableFormat(String id) async {
+  /// 清除所有图片缓存
+  Future<void> clearAllImageCache() async {
     try {
-      debugPrint('获取字符图片可用格式: $id');
+      debugPrint('开始清除所有字符图像缓存');
+      await _cacheService.clearAllCache();
+      debugPrint('字符图像缓存清除完成');
+    } catch (e) {
+      debugPrint('清除字符图像缓存失败: $e');
+    }
+  }
+
+  /// 获取可用的图片格式
+  Future<Map<String, String>?> getAvailableFormat(String id,
+      {bool preferThumbnail = false}) async {
+    try {
+      debugPrint('获取字符图片可用格式: $id, 优先使用缩略图: $preferThumbnail');
+
+      // 如果优先使用预览图，则先检查非方形格式
+      if (preferThumbnail) {
+        // 优先检查binary格式（非方形二值化图像）
+        if (await hasCharacterImage(id, 'binary', 'png')) {
+          debugPrint('找到binary格式: $id');
+          return {'type': 'binary', 'format': 'png'};
+        }
+        // 其次检查transparent格式（非方形透明图像）
+        if (await hasCharacterImage(id, 'transparent', 'png')) {
+          debugPrint('找到transparent格式: $id');
+          return {'type': 'transparent', 'format': 'png'};
+        }
+        // 最后检查thumbnail格式
+        if (await hasCharacterImage(id, 'thumbnail', 'jpg')) {
+          debugPrint('找到thumbnail格式: $id');
+          return {'type': 'thumbnail', 'format': 'jpg'};
+        }
+      }
 
       // 优先检查square-binary格式
       if (await hasCharacterImage(id, 'square-binary', 'png-binary')) {
@@ -35,6 +66,12 @@ class CharacterImageService {
           id, 'square-transparent', 'png-transparent')) {
         debugPrint('找到square-transparent格式: $id');
         return {'type': 'square-transparent', 'format': 'png-transparent'};
+      }
+
+      // 检查缩略图格式（如果之前没有优先检查）
+      if (!preferThumbnail && await hasCharacterImage(id, 'thumbnail', 'jpg')) {
+        debugPrint('找到thumbnail格式: $id');
+        return {'type': 'thumbnail', 'format': 'jpg'};
       }
 
       // 最后检查square-outline格式
@@ -184,6 +221,9 @@ class CharacterImageService {
       case 'thumbnail':
         return path.join(
             _storage.getAppDataPath(), 'characters', id, '$id-thumbnail.jpg');
+      case 'square-thumbnail':
+        return path.join(_storage.getAppDataPath(), 'characters', id,
+            '$id-square-thumbnail.jpg');
       default:
         // 默认使用square-binary
         return path.join(_storage.getAppDataPath(), 'characters', id,
