@@ -27,6 +27,10 @@ class CollectionElementRenderer {
     String backgroundColor = 'transparent',
     WidgetRef? ref,
   }) {
+    // 添加调试日志，查看传入的颜色值
+    debugPrint('集字布局 - 传入的字体颜色: $fontColor');
+    debugPrint('集字布局 - 传入的背景颜色: $backgroundColor');
+
     if (characters.isEmpty) {
       return const Center(
           child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
@@ -63,6 +67,13 @@ class CollectionElementRenderer {
     final isHorizontal = writingMode.startsWith('horizontal');
     final isLeftToRight = writingMode.endsWith('l');
 
+    // 解析颜色
+    final parsedFontColor = _parseColor(fontColor);
+    final parsedBackgroundColor = _parseColor(backgroundColor);
+
+    debugPrint('解析后的字体颜色: $parsedFontColor');
+    debugPrint('解析后的背景颜色: $parsedBackgroundColor');
+
     // 计算每个字符的位置
     final List<_CharacterPosition> positions = _calculateCharacterPositions(
       charList: charList,
@@ -76,8 +87,8 @@ class CollectionElementRenderer {
       availableWidth: availableWidth,
       availableHeight: availableHeight,
       isNewLineList: isNewLineList,
-      fontColor: _parseColor(fontColor),
-      backgroundColor: _parseColor(backgroundColor),
+      fontColor: parsedFontColor,
+      backgroundColor: parsedBackgroundColor,
     );
 
     // 使用StatefulBuilder来支持重绘
@@ -370,32 +381,87 @@ class CollectionElementRenderer {
 
   /// 解析颜色字符串
   static Color _parseColor(String colorStr) {
-    if (colorStr == 'transparent') return Colors.transparent;
+    debugPrint('开始解析颜色: "$colorStr"');
+
+    // 处理透明色
+    if (colorStr == 'transparent') {
+      debugPrint('解析为透明色');
+      return Colors.transparent;
+    }
+
+    // 处理常见颜色名称
+    switch (colorStr.toLowerCase()) {
+      case 'black':
+        return Colors.black;
+      case 'white':
+        return Colors.white;
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'pink':
+        return Colors.pink;
+      case 'purple':
+        return Colors.purple;
+      case 'cyan':
+        return Colors.cyan;
+      case 'orange':
+        return Colors.orange;
+    }
 
     try {
-      final buffer = StringBuffer();
-      if (colorStr.startsWith('#')) {
-        if (colorStr.length == 7) {
-          // #RRGGBB format
-          buffer.write('ff'); // Add full opacity
-          buffer.write(colorStr.substring(1));
-        } else if (colorStr.length == 9) {
-          // #AARRGGBB format
-          buffer.write(colorStr.substring(1));
-        } else {
-          debugPrint('Invalid color format: $colorStr');
-          return Colors.black; // Invalid format
-        }
+      // 去除可能的#前缀
+      String cleanHex =
+          colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
+
+      debugPrint('清理后的十六进制: "$cleanHex"');
+
+      // 处理不同长度的十六进制颜色
+      if (cleanHex.length == 6) {
+        // RRGGBB格式，添加完全不透明的Alpha通道
+        cleanHex = 'ff$cleanHex';
+        debugPrint('6位十六进制，添加不透明Alpha: "$cleanHex"');
+      } else if (cleanHex.length == 8) {
+        // AARRGGBB格式，已经包含Alpha通道
+        debugPrint('8位十六进制，已包含Alpha: "$cleanHex"');
+      } else if (cleanHex.length == 3) {
+        // RGB格式，扩展为RRGGBB并添加完全不透明的Alpha通道
+        cleanHex =
+            'ff${cleanHex[0]}${cleanHex[0]}${cleanHex[1]}${cleanHex[1]}${cleanHex[2]}${cleanHex[2]}';
+        debugPrint('3位十六进制，扩展并添加Alpha: "$cleanHex"');
       } else {
-        buffer.write('ff'); // Default full opacity
-        buffer.write(colorStr);
+        debugPrint('⚠️ 无效的颜色格式: "$colorStr" (清理后: "$cleanHex")，使用黑色');
+        return Colors.black; // 无效格式，返回黑色
       }
 
-      final hexString = buffer.toString();
-      return Color(int.parse(hexString, radix: 16));
+      // 解析十六进制值
+      final int colorValue = int.parse(cleanHex, radix: 16);
+
+      // 直接使用Color构造函数创建颜色
+      final Color color = Color(colorValue);
+
+      // 使用color.value获取颜色值，然后提取RGBA分量
+      final int r = (color.value >> 16) & 0xFF;
+      final int g = (color.value >> 8) & 0xFF;
+      final int b = color.value & 0xFF;
+      final int a = (color.value >> 24) & 0xFF;
+
+      debugPrint('✅ 解析颜色成功: "$colorStr" -> 0x$cleanHex -> $color');
+      debugPrint('  - RGBA: ($r, $g, $b, $a)');
+      debugPrint(
+          '  - 直接获取: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})');
+
+      return color;
     } catch (e) {
-      debugPrint('Error parsing color: $e');
-      return Colors.black;
+      debugPrint('❌ 解析颜色失败: $e, colorStr: "$colorStr"，使用黑色');
+      return Colors.black; // 出错时返回黑色
     }
   }
 }
@@ -563,6 +629,13 @@ class _CollectionPainter extends CustomPainter {
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
+
+      // 提取RGB分量进行调试
+      final int r = position.backgroundColor.r.toInt();
+      final int g = position.backgroundColor.g.toInt();
+      final int b = position.backgroundColor.b.toInt();
+      final int a = position.backgroundColor.a.toInt();
+      debugPrint('  - 背景色RGBA: ($r, $g, $b, $a)');
     }
 
     // 检查是否有字符图像信息，并且不是临时字符
@@ -739,6 +812,8 @@ class _CollectionPainter extends CustomPainter {
     debugPrint('  - 字符: "${position.char}"');
     debugPrint('  - 位置: (${position.x}, ${position.y})');
     debugPrint('  - 尺寸: ${position.size}x${position.size}');
+    debugPrint('  - 字体颜色: ${position.fontColor}');
+    debugPrint('  - 背景颜色: ${position.backgroundColor}');
 
     // 创建绘制区域
     final rect = Rect.fromLTWH(
@@ -755,6 +830,13 @@ class _CollectionPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
       debugPrint('  - 使用自定义背景色: ${position.backgroundColor}');
+
+      // 提取RGB分量进行调试
+      final int r = position.backgroundColor.r.toInt();
+      final int g = position.backgroundColor.g.toInt();
+      final int b = position.backgroundColor.b.toInt();
+      final int a = position.backgroundColor.a.toInt();
+      debugPrint('  - 背景色RGBA: ($r, $g, $b, $a)');
     } else {
       // 绘制默认占位符背景
       final paint = Paint()
@@ -763,6 +845,13 @@ class _CollectionPainter extends CustomPainter {
       canvas.drawRect(rect, paint);
       debugPrint('  - 使用默认背景色: ${Colors.grey.withAlpha(26)}');
     }
+
+    // 提取字体颜色的RGB分量进行调试
+    final int fr = position.fontColor.r.toInt();
+    final int fg = position.fontColor.g.toInt();
+    final int fb = position.fontColor.b.toInt();
+    final int fa = position.fontColor.a.toInt();
+    debugPrint('  - 字体颜色RGBA: ($fr, $fg, $fb, $fa)');
 
     // 绘制字符文本
     final textPainter = TextPainter(
@@ -797,6 +886,8 @@ class _CollectionPainter extends CustomPainter {
     debugPrint('  - 字符: "${position.char}"');
     debugPrint('  - 位置: (${position.x}, ${position.y})');
     debugPrint('  - 尺寸: ${position.size}x${position.size}');
+    debugPrint('  - 字体颜色: ${position.fontColor}');
+    debugPrint('  - 背景颜色: ${position.backgroundColor}');
 
     // 创建绘制区域
     final rect = Rect.fromLTWH(
@@ -806,11 +897,35 @@ class _CollectionPainter extends CustomPainter {
       position.size,
     );
 
-    // 绘制默认占位符背景
-    final paint = Paint()
-      ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(rect, paint);
+    // 绘制背景
+    if (position.backgroundColor != Colors.transparent) {
+      final bgPaint = Paint()
+        ..color = position.backgroundColor
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, bgPaint);
+      debugPrint('  - 使用自定义背景色: ${position.backgroundColor}');
+
+      // 提取RGB分量进行调试
+      final int r = position.backgroundColor.r.toInt();
+      final int g = position.backgroundColor.g.toInt();
+      final int b = position.backgroundColor.b.toInt();
+      final int a = position.backgroundColor.a.toInt();
+      debugPrint('  - 背景色RGBA: ($r, $g, $b, $a)');
+    } else {
+      // 绘制默认占位符背景
+      final paint = Paint()
+        ..color = Colors.grey.withAlpha(77) // 约等于 0.3 不透明度
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, paint);
+      debugPrint('  - 使用默认背景色: ${Colors.grey.withAlpha(77)}');
+    }
+
+    // 提取字体颜色的RGB分量进行调试
+    final int fr = position.fontColor.r.toInt();
+    final int fg = position.fontColor.g.toInt();
+    final int fb = position.fontColor.b.toInt();
+    final int fa = position.fontColor.a.toInt();
+    debugPrint('  - 字体颜色RGBA: ($fr, $fg, $fb, $fa)');
 
     // 绘制字符文本作为占位符
     final textPainter = TextPainter(

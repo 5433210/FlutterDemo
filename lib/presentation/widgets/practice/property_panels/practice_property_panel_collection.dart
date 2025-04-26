@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -668,6 +669,62 @@ class _CollectionPropertyPanelState
         // 记录最后一次输入的文本
         _lastInputText = characters;
 
+        // 如果是新增字符，则选中新增的字符
+        if (characters.length > oldCharacters.length &&
+            oldCharacters.isNotEmpty) {
+          // 找出新增的字符位置
+          int newCharIndex = -1;
+
+          // 如果是在末尾添加字符
+          if (characters.startsWith(oldCharacters)) {
+            newCharIndex = oldCharacters.length;
+            debugPrint('在末尾添加了字符，选中索引: $newCharIndex');
+          }
+          // 如果是在中间或开头添加字符，尝试找出新增的位置
+          else {
+            // 这里使用一个简单的算法来尝试找出新增的字符位置
+            for (int i = 0; i < characters.length; i++) {
+              if (i >= oldCharacters.length ||
+                  characters[i] != oldCharacters[i]) {
+                newCharIndex = i;
+                debugPrint('在位置 $i 添加了字符，选中索引: $newCharIndex');
+                break;
+              }
+            }
+          }
+
+          // 如果找到了新增的字符位置，则选中它
+          if (newCharIndex >= 0 && newCharIndex < characters.length) {
+            setState(() {
+              _selectedCharIndex = newCharIndex;
+            });
+            debugPrint(
+                '选中新增字符，索引: $_selectedCharIndex, 字符: ${characters[newCharIndex]}');
+          } else {
+            // 如果无法确定新增的字符位置，则选中最后一个字符
+            setState(() {
+              _selectedCharIndex = characters.length - 1;
+            });
+            debugPrint('无法确定新增字符位置，选中最后一个字符，索引: $_selectedCharIndex');
+          }
+        }
+        // 如果是删除字符或清空内容，则选中第一个字符（如果有的话）
+        else if (characters.length < oldCharacters.length) {
+          setState(() {
+            _selectedCharIndex = characters.isEmpty
+                ? 0
+                : math.min(_selectedCharIndex, characters.length - 1);
+          });
+          debugPrint('删除了字符，选中索引: $_selectedCharIndex');
+        }
+        // 如果是第一次输入字符，则选中第一个字符
+        else if (oldCharacters.isEmpty && characters.isNotEmpty) {
+          setState(() {
+            _selectedCharIndex = 0;
+          });
+          debugPrint('第一次输入字符，选中索引: $_selectedCharIndex');
+        }
+
         // 使用防抖处理，延迟处理输入
         if (_debounceTimer?.isActive ?? false) {
           _debounceTimer!.cancel();
@@ -1162,16 +1219,70 @@ class _CollectionPropertyPanelState
       maxLines: 5,
       minLines: 3,
       onChanged: (value) {
+        // 获取当前内容和新内容
+        final oldContent = widget.element['content'] as Map<String, dynamic>;
+        final oldCharacters = oldContent['characters'] as String? ?? '';
+
         // 立即更新字符内容，确保UI响应
         widget.onUpdateChars(value);
 
         // 记录最后一次输入的文本
         _lastInputText = value;
 
-        // 重置选中的字符索引
-        setState(() {
-          _selectedCharIndex = 0;
-        });
+        // 如果是新增字符，则选中新增的字符
+        if (value.length > oldCharacters.length && oldCharacters.isNotEmpty) {
+          // 找出新增的字符位置
+          int newCharIndex = -1;
+
+          // 如果是在末尾添加字符
+          if (value.startsWith(oldCharacters)) {
+            newCharIndex = oldCharacters.length;
+            debugPrint('在末尾添加了字符，选中索引: $newCharIndex');
+          }
+          // 如果是在中间或开头添加字符，尝试找出新增的位置
+          else {
+            // 这里使用一个简单的算法来尝试找出新增的字符位置
+            // 注意：这个算法不能处理一次添加多个字符或复杂的编辑操作
+            for (int i = 0; i < value.length; i++) {
+              if (i >= oldCharacters.length || value[i] != oldCharacters[i]) {
+                newCharIndex = i;
+                debugPrint('在位置 $i 添加了字符，选中索引: $newCharIndex');
+                break;
+              }
+            }
+          }
+
+          // 如果找到了新增的字符位置，则选中它
+          if (newCharIndex >= 0 && newCharIndex < value.length) {
+            setState(() {
+              _selectedCharIndex = newCharIndex;
+            });
+            debugPrint(
+                '选中新增字符，索引: $_selectedCharIndex, 字符: ${value[newCharIndex]}');
+          } else {
+            // 如果无法确定新增的字符位置，则选中最后一个字符
+            setState(() {
+              _selectedCharIndex = value.length - 1;
+            });
+            debugPrint('无法确定新增字符位置，选中最后一个字符，索引: $_selectedCharIndex');
+          }
+        }
+        // 如果是删除字符或清空内容，则选中第一个字符（如果有的话）
+        else if (value.length < oldCharacters.length) {
+          setState(() {
+            _selectedCharIndex = value.isEmpty
+                ? 0
+                : math.min(_selectedCharIndex, value.length - 1);
+          });
+          debugPrint('删除了字符，选中索引: $_selectedCharIndex');
+        }
+        // 如果是第一次输入字符，则选中第一个字符
+        else if (oldCharacters.isEmpty && value.isNotEmpty) {
+          setState(() {
+            _selectedCharIndex = 0;
+          });
+          debugPrint('第一次输入字符，选中索引: $_selectedCharIndex');
+        }
 
         // 使用防抖处理，延迟处理输入
         if (_debounceTimer?.isActive ?? false) {
@@ -1350,22 +1461,45 @@ class _CollectionPropertyPanelState
 
   /// 将颜色转换为十六进制字符串
   String _colorToHex(Color color) {
+    // 处理透明色
     if (color == Colors.transparent) {
       return 'transparent';
     }
 
-    try {
-      // 将 RGB 值转换为十六进制
-      final colorValue = color.toString();
-      // 从 Color(0xFFFFFFFF) 格式中提取十六进制值
-      final hexCode = colorValue.split('(0x')[1].split(')')[0];
-      // 移除前两位的透明度值
-      final colorCode = hexCode.length > 6 ? hexCode.substring(2) : hexCode;
+    // 处理常见颜色
+    if (color == Colors.black) return '#000000';
+    if (color == Colors.white) return '#ffffff';
+    if (color == Colors.red) return '#ff0000';
+    if (color == Colors.green) return '#00ff00';
+    if (color == Colors.blue) return '#0000ff';
+    if (color == Colors.yellow) return '#ffff00';
+    if (color == Colors.cyan) return '#00ffff';
+    if (color == Colors.purple.shade200) return '#ff00ff'; // 近似品红色
+    if (color == Colors.orange) return '#ffa500';
+    if (color == Colors.purple) return '#800080';
+    if (color == Colors.pink) return '#ffc0cb';
+    if (color == Colors.brown) return '#a52a2a';
+    if (color == Colors.grey) return '#808080';
 
-      debugPrint('Converting color to hex: $color -> #$colorCode');
-      return '#$colorCode'; // 包含 # 前缀
+    try {
+      // 获取颜色的RGB值
+      final int r = color.r.toInt();
+      final int g = color.g.toInt();
+      final int b = color.b.toInt();
+      final int a = color.a.toInt();
+
+      // 转换为十六进制字符串，确保每个颜色分量都是2位
+      final String hexR = r.toRadixString(16).padLeft(2, '0');
+      final String hexG = g.toRadixString(16).padLeft(2, '0');
+      final String hexB = b.toRadixString(16).padLeft(2, '0');
+
+      // 组合成完整的十六进制颜色字符串
+      final String hexString = '$hexR$hexG$hexB';
+
+      debugPrint('颜色转换为十六进制: $color -> #$hexString (R:$r G:$g B:$b A:$a)');
+      return '#$hexString'; // 包含 # 前缀
     } catch (e) {
-      debugPrint('Error converting color to hex: $e');
+      debugPrint('颜色转换为十六进制失败: $e');
       return '#000000'; // 出错时返回默认黑色
     }
   }
@@ -1422,44 +1556,116 @@ class _CollectionPropertyPanelState
 
   /// 将十六进制颜色字符串转换为Color对象
   Color _hexToColor(String hexString) {
+    debugPrint('开始解析颜色: "$hexString"');
+
+    // 处理透明色
     if (hexString == 'transparent') {
+      debugPrint('解析为透明色');
       return Colors.transparent;
     }
 
+    // 处理常见颜色名称
+    switch (hexString.toLowerCase()) {
+      case 'black':
+        return Colors.black;
+      case 'white':
+        return Colors.white;
+      case 'red':
+        return Colors.red;
+      case 'green':
+        return Colors.green;
+      case 'blue':
+        return Colors.blue;
+      case 'yellow':
+        return Colors.yellow;
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+      case 'cyan':
+        return Colors.cyan;
+      case 'orange':
+        return Colors.orange;
+      case 'purple':
+        return Colors.purple;
+      case 'pink':
+        return Colors.pink;
+      case 'brown':
+        return Colors.brown;
+    }
+
+    // 处理特定的十六进制颜色
+    switch (hexString.toLowerCase()) {
+      case '#000000':
+        return Colors.black;
+      case '#ffffff':
+        return Colors.white;
+      case '#ff0000':
+        return Colors.red;
+      case '#00ff00':
+        return Colors.green;
+      case '#0000ff':
+        return Colors.blue;
+      case '#ffff00':
+        return Colors.yellow;
+      case '#00ffff':
+        return Colors.cyan;
+      case '#ff00ff':
+        return Colors.purple.shade200; // 近似品红色
+      case '#ffa500':
+        return Colors.orange;
+      case '#800080':
+        return Colors.purple;
+      case '#ffc0cb':
+        return Colors.pink;
+      case '#a52a2a':
+        return Colors.brown;
+      case '#808080':
+        return Colors.grey;
+    }
+
     try {
-      final buffer = StringBuffer();
-      if (hexString.startsWith('#')) {
-        if (hexString.length == 7) {
-          // #RRGGBB format
-          buffer.write('ff'); // Add full opacity
-          buffer.write(hexString.substring(1));
-        } else if (hexString.length == 9) {
-          // #AARRGGBB format
-          buffer.write(hexString.substring(1));
-        } else {
-          debugPrint('Invalid color format: $hexString');
-          return Colors.black; // Invalid format
-        }
+      // 去除可能的#前缀
+      String cleanHex =
+          hexString.startsWith('#') ? hexString.substring(1) : hexString;
+
+      debugPrint('清理后的十六进制: "$cleanHex"');
+
+      // 处理不同长度的十六进制颜色
+      if (cleanHex.length == 6) {
+        // RRGGBB格式，添加完全不透明的Alpha通道
+        cleanHex = 'ff$cleanHex';
+        debugPrint('6位十六进制，添加不透明Alpha: "$cleanHex"');
+      } else if (cleanHex.length == 8) {
+        // AARRGGBB格式，已经包含Alpha通道
+        debugPrint('8位十六进制，已包含Alpha: "$cleanHex"');
+      } else if (cleanHex.length == 3) {
+        // RGB格式，扩展为RRGGBB并添加完全不透明的Alpha通道
+        cleanHex =
+            'ff${cleanHex[0]}${cleanHex[0]}${cleanHex[1]}${cleanHex[1]}${cleanHex[2]}${cleanHex[2]}';
+        debugPrint('3位十六进制，扩展并添加Alpha: "$cleanHex"');
       } else {
-        if (hexString.length == 6) {
-          buffer.write('ff'); // Add full opacity
-          buffer.write(hexString);
-        } else {
-          debugPrint('Invalid color format: $hexString');
-          return Colors.black;
-        }
+        debugPrint('⚠️ 无效的颜色格式: "$hexString" (清理后: "$cleanHex")，使用黑色');
+        return Colors.black; // 无效格式，返回黑色
       }
 
-      final hexValue = buffer.toString();
-      final colorValue = int.parse(hexValue, radix: 16);
-      final color = Color(colorValue);
+      // 解析十六进制值
+      final int colorValue = int.parse(cleanHex, radix: 16);
+      final Color color = Color(colorValue);
 
-      debugPrint('Parsed color: $hexString -> 0x$hexValue -> $color');
+      // 提取RGB分量进行调试
+      final int r = (colorValue >> 16) & 0xFF;
+      final int g = (colorValue >> 8) & 0xFF;
+      final int b = colorValue & 0xFF;
+      final int a = (colorValue >> 24) & 0xFF;
+
+      debugPrint('✅ 解析颜色成功: "$hexString" -> 0x$cleanHex -> $color');
+      debugPrint('  - RGBA: ($r, $g, $b, $a)');
+      debugPrint('  - 直接获取: (${color.r}, ${color.g}, ${color.b}, ${color.a})');
 
       return color;
     } catch (e) {
-      debugPrint('解析颜色失败: $e, hexString: $hexString');
-      return Colors.black;
+      debugPrint('❌ 解析颜色失败: $e, hexString: "$hexString"，使用黑色');
+      return Colors.black; // 出错时返回黑色
     }
   }
 
@@ -1624,6 +1830,39 @@ class _CollectionPropertyPanelState
         _candidateCharacters = entities;
         _isLoadingCharacters = false;
       });
+
+      // 自动选择第一个候选项作为默认的集字
+      if (entities.isNotEmpty) {
+        // 检查当前选中字符的索引是否有效
+        final content = widget.element['content'] as Map<String, dynamic>;
+        final characters = content['characters'] as String? ?? '';
+
+        if (_selectedCharIndex >= 0 && _selectedCharIndex < characters.length) {
+          final selectedChar = characters[_selectedCharIndex];
+
+          // 查找与当前选中字符匹配的候选集字
+          final matchingEntities = entities
+              .where((entity) => entity.character == selectedChar)
+              .toList();
+
+          if (matchingEntities.isNotEmpty) {
+            debugPrint(
+                '自动选择第一个候选项作为默认的集字: ${matchingEntities.first.id}, 字符: ${matchingEntities.first.character}');
+
+            // 检查当前是否已经选择了这个候选项
+            final characterImages =
+                content['characterImages'] as Map<String, dynamic>? ?? {};
+            final imageInfo =
+                characterImages['$_selectedCharIndex'] as Map<String, dynamic>?;
+
+            if (imageInfo == null ||
+                imageInfo['characterId'] != matchingEntities.first.id) {
+              // 如果当前没有选择这个候选项，则自动选择它
+              _selectCandidateCharacter(matchingEntities.first);
+            }
+          }
+        }
+      }
     } catch (e, stack) {
       debugPrint('加载候选集字失败: $e');
       debugPrint('堆栈: $stack');
@@ -1704,6 +1943,9 @@ class _CollectionPropertyPanelState
       if (matchingChars.isNotEmpty) {
         debugPrint(
             '匹配的候选集字: ${matchingChars.map((e) => "${e.character}(${e.id})").join(", ")}');
+
+        // 自动选择第一个候选项
+        _selectCandidateCharacter(matchingChars.first);
       }
 
       _loadCandidateCharacters();
@@ -1749,6 +1991,17 @@ class _CollectionPropertyPanelState
     // 解析初始颜色（仅用于调试）
     debugPrint('显示颜色选择器，初始颜色: $initialColor');
 
+    // 添加详细的调试信息
+    for (final color in presetColors) {
+      final r = color.r.toInt();
+      final g = color.g.toInt();
+      final b = color.b.toInt();
+      final a = color.a.toInt();
+      final hexCode =
+          '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
+      debugPrint('预设颜色: $color, RGBA: ($r, $g, $b, $a), 十六进制: $hexCode');
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1768,7 +2021,22 @@ class _CollectionPropertyPanelState
             itemBuilder: (context, index) {
               return InkWell(
                 onTap: () {
-                  onColorSelected(presetColors[index]);
+                  final color = presetColors[index];
+                  final r = color.r.toInt();
+                  final g = color.g.toInt();
+                  final b = color.b.toInt();
+                  final a = color.a.toInt();
+
+                  // 使用我们的 _colorToHex 方法获取十六进制颜色
+                  final hexCode = _colorToHex(color);
+
+                  debugPrint(
+                      '选择颜色: $color, RGBA: ($r, $g, $b, $a), 十六进制: $hexCode');
+                  debugPrint(
+                      '颜色对象: ${color.runtimeType}, ARGB: (${color.a}, ${color.r}, ${color.g}, ${color.b})');
+
+                  // 直接传递颜色对象，让 _updateContentProperty 方法处理转换
+                  onColorSelected(color);
                   Navigator.of(context).pop();
                 },
                 child: Container(
@@ -1966,6 +2234,10 @@ class _CollectionPropertyPanelState
           }
 
           if (previewFormat != null) {
+            // 自动选择第一个候选项作为默认的集字
+            debugPrint(
+                '自动选择第一个候选项作为默认的集字: ${entity.id}, 字符: ${entity.character}, 索引: $i');
+
             characterImages['$i'] = {
               'characterId': entity.id,
               // 使用缩略图格式用于预览
@@ -2022,7 +2294,78 @@ class _CollectionPropertyPanelState
   void _updateContentProperty(String key, dynamic value) {
     final content = Map<String, dynamic>.from(
         widget.element['content'] as Map<String, dynamic>? ?? {});
-    content[key] = value;
+
+    // 特殊处理颜色属性，确保颜色值被正确处理
+    if (key == 'fontColor' || key == 'backgroundColor') {
+      debugPrint('更新颜色属性: $key = $value');
+
+      // 如果值是Color对象，转换为十六进制字符串
+      if (value is Color) {
+        final hexColor = _colorToHex(value);
+        debugPrint('颜色对象转换为十六进制: $value -> $hexColor');
+        content[key] = hexColor;
+      }
+      // 确保颜色值是有效的十六进制格式或颜色名称
+      else if (value is String) {
+        if (value == 'transparent') {
+          debugPrint('设置透明色: $key = $value');
+          content[key] = value;
+        }
+        // 处理颜色名称
+        else if (!value.startsWith('#') &&
+            [
+              'black',
+              'white',
+              'red',
+              'green',
+              'blue',
+              'yellow',
+              'grey',
+              'gray',
+              'cyan',
+              'orange',
+              'purple',
+              'pink',
+              'brown'
+            ].contains(value.toLowerCase())) {
+          debugPrint('设置颜色名称: $key = $value');
+          content[key] = value.toLowerCase();
+        }
+        // 处理十六进制颜色
+        else if (value.startsWith('#')) {
+          // 确保是有效的十六进制颜色
+          if (value.length == 7 || value.length == 9) {
+            debugPrint('设置十六进制颜色: $key = $value');
+            content[key] = value.toLowerCase();
+          } else {
+            debugPrint('无效的十六进制颜色格式: $value，使用默认值');
+            content[key] = key == 'fontColor' ? '#000000' : 'transparent';
+          }
+        } else {
+          // 如果没有#前缀，尝试添加它
+          final withPrefix = '#$value';
+          if ((withPrefix.length == 7 || withPrefix.length == 9) &&
+              RegExp(r'^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$')
+                  .hasMatch(withPrefix)) {
+            debugPrint('添加#前缀: $value -> $withPrefix');
+            content[key] = withPrefix.toLowerCase();
+          } else {
+            debugPrint('无效的颜色格式: $value，使用默认值');
+            content[key] = key == 'fontColor' ? '#000000' : 'transparent';
+          }
+        }
+      } else {
+        debugPrint('颜色值不是字符串或Color对象: $value，使用默认值');
+        content[key] = key == 'fontColor' ? '#000000' : 'transparent';
+      }
+
+      // 打印最终设置的颜色值
+      debugPrint('最终设置的颜色值: $key = ${content[key]}');
+    } else {
+      // 其他属性正常处理
+      content[key] = value;
+    }
+
     _updateProperty('content', content);
   }
 
