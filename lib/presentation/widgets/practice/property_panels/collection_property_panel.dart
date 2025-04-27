@@ -126,6 +126,11 @@ class _CollectionPropertyPanelState
         _textController.text = characters;
       }
 
+      // 检查是否需要保留characterImages
+      final shouldPreserveImages = oldContent.containsKey('characterImages') &&
+          content.containsKey('characterImages') &&
+          oldCharacters == characters;
+
       // 更新候选集字
       if (oldCharacters != characters) {
         _lastInputText = characters;
@@ -133,6 +138,13 @@ class _CollectionPropertyPanelState
           _cleanupCharacterImages(characters);
           _loadCandidateCharacters();
           _updateCharacterImagesForNewText(characters);
+        });
+      } else if (shouldPreserveImages) {
+        // 如果字符没有变化但元素被重新选中，确保保留图像信息
+        Future.microtask(() {
+          _loadCandidateCharacters();
+          // 自动更新缺失的字符图像
+          _autoUpdateMissingCharacterImages(characters);
         });
       }
     }
@@ -158,10 +170,143 @@ class _CollectionPropertyPanelState
 
     // 使用 addPostFrameCallback 推迟状态更新，避免在构建过程中调用 setState
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 首次加载时，完全重置characterImages并重新生成
-      _resetAndRegenerateCharacterImages(characters);
+      // 加载候选集字
       _loadCandidateCharacters();
+
+      // 自动更新缺失的字符图像
+      if (characters.isNotEmpty) {
+        _autoUpdateMissingCharacterImages(characters);
+      }
     });
+  }
+
+  // 自动更新缺失的字符图像
+  Future<void> _autoUpdateMissingCharacterImages(String characters) async {
+    try {
+      if (characters.isEmpty) return;
+
+      // 获取当前内容
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>? ?? {});
+
+      // 获取现有的字符图像信息
+      Map<String, dynamic> characterImages = {};
+      if (content.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+      }
+
+      // 获取字符服务
+      final characterService = ref.read(characterServiceProvider);
+      final characterImageService = ref.read(characterImageServiceProvider);
+
+      // 记录是否有更新
+      bool hasUpdates = false;
+
+      // 处理每个字符
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+
+        // 跳过换行符
+        if (char == '\n') continue;
+
+        // 检查该字符是否已有有效的图像信息
+        final imageInfo = characterImages['$i'] as Map<String, dynamic>?;
+
+        // 如果已有有效的图像信息且不是临时图像，则跳过
+        if (imageInfo != null &&
+            imageInfo.containsKey('characterId') &&
+            imageInfo.containsKey('type') &&
+            imageInfo.containsKey('format') &&
+            imageInfo['isTemporary'] != true) {
+          continue;
+        }
+
+        // 搜索匹配的候选集字
+        final matchingCharacters =
+            await characterService.searchCharacters(char);
+
+        // 如果没有找到匹配的候选集字，跳过
+        if (matchingCharacters.isEmpty) continue;
+
+        // 获取第一个匹配字符的详细信息
+        final characterEntity = await characterService
+            .getCharacterDetails(matchingCharacters.first.id);
+
+        // 如果无法获取详细信息，跳过
+        if (characterEntity == null) continue;
+
+        // 获取字符图像格式
+        final format =
+            await characterImageService.getAvailableFormat(characterEntity.id);
+
+        // 如果无法获取格式，跳过
+        if (format == null) continue;
+
+        // 检查可用的图像格式
+        final hasSquareBinary = await characterImageService.hasCharacterImage(
+            characterEntity.id, 'square-binary', 'png-binary');
+        final hasSquareOutline = await characterImageService.hasCharacterImage(
+            characterEntity.id, 'square-outline', 'svg-outline');
+
+        // 确定绘制格式
+        String drawingType;
+        String drawingFormat;
+
+        if (hasSquareBinary) {
+          drawingType = 'square-binary';
+          drawingFormat = 'png-binary';
+        } else if (hasSquareOutline) {
+          drawingType = 'square-outline';
+          drawingFormat = 'svg-outline';
+        } else {
+          drawingType = format['type'] ?? 'square-binary';
+          drawingFormat = format['format'] ?? 'png-binary';
+        }
+
+        // 创建字符图像信息
+        final Map<String, dynamic> newImageInfo = {
+          'characterId': characterEntity.id,
+          'type': format['type'] ?? 'square-binary',
+          'format': format['format'] ?? 'png-binary',
+          'drawingType': drawingType,
+          'drawingFormat': drawingFormat,
+          'transform': {
+            'scale': 1.0,
+            'rotation': 0.0,
+            'color': content['fontColor'] ?? '#000000',
+            'opacity': 1.0,
+            'invert': false,
+          }
+        };
+
+        // 如果之前有图像信息，尝试保留transform属性
+        if (imageInfo != null && imageInfo.containsKey('transform')) {
+          newImageInfo['transform'] = Map<String, dynamic>.from(
+              imageInfo['transform'] as Map<String, dynamic>);
+        }
+
+        // 更新字符图像信息
+        characterImages['$i'] = newImageInfo;
+        hasUpdates = true;
+      }
+
+      // 如果有更新，则更新元素内容
+      if (hasUpdates) {
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = characterImages;
+        _updateProperty('content', updatedContent);
+
+        // 刷新UI
+        if (mounted) {
+          setState(() {});
+        }
+
+        debugPrint('已自动更新缺失的字符图像');
+      }
+    } catch (e) {
+      debugPrint('自动更新缺失的字符图像失败: $e');
+    }
   }
 
   // 清理多余的字符图像信息 (由原面板拆分而来的方法)
@@ -302,6 +447,108 @@ class _CollectionPropertyPanelState
     });
   }
 
+  // 新增：将基于索引的characterImages转换为基于字符的格式
+  Map<String, dynamic> _convertToCharacterBasedImages(
+      String characters, Map<String, dynamic> indexBasedImages) {
+    final Map<String, dynamic> characterBasedImages = {};
+
+    // 遍历每个索引
+    for (final entry in indexBasedImages.entries) {
+      final String indexKey = entry.key;
+      final dynamic imageInfo = entry.value;
+
+      // 尝试解析索引
+      try {
+        final int index = int.parse(indexKey);
+        if (index >= 0 && index < characters.length) {
+          // 生成新的键：字符+位置，确保唯一性
+          final String character = characters[index];
+          final String newKey = '$character-$index';
+
+          // 复制图像信息并添加字符信息
+          if (imageInfo is Map<String, dynamic>) {
+            final Map<String, dynamic> newImageInfo =
+                Map<String, dynamic>.from(imageInfo);
+            newImageInfo['character'] = character; // 存储字符本身
+            newImageInfo['originalIndex'] = index; // 存储原始索引以备参考
+            characterBasedImages[newKey] = newImageInfo;
+          } else {
+            characterBasedImages[newKey] = imageInfo;
+          }
+        }
+      } catch (e) {
+        // 如果键不是一个索引，就直接复制
+        characterBasedImages[indexKey] = imageInfo;
+      }
+    }
+
+    return characterBasedImages;
+  }
+
+  // 新增：将基于字符的characterImages转换回基于索引的格式
+  Map<String, dynamic> _convertToIndexBasedImages(
+      String characters, Map<String, dynamic> characterBasedImages) {
+    final Map<String, dynamic> indexBasedImages = {};
+
+    // 创建字符到索引的映射
+    final Map<String, List<int>> characterToIndices = {};
+    for (int i = 0; i < characters.length; i++) {
+      final String character = characters[i];
+      characterToIndices.putIfAbsent(character, () => []).add(i);
+    }
+
+    // 遍历基于字符的图像信息
+    for (final entry in characterBasedImages.entries) {
+      final String key = entry.key;
+      final dynamic imageInfo = entry.value;
+
+      if (imageInfo is Map<String, dynamic> &&
+          imageInfo.containsKey('character')) {
+        final String character = imageInfo['character'];
+
+        // 查找该字符的所有索引
+        final List<int>? indices = characterToIndices[character];
+        if (indices != null && indices.isNotEmpty) {
+          // 尝试匹配原始索引
+          int targetIndex = indices.first; // 默认使用第一个匹配的索引
+          if (imageInfo.containsKey('originalIndex')) {
+            final int originalIndex = imageInfo['originalIndex'];
+            if (indices.contains(originalIndex)) {
+              targetIndex = originalIndex; // 如果原始索引仍然有效，就使用它
+            }
+          }
+
+          // 复制图像信息并移除不需要的字段
+          final Map<String, dynamic> newImageInfo =
+              Map<String, dynamic>.from(imageInfo);
+          newImageInfo.remove('character');
+          newImageInfo.remove('originalIndex');
+
+          // 添加到基于索引的映射
+          indexBasedImages['$targetIndex'] = newImageInfo;
+        }
+      } else {
+        // 处理不符合预期格式的条目
+        final keyParts = key.split('-');
+        if (keyParts.length == 2) {
+          try {
+            final int index = int.parse(keyParts[1]);
+            if (index >= 0 && index < characters.length) {
+              indexBasedImages['$index'] = imageInfo;
+            }
+          } catch (e) {
+            // 无法解析索引，跳过
+          }
+        } else {
+          // 保留原始键
+          indexBasedImages[key] = imageInfo;
+        }
+      }
+    }
+
+    return indexBasedImages;
+  }
+
   // 新增：获取字符显示标签
   String _getCharacterLabel(int charIndex) {
     final content = widget.element['content'] as Map<String, dynamic>;
@@ -312,33 +559,6 @@ class _CollectionPropertyPanelState
     }
 
     return '未知';
-  }
-
-  // 初始化字符图像 (由原面板拆分而来的方法)
-  Future<void> _initCharacterImages() async {
-    try {
-      final content = widget.element['content'] as Map<String, dynamic>? ?? {};
-      final characters = content['characters'] as String? ?? '';
-
-      if (characters.isEmpty) {
-        return;
-      }
-
-      // 确保存在characterImages字段（即使为空）
-      if (!content.containsKey('characterImages')) {
-        final updatedContent = Map<String, dynamic>.from(content);
-        updatedContent['characterImages'] = <String, dynamic>{};
-        _updateProperty('content', updatedContent);
-      }
-
-      // 获取候选集字
-      await _loadCandidateCharacters();
-
-      // 为每个字符查找匹配的候选集字并设置图像信息
-      // (这里省略实现细节，保留在原代码里)
-    } catch (e) {
-      debugPrint('初始化字符图像失败: $e');
-    }
   }
 
   // 加载候选集字
@@ -444,35 +664,42 @@ class _CollectionPropertyPanelState
 
   // 处理文本变化
   void _onTextChanged(String value) {
-    widget.onUpdateChars(value);
-  }
+    final oldContent = widget.element['content'] as Map<String, dynamic>;
+    final oldCharacters = oldContent['characters'] as String? ?? '';
 
-  // 完全重置characterImages并根据characters重新生成
-  Future<void> _resetAndRegenerateCharacterImages(String characters) async {
-    try {
-      debugPrint('首次加载字帖，重置并重新生成characterImages');
+    // 如果文本实际发生了变化
+    if (oldCharacters != value) {
+      // 获取当前的characterImages
+      Map<String, dynamic> characterImages = {};
+      if (oldContent.containsKey('characterImages')) {
+        characterImages = Map<String, dynamic>.from(
+            oldContent['characterImages'] as Map<String, dynamic>);
 
-      // 获取当前内容
-      final content = Map<String, dynamic>.from(
-          widget.element['content'] as Map<String, dynamic>? ?? {});
+        // 1. 先转换为基于字符的格式
+        final characterBasedImages =
+            _convertToCharacterBasedImages(oldCharacters, characterImages);
 
-      // 完全清空characterImages
-      content['characterImages'] = <String, dynamic>{};
+        // 2. 再转换回基于索引的格式，但使用新的字符串
+        final newIndexBasedImages =
+            _convertToIndexBasedImages(value, characterBasedImages);
 
-      // 更新元素内容
-      _updateProperty('content', content);
+        // 3. 更新内容
+        final updatedContent = Map<String, dynamic>.from(oldContent);
+        updatedContent['characters'] = value;
+        updatedContent['characterImages'] = newIndexBasedImages;
 
-      // 如果有字符，则初始化字符图像信息
-      if (characters.isNotEmpty) {
-        await _initCharacterImages();
+        // 更新属性
+        widget.onElementPropertiesChanged({'content': updatedContent});
 
-        // 为所有字符更新图像
-        await _updateCharacterImagesForNewText(characters);
+        // 记录日志
+        debugPrint('文本已更新并重新映射字符图像信息');
+      } else {
+        // 如果没有characterImages，直接更新文本
+        widget.onUpdateChars(value);
       }
-
-      debugPrint('characterImages已重置并重新生成完成');
-    } catch (e) {
-      debugPrint('重置并重新生成characterImages失败: $e');
+    } else {
+      // 文本没有变化，直接调用原方法
+      widget.onUpdateChars(value);
     }
   }
 
@@ -531,61 +758,98 @@ class _CollectionPropertyPanelState
         characterImages = {};
       }
 
-      // 在属性面板中使用缩略图，但在集字元素绘制时优先使用方形二值化图，其次是方形SVG轮廓
-      final characterImageService = ref.read(characterImageServiceProvider);
-
-      // 检查可用的图像格式
-      bool hasSquareBinary = await characterImageService.hasCharacterImage(
-          characterId, 'square-binary', 'png-binary');
-      bool hasSquareOutline = await characterImageService.hasCharacterImage(
-          characterId, 'square-outline', 'svg-outline');
-
-      // 确定绘制格式
-      String drawingType;
-      String drawingFormat;
-
-      if (hasSquareBinary) {
-        drawingType = 'square-binary';
-        drawingFormat = 'png-binary';
-      } else if (hasSquareOutline) {
-        drawingType = 'square-outline';
-        drawingFormat = 'svg-outline';
-      } else {
-        drawingType = 'square-binary';
-        drawingFormat = 'png-binary';
-      }
-
-      // 创建字符图像信息
-      final Map<String, dynamic> imageInfo = {
-        'characterId': characterId,
-        'type': type,
-        'format': format,
-        'drawingType': drawingType,
-        'drawingFormat': drawingFormat,
-      };
-
-      // 如果之前的图像信息存在transform属性，则保留它
+      // 首先检查是否已经存在该索引的图像信息
       final existingInfo = characterImages['$index'] as Map<String, dynamic>?;
-      if (existingInfo != null && existingInfo.containsKey('transform')) {
-        imageInfo['transform'] = Map<String, dynamic>.from(
-            existingInfo['transform'] as Map<String, dynamic>);
+
+      // 如果characterId相同，则尽可能保留现有图像信息
+      if (existingInfo != null && existingInfo['characterId'] == characterId) {
+        // 仅更新type和format，保留drawingType和drawingFormat
+        existingInfo['type'] = type;
+        existingInfo['format'] = format;
+
+        // 如果是临时字符，添加isTemporary标记
+        if (isTemporary) {
+          existingInfo['isTemporary'] = true;
+        } else if (existingInfo.containsKey('isTemporary')) {
+          existingInfo.remove('isTemporary');
+        }
+
+        // 直接使用更新后的现有信息
+        characterImages['$index'] = existingInfo;
       } else {
-        // 否则创建默认的transform属性
-        imageInfo['transform'] = {
-          'scale': 1.0,
-          'rotation': 0.0,
-          'color': content['fontColor'] ?? '#000000',
-          'opacity': 1.0,
-          'invert': false,
+        // 如果不存在或characterId不同，则需要创建新的图像信息
+
+        // 在属性面板中使用缩略图，但在集字元素绘制时优先使用方形二值化图，其次是方形SVG轮廓
+        final characterImageService = ref.read(characterImageServiceProvider);
+
+        // 检查可用的图像格式
+        bool hasSquareBinary = await characterImageService.hasCharacterImage(
+            characterId, 'square-binary', 'png-binary');
+        bool hasSquareOutline = await characterImageService.hasCharacterImage(
+            characterId, 'square-outline', 'svg-outline');
+
+        // 确定绘制格式
+        String drawingType;
+        String drawingFormat;
+
+        if (hasSquareBinary) {
+          drawingType = 'square-binary';
+          drawingFormat = 'png-binary';
+        } else if (hasSquareOutline) {
+          drawingType = 'square-outline';
+          drawingFormat = 'svg-outline';
+        } else {
+          drawingType = type;
+          drawingFormat = format;
+        }
+
+        // 创建新的字符图像信息
+        final Map<String, dynamic> imageInfo = {
+          'characterId': characterId,
+          'type': type,
+          'format': format,
+          'drawingType': drawingType,
+          'drawingFormat': drawingFormat,
         };
-      }
 
-      // 如果是临时字符，添加isTemporary标记
-      if (isTemporary) {
-        imageInfo['isTemporary'] = true;
-      }
+        // 尝试保留现有的transform属性
+        if (existingInfo != null && existingInfo.containsKey('transform')) {
+          imageInfo['transform'] = Map<String, dynamic>.from(
+              existingInfo['transform'] as Map<String, dynamic>);
+        } else {
+          // 否则创建默认的transform属性
+          imageInfo['transform'] = {
+            'scale': 1.0,
+            'rotation': 0.0,
+            'color': content['fontColor'] ?? '#000000',
+            'opacity': 1.0,
+            'invert': false,
+          };
+        }
 
-      characterImages['$index'] = imageInfo;
+        // 如果是临时字符，添加isTemporary标记
+        if (isTemporary) {
+          imageInfo['isTemporary'] = true;
+        }
+
+        // 保留其他可能存在的字段
+        if (existingInfo != null) {
+          for (final key in existingInfo.keys) {
+            if (!imageInfo.containsKey(key) &&
+                key != 'characterId' &&
+                key != 'type' &&
+                key != 'format' &&
+                key != 'drawingType' &&
+                key != 'drawingFormat' &&
+                key != 'transform' &&
+                key != 'isTemporary') {
+              imageInfo[key] = existingInfo[key];
+            }
+          }
+        }
+
+        characterImages['$index'] = imageInfo;
+      }
 
       final updatedContent = Map<String, dynamic>.from(content);
       updatedContent['characterImages'] = characterImages;
@@ -645,6 +909,9 @@ class _CollectionPropertyPanelState
         // 刷新UI
         setState(() {});
       }
+
+      // 自动更新缺失的字符图像
+      await _autoUpdateMissingCharacterImages(newText);
     } catch (e) {
       debugPrint('更新字符图像信息失败: $e');
     }

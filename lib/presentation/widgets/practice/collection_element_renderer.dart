@@ -28,11 +28,6 @@ class CollectionElementRenderer {
     bool enableSoftLineBreak = false,
     WidgetRef? ref,
   }) {
-    // 添加调试日志，查看传入的颜色值
-    debugPrint('集字布局 - 传入的字体颜色: $fontColor');
-    debugPrint('集字布局 - 传入的背景颜色: $backgroundColor');
-    debugPrint('集字布局 - 启用软回车: $enableSoftLineBreak');
-
     if (characters.isEmpty) {
       return const Center(
           child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
@@ -73,9 +68,6 @@ class CollectionElementRenderer {
     final parsedFontColor = _parseColor(fontColor);
     final parsedBackgroundColor = _parseColor(backgroundColor);
 
-    debugPrint('解析后的字体颜色: $parsedFontColor');
-    debugPrint('解析后的背景颜色: $parsedBackgroundColor');
-
     // 计算每个字符的位置
     final List<_CharacterPosition> positions = _calculateCharacterPositions(
       charList: charList,
@@ -110,9 +102,6 @@ class CollectionElementRenderer {
         painter.setRepaintCallback(() {
           setState(() {});
         });
-
-        // 添加调试信息
-        debugPrint('创建集字绘制器: ref=${ref != null ? "非空" : "为空"}');
 
         return CustomPaint(
           size: Size(availableWidth, availableHeight),
@@ -198,16 +187,6 @@ class CollectionElementRenderer {
         }
       }
 
-      // 如果启用了软回车，在调试模式下显示行分布信息
-      if (enableSoftLineBreak) {
-        debugPrint('启用软回车 - 行分布情况:');
-        int maxRow = rowIndices.isEmpty ? 0 : rowIndices.reduce(max);
-        for (int row = 0; row <= maxRow; row++) {
-          int charsInRow = rowIndices.where((r) => r == row).length;
-          debugPrint('  - 第${row + 1}行: $charsInRow 个字符');
-        }
-      }
-
       // 计算行数（使用最大行号+1）
       final rowCount = rowIndices.isEmpty ? 0 : rowIndices.reduce(max) + 1;
 
@@ -269,8 +248,6 @@ class CollectionElementRenderer {
               effectiveLetterSpacing =
                   (availableWidth - charsInCurrentRow * charSize) /
                       (charsInCurrentRow - 1);
-              debugPrint(
-                  '水平两端对齐: 行 $rowIndex, 字符数 $charsInCurrentRow, 有效间距 $effectiveLetterSpacing');
             }
             startX = isLeftToRight ? 0 : 0;
             break;
@@ -353,16 +330,6 @@ class CollectionElementRenderer {
         }
       }
 
-      // 如果启用了软回车，在调试模式下显示列分布信息
-      if (enableSoftLineBreak) {
-        debugPrint('启用软回车 - 列分布情况:');
-        int maxCol = colIndices.isEmpty ? 0 : colIndices.reduce(max);
-        for (int col = 0; col <= maxCol; col++) {
-          int charsInCol = colIndices.where((c) => c == col).length;
-          debugPrint('  - 第${col + 1}列: $charsInCol 个字符');
-        }
-      }
-
       // 计算列数（使用最大列号+1）
       final colCount = colIndices.isEmpty ? 0 : colIndices.reduce(max) + 1;
 
@@ -424,8 +391,6 @@ class CollectionElementRenderer {
               effectiveLetterSpacing =
                   (availableHeight - charsInCurrentCol * charSize) /
                       (charsInCurrentCol - 1);
-              debugPrint(
-                  '垂直两端对齐: 列 $colIndex, 字符数 $charsInCurrentCol, 有效间距 $effectiveLetterSpacing');
             }
             startY = 0;
             break;
@@ -464,11 +429,8 @@ class CollectionElementRenderer {
 
   /// 解析颜色字符串
   static Color _parseColor(String colorStr) {
-    debugPrint('开始解析颜色: "$colorStr"');
-
     // 处理透明色
     if (colorStr == 'transparent') {
-      debugPrint('解析为透明色');
       return Colors.transparent;
     }
 
@@ -504,23 +466,17 @@ class CollectionElementRenderer {
       String cleanHex =
           colorStr.startsWith('#') ? colorStr.substring(1) : colorStr;
 
-      debugPrint('清理后的十六进制: "$cleanHex"');
-
       // 处理不同长度的十六进制颜色
       if (cleanHex.length == 6) {
         // RRGGBB格式，添加完全不透明的Alpha通道
         cleanHex = 'ff$cleanHex';
-        debugPrint('6位十六进制，添加不透明Alpha: "$cleanHex"');
       } else if (cleanHex.length == 8) {
         // AARRGGBB格式，已经包含Alpha通道
-        debugPrint('8位十六进制，已包含Alpha: "$cleanHex"');
       } else if (cleanHex.length == 3) {
         // RGB格式，扩展为RRGGBB并添加完全不透明的Alpha通道
         cleanHex =
             'ff${cleanHex[0]}${cleanHex[0]}${cleanHex[1]}${cleanHex[1]}${cleanHex[2]}${cleanHex[2]}';
-        debugPrint('3位十六进制，扩展并添加Alpha: "$cleanHex"');
       } else {
-        debugPrint('⚠️ 无效的颜色格式: "$colorStr" (清理后: "$cleanHex")，使用黑色');
         return Colors.black; // 无效格式，返回黑色
       }
 
@@ -530,20 +486,8 @@ class CollectionElementRenderer {
       // 直接使用Color构造函数创建颜色
       final Color color = Color(colorValue);
 
-      // 使用color.value获取颜色值，然后提取RGBA分量
-      final int r = (color.value >> 16) & 0xFF;
-      final int g = (color.value >> 8) & 0xFF;
-      final int b = color.value & 0xFF;
-      final int a = (color.value >> 24) & 0xFF;
-
-      debugPrint('✅ 解析颜色成功: "$colorStr" -> 0x$cleanHex -> $color');
-      debugPrint('  - RGBA: ($r, $g, $b, $a)');
-      debugPrint(
-          '  - 直接获取: (${color.red}, ${color.green}, ${color.blue}, ${color.alpha})');
-
       return color;
     } catch (e) {
-      debugPrint('❌ 解析颜色失败: $e, colorStr: "$colorStr"，使用黑色');
       return Colors.black; // 出错时返回黑色
     }
   }
@@ -557,7 +501,6 @@ class GlobalImageCache {
   // 添加图像到缓存
   static void add(String key, ui.Image image) {
     cache[key] = image;
-    debugPrint('📦 图像已添加到全局缓存: $key, 当前全局缓存大小: ${cache.length}');
   }
 
   // 检查缓存中是否有图像
@@ -627,10 +570,8 @@ class _CollectionPainter extends CustomPainter {
         for (var characterIndex = 0;
             characterIndex < characters.length;
             characterIndex++) {
-          debugPrint('处理字符: ${characters[characterIndex]}');
           // 查找字符对应的图片信息
           if (characters[characterIndex] == '\n') {
-            debugPrint('跳过空字符');
             continue;
           }
           if (positionIndex >= positions.length) {
@@ -654,25 +595,18 @@ class _CollectionPainter extends CustomPainter {
             // 如果缓存中没有图像且不在加载中，则启动异步加载
             if (!_imageCache.containsKey(cacheKey) &&
                 !_loadingImages.contains(cacheKey)) {
-              debugPrint('预加载字符图像: $cacheKey');
               _loadAndCacheImage(characterId, type, format);
             }
           }
         }
       });
-    } else {
-      debugPrint('无法预加载字符图片: ref 为 null');
     }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    debugPrint('开始绘制集字元素，字符数量: ${positions.length}');
-    debugPrint('characterImages类型: ${characterImages.runtimeType}');
-
     // 添加裁剪区域，限制在画布范围内
     final clipRect = Rect.fromLTWH(0, 0, size.width, size.height);
-    debugPrint('⚠️ 添加集字元素裁剪区域: $clipRect');
     canvas.clipRect(clipRect);
 
     // 绘制每个字符
@@ -680,7 +614,6 @@ class _CollectionPainter extends CustomPainter {
     var characterIndex = 0;
     for (final chararcter in characters) {
       if (chararcter == '\n') {
-        debugPrint('跳过空字符');
         characterIndex++;
         continue;
       }
@@ -695,14 +628,9 @@ class _CollectionPainter extends CustomPainter {
       characterIndex++;
 
       if (charImage != null) {
-        debugPrint('找到字符 ${position.char} 的图片: $charImage');
         // 绘制图片
         _drawCharacterImage(canvas, position, charImage);
       } else {
-        debugPrint('❌ 未找到字符 "${position.char}" 的图片，使用占位符');
-        debugPrint('  - 字符索引: ${characters.indexOf(position.char)}');
-        debugPrint('  - 位置: (${position.x}, ${position.y})');
-        debugPrint('  - 尺寸: ${position.size}x${position.size}');
         // 找不到图片，绘制文本作为占位符
         _drawCharacterText(canvas, position);
       }
@@ -747,13 +675,6 @@ class _CollectionPainter extends CustomPainter {
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
-
-      // 提取RGB分量进行调试
-      final int r = position.backgroundColor.r.toInt();
-      final int g = position.backgroundColor.g.toInt();
-      final int b = position.backgroundColor.b.toInt();
-      final int a = position.backgroundColor.a.toInt();
-      debugPrint('  - 背景色RGBA: ($r, $g, $b, $a)');
     }
 
     // 检查是否有字符图像信息，并且不是临时字符
@@ -773,16 +694,9 @@ class _CollectionPainter extends CustomPainter {
           charImage['transform'] is Map<String, dynamic>) {
         final transform = charImage['transform'] as Map<String, dynamic>;
         invertDisplay = transform['invert'] == true;
-
-        if (invertDisplay) {
-          debugPrint('⚠️ 检测到字符需要反转: $characterId (transform.invert=true)');
-        }
       } else if (charImage.containsKey('invert')) {
         // 直接检查invert属性
         invertDisplay = charImage['invert'] == true;
-        if (invertDisplay) {
-          debugPrint('⚠️ 检测到字符需要反转: $characterId (invert=true)');
-        }
       }
 
       // 获取图片路径
@@ -813,7 +727,7 @@ class _CollectionPainter extends CustomPainter {
           imagePath =
               '${storage.getAppDataPath()}/characters/$characterId/$fileName';
         } catch (e) {
-          debugPrint('❌ 获取图片路径失败: $e');
+          // 处理错误
         }
       }
 
@@ -821,34 +735,6 @@ class _CollectionPainter extends CustomPainter {
       final bool isSubstitute = charImage['isSubstitute'] == true;
       final String originalChar =
           charImage['originalChar'] as String? ?? position.char;
-
-      if (isSubstitute) {
-        debugPrint('🔄 绘制替代字符 "${position.char}" 图像:');
-        debugPrint('  - 原始字符: $originalChar');
-
-        if (charImage.containsKey('substituteKey')) {
-          debugPrint('  - 替代键: ${charImage['substituteKey']}');
-        }
-
-        if (charImage.containsKey('substituteChar')) {
-          debugPrint('  - 替代字符: ${charImage['substituteChar'] ?? '未知'}');
-        }
-
-        if (charImage.containsKey('substituteIndex')) {
-          debugPrint('  - 替代索引: ${charImage['substituteIndex']}');
-        }
-      } else {
-        debugPrint('🎨 绘制字符 "${position.char}" 图像:');
-      }
-
-      debugPrint('  - 字符ID: $characterId');
-      debugPrint('  - 图片类型: $type');
-      debugPrint('  - 图片格式: $format');
-      // 显示反转信息
-      debugPrint('  - 是否反转显示: $invertDisplay');
-      if (imagePath.isNotEmpty) {
-        debugPrint('  - 图片路径: $imagePath');
-      }
 
       // 创建缓存键
       final cacheKey = '$characterId-$type-$format';
@@ -859,14 +745,12 @@ class _CollectionPainter extends CustomPainter {
           GlobalImageCache.contains(actualCacheKey)) {
         final cacheKeyToUse =
             GlobalImageCache.contains(cacheKey) ? cacheKey : actualCacheKey;
-        debugPrint('✅ 使用全局缓存的图像: $cacheKeyToUse (原始键: $cacheKey)');
         // 使用全局缓存的图像
         final image = GlobalImageCache.get(cacheKeyToUse)!;
 
         // 同时更新本地缓存
         if (!_imageCache.containsKey(cacheKey)) {
           _imageCache[cacheKey] = image;
-          debugPrint('📦 从全局缓存复制到本地缓存: $cacheKey');
         }
 
         // 准备绘制
@@ -885,24 +769,13 @@ class _CollectionPainter extends CustomPainter {
         // 如果不需要任何颜色处理，直接绘制原始图像
         if (!needsColorProcessing) {
           canvas.drawImageRect(image, srcRect, rect, paint);
-          debugPrint('✅ 图像绘制完成: ${image.width}x${image.height} (无颜色处理)');
           return;
         }
 
         // 需要进行颜色处理
-        debugPrint(
-            '🎨 应用颜色处理: fontColor=${position.fontColor}, invertDisplay=$invertDisplay');
-
-        // 使用单次绘制操作处理颜色
         canvas.saveLayer(rect, Paint());
 
         if (invertDisplay) {
-          // 反转处理：黑色变透明，透明变黑色，然后应用字体颜色
-          debugPrint('🔄 应用颜色反转效果（黑色转透明，透明转黑色）');
-
-          // 使用更有效的方法实现反转效果
-          debugPrint('  - 使用反转填充方法');
-
           // 步骤1：首先用字体颜色填充整个区域
           canvas.drawRect(rect, Paint()..color = position.fontColor);
 
@@ -913,9 +786,6 @@ class _CollectionPainter extends CustomPainter {
         } else {
           // 标准处理：直接将黑色替换为字体颜色
           if (type.contains('binary') && format.contains('binary')) {
-            debugPrint('  - 应用字体颜色替换: ${position.fontColor}');
-
-            // 使用更高效的方法进行颜色替换
             // 1. 首先绘制原始图像
             canvas.drawImageRect(image, srcRect, rect, Paint());
 
@@ -934,21 +804,12 @@ class _CollectionPainter extends CustomPainter {
 
         // 完成绘制
         canvas.restore();
-
-        debugPrint('✅ 图像绘制完成: ${image.width}x${image.height} (应用了颜色处理)');
       }
     }
   }
 
   /// 绘制字符文本
   void _drawCharacterText(Canvas canvas, _CharacterPosition position) {
-    debugPrint('📝 绘制字符文本:');
-    debugPrint('  - 字符: "${position.char}"');
-    debugPrint('  - 位置: (${position.x}, ${position.y})');
-    debugPrint('  - 尺寸: ${position.size}x${position.size}');
-    debugPrint('  - 字体颜色: ${position.fontColor}');
-    debugPrint('  - 背景颜色: ${position.backgroundColor}');
-
     // 创建绘制区域
     final rect = Rect.fromLTWH(
       position.x,
@@ -963,29 +824,13 @@ class _CollectionPainter extends CustomPainter {
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, bgPaint);
-      debugPrint('  - 使用自定义背景色: ${position.backgroundColor}');
-
-      // 提取RGB分量进行调试
-      final int r = position.backgroundColor.r.toInt();
-      final int g = position.backgroundColor.g.toInt();
-      final int b = position.backgroundColor.b.toInt();
-      final int a = position.backgroundColor.a.toInt();
-      debugPrint('  - 背景色RGBA: ($r, $g, $b, $a)');
     } else {
       // 绘制默认占位符背景
       final paint = Paint()
         ..color = Colors.grey.withAlpha(26) // 约等于 0.1 不透明度
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, paint);
-      debugPrint('  - 使用默认背景色: ${Colors.grey.withAlpha(26)}');
     }
-
-    // 提取字体颜色的RGB分量进行调试
-    final int fr = position.fontColor.r.toInt();
-    final int fg = position.fontColor.g.toInt();
-    final int fb = position.fontColor.b.toInt();
-    final int fa = position.fontColor.a.toInt();
-    debugPrint('  - 字体颜色RGBA: ($fr, $fg, $fb, $fa)');
 
     // 绘制字符文本
     final textPainter = TextPainter(
@@ -1005,9 +850,6 @@ class _CollectionPainter extends CustomPainter {
       position.y + (position.size - textPainter.height) / 2,
     );
 
-    debugPrint('  - 文本尺寸: ${textPainter.width}x${textPainter.height}');
-    debugPrint('  - 文本位置: (${textOffset.dx}, ${textOffset.dy})');
-
     textPainter.paint(
       canvas,
       textOffset,
@@ -1017,38 +859,10 @@ class _CollectionPainter extends CustomPainter {
   /// 查找字符对应的图片
   dynamic _findCharacterImage(String char, int positionIndex) {
     try {
-      debugPrint('🔍 查找字符 "$char" 的图片:');
-      debugPrint('  - characterImages类型: ${characterImages.runtimeType}');
-
       // 检查 characterImages 是否是 Map 类型
       if (characterImages is Map<String, dynamic>) {
         // 如果是 Map 类型，则直接查找字符索引
         final charImages = characterImages as Map<String, dynamic>;
-        debugPrint('  - characterImages是Map类型，包含 ${charImages.length} 个键');
-        debugPrint('  - characterImages键: ${charImages.keys.toList()}');
-
-        // 尝试直接用字符作为键查找
-        // if (charImages.containsKey(char)) {
-        //   final imageInfo = charImages[char] as Map<String, dynamic>;
-        //   debugPrint('✅ 直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
-
-        //   // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-        //   final result = {
-        //     'characterId': imageInfo['characterId'],
-        //     'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-        //     'format': imageInfo['drawingFormat'] ?? 'png-binary',
-        //   };
-
-        //   // 添加transform属性（如果有）
-        //   if (imageInfo.containsKey('transform')) {
-        //     result['transform'] = imageInfo['transform'];
-        //   } else if (imageInfo.containsKey('invert') &&
-        //       imageInfo['invert'] == true) {
-        //     result['invert'] = true;
-        //   }
-
-        //   return result;
-        // }
 
         // 查找当前字符在集字内容中的索引
         int charIndex = -1;
@@ -1058,14 +872,12 @@ class _CollectionPainter extends CustomPainter {
             break;
           }
         }
-        debugPrint('  - 字符 "$char" 在集字内容中的索引: $charIndex');
 
         // 如果找到了字符索引，则查找对应的图像信息
         if (charIndex >= 0) {
           // 直接在 charImages 中查找字符索引
           if (charImages.containsKey('$charIndex')) {
             final imageInfo = charImages['$charIndex'] as Map<String, dynamic>;
-            debugPrint('✅ 在charImages中找到索引 $charIndex 的图像信息: $imageInfo');
 
             // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
             return {
@@ -1075,61 +887,6 @@ class _CollectionPainter extends CustomPainter {
               'transform': imageInfo['transform'],
             };
           }
-          debugPrint('  - 在charImages中未找到索引 "$charIndex" 的图像信息');
-
-          // // 兼容旧格式：检查是否有 characterImages 子 Map
-          // if (charImages.containsKey('characterImages')) {
-          //   final images =
-          //       charImages['characterImages'] as Map<String, dynamic>?;
-          //   debugPrint('  - 检查characterImages子Map: ${images?.keys.toList()}');
-
-          //   // 尝试直接用字符作为键查找
-          //   if (images != null && images.containsKey(char)) {
-          //     final imageInfo = images[char] as Map<String, dynamic>;
-          //     debugPrint(
-          //         '✅ 在characterImages子Map中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
-
-          //     // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-          //     final result = {
-          //       'characterId': imageInfo['characterId'],
-          //       'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-          //       'format': imageInfo['drawingFormat'] ?? 'png-binary',
-          //     };
-
-          //     // 添加transform属性（如果有）
-          //     if (imageInfo.containsKey('transform')) {
-          //       result['transform'] = imageInfo['transform'];
-          //     } else if (imageInfo.containsKey('invert') &&
-          //         imageInfo['invert'] == true) {
-          //       result['invert'] = true;
-          //     }
-
-          //     return result;
-          //   }
-
-          //   if (images != null && images.containsKey('$charIndex')) {
-          //     final imageInfo = images['$charIndex'] as Map<String, dynamic>;
-          //     debugPrint(
-          //         '✅ 在characterImages子Map中找到索引 $charIndex 的图像信息: $imageInfo');
-
-          //     // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-          //     final result = {
-          //       'characterId': imageInfo['characterId'],
-          //       'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-          //       'format': imageInfo['drawingFormat'] ?? 'png-binary',
-          //     };
-
-          //     // 添加transform属性（如果有）
-          //     if (imageInfo.containsKey('transform')) {
-          //       result['transform'] = imageInfo['transform'];
-          //     } else if (imageInfo.containsKey('invert') &&
-          //         imageInfo['invert'] == true) {
-          //       result['invert'] = true;
-          //     }
-
-          //     return result;
-          //   }
-          // }
 
           // 检查是否有 content.characterImages 结构
           if (charImages.containsKey('content')) {
@@ -1137,38 +894,9 @@ class _CollectionPainter extends CustomPainter {
             if (content != null && content.containsKey('characterImages')) {
               final images =
                   content['characterImages'] as Map<String, dynamic>?;
-              debugPrint(
-                  '  - 检查content.characterImages: ${images?.keys.toList()}');
-
-              // 尝试直接用字符作为键查找
-              // if (images != null && images.containsKey(char)) {
-              //   final imageInfo = images[char] as Map<String, dynamic>;
-              //   debugPrint(
-              //       '✅ 在content.characterImages中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
-
-              //   // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-              //   final result = {
-              //     'characterId': imageInfo['characterId'],
-              //     'type':
-              //         imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-              //     'format': imageInfo['drawingFormat'] ?? 'png-binary',
-              //   };
-
-              //   // 添加transform属性（如果有）
-              //   if (imageInfo.containsKey('transform')) {
-              //     result['transform'] = imageInfo['transform'];
-              //   } else if (imageInfo.containsKey('invert') &&
-              //       imageInfo['invert'] == true) {
-              //     result['invert'] = true;
-              //   }
-
-              //   return result;
-              // }
 
               if (images != null && images.containsKey('$charIndex')) {
                 final imageInfo = images['$charIndex'] as Map<String, dynamic>;
-                debugPrint(
-                    '✅ 在content.characterImages中找到索引 $charIndex 的图像信息: $imageInfo');
 
                 // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
                 final result = {
@@ -1192,24 +920,19 @@ class _CollectionPainter extends CustomPainter {
           }
         }
 
-        // 不再尝试查找替代字符，直接返回null
-        debugPrint('❌ 未找到字符 "$char" 的图像信息，将使用占位图');
         return null;
       } else if (characterImages is List) {
         // 如果是 List 类型，则遍历查找
         final charImagesList = characterImages as List;
-        debugPrint('  - characterImages是List类型，长度: ${charImagesList.length}');
 
         for (int i = 0; i < charImagesList.length; i++) {
           final image = charImagesList[i];
-          debugPrint('  - 检查列表项 $i: $image');
 
           if (image is Map<String, dynamic>) {
             // 检查是否有字符信息
             if (image.containsKey('character') && image['character'] == char) {
               // 检查是否有字符图像信息
               if (image.containsKey('characterId')) {
-                debugPrint('✅ 在List中找到字符 "$char" 的图像信息: $image');
                 // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
                 final result = {
                   'characterId': image['characterId'],
@@ -1232,16 +955,11 @@ class _CollectionPainter extends CustomPainter {
             }
           }
         }
-        debugPrint('❌ 在List中未找到字符 "$char" 的图像信息');
-      } else {
-        debugPrint('❌ characterImages类型不支持: ${characterImages.runtimeType}');
       }
     } catch (e, stack) {
-      debugPrint('❌ 查找字符图像失败: $e');
-      debugPrint('  - 堆栈: $stack');
+      // 错误处理
     }
 
-    debugPrint('❌ 未找到字符 "$char" 的图像信息，返回null');
     return null;
   }
 
@@ -1256,27 +974,19 @@ class _CollectionPainter extends CustomPainter {
         GlobalImageCache.contains(actualCacheKey)) {
       final cacheKeyToUse =
           GlobalImageCache.contains(cacheKey) ? cacheKey : actualCacheKey;
-      debugPrint('✅ 图像已存在于全局缓存中: $cacheKeyToUse (原始键: $cacheKey)');
 
       // 从全局缓存复制到本地缓存
       if (!_imageCache.containsKey(cacheKey)) {
         _imageCache[cacheKey] = GlobalImageCache.get(cacheKeyToUse)!;
-        debugPrint('📦 从全局缓存复制到本地缓存: $cacheKey (源键: $cacheKeyToUse)');
 
         // 标记需要重绘
         _needsRepaint = true;
-        debugPrint('🔄 标记需要重绘: $cacheKey');
       }
       return;
     }
 
     // 标记为正在加载
     _loadingImages.add(cacheKey);
-    debugPrint('🔄 开始加载字符图像:');
-    debugPrint('  - 字符ID: $characterId');
-    debugPrint('  - 图片类型: $type');
-    debugPrint('  - 图片格式: $format');
-    debugPrint('  - 缓存键: $cacheKey');
 
     try {
       // 加载图像数据
@@ -1313,30 +1023,16 @@ class _CollectionPainter extends CustomPainter {
       String preferredFormat = 'png-binary';
 
       // 检查可用格式
-      debugPrint('📋 检查可用格式: $characterId');
       final availableFormat =
           await characterImageService.getAvailableFormat(characterId);
       if (availableFormat != null) {
         preferredType = availableFormat['type']!;
         preferredFormat = availableFormat['format']!;
-        debugPrint('✅ 获取到可用格式:');
-        debugPrint('  - 类型: $preferredType');
-        debugPrint('  - 格式: $preferredFormat');
-      } else {
-        debugPrint('⚠️ 未获取到可用格式，使用默认格式:');
-        debugPrint('  - 类型: $preferredType');
-        debugPrint('  - 格式: $preferredFormat');
       }
 
       // 获取图片路径
       final imagePath =
           getImagePath(characterId, preferredType, preferredFormat);
-      debugPrint('📁 图片路径: $imagePath');
-
-      debugPrint('📥 调用 characterImageService.getCharacterImage:');
-      debugPrint('  - 字符ID: $characterId');
-      debugPrint('  - 类型: $preferredType');
-      debugPrint('  - 格式: $preferredFormat');
 
       final imageData = await characterImageService.getCharacterImage(
           characterId, preferredType, preferredFormat);
@@ -1345,22 +1041,13 @@ class _CollectionPainter extends CustomPainter {
       final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
 
       if (imageData != null) {
-        debugPrint('✅ 成功获取字符图像数据:');
-        debugPrint('  - 缓存键: $actualCacheKey');
-        debugPrint('  - 大小: ${imageData.length} 字节');
-
         // 解码图像
         final completer = Completer<ui.Image>();
-        debugPrint('🔄 开始解码图像数据: $actualCacheKey');
         ui.decodeImageFromList(imageData, (ui.Image image) {
-          debugPrint('✅ 图像解码完成:');
-          debugPrint('  - 缓存键: $actualCacheKey');
-          debugPrint('  - 尺寸: ${image.width}x${image.height}');
           completer.complete(image);
         });
 
         final image = await completer.future;
-        debugPrint('✅ 图像解码完成并获取到 future 结果: $actualCacheKey');
 
         // 缓存图像到本地缓存
         _imageCache[actualCacheKey] = image;
@@ -1372,33 +1059,16 @@ class _CollectionPainter extends CustomPainter {
         if (cacheKey != actualCacheKey) {
           _imageCache[cacheKey] = image;
           GlobalImageCache.add(cacheKey, image);
-          debugPrint('📦 同时缓存到原始请求键: $cacheKey');
         }
-
-        debugPrint('📦 图像已缓存:');
-        debugPrint('  - 缓存键: $actualCacheKey');
-        debugPrint('  - 本地缓存大小: ${_imageCache.length}');
-        debugPrint('  - 全局缓存大小: ${GlobalImageCache.cache.length}');
 
         // 标记需要重绘
         _needsRepaint = true;
-        debugPrint('🔄 标记需要重绘: $actualCacheKey');
-      } else {
-        debugPrint('❌ 获取字符图像数据失败:');
-        debugPrint('  - 缓存键: $actualCacheKey');
-        debugPrint('  - 图片路径: $imagePath');
-        debugPrint('  - 返回值: null');
       }
     } catch (e) {
-      debugPrint('❌ 加载字符图像失败:');
-      debugPrint('  - 缓存键: $cacheKey');
-      debugPrint('  - 错误: $e');
+      // 错误处理
     } finally {
       // 移除加载标记
       _loadingImages.remove(cacheKey);
-      debugPrint('🔄 移除加载标记:');
-      debugPrint('  - 缓存键: $cacheKey');
-      debugPrint('  - 当前加载中的图像数量: ${_loadingImages.length}');
     }
   }
 }
