@@ -623,10 +623,25 @@ class _CollectionPainter extends CustomPainter {
       Future.microtask(() {
         // 遍历所有字符位置
         var positionIndex = 0;
-        for (final position in positions) {
+
+        for (var characterIndex = 0;
+            characterIndex < characters.length;
+            characterIndex++) {
+          debugPrint('处理字符: ${characters[characterIndex]}');
           // 查找字符对应的图片信息
-          final charImage = _findCharacterImage(position.char, positionIndex);
+          if (characters[characterIndex] == '\n') {
+            debugPrint('跳过空字符');
+            continue;
+          }
+          if (positionIndex >= positions.length) {
+            break;
+          }
+          final charImage = _findCharacterImage(
+              positions[positionIndex].char, characterIndex);
+
           positionIndex++;
+          characterIndex++;
+
           // 如果找到了图片信息，则加载图片
           if (charImage != null) {
             final characterId = charImage['characterId'].toString();
@@ -662,10 +677,22 @@ class _CollectionPainter extends CustomPainter {
 
     // 绘制每个字符
     var positionIndex = 0;
-    for (final position in positions) {
+    var characterIndex = 0;
+    for (final chararcter in characters) {
+      if (chararcter == '\n') {
+        debugPrint('跳过空字符');
+        characterIndex++;
+        continue;
+      }
       // 查找字符对应的图片
-      final charImage = _findCharacterImage(position.char, positionIndex);
+      if (positionIndex >= positions.length) {
+        break;
+      }
+      final position = positions[positionIndex];
+      final charImage =
+          _findCharacterImage(positions[positionIndex].char, characterIndex);
       positionIndex++;
+      characterIndex++;
 
       if (charImage != null) {
         debugPrint('找到字符 ${position.char} 的图片: $charImage');
@@ -1001,27 +1028,27 @@ class _CollectionPainter extends CustomPainter {
         debugPrint('  - characterImages键: ${charImages.keys.toList()}');
 
         // 尝试直接用字符作为键查找
-        if (charImages.containsKey(char)) {
-          final imageInfo = charImages[char] as Map<String, dynamic>;
-          debugPrint('✅ 直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
+        // if (charImages.containsKey(char)) {
+        //   final imageInfo = charImages[char] as Map<String, dynamic>;
+        //   debugPrint('✅ 直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
-          // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-          final result = {
-            'characterId': imageInfo['characterId'],
-            'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-            'format': imageInfo['drawingFormat'] ?? 'png-binary',
-          };
+        //   // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
+        //   final result = {
+        //     'characterId': imageInfo['characterId'],
+        //     'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
+        //     'format': imageInfo['drawingFormat'] ?? 'png-binary',
+        //   };
 
-          // 添加transform属性（如果有）
-          if (imageInfo.containsKey('transform')) {
-            result['transform'] = imageInfo['transform'];
-          } else if (imageInfo.containsKey('invert') &&
-              imageInfo['invert'] == true) {
-            result['invert'] = true;
-          }
+        //   // 添加transform属性（如果有）
+        //   if (imageInfo.containsKey('transform')) {
+        //     result['transform'] = imageInfo['transform'];
+        //   } else if (imageInfo.containsKey('invert') &&
+        //       imageInfo['invert'] == true) {
+        //     result['invert'] = true;
+        //   }
 
-          return result;
-        }
+        //   return result;
+        // }
 
         // 查找当前字符在集字内容中的索引
         int charIndex = -1;
@@ -1050,59 +1077,59 @@ class _CollectionPainter extends CustomPainter {
           }
           debugPrint('  - 在charImages中未找到索引 "$charIndex" 的图像信息');
 
-          // 兼容旧格式：检查是否有 characterImages 子 Map
-          if (charImages.containsKey('characterImages')) {
-            final images =
-                charImages['characterImages'] as Map<String, dynamic>?;
-            debugPrint('  - 检查characterImages子Map: ${images?.keys.toList()}');
+          // // 兼容旧格式：检查是否有 characterImages 子 Map
+          // if (charImages.containsKey('characterImages')) {
+          //   final images =
+          //       charImages['characterImages'] as Map<String, dynamic>?;
+          //   debugPrint('  - 检查characterImages子Map: ${images?.keys.toList()}');
 
-            // 尝试直接用字符作为键查找
-            if (images != null && images.containsKey(char)) {
-              final imageInfo = images[char] as Map<String, dynamic>;
-              debugPrint(
-                  '✅ 在characterImages子Map中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
+          //   // 尝试直接用字符作为键查找
+          //   if (images != null && images.containsKey(char)) {
+          //     final imageInfo = images[char] as Map<String, dynamic>;
+          //     debugPrint(
+          //         '✅ 在characterImages子Map中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
-              // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-              final result = {
-                'characterId': imageInfo['characterId'],
-                'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-                'format': imageInfo['drawingFormat'] ?? 'png-binary',
-              };
+          //     // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
+          //     final result = {
+          //       'characterId': imageInfo['characterId'],
+          //       'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
+          //       'format': imageInfo['drawingFormat'] ?? 'png-binary',
+          //     };
 
-              // 添加transform属性（如果有）
-              if (imageInfo.containsKey('transform')) {
-                result['transform'] = imageInfo['transform'];
-              } else if (imageInfo.containsKey('invert') &&
-                  imageInfo['invert'] == true) {
-                result['invert'] = true;
-              }
+          //     // 添加transform属性（如果有）
+          //     if (imageInfo.containsKey('transform')) {
+          //       result['transform'] = imageInfo['transform'];
+          //     } else if (imageInfo.containsKey('invert') &&
+          //         imageInfo['invert'] == true) {
+          //       result['invert'] = true;
+          //     }
 
-              return result;
-            }
+          //     return result;
+          //   }
 
-            if (images != null && images.containsKey('$charIndex')) {
-              final imageInfo = images['$charIndex'] as Map<String, dynamic>;
-              debugPrint(
-                  '✅ 在characterImages子Map中找到索引 $charIndex 的图像信息: $imageInfo');
+          //   if (images != null && images.containsKey('$charIndex')) {
+          //     final imageInfo = images['$charIndex'] as Map<String, dynamic>;
+          //     debugPrint(
+          //         '✅ 在characterImages子Map中找到索引 $charIndex 的图像信息: $imageInfo');
 
-              // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-              final result = {
-                'characterId': imageInfo['characterId'],
-                'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-                'format': imageInfo['drawingFormat'] ?? 'png-binary',
-              };
+          //     // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
+          //     final result = {
+          //       'characterId': imageInfo['characterId'],
+          //       'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
+          //       'format': imageInfo['drawingFormat'] ?? 'png-binary',
+          //     };
 
-              // 添加transform属性（如果有）
-              if (imageInfo.containsKey('transform')) {
-                result['transform'] = imageInfo['transform'];
-              } else if (imageInfo.containsKey('invert') &&
-                  imageInfo['invert'] == true) {
-                result['invert'] = true;
-              }
+          //     // 添加transform属性（如果有）
+          //     if (imageInfo.containsKey('transform')) {
+          //       result['transform'] = imageInfo['transform'];
+          //     } else if (imageInfo.containsKey('invert') &&
+          //         imageInfo['invert'] == true) {
+          //       result['invert'] = true;
+          //     }
 
-              return result;
-            }
-          }
+          //     return result;
+          //   }
+          // }
 
           // 检查是否有 content.characterImages 结构
           if (charImages.containsKey('content')) {
@@ -1114,29 +1141,29 @@ class _CollectionPainter extends CustomPainter {
                   '  - 检查content.characterImages: ${images?.keys.toList()}');
 
               // 尝试直接用字符作为键查找
-              if (images != null && images.containsKey(char)) {
-                final imageInfo = images[char] as Map<String, dynamic>;
-                debugPrint(
-                    '✅ 在content.characterImages中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
+              // if (images != null && images.containsKey(char)) {
+              //   final imageInfo = images[char] as Map<String, dynamic>;
+              //   debugPrint(
+              //       '✅ 在content.characterImages中直接使用字符 "$char" 作为键找到图像信息: $imageInfo');
 
-                // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-                final result = {
-                  'characterId': imageInfo['characterId'],
-                  'type':
-                      imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
-                  'format': imageInfo['drawingFormat'] ?? 'png-binary',
-                };
+              //   // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
+              //   final result = {
+              //     'characterId': imageInfo['characterId'],
+              //     'type':
+              //         imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
+              //     'format': imageInfo['drawingFormat'] ?? 'png-binary',
+              //   };
 
-                // 添加transform属性（如果有）
-                if (imageInfo.containsKey('transform')) {
-                  result['transform'] = imageInfo['transform'];
-                } else if (imageInfo.containsKey('invert') &&
-                    imageInfo['invert'] == true) {
-                  result['invert'] = true;
-                }
+              //   // 添加transform属性（如果有）
+              //   if (imageInfo.containsKey('transform')) {
+              //     result['transform'] = imageInfo['transform'];
+              //   } else if (imageInfo.containsKey('invert') &&
+              //       imageInfo['invert'] == true) {
+              //     result['invert'] = true;
+              //   }
 
-                return result;
-              }
+              //   return result;
+              // }
 
               if (images != null && images.containsKey('$charIndex')) {
                 final imageInfo = images['$charIndex'] as Map<String, dynamic>;

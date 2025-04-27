@@ -150,12 +150,14 @@ class _CollectionPropertyPanelState
   @override
   void initState() {
     super.initState();
-    _initCharacterImages();
 
     // 初始化文本控制器
     final content = widget.element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     _textController.text = characters;
+
+    // 首次加载时，完全重置characterImages并重新生成
+    _resetAndRegenerateCharacterImages(characters);
 
     _loadCandidateCharacters();
   }
@@ -187,8 +189,56 @@ class _CollectionPropertyPanelState
         }
       }
 
+      // 检查是否存在嵌套的characterImages结构
+      bool hasNestedStructure = false;
+      if (characterImages.containsKey('characterImages')) {
+        hasNestedStructure = true;
+        // 清理嵌套的characterImages
+        var nestedImages = characterImages['characterImages'];
+        if (nestedImages is Map<String, dynamic>) {
+          final nestedKeysToRemove = <String>[];
+          for (final key in nestedImages.keys) {
+            if (!validKeys.contains(key) && !characters.contains(key)) {
+              nestedKeysToRemove.add(key);
+            }
+          }
+
+          // 移除无效的嵌套键
+          for (final key in nestedKeysToRemove) {
+            nestedImages.remove(key);
+          }
+
+          characterImages['characterImages'] = nestedImages;
+        }
+      }
+
+      // 检查是否存在content.characterImages嵌套结构
+      if (characterImages.containsKey('content')) {
+        final content = characterImages['content'] as Map<String, dynamic>?;
+        if (content != null && content.containsKey('characterImages')) {
+          hasNestedStructure = true;
+          var contentImages = content['characterImages'];
+          if (contentImages is Map<String, dynamic>) {
+            final contentKeysToRemove = <String>[];
+            for (final key in contentImages.keys) {
+              if (!validKeys.contains(key) && !characters.contains(key)) {
+                contentKeysToRemove.add(key);
+              }
+            }
+
+            // 移除无效的内容键
+            for (final key in contentKeysToRemove) {
+              contentImages.remove(key);
+            }
+
+            content['characterImages'] = contentImages;
+            characterImages['content'] = content;
+          }
+        }
+      }
+
       // 如果有需要删除的键，则更新元素内容
-      if (keysToRemove.isNotEmpty) {
+      if (keysToRemove.isNotEmpty || hasNestedStructure) {
         // 删除多余的键
         for (final key in keysToRemove) {
           characterImages.remove(key);
@@ -198,6 +248,14 @@ class _CollectionPropertyPanelState
         final updatedContent = Map<String, dynamic>.from(content);
         updatedContent['characterImages'] = characterImages;
         _updateProperty('content', updatedContent);
+
+        // 记录清理情况
+        if (keysToRemove.isNotEmpty) {
+          debugPrint('已清理顶层characterImages中的无效键: $keysToRemove');
+        }
+        if (hasNestedStructure) {
+          debugPrint('已清理嵌套的characterImages结构');
+        }
       }
     } catch (e) {
       debugPrint('清理字符图像信息失败: $e');
@@ -264,13 +322,12 @@ class _CollectionPropertyPanelState
         return;
       }
 
-      // 检查是否已有字符图像信息
-      if (content.containsKey('characterImages')) {
-        return;
+      // 确保存在characterImages字段（即使为空）
+      if (!content.containsKey('characterImages')) {
+        final updatedContent = Map<String, dynamic>.from(content);
+        updatedContent['characterImages'] = <String, dynamic>{};
+        _updateProperty('content', updatedContent);
       }
-
-      // 创建字符图像信息
-      final characterImages = <String, dynamic>{};
 
       // 获取候选集字
       await _loadCandidateCharacters();
@@ -386,6 +443,35 @@ class _CollectionPropertyPanelState
   // 处理文本变化
   void _onTextChanged(String value) {
     widget.onUpdateChars(value);
+  }
+
+  // 完全重置characterImages并根据characters重新生成
+  Future<void> _resetAndRegenerateCharacterImages(String characters) async {
+    try {
+      debugPrint('首次加载字帖，重置并重新生成characterImages');
+
+      // 获取当前内容
+      final content = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>? ?? {});
+
+      // 完全清空characterImages
+      content['characterImages'] = <String, dynamic>{};
+
+      // 更新元素内容
+      _updateProperty('content', content);
+
+      // 如果有字符，则初始化字符图像信息
+      if (characters.isNotEmpty) {
+        await _initCharacterImages();
+
+        // 为所有字符更新图像
+        await _updateCharacterImagesForNewText(characters);
+      }
+
+      debugPrint('characterImages已重置并重新生成完成');
+    } catch (e) {
+      debugPrint('重置并重新生成characterImages失败: $e');
+    }
   }
 
   // 选择候选集字
