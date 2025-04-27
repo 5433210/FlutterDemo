@@ -9,6 +9,7 @@ class TextElementRenderer extends StatelessWidget {
   final bool isEditing;
   final bool isSelected;
   final double scale;
+  final bool isPreviewMode;
 
   const TextElementRenderer({
     Key? key,
@@ -16,6 +17,7 @@ class TextElementRenderer extends StatelessWidget {
     this.isEditing = false,
     this.isSelected = false,
     this.scale = 1.0,
+    this.isPreviewMode = false,
   }) : super(key: key);
 
   @override
@@ -63,14 +65,17 @@ class TextElementRenderer extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: BoxDecoration(
-        border: isSelected
-            ? Border.all(
-                color: Colors.blue.withAlpha(128),
-                width: 1.0,
-              )
-            : null,
-      ),
+      // 在预览模式下不显示边框
+      decoration: isPreviewMode
+          ? null
+          : BoxDecoration(
+              border: isSelected
+                  ? Border.all(
+                      color: Colors.blue.withAlpha(128),
+                      width: 1.0,
+                    )
+                  : null,
+            ),
       child: isEditing
           ? TextField(
               controller: TextEditingController(text: text),
@@ -104,11 +109,14 @@ class TextElementRenderer extends StatelessWidget {
                     alignment: Alignment.topRight, // 与面板预览区保持一致
                     decoration: BoxDecoration(
                       color: backgroundColor,
-                      border: isSelected
-                          ? Border.all(
-                              color: Colors.blue.withAlpha(128), width: 1.0)
-                          : Border.all(color: Colors.grey), // 与面板预览区保持一致
-                      borderRadius: BorderRadius.circular(4.0), // 与面板预览区保持一致
+                      // 在预览模式下不显示边框
+                      border: isPreviewMode
+                          ? null
+                          : isSelected
+                              ? Border.all(
+                                  color: Colors.blue.withAlpha(128), width: 1.0)
+                              : Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4.0),
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(padding),

@@ -1222,18 +1222,21 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     // 根据元素类型构建内容
     switch (type) {
       case 'text':
-        content = ElementRenderers.buildTextElement(element);
+        content = ElementRenderers.buildTextElement(element,
+            isPreviewMode: _isPreviewMode);
         break;
       case 'image':
-        content = ElementRenderers.buildImageElement(element);
+        content = ElementRenderers.buildImageElement(element,
+            isPreviewMode: _isPreviewMode);
         break;
       case 'collection':
-        content = ElementRenderers.buildCollectionElement(element, ref: ref);
+        content = ElementRenderers.buildCollectionElement(element,
+            ref: ref, isPreviewMode: _isPreviewMode);
         break;
       case 'group':
         // 将组合控件的选中状态传递给子元素
-        content =
-            ElementRenderers.buildGroupElement(element, isSelected: isSelected);
+        content = ElementRenderers.buildGroupElement(element,
+            isSelected: isSelected, isPreviewMode: _isPreviewMode);
         break;
       default:
         content = Container(
@@ -1263,23 +1266,25 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 width: width,
                 height: height,
                 padding: const EdgeInsets.all(0),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    // 根据规范设置边框颜色和宽度
-                    color: hasError
-                        ? Colors.red // 错误状态：红色边框
-                        : isLocked || isLayerLocked
-                            ? Colors.orange // 锁定状态：橙色边框
-                            : !_isPreviewMode && isSelected
-                                ? Colors.blue // 编辑状态或选中状态：蓝色边框
-                                : Colors.grey
-                                    .withAlpha(179), // 普通状态：灰色边框，70%不透明度
-                    width: 1.0, // 所有状态都是1px
-                    style: (isHidden || isLayerHidden) && !_isPreviewMode
-                        ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
-                        : BorderStyle.solid, // 隐藏状态使用半透明
-                  ),
-                ),
+                decoration: _isPreviewMode
+                    ? null // 预览模式下不显示边框
+                    : BoxDecoration(
+                        border: Border.all(
+                          // 根据规范设置边框颜色和宽度
+                          color: hasError
+                              ? Colors.red // 错误状态：红色边框
+                              : isLocked || isLayerLocked
+                                  ? Colors.orange // 锁定状态：橙色边框
+                                  : isSelected
+                                      ? Colors.blue // 选中状态：蓝色边框
+                                      : Colors.grey
+                                          .withAlpha(179), // 普通状态：灰色边框，70%不透明度
+                          width: 1.0, // 所有状态都是1px
+                          style: (isHidden || isLayerHidden)
+                              ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
+                              : BorderStyle.solid, // 隐藏状态使用半透明
+                        ),
+                      ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [

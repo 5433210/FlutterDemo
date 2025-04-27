@@ -12,7 +12,7 @@ import 'text_renderer.dart';
 class ElementRenderers {
   /// 构建集字元素
   static Widget buildCollectionElement(Map<String, dynamic> element,
-      {WidgetRef? ref}) {
+      {WidgetRef? ref, bool isPreviewMode = false}) {
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
@@ -90,7 +90,7 @@ class ElementRenderers {
 
   /// 构建组合元素
   static Widget buildGroupElement(Map<String, dynamic> element,
-      {bool isSelected = false, WidgetRef? ref}) {
+      {bool isSelected = false, WidgetRef? ref, bool isPreviewMode = false}) {
     final content = element['content'] as Map<String, dynamic>;
     final List<dynamic> children = content['children'] as List<dynamic>;
 
@@ -114,18 +114,23 @@ class ElementRenderers {
             Widget childWidget;
             switch (type) {
               case 'text':
-                childWidget = buildTextElement(child);
+                childWidget =
+                    buildTextElement(child, isPreviewMode: isPreviewMode);
                 break;
               case 'image':
-                childWidget = buildImageElement(child);
+                childWidget =
+                    buildImageElement(child, isPreviewMode: isPreviewMode);
                 break;
               case 'collection':
-                childWidget = buildCollectionElement(child, ref: ref);
+                childWidget = buildCollectionElement(child,
+                    ref: ref, isPreviewMode: isPreviewMode);
                 break;
               case 'group':
                 // 递归处理嵌套组合，并传递选中状态
-                childWidget =
-                    buildGroupElement(child, isSelected: isSelected, ref: ref);
+                childWidget = buildGroupElement(child,
+                    isSelected: isSelected,
+                    ref: ref,
+                    isPreviewMode: isPreviewMode);
                 break;
               default:
                 childWidget = Container(
@@ -153,15 +158,19 @@ class ElementRenderers {
                   child: Container(
                     width: width,
                     height: height,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        // 根据组合选中状态决定边框颜色
-                        color: isSelected
-                            ? Colors.blue.withAlpha(179) // 选中状态：蓝色边框，70% 的不透明度
-                            : Colors.grey.withAlpha(179), // 默认状态：灰色边框，70% 的不透明度
-                        width: 1.0,
-                      ),
-                    ),
+                    decoration: isPreviewMode
+                        ? null // 预览模式下不显示边框
+                        : BoxDecoration(
+                            border: Border.all(
+                              // 根据组合选中状态决定边框颜色
+                              color: isSelected
+                                  ? Colors.blue
+                                      .withAlpha(179) // 选中状态：蓝色边框，70% 的不透明度
+                                  : Colors.grey
+                                      .withAlpha(179), // 默认状态：灰色边框，70% 的不透明度
+                              width: 1.0,
+                            ),
+                          ),
                     child: childWidget,
                   ),
                 ),
@@ -176,7 +185,8 @@ class ElementRenderers {
   }
 
   /// 构建图片元素
-  static Widget buildImageElement(Map<String, dynamic> element) {
+  static Widget buildImageElement(Map<String, dynamic> element,
+      {bool isPreviewMode = false}) {
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
     final transformedImageUrl = content['transformedImageUrl'] as String?;
@@ -245,7 +255,8 @@ class ElementRenderers {
   }
 
   /// 构建文本元素
-  static Widget buildTextElement(Map<String, dynamic> element) {
+  static Widget buildTextElement(Map<String, dynamic> element,
+      {bool isPreviewMode = false}) {
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final text = content['text'] as String? ?? '';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
@@ -298,8 +309,9 @@ class ElementRenderers {
             alignment: Alignment.topRight, // 与面板预览区保持一致
             decoration: BoxDecoration(
               color: backgroundColor,
-              border: Border.all(color: Colors.grey), // 与面板预览区保持一致
-              borderRadius: BorderRadius.circular(4.0), // 与面板预览区保持一致
+              // 在预览模式下不显示边框
+              border: isPreviewMode ? null : Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(4.0),
             ),
             child: Padding(
               padding: EdgeInsets.all(padding),
