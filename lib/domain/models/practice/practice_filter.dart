@@ -29,7 +29,7 @@ class PracticeFilter with _$PracticeFilter {
     @Default(0) int offset,
 
     /// 排序字段
-    @Default('createTime') String sortField,
+    @Default('updateTime') String sortField,
 
     /// 排序方向(asc/desc)
     @Default('desc') String sortOrder,

@@ -16,6 +16,11 @@ class PracticeService {
     required PracticeRepository repository,
   }) : _repository = repository;
 
+  /// 获取字帖练习数量
+  Future<int> count(PracticeFilter? filter) {
+    return _repository.count(filter);
+  }
+
   /// 创建字帖练习
   Future<PracticeEntity> createPractice({
     required String title,

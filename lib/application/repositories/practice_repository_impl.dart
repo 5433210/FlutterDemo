@@ -427,14 +427,27 @@ class PracticeRepositoryImpl implements PracticeRepository {
           DateTimeHelper.toStorageFormat(filter.endTime!);
     }
 
-    query['sort'] = {
-      filter.sortField: filter.sortOrder,
-    };
+    // 设置排序字段，将驼峰命名转换为下划线命名
+    final dbSortField = _convertFieldNameToDb(filter.sortField);
+    query['orderBy'] = '$dbSortField ${filter.sortOrder}';
 
+    // 添加调试日志
+    debugPrint(
+        '构建查询参数: sortField=${filter.sortField}, dbSortField=$dbSortField, sortOrder=${filter.sortOrder}');
+    debugPrint('排序字段: ${query['orderBy']}');
+
+    // 设置分页参数
     query['limit'] = filter.limit;
     query['offset'] = filter.offset;
 
     return query;
+  }
+
+  /// 将驼峰命名的字段名转换为数据库中的实际字段名
+  String _convertFieldNameToDb(String fieldName) {
+    // 根据数据库迁移脚本，practices 表中的字段名是 createTime 和 updateTime
+    // 不需要转换为下划线命名
+    return fieldName;
   }
 
   /// 处理从数据库获取的数据，确保pages字段格式正确
