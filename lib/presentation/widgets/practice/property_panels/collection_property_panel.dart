@@ -156,10 +156,12 @@ class _CollectionPropertyPanelState
     final characters = content['characters'] as String? ?? '';
     _textController.text = characters;
 
-    // 首次加载时，完全重置characterImages并重新生成
-    _resetAndRegenerateCharacterImages(characters);
-
-    _loadCandidateCharacters();
+    // 使用 addPostFrameCallback 推迟状态更新，避免在构建过程中调用 setState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 首次加载时，完全重置characterImages并重新生成
+      _resetAndRegenerateCharacterImages(characters);
+      _loadCandidateCharacters();
+    });
   }
 
   // 清理多余的字符图像信息 (由原面板拆分而来的方法)

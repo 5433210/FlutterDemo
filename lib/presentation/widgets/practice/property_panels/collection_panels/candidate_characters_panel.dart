@@ -97,13 +97,15 @@ class CandidateCharactersPanel extends ConsumerWidget {
             child:
                 Text('候选集字列表', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
-          // 显示控制按钮组 - 修改为两个按钮
+          // 显示控制按钮组 - 使用Wrap替代Row，允许按钮在需要时换行
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text('显示效果:'),
-                const SizedBox(width: 8.0),
                 // 全局反转按钮
                 InkWell(
                   onTap: () {
@@ -149,7 +151,6 @@ class CandidateCharactersPanel extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8.0),
                 // 新增：当前字符反转按钮
                 InkWell(
                   onTap: () {
