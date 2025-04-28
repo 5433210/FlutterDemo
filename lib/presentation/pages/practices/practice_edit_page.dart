@@ -1136,8 +1136,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                             color: backgroundColor,
                             child: Stack(
                               children: [
-                                // 网格
-                                if (_controller.state.gridVisible)
+                                // 网格 - 仅在非预览模式下显示
+                                if (_controller.state.gridVisible &&
+                                    !_isPreviewMode)
                                   CustomPaint(
                                     size: pixelSize,
                                     painter: GridPainter(
