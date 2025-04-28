@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:demo/routes/app_routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -46,9 +44,6 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
   // 排序相关
   String _sortField = 'updateTime'; // 默认按更新时间排序
   String _sortOrder = 'desc'; // 默认降序排序
-
-  // 调试信息
-  final bool _debugMode = true; // 开启调试模式
 
   // 滚动控制器
   final ScrollController _scrollController = ScrollController();
@@ -257,22 +252,83 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
               }
             },
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
                       Container(
-                        color: Colors.grey[300],
-                        child: Center(child: Text(practice['title'] ?? '')),
-                      ),
-                      if (_getFirstPagePreview(practice) != null)
-                        Positioned.fill(
-                          child: Image.memory(
-                            _getFirstPagePreview(practice)!,
-                            fit: BoxFit.cover,
+                        color: Colors.grey[200],
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: Center(
+                          child: Text(
+                            practice['title'] ?? '',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.black54,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final thumbnail = practice['thumbnail'] as Uint8List?;
+                          if (thumbnail != null && thumbnail.isNotEmpty) {
+                            return Positioned.fill(
+                              child: Container(
+                                // decoration: BoxDecoration(
+                                //   color: Colors.white,
+                                //   border: Border.all(
+                                //       color: Colors.grey.shade300, width: 0),
+                                // ),
+                                padding: const EdgeInsets.all(3.0), // 添加内边距
+                                child: Image.memory(
+                                  thumbnail,
+                                  fit: BoxFit.contain, // 保持图片比例
+                                  alignment: Alignment.center, // 居中对齐
+                                  gaplessPlayback: true,
+                                  cacheWidth: 500, // 限制缓存宽度，提高性能
+                                  cacheHeight: 500, // 限制缓存高度，提高性能
+                                  frameBuilder: (context, child, frame,
+                                      wasSynchronouslyLoaded) {
+                                    if (frame == null) {
+                                      return Container(
+                                        color: Colors.grey.shade200,
+                                        child: const Center(
+                                            child: CircularProgressIndicator()),
+                                      );
+                                    }
+                                    return child;
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey.shade200,
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.image_not_supported,
+                                                color: Colors.grey.shade400),
+                                            const SizedBox(height: 4),
+                                            Text('缩略图加载失败',
+                                                style: TextStyle(
+                                                    color:
+                                                        Colors.grey.shade600)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                       // 批量选择模式下显示选择指示器
                       if (_isBatchMode)
                         Positioned(
@@ -280,7 +336,7 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                           top: 8,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withAlpha(204),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -367,18 +423,68 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.grey.shade300, width: 1),
                   ),
-                  child: _getFirstPagePreview(practice) != null
-                      ? ClipRRect(
+                  child: Builder(
+                    builder: (context) {
+                      final thumbnail = practice['thumbnail'] as Uint8List?;
+                      if (thumbnail != null && thumbnail.isNotEmpty) {
+                        return ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: Image.memory(
-                            _getFirstPagePreview(practice)!,
-                            fit: BoxFit.cover,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                  color: Colors.grey.shade300, width: 1),
+                            ),
+                            padding: const EdgeInsets.all(4.0), // 添加内边距
+                            child: Image.memory(
+                              thumbnail,
+                              fit: BoxFit.contain, // 保持图片比例
+                              alignment: Alignment.center, // 居中对齐
+                              gaplessPlayback: true,
+                              cacheWidth: 100, // 限制缓存宽度，提高性能
+                              cacheHeight: 100, // 限制缓存高度，提高性能
+                              frameBuilder: (context, child, frame,
+                                  wasSynchronouslyLoaded) {
+                                if (frame == null) {
+                                  return Container(
+                                    color: Colors.grey.shade200,
+                                    child: const Center(
+                                        child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )),
+                                  );
+                                }
+                                return child;
+                              },
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.image_not_supported,
+                                          size: 16,
+                                          color: Colors.grey.shade400),
+                                      Text('${index + 1}',
+                                          style: TextStyle(
+                                              color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        )
-                      : Center(child: Text('${index + 1}')),
+                        );
+                      }
+                      return Center(child: Text('${index + 1}'));
+                    },
+                  ),
                 ),
                 // 批量选择模式下显示选择指示器
                 if (_isBatchMode)
@@ -387,7 +493,7 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                     top: 0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha(204),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -520,28 +626,6 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
     }
   }
 
-  // Helper method to get first page preview image if available
-  Uint8List? _getFirstPagePreview(Map<String, dynamic> practice) {
-    // If there's a thumbnail field with image data, use it
-    if (practice.containsKey('thumbnail') && practice['thumbnail'] != null) {
-      // Handle case where thumbnail is already a Uint8List
-      if (practice['thumbnail'] is Uint8List) {
-        return practice['thumbnail'];
-      }
-      // Handle case where thumbnail is a base64 encoded string
-      else if (practice['thumbnail'] is String &&
-          practice['thumbnail'].isNotEmpty) {
-        try {
-          return base64Decode(practice['thumbnail']);
-        } catch (e) {
-          debugPrint('Failed to decode thumbnail: $e');
-          return null;
-        }
-      }
-    }
-    return null;
-  }
-
   // 加载更多字帖
   Future<void> _loadMorePractices() async {
     if (!_hasMoreItems || _isLoadingMore) return;
@@ -580,9 +664,17 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
             'status': practice.status,
             'createTime': practice.createTime.toIso8601String(),
             'updateTime': practice.updateTime.toIso8601String(),
-            'thumbnail': practice.thumbnail,
             'pageCount': practice.pages.length,
           };
+
+          // 特殊处理缩略图数据
+          if (practice.thumbnail != null) {
+            // 直接使用 Uint8List 类型的缩略图数据
+            practiceMap['thumbnail'] = practice.thumbnail;
+          } else {
+            practiceMap['thumbnail'] = null;
+          }
+
           practicesMap.add(practiceMap);
         } catch (e) {
           debugPrint('转换练习实体失败: $e');
@@ -625,24 +717,10 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
         offset: (_currentPage - 1) * _pageSize,
       );
 
-      if (_debugMode) {
-        debugPrint('加载字帖，排序字段: ${filter.sortField}, 排序方向: ${filter.sortOrder}');
-        debugPrint(
-            '分页参数: 页码=$_currentPage, 每页数量=$_pageSize, 偏移量=${(_currentPage - 1) * _pageSize}');
-      }
-
       // 使用过滤器查询字帖
       var practicesResult = [];
       try {
         practicesResult = await practiceService.queryPractices(filter);
-        if (_debugMode) {
-          debugPrint('查询结果: ${practicesResult.length} 条记录');
-          if (practicesResult.isNotEmpty) {
-            final first = practicesResult.first;
-            debugPrint('第一条记录: id=${first.id}, title=${first.title}');
-            debugPrint('排序字段值: ${first.updateTime}');
-          }
-        }
       } catch (e) {
         debugPrint('查询字帖失败: $e');
         if (mounted) {
@@ -656,9 +734,6 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
       int totalCount = 0;
       try {
         totalCount = await practiceService.count(filter);
-        if (_debugMode) {
-          debugPrint('总记录数: $totalCount');
-        }
       } catch (e) {
         debugPrint('获取总记录数失败: $e');
       }
@@ -675,9 +750,17 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
             'status': practice.status,
             'createTime': practice.createTime.toIso8601String(),
             'updateTime': practice.updateTime.toIso8601String(),
-            'thumbnail': practice.thumbnail,
             'pageCount': practice.pages.length,
           };
+
+          // 特殊处理缩略图数据
+          if (practice.thumbnail != null) {
+            // 直接使用 Uint8List 类型的缩略图数据
+            practiceMap['thumbnail'] = practice.thumbnail;
+          } else {
+            practiceMap['thumbnail'] = null;
+          }
+
           practicesMap.add(practiceMap);
         } catch (e) {
           debugPrint('转换练习实体失败: $e');

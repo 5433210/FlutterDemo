@@ -3,10 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
+import 'canvas_capture.dart';
 import 'practice_edit_state.dart';
+import 'thumbnail_generator.dart';
 import 'undo_redo_manager.dart';
 
 /// 字帖编辑控制器
@@ -26,6 +29,12 @@ class PracticeEditController extends ChangeNotifier {
 
   // 服务实例
   final PracticeService _practiceService;
+
+  // 预览模式下的画布 GlobalKey
+  GlobalKey? _canvasKey;
+
+  // 预览模式回调函数
+  Function(bool)? _previewModeCallback;
 
   /// 构造函数
   PracticeEditController(this._practiceService) {
@@ -432,6 +441,34 @@ class PracticeEditController extends ChangeNotifier {
     };
 
     _addElement(element);
+  }
+
+  /// 从 RepaintBoundary 捕获图像
+  Future<Uint8List?> captureFromRepaintBoundary(GlobalKey key) async {
+    try {
+      // 获取 RenderRepaintBoundary
+      final boundary =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+      if (boundary == null) {
+        debugPrint('无法获取 RenderRepaintBoundary');
+        return null;
+      }
+
+      // 捕获图像
+      final image = await boundary.toImage(pixelRatio: 2.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+
+      if (byteData != null) {
+        return byteData.buffer.asUint8List();
+      }
+
+      debugPrint('无法将图像转换为字节数据');
+      return null;
+    } catch (e, stack) {
+      debugPrint('从 RepaintBoundary 捕获图像失败: $e');
+      debugPrint('堆栈跟踪: $stack');
+      return null;
+    }
   }
 
   /// 检查标题是否已存在
@@ -1403,6 +1440,11 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  /// 设置画布 GlobalKey
+  void setCanvasKey(GlobalKey key) {
+    _canvasKey = key;
+  }
+
   // 设置当前页面
   void setCurrentPage(int index) {
     if (index >= 0 && index < state.pages.length) {
@@ -1492,6 +1534,11 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 设置预览模式回调函数
+  void setPreviewModeCallback(Function(bool) callback) {
+    _previewModeCallback = callback;
   }
 
   /// 显示所有图层
@@ -2280,89 +2327,69 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 生成字帖缩略图
   Future<Uint8List?> _generateThumbnail() async {
-    if (_state.pages.isEmpty) return null;
+    if (_state.pages.isEmpty) {
+      return null;
+    }
 
     try {
       // 获取第一页作为缩略图
       final firstPage = _state.pages.first;
 
-      // 直接在这里生成缩略图，不依赖外部类
-      // 注意：这里获取页面尺寸但当前未使用，保留注释以便未来可能的优化
-      // final pageWidth = (firstPage['width'] as num?)?.toDouble() ?? 595.0;
-      // final pageHeight = (firstPage['height'] as num?)?.toDouble() ?? 842.0;
-
       // 缩略图尺寸
       const thumbWidth = 300.0;
       const thumbHeight = 400.0;
 
-      // 注意：这里可以计算缩放比例用于缩放缩略图，但当前实现使用固定尺寸
-      // 保留注释以便未来可能的优化
-      // final scaleX = thumbWidth / pageWidth;
-      // final scaleY = thumbHeight / pageHeight;
-      // final scale = math.min(scaleX, scaleY);
+      // 临时进入预览模式
+      bool wasInPreviewMode = false;
+      if (_previewModeCallback != null) {
+        // 假设当前不在预览模式
+        wasInPreviewMode = false;
 
-      // 创建一个简单的图像
-      final recorder = ui.PictureRecorder();
-      final canvas = Canvas(recorder);
+        // 切换到预览模式
+        _previewModeCallback!(true);
 
-      // 绘制背景
-      final bgColor =
-          _parseColor(firstPage['backgroundColor'] as String? ?? '#FFFFFF');
-      final paint = Paint()..color = bgColor;
-      canvas.drawRect(
-          const Rect.fromLTWH(0, 0, thumbWidth, thumbHeight), paint);
-
-      // 绘制边框
-      final borderPaint = Paint()
-        ..color = Colors.grey
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
-      canvas.drawRect(
-          const Rect.fromLTWH(0, 0, thumbWidth, thumbHeight), borderPaint);
-
-      // 绘制标题
-      final textStyle = ui.TextStyle(
-        color: Colors.black,
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      );
-
-      // 绘制标题背景
-      final bgPaint = Paint()..color = const Color.fromRGBO(255, 255, 255, 0.7);
-      const textBgRect =
-          Rect.fromLTWH(10, thumbHeight - 40, thumbWidth - 20, 30);
-      canvas.drawRect(textBgRect, bgPaint);
-
-      final paragraphBuilder = ui.ParagraphBuilder(ui.ParagraphStyle(
-        textAlign: TextAlign.center,
-      ))
-        ..pushStyle(textStyle)
-        ..addText(_practiceTitle ?? '');
-
-      final paragraph = paragraphBuilder.build()
-        ..layout(const ui.ParagraphConstraints(width: thumbWidth - 20));
-
-      // 将标题放在底部
-      canvas.drawParagraph(
-          paragraph, Offset(10, thumbHeight - paragraph.height - 10));
-
-      // 完成绘制
-      final picture = recorder.endRecording();
-      final img =
-          await picture.toImage(thumbWidth.toInt(), thumbHeight.toInt());
-      final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
-
-      if (byteData != null) {
-        final thumbnailData = byteData.buffer.asUint8List();
-        debugPrint('缩略图生成成功: 大小 ${thumbnailData.length} 字节');
-        return thumbnailData;
+        // 等待一帧，确保 RepaintBoundary 已经渲染
+        await Future.delayed(const Duration(milliseconds: 100));
       }
 
-      debugPrint('缩略图生成失败: byteData 为 null');
-      return null;
-    } catch (e, stack) {
+      // 如果有画布 GlobalKey，使用 RepaintBoundary 捕获
+      Uint8List? thumbnail;
+      if (_canvasKey != null) {
+        thumbnail = await captureFromRepaintBoundary(_canvasKey!);
+      }
+
+      // 恢复原来的预览模式状态
+      if (_previewModeCallback != null && !wasInPreviewMode) {
+        _previewModeCallback!(false);
+      }
+
+      // 如果成功捕获了缩略图，直接返回
+      if (thumbnail != null) {
+        return thumbnail;
+      }
+
+      // 使用 CanvasCapture 捕获预览模式下的页面
+      thumbnail = await CanvasCapture.capturePracticePage(
+        firstPage,
+        width: thumbWidth,
+        height: thumbHeight,
+      );
+
+      if (thumbnail != null) {
+        return thumbnail;
+      }
+
+      // 如果 CanvasCapture 失败，尝试使用 ThumbnailGenerator 作为备选方案
+      final fallbackThumbnail = await ThumbnailGenerator.generateThumbnail(
+        firstPage,
+        width: thumbWidth,
+        height: thumbHeight,
+        title: _practiceTitle,
+      );
+
+      return fallbackThumbnail;
+    } catch (e) {
       debugPrint('生成缩略图失败: $e');
-      debugPrint('堆栈跟踪: $stack');
       return null;
     }
   }
@@ -2404,18 +2431,6 @@ class PracticeEditController extends ChangeNotifier {
 
     // 通知监听器
     notifyListeners();
-  }
-
-  /// 解析颜色字符串
-  Color _parseColor(String colorStr) {
-    if (colorStr.startsWith('#')) {
-      String hexColor = colorStr.substring(1);
-      if (hexColor.length == 6) {
-        hexColor = 'FF$hexColor'; // 添加透明度
-      }
-      return Color(int.parse(hexColor, radix: 16));
-    }
-    return Colors.white; // 默认颜色
   }
 }
 

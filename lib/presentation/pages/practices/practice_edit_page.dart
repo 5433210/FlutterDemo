@@ -59,6 +59,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
 
+  // 添加一个 GlobalKey 用于截图
+  final GlobalKey canvasKey = GlobalKey();
+
   // 键盘状态
   bool _isCtrlPressed = false;
   bool _isShiftPressed = false;
@@ -136,6 +139,16 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     // Create or get the PracticeService instance
     final practiceService = ref.read(practiceServiceProvider);
     _controller = PracticeEditController(practiceService);
+
+    // 将 canvasKey 传递给控制器
+    _controller.setCanvasKey(canvasKey);
+
+    // 设置预览模式回调函数
+    _controller.setPreviewModeCallback((isPreview) {
+      setState(() {
+        _isPreviewMode = isPreview;
+      });
+    });
 
     // 初始化键盘监听器
     _focusNode = FocusNode();
@@ -700,6 +713,22 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
     final elements = _controller.state.currentPageElements;
 
+    // 在预览模式下使用 RepaintBoundary 和 GlobalKey
+    // if (_isPreviewMode) {
+    //   return RepaintBoundary(
+    //     key: canvasKey,
+    //     child: _buildEditCanvasContent(currentPage, elements),
+    //   );
+    // }
+
+    return _buildEditCanvasContent(currentPage, elements);
+  }
+
+  /// 构建编辑画布内容
+  Widget _buildEditCanvasContent(
+      Map<String, dynamic> currentPage, List<dynamic> elementsList) {
+    // 转换为正确的类型
+    final elements = elementsList.cast<Map<String, dynamic>>();
     return DragTarget<String>(
       onAcceptWithDetails: (details) {
         // 获取放置位置 - 相对于编辑画布的坐标
@@ -1090,35 +1119,38 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                       width: pixelSize.width,
                       height: pixelSize.height,
                       color: PageOperations.getPageBackgroundColor(currentPage),
-                      child: Stack(
-                        children: [
-                          // 网格
-                          if (_controller.state.gridVisible)
-                            CustomPaint(
-                              size: pixelSize,
-                              painter: GridPainter(
-                                  gridSize: _controller.state.gridSize),
-                            ),
+                      child: RepaintBoundary(
+                        key: canvasKey,
+                        child: Stack(
+                          children: [
+                            // 网格
+                            if (_controller.state.gridVisible)
+                              CustomPaint(
+                                size: pixelSize,
+                                painter: GridPainter(
+                                    gridSize: _controller.state.gridSize),
+                              ),
 
-                          // 元素
-                          // 根据图层顺序排序元素
-                          ..._sortElementsByLayerOrder(elements)
-                              .map((element) => _buildElement(element)),
+                            // 元素
+                            // 根据图层顺序排序元素
+                            ..._sortElementsByLayerOrder(elements)
+                                .map((element) => _buildElement(element)),
 
-                          // 拖拽指示
-                          if (candidateData.isNotEmpty)
-                            Container(
-                              width: pixelSize.width,
-                              height: pixelSize.height,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Colors.blue,
-                                  width: 1,
-                                  style: BorderStyle.solid,
+                            // 拖拽指示
+                            if (candidateData.isNotEmpty)
+                              Container(
+                                width: pixelSize.width,
+                                height: pixelSize.height,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.blue,
+                                    width: 1,
+                                    style: BorderStyle.solid,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }),

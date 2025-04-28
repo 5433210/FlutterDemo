@@ -135,14 +135,14 @@ class SQLiteDatabase implements DatabaseInterface {
     try {
       final results = await _db.rawQuery(queryResult.sql, queryResult.args);
 
-      AppLogger.debug(
-        '查询完成',
-        tag: 'SQLiteDatabase',
-        data: {
-          'resultCount': results.length,
-          'firstResult': results.isNotEmpty ? results.first : null,
-        },
-      );
+      // AppLogger.debug(
+      //   '查询完成',
+      //   tag: 'SQLiteDatabase',
+      //   data: {
+      //     'resultCount': results.length,
+      //     'firstResult': results.isNotEmpty ? results.first : null,
+      //   },
+      // );
 
       return results;
     } catch (e) {
