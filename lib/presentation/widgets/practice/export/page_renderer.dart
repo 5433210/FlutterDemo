@@ -92,6 +92,80 @@ class PageRenderer {
     }
   }
 
+  /// 渲染单个页面
+  Future<Uint8List?> renderSinglePage(int pageIndex,
+      {double pixelRatio = 1.0}) async {
+    try {
+      debugPrint('开始渲染第 ${pageIndex + 1} 页, 像素比例: $pixelRatio');
+
+      // 检查页面索引是否有效
+      if (pageIndex < 0 || pageIndex >= controller.state.pages.length) {
+        debugPrint('错误: 无效的页面索引: $pageIndex');
+        return null;
+      }
+
+      // 使用一个标志变量记录当前预览模式状态，以便在完成后还原
+      final wasInPreviewMode = controller.state.isPreviewMode;
+
+      // 如果不是预览模式，则创建一个延迟任务切换到预览模式
+      if (!wasInPreviewMode) {
+        debugPrint('临时启用预览模式');
+        // 使用Future延迟执行预览模式切换，避免在构建过程中调用setState
+        await Future.microtask(() => controller.togglePreviewMode(true));
+      }
+
+      try {
+        // 等待UI更新完成
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // 保存当前页面索引
+        final int originalPageIndex = controller.state.currentPageIndex;
+
+        // 切换到要渲染的页面
+        controller.setCurrentPage(pageIndex);
+
+        // 等待UI更新完成
+        await Future.delayed(const Duration(milliseconds: 200));
+
+        // 捕获页面图像
+        final Uint8List? bytes =
+            await _captureCurrentPage(pixelRatio: pixelRatio);
+
+        // 恢复原始页面索引
+        controller.setCurrentPage(originalPageIndex);
+
+        // 如果我们改变了预览模式，恢复原始状态
+        if (!wasInPreviewMode) {
+          debugPrint('恢复原始视图模式');
+          await Future.microtask(() => controller.togglePreviewMode(false));
+        }
+
+        if (bytes == null) {
+          debugPrint('错误: 无法捕获页面图像');
+          return null;
+        }
+
+        debugPrint('成功渲染页面, 大小: ${bytes.length} 字节');
+        return bytes;
+      } catch (e, stack) {
+        debugPrint('渲染页面时发生错误: $e');
+        debugPrint('堆栈跟踪: $stack');
+
+        // 如果我们改变了预览模式，恢复原始状态
+        if (!wasInPreviewMode) {
+          debugPrint('恢复原始视图模式');
+          await Future.microtask(() => controller.togglePreviewMode(false));
+        }
+
+        return null;
+      }
+    } catch (e, stack) {
+      debugPrint('渲染单个页面时发生错误: $e');
+      debugPrint('堆栈跟踪: $stack');
+      return null;
+    }
+  }
+
   /// 捕获当前页面
   Future<Uint8List?> _captureCurrentPage({double pixelRatio = 1.0}) async {
     try {

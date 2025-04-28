@@ -31,21 +31,25 @@ class FileOperations {
     }
 
     debugPrint('显示导出对话框');
+
     // 显示导出对话框
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => ExportDialog(
         pageCount: pages.length,
         defaultFileName: defaultFileName,
-        onExport: (outputPath, exportType, fileName, pixelRatio) {
+        currentPageIndex: controller.state.currentPageIndex,
+        controller: controller,
+        onExport: (outputPath, exportType, fileName, pixelRatio, extraParams) {
           debugPrint(
-              '用户选择了导出参数: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio');
+              '用户选择了导出参数: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio, 额外参数=$extraParams');
           // 返回导出参数
           return {
             'outputPath': outputPath,
             'exportType': exportType,
             'fileName': fileName,
             'pixelRatio': pixelRatio,
+            'extraParams': extraParams,
           };
         },
       ),
@@ -90,11 +94,19 @@ class FileOperations {
       // 根据导出类型调用不同的导出方法
       if (exportType == ExportType.pdf) {
         debugPrint('开始导出PDF');
+        // 获取额外参数
+        final extraParams = result.containsKey('extraParams')
+            ? result['extraParams'] as Map<String, dynamic>
+            : <String, dynamic>{};
+
+        debugPrint('导出PDF的额外参数: $extraParams');
+
         final pdfPath = await ExportService.exportToPdf(
           controller,
           outputPath,
           fileName,
           pixelRatio: pixelRatio,
+          extraParams: extraParams,
         );
 
         debugPrint('PDF导出结果: ${pdfPath != null ? "成功" : "失败"}, 路径: $pdfPath');

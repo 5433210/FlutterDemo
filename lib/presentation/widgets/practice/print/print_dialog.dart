@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 /// 打印对话框
 class PrintDialog extends StatefulWidget {
@@ -27,26 +27,66 @@ class _PrintDialogState extends State<PrintDialog> {
   /// 当前页面索引
   int _currentPageIndex = 0;
 
-  /// 生成PDF文档
-  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
-    final pdf = pw.Document(title: widget.documentName);
-
-    for (final pageImage in widget.pageImages) {
-      final image = pw.MemoryImage(pageImage);
-      
-      pdf.addPage(
-        pw.Page(
-          pageFormat: format,
-          build: (pw.Context context) {
-            return pw.Center(
-              child: pw.Image(image, fit: pw.BoxFit.contain),
-            );
-          },
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 800,
+        height: 600,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '打印预览',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // 左侧打印设置
+                  Expanded(
+                    flex: 3,
+                    child: PdfPreview(
+                      maxPageWidth: 300,
+                      build: (format) => _generatePdf(format),
+                      canChangePageFormat: true,
+                      canChangeOrientation: true,
+                      allowPrinting: false, // 禁用打印功能按钮
+                      allowSharing: false,
+                      canDebug: false,
+                      pdfFileName: '${widget.documentName}.pdf',
+                      previewPageMargin: const EdgeInsets.all(8),
+                      actions: const [], // 移除所有操作按钮，包括打印按钮
+                    ),
+                  ),
+                  const VerticalDivider(),
+                  // 右侧预览
+                  Expanded(
+                    flex: 4,
+                    child: _buildPagePreview(),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      );
-    }
-
-    return pdf.save();
+      ),
+    );
   }
 
   /// 构建页面预览
@@ -110,76 +150,25 @@ class _PrintDialogState extends State<PrintDialog> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-        width: 800,
-        height: 600,
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '打印预览',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            const Divider(),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 左侧打印设置
-                  Expanded(
-                    flex: 3,
-                    child: PdfPreview(
-                      maxPageWidth: 300,
-                      build: (format) => _generatePdf(format),
-                      canChangePageFormat: true,
-                      canChangeOrientation: true,
-                      allowPrinting: true,
-                      allowSharing: false,
-                      canDebug: false,
-                      pdfFileName: '${widget.documentName}.pdf',
-                      previewPageMargin: const EdgeInsets.all(8),
-                      actions: [
-                        PdfPreviewAction(
-                          icon: const Icon(Icons.print),
-                          onPressed: (context, build, format) async {
-                            await Printing.layoutPdf(
-                              onLayout: (format) => build(format),
-                              name: widget.documentName,
-                              format: format,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const VerticalDivider(),
-                  // 右侧预览
-                  Expanded(
-                    flex: 4,
-                    child: _buildPagePreview(),
-                  ),
-                ],
-              ),
-            ),
-          ],
+  /// 生成PDF文档
+  Future<Uint8List> _generatePdf(PdfPageFormat format) async {
+    final pdf = pw.Document(title: widget.documentName);
+
+    for (final pageImage in widget.pageImages) {
+      final image = pw.MemoryImage(pageImage);
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: format,
+          build: (pw.Context context) {
+            return pw.Center(
+              child: pw.Image(image, fit: pw.BoxFit.contain),
+            );
+          },
         ),
-      ),
-    );
+      );
+    }
+
+    return pdf.save();
   }
 }

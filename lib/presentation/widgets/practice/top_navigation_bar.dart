@@ -87,11 +87,12 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: '另存为',
           onPressed: () => _saveAs(context),
         ),
-        IconButton(
-          icon: const Icon(Icons.print),
-          tooltip: '打印',
-          onPressed: () => _printPractice(context),
-        ),
+        // 打印功能暂时屏蔽
+        // IconButton(
+        //   icon: const Icon(Icons.print),
+        //   tooltip: '打印',
+        //   onPressed: () => _printPractice(context),
+        // ),
         IconButton(
           icon: const Icon(Icons.file_download),
           tooltip: '导出',
