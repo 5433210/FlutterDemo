@@ -79,11 +79,11 @@ class PageOperations {
       'index': index,
       'width': 595.0, // A4 宽度 (72dpi)
       'height': 842.0, // A4 高度 (72dpi)
-      'backgroundType': 'color',
-      'backgroundColor': '#FFFFFF',
-      'backgroundImage': null,
-      'backgroundTexture': null,
-      'backgroundOpacity': 1.0,
+      'background': {
+        'type': 'color',
+        'value': '#FFFFFF',
+        'opacity': 1.0,
+      },
       'margin': {
         'left': 20.0,
         'top': 20.0,
@@ -118,6 +118,7 @@ class PageOperations {
       'background': {
         'type': backgroundType ?? 'color',
         'value': backgroundValue ?? '#FFFFFF',
+        'opacity': 1.0,
       },
       'elements': [],
       'settings': {
@@ -218,37 +219,78 @@ class PageOperations {
 
   /// 获取页面背景颜色
   static Color getPageBackgroundColor(Map<String, dynamic> page) {
-    // 尝试从页面数据中获取背景信息，同时提供默认值以防属性为空
-    final backgroundType = page['backgroundType'] as String? ?? 'color';
-    final backgroundColor = page['backgroundColor'] as String? ?? '#FFFFFF';
-    final backgroundOpacity =
-        (page['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
+    // 默认值
+    const defaultColor = '#FFFFFF';
+    const defaultOpacity = 1.0;
 
-    // 检查是否存在background字段（新格式）
+    // 只使用新格式的背景属性
     if (page.containsKey('background') && page['background'] is Map) {
       final background = page['background'] as Map<String, dynamic>;
       final type = background['type'] as String? ?? 'color';
-      final value = background['value'] as String? ?? '#FFFFFF';
+      final value = background['value'] as String? ?? defaultColor;
+      final opacity =
+          (background['opacity'] as num?)?.toDouble() ?? defaultOpacity;
 
       if (type == 'color' && value.isNotEmpty) {
-        return Color(int.parse(value.replaceAll('#', '0xFF')))
-            .withOpacity(backgroundOpacity);
+        try {
+          // 解析颜色
+          String hexColor = value.replaceAll('#', '');
+
+          // 确保颜色格式正确
+          if (hexColor.length < 6) {
+            hexColor = hexColor.padRight(6, 'F');
+          } else if (hexColor.length > 6) {
+            hexColor = hexColor.substring(0, 6);
+          }
+
+          // 添加完全不透明的 alpha 通道
+          hexColor = 'FF$hexColor';
+
+          // 创建基础颜色
+          final int colorValue = int.parse(hexColor, radix: 16);
+          final Color baseColor = Color(colorValue);
+
+          // 应用透明度
+          final int alpha = (opacity * 255).round();
+          final Color finalColor = baseColor.withAlpha(alpha);
+
+          return finalColor;
+        } catch (e) {
+          debugPrint('Error parsing color: $e');
+          // 创建带透明度的白色
+          final int alpha = (opacity * 255).round();
+          return Colors.white.withAlpha(alpha);
+        }
       }
     }
 
-    // 使用旧格式属性（直接的backgroundType和backgroundColor）
-    if (backgroundType == 'color' && backgroundColor.isNotEmpty) {
-      try {
-        return Color(int.parse(backgroundColor.replaceAll('#', '0xFF')))
-            .withOpacity(backgroundOpacity);
-      } catch (e) {
-        debugPrint('Error parsing color: $e');
-        return Colors.white.withOpacity(backgroundOpacity);
-      }
-    }
+    // 向后兼容：如果没有新格式，尝试使用旧格式（但这种情况应该越来越少）
+    final backgroundColor = page['backgroundColor'] as String? ?? defaultColor;
+    final backgroundOpacity =
+        (page['backgroundOpacity'] as num?)?.toDouble() ?? defaultOpacity;
 
-    // 默认返回白色
-    return Colors.white.withOpacity(backgroundOpacity);
+    try {
+      // 解析颜色
+      String hexColor = backgroundColor.replaceAll('#', '');
+      if (hexColor.length == 6) {
+        hexColor = 'FF$hexColor'; // 添加完全不透明的 alpha 通道
+      }
+
+      // 创建基础颜色
+      final int colorValue = int.parse(hexColor, radix: 16);
+      final Color baseColor = Color(colorValue);
+
+      // 应用透明度
+      final int alpha = (backgroundOpacity * 255).round();
+      final Color finalColor = baseColor.withAlpha(alpha);
+
+      return finalColor;
+    } catch (e) {
+      debugPrint('Error parsing color from old format: $e');
+      // 创建带透明度的白色
+      final int alpha = (backgroundOpacity * 255).round();
+      return Colors.white.withAlpha(alpha);
+    }
   }
 
   /// 根据索引获取页面
@@ -455,14 +497,28 @@ class PageOperations {
   static Map<String, dynamic> updateBackground(
     Map<String, dynamic> page,
     String backgroundType,
-    String backgroundValue,
-  ) {
+    String backgroundValue, {
+    double? opacity,
+  }) {
+    // 获取当前的透明度，如果没有提供新的透明度
+    final currentOpacity = opacity ??
+        (page.containsKey('background') &&
+                (page['background'] as Map<String, dynamic>)
+                    .containsKey('opacity')
+            ? (page['background'] as Map<String, dynamic>)['opacity'] as double
+            : (page['backgroundOpacity'] as num?)?.toDouble() ?? 1.0);
+
     return {
       ...page,
       'background': {
         'type': backgroundType,
         'value': backgroundValue,
+        'opacity': currentOpacity,
       },
+      // 同时更新旧格式属性，确保兼容性
+      'backgroundType': backgroundType,
+      'backgroundColor': backgroundValue,
+      'backgroundOpacity': currentOpacity,
     };
   }
 

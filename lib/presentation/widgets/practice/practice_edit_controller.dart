@@ -2200,24 +2200,58 @@ class PracticeEditController extends ChangeNotifier {
       final pageIndex = _state.currentPageIndex;
       final page = _state.pages[pageIndex];
 
-      // Make sure the background color is properly formatted
+      // 更新页面属性
+
+      // 处理背景颜色和透明度 - 只使用新格式
+      // 1. 处理旧格式的背景颜色 (向后兼容，但转换为新格式)
       if (properties.containsKey('backgroundColor')) {
         String backgroundColor = properties['backgroundColor'] as String;
         if (!backgroundColor.startsWith('#')) {
           backgroundColor = '#$backgroundColor';
-          properties['backgroundColor'] = backgroundColor;
         }
 
-        // 调试信息
-        debugPrint('更新页面背景颜色: $backgroundColor');
+        // 获取当前的背景透明度
+        final backgroundOpacity = properties.containsKey('backgroundOpacity')
+            ? (properties['backgroundOpacity'] as num).toDouble()
+            : page.containsKey('background') &&
+                    (page['background'] as Map<String, dynamic>)
+                        .containsKey('opacity')
+                ? (page['background'] as Map<String, dynamic>)['opacity']
+                    as double
+                : 1.0;
 
-        // 确保同时更新新格式的背景属性
-        if (!properties.containsKey('background')) {
-          properties['background'] = {
-            'type': 'color',
-            'value': backgroundColor,
-          };
-        }
+        // 只设置新格式的背景属性
+        properties['background'] = {
+          'type': 'color',
+          'value': backgroundColor,
+          'opacity': backgroundOpacity,
+        };
+
+        // 删除旧格式属性
+        properties.remove('backgroundColor');
+        properties.remove('backgroundType');
+        properties.remove('backgroundOpacity');
+      }
+
+      // 2. 处理旧格式的背景透明度 (向后兼容，但转换为新格式)
+      else if (properties.containsKey('backgroundOpacity')) {
+        final backgroundOpacity =
+            (properties['backgroundOpacity'] as num).toDouble();
+
+        // 获取当前的背景颜色和类型
+        final background = page.containsKey('background')
+            ? Map<String, dynamic>.from(
+                page['background'] as Map<String, dynamic>)
+            : {'type': 'color', 'value': '#FFFFFF'};
+
+        // 更新透明度
+        background['opacity'] = backgroundOpacity;
+
+        // 只设置新格式的背景属性
+        properties['background'] = background;
+
+        // 删除旧格式属性
+        properties.remove('backgroundOpacity');
       }
 
       // Create a copy of the old properties that will be modified
@@ -2236,14 +2270,10 @@ class PracticeEditController extends ChangeNotifier {
         updatePage: (index, props) {
           if (index >= 0 && index < _state.pages.length) {
             final page = _state.pages[index];
+
             // Update page properties
             props.forEach((key, value) {
               page[key] = value;
-
-              // 调试信息
-              if (key == 'backgroundColor') {
-                debugPrint('页面背景颜色已更新为: $value');
-              }
             });
 
             _state.hasUnsavedChanges = true;
@@ -2415,11 +2445,10 @@ class PracticeEditController extends ChangeNotifier {
       'height': 297.0, // A4纸高度（毫米）
       'orientation': 'portrait', // 默认纵向
       'dpi': 300, // 默认DPI
-      'backgroundColor': '#FFFFFF',
-      'backgroundOpacity': 1.0,
       'background': {
         'type': 'color',
         'value': '#FFFFFF',
+        'opacity': 1.0,
       },
       'elements': <Map<String, dynamic>>[],
       'layers': <Map<String, dynamic>>[defaultLayer], // 每个页面都有自己的图层

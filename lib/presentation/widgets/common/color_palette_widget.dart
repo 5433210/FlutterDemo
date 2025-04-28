@@ -41,13 +41,64 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
   final FocusNode _focusNode = FocusNode();
 
   @override
-  void initState() {
-    super.initState();
-    _currentColor = widget.initialColor;
-    _colorCodeController = TextEditingController(text: _colorToHex(_currentColor));
-
-    // 监听焦点变化，当失去焦点时应用颜色
-    _focusNode.addListener(_onFocusChange);
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // 颜色标签
+        Expanded(
+          flex: 2,
+          child: Text(widget.labelText),
+        ),
+        // 颜色预览
+        GestureDetector(
+          onTap: () => _showColorPicker(context),
+          child: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: _currentColor,
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 颜色代码输入框
+        Expanded(
+          flex: 3,
+          child: TextField(
+            controller: _colorCodeController,
+            focusNode: _focusNode,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              prefixText: '#',
+              hintText: '颜色代码',
+            ),
+            style: const TextStyle(fontSize: 14),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
+              LengthLimitingTextInputFormatter(6),
+            ],
+            onChanged: (value) {
+              // 实时预览颜色变化
+              if (value.length == 6) {
+                setState(() {
+                  _currentColor = _hexToColor(value);
+                });
+              }
+            },
+            onSubmitted: (value) {
+              _applyColorFromText();
+            },
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -68,39 +119,15 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     super.dispose();
   }
 
-  /// 焦点变化处理
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _applyColorFromText();
-    }
-  }
+  @override
+  void initState() {
+    super.initState();
+    _currentColor = widget.initialColor;
+    _colorCodeController =
+        TextEditingController(text: _colorToHex(_currentColor));
 
-  /// 将颜色转换为十六进制字符串（不带#前缀）
-  String _colorToHex(Color color) {
-    return color.value.toRadixString(16).padLeft(8, '0').substring(2);
-  }
-
-  /// 从十六进制字符串解析颜色
-  Color _hexToColor(String hexString) {
-    try {
-      final hexCode = hexString.replaceAll('#', '');
-      if (hexCode.length == 6) {
-        return Color(int.parse('FF$hexCode', radix: 16));
-      } else if (hexCode.length == 8) {
-        return Color(int.parse(hexCode, radix: 16));
-      }
-    } catch (e) {
-      debugPrint('颜色解析错误: $e');
-    }
-    return Colors.black;
-  }
-
-  /// 更新颜色代码文本
-  void _updateColorCodeText() {
-    final hexCode = _colorToHex(_currentColor);
-    if (_colorCodeController.text != hexCode) {
-      _colorCodeController.text = hexCode;
-    }
+    // 监听焦点变化，当失去焦点时应用颜色
+    _focusNode.addListener(_onFocusChange);
   }
 
   /// 从文本应用颜色
@@ -116,6 +143,50 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     } catch (e) {
       // 如果解析失败，恢复为当前颜色
       _updateColorCodeText();
+    }
+  }
+
+  /// 将颜色转换为十六进制字符串（不带#前缀）
+  String _colorToHex(Color color) {
+    // 直接使用RGB值构建十六进制字符串
+    final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+    final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+    final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
+
+    final hexColor = '$r$g$b';
+    return hexColor;
+  }
+
+  /// 从十六进制字符串解析颜色
+  Color _hexToColor(String hexString) {
+    try {
+      final hexCode = hexString.replaceAll('#', '');
+
+      // 确保颜色格式正确
+      String cleanHex = hexCode;
+      if (cleanHex.length < 6) {
+        cleanHex = cleanHex.padRight(6, 'F');
+      } else if (cleanHex.length > 6) {
+        cleanHex = cleanHex.substring(0, 6);
+      }
+
+      // 添加完全不透明的 alpha 通道
+      cleanHex = 'FF$cleanHex';
+
+      // 解析颜色
+      final int colorValue = int.parse(cleanHex, radix: 16);
+      final Color color = Color(colorValue);
+      return color;
+    } catch (e) {
+      debugPrint('Color parsing error: $e');
+      return Colors.black;
+    }
+  }
+
+  /// 焦点变化处理
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      _applyColorFromText();
     }
   }
 
@@ -168,63 +239,11 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // 颜色标签
-        Expanded(
-          flex: 2,
-          child: Text(widget.labelText),
-        ),
-        // 颜色预览
-        GestureDetector(
-          onTap: () => _showColorPicker(context),
-          child: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: _currentColor,
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // 颜色代码输入框
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: _colorCodeController,
-            focusNode: _focusNode,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              prefixText: '#',
-              hintText: '颜色代码',
-            ),
-            style: const TextStyle(fontSize: 14),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9a-fA-F]')),
-              LengthLimitingTextInputFormatter(6),
-            ],
-            onChanged: (value) {
-              // 实时预览颜色变化
-              if (value.length == 6) {
-                setState(() {
-                  _currentColor = _hexToColor(value);
-                });
-              }
-            },
-            onSubmitted: (value) {
-              _applyColorFromText();
-            },
-          ),
-        ),
-      ],
-    );
+  /// 更新颜色代码文本
+  void _updateColorCodeText() {
+    final hexCode = _colorToHex(_currentColor);
+    if (_colorCodeController.text != hexCode) {
+      _colorCodeController.text = hexCode;
+    }
   }
 }

@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import 'page_operations.dart';
+
 /// 页面缩略图条
 class PageThumbnailStrip extends StatefulWidget {
   final List<Map<String, dynamic>> pages;
@@ -103,46 +105,8 @@ class _PageThumbnailStripState extends State<PageThumbnailStrip> {
 
   /// 构建页面缩略图
   Widget _buildPageThumbnail(Map<String, dynamic> page) {
-    // 获取背景颜色 - 处理新旧数据格式
-    Color color = Colors.white;
-
-    // 检查是否有新格式的background属性
-    if (page.containsKey('background') && page['background'] is Map) {
-      final background = page['background'] as Map<String, dynamic>;
-      final type = background['type'] as String? ?? 'color';
-      final value = background['value'] as String? ?? '#FFFFFF';
-
-      if (type == 'color' && value.isNotEmpty) {
-        try {
-          color = Color(int.parse(value.replaceAll('#', '0xFF')));
-        } catch (e) {
-          // 如果解析失败，使用默认白色
-          color = Colors.white;
-        }
-      }
-    }
-    // 尝试使用旧格式属性
-    else {
-      final backgroundType = page['backgroundType'] as String? ?? 'color';
-      final backgroundColor = page['backgroundColor'] as String? ?? '#FFFFFF';
-      final backgroundOpacity =
-          (page['backgroundOpacity'] as num?)?.toDouble() ?? 1.0;
-
-      if (backgroundType == 'color' && backgroundColor.isNotEmpty) {
-        try {
-          final colorValue = int.parse(backgroundColor.replaceAll('#', '0xFF'));
-          color = Color.fromRGBO(
-            (colorValue >> 16) & 0xFF,
-            (colorValue >> 8) & 0xFF,
-            colorValue & 0xFF,
-            backgroundOpacity,
-          );
-        } catch (e) {
-          // 如果解析失败，使用默认白色
-          color = Colors.white;
-        }
-      }
-    }
+    // 使用 PageOperations 获取背景颜色，确保一致性
+    Color color = PageOperations.getPageBackgroundColor(page);
 
     // 获取页面元素
     final elements = page['elements'] as List<dynamic>? ?? [];

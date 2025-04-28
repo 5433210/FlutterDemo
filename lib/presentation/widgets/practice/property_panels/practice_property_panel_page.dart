@@ -234,24 +234,25 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                       debugPrint('选择的背景颜色: $hexColor');
 
                       // 获取当前的不透明度
-                      final backgroundOpacity =
-                          (widget.page!['backgroundOpacity'] as num?)
-                                  ?.toDouble() ??
-                              1.0;
+                      final opacity = widget.page!.containsKey('background') &&
+                              (widget.page!['background']
+                                      as Map<String, dynamic>)
+                                  .containsKey('opacity')
+                          ? (widget.page!['background']
+                              as Map<String, dynamic>)['opacity'] as double
+                          : 1.0;
 
-                      // 更新页面属性 - 同时更新旧格式和新格式
-                      widget.onPagePropertiesChanged({
-                        // 旧格式属性
-                        'backgroundColor': hexColor,
-                        'backgroundType': 'color',
-                        'backgroundOpacity': backgroundOpacity,
-
-                        // 新格式属性
+                      // 只更新新格式属性
+                      final backgroundData = {
                         'background': {
                           'type': 'color',
                           'value': hexColor,
+                          'opacity': opacity,
                         },
-                      });
+                      };
+
+                      debugPrint('【背景跟踪】用户设置背景颜色: $backgroundData');
+                      widget.onPagePropertiesChanged(backgroundData);
 
                       // 更新颜色代码控制器
                       setState(() {
@@ -261,6 +262,70 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
                                 : hexColor;
                       });
                     },
+                  ),
+
+                  const SizedBox(height: 16.0),
+
+                  // 背景透明度设置
+                  const Text('背景透明度'),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: widget.page!.containsKey('background') &&
+                                  (widget.page!['background']
+                                          as Map<String, dynamic>)
+                                      .containsKey('opacity')
+                              ? (widget.page!['background']
+                                  as Map<String, dynamic>)['opacity'] as double
+                              : 1.0,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 10,
+                          label: (widget.page!.containsKey('background') &&
+                                      (widget.page!['background']
+                                              as Map<String, dynamic>)
+                                          .containsKey('opacity')
+                                  ? (widget.page!['background']
+                                          as Map<String, dynamic>)['opacity']
+                                      as double
+                                  : 1.0)
+                              .toStringAsFixed(1),
+                          onChanged: (value) {
+                            // 获取当前的背景信息
+                            final background =
+                                widget.page!.containsKey('background')
+                                    ? Map<String, dynamic>.from(
+                                        widget.page!['background']
+                                            as Map<String, dynamic>)
+                                    : {
+                                        'type': 'color',
+                                        'value': '#FFFFFF',
+                                      };
+
+                            // 更新透明度
+                            background['opacity'] = value;
+
+                            // 只更新新格式属性
+                            final backgroundData = {
+                              'background': background,
+                            };
+
+                            debugPrint(
+                                '【背景跟踪】用户设置背景透明度: value=$value, 完整数据=$backgroundData');
+                            widget.onPagePropertiesChanged(backgroundData);
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text(
+                          '${((widget.page!.containsKey('background') && (widget.page!['background'] as Map<String, dynamic>).containsKey('opacity') ? (widget.page!['background'] as Map<String, dynamic>)['opacity'] as double : 1.0) * 100).toInt()}%',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -350,9 +415,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
       _dpiController.text =
           ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
 
-      // 更新背景颜色控制器
-      final backgroundColor =
-          widget.page!['backgroundColor'] as String? ?? '#FFFFFF';
+      // 更新背景颜色控制器 - 使用新格式
+      String backgroundColor = '#FFFFFF';
+      if (widget.page!.containsKey('background') &&
+          (widget.page!['background'] as Map<String, dynamic>)
+              .containsKey('value')) {
+        backgroundColor = (widget.page!['background']
+            as Map<String, dynamic>)['value'] as String;
+      }
       _backgroundColorController.text = backgroundColor.startsWith('#')
           ? backgroundColor.substring(1)
           : backgroundColor;
@@ -461,9 +531,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
       _dpiController.text =
           ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
 
-      // 设置背景颜色初始值
-      final backgroundColor =
-          widget.page!['backgroundColor'] as String? ?? '#FFFFFF';
+      // 设置背景颜色初始值 - 使用新格式
+      String backgroundColor = '#FFFFFF';
+      if (widget.page!.containsKey('background') &&
+          (widget.page!['background'] as Map<String, dynamic>)
+              .containsKey('value')) {
+        backgroundColor = (widget.page!['background']
+            as Map<String, dynamic>)['value'] as String;
+      }
       _backgroundColorController.text = backgroundColor.startsWith('#')
           ? backgroundColor.substring(1)
           : backgroundColor;
@@ -494,14 +569,14 @@ class _PagePropertyPanelState extends State<PagePropertyPanel> {
   /// 将颜色转换为十六进制字符串
   String _colorToHex(Color color) {
     try {
-      // 使用安全的方式转换颜色
-      final hex = color.toString();
-      // 格式会是 Color(0xAARRGGBB) 或 Color(0xFFRRGGBB)
-      final hexCode = hex.split('(0x')[1].split(')')[0];
-      // 取后6位，即RRGGBB
-      final colorCode =
-          hexCode.length > 6 ? hexCode.substring(hexCode.length - 6) : hexCode;
-      return '#$colorCode'; // 包含 # 前缀
+      // 直接使用颜色的RGB值构建十六进制字符串
+      final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+      final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+      final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
+
+      final hexColor = '#$r$g$b';
+      debugPrint('【背景跟踪】颜色转换: ${color.toString()} -> $hexColor');
+      return hexColor;
     } catch (e) {
       debugPrint('Error converting color to hex: $e');
       return '#FFFFFF'; // 出错时返回默认白色

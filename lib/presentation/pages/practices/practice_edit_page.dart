@@ -771,7 +771,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       },
       builder: (context, candidateData, rejectedData) {
         return Container(
-          color: Colors.grey.shade200,
+          // 使用深色背景，以便更清楚地看到透明度效果
+          color: Colors.grey.shade800,
           child: InteractiveViewer(
             boundaryMargin: const EdgeInsets.all(double.infinity),
             panEnabled:
@@ -1115,42 +1116,50 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     // 计算像素尺寸
                     final pixelSize = _calculatePixelSize(currentPage);
 
-                    return Container(
-                      width: pixelSize.width,
-                      height: pixelSize.height,
-                      color: PageOperations.getPageBackgroundColor(currentPage),
-                      child: RepaintBoundary(
-                        key: canvasKey,
-                        child: Stack(
-                          children: [
-                            // 网格
-                            if (_controller.state.gridVisible)
-                              CustomPaint(
-                                size: pixelSize,
-                                painter: GridPainter(
-                                    gridSize: _controller.state.gridSize),
-                              ),
+                    return RepaintBoundary(
+                      key: canvasKey,
+                      child: Builder(
+                        builder: (context) {
+                          final backgroundColor =
+                              PageOperations.getPageBackgroundColor(
+                                  currentPage);
 
-                            // 元素
-                            // 根据图层顺序排序元素
-                            ..._sortElementsByLayerOrder(elements)
-                                .map((element) => _buildElement(element)),
-
-                            // 拖拽指示
-                            if (candidateData.isNotEmpty)
-                              Container(
-                                width: pixelSize.width,
-                                height: pixelSize.height,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.blue,
-                                    width: 1,
-                                    style: BorderStyle.solid,
+                          return Container(
+                            width: pixelSize.width,
+                            height: pixelSize.height,
+                            color: backgroundColor,
+                            child: Stack(
+                              children: [
+                                // 网格
+                                if (_controller.state.gridVisible)
+                                  CustomPaint(
+                                    size: pixelSize,
+                                    painter: GridPainter(
+                                        gridSize: _controller.state.gridSize),
                                   ),
-                                ),
-                              ),
-                          ],
-                        ),
+
+                                // 元素
+                                // 根据图层顺序排序元素
+                                ..._sortElementsByLayerOrder(elements)
+                                    .map((element) => _buildElement(element)),
+
+                                // 拖拽指示
+                                if (candidateData.isNotEmpty)
+                                  Container(
+                                    width: pixelSize.width,
+                                    height: pixelSize.height,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.blue,
+                                        width: 1,
+                                        style: BorderStyle.solid,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     );
                   }),
