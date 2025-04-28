@@ -218,7 +218,7 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
         crossAxisCount: AppSizes.gridCrossAxisCount,
         mainAxisSpacing: AppSizes.gridMainAxisSpacing,
         crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-        childAspectRatio: 1,
+        childAspectRatio: 0.75, // 3:4 aspect ratio to match the thumbnails
       ),
       itemCount: _filteredPractices.length + (_isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
@@ -278,50 +278,59 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                           final thumbnail = practice['thumbnail'] as Uint8List?;
                           if (thumbnail != null && thumbnail.isNotEmpty) {
                             return Positioned.fill(
-                              child: Container(
-                                // decoration: BoxDecoration(
-                                //   color: Colors.white,
-                                //   border: Border.all(
-                                //       color: Colors.grey.shade300, width: 0),
-                                // ),
-                                padding: const EdgeInsets.all(3.0), // 添加内边距
-                                child: Image.memory(
-                                  thumbnail,
-                                  fit: BoxFit.contain, // 保持图片比例
-                                  alignment: Alignment.center, // 居中对齐
-                                  gaplessPlayback: true,
-                                  cacheWidth: 500, // 限制缓存宽度，提高性能
-                                  cacheHeight: 500, // 限制缓存高度，提高性能
-                                  frameBuilder: (context, child, frame,
-                                      wasSynchronouslyLoaded) {
-                                    if (frame == null) {
-                                      return Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Center(
-                                            child: CircularProgressIndicator()),
-                                      );
-                                    }
-                                    return child;
-                                  },
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey.shade200,
-                                      child: Center(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.image_not_supported,
-                                                color: Colors.grey.shade400),
-                                            const SizedBox(height: 4),
-                                            Text('缩略图加载失败',
-                                                style: TextStyle(
+                              child: Center(
+                                child: AspectRatio(
+                                  aspectRatio: 3 / 4, // 保持3:4的长宽比
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(
+                                          color: Colors.grey.shade300,
+                                          width: 1),
+                                    ),
+                                    padding: const EdgeInsets.all(4.0),
+                                    child: Image.memory(
+                                      thumbnail,
+                                      fit: BoxFit.contain, // 保持图片比例
+                                      alignment: Alignment.center, // 居中对齐
+                                      gaplessPlayback: true,
+                                      cacheWidth: 500, // 限制缓存宽度，提高性能
+                                      cacheHeight: 500, // 限制缓存高度，提高性能
+                                      frameBuilder: (context, child, frame,
+                                          wasSynchronouslyLoaded) {
+                                        if (frame == null) {
+                                          return Container(
+                                            color: Colors.grey.shade200,
+                                            child: const Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                          );
+                                        }
+                                        return child;
+                                      },
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey.shade200,
+                                          child: Center(
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.image_not_supported,
                                                     color:
-                                                        Colors.grey.shade600)),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
+                                                        Colors.grey.shade400),
+                                                const SizedBox(height: 4),
+                                                Text('缩略图加载失败',
+                                                    style: TextStyle(
+                                                        color: Colors
+                                                            .grey.shade600)),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
                               ),
                             );
@@ -366,13 +375,25 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '最后更新: ${_formatDateTime(practice['updateTime'])}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              '最后更新: ${_formatDateTime(practice['updateTime'])}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
-                          Text(
-                            '${practice['pageCount'] ?? 0}页',
-                            style: Theme.of(context).textTheme.bodySmall,
+                          const SizedBox(
+                              width: 8), // Add spacing between the texts
+                          Flexible(
+                            flex: 1,
+                            child: Text(
+                              '${practice['pageCount'] ?? 0}页',
+                              style: Theme.of(context).textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
                           ),
                         ],
                       ),
@@ -440,44 +461,49 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
                                   color: Colors.grey.shade300, width: 1),
                             ),
                             padding: const EdgeInsets.all(4.0), // 添加内边距
-                            child: Image.memory(
-                              thumbnail,
-                              fit: BoxFit.contain, // 保持图片比例
-                              alignment: Alignment.center, // 居中对齐
-                              gaplessPlayback: true,
-                              cacheWidth: 100, // 限制缓存宽度，提高性能
-                              cacheHeight: 100, // 限制缓存高度，提高性能
-                              frameBuilder: (context, child, frame,
-                                  wasSynchronouslyLoaded) {
-                                if (frame == null) {
-                                  return Container(
-                                    color: Colors.grey.shade200,
-                                    child: const Center(
-                                        child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    )),
-                                  );
-                                }
-                                return child;
-                              },
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.image_not_supported,
-                                          size: 16,
-                                          color: Colors.grey.shade400),
-                                      Text('${index + 1}',
-                                          style: TextStyle(
-                                              color: Colors.grey.shade600)),
-                                    ],
-                                  ),
-                                );
-                              },
+                            child: AspectRatio(
+                              aspectRatio: 3 / 4, // 保持3:4的长宽比
+                              child: Center(
+                                child: Image.memory(
+                                  thumbnail,
+                                  fit: BoxFit.contain, // 保持图片比例
+                                  alignment: Alignment.center, // 居中对齐
+                                  gaplessPlayback: true,
+                                  cacheWidth: 100, // 限制缓存宽度，提高性能
+                                  cacheHeight: 100, // 限制缓存高度，提高性能
+                                  frameBuilder: (context, child, frame,
+                                      wasSynchronouslyLoaded) {
+                                    if (frame == null) {
+                                      return Container(
+                                        color: Colors.grey.shade200,
+                                        child: const Center(
+                                            child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        )),
+                                      );
+                                    }
+                                    return child;
+                                  },
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.image_not_supported,
+                                              size: 16,
+                                              color: Colors.grey.shade400),
+                                          Text('${index + 1}',
+                                              style: TextStyle(
+                                                  color: Colors.grey.shade600)),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
                             ),
                           ),
                         );
@@ -513,8 +539,16 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('最后更新: ${_formatDateTime(practice['updateTime'])}'),
-                Text('${practice['pageCount'] ?? 0}页'),
+                Text(
+                  '最后更新: ${_formatDateTime(practice['updateTime'])}',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  '${practice['pageCount'] ?? 0}页',
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ],
             ),
             trailing: _isBatchMode ? null : const Icon(Icons.chevron_right),

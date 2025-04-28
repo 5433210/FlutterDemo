@@ -114,28 +114,12 @@ class ThumbnailGenerator {
       canvas.restore();
       canvas.save();
 
-      // 添加明显的视觉元素，帮助确认图像是否正确渲染
-      debugPrint('添加明显的视觉元素，帮助确认图像是否正确渲染');
-
-      // 绘制边框
+      // 绘制细边框，帮助区分缩略图边界
       final borderPaint = Paint()
-        ..color = Colors.blue
+        ..color = Colors.grey.shade300
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 5.0;
+        ..strokeWidth = 1.0;
       canvas.drawRect(Rect.fromLTWH(0, 0, width, height), borderPaint);
-
-      // 绘制对角线，确保图像有可见内容
-      final linePaint = Paint()
-        ..color = Colors.red
-        ..strokeWidth = 3.0;
-      canvas.drawLine(const Offset(0, 0), Offset(width, height), linePaint);
-      canvas.drawLine(Offset(width, 0), Offset(0, height), linePaint);
-
-      // 在中心绘制一个圆形
-      final circlePaint = Paint()
-        ..color = Colors.green
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset(width / 2, height / 2), 50, circlePaint);
 
       // 绘制标题
       if (title != null && title.isNotEmpty) {

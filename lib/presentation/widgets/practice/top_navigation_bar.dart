@@ -79,12 +79,12 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.save),
-          tooltip: '保存',
+          tooltip: '保存 (Ctrl+S)',
           onPressed: () => _savePractice(context),
         ),
         IconButton(
           icon: const Icon(Icons.save_as),
-          tooltip: '另存为',
+          tooltip: '另存为 (Ctrl+Shift+S)',
           onPressed: () => _saveAs(context),
         ),
         // 打印功能暂时屏蔽
@@ -95,7 +95,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
         // ),
         IconButton(
           icon: const Icon(Icons.file_download),
-          tooltip: '导出',
+          tooltip: '导出 (Ctrl+E)',
           onPressed: () => _exportPractice(context),
         ),
       ],
@@ -108,12 +108,12 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.undo),
-          tooltip: '撤销',
+          tooltip: '撤销 (Ctrl+Z)',
           onPressed: controller.state.canUndo ? controller.undo : null,
         ),
         IconButton(
           icon: const Icon(Icons.redo),
-          tooltip: '重做',
+          tooltip: '重做 (Ctrl+Y)',
           onPressed: controller.state.canRedo ? controller.redo : null,
         ),
       ],
@@ -124,7 +124,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   Widget _buildPreviewGroup() {
     return IconButton(
       icon: Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
-      tooltip: isPreviewMode ? '退出预览模式' : '预览模式',
+      tooltip: isPreviewMode ? '退出预览模式 (Ctrl+P)' : '预览模式 (Ctrl+P)',
       onPressed: onTogglePreviewMode,
     );
   }
@@ -137,7 +137,7 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
           icon: Icon(
             showThumbnails ? Icons.view_carousel : Icons.view_carousel_outlined,
           ),
-          tooltip: showThumbnails ? '隐藏页面缩略图' : '显示页面缩略图',
+          tooltip: showThumbnails ? '隐藏页面缩略图 (Ctrl+O)' : '显示页面缩略图 (Ctrl+O)',
           onPressed: () => onThumbnailToggle(!showThumbnails),
         ),
       ],

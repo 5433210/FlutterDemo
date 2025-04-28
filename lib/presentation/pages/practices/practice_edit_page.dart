@@ -22,6 +22,7 @@ import '../../widgets/practice/control_handlers.dart';
 import '../../widgets/practice/edit_toolbar.dart';
 import '../../widgets/practice/element_operations.dart';
 import '../../widgets/practice/element_renderers.dart';
+import '../../widgets/practice/file_operations.dart';
 import '../../widgets/practice/grid_painter.dart';
 import '../../widgets/practice/page_operations.dart';
 import '../../widgets/practice/page_thumbnail_strip.dart';
@@ -78,7 +79,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: () async => true,
+      onWillPop: _onWillPop,
       child: PageLayout(
         toolbar: AnimatedBuilder(
           animation: _controller,
@@ -90,6 +91,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               onTogglePreviewMode: () {
                 setState(() {
                   _isPreviewMode = !_isPreviewMode; // 切换预览模式
+                  _controller.togglePreviewMode(_isPreviewMode); // 通知控制器
                 });
               },
               showThumbnails: _showThumbnails,
@@ -1650,17 +1652,21 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   void _copySelectedElement() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
-    if (_controller.state.selectedElementIds.length == 1) {
-      // 单选复制
-      final id = _controller.state.selectedElementIds.first;
-      final elements = _controller.state.currentPageElements;
-      final element = ElementOperations.findElementById(elements, id);
+    final elements = _controller.state.currentPageElements;
+    final id = _controller.state.selectedElementIds.first;
+    final element = elements.firstWhere((e) => e['id'] == id,
+        orElse: () => <String, dynamic>{});
 
-      if (element != null) {
-        _clipboardElement = Map<String, dynamic>.from(element);
+    if (element.isNotEmpty) {
+      // 深拷贝元素
+      _clipboardElement = Map<String, dynamic>.from(element);
+
+      // 显示提示
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('已复制元素到剪贴板')),
+        );
       }
-    } else {
-      // 多选复制暂不支持
     }
   }
 
@@ -1693,27 +1699,190 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 处理键盘事件
   bool _handleKeyEvent(KeyEvent event) {
-    setState(() {
-      if (event is KeyDownEvent) {
-        if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
-            event.logicalKey == LogicalKeyboardKey.controlRight) {
-          _isCtrlPressed = true;
-        } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
-            event.logicalKey == LogicalKeyboardKey.shiftRight) {
-          _isShiftPressed = true;
+    // 更新修饰键状态
+    if (event is KeyDownEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
+          event.logicalKey == LogicalKeyboardKey.controlRight) {
+        _isCtrlPressed = true;
+      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
+          event.logicalKey == LogicalKeyboardKey.shiftRight) {
+        _isShiftPressed = true;
+      }
+    } else if (event is KeyUpEvent) {
+      if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
+          event.logicalKey == LogicalKeyboardKey.controlRight) {
+        _isCtrlPressed = false;
+      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
+          event.logicalKey == LogicalKeyboardKey.shiftRight) {
+        _isShiftPressed = false;
+      }
+    }
+
+    // 如果是按键按下事件，处理快捷键
+    if (event is KeyDownEvent) {
+      // 如果是预览模式，只处理预览模式切换快捷键
+      if (_isPreviewMode) {
+        if (_isCtrlPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
+          setState(() {
+            _isPreviewMode = !_isPreviewMode;
+            _controller.togglePreviewMode(_isPreviewMode);
+          });
+          return true;
         }
-      } else if (event is KeyUpEvent) {
-        if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
-            event.logicalKey == LogicalKeyboardKey.controlRight) {
-          _isCtrlPressed = false;
-        } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
-            event.logicalKey == LogicalKeyboardKey.shiftRight) {
-          _isShiftPressed = false;
+        return false;
+      }
+
+      // 处理Ctrl组合键
+      if (_isCtrlPressed) {
+        switch (event.logicalKey) {
+          // Ctrl+S: 保存 或 Ctrl+Shift+S: 另存为
+          case LogicalKeyboardKey.keyS:
+            if (_isShiftPressed) {
+              // Ctrl+Shift+S: 另存为
+              _saveAsNewPractice();
+            } else {
+              // Ctrl+S: 保存
+              _savePractice();
+            }
+            return true;
+
+          // Ctrl+A: 全选当前页所有元素
+          case LogicalKeyboardKey.keyA:
+            _selectAllElements();
+            return true;
+
+          // Ctrl+C: 复制选中
+          case LogicalKeyboardKey.keyC:
+            _copySelectedElement();
+            return true;
+
+          // Ctrl+V: 粘贴复制
+          case LogicalKeyboardKey.keyV:
+            _pasteElement();
+            return true;
+
+          // Ctrl+D: 删除选中
+          case LogicalKeyboardKey.keyD:
+            if (_controller.state.selectedElementIds.isNotEmpty) {
+              final idsToDelete =
+                  List<String>.from(_controller.state.selectedElementIds);
+              for (final id in idsToDelete) {
+                _controller.deleteElement(id);
+              }
+            }
+            return true;
+
+          // Ctrl+Z: 撤销
+          case LogicalKeyboardKey.keyZ:
+            _controller.undo();
+            return true;
+
+          // Ctrl+Y: 重做
+          case LogicalKeyboardKey.keyY:
+            _controller.redo();
+            return true;
+
+          // Ctrl+J: 组合
+          case LogicalKeyboardKey.keyJ:
+            if (_controller.state.selectedElementIds.length > 1) {
+              _controller.groupSelectedElements();
+            }
+            return true;
+
+          // Ctrl+U: 取消组合
+          case LogicalKeyboardKey.keyU:
+            if (_controller.state.selectedElementIds.length == 1) {
+              final id = _controller.state.selectedElementIds.first;
+              final element = ElementOperations.findElementById(
+                  _controller.state.currentPageElements, id);
+              if (element != null && element['type'] == 'group') {
+                _controller.ungroupElements(id);
+              }
+            }
+            return true;
+
+          // Ctrl+G: 网格开关
+          case LogicalKeyboardKey.keyG:
+            setState(() {
+              _controller.state.gridVisible = !_controller.state.gridVisible;
+            });
+            return true;
+
+          // Ctrl+R: 吸附开关
+          case LogicalKeyboardKey.keyR:
+            setState(() {
+              _controller.state.snapEnabled = !_controller.state.snapEnabled;
+            });
+            return true;
+
+          // Ctrl+T: 置顶
+          case LogicalKeyboardKey.keyT:
+            if (!_isShiftPressed) {
+              _bringElementToFront();
+            } else {
+              // Ctrl+Shift+T: 上一层
+              _moveElementUp();
+            }
+            return true;
+
+          // Ctrl+B: 置底
+          case LogicalKeyboardKey.keyB:
+            if (!_isShiftPressed) {
+              _sendElementToBack();
+            } else {
+              // Ctrl+Shift+B: 下一层
+              _moveElementDown();
+            }
+            return true;
+
+          // Ctrl+E: 导出
+          case LogicalKeyboardKey.keyE:
+            // 实现导出功能
+            _showExportDialog();
+            return true;
+
+          // Ctrl+P: 预览模式开关
+          case LogicalKeyboardKey.keyP:
+            setState(() {
+              _isPreviewMode = !_isPreviewMode;
+              _controller.togglePreviewMode(_isPreviewMode);
+            });
+            return true;
+
+          // Ctrl+O: 显示页面缩略图开关
+          case LogicalKeyboardKey.keyO:
+            setState(() {
+              _showThumbnails = !_showThumbnails;
+            });
+            return true;
         }
       }
-    });
 
-    // 返回false表示不拦截事件，允许其他处理程序处理
+      // 处理方向键：移动选中项
+      if (_controller.state.selectedElementIds.isNotEmpty) {
+        final moveDistance = _isCtrlPressed ? 10.0 : 1.0; // Ctrl按下时移动更大距离
+
+        switch (event.logicalKey) {
+          case LogicalKeyboardKey.arrowUp:
+            _moveSelectedElements(0, -moveDistance);
+            return true;
+
+          case LogicalKeyboardKey.arrowDown:
+            _moveSelectedElements(0, moveDistance);
+            return true;
+
+          case LogicalKeyboardKey.arrowLeft:
+            _moveSelectedElements(-moveDistance, 0);
+            return true;
+
+          case LogicalKeyboardKey.arrowRight:
+            _moveSelectedElements(moveDistance, 0);
+            return true;
+        }
+      }
+    }
+
+    // 如果没有处理，返回false让事件继续传递
     return false;
   }
 
@@ -2022,7 +2191,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index > 0) {
-      // 交换元素位置
+      // 交换当前元素和下一层元素的位置
       final temp = elements[index];
       elements[index] = elements[index - 1];
       elements[index - 1] = temp;
@@ -2044,8 +2213,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final elements = _controller.state.currentPageElements;
     final index = elements.indexWhere((e) => e['id'] == id);
 
-    if (index < elements.length - 1) {
-      // 交换元素位置
+    if (index >= 0 && index < elements.length - 1) {
+      // 交换当前元素和上一层元素的位置
       final temp = elements[index];
       elements[index] = elements[index + 1];
       elements[index + 1] = temp;
@@ -2057,6 +2226,85 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
       setState(() {});
     }
+  }
+
+  /// 移动选中的元素
+  void _moveSelectedElements(double dx, double dy) {
+    if (_controller.state.selectedElementIds.isEmpty) return;
+
+    final elements = _controller.state.currentPageElements;
+    bool hasChanges = false;
+
+    for (final id in _controller.state.selectedElementIds) {
+      final elementIndex = elements.indexWhere((e) => e['id'] == id);
+      if (elementIndex >= 0) {
+        final element = elements[elementIndex];
+
+        // 检查元素所在图层是否锁定
+        final layerId = element['layerId'] as String?;
+        if (layerId != null && _controller.state.isLayerLocked(layerId)) {
+          continue; // 跳过锁定图层上的元素
+        }
+
+        // 更新元素位置
+        element['x'] = (element['x'] as num).toDouble() + dx;
+        element['y'] = (element['y'] as num).toDouble() + dy;
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      _controller.state.hasUnsavedChanges = true;
+      setState(() {});
+    }
+  }
+
+  /// 处理返回按钮
+  Future<bool> _onWillPop() async {
+    // 检查是否有未保存的修改
+    if (_controller.state.hasUnsavedChanges) {
+      // 显示确认对话框
+      final bool? result = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('未保存的修改'),
+            content: const Text('你有未保存的修改，确定要离开吗？'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('取消'),
+                onPressed: () {
+                  Navigator.of(context).pop(false);
+                },
+              ),
+              TextButton(
+                child: const Text('离开'),
+                onPressed: () {
+                  Navigator.of(context).pop(true);
+                },
+              ),
+              TextButton(
+                child: const Text('保存并离开'),
+                onPressed: () async {
+                  // 保存修改
+                  await _savePractice();
+                  if (context.mounted) {
+                    // 返回true表示确认离开
+                    Navigator.of(context).pop(true);
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      // 如果用户取消，则不离开
+      return result ?? false;
+    }
+
+    // 没有未保存的修改，可以直接离开
+    return true;
   }
 
   /// 粘贴元素
@@ -2311,6 +2559,209 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     });
   }
 
+  /// 另存为新字帖
+  Future<void> _saveAsNewPractice() async {
+    if (_controller.state.pages.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法保存：字帖没有页面')),
+      );
+      return;
+    }
+
+    // 保存 ScaffoldMessenger 引用，避免异步操作后使用 context
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // 弹出对话框输入标题
+    final TextEditingController textController = TextEditingController();
+    final title = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('保存字帖'),
+        content: TextField(
+          controller: textController,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: '字帖标题',
+            hintText: '请输入字帖标题',
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(textController.text);
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+
+    // 释放控制器资源
+    textController.dispose();
+
+    if (title == null || title.isEmpty) return;
+
+    // 保存字帖
+    final result = await _controller.saveAsNewPractice(title);
+
+    if (!mounted) return;
+
+    if (result == true) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('字帖"$title"保存成功')),
+      );
+    } else if (result == 'title_exists') {
+      // 标题已存在，询问是否覆盖
+      final shouldOverwrite = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('标题已存在'),
+          content: const Text('已存在同名字帖，是否覆盖？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('覆盖'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (shouldOverwrite == true) {
+        final saveResult =
+            await _controller.saveAsNewPractice(title, forceOverwrite: true);
+
+        if (!mounted) return;
+
+        if (saveResult == true) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('字帖"$title"保存成功')),
+          );
+        } else {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('保存失败')),
+          );
+        }
+      }
+    } else {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('保存失败')),
+      );
+    }
+  }
+
+  /// 保存字帖
+  Future<void> _savePractice() async {
+    if (_controller.state.pages.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法保存：字帖没有页面')),
+      );
+      return;
+    }
+
+    // 保存 ScaffoldMessenger 引用，避免异步操作后使用 context
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // 如果从未保存过，弹出对话框输入标题
+    if (!_controller.isSaved) {
+      await _saveAsNewPractice();
+      return;
+    }
+
+    // 保存字帖
+    final result = await _controller.savePractice();
+
+    if (!mounted) return;
+
+    if (result == true) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('保存成功')),
+      );
+    } else if (result == 'title_exists') {
+      // 标题已存在，询问是否覆盖
+      final shouldOverwrite = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('标题已存在'),
+          content: const Text('已存在同名字帖，是否覆盖？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('覆盖'),
+            ),
+          ],
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (shouldOverwrite == true) {
+        final saveResult = await _controller.savePractice(forceOverwrite: true);
+
+        if (!mounted) return;
+
+        if (saveResult == true) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('保存成功')),
+          );
+        } else {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('保存失败')),
+          );
+        }
+      }
+    } else {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('保存失败')),
+      );
+    }
+  }
+
+  /// 全选当前页面所有元素
+  void _selectAllElements() {
+    if (_controller.state.currentPageIndex < 0 ||
+        _controller.state.currentPageIndex >= _controller.state.pages.length) {
+      return;
+    }
+
+    final elements = _controller.state.currentPageElements;
+    if (elements.isEmpty) return;
+
+    // 收集所有未锁定图层上的元素ID
+    final ids = <String>[];
+    for (final element in elements) {
+      final id = element['id'] as String;
+      final layerId = element['layerId'] as String?;
+
+      // 如果元素所在图层未锁定，则添加到选择列表
+      if (layerId == null || !_controller.state.isLayerLocked(layerId)) {
+        ids.add(id);
+      }
+    }
+
+    // 更新选择状态
+    _controller.state.selectedElementIds = ids;
+    _controller.state.selectedElement = null; // 多选时不设置单个选中元素
+
+    setState(() {});
+  }
+
   /// 将元素置于底层
   void _sendElementToBack() {
     if (_controller.state.selectedElementIds.isEmpty) return;
@@ -2332,6 +2783,22 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
       setState(() {});
     }
+  }
+
+  /// 显示导出对话框
+  Future<void> _showExportDialog() async {
+    if (!mounted) return;
+
+    // 获取默认文件名
+    final defaultFileName = _controller.practiceTitle ?? '未命名字帖';
+
+    // 调用 FileOperations.exportPractice 方法，与导出按钮行为一致
+    await FileOperations.exportPractice(
+      context,
+      _controller.state.pages,
+      _controller,
+      defaultFileName,
+    );
   }
 
   /// 选择本地图片

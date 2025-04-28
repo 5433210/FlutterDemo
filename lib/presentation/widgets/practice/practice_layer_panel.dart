@@ -108,11 +108,12 @@ class _PracticeLayerPanelState extends State<PracticeLayerPanel> {
             child: Row(
               children: [
                 // 可见性切换按钮
-                InkWell(
-                  onTap: () => widget.onLayerVisibilityToggle(id, !isVisible),
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
+                SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: InkWell(
+                    onTap: () => widget.onLayerVisibilityToggle(id, !isVisible),
+                    borderRadius: BorderRadius.circular(4),
                     child: Icon(
                       isVisible ? Icons.visibility : Icons.visibility_off,
                       color: isVisible ? Colors.blue : Colors.grey,
@@ -123,11 +124,12 @@ class _PracticeLayerPanelState extends State<PracticeLayerPanel> {
                 const SizedBox(width: 4),
 
                 // 锁定切换按钮
-                InkWell(
-                  onTap: () => widget.onLayerLockToggle(id, !isLocked),
-                  borderRadius: BorderRadius.circular(4),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4.0),
+                SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: InkWell(
+                    onTap: () => widget.onLayerLockToggle(id, !isLocked),
+                    borderRadius: BorderRadius.circular(4),
                     child: Icon(
                       isLocked ? Icons.lock : Icons.lock_open,
                       color: isLocked ? Colors.orange : Colors.grey,
@@ -162,79 +164,90 @@ class _PracticeLayerPanelState extends State<PracticeLayerPanel> {
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              name,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                                color: isSelected ? Colors.blue : null,
-                              ),
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isSelected ? Colors.blue : null,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                 ),
 
-                // 操作按钮
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 重命名按钮
-                    if (!isEditing)
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            _editingLayerId = id;
-                            _nameController.text = name;
-                          });
-                          // 确保下一帧就聚焦
-                          Future.microtask(() => _focusNode.requestFocus());
-                        },
-                        borderRadius: BorderRadius.circular(4),
-                        child: const Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-
-                    // 删除图层按钮
-                    if (!isEditing)
-                      InkWell(
-                        onTap: () => _showDeleteLayerDialog(context, id, name),
-                        borderRadius: BorderRadius.circular(4),
-                        child: const Padding(
-                          padding: EdgeInsets.all(4.0),
-                          child: Icon(
-                            Icons.delete,
-                            size: 16,
-                            color: Colors.redAccent,
-                          ),
-                        ),
-                      ),
-
-                    // 拖拽按钮
-                    if (!isEditing)
-                      MouseRegion(
-                        cursor: SystemMouseCursors.grab,
-                        child: ReorderableDragStartListener(
-                          index: index,
-                          child: const Padding(
-                            padding: EdgeInsets.all(4.0),
-                            child: Icon(
-                              Icons.drag_handle,
+                // 操作按钮 - 使用Wrap来自动换行，避免溢出
+                if (!isEditing)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 72),
+                    child: Wrap(
+                      spacing: 0,
+                      children: [
+                        // 重命名按钮
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _editingLayerId = id;
+                                _nameController.text = name;
+                              });
+                              // 确保下一帧就聚焦
+                              Future.microtask(() => _focusNode.requestFocus());
+                            },
+                            borderRadius: BorderRadius.circular(4),
+                            child: const Icon(
+                              Icons.edit,
                               size: 16,
                               color: Colors.grey,
                             ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
+
+                        // 删除图层按钮
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: InkWell(
+                            onTap: () =>
+                                _showDeleteLayerDialog(context, id, name),
+                            borderRadius: BorderRadius.circular(4),
+                            child: const Icon(
+                              Icons.delete,
+                              size: 16,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                        ),
+
+                        // 拖拽按钮
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.grab,
+                            child: ReorderableDragStartListener(
+                              index: index,
+                              child: const Icon(
+                                Icons.drag_handle,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -313,65 +326,85 @@ class _PracticeLayerPanelState extends State<PracticeLayerPanel> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // 标题
-          const Text(
-            '图层',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+          const Flexible(
+            child: Text(
+              '图层',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
           // 工具按钮组
-          Row(
+          Wrap(
+            spacing: 0,
             children: [
               // 添加图层按钮
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline),
-                color: Colors.blue,
-                onPressed: widget.onAddLayer,
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Tooltip(
+                  message: '添加新图层',
+                  child: IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    color: Colors.blue,
+                    onPressed: widget.onAddLayer,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                  ),
                 ),
-                iconSize: 20,
               ),
 
               // 全部显示/隐藏按钮
-              IconButton(
-                icon: const Icon(Icons.visibility),
-                onPressed: () {
-                  final allVisible = widget.controller.state.layers
-                      .every((layer) => layer['isVisible'] == true);
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Tooltip(
+                  message: '切换所有图层可见性',
+                  child: IconButton(
+                    icon: const Icon(Icons.visibility),
+                    onPressed: () {
+                      final allVisible = widget.controller.state.layers
+                          .every((layer) => layer['isVisible'] == true);
 
-                  // 如果所有图层都可见，则隐藏所有；否则显示所有
-                  for (final layer in widget.controller.state.layers) {
-                    widget.onLayerVisibilityToggle(layer['id'], !allVisible);
-                  }
-                },
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+                      // 如果所有图层都可见，则隐藏所有；否则显示所有
+                      for (final layer in widget.controller.state.layers) {
+                        widget.onLayerVisibilityToggle(
+                            layer['id'], !allVisible);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                  ),
                 ),
-                iconSize: 20,
               ),
 
               // 全部锁定/解锁按钮
-              IconButton(
-                icon: const Icon(Icons.lock_outline),
-                onPressed: () {
-                  final allLocked = widget.controller.state.layers
-                      .every((layer) => layer['isLocked'] == true);
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: Tooltip(
+                  message: '切换所有图层锁定状态',
+                  child: IconButton(
+                    icon: const Icon(Icons.lock_outline),
+                    onPressed: () {
+                      final allLocked = widget.controller.state.layers
+                          .every((layer) => layer['isLocked'] == true);
 
-                  // 如果所有图层都被锁定，则解锁所有；否则锁定所有
-                  for (final layer in widget.controller.state.layers) {
-                    widget.onLayerLockToggle(layer['id'], !allLocked);
-                  }
-                },
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
+                      // 如果所有图层都被锁定，则解锁所有；否则锁定所有
+                      for (final layer in widget.controller.state.layers) {
+                        widget.onLayerLockToggle(layer['id'], !allLocked);
+                      }
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 20,
+                  ),
                 ),
-                iconSize: 20,
               ),
             ],
           ),

@@ -63,27 +63,27 @@ class EditToolbar extends StatelessWidget {
               children: [
                 _buildToolbarButton(
                   icon: Icons.copy,
-                  tooltip: '复制',
+                  tooltip: '复制 (Ctrl+C)',
                   onPressed: hasSelection ? onCopy : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.paste,
-                  tooltip: '粘贴',
+                  tooltip: '粘贴 (Ctrl+V)',
                   onPressed: onPaste,
                 ),
                 _buildToolbarButton(
                   icon: Icons.delete,
-                  tooltip: '删除',
+                  tooltip: '删除 (Ctrl+D)',
                   onPressed: hasSelection ? onDelete : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.group,
-                  tooltip: '组合',
+                  tooltip: '组合 (Ctrl+J)',
                   onPressed: isMultiSelected ? onGroupElements : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.format_shapes,
-                  tooltip: '取消组合',
+                  tooltip: '取消组合 (Ctrl+U)',
                   onPressed: hasSelectedGroup ? onUngroupElements : null,
                 ),
               ],
@@ -99,22 +99,22 @@ class EditToolbar extends StatelessWidget {
               children: [
                 _buildToolbarButton(
                   icon: Icons.vertical_align_top,
-                  tooltip: '置于顶层',
+                  tooltip: '置于顶层 (Ctrl+T)',
                   onPressed: hasSelection ? onBringToFront : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.vertical_align_bottom,
-                  tooltip: '置于底层',
+                  tooltip: '置于底层 (Ctrl+B)',
                   onPressed: hasSelection ? onSendToBack : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.arrow_upward,
-                  tooltip: '上移一层',
+                  tooltip: '上移一层 (Ctrl+Shift+T)',
                   onPressed: hasSelection ? onMoveUp : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.arrow_downward,
-                  tooltip: '下移一层',
+                  tooltip: '下移一层 (Ctrl+Shift+B)',
                   onPressed: hasSelection ? onMoveDown : null,
                 ),
               ],
@@ -130,14 +130,14 @@ class EditToolbar extends StatelessWidget {
               children: [
                 _buildToolbarButton(
                   icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                  tooltip: gridVisible ? '隐藏网格' : '显示网格',
+                  tooltip: gridVisible ? '隐藏网格 (Ctrl+G)' : '显示网格 (Ctrl+G)',
                   onPressed: onToggleGrid,
                   isActive: gridVisible,
                 ),
                 _buildToolbarButton(
                   icon: Icons
                       .format_line_spacing, // Alternative icon for snapping/alignment
-                  tooltip: snapEnabled ? '禁用吸附' : '启用吸附',
+                  tooltip: snapEnabled ? '禁用吸附 (Ctrl+R)' : '启用吸附 (Ctrl+R)',
                   onPressed: onToggleSnap,
                   isActive: snapEnabled,
                 ),
