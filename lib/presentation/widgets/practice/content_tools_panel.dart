@@ -45,6 +45,55 @@ class ContentToolsPanel extends StatelessWidget {
   }
 
   /// 构建工具按钮
+  Widget _buildToolButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required String toolId,
+    required VoidCallback onPressed,
+  }) {
+    final isSelected = currentTool == toolId;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Theme.of(context).primaryColor.withOpacity(0.2)
+                : null,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Tooltip(
+            message: _getTooltipForTool(toolId),
+            child: IconButton(
+              icon: Icon(icon),
+              color: isSelected ? Theme.of(context).primaryColor : null,
+              onPressed: onPressed,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isSelected ? Theme.of(context).primaryColor : null,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建工具按钮
   Widget _buildToolButtons(BuildContext context) {
     return Wrap(
       spacing: 8,
@@ -83,46 +132,20 @@ class ContentToolsPanel extends StatelessWidget {
     );
   }
 
-  /// 构建工具按钮
-  Widget _buildToolButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required String toolId,
-    required VoidCallback onPressed,
-  }) {
-    final isSelected = currentTool == toolId;
-    
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.2) : null,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
-              width: 2,
-            ),
-          ),
-          child: IconButton(
-            icon: Icon(icon),
-            color: isSelected ? Theme.of(context).primaryColor : null,
-            onPressed: onPressed,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: isSelected ? Theme.of(context).primaryColor : null,
-          ),
-        ),
-      ],
-    );
+  /// 获取工具的提示文本
+  String _getTooltipForTool(String toolId) {
+    switch (toolId) {
+      case 'text':
+        return '添加文本 (Ctrl+N, T)';
+      case 'collection':
+        return '添加集字 (Ctrl+N, C)';
+      case 'image':
+        return '添加图片 (Ctrl+N, P)';
+      case 'select':
+        return '选择工具';
+      default:
+        return '';
+    }
   }
 
   /// 显示集字对话框
@@ -131,7 +154,7 @@ class ContentToolsPanel extends StatelessWidget {
       context: context,
       builder: (context) {
         final textController = TextEditingController();
-        
+
         return AlertDialog(
           title: const Text('添加集字内容'),
           content: TextField(
@@ -169,7 +192,7 @@ class ContentToolsPanel extends StatelessWidget {
       context: context,
       builder: (context) {
         final textController = TextEditingController();
-        
+
         return AlertDialog(
           title: const Text('添加图片'),
           content: TextField(

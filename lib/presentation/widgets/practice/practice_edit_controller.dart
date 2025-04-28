@@ -74,6 +74,7 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加集字元素
   void addCollectionElement(String characters) {
+    _checkDisposed();
     final element = {
       'id': 'collection_${_uuid.v4()}',
       'type': 'collection',
@@ -391,6 +392,7 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加文本元素
   void addTextElement() {
+    _checkDisposed();
     final element = {
       'id': 'text_${_uuid.v4()}',
       'type': 'text',
@@ -791,6 +793,20 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  /// 释放资源
+  @override
+  void dispose() {
+    // 清除所有引用
+    _canvasKey = null;
+    _pageKeys.clear();
+    _previewModeCallback = null;
+
+    // 标记为已销毁
+    _state.isDisposed = true;
+
+    super.dispose();
+  }
+
   void duplicateLayer(String layerId) {
     if (_state.currentPage == null) return;
 
@@ -1095,6 +1111,15 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  @override
+  void notifyListeners() {
+    if (_state.isDisposed) {
+      debugPrint('警告: 尝试在控制器销毁后调用 notifyListeners()');
+      return;
+    }
+    super.notifyListeners();
+  }
+
   /// 重做操作
   void redo() {
     if (_undoRedoManager.canRedo) {
@@ -1265,6 +1290,7 @@ class PracticeEditController extends ChangeNotifier {
   /// - 'title_exists': 标题已存在，需要确认是否覆盖
   Future<dynamic> saveAsNewPractice(String title,
       {bool forceOverwrite = false}) async {
+    _checkDisposed();
     // 如果没有页面，则不保存
     if (_state.pages.isEmpty) return false;
 
@@ -1343,6 +1369,7 @@ class PracticeEditController extends ChangeNotifier {
   /// - 'title_exists': 标题已存在，需要确认是否覆盖
   Future<dynamic> savePractice(
       {String? title, bool forceOverwrite = false}) async {
+    _checkDisposed();
     // 如果没有页面，则不保存
     if (_state.pages.isEmpty) return false;
 
@@ -2418,6 +2445,14 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.addOperation(operation);
   }
 
+  /// 检查控制器是否已销毁，如果已销毁则抛出异常
+  void _checkDisposed() {
+    if (_state.isDisposed) {
+      throw StateError(
+          'A PracticeEditController was used after being disposed.');
+    }
+  }
+
   /// 创建自定义操作
   UndoableOperation _createCustomOperation({
     required VoidCallback execute,
@@ -2433,6 +2468,8 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 生成字帖缩略图
   Future<Uint8List?> _generateThumbnail() async {
+    _checkDisposed();
+
     if (_state.pages.isEmpty) {
       return null;
     }

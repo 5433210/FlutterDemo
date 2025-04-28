@@ -15,11 +15,13 @@ class PracticeTitleEditDialog extends StatefulWidget {
   });
 
   @override
-  State<PracticeTitleEditDialog> createState() => _PracticeTitleEditDialogState();
+  State<PracticeTitleEditDialog> createState() =>
+      _PracticeTitleEditDialogState();
 }
 
 class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   late final TextEditingController _titleController;
+  late final FocusNode _focusNode;
   String? _errorText;
   bool _isChecking = false;
 
@@ -32,6 +34,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         children: [
           TextField(
             controller: _titleController,
+            focusNode: _focusNode,
             decoration: InputDecoration(
               labelText: '字帖标题',
               hintText: '请输入字帖标题',
@@ -45,6 +48,14 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
                 setState(() {
                   _errorText = null;
                 });
+              }
+            },
+            onSubmitted: (_) async {
+              // 按下回车键时保存
+              if (await _validateTitle()) {
+                if (context.mounted) {
+                  Navigator.of(context).pop(_titleController.text.trim());
+                }
               }
             },
           ),
@@ -63,7 +74,9 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         TextButton(
           onPressed: () async {
             if (await _validateTitle()) {
-              Navigator.of(context).pop(_titleController.text.trim());
+              if (context.mounted) {
+                Navigator.of(context).pop(_titleController.text.trim());
+              }
             }
           },
           child: const Text('保存'),
@@ -75,6 +88,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   @override
   void dispose() {
     _titleController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -82,6 +96,14 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
+    _focusNode = FocusNode();
+
+    // 确保在对话框显示后文本框获得焦点
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
   }
 
   /// 验证标题

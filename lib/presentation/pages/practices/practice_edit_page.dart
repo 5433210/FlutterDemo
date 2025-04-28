@@ -16,6 +16,7 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/providers/storage_providers.dart';
+import '../../dialogs/practice_title_edit_dialog.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/practice/collection_element_renderer.dart';
 import '../../widgets/practice/control_handlers.dart';
@@ -66,6 +67,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   // 键盘状态
   bool _isCtrlPressed = false;
   bool _isShiftPressed = false;
+  String _lastKeyPressed = ''; // 用于跟踪组合键状态
 
   // 键盘监听器
   late FocusNode _focusNode;
@@ -1670,6 +1672,28 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
+  /// 编辑标题
+  Future<void> _editTitle() async {
+    if (!mounted) return;
+
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (context) => PracticeTitleEditDialog(
+        initialTitle: _controller.practiceTitle,
+        checkTitleExists: _controller.checkTitleExists,
+      ),
+    );
+
+    if (newTitle != null && newTitle.isNotEmpty) {
+      _controller.updatePracticeTitle(newTitle);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('标题已更新为 "$newTitle"')),
+        );
+      }
+    }
+  }
+
   /// 获取图片路径
   String _getImagePath(String characterId, String type, String format) {
     final storage = ref.read(initializedStorageProvider);
@@ -1708,10 +1732,45 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           event.logicalKey == LogicalKeyboardKey.shiftRight) {
         _isShiftPressed = true;
       }
+
+      // 处理组合键
+      if (_isCtrlPressed) {
+        // 记录最后按下的键
+        if (event.logicalKey == LogicalKeyboardKey.keyM) {
+          _lastKeyPressed = 'M';
+        } else if (event.logicalKey == LogicalKeyboardKey.keyN) {
+          _lastKeyPressed = 'N';
+        } else if (_lastKeyPressed == 'M' &&
+            event.logicalKey == LogicalKeyboardKey.keyT) {
+          // Ctrl+M, T 组合键：修改标题
+          _editTitle();
+          _lastKeyPressed = '';
+          return true;
+        } else if (_lastKeyPressed == 'N' &&
+            event.logicalKey == LogicalKeyboardKey.keyT) {
+          // Ctrl+N, T 组合键：添加文本控件
+          _controller.addTextElement();
+          _lastKeyPressed = '';
+          return true;
+        } else if (_lastKeyPressed == 'N' &&
+            event.logicalKey == LogicalKeyboardKey.keyP) {
+          // Ctrl+N, P 组合键：添加图片控件
+          _controller.addEmptyImageElementAt(100.0, 100.0);
+          _lastKeyPressed = '';
+          return true;
+        } else if (_lastKeyPressed == 'N' &&
+            event.logicalKey == LogicalKeyboardKey.keyC) {
+          // Ctrl+N, C 组合键：添加集字控件
+          _controller.addEmptyCollectionElementAt(100.0, 100.0);
+          _lastKeyPressed = '';
+          return true;
+        }
+      }
     } else if (event is KeyUpEvent) {
       if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
           event.logicalKey == LogicalKeyboardKey.controlRight) {
         _isCtrlPressed = false;
+        _lastKeyPressed = ''; // 重置组合键状态
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
           event.logicalKey == LogicalKeyboardKey.shiftRight) {
         _isShiftPressed = false;
@@ -1839,6 +1898,28 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           case LogicalKeyboardKey.keyE:
             // 实现导出功能
             _showExportDialog();
+            return true;
+
+          // Ctrl+M+T: 修改标题
+          case LogicalKeyboardKey.keyM:
+            if (event.logicalKey == LogicalKeyboardKey.keyT) {
+              _editTitle();
+              return true;
+            }
+            return false;
+
+          // Ctrl+N+T: 添加文本控件
+          case LogicalKeyboardKey.keyN:
+            return false; // 先返回false，让组合键继续传递
+
+          // Ctrl+H: 隐藏选中对象
+          case LogicalKeyboardKey.keyH:
+            _toggleSelectedElementsVisibility();
+            return true;
+
+          // Ctrl+L: 锁定选中对象
+          case LogicalKeyboardKey.keyL:
+            _toggleSelectedElementsLock();
             return true;
 
           // Ctrl+P: 预览模式开关
@@ -2572,38 +2653,44 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     // 保存 ScaffoldMessenger 引用，避免异步操作后使用 context
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // 弹出对话框输入标题
-    final TextEditingController textController = TextEditingController();
+    // 使用StatefulBuilder创建对话框，确保控制器在对话框的生命周期内管理
     final title = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('保存字帖'),
-        content: TextField(
-          controller: textController,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: '字帖标题',
-            hintText: '请输入字帖标题',
-          ),
-          onSubmitted: (value) => Navigator.of(context).pop(value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(textController.text);
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
+      barrierDismissible: true, // 允许点击外部关闭对话框
+      builder: (context) {
+        // 在对话框内部创建控制器，确保它的生命周期与对话框一致
+        final TextEditingController textController = TextEditingController();
 
-    // 释放控制器资源
-    textController.dispose();
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('保存字帖'),
+              content: TextField(
+                controller: textController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: '字帖标题',
+                  hintText: '请输入字帖标题',
+                ),
+                onSubmitted: (value) => Navigator.of(context).pop(value),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('取消'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(textController.text);
+                  },
+                  child: const Text('保存'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
 
     if (title == null || title.isEmpty) return;
 
@@ -2620,20 +2707,23 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       // 标题已存在，询问是否覆盖
       final shouldOverwrite = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('标题已存在'),
-          content: const Text('已存在同名字帖，是否覆盖？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('覆盖'),
-            ),
-          ],
-        ),
+        barrierDismissible: true, // 允许点击外部关闭对话框
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('标题已存在'),
+            content: const Text('已存在同名字帖，是否覆盖？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('覆盖'),
+              ),
+            ],
+          );
+        },
       );
 
       if (!mounted) return;
@@ -2693,20 +2783,23 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       // 标题已存在，询问是否覆盖
       final shouldOverwrite = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('标题已存在'),
-          content: const Text('已存在同名字帖，是否覆盖？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('覆盖'),
-            ),
-          ],
-        ),
+        barrierDismissible: true, // 允许点击外部关闭对话框
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('标题已存在'),
+            content: const Text('已存在同名字帖，是否覆盖？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('取消'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('覆盖'),
+              ),
+            ],
+          );
+        },
       );
 
       if (!mounted) return;
@@ -2912,5 +3005,47 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     });
 
     return sortedElements;
+  }
+
+  /// 切换选中元素的锁定状态
+  void _toggleSelectedElementsLock() {
+    if (_controller.state.selectedElementIds.isEmpty) return;
+
+    for (final id in _controller.state.selectedElementIds) {
+      // 获取当前元素
+      final elements =
+          _controller.state.currentPage?['elements'] as List<dynamic>?;
+      if (elements == null) continue;
+
+      final elementIndex = elements.indexWhere((e) => e['id'] == id);
+      if (elementIndex == -1) continue;
+
+      final element = elements[elementIndex] as Map<String, dynamic>;
+
+      // 切换锁定状态
+      final isLocked = element['locked'] ?? false;
+      _controller.updateElementProperty(id, 'locked', !isLocked);
+    }
+  }
+
+  /// 切换选中元素的可见性
+  void _toggleSelectedElementsVisibility() {
+    if (_controller.state.selectedElementIds.isEmpty) return;
+
+    for (final id in _controller.state.selectedElementIds) {
+      // 获取当前元素
+      final elements =
+          _controller.state.currentPage?['elements'] as List<dynamic>?;
+      if (elements == null) continue;
+
+      final elementIndex = elements.indexWhere((e) => e['id'] == id);
+      if (elementIndex == -1) continue;
+
+      final element = elements[elementIndex] as Map<String, dynamic>;
+
+      // 切换隐藏状态
+      final isHidden = element['hidden'] ?? false;
+      _controller.updateElementProperty(id, 'hidden', !isHidden);
+    }
   }
 }
