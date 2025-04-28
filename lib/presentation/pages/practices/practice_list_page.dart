@@ -72,7 +72,7 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
           FilledButton.icon(
             onPressed: () => _navigateToEditPage(),
             icon: const Icon(Icons.add),
-            label: const Text('新建练习'),
+            label: const Text('新建字帖'),
           ),
           const SizedBox(width: AppSizes.spacingMedium),
           IconButton(
@@ -134,7 +134,7 @@ class _PracticeListPageState extends ConsumerState<PracticeListPage> {
             width: 240,
             child: SearchBar(
               controller: _searchController,
-              hintText: '搜索练习...',
+              hintText: '搜索字帖...',
               leading: const Icon(Icons.search),
               padding: const WidgetStatePropertyAll(
                 EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),

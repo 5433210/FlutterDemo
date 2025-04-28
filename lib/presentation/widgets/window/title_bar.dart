@@ -63,7 +63,7 @@ class _TitleBarState extends State<TitleBar> with WindowListener {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
                   child: Text(
-                    widget.title ?? '书法集字',
+                    widget.title ?? '字字珠玑',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: theme.colorScheme.onSurface,
