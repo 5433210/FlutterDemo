@@ -1,7 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as path;
 
 import '../../dialogs/practice_save_dialog.dart';
+import 'export/export_dialog.dart';
+import 'export/export_service.dart';
+import 'export/page_renderer.dart';
 import 'practice_edit_controller.dart';
+import 'print/print_dialog.dart';
 
 /// 文件操作工具类
 class FileOperations {
@@ -9,53 +16,252 @@ class FileOperations {
   static Future<void> exportPractice(
     BuildContext context,
     List<Map<String, dynamic>> pages,
+    PracticeEditController controller,
+    String defaultFileName,
   ) async {
-    final formats = ['PDF', 'PNG', 'JPG'];
+    debugPrint('=== 开始导出字帖 ===');
+    debugPrint('页面数量: ${pages.length}, 默认文件名: $defaultFileName');
 
-    final format = await showDialog<String>(
+    if (pages.isEmpty) {
+      debugPrint('错误: 没有可导出的页面');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有可导出的页面')),
+      );
+      return;
+    }
+
+    debugPrint('显示导出对话框');
+    // 显示导出对话框
+    final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('导出字帖'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('请选择导出格式:'),
-            const SizedBox(height: 16),
-            ...formats.map(
-              (format) => ListTile(
-                title: Text(format),
-                onTap: () => Navigator.pop(context, format),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
-          ),
-        ],
+      builder: (context) => ExportDialog(
+        pageCount: pages.length,
+        defaultFileName: defaultFileName,
+        onExport: (outputPath, exportType, fileName, pixelRatio) {
+          debugPrint(
+              '用户选择了导出参数: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio');
+          // 返回导出参数
+          return {
+            'outputPath': outputPath,
+            'exportType': exportType,
+            'fileName': fileName,
+            'pixelRatio': pixelRatio,
+          };
+        },
       ),
     );
 
-    if (format == null) return;
+    if (result == null) {
+      debugPrint('用户取消了导出');
+      return;
+    }
 
-    // 这里应该实现实际的导出逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('导出为$format格式 (功能待实现)')),
-    );
+    debugPrint('导出对话框返回结果: $result');
+
+    // 检查结果是否包含所需的键
+    if (!result.containsKey('outputPath') ||
+        !result.containsKey('exportType') ||
+        !result.containsKey('fileName')) {
+      debugPrint('错误: 导出对话框返回的结果缺少必要的键');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('导出失败: 参数不完整')),
+        );
+      }
+      return;
+    }
+
+    final outputPath = result['outputPath'] as String;
+    final exportType = result['exportType'] as ExportType;
+    final fileName = result['fileName'] as String;
+    final pixelRatio = result['pixelRatio'] as double;
+
+    debugPrint(
+        '准备导出: 路径=$outputPath, 类型=${exportType.name}, 文件名=$fileName, 像素比例=$pixelRatio');
+
+    // 显示导出进度
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在导出，请稍候...')),
+      );
+    }
+
+    try {
+      // 根据导出类型调用不同的导出方法
+      if (exportType == ExportType.pdf) {
+        debugPrint('开始导出PDF');
+        final pdfPath = await ExportService.exportToPdf(
+          controller,
+          outputPath,
+          fileName,
+          pixelRatio: pixelRatio,
+        );
+
+        debugPrint('PDF导出结果: ${pdfPath != null ? "成功" : "失败"}, 路径: $pdfPath');
+
+        if (pdfPath != null) {
+          // 检查文件是否存在
+          final file = File(pdfPath);
+          final exists = await file.exists();
+          debugPrint('检查导出的PDF文件是否存在: $exists');
+
+          if (exists) {
+            final fileSize = await file.length();
+            debugPrint('导出的PDF文件大小: $fileSize 字节');
+
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('PDF导出成功: $pdfPath'),
+                  action: SnackBarAction(
+                    label: '打开文件夹',
+                    onPressed: () {
+                      // 打开文件所在的文件夹
+                      final directory = path.dirname(pdfPath);
+                      Process.run('explorer.exe', [directory]);
+                    },
+                  ),
+                ),
+              );
+            }
+          } else {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('PDF导出成功，但无法找到文件: $pdfPath')),
+              );
+            }
+          }
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('PDF导出失败')),
+          );
+        }
+      } else {
+        // 导出为图片
+        debugPrint('开始导出图片, 格式: ${exportType.name}');
+        final imagePaths = await ExportService.exportToImages(
+          controller,
+          outputPath,
+          fileName,
+          exportType,
+          pixelRatio: pixelRatio,
+        );
+
+        debugPrint(
+            '图片导出结果: ${imagePaths.isNotEmpty ? "成功" : "失败"}, 数量: ${imagePaths.length}');
+        if (imagePaths.isNotEmpty) {
+          for (int i = 0; i < imagePaths.length; i++) {
+            debugPrint('导出的图片 ${i + 1}: ${imagePaths[i]}');
+          }
+        }
+
+        if (imagePaths.isNotEmpty) {
+          // 检查第一个文件是否存在
+          if (imagePaths.isNotEmpty) {
+            final file = File(imagePaths[0]);
+            final exists = await file.exists();
+            debugPrint('检查导出的第一个图片文件是否存在: $exists');
+
+            if (exists) {
+              final fileSize = await file.length();
+              debugPrint('导出的第一个图片文件大小: $fileSize 字节');
+            }
+          }
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('导出${imagePaths.length}个图片成功'),
+                action: SnackBarAction(
+                  label: '打开文件夹',
+                  onPressed: () {
+                    // 打开文件所在的文件夹
+                    if (imagePaths.isNotEmpty) {
+                      final directory = path.dirname(imagePaths[0]);
+                      Process.run('explorer.exe', [directory]);
+                    }
+                  },
+                ),
+              ),
+            );
+          }
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('图片导出失败')),
+          );
+        }
+      }
+    } catch (e, stack) {
+      debugPrint('导出过程中发生异常: $e');
+      debugPrint('异常堆栈: $stack');
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('导出失败: $e')),
+        );
+      }
+    } finally {
+      debugPrint('=== 导出字帖过程结束 ===');
+    }
   }
 
   /// 打印字帖
   static Future<void> printPractice(
     BuildContext context,
     List<Map<String, dynamic>> pages,
+    PracticeEditController controller,
+    String documentName,
   ) async {
-    // 这里应该实现实际的打印逻辑
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('打印功能待实现')),
-    );
+    if (pages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有可打印的页面')),
+      );
+      return;
+    }
+
+    // 显示加载提示
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在准备打印，请稍候...')),
+      );
+    }
+
+    try {
+      // 使用 PageRenderer 渲染所有页面
+      final pageRenderer = PageRenderer(controller);
+      final pageImages = await pageRenderer.renderAllPages(
+        onProgress: (current, total) {
+          debugPrint('渲染进度: $current/$total');
+        },
+        pixelRatio: 1.0, // 使用标准分辨率
+      );
+
+      if (pageImages.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('无法捕获页面图像')),
+          );
+        }
+        return;
+      }
+
+      // 显示打印对话框
+      if (context.mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => PrintDialog(
+            pageImages: pageImages,
+            documentName: documentName.isNotEmpty ? documentName : '未命名字帖',
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('打印准备失败: $e')),
+        );
+      }
+    }
   }
 
   /// 另存为

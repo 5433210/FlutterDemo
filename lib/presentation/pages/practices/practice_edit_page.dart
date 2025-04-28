@@ -1,7 +1,6 @@
 import 'dart:ui' as ui;
 
 import 'package:demo/presentation/widgets/page_layout.dart';
-import 'package:demo/presentation/widgets/practice/top_navigation_bar.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
@@ -29,6 +28,7 @@ import '../../widgets/practice/page_thumbnail_strip.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
 import '../../widgets/practice/practice_layer_panel.dart';
 import '../../widgets/practice/practice_property_panel.dart';
+import '../../widgets/practice/top_navigation_bar.dart';
 
 /// 字帖编辑页面
 class PracticeEditPage extends ConsumerStatefulWidget {
@@ -120,7 +120,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   @override
   void dispose() {
     // 清空撤销/重做栈
-    _controller.undoRedoManager.clearHistory();
+    _controller.clearUndoRedoHistory();
 
     // 移除键盘监听
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
@@ -702,25 +702,31 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   /// 构建编辑画布
   Widget _buildEditCanvas() {
+    debugPrint('=== 构建编辑画布 ===');
     if (_controller.state.pages.isEmpty) {
+      debugPrint('没有页面，请添加页面');
       return const Center(child: Text('没有页面，请添加页面'));
     }
 
     final currentPage = _controller.state.currentPage;
     if (currentPage == null) {
+      debugPrint('当前页面不存在');
       return const Center(child: Text('当前页面不存在'));
     }
 
     final elements = _controller.state.currentPageElements;
+    debugPrint('当前页面元素数量: ${elements.length}');
 
-    // 在预览模式下使用 RepaintBoundary 和 GlobalKey
-    // if (_isPreviewMode) {
-    //   return RepaintBoundary(
-    //     key: canvasKey,
-    //     child: _buildEditCanvasContent(currentPage, elements),
-    //   );
-    // }
+    // 检查 canvasKey 状态
+    debugPrint(
+        'canvasKey: ${canvasKey.toString()}, 是否有 currentContext: ${canvasKey.currentContext != null}');
+    if (canvasKey.currentContext != null) {
+      final renderObject = canvasKey.currentContext!.findRenderObject();
+      debugPrint('canvasKey 的 RenderObject 类型: ${renderObject?.runtimeType}');
+    }
 
+    // 始终使用 RepaintBoundary 和 GlobalKey，以便导出和打印功能可以捕获画布内容
+    debugPrint('创建 RepaintBoundary 和 GlobalKey');
     return _buildEditCanvasContent(currentPage, elements);
   }
 

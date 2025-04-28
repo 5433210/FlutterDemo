@@ -108,14 +108,12 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
         IconButton(
           icon: const Icon(Icons.undo),
           tooltip: '撤销',
-          onPressed:
-              controller.undoRedoManager.canUndo ? controller.undo : null,
+          onPressed: controller.state.canUndo ? controller.undo : null,
         ),
         IconButton(
           icon: const Icon(Icons.redo),
           tooltip: '重做',
-          onPressed:
-              controller.undoRedoManager.canRedo ? controller.redo : null,
+          onPressed: controller.state.canRedo ? controller.redo : null,
         ),
       ],
     );
@@ -167,9 +165,14 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// 导出字帖
   Future<void> _exportPractice(BuildContext context) async {
+    // 获取默认文件名
+    final defaultFileName = controller.practiceTitle ?? '未命名字帖';
+
     await FileOperations.exportPractice(
       context,
       controller.state.pages,
+      controller,
+      defaultFileName,
     );
   }
 
@@ -225,9 +228,14 @@ class TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
 
   /// 打印字帖
   Future<void> _printPractice(BuildContext context) async {
+    // 获取文档名称
+    final documentName = controller.practiceTitle ?? '未命名字帖';
+
     await FileOperations.printPractice(
       context,
       controller.state.pages,
+      controller,
+      documentName,
     );
   }
 

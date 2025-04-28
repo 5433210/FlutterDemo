@@ -19,6 +19,7 @@ class PracticeEditState {
 
   // 状态标志
   bool hasUnsavedChanges = false;
+  bool isPreviewMode = false;
 
   // 撤销/重做状态
   bool canUndo = false;

@@ -33,6 +33,9 @@ class PracticeEditController extends ChangeNotifier {
   // 预览模式下的画布 GlobalKey
   GlobalKey? _canvasKey;
 
+  // 每个页面的 GlobalKey 映射表
+  final Map<String, GlobalKey> _pageKeys = {};
+
   // 预览模式回调函数
   Function(bool)? _previewModeCallback;
 
@@ -50,6 +53,9 @@ class PracticeEditController extends ChangeNotifier {
     // 初始化默认数据
     _initDefaultData();
   }
+
+  /// 获取画布 GlobalKey
+  GlobalKey? get canvasKey => _canvasKey;
 
   /// 检查字帖是否已保存过
   bool get isSaved => _practiceId != null;
@@ -496,6 +502,11 @@ class PracticeEditController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 清空撤销/重做历史
+  void clearUndoRedoHistory() {
+    _undoRedoManager.clearHistory();
+  }
+
   /// 删除所有图层
   void deleteAllLayers() {
     if (_state.currentPage == null ||
@@ -880,6 +891,59 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 获取页面的 GlobalKey 列表
+  /// 为每个页面返回不同的 GlobalKey
+  List<GlobalKey> getPageKeys() {
+    debugPrint('=== 获取页面的 GlobalKey 列表 ===');
+    debugPrint('页面数量: ${_state.pages.length}');
+
+    if (_canvasKey == null) {
+      debugPrint('错误: _canvasKey 为 null');
+      return [];
+    }
+
+    // 检查主画布 key 是否有效
+    debugPrint(
+        '主画布 _canvasKey: ${_canvasKey.toString()}, 是否有 currentContext: ${_canvasKey?.currentContext != null}');
+    if (_canvasKey?.currentContext != null) {
+      final renderObject = _canvasKey!.currentContext!.findRenderObject();
+      debugPrint('_canvasKey 的 RenderObject 类型: ${renderObject?.runtimeType}');
+
+      if (renderObject is RenderRepaintBoundary) {
+        debugPrint('_canvasKey 是有效的 RenderRepaintBoundary');
+      } else {
+        debugPrint('警告: _canvasKey 不是 RenderRepaintBoundary');
+      }
+    } else {
+      debugPrint('警告: _canvasKey 没有 currentContext');
+    }
+
+    // 创建页面 key 列表
+    final List<GlobalKey> keys = [];
+
+    // 当前页面使用主画布 key
+    final currentPageIndex = _state.currentPageIndex;
+
+    for (int i = 0; i < _state.pages.length; i++) {
+      final page = _state.pages[i];
+      final pageId = page['id'] as String;
+
+      if (i == currentPageIndex) {
+        // 当前页面使用主画布 key
+        debugPrint('页面 $i (ID: $pageId) 使用主画布 key: ${_canvasKey.toString()}');
+        keys.add(_canvasKey!);
+      } else {
+        // 其他页面使用临时 key
+        final tempKey = GlobalKey();
+        debugPrint('页面 $i (ID: $pageId) 使用临时 key: ${tempKey.toString()}');
+        keys.add(tempKey);
+      }
+    }
+
+    debugPrint('返回 ${keys.length} 个 GlobalKey');
+    return keys;
   }
 
   /// 组合选中的元素
@@ -1651,6 +1715,18 @@ class PracticeEditController extends ChangeNotifier {
       _state.hasUnsavedChanges = true;
       notifyListeners();
     }
+  }
+
+  /// 切换预览模式
+  void togglePreviewMode(bool isPreviewMode) {
+    _state.isPreviewMode = isPreviewMode;
+
+    // 调用预览模式回调函数
+    if (_previewModeCallback != null) {
+      _previewModeCallback!(isPreviewMode);
+    }
+
+    notifyListeners();
   }
 
   /// 切换吸附功能
