@@ -147,9 +147,11 @@ abstract class AppLocalizations {
   String get characterCollectionImageLoadError;
   String get characterCollectionLeave;
   String get characterCollectionLoadingImage;
+  String get characterCollectionNextPage;
   String get characterCollectionNoCharacter;
   String get characterCollectionNoCharacters;
   String get characterCollectionPreviewTab;
+  String get characterCollectionPreviousPage;
   String get characterCollectionProcessing;
   String get characterCollectionResultsTab;
   String get characterCollectionRetry;

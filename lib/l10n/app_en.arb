@@ -177,6 +177,8 @@
   "characterCollectionToolPan": "Pan Tool (Ctrl+V)",
   "characterCollectionToolSelect": "Selection Tool (Ctrl+B)",
   "characterCollectionToolDelete": "Delete Selected (Ctrl+D)",
+  "characterCollectionPreviousPage": "Previous Page",
+  "characterCollectionNextPage": "Next Page",
 
   "initializationFailed": "Initialization failed: {error}"
 }

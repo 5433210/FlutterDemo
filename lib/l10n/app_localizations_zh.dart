@@ -86,6 +86,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCollectionLoadingImage => '加载图片中...';
 
   @override
+  String get characterCollectionNextPage => '下一页';
+
+  @override
   String get characterCollectionNoCharacter => '无字符';
 
   @override
@@ -93,6 +96,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterCollectionPreviewTab => '字符预览';
+
+  @override
+  String get characterCollectionPreviousPage => '上一页';
 
   @override
   String get characterCollectionProcessing => '处理中...';

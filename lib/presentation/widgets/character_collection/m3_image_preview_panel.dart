@@ -6,7 +6,7 @@ import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import 'm3_image_view.dart';
 import 'm3_preview_toolbar.dart';
-import 'thumbnail_list.dart';
+import 'm3_thumbnail_list.dart';
 
 class M3ImagePreviewPanel extends ConsumerWidget {
   const M3ImagePreviewPanel({super.key});
@@ -90,7 +90,7 @@ class M3ImagePreviewPanel extends ConsumerWidget {
         ),
 
         // Thumbnail list
-        if (imageState.pageIds.length > 1) const ThumbnailList(),
+        if (imageState.pageIds.length > 1) const M3ThumbnailList(),
       ],
     );
   }

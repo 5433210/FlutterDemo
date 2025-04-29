@@ -180,6 +180,8 @@
   "characterCollectionToolPan": "拖拽工具 (Ctrl+V)",
   "characterCollectionToolSelect": "框选工具 (Ctrl+B)",
   "characterCollectionToolDelete": "删除选中区域 (Ctrl+D)",
+  "characterCollectionPreviousPage": "上一页",
+  "characterCollectionNextPage": "下一页",
 
   "initializationFailed": "初始化失败: {error}"
 }

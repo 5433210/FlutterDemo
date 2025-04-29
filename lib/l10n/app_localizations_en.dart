@@ -89,6 +89,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionLoadingImage => 'Loading image...';
 
   @override
+  String get characterCollectionNextPage => 'Next Page';
+
+  @override
   String get characterCollectionNoCharacter => 'No character';
 
   @override
@@ -96,6 +99,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterCollectionPreviewTab => 'Character Preview';
+
+  @override
+  String get characterCollectionPreviousPage => 'Previous Page';
 
   @override
   String get characterCollectionProcessing => 'Processing...';
