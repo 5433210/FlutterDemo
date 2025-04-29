@@ -25,16 +25,16 @@ class WorkFilterSection extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      alignment: WrapAlignment.spaceBetween,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        if (actions != null) ...[
-          const Spacer(),
-          ...actions!,
-        ],
+        if (actions != null) ...actions!,
       ],
     );
   }

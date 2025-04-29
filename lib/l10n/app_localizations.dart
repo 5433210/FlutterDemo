@@ -126,9 +126,62 @@ abstract class AppLocalizations {
   String get edit;
   String get export;
 
+  String get filterDateApply;
+  String get filterDateClear;
+
+  String get filterDateCustom;
+  String get filterDateEndDate;
+  String get filterDatePresetAll;
+  String get filterDatePresetLast30Days;
+  String get filterDatePresetLast365Days;
+  String get filterDatePresetLast7Days;
+  String get filterDatePresetLast90Days;
+  String get filterDatePresetLastMonth;
+  String get filterDatePresetLastWeek;
+  String get filterDatePresetLastYear;
+  String get filterDatePresets;
+
+  String get filterDatePresetThisMonth;
+  String get filterDatePresetThisWeek;
+  String get filterDatePresetThisYear;
+  // Date presets
+  String get filterDatePresetToday;
+  String get filterDatePresetYesterday;
+  // Date section
+  String get filterDateSection;
+  String get filterDateSelectPrompt;
+
+  String get filterDateStartDate;
   String get filterReset;
+  String get filterSortAscending;
+  String get filterSortDescending;
+
+  String get filterSortFieldAuthor;
+  String get filterSortFieldCreateTime;
+  String get filterSortFieldCreationDate;
+  String get filterSortFieldNone;
+  String get filterSortFieldStyle;
+  String get filterSortFieldTitle;
+  String get filterSortFieldTool;
+  String get filterSortFieldUpdateTime;
+
+  // Sort section
+  String get filterSortSection;
+  String get filterStyleClerical;
+  String get filterStyleCursive;
+  String get filterStyleOther;
+  String get filterStyleRegular;
+  String get filterStyleRunning;
+  String get filterStyleSeal;
+  // Style section
+  String get filterStyleSection;
   // Filter panel
   String get filterTitle;
+  String get filterToolBrush;
+  String get filterToolHardPen;
+  String get filterToolOther;
+  // Tool section
+  String get filterToolSection;
   // Settings
   String get generalSettings;
 

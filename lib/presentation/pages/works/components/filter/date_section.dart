@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../domain/models/work/work_filter.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_sizes.dart';
 import 'date_range_filter_section.dart';
 
@@ -17,10 +18,11 @@ class DateSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('创作时间', style: Theme.of(context).textTheme.titleMedium),
+        Text(l10n.filterDateSection, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSizes.s),
         DateRangeFilterSection(
           filter: DateRangeFilter(

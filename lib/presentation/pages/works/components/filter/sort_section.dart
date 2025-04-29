@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../../domain/enums/sort_field.dart';
 import '../../../../../domain/models/common/sort_option.dart';
 import '../../../../../domain/models/work/work_filter.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class SortSection extends StatelessWidget {
   // 默认排序选项
-  static final defaultSortOption =
-      const SortOption(field: SortField.createTime, descending: true);
+  static const defaultSortOption =
+      SortOption(field: SortField.createTime, descending: true);
   final WorkFilter filter;
 
   final ValueChanged<WorkFilter> onFilterChanged;
@@ -22,13 +23,16 @@ class SortSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          spacing: AppSizes.s,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('排序', style: theme.textTheme.titleMedium),
-            const SizedBox(width: AppSizes.s),
+            Text(l10n.filterSortSection, style: theme.textTheme.titleMedium),
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.s,
@@ -46,7 +50,9 @@ class SortSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      filter.sortOption.descending ? '降序' : '升序',
+                      filter.sortOption.descending
+                          ? l10n.filterSortDescending
+                          : l10n.filterSortAscending,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSecondaryContainer,
                       ),
@@ -67,9 +73,9 @@ class SortSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSizes.s),
-        ...SortField.values
-            .where((field) => field != SortField.none)
-            .map((field) => _buildSortItem(field, field.label, theme)),
+        ...SortField.values.where((field) => field != SortField.none).map(
+            (field) =>
+                _buildSortItem(field, _getSortFieldLabel(field, l10n), theme)),
       ],
     );
   }
@@ -145,5 +151,18 @@ class SortSection extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getSortFieldLabel(SortField field, AppLocalizations l10n) {
+    return switch (field) {
+      SortField.title => l10n.filterSortFieldTitle,
+      SortField.author => l10n.filterSortFieldAuthor,
+      SortField.creationDate => l10n.filterSortFieldCreationDate,
+      SortField.createTime => l10n.filterSortFieldCreateTime,
+      SortField.updateTime => l10n.filterSortFieldUpdateTime,
+      SortField.tool => l10n.filterSortFieldTool,
+      SortField.style => l10n.filterSortFieldStyle,
+      SortField.none => l10n.filterSortFieldNone,
+    };
   }
 }

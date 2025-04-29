@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 
 import '../../../../../domain/models/common/date_range_filter.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../../theme/app_sizes.dart';
 
 class DateRangeFilterSection extends StatefulWidget {
@@ -34,6 +35,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     final filter = widget.filter;
     final bool showResetChip = filter != null &&
@@ -53,7 +55,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
               children: [
                 Expanded(
                   child: Chip(
-                    label: Text(_formatFilterText()),
+                    label: Text(_formatFilterText(l10n)),
                     onDeleted: () {
                       _logger.info('点击删除按钮');
                       widget.onChanged(null);
@@ -65,9 +67,11 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
           ),
         TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: '预设'),
-            Tab(text: '自定义'),
+          isScrollable: true,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+          tabs: [
+            Tab(text: l10n.filterDatePresets),
+            Tab(text: l10n.filterDateCustom),
           ],
         ),
         const SizedBox(height: AppSizes.m),
@@ -76,8 +80,8 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildPresets(theme),
-              _buildCustomRange(context),
+              _buildPresets(theme, l10n),
+              _buildCustomRange(context, l10n),
             ],
           ),
         ),
@@ -110,23 +114,25 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     }
   }
 
-  Widget _buildCustomRange(BuildContext context) {
+  Widget _buildCustomRange(BuildContext context, AppLocalizations l10n) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildDateField(
           context: context,
-          label: '开始日期',
+          label: l10n.filterDateStartDate,
           value: _startDate,
           onPressed: () => _selectDate(context, true),
+          l10n: l10n,
         ),
         const SizedBox(height: AppSizes.m),
         _buildDateField(
           context: context,
-          label: '结束日期',
+          label: l10n.filterDateEndDate,
           value: _endDate,
           onPressed: () => _selectDate(context, false),
+          l10n: l10n,
         ),
         if (_hasSelection) ...[
           const SizedBox(height: AppSizes.l),
@@ -136,14 +142,14 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
                 Expanded(
                   child: FilledButton(
                     onPressed: _applyDateRange,
-                    child: const Text('应用'),
+                    child: Text(l10n.filterDateApply),
                   ),
                 ),
               if (_hasValidRange) const SizedBox(width: AppSizes.s),
               Expanded(
                 child: TextButton(
                   onPressed: _clearDateRange,
-                  child: const Text('清除'),
+                  child: Text(l10n.filterDateClear),
                 ),
               ),
             ],
@@ -158,6 +164,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     required String label,
     required DateTime? value,
     required VoidCallback onPressed,
+    required AppLocalizations l10n,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +175,9 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
           width: double.infinity,
           child: OutlinedButton.icon(
             icon: const Icon(Icons.calendar_today, size: 18),
-            label: Text(value != null ? _formatDate(value) : '点击选择日期'),
+            label: Text(value != null
+                ? _formatDate(value)
+                : l10n.filterDateSelectPrompt),
             onPressed: onPressed,
           ),
         ),
@@ -176,7 +185,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     );
   }
 
-  Widget _buildPresets(ThemeData theme) {
+  Widget _buildPresets(ThemeData theme, AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.s),
       child: Column(
@@ -190,7 +199,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
                 .map((preset) {
               final selected = widget.filter?.preset == preset;
               return FilterChip(
-                label: Text(preset.label),
+                label: Text(_getPresetLabel(preset, l10n)),
                 selected: selected,
                 onSelected: (selected) {
                   _logger.fine('选择预设: $preset, selected: $selected');
@@ -229,17 +238,21 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  String _formatFilterText() {
+  String _formatFilterText(AppLocalizations l10n) {
     final filter = widget.filter;
     if (filter == null) return '';
 
     if (filter.preset != null && filter.preset != DateRangePreset.all) {
-      return filter.preset!.label;
+      return _getPresetLabel(filter.preset!, l10n);
     }
 
     if (filter.start != null || filter.end != null) {
-      final start = filter.start != null ? _formatDate(filter.start!) : '开始日期';
-      final end = filter.end != null ? _formatDate(filter.end!) : '结束日期';
+      final start = filter.start != null
+          ? _formatDate(filter.start!)
+          : l10n.filterDateStartDate;
+      final end = filter.end != null
+          ? _formatDate(filter.end!)
+          : l10n.filterDateEndDate;
       return '$start - $end';
     }
 
@@ -249,6 +262,24 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
   String _getPresetDateRange(DateRangePreset preset) {
     final range = preset.getRange();
     return '${_formatDate(range.start)} - ${_formatDate(range.end)}';
+  }
+
+  String _getPresetLabel(DateRangePreset preset, AppLocalizations l10n) {
+    return switch (preset) {
+      DateRangePreset.today => l10n.filterDatePresetToday,
+      DateRangePreset.yesterday => l10n.filterDatePresetYesterday,
+      DateRangePreset.thisWeek => l10n.filterDatePresetThisWeek,
+      DateRangePreset.lastWeek => l10n.filterDatePresetLastWeek,
+      DateRangePreset.thisMonth => l10n.filterDatePresetThisMonth,
+      DateRangePreset.lastMonth => l10n.filterDatePresetLastMonth,
+      DateRangePreset.thisYear => l10n.filterDatePresetThisYear,
+      DateRangePreset.lastYear => l10n.filterDatePresetLastYear,
+      DateRangePreset.last7Days => l10n.filterDatePresetLast7Days,
+      DateRangePreset.last30Days => l10n.filterDatePresetLast30Days,
+      DateRangePreset.last90Days => l10n.filterDatePresetLast90Days,
+      DateRangePreset.last365Days => l10n.filterDatePresetLast365Days,
+      DateRangePreset.all => l10n.filterDatePresetAll,
+    };
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {

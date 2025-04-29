@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../domain/enums/work_style.dart';
 import '../../../../../domain/models/work/work_filter.dart';
+import '../../../../../l10n/app_localizations.dart';
 import 'work_filter_section.dart';
 
 class StyleSection extends StatelessWidget {
@@ -16,20 +17,22 @@ class StyleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return WorkFilterSection(
-      title: '书法风格',
+      title: l10n.filterStyleSection,
       child: _buildStyleChips(context),
     );
   }
 
   Widget _buildStyleChips(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: WorkStyle.values.map((style) {
         final selected = filter.style?.value == style.value;
         return FilterChip(
-          label: Text(style.label),
+          label: Text(_getStyleLabel(style, l10n)),
           selected: selected,
           onSelected: (value) {
             // 如果是取消选择或者点击当前已选中的项，则清除选择
@@ -41,5 +44,16 @@ class StyleSection extends StatelessWidget {
         );
       }).toList(),
     );
+  }
+  
+  String _getStyleLabel(WorkStyle style, AppLocalizations l10n) {
+    return switch (style) {
+      WorkStyle.regular => l10n.filterStyleRegular,
+      WorkStyle.running => l10n.filterStyleRunning,
+      WorkStyle.cursive => l10n.filterStyleCursive,
+      WorkStyle.clerical => l10n.filterStyleClerical,
+      WorkStyle.seal => l10n.filterStyleSeal,
+      WorkStyle.other => l10n.filterStyleOther,
+    };
   }
 }
