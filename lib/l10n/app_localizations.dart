@@ -221,15 +221,79 @@ abstract class AppLocalizations {
   String get workBrowseSearch;
   // Work browse page
   String get workBrowseTitle;
+  String get workFormAuthor;
+  String get workFormAuthorHelp;
+  String get workFormAuthorHint;
+  String get workFormAuthorMaxLength;
+
+  String get workFormAuthorTooltip;
+  String get workFormCreationDate;
+  String get workFormDateHelp;
+  String get workFormDateTooltip;
+
+  String get workFormHelp;
+  String get workFormNextField;
+  String get workFormPreviousField;
+  String get workFormRemark;
+  String get workFormRemarkHelp;
+  String get workFormRemarkHint;
+  String get workFormRemarkMaxLength;
+  String get workFormRemarkTooltip;
+  String get workFormRequiredField;
+  String get workFormSelectDate;
+  String get workFormShortcuts;
+  String get workFormStyle;
+
+  String get workFormStyleHelp;
+  String get workFormStyleTooltip;
+  // Work Form
+  String get workFormTitle;
+  // Field help texts
+  String get workFormTitleHelp;
+  String get workFormTitleHint;
+  String get workFormTitleMaxLength;
+
+  String get workFormTitleMinLength;
+  String get workFormTitleRequired;
+  // Field tooltips
+  String get workFormTitleTooltip;
+
+  String get workFormTool;
+  String get workFormToolHelp;
+  String get workFormToolTooltip;
+  String get workImportDialogAddImages;
+  String get workImportDialogCancel;
+  String get workImportDialogDeleteImage;
+
+  String get workImportDialogDeleteImageConfirm;
+  String get workImportDialogImport;
+  String get workImportDialogNoImages;
+  String get workImportDialogNoImagesHint;
+  String get workImportDialogProcessing;
+  String get workImportDialogSuccess;
+  // Work Import Dialog
+  String get workImportDialogTitle;
   // Navigation
   String get works;
+  String get workStyleClerical;
+  String get workStyleCursive;
+  String get workStyleOther;
+  // Work Style localization
+  String get workStyleRegular;
+
+  String get workStyleRunning;
+  String get workStyleSeal;
+  // Work Tool localization
+  String get workToolBrush;
+  String get workToolHardPen;
+  String get workToolOther;
   // Initialization
   String initializationFailed(String error);
   String workBrowseDeleteConfirmMessage(int count);
   String workBrowseDeleteSelected(int count);
-
   String workBrowseError(String message);
   String workBrowseSelectedCount(int count);
+  String workImportDialogError(String error);
 
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;

@@ -107,5 +107,29 @@
   "filterDatePresetLast365Days": "最近一年",
   "filterDatePresetAll": "全部时间",
 
+  "workImportDialogTitle": "导入作品",
+  "workImportDialogCancel": "取消",
+  "workImportDialogImport": "导入",
+  "workImportDialogAddImages": "添加图片",
+  "workImportDialogNoImages": "未选择图片",
+  "workImportDialogNoImagesHint": "点击添加图片",
+  "workImportDialogProcessing": "处理中...",
+  "workImportDialogSuccess": "导入成功",
+  "workImportDialogError": "导入失败: {error}",
+  "workImportDialogDeleteImage": "删除图片",
+  "workImportDialogDeleteImageConfirm": "确定要删除这张图片吗？",
+
+  "workFormTitle": "标题",
+  "workFormTitleRequired": "标题不能为空",
+  "workFormAuthor": "作者",
+  "workFormStyle": "风格",
+  "workFormTool": "工具",
+  "workFormCreationDate": "创作日期",
+  "workFormRemark": "备注",
+  "workFormSelectDate": "选择日期",
+  "workFormRequiredField": "必填字段",
+  "workFormHelp": "帮助",
+  "workFormShortcuts": "键盘快捷键",
+
   "initializationFailed": "初始化失败: {error}"
 }

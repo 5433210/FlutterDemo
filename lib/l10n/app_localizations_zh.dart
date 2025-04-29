@@ -257,7 +257,164 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workBrowseTitle => '作品';
 
   @override
+  String get workFormAuthor => '作者';
+
+  @override
+  String get workFormAuthorHelp => '可选，作品的创作者';
+
+  @override
+  String get workFormAuthorHint => '请输入作者名';
+
+  @override
+  String get workFormAuthorMaxLength => '作者名不能超过50个字符';
+
+  @override
+  String get workFormAuthorTooltip => '按 Ctrl+A 快速跳转到作者输入框';
+
+  @override
+  String get workFormCreationDate => '创作日期';
+
+  @override
+  String get workFormDateHelp => '作品的完成日期';
+
+  @override
+  String get workFormDateTooltip => '按 Tab 键导航到下一个字段';
+
+  @override
+  String get workFormHelp => '帮助';
+
+  @override
+  String get workFormNextField => '下一项';
+
+  @override
+  String get workFormPreviousField => '上一项';
+
+  @override
+  String get workFormRemark => '备注';
+
+  @override
+  String get workFormRemarkHelp => '可选，关于作品的其他说明';
+
+  @override
+  String get workFormRemarkHint => '可选';
+
+  @override
+  String get workFormRemarkMaxLength => '备注不能超过500个字符';
+
+  @override
+  String get workFormRemarkTooltip => '按 Ctrl+R 快速跳转到备注输入框';
+
+  @override
+  String get workFormRequiredField => '必填字段';
+
+  @override
+  String get workFormSelectDate => '选择日期';
+
+  @override
+  String get workFormShortcuts => '键盘快捷键';
+
+  @override
+  String get workFormStyle => '风格';
+
+  @override
+  String get workFormStyleHelp => '作品的主要画风类型';
+
+  @override
+  String get workFormStyleTooltip => '按 Tab 键导航到下一个字段';
+
+  // Work Form
+  @override
+  String get workFormTitle => '标题';
+
+  @override
+  String get workFormTitleHelp => '作品的主要标题，将显示在作品列表中';
+
+  @override
+  String get workFormTitleHint => '请输入标题';
+
+  @override
+  String get workFormTitleMaxLength => '标题不能超过100个字符';
+
+  @override
+  String get workFormTitleMinLength => '标题至少需要2个字符';
+
+  @override
+  String get workFormTitleRequired => '请输入作品标题';
+
+  @override
+  String get workFormTitleTooltip => '按 Ctrl+T 快速跳转到标题输入框';
+
+  @override
+  String get workFormTool => '工具';
+
+  @override
+  String get workFormToolHelp => '创作本作品使用的主要工具';
+
+  @override
+  String get workFormToolTooltip => '按 Tab 键导航到下一个字段';
+
+  @override
+  String get workImportDialogAddImages => '添加图片';
+
+  @override
+  String get workImportDialogCancel => '取消';
+
+  @override
+  String get workImportDialogDeleteImage => '删除图片';
+
+  @override
+  String get workImportDialogDeleteImageConfirm => '确定要删除这张图片吗？';
+
+  @override
+  String get workImportDialogImport => '导入';
+
+  @override
+  String get workImportDialogNoImages => '未选择图片';
+
+  @override
+  String get workImportDialogNoImagesHint => '点击添加图片';
+
+  @override
+  String get workImportDialogProcessing => '处理中...';
+
+  @override
+  String get workImportDialogSuccess => '导入成功';
+
+  // Work Import Dialog
+  @override
+  String get workImportDialogTitle => '导入作品';
+
+  @override
   String get works => '作品';
+
+  @override
+  String get workStyleClerical => '隶书';
+
+  @override
+  String get workStyleCursive => '草书';
+
+  @override
+  String get workStyleOther => '其他';
+
+  // Work Style localization
+  @override
+  String get workStyleRegular => '楷书';
+
+  @override
+  String get workStyleRunning => '行书';
+
+  @override
+  String get workStyleSeal => '篆书';
+
+  // Work Tool localization
+  @override
+  String get workToolBrush => '毛笔';
+
+  @override
+  String get workToolHardPen => '硬笔';
+
+  @override
+  String get workToolOther => '其他';
 
   @override
   String initializationFailed(String error) => '初始化失败: $error';
@@ -274,4 +431,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workBrowseSelectedCount(int count) => '已选择 $count 项';
+
+  @override
+  String workImportDialogError(String error) => '导入失败: $error';
 }

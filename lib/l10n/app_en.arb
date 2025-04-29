@@ -104,5 +104,29 @@
   "filterDatePresetLast365Days": "Last 365 Days",
   "filterDatePresetAll": "All Time",
 
+  "workImportDialogTitle": "Import Work",
+  "workImportDialogCancel": "Cancel",
+  "workImportDialogImport": "Import",
+  "workImportDialogAddImages": "Add Images",
+  "workImportDialogNoImages": "No images selected",
+  "workImportDialogNoImagesHint": "Click to add images",
+  "workImportDialogProcessing": "Processing...",
+  "workImportDialogSuccess": "Import successful",
+  "workImportDialogError": "Import failed: {error}",
+  "workImportDialogDeleteImage": "Delete Image",
+  "workImportDialogDeleteImageConfirm": "Are you sure you want to delete this image?",
+
+  "workFormTitle": "Title",
+  "workFormTitleRequired": "Title is required",
+  "workFormAuthor": "Author",
+  "workFormStyle": "Style",
+  "workFormTool": "Tool",
+  "workFormCreationDate": "Creation Date",
+  "workFormRemark": "Remark",
+  "workFormSelectDate": "Select Date",
+  "workFormRequiredField": "Required field",
+  "workFormHelp": "Help",
+  "workFormShortcuts": "Keyboard Shortcuts",
+
   "initializationFailed": "Initialization failed: {error}"
 }

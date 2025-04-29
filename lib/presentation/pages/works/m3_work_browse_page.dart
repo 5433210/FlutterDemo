@@ -7,7 +7,7 @@ import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
-import '../../dialogs/work_import/work_import_dialog.dart';
+import '../../dialogs/work_import/m3_work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../viewmodels/states/work_browse_state.dart';
@@ -298,11 +298,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
 
   // 简化为一个统一的导入对话框方法
   Future<void> _showImportDialog(BuildContext context) async {
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const WorkImportDialog(),
-    );
+    final result = await M3WorkImportDialog.show(context);
 
     if (result == true) {
       AppLogger.debug('Import completed, preparing to refresh list',

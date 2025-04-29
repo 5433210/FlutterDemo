@@ -258,7 +258,171 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workBrowseTitle => 'Works';
 
   @override
+  String get workFormAuthor => 'Author';
+
+  @override
+  String get workFormAuthorHelp => 'Optional, the creator of the work';
+
+  @override
+  String get workFormAuthorHint => 'Enter author name';
+
+  @override
+  String get workFormAuthorMaxLength =>
+      'Author name cannot exceed 50 characters';
+
+  @override
+  String get workFormAuthorTooltip =>
+      'Press Ctrl+A to quickly jump to the author field';
+
+  @override
+  String get workFormCreationDate => 'Creation Date';
+
+  @override
+  String get workFormDateHelp => 'The completion date of the work';
+
+  @override
+  String get workFormDateTooltip => 'Press Tab to navigate to the next field';
+
+  @override
+  String get workFormHelp => 'Help';
+
+  @override
+  String get workFormNextField => 'Next Field';
+
+  @override
+  String get workFormPreviousField => 'Previous Field';
+
+  @override
+  String get workFormRemark => 'Remark';
+
+  @override
+  String get workFormRemarkHelp =>
+      'Optional, additional information about the work';
+
+  @override
+  String get workFormRemarkHint => 'Optional';
+
+  @override
+  String get workFormRemarkMaxLength => 'Remark cannot exceed 500 characters';
+
+  @override
+  String get workFormRemarkTooltip =>
+      'Press Ctrl+R to quickly jump to the remark field';
+
+  @override
+  String get workFormRequiredField => 'Required field';
+
+  @override
+  String get workFormSelectDate => 'Select Date';
+
+  @override
+  String get workFormShortcuts => 'Keyboard Shortcuts';
+
+  @override
+  String get workFormStyle => 'Style';
+
+  @override
+  String get workFormStyleHelp => 'The main style type of the work';
+
+  @override
+  String get workFormStyleTooltip => 'Press Tab to navigate to the next field';
+
+  // Work Form
+  @override
+  String get workFormTitle => 'Title';
+
+  @override
+  String get workFormTitleHelp =>
+      'The main title of the work, displayed in the work list';
+
+  @override
+  String get workFormTitleHint => 'Enter title';
+
+  @override
+  String get workFormTitleMaxLength => 'Title cannot exceed 100 characters';
+
+  @override
+  String get workFormTitleMinLength => 'Title must be at least 2 characters';
+
+  @override
+  String get workFormTitleRequired => 'Title is required';
+
+  @override
+  String get workFormTitleTooltip =>
+      'Press Ctrl+T to quickly jump to the title field';
+
+  @override
+  String get workFormTool => 'Tool';
+
+  @override
+  String get workFormToolHelp => 'The main tool used to create this work';
+
+  @override
+  String get workFormToolTooltip => 'Press Tab to navigate to the next field';
+
+  @override
+  String get workImportDialogAddImages => 'Add Images';
+
+  @override
+  String get workImportDialogCancel => 'Cancel';
+
+  @override
+  String get workImportDialogDeleteImage => 'Delete Image';
+
+  @override
+  String get workImportDialogDeleteImageConfirm =>
+      'Are you sure you want to delete this image?';
+
+  @override
+  String get workImportDialogImport => 'Import';
+
+  @override
+  String get workImportDialogNoImages => 'No images selected';
+
+  @override
+  String get workImportDialogNoImagesHint => 'Click to add images';
+
+  @override
+  String get workImportDialogProcessing => 'Processing...';
+
+  @override
+  String get workImportDialogSuccess => 'Import successful';
+
+  // Work Import Dialog
+  @override
+  String get workImportDialogTitle => 'Import Work';
+
+  @override
   String get works => 'Works';
+
+  @override
+  String get workStyleClerical => 'Clerical Script';
+
+  @override
+  String get workStyleCursive => 'Cursive Script';
+
+  @override
+  String get workStyleOther => 'Other';
+
+  // Work Style localization
+  @override
+  String get workStyleRegular => 'Regular Script';
+
+  @override
+  String get workStyleRunning => 'Running Script';
+
+  @override
+  String get workStyleSeal => 'Seal Script';
+
+  // Work Tool localization
+  @override
+  String get workToolBrush => 'Brush';
+
+  @override
+  String get workToolHardPen => 'Hard Pen';
+
+  @override
+  String get workToolOther => 'Other';
 
   @override
   String initializationFailed(String error) => 'Initialization failed: $error';
@@ -275,4 +439,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workBrowseSelectedCount(int count) => '$count selected';
+
+  @override
+  String workImportDialogError(String error) => 'Import failed: $error';
 }
