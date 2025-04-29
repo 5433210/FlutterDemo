@@ -15,21 +15,21 @@ class ThumbnailList extends ConsumerWidget {
     final imageState = ref.watch(workImageProvider);
 
     return Container(
-      height: 80,
+      height: 100,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
-        ),
+        // border: Border(
+        //   // top: BorderSide(color: Theme.of(context).dividerColor),
+        // ),
       ),
       child: Row(
         children: [
           // 页面指示器
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(4),
             alignment: Alignment.center,
             child: Text(
-              '页面: ${imageState.pageIds.indexOf(imageState.currentPageId) + 1}/${imageState.pageIds.length}',
+              '${imageState.pageIds.indexOf(imageState.currentPageId) + 1}/${imageState.pageIds.length}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

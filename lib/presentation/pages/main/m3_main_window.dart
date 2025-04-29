@@ -6,6 +6,7 @@ import '../../../presentation/pages/characters/character_management_page.dart';
 import '../../../presentation/pages/practices/practice_edit_page.dart';
 import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
+import '../../../presentation/pages/works/m3_character_collection_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
 import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
@@ -116,6 +117,17 @@ class _M3MainWindowState extends State<M3MainWindow>
               final workId = settings.arguments as String;
               return MaterialPageRoute<bool>(
                 builder: (context) => M3WorkDetailPage(workId: workId),
+              );
+            }
+            if (settings.name == AppRoutes.characterCollection &&
+                settings.arguments != null) {
+              final args = settings.arguments as Map<String, String>;
+              return MaterialPageRoute<bool>(
+                builder: (context) => M3CharacterCollectionPage(
+                  workId: args['workId']!,
+                  initialPageId: args['pageId']!,
+                  initialCharacterId: args['characterId'],
+                ),
               );
             }
             // Default to work browse page

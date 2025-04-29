@@ -148,7 +148,7 @@ class WorkImagesManagementView extends ConsumerWidget {
                   ),
                 ),
 
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
 
                 // 删除图片按钮 - 改为图标按钮
                 Tooltip(

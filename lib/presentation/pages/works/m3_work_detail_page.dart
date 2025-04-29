@@ -14,7 +14,7 @@ import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
-import './character_collection_page.dart';
+import './m3_character_collection_page.dart';
 import 'components/m3_unified_work_detail_panel.dart';
 import 'components/m3_view_mode_image_preview.dart';
 import 'components/work_images_management_view.dart';
@@ -486,7 +486,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
           if (mounted) {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => CharacterCollectionPage(
+                builder: (context) => M3CharacterCollectionPage(
                   workId: work.id,
                   initialPageId: initialPageId,
                 ),

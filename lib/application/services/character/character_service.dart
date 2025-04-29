@@ -11,7 +11,7 @@ import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../presentation/viewmodels/character_collection_viewmodel.dart';
+import '../../../presentation/viewmodels/states/character_grid_state.dart';
 import '../../../utils/image/image_cache_util.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/service_providers.dart';
@@ -261,7 +261,6 @@ class CharacterService {
           id: entity.id,
           pageId: entity.pageId,
           character: entity.character,
-          rect: entity.region.rect,
           thumbnailPath: thumbnailPath,
           createdAt: entity.createTime ?? DateTime.now(),
           updatedAt: entity.updateTime ?? DateTime.now(),
@@ -289,7 +288,6 @@ class CharacterService {
           id: entity.id,
           pageId: entity.pageId,
           character: entity.character,
-          rect: entity.region.rect,
           thumbnailPath: thumbnailPath,
           createdAt: entity.createTime ?? DateTime.now(),
           updatedAt: entity.updateTime ?? DateTime.now(),

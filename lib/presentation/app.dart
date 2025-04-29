@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:demo/presentation/pages/characters/character_management_page.dart';
 import 'package:demo/presentation/pages/works/character_collection_page.dart';
+import 'package:demo/presentation/pages/works/m3_character_collection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -151,11 +152,17 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.characterCollection:
         if (args is Map<String, String>) {
           return MaterialPageRoute(
-            builder: (context) => CharacterCollectionPage(
-              workId: args['workId']!,
-              initialPageId: args['pageId']!,
-              initialCharacterId: args['characterId']!,
-            ),
+            builder: (context) => useMaterial3
+                ? M3CharacterCollectionPage(
+                    workId: args['workId']!,
+                    initialPageId: args['pageId']!,
+                    initialCharacterId: args['characterId']!,
+                  )
+                : CharacterCollectionPage(
+                    workId: args['workId']!,
+                    initialPageId: args['pageId']!,
+                    initialCharacterId: args['characterId']!,
+                  ),
           );
         }
         break;

@@ -49,12 +49,15 @@ class SortSection extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      filter.sortOption.descending
-                          ? l10n.filterSortDescending
-                          : l10n.filterSortAscending,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
+                    Flexible(
+                      child: Text(
+                        filter.sortOption.descending
+                            ? l10n.filterSortDescending
+                            : l10n.filterSortAscending,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 4),

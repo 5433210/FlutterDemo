@@ -14,6 +14,229 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
+  String get characterCollectionBack => '返回';
+
+  @override
+  String get characterCollectionDeleteConfirm => '确认删除';
+
+  @override
+  String get characterCollectionDeleteMessage => '即将删除当前选中的已保存选区，此操作不可撤销。';
+
+  @override
+  String get characterCollectionDeleteShortcuts => '快捷键: Enter确认删除, Esc取消';
+
+  @override
+  String get characterCollectionFilterAll => '全部';
+
+  @override
+  String get characterCollectionFilterFavorite => '已收藏';
+
+  @override
+  String get characterCollectionFilterRecent => '最近添加';
+
+  @override
+  String get characterCollectionHelp => '帮助';
+
+  @override
+  String get characterCollectionHelpClose => '关闭';
+
+  @override
+  String get characterCollectionHelpExport => '导出指南';
+
+  @override
+  String get characterCollectionHelpExportSoon => '导出功能即将推出';
+
+  @override
+  String get characterCollectionHelpGuide => '使用指南';
+
+  @override
+  String get characterCollectionHelpIntro => '此工具帮助您从书法作品中提取和管理单个字符。';
+
+  @override
+  String get characterCollectionHelpNotes => '重要提示';
+
+  @override
+  String get characterCollectionHelpSection1 => '基本操作';
+
+  @override
+  String get characterCollectionHelpSection2 => '调整区域';
+
+  @override
+  String get characterCollectionHelpSection3 => '擦除工具';
+
+  @override
+  String get characterCollectionHelpSection4 => '保存更改';
+
+  @override
+  String get characterCollectionHelpSection5 => '键盘快捷键';
+
+  @override
+  String get characterCollectionHelpTitle => '字符采集帮助';
+
+  @override
+  String get characterCollectionImageInvalid => '无效的图片数据';
+
+  @override
+  String get characterCollectionImageLoadError => '图片加载失败';
+
+  @override
+  String get characterCollectionLeave => '离开';
+
+  @override
+  String get characterCollectionLoadingImage => '加载图片中...';
+
+  @override
+  String get characterCollectionNoCharacter => '无字符';
+
+  @override
+  String get characterCollectionNoCharacters => '还没有收集任何字符';
+
+  @override
+  String get characterCollectionPreviewTab => '字符预览';
+
+  @override
+  String get characterCollectionProcessing => '处理中...';
+
+  @override
+  String get characterCollectionResultsTab => '采集结果';
+
+  @override
+  String get characterCollectionRetry => '重试';
+
+  @override
+  String get characterCollectionReturnToDetails => '返回详情页';
+
+  @override
+  String get characterCollectionSearchHint => '搜索字符...';
+
+  @override
+  String get characterCollectionSelectRegion => '请在预览区域选择一个字符区域';
+
+  @override
+  String get characterCollectionSwitchingPage => '正在切换到字符所在页面...';
+
+  // Character Collection Page
+  @override
+  String get characterCollectionTitle => '字符采集';
+
+  @override
+  String get characterCollectionToolDelete => '删除选中区域 (Ctrl+D)';
+
+  @override
+  String get characterCollectionToolPan => '拖拽工具 (Ctrl+V)';
+
+  @override
+  String get characterCollectionToolSelect => '框选工具 (Ctrl+B)';
+
+  @override
+  String get characterCollectionUnsavedChanges => '未保存的更改';
+
+  @override
+  String get characterCollectionUnsavedChangesMessage => '您有未保存的更改。确定要离开吗？';
+
+  @override
+  String get characterCollectionUseSelectionTool => '使用左侧的框选工具从图片中提取字符';
+
+  @override
+  String get characterEditCompletingSave => '完成保存...';
+
+  @override
+  String get characterEditImageInvert => '图像反转';
+
+  @override
+  String get characterEditImageLoadError => '图像加载错误';
+
+  @override
+  String get characterEditImageLoadFailed => '无法加载或处理字符图像';
+
+  @override
+  String get characterEditInitializing => '初始化...';
+
+  @override
+  String get characterEditInputCharacter => '输入汉字';
+
+  @override
+  String get characterEditInputHint => '请输入';
+
+  @override
+  String get characterEditInvertMode => '反转模式';
+
+  @override
+  String get characterEditLoadingImage => '正在加载字符图像...';
+
+  @override
+  String get characterEditNoRegionSelected => '没有选择区域';
+
+  @override
+  String get characterEditOnlyOneCharacter => '只能输入一个汉字';
+
+  @override
+  String get characterEditPanImage => '平移图像(长按alt键)';
+
+  @override
+  String get characterEditPleaseEnterCharacter => '请输入一个汉字';
+
+  @override
+  String get characterEditPreparingSave => '准备保存...';
+
+  @override
+  String get characterEditProcessingEraseData => '处理擦除数据...';
+
+  @override
+  String get characterEditProcessingImage => '处理图像...';
+
+  @override
+  String get characterEditRedo => '重做';
+
+  @override
+  String get characterEditSaveComplete => '保存完成';
+
+  @override
+  String get characterEditSaveConfirmTitle => '保存字符';
+
+  @override
+  String get characterEditSavePreview => '字符预览：';
+
+  @override
+  String get characterEditSaveShortcuts => '按Enter保存，Esc取消';
+
+  @override
+  String get characterEditSaveTimeout => '保存超时';
+
+  @override
+  String get characterEditSavingToStorage => '保存到存储...';
+
+  @override
+  String get characterEditShowContour => '轮廓显示';
+
+  @override
+  String get characterEditThumbnailCheckFailed => '检查缩略图失败';
+
+  @override
+  String get characterEditThumbnailEmpty => '缩略图文件为空';
+
+  @override
+  String get characterEditThumbnailLoadError => '加载缩略图失败';
+
+  @override
+  String get characterEditThumbnailLoadFailed => '加载缩略图失败';
+
+  @override
+  String get characterEditThumbnailNotFound => '缩略图不存在';
+
+  @override
+  String get characterEditThumbnailSizeError => '获取缩略图大小失败';
+
+  @override
+  String get characterEditUndo => '撤销';
+
+  @override
+  String get characterEditUnknownError => '未知错误';
+
+  @override
+  String get characterEditValidChineseCharacter => '请输入有效的汉字';
+
+  @override
   String get characters => '集字';
 
   @override
@@ -497,6 +720,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workToolOther => '其他';
+
+  @override
+  String characterCollectionDeleteBatchConfirm(int count) =>
+      '确认删除$count个已保存的选区';
+
+  @override
+  String characterCollectionDeleteBatchMessage(int count) =>
+      '即将删除$count个已保存的选区，此操作不可撤销。';
+
+  @override
+  String characterCollectionError(String error) => '错误: $error';
+
+  @override
+  String characterCollectionFindSwitchFailed(String error) =>
+      '查找并切换页面失败: $error';
+
+  @override
+  String characterEditCharacterUpdated(String character) => '已更新字符: $character';
+
+  @override
+  String characterEditSaveConfirmMessage(String character) =>
+      '是否保存对字符"$character"的更改？';
 
   @override
   String initializationFailed(String error) => '初始化失败: $error';

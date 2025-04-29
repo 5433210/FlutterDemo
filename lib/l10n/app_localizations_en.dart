@@ -14,6 +14,238 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get characterCollectionBack => 'Back';
+
+  @override
+  String get characterCollectionDeleteConfirm => 'Confirm Deletion';
+
+  @override
+  String get characterCollectionDeleteMessage =>
+      'You are about to delete the selected region. This action cannot be undone.';
+
+  @override
+  String get characterCollectionDeleteShortcuts =>
+      'Shortcuts: Enter to confirm, Esc to cancel';
+
+  @override
+  String get characterCollectionFilterAll => 'All';
+
+  @override
+  String get characterCollectionFilterFavorite => 'Favorites';
+
+  @override
+  String get characterCollectionFilterRecent => 'Recent';
+
+  @override
+  String get characterCollectionHelp => 'Help';
+
+  @override
+  String get characterCollectionHelpClose => 'Close';
+
+  @override
+  String get characterCollectionHelpExport => 'Export Guide';
+
+  @override
+  String get characterCollectionHelpExportSoon => 'Export feature coming soon';
+
+  @override
+  String get characterCollectionHelpGuide => 'User Guide';
+
+  @override
+  String get characterCollectionHelpIntro =>
+      'This tool helps you extract and manage individual characters from your calligraphy works.';
+
+  @override
+  String get characterCollectionHelpNotes => 'Important Notes';
+
+  @override
+  String get characterCollectionHelpSection1 => 'Basic Operations';
+
+  @override
+  String get characterCollectionHelpSection2 => 'Adjusting Regions';
+
+  @override
+  String get characterCollectionHelpSection3 => 'Erasing Tool';
+
+  @override
+  String get characterCollectionHelpSection4 => 'Saving Changes';
+
+  @override
+  String get characterCollectionHelpSection5 => 'Keyboard Shortcuts';
+
+  @override
+  String get characterCollectionHelpTitle => 'Character Collection Help';
+
+  @override
+  String get characterCollectionImageInvalid => 'Invalid image data';
+
+  @override
+  String get characterCollectionImageLoadError => 'Failed to load image';
+
+  @override
+  String get characterCollectionLeave => 'Leave';
+
+  @override
+  String get characterCollectionLoadingImage => 'Loading image...';
+
+  @override
+  String get characterCollectionNoCharacter => 'No character';
+
+  @override
+  String get characterCollectionNoCharacters => 'No characters collected yet';
+
+  @override
+  String get characterCollectionPreviewTab => 'Character Preview';
+
+  @override
+  String get characterCollectionProcessing => 'Processing...';
+
+  @override
+  String get characterCollectionResultsTab => 'Collection Results';
+
+  @override
+  String get characterCollectionRetry => 'Retry';
+
+  @override
+  String get characterCollectionReturnToDetails => 'Return to Details';
+
+  @override
+  String get characterCollectionSearchHint => 'Search characters...';
+
+  @override
+  String get characterCollectionSelectRegion =>
+      'Please select a character region in the preview area';
+
+  @override
+  String get characterCollectionSwitchingPage =>
+      "Switching to character's page...";
+
+  // Character Collection Page
+  @override
+  String get characterCollectionTitle => 'Character Collection';
+
+  @override
+  String get characterCollectionToolDelete => 'Delete Selected (Ctrl+D)';
+
+  @override
+  String get characterCollectionToolPan => 'Pan Tool (Ctrl+V)';
+
+  @override
+  String get characterCollectionToolSelect => 'Selection Tool (Ctrl+B)';
+
+  @override
+  String get characterCollectionUnsavedChanges => 'Unsaved Changes';
+
+  @override
+  String get characterCollectionUnsavedChangesMessage =>
+      'You have unsaved changes. Are you sure you want to leave?';
+
+  @override
+  String get characterCollectionUseSelectionTool =>
+      'Use the selection tool on the left to extract characters from the image';
+
+  @override
+  String get characterEditCompletingSave => 'Completing save...';
+
+  @override
+  String get characterEditImageInvert => 'Image Invert';
+
+  @override
+  String get characterEditImageLoadError => 'Image loading error';
+
+  @override
+  String get characterEditImageLoadFailed =>
+      'Failed to load or process character image';
+
+  @override
+  String get characterEditInitializing => 'Initializing...';
+
+  @override
+  String get characterEditInputCharacter => 'Input Character';
+
+  @override
+  String get characterEditInputHint => 'Type here';
+
+  @override
+  String get characterEditInvertMode => 'Invert Mode';
+
+  @override
+  String get characterEditLoadingImage => 'Loading character image...';
+
+  @override
+  String get characterEditNoRegionSelected => 'No region selected';
+
+  @override
+  String get characterEditOnlyOneCharacter => 'Only one character is allowed';
+
+  @override
+  String get characterEditPanImage => 'Pan Image (hold Alt)';
+
+  @override
+  String get characterEditPleaseEnterCharacter => 'Please enter a character';
+
+  @override
+  String get characterEditPreparingSave => 'Preparing to save...';
+
+  @override
+  String get characterEditProcessingEraseData => 'Processing erase data...';
+
+  @override
+  String get characterEditProcessingImage => 'Processing image...';
+
+  @override
+  String get characterEditRedo => 'Redo';
+
+  @override
+  String get characterEditSaveComplete => 'Save complete';
+
+  @override
+  String get characterEditSaveConfirmTitle => 'Save Character';
+
+  @override
+  String get characterEditSavePreview => 'Character Preview:';
+
+  @override
+  String get characterEditSaveShortcuts => 'Press Enter to save, Esc to cancel';
+
+  @override
+  String get characterEditSaveTimeout => 'Save timeout';
+
+  @override
+  String get characterEditSavingToStorage => 'Saving to storage...';
+
+  @override
+  String get characterEditShowContour => 'Show Contour';
+
+  @override
+  String get characterEditThumbnailCheckFailed => 'Failed to check thumbnail';
+
+  @override
+  String get characterEditThumbnailEmpty => 'Thumbnail file is empty';
+
+  @override
+  String get characterEditThumbnailLoadError => 'Failed to load thumbnail';
+
+  @override
+  String get characterEditThumbnailLoadFailed => 'Failed to load thumbnail';
+
+  @override
+  String get characterEditThumbnailNotFound => 'Thumbnail not found';
+
+  @override
+  String get characterEditThumbnailSizeError => 'Failed to get thumbnail size';
+
+  @override
+  String get characterEditUndo => 'Undo';
+
+  @override
+  String get characterEditUnknownError => 'Unknown error';
+
+  @override
+  String get characterEditValidChineseCharacter =>
+      'Please enter a valid Chinese character';
+
+  @override
   String get characters => 'Characters';
 
   @override
@@ -508,6 +740,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workToolOther => 'Other';
+
+  @override
+  String characterCollectionDeleteBatchConfirm(int count) =>
+      'Confirm Deletion of $count Regions';
+
+  @override
+  String characterCollectionDeleteBatchMessage(int count) =>
+      'You are about to delete $count saved regions. This action cannot be undone.';
+
+  @override
+  String characterCollectionError(String error) => 'Error: $error';
+
+  @override
+  String characterCollectionFindSwitchFailed(String error) =>
+      'Failed to find and switch page: $error';
+
+  @override
+  String characterEditCharacterUpdated(String character) =>
+      'Character updated: $character';
+
+  @override
+  String characterEditSaveConfirmMessage(String character) =>
+      'Save changes to character "$character"?';
 
   @override
   String initializationFailed(String error) => 'Initialization failed: $error';
