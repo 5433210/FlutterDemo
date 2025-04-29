@@ -6,7 +6,7 @@ import '../../../presentation/pages/characters/character_management_page.dart';
 import '../../../presentation/pages/practices/practice_edit_page.dart';
 import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
-import '../../../presentation/pages/works/work_browse_page.dart';
+import '../../../presentation/pages/works/m3_work_browse_page.dart';
 import '../../../presentation/pages/works/work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
@@ -19,7 +19,8 @@ class M3MainWindow extends StatefulWidget {
   State<M3MainWindow> createState() => _M3MainWindowState();
 }
 
-class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver {
+class _M3MainWindowState extends State<M3MainWindow>
+    with WidgetsBindingObserver {
   int _selectedIndex = 0;
   bool _isNavigationExtended = false;
 
@@ -28,17 +29,17 @@ class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         // 导航快捷键
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1): 
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
             const ActivateTabIntent(0),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2): 
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
             const ActivateTabIntent(1),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3): 
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
             const ActivateTabIntent(2),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4): 
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
             const ActivateTabIntent(3),
-        
+
         // 侧边栏快捷键
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN): 
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
             const ToggleNavigationIntent(),
       },
       child: Actions(
@@ -47,7 +48,8 @@ class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver
             onInvoke: (intent) => setState(() => _selectedIndex = intent.index),
           ),
           ToggleNavigationIntent: CallbackAction<ToggleNavigationIntent>(
-            onInvoke: (intent) => setState(() => _isNavigationExtended = !_isNavigationExtended),
+            onInvoke: (intent) =>
+                setState(() => _isNavigationExtended = !_isNavigationExtended),
           ),
         },
         child: Scaffold(
@@ -55,7 +57,7 @@ class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver
             children: [
               // 标题栏
               const M3TitleBar(),
-              
+
               // 内容区域
               Expanded(
                 child: Row(
@@ -75,7 +77,7 @@ class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver
                         });
                       },
                     ),
-                    
+
                     // 内容区域
                     Expanded(
                       child: _buildContent(),
@@ -118,7 +120,7 @@ class _M3MainWindowState extends State<M3MainWindow> with WidgetsBindingObserver
             }
             // Default to work browse page
             return MaterialPageRoute(
-              builder: (context) => const WorkBrowsePage(),
+              builder: (context) => const M3WorkBrowsePage(),
             );
           },
         );

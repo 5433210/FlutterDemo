@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  
+
   "appName": "Calligraphy Collection",
 
   "works": "Works",
@@ -29,5 +29,32 @@
   "language": "Language",
   "languageSystem": "System",
   "languageZh": "简体中文",
-  "languageEn": "English"
+  "languageEn": "English",
+
+  "navExpandSidebar": "Expand Sidebar",
+  "navCollapseSidebar": "Collapse Sidebar",
+
+  "workBrowseTitle": "Works",
+  "workBrowseImport": "Import Work",
+  "workBrowseBatchMode": "Batch Mode",
+  "workBrowseBatchDone": "Done",
+  "workBrowseSelectedCount": "{count} selected",
+  "workBrowseDeleteSelected": "Delete {count}",
+  "workBrowseSearch": "Search works...",
+  "workBrowseGridView": "Grid View",
+  "workBrowseListView": "List View",
+  "workBrowseDeleteConfirmTitle": "Confirm Deletion",
+  "workBrowseDeleteConfirmMessage": "Are you sure you want to delete {count} selected works? This action cannot be undone.",
+  "workBrowseCancel": "Cancel",
+  "workBrowseDelete": "Delete",
+  "workBrowseLoading": "Loading works...",
+  "workBrowseError": "Error: {message}",
+  "workBrowseReload": "Reload",
+  "workBrowseNoWorks": "No works found",
+  "workBrowseNoWorksHint": "Try importing new works or changing filters",
+
+  "filterTitle": "Filter & Sort",
+  "filterReset": "Reset Filters",
+
+  "initializationFailed": "Initialization failed: {error}"
 }

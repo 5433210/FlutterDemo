@@ -83,4 +83,29 @@ class AppSizes {
   static const double breakpointMd = 905.0;
   static const double breakpointLg = 1240.0;
   static const double breakpointXl = 1440.0;
+
+  // Work browse page specific
+  static const double workFilterPanelWidth = 280.0;
+  static const double workListItemHeight = 160.0;
+  static const double workListThumbnailWidth = 200.0;
+  static const double workGridItemTagHeight = 24.0;
+  static const double workGridItemAspectRatio = 4 / 3;
+
+  // Animation durations
+  static const int animationDurationFast = 150;
+  static const int animationDurationMedium = 200;
+  static const int animationDurationSlow = 300;
+
+  // Tag chips
+  static const double tagChipHorizontalPadding = 6.0;
+  static const double tagChipVerticalPadding = 2.0;
+  static const double tagChipBorderRadius = 4.0;
+  static const double tagChipFontSize = 12.0;
+  static const double tagChipSpacing = 4.0;
+  static const double tagContainerMaxHeight = 48.0;
+
+  // Search bar
+  static const double searchBarWidth = 240.0;
+  static const double searchBarIconSize = 20.0;
+  static const double searchBarClearIconSize = 16.0;
 }

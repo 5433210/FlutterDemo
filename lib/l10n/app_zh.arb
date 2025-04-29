@@ -1,6 +1,6 @@
 {
   "@@locale": "zh",
-  
+
   "appName": "书法集字",
   "@appName": {
     "description": "应用名称"
@@ -32,5 +32,32 @@
   "language": "语言",
   "languageSystem": "跟随系统",
   "languageZh": "简体中文",
-  "languageEn": "English"
+  "languageEn": "English",
+
+  "navExpandSidebar": "展开侧边栏",
+  "navCollapseSidebar": "收起侧边栏",
+
+  "workBrowseTitle": "作品",
+  "workBrowseImport": "导入作品",
+  "workBrowseBatchMode": "批量处理",
+  "workBrowseBatchDone": "完成",
+  "workBrowseSelectedCount": "已选择 {count} 项",
+  "workBrowseDeleteSelected": "删除{count}项",
+  "workBrowseSearch": "搜索作品...",
+  "workBrowseGridView": "网格视图",
+  "workBrowseListView": "列表视图",
+  "workBrowseDeleteConfirmTitle": "确认删除",
+  "workBrowseDeleteConfirmMessage": "确定要删除选中的 {count} 个作品吗？此操作不可恢复。",
+  "workBrowseCancel": "取消",
+  "workBrowseDelete": "删除",
+  "workBrowseLoading": "正在加载作品...",
+  "workBrowseError": "发生错误: {message}",
+  "workBrowseReload": "重新加载",
+  "workBrowseNoWorks": "没有找到作品",
+  "workBrowseNoWorksHint": "尝试导入新作品或修改筛选条件",
+
+  "filterTitle": "筛选与排序",
+  "filterReset": "重置筛选条件",
+
+  "initializationFailed": "初始化失败: {error}"
 }

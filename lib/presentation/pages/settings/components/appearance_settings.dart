@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/enums/app_theme_mode.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../providers/settings_provider.dart';
 import '../../../widgets/settings/settings_section.dart';
 
@@ -13,13 +14,14 @@ class AppearanceSettings extends ConsumerWidget {
     final themeMode = ref.watch(settingsProvider.select((s) => s.themeMode));
     final isDarkMode = themeMode == AppThemeMode.dark;
     final isSystemMode = themeMode == AppThemeMode.system;
+    final l10n = AppLocalizations.of(context);
 
     return SettingsSection(
-      title: '外观',
+      title: l10n.themeMode,
       icon: Icons.palette_outlined,
       children: [
         ListTile(
-          title: const Text('深色模式'),
+          title: Text(l10n.themeModeDark),
           subtitle: const Text('使用深色主题'),
           leading: const Icon(Icons.dark_mode),
           trailing: Switch(
@@ -32,7 +34,7 @@ class AppearanceSettings extends ConsumerWidget {
           ),
         ),
         ListTile(
-          title: const Text('跟随系统'),
+          title: Text(l10n.themeModeSystem),
           subtitle: const Text('根据系统设置自动切换深色/浅色模式'),
           leading: const Icon(Icons.settings_system_daydream_outlined),
           trailing: Switch(
