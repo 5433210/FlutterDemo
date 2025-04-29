@@ -144,6 +144,42 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCollectionUseSelectionTool => '使用左侧的框选工具从图片中提取字符';
 
   @override
+  String get characterDetailAuthor => '作者';
+
+  @override
+  String get characterDetailBasicInfo => '基本信息';
+
+  @override
+  String get characterDetailCalligraphyStyle => '书法风格';
+
+  @override
+  String get characterDetailCollectionTime => '收集时间';
+
+  @override
+  String get characterDetailCreationTime => '创作时间';
+
+  @override
+  String get characterDetailLoadError => '加载字符详情失败';
+
+  @override
+  String get characterDetailSimplifiedChar => '字符';
+
+  @override
+  String get characterDetailTags => '标签';
+
+  @override
+  String get characterDetailUnknown => '未知';
+
+  @override
+  String get characterDetailWorkInfo => '来源作品';
+
+  @override
+  String get characterDetailWorkTitle => '作品标题';
+
+  @override
+  String get characterDetailWritingTool => '书写工具';
+
+  @override
   String get characterEditCompletingSave => '完成保存...';
 
   @override
@@ -241,6 +277,89 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterEditValidChineseCharacter => '请输入有效的汉字';
+
+  @override
+  String get characterFilterAddTag => '添加标签';
+
+  @override
+  String get characterFilterAddTagHint => '输入标签后按Enter键添加';
+
+  @override
+  String get characterFilterCalligraphyStyle => '书法风格';
+
+  @override
+  String get characterFilterCollapse => '收起筛选';
+
+  @override
+  String get characterFilterCollectionDate => '收集日期';
+
+  @override
+  String get characterFilterCreationDate => '创作日期';
+
+  @override
+  String get characterFilterExpand => '展开筛选';
+
+  @override
+  String get characterFilterFavoritesOnly => '仅显示收藏';
+
+  @override
+  String get characterFilterSelectedTags => '已选标签';
+
+  @override
+  String get characterFilterSort => '排序';
+
+  @override
+  String get characterFilterTags => '标签';
+
+  // Character Filter Panel
+  @override
+  String get characterFilterTitle => '筛选与排序';
+
+  @override
+  String get characterFilterWritingTool => '书写工具';
+
+  @override
+  String get characterManagementBatchDone => '完成';
+
+  @override
+  String get characterManagementBatchMode => '批量模式';
+
+  @override
+  String get characterManagementDeleteConfirm => '确认删除';
+
+  @override
+  String get characterManagementDeleteMessage => '确定要删除选中的字符吗？此操作无法撤销。';
+
+  @override
+  String get characterManagementDeleteSelected => '删除选中';
+
+  @override
+  String get characterManagementError => '错误: {message}';
+
+  @override
+  String get characterManagementGridView => '网格视图';
+
+  @override
+  String get characterManagementItemsPerPage => '每页{count}项';
+
+  @override
+  String get characterManagementListView => '列表视图';
+
+  @override
+  String get characterManagementLoading => '加载字符中...';
+
+  @override
+  String get characterManagementNoCharacters => '未找到字符';
+
+  @override
+  String get characterManagementNoCharactersHint => '尝试调整筛选条件或从作品中提取字符';
+
+  @override
+  String get characterManagementSearch => '搜索字符...';
+
+  // Character Management Page
+  @override
+  String get characterManagementTitle => '字符管理';
 
   @override
   String get characters => '集字';
@@ -453,6 +572,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeModeSystem => '跟随系统';
 
   @override
+  String get workBrowseAddFavorite => '添加收藏';
+
+  @override
   String get workBrowseBatchDone => '完成';
 
   @override
@@ -487,6 +609,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workBrowseReload => '重新加载';
+
+  @override
+  String get workBrowseRemoveFavorite => '取消收藏';
 
   @override
   String get workBrowseSearch => '搜索作品...';

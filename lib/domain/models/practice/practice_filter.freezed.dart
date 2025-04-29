@@ -236,7 +236,7 @@ class _$PracticeFilterImpl extends _PracticeFilter {
       this.status,
       this.limit = 20,
       this.offset = 0,
-      this.sortField = 'createTime',
+      this.sortField = 'updateTime',
       this.sortOrder = 'desc'})
       : _tags = tags,
         super._();

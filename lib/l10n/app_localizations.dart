@@ -168,8 +168,21 @@ abstract class AppLocalizations {
   String get characterCollectionUnsavedChanges;
   String get characterCollectionUnsavedChangesMessage;
   String get characterCollectionUseSelectionTool;
-  String get characterEditCompletingSave;
+  String get characterDetailAuthor;
 
+  String get characterDetailBasicInfo;
+  String get characterDetailCalligraphyStyle;
+  String get characterDetailCollectionTime;
+  String get characterDetailCreationTime;
+  String get characterDetailLoadError;
+  String get characterDetailSimplifiedChar;
+  String get characterDetailTags;
+  String get characterDetailUnknown;
+
+  String get characterDetailWorkInfo;
+  String get characterDetailWorkTitle;
+  String get characterDetailWritingTool;
+  String get characterEditCompletingSave;
   String get characterEditImageInvert;
   String get characterEditImageLoadError;
   String get characterEditImageLoadFailed;
@@ -179,13 +192,13 @@ abstract class AppLocalizations {
   String get characterEditInputHint;
   String get characterEditInvertMode;
   String get characterEditLoadingImage;
-
   String get characterEditNoRegionSelected;
   String get characterEditOnlyOneCharacter;
   String get characterEditPanImage;
   String get characterEditPleaseEnterCharacter;
   String get characterEditPreparingSave;
   String get characterEditProcessingEraseData;
+
   String get characterEditProcessingImage;
   String get characterEditRedo;
   String get characterEditSaveComplete;
@@ -194,6 +207,7 @@ abstract class AppLocalizations {
   String get characterEditSaveShortcuts;
   String get characterEditSaveTimeout;
   String get characterEditSavingToStorage;
+
   String get characterEditShowContour;
   String get characterEditThumbnailCheckFailed;
   String get characterEditThumbnailEmpty;
@@ -203,31 +217,63 @@ abstract class AppLocalizations {
   String get characterEditThumbnailNotFound;
   String get characterEditThumbnailSizeError;
   String get characterEditUndo;
+
   String get characterEditUnknownError;
   String get characterEditValidChineseCharacter;
+  String get characterFilterAddTag;
+  String get characterFilterAddTagHint;
+  String get characterFilterCalligraphyStyle;
+  String get characterFilterCollapse;
+  String get characterFilterCollectionDate;
+  String get characterFilterCreationDate;
+  String get characterFilterExpand;
+  String get characterFilterFavoritesOnly;
+  String get characterFilterSelectedTags;
+  String get characterFilterSort;
+  String get characterFilterTags;
+  // Character Filter Panel
+  String get characterFilterTitle;
+  String get characterFilterWritingTool;
+  String get characterManagementBatchDone;
+  String get characterManagementBatchMode;
+  String get characterManagementDeleteConfirm;
+
+  String get characterManagementDeleteMessage;
+  String get characterManagementDeleteSelected;
+  String get characterManagementError;
+  String get characterManagementGridView;
+
+  String get characterManagementItemsPerPage;
+  String get characterManagementListView;
+  String get characterManagementLoading;
+  String get characterManagementNoCharacters;
+  String get characterManagementNoCharactersHint;
+  String get characterManagementSearch;
+  // Character Management Page
+  String get characterManagementTitle;
   String get characters;
   String get confirm;
-
   String get delete;
   String get edit;
   String get export;
   String get filterDateApply;
-
   String get filterDateClear;
   String get filterDateCustom;
   String get filterDateEndDate;
   String get filterDatePresetAll;
-
   String get filterDatePresetLast30Days;
   String get filterDatePresetLast365Days;
   String get filterDatePresetLast7Days;
   String get filterDatePresetLast90Days;
+
   String get filterDatePresetLastMonth;
   String get filterDatePresetLastWeek;
   String get filterDatePresetLastYear;
+
   String get filterDatePresets;
   String get filterDatePresetThisMonth;
   String get filterDatePresetThisWeek;
+
   String get filterDatePresetThisYear;
   // Date presets
   String get filterDatePresetToday;
@@ -238,12 +284,10 @@ abstract class AppLocalizations {
   String get filterDateStartDate;
   String get filterReset;
   String get filterSortAscending;
-
   String get filterSortDescending;
   String get filterSortFieldAuthor;
   String get filterSortFieldCreateTime;
   String get filterSortFieldCreationDate;
-
   String get filterSortFieldNone;
   String get filterSortFieldStyle;
   String get filterSortFieldTitle;
@@ -254,9 +298,11 @@ abstract class AppLocalizations {
   String get filterStyleClerical;
   String get filterStyleCursive;
   String get filterStyleOther;
+
   String get filterStyleRegular;
   String get filterStyleRunning;
   String get filterStyleSeal;
+
   // Style section
   String get filterStyleSection;
   // Filter panel
@@ -271,7 +317,6 @@ abstract class AppLocalizations {
   String get import;
   // Language
   String get language;
-
   String get languageEn;
   String get languageSystem;
   String get languageZh;
@@ -279,13 +324,14 @@ abstract class AppLocalizations {
   String get navCollapseSidebar;
   String get navExpandSidebar;
   String get practices;
-
   String get print;
   String get save;
+
   String get settings;
   String get storageSettings;
   // Tag Editor
   String get tagEditorEnterTagHint;
+
   String get tagEditorNoTags;
   String get tagEditorSuggestedTags;
   // Theme
@@ -293,6 +339,8 @@ abstract class AppLocalizations {
   String get themeModeDark;
   String get themeModeLight;
   String get themeModeSystem;
+
+  String get workBrowseAddFavorite;
   String get workBrowseBatchDone;
   String get workBrowseBatchMode;
   String get workBrowseCancel;
@@ -303,11 +351,10 @@ abstract class AppLocalizations {
   String get workBrowseListView;
   String get workBrowseLoading;
   String get workBrowseNoWorks;
-
   String get workBrowseNoWorksHint;
   String get workBrowseReload;
+  String get workBrowseRemoveFavorite;
   String get workBrowseSearch;
-
   // Work browse page
   String get workBrowseTitle;
   String get workDetailBack;
@@ -321,7 +368,6 @@ abstract class AppLocalizations {
   String get workDetailImageCount;
   String get workDetailImageLoadError;
   String get workDetailLoading;
-
   String get workDetailNoCharacters;
   String get workDetailNoImages;
   String get workDetailNoImagesForExtraction;
@@ -331,7 +377,6 @@ abstract class AppLocalizations {
   String get workDetailSave;
   String get workDetailSaveFailure;
   String get workDetailSaveSuccess;
-
   String get workDetailTags;
   // Work Detail Page
   String get workDetailTitle;
@@ -339,7 +384,6 @@ abstract class AppLocalizations {
   String get workDetailUpdateTime;
   String get workDetailViewMore;
   String get workFormAuthor;
-
   String get workFormAuthorHelp;
   String get workFormAuthorHint;
   String get workFormAuthorMaxLength;
@@ -363,6 +407,7 @@ abstract class AppLocalizations {
   String get workFormStyleTooltip;
   // Work Form
   String get workFormTitle;
+
   // Field help texts
   String get workFormTitleHelp;
   String get workFormTitleHint;
@@ -375,11 +420,11 @@ abstract class AppLocalizations {
   String get workFormToolHelp;
   String get workFormToolTooltip;
   String get workImportDialogAddImages;
-
   String get workImportDialogCancel;
   String get workImportDialogDeleteImage;
   String get workImportDialogDeleteImageConfirm;
   String get workImportDialogImport;
+
   String get workImportDialogNoImages;
   String get workImportDialogNoImagesHint;
   String get workImportDialogProcessing;
@@ -398,6 +443,7 @@ abstract class AppLocalizations {
   // Work Tool localization
   String get workToolBrush;
   String get workToolHardPen;
+
   String get workToolOther;
   String characterCollectionDeleteBatchConfirm(int count);
   String characterCollectionDeleteBatchMessage(int count);

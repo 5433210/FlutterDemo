@@ -151,6 +151,42 @@ class AppLocalizationsEn extends AppLocalizations {
       'Use the selection tool on the left to extract characters from the image';
 
   @override
+  String get characterDetailAuthor => 'Author';
+
+  @override
+  String get characterDetailBasicInfo => 'Basic Information';
+
+  @override
+  String get characterDetailCalligraphyStyle => 'Calligraphy Style';
+
+  @override
+  String get characterDetailCollectionTime => 'Collection Time';
+
+  @override
+  String get characterDetailCreationTime => 'Creation Time';
+
+  @override
+  String get characterDetailLoadError => 'Error loading character details';
+
+  @override
+  String get characterDetailSimplifiedChar => 'Character';
+
+  @override
+  String get characterDetailTags => 'Tags';
+
+  @override
+  String get characterDetailUnknown => 'Unknown';
+
+  @override
+  String get characterDetailWorkInfo => 'Source Work';
+
+  @override
+  String get characterDetailWorkTitle => 'Work Title';
+
+  @override
+  String get characterDetailWritingTool => 'Writing Tool';
+
+  @override
   String get characterEditCompletingSave => 'Completing save...';
 
   @override
@@ -250,6 +286,91 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get characterEditValidChineseCharacter =>
       'Please enter a valid Chinese character';
+
+  @override
+  String get characterFilterAddTag => 'Add Tag';
+
+  @override
+  String get characterFilterAddTagHint => 'Enter tag and press Enter';
+
+  @override
+  String get characterFilterCalligraphyStyle => 'Calligraphy Style';
+
+  @override
+  String get characterFilterCollapse => 'Collapse Filter';
+
+  @override
+  String get characterFilterCollectionDate => 'Collection Date';
+
+  @override
+  String get characterFilterCreationDate => 'Creation Date';
+
+  @override
+  String get characterFilterExpand => 'Expand Filter';
+
+  @override
+  String get characterFilterFavoritesOnly => 'Favorites Only';
+
+  @override
+  String get characterFilterSelectedTags => 'Selected Tags';
+
+  @override
+  String get characterFilterSort => 'Sort';
+
+  @override
+  String get characterFilterTags => 'Tags';
+
+  // Character Filter Panel
+  @override
+  String get characterFilterTitle => 'Filter & Sort';
+
+  @override
+  String get characterFilterWritingTool => 'Writing Tool';
+
+  @override
+  String get characterManagementBatchDone => 'Done';
+
+  @override
+  String get characterManagementBatchMode => 'Batch Mode';
+
+  @override
+  String get characterManagementDeleteConfirm => 'Confirm Deletion';
+
+  @override
+  String get characterManagementDeleteMessage =>
+      'Are you sure you want to delete the selected character(s)? This action cannot be undone.';
+
+  @override
+  String get characterManagementDeleteSelected => 'Delete Selected';
+
+  @override
+  String get characterManagementError => 'Error: {message}';
+
+  @override
+  String get characterManagementGridView => 'Grid View';
+
+  @override
+  String get characterManagementItemsPerPage => '{count} per page';
+
+  @override
+  String get characterManagementListView => 'List View';
+
+  @override
+  String get characterManagementLoading => 'Loading characters...';
+
+  @override
+  String get characterManagementNoCharacters => 'No characters found';
+
+  @override
+  String get characterManagementNoCharactersHint =>
+      'Try adjusting your filters or extract characters from your works';
+
+  @override
+  String get characterManagementSearch => 'Search characters...';
+
+  // Character Management Page
+  @override
+  String get characterManagementTitle => 'Character Management';
 
   @override
   String get characters => 'Characters';
@@ -462,6 +583,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeSystem => 'System';
 
   @override
+  String get workBrowseAddFavorite => 'Add to Favorites';
+
+  @override
   String get workBrowseBatchDone => 'Done';
 
   @override
@@ -497,6 +621,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workBrowseReload => 'Reload';
+
+  @override
+  String get workBrowseRemoveFavorite => 'Remove from Favorites';
 
   @override
   String get workBrowseSearch => 'Search works...';

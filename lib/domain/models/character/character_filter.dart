@@ -67,6 +67,7 @@ class CharacterFilter with _$CharacterFilter {
 
     /// 作品ID筛选
     String? workId,
+    String? pageId,
 
     /// 作品风格
     @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
@@ -117,6 +118,7 @@ class CharacterFilter with _$CharacterFilter {
   bool get isEmpty =>
       searchText == null &&
       workId == null &&
+      pageId == null &&
       isFavorite == null &&
       tags.isEmpty &&
       style == null &&
@@ -145,4 +147,10 @@ class CharacterFilter with _$CharacterFilter {
   CharacterFilter removeTag(String tag) {
     return copyWith(tags: [...tags]..remove(tag));
   }
+}
+
+// 排序方向
+enum SortDirection {
+  ascending,
+  descending,
 }

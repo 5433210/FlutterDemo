@@ -28,6 +28,7 @@ mixin _$CharacterFilter {
 
   /// 作品ID筛选
   String? get workId => throw _privateConstructorUsedError;
+  String? get pageId => throw _privateConstructorUsedError;
 
   /// 作品风格
   @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
@@ -86,6 +87,7 @@ abstract class $CharacterFilterCopyWith<$Res> {
       {String? searchText,
       bool? isFavorite,
       String? workId,
+      String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       WorkStyle? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
@@ -126,6 +128,7 @@ class _$CharacterFilterCopyWithImpl<$Res, $Val extends CharacterFilter>
     Object? searchText = freezed,
     Object? isFavorite = freezed,
     Object? workId = freezed,
+    Object? pageId = freezed,
     Object? style = freezed,
     Object? tool = freezed,
     Object? creationDatePreset = null,
@@ -149,6 +152,10 @@ class _$CharacterFilterCopyWithImpl<$Res, $Val extends CharacterFilter>
       workId: freezed == workId
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pageId: freezed == pageId
+          ? _value.pageId
+          : pageId // ignore: cast_nullable_to_non_nullable
               as String?,
       style: freezed == style
           ? _value.style
@@ -216,6 +223,7 @@ abstract class _$$CharacterFilterImplCopyWith<$Res>
       {String? searchText,
       bool? isFavorite,
       String? workId,
+      String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       WorkStyle? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
@@ -255,6 +263,7 @@ class __$$CharacterFilterImplCopyWithImpl<$Res>
     Object? searchText = freezed,
     Object? isFavorite = freezed,
     Object? workId = freezed,
+    Object? pageId = freezed,
     Object? style = freezed,
     Object? tool = freezed,
     Object? creationDatePreset = null,
@@ -278,6 +287,10 @@ class __$$CharacterFilterImplCopyWithImpl<$Res>
       workId: freezed == workId
           ? _value.workId
           : workId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      pageId: freezed == pageId
+          ? _value.pageId
+          : pageId // ignore: cast_nullable_to_non_nullable
               as String?,
       style: freezed == style
           ? _value.style
@@ -330,6 +343,7 @@ class _$CharacterFilterImpl extends _CharacterFilter {
       {this.searchText,
       this.isFavorite,
       this.workId,
+      this.pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       this.style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
@@ -365,6 +379,8 @@ class _$CharacterFilterImpl extends _CharacterFilter {
   /// 作品ID筛选
   @override
   final String? workId;
+  @override
+  final String? pageId;
 
   /// 作品风格
   @override
@@ -423,7 +439,7 @@ class _$CharacterFilterImpl extends _CharacterFilter {
 
   @override
   String toString() {
-    return 'CharacterFilter(searchText: $searchText, isFavorite: $isFavorite, workId: $workId, style: $style, tool: $tool, creationDatePreset: $creationDatePreset, creationDateRange: $creationDateRange, collectionDatePreset: $collectionDatePreset, collectionDateRange: $collectionDateRange, tags: $tags, sortOption: $sortOption, limit: $limit, offset: $offset)';
+    return 'CharacterFilter(searchText: $searchText, isFavorite: $isFavorite, workId: $workId, pageId: $pageId, style: $style, tool: $tool, creationDatePreset: $creationDatePreset, creationDateRange: $creationDateRange, collectionDatePreset: $collectionDatePreset, collectionDateRange: $collectionDateRange, tags: $tags, sortOption: $sortOption, limit: $limit, offset: $offset)';
   }
 
   @override
@@ -436,6 +452,7 @@ class _$CharacterFilterImpl extends _CharacterFilter {
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
             (identical(other.workId, workId) || other.workId == workId) &&
+            (identical(other.pageId, pageId) || other.pageId == pageId) &&
             (identical(other.style, style) || other.style == style) &&
             (identical(other.tool, tool) || other.tool == tool) &&
             (identical(other.creationDatePreset, creationDatePreset) ||
@@ -460,6 +477,7 @@ class _$CharacterFilterImpl extends _CharacterFilter {
       searchText,
       isFavorite,
       workId,
+      pageId,
       style,
       tool,
       creationDatePreset,
@@ -493,6 +511,7 @@ abstract class _CharacterFilter extends CharacterFilter {
       {final String? searchText,
       final bool? isFavorite,
       final String? workId,
+      final String? pageId,
       @JsonKey(fromJson: _workStyleFilterFromJson, toJson: _workStyleToJson)
       final WorkStyle? style,
       @JsonKey(fromJson: _workToolFilterFromJson, toJson: _workToolToJson)
@@ -527,6 +546,8 @@ abstract class _CharacterFilter extends CharacterFilter {
   /// 作品ID筛选
   @override
   String? get workId;
+  @override
+  String? get pageId;
 
   /// 作品风格
   @override

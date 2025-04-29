@@ -46,25 +46,116 @@ class M3CharacterGridView extends ConsumerWidget {
 
         // 字符网格
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.all(16.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              childAspectRatio: 1,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: gridState.filteredCharacters.length,
-            itemBuilder: (context, index) {
-              final character = gridState.filteredCharacters[index];
-              return M3CharacterTile(
-                character: character,
-                isSelected: gridState.selectedIds.contains(character.id),
-                onTap: () => onCharacterSelected(character.id),
-                onLongPress: () => ref
-                    .read(characterGridProvider.notifier)
-                    .toggleSelection(character.id),
-              );
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // 设置固定的卡片宽度和最小宽度
+              const double fixedCardWidth = 120.0; // 固定卡片宽度
+              const double minContainerWidth = 300.0; // 最小容器宽度
+              const double spacing = 8.0;
+              const double padding = 16.0;
+
+              // 计算可用宽度
+              final double availableWidth = constraints.maxWidth;
+
+              // 判断是否需要裁剪显示
+              final bool needsClipping = availableWidth < minContainerWidth;
+
+              // 如果需要裁剪，使用固定列数和固定卡片宽度
+              if (needsClipping) {
+                // 固定显示2列
+                const int fixedColumnCount = 2;
+
+                // 创建一个固定宽度的容器，允许水平滚动
+                return SizedBox(
+                  width: availableWidth,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      // 设置一个固定的内容宽度，确保卡片大小不变
+                      width: fixedColumnCount * fixedCardWidth +
+                          (fixedColumnCount - 1) * spacing +
+                          padding * 2,
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(padding),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: fixedColumnCount,
+                          childAspectRatio: 1.0, // 正方形卡片
+                          crossAxisSpacing: spacing,
+                          mainAxisSpacing: spacing,
+                        ),
+                        itemCount: gridState.filteredCharacters.length,
+                        itemBuilder: (context, index) {
+                          final character = gridState.filteredCharacters[index];
+                          return M3CharacterTile(
+                            character: character,
+                            isSelected:
+                                gridState.selectedIds.contains(character.id),
+                            onTap: () => onCharacterSelected(character.id),
+                            onLongPress: () => ref
+                                .read(characterGridProvider.notifier)
+                                .toggleSelection(character.id),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
+              } else {
+                // 正常模式：根据可用宽度动态调整列数
+                // 计算最佳列数
+                // 设置最小卡片宽度为100像素，最大为150像素
+                const double minCardWidth = 100.0;
+                const double maxCardWidth = 150.0;
+
+                // 计算可用宽度（减去padding）
+                final double adjustedWidth = availableWidth - padding * 2;
+
+                // 计算可以放置的最大列数（基于最小卡片宽度）
+                int maxColumns = (adjustedWidth / minCardWidth).floor();
+
+                // 确保至少有2列，最多有8列
+                int crossAxisCount = maxColumns.clamp(2, 8);
+
+                // 计算实际卡片宽度
+                double actualCardWidth =
+                    (adjustedWidth - (spacing * (crossAxisCount - 1))) /
+                        crossAxisCount;
+
+                // 确保卡片宽度不超过最大值
+                if (actualCardWidth > maxCardWidth && crossAxisCount < 8) {
+                  // 如果卡片太宽，增加列数
+                  crossAxisCount += 1;
+                  actualCardWidth =
+                      (adjustedWidth - (spacing * (crossAxisCount - 1))) /
+                          crossAxisCount;
+                }
+
+                // 使用正方形卡片
+                double childAspectRatio = 1.0;
+
+                return GridView.builder(
+                  padding: const EdgeInsets.all(padding),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    childAspectRatio: childAspectRatio,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                  ),
+                  itemCount: gridState.filteredCharacters.length,
+                  itemBuilder: (context, index) {
+                    final character = gridState.filteredCharacters[index];
+                    return M3CharacterTile(
+                      character: character,
+                      isSelected: gridState.selectedIds.contains(character.id),
+                      onTap: () => onCharacterSelected(character.id),
+                      onLongPress: () => ref
+                          .read(characterGridProvider.notifier)
+                          .toggleSelection(character.id),
+                    );
+                  },
+                );
+              }
             },
           ),
         ),

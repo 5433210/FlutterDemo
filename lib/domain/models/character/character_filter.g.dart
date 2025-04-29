@@ -12,6 +12,7 @@ _$CharacterFilterImpl _$$CharacterFilterImplFromJson(
       searchText: json['searchText'] as String?,
       isFavorite: json['isFavorite'] as bool?,
       workId: json['workId'] as String?,
+      pageId: json['pageId'] as String?,
       style: _workStyleFilterFromJson(json['style']),
       tool: _workToolFilterFromJson(json['tool']),
       creationDatePreset: json['creationDatePreset'] == null
@@ -38,6 +39,7 @@ Map<String, dynamic> _$$CharacterFilterImplToJson(
       'searchText': instance.searchText,
       'isFavorite': instance.isFavorite,
       'workId': instance.workId,
+      'pageId': instance.pageId,
       'style': _workStyleToJson(instance.style),
       'tool': _workToolToJson(instance.tool),
       'creationDatePreset': _dateRangePresetToJson(instance.creationDatePreset),

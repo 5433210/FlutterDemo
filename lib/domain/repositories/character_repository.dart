@@ -1,4 +1,5 @@
 import '../models/character/character_entity.dart';
+import '../models/character/character_filter.dart';
 import '../models/character/character_region.dart';
 
 /// 字形仓库接口

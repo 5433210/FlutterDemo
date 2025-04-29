@@ -40,7 +40,7 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
     final l10n = AppLocalizations.of(context);
 
     return Container(
-      height: kToolbarHeight,
+      height: AppSizes.appBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -90,7 +90,6 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
 
           // 右侧控制组
           SizedBox(
-            width: AppSizes.searchBarWidth,
             child: SearchBar(
               controller: _searchController,
               onChanged: widget.onSearch,

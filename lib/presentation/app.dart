@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 
 import 'package:demo/presentation/pages/characters/character_management_page.dart';
+import 'package:demo/presentation/pages/characters/m3_character_management_page.dart';
 import 'package:demo/presentation/pages/works/character_collection_page.dart';
 import 'package:demo/presentation/pages/works/m3_character_collection_page.dart';
 import 'package:flutter/material.dart';
@@ -174,7 +175,9 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.characterManagement:
         return MaterialPageRoute(
-          builder: (context) => const CharacterManagementPage(),
+          builder: (context) => useMaterial3
+              ? const M3CharacterManagementPage()
+              : const CharacterManagementPage(),
         );
 
       case AppRoutes.practiceList:

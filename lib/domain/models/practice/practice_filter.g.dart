@@ -21,7 +21,7 @@ _$PracticeFilterImpl _$$PracticeFilterImplFromJson(Map<String, dynamic> json) =>
       status: json['status'] as String?,
       limit: (json['limit'] as num?)?.toInt() ?? 20,
       offset: (json['offset'] as num?)?.toInt() ?? 0,
-      sortField: json['sortField'] as String? ?? 'createTime',
+      sortField: json['sortField'] as String? ?? 'updateTime',
       sortOrder: json['sortOrder'] as String? ?? 'desc',
     );
 

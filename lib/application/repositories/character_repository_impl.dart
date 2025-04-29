@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../domain/models/character/character_entity.dart';
+import '../../domain/models/character/character_filter.dart';
 import '../../domain/models/character/character_region.dart';
 import '../../domain/repositories/character_repository.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -239,9 +240,27 @@ class CharacterRepositoryImpl implements CharacterRepository {
       ));
     }
 
+    // 风格过滤
+    if (filter.style != null) {
+      conditions.add(DatabaseQueryCondition(
+        field: 'style',
+        operator: '=',
+        value: filter.style!.value,
+      ));
+    }
+
+    // 工具过滤
+    if (filter.tool != null) {
+      conditions.add(DatabaseQueryCondition(
+        field: 'tool',
+        operator: '=',
+        value: filter.tool!.value,
+      ));
+    }
+
     // 标签过滤
-    if (filter.tags != null && filter.tags!.isNotEmpty) {
-      final tagConditions = filter.tags!.map((tag) {
+    if (filter.tags.isNotEmpty) {
+      final tagConditions = filter.tags.map((tag) {
         return DatabaseQueryCondition(
           field: 'tags',
           operator: 'LIKE',
@@ -260,29 +279,39 @@ class CharacterRepositoryImpl implements CharacterRepository {
       }
     }
 
-    // 时间范围过滤
-    if (filter.fromDate != null) {
+    // 创作时间范围过滤
+    if (filter.creationDateRange != null) {
       conditions.add(DatabaseQueryCondition(
         field: 'createTime',
         operator: '>=',
-        value: filter.fromDate!.toIso8601String(),
+        value: filter.creationDateRange!.start.toIso8601String(),
       ));
-    }
-
-    if (filter.toDate != null) {
       conditions.add(DatabaseQueryCondition(
         field: 'createTime',
         operator: '<=',
-        value: filter.toDate!.toIso8601String(),
+        value: filter.creationDateRange!.end.toIso8601String(),
       ));
     }
 
-    // 构建排序子句
+    // 收集时间范围过滤
+    if (filter.collectionDateRange != null) {
+      conditions.add(DatabaseQueryCondition(
+        field: 'collectTime',
+        operator: '>=',
+        value: filter.collectionDateRange!.start.toIso8601String(),
+      ));
+      conditions.add(DatabaseQueryCondition(
+        field: 'collectTime',
+        operator: '<=',
+        value: filter.collectionDateRange!.end.toIso8601String(),
+      ));
+    }
+
+    // 构建排序
     String? orderBy;
-    if (filter.sortBy != null) {
-      final field = _getSortField(filter.sortBy!);
-      final direction =
-          filter.sortDirection == SortDirection.descending ? 'DESC' : 'ASC';
+    if (!filter.sortOption.isDefault) {
+      final field = filter.sortOption.field.value;
+      final direction = filter.sortOption.descending ? 'DESC' : 'ASC';
       orderBy = '$field $direction';
     }
 
@@ -320,17 +349,6 @@ class CharacterRepositoryImpl implements CharacterRepository {
     );
   }
 
-  String _getSortField(SortField field) {
-    switch (field) {
-      case SortField.character:
-        return 'character';
-      case SortField.createTime:
-        return 'createTime';
-      case SortField.updateTime:
-        return 'updateTime';
-    }
-  }
-
   Map<String, dynamic> _toDbMap(CharacterEntity entity) {
     return {
       'id': entity.id,
@@ -338,8 +356,8 @@ class CharacterRepositoryImpl implements CharacterRepository {
       'pageId': entity.pageId,
       'character': entity.character,
       'region': jsonEncode(entity.region.toJson()),
-      'createTime': entity.createTime?.toIso8601String(),
-      'updateTime': entity.updateTime?.toIso8601String(),
+      'createTime': entity.createTime.toIso8601String(),
+      'updateTime': entity.updateTime.toIso8601String(),
       'isFavorite': entity.isFavorite ? 1 : 0,
     };
   }

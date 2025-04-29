@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../presentation/intents/navigation_intents.dart';
-import '../../../presentation/pages/characters/character_management_page.dart';
+import '../../../presentation/pages/characters/m3_character_management_page.dart';
 import '../../../presentation/pages/practices/practice_edit_page.dart';
 import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
@@ -137,7 +137,7 @@ class _M3MainWindowState extends State<M3MainWindow>
           },
         );
       case 1:
-        return const CharacterManagementPage();
+        return const M3CharacterManagementPage();
       case 2:
         return Navigator(
           key: ValueKey('practice_navigator_$_selectedIndex'),

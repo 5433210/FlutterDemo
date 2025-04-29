@@ -56,8 +56,6 @@ class WorkCard extends ConsumerWidget {
                     path: coverPath,
                     width: width,
                     height: height,
-                    cacheKey:
-                        '${work.id}_${work.updateTime.millisecondsSinceEpoch}',
                     fit: BoxFit.cover,
                   ),
                 ),
