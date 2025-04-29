@@ -4,17 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../application/providers/feature_flag_provider.dart';
 import '../application/providers/initialization_providers.dart';
 import '../presentation/pages/characters/character_list_page.dart';
+import '../presentation/pages/main/m3_main_window.dart';
+import '../presentation/pages/main/main_window.dart';
 import '../presentation/pages/practices/practice_edit_page.dart';
 import '../presentation/pages/practices/practice_list_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/works/work_browse_page.dart';
 import '../presentation/pages/works/work_detail_page.dart';
+import '../presentation/providers/settings_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/initialization/initialization_screen.dart';
-import 'pages/main/main_window.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -23,6 +26,8 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Listen to initialization provider to ensure everything is set up
     final initialization = ref.watch(appInitializationProvider);
+    // 监听功能标志
+    final featureFlags = ref.watch(featureFlagsProvider);
 
     return initialization.when(
       loading: () => const MaterialApp(
@@ -37,9 +42,17 @@ class MyApp extends ConsumerWidget {
       ),
       data: (_) => MaterialApp(
         title: '字字珠玑',
-        theme: AppTheme.light(),
+        theme: featureFlags.useMaterial3UI 
+            ? AppTheme.lightM3() // 新的Material 3主题
+            : AppTheme.light(),  // 现有主题
+        darkTheme: featureFlags.useMaterial3UI 
+            ? AppTheme.darkM3()  // 新的Material 3暗色主题
+            : AppTheme.dark(),   // 现有暗色主题
+        themeMode: ref.watch(settingsProvider.select((s) => s.themeMode.toFlutterThemeMode())),
         debugShowCheckedModeBanner: false,
-        home: const MainWindow(),
+        home: featureFlags.useMaterial3UI
+            ? const M3MainWindow() // 新的Material 3主窗体
+            : const MainWindow(),  // 现有主窗体
         onGenerateRoute: _generateRoute,
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../widgets/page_layout.dart';
 import 'components/appearance_settings.dart';
+import 'components/developer_settings.dart';
 import 'components/storage_settings.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -22,6 +23,8 @@ class SettingsPage extends ConsumerWidget {
         AppearanceSettings(),
         Divider(),
         StorageSettings(),
+        Divider(),
+        DeveloperSettings(), // 添加开发者设置部分
       ],
     );
   }
