@@ -43,7 +43,7 @@ class PageLayout extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.5),
+                      color: theme.dividerColor.withAlpha(50),
                       width: 1,
                     ),
                   ),

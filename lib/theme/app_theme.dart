@@ -6,34 +6,18 @@ import 'app_text_styles.dart';
 
 /// Application Theme
 class AppTheme {
-  /// 获取Material 3亮色主题
-  static ThemeData lightM3() {
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-      ),
-      scaffoldBackgroundColor: Colors.white,
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        elevation: 0,
-      ),
-      cardTheme: CardTheme(
-        elevation: AppSizes.cardElevation,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        space: 1,
-        thickness: 1,
-      ),
-      navigationRailTheme: const NavigationRailThemeData(
-        labelType: NavigationRailLabelType.all,
-        useIndicator: true,
-        minWidth: AppSizes.navigationRailWidth,
-        minExtendedWidth: 200,
+  /// 获取暗色主题
+  static ThemeData dark() {
+    return ThemeData.dark().copyWith(
+      colorScheme: ColorScheme.dark(
+        primary: AppColors.primary,
+        onPrimary: Colors.white,
+        secondary: AppColors.secondary,
+        onSecondary: Colors.white,
+        surface: Colors.grey[850]!,
+        onSurface: Colors.white,
+        error: AppColors.error,
+        onError: Colors.white,
       ),
     );
   }
@@ -66,22 +50,6 @@ class AppTheme {
         useIndicator: true,
         minWidth: AppSizes.navigationRailWidth,
         minExtendedWidth: 200,
-      ),
-    );
-  }
-
-  /// 获取暗色主题
-  static ThemeData dark() {
-    return ThemeData.dark().copyWith(
-      colorScheme: ColorScheme.dark(
-        primary: AppColors.primary,
-        onPrimary: Colors.white,
-        secondary: AppColors.secondary,
-        onSecondary: Colors.white,
-        surface: Colors.grey[850]!,
-        onSurface: Colors.white,
-        error: AppColors.error,
-        onError: Colors.white,
       ),
     );
   }
@@ -139,6 +107,42 @@ class AppTheme {
           horizontal: AppSizes.p12,
           vertical: AppSizes.p8,
         ),
+      ),
+    );
+  }
+
+  /// 获取Material 3亮色主题
+  static ThemeData lightM3() {
+    return ThemeData(
+      useMaterial3: true,
+      searchBarTheme: const SearchBarThemeData(
+        constraints: BoxConstraints.tightFor(
+            width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
+      ),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.light,
+      ),
+      scaffoldBackgroundColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+      ),
+      cardTheme: CardTheme(
+        elevation: AppSizes.cardElevation,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        space: 1,
+        thickness: 1,
+      ),
+      navigationRailTheme: const NavigationRailThemeData(
+        labelType: NavigationRailLabelType.all,
+        useIndicator: true,
+        minWidth: AppSizes.navigationRailWidth,
+        minExtendedWidth: 200,
       ),
     );
   }

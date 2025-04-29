@@ -66,12 +66,11 @@ class _M3ViewModeImagePreviewState
 
     // Use LayoutBuilder to match layout calculation
     return LayoutBuilder(builder: (context, constraints) {
-      const thumbnailHeight = 120.0;
+      const thumbnailHeight = 100.0;
 
       return Column(
         children: [
           // Add empty space matching toolbar height for visual consistency with edit mode
-          const SizedBox(height: _toolbarHeight),
 
           // Main image display area
           Expanded(
@@ -106,8 +105,8 @@ class _M3ViewModeImagePreviewState
                   return ZoomableImageView(
                     imagePath: currentImage.path,
                     enableMouseWheel: true,
-                    minScale: 0.5,
-                    maxScale: 4.0,
+                    minScale: 0.1,
+                    maxScale: 10.0,
                     showControls: true,
                   );
                 },
@@ -118,12 +117,15 @@ class _M3ViewModeImagePreviewState
           // Thumbnail strip below the main image
           SizedBox(
             height: thumbnailHeight,
-            child: ThumbnailStrip<WorkImage>(
-              images: widget.images,
-              selectedIndex: widget.selectedIndex,
-              onTap: widget.onImageSelect,
-              pathResolver: (image) => image.thumbnailPath,
-              keyResolver: (image) => image.id,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: ThumbnailStrip<WorkImage>(
+                images: widget.images,
+                selectedIndex: widget.selectedIndex,
+                onTap: widget.onImageSelect,
+                pathResolver: (image) => image.thumbnailPath,
+                keyResolver: (image) => image.id,
+              ),
             ),
           ),
         ],

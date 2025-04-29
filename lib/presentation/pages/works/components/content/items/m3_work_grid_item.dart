@@ -49,8 +49,8 @@ class M3WorkGridItem extends ConsumerWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  AspectRatio(
-                    aspectRatio: AppSizes.workGridItemAspectRatio,
+                  Container(
+                    alignment: Alignment.center,
                     child: _buildThumbnail(context, ref),
                   ),
                   // 选择指示器
@@ -63,7 +63,7 @@ class M3WorkGridItem extends ConsumerWidget {
                           color: isSelected
                               ? colorScheme.primaryContainer
                               : colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                         child: Padding(

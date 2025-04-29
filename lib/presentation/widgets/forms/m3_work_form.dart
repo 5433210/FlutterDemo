@@ -312,7 +312,7 @@ class _M3WorkFormState extends State<M3WorkForm> {
             : AutovalidateMode.disabled,
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.title != null) ...[
@@ -384,7 +384,6 @@ class _M3WorkFormState extends State<M3WorkForm> {
 
               // Keyboard shortcuts section
               if (widget.showKeyboardShortcuts) ...[
-                const SizedBox(height: AppSizes.spacingLarge),
                 Text(
                   l10n.workFormShortcuts,
                   style: theme.textTheme.titleSmall,
@@ -556,7 +555,7 @@ class _M3WorkFormState extends State<M3WorkForm> {
           fillColor: _isReadOnly ? readOnlyFillColor : null,
           border: const OutlineInputBorder(),
         ),
-        maxLines: 3,
+        maxLines: 1,
         onChanged: widget.onRemarkChanged,
         validator: _validateRemark,
         textInputAction: TextInputAction.done,

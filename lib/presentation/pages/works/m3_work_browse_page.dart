@@ -92,6 +92,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                 SidebarToggle(
                   isOpen: state.isSidebarOpen,
                   onToggle: () => viewModel.toggleSidebar(),
+                  alignRight: true,
                 ),
                 AnimatedContainer(
                   duration: const Duration(

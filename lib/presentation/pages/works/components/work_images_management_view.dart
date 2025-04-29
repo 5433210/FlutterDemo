@@ -127,7 +127,6 @@ class WorkImagesManagementView extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isSmallWidth = constraints.maxWidth < 500;
         final theme = Theme.of(context);
 
         return Stack(
@@ -143,26 +142,9 @@ class WorkImagesManagementView extends ConsumerWidget {
                 Tooltip(
                   message: '添加图片',
                   preferBelow: false,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.inverseSurface.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Container(
-                    height: 36,
-                    width: 36,
-                    decoration: BoxDecoration(
-                      color: isProcessing
-                          ? theme.colorScheme.primary.withOpacity(0.3)
-                          : theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: IconButton(
-                      onPressed:
-                          isProcessing ? null : () => notifier.addImages(),
-                      icon: const Icon(Icons.add_photo_alternate, size: 20),
-                      color: theme.colorScheme.onPrimary,
-                      padding: EdgeInsets.zero,
-                    ),
+                  child: IconButton(
+                    onPressed: isProcessing ? null : () => notifier.addImages(),
+                    icon: const Icon(Icons.add_photo_alternate),
                   ),
                 ),
 
@@ -172,33 +154,11 @@ class WorkImagesManagementView extends ConsumerWidget {
                 Tooltip(
                   message: '删除当前图片',
                   preferBelow: false,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.inverseSurface.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Container(
-                    height: 36,
-                    width: 36,
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        color: (isProcessing || state.images.isEmpty)
-                            ? theme.colorScheme.error.withOpacity(0.3)
-                            : theme.colorScheme.error.withOpacity(0.8),
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: IconButton(
-                      onPressed: (isProcessing || state.images.isEmpty)
-                          ? null
-                          : () => _handleDeleteSelected(context, ref),
-                      icon: const Icon(Icons.delete_outline, size: 20),
-                      color: (isProcessing || state.images.isEmpty)
-                          ? theme.colorScheme.error.withOpacity(0.3)
-                          : theme.colorScheme.error,
-                      padding: EdgeInsets.zero,
-                    ),
+                  child: IconButton(
+                    onPressed: (isProcessing || state.images.isEmpty)
+                        ? null
+                        : () => _handleDeleteSelected(context, ref),
+                    icon: const Icon(Icons.delete_outline),
                   ),
                 ),
               ],

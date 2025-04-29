@@ -106,6 +106,7 @@ class AppSizes {
 
   // Search bar
   static const double searchBarWidth = 240.0;
-  static const double searchBarIconSize = 20.0;
+  static const double searchBarHeight = 32.0;
+  static const double searchBarIconSize = 16.0;
   static const double searchBarClearIconSize = 16.0;
 }

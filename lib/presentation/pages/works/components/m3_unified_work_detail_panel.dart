@@ -45,14 +45,10 @@ class _M3UnifiedWorkDetailPanelState
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(
-        top: AppSizes.spacingMedium,
-        right: AppSizes.spacingMedium,
-        bottom: AppSizes.spacingMedium,
-      ),
+      margin: const EdgeInsets.only(),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(0),
         side: BorderSide(
           color: theme.colorScheme.outlineVariant.withAlpha(128),
           width: 1,

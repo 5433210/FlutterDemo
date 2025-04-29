@@ -40,7 +40,7 @@ class M3WorkImportDialog extends ConsumerWidget {
                     title: Text(l10n.workImportDialogTitle),
                     actions: [
                       // Cancel button
-                      TextButton.icon(
+                      OutlinedButton.icon(
                         onPressed: state.isProcessing
                             ? null
                             : () {
@@ -49,11 +49,6 @@ class M3WorkImportDialog extends ConsumerWidget {
                               },
                         icon: const Icon(Icons.close),
                         label: Text(l10n.workImportDialogCancel),
-                        style: TextButton.styleFrom(
-                          foregroundColor: state.isProcessing
-                              ? theme.colorScheme.onSurface.withOpacity(0.38)
-                              : null,
-                        ),
                       ),
                       const SizedBox(width: 8),
                       // Import button
@@ -74,7 +69,8 @@ class M3WorkImportDialog extends ConsumerWidget {
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.only(
+                          bottom: 24, left: 24, right: 24),
                       child: _buildResponsiveLayout(
                         context,
                         isLargeScreen,

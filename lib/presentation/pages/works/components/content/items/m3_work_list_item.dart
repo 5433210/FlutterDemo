@@ -53,11 +53,12 @@ class M3WorkListItem extends ConsumerWidget {
                 children: [
                   SizedBox(
                     width: AppSizes.workListThumbnailWidth,
-                    child: AspectRatio(
-                      aspectRatio: AppSizes.workGridItemAspectRatio,
+                    child: Container(
+                      alignment: Alignment.center,
                       child: _buildThumbnail(context, ref),
                     ),
                   ),
+
                   // 选择指示器
                   if (isSelectionMode)
                     Positioned(
@@ -68,7 +69,7 @@ class M3WorkListItem extends ConsumerWidget {
                           color: isSelected
                               ? colorScheme.primaryContainer
                               : colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.7),
+                                  .withAlpha(100),
                           shape: BoxShape.circle,
                         ),
                         child: Padding(
@@ -293,7 +294,7 @@ class M3WorkListItem extends ConsumerWidget {
         child: Icon(
           Icons.image_outlined,
           size: 48,
-          color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -309,7 +310,7 @@ class M3WorkListItem extends ConsumerWidget {
           horizontal: AppSizes.tagChipHorizontalPadding,
           vertical: AppSizes.tagChipVerticalPadding),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
       ),
       child: Text(

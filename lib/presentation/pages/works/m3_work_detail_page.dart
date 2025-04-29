@@ -125,12 +125,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       children: [
         // Left side image preview and management
         Expanded(
-          flex: 7,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.spacingMedium),
-            child: WorkImagesManagementView(
-              work: work,
-            ),
+          child: WorkImagesManagementView(
+            work: work,
           ),
         ),
 
@@ -199,7 +195,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
             ),
           ),
           // Cancel button
-          TextButton.icon(
+          OutlinedButton.icon(
             icon: const Icon(Icons.close),
             label: Text(l10n.workDetailCancel),
             onPressed: () => _handleCancelEdit(),
@@ -222,15 +218,11 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          flex: 7,
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.spacingMedium),
-            child: M3ViewModeImagePreview(
-              images: work.images,
-              selectedIndex: state.selectedImageIndex,
-              onImageSelect: (index) =>
-                  ref.read(workDetailProvider.notifier).selectImage(index),
-            ),
+          child: M3ViewModeImagePreview(
+            images: work.images,
+            selectedIndex: state.selectedImageIndex,
+            onImageSelect: (index) =>
+                ref.read(workDetailProvider.notifier).selectImage(index),
           ),
         ),
         SidebarToggle(
@@ -299,10 +291,6 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
               icon: const Icon(Icons.text_fields),
               label: Text(l10n.workDetailExtract),
               onPressed: () => _navigateToCharacterExtraction(work),
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                foregroundColor: theme.colorScheme.onSecondaryContainer,
-              ),
             ),
           const SizedBox(width: 8),
           // Edit button

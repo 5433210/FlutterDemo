@@ -61,7 +61,9 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
           const SizedBox(width: AppSizes.s),
           OutlinedButton.icon(
             icon: Icon(widget.batchMode ? Icons.close : Icons.checklist),
-            label: Text(widget.batchMode ? l10n.workBrowseBatchDone : l10n.workBrowseBatchMode),
+            label: Text(widget.batchMode
+                ? l10n.workBrowseBatchDone
+                : l10n.workBrowseBatchMode),
             onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
           ),
 
@@ -77,7 +79,8 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
                 padding: const EdgeInsets.only(left: AppSizes.s),
                 child: FilledButton.tonalIcon(
                   icon: const Icon(Icons.delete),
-                  label: Text(l10n.workBrowseDeleteSelected(widget.selectedCount)),
+                  label:
+                      Text(l10n.workBrowseDeleteSelected(widget.selectedCount)),
                   onPressed: _showDeleteConfirmation,
                 ),
               ),
@@ -92,24 +95,20 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
               controller: _searchController,
               onChanged: widget.onSearch,
               hintText: l10n.workBrowseSearch,
-              leading: Icon(
-                Icons.search,
-                size: AppSizes.searchBarIconSize,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              leading:
+                  const Icon(Icons.search, size: AppSizes.searchBarIconSize),
               trailing: [
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _searchController,
                   builder: (context, value, child) {
                     return AnimatedOpacity(
                       opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                      duration: Duration(
+                      duration: const Duration(
                           milliseconds: AppSizes.animationDurationMedium),
                       child: IconButton(
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.clear,
                           size: AppSizes.searchBarClearIconSize,
-                          color: colorScheme.onSurfaceVariant,
                         ),
                         onPressed: () {
                           _searchController.clear();
@@ -120,9 +119,6 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
                   },
                 ),
               ],
-              padding: MaterialStateProperty.all<EdgeInsets>(
-                const EdgeInsets.symmetric(horizontal: AppSizes.xs),
-              ),
             ),
           ),
           const SizedBox(width: AppSizes.m),
@@ -135,19 +131,12 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
                   : Icons.grid_view,
               color: colorScheme.primary,
             ),
-            style: IconButton.styleFrom(
-              foregroundColor: colorScheme.onSurface,
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.s),
-              ),
-            ),
             onPressed: () => widget.onViewModeChanged(
                 widget.viewMode == ViewMode.grid
                     ? ViewMode.list
                     : ViewMode.grid),
-            tooltip: widget.viewMode == ViewMode.grid 
-                ? l10n.workBrowseListView 
+            tooltip: widget.viewMode == ViewMode.grid
+                ? l10n.workBrowseListView
                 : l10n.workBrowseGridView,
           ),
         ],
@@ -173,7 +162,8 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.workBrowseDeleteConfirmTitle),
-        content: Text(l10n.workBrowseDeleteConfirmMessage(widget.selectedCount)),
+        content:
+            Text(l10n.workBrowseDeleteConfirmMessage(widget.selectedCount)),
         actions: [
           TextButton(
             child: Text(l10n.workBrowseCancel),

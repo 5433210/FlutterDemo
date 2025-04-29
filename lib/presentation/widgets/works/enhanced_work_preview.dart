@@ -46,81 +46,82 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
 
     return LayoutBuilder(builder: (context, constraints) {
       final availableHeight = constraints.maxHeight;
-      final toolbarHeight = widget.showToolbar ? 48.0 : 0.0;
-      final thumbnailHeight = widget.images.isNotEmpty ? 120.0 : 0.0;
+      final toolbarHeight = widget.showToolbar ? 40.0 : 0.0;
+      final thumbnailHeight = widget.images.isNotEmpty ? 100.0 : 0.0;
       final imageHeight = availableHeight - toolbarHeight - thumbnailHeight;
 
-      return Column(
-        children: [
-          // 工具栏 - 图标按钮设计
-          if (widget.showToolbar && widget.toolbarActions != null)
-            Container(
-              height: toolbarHeight,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: widget.toolbarActions!,
+      return Stack(children: [
+        Column(
+          children: [
+            // 主图片显示区域
+            Expanded(
+              child: currentImage != null
+                  ? ZoomableImageView(
+                      imagePath: currentImage.path,
+                      enableMouseWheel: true,
+                      minScale: 0.1,
+                      maxScale: 10.0,
+                      showControls: true,
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_not_supported,
+                              size: 48, color: theme.colorScheme.outline),
+                          const SizedBox(height: 16),
+                          Text('没有可显示的图片',
+                              style:
+                                  TextStyle(color: theme.colorScheme.outline)),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
             ),
 
-          // 主图片显示区域
-          Expanded(
-            child: currentImage != null
-                ? ZoomableImageView(
-                    imagePath: currentImage.path,
-                    enableMouseWheel: true,
-                    minScale: 0.5,
-                    maxScale: 4.0,
-                    showControls: true,
-                  )
-                : Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image_not_supported,
-                            size: 48, color: theme.colorScheme.outline),
-                        const SizedBox(height: 16),
-                        Text('没有可显示的图片',
-                            style: TextStyle(color: theme.colorScheme.outline)),
-                      ],
+            // 缩略图条 - 仅在有图片时显示
+            if (widget.images.isNotEmpty)
+              SizedBox(
+                  height: thumbnailHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2.0),
+                    child: ThumbnailStrip<WorkImage>(
+                      images: widget.images,
+                      selectedIndex: widget.selectedIndex,
+                      isEditable: widget.isEditing,
+                      onTap: (index) {
+                        AppLogger.debug('EnhancedWorkPreview onTap: $index');
+                        widget.onIndexChanged?.call(index);
+                      },
+                      onReorder: (oldIndex, newIndex) {
+                        AppLogger.debug(
+                            'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex');
+                        widget.onImagesReordered?.call(oldIndex, newIndex);
+                      },
+                      pathResolver: (image) => image.path,
+                      keyResolver: (image) => image.id,
+                    ),
+                  )),
+          ],
+        ), // 工具栏 - 图标按钮设计
+        if (widget.showToolbar && widget.toolbarActions != null)
+          Container(
+            height: toolbarHeight,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: widget.toolbarActions!,
                     ),
                   ),
-          ),
-
-          // 缩略图条 - 仅在有图片时显示
-          if (widget.images.isNotEmpty)
-            SizedBox(
-              height: thumbnailHeight,
-              child: ThumbnailStrip<WorkImage>(
-                images: widget.images,
-                selectedIndex: widget.selectedIndex,
-                isEditable: widget.isEditing,
-                onTap: (index) {
-                  AppLogger.debug('EnhancedWorkPreview onTap: $index');
-                  widget.onIndexChanged?.call(index);
-                },
-                onReorder: (oldIndex, newIndex) {
-                  AppLogger.debug(
-                      'EnhancedWorkPreview onReorder: $oldIndex -> $newIndex');
-                  widget.onImagesReordered?.call(oldIndex, newIndex);
-                },
-                pathResolver: (image) => image.path,
-                keyResolver: (image) => image.id,
-              ),
+                ),
+              ],
             ),
-        ],
-      );
+          ),
+      ]);
     });
   }
 }
