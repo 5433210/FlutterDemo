@@ -17,6 +17,7 @@ import '../presentation/pages/practices/practice_edit_page.dart';
 import '../presentation/pages/practices/practice_list_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
+import '../presentation/pages/works/m3_work_detail_page.dart';
 import '../presentation/pages/works/work_browse_page.dart';
 import '../presentation/pages/works/work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
@@ -132,8 +133,17 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.workDetail:
         if (args is Map<String, String>) {
           return MaterialPageRoute(
-            builder: (context) => WorkDetailPage(
-                workId: args['workId']!, initialPageId: args['pageId']!),
+            builder: (context) => useMaterial3
+                ? M3WorkDetailPage(
+                    workId: args['workId']!, initialPageId: args['pageId']!)
+                : WorkDetailPage(
+                    workId: args['workId']!, initialPageId: args['pageId']!),
+          );
+        } else if (args is String) {
+          return MaterialPageRoute(
+            builder: (context) => useMaterial3
+                ? M3WorkDetailPage(workId: args)
+                : WorkDetailPage(workId: args),
           );
         }
         break;

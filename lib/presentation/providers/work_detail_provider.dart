@@ -40,7 +40,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       hasChanges: false,
     );
 
-    AppLogger.debug('编辑完成', tag: 'WorkDetailProvider', data: {
+    AppLogger.debug('Editing completed', tag: 'WorkDetailProvider', data: {
       'workId': state.work?.id,
       'title': state.work?.title,
       'tagCount': state.work?.tags.length,
@@ -62,7 +62,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     } catch (e) {
       state = state.copyWith(
         isSaving: false,
-        error: '删除失败: $e',
+        error: 'Delete failed: $e',
       );
       return false;
     }
@@ -90,7 +90,7 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: '加载失败: $e',
+        error: 'Loading failed: $e',
       );
     }
   }
@@ -112,20 +112,24 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     try {
       state = state.copyWith(isSaving: true, error: null);
 
-      AppLogger.debug('保存作品前状态', tag: 'WorkDetailProvider', data: {
-        'workId': state.editingWork!.id,
-        'title': state.editingWork!.title,
-        'tagCount': state.editingWork!.tags.length,
-      });
+      AppLogger.debug('Work state before saving',
+          tag: 'WorkDetailProvider',
+          data: {
+            'workId': state.editingWork!.id,
+            'title': state.editingWork!.title,
+            'tagCount': state.editingWork!.tags.length,
+          });
 
       final updatedWork =
           await _workService.updateWorkEntity(state.editingWork!);
 
-      AppLogger.debug('保存作品后状态', tag: 'WorkDetailProvider', data: {
-        'workId': updatedWork.id,
-        'title': updatedWork.title,
-        'tagCount': updatedWork.tags.length,
-      });
+      AppLogger.debug('Work state after saving',
+          tag: 'WorkDetailProvider',
+          data: {
+            'workId': updatedWork.id,
+            'title': updatedWork.title,
+            'tagCount': updatedWork.tags.length,
+          });
 
       state = state.copyWith(
         work: updatedWork,
@@ -138,10 +142,11 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
 
       return true;
     } catch (e) {
-      AppLogger.error('保存作品失败', tag: 'WorkDetailProvider', error: e);
+      AppLogger.error('Failed to save work',
+          tag: 'WorkDetailProvider', error: e);
       state = state.copyWith(
         isSaving: false,
-        error: '保存失败: $e',
+        error: 'Save failed: $e',
       );
       return false;
     }
@@ -186,16 +191,18 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   }) {
     if (state.editingWork == null) return;
 
-    // 添加日志帮助调试
-    AppLogger.debug('更新作品基本信息', tag: 'WorkDetailProvider', data: {
-      'workId': state.editingWork!.id,
-      'title': title ?? '[unchanged]',
-      'author': author ?? '[unchanged]',
-      'style': style?.value ?? '[unchanged]',
-      'tool': tool?.value ?? '[unchanged]',
-      'creationDate': creationDate?.toString() ?? '[unchanged]',
-      'remark': remark?.toString() ?? '[unchanged]',
-    });
+    // Add logs to help with debugging
+    AppLogger.debug('Updating work basic info',
+        tag: 'WorkDetailProvider',
+        data: {
+          'workId': state.editingWork!.id,
+          'title': title ?? '[unchanged]',
+          'author': author ?? '[unchanged]',
+          'style': style?.value ?? '[unchanged]',
+          'tool': tool?.value ?? '[unchanged]',
+          'creationDate': creationDate?.toString() ?? '[unchanged]',
+          'remark': remark?.toString() ?? '[unchanged]',
+        });
 
     final updatedWork = WorkEntity(
       id: state.editingWork!.id,

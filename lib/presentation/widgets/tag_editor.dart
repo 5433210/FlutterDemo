@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class TagEditor extends StatefulWidget {
   final List<String> tags;
   final List<String> suggestedTags;
@@ -29,12 +31,14 @@ class _TagEditorState extends State<TagEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Only show tag input when not in read-only mode
         if (!widget.readOnly) ...[
-          // 标签输入
+          // Tag input
           Row(
             children: [
               Expanded(
@@ -42,7 +46,7 @@ class _TagEditorState extends State<TagEditor> {
                   controller: _controller,
                   focusNode: _focusNode,
                   decoration: InputDecoration(
-                    hintText: '输入标签后按Enter添加',
+                    hintText: l10n.tagEditorEnterTagHint,
                     isDense: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(4),
@@ -58,7 +62,7 @@ class _TagEditorState extends State<TagEditor> {
                   ),
                   onSubmitted: (value) {
                     _addTag(value);
-                    _focusNode.requestFocus(); // 保持焦点
+                    _focusNode.requestFocus(); // Keep focus
                   },
                 ),
               ),
@@ -71,7 +75,7 @@ class _TagEditorState extends State<TagEditor> {
         // Current tags display - always shown
         if (_tags.isEmpty && widget.readOnly)
           Text(
-            '暂无标签',
+            l10n.tagEditorNoTags,
             style: TextStyle(
               color: Theme.of(context).hintColor,
               fontStyle: FontStyle.italic,
@@ -99,10 +103,11 @@ class _TagEditorState extends State<TagEditor> {
         // Only show suggested tags when not in read-only mode and there are suggestions
         if (!widget.readOnly && widget.suggestedTags.isNotEmpty) ...[
           const SizedBox(height: 16),
-          const Text('建议标签:', style: TextStyle(fontWeight: FontWeight.bold)),
+          Text(l10n.tagEditorSuggestedTags,
+              style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
 
-          // 建议标签
+          // Suggested tags
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -144,8 +149,9 @@ class _TagEditorState extends State<TagEditor> {
   }
 
   void _addTag(String tag) {
-    if (widget.readOnly)
+    if (widget.readOnly) {
       return; // Safety check - don't add tags in readonly mode
+    }
 
     tag = tag.trim();
     if (tag.isNotEmpty && !_tags.contains(tag)) {
@@ -158,8 +164,9 @@ class _TagEditorState extends State<TagEditor> {
   }
 
   void _removeTag(String tag) {
-    if (widget.readOnly)
+    if (widget.readOnly) {
       return; // Safety check - don't remove tags in readonly mode
+    }
 
     setState(() {
       _tags.remove(tag);

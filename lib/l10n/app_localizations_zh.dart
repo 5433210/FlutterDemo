@@ -203,6 +203,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageSettings => '存储设置';
 
   @override
+  String get tagEditorEnterTagHint => '输入标签后按Enter添加';
+
+  @override
+  String get tagEditorNoTags => '暂无标签';
+
+  @override
+  String get tagEditorSuggestedTags => '建议标签:';
+
+  @override
   String get themeMode => '主题模式';
 
   @override
@@ -255,6 +264,79 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workBrowseTitle => '作品';
+
+  @override
+  String get workDetailBack => '返回';
+
+  @override
+  String get workDetailBasicInfo => '基本信息';
+
+  @override
+  String get workDetailCancel => '取消';
+
+  @override
+  String get workDetailCharacters => '集字';
+
+  @override
+  String get workDetailCreateTime => '创建时间';
+
+  @override
+  String get workDetailEdit => '编辑';
+
+  @override
+  String get workDetailExtract => '提取字形';
+
+  @override
+  String get workDetailExtractionError => '无法打开字形提取';
+
+  @override
+  String get workDetailImageCount => '图片数量';
+
+  @override
+  String get workDetailImageLoadError => '选择的图片无法加载，请尝试重新导入图片';
+
+  @override
+  String get workDetailLoading => '加载作品详情中...';
+
+  @override
+  String get workDetailNoCharacters => '暂无集字';
+
+  @override
+  String get workDetailNoImages => '没有可显示的图片';
+
+  @override
+  String get workDetailNoImagesForExtraction => '无法提取字形：作品没有图片';
+
+  @override
+  String get workDetailNoWork => '作品不存在或已被删除';
+
+  @override
+  String get workDetailOtherInfo => '其他信息';
+
+  @override
+  String get workDetailSave => '保存';
+
+  @override
+  String get workDetailSaveFailure => '保存失败';
+
+  @override
+  String get workDetailSaveSuccess => '保存成功';
+
+  @override
+  String get workDetailTags => '标签';
+
+  // Work Detail Page
+  @override
+  String get workDetailTitle => '作品详情';
+
+  @override
+  String get workDetailUnsavedChanges => '您有未保存的更改，确定要放弃吗？';
+
+  @override
+  String get workDetailUpdateTime => '修改时间';
+
+  @override
+  String get workDetailViewMore => '查看更多';
 
   @override
   String get workFormAuthor => '作者';

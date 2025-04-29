@@ -128,5 +128,9 @@
   "workFormHelp": "Help",
   "workFormShortcuts": "Keyboard Shortcuts",
 
+  "tagEditorEnterTagHint": "Enter tag and press Enter",
+  "tagEditorNoTags": "No tags",
+  "tagEditorSuggestedTags": "Suggested tags:",
+
   "initializationFailed": "Initialization failed: {error}"
 }

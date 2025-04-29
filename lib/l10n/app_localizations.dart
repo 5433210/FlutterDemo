@@ -200,12 +200,16 @@ abstract class AppLocalizations {
   String get settings;
   String get storageSettings;
 
+  // Tag Editor
+  String get tagEditorEnterTagHint;
+  String get tagEditorNoTags;
+  String get tagEditorSuggestedTags;
   // Theme
   String get themeMode;
+
   String get themeModeDark;
   String get themeModeLight;
   String get themeModeSystem;
-
   String get workBrowseBatchDone;
   String get workBrowseBatchMode;
   String get workBrowseCancel;
@@ -221,12 +225,40 @@ abstract class AppLocalizations {
   String get workBrowseSearch;
   // Work browse page
   String get workBrowseTitle;
+  String get workDetailBack;
+
+  String get workDetailBasicInfo;
+  String get workDetailCancel;
+  String get workDetailCharacters;
+  String get workDetailCreateTime;
+
+  String get workDetailEdit;
+  String get workDetailExtract;
+  String get workDetailExtractionError;
+  String get workDetailImageCount;
+  String get workDetailImageLoadError;
+  String get workDetailLoading;
+  String get workDetailNoCharacters;
+  String get workDetailNoImages;
+  String get workDetailNoImagesForExtraction;
+  String get workDetailNoWork;
+  String get workDetailOtherInfo;
+  String get workDetailSave;
+  String get workDetailSaveFailure;
+  String get workDetailSaveSuccess;
+  String get workDetailTags;
+  // Work Detail Page
+  String get workDetailTitle;
+  String get workDetailUnsavedChanges;
+  String get workDetailUpdateTime;
+  String get workDetailViewMore;
   String get workFormAuthor;
   String get workFormAuthorHelp;
+
   String get workFormAuthorHint;
   String get workFormAuthorMaxLength;
-
   String get workFormAuthorTooltip;
+
   String get workFormCreationDate;
   String get workFormDateHelp;
   String get workFormDateTooltip;
@@ -243,7 +275,6 @@ abstract class AppLocalizations {
   String get workFormSelectDate;
   String get workFormShortcuts;
   String get workFormStyle;
-
   String get workFormStyleHelp;
   String get workFormStyleTooltip;
   // Work Form
@@ -252,7 +283,6 @@ abstract class AppLocalizations {
   String get workFormTitleHelp;
   String get workFormTitleHint;
   String get workFormTitleMaxLength;
-
   String get workFormTitleMinLength;
   String get workFormTitleRequired;
   // Field tooltips
@@ -261,10 +291,10 @@ abstract class AppLocalizations {
   String get workFormTool;
   String get workFormToolHelp;
   String get workFormToolTooltip;
+
   String get workImportDialogAddImages;
   String get workImportDialogCancel;
   String get workImportDialogDeleteImage;
-
   String get workImportDialogDeleteImageConfirm;
   String get workImportDialogImport;
   String get workImportDialogNoImages;
@@ -276,17 +306,19 @@ abstract class AppLocalizations {
   // Navigation
   String get works;
   String get workStyleClerical;
+
   String get workStyleCursive;
   String get workStyleOther;
   // Work Style localization
   String get workStyleRegular;
-
   String get workStyleRunning;
   String get workStyleSeal;
+
   // Work Tool localization
   String get workToolBrush;
   String get workToolHardPen;
   String get workToolOther;
+
   // Initialization
   String initializationFailed(String error);
   String workBrowseDeleteConfirmMessage(int count);

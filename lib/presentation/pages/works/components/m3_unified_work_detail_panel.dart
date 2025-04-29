@@ -1,0 +1,400 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
+import '../../../../domain/models/work/work_entity.dart';
+import '../../../../infrastructure/logging/logger.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../../theme/app_sizes.dart';
+import '../../../providers/work_detail_provider.dart';
+import '../../../widgets/common/tab_bar_theme_wrapper.dart';
+import '../../../widgets/forms/m3_work_form.dart';
+import '../../../widgets/tag_editor.dart';
+
+/// Material 3 version of the unified work detail panel
+class M3UnifiedWorkDetailPanel extends ConsumerStatefulWidget {
+  /// The work entity to display
+  final WorkEntity work;
+
+  /// Whether the panel is in editing mode
+  final bool isEditing;
+
+  const M3UnifiedWorkDetailPanel({
+    super.key,
+    required this.work,
+    required this.isEditing,
+  });
+
+  @override
+  ConsumerState<M3UnifiedWorkDetailPanel> createState() =>
+      _M3UnifiedWorkDetailPanelState();
+}
+
+class _M3UnifiedWorkDetailPanelState
+    extends ConsumerState<M3UnifiedWorkDetailPanel>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final tags = widget.work.tags;
+
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(
+        top: AppSizes.spacingMedium,
+        right: AppSizes.spacingMedium,
+        bottom: AppSizes.spacingMedium,
+      ),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: theme.colorScheme.outlineVariant.withAlpha(128),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          TabBarThemeWrapper(
+            child: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: l10n.workDetailBasicInfo),
+                Tab(text: l10n.workDetailTags),
+                Tab(text: l10n.workDetailCharacters),
+              ],
+              indicatorSize: TabBarIndicatorSize.tab,
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildBasicInfoTab(context),
+                _buildTagsTab(context, tags),
+                _buildCharactersTab(context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(M3UnifiedWorkDetailPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.work != widget.work ||
+        oldWidget.isEditing != widget.isEditing) {
+      // Log state changes
+      AppLogger.debug('M3UnifiedWorkDetailPanel updated',
+          tag: 'WorkDetailPanel',
+          data: {
+            'oldTitle': oldWidget.work.title,
+            'newTitle': widget.work.title,
+            'oldTagCount': oldWidget.work.tags.length,
+            'newTagCount': widget.work.tags.length,
+            'isEditingChanged': oldWidget.isEditing != widget.isEditing,
+          });
+
+      setState(() {
+        // Force update state to reflect new data
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  // Additional metadata not included in the form
+  Widget _buildAdditionalMetadata(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(),
+        const SizedBox(height: AppSizes.spacingSmall),
+        Text(
+          l10n.workDetailOtherInfo,
+          style: theme.textTheme.titleMedium,
+        ),
+        const SizedBox(height: AppSizes.spacingSmall),
+        _buildInfoRow(l10n.workDetailImageCount,
+            (widget.work.imageCount ?? 0).toString()),
+        _buildInfoRow(
+            l10n.workDetailCreateTime, _formatDateTime(widget.work.createTime)),
+        _buildInfoRow(
+            l10n.workDetailUpdateTime, _formatDateTime(widget.work.updateTime)),
+      ],
+    );
+  }
+
+  Widget _buildBasicInfoTab(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      children: [
+        // Use M3WorkForm for both view and edit modes
+        M3WorkForm(
+          title: AppLocalizations.of(context).workDetailBasicInfo,
+          initialTitle: widget.work.title,
+          initialAuthor: widget.work.author,
+          initialStyle: widget.work.style,
+          initialTool: widget.work.tool,
+          initialCreationDate: widget.work.creationDate,
+          initialRemark: widget.work.remark,
+          isProcessing: false,
+          // Only enable editing in edit mode
+          onTitleChanged: widget.isEditing
+              ? (value) => _updateWorkField('title', value)
+              : null,
+          onAuthorChanged: widget.isEditing
+              ? (value) => _updateWorkField('author', value)
+              : null,
+          onStyleChanged: widget.isEditing
+              ? (value) => _updateWorkField('style', value)
+              : null,
+          onToolChanged: widget.isEditing
+              ? (value) => _updateWorkField('tool', value)
+              : null,
+          onCreationDateChanged: widget.isEditing
+              ? (value) => _updateWorkField('creationDate', value)
+              : null,
+          onRemarkChanged: widget.isEditing
+              ? (value) => _updateWorkField('remark', value)
+              : null,
+          // Configure form appearance
+          visibleFields: WorkFormPresets.editFields,
+          requiredFields: const {WorkFormField.title},
+          showHelp: false,
+          showKeyboardShortcuts: false,
+        ),
+
+        // Display additional metadata in view mode
+        if (!widget.isEditing) ...[
+          const SizedBox(height: AppSizes.spacingMedium),
+          _buildAdditionalMetadata(context),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCharacterChip(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          '字',
+          style: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCharactersSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+    final charCount = widget.work.collectedChars.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$charCount ${l10n.characters}', style: theme.textTheme.bodySmall),
+        if (charCount == 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(child: Text(l10n.workDetailNoCharacters)),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: List.generate(
+              math.min(charCount, 20),
+              (index) => _buildCharacterChip(context),
+            ),
+          ),
+        if (charCount > 20)
+          Center(
+            child: TextButton(
+              onPressed: () {},
+              child: Text(l10n.workDetailViewMore),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCharactersTab(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      child: _buildCharactersSection(context),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagsTab(BuildContext context, List<String> tags) {
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      child: widget.isEditing
+          ? TagEditor(
+              tags: tags,
+              onTagsChanged: (newTags) => _updateWorkField('tags', newTags),
+              readOnly: false,
+            )
+          : TagEditor(
+              tags: tags,
+              onTagsChanged:
+                  (_) {}, // Dummy function, never called in readOnly mode
+              readOnly: true,
+            ),
+    );
+  }
+
+  // Format DateTime for display
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat.yMMMd().add_Hm().format(dateTime);
+  }
+
+  // Get the current value of a field
+  dynamic _getCurrentFieldValue(String field) {
+    switch (field) {
+      case 'title':
+        return widget.work.title;
+      case 'author':
+        return widget.work.author;
+      case 'style':
+        return widget.work.style;
+      case 'tool':
+        return widget.work.tool;
+      case 'creationDate':
+        return widget.work.creationDate;
+      case 'remark':
+        return widget.work.remark;
+      case 'tags':
+        return widget.work.tags;
+      default:
+        return null;
+    }
+  }
+
+  void _updateWorkField(String field, dynamic value) {
+    final notifier = ref.read(workDetailProvider.notifier);
+    final currentValue = _getCurrentFieldValue(field);
+
+    // Log detailed field modification information
+    AppLogger.debug('Field modified', tag: 'WorkDetailPanel', data: {
+      'field': field,
+      'oldValue': field == 'tags'
+          ? '${widget.work.tags.length} tags: ${widget.work.tags}'
+          : currentValue.toString(),
+      'newValue': field == 'tags'
+          ? '${(value as List<String>).length} tags: $value'
+          : value.toString(),
+      'workId': widget.work.id,
+      'isChanged': currentValue != value,
+    });
+
+    // Update the field in the provider
+    if (field == 'tags') {
+      notifier.updateWorkTags(value);
+    } else {
+      // For other fields, use the updateWorkBasicInfo method
+      switch (field) {
+        case 'title':
+          notifier.updateWorkBasicInfo(title: value);
+          break;
+        case 'author':
+          notifier.updateWorkBasicInfo(author: value);
+          break;
+        case 'style':
+          notifier.updateWorkBasicInfo(style: value);
+          break;
+        case 'tool':
+          notifier.updateWorkBasicInfo(tool: value);
+          break;
+        case 'creationDate':
+          notifier.updateWorkBasicInfo(creationDate: value);
+          break;
+        case 'remark':
+          notifier.updateWorkBasicInfo(remark: value);
+          break;
+      }
+    }
+
+    // Ensure state is marked as changed
+    notifier.markAsChanged();
+
+    // Log the updated state
+    Future.microtask(() {
+      final updatedState = ref.read(workDetailProvider);
+      AppLogger.debug('Field modification complete',
+          tag: 'WorkDetailPanel',
+          data: {
+            'editingWorkTitle': updatedState.editingWork?.title,
+            'editingWorkAuthor': updatedState.editingWork?.author,
+            'editingWorkStyle': updatedState.editingWork?.style.value,
+            'editingWorkTool': updatedState.editingWork?.tool.value,
+            'editingWorkTagCount': updatedState.editingWork?.tags.length,
+            'editingWorkTags': updatedState.editingWork?.tags,
+            'hasChanges': updatedState.hasChanges,
+          });
+
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+}

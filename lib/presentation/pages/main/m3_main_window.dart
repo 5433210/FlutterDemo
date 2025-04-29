@@ -7,7 +7,7 @@ import '../../../presentation/pages/practices/practice_edit_page.dart';
 import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
-import '../../../presentation/pages/works/work_detail_page.dart';
+import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
@@ -115,7 +115,7 @@ class _M3MainWindowState extends State<M3MainWindow>
                 settings.arguments != null) {
               final workId = settings.arguments as String;
               return MaterialPageRoute<bool>(
-                builder: (context) => WorkDetailPage(workId: workId),
+                builder: (context) => M3WorkDetailPage(workId: workId),
               );
             }
             // Default to work browse page

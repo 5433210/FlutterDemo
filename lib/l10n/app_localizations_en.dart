@@ -203,6 +203,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get storageSettings => 'Storage Settings';
 
   @override
+  String get tagEditorEnterTagHint => 'Enter tag and press Enter';
+
+  @override
+  String get tagEditorNoTags => 'No tags';
+
+  @override
+  String get tagEditorSuggestedTags => 'Suggested tags:';
+
+  @override
   String get themeMode => 'Theme Mode';
 
   @override
@@ -256,6 +265,82 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workBrowseTitle => 'Works';
+
+  @override
+  String get workDetailBack => 'Back';
+
+  @override
+  String get workDetailBasicInfo => 'Basic Information';
+
+  @override
+  String get workDetailCancel => 'Cancel';
+
+  @override
+  String get workDetailCharacters => 'Characters';
+
+  @override
+  String get workDetailCreateTime => 'Created';
+
+  @override
+  String get workDetailEdit => 'Edit';
+
+  @override
+  String get workDetailExtract => 'Extract Characters';
+
+  @override
+  String get workDetailExtractionError => 'Cannot open character extraction';
+
+  @override
+  String get workDetailImageCount => 'Image Count';
+
+  @override
+  String get workDetailImageLoadError =>
+      'Selected image could not be loaded, please try reimporting the image';
+
+  @override
+  String get workDetailLoading => 'Loading work details...';
+
+  @override
+  String get workDetailNoCharacters => 'No characters yet';
+
+  @override
+  String get workDetailNoImages => 'No images to display';
+
+  @override
+  String get workDetailNoImagesForExtraction =>
+      'Cannot extract characters: work has no images';
+
+  @override
+  String get workDetailNoWork => 'Work does not exist or has been deleted';
+
+  @override
+  String get workDetailOtherInfo => 'Other Information';
+
+  @override
+  String get workDetailSave => 'Save';
+
+  @override
+  String get workDetailSaveFailure => 'Save failed';
+
+  @override
+  String get workDetailSaveSuccess => 'Save successful';
+
+  @override
+  String get workDetailTags => 'Tags';
+
+  // Work Detail Page
+  @override
+  String get workDetailTitle => 'Work Details';
+
+  @override
+  String get workDetailUnsavedChanges =>
+      'You have unsaved changes. Are you sure you want to discard them?';
+
+  @override
+  String get workDetailUpdateTime => 'Updated';
+
+  @override
+  String get workDetailViewMore => 'View More';
 
   @override
   String get workFormAuthor => 'Author';
