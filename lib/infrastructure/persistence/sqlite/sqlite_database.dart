@@ -37,15 +37,15 @@ class SQLiteDatabase implements DatabaseInterface {
       final result = await _db.rawQuery(queryResult.sql, queryResult.args);
       final count = Sqflite.firstIntValue(result) ?? 0;
 
-      AppLogger.debug(
-        '统计查询完成',
-        tag: 'SQLiteDatabase',
-        data: {
-          'count': count,
-          'sql': queryResult.sql,
-          'args': queryResult.args,
-        },
-      );
+      // AppLogger.debug(
+      //   '统计查询完成',
+      //   tag: 'SQLiteDatabase',
+      //   data: {
+      //     'count': count,
+      //     'sql': queryResult.sql,
+      //     'args': queryResult.args,
+      //   },
+      // );
 
       return count;
     } catch (e) {
@@ -111,26 +111,26 @@ class SQLiteDatabase implements DatabaseInterface {
     String table,
     Map<String, dynamic> filter,
   ) async {
-    AppLogger.debug(
-      '执行数据库查询',
-      tag: 'SQLiteDatabase',
-      data: {
-        'table': table,
-        'filter': filter,
-      },
-    );
+    // AppLogger.debug(
+    //   '执行数据库查询',
+    //   tag: 'SQLiteDatabase',
+    //   data: {
+    //     'table': table,
+    //     'filter': filter,
+    //   },
+    // );
 
     final query = DatabaseQuery.fromJson(filter);
     final queryResult = _buildQuerySql(table, query);
 
-    AppLogger.debug(
-      '生成SQL查询语句',
-      tag: 'SQLiteDatabase',
-      data: {
-        'sql': queryResult.sql,
-        'args': queryResult.args,
-      },
-    );
+    // AppLogger.debug(
+    //   '生成SQL查询语句',
+    //   tag: 'SQLiteDatabase',
+    //   data: {
+    //     'sql': queryResult.sql,
+    //     'args': queryResult.args,
+    //   },
+    // );
 
     try {
       final results = await _db.rawQuery(queryResult.sql, queryResult.args);
@@ -260,16 +260,16 @@ class SQLiteDatabase implements DatabaseInterface {
     final whereClause = where.isEmpty ? '' : 'WHERE ${where.join(' AND ')}';
     final sql = 'SELECT COUNT(*) as count FROM $table $whereClause';
 
-    AppLogger.debug(
-      '构建COUNT SQL查询',
-      tag: 'SQLiteDatabase',
-      data: {
-        'table': table,
-        'whereClause': whereClause,
-        'sql': sql,
-        'args': whereArgs,
-      },
-    );
+    // AppLogger.debug(
+    //   '构建COUNT SQL查询',
+    //   tag: 'SQLiteDatabase',
+    //   data: {
+    //     'table': table,
+    //     'whereClause': whereClause,
+    //     'sql': sql,
+    //     'args': whereArgs,
+    //   },
+    // );
 
     return (sql: sql, args: whereArgs);
   }
@@ -307,18 +307,18 @@ class SQLiteDatabase implements DatabaseInterface {
     final limitClause = query.limit == null ? '' : 'LIMIT ${query.limit}';
     final offsetClause = query.offset == null ? '' : 'OFFSET ${query.offset}';
 
-    AppLogger.debug(
-      '构建SQL查询参数',
-      tag: 'SQLiteDatabase',
-      data: {
-        'orderBy': query.orderBy,
-        'limit': query.limit,
-        'offset': query.offset,
-        'orderClause': orderClause,
-        'limitClause': limitClause,
-        'offsetClause': offsetClause,
-      },
-    );
+    // AppLogger.debug(
+    //   '构建SQL查询参数',
+    //   tag: 'SQLiteDatabase',
+    //   data: {
+    //     'orderBy': query.orderBy,
+    //     'limit': query.limit,
+    //     'offset': query.offset,
+    //     'orderClause': orderClause,
+    //     'limitClause': limitClause,
+    //     'offsetClause': offsetClause,
+    //   },
+    // );
 
     return (
       sql:

@@ -71,7 +71,7 @@ class TextRenderer {
     }
 
     text = fittedLines.join('\n');
-    developer.log('text: $text');
+    // developer.log('text: $text');
     return text;
   }
 
@@ -141,7 +141,7 @@ class TextRenderer {
     }
 
     text = reversedLines.join('\n');
-    developer.log('text: $text');
+    // developer.log('text: $text');
     return text;
   }
 
@@ -262,14 +262,14 @@ class TextRenderer {
     double padding = 0.0,
     Color backgroundColor = Colors.transparent,
   }) {
-    // 添加调试日志
-    developer.log(
-        '水平文本渲染: writingMode=$writingMode, textAlign=$textAlign, verticalAlign=$verticalAlign');
-    developer.log(
-        '水平文本约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-    developer.log('水平文本内容: text=$text');
-    developer.log(
-        '水平文本样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
+    // // 添加调试日志
+    // developer.log(
+    //     '水平文本渲染: writingMode=$writingMode, textAlign=$textAlign, verticalAlign=$verticalAlign');
+    // developer.log(
+    //     '水平文本约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
+    // developer.log('水平文本内容: text=$text');
+    // developer.log(
+    //     '水平文本样式: fontSize=${style.fontSize}, fontFamily=${style.fontFamily}, fontWeight=${style.fontWeight}, fontStyle=${style.fontStyle}, color=${style.color}');
 
     final isRightToLeft = writingMode == 'horizontal-r';
     final textAlignEnum = getTextAlign(textAlign);

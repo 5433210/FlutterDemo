@@ -1,30 +1,44 @@
+import 'package:flutter/services.dart';
+
 /// 字帖编辑状态类
 class PracticeEditState {
+  // 画布相关
+  double _canvasScale = 1.0;
+
   // 页面相关
   List<Map<String, dynamic>> pages = [];
-  int currentPageIndex = -1;
-  bool isPageThumbnailsVisible = false; // 将默认值设为false，隐藏页面缩略图
 
+  int currentPageIndex = -1;
+
+  bool isPageThumbnailsVisible = false; // 将默认值设为false，隐藏页面缩略图
   // 图层相关
   String? selectedLayerId;
-
   // 元素选择相关
   List<String> selectedElementIds = [];
+
   Map<String, dynamic>? selectedElement;
 
   // 辅助功能相关
   bool gridVisible = false;
   bool snapEnabled = false;
-  double gridSize = 20.0;
 
+  double gridSize = 20.0;
   // 状态标志
   bool hasUnsavedChanges = false;
   bool isPreviewMode = false;
-  bool isDisposed = false; // 标记控制器是否已销毁
 
+  bool isDisposed = false; // 标记控制器是否已销毁
   // 撤销/重做状态
   bool canUndo = false;
   bool canRedo = false;
+
+  /// 获取画布缩放值
+  double get canvasScale => _canvasScale;
+
+  /// 设置画布缩放值
+  set canvasScale(double value) {
+    _canvasScale = value;
+  }
 
   /// 获取当前页面
   Map<String, dynamic>? get currentPage {
@@ -45,6 +59,15 @@ class PracticeEditState {
 
   /// 检查是否有未保存的更改
   bool get hasChanges => hasUnsavedChanges;
+
+  /// 检查是否按下了 Ctrl 或 Shift 键
+  bool get isCtrlOrShiftPressed {
+    final keys = RawKeyboard.instance.keysPressed;
+    return keys.contains(LogicalKeyboardKey.controlLeft) ||
+        keys.contains(LogicalKeyboardKey.controlRight) ||
+        keys.contains(LogicalKeyboardKey.shiftLeft) ||
+        keys.contains(LogicalKeyboardKey.shiftRight);
+  }
 
   /// 获取当前页面的图层列表
   List<Map<String, dynamic>> get layers {

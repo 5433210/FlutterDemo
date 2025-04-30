@@ -57,6 +57,9 @@ class PracticeEditController extends ChangeNotifier {
   /// 获取画布 GlobalKey
   GlobalKey? get canvasKey => _canvasKey;
 
+  /// 获取画布缩放值
+  double get canvasScale => _state.canvasScale;
+
   /// 检查字帖是否已保存过
   bool get isSaved => _practiceId != null;
 
@@ -1282,6 +1285,12 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.addOperation(operation);
   }
 
+  /// 重置画布缩放
+  void resetZoom() {
+    _state.canvasScale = 1.0;
+    notifyListeners();
+  }
+
   /// 另存为新字帖
   /// 始终提示用户输入标题
   /// 返回值:
@@ -1756,7 +1765,6 @@ class PracticeEditController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 切换吸附功能
   void toggleSnap() {
     _state.snapEnabled = !_state.snapEnabled;
     notifyListeners();
@@ -2400,6 +2408,13 @@ class PracticeEditController extends ChangeNotifier {
       _state.hasUnsavedChanges = true;
       notifyListeners();
     }
+  }
+
+  /// 切换吸附功能
+  /// 设置画布缩放值
+  void zoomTo(double scale) {
+    _state.canvasScale = scale.clamp(0.1, 10.0); // 限制缩放范围
+    notifyListeners();
   }
 
   /// 添加元素的通用方法

@@ -272,17 +272,17 @@ class WorkRepositoryImpl implements WorkRepository {
           ? '${filter.sortOption.field.name} ${filter.sortOption.descending ? 'DESC' : 'ASC'}'
           : null,
     );
-    AppLogger.debug(
-      '查询条件构建完成',
-      tag: 'WorkRepositoryImpl',
-      data: {
-        'conditions': conditions.length,
-        'groups': groups.length,
-        'hasOrderBy': filter.sortOption.field != null,
-        'orderBy': filter.sortOption.field.name,
-        'isDescending': filter.sortOption.descending,
-      },
-    );
+    // AppLogger.debug(
+    //   '查询条件构建完成',
+    //   tag: 'WorkRepositoryImpl',
+    //   data: {
+    //     'conditions': conditions.length,
+    //     'groups': groups.length,
+    //     'hasOrderBy': filter.sortOption.field != null,
+    //     'orderBy': filter.sortOption.field.name,
+    //     'isDescending': filter.sortOption.descending,
+    //   },
+    // );
 
     return query.toJson();
   }

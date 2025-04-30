@@ -116,7 +116,7 @@ class TextElementRenderer extends StatelessWidget {
                               ? Border.all(
                                   color: Colors.blue.withAlpha(128), width: 1.0)
                               : Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(4.0),
+                      // 移除圆角
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(padding),

@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -564,26 +566,18 @@ class _CollectionPainter extends CustomPainter {
     if (ref != null) {
       // 使用Future.microtask确保在下一个微任务中执行，避免在构造函数中执行异步操作
       Future.microtask(() {
+        // 创建一个集合来存储需要加载的字符ID和类型
+        final Set<String> charsToLoad = {};
+
         // 遍历所有字符位置
-        var positionIndex = 0;
+        for (int i = 0; i < positions.length; i++) {
+          final position = positions[i];
+          final char = position.char;
 
-        for (var characterIndex = 0;
-            characterIndex < characters.length;
-            characterIndex++) {
           // 查找字符对应的图片信息
-          if (characters[characterIndex] == '\n') {
-            continue;
-          }
-          if (positionIndex >= positions.length) {
-            break;
-          }
-          final charImage = _findCharacterImage(
-              positions[positionIndex].char, characterIndex);
+          final charImage = _findCharacterImage(char, i);
 
-          positionIndex++;
-          characterIndex++;
-
-          // 如果找到了图片信息，则加载图片
+          // 如果找到了图片信息，则准备加载图片
           if (charImage != null) {
             final characterId = charImage['characterId'].toString();
             final type = charImage['type'] as String;
@@ -592,8 +586,22 @@ class _CollectionPainter extends CustomPainter {
             // 创建缓存键
             final cacheKey = '$characterId-$type-$format';
 
+            // 添加到待加载集合中
+            charsToLoad.add(cacheKey);
+          }
+        }
+
+        // 开始加载所有需要的字符图片
+        for (final cacheKey in charsToLoad) {
+          final parts = cacheKey.split('-');
+          if (parts.length >= 3) {
+            final characterId = parts[0];
+            final type = parts[1];
+            final format = parts.sublist(2).join('-');
+
             // 如果缓存中没有图像且不在加载中，则启动异步加载
             if (!_imageCache.containsKey(cacheKey) &&
+                !GlobalImageCache.contains(cacheKey) &&
                 !_loadingImages.contains(cacheKey)) {
               _loadAndCacheImage(characterId, type, format);
             }
@@ -612,18 +620,19 @@ class _CollectionPainter extends CustomPainter {
     // 绘制每个字符
     var positionIndex = 0;
     var characterIndex = 0;
-    for (final chararcter in characters) {
-      if (chararcter == '\n') {
+    for (final character in characters) {
+      if (character == '\n') {
         characterIndex++;
         continue;
       }
+
       // 查找字符对应的图片
       if (positionIndex >= positions.length) {
         break;
       }
+
       final position = positions[positionIndex];
-      final charImage =
-          _findCharacterImage(positions[positionIndex].char, characterIndex);
+      final charImage = _findCharacterImage(position.char, characterIndex);
       positionIndex++;
       characterIndex++;
 
@@ -699,54 +708,42 @@ class _CollectionPainter extends CustomPainter {
         invertDisplay = charImage['invert'] == true;
       }
 
-      // 获取图片路径
-      String imagePath = '';
-      if (ref != null) {
-        try {
-          final storage = ref!.read(initializedStorageProvider);
-          // 根据类型和格式构建文件名
-          String fileName;
-          switch (type) {
-            case 'square-binary':
-              fileName = '$characterId-square-binary.png';
-              break;
-            case 'square-transparent':
-              fileName = '$characterId-square-transparent.png';
-              break;
-            case 'square-outline':
-              fileName = '$characterId-square-outline.svg';
-              break;
-            case 'thumbnail':
-              fileName = '$characterId-thumbnail.jpg';
-              break;
-            default:
-              fileName = '$characterId-$type.$format';
-          }
-
-          // 构建完整路径
-          imagePath =
-              '${storage.getAppDataPath()}/characters/$characterId/$fileName';
-        } catch (e) {
-          // 处理错误
-        }
-      }
-
-      // 检查是否是替代字符
-      final bool isSubstitute = charImage['isSubstitute'] == true;
-      final String originalChar =
-          charImage['originalChar'] as String? ?? position.char;
-
       // 创建缓存键
       final cacheKey = '$characterId-$type-$format';
 
       // 首先检查全局缓存 - 使用实际的缓存键检查
       final actualCacheKey = '$characterId-square-binary-png-binary';
-      if (GlobalImageCache.contains(cacheKey) ||
-          GlobalImageCache.contains(actualCacheKey)) {
-        final cacheKeyToUse =
-            GlobalImageCache.contains(cacheKey) ? cacheKey : actualCacheKey;
+
+      // 检查缓存状态
+      final bool hasOriginalKey = GlobalImageCache.contains(cacheKey);
+      final bool hasActualKey = GlobalImageCache.contains(actualCacheKey);
+
+      // 如果缓存中没有图像，尝试加载
+      if (!hasOriginalKey &&
+          !hasActualKey &&
+          !_loadingImages.contains(cacheKey)) {
+        // 标记为正在加载
+        _loadingImages.add(cacheKey);
+        // 异步加载图像
+        Future.microtask(() async {
+          _loadAndCacheImage(characterId, type, format);
+          // 加载完成后标记需要重绘
+          _needsRepaint = true;
+        });
+        // 先绘制文本占位符
+        _drawCharacterText(canvas, position);
+        return;
+      }
+
+      if (hasOriginalKey || hasActualKey) {
+        final cacheKeyToUse = hasOriginalKey ? cacheKey : actualCacheKey;
+
         // 使用全局缓存的图像
-        final image = GlobalImageCache.get(cacheKeyToUse)!;
+        final image = GlobalImageCache.get(cacheKeyToUse);
+        if (image == null) {
+          _drawCharacterText(canvas, position);
+          return;
+        }
 
         // 同时更新本地缓存
         if (!_imageCache.containsKey(cacheKey)) {
@@ -880,12 +877,13 @@ class _CollectionPainter extends CustomPainter {
             final imageInfo = charImages['$charIndex'] as Map<String, dynamic>;
 
             // 优先使用绘制格式（如果有），否则优先使用方形二值化图，其次是方形SVG轮廓
-            return {
+            final result = {
               'characterId': imageInfo['characterId'],
               'type': imageInfo['drawingType'] ?? 'square-binary', // 优先使用绘制格式
               'format': imageInfo['drawingFormat'] ?? 'png-binary',
               'transform': imageInfo['transform'],
             };
+            return result;
           }
 
           // 检查是否有 content.characterImages 结构
@@ -956,8 +954,8 @@ class _CollectionPainter extends CustomPainter {
           }
         }
       }
-    } catch (e, stack) {
-      // 错误处理
+    } catch (e) {
+      // 错误处理，静默失败
     }
 
     return null;
@@ -970,6 +968,7 @@ class _CollectionPainter extends CustomPainter {
 
     // 首先检查全局缓存 - 使用实际的缓存键检查
     final actualCacheKey = '$characterId-square-binary-png-binary';
+
     if (GlobalImageCache.contains(cacheKey) ||
         GlobalImageCache.contains(actualCacheKey)) {
       final cacheKeyToUse =
@@ -990,6 +989,10 @@ class _CollectionPainter extends CustomPainter {
 
     try {
       // 加载图像数据
+      if (ref == null) {
+        return;
+      }
+
       final characterImageService = ref!.read(characterImageServiceProvider);
       final storage = ref!.read(initializedStorageProvider);
 
@@ -1034,8 +1037,40 @@ class _CollectionPainter extends CustomPainter {
       final imagePath =
           getImagePath(characterId, preferredType, preferredFormat);
 
-      final imageData = await characterImageService.getCharacterImage(
-          characterId, preferredType, preferredFormat);
+      // 检查文件是否存在
+      final file = File(imagePath);
+      Uint8List? imageData;
+
+      if (await file.exists()) {
+        // 如果文件存在，直接从文件读取
+        try {
+          imageData = await file.readAsBytes();
+        } catch (e) {
+          // 读取失败，忽略错误
+        }
+      }
+
+      // 如果从文件读取失败，尝试从服务获取
+      if (imageData == null) {
+        imageData = await characterImageService.getCharacterImage(
+            characterId, preferredType, preferredFormat);
+
+        // 如果获取成功，保存到文件
+        if (imageData != null) {
+          try {
+            // 确保目录存在
+            final directory = Directory(file.parent.path);
+            if (!await directory.exists()) {
+              await directory.create(recursive: true);
+            }
+
+            // 保存文件
+            await file.writeAsBytes(imageData);
+          } catch (e) {
+            // 保存失败，忽略错误
+          }
+        }
+      }
 
       // 更新缓存键以使用实际加载的类型和格式
       final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
@@ -1065,7 +1100,7 @@ class _CollectionPainter extends CustomPainter {
         _needsRepaint = true;
       }
     } catch (e) {
-      // 错误处理
+      // 错误处理，静默失败
     } finally {
       // 移除加载标记
       _loadingImages.remove(cacheKey);

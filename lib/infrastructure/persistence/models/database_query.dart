@@ -92,11 +92,11 @@ class DatabaseQuery {
         );
       }
 
-      AppLogger.debug('查询条件构建完成', tag: 'DatabaseQuery', data: {
-        'conditionCount': conditions.length,
-        'groupCount': groups.length,
-        'orderBy': json['orderBy'],
-      });
+      // AppLogger.debug('查询条件构建完成', tag: 'DatabaseQuery', data: {
+      //   'conditionCount': conditions.length,
+      //   'groupCount': groups.length,
+      //   'orderBy': json['orderBy'],
+      // });
 
       return DatabaseQuery(
         conditions: conditions,

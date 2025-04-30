@@ -1,9 +1,9 @@
+import 'package:demo/presentation/pages/practices/practice_edit_page_refactored.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
-import '../../../presentation/pages/practices/practice_edit_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
 import '../../../presentation/pages/works/m3_character_collection_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
@@ -151,7 +151,7 @@ class _M3MainWindowState extends State<M3MainWindow>
               }
 
               return MaterialPageRoute<bool>(
-                builder: (context) => PracticeEditPage(
+                builder: (context) => PracticeEditPageRefactored(
                   practiceId: practiceId,
                 ),
               );

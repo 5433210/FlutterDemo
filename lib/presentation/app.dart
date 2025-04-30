@@ -16,7 +16,6 @@ import '../l10n/app_localizations.dart';
 import '../presentation/pages/characters/character_list_page.dart';
 import '../presentation/pages/main/m3_main_window.dart';
 import '../presentation/pages/main/main_window.dart';
-import '../presentation/pages/practices/practice_edit_page.dart';
 import '../presentation/pages/practices/practice_list_page.dart';
 import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
@@ -27,6 +26,7 @@ import '../presentation/providers/settings_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/initialization/initialization_screen.dart';
+import 'pages/practices/practice_edit_page_refactored.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -190,7 +190,7 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.practiceEdit:
         return MaterialPageRoute(
-          builder: (context) => PracticeEditPage(
+          builder: (context) => PracticeEditPageRefactored(
             practiceId: args as String?,
           ),
         );

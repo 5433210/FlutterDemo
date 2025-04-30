@@ -63,12 +63,12 @@ class EditToolbar extends StatelessWidget {
               children: [
                 _buildToolbarButton(
                   icon: Icons.copy,
-                  tooltip: '复制 (Ctrl+C)',
+                  tooltip: '复制 (Ctrl+Shift+C)',
                   onPressed: hasSelection ? onCopy : null,
                 ),
                 _buildToolbarButton(
                   icon: Icons.paste,
-                  tooltip: '粘贴 (Ctrl+V)',
+                  tooltip: '粘贴 (Ctrl+Shift+V)',
                   onPressed: onPaste,
                 ),
                 _buildToolbarButton(

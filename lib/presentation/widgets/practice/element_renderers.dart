@@ -311,7 +311,7 @@ class ElementRenderers {
               color: backgroundColor,
               // 在预览模式下不显示边框
               border: isPreviewMode ? null : Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(4.0),
+              // 移除圆角
             ),
             child: Padding(
               padding: EdgeInsets.all(padding),
