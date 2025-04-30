@@ -41,12 +41,12 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
 
     return Container(
       height: AppSizes.appBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: theme.colorScheme.surface,
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant,
           ),
         ),
       ),
@@ -128,7 +128,6 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
               widget.viewMode == ViewMode.grid
                   ? Icons.view_list
                   : Icons.grid_view,
-              color: colorScheme.primary,
             ),
             onPressed: () => widget.onViewModeChanged(
                 widget.viewMode == ViewMode.grid

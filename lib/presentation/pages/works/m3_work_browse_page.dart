@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -59,22 +60,22 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       }
     });
 
-    return Scaffold(
+    return PageLayout(
+      toolbar: M3WorkBrowseToolbar(
+          viewMode: state.viewMode,
+          onViewModeChanged: (mode) => viewModel.setViewMode(mode),
+          onImport: () => _showImportDialog(context),
+          onSearch: viewModel.setSearchQuery,
+          batchMode: state.batchMode,
+          onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
+          selectedCount: state.selectedWorks.length,
+          onDeleteSelected: () => {
+                ref.read(workBrowseProvider.notifier).deleteSelected(),
+                ref.read(worksNeedsRefreshProvider.notifier).state =
+                    RefreshInfo.importCompleted()
+              }),
       body: Column(
         children: [
-          M3WorkBrowseToolbar(
-              viewMode: state.viewMode,
-              onViewModeChanged: (mode) => viewModel.setViewMode(mode),
-              onImport: () => _showImportDialog(context),
-              onSearch: viewModel.setSearchQuery,
-              batchMode: state.batchMode,
-              onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
-              selectedCount: state.selectedWorks.length,
-              onDeleteSelected: () => {
-                    ref.read(workBrowseProvider.notifier).deleteSelected(),
-                    ref.read(worksNeedsRefreshProvider.notifier).state =
-                        RefreshInfo.importCompleted()
-                  }),
           Expanded(
             child: Row(
               children: [

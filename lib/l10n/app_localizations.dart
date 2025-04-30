@@ -323,6 +323,26 @@ abstract class AppLocalizations {
 
   String get navCollapseSidebar;
   String get navExpandSidebar;
+  String get practiceListBatchDone;
+  String get practiceListBatchMode;
+  String get practiceListDeleteConfirm;
+  String get practiceListDeleteMessage;
+  String get practiceListDeleteSelected;
+  String get practiceListError;
+  String get practiceListGridView;
+  String get practiceListItemsPerPage;
+  String get practiceListListView;
+  String get practiceListLoading;
+  String get practiceListNewPractice;
+  String get practiceListNoResults;
+  String get practiceListPages;
+  String get practiceListSearch;
+  String get practiceListSortByCreateTime;
+  String get practiceListSortByTitle;
+  String get practiceListSortByUpdateTime;
+  String get practiceListThumbnailError;
+  String get practiceListTitle;
+  String get practiceListTotalItems;
   String get practices;
   String get print;
   String get save;

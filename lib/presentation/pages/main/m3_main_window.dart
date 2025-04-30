@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
 import '../../../presentation/pages/practices/practice_edit_page.dart';
-import '../../../presentation/pages/practices/practice_list_page.dart';
 import '../../../presentation/pages/settings/settings_page.dart';
 import '../../../presentation/pages/works/m3_character_collection_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
@@ -12,6 +11,7 @@ import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
+import '../practices/m3_practice_list_page.dart';
 
 class M3MainWindow extends StatefulWidget {
   const M3MainWindow({super.key});
@@ -157,7 +157,7 @@ class _M3MainWindowState extends State<M3MainWindow>
               );
             }
             return MaterialPageRoute(
-              builder: (context) => const PracticeListPage(),
+              builder: (context) => const M3PracticeListPage(),
             );
           },
         );

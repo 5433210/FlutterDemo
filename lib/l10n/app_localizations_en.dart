@@ -547,6 +547,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navExpandSidebar => 'Expand Sidebar';
 
   @override
+  String get practiceListBatchDone => 'Done';
+
+  @override
+  String get practiceListBatchMode => 'Batch Mode';
+
+  @override
+  String get practiceListDeleteConfirm => 'Confirm Deletion';
+
+  @override
+  String get practiceListDeleteMessage =>
+      'Are you sure you want to delete the selected practice sheet(s)? This action cannot be undone.';
+
+  @override
+  String get practiceListDeleteSelected => 'Delete Selected';
+
+  @override
+  String get practiceListError => 'Error loading practice sheets';
+
+  @override
+  String get practiceListGridView => 'Grid View';
+
+  @override
+  String get practiceListItemsPerPage => '{count} per page';
+
+  @override
+  String get practiceListListView => 'List View';
+
+  @override
+  String get practiceListLoading => 'Loading practice sheets...';
+
+  @override
+  String get practiceListNewPractice => 'New Practice Sheet';
+
+  @override
+  String get practiceListNoResults => 'No practice sheets found';
+
+  @override
+  String get practiceListPages => 'pages';
+
+  @override
+  String get practiceListSearch => 'Search practice sheets...';
+
+  @override
+  String get practiceListSortByCreateTime => 'Sort by Creation Time';
+
+  @override
+  String get practiceListSortByTitle => 'Sort by Title';
+
+  @override
+  String get practiceListSortByUpdateTime => 'Sort by Update Time';
+
+  @override
+  String get practiceListThumbnailError => 'Thumbnail load failed';
+
+  @override
+  String get practiceListTitle => 'Practice Sheets';
+
+  @override
+  String get practiceListTotalItems => '{count} practice sheets';
+
+  @override
   String get practices => 'Practices';
 
   @override

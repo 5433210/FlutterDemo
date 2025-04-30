@@ -536,6 +536,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navExpandSidebar => '展开侧边栏';
 
   @override
+  String get practiceListBatchDone => '完成';
+
+  @override
+  String get practiceListBatchMode => '批量模式';
+
+  @override
+  String get practiceListDeleteConfirm => '确认删除';
+
+  @override
+  String get practiceListDeleteMessage => '确定要删除选中的字帖吗？此操作不可撤销。';
+
+  @override
+  String get practiceListDeleteSelected => '删除所选';
+
+  @override
+  String get practiceListError => '加载字帖失败';
+
+  @override
+  String get practiceListGridView => '网格视图';
+
+  @override
+  String get practiceListItemsPerPage => '每页{count}项';
+
+  @override
+  String get practiceListListView => '列表视图';
+
+  @override
+  String get practiceListLoading => '加载字帖中...';
+
+  @override
+  String get practiceListNewPractice => '新建字帖';
+
+  @override
+  String get practiceListNoResults => '没有找到字帖';
+
+  @override
+  String get practiceListPages => '页';
+
+  @override
+  String get practiceListSearch => '搜索字帖...';
+
+  @override
+  String get practiceListSortByCreateTime => '按创建时间排序';
+
+  @override
+  String get practiceListSortByTitle => '按标题排序';
+
+  @override
+  String get practiceListSortByUpdateTime => '按更新时间排序';
+
+  @override
+  String get practiceListThumbnailError => '缩略图加载失败';
+
+  @override
+  String get practiceListTitle => '字帖列表';
+
+  @override
+  String get practiceListTotalItems => '共{count}个字帖';
+
+  @override
   String get practices => '字帖';
 
   @override
