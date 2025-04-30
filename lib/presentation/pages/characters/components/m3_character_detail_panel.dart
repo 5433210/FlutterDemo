@@ -23,7 +23,7 @@ class M3CharacterDetailPanel extends ConsumerStatefulWidget {
   final VoidCallback? onEdit;
 
   /// Callback when the favorite button is pressed
-  final VoidCallback? onToggleFavorite;
+  final Future<void> Function()? onToggleFavorite;
 
   /// Constructor
   const M3CharacterDetailPanel({
@@ -335,9 +335,8 @@ class _M3CharacterDetailPanelState
                 ? theme.colorScheme.primary
                 : theme.colorScheme.onSurface,
           ),
-          onPressed: () {
+          onPressed: () async {
             widget.onToggleFavorite?.call();
-            ref.invalidate(characterDetailProvider(widget.characterId));
           },
           tooltip: character.isFavorite
               ? l10n.workBrowseRemoveFavorite

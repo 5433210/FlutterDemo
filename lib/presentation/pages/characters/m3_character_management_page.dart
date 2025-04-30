@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
+import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
+import '../works/m3_character_collection_page.dart';
 import 'components/m3_character_detail_panel.dart';
 import 'components/m3_character_filter_panel.dart';
 import 'components/m3_character_grid_view.dart';
@@ -450,15 +452,24 @@ class _M3CharacterManagementPageState
     final state = ref.read(characterManagementProvider);
     final character = state.characters.firstWhere((c) => c.id == characterId);
 
-    Navigator.pushNamed(
-      context,
-      '/character_collection',
-      arguments: {
-        'workId': character.workId,
-        'pageId': character.pageId,
-        'characterId': character.id,
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => M3CharacterCollectionPage(
+          workId: character.workId,
+          initialCharacterId: character.id,
+          initialPageId: character.pageId,
+        ),
+      ),
     );
+    // Navigator.pushNamed(
+    //   context,
+    //   '/character_collection',
+    //   arguments: {
+    //     'workId': character.workId,
+    //     'pageId': character.pageId,
+    //     'characterId': character.id,
+    //   },
+    // );
   }
 
   void _handlePageChange(int page) {
@@ -480,8 +491,14 @@ class _M3CharacterManagementPageState
     ref.read(characterManagementProvider.notifier).updateFilter(filter);
   }
 
-  void _handleToggleFavorite(String characterId) {
-    ref.read(characterManagementProvider.notifier).toggleFavorite(characterId);
+  Future<void> _handleToggleFavorite(String characterId) async {
+    await ref
+        .read(characterManagementProvider.notifier)
+        .toggleFavorite(characterId);
+    if (characterId ==
+        ref.read(characterManagementProvider).selectedCharacterId) {
+      ref.invalidate(characterDetailProvider(characterId));
+    }
   }
 
   void _toggleBatchMode() {
