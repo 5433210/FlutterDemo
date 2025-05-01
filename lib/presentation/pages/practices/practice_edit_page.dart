@@ -9,6 +9,7 @@ import '../../../application/providers/service_providers.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/practice/edit_toolbar.dart';
+import '../../widgets/practice/file_operations.dart';
 import '../../widgets/practice/page_operations.dart';
 import '../../widgets/practice/page_thumbnail_strip.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
@@ -18,19 +19,6 @@ import '../../widgets/practice/top_navigation_bar.dart';
 import 'handlers/keyboard_handler.dart';
 import 'widgets/content_tools_panel.dart';
 import 'widgets/practice_edit_canvas.dart';
-
-/// File operations helper class
-class FileOperations {
-  static Future<void> exportPractice(
-    BuildContext context,
-    List<dynamic> pages,
-    PracticeEditController controller,
-    String defaultFileName,
-  ) async {
-    // Export practice logic would go here
-    // This is a placeholder for the actual implementation
-  }
-}
 
 /// Main page for practice editing
 class PracticeEditPage extends ConsumerStatefulWidget {
