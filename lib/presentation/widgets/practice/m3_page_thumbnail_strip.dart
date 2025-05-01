@@ -2,8 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
+import '../../../l10n/app_localizations.dart';
 import 'page_operations.dart';
 
 /// Material 3 version of the page thumbnail strip
@@ -124,13 +124,13 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
       child: elements.isNotEmpty
           ? Center(
               child: Text(
-                l10n!.preview,
+                l10n.preview,
                 style: const TextStyle(fontSize: 10),
               ),
             )
           : Center(
               child: Text(
-                l10n!.empty,
+                l10n.empty,
                 style: const TextStyle(fontSize: 10),
               ),
             ),
@@ -219,7 +219,7 @@ class _M3PageThumbnailStripState extends State<M3PageThumbnailStrip> {
                       color: colorScheme.error,
                       onPressed: () => widget.onDeletePage(index),
                       splashRadius: 18,
-                      tooltip: l10n!.deletePage,
+                      tooltip: l10n.deletePage,
                     ),
                   ),
 

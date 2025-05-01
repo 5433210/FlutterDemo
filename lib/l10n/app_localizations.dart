@@ -134,6 +134,12 @@ abstract class AppLocalizations {
   /// **'Calligraphy Collection'**
   String get appName;
 
+  /// No description provided for @appTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calligraphy Collection'**
+  String get appTitle;
+
   /// No description provided for @backgroundColor.
   ///
   /// In en, this message translates to:
@@ -499,44 +505,209 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Writing Tool'**
   String get characterDetailWritingTool;
+
+  /// No description provided for @characterEditCompletingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Completing save...'**
   String get characterEditCompletingSave;
+
+  /// No description provided for @characterEditImageInvert.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Invert'**
   String get characterEditImageInvert;
+
+  /// No description provided for @characterEditImageLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Image loading error'**
   String get characterEditImageLoadError;
+
+  /// No description provided for @characterEditImageLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load or process character image'**
   String get characterEditImageLoadFailed;
+
+  /// No description provided for @characterEditInitializing.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing...'**
   String get characterEditInitializing;
-  // Character Edit Panel localization keys
+
+  /// No description provided for @characterEditInputCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Input Character'**
   String get characterEditInputCharacter;
+
+  /// No description provided for @characterEditInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type here'**
   String get characterEditInputHint;
+
+  /// No description provided for @characterEditInvertMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invert Mode'**
   String get characterEditInvertMode;
+
+  /// No description provided for @characterEditLoadingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading character image...'**
   String get characterEditLoadingImage;
+
+  /// No description provided for @characterEditNoRegionSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No region selected'**
   String get characterEditNoRegionSelected;
+
+  /// No description provided for @characterEditOnlyOneCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Only one character is allowed'**
   String get characterEditOnlyOneCharacter;
+
+  /// No description provided for @characterEditPanImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pan Image (hold Alt)'**
   String get characterEditPanImage;
+
+  /// No description provided for @characterEditPleaseEnterCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a character'**
   String get characterEditPleaseEnterCharacter;
+
+  /// No description provided for @characterEditPreparingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing to save...'**
   String get characterEditPreparingSave;
+
+  /// No description provided for @characterEditProcessingEraseData.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing erase data...'**
   String get characterEditProcessingEraseData;
 
+  /// No description provided for @characterEditProcessingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing image...'**
   String get characterEditProcessingImage;
+
+  /// No description provided for @characterEditRedo.
+  ///
+  /// In en, this message translates to:
+  /// **'Redo'**
   String get characterEditRedo;
+
+  /// No description provided for @characterEditSaveComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Save complete'**
   String get characterEditSaveComplete;
+
+  /// No description provided for @characterEditSaveConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Character'**
   String get characterEditSaveConfirmTitle;
+
+  /// No description provided for @characterEditSavePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Preview:'**
   String get characterEditSavePreview;
+
+  /// No description provided for @characterEditSaveShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Enter to save, Esc to cancel'**
   String get characterEditSaveShortcuts;
+
+  /// No description provided for @characterEditSaveTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Save timeout'**
   String get characterEditSaveTimeout;
+
+  /// No description provided for @characterEditSavingToStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving to storage...'**
   String get characterEditSavingToStorage;
 
+  /// No description provided for @characterEditShowContour.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Contour'**
   String get characterEditShowContour;
+
+  /// No description provided for @characterEditThumbnailCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to check thumbnail'**
   String get characterEditThumbnailCheckFailed;
+
+  /// No description provided for @characterEditThumbnailEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail file is empty'**
   String get characterEditThumbnailEmpty;
+
+  /// No description provided for @characterEditThumbnailLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load thumbnail'**
   String get characterEditThumbnailLoadError;
 
+  /// No description provided for @characterEditThumbnailLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load thumbnail'**
   String get characterEditThumbnailLoadFailed;
+
+  /// No description provided for @characterEditThumbnailNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail not found'**
   String get characterEditThumbnailNotFound;
+
+  /// No description provided for @characterEditThumbnailSizeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to get thumbnail size'**
   String get characterEditThumbnailSizeError;
+
+  /// No description provided for @characterEditUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
   String get characterEditUndo;
 
+  /// No description provided for @characterEditUnknownError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown error'**
   String get characterEditUnknownError;
+
+  /// No description provided for @characterEditValidChineseCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid Chinese character'**
   String get characterEditValidChineseCharacter;
+
+  /// No description provided for @characterFilterAddTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Tag'**
   String get characterFilterAddTag;
 
   /// No description provided for @characterFilterAddTagHint.
@@ -689,8 +860,6 @@ abstract class AppLocalizations {
   /// **'Characters'**
   String get characters;
 
-  String get clearImageCache;
-
   /// No description provided for @collectionPropertyPanel.
   ///
   /// In en, this message translates to:
@@ -721,10 +890,22 @@ abstract class AppLocalizations {
   /// **'Border Width'**
   String get collectionPropertyPanelBorderWidth;
 
+  /// No description provided for @collectionPropertyPanelCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Image cache cleared'**
   String get collectionPropertyPanelCacheCleared;
 
+  /// No description provided for @collectionPropertyPanelCacheClearFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear image cache'**
   String get collectionPropertyPanelCacheClearFailed;
 
+  /// No description provided for @collectionPropertyPanelCandidateCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Candidate Characters'**
   String get collectionPropertyPanelCandidateCharacters;
 
   /// No description provided for @collectionPropertyPanelCharacter.
@@ -733,6 +914,10 @@ abstract class AppLocalizations {
   /// **'Character'**
   String get collectionPropertyPanelCharacter;
 
+  /// No description provided for @collectionPropertyPanelCharacterSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Settings'**
   String get collectionPropertyPanelCharacterSettings;
 
   /// No description provided for @collectionPropertyPanelCharacterSource.
@@ -741,10 +926,22 @@ abstract class AppLocalizations {
   /// **'Character Source'**
   String get collectionPropertyPanelCharacterSource;
 
+  /// No description provided for @collectionPropertyPanelCharIndex.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Index'**
   String get collectionPropertyPanelCharIndex;
 
+  /// No description provided for @collectionPropertyPanelClearImageCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Image Cache'**
   String get collectionPropertyPanelClearImageCache;
 
+  /// No description provided for @collectionPropertyPanelColorInversion.
+  ///
+  /// In en, this message translates to:
+  /// **'Color Inversion'**
   String get collectionPropertyPanelColorInversion;
 
   /// No description provided for @collectionPropertyPanelContent.
@@ -753,8 +950,16 @@ abstract class AppLocalizations {
   /// **'Content Properties'**
   String get collectionPropertyPanelContent;
 
+  /// No description provided for @collectionPropertyPanelDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
   String get collectionPropertyPanelDisabled;
 
+  /// No description provided for @collectionPropertyPanelEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
   String get collectionPropertyPanelEnabled;
 
   /// No description provided for @collectionPropertyPanelFlip.
@@ -787,12 +992,28 @@ abstract class AppLocalizations {
   /// **'Geometry Properties'**
   String get collectionPropertyPanelGeometry;
 
+  /// No description provided for @collectionPropertyPanelHeaderContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
   String get collectionPropertyPanelHeaderContent;
 
+  /// No description provided for @collectionPropertyPanelHeaderGeometry.
+  ///
+  /// In en, this message translates to:
+  /// **'Geometry'**
   String get collectionPropertyPanelHeaderGeometry;
 
+  /// No description provided for @collectionPropertyPanelHeaderVisual.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual'**
   String get collectionPropertyPanelHeaderVisual;
 
+  /// No description provided for @collectionPropertyPanelInvertDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Invert Display'**
   String get collectionPropertyPanelInvertDisplay;
 
   /// No description provided for @collectionPropertyPanelNoCharacterSelected.
@@ -801,10 +1022,22 @@ abstract class AppLocalizations {
   /// **'No character selected'**
   String get collectionPropertyPanelNoCharacterSelected;
 
+  /// No description provided for @collectionPropertyPanelNoCharactersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching characters found'**
   String get collectionPropertyPanelNoCharactersFound;
 
+  /// No description provided for @collectionPropertyPanelNoCharacterText.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter text to see character options'**
   String get collectionPropertyPanelNoCharacterText;
 
+  /// No description provided for @collectionPropertyPanelOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of'**
   String get collectionPropertyPanelOf;
 
   /// No description provided for @collectionPropertyPanelOpacity.
@@ -824,6 +1057,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Padding'**
   String get collectionPropertyPanelPadding;
+
+  /// No description provided for @collectionPropertyPanelPropertyUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Property updated'**
+  String get collectionPropertyPanelPropertyUpdated;
 
   /// No description provided for @collectionPropertyPanelRender.
   ///
@@ -849,6 +1088,10 @@ abstract class AppLocalizations {
   /// **'Scale'**
   String get collectionPropertyPanelScale;
 
+  /// No description provided for @collectionPropertyPanelSearchInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching...'**
   String get collectionPropertyPanelSearchInProgress;
 
   /// No description provided for @collectionPropertyPanelSelectCharacter.
@@ -857,8 +1100,16 @@ abstract class AppLocalizations {
   /// **'Please select a character'**
   String get collectionPropertyPanelSelectCharacter;
 
+  /// No description provided for @collectionPropertyPanelSelectCharacterFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a candidate character first'**
   String get collectionPropertyPanelSelectCharacterFirst;
 
+  /// No description provided for @collectionPropertyPanelSelectedCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Character'**
   String get collectionPropertyPanelSelectedCharacter;
 
   /// No description provided for @collectionPropertyPanelStyle.
@@ -873,8 +1124,16 @@ abstract class AppLocalizations {
   /// **'Styled'**
   String get collectionPropertyPanelStyled;
 
+  /// No description provided for @collectionPropertyPanelTextSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Settings'**
   String get collectionPropertyPanelTextSettings;
 
+  /// No description provided for @collectionPropertyPanelUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
   String get collectionPropertyPanelUnknown;
 
   /// No description provided for @collectionPropertyPanelVisual.
@@ -906,8 +1165,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contains'**
   String get contains;
-
-  String get contentSettings;
 
   /// No description provided for @customSize.
   ///
@@ -1251,8 +1508,6 @@ abstract class AppLocalizations {
   /// **'General Settings'**
   String get generalSettings;
 
-  String get geometryProperties;
-
   /// No description provided for @gridSettings.
   ///
   /// In en, this message translates to:
@@ -1289,8 +1544,16 @@ abstract class AppLocalizations {
   /// **'Hide element'**
   String get hideElement;
 
+  /// No description provided for @imageCacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Image cache cleared'**
   String get imageCacheCleared;
 
+  /// No description provided for @imageCacheClearFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to clear image cache'**
   String get imageCacheClearFailed;
 
   /// No description provided for @imagePropertyPanel.
@@ -1299,6 +1562,10 @@ abstract class AppLocalizations {
   /// **'Image Properties'**
   String get imagePropertyPanel;
 
+  /// No description provided for @imagePropertyPanelApplyTransform.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Transform'**
   String get imagePropertyPanelApplyTransform;
 
   /// No description provided for @imagePropertyPanelBorder.
@@ -1325,8 +1592,16 @@ abstract class AppLocalizations {
   /// **'Brightness'**
   String get imagePropertyPanelBrightness;
 
+  /// No description provided for @imagePropertyPanelCannotApplyNoImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot apply transform: No image set'**
   String get imagePropertyPanelCannotApplyNoImage;
 
+  /// No description provided for @imagePropertyPanelCannotApplyNoSizeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot apply transform: Image size information unavailable'**
   String get imagePropertyPanelCannotApplyNoSizeInfo;
 
   /// No description provided for @imagePropertyPanelContent.
@@ -1347,16 +1622,34 @@ abstract class AppLocalizations {
   /// **'Corner Radius'**
   String get imagePropertyPanelCornerRadius;
 
+  /// No description provided for @imagePropertyPanelCropBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom Crop'**
   String get imagePropertyPanelCropBottom;
 
+  /// No description provided for @imagePropertyPanelCropLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left Crop'**
   String get imagePropertyPanelCropLeft;
 
-  String get imagePropertyPanelCroppingApplied;
-
+  /// No description provided for @imagePropertyPanelCroppingValueTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot apply transform: Cropping values too large, resulting in invalid crop area'**
   String get imagePropertyPanelCroppingValueTooLarge;
 
+  /// No description provided for @imagePropertyPanelCropRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right Crop'**
   String get imagePropertyPanelCropRight;
 
+  /// No description provided for @imagePropertyPanelCropTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top Crop'**
   String get imagePropertyPanelCropTop;
 
   /// No description provided for @imagePropertyPanelDimensions.
@@ -1370,8 +1663,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display Mode'**
   String get imagePropertyPanelDisplay;
-
-  String get imagePropertyPanelFileNotExist;
 
   /// No description provided for @imagePropertyPanelFilters.
   ///
@@ -1403,6 +1694,10 @@ abstract class AppLocalizations {
   /// **'Fill'**
   String get imagePropertyPanelFitFill;
 
+  /// No description provided for @imagePropertyPanelFitMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit Mode'**
   String get imagePropertyPanelFitMode;
 
   /// No description provided for @imagePropertyPanelFitNone.
@@ -1411,12 +1706,28 @@ abstract class AppLocalizations {
   /// **'None'**
   String get imagePropertyPanelFitNone;
 
+  /// No description provided for @imagePropertyPanelFitOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
   String get imagePropertyPanelFitOriginal;
 
+  /// No description provided for @imagePropertyPanelFlip.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip'**
   String get imagePropertyPanelFlip;
 
+  /// No description provided for @imagePropertyPanelFlipHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Flip'**
   String get imagePropertyPanelFlipHorizontal;
 
+  /// No description provided for @imagePropertyPanelFlipVertical.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Flip'**
   String get imagePropertyPanelFlipVertical;
 
   /// No description provided for @imagePropertyPanelGeometry.
@@ -1425,8 +1736,16 @@ abstract class AppLocalizations {
   /// **'Geometry Properties'**
   String get imagePropertyPanelGeometry;
 
+  /// No description provided for @imagePropertyPanelGeometryWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The following properties adjust the entire element frame, not the image content itself'**
   String get imagePropertyPanelGeometryWarning;
 
+  /// No description provided for @imagePropertyPanelImageSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Selection'**
   String get imagePropertyPanelImageSelection;
 
   /// No description provided for @imagePropertyPanelImageSize.
@@ -1435,10 +1754,16 @@ abstract class AppLocalizations {
   /// **'Image Size'**
   String get imagePropertyPanelImageSize;
 
+  /// No description provided for @imagePropertyPanelImageTransform.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Transform'**
   String get imagePropertyPanelImageTransform;
 
-  String get imagePropertyPanelLoadError;
-
+  /// No description provided for @imagePropertyPanelNoCropping.
+  ///
+  /// In en, this message translates to:
+  /// **' (no cropping, but other transforms applied)'**
   String get imagePropertyPanelNoCropping;
 
   /// No description provided for @imagePropertyPanelNoImage.
@@ -1447,6 +1772,10 @@ abstract class AppLocalizations {
   /// **'No image selected'**
   String get imagePropertyPanelNoImage;
 
+  /// No description provided for @imagePropertyPanelNoImageSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No image selected'**
   String get imagePropertyPanelNoImageSelected;
 
   /// No description provided for @imagePropertyPanelOpacity.
@@ -1473,11 +1802,17 @@ abstract class AppLocalizations {
   /// **'Preserve Aspect Ratio'**
   String get imagePropertyPanelPreserveRatio;
 
+  /// No description provided for @imagePropertyPanelPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Preview'**
   String get imagePropertyPanelPreview;
 
+  /// No description provided for @imagePropertyPanelPreviewNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Repeated logs in the console are normal and do not affect functionality'**
   String get imagePropertyPanelPreviewNotice;
-
-  String get imagePropertyPanelProcessingPathError;
 
   /// No description provided for @imagePropertyPanelReset.
   ///
@@ -1485,8 +1820,16 @@ abstract class AppLocalizations {
   /// **'Reset'**
   String get imagePropertyPanelReset;
 
+  /// No description provided for @imagePropertyPanelResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'All transformations have been reset'**
   String get imagePropertyPanelResetSuccess;
 
+  /// No description provided for @imagePropertyPanelResetTransform.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Transform'**
   String get imagePropertyPanelResetTransform;
 
   /// No description provided for @imagePropertyPanelRotation.
@@ -1501,12 +1844,22 @@ abstract class AppLocalizations {
   /// **'Saturation'**
   String get imagePropertyPanelSaturation;
 
+  /// No description provided for @imagePropertyPanelSelectFromLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Local'**
   String get imagePropertyPanelSelectFromLocal;
 
+  /// No description provided for @imagePropertyPanelTransformApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Transform applied to image'**
   String get imagePropertyPanelTransformApplied;
 
-  String get imagePropertyPanelTransformError;
-
+  /// No description provided for @imagePropertyPanelTransformWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The following transformations modify the image content itself, not the element frame'**
   String get imagePropertyPanelTransformWarning;
 
   /// No description provided for @imagePropertyPanelVisual.
@@ -1533,13 +1886,22 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get language;
 
-  /// Get the localized language name for English
+  /// No description provided for @languageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
   String get languageEn;
 
-  /// Get the localized language name for the system language
+  /// No description provided for @languageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
   String get languageSystem;
 
-  /// Get the localized language name for Chinese
+  /// No description provided for @languageZh.
+  ///
+  /// In en, this message translates to:
+  /// **'简体中文'**
   String get languageZh;
 
   /// No description provided for @layer.
@@ -1805,12 +2167,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Elements'**
   String get practiceEditElements;
-
-  /// No description provided for @practiceEditElementSelectionInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} elements selected'**
-  String get practiceEditElementSelectionInfo;
 
   /// No description provided for @practiceEditEnableSnap.
   ///
@@ -2175,7 +2531,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview'**
   String get preview;
-  String get previewText;
 
   /// No description provided for @print.
   ///
@@ -2200,8 +2555,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
-
-  String get selectCollection;
 
   /// No description provided for @selected.
   ///
@@ -2449,8 +2802,6 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeModeSystem;
 
-  String get toggleTestText;
-
   /// No description provided for @total.
   ///
   /// In en, this message translates to:
@@ -2493,14 +2844,16 @@ abstract class AppLocalizations {
   /// **'Visible'**
   String get visible;
 
-  String get visualSettings;
-
   /// No description provided for @width.
   ///
   /// In en, this message translates to:
   /// **'Width'**
   String get width;
 
+  /// No description provided for @workBrowseAddFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Favorites'**
   String get workBrowseAddFavorite;
 
   /// No description provided for @workBrowseBatchDone.
@@ -2574,6 +2927,11 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reload'**
   String get workBrowseReload;
+
+  /// No description provided for @workBrowseRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from Favorites'**
   String get workBrowseRemoveFavorite;
 
   /// No description provided for @workBrowseSearch.
@@ -2614,21 +2972,101 @@ abstract class AppLocalizations {
   String get workDetailUpdateTime;
   String get workDetailViewMore;
   String get workFormAuthor;
+
+  /// No description provided for @workFormAuthorHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, the creator of the work'**
   String get workFormAuthorHelp;
+
+  /// No description provided for @workFormAuthorHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter author name'**
   String get workFormAuthorHint;
+
+  /// No description provided for @workFormAuthorMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Author name cannot exceed 50 characters'**
   String get workFormAuthorMaxLength;
+
+  /// No description provided for @workFormAuthorTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Ctrl+A to quickly jump to the author field'**
   String get workFormAuthorTooltip;
+
+  /// No description provided for @workFormCreationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Creation Date'**
   String get workFormCreationDate;
+
+  /// No description provided for @workFormDateHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The completion date of the work'**
   String get workFormDateHelp;
+
+  /// No description provided for @workFormDateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Tab to navigate to the next field'**
   String get workFormDateTooltip;
+
+  /// No description provided for @workFormHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
   String get workFormHelp;
+
+  /// No description provided for @workFormNextField.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Field'**
   String get workFormNextField;
+
+  /// No description provided for @workFormPreviousField.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Field'**
   String get workFormPreviousField;
+
+  /// No description provided for @workFormRemark.
+  ///
+  /// In en, this message translates to:
+  /// **'Remark'**
   String get workFormRemark;
+
+  /// No description provided for @workFormRemarkHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, additional information about the work'**
   String get workFormRemarkHelp;
+
+  /// No description provided for @workFormRemarkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
   String get workFormRemarkHint;
+
+  /// No description provided for @workFormRemarkMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Remark cannot exceed 500 characters'**
   String get workFormRemarkMaxLength;
+
+  /// No description provided for @workFormRemarkTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Ctrl+R to quickly jump to the remark field'**
   String get workFormRemarkTooltip;
+
+  /// No description provided for @workFormRequiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'Required field'**
   String get workFormRequiredField;
 
   /// No description provided for @workFormSelectDate.
@@ -2648,22 +3086,83 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Style'**
   String get workFormStyle;
+
+  /// No description provided for @workFormStyleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The main style type of the work'**
   String get workFormStyleHelp;
+
+  /// No description provided for @workFormStyleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Tab to navigate to the next field'**
   String get workFormStyleTooltip;
-  // Work Form
+
+  /// No description provided for @workFormTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
   String get workFormTitle;
 
-  // Field help texts
+  /// No description provided for @workFormTitleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The main title of the work, displayed in the work list'**
   String get workFormTitleHelp;
+
+  /// No description provided for @workFormTitleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter title'**
   String get workFormTitleHint;
+
+  /// No description provided for @workFormTitleMaxLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Title cannot exceed 100 characters'**
   String get workFormTitleMaxLength;
+
+  /// No description provided for @workFormTitleMinLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Title must be at least 2 characters'**
   String get workFormTitleMinLength;
+
+  /// No description provided for @workFormTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Title is required'**
   String get workFormTitleRequired;
-  // Field tooltips
+
+  /// No description provided for @workFormTitleTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Ctrl+T to quickly jump to the title field'**
   String get workFormTitleTooltip;
+
+  /// No description provided for @workFormTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Tool'**
   String get workFormTool;
+
+  /// No description provided for @workFormToolHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'The main tool used to create this work'**
   String get workFormToolHelp;
+
+  /// No description provided for @workFormToolTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Press Tab to navigate to the next field'**
   String get workFormToolTooltip;
+
+  /// No description provided for @workImportDialogAddImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Images'**
   String get workImportDialogAddImages;
 
   /// No description provided for @workImportDialogCancel.
@@ -2731,9 +3230,11 @@ abstract class AppLocalizations {
   // Work Style localization
   String get workStyleRegular;
   String get workStyleRunning;
+
   String get workStyleSeal;
   // Work Tool localization
   String get workToolBrush;
+
   String get workToolHardPen;
 
   String get workToolOther;
@@ -2741,7 +3242,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionDeleteBatchConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Deletion of {count} Regions'**
+  /// **'Confirm to delete {count} saved regions?'**
   String characterCollectionDeleteBatchConfirm(Object count);
 
   /// No description provided for @characterCollectionDeleteBatchMessage.
@@ -2762,8 +3263,16 @@ abstract class AppLocalizations {
   /// **'Failed to find and switch page: {error}'**
   String characterCollectionFindSwitchFailed(Object error);
 
+  /// No description provided for @characterEditCharacterUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **' \"{character}\" updated'**
   String characterEditCharacterUpdated(Object character);
 
+  /// No description provided for @characterEditSaveConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm to save \"{character}\"?'**
   String characterEditSaveConfirmMessage(Object character);
 
   /// No description provided for @characterManagementError.
@@ -2775,14 +3284,51 @@ abstract class AppLocalizations {
   /// No description provided for @characterManagementItemsPerPage.
   ///
   /// In en, this message translates to:
-  /// **'{count} items/page'**
+  /// **'{count} per page'**
   String characterManagementItemsPerPage(Object count);
+
+  /// No description provided for @imagePropertyPanelCroppingApplied.
+  ///
+  /// In en, this message translates to:
+  /// **' (cropping: left {left}px, top {top}px, right {right}px, bottom {bottom}px)'**
+  String imagePropertyPanelCroppingApplied(
+      Object bottom, Object left, Object right, Object top);
+
+  /// No description provided for @imagePropertyPanelFileNotExist.
+  ///
+  /// In en, this message translates to:
+  /// **'File does not exist: {path}'**
+  String imagePropertyPanelFileNotExist(Object path);
+
+  /// No description provided for @imagePropertyPanelLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load image: {error}'**
+  String imagePropertyPanelLoadError(Object error);
+
+  /// No description provided for @imagePropertyPanelProcessingPathError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error processing file path: {error}'**
+  String imagePropertyPanelProcessingPathError(Object error);
+
+  /// No description provided for @imagePropertyPanelTransformError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to apply transform: {error}'**
+  String imagePropertyPanelTransformError(Object error);
 
   /// No description provided for @initializationFailed.
   ///
   /// In en, this message translates to:
   /// **'Initialization failed: {error}'**
   String initializationFailed(Object error);
+
+  /// No description provided for @practiceEditElementSelectionInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} elements selected'**
+  String practiceEditElementSelectionInfo(Object count);
 
   /// No description provided for @practiceEditLoadFailed.
   ///
@@ -2831,6 +3377,7 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import failed: {error}'**
   String workImportDialogError(Object error);
+
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }

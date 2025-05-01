@@ -895,8 +895,7 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(l10n.imagePropertyPanelLoadError
-                      .replaceAll('{error}', 'Failed to load image data')),
+                  content: Text(l10n.imagePropertyPanelLoadError('{error}')),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -909,8 +908,7 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(l10n.imagePropertyPanelLoadError
-                      .replaceAll('{error}', 'Failed to decode image')),
+                  content: Text(l10n.imagePropertyPanelLoadError('{error}')),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -936,11 +934,11 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
           if (noCropping) {
             message += l10n.imagePropertyPanelNoCropping;
           } else {
-            message += l10n.imagePropertyPanelCroppingApplied
-                .replaceAll('{left}', originalCropLeft.toInt().toString())
-                .replaceAll('{top}', originalCropTop.toInt().toString())
-                .replaceAll('{right}', originalCropRight.toInt().toString())
-                .replaceAll('{bottom}', originalCropBottom.toInt().toString());
+            message += l10n.imagePropertyPanelCroppingApplied(
+                originalCropLeft.toInt().toString(),
+                originalCropTop.toInt().toString(),
+                originalCropRight.toInt().toString(),
+                originalCropBottom.toInt().toString());
           }
 
           if (context.mounted) {
@@ -957,8 +955,8 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(l10n.imagePropertyPanelTransformError
-                    .replaceAll('{error}', e.toString())),
+                content:
+                    Text(l10n.imagePropertyPanelTransformError(e.toString())),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -1129,8 +1127,7 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
                 const Icon(Icons.error_outline, color: Colors.red, size: 40),
                 const SizedBox(height: 8),
                 Text(
-                  l10n.imagePropertyPanelFileNotExist
-                      .replaceAll('{path}', filePath),
+                  l10n.imagePropertyPanelFileNotExist(filePath),
                   style: const TextStyle(color: Colors.red),
                   textAlign: TextAlign.center,
                 ),
@@ -1200,9 +1197,9 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
                           color: Colors.red, size: 40),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.imagePropertyPanelLoadError.replaceAll(
-                            '{error}',
-                            error.toString().substring(
+                        l10n.imagePropertyPanelLoadError(error
+                            .toString()
+                            .substring(
                                 0, math.min(error.toString().length, 50))),
                         style: const TextStyle(color: Colors.red),
                         textAlign: TextAlign.center,
@@ -1222,8 +1219,7 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
               const Icon(Icons.error_outline, color: Colors.red, size: 40),
               const SizedBox(height: 8),
               Text(
-                l10n.imagePropertyPanelProcessingPathError
-                    .replaceAll('{error}', e.toString()),
+                l10n.imagePropertyPanelProcessingPathError(e.toString()),
                 style: const TextStyle(color: Colors.red),
                 textAlign: TextAlign.center,
               ),
@@ -1291,10 +1287,9 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
                         color: Colors.red, size: 40),
                     const SizedBox(height: 8),
                     Text(
-                      l10n.imagePropertyPanelLoadError.replaceAll(
-                          '{error}',
-                          error.toString().substring(
-                              0, math.min(error.toString().length, 50))),
+                      l10n.imagePropertyPanelLoadError(error
+                          .toString()
+                          .substring(0, math.min(error.toString().length, 50))),
                       style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center,
                     ),

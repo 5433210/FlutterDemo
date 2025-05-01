@@ -63,8 +63,7 @@ class M3PaginationControls extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.first_page),
-                onPressed:
-                    currentPage > 1 ? () => onPageChanged(1) : null,
+                onPressed: currentPage > 1 ? () => onPageChanged(1) : null,
                 tooltip: 'First Page',
               ),
               IconButton(
