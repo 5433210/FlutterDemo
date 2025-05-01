@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// The language options supported by the application
 enum AppLanguage {
   /// System language (follows device settings)
@@ -11,21 +13,22 @@ enum AppLanguage {
   /// English language
   en;
 
-  /// Get a friendly display name for the language
-  String get displayName {
-    return switch (this) {
-      AppLanguage.system => '跟随系统',
-      AppLanguage.zh => '简体中文',
-      AppLanguage.en => 'English',
-    };
-  }
-
   /// Get the icon for the language
   IconData get icon {
     return switch (this) {
       AppLanguage.system => Icons.language,
       AppLanguage.zh => Icons.language,
       AppLanguage.en => Icons.language,
+    };
+  }
+
+  /// Get a friendly display name for the language
+  String getDisplayName(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return switch (this) {
+      AppLanguage.system => l10n.languageSystem,
+      AppLanguage.zh => l10n.languageZh,
+      AppLanguage.en => l10n.languageEn,
     };
   }
 

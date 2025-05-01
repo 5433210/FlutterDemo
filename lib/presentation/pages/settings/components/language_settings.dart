@@ -17,7 +17,7 @@ class LanguageSettings extends ConsumerWidget {
 
     AppLogger.debug('LanguageSettings.build', tag: 'LanguageSettings', data: {
       'currentLanguage': settings.language.toString(),
-      'displayName': settings.language.displayName,
+      'displayName': settings.language.getDisplayName(context),
       'currentLocale': Localizations.localeOf(context).toString(),
     });
 
@@ -27,7 +27,7 @@ class LanguageSettings extends ConsumerWidget {
       children: [
         ListTile(
           title: Text(l10n.language),
-          subtitle: Text(settings.language.displayName),
+          subtitle: Text(settings.language.getDisplayName(context)),
           leading: Icon(settings.language.icon),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () => _showLanguageSelector(context, ref, settings.language),
@@ -56,7 +56,7 @@ class LanguageSettings extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: AppLanguage.values.map((language) {
             return RadioListTile<AppLanguage>(
-              title: Text(language.displayName),
+              title: Text(language.getDisplayName(context)),
               value: language,
               groupValue: currentLanguage,
               onChanged: (value) async {

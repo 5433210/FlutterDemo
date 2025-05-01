@@ -228,8 +228,7 @@ class _M3CharacterManagementPageState
                         value: size,
                         height: 36,
                         child: Text(
-                          l10n.characterManagementItemsPerPage
-                              .replaceAll('{count}', '$size'),
+                          l10n.characterManagementItemsPerPage('$size'),
                         ),
                       ))
                   .toList(),
@@ -240,8 +239,7 @@ class _M3CharacterManagementPageState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      l10n.characterManagementItemsPerPage
-                          .replaceAll('{count}', '${state.pageSize}'),
+                      l10n.characterManagementItemsPerPage('${state.pageSize}'),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface,
                       ),

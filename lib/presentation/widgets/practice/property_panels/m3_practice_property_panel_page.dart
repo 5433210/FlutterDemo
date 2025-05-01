@@ -1,0 +1,698 @@
+import 'package:flutter/material.dart';
+
+import '../../../../l10n/app_localizations.dart';
+import '../../common/color_palette_widget.dart';
+import '../practice_edit_controller.dart';
+
+/// Material 3 页面属性面板
+class M3PagePropertyPanel extends StatefulWidget {
+  final Map<String, dynamic>? page;
+  final Function(Map<String, dynamic>) onPagePropertiesChanged;
+  final PracticeEditController controller;
+
+  const M3PagePropertyPanel({
+    super.key,
+    required this.controller,
+    required this.page,
+    required this.onPagePropertiesChanged,
+  });
+
+  @override
+  State<M3PagePropertyPanel> createState() => _M3PagePropertyPanelState();
+}
+
+class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
+  // 宽度、高度和DPI输入控制器
+  late TextEditingController _widthController;
+  late TextEditingController _heightController;
+  late TextEditingController _dpiController;
+  late TextEditingController _backgroundColorController;
+  late FocusNode _widthFocusNode;
+  late FocusNode _heightFocusNode;
+  late FocusNode _dpiFocusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    if (widget.page == null) {
+      return Center(child: Text(l10n.noPageSelected));
+    }
+
+    final width = (widget.page!['width'] as num?)?.toDouble() ?? 595.0;
+    final height = (widget.page!['height'] as num?)?.toDouble() ?? 842.0;
+    final orientation = widget.page!['orientation'] as String? ?? 'portrait';
+    final dpi = (widget.page!['dpi'] as num?)?.toInt() ?? 300;
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            l10n.practiceEditPageProperties,
+            style: textTheme.titleLarge,
+          ),
+        ),
+
+        // 页面尺寸设置
+        _buildM3ExpansionTile(
+          context: context,
+          title: l10n.pageSize,
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 预设尺寸选择
+                  Text(
+                    l10n.presetSize,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  DropdownButtonFormField<String>(
+                    value: _getPageSizePreset(width, height),
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                    ),
+                    items: [
+                      DropdownMenuItem(
+                        value: 'A4',
+                        child: Text(l10n.a4Size),
+                      ),
+                      DropdownMenuItem(
+                        value: 'A5',
+                        child: Text(l10n.a5Size),
+                      ),
+                      DropdownMenuItem(
+                        value: 'custom',
+                        child: Text(l10n.customSize),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        _handlePageSizePresetChange(value, orientation);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 页面方向设置
+                  Text(
+                    l10n.pageOrientation,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text(l10n.portrait),
+                          value: 'portrait',
+                          groupValue: orientation,
+                          activeColor: colorScheme.primary,
+                          onChanged: (value) {
+                            if (value != null && value != orientation) {
+                              final Map<String, dynamic> updates = {
+                                'orientation': value
+                              };
+                              // 如果当前宽度大于高度，交换宽高
+                              if (width > height) {
+                                updates['width'] = height;
+                                updates['height'] = width;
+
+                                // 更新控制器的值
+                                _widthController.text = height.toString();
+                                _heightController.text = width.toString();
+                              }
+                              widget.onPagePropertiesChanged(updates);
+                            }
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: RadioListTile<String>(
+                          title: Text(l10n.landscape),
+                          value: 'landscape',
+                          groupValue: orientation,
+                          activeColor: colorScheme.primary,
+                          onChanged: (value) {
+                            if (value != null && value != orientation) {
+                              final Map<String, dynamic> updates = {
+                                'orientation': value
+                              };
+                              // 如果当前宽度小于高度，交换宽高
+                              if (width < height) {
+                                updates['width'] = height;
+                                updates['height'] = width;
+
+                                // 更新控制器的值
+                                _widthController.text = height.toString();
+                                _heightController.text = width.toString();
+                              }
+                              widget.onPagePropertiesChanged(updates);
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // 尺寸输入
+                  Text(
+                    l10n.dimensions,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.width,
+                            suffixText: 'mm',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: colorScheme.outline,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 12.0,
+                            ),
+                          ),
+                          controller: _widthController,
+                          focusNode: _widthFocusNode,
+                          keyboardType: TextInputType.number,
+                          onSubmitted: _updateWidth,
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            labelText: l10n.height,
+                            suffixText: 'mm',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: colorScheme.outline,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 12.0,
+                            ),
+                          ),
+                          controller: _heightController,
+                          focusNode: _heightFocusNode,
+                          keyboardType: TextInputType.number,
+                          onSubmitted: _updateHeight,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  // DPI设置
+                  Text(
+                    l10n.dpiSetting,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'DPI',
+                      helperText: l10n.dpiHelperText,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        borderSide: BorderSide(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                    ),
+                    controller: _dpiController,
+                    focusNode: _dpiFocusNode,
+                    keyboardType: TextInputType.number,
+                    onSubmitted: _updateDpi,
+                  ),
+                  const SizedBox(height: 8.0),
+
+                  // 像素尺寸显示
+                  Text(
+                    '${l10n.canvasPixelSize}: ${_calculatePixelSize(width, height, dpi)}',
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        // 背景颜色设置
+        _buildM3ExpansionTile(
+          context: context,
+          title: l10n.backgroundColor,
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ColorPaletteWidget(
+                    initialColor: _getBackgroundColor(),
+                    onColorChanged: _updateBackgroundColor,
+                    labelText: l10n.backgroundColor,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        // 网格设置
+        _buildM3ExpansionTile(
+          context: context,
+          title: l10n.gridSettings,
+          initiallyExpanded: true,
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 显示网格选项
+                  SwitchListTile(
+                    title: Text(l10n.showGrid),
+                    value: widget.controller.state.gridVisible,
+                    activeColor: colorScheme.primary,
+                    onChanged: (value) {
+                      // 更新页面属性
+                      widget.onPagePropertiesChanged({'gridVisible': value});
+                      // 同步更新控制器的网格显示状态
+                      widget.controller.state.gridVisible = value;
+                      // 不直接调用 notifyListeners，而是通过属性更新触发控制器的更新
+                      setState(() {});
+                    },
+                  ),
+                  const SizedBox(height: 8.0),
+
+                  // 网格大小设置
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.gridSize,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        Slider(
+                          value: widget.controller.state.gridSize,
+                          min: 5.0,
+                          max: 50.0,
+                          divisions: 9,
+                          label: widget.controller.state.gridSize
+                              .toStringAsFixed(0),
+                          activeColor: colorScheme.primary,
+                          inactiveColor: colorScheme.surfaceContainerHighest,
+                          thumbColor: colorScheme.primary,
+                          onChanged: (value) {
+                            setState(() {
+                              // 更新页面属性
+                              widget
+                                  .onPagePropertiesChanged({'gridSize': value});
+                              // 同步更新控制器的网格大小
+                              widget.controller.state.gridSize = value;
+                              // 不直接调用 notifyListeners，而是通过属性更新触发控制器的更新
+                            });
+                          },
+                        ),
+                        Text(
+                          '${widget.controller.state.gridSize.toStringAsFixed(0)} ${l10n.pixels}',
+                          style: textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  @override
+  void didUpdateWidget(M3PagePropertyPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当页面属性更新时，更新输入框的值
+    if (widget.page != null && oldWidget.page != widget.page) {
+      _widthController.text =
+          ((widget.page!['width'] as num?)?.toDouble() ?? 210.0).toString();
+      _heightController.text =
+          ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
+      _dpiController.text =
+          ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
+
+      // 更新背景颜色控制器 - 使用新格式
+      String backgroundColor = '#FFFFFF';
+      if (widget.page!.containsKey('background') &&
+          (widget.page!['background'] as Map<String, dynamic>)
+              .containsKey('value')) {
+        backgroundColor = (widget.page!['background']
+            as Map<String, dynamic>)['value'] as String;
+      }
+      _backgroundColorController.text = backgroundColor.startsWith('#')
+          ? backgroundColor.substring(1)
+          : backgroundColor;
+    }
+  }
+
+  @override
+  void dispose() {
+    // 移除焦点监听器
+    _widthFocusNode.removeListener(_handleWidthFocusChange);
+    _heightFocusNode.removeListener(_handleHeightFocusChange);
+    _dpiFocusNode.removeListener(_handleDpiFocusChange);
+
+    // 移除控制器监听器
+    widget.controller.removeListener(_handleControllerChange);
+
+    // 释放控制器
+    _widthController.dispose();
+    _heightController.dispose();
+    _dpiController.dispose();
+    _backgroundColorController.dispose();
+
+    // 释放焦点节点
+    _widthFocusNode.dispose();
+    _heightFocusNode.dispose();
+    _dpiFocusNode.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化控制器
+    _widthController = TextEditingController();
+    _heightController = TextEditingController();
+    _dpiController = TextEditingController();
+    _backgroundColorController = TextEditingController();
+
+    // 初始化焦点节点
+    _widthFocusNode = FocusNode();
+    _heightFocusNode = FocusNode();
+    _dpiFocusNode = FocusNode();
+
+    // 设置初始值
+    if (widget.page != null) {
+      _widthController.text =
+          ((widget.page!['width'] as num?)?.toDouble() ?? 210.0).toString();
+      _heightController.text =
+          ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
+      _dpiController.text =
+          ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
+
+      // 设置背景颜色初始值 - 使用新格式
+      String backgroundColor = '#FFFFFF';
+      if (widget.page!.containsKey('background') &&
+          (widget.page!['background'] as Map<String, dynamic>)
+              .containsKey('value')) {
+        backgroundColor = (widget.page!['background']
+            as Map<String, dynamic>)['value'] as String;
+      }
+      _backgroundColorController.text = backgroundColor.startsWith('#')
+          ? backgroundColor.substring(1)
+          : backgroundColor;
+    }
+
+    // 添加焦点监听器
+    _widthFocusNode.addListener(_handleWidthFocusChange);
+    _heightFocusNode.addListener(_handleHeightFocusChange);
+    _dpiFocusNode.addListener(_handleDpiFocusChange);
+
+    // 监听控制器状态变化，用于同步网格状态
+    widget.controller.addListener(_handleControllerChange);
+  }
+
+  /// 构建Material 3风格的ExpansionTile
+  Widget _buildM3ExpansionTile({
+    required BuildContext context,
+    required String title,
+    List<Widget> children = const <Widget>[],
+    bool initiallyExpanded = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          title: Text(
+            title,
+            style: textTheme.titleMedium?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+          ),
+          initiallyExpanded: initiallyExpanded,
+          collapsedIconColor: colorScheme.onSurfaceVariant,
+          iconColor: colorScheme.primary,
+          backgroundColor: colorScheme.surfaceContainerLow,
+          collapsedBackgroundColor: colorScheme.surfaceContainerLow,
+          childrenPadding: EdgeInsets.zero,
+          children: children,
+        ),
+      ),
+    );
+  }
+
+  /// 计算像素尺寸
+  String _calculatePixelSize(double width, double height, int dpi) {
+    // 毫米转英寸，1英寸 = 25.4毫米
+    final widthInches = width / 25.4;
+    final heightInches = height / 25.4;
+
+    // 计算像素尺寸
+    final widthPixels = (widthInches * dpi).round();
+    final heightPixels = (heightInches * dpi).round();
+
+    return '$widthPixels × $heightPixels ${AppLocalizations.of(context).pixels}';
+  }
+
+  /// 获取背景颜色
+  Color _getBackgroundColor() {
+    if (widget.page == null) return Colors.white;
+
+    // 使用新格式
+    if (widget.page!.containsKey('background') &&
+        (widget.page!['background'] as Map<String, dynamic>)
+            .containsKey('value')) {
+      final colorStr = (widget.page!['background']
+          as Map<String, dynamic>)['value'] as String;
+      return Color(int.parse(colorStr.substring(1), radix: 16) | 0xFF000000);
+    }
+
+    // 默认白色
+    return Colors.white;
+  }
+
+  /// 获取页面尺寸预设
+  String _getPageSizePreset(double width, double height) {
+    double portraitWidth = width;
+    double portraitHeight = height;
+
+    // 确保比较时使用纵向尺寸
+    if (width > height) {
+      portraitWidth = height;
+      portraitHeight = width;
+    }
+
+    // 使用毫米单位进行比较
+    if ((portraitWidth - 210.0).abs() < 1 &&
+        (portraitHeight - 297.0).abs() < 1) {
+      return 'A4';
+    } else if ((portraitWidth - 148.0).abs() < 1 &&
+        (portraitHeight - 210.0).abs() < 1) {
+      return 'A5';
+    } else {
+      return 'custom';
+    }
+  }
+
+  // 处理控制器状态变化
+  void _handleControllerChange() {
+    // 只在控制器的网格状态变化时重建UI
+    setState(() {});
+  }
+
+  /// 处理DPI焦点变化
+  void _handleDpiFocusChange() {
+    if (!_dpiFocusNode.hasFocus) {
+      _updateDpi(_dpiController.text);
+    }
+  }
+
+  /// 处理高度焦点变化
+  void _handleHeightFocusChange() {
+    if (!_heightFocusNode.hasFocus) {
+      _updateHeight(_heightController.text);
+    }
+  }
+
+  /// 处理页面尺寸预设变更
+  void _handlePageSizePresetChange(String preset, String orientation) {
+    double width, height;
+
+    switch (preset) {
+      case 'A4':
+        width = 210.0; // A4 width in mm
+        height = 297.0; // A4 height in mm
+        break;
+      case 'A5':
+        width = 148.0; // A5 width in mm
+        height = 210.0; // A5 height in mm
+        break;
+      case 'custom':
+        // 不做任何操作，让用户自行输入
+        return;
+      default:
+        return;
+    }
+
+    // 根据方向调整宽高
+    if (orientation == 'landscape') {
+      // 横向时交换宽高
+      final temp = width;
+      width = height;
+      height = temp;
+    }
+
+    // 更新控制器的值
+    _widthController.text = width.toString();
+    _heightController.text = height.toString();
+
+    // 一次性更新所有属性
+    widget.onPagePropertiesChanged({
+      'width': width,
+      'height': height,
+    });
+  }
+
+  /// 处理宽度焦点变化
+  void _handleWidthFocusChange() {
+    if (!_widthFocusNode.hasFocus) {
+      _updateWidth(_widthController.text);
+    }
+  }
+
+  /// 更新背景颜色
+  void _updateBackgroundColor(Color color) {
+    // 转换为十六进制字符串
+    final r = color.r.toInt().toRadixString(16).padLeft(2, '0');
+    final g = color.g.toInt().toRadixString(16).padLeft(2, '0');
+    final b = color.b.toInt().toRadixString(16).padLeft(2, '0');
+    final colorHex = '#$r$g$b';
+
+    // 使用新格式
+    final background = {
+      'type': 'color',
+      'value': colorHex,
+    };
+
+    widget.onPagePropertiesChanged({'background': background});
+  }
+
+  /// 更新DPI
+  void _updateDpi(String value) {
+    final newValue = int.tryParse(value);
+    if (newValue != null && newValue > 0) {
+      widget.onPagePropertiesChanged({'dpi': newValue});
+    } else {
+      // 如果输入无效，恢复原来的值
+      if (widget.page != null) {
+        _dpiController.text =
+            ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
+      }
+    }
+  }
+
+  // 更新高度（毫米）
+  void _updateHeight(String value) {
+    final newValue = double.tryParse(value);
+    if (newValue != null && newValue > 0) {
+      // 直接传递毫米值，不需要转换
+      // 实际的像素转换将在渲染时进行
+      widget.onPagePropertiesChanged({'height': newValue});
+    } else {
+      // 如果输入无效，恢复原来的值
+      if (widget.page != null) {
+        _heightController.text =
+            ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
+      }
+    }
+  }
+
+  // 更新宽度（毫米）
+  void _updateWidth(String value) {
+    final newValue = double.tryParse(value);
+    if (newValue != null && newValue > 0) {
+      // 直接传递毫米值，不需要转换
+      // 实际的像素转换将在渲染时进行
+      widget.onPagePropertiesChanged({'width': newValue});
+    } else {
+      // 如果输入无效，恢复原来的值
+      if (widget.page != null) {
+        _widthController.text =
+            ((widget.page!['width'] as num?)?.toDouble() ?? 210.0).toString();
+      }
+    }
+  }
+}

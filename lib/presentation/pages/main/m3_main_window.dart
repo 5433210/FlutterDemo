@@ -1,4 +1,3 @@
-import 'package:demo/presentation/pages/practices/practice_edit_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +10,7 @@ import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
+import '../practices/m3_practice_edit_page.dart';
 import '../practices/m3_practice_list_page.dart';
 
 class M3MainWindow extends StatefulWidget {
@@ -151,8 +151,8 @@ class _M3MainWindowState extends State<M3MainWindow>
               }
 
               return MaterialPageRoute<bool>(
-                builder: (context) => PracticeEditPage(
-                  practiceId: practiceId,
+                builder: (context) => M3PracticeEditPage(
+                  practiceId: practiceId.isNotEmpty ? practiceId : null,
                 ),
               );
             }

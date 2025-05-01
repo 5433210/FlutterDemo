@@ -86,8 +86,7 @@ class M3CharacterListView extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              l10n.characterManagementError
-                  .replaceAll('{message}', errorMessage!),
+              l10n.characterManagementError(errorMessage!),
               style: TextStyle(color: theme.colorScheme.error),
             ),
           ],

@@ -45,6 +45,14 @@ class ElementUtils {
     return null;
   }
 
+  static Color parseColor(String hexColor) {
+    hexColor = hexColor.toUpperCase().replaceAll('#', '');
+    if (hexColor.length == 6) {
+      hexColor = 'FF$hexColor'; // Add alpha if not provided
+    }
+    return Color(int.parse(hexColor, radix: 16));
+  }
+
   /// Sort elements by layer order
   static List<Map<String, dynamic>> sortElementsByLayerOrder(
       List<Map<String, dynamic>> elements, List<dynamic> layers) {

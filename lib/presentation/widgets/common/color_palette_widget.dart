@@ -17,6 +17,12 @@ class ColorPaletteWidget extends StatefulWidget {
   /// 是否显示透明度滑块
   final bool enableAlpha;
 
+  /// 是否显示文本输入框
+  final bool showTextField;
+
+  /// 外部提供的文本编辑控制器
+  final TextEditingController? textEditingController;
+
   /// 构造函数
   const ColorPaletteWidget({
     Key? key,
@@ -24,6 +30,8 @@ class ColorPaletteWidget extends StatefulWidget {
     required this.onColorChanged,
     this.labelText = '颜色',
     this.enableAlpha = false,
+    this.showTextField = true,
+    this.textEditingController,
   }) : super(key: key);
 
   @override
@@ -123,8 +131,18 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
   void initState() {
     super.initState();
     _currentColor = widget.initialColor;
-    _colorCodeController =
-        TextEditingController(text: _colorToHex(_currentColor));
+
+    // 使用外部提供的控制器或创建新的控制器
+    if (widget.textEditingController != null) {
+      _colorCodeController = widget.textEditingController!;
+      // 确保控制器有正确的初始值
+      if (_colorCodeController.text.isEmpty) {
+        _colorCodeController.text = _colorToHex(_currentColor);
+      }
+    } else {
+      _colorCodeController =
+          TextEditingController(text: _colorToHex(_currentColor));
+    }
 
     // 监听焦点变化，当失去焦点时应用颜色
     _focusNode.addListener(_onFocusChange);

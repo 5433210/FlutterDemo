@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:demo/presentation/pages/characters/character_management_page.dart';
 import 'package:demo/presentation/pages/characters/m3_character_management_page.dart';
+import 'package:demo/presentation/pages/practices/m3_practice_edit_page.dart';
 import 'package:demo/presentation/pages/practices/m3_practice_list_page.dart';
 import 'package:demo/presentation/pages/works/character_collection_page.dart';
 import 'package:demo/presentation/pages/works/m3_character_collection_page.dart';
@@ -190,9 +191,13 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.practiceEdit:
         return MaterialPageRoute(
-          builder: (context) => PracticeEditPage(
-            practiceId: args as String?,
-          ),
+          builder: (context) => useMaterial3
+              ? M3PracticeEditPage(
+                  practiceId: args as String?,
+                )
+              : PracticeEditPage(
+                  practiceId: args as String?,
+                ),
         );
 
       case AppRoutes.settings:
