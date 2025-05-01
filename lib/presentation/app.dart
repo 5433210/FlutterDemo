@@ -26,7 +26,7 @@ import '../presentation/providers/settings_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/initialization/initialization_screen.dart';
-import 'pages/practices/practice_edit_page_refactored.dart';
+import 'pages/practices/practice_edit_page.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
@@ -190,7 +190,7 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.practiceEdit:
         return MaterialPageRoute(
-          builder: (context) => PracticeEditPageRefactored(
+          builder: (context) => PracticeEditPage(
             practiceId: args as String?,
           ),
         );

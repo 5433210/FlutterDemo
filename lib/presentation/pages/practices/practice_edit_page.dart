@@ -1,38 +1,38 @@
-import 'dart:ui' as ui;
+import 'dart:math';
 
-import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show
-        KeyEvent,
-        KeyDownEvent,
-        KeyUpEvent,
-        LogicalKeyboardKey,
-        HardwareKeyboard;
-import 'package:flutter_riverpod/flutter_riverpod.dart'
-    show ConsumerState, ConsumerStatefulWidget;
-import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
-import '../../../infrastructure/providers/storage_providers.dart';
-import '../../dialogs/practice_title_edit_dialog.dart';
 import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/practice/collection_element_renderer.dart';
-import '../../widgets/practice/control_handlers.dart';
+import '../../widgets/page_layout.dart';
 import '../../widgets/practice/edit_toolbar.dart';
-import '../../widgets/practice/element_operations.dart';
-import '../../widgets/practice/element_renderers.dart';
-import '../../widgets/practice/file_operations.dart';
-import '../../widgets/practice/grid_painter.dart';
 import '../../widgets/practice/page_operations.dart';
 import '../../widgets/practice/page_thumbnail_strip.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
 import '../../widgets/practice/practice_layer_panel.dart';
 import '../../widgets/practice/practice_property_panel.dart';
 import '../../widgets/practice/top_navigation_bar.dart';
+import 'handlers/keyboard_handler.dart';
+import 'widgets/content_tools_panel.dart';
+import 'widgets/practice_edit_canvas.dart';
 
-/// 字帖编辑页面
+/// File operations helper class
+class FileOperations {
+  static Future<void> exportPractice(
+    BuildContext context,
+    List<dynamic> pages,
+    PracticeEditController controller,
+    String defaultFileName,
+  ) async {
+    // Export practice logic would go here
+    // This is a placeholder for the actual implementation
+  }
+}
+
+/// Main page for practice editing
 class PracticeEditPage extends ConsumerStatefulWidget {
   final String? practiceId;
 
@@ -42,41 +42,49 @@ class PracticeEditPage extends ConsumerStatefulWidget {
   ConsumerState<PracticeEditPage> createState() => _PracticeEditPageState();
 }
 
+/// Dialog for editing practice title
+class PracticeTitleEditDialog extends StatefulWidget {
+  final String? initialTitle;
+  final Future<bool> Function(String) checkTitleExists;
+
+  const PracticeTitleEditDialog({
+    Key? key,
+    required this.initialTitle,
+    required this.checkTitleExists,
+  }) : super(key: key);
+
+  @override
+  State<PracticeTitleEditDialog> createState() =>
+      _PracticeTitleEditDialogState();
+}
+
 class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
-  // 控制器
+  // Controller
   late final PracticeEditController _controller;
 
-  // 当前工具
+  // Current tool
   String _currentTool = 'select';
 
-  // 剪贴板
+  // Clipboard
   Map<String, dynamic>? _clipboardElement;
 
-  // 预览模式
+  // Preview mode
   bool _isPreviewMode = false;
 
-  // 拖拽状态
-  bool _isDragging = false;
-  Offset _dragStart = Offset.zero;
-  Offset _elementStartPosition = Offset.zero;
-  final Map<String, Offset> _elementStartPositions = {};
-
-  // 添加一个 GlobalKey 用于截图
+  // Add a GlobalKey for screenshots
   final GlobalKey canvasKey = GlobalKey();
 
-  // 键盘状态
-  bool _isCtrlPressed = false;
-  bool _isShiftPressed = false;
-  String _lastKeyPressed = ''; // 用于跟踪组合键状态
-
-  // 键盘监听器
+  // Keyboard focus node
   late FocusNode _focusNode;
 
-  // 缩放控制器
+  // Zoom controller
   late TransformationController _transformationController;
 
-  // 控制页面缩略图显示状态
-  bool _showThumbnails = false; // 现在是一个状态变量，而不是getter
+  // Control page thumbnails display state
+  bool _showThumbnails = false;
+
+  // Keyboard handler
+  late KeyboardHandler _keyboardHandler;
 
   @override
   Widget build(BuildContext context) {
@@ -92,14 +100,15 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               isPreviewMode: _isPreviewMode,
               onTogglePreviewMode: () {
                 setState(() {
-                  _isPreviewMode = !_isPreviewMode; // 切换预览模式
-                  _controller.togglePreviewMode(_isPreviewMode); // 通知控制器
+                  _isPreviewMode = !_isPreviewMode; // Toggle preview mode
+                  _controller
+                      .togglePreviewMode(_isPreviewMode); // Notify controller
                 });
               },
               showThumbnails: _showThumbnails,
               onThumbnailToggle: (bool value) {
                 setState(() {
-                  _showThumbnails = value; // 更新缩略图显示状态
+                  _showThumbnails = value; // Update thumbnails display state
                 });
               },
             );
@@ -114,8 +123,8 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // 在didChangeDependencies中加载字帖，而不是在initState中
-    // 这样可以安全地使用context
+    // Load practice in didChangeDependencies instead of initState
+    // This way we can safely use context
     if (widget.practiceId != null) {
       _loadPractice(widget.practiceId!);
     }
@@ -123,14 +132,14 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
   @override
   void dispose() {
-    // 清空撤销/重做栈
+    // Clear undo/redo stack
     _controller.clearUndoRedoHistory();
 
-    // 移除键盘监听
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    // Remove keyboard listeners
+    HardwareKeyboard.instance.removeHandler(_keyboardHandler.handleKeyEvent);
     _focusNode.dispose();
 
-    // 释放缩放控制器
+    // Release zoom controller
     _transformationController.dispose();
 
     _controller.dispose();
@@ -144,27 +153,93 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final practiceService = ref.read(practiceServiceProvider);
     _controller = PracticeEditController(practiceService);
 
-    // 将 canvasKey 传递给控制器
+    // Pass canvasKey to controller
     _controller.setCanvasKey(canvasKey);
 
-    // 设置预览模式回调函数
+    // Set preview mode callback
     _controller.setPreviewModeCallback((isPreview) {
       setState(() {
         _isPreviewMode = isPreview;
       });
     });
 
-    // 初始化键盘监听器
+    // Initialize keyboard focus node
     _focusNode = FocusNode();
 
-    // 初始化缩放控制器
+    // Initialize zoom controller
     _transformationController = TransformationController();
+    debugPrint(
+        '【平移】PracticeEditPageRefactored.initState: 初始化 transformationController=$_transformationController, 值=${_transformationController.value}');
 
-    // 添加键盘监听
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+    // Initialize keyboard handler
+    _keyboardHandler = KeyboardHandler(
+      controller: _controller,
+      onTogglePreviewMode: () {
+        setState(() {
+          _isPreviewMode = !_isPreviewMode;
+          _controller.togglePreviewMode(_isPreviewMode);
+        });
+      },
+      onToggleThumbnails: () {
+        setState(() {
+          _showThumbnails = !_showThumbnails;
+        });
+      },
+      editTitle: _editTitle,
+      savePractice: _savePractice,
+      saveAsNewPractice: _saveAsNewPractice,
+      selectAllElements: _selectAllElements,
+      copySelectedElement: _copySelectedElement,
+      pasteElement: _pasteElement,
+      deleteSelectedElements: _deleteSelectedElements,
+      groupSelectedElements: _groupSelectedElements,
+      ungroupElements: _ungroupElements,
+      bringToFront: _bringElementToFront,
+      sendToBack: _sendElementToBack,
+      moveElementUp: _moveElementUp,
+      moveElementDown: _moveElementDown,
+      toggleGrid: _toggleGrid,
+      toggleSnap: _toggleSnap,
+      toggleSelectedElementsVisibility: _toggleSelectedElementsVisibility,
+      toggleSelectedElementsLock: _toggleSelectedElementsLock,
+      showExportDialog: _showExportDialog,
+      moveSelectedElements: _moveSelectedElements,
+    );
+
+    // Add keyboard listener
+    HardwareKeyboard.instance.addHandler(_keyboardHandler.handleKeyEvent);
   }
 
-  /// 将元素置于顶层
+  /// Add a new page
+  void _addNewPage() {
+    setState(() {
+      // 使用 PageOperations 创建新页面
+      final newPage = PageOperations.addPage(_controller.state.pages, null);
+
+      // 添加默认图层
+      if (!newPage.containsKey('layers')) {
+        newPage['layers'] = [
+          {
+            'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
+            'name': '默认图层',
+            'isVisible': true,
+            'isLocked': false,
+          }
+        ];
+      }
+
+      // 添加到页面列表
+      _controller.state.pages.add(newPage);
+
+      // 切换到新页面
+      _controller.state.currentPageIndex = _controller.state.pages.length - 1;
+
+      // 标记有未保存的更改
+      _controller.state.hasUnsavedChanges = true;
+    });
+  }
+
+  /// Bring element to front
   void _bringElementToFront() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
@@ -173,12 +248,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index >= 0 && index < elements.length - 1) {
-      // 移除元素
+      // Remove element
       final element = elements.removeAt(index);
-      // 添加到末尾（最顶层）
+      // Add to end (top layer)
       elements.add(element);
 
-      // 更新当前页面的元素
+      // Update current page elements
       _controller.state.pages[_controller.state.currentPageIndex]['elements'] =
           elements;
       _controller.state.hasUnsavedChanges = true;
@@ -187,46 +262,43 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
+  /// Build the body of the page
   Widget _buildBody(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return Row(
           children: [
-            // 左侧面板
+            // Left panel
             if (!_isPreviewMode) _buildLeftPanel(),
 
-            // 中央编辑区
+            // Central edit area
             Expanded(
               child: Column(
                 children: [
-                  // 工具栏
+                  // Toolbar
                   if (!_isPreviewMode) _buildEditToolbar(),
 
-                  // 编辑画布
-                  Expanded(child: _buildEditCanvas()),
-
-                  // 页面缩略图栏
-                  if (_showThumbnails && !_isPreviewMode)
-                    SizedBox(
-                      height: 120,
-                      child: PageThumbnailStrip(
-                        pages: _controller.state.pages,
-                        currentPageIndex: _controller.state.currentPageIndex,
-                        onPageSelected: (index) =>
-                            _controller.setCurrentPage(index),
-                        onAddPage: _controller.addNewPage,
-                        onDeletePage: _controller.deletePage,
-                        onReorderPages: (oldIndex, newIndex) {
-                          _controller.reorderPages(oldIndex, newIndex);
-                        },
+                  // Edit canvas - 使用ProviderScope包装，确保可以访问ref
+                  Expanded(
+                    child: ProviderScope(
+                      child: PracticeEditCanvas(
+                        controller: _controller,
+                        isPreviewMode: _isPreviewMode,
+                        canvasKey: canvasKey,
+                        transformationController: _transformationController,
                       ),
                     ),
+                  ),
+
+                  // Page thumbnails
+                  if (_showThumbnails && !_isPreviewMode)
+                    _buildPageThumbnails(),
                 ],
               ),
             ),
 
-            // 右侧属性面板
+            // Right properties panel
             if (!_isPreviewMode) _buildRightPanel(),
           ],
         );
@@ -234,1173 +306,27 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     );
   }
 
-  /// 构建内容控件区
-  Widget _buildContentToolPanel() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              '内容控件',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
-            children: [
-              _buildDraggableToolButton(
-                icon: Icons.title,
-                label: '文本',
-                toolName: 'text',
-                elementType: 'text',
-              ),
-              _buildDraggableToolButton(
-                icon: Icons.image,
-                label: '图片',
-                toolName: 'image',
-                elementType: 'image',
-              ),
-              _buildDraggableToolButton(
-                icon: Icons.format_shapes,
-                label: '集字',
-                toolName: 'collection',
-                elementType: 'collection',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 构建控制点手势检测器
-  Widget _buildControlPointDetector(
-    String elementId,
-    int controlPointIndex,
-    Offset position,
-    Size size, {
-    bool isRotation = false,
-  }) {
-    // 根据控制点类型选择光标
-    MouseCursor cursor;
-    if (isRotation) {
-      cursor = SystemMouseCursors.grab;
-    } else {
-      switch (controlPointIndex) {
-        case 0: // 左上角
-        case 4: // 右下角
-          cursor = SystemMouseCursors.resizeUpLeft;
-          break;
-        case 2: // 右上角
-        case 6: // 左下角
-          cursor = SystemMouseCursors.resizeUpRight;
-          break;
-        case 1: // 上中
-        case 5: // 下中
-          cursor = SystemMouseCursors.resizeUpDown;
-          break;
-        case 3: // 右中
-        case 7: // 左中
-          cursor = SystemMouseCursors.resizeLeftRight;
-          break;
-        default:
-          cursor = SystemMouseCursors.basic;
-      }
-    }
-
-    return Container(
-      width: size.width,
-      height: size.height,
-      decoration: BoxDecoration(
-        color: isRotation
-            ? Colors.blue // 旋转控制点使用蓝色
-            : Colors.white, // 其他控制点使用白色
-        border: Border.all(
-          color: isRotation ? Colors.white : Colors.blue,
-          width: isRotation ? 1 : 1,
-        ),
-        shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
-        boxShadow: isRotation
-            ? [
-                BoxShadow(
-                  color: Colors.black.withAlpha(76), // 0.3 的不透明度
-                  spreadRadius: 1,
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : null,
-      ),
-      child: MouseRegion(
-        cursor: cursor,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque, // 确保手势检测器完全捕获所有事件
-          // 添加点击事件处理，阻止事件冒泡
-          onTap: () {
-            // 阻止点击事件传递到元素上
-            debugPrint('Control point $controlPointIndex tapped at $position');
-          },
-          onPanStart: (details) {
-            // 阻止事件冒泡
-            // 使用 setState 来标记正在拖动，这将禁用 InteractiveViewer 的平移
-            debugPrint('\n=== 开始操作控制点 $controlPointIndex (元素 $elementId) ===');
-            debugPrint('控制点类型: ${isRotation ? "旋转控制点" : "大小调整控制点"}');
-            debugPrint('开始位置: ${details.localPosition}');
-
-            setState(() {
-              _isDragging = true;
-              _dragStart = details.localPosition;
-
-              // 如果是旋转控制点，记录元素中心点
-              if (isRotation) {
-                final element = _controller.state.currentPageElements
-                    .firstWhere((e) => e['id'] == elementId);
-                final x = (element['x'] as num).toDouble();
-                final y = (element['y'] as num).toDouble();
-                final width = (element['width'] as num).toDouble();
-                final height = (element['height'] as num).toDouble();
-
-                // 计算元素中心点
-                _elementStartPosition = Offset(x + width / 2, y + height / 2);
-              }
-            });
-
-            // 添加防止事件冒泡的处理
-            details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
-          },
-          onPanUpdate: (details) {
-            // 阻止事件冒泡
-            // 已经在 InteractiveViewer 中禁用了平移
-
-            // 打印控制点更新操作的日志
-            debugPrint('控制点 $controlPointIndex 移动: ${details.delta}');
-
-            if (isRotation) {
-              // 旋转控制点的处理
-              final element = _controller.state.currentPageElements
-                  .firstWhere((e) => e['id'] == elementId);
-              final currentRotation = (element['rotation'] as num).toDouble();
-
-              // 计算旋转角度
-              final center = _elementStartPosition;
-              final startPoint = details.globalPosition - details.delta;
-              final currentPoint = details.globalPosition;
-
-              final deltaAngle = ControlHandlers.calculateRotation(
-                center,
-                startPoint,
-                currentPoint,
-              );
-
-              // 更新旋转角度
-              final newRotation = (currentRotation + deltaAngle) % 360;
-              _controller.updateElementProperty(
-                  elementId, 'rotation', newRotation);
-            } else {
-              // 大小调整控制点的处理
-              final element = _controller.state.currentPageElements
-                  .firstWhere((e) => e['id'] == elementId);
-
-              // 计算新的几何属性
-              final currentGeometry = {
-                'x': (element['x'] as num).toDouble(),
-                'y': (element['y'] as num).toDouble(),
-                'width': (element['width'] as num).toDouble(),
-                'height': (element['height'] as num).toDouble(),
-              };
-
-              final newGeometry = ControlHandlers.calculateNewGeometry(
-                currentGeometry,
-                controlPointIndex,
-                details.delta,
-              );
-
-              // 更新元素属性
-              if (newGeometry.isNotEmpty) {
-                // 确保宽高不为负数
-                if (newGeometry.containsKey('width') &&
-                    (newGeometry['width'] as double) <= 10) {
-                  newGeometry['width'] = 10.0;
-                }
-                if (newGeometry.containsKey('height') &&
-                    (newGeometry['height'] as double) <= 10) {
-                  newGeometry['height'] = 10.0;
-                }
-
-                _controller.updateElementPropertiesDuringDrag(
-                    elementId, newGeometry);
-              }
-            }
-
-            // 添加防止事件冒泡的处理
-            details.sourceTimeStamp; // 访问属性以避免未使用的变量警告
-          },
-          onPanEnd: (details) {
-            // 打印控制点操作结束的日志
-            debugPrint('\n=== 结束操作控制点 $controlPointIndex (元素 $elementId) ===');
-
-            // 获取元素的当前状态
-            final element = _controller.state.currentPageElements
-                .firstWhere((e) => e['id'] == elementId);
-
-            if (isRotation) {
-              final rotation = (element['rotation'] as num).toDouble();
-              debugPrint('旋转后的角度: $rotation度');
-
-              // 旋转结束时应用吸附
-              _controller.updateElementProperty(
-                  elementId, 'rotation', rotation);
-            } else {
-              // 获取当前尺寸和位置
-              final x = (element['x'] as num).toDouble();
-              final y = (element['y'] as num).toDouble();
-              final width = (element['width'] as num).toDouble();
-              final height = (element['height'] as num).toDouble();
-              debugPrint('调整后的尺寸: 宽=$width, 高=$height');
-              debugPrint('调整后的位置: x=$x, y=$y');
-
-              // 在拖动结束时应用吸附
-              _controller.updateElementProperties(elementId, {
-                'x': x,
-                'y': y,
-                'width': width,
-                'height': height,
-              });
-            }
-
-            setState(() {
-              _isDragging = false;
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  /// 构建控制点
-  Widget _buildControlPoints(String elementId, double width, double height) {
-    const controlPointSize = 8.0;
-    const rotationHandleDistance = 35.0;
-
-    return Stack(
-      clipBehavior: Clip.none, // 关键修改：禁用裁剪，允许控制点超出边界
-      children: [
-        // 不再添加边框，但仍需要一个容器来确保布局正确
-        Container(
-          width: width,
-          height: height,
-          color: Colors.transparent, // 透明容器，仅用于布局
-        ),
-
-        // 左上角
-        Positioned(
-          left: -controlPointSize / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            0,
-            const Offset(
-                -controlPointSize / 2, -controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 上中
-        Positioned(
-          left: (width - controlPointSize) / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            1,
-            Offset((width - controlPointSize) / 2,
-                -controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 右上角
-        Positioned(
-          right: -controlPointSize / 2,
-          top: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            2,
-            Offset(
-                width + controlPointSize / 2, -controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 右中
-        Positioned(
-          right: -controlPointSize / 2,
-          top: (height - controlPointSize) / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            3,
-            Offset(width + controlPointSize / 2,
-                (height - controlPointSize) / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 右下角
-        Positioned(
-          right: -controlPointSize / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            4,
-            Offset(width + controlPointSize / 2,
-                height + controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 下中
-        Positioned(
-          left: (width - controlPointSize) / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            5,
-            Offset((width - controlPointSize) / 2,
-                height + controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 左下角
-        Positioned(
-          left: -controlPointSize / 2,
-          bottom: -controlPointSize / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            6,
-            Offset(
-                -controlPointSize / 2, height + controlPointSize / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 左中
-        Positioned(
-          left: -controlPointSize / 2,
-          top: (height - controlPointSize) / 2,
-          child: _buildControlPointDetector(
-            elementId,
-            7,
-            Offset(-controlPointSize / 2,
-                (height - controlPointSize) / 2), // 使用实际位置
-            const Size(controlPointSize, controlPointSize),
-          ),
-        ),
-
-        // 旋转控制柄 - 连接线
-        // Positioned(
-        //   left: width / 2 - 1,
-        //   top: -rotationHandleDistance + 14, // 从旋转手柄底部开始
-        //   child: Container(
-        //     width: 2,
-        //     height: rotationHandleDistance - 14, // 连接线高度
-        //     color: Colors.blue,
-        //   ),
-        // ),
-
-        // 旋转控制柄 - 手柄
-        Positioned(
-          left: width / 2 - 7,
-          top: -7,
-          child: _buildControlPointDetector(
-            elementId,
-            8,
-            Offset(width / 2 - 7, -7), // 使用实际位置
-            const Size(14, 14),
-            isRotation: true,
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 构建可拖拽的工具按钮
-  Widget _buildDraggableToolButton({
-    required IconData icon,
-    required String label,
-    required String toolName,
-    required String elementType,
-  }) {
-    return Draggable<String>(
-      // 拖拽的数据是元素类型
-      data: elementType,
-      // 拖拽时显示的控件
-      feedback: Material(
-        elevation: 4.0,
-        child: Container(
-          width: 70,
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: BoxDecoration(
-            color: Colors.blue.withAlpha(204), // 0.8 opacity
-            borderRadius: BorderRadius.circular(4.0),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: Colors.white, size: 24.0),
-              const SizedBox(height: 4.0),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12.0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      // 拖拽时原位置显示的控件
-      childWhenDragging: Material(
-        color: Colors.transparent,
-        child: Opacity(
-          opacity: 0.5,
-          child: _buildToolButton(
-            icon: icon,
-            label: label,
-            toolName: toolName,
-            onPressed: () {}, // 拖拽时禁用点击
-          ),
-        ),
-      ),
-      // 原始控件
-      child: _buildToolButton(
-        icon: icon,
-        label: label,
-        toolName: toolName,
-        onPressed: () {
-          setState(() {
-            _currentTool = toolName;
-          });
-          // 点击时默认添加对应类型的元素
-          switch (elementType) {
-            case 'text':
-              _controller.addTextElement();
-              break;
-            case 'image':
-              // 直接添加空图片元素，不显示对话框
-              _controller.addEmptyImageElementAt(100.0, 100.0);
-              break;
-            case 'collection':
-              // 直接添加空集字元素，不显示对话框
-              _controller.addEmptyCollectionElementAt(100.0, 100.0);
-              break;
-          }
-        },
-      ),
-    );
-  }
-
-  /// 构建编辑画布
-  Widget _buildEditCanvas() {
-    debugPrint('=== 构建编辑画布 ===');
-    if (_controller.state.pages.isEmpty) {
-      debugPrint('没有页面，请添加页面');
-      return const Center(child: Text('没有页面，请添加页面'));
-    }
-
-    final currentPage = _controller.state.currentPage;
-    if (currentPage == null) {
-      debugPrint('当前页面不存在');
-      return const Center(child: Text('当前页面不存在'));
-    }
-
-    final elements = _controller.state.currentPageElements;
-    debugPrint('当前页面元素数量: ${elements.length}');
-
-    // 检查 canvasKey 状态
-    debugPrint(
-        'canvasKey: ${canvasKey.toString()}, 是否有 currentContext: ${canvasKey.currentContext != null}');
-    if (canvasKey.currentContext != null) {
-      final renderObject = canvasKey.currentContext!.findRenderObject();
-      debugPrint('canvasKey 的 RenderObject 类型: ${renderObject?.runtimeType}');
-    }
-
-    // 始终使用 RepaintBoundary 和 GlobalKey，以便导出和打印功能可以捕获画布内容
-    debugPrint('创建 RepaintBoundary 和 GlobalKey');
-    return _buildEditCanvasContent(currentPage, elements);
-  }
-
-  /// 构建编辑画布内容
-  Widget _buildEditCanvasContent(
-      Map<String, dynamic> currentPage, List<dynamic> elementsList) {
-    // 转换为正确的类型
-    final elements = elementsList.cast<Map<String, dynamic>>();
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) {
-        // 获取放置位置 - 相对于编辑画布的坐标
-        final RenderBox renderBox = context.findRenderObject() as RenderBox;
-        final localPosition = renderBox.globalToLocal(details.offset);
-
-        // 获取InteractiveViewer的变换矩阵
-        // 注意：在实际应用中，你可能需要保存和访问InteractiveViewer的TransformationController
-        // 这里简化处理，使用一个估计的位置
-
-        // 计算A4页面中心位置
-        final pageWidth = (currentPage['width'] as num?)?.toDouble() ??
-            842.0; // A4 宽度 (72dpi)
-        final pageHeight = (currentPage['height'] as num?)?.toDouble() ??
-            842.0; // A4 高度 (72dpi)
-
-        // 使用相对位置，如果坐标在可见范围内，则使用实际位置
-        // 否则默认放在页面中心
-        double x = localPosition.dx;
-        double y = localPosition.dy;
-
-        // 确保坐标在页面范围内
-        x = x.clamp(0.0, pageWidth);
-        y = y.clamp(0.0, pageHeight);
-
-        // 根据类型添加不同的元素
-        switch (details.data) {
-          case 'text':
-            _controller.addTextElementAt(x, y);
-            break;
-          case 'image':
-            // 直接添加空图片元素，不显示对话框
-            _controller.addEmptyImageElementAt(x, y);
-            break;
-          case 'collection':
-            // 直接添加空集字元素，不显示对话框
-            _controller.addEmptyCollectionElementAt(x, y);
-            break;
-        }
-      },
-      builder: (context, candidateData, rejectedData) {
-        return Container(
-          // 使用深色背景，以便更清楚地看到透明度效果
-          color: Colors.grey.shade800,
-          child: InteractiveViewer(
-            boundaryMargin: const EdgeInsets.all(double.infinity),
-            panEnabled:
-                _isPreviewMode || !_isDragging, // 预览模式下始终启用平移，编辑模式下拖拽元素时禁用
-            scaleEnabled: true,
-            minScale: 0.1,
-            maxScale: 15.0,
-            scaleFactor: 200.0, // 增大缩放因子，减小缩放幅度
-            constrained: false, // 添加这一行，使内容不受约束
-            transformationController: _transformationController,
-            child: GestureDetector(
-              onTapUp: (details) => _handleTapUp(details, elements),
-              onSecondaryTapUp: (details) =>
-                  _handleSecondaryTapUp(details, elements),
-              onPanStart: (details) {
-                // 判断点击位置是否在元素上
-                bool hitElement = false;
-
-                // 在预览模式下，不需要检查元素点击
-                if (!_isPreviewMode) {
-                  for (int i = elements.length - 1; i >= 0; i--) {
-                    final element = elements[i];
-                    final x = (element['x'] as num).toDouble();
-                    final y = (element['y'] as num).toDouble();
-                    final width = (element['width'] as num).toDouble();
-                    final height = (element['height'] as num).toDouble();
-
-                    if (details.localPosition.dx >= x &&
-                        details.localPosition.dx <= x + width &&
-                        details.localPosition.dy >= y &&
-                        details.localPosition.dy <= y + height) {
-                      hitElement = true;
-                      break;
-                    }
-                  }
-                }
-
-                // 在预览模式下，或者点击在空白区域时，记录初始点击位置用于手动平移
-                if (_isPreviewMode ||
-                    (_controller.state.selectedElementIds.isEmpty ||
-                        !hitElement)) {
-                  setState(() {
-                    _dragStart = details.localPosition;
-                    // 记录当前变换矩阵的状态
-                    _elementStartPosition = Offset(
-                      _transformationController.value.getTranslation().x,
-                      _transformationController.value.getTranslation().y,
-                    );
-                  });
-                  debugPrint('开始平移画布: ${details.localPosition}');
-                  return;
-                }
-
-                // 如果有选中的元素并且点击在元素上，开始拖拽元素（仅在非预览模式下）
-                if (_controller.state.selectedElementIds.isNotEmpty &&
-                    hitElement) {
-                  setState(() {
-                    _isDragging = true;
-                    _dragStart = details.localPosition;
-
-                    // 记录所有选中元素的起始位置
-                    _elementStartPositions.clear(); // 清空之前的记录
-                    for (final elementId
-                        in _controller.state.selectedElementIds) {
-                      final element = _controller.state.currentPageElements
-                          .firstWhere((e) => e['id'] == elementId);
-                      if (element['isLocked'] == true) continue;
-
-                      // 保存每个元素的初始位置
-                      _elementStartPositions[elementId] = Offset(
-                        (element['x'] as num).toDouble(),
-                        (element['y'] as num).toDouble(),
-                      );
-                    }
-                  });
-                  debugPrint('开始拖拽元素: ${details.localPosition}');
-                }
-              },
-              onPanUpdate: (details) {
-                // 在预览模式下，只处理画布平移
-                if (_isPreviewMode) {
-                  // 平移画布
-                  final dx = details.localPosition.dx - _dragStart.dx;
-                  final dy = details.localPosition.dy - _dragStart.dy;
-
-                  // 创建新的变换矩阵
-                  final Matrix4 newMatrix = Matrix4.identity();
-                  // 设置与当前相同的缩放因子
-                  final scale =
-                      _transformationController.value.getMaxScaleOnAxis();
-                  newMatrix.setEntry(0, 0, scale);
-                  newMatrix.setEntry(1, 1, scale);
-                  newMatrix.setEntry(2, 2, scale);
-
-                  // 设置新的平移值
-                  newMatrix.setTranslation(Vector3(
-                    _elementStartPosition.dx + dx,
-                    _elementStartPosition.dy + dy,
-                    0.0,
-                  ));
-
-                  // 应用新变换
-                  _transformationController.value = newMatrix;
-
-                  debugPrint('预览模式平移画布: dx=$dx, dy=$dy');
-                  return;
-                }
-
-                // 非预览模式下的处理
-                if (_isDragging &&
-                    _controller.state.selectedElementIds.isNotEmpty) {
-                  // 拖拽元素
-                  final dx = details.localPosition.dx - _dragStart.dx;
-                  final dy = details.localPosition.dy - _dragStart.dy;
-
-                  // 更新所有选中元素的位置
-                  for (final elementId
-                      in _controller.state.selectedElementIds) {
-                    // 获取元素
-                    final element = _controller.state.currentPageElements
-                        .firstWhere((e) => e['id'] == elementId);
-
-                    // 检查元素锁定状态 - 如果元素被锁定，跳过移动
-                    if (element['locked'] == true) {
-                      debugPrint('元素 $elementId 已锁定，无法移动');
-                      continue;
-                    }
-
-                    // 检查图层锁定状态
-                    final layerId = element['layerId'] as String?;
-                    if (layerId != null) {
-                      final layer = _controller.state.getLayerById(layerId);
-                      if (layer != null) {
-                        if (layer['isLocked'] == true) {
-                          debugPrint('元素 $elementId 所在图层已锁定，无法移动');
-                          continue;
-                        }
-                        if (layer['isVisible'] == false) continue;
-                      }
-                    }
-
-                    // 获取元素的初始位置
-                    final startPosition = _elementStartPositions[elementId];
-                    if (startPosition == null) continue;
-
-                    // 计算新位置
-                    double newX = startPosition.dx + dx;
-                    double newY = startPosition.dy + dy;
-
-                    // 吸附到网格（如果启用）
-                    if (_controller.state.snapEnabled) {
-                      newX = (newX / _controller.state.gridSize).round() *
-                          _controller.state.gridSize;
-                      newY = (newY / _controller.state.gridSize).round() *
-                          _controller.state.gridSize;
-                    }
-
-                    // 更新元素位置 - 拖动过程中不应用吸附
-                    _controller.updateElementPropertiesDuringDrag(elementId, {
-                      'x': newX,
-                      'y': newY,
-                    });
-                  }
-                  debugPrint('拖拽更新: dx=$dx, dy=$dy');
-                } else if (!_isDragging) {
-                  // 平移画布
-                  final dx = details.localPosition.dx - _dragStart.dx;
-                  final dy = details.localPosition.dy - _dragStart.dy;
-
-                  // 创建新的变换矩阵
-                  final Matrix4 newMatrix = Matrix4.identity();
-                  // 设置与当前相同的缩放因子
-                  final scale =
-                      _transformationController.value.getMaxScaleOnAxis();
-                  newMatrix.setEntry(0, 0, scale);
-                  newMatrix.setEntry(1, 1, scale);
-                  newMatrix.setEntry(2, 2, scale);
-
-                  // 设置新的平移值
-                  newMatrix.setTranslation(Vector3(
-                    _elementStartPosition.dx + dx,
-                    _elementStartPosition.dy + dy,
-                    0.0,
-                  ));
-
-                  // 应用新变换
-                  _transformationController.value = newMatrix;
-
-                  debugPrint('平移画布: dx=$dx, dy=$dy');
-                }
-              },
-              onPanEnd: (details) {
-                // 在预览模式下，只处理画布平移结束
-                if (_isPreviewMode) {
-                  // 平移结束时可以应用惯性效果
-                  final velocity = details.velocity;
-                  final speed = velocity.pixelsPerSecond.distance;
-
-                  if (speed > 100) {
-                    // 应用惯性效果
-                    final Vector3 translation =
-                        _transformationController.value.getTranslation();
-                    final double dx = -velocity.pixelsPerSecond.dx / 10;
-                    final double dy = -velocity.pixelsPerSecond.dy / 10;
-
-                    // 应用动画效果
-                    final Matrix4 newMatrix = Matrix4.identity();
-                    final scale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    newMatrix.setEntry(0, 0, scale);
-                    newMatrix.setEntry(1, 1, scale);
-                    newMatrix.setEntry(2, 2, scale);
-                    newMatrix.setTranslation(Vector3(
-                      translation.x + dx,
-                      translation.y + dy,
-                      0.0,
-                    ));
-
-                    // 使用动画应用新变换
-                    const duration = Duration(milliseconds: 300);
-                    final Animatable<Matrix4> tween = Matrix4Tween(
-                      begin: _transformationController.value,
-                      end: newMatrix,
-                    );
-
-                    // 创建动画控制器
-                    final animController = AnimationController(
-                      vsync: Navigator.of(context),
-                      duration: duration,
-                    );
-
-                    // 添加动画监听
-                    Animation<Matrix4> animation = tween.animate(
-                      CurvedAnimation(
-                        parent: animController,
-                        curve: Curves.decelerate,
-                      ),
-                    );
-
-                    animation.addListener(() {
-                      _transformationController.value = animation.value;
-                    });
-
-                    // 启动动画
-                    animController.forward().then((_) {
-                      animController.dispose();
-                    });
-                  }
-
-                  debugPrint('预览模式平移结束: 速度=$speed');
-                  return;
-                }
-
-                // 非预览模式下的处理
-                if (_isDragging) {
-                  setState(() {
-                    _isDragging = false;
-                  });
-
-                  // 在拖动结束时应用吸附
-                  for (final elementId
-                      in _controller.state.selectedElementIds) {
-                    final element = _controller.state.currentPageElements
-                        .firstWhere((e) => e['id'] == elementId);
-
-                    // 获取当前位置
-                    final x = (element['x'] as num).toDouble();
-                    final y = (element['y'] as num).toDouble();
-
-                    // 应用吸附
-                    _controller.updateElementProperties(elementId, {
-                      'x': x,
-                      'y': y,
-                    });
-
-                    debugPrint('元素 $elementId 结束位置: ($x, $y)');
-                  }
-                } else {
-                  // 平移结束时可以应用惯性效果
-                  final velocity = details.velocity;
-                  final speed = velocity.pixelsPerSecond.distance;
-
-                  if (speed > 100) {
-                    // 应用惯性效果
-                    final Vector3 translation =
-                        _transformationController.value.getTranslation();
-                    final double dx = -velocity.pixelsPerSecond.dx / 10;
-                    final double dy = -velocity.pixelsPerSecond.dy / 10;
-
-                    // 应用动画效果
-                    final Matrix4 newMatrix = Matrix4.identity();
-                    final scale =
-                        _transformationController.value.getMaxScaleOnAxis();
-                    newMatrix.setEntry(0, 0, scale);
-                    newMatrix.setEntry(1, 1, scale);
-                    newMatrix.setEntry(2, 2, scale);
-                    newMatrix.setTranslation(Vector3(
-                      translation.x + dx,
-                      translation.y + dy,
-                      0.0,
-                    ));
-
-                    // 使用动画应用新变换
-                    const duration = Duration(milliseconds: 300);
-                    final Animatable<Matrix4> tween = Matrix4Tween(
-                      begin: _transformationController.value,
-                      end: newMatrix,
-                    );
-
-                    // 创建动画控制器
-                    final animController = AnimationController(
-                      vsync: Navigator.of(context),
-                      duration: duration,
-                    );
-
-                    // 添加动画监听
-                    Animation<Matrix4> animation = tween.animate(
-                      CurvedAnimation(
-                        parent: animController,
-                        curve: Curves.decelerate,
-                      ),
-                    );
-
-                    animation.addListener(() {
-                      _transformationController.value = animation.value;
-                    });
-
-                    // 启动动画
-                    animController.forward().then((_) {
-                      animController.dispose();
-                    });
-                  }
-
-                  debugPrint('平移结束: 速度=$speed');
-                }
-              },
-              child: Stack(
-                children: [
-                  // 页面背景
-                  Builder(builder: (context) {
-                    // 计算像素尺寸
-                    final pixelSize = _calculatePixelSize(currentPage);
-
-                    return RepaintBoundary(
-                      key: canvasKey,
-                      child: Builder(
-                        builder: (context) {
-                          final backgroundColor =
-                              PageOperations.getPageBackgroundColor(
-                                  currentPage);
-
-                          return Container(
-                            width: pixelSize.width,
-                            height: pixelSize.height,
-                            color: backgroundColor,
-                            child: Stack(
-                              children: [
-                                // 网格 - 仅在非预览模式下显示
-                                if (_controller.state.gridVisible &&
-                                    !_isPreviewMode)
-                                  CustomPaint(
-                                    size: pixelSize,
-                                    painter: GridPainter(
-                                        gridSize: _controller.state.gridSize),
-                                  ),
-
-                                // 元素
-                                // 根据图层顺序排序元素
-                                ..._sortElementsByLayerOrder(elements)
-                                    .map((element) => _buildElement(element)),
-
-                                // 拖拽指示
-                                if (candidateData.isNotEmpty)
-                                  Container(
-                                    width: pixelSize.width,
-                                    height: pixelSize.height,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.blue,
-                                        width: 1,
-                                        style: BorderStyle.solid,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-      onWillAcceptWithDetails: (data) => true,
-    );
-  }
-
-  /// 构建顶部编辑工具栏
+  /// Build the edit toolbar
   Widget _buildEditToolbar() {
     return EditToolbar(
       controller: _controller,
       gridVisible: _controller.state.gridVisible,
       snapEnabled: _controller.state.snapEnabled,
-      onToggleGrid: () {
-        _controller.state.gridVisible = !_controller.state.gridVisible;
-        setState(() {});
-      },
-      onToggleSnap: () {
-        _controller.state.snapEnabled = !_controller.state.snapEnabled;
-        setState(() {});
-      },
+      onToggleGrid: _toggleGrid,
+      onToggleSnap: _toggleSnap,
       onCopy: _copySelectedElement,
       onPaste: _pasteElement,
-      onGroupElements: () {
-        if (_controller.state.selectedElementIds.length > 1) {
-          _controller.groupSelectedElements();
-        }
-      },
-      onUngroupElements: () {
-        if (_controller.state.selectedElementIds.length == 1) {
-          final id = _controller.state.selectedElementIds.first;
-          final element = ElementOperations.findElementById(
-              _controller.state.currentPageElements, id);
-          if (element != null && element['type'] == 'group') {
-            _controller.ungroupElements(id);
-          }
-        }
-      },
+      onGroupElements: _groupSelectedElements,
+      onUngroupElements: _ungroupElements,
       onBringToFront: _bringElementToFront,
       onSendToBack: _sendElementToBack,
       onMoveUp: _moveElementUp,
       onMoveDown: _moveElementDown,
-      onDelete: () {
-        if (_controller.state.selectedElementIds.isNotEmpty) {
-          // 创建一个副本以避免 ConcurrentModificationError
-          final idsToDelete =
-              List<String>.from(_controller.state.selectedElementIds);
-          for (final id in idsToDelete) {
-            _controller.deleteElement(id);
-          }
-        }
-      },
+      onDelete: _deleteSelectedElements,
     );
   }
 
-  /// 构建元素
-  Widget _buildElement(Map<String, dynamic> element) {
-    final id = element['id'] as String;
-    final type = element['type'] as String;
-    final x = (element['x'] as num).toDouble();
-    final y = (element['y'] as num).toDouble();
-    final width = (element['width'] as num).toDouble();
-    final height = (element['height'] as num).toDouble();
-    final rotation = (element['rotation'] as num).toDouble();
-    final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
-
-    // 检查元素是否被选中
-    final isSelected = _controller.state.selectedElementIds.contains(id);
-
-    // 检查元素是否被锁定或隐藏
-    final isLocked = element['locked'] == true;
-    final isHidden = element['hidden'] == true;
-
-    // 检查元素所在图层的锁定和隐藏状态
-    final layerId = element['layerId'] as String?;
-    bool isLayerLocked = false;
-    bool isLayerHidden = false;
-    double layerOpacity = 1.0;
-
-    if (layerId != null) {
-      final layer = _controller.state.getLayerById(layerId);
-      if (layer != null) {
-        isLayerLocked = layer['isLocked'] == true;
-        isLayerHidden =
-            layer['isVisible'] == false; // 注意这里的逻辑：isVisible=false 意味着隐藏
-        layerOpacity = (layer['opacity'] as num?)?.toDouble() ?? 1.0; // 获取图层透明度
-      }
-    }
-
-    // 检查元素是否处于错误状态
-    final hasError = element['hasError'] == true;
-
-    Widget content;
-
-    // 根据元素类型构建内容
-    switch (type) {
-      case 'text':
-        content = ElementRenderers.buildTextElement(element,
-            isPreviewMode: _isPreviewMode);
-        break;
-      case 'image':
-        content = ElementRenderers.buildImageElement(element,
-            isPreviewMode: _isPreviewMode);
-        break;
-      case 'collection':
-        content = ElementRenderers.buildCollectionElement(element,
-            ref: ref, isPreviewMode: _isPreviewMode);
-        break;
-      case 'group':
-        // 将组合控件的选中状态传递给子元素
-        content = ElementRenderers.buildGroupElement(element,
-            isSelected: isSelected, isPreviewMode: _isPreviewMode);
-        break;
-      default:
-        content = Container(
-          color: Colors.grey.withAlpha(51), // 0.2 opacity
-          child: const Center(child: Text('未知元素')),
-        );
-    }
-
-    return Positioned(
-      left: x,
-      top: y,
-      child: Transform.rotate(
-        angle: rotation * 3.1415926 / 180,
-        // 添加原点参数，确保旋转以元素中心为原点
-        alignment: Alignment.center,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Main element widget
-            Opacity(
-              // 元素或图层隐藏状态下，编辑模式显示半透明，预览模式完全隐藏
-              // 应用图层透明度和元素透明度的组合
-              opacity: isHidden || isLayerHidden
-                  ? (_isPreviewMode ? 0.0 : 0.5) // 隐藏状态
-                  : opacity * layerOpacity, // 正常状态，元素透明度与图层透明度相乘
-              child: Container(
-                width: width,
-                height: height,
-                padding: const EdgeInsets.all(0),
-                decoration: _isPreviewMode
-                    ? null // 预览模式下不显示边框
-                    : BoxDecoration(
-                        border: Border.all(
-                          // 根据规范设置边框颜色和宽度
-                          color: hasError
-                              ? Colors.red // 错误状态：红色边框
-                              : isLocked || isLayerLocked
-                                  ? Colors.orange // 锁定状态：橙色边框
-                                  : isSelected
-                                      ? Colors.blue // 选中状态：蓝色边框
-                                      : Colors.grey
-                                          .withAlpha(179), // 普通状态：灰色边框，70%不透明度
-                          width: 1.0, // 所有状态都是1px
-                          style: (isHidden || isLayerHidden)
-                              ? BorderStyle.none // Flutter没有虚线边框，所以使用透明度来模拟
-                              : BorderStyle.solid, // 隐藏状态使用半透明
-                        ),
-                      ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    // 元素内容
-                    content,
-
-                    // 锁定图标
-                    if ((isLocked || isLayerLocked) && !_isPreviewMode)
-                      Positioned(
-                        right: 4,
-                        top: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(179), // 0.7 的不透明度
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: Icon(
-                            isLayerLocked ? Icons.layers_outlined : Icons.lock,
-                            color: Colors.orange,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-
-                    // 错误图标
-                    if (hasError && !_isPreviewMode)
-                      Positioned(
-                        right: (isLocked || isLayerLocked)
-                            ? 26
-                            : 4, // 如果同时有锁定图标，则错开一点
-                        top: 4,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(179), // 0.7 的不透明度
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                          child: const Icon(
-                            Icons.error_outline,
-                            color: Colors.red,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 只在编辑状态下显示控制点（单选元素、不在预览模式、非锁定状态）
-            if (!_isPreviewMode &&
-                isSelected &&
-                !isLocked &&
-                !isLayerLocked && // 添加图层锁定检查
-                _controller.state.selectedElementIds.length == 1)
-              _buildControlPoints(id, width, height),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 构建左侧面板
+  /// Build the left panel
   Widget _buildLeftPanel() {
     return ResizablePanel(
       initialWidth: 250,
@@ -1409,25 +335,33 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       isLeftPanel: true,
       child: Column(
         children: [
-          // 内容控件区
-          _buildContentToolPanel(),
+          // Content tools area
+          ContentToolsPanel(
+            controller: _controller,
+            currentTool: _currentTool,
+            onToolSelected: (tool) {
+              setState(() {
+                _currentTool = tool;
+              });
+            },
+          ),
 
           const Divider(),
 
-          // 图层管理区
+          // Layer management area
           Expanded(
             child: PracticeLayerPanel(
               controller: _controller,
               onLayerSelect: (layerId) {
-                // 处理图层选择
+                // Handle layer selection
                 _controller.selectLayer(layerId);
               },
               onLayerVisibilityToggle: (layerId, isVisible) {
-                // 处理图层可见性切换
+                // Handle layer visibility toggle
                 _controller.toggleLayerVisibility(layerId, isVisible);
               },
               onLayerLockToggle: (layerId, isLocked) {
-                // 处理图层锁定切换
+                // Handle layer lock toggle
                 _controller.toggleLayerLock(layerId, isLocked);
               },
               onAddLayer: _controller.addNewLayer,
@@ -1440,19 +374,32 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     );
   }
 
-  /// 构建右侧属性面板
+  /// Build the page thumbnails area
+  Widget _buildPageThumbnails() {
+    return PageThumbnailStrip(
+      pages: _controller.state.pages,
+      currentPageIndex: _controller.state.currentPageIndex,
+      onPageSelected: (index) {
+        setState(() {
+          _controller.state.currentPageIndex = index;
+        });
+      },
+      onAddPage: _addNewPage,
+      onDeletePage: _deletePage,
+      onReorderPages: _reorderPages,
+    );
+  }
+
+  /// Build the right properties panel
   Widget _buildRightPanel() {
     return AnimatedBuilder(
-      animation: _controller, // 关键修改：监听控制器的变化
+      animation: _controller,
       builder: (context, _) {
-        // 创建一个唯一的key，确保在选择变化时面板能够重新构建
-        // 注意：这个key已经不再使用，因为我们现在使用AnimatedBuilder来监听控制器的变化
-
         Widget panel;
 
-        // 检查是否选中了图层
+        // Check if a layer is selected
         if (_controller.state.selectedLayerId != null) {
-          // 选中图层时显示图层属性
+          // Show layer properties when layer is selected
           final layerId = _controller.state.selectedLayerId!;
           final layer = _controller.state.getLayerById(layerId);
           if (layer != null) {
@@ -1460,12 +407,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
               controller: _controller,
               layer: layer,
               onLayerPropertiesChanged: (properties) {
-                // 更新图层属性
+                // Update layer properties
                 _controller.updateLayerProperties(layerId, properties);
               },
             );
 
-            // 返回可调整宽度的面板
+            // Return resizable panel
             return ResizablePanel(
               initialWidth: 300,
               minWidth: 200,
@@ -1476,9 +423,9 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
           }
         }
 
-        // 根据选中元素类型显示不同的属性面板
+        // Show different property panels based on selected element type
         if (_controller.state.selectedElementIds.isEmpty) {
-          // 未选中元素时显示页面属性
+          // Show page properties when no element is selected
           panel = PracticePropertyPanel.forPage(
             controller: _controller,
             page: _controller.state.currentPage,
@@ -1489,12 +436,14 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
             },
           );
         } else if (_controller.state.selectedElementIds.length == 1) {
-          // 单选元素时根据类型显示属性
+          // Show element-specific properties when one element is selected
           final id = _controller.state.selectedElementIds.first;
-          final element = ElementOperations.findElementById(
-              _controller.state.currentPageElements, id);
+          final element = _controller.state.currentPageElements.firstWhere(
+            (e) => e['id'] == id,
+            orElse: () => <String, dynamic>{},
+          );
 
-          if (element != null) {
+          if (element.isNotEmpty) {
             switch (element['type']) {
               case 'text':
                 panel = PracticePropertyPanel.forText(
@@ -1513,7 +462,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                     _controller.updateElementProperties(id, properties);
                   },
                   onSelectImage: () async {
-                    // 实现选择图片的逻辑
+                    // Implement image selection logic
                     await _showImageUrlDialog(context);
                   },
                   ref: ref,
@@ -1549,18 +498,18 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
                 );
                 break;
               default:
-                panel = const Center(child: Text('不支持的元素类型'));
+                panel = const Center(child: Text('Unsupported element type'));
             }
           } else {
-            panel = const Center(child: Text('找不到选中的元素'));
+            panel = const Center(child: Text('Selected element not found'));
           }
         } else {
-          // 多选元素时显示组合属性
+          // Show multi-selection properties when multiple elements are selected
           panel = PracticePropertyPanel.forMultiSelection(
             controller: _controller,
             selectedIds: _controller.state.selectedElementIds,
             onElementPropertiesChanged: (properties) {
-              // 将属性应用到所有选中的元素
+              // Apply properties to all selected elements
               for (final id in _controller.state.selectedElementIds) {
                 _controller.updateElementProperties(id, properties);
               }
@@ -1579,100 +528,112 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     );
   }
 
-  /// 构建工具按钮
-  Widget _buildToolButton({
-    required IconData icon,
-    required String label,
-    required String toolName,
-    required VoidCallback onPressed,
-  }) {
-    final isSelected = _currentTool == toolName;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _currentTool = toolName;
-          });
-          onPressed();
-        },
-        borderRadius: BorderRadius.circular(4.0),
-        child: Container(
-          width: 70,
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.blue.withAlpha(26) : null, // 0.1 opacity
-            border: Border.all(
-              color: isSelected ? Colors.blue : Colors.grey.shade300,
-              width: 1.0,
-            ),
-            borderRadius: BorderRadius.circular(4.0),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: isSelected ? Colors.blue : null,
-                size: 24.0,
-              ),
-              const SizedBox(height: 4.0),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? Colors.blue : null,
-                  fontSize: 12.0,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 计算毫米到像素的转换
-  Size _calculatePixelSize(Map<String, dynamic> page) {
-    // 获取页面尺寸（毫米）
-    final width = (page['width'] as num?)?.toDouble() ?? 210.0;
-    final height = (page['height'] as num?)?.toDouble() ?? 297.0;
-    final dpi = (page['dpi'] as num?)?.toInt() ?? 300;
-
-    // 毫米转英寸，1英寸 = 25.4毫米
-    final widthInches = width / 25.4;
-    final heightInches = height / 25.4;
-
-    // 计算像素尺寸
-    final widthPixels = (widthInches * dpi).round().toDouble();
-    final heightPixels = (heightInches * dpi).round().toDouble();
-
-    return Size(widthPixels, heightPixels);
-  }
-
-  /// 复制选中的元素
+  /// Copy selected elements
   void _copySelectedElement() {
-    if (_controller.state.selectedElementIds.isEmpty) return;
+    // 检查是否有选中的元素
+    if (_controller.state.selectedElementIds.isEmpty) {
+      return;
+    }
 
     final elements = _controller.state.currentPageElements;
-    final id = _controller.state.selectedElementIds.first;
-    final element = elements.firstWhere((e) => e['id'] == id,
-        orElse: () => <String, dynamic>{});
+    final selectedIds = _controller.state.selectedElementIds;
 
-    if (element.isNotEmpty) {
-      // 深拷贝元素
-      _clipboardElement = Map<String, dynamic>.from(element);
+    // 如果只选中了一个元素，使用原来的逻辑
+    if (selectedIds.length == 1) {
+      final id = selectedIds.first;
+      final element = elements.firstWhere((e) => e['id'] == id,
+          orElse: () => <String, dynamic>{});
 
-      // 显示提示
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('已复制元素到剪贴板')),
-        );
+      if (element.isNotEmpty) {
+        // Deep copy element
+        _clipboardElement = Map<String, dynamic>.from(element);
+
+        // Show notification
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Element copied to clipboard'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } else {
+      // 多选情况：创建一个特殊的剪贴板对象，包含多个元素
+      final selectedElements = <Map<String, dynamic>>[];
+
+      for (final id in selectedIds) {
+        final element = elements.firstWhere((e) => e['id'] == id,
+            orElse: () => <String, dynamic>{});
+
+        if (element.isNotEmpty) {
+          // 深拷贝元素
+          selectedElements.add(Map<String, dynamic>.from(element));
+        }
+      }
+
+      if (selectedElements.isNotEmpty) {
+        // 创建一个特殊的剪贴板对象，标记为多元素集合
+        _clipboardElement = {
+          'type': 'multi_elements',
+          'elements': selectedElements,
+        };
+
+        // 显示通知
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '${selectedElements.length} elements copied to clipboard'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }
 
-  /// 编辑标题
+  /// Delete a page
+  void _deletePage(int index) {
+    // 确保至少保留一个页面
+    if (_controller.state.pages.length <= 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot delete the only page')),
+      );
+      return;
+    }
+
+    setState(() {
+      // 删除页面
+      PageOperations.deletePage(_controller.state.pages, index);
+
+      // 如果删除的是当前页面，则切换到前一个页面
+      if (_controller.state.currentPageIndex >=
+          _controller.state.pages.length) {
+        _controller.state.currentPageIndex = _controller.state.pages.length - 1;
+      }
+
+      // 标记有未保存的更改
+      _controller.state.hasUnsavedChanges = true;
+    });
+  }
+
+  //------------------------------------------------------------------------------
+  // Helper methods to handle various actions
+  //------------------------------------------------------------------------------
+
+  /// Delete selected elements
+  void _deleteSelectedElements() {
+    if (_controller.state.selectedElementIds.isEmpty) return;
+
+    // Create a copy to avoid ConcurrentModificationError
+    final idsToDelete = List<String>.from(_controller.state.selectedElementIds);
+    for (final id in idsToDelete) {
+      _controller.deleteElement(id);
+    }
+  }
+
+  /// Edit title
   Future<void> _editTitle() async {
     if (!mounted) return;
 
@@ -1688,582 +649,91 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       _controller.updatePracticeTitle(newTitle);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('标题已更新为 "$newTitle"')),
+          SnackBar(content: Text('Title updated to "$newTitle"')),
         );
       }
     }
   }
 
-  /// 获取图片路径
-  String _getImagePath(String characterId, String type, String format) {
-    final storage = ref.read(initializedStorageProvider);
-
-    // 根据类型和格式构建文件名
-    String fileName;
-    switch (type) {
-      case 'square-binary':
-        fileName = '$characterId-square-binary.png';
-        break;
-      case 'square-transparent':
-        fileName = '$characterId-square-transparent.png';
-        break;
-      case 'square-outline':
-        fileName = '$characterId-square-outline.svg';
-        break;
-      case 'thumbnail':
-        fileName = '$characterId-thumbnail.jpg';
-        break;
-      default:
-        fileName = '$characterId-$type.$format';
-    }
-
-    // 构建完整路径
-    return '${storage.getAppDataPath()}/characters/$characterId/$fileName';
+  // 生成随机字符串的辅助方法
+  String _getRandomString(int length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random();
+    return String.fromCharCodes(Iterable.generate(
+        length, (_) => chars.codeUnitAt(random.nextInt(chars.length))));
   }
 
-  /// 处理键盘事件
-  bool _handleKeyEvent(KeyEvent event) {
-    // 更新修饰键状态
-    if (event is KeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
-          event.logicalKey == LogicalKeyboardKey.controlRight) {
-        _isCtrlPressed = true;
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
-          event.logicalKey == LogicalKeyboardKey.shiftRight) {
-        _isShiftPressed = true;
-      }
-
-      // 处理组合键
-      if (_isCtrlPressed) {
-        // 记录最后按下的键
-        if (event.logicalKey == LogicalKeyboardKey.keyM) {
-          _lastKeyPressed = 'M';
-        } else if (event.logicalKey == LogicalKeyboardKey.keyN) {
-          _lastKeyPressed = 'N';
-        } else if (_lastKeyPressed == 'M' &&
-            event.logicalKey == LogicalKeyboardKey.keyT) {
-          // Ctrl+M, T 组合键：修改标题
-          _editTitle();
-          _lastKeyPressed = '';
-          return true;
-        } else if (_lastKeyPressed == 'N' &&
-            event.logicalKey == LogicalKeyboardKey.keyT) {
-          // Ctrl+N, T 组合键：添加文本控件
-          _controller.addTextElement();
-          _lastKeyPressed = '';
-          return true;
-        } else if (_lastKeyPressed == 'N' &&
-            event.logicalKey == LogicalKeyboardKey.keyP) {
-          // Ctrl+N, P 组合键：添加图片控件
-          _controller.addEmptyImageElementAt(100.0, 100.0);
-          _lastKeyPressed = '';
-          return true;
-        } else if (_lastKeyPressed == 'N' &&
-            event.logicalKey == LogicalKeyboardKey.keyC) {
-          // Ctrl+N, C 组合键：添加集字控件
-          _controller.addEmptyCollectionElementAt(100.0, 100.0);
-          _lastKeyPressed = '';
-          return true;
-        }
-      }
-    } else if (event is KeyUpEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
-          event.logicalKey == LogicalKeyboardKey.controlRight) {
-        _isCtrlPressed = false;
-        _lastKeyPressed = ''; // 重置组合键状态
-      } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
-          event.logicalKey == LogicalKeyboardKey.shiftRight) {
-        _isShiftPressed = false;
-      }
-    }
-
-    // 如果是按键按下事件，处理快捷键
-    if (event is KeyDownEvent) {
-      // 如果是预览模式，只处理预览模式切换快捷键
-      if (_isPreviewMode) {
-        if (_isCtrlPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
-          setState(() {
-            _isPreviewMode = !_isPreviewMode;
-            _controller.togglePreviewMode(_isPreviewMode);
-          });
-          return true;
-        }
-        return false;
-      }
-
-      // 处理Ctrl组合键
-      if (_isCtrlPressed) {
-        switch (event.logicalKey) {
-          // Ctrl+S: 保存 或 Ctrl+Shift+S: 另存为
-          case LogicalKeyboardKey.keyS:
-            if (_isShiftPressed) {
-              // Ctrl+Shift+S: 另存为
-              _saveAsNewPractice();
-            } else {
-              // Ctrl+S: 保存
-              _savePractice();
-            }
-            return true;
-
-          // Ctrl+A: 全选当前页所有元素
-          case LogicalKeyboardKey.keyA:
-            _selectAllElements();
-            return true;
-
-          // Ctrl+C: 复制选中
-          case LogicalKeyboardKey.keyC:
-            _copySelectedElement();
-            return true;
-
-          // Ctrl+V: 粘贴复制
-          case LogicalKeyboardKey.keyV:
-            _pasteElement();
-            return true;
-
-          // Ctrl+D: 删除选中
-          case LogicalKeyboardKey.keyD:
-            if (_controller.state.selectedElementIds.isNotEmpty) {
-              final idsToDelete =
-                  List<String>.from(_controller.state.selectedElementIds);
-              for (final id in idsToDelete) {
-                _controller.deleteElement(id);
-              }
-            }
-            return true;
-
-          // Ctrl+Z: 撤销
-          case LogicalKeyboardKey.keyZ:
-            _controller.undo();
-            return true;
-
-          // Ctrl+Y: 重做
-          case LogicalKeyboardKey.keyY:
-            _controller.redo();
-            return true;
-
-          // Ctrl+J: 组合
-          case LogicalKeyboardKey.keyJ:
-            if (_controller.state.selectedElementIds.length > 1) {
-              _controller.groupSelectedElements();
-            }
-            return true;
-
-          // Ctrl+U: 取消组合
-          case LogicalKeyboardKey.keyU:
-            if (_controller.state.selectedElementIds.length == 1) {
-              final id = _controller.state.selectedElementIds.first;
-              final element = ElementOperations.findElementById(
-                  _controller.state.currentPageElements, id);
-              if (element != null && element['type'] == 'group') {
-                _controller.ungroupElements(id);
-              }
-            }
-            return true;
-
-          // Ctrl+G: 网格开关
-          case LogicalKeyboardKey.keyG:
-            setState(() {
-              _controller.state.gridVisible = !_controller.state.gridVisible;
-            });
-            return true;
-
-          // Ctrl+R: 吸附开关
-          case LogicalKeyboardKey.keyR:
-            setState(() {
-              _controller.state.snapEnabled = !_controller.state.snapEnabled;
-            });
-            return true;
-
-          // Ctrl+T: 置顶
-          case LogicalKeyboardKey.keyT:
-            if (!_isShiftPressed) {
-              _bringElementToFront();
-            } else {
-              // Ctrl+Shift+T: 上一层
-              _moveElementUp();
-            }
-            return true;
-
-          // Ctrl+B: 置底
-          case LogicalKeyboardKey.keyB:
-            if (!_isShiftPressed) {
-              _sendElementToBack();
-            } else {
-              // Ctrl+Shift+B: 下一层
-              _moveElementDown();
-            }
-            return true;
-
-          // Ctrl+E: 导出
-          case LogicalKeyboardKey.keyE:
-            // 实现导出功能
-            _showExportDialog();
-            return true;
-
-          // Ctrl+M+T: 修改标题
-          case LogicalKeyboardKey.keyM:
-            if (event.logicalKey == LogicalKeyboardKey.keyT) {
-              _editTitle();
-              return true;
-            }
-            return false;
-
-          // Ctrl+N+T: 添加文本控件
-          case LogicalKeyboardKey.keyN:
-            return false; // 先返回false，让组合键继续传递
-
-          // Ctrl+H: 隐藏选中对象
-          case LogicalKeyboardKey.keyH:
-            _toggleSelectedElementsVisibility();
-            return true;
-
-          // Ctrl+L: 锁定选中对象
-          case LogicalKeyboardKey.keyL:
-            _toggleSelectedElementsLock();
-            return true;
-
-          // Ctrl+P: 预览模式开关
-          case LogicalKeyboardKey.keyP:
-            setState(() {
-              _isPreviewMode = !_isPreviewMode;
-              _controller.togglePreviewMode(_isPreviewMode);
-            });
-            return true;
-
-          // Ctrl+O: 显示页面缩略图开关
-          case LogicalKeyboardKey.keyO:
-            setState(() {
-              _showThumbnails = !_showThumbnails;
-            });
-            return true;
-        }
-      }
-
-      // 处理方向键：移动选中项
-      if (_controller.state.selectedElementIds.isNotEmpty) {
-        final moveDistance = _isCtrlPressed ? 10.0 : 1.0; // Ctrl按下时移动更大距离
-
-        switch (event.logicalKey) {
-          case LogicalKeyboardKey.arrowUp:
-            _moveSelectedElements(0, -moveDistance);
-            return true;
-
-          case LogicalKeyboardKey.arrowDown:
-            _moveSelectedElements(0, moveDistance);
-            return true;
-
-          case LogicalKeyboardKey.arrowLeft:
-            _moveSelectedElements(-moveDistance, 0);
-            return true;
-
-          case LogicalKeyboardKey.arrowRight:
-            _moveSelectedElements(moveDistance, 0);
-            return true;
-        }
-      }
-    }
-
-    // 如果没有处理，返回false让事件继续传递
-    return false;
-  }
-
-  /// 处理右键点击事件
-  void _handleSecondaryTapUp(
-      TapUpDetails details, List<Map<String, dynamic>> elements) {
-    // 检查是否点击在选中的元素上
-    bool hitSelectedElement = false;
-
-    // 从后往前检查（后添加的元素在上层）
-    for (int i = elements.length - 1; i >= 0; i--) {
-      final element = elements[i];
-      final id = element['id'] as String;
-      final x = (element['x'] as num).toDouble();
-      final y = (element['y'] as num).toDouble();
-      final width = (element['width'] as num).toDouble();
-      final height = (element['height'] as num).toDouble();
-
-      // 判断是否点击在元素内部
-      final bool isInside = details.localPosition.dx >= x &&
-          details.localPosition.dx <= x + width &&
-          details.localPosition.dy >= y &&
-          details.localPosition.dy <= y + height;
-
-      // 如果点击在元素内部且该元素已被选中
-      if (isInside && _controller.state.selectedElementIds.contains(id)) {
-        hitSelectedElement = true;
-        debugPrint('\n=== 右键点击选中的元素 $id ===');
-        debugPrint('取消选中元素');
-
-        // 取消选择
-        _controller.clearSelection();
-        setState(() {
-          // 重置拖拽状态
-          _isDragging = false;
-        });
-
-        break;
-      }
-    }
-
-    // 如果没有点击在选中的元素上，则不做任何操作
-    if (!hitSelectedElement) {
-      debugPrint('\n=== 右键点击非选中元素或空白区域 ===');
+  /// Group selected elements
+  void _groupSelectedElements() {
+    if (_controller.state.selectedElementIds.length > 1) {
+      _controller.groupSelectedElements();
     }
   }
 
-  /// 处理点击事件
-  void _handleTapUp(TapUpDetails details, List<Map<String, dynamic>> elements) {
-    // 如果点击在空白处，取消选择
-    bool hitElement = false;
-
-    // 从后往前检查（后添加的元素在上层）
-    for (int i = elements.length - 1; i >= 0; i--) {
-      final element = elements[i];
-      final id = element['id'] as String;
-      final x = (element['x'] as num).toDouble();
-      final y = (element['y'] as num).toDouble();
-      final width = (element['width'] as num).toDouble();
-      final height = (element['height'] as num).toDouble();
-      final isLocked = element['locked'] == true;
-      final isHidden = element['hidden'] == true;
-
-      // 如果元素被隐藏且在预览模式下，跳过该元素
-      if (isHidden && _isPreviewMode) continue;
-
-      // 注意：旋转角度在简单碰撞检测中暂未使用，但在更复杂的检测中会用到
-
-      // 计算边框宽度，用于边框点击检测
-      final isSelected = _controller.state.selectedElementIds.contains(id);
-      final borderWidth = !_isPreviewMode && isSelected ? 2.0 : 1.0;
-
-      // 判断是否点击在元素内部
-      final bool isInside = details.localPosition.dx >= x &&
-          details.localPosition.dx <= x + width &&
-          details.localPosition.dy >= y &&
-          details.localPosition.dy <= y + height;
-
-      // 判断是否点击在边框上
-      // 只在边框附近小范围内扩展点击区域
-      final bool isOnBorder = !isInside &&
-          (
-              // 左边框
-              (details.localPosition.dx >= x - borderWidth &&
-                      details.localPosition.dx <= x &&
-                      details.localPosition.dy >= y &&
-                      details.localPosition.dy <= y + height) ||
-                  // 右边框
-                  (details.localPosition.dx >= x + width &&
-                      details.localPosition.dx <= x + width + borderWidth &&
-                      details.localPosition.dy >= y &&
-                      details.localPosition.dy <= y + height) ||
-                  // 上边框
-                  (details.localPosition.dy >= y - borderWidth &&
-                      details.localPosition.dy <= y &&
-                      details.localPosition.dx >= x &&
-                      details.localPosition.dx <= x + width) ||
-                  // 下边框
-                  (details.localPosition.dy >= y + height &&
-                      details.localPosition.dy <= y + height + borderWidth &&
-                      details.localPosition.dx >= x &&
-                      details.localPosition.dx <= x + width));
-
-      // 打印调试信息
-      if (isOnBorder) {
-        debugPrint(
-            'Click on border of element $id at ${details.localPosition}');
-      }
-
-      // 如果点击在元素内部或边框上
-      if (isInside || isOnBorder) {
-        hitElement = true;
-
-        // 如果元素被锁定，只允许选中，不允许编辑
-        if (isLocked) {
-          // 锁定元素只能选中，不能编辑
-          // 清除图层选择，确保属性面板能切换到元素属性
-          _controller.state.selectedLayerId = null;
-
-          _controller.selectElement(id,
-              isMultiSelect: _isCtrlPressed || _isShiftPressed);
-
-          // 强制触发UI更新，确保属性面板切换
-          setState(() {});
-        } else {
-          // 根据状态图实现状态转换
-          final isCurrentlySelected =
-              _controller.state.selectedElementIds.contains(id);
-          final isMultipleSelected =
-              _controller.state.selectedElementIds.length > 1;
-
-          // 打印当前状态信息
-          debugPrint('\n=== 点击元素 $id 前的状态 ===');
-          debugPrint(
-              '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
-          debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
-          debugPrint('当前元素是否选中: $isCurrentlySelected');
-          debugPrint('当前是否多选状态: $isMultipleSelected');
-          debugPrint('是否按下Ctrl或Shift键: ${_isCtrlPressed || _isShiftPressed}');
-
-          if (_isCtrlPressed || _isShiftPressed) {
-            // Ctrl+点击：多选状态
-            debugPrint('→ 进入多选状态 (按下Ctrl或Shift键)');
-            // 清除图层选择，确保属性面板能切换到元素属性
-            _controller.state.selectedLayerId = null;
-
-            _controller.selectElement(id, isMultiSelect: true);
-            // 强制触发UI更新，确保属性面板切换
-            setState(() {});
-          } else if (isCurrentlySelected && isMultipleSelected) {
-            // 已选中且当前是多选状态：取消其他选择，进入编辑状态
-            debugPrint('→ 从多选状态转为编辑状态 (取消其他选择)');
-            _controller.state.selectedElementIds = [id];
-            _controller.state.selectedElement = element;
-
-            // 关键修改: 无论如何都启用拖拽
-            setState(() {
-              _isDragging = true;
-              _dragStart = details.localPosition;
-              _elementStartPosition = Offset(x, y);
-              debugPrint('→ 设置拖拽状态，准备移动元素');
-            });
-          } else if (!isCurrentlySelected) {
-            // 未选中：选中并进入编辑状态
-            debugPrint('→ 从普通状态转为编辑状态 (选中元素)');
-            // 清除图层选择，确保属性面板能切换到元素属性
-            _controller.state.selectedLayerId = null;
-
-            _controller.selectElement(id, isMultiSelect: false);
-            // 强制触发UI更新，确保属性面板切换
-            setState(() {});
-
-            // 关键修改: 同时启用拖拽
-            setState(() {
-              _isDragging = true;
-              _dragStart = details.localPosition;
-              _elementStartPosition = Offset(x, y);
-              debugPrint('→ 设置拖拽状态，准备移动元素');
-            });
-          } else {
-            // 如果已经在编辑状态，保持不变并启用拖拽
-            debugPrint('→ 保持编辑状态不变 (已经选中)');
-
-            // 关键修改：即使元素已经被选中，也设置拖拽状态，以便能够拖动元素
-            setState(() {
-              _isDragging = true;
-              _dragStart = details.localPosition;
-              _elementStartPosition = Offset(x, y);
-
-              debugPrint('→ 设置拖拽状态，准备移动元素');
-              debugPrint('  拖拽起始点: $_dragStart');
-              debugPrint('  元素起始位置: $_elementStartPosition');
-            });
-          }
-
-          // 打印状态变化后的信息
-          Future.microtask(() {
-            debugPrint('=== 点击元素 $id 后的状态 ===');
-            debugPrint(
-                '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
-            debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
-            debugPrint('元素起点：${element['x']}, ${element['y']}');
-            debugPrint('元素尺寸: ${element['width']}x${element['height']}');
-            debugPrint('\n');
-          });
-        }
-
-        break;
-      }
-    }
-
-    if (!hitElement) {
-      // 打印点击空白区域的状态信息
-      debugPrint('\n=== 点击空白区域 ===');
-      debugPrint('当前选中元素数量: ${_controller.state.selectedElementIds.length}');
-      debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
-      debugPrint('是否按下Ctrl或Shift键: ${_isCtrlPressed || _isShiftPressed}');
-
-      if (!(_isCtrlPressed || _isShiftPressed)) {
-        // 点击空白处且没有按下Ctrl或Shift键，取消选择
-        debugPrint('→ 取消所有选择，进入普通状态');
-        _controller.clearSelection();
-        setState(() {
-          // 重置拖拽状态
-          _isDragging = false;
-          debugPrint('→ 重置拖拽状态');
-        });
-
-        // 打印状态变化后的信息
-        Future.microtask(() {
-          debugPrint('=== 点击空白区域后的状态 ===');
-          debugPrint(
-              '当前选中元素数量: ${_controller.state.selectedElementIds.length}');
-          debugPrint('当前选中元素IDs: ${_controller.state.selectedElementIds}');
-          debugPrint('\n');
-        });
-      } else {
-        debugPrint('→ 保持当前选择状态 (按下Ctrl或Shift键)');
-      }
-    }
-  }
-
-  /// 加载字帖
+  /// Load practice
   Future<void> _loadPractice(String id) async {
-    // 首先检查是否已经加载过该ID的字帖，避免重复加载
+    // First check if we've already loaded this practice ID, avoid duplicate loading
     if (_controller.practiceId == id) {
-      debugPrint('字帖已经加载，跳过重复加载: $id');
+      debugPrint('Practice already loaded, skipping duplicate load: $id');
       return;
     }
 
-    // 在开始异步操作前保存一个引用
+    // Save a reference before starting async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      debugPrint('开始加载字帖: $id');
+      debugPrint('Starting practice load: $id');
 
-      // 调用控制器的loadPractice方法
+      // Call controller's loadPractice method
       final success = await _controller.loadPractice(id);
 
       if (success) {
-        // 加载成功，更新UI
+        // Load success, update UI
         if (mounted) {
           setState(() {
-            // 重置缩放和平移
+            // Reset zoom and pan
             _transformationController.value = Matrix4.identity();
           });
 
-          // 使用保存的引用显示成功提示
+          // Show success notification
           scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('字帖 "${_controller.practiceTitle}" 加载成功')),
+            SnackBar(
+                content: Text(
+                    'Practice "${_controller.practiceTitle}" loaded successfully')),
           );
 
-          debugPrint('字帖加载成功: ${_controller.practiceTitle}');
+          debugPrint(
+              'Practice loaded successfully: ${_controller.practiceTitle}');
 
-          // 预加载所有集字元素的图片
+          // Preload all collection element images
           _preloadAllCollectionImages();
         }
       } else {
-        // 加载失败
+        // Load failed
         if (mounted) {
-          // 使用保存的引用显示失败提示
+          // Show failure notification
           scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('加载字帖失败：字帖不存在或已被删除')),
+            const SnackBar(
+                content: Text(
+                    'Failed to load practice: Practice does not exist or has been deleted')),
           );
-          debugPrint('字帖加载失败: 字帖不存在或已被删除');
+          debugPrint(
+              'Practice load failed: Practice does not exist or has been deleted');
         }
       }
     } catch (e) {
-      // 处理异常
-      debugPrint('加载字帖失败: $e');
+      // Handle exceptions
+      debugPrint('Failed to load practice: $e');
       if (mounted) {
-        // 使用保存的引用显示异常提示
+        // Show exception notification
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('加载字帖失败: $e')),
+          SnackBar(content: Text('Failed to load practice: $e')),
         );
       }
     }
   }
 
-  /// 将元素下移一层
+  /// Move element down one layer
   void _moveElementDown() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
@@ -2272,12 +742,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index > 0) {
-      // 交换当前元素和下一层元素的位置
+      // Swap current element with element below
       final temp = elements[index];
       elements[index] = elements[index - 1];
       elements[index - 1] = temp;
 
-      // 更新当前页面的元素
+      // Update current page elements
       _controller.state.pages[_controller.state.currentPageIndex]['elements'] =
           elements;
       _controller.state.hasUnsavedChanges = true;
@@ -2286,7 +756,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  /// 将元素上移一层
+  /// Move element up one layer
   void _moveElementUp() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
@@ -2295,12 +765,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index >= 0 && index < elements.length - 1) {
-      // 交换当前元素和上一层元素的位置
+      // Swap current element with element above
       final temp = elements[index];
       elements[index] = elements[index + 1];
       elements[index + 1] = temp;
 
-      // 更新当前页面的元素
+      // Update current page elements
       _controller.state.pages[_controller.state.currentPageIndex]['elements'] =
           elements;
       _controller.state.hasUnsavedChanges = true;
@@ -2309,7 +779,7 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  /// 移动选中的元素
+  /// Move selected elements
   void _moveSelectedElements(double dx, double dy) {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
@@ -2321,13 +791,13 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
       if (elementIndex >= 0) {
         final element = elements[elementIndex];
 
-        // 检查元素所在图层是否锁定
+        // Check if element's layer is locked
         final layerId = element['layerId'] as String?;
         if (layerId != null && _controller.state.isLayerLocked(layerId)) {
-          continue; // 跳过锁定图层上的元素
+          continue; // Skip elements on locked layers
         }
 
-        // 更新元素位置
+        // Update element position
         element['x'] = (element['x'] as num).toDouble() + dx;
         element['y'] = (element['y'] as num).toDouble() + dy;
         hasChanges = true;
@@ -2340,37 +810,38 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  /// 处理返回按钮
+  /// Handle back button
   Future<bool> _onWillPop() async {
-    // 检查是否有未保存的修改
+    // Check for unsaved changes
     if (_controller.state.hasUnsavedChanges) {
-      // 显示确认对话框
+      // Show confirmation dialog
       final bool? result = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('未保存的修改'),
-            content: const Text('你有未保存的修改，确定要离开吗？'),
+            title: const Text('Unsaved Changes'),
+            content:
+                const Text('You have unsaved changes. Do you want to leave?'),
             actions: <Widget>[
               TextButton(
-                child: const Text('取消'),
+                child: const Text('Cancel'),
                 onPressed: () {
                   Navigator.of(context).pop(false);
                 },
               ),
               TextButton(
-                child: const Text('离开'),
+                child: const Text('Leave'),
                 onPressed: () {
                   Navigator.of(context).pop(true);
                 },
               ),
               TextButton(
-                child: const Text('保存并离开'),
+                child: const Text('Save and Leave'),
                 onPressed: () async {
-                  // 保存修改
+                  // Save changes
                   await _savePractice();
                   if (context.mounted) {
-                    // 返回true表示确认离开
+                    // Return true to confirm leaving
                     Navigator.of(context).pop(true);
                   }
                 },
@@ -2380,310 +851,241 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         },
       );
 
-      // 如果用户取消，则不离开
+      // If user cancels, don't leave
       return result ?? false;
     }
 
-    // 没有未保存的修改，可以直接离开
+    // No unsaved changes, can leave
     return true;
   }
 
-  /// 粘贴元素
+  /// Paste element(s)
   void _pasteElement() {
     if (_clipboardElement == null) return;
 
-    // 创建新元素ID
-    final newId =
-        '${_clipboardElement!['type']}_${DateTime.now().millisecondsSinceEpoch}';
-
-    // 复制元素并修改位置（稍微偏移一点）
-    final newElement = {
-      ..._clipboardElement!,
-      'id': newId,
-      'x': (_clipboardElement!['x'] as num).toDouble() + 20,
-      'y': (_clipboardElement!['y'] as num).toDouble() + 20,
-    };
-
-    // 添加到当前页面
     final elements = _controller.state.currentPageElements;
-    elements.add(newElement);
+    final newElementIds = <String>[];
+
+    // 检查是否是多元素集合
+    if (_clipboardElement!['type'] == 'multi_elements') {
+      // 处理多元素粘贴
+      final clipboardElements = _clipboardElement!['elements'] as List<dynamic>;
+      final newElements = <Map<String, dynamic>>[];
+
+      // 获取当前时间戳作为基础
+      final baseTimestamp = DateTime.now().millisecondsSinceEpoch;
+
+      // 为每个元素添加索引，确保ID唯一
+      int index = 0;
+      for (final element in clipboardElements) {
+        // 创建新元素ID，添加索引和随机数确保唯一性
+        final newId =
+            '${element['type']}_${baseTimestamp}_${index}_${_getRandomString(4)}';
+        index++;
+
+        // 复制元素并修改位置（稍微偏移一点）
+        final newElement = {
+          ...Map<String, dynamic>.from(element as Map<String, dynamic>),
+          'id': newId,
+          'x': (element['x'] as num).toDouble() + 20,
+          'y': (element['y'] as num).toDouble() + 20,
+        };
+
+        // 添加到新元素列表
+        newElements.add(newElement);
+        newElementIds.add(newId);
+      }
+
+      // 添加所有新元素到当前页面
+      elements.addAll(newElements);
+    } else {
+      // 处理单个元素粘贴（原有逻辑）
+      // 创建新元素ID，添加随机字符串确保唯一性
+      final newId =
+          '${_clipboardElement!['type']}_${DateTime.now().millisecondsSinceEpoch}_${_getRandomString(4)}';
+
+      // 复制元素并修改位置（稍微偏移一点）
+      final newElement = {
+        ..._clipboardElement!,
+        'id': newId,
+        'x': (_clipboardElement!['x'] as num).toDouble() + 20,
+        'y': (_clipboardElement!['y'] as num).toDouble() + 20,
+      };
+
+      // 添加到当前页面
+      elements.add(newElement);
+      newElementIds.add(newId);
+    }
 
     // 更新当前页面的元素
     _controller.state.pages[_controller.state.currentPageIndex]['elements'] =
         elements;
 
-    // 选中新粘贴的元素
-    _controller.state.selectedElementIds = [newId];
-    _controller.state.selectedElement = newElement;
+    // 选中新粘贴的元素 - 如果是多个元素，只选中第一个
+    if (newElementIds.length == 1) {
+      _controller.state.selectedElementIds = newElementIds;
+      _controller.state.selectedElement =
+          elements.firstWhere((e) => e['id'] == newElementIds.first);
+    } else if (newElementIds.isNotEmpty) {
+      // 对于多个元素，只选中第一个，这样点击时不会全部被选中
+      final firstId = newElementIds.first;
+      _controller.state.selectedElementIds = [firstId];
+      _controller.state.selectedElement =
+          elements.firstWhere((e) => e['id'] == firstId);
+    }
     _controller.state.hasUnsavedChanges = true;
 
     setState(() {});
   }
 
-  /// 预加载所有集字元素的图片
+  /// Preload all collection element images
   void _preloadAllCollectionImages() {
-    debugPrint('===== 开始预加载所有集字元素的图片... =====');
-
-    // 获取当前页面的所有元素
+    // Get current page elements
     final elements = _controller.state.currentPageElements;
-    debugPrint('当前页面元素数量: ${elements.length}');
 
-    // 获取字符图像服务
+    // Get character image service
     final characterImageService = ref.read(characterImageServiceProvider);
 
-    // 计数器
-    int collectionElementCount = 0;
-    int totalCharactersCount = 0;
-
-    // 遍历所有元素，找出集字元素
+    // Iterate through all elements to find collection elements
     for (final element in elements) {
       if (element['type'] == 'collection') {
-        collectionElementCount++;
-
-        // 获取集字元素的内容
+        // Get collection element content
         final content = element['content'] as Map<String, dynamic>?;
-        if (content == null) {
-          debugPrint('⚠️ 集字元素内容为空: ${element['id']}');
-          continue;
-        }
+        if (content == null) continue;
 
-        // 获取字符图像信息
+        // Get character image info
         final characterImages =
             content['characterImages'] as Map<String, dynamic>?;
-        if (characterImages == null) {
-          debugPrint('⚠️ 集字元素字符图像信息为空: ${element['id']}');
-          continue;
-        }
+        if (characterImages == null) continue;
 
-        // 获取字符列表
+        // Get character list
         final characters = content['characters'] as String?;
-        if (characters == null || characters.isEmpty) {
-          debugPrint('⚠️ 集字元素字符列表为空: ${element['id']}');
-          continue;
-        }
+        if (characters == null || characters.isEmpty) continue;
 
-        final id = element['id'] as String;
-        final elementWidth = (element['width'] as num).toDouble();
-        final elementHeight = (element['height'] as num).toDouble();
+        // Preload each character's image
+        for (int i = 0; i < characters.length; i++) {
+          final char = characters[i];
 
-        debugPrint('🔍 预加载集字元素 $id 的图片');
-        debugPrint(
-            '  - 元素尺寸: ${elementWidth.toStringAsFixed(1)}x${elementHeight.toStringAsFixed(1)}');
-        debugPrint('  - 字符列表: $characters (${characters.length}个字符)');
-        debugPrint('  - 字符图像信息: ${characterImages.length}个字符有图像信息');
-        debugPrint('  - characterImages键: ${characterImages.keys.toList()}');
+          // Try multiple ways to find the image info for the character
+          Map<String, dynamic>? charImage;
 
-        // 打印characterImages的详细内容
-        debugPrint('  - characterImages详细内容:');
-        characterImages.forEach((key, value) {
-          debugPrint('    - 键: "$key", 值: $value');
-        });
-
-        totalCharactersCount += characters.length;
-
-        // 使用 Future.microtask 确保在下一个微任务中执行，避免阻塞UI
-        Future.microtask(() {
-          // 预加载每个字符的图片
-          for (int i = 0; i < characters.length; i++) {
-            final char = characters[i];
-
-            debugPrint('🔍 处理字符 "$char" (索引: $i):');
-
-            // 尝试多种方式查找字符对应的图片信息
-            Map<String, dynamic>? charImage;
-
-            // 1. 直接使用字符作为键
-            if (characterImages.containsKey(char)) {
-              charImage = characterImages[char] as Map<String, dynamic>;
-              debugPrint('  - 直接使用字符作为键找到图像信息');
-            }
-            // 2. 使用索引作为键
-            else if (characterImages.containsKey('$i')) {
-              charImage = characterImages['$i'] as Map<String, dynamic>;
-              debugPrint('  - 使用索引 "$i" 作为键找到图像信息');
-            }
-            // 3. 遍历所有键查找可能匹配的图像信息
-            else {
-              debugPrint('  - 尝试遍历所有键查找可能匹配的图像信息');
-
-              // 首先尝试查找精确匹配的字符
-              bool foundExactMatch = false;
-              for (final key in characterImages.keys) {
-                final value = characterImages[key];
-                if (value is Map<String, dynamic> &&
-                    value.containsKey('characterId') &&
-                    (value.containsKey('character') &&
-                        value['character'] == char)) {
-                  charImage = value;
-                  debugPrint('  - 在键 "$key" 中找到匹配字符 "$char" 的图像信息');
-                  foundExactMatch = true;
-                  break;
-                }
+          // Try direct lookup by character
+          if (characterImages.containsKey(char)) {
+            charImage = characterImages[char] as Map<String, dynamic>;
+          }
+          // Try lookup by index
+          else if (characterImages.containsKey('$i')) {
+            charImage = characterImages['$i'] as Map<String, dynamic>;
+          }
+          // Try to find any matching character
+          else {
+            for (final key in characterImages.keys) {
+              final value = characterImages[key];
+              if (value is Map<String, dynamic> &&
+                  value.containsKey('characterId') &&
+                  (value.containsKey('character') &&
+                      value['character'] == char)) {
+                charImage = value;
+                break;
               }
-
-              // 如果没有找到精确匹配，则尝试查找任何可用的字符作为替代
-              if (!foundExactMatch) {
-                // 记录所有可能的替代字符
-                final List<Map<String, dynamic>> possibleSubstitutes = [];
-
-                for (final key in characterImages.keys) {
-                  final value = characterImages[key];
-                  if (value is Map<String, dynamic> &&
-                      value.containsKey('characterId')) {
-                    possibleSubstitutes.add({
-                      'key': key,
-                      'value': value,
-                    });
-                  }
-                }
-
-                // 如果找到了可能的替代字符，选择第一个
-                if (possibleSubstitutes.isNotEmpty) {
-                  final substitute = possibleSubstitutes.first;
-                  charImage = substitute['value'] as Map<String, dynamic>;
-                  final substituteKey = substitute['key'] as String;
-                  debugPrint('⚠️ 未找到字符 "$char" 的精确匹配，使用替代字符:');
-                  debugPrint('  - 替代键: $substituteKey');
-
-                  // 如果替代字符有character属性，显示它
-                  if (charImage.containsKey('character')) {
-                    debugPrint('  - 替代字符: ${charImage['character']}');
-                  }
-                }
-              }
-            }
-
-            if (charImage != null && charImage.containsKey('characterId')) {
-              final characterId = charImage['characterId'].toString();
-              final type = charImage['type'] as String? ??
-                  charImage['drawingType'] as String? ??
-                  'square-binary';
-              final format = charImage['format'] as String? ??
-                  charImage['drawingFormat'] as String? ??
-                  'png-binary';
-
-              // 获取图片路径
-              final imagePath = _getImagePath(characterId, type, format);
-
-              // 检查是否是替代字符
-              final bool isSubstitute = charImage.containsKey('character') &&
-                  charImage['character'] != char;
-
-              if (isSubstitute) {
-                debugPrint('⚠️ 预加载替代字符 "$char" 的图片:');
-                debugPrint('  - 原始字符: $char');
-                if (charImage.containsKey('character')) {
-                  debugPrint('  - 替代字符: ${charImage['character']}');
-                }
-              } else {
-                debugPrint('📥 预加载字符 "$char" 的图片:');
-              }
-
-              debugPrint('  - 字符ID: $characterId');
-              debugPrint('  - 图片类型: $type');
-              debugPrint('  - 图片格式: $format');
-              debugPrint('  - 图片路径: $imagePath');
-
-              // 预加载图片
-              characterImageService
-                  .getCharacterImage(
-                characterId,
-                type,
-                format,
-              )
-                  .then((imageData) {
-                if (imageData != null) {
-                  debugPrint('✅ 字符 "$char" 图片加载成功: ${imageData.length} 字节');
-
-                  // 解码图像并添加到全局缓存
-                  final cacheKey = '$characterId-$type-$format';
-                  // 同时添加标准化的缓存键
-                  final standardCacheKey =
-                      '$characterId-square-binary-png-binary';
-
-                  ui.decodeImageFromList(imageData, (ui.Image image) {
-                    // 添加到全局缓存 - 使用两种键
-                    GlobalImageCache.add(cacheKey, image);
-                    if (cacheKey != standardCacheKey) {
-                      GlobalImageCache.add(standardCacheKey, image);
-                      debugPrint('📦 同时添加到标准缓存键: $standardCacheKey');
-                    }
-                  });
-                } else {
-                  debugPrint('❌ 字符 "$char" 图片加载失败');
-                }
-              }).catchError((error) {
-                debugPrint('❌ 字符 "$char" 图片加载出错: $error');
-              });
-            } else {
-              debugPrint('⚠️ 字符 "$char" 没有对应的图片信息');
             }
           }
 
-          // 强制重绘元素
-          setState(() {});
-        });
+          if (charImage != null && charImage.containsKey('characterId')) {
+            final characterId = charImage['characterId'].toString();
+            final type = charImage['type'] as String? ?? 'square-binary';
+            final format = charImage['format'] as String? ?? 'png-binary';
+
+            // Preload image
+            characterImageService.getCharacterImage(
+              characterId,
+              type,
+              format,
+            );
+          }
+        }
       }
     }
+  }
 
-    debugPrint('===== 预加载统计 =====');
-    debugPrint('集字元素数量: $collectionElementCount');
-    debugPrint('总字符数量: $totalCharactersCount');
-    debugPrint('======================');
-
-    // 添加延迟重绘，确保预加载的图片能够被渲染
-    Future.delayed(const Duration(milliseconds: 500), () {
-      debugPrint('🔄 延迟重绘，确保预加载的图片能够被渲染');
-      if (mounted) {
-        setState(() {});
+  /// Reorder pages
+  void _reorderPages(int oldIndex, int newIndex) {
+    setState(() {
+      // 处理 ReorderableListView 的特殊情况
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
       }
+
+      // 移动页面
+      final page = _controller.state.pages.removeAt(oldIndex);
+      _controller.state.pages.insert(newIndex, page);
+
+      // 更新页面索引和名称
+      for (int i = 0; i < _controller.state.pages.length; i++) {
+        _controller.state.pages[i]['index'] = i;
+        _controller.state.pages[i]['name'] = '页面 ${i + 1}';
+      }
+
+      // 如果重新排序的是当前页面，更新当前页面索引
+      if (oldIndex == _controller.state.currentPageIndex) {
+        _controller.state.currentPageIndex = newIndex;
+      } else if (oldIndex < _controller.state.currentPageIndex &&
+          newIndex >= _controller.state.currentPageIndex) {
+        _controller.state.currentPageIndex--;
+      } else if (oldIndex > _controller.state.currentPageIndex &&
+          newIndex <= _controller.state.currentPageIndex) {
+        _controller.state.currentPageIndex++;
+      }
+
+      // 标记有未保存的更改
+      _controller.state.hasUnsavedChanges = true;
     });
   }
 
-  /// 另存为新字帖
+  /// Save as new practice
   Future<void> _saveAsNewPractice() async {
     if (_controller.state.pages.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法保存：字帖没有页面')),
+        const SnackBar(content: Text('Cannot save: Practice has no pages')),
       );
       return;
     }
 
-    // 保存 ScaffoldMessenger 引用，避免异步操作后使用 context
+    // Save ScaffoldMessenger reference to avoid using context after async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // 使用StatefulBuilder创建对话框，确保控制器在对话框的生命周期内管理
+    // Use StatefulBuilder to create dialog, ensuring controller is managed within dialog lifecycle
     final title = await showDialog<String>(
       context: context,
-      barrierDismissible: true, // 允许点击外部关闭对话框
+      barrierDismissible: true, // Allow clicking outside to close dialog
       builder: (context) {
-        // 在对话框内部创建控制器，确保它的生命周期与对话框一致
+        // Create controller inside dialog to ensure its lifecycle matches the dialog
         final TextEditingController textController = TextEditingController();
 
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('保存字帖'),
+              title: const Text('Save Practice'),
               content: TextField(
                 controller: textController,
                 autofocus: true,
                 decoration: const InputDecoration(
-                  labelText: '字帖标题',
-                  hintText: '请输入字帖标题',
+                  labelText: 'Practice Title',
+                  hintText: 'Please enter practice title',
                 ),
                 onSubmitted: (value) => Navigator.of(context).pop(value),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('取消'),
+                  child: const Text('Cancel'),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(textController.text);
                   },
-                  child: const Text('保存'),
+                  child: const Text('Save'),
                 ),
               ],
             );
@@ -2694,32 +1096,33 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
     if (title == null || title.isEmpty) return;
 
-    // 保存字帖
+    // Save practice
     final result = await _controller.saveAsNewPractice(title);
 
     if (!mounted) return;
 
     if (result == true) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(content: Text('字帖"$title"保存成功')),
+        SnackBar(content: Text('Practice "$title" saved successfully')),
       );
     } else if (result == 'title_exists') {
-      // 标题已存在，询问是否覆盖
+      // Title already exists, ask whether to overwrite
       final shouldOverwrite = await showDialog<bool>(
         context: context,
-        barrierDismissible: true, // 允许点击外部关闭对话框
+        barrierDismissible: true, // Allow clicking outside to close dialog
         builder: (context) {
           return AlertDialog(
-            title: const Text('标题已存在'),
-            content: const Text('已存在同名字帖，是否覆盖？'),
+            title: const Text('Title Already Exists'),
+            content: const Text(
+                'A practice with this title already exists. Overwrite?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('取消'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('覆盖'),
+                child: const Text('Overwrite'),
               ),
             ],
           );
@@ -2736,66 +1139,67 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
         if (saveResult == true) {
           scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('字帖"$title"保存成功')),
+            SnackBar(content: Text('Practice "$title" saved successfully')),
           );
         } else {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('保存失败')),
+            const SnackBar(content: Text('Save failed')),
           );
         }
       }
     } else {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('保存失败')),
+        const SnackBar(content: Text('Save failed')),
       );
     }
   }
 
-  /// 保存字帖
+  /// Save practice
   Future<void> _savePractice() async {
     if (_controller.state.pages.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法保存：字帖没有页面')),
+        const SnackBar(content: Text('Cannot save: Practice has no pages')),
       );
       return;
     }
 
-    // 保存 ScaffoldMessenger 引用，避免异步操作后使用 context
+    // Save ScaffoldMessenger reference to avoid using context after async operation
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // 如果从未保存过，弹出对话框输入标题
+    // If never saved before, show dialog to enter title
     if (!_controller.isSaved) {
       await _saveAsNewPractice();
       return;
     }
 
-    // 保存字帖
+    // Save practice
     final result = await _controller.savePractice();
 
     if (!mounted) return;
 
     if (result == true) {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('保存成功')),
+        const SnackBar(content: Text('Save successful')),
       );
     } else if (result == 'title_exists') {
-      // 标题已存在，询问是否覆盖
+      // Title already exists, ask whether to overwrite
       final shouldOverwrite = await showDialog<bool>(
         context: context,
-        barrierDismissible: true, // 允许点击外部关闭对话框
+        barrierDismissible: true, // Allow clicking outside to close dialog
         builder: (context) {
           return AlertDialog(
-            title: const Text('标题已存在'),
-            content: const Text('已存在同名字帖，是否覆盖？'),
+            title: const Text('Title Already Exists'),
+            content: const Text(
+                'A practice with this title already exists. Overwrite?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('取消'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('覆盖'),
+                child: const Text('Overwrite'),
               ),
             ],
           );
@@ -2811,22 +1215,22 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
         if (saveResult == true) {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('保存成功')),
+            const SnackBar(content: Text('Save successful')),
           );
         } else {
           scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('保存失败')),
+            const SnackBar(content: Text('Save failed')),
           );
         }
       }
     } else {
       scaffoldMessenger.showSnackBar(
-        const SnackBar(content: Text('保存失败')),
+        const SnackBar(content: Text('Save failed')),
       );
     }
   }
 
-  /// 全选当前页面所有元素
+  /// Select all elements on current page
   void _selectAllElements() {
     if (_controller.state.currentPageIndex < 0 ||
         _controller.state.currentPageIndex >= _controller.state.pages.length) {
@@ -2836,26 +1240,27 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final elements = _controller.state.currentPageElements;
     if (elements.isEmpty) return;
 
-    // 收集所有未锁定图层上的元素ID
+    // Collect IDs of all elements on unlocked layers
     final ids = <String>[];
     for (final element in elements) {
       final id = element['id'] as String;
       final layerId = element['layerId'] as String?;
 
-      // 如果元素所在图层未锁定，则添加到选择列表
+      // If element's layer is not locked, add to selection list
       if (layerId == null || !_controller.state.isLayerLocked(layerId)) {
         ids.add(id);
       }
     }
 
-    // 更新选择状态
+    // Update selection state
     _controller.state.selectedElementIds = ids;
-    _controller.state.selectedElement = null; // 多选时不设置单个选中元素
+    _controller.state.selectedElement =
+        null; // Don't set single selected element in multi-selection
 
     setState(() {});
   }
 
-  /// 将元素置于底层
+  /// Send element to back
   void _sendElementToBack() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
@@ -2864,12 +1269,12 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index > 0) {
-      // 移除元素
+      // Remove element
       final element = elements.removeAt(index);
-      // 添加到开头（最底层）
+      // Add to beginning (bottom layer)
       elements.insert(0, element);
 
-      // 更新当前页面的元素
+      // Update current page elements
       _controller.state.pages[_controller.state.currentPageIndex]['elements'] =
           elements;
       _controller.state.hasUnsavedChanges = true;
@@ -2878,14 +1283,14 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     }
   }
 
-  /// 显示导出对话框
+  /// Show export dialog
   Future<void> _showExportDialog() async {
     if (!mounted) return;
 
-    // 获取默认文件名
-    final defaultFileName = _controller.practiceTitle ?? '未命名字帖';
+    // Get default filename
+    final defaultFileName = _controller.practiceTitle ?? 'Untitled Practice';
 
-    // 调用 FileOperations.exportPractice 方法，与导出按钮行为一致
+    // Call FileOperations.exportPractice method, consistent with export button behavior
     await FileOperations.exportPractice(
       context,
       _controller.state.pages,
@@ -2894,43 +1299,42 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
     );
   }
 
-  /// 选择本地图片
+  /// Select local image
   Future<void> _showImageUrlDialog(BuildContext context) async {
     try {
-      // 使用file_picker打开文件选择对话框
+      // Use file_picker to open file selection dialog
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
-        dialogTitle: '选择图片',
+        dialogTitle: 'Select Image',
         lockParentWindow: true,
       );
 
-      // 如果用户取消了选择，result将为null
+      // If user cancels selection, result will be null
       if (result == null || result.files.isEmpty) {
         return;
       }
 
-      // 获取选择的文件路径
+      // Get selected file path
       final file = result.files.first;
       final filePath = file.path;
 
       if (filePath == null || filePath.isEmpty) {
-        // 显示错误消息
+        // Show error message
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('无法获取文件路径')),
+            const SnackBar(content: Text('Could not get file path')),
           );
         }
         return;
       }
 
-      // 将文件路径转换为可用的URL格式
+      // Convert file path to usable URL format
       final fileUrl = 'file://$filePath';
-      debugPrint('选择的图片路径: $fileUrl');
 
-      // 更新或添加图片元素
+      // Update or add image element
       if (_controller.state.selectedElementIds.isNotEmpty) {
-        // 如果有选中的元素，更新它的图片URL
+        // If there are selected elements, update its image URL
         final elementId = _controller.state.selectedElementIds.first;
         final element = _controller.state.currentPageElements.firstWhere(
           (e) => e['id'] == elementId,
@@ -2938,81 +1342,51 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
         );
 
         if (element.isNotEmpty && element['type'] == 'image') {
-          // 更新现有图片元素的URL
+          // Update existing image element URL
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
           content['imageUrl'] = fileUrl;
-          // 设置isTransformApplied为true，确保立即显示图片
+          // Set isTransformApplied to true to ensure image displays immediately
           content['isTransformApplied'] = true;
           _controller.updateElementProperties(elementId, {'content': content});
 
-          // 显示成功消息
+          // Show success message
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('图片已更新')),
+              const SnackBar(content: Text('Image updated')),
             );
           }
         } else {
-          // 添加新图片元素
+          // Add new image element
           _controller.addImageElement(fileUrl);
         }
       } else {
-        // 添加新图片元素
+        // Add new image element
         _controller.addImageElement(fileUrl);
       }
     } catch (e) {
-      // 显示错误消息
+      // Show error message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择图片时出错: $e')),
+          SnackBar(content: Text('Error selecting image: $e')),
         );
       }
-      debugPrint('选择图片时出错: $e');
     }
   }
 
-  /// 根据图层顺序排序元素
-  List<Map<String, dynamic>> _sortElementsByLayerOrder(
-      List<Map<String, dynamic>> elements) {
-    // 获取图层列表
-    final layers = _controller.state.layers;
-
-    // 创建图层顺序映射
-    // 注意：图层在列表中的索引越大，表示越靠上层，应该越后绘制
-    final layerOrderMap = <String, int>{};
-    for (int i = 0; i < layers.length; i++) {
-      final layer = layers[i];
-      final layerId = layer['id'] as String;
-      layerOrderMap[layerId] = i; // 使用图层在列表中的索引作为排序依据
-    }
-
-    // 对元素进行排序
-    final sortedElements = List<Map<String, dynamic>>.from(elements);
-    sortedElements.sort((a, b) {
-      final aLayerId = a['layerId'] as String?;
-      final bLayerId = b['layerId'] as String?;
-
-      // 如果元素没有图层ID，则放到最后
-      if (aLayerId == null && bLayerId == null) return 0;
-      if (aLayerId == null) return 1;
-      if (bLayerId == null) return -1;
-
-      // 根据图层顺序排序
-      // 图层索引越大（越靠上层），应该越后绘制
-      final aOrder = layerOrderMap[aLayerId] ?? 0;
-      final bOrder = layerOrderMap[bLayerId] ?? 0;
-      return aOrder.compareTo(bOrder); // 索引小的先绘制，索引大的后绘制
+  /// Toggle grid visibility
+  void _toggleGrid() {
+    setState(() {
+      _controller.state.gridVisible = !_controller.state.gridVisible;
     });
-
-    return sortedElements;
   }
 
-  /// 切换选中元素的锁定状态
+  /// Toggle lock state of selected elements
   void _toggleSelectedElementsLock() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
     for (final id in _controller.state.selectedElementIds) {
-      // 获取当前元素
+      // Get current element
       final elements =
           _controller.state.currentPage?['elements'] as List<dynamic>?;
       if (elements == null) continue;
@@ -3022,18 +1396,18 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
       final element = elements[elementIndex] as Map<String, dynamic>;
 
-      // 切换锁定状态
+      // Toggle lock state
       final isLocked = element['locked'] ?? false;
       _controller.updateElementProperty(id, 'locked', !isLocked);
     }
   }
 
-  /// 切换选中元素的可见性
+  /// Toggle visibility of selected elements
   void _toggleSelectedElementsVisibility() {
     if (_controller.state.selectedElementIds.isEmpty) return;
 
     for (final id in _controller.state.selectedElementIds) {
-      // 获取当前元素
+      // Get current element
       final elements =
           _controller.state.currentPage?['elements'] as List<dynamic>?;
       if (elements == null) continue;
@@ -3043,9 +1417,117 @@ class _PracticeEditPageState extends ConsumerState<PracticeEditPage> {
 
       final element = elements[elementIndex] as Map<String, dynamic>;
 
-      // 切换隐藏状态
+      // Toggle hidden state
       final isHidden = element['hidden'] ?? false;
       _controller.updateElementProperty(id, 'hidden', !isHidden);
+    }
+  }
+
+  /// Toggle snap to grid
+  void _toggleSnap() {
+    setState(() {
+      _controller.state.snapEnabled = !_controller.state.snapEnabled;
+    });
+  }
+
+  /// Ungroup elements
+  void _ungroupElements() {
+    if (_controller.state.selectedElementIds.length == 1) {
+      final id = _controller.state.selectedElementIds.first;
+      final element = _controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (element.isNotEmpty && element['type'] == 'group') {
+        _controller.ungroupElements(id);
+      }
+    }
+  }
+}
+
+class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
+  late TextEditingController _controller;
+  String? _errorText;
+  bool _isChecking = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Practice Title'),
+      content: TextField(
+        controller: _controller,
+        decoration: InputDecoration(
+          labelText: 'Title',
+          errorText: _errorText,
+          enabled: !_isChecking,
+        ),
+        autofocus: true,
+        onSubmitted: _validateAndSubmit,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed:
+              _isChecking ? null : () => _validateAndSubmit(_controller.text),
+          child: _isChecking
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialTitle);
+  }
+
+  Future<void> _validateAndSubmit(String value) async {
+    if (value.isEmpty) {
+      setState(() {
+        _errorText = 'Title cannot be empty';
+      });
+      return;
+    }
+
+    setState(() {
+      _isChecking = true;
+      _errorText = null;
+    });
+
+    // Check if title already exists
+    if (value != widget.initialTitle) {
+      final exists = await widget.checkTitleExists(value);
+      if (exists) {
+        setState(() {
+          _errorText = 'A practice with this title already exists';
+          _isChecking = false;
+        });
+        return;
+      }
+    }
+
+    setState(() {
+      _isChecking = false;
+    });
+
+    if (context.mounted) {
+      Navigator.of(context).pop(value);
     }
   }
 }

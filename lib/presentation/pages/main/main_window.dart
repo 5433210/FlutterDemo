@@ -1,4 +1,4 @@
-import 'package:demo/presentation/pages/practices/practice_edit_page_refactored.dart';
+import 'package:demo/presentation/pages/practices/practice_edit_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../../presentation/pages/settings/settings_page.dart';
@@ -104,7 +104,7 @@ class _MainWindowState extends State<MainWindow> with WidgetsBindingObserver {
 
               return MaterialPageRoute<bool>(
                 // 指定返回值类型为bool
-                builder: (context) => PracticeEditPageRefactored(
+                builder: (context) => PracticeEditPage(
                   practiceId: practiceId,
                 ),
               );
