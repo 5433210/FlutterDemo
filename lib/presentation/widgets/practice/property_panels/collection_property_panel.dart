@@ -139,14 +139,34 @@ class _CollectionPropertyPanelState
           _loadCandidateCharacters();
           _updateCharacterImagesForNewText(characters);
         });
-      } else if (shouldPreserveImages) {
-        // 如果字符没有变化但元素被重新选中，确保保留图像信息
-        Future.microtask(() {
-          _loadCandidateCharacters();
-          // 自动更新缺失的字符图像
-          _autoUpdateMissingCharacterImages(characters);
-        });
       }
+      // else if (shouldPreserveImages) {
+      //   // 如果字符没有变化但元素被重新选中，确保保留图像信息
+
+      //   // 检查是否真的需要重新加载候选字符
+      //   final bool shouldReloadCandidates = _candidateCharacters.isEmpty ||
+      //       (oldWidget.element['id'] != widget.element['id']);
+
+      //   // 使用防抖处理来减少频繁更新
+      //   if (_debounceTimer?.isActive ?? false) {
+      //     _debounceTimer!.cancel();
+      //   }
+
+      //   _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      //     if (!mounted) return;
+
+      //     // 只在需要时加载候选字符
+      //     if (shouldReloadCandidates) {
+      //       _loadCandidateCharacters();
+      //     }
+
+      //     // 延迟执行图像更新，降低即时性能压力
+      //     Future.delayed(const Duration(milliseconds: 100), () {
+      //       if (!mounted) return;
+      //       _autoUpdateMissingCharacterImages(characters);
+      //     });
+      //   });
+      // }
     }
   }
 

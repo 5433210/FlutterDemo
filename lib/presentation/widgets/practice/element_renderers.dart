@@ -33,23 +33,23 @@ class ElementRenderers {
     final characterImages = content['characterImages'];
 
     // 添加调试信息
-    debugPrint('集字图片列表类型: ${characterImages?.runtimeType}');
-    if (characterImages != null) {
-      if (characterImages is Map) {
-        debugPrint('集字图片列表是Map类型，键: ${(characterImages).keys.join(", ")}');
-      } else if (characterImages is List) {
-        debugPrint('集字图片列表是List类型，长度: ${(characterImages).length}');
-      } else {
-        debugPrint('集字图片列表是其他类型');
-      }
-    } else {
-      debugPrint('集字图片列表为空');
-    }
+    // debugPrint('集字图片列表类型: ${characterImages?.runtimeType}');
+    // if (characterImages != null) {
+    //   if (characterImages is Map) {
+    //     debugPrint('集字图片列表是Map类型，键: ${(characterImages).keys.join(", ")}');
+    //   } else if (characterImages is List) {
+    //     debugPrint('集字图片列表是List类型，长度: ${(characterImages).length}');
+    //   } else {
+    //     debugPrint('集字图片列表是其他类型');
+    //   }
+    // } else {
+    //   debugPrint('集字图片列表为空');
+    // }
 
-    // 添加 ref 调试信息
-    debugPrint('buildCollectionElement: ref=${ref != null ? "非空" : "为空"}');
-    // 添加软回车调试信息
-    debugPrint('集字元素软回车设置: $enableSoftLineBreak');
+    // // 添加 ref 调试信息
+    // debugPrint('buildCollectionElement: ref=${ref != null ? "非空" : "为空"}');
+    // // 添加软回车调试信息
+    // debugPrint('集字元素软回车设置: $enableSoftLineBreak');
 
     return Container(
       width: double.infinity,
@@ -309,8 +309,8 @@ class ElementRenderers {
             alignment: Alignment.topRight, // 与面板预览区保持一致
             decoration: BoxDecoration(
               color: backgroundColor,
-              // 在预览模式下不显示边框
-              border: isPreviewMode ? null : Border.all(color: Colors.grey),
+              // 移除非选中状态下的灰色边框
+              border: null, // 不再显示边框
               // 移除圆角
             ),
             child: Padding(
@@ -499,12 +499,12 @@ class ElementRenderers {
       }
 
       final hexString = buffer.toString();
-      debugPrint('解析颜色: $colorStr -> 0x$hexString');
+      // debugPrint('解析颜色: $colorStr -> 0x$hexString');
 
       final colorValue = int.parse(hexString, radix: 16);
       final color = Color(colorValue);
 
-      debugPrint('颜色解析结果: $colorStr -> $color');
+      // debugPrint('颜色解析结果: $colorStr -> $color');
 
       return color;
     } catch (e) {

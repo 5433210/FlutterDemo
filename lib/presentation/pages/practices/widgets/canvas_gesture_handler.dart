@@ -16,6 +16,9 @@ class CanvasGestureHandler {
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
 
+  // 记录平移开始时的选中元素，确保平移不会改变选中状态
+  List<String> _panStartSelectedElementIds = [];
+
   CanvasGestureHandler({
     required this.controller,
     required this.onDragStart,
@@ -25,6 +28,10 @@ class CanvasGestureHandler {
 
   /// Handle pan end on canvas
   void handlePanEnd(DragEndDetails details) {
+    // 添加日志跟踪
+    debugPrint(
+        '【平移】handlePanEnd: 拖拽结束，速度=${details.velocity.pixelsPerSecond}, 是否正在拖拽元素=$_isDragging');
+
     // If in preview mode, don't handle element dragging
     if (controller.state.isPreviewMode) return;
 
@@ -60,6 +67,28 @@ class CanvasGestureHandler {
           'x': x,
           'y': y,
         });
+      }
+
+      onDragEnd();
+    } else {
+      // 添加日志跟踪 - 平移结束
+      debugPrint('【平移】handlePanEnd: 平移画布结束');
+
+      // 如果平移开始时有选中的元素，恢复选中状态
+      if (_panStartSelectedElementIds.isNotEmpty) {
+        debugPrint(
+            '【平移】handlePanEnd: 恢复平移前的选中状态: $_panStartSelectedElementIds');
+
+        // 清除当前选中状态
+        controller.clearSelection();
+
+        // 恢复平移前的选中状态
+        for (final elementId in _panStartSelectedElementIds) {
+          controller.selectElement(elementId, isMultiSelect: true);
+        }
+
+        // 清空记录
+        _panStartSelectedElementIds = [];
       }
 
       onDragEnd();
@@ -167,9 +196,20 @@ class CanvasGestureHandler {
     // 直接使用起始位置
     _elementStartPosition = Offset.zero;
 
+    // 保存当前选中状态，确保平移不会改变选中状态
+    _panStartSelectedElementIds =
+        List.from(controller.state.selectedElementIds);
+
+    // 添加日志跟踪
+    debugPrint(
+        '【平移】handlePanStart: 准备平移画布，起始位置=$_dragStart, 预览模式=${controller.state.isPreviewMode}, 是否拖拽元素=$_isDragging');
+    debugPrint(
+        '【平移】handlePanStart: 记录平移开始时的选中元素: $_panStartSelectedElementIds');
+
     onDragStart(false, _dragStart, _elementStartPosition, {});
 
     // 如果点击在空白区域且不按住Ctrl/Shift键，则清除选择
+    // 注意：我们仍然清除选择，但会在平移结束时恢复
     if (!hitAnyElement && !controller.state.isCtrlOrShiftPressed) {
       controller.clearSelection();
     }
@@ -252,10 +292,25 @@ class CanvasGestureHandler {
       final dx = currentPosition.dx - _dragStart.dx;
       final dy = currentPosition.dy - _dragStart.dy;
 
+      // 检查偏移量是否有效
+      if (dx.isNaN || dy.isNaN) {
+        debugPrint('【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！');
+        return;
+      }
+
       // 记录拖拽信息，让父组件处理平移
+      final oldPosition = _elementStartPosition;
       _elementStartPosition = Offset(dx, dy);
 
+      // 添加日志跟踪
+      debugPrint(
+          '【平移】handlePanUpdate: 平移画布，当前位置=$currentPosition, 起始位置=$_dragStart, 偏移量=($dx, $dy), 旧偏移量=$oldPosition');
+
+      // 确保调用回调
       onDragUpdate();
+
+      // 检查回调后的状态
+      debugPrint('【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition');
     }
   }
 
@@ -360,20 +415,13 @@ class CanvasGestureHandler {
             // Shift+click: Toggle this element in multi-selection
             controller.state.selectedLayerId = null;
             controller.selectElement(id, isMultiSelect: true);
-          } else if (isCurrentlySelected && isMultipleSelected) {
-            // Already in multi-selection: Select only this element
-            controller.state.selectedElementIds = [id];
-            controller.state.selectedElement = element;
-
-            // Prepare for dragging
-            _isDragging = true;
-            _dragStart = details.localPosition;
-            _elementStartPosition = Offset(x, y);
-            _elementStartPositions.clear();
-            _elementStartPositions[id] = Offset(x, y);
-
-            onDragStart(_isDragging, _dragStart, _elementStartPosition,
-                _elementStartPositions);
+          } else if (isCurrentlySelected) {
+            // 已经选中的元素，再次点击则取消选中
+            debugPrint('【选择】handleTapUp: 再次点击已选中的元素，取消选中: $id');
+            controller.clearSelection();
+            _isDragging = false;
+            onDragStart(false, Offset.zero, Offset.zero, {});
+            return;
           } else if (!isCurrentlySelected) {
             // Not selected: Select and prepare for dragging
             controller.state.selectedLayerId = null;
@@ -386,8 +434,8 @@ class CanvasGestureHandler {
             _elementStartPositions.clear();
             _elementStartPositions[id] = Offset(x, y);
 
-            onDragStart(_isDragging, _dragStart, _elementStartPosition,
-                _elementStartPositions);
+            // onDragStart(_isDragging, _dragStart, _elementStartPosition,
+            //     _elementStartPositions);
           } else {
             // Already selected: Prepare for dragging
             _isDragging = true;
@@ -415,8 +463,9 @@ class CanvasGestureHandler {
       }
     }
 
-    if (!hitElement && !controller.state.isCtrlOrShiftPressed) {
+    if (!hitElement) {
       // Click in blank area, cancel selection
+      debugPrint('【选择】handleTapUp: 点击空白区域，清除选择');
       controller.clearSelection();
       _isDragging = false;
       onDragStart(false, Offset.zero, Offset.zero, {});

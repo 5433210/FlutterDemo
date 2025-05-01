@@ -1984,7 +1984,10 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 更新元素属性 - 拖动结束时使用，应用吸附并记录撤销/重做
   void updateElementProperties(String id, Map<String, dynamic> properties) {
-    if (_state.currentPageIndex >= _state.pages.length) return;
+    if (_state.currentPageIndex >= _state.pages.length) {
+      debugPrint('【控制器】updateElementProperties: 当前页面索引无效，无法更新元素属性');
+      return;
+    }
 
     final page = _state.pages[_state.currentPageIndex];
     final elements = page['elements'] as List<dynamic>;
@@ -2153,11 +2156,21 @@ class PracticeEditController extends ChangeNotifier {
         }
       }
 
+      // 打印更新后的属性
+      debugPrint('【控制器】updateElementProperties: 更新后的属性:');
+      newProperties.forEach((key, value) {
+        if (key != 'content') {
+          // 不打印content，太长了
+          debugPrint('【控制器】  $key: $value');
+        }
+      });
+
       final operation = ElementPropertyOperation(
         elementId: id,
         oldProperties: oldProperties,
         newProperties: newProperties,
         updateElement: (id, props) {
+          debugPrint('【控制器】ElementPropertyOperation.updateElement: 开始更新元素');
           if (_state.currentPageIndex >= 0 &&
               _state.currentPageIndex < _state.pages.length) {
             final page = _state.pages[_state.currentPageIndex];
@@ -2165,21 +2178,35 @@ class PracticeEditController extends ChangeNotifier {
             final elementIndex = elements.indexWhere((e) => e['id'] == id);
 
             if (elementIndex >= 0) {
+              debugPrint(
+                  '【控制器】ElementPropertyOperation.updateElement: 找到元素，索引=$elementIndex');
               elements[elementIndex] = props;
 
               // 如果是当前选中的元素，更新selectedElement
               if (_state.selectedElementIds.contains(id)) {
+                debugPrint(
+                    '【控制器】ElementPropertyOperation.updateElement: 更新selectedElement');
                 _state.selectedElement = props;
               }
 
               _state.hasUnsavedChanges = true;
+              debugPrint(
+                  '【控制器】ElementPropertyOperation.updateElement: 调用notifyListeners()');
               notifyListeners();
+              debugPrint('【控制器】ElementPropertyOperation.updateElement: 更新完成');
+            } else {
+              debugPrint(
+                  '【控制器】ElementPropertyOperation.updateElement: 找不到元素，ID=$id');
             }
+          } else {
+            debugPrint('【控制器】ElementPropertyOperation.updateElement: 当前页面索引无效');
           }
         },
       );
 
+      debugPrint('【控制器】updateElementProperties: 添加操作到撤销/重做管理器');
       _undoRedoManager.addOperation(operation);
+      debugPrint('=== 元素属性更新完成 ===');
     }
   }
 

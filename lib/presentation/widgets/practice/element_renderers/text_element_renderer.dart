@@ -109,13 +109,13 @@ class TextElementRenderer extends StatelessWidget {
                     alignment: Alignment.topRight, // 与面板预览区保持一致
                     decoration: BoxDecoration(
                       color: backgroundColor,
-                      // 在预览模式下不显示边框
+                      // 在预览模式下不显示边框，非选中状态也不显示边框
                       border: isPreviewMode
                           ? null
                           : isSelected
                               ? Border.all(
                                   color: Colors.blue.withAlpha(128), width: 1.0)
-                              : Border.all(color: Colors.grey),
+                              : null, // 移除非选中状态下的灰色边框
                       // 移除圆角
                     ),
                     child: Padding(

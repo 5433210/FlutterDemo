@@ -170,6 +170,8 @@ class _PracticeEditPageRefactoredState
 
     // Initialize zoom controller
     _transformationController = TransformationController();
+    debugPrint(
+        '【平移】PracticeEditPageRefactored.initState: 初始化 transformationController=$_transformationController, 值=${_transformationController.value}');
 
     // Initialize keyboard handler
     _keyboardHandler = KeyboardHandler(
