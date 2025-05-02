@@ -629,5 +629,14 @@
   "horizontalLeftToRight": "横排左起",
   "horizontalRightToLeft": "横排右起",
   "verticalLeftToRight": "竖排左起",
-  "verticalRightToLeft": "竖排右起"
+  "verticalRightToLeft": "竖排右起",
+  "collectionPropertyPanelAvailableCharacters": "可用字符",
+  "collectionPropertyPanelGlobalInversion": "全局反转",  
+  "collectionPropertyPanelCurrentCharInversion": "当前字符反转", 
+  "collectionPropertyPanelColorPicker":"颜色选择器",
+  "collectionPropertyPanelColorSettings":"颜色设置",
+  "collectionPropertyPanelAutoLineBreak":"自动换行",
+  "collectionPropertyPanelAutoLineBreakEnabled":"已启用自动换行", 
+  "collectionPropertyPanelAutoLineBreakDisabled":"已禁用自动换行",  
+  "collectionPropertyPanelAutoLineBreakTooltip":"自动换行"
 }

@@ -3862,6 +3862,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Vertical Right-to-Left'**
   String get verticalRightToLeft;
+
+  /// No description provided for @collectionPropertyPanelAvailableCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Characters'**
+  String get collectionPropertyPanelAvailableCharacters;
+
+  /// No description provided for @collectionPropertyPanelGlobalInversion.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Inversion'**
+  String get collectionPropertyPanelGlobalInversion;
+
+  /// No description provided for @collectionPropertyPanelCurrentCharInversion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Character Inversion'**
+  String get collectionPropertyPanelCurrentCharInversion;
+
+  /// No description provided for @collectionPropertyPanelColorPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Color'**
+  String get collectionPropertyPanelColorPicker;
+
+  /// No description provided for @collectionPropertyPanelColorSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Color Setting'**
+  String get collectionPropertyPanelColorSettings;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Line Break'**
+  String get collectionPropertyPanelAutoLineBreak;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get collectionPropertyPanelAutoLineBreakEnabled;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get collectionPropertyPanelAutoLineBreakDisabled;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Line Break'**
+  String get collectionPropertyPanelAutoLineBreakTooltip;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

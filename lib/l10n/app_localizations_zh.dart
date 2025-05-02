@@ -1941,4 +1941,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get verticalRightToLeft => '竖排右起';
+
+  @override
+  String get collectionPropertyPanelAvailableCharacters => '可用字符';
+
+  @override
+  String get collectionPropertyPanelGlobalInversion => '全局反转';
+
+  @override
+  String get collectionPropertyPanelCurrentCharInversion => '当前字符反转';
+
+  @override
+  String get collectionPropertyPanelColorPicker => '颜色选择器';
+
+  @override
+  String get collectionPropertyPanelColorSettings => '颜色设置';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreak => '自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakEnabled => '已启用自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakDisabled => '已禁用自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakTooltip => '自动换行';
 }

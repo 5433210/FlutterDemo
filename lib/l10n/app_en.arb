@@ -629,5 +629,13 @@
   "horizontalLeftToRight": "Horizontal Left-to-Right",
   "horizontalRightToLeft": "Horizontal Right-to-Left",
   "verticalLeftToRight": "Vertical Left-to-Right",
-  "verticalRightToLeft": "Vertical Right-to-Left"
-}
+  "verticalRightToLeft": "Vertical Right-to-Left",
+  "collectionPropertyPanelAvailableCharacters": "Available Characters",
+  "collectionPropertyPanelGlobalInversion": "Global Inversion",  
+  "collectionPropertyPanelCurrentCharInversion": "Current Character Inversion", 
+  "collectionPropertyPanelColorPicker":"Pick Color",
+  "collectionPropertyPanelColorSettings":"Color Setting",
+  "collectionPropertyPanelAutoLineBreak":"Auto Line Break",
+  "collectionPropertyPanelAutoLineBreakEnabled":"Enable", 
+  "collectionPropertyPanelAutoLineBreakDisabled":"Disable",  
+  "collectionPropertyPanelAutoLineBreakTooltip":"Auto Line Break"}

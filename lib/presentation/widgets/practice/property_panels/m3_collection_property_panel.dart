@@ -8,11 +8,11 @@ import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
-import 'collection_panels/content_settings_panel.dart';
-import 'collection_panels/geometry_properties_panel.dart';
-import 'collection_panels/visual_properties_panel.dart';
-import 'element_common_property_panel.dart';
-import 'layer_info_panel.dart';
+import 'collection_panels/m3_content_settings_panel.dart';
+import 'collection_panels/m3_geometry_properties_panel.dart';
+import 'collection_panels/m3_visual_properties_panel.dart';
+import 'm3_element_common_property_panel.dart';
+import 'm3_layer_info_panel.dart';
 
 /// Material 3 version of the Collection Property Panel with internationalization support
 class M3CollectionPropertyPanel extends ConsumerStatefulWidget {
@@ -71,30 +71,30 @@ class _M3CollectionPropertyPanelState
     return ListView(
       children: [
         // Basic properties section (at the top)
-        ElementCommonPropertyPanel(
+        M3ElementCommonPropertyPanel(
           element: widget.element,
           onElementPropertiesChanged: widget.onElementPropertiesChanged,
           controller: widget.controller,
         ),
 
         // Layer information section
-        LayerInfoPanel(layer: layer),
+        M3LayerInfoPanel(layer: layer),
 
         // Geometry properties section
-        GeometryPropertiesPanel(
+        M3GeometryPropertiesPanel(
           element: widget.element,
           onPropertyChanged: _updateProperty,
         ),
 
         // Visual properties section
-        VisualPropertiesPanel(
+        M3VisualPropertiesPanel(
           element: widget.element,
           onPropertyChanged: _updateProperty,
           onContentPropertyChanged: _updateContentProperty,
         ),
 
         // Content settings section
-        ContentSettingsPanel(
+        M3ContentSettingsPanel(
           element: widget.element,
           selectedCharIndex: _selectedCharIndex,
           candidateCharacters: _candidateCharacters,

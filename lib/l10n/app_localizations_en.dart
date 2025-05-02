@@ -1941,4 +1941,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get verticalRightToLeft => 'Vertical Right-to-Left';
+
+  @override
+  String get collectionPropertyPanelAvailableCharacters => 'Available Characters';
+
+  @override
+  String get collectionPropertyPanelGlobalInversion => 'Global Inversion';
+
+  @override
+  String get collectionPropertyPanelCurrentCharInversion => 'Current Character Inversion';
+
+  @override
+  String get collectionPropertyPanelColorPicker => 'Pick Color';
+
+  @override
+  String get collectionPropertyPanelColorSettings => 'Color Setting';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreak => 'Auto Line Break';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakEnabled => 'Enable';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakDisabled => 'Disable';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakTooltip => 'Auto Line Break';
 }
