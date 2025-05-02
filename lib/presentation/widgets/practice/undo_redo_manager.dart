@@ -216,21 +216,21 @@ class ElementPropertyOperation implements UndoableOperation {
 
   @override
   void execute() {
-    debugPrint('【撤销/重做】ElementPropertyOperation.execute: 开始执行');
-    debugPrint('【撤销/重做】ElementPropertyOperation.execute: 元素ID=$elementId');
+    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 开始执行');
+    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 元素ID=$elementId');
 
-    // 打印要更新的属性
-    debugPrint('【撤销/重做】ElementPropertyOperation.execute: 要更新的属性:');
-    newProperties.forEach((key, value) {
-      if (key != 'content') {
-        // 不打印content，太长了
-        debugPrint('【撤销/重做】  $key: $value');
-      }
-    });
+    // // 打印要更新的属性
+    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 要更新的属性:');
+    // newProperties.forEach((key, value) {
+    //   if (key != 'content') {
+    //     // 不打印content，太长了
+    //     debugPrint('【撤销/重做】  $key: $value');
+    //   }
+    // });
 
     try {
       updateElement(elementId, newProperties);
-      debugPrint('【撤销/重做】ElementPropertyOperation.execute: 执行成功');
+      // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 执行成功');
     } catch (e) {
       debugPrint('【撤销/重做】ElementPropertyOperation.execute: 执行失败: $e');
     }
@@ -238,21 +238,21 @@ class ElementPropertyOperation implements UndoableOperation {
 
   @override
   void undo() {
-    debugPrint('【撤销/重做】ElementPropertyOperation.undo: 开始撤销');
-    debugPrint('【撤销/重做】ElementPropertyOperation.undo: 元素ID=$elementId');
+    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 开始撤销');
+    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 元素ID=$elementId');
 
-    // 打印要恢复的属性
-    debugPrint('【撤销/重做】ElementPropertyOperation.undo: 要恢复的属性:');
-    oldProperties.forEach((key, value) {
-      if (key != 'content') {
-        // 不打印content，太长了
-        debugPrint('【撤销/重做】  $key: $value');
-      }
-    });
+    // // 打印要恢复的属性
+    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 要恢复的属性:');
+    // oldProperties.forEach((key, value) {
+    //   if (key != 'content') {
+    //     // 不打印content，太长了
+    //     debugPrint('【撤销/重做】  $key: $value');
+    //   }
+    // });
 
     try {
       updateElement(elementId, oldProperties);
-      debugPrint('【撤销/重做】ElementPropertyOperation.undo: 撤销成功');
+      // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 撤销成功');
     } catch (e) {
       debugPrint('【撤销/重做】ElementPropertyOperation.undo: 撤销失败: $e');
     }
@@ -399,18 +399,18 @@ class UndoRedoManager {
 
     try {
       // 执行操作
-      debugPrint('【撤销/重做】UndoRedoManager.addOperation: 执行操作');
+      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 执行操作');
       operation.execute();
-      debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作执行成功');
+      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作执行成功');
 
       // 添加到撤销栈
       _undoStack.add(operation);
-      debugPrint(
-          '【撤销/重做】UndoRedoManager.addOperation: 已添加到撤销栈，当前栈大小=${_undoStack.length}');
+      // debugPrint(
+      //     '【撤销/重做】UndoRedoManager.addOperation: 已添加到撤销栈，当前栈大小=${_undoStack.length}');
 
       // 清空重做栈
       _redoStack.clear();
-      debugPrint('【撤销/重做】UndoRedoManager.addOperation: 已清空重做栈');
+      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 已清空重做栈');
 
       // 如果超过最大栈大小，移除最早的操作
       if (_undoStack.length > _maxStackSize) {
@@ -420,12 +420,12 @@ class UndoRedoManager {
 
       // 通知状态变化
       if (onStateChanged != null) {
-        debugPrint('【撤销/重做】UndoRedoManager.addOperation: 调用状态变化回调');
+        // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 调用状态变化回调');
         onStateChanged!();
-        debugPrint('【撤销/重做】UndoRedoManager.addOperation: 状态变化回调执行完成');
+        // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 状态变化回调执行完成');
       }
 
-      debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作添加成功');
+      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作添加成功');
     } catch (e) {
       debugPrint('【撤销/重做】UndoRedoManager.addOperation: 添加操作失败: $e');
     }

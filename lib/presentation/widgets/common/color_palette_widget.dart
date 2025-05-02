@@ -115,7 +115,10 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
     // 如果外部传入的颜色发生变化，更新内部状态
     if (oldWidget.initialColor != widget.initialColor) {
       _currentColor = widget.initialColor;
-      _updateColorCodeText();
+      // Schedule the text update after the build phase is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateColorCodeText();
+      });
     }
   }
 
@@ -160,7 +163,10 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
       }
     } catch (e) {
       // 如果解析失败，恢复为当前颜色
-      _updateColorCodeText();
+      // Schedule the text update to avoid build phase issues
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateColorCodeText();
+      });
     }
   }
 
@@ -246,7 +252,10 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
             TextButton(
               child: const Text('确定'),
               onPressed: () {
-                _updateColorCodeText();
+                // Schedule the text update after the dialog is closed
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _updateColorCodeText();
+                });
                 widget.onColorChanged(_currentColor);
                 Navigator.of(context).pop();
               },

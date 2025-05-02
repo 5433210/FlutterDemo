@@ -46,11 +46,26 @@ class ElementUtils {
   }
 
   static Color parseColor(String hexColor) {
-    hexColor = hexColor.toUpperCase().replaceAll('#', '');
-    if (hexColor.length == 6) {
-      hexColor = 'FF$hexColor'; // Add alpha if not provided
+    try {
+      // Handle transparent color
+      if (hexColor == 'transparent') {
+        return Colors.transparent;
+      }
+
+      // Remove # if present
+      hexColor = hexColor.toUpperCase().replaceAll('#', '');
+
+      // Add alpha channel if not provided
+      if (hexColor.length == 6) {
+        hexColor = 'FF$hexColor'; // Add alpha if not provided
+      }
+
+      // Parse the color
+      return Color(int.parse(hexColor, radix: 16));
+    } catch (e) {
+      debugPrint('Error parsing color: $hexColor, error: $e');
+      return Colors.white; // Default to white on error
     }
-    return Color(int.parse(hexColor, radix: 16));
   }
 
   /// Sort elements by layer order

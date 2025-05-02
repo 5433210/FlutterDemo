@@ -38,7 +38,7 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -96,9 +96,11 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
+      key: ValueKey(id),
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: isSelected ? colorScheme.primaryContainer.withOpacity(0.7) : null,
+        color:
+            isSelected ? colorScheme.primaryContainer.withOpacity(0.7) : null,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(
@@ -115,10 +117,12 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                   width: 32,
                   height: 32,
                   child: IconButton(
-                    onPressed: () => widget.onLayerVisibilityToggle(id, !isVisible),
+                    onPressed: () =>
+                        widget.onLayerVisibilityToggle(id, !isVisible),
                     icon: Icon(
                       isVisible ? Icons.visibility : Icons.visibility_off,
-                      color: isVisible ? colorScheme.primary : colorScheme.outline,
+                      color:
+                          isVisible ? colorScheme.primary : colorScheme.outline,
                       size: 18,
                     ),
                     style: IconButton.styleFrom(
@@ -136,7 +140,8 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                     onPressed: () => widget.onLayerLockToggle(id, !isLocked),
                     icon: Icon(
                       isLocked ? Icons.lock : Icons.lock_open,
-                      color: isLocked ? colorScheme.tertiary : colorScheme.outline,
+                      color:
+                          isLocked ? colorScheme.tertiary : colorScheme.outline,
                       size: 18,
                     ),
                     style: IconButton.styleFrom(
@@ -155,7 +160,8 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                           focusNode: _focusNode,
                           decoration: InputDecoration(
                             isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 8),
                             border: InputBorder.none,
                             filled: true,
                             fillColor: colorScheme.surfaceContainerHighest,
@@ -167,8 +173,12 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                       : Text(
                           name,
                           style: textTheme.bodyMedium?.copyWith(
-                            color: isSelected ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? colorScheme.onPrimaryContainer
+                                : colorScheme.onSurface,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -211,7 +221,8 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
                           width: 32,
                           height: 32,
                           child: IconButton(
-                            onPressed: () => _showDeleteLayerDialog(context, id, name, l10n),
+                            onPressed: () =>
+                                _showDeleteLayerDialog(context, id, name, l10n),
                             icon: Icon(
                               Icons.delete,
                               size: 16,
@@ -291,7 +302,8 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
         onReorder: (oldIndex, newIndex) {
           // Since we reversed the layer list, adjust indices
           final actualOldIndex = layers.length - 1 - oldIndex;
-          final actualNewIndex = layers.length - 1 -
+          final actualNewIndex = layers.length -
+              1 -
               (newIndex > oldIndex ? newIndex - 1 : newIndex);
           widget.onReorderLayer(actualOldIndex, actualNewIndex);
         },
@@ -316,8 +328,8 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
           Text(
             l10n.practiceEditLayerPanel,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const Spacer(),
           FilledButton.icon(

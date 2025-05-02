@@ -1,10 +1,11 @@
 import 'dart:io';
-import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
+import '../../../widgets/practice/collection_element_renderer.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
@@ -149,13 +150,12 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         final RenderBox renderBox = context.findRenderObject() as RenderBox;
         final localPosition = renderBox.globalToLocal(details.offset);
 
-        // Calculate page dimensions
-        final pageWidth = (currentPage['width'] as num?)?.toDouble() ?? 842.0;
-        final pageHeight = (currentPage['height'] as num?)?.toDouble() ?? 595.0;
+        // Calculate page dimensions (applying DPI conversion)
+        final pageSize = ElementUtils.calculatePixelSize(currentPage);
 
         // Ensure coordinates are within page boundaries
-        double x = localPosition.dx.clamp(0.0, pageWidth);
-        double y = localPosition.dy.clamp(0.0, pageHeight);
+        double x = localPosition.dx.clamp(0.0, pageSize.width);
+        double y = localPosition.dy.clamp(0.0, pageSize.height);
 
         // Adjust for current zoom level
         final scale = widget.transformationController.value.getMaxScaleOnAxis();
@@ -320,16 +320,21 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     List<Map<String, dynamic>> elements,
     ColorScheme colorScheme,
   ) {
-    // Get page dimensions
-    final pageWidth = (page['width'] as num?)?.toDouble() ?? 842.0;
-    final pageHeight = (page['height'] as num?)?.toDouble() ?? 595.0;
-    final pageSize = Size(pageWidth, pageHeight);
+    // Get page dimensions (applying DPI conversion)
+    final pageSize = ElementUtils.calculatePixelSize(page);
 
     // Get page background color
-    final background = page['background'] as Map<String, dynamic>?;
-    final backgroundColor = background != null && background['type'] == 'color'
-        ? ElementUtils.parseColor(background['value'] as String? ?? '#FFFFFF')
-        : Colors.white;
+    Color backgroundColor = Colors.white;
+    try {
+      final background = page['background'] as Map<String, dynamic>?;
+      if (background != null && background['type'] == 'color') {
+        final colorStr = background['value'] as String? ?? '#FFFFFF';
+        backgroundColor = ElementUtils.parseColor(colorStr);
+        debugPrint('Background color parsed: $colorStr -> $backgroundColor');
+      }
+    } catch (e) {
+      debugPrint('Error parsing background color: $e');
+    }
 
     // Get selected element for control points
     String? selectedElementId;
@@ -353,6 +358,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
 
     return Stack(
+      fit: StackFit.loose, // Use loose fit for outer stack
+      clipBehavior:
+          Clip.hardEdge, // Use hardEdge to prevent mouse tracking issues
       children: [
         // Page background
         Container(
@@ -364,6 +372,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             child: AbsorbPointer(
               absorbing: false, // Ensure control points can receive events
               child: Stack(
+                fit: StackFit.expand, // Ensure stack fills its parent
+                clipBehavior: Clip
+                    .hardEdge, // Use hardEdge to prevent mouse tracking issues
                 children: [
                   // Background layer - ensure background color is correctly applied
                   Container(
@@ -379,19 +390,20 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       size: Size(pageSize.width, pageSize.height),
                       painter: _GridPainter(
                         gridSize: widget.controller.state.gridSize,
-                        gridColor: colorScheme.outlineVariant.withOpacity(0.3),
+                        gridColor: colorScheme.outlineVariant
+                            .withAlpha(77), // 0.3 opacity (77/255)
                       ),
                     ),
 
                   // Render elements
                   ...elements.map((element) {
                     // Skip hidden elements
-                    if (element['isHidden'] == true)
+                    if (element['isHidden'] == true) {
                       return const SizedBox.shrink();
+                    }
 
                     // Get element properties
                     final id = element['id'] as String;
-                    final type = element['type'] as String;
                     final elementX = (element['x'] as num).toDouble();
                     final elementY = (element['y'] as num).toDouble();
                     final elementWidth = (element['width'] as num).toDouble();
@@ -443,17 +455,33 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
         // Control points for selected element (only in edit mode and when one element is selected)
         if (!widget.isPreviewMode && selectedElementId != null)
-          _buildControlPoints(selectedElementId, x, y, width, height, rotation),
+          Positioned.fill(
+            child: _buildControlPoints(
+                selectedElementId, x, y, width, height, rotation),
+          ),
       ],
     );
   }
 
-  /// Calculate angle between two points
-  double _calculateAngle(double cx, double cy, double dx, double dy) {
-    // Convert to radians
-    final angleRadians = math.atan2(dy, dx);
-    // Convert to degrees
-    return angleRadians * (180 / math.pi);
+  /// Get BoxFit from fitMode string
+  BoxFit _getFitMode(String fitMode) {
+    switch (fitMode) {
+      case 'fill':
+        return BoxFit.fill;
+      case 'cover':
+        return BoxFit.cover;
+      case 'fitWidth':
+        return BoxFit.fitWidth;
+      case 'fitHeight':
+        return BoxFit.fitHeight;
+      case 'none':
+        return BoxFit.none;
+      case 'scaleDown':
+        return BoxFit.scaleDown;
+      case 'contain':
+      default:
+        return BoxFit.contain;
+    }
   }
 
   /// Handle control point updates
@@ -525,7 +553,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     double y = (element['y'] as num).toDouble();
     double width = (element['width'] as num).toDouble();
     double height = (element['height'] as num).toDouble();
-    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
 
     // Calculate new position and size based on control point index
     switch (controlPointIndex) {
@@ -591,23 +618,28 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       return;
     }
 
-    // Get element center
-    final x = (element['x'] as num).toDouble();
-    final y = (element['y'] as num).toDouble();
-    final width = (element['width'] as num).toDouble();
-    final height = (element['height'] as num).toDouble();
+    // Get current rotation
     final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
 
-    // Calculate center point
-    final centerX = x + width / 2;
-    final centerY = y + height / 2;
+    // We'll use a simpler rotation approach that doesn't require center point calculation
 
-    // Calculate angle between center and new position
-    final angle = _calculateAngle(centerX, centerY, delta.dx, delta.dy);
+    // Improved rotation calculation
+    // Use a sensitivity factor to make rotation more controllable
+    const rotationSensitivity = 0.5;
+
+    // Calculate rotation based on delta movement
+    // Horizontal movement (dx) has more effect on rotation than vertical movement (dy)
+    final rotationDelta = (delta.dx * rotationSensitivity);
+
+    // Apply the rotation delta
+    final newRotation = rotation + rotationDelta;
+
+    debugPrint(
+        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation');
 
     // Update rotation
     widget.controller
-        .updateElementProperties(elementId, {'rotation': rotation + angle});
+        .updateElementProperties(elementId, {'rotation': newRotation});
   }
 
   /// Handle transformation changes
@@ -619,19 +651,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
   /// Parse color from string
   Color _parseColor(String colorString) {
-    if (colorString == 'transparent') {
-      return Colors.transparent;
-    }
-
-    if (colorString.startsWith('#')) {
-      String hexColor = colorString.replaceAll('#', '');
-      if (hexColor.length == 6) {
-        hexColor = 'FF$hexColor';
-      }
-      return Color(int.parse(hexColor, radix: 16));
-    }
-
-    return Colors.white;
+    // Use the same implementation as ElementUtils.parseColor for consistency
+    return ElementUtils.parseColor(colorString);
   }
 
   /// Render collection element
@@ -640,19 +661,64 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final characters = content['characters'] as String? ?? '';
     final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
 
+    // Get collection properties with defaults
+    final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 40.0;
+    final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 0.0;
+    final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 0.0;
+    final textAlign = content['textAlign'] as String? ?? 'left';
+    final verticalAlign = content['verticalAlign'] as String? ?? 'top';
+    final fontColor = content['fontColor'] as String? ?? '#000000';
+    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
+    final enableSoftLineBreak =
+        content['enableSoftLineBreak'] as bool? ?? false;
+
+    // Get character images
+    final characterImages =
+        content['characterImages'] as Map<String, dynamic>? ?? {};
+
     // Parse color
     final bgColor = _parseColor(backgroundColor);
 
+    if (characters.isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: bgColor,
+        child: const Center(
+          child: Text(
+            'Empty Collection',
+            style: TextStyle(fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    // Use CollectionElementRenderer to render the collection
     return Container(
       width: double.infinity,
       height: double.infinity,
       color: bgColor,
-      child: Center(
-        child: Text(
-          characters.isEmpty ? 'Empty Collection' : characters,
-          style: const TextStyle(fontSize: 14),
-          textAlign: TextAlign.center,
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return CollectionElementRenderer.buildCollectionLayout(
+            characters: characters,
+            writingMode: writingMode,
+            fontSize: fontSize,
+            letterSpacing: letterSpacing,
+            lineSpacing: lineSpacing,
+            textAlign: textAlign,
+            verticalAlign: verticalAlign,
+            characterImages: characterImages,
+            constraints: constraints,
+            padding: padding,
+            fontColor: fontColor,
+            backgroundColor: backgroundColor,
+            enableSoftLineBreak: enableSoftLineBreak,
+            ref: ref,
+          );
+        },
       ),
     );
   }
@@ -673,7 +739,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         return _renderGroupElement(element);
       default:
         return Container(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey.withAlpha(51), // 0.2 opacity (51/255)
           child: Center(child: Text('Unknown element type: $type')),
         );
     }
@@ -688,7 +754,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       return Container(
         width: double.infinity,
         height: double.infinity,
-        color: Colors.grey.withOpacity(0.1),
+        color: Colors.grey.withAlpha(26), // 0.1 opacity (26/255)
         child: const Center(
           child: Text('Empty Group'),
         ),
@@ -709,12 +775,77 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   Widget _renderImageElement(Map<String, dynamic> element) {
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final imageUrl = content['imageUrl'] as String? ?? '';
+    final transformedImageUrl = content['transformedImageUrl'] as String?;
     final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
+    final fitMode = content['fitMode'] as String? ?? 'contain';
+
+    // Get BoxFit from fitMode
+    final BoxFit fit = _getFitMode(fitMode);
 
     // Parse color
     final bgColor = _parseColor(backgroundColor);
 
-    if (imageUrl.isEmpty) {
+    // Process transformedImageData (could be Uint8List, List<int>, or List<dynamic>)
+    Uint8List? transformedImageData;
+    final dynamic rawTransformedData = content['transformedImageData'];
+
+    if (rawTransformedData != null) {
+      debugPrint(
+          'Found transformedImageData of type: ${rawTransformedData.runtimeType}');
+
+      if (rawTransformedData is Uint8List) {
+        transformedImageData = rawTransformedData;
+        debugPrint('Using transformedImageData as Uint8List directly');
+      } else if (rawTransformedData is List<int>) {
+        transformedImageData = Uint8List.fromList(rawTransformedData);
+        debugPrint('Converted List<int> to Uint8List');
+      } else if (rawTransformedData is List) {
+        // Handle case where JSON deserialization creates a List<dynamic>
+        try {
+          transformedImageData = Uint8List.fromList(
+              (rawTransformedData).map((dynamic item) => item as int).toList());
+          debugPrint('Converted List<dynamic> to Uint8List');
+        } catch (e) {
+          debugPrint('Error converting List<dynamic> to Uint8List: $e');
+        }
+      }
+    }
+
+    // If we have transformed image data, use it
+    if (transformedImageData != null) {
+      debugPrint(
+          'Using transformedImageData for rendering (${transformedImageData.length} bytes)');
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: bgColor,
+        child: Image.memory(
+          transformedImageData,
+          fit: fit,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading transformed image data: $error');
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.broken_image,
+                      size: 48, color: Colors.red.shade300),
+                  const SizedBox(height: 8),
+                  Text('Error: $error',
+                      style: TextStyle(color: Colors.red.shade300)),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // If we have a transformed image URL, use it
+    final effectiveImageUrl = transformedImageUrl ?? imageUrl;
+
+    // If no image URL is available, show placeholder
+    if (effectiveImageUrl.isEmpty) {
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -726,16 +857,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
 
     // Check if it's a local file path
-    if (imageUrl.startsWith('file://')) {
-      final filePath = imageUrl.substring(7);
+    if (effectiveImageUrl.startsWith('file://')) {
+      final filePath = effectiveImageUrl.substring(7);
       return Container(
         width: double.infinity,
         height: double.infinity,
         color: bgColor,
         child: Image.file(
           File(filePath),
-          fit: BoxFit.contain,
+          fit: fit,
           errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading file image: $error');
             return Center(
               child: Icon(Icons.broken_image,
                   size: 48, color: Colors.red.shade300),
@@ -749,9 +881,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         height: double.infinity,
         color: bgColor,
         child: Image.network(
-          imageUrl,
-          fit: BoxFit.contain,
+          effectiveImageUrl,
+          fit: fit,
           errorBuilder: (context, error, stackTrace) {
+            debugPrint('Error loading network image: $error');
             return Center(
               child: Icon(Icons.broken_image,
                   size: 48, color: Colors.red.shade300),

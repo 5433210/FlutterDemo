@@ -40,7 +40,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final text = content['text'] as String? ?? '';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
-    final fontFamily = content['fontFamily'] as String? ?? 'Default';
+    final fontFamily = content['fontFamily'] as String? ?? 'sans-serif';
     final fontWeight = content['fontWeight'] as String? ?? 'normal';
     final fontStyle = content['fontStyle'] as String? ?? 'normal';
     final color = content['color'] as String? ?? '#000000';
@@ -507,36 +507,61 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                     ),
                     items: const [
                       DropdownMenuItem(
-                        value: 'Default',
-                        child: Text('Default'),
+                        value: 'sans-serif',
+                        child: Text('Sans Serif'),
                       ),
                       DropdownMenuItem(
-                        value: 'Arial',
-                        child: Text('Arial'),
+                        value: 'serif',
+                        child: Text('Serif'),
                       ),
                       DropdownMenuItem(
-                        value: 'Times New Roman',
-                        child: Text('Times New Roman'),
+                        value: 'monospace',
+                        child: Text('Monospace'),
                       ),
                       DropdownMenuItem(
-                        value: 'Courier New',
-                        child: Text('Courier New'),
+                        value: 'cursive',
+                        child: Text('Cursive'),
                       ),
                       DropdownMenuItem(
-                        value: 'Georgia',
-                        child: Text('Georgia'),
+                        value: 'fantasy',
+                        child: Text('Fantasy'),
+                      ),
+                      // Chinese fonts based on assets/fonts/chinese directory
+                      DropdownMenuItem(
+                        value: 'SourceHanSansCN',
+                        child: Text('思源黑体'),
                       ),
                       DropdownMenuItem(
-                        value: 'Verdana',
-                        child: Text('Verdana'),
+                        value: 'NotoSansSC',
+                        child: Text('Noto Sans SC'),
                       ),
                       DropdownMenuItem(
-                        value: 'Roboto',
-                        child: Text('Roboto'),
+                        value: 'Microsoft YaHei',
+                        child: Text('微软雅黑'),
                       ),
                       DropdownMenuItem(
-                        value: 'Open Sans',
-                        child: Text('Open Sans'),
+                        value: 'SimSun',
+                        child: Text('宋体'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SimHei',
+                        child: Text('黑体'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SimKai',
+                        child: Text('楷体'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SimFang',
+                        child: Text('仿宋'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SimLi',
+                        child: Text('隶书'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'SimYou',
+                        child: Text('幼圆'),
                       ),
                     ],
                     onChanged: (String? value) {
@@ -872,7 +897,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                       text.isNotEmpty ? text : 'Text Preview',
                       style: TextStyle(
                         fontSize: fontSize,
-                        fontFamily: fontFamily == 'Default' ? null : fontFamily,
+                        fontFamily: fontFamily,
                         fontWeight: fontWeight == 'bold'
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -915,16 +940,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
   // 显示颜色选择器
   Future<void> _showColorPicker(BuildContext context, String initialColor,
       Function(Color) onColorSelected) async {
-    Color currentColor;
-    if (initialColor == 'transparent') {
-      currentColor = Colors.transparent;
-    } else {
-      try {
-        currentColor = Color(int.parse(initialColor.replaceFirst('#', '0xFF')));
-      } catch (e) {
-        currentColor = Colors.black;
-      }
-    }
+    // No need to parse the initial color here as we're just showing a color grid
 
     // 构建颜色选择器
     final List<Color> colors = [

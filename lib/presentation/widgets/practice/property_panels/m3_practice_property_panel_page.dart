@@ -636,10 +636,12 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   /// 更新背景颜色
   void _updateBackgroundColor(Color color) {
     // 转换为十六进制字符串
-    final r = color.r.toInt().toRadixString(16).padLeft(2, '0');
-    final g = color.g.toInt().toRadixString(16).padLeft(2, '0');
-    final b = color.b.toInt().toRadixString(16).padLeft(2, '0');
+    final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
+    final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
+    final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
     final colorHex = '#$r$g$b';
+
+    debugPrint('Setting background color to: $colorHex from Color: $color');
 
     // 使用新格式
     final background = {

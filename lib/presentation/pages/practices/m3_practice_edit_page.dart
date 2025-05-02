@@ -6,17 +6,25 @@ import '../../../application/providers/service_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/practice/edit_toolbar.dart';
+// import '../../widgets/practice/edit_toolbar.dart';
+// import '../../widgets/practice/file_operations.dart';
+// import '../../widgets/practice/page_thumbnail_strip.dart';
 import '../../widgets/practice/file_operations.dart';
-import '../../widgets/practice/page_thumbnail_strip.dart';
+import '../../widgets/practice/m3_edit_toolbar.dart';
+import '../../widgets/practice/m3_page_thumbnail_strip.dart';
+import '../../widgets/practice/m3_practice_layer_panel.dart';
+import '../../widgets/practice/m3_top_navigation_bar.dart';
 import '../../widgets/practice/practice_edit_controller.dart';
-import '../../widgets/practice/practice_layer_panel.dart';
-import '../../widgets/practice/practice_property_panel.dart';
-import '../../widgets/practice/top_navigation_bar.dart';
+// import '../../widgets/practice/practice_layer_panel.dart';
+// import '../../widgets/practice/practice_property_panel.dart';
+// import '../../widgets/practice/top_navigation_bar.dart';
+import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
-import 'widgets/content_tools_panel.dart';
-import 'widgets/practice_edit_canvas.dart';
+import 'widgets/m3_content_tools_panel.dart';
+import 'widgets/m3_practice_edit_canvas.dart';
+// import 'widgets/content_tools_panel.dart';
+// import 'widgets/practice_edit_canvas.dart';
 import 'widgets/practice_title_edit_dialog.dart';
 
 /// Material 3 version of the Practice Edit page
@@ -74,7 +82,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         toolbar: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            return TopNavigationBar(
+            return M3TopNavigationBar(
               controller: _controller,
               practiceId: widget.practiceId,
               isPreviewMode: _isPreviewMode,
@@ -226,7 +234,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                   // Edit canvas - 使用ProviderScope包装，确保可以访问ref
                   Expanded(
                     child: ProviderScope(
-                      child: PracticeEditCanvas(
+                      child: M3PracticeEditCanvas(
                         controller: _controller,
                         isPreviewMode: _isPreviewMode,
                         canvasKey: canvasKey,
@@ -254,7 +262,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   Widget _buildEditToolbar() {
     final l10n = AppLocalizations.of(context);
 
-    return EditToolbar(
+    return M3EditToolbar(
       controller: _controller,
       gridVisible: _controller.state.gridVisible,
       snapEnabled: _controller.state.snapEnabled,
@@ -284,7 +292,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       child: Column(
         children: [
           // Content tools area
-          ContentToolsPanel(
+          M3ContentToolsPanel(
             controller: _controller,
             currentTool: _currentTool,
             onToolSelected: (tool) {
@@ -298,7 +306,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
           // Layer management area
           Expanded(
-            child: PracticeLayerPanel(
+            child: M3PracticeLayerPanel(
               controller: _controller,
               onLayerSelect: (layerId) {
                 // Handle layer selection
@@ -324,7 +332,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   /// Build the page thumbnails area
   Widget _buildPageThumbnails() {
-    return PageThumbnailStrip(
+    return M3PageThumbnailStrip(
       pages: _controller.state.pages,
       currentPageIndex: _controller.state.currentPageIndex,
       onPageSelected: (index) {
@@ -351,7 +359,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           final layerId = _controller.state.selectedLayerId!;
           final layer = _controller.state.getLayerById(layerId);
           if (layer != null) {
-            panel = PracticePropertyPanel.forLayer(
+            panel = M3PracticePropertyPanel.forLayer(
               controller: _controller,
               layer: layer,
               onLayerPropertiesChanged: (properties) {
@@ -374,7 +382,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         // Show different property panels based on selected element type
         if (_controller.state.selectedElementIds.isEmpty) {
           // Show page properties when no element is selected
-          panel = PracticePropertyPanel.forPage(
+          panel = M3PracticePropertyPanel.forPage(
             controller: _controller,
             page: _controller.state.currentPage,
             onPagePropertiesChanged: (properties) {
@@ -394,7 +402,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           if (element.isNotEmpty) {
             switch (element['type']) {
               case 'text':
-                panel = PracticePropertyPanel.forText(
+                panel = M3PracticePropertyPanel.forText(
                   controller: _controller,
                   element: element,
                   onElementPropertiesChanged: (properties) {
@@ -403,7 +411,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 );
                 break;
               case 'image':
-                panel = PracticePropertyPanel.forImage(
+                panel = M3PracticePropertyPanel.forImage(
                   controller: _controller,
                   element: element,
                   onElementPropertiesChanged: (properties) {
@@ -417,7 +425,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 );
                 break;
               case 'collection':
-                panel = PracticePropertyPanel.forCollection(
+                panel = M3PracticePropertyPanel.forCollection(
                   controller: _controller,
                   element: element,
                   onElementPropertiesChanged: (properties) {
@@ -437,7 +445,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 );
                 break;
               case 'group':
-                panel = PracticePropertyPanel.forGroup(
+                panel = M3PracticePropertyPanel.forGroup(
                   controller: _controller,
                   element: element,
                   onElementPropertiesChanged: (properties) {
@@ -453,7 +461,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           }
         } else {
           // Show multi-selection properties when multiple elements are selected
-          panel = PracticePropertyPanel.forMultiSelection(
+          panel = M3PracticePropertyPanel.forMultiSelection(
             controller: _controller,
             selectedIds: _controller.state.selectedElementIds,
             onElementPropertiesChanged: (properties) {

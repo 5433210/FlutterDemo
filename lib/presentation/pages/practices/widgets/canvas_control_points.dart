@@ -334,13 +334,14 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
   void didUpdateWidget(CanvasControlPoints oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // 当控制点位置或大小发生变化时，强制重建
+    // 当控制点位置或大小发生变化时，记录日志
     if (oldWidget.x != widget.x ||
         oldWidget.y != widget.y ||
         oldWidget.width != widget.width ||
         oldWidget.height != widget.height ||
         oldWidget.rotation != widget.rotation) {
-      // _forceRebuildHitTest();
+      debugPrint(
+          '控制点属性已更新: x=${widget.x}, y=${widget.y}, width=${widget.width}, height=${widget.height}, rotation=${widget.rotation}');
     }
   }
 
@@ -352,117 +353,94 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
   /// 构建单个控制点
   Widget _buildControlPoint(int index, Offset position, MouseCursor cursor,
       {bool isRotation = false}) {
-    // 控制点大小
-    const controlPointSize = 12.0;
-    // 点击区域大小（比控制点大，便于点击）
-    const hitAreaSize = 40.0;
+    // 增大控制点大小，使其更容易点击
+    const controlPointSize = 16.0;
+    // 增大点击区域大小，大幅提高可点击范围
+    const hitAreaSize = 60.0;
 
     // 计算点击区域位置
     final left = position.dx - hitAreaSize / 2;
     final top = position.dy - hitAreaSize / 2;
+
+    // 添加调试信息
+    debugPrint(
+        '构建控制点 $index 在位置 $position，点击区域: ($left, $top, $hitAreaSize, $hitAreaSize)');
 
     return Positioned(
       left: left,
       top: top,
       width: hitAreaSize,
       height: hitAreaSize,
-      // child: RepaintBoundary(
-      child: MouseRegion(
-        cursor: cursor,
-        opaque: true, // 确保鼠标事件不会穿透
-        hitTestBehavior: HitTestBehavior.opaque, // 使用opaque确保即使透明区域也能接收事件
-        onEnter: (_) {},
-        onHover: (_) {},
-        onExit: (_) {},
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque, // 使用opaque确保即使透明区域也能接收事件
-          onTapDown: (details) {},
-          onTap: () {},
-          onPanStart: (details) {
-            // 立即触发一次更新，确保控制点能够立即响应
-            widget.onControlPointUpdate(index, Offset.zero);
-          },
-          onPanUpdate: (details) {
-            try {
-              // 确保立即处理控制点更新
-              widget.onControlPointUpdate(index, details.delta);
-            } catch (e) {}
-          },
-          onPanEnd: (details) {},
-          child: Container(
-            color: Colors.transparent, // 使用完全透明的背景确保鼠标事件覆盖整个区域
-            child: Center(
-              child: Container(
-                width: controlPointSize,
-                height: controlPointSize,
-                decoration: BoxDecoration(
-                  color: isRotation ? Colors.blue : Colors.white,
-                  shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
-                  border: Border.all(
-                    color: isRotation ? Colors.white : Colors.blue,
-                    width: isRotation ? 2.0 : 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(128),
-                      spreadRadius: 2,
-                      blurRadius: 2,
-                      offset: const Offset(0, 2),
+      child: Material(
+        color: Colors.transparent, // 使用透明背景
+        child: MouseRegion(
+          cursor: cursor,
+          opaque: true, // 确保鼠标事件不会穿透
+          hitTestBehavior: HitTestBehavior.opaque, // 使用opaque确保即使透明区域也能接收事件
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque, // 使用opaque确保即使透明区域也能接收事件
+            onPanStart: (details) {
+              debugPrint('控制点 $index 开始拖拽: ${details.localPosition}');
+              // 立即触发一次更新，确保控制点能够立即响应
+              widget.onControlPointUpdate(index, Offset.zero);
+            },
+            onPanUpdate: (details) {
+              debugPrint('控制点 $index 拖拽更新: delta=${details.delta}');
+              try {
+                // 确保立即处理控制点更新
+                widget.onControlPointUpdate(index, details.delta);
+              } catch (e) {
+                debugPrint('控制点更新错误: $e');
+              }
+            },
+            onPanEnd: (details) {
+              debugPrint('控制点 $index 结束拖拽');
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                // 添加一个半透明的背景，帮助调试时可视化点击区域
+                color: Colors.transparent,
+                border: isRotation
+                    ? Border.all(color: Colors.blue.withAlpha(25), width: 1.0)
+                    : null,
+              ),
+              child: Center(
+                child: Container(
+                  width: controlPointSize,
+                  height: controlPointSize,
+                  decoration: BoxDecoration(
+                    color: isRotation ? Colors.blue : Colors.white,
+                    shape: isRotation ? BoxShape.circle : BoxShape.rectangle,
+                    border: Border.all(
+                      color: isRotation ? Colors.white : Colors.blue,
+                      width: isRotation ? 2.0 : 1.5,
                     ),
-                  ],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(128),
+                        spreadRadius: 2,
+                        blurRadius: 2,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  // 为旋转控制点添加图标，使其更明显
+                  child: isRotation
+                      ? const Center(
+                          child: Icon(
+                            Icons.rotate_right,
+                            color: Colors.white,
+                            size: 12.0,
+                          ),
+                        )
+                      : null,
                 ),
-                // child: Center(
-                //   child: isRotation
-                //       ? const Icon(
-                //           Icons.rotate_right,
-                //           color: Colors.white,
-                //           size: 16.0,
-                //         )
-                //       : null,
-                // ),
               ),
             ),
           ),
         ),
       ),
-      // ),
     );
-  }
-
-  // 强制重建光标和命中测试
-  void _forceRebuildHitTest() {
-    // 通过进行微小的状态更新来迫使Flutter重新评估命中测试
-    if (mounted) {
-      setState(() {
-        // 空状态更新，只为了触发重绘和命中测试重建
-      });
-
-      // 为确保命中测试更新，请求RenderObject重新布局和重绘
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final context = this.context;
-        if (context.mounted) {
-          final renderObject = context.findRenderObject();
-          if (renderObject != null && renderObject is RenderBox) {
-            renderObject.markNeedsPaint();
-            renderObject.markNeedsLayout();
-
-            // 通知父节点也需要重绘和重新构建
-            final parentData = renderObject.parentData;
-            if (parentData != null) {
-              final parent =
-                  context.findAncestorRenderObjectOfType<RenderBox>();
-              if (parent != null) {
-                parent.markNeedsPaint();
-                parent.markNeedsLayout();
-              }
-            }
-
-            // 再次触发命中测试更新
-            WidgetsBinding.instance.scheduleFrame();
-          }
-        }
-      });
-    }
   }
 
   /// 旋转一个点

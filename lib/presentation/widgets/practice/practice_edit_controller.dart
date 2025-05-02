@@ -410,7 +410,7 @@ class PracticeEditController extends ChangeNotifier {
       'isHidden': false, // 隐藏标志
       'name': '文本元素', // 默认名称
       'content': {
-        'text': '双击编辑文本',
+        'text': '属性页\n输入文本',
         'fontFamily': 'sans-serif',
         'fontSize': 24.0,
         'textColor': '#000000',
