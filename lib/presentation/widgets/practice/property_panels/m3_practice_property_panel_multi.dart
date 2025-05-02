@@ -311,7 +311,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.layerOperations, // Using layerOperations as a substitute for alignment operations
+                  l10n.alignmentOperations,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -321,7 +321,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
                 // 水平对齐
                 Text(
-                  '${l10n.textPropertyPanelHorizontal} ${l10n.textPropertyPanelTextAlign}',
+                  l10n.horizontalAlignment,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -337,8 +337,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             ? () => _alignElements('left')
                             : null,
                         icon: const Icon(Icons.align_horizontal_left, size: 18),
-                        label: Text(
-                            '${l10n.textPropertyPanelHorizontal} ${l10n.bringLayerToFront}'),
+                        label: Text(l10n.alignLeft),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -352,7 +351,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             : null,
                         icon:
                             const Icon(Icons.align_horizontal_center, size: 18),
-                        label: Text(l10n.textPropertyPanelHorizontal),
+                        label: Text(l10n.alignCenter),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -366,8 +365,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             : null,
                         icon:
                             const Icon(Icons.align_horizontal_right, size: 18),
-                        label: Text(
-                            '${l10n.textPropertyPanelHorizontal} ${l10n.sendToBack}'),
+                        label: Text(l10n.alignRight),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -379,7 +377,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
                 // 垂直对齐
                 Text(
-                  '${l10n.textPropertyPanelVertical} ${l10n.textPropertyPanelTextAlign}',
+                  l10n.verticalAlignment,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -395,8 +393,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             ? () => _alignElements('top')
                             : null,
                         icon: const Icon(Icons.align_vertical_top, size: 18),
-                        label: Text(
-                            '${l10n.textPropertyPanelVertical} ${l10n.bringLayerToFront}'),
+                        label: Text(l10n.alignTop),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -409,7 +406,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             ? () => _alignElements('middle')
                             : null,
                         icon: const Icon(Icons.align_vertical_center, size: 18),
-                        label: Text(l10n.textPropertyPanelVertical),
+                        label: Text(l10n.alignMiddle),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -422,8 +419,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                             ? () => _alignElements('bottom')
                             : null,
                         icon: const Icon(Icons.align_vertical_bottom, size: 18),
-                        label: Text(
-                            '${l10n.textPropertyPanelVertical} ${l10n.sendToBack}'),
+                        label: Text(l10n.alignBottom),
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -435,7 +431,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      l10n.practiceEditElementSelectionInfo('2+'),
+                      l10n.alignmentRequiresMultipleElements,
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.error,
                         fontStyle: FontStyle.italic,
@@ -458,7 +454,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.position,
+                  l10n.distributionOperations,
                   style: textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
@@ -468,7 +464,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
                 // 元素分布
                 Text(
-                  l10n.elements,
+                  l10n.elementDistribution,
                   style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurfaceVariant,
@@ -480,7 +476,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                       ? () => _distributeElements('horizontal')
                       : null,
                   icon: const Icon(Icons.horizontal_distribute, size: 18),
-                  label: Text(l10n.textPropertyPanelHorizontal),
+                  label: Text(l10n.distributeHorizontally),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
@@ -491,7 +487,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                       ? () => _distributeElements('vertical')
                       : null,
                   icon: const Icon(Icons.vertical_distribute, size: 18),
-                  label: Text(l10n.textPropertyPanelVertical),
+                  label: Text(l10n.distributeVertically),
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                   ),
@@ -500,7 +496,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
-                      l10n.practiceEditElementSelectionInfo('3+'),
+                      l10n.distributionRequiresThreeElements,
                       style: textTheme.bodySmall?.copyWith(
                         color: colorScheme.error,
                         fontStyle: FontStyle.italic,
@@ -533,7 +529,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
 
                 // 移动到图层
                 Text(
-                  '${l10n.moveUp} ${l10n.selected} ${l10n.elements} ${l10n.layer}:',
+                  l10n.moveSelectedElementsToLayer,
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -550,7 +546,7 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
                       value: null,
                       hint: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Text(l10n.selectCollection)),
+                          child: Text(l10n.selectTargetLayer)),
                       items: _buildLayerItems(context),
                       onChanged: (value) {
                         if (value != null) {

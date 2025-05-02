@@ -1443,6 +1443,93 @@ class AppLocalizationsEn extends AppLocalizations {
   String get width => 'Width';
 
   @override
+  String get alignmentOperations => 'Alignment Operations';
+
+  @override
+  String get horizontalAlignment => 'Horizontal Alignment';
+
+  @override
+  String get alignLeft => 'Align Left';
+
+  @override
+  String get alignCenter => 'Align Center';
+
+  @override
+  String get alignRight => 'Align Right';
+
+  @override
+  String get verticalAlignment => 'Vertical Alignment';
+
+  @override
+  String get alignTop => 'Align Top';
+
+  @override
+  String get alignMiddle => 'Align Middle';
+
+  @override
+  String get alignBottom => 'Align Bottom';
+
+  @override
+  String get distributionOperations => 'Distribution Operations';
+
+  @override
+  String get elementDistribution => 'Element Distribution';
+
+  @override
+  String get distributeHorizontally => 'Distribute Horizontally';
+
+  @override
+  String get distributeVertically => 'Distribute Vertically';
+
+  @override
+  String get alignmentRequiresMultipleElements => 'Alignment requires at least 2 elements';
+
+  @override
+  String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
+
+  @override
+  String get distribution => 'Distribution';
+
+  @override
+  String get center => 'Center';
+
+  @override
+  String get moveSelectedElementsToLayer => 'Move Selected Elements to Layer';
+
+  @override
+  String get selectTargetLayer => 'Select Target Layer';
+
+  @override
+  String get layerInfo => 'Layer Information';
+
+  @override
+  String get layerName => 'Layer Name';
+
+  @override
+  String get visibility => 'Visibility';
+
+  @override
+  String get lockStatus => 'Lock Status';
+
+  @override
+  String get unlocked => 'Unlocked';
+
+  @override
+  String get elementType => 'Element Type';
+
+  @override
+  String get elementId => 'Element ID';
+
+  @override
+  String get text => 'Text';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get collection => 'Collection';
+
+  @override
   String get workBrowseAddFavorite => 'Add to Favorites';
 
   @override

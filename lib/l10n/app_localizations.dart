@@ -2963,6 +2963,180 @@ abstract class AppLocalizations {
   /// **'Width'**
   String get width;
 
+  /// No description provided for @alignmentOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment Operations'**
+  String get alignmentOperations;
+
+  /// No description provided for @horizontalAlignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Alignment'**
+  String get horizontalAlignment;
+
+  /// No description provided for @alignLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Left'**
+  String get alignLeft;
+
+  /// No description provided for @alignCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Center'**
+  String get alignCenter;
+
+  /// No description provided for @alignRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Right'**
+  String get alignRight;
+
+  /// No description provided for @verticalAlignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Alignment'**
+  String get verticalAlignment;
+
+  /// No description provided for @alignTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Top'**
+  String get alignTop;
+
+  /// No description provided for @alignMiddle.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Middle'**
+  String get alignMiddle;
+
+  /// No description provided for @alignBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Bottom'**
+  String get alignBottom;
+
+  /// No description provided for @distributionOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution Operations'**
+  String get distributionOperations;
+
+  /// No description provided for @elementDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Distribution'**
+  String get elementDistribution;
+
+  /// No description provided for @distributeHorizontally.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute Horizontally'**
+  String get distributeHorizontally;
+
+  /// No description provided for @distributeVertically.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute Vertically'**
+  String get distributeVertically;
+
+  /// No description provided for @alignmentRequiresMultipleElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment requires at least 2 elements'**
+  String get alignmentRequiresMultipleElements;
+
+  /// No description provided for @distributionRequiresThreeElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution requires at least 3 elements'**
+  String get distributionRequiresThreeElements;
+
+  /// No description provided for @distribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution'**
+  String get distribution;
+
+  /// No description provided for @center.
+  ///
+  /// In en, this message translates to:
+  /// **'Center'**
+  String get center;
+
+  /// No description provided for @moveSelectedElementsToLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Selected Elements to Layer'**
+  String get moveSelectedElementsToLayer;
+
+  /// No description provided for @selectTargetLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Target Layer'**
+  String get selectTargetLayer;
+
+  /// No description provided for @layerInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Layer Information'**
+  String get layerInfo;
+
+  /// No description provided for @layerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Layer Name'**
+  String get layerName;
+
+  /// No description provided for @visibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility'**
+  String get visibility;
+
+  /// No description provided for @lockStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock Status'**
+  String get lockStatus;
+
+  /// No description provided for @unlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked'**
+  String get unlocked;
+
+  /// No description provided for @elementType.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Type'**
+  String get elementType;
+
+  /// No description provided for @elementId.
+  ///
+  /// In en, this message translates to:
+  /// **'Element ID'**
+  String get elementId;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
+
+  /// No description provided for @collection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get collection;
+
   /// No description provided for @workBrowseAddFavorite.
   ///
   /// In en, this message translates to:

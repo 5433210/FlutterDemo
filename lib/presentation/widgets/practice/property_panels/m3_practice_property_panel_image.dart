@@ -13,8 +13,8 @@ import '../../../../providers.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
-import 'element_common_property_panel.dart';
-import 'layer_info_panel.dart';
+import 'm3_element_common_property_panel.dart';
+import 'm3_layer_info_panel.dart';
 import 'practice_property_panel_base.dart';
 
 /// Material 3 Image Property Panel
@@ -160,14 +160,14 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
     return ListView(
       children: [
         // Basic element properties
-        ElementCommonPropertyPanel(
+        M3ElementCommonPropertyPanel(
           element: element,
           onElementPropertiesChanged: onElementPropertiesChanged,
           controller: controller,
         ),
 
         // Layer information
-        LayerInfoPanel(layer: layer),
+        M3LayerInfoPanel(layer: layer),
 
         // Geometry properties section
         Card(

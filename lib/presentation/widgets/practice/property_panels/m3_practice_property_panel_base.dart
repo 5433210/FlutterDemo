@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_collection_property_panel.dart';
+import 'm3_element_common_property_panel.dart';
+import 'm3_layer_info_panel.dart';
 import 'm3_practice_property_panel_group.dart';
 import 'm3_practice_property_panel_image.dart';
 import 'm3_practice_property_panel_layer.dart';
@@ -127,7 +129,7 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     // 使用静态变量保存当前值，以便在拖动结束时记录操作
     double currentOpacity = 0.0;
 
@@ -156,7 +158,7 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
                         min: 0.0,
                         max: 1.0,
                         divisions: 100,
-                        label: (currentOpacity * 100).toStringAsFixed(0) + '%',
+                        label: '${(currentOpacity * 100).toStringAsFixed(0)}%',
                         onChanged: (value) {
                           setState(() {
                             currentOpacity = value;
@@ -197,7 +199,7 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     return Material(
       color: Colors.transparent,
       child: Theme(
@@ -233,7 +235,7 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     // 使用唯一的键来标识控制器
     final String key = label;
     final String valueStr = value.toStringAsFixed(0);
@@ -329,6 +331,19 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
     );
   }
 
+  /// 创建元素通用属性面板
+  static Widget forElementCommon({
+    required PracticeEditController controller,
+    required Map<String, dynamic> element,
+    required Function(Map<String, dynamic>) onElementPropertiesChanged,
+  }) {
+    return M3ElementCommonPropertyPanel(
+      controller: controller,
+      element: element,
+      onElementPropertiesChanged: onElementPropertiesChanged,
+    );
+  }
+
   /// 创建组合属性面板
   static Widget forGroup({
     required PracticeEditController controller,
@@ -369,6 +384,15 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
       controller: controller,
       layer: layer,
       onLayerPropertiesChanged: onLayerPropertiesChanged,
+    );
+  }
+
+  /// 创建图层信息面板
+  static Widget forLayerInfo({
+    required Map<String, dynamic>? layer,
+  }) {
+    return M3LayerInfoPanel(
+      layer: layer,
     );
   }
 

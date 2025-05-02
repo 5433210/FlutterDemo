@@ -918,7 +918,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get layer => '图层';
 
   @override
-  String get layer1 => '图层 1';
+  String get layer1 => '图层1';
 
   @override
   String get layerElements => '图层元素';
@@ -1441,6 +1441,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get width => '宽度';
+
+  @override
+  String get alignmentOperations => '对齐操作';
+
+  @override
+  String get horizontalAlignment => '水平对齐';
+
+  @override
+  String get alignLeft => '左对齐';
+
+  @override
+  String get alignCenter => '居中';
+
+  @override
+  String get alignRight => '右对齐';
+
+  @override
+  String get verticalAlignment => '垂直对齐';
+
+  @override
+  String get alignTop => '顶对齐';
+
+  @override
+  String get alignMiddle => '居中';
+
+  @override
+  String get alignBottom => '底对齐';
+
+  @override
+  String get distributionOperations => '分布操作';
+
+  @override
+  String get elementDistribution => '元素分布';
+
+  @override
+  String get distributeHorizontally => '水平均匀分布';
+
+  @override
+  String get distributeVertically => '垂直均匀分布';
+
+  @override
+  String get alignmentRequiresMultipleElements => '对齐操作需要至少2个元素';
+
+  @override
+  String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
+
+  @override
+  String get distribution => '分布';
+
+  @override
+  String get center => '居中';
+
+  @override
+  String get moveSelectedElementsToLayer => '移动选中元素到图层';
+
+  @override
+  String get selectTargetLayer => '选择目标图层';
+
+  @override
+  String get layerInfo => '图层信息';
+
+  @override
+  String get layerName => '图层名称';
+
+  @override
+  String get visibility => '可见性';
+
+  @override
+  String get lockStatus => '锁定状态';
+
+  @override
+  String get unlocked => '未锁定';
+
+  @override
+  String get elementType => '元素类型';
+
+  @override
+  String get elementId => '元素ID';
+
+  @override
+  String get text => '文本';
+
+  @override
+  String get image => '图片';
+
+  @override
+  String get collection => '集字';
 
   @override
   String get workBrowseAddFavorite => '添加到收藏';
