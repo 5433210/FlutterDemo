@@ -20,18 +20,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appName => 'Calligraphy Collection';
 
   @override
+  String get appTitle => 'Calligraphy Collection';
+
+  @override
   String get backgroundColor => 'Background Color';
 
   @override
   String get basicInfo => 'Basic Information';
+
   @override
   String get bringLayerToFront => 'Bring layer to the front';
+
   @override
   String get bringToFront => 'Bring to Front';
-
   @override
   String get cancel => 'Cancel';
-
   @override
   String get canvasPixelSize => 'Canvas Pixel Size';
 
@@ -401,14 +404,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelBorder => 'Border';
+
   @override
   String get collectionPropertyPanelBorderColor => 'Border Color';
 
   @override
   String get collectionPropertyPanelBorderWidth => 'Border Width';
-
   @override
   String get collectionPropertyPanelCacheCleared => 'Image cache cleared';
+
   @override
   String get collectionPropertyPanelCacheClearFailed =>
       'Failed to clear image cache';
@@ -416,7 +420,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get collectionPropertyPanelCandidateCharacters =>
       'Candidate Characters';
-
   @override
   String get collectionPropertyPanelCharacter => 'Character';
 
@@ -431,6 +434,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelClearImageCache => 'Clear Image Cache';
+
   @override
   String get collectionPropertyPanelColorInversion => 'color inversion';
 
@@ -441,7 +445,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelEnabled => 'Enabled';
-
   @override
   String get collectionPropertyPanelFlip => 'Flip';
 
@@ -456,12 +459,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelGeometry => 'Geometry Properties';
+
   @override
   String get collectionPropertyPanelHeaderContent => 'Content Properties';
 
   @override
   String get collectionPropertyPanelHeaderGeometry => 'Geometry Properties';
-
   @override
   String get collectionPropertyPanelHeaderVisual => 'Visual Properties';
 
@@ -478,16 +481,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelNoCharacterText => 'No character';
+
   @override
   String get collectionPropertyPanelOf => 'of';
+
   @override
   String get collectionPropertyPanelOpacity => 'Opacity';
-
   @override
   String get collectionPropertyPanelOriginal => 'Original';
   @override
   String get collectionPropertyPanelPadding => 'Padding';
 
+  @override
+  String get collectionPropertyPanelPropertyUpdated => 'Property updated';
   @override
   String get collectionPropertyPanelRender => 'Render Mode';
 
@@ -695,9 +701,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterStyleSeal => 'Seal Script';
+
   @override
   String get filterStyleSection => 'Calligraphy Style';
-
   @override
   String get filterTitle => 'Filter & Sort';
 
@@ -718,9 +724,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get geometryProperties => 'Geometry Properties';
+
   @override
   String get gridSettings => 'Grid Settings';
-
   @override
   String get gridSize => 'Grid Size';
 
@@ -784,10 +790,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelCropLeft => 'Left Crop';
 
   @override
-  String get imagePropertyPanelCroppingApplied =>
-      ' (cropping: left {left}px, top {top}px, right {right}px, bottom {bottom}px)';
-
-  @override
   String get imagePropertyPanelCroppingValueTooLarge =>
       'Cannot apply transform: Crop values too large, resulting in invalid crop area';
 
@@ -804,10 +806,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelDisplay => 'Display Mode';
 
   @override
-  String get imagePropertyPanelFileNotExist => 'File does not exist: {path}';
-
-  @override
   String get imagePropertyPanelFilters => 'Image Filters';
+
   @override
   String get imagePropertyPanelFit => 'Fit';
 
@@ -816,7 +816,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelFitCover => 'Cover';
-
   @override
   String get imagePropertyPanelFitFill => 'Fill';
 
@@ -831,6 +830,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelFlip => 'Flip';
+
   @override
   String get imagePropertyPanelFlipHorizontal => 'Flip Horizontally';
 
@@ -839,7 +839,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelGeometry => 'Geometry Properties';
-
   @override
   String get imagePropertyPanelGeometryWarning =>
       'These properties adjust the entire element box, not the image content itself';
@@ -852,9 +851,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelImageTransform => 'Image Transform';
-
-  @override
-  String get imagePropertyPanelLoadError => 'Failed to load image: {error}...';
 
   @override
   String get imagePropertyPanelNoCropping =>
@@ -886,10 +882,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Note: Repeated logs displayed during preview are normal';
 
   @override
-  String get imagePropertyPanelProcessingPathError =>
-      'Error processing path: {error}';
-
-  @override
   String get imagePropertyPanelReset => 'Reset';
 
   @override
@@ -910,10 +902,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelTransformApplied => 'Transform applied';
-
-  @override
-  String get imagePropertyPanelTransformError =>
-      'Failed to apply transform: {error}';
 
   @override
   String get imagePropertyPanelTransformWarning =>
@@ -1076,8 +1064,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get practiceEditElements => 'Elements';
 
-  @override
-  String get practiceEditElementSelectionInfo => '{count} elements selected';
+  // @override
+  // String get practiceEditElementSelectionInfo => '{count} elements selected';
 
   @override
   String get practiceEditEnableSnap => 'Enable Snap (Ctrl+R)';
@@ -1818,9 +1806,34 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String imagePropertyPanelCroppingApplied(
+          Object bottom, Object left, Object right, Object top) =>
+      ' (cropping: left {left}px, top {top}px, right {right}px, bottom {bottom}px)';
+
+  @override
+  String imagePropertyPanelFileNotExist(Object path) =>
+      'File does not exist: {path}';
+
+  @override
+  String imagePropertyPanelLoadError(Object error) =>
+      'Failed to load image: {error}...';
+
+  @override
+  String imagePropertyPanelProcessingPathError(Object error) =>
+      'Error processing path: {error}';
+
+  @override
+  String imagePropertyPanelTransformError(Object error) =>
+      'Failed to apply transform: {error}';
+
+  @override
   String initializationFailed(Object error) {
     return 'Initialization failed: $error';
   }
+
+  @override
+  String practiceEditElementSelectionInfo(Object count) =>
+      'selected {count} elements';
 
   @override
   String practiceEditLoadFailed(Object error) {

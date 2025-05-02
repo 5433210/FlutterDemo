@@ -22,6 +22,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appName => '书法集字';
 
   @override
+  String get appTitle => '书法集字';
+
+  @override
   String get backgroundColor => '背景颜色';
   @override
   String get basicInfo => '基本信息';
@@ -778,10 +781,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelCropLeft => '左裁剪';
 
   @override
-  String get imagePropertyPanelCroppingApplied =>
-      ' (裁剪: 左{left}px, 上{top}px, 右{right}px, 下{bottom}px)';
-
-  @override
   String get imagePropertyPanelCroppingValueTooLarge => '无法应用变换：裁剪值过大，导致裁剪区域无效';
 
   @override
@@ -795,9 +794,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelDisplay => '显示模式';
-
-  @override
-  String get imagePropertyPanelFileNotExist => '文件不存在: {path}';
 
   @override
   String get imagePropertyPanelFilters => '图像滤镜';
@@ -848,9 +844,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelImageTransform => '图像变换';
 
   @override
-  String get imagePropertyPanelLoadError => '无法加载图片: {error}...';
-
-  @override
   String get imagePropertyPanelNoCropping => ' (无裁剪，但应用了其他变换)';
 
   @override
@@ -878,9 +871,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelPreviewNotice => '注意: 长时间显示重复日志属于正常现象，不影响功能';
 
   @override
-  String get imagePropertyPanelProcessingPathError => '处理文件路径时出错: {error}';
-
-  @override
   String get imagePropertyPanelReset => '重置';
 
   @override
@@ -900,9 +890,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelTransformApplied => '已应用变换';
-
-  @override
-  String get imagePropertyPanelTransformError => '应用变换失败: {error}';
 
   @override
   String get imagePropertyPanelTransformWarning => '以下变换直接修改图片内容本身，而不是整个元素框';
@@ -1059,9 +1046,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceEditElements => '元素';
-
-  @override
-  String get practiceEditElementSelectionInfo => '已选择{count}个元素';
 
   @override
   String get practiceEditEnableSnap => '启用吸附 (Ctrl+R)';
@@ -1703,6 +1687,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workImportDialogNoImagesHint => '点击添加图片';
+
   @override
   String get workImportDialogProcessing => '处理中...';
 
@@ -1721,7 +1706,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workStyleCursive => '草书';
-
   @override
   String get workStyleOther => '其他';
 
@@ -1786,9 +1770,30 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String imagePropertyPanelCroppingApplied(
+          Object bottom, Object left, Object right, Object top) =>
+      ' (裁剪: 左{$left}px, 上{$top}px, 右{$right}px, 下{$bottom}px)';
+
+  @override
+  String imagePropertyPanelFileNotExist(Object path) => '文件不存在: {path}';
+
+  @override
+  String imagePropertyPanelLoadError(Object error) => '无法加载图片: {error}...';
+
+  @override
+  String imagePropertyPanelProcessingPathError(Object error) =>
+      '处理文件路径时出错: {error}';
+
+  @override
+  String imagePropertyPanelTransformError(Object error) => '应用变换失败: {error}';
+
+  @override
   String initializationFailed(Object error) {
     return '初始化失败: $error';
   }
+
+  @override
+  String practiceEditElementSelectionInfo(Object count) => '已选择{count}个元素';
 
   @override
   String practiceEditLoadFailed(Object error) {
