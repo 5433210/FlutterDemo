@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../common/color_palette_widget.dart';
+import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
 
 /// Material 3 页面属性面板
@@ -47,19 +48,33 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
     final dpi = (widget.page!['dpi'] as num?)?.toInt() ?? 300;
 
     return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       children: [
+        // 页面标题
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Text(
-            l10n.practiceEditPageProperties,
-            style: textTheme.titleLarge,
+          child: Row(
+            children: [
+              Icon(
+                Icons.description,
+                color: colorScheme.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                l10n.practiceEditPageProperties,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
           ),
         ),
 
         // 页面尺寸设置
-        _buildM3ExpansionTile(
-          context: context,
-          title: l10n.pageSize,
+        materialExpansionTile(
+          title: Text(l10n.pageSize),
           initiallyExpanded: true,
           children: [
             Padding(
@@ -69,167 +84,153 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 预设尺寸选择
-                  Text(
-                    l10n.presetSize,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text('${l10n.presetSize}:',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  DropdownButtonFormField<String>(
-                    value: _getPageSizePreset(width, height),
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                          color: colorScheme.outline,
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: DropdownButtonFormField<String>(
+                        value: _getPageSizePreset(width, height),
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: colorScheme.outline,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surface,
                         ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
+                        items: [
+                          DropdownMenuItem(
+                            value: 'A4',
+                            child: Text(l10n.a4Size),
+                          ),
+                          DropdownMenuItem(
+                            value: 'A5',
+                            child: Text(l10n.a5Size),
+                          ),
+                          DropdownMenuItem(
+                            value: 'custom',
+                            child: Text(l10n.customSize),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            _handlePageSizePresetChange(value, orientation);
+                          }
+                        },
                       ),
                     ),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'A4',
-                        child: Text(l10n.a4Size),
-                      ),
-                      DropdownMenuItem(
-                        value: 'A5',
-                        child: Text(l10n.a5Size),
-                      ),
-                      DropdownMenuItem(
-                        value: 'custom',
-                        child: Text(l10n.customSize),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        _handlePageSizePresetChange(value, orientation);
-                      }
-                    },
                   ),
                   const SizedBox(height: 16.0),
 
                   // 页面方向设置
-                  Text(
-                    l10n.pageOrientation,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text('${l10n.pageOrientation}:',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(l10n.portrait),
-                          value: 'portrait',
-                          groupValue: orientation,
-                          activeColor: colorScheme.primary,
-                          onChanged: (value) {
-                            if (value != null && value != orientation) {
-                              final Map<String, dynamic> updates = {
-                                'orientation': value
-                              };
-                              // 如果当前宽度大于高度，交换宽高
-                              if (width > height) {
-                                updates['width'] = height;
-                                updates['height'] = width;
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text(l10n.portrait),
+                              value: 'portrait',
+                              groupValue: orientation,
+                              activeColor: colorScheme.primary,
+                              onChanged: (value) {
+                                if (value != null && value != orientation) {
+                                  final Map<String, dynamic> updates = {
+                                    'orientation': value
+                                  };
+                                  // 如果当前宽度大于高度，交换宽高
+                                  if (width > height) {
+                                    updates['width'] = height;
+                                    updates['height'] = width;
 
-                                // 更新控制器的值
-                                _widthController.text = height.toString();
-                                _heightController.text = width.toString();
-                              }
-                              widget.onPagePropertiesChanged(updates);
-                            }
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: Text(l10n.landscape),
-                          value: 'landscape',
-                          groupValue: orientation,
-                          activeColor: colorScheme.primary,
-                          onChanged: (value) {
-                            if (value != null && value != orientation) {
-                              final Map<String, dynamic> updates = {
-                                'orientation': value
-                              };
-                              // 如果当前宽度小于高度，交换宽高
-                              if (width < height) {
-                                updates['width'] = height;
-                                updates['height'] = width;
+                                    // 更新控制器的值
+                                    _widthController.text = height.toString();
+                                    _heightController.text = width.toString();
+                                  }
+                                  widget.onPagePropertiesChanged(updates);
+                                }
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text(l10n.landscape),
+                              value: 'landscape',
+                              groupValue: orientation,
+                              activeColor: colorScheme.primary,
+                              onChanged: (value) {
+                                if (value != null && value != orientation) {
+                                  final Map<String, dynamic> updates = {
+                                    'orientation': value
+                                  };
+                                  // 如果当前宽度小于高度，交换宽高
+                                  if (width < height) {
+                                    updates['width'] = height;
+                                    updates['height'] = width;
 
-                                // 更新控制器的值
-                                _widthController.text = height.toString();
-                                _heightController.text = width.toString();
-                              }
-                              widget.onPagePropertiesChanged(updates);
-                            }
-                          },
-                        ),
+                                    // 更新控制器的值
+                                    _widthController.text = height.toString();
+                                    _heightController.text = width.toString();
+                                  }
+                                  widget.onPagePropertiesChanged(updates);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 16.0),
 
                   // 尺寸输入
-                  Text(
-                    l10n.dimensions,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text('${l10n.dimensions}:',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
                   Row(
                     children: [
                       Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            labelText: l10n.width,
-                            suffixText: 'mm',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                color: colorScheme.outline,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
-                            ),
-                          ),
-                          controller: _widthController,
-                          focusNode: _widthFocusNode,
-                          keyboardType: TextInputType.number,
-                          onSubmitted: _updateWidth,
+                        child: EditableNumberField(
+                          label: l10n.width,
+                          value: width,
+                          suffix: 'mm',
+                          min: 10,
+                          max: 1000,
+                          onChanged: (value) => _updateWidth(value.toString()),
                         ),
                       ),
                       const SizedBox(width: 8.0),
                       Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            labelText: l10n.height,
-                            suffixText: 'mm',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide(
-                                color: colorScheme.outline,
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
-                            ),
-                          ),
-                          controller: _heightController,
-                          focusNode: _heightFocusNode,
-                          keyboardType: TextInputType.number,
-                          onSubmitted: _updateHeight,
+                        child: EditableNumberField(
+                          label: l10n.height,
+                          value: height,
+                          suffix: 'mm',
+                          min: 10,
+                          max: 1000,
+                          onChanged: (value) => _updateHeight(value.toString()),
                         ),
                       ),
                     ],
@@ -237,41 +238,40 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                   const SizedBox(height: 16.0),
 
                   // DPI设置
-                  Text(
-                    l10n.dpiSetting,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
+                  Text('${l10n.dpiSetting}:',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: 'DPI',
-                      helperText: l10n.dpiHelperText,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(
-                          color: colorScheme.outline,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
-                      ),
-                    ),
-                    controller: _dpiController,
-                    focusNode: _dpiFocusNode,
-                    keyboardType: TextInputType.number,
-                    onSubmitted: _updateDpi,
+                  EditableNumberField(
+                    label: 'DPI',
+                    value: dpi.toDouble(),
+                    suffix: '',
+                    min: 72,
+                    max: 600,
+                    decimalPlaces: 0,
+                    onChanged: (value) => _updateDpi(value.toString()),
                   ),
                   const SizedBox(height: 8.0),
 
                   // 像素尺寸显示
-                  Text(
-                    '${l10n.canvasPixelSize}: ${_calculatePixelSize(width, height, dpi)}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
+                  Container(
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: colorScheme.tertiary, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${l10n.canvasPixelSize}: ${_calculatePixelSize(width, height, dpi)}',
+                            style: TextStyle(
+                                fontSize: 14, color: colorScheme.tertiary),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -281,9 +281,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
         ),
 
         // 背景颜色设置
-        _buildM3ExpansionTile(
-          context: context,
-          title: l10n.backgroundColor,
+        materialExpansionTile(
+          title: Text(l10n.backgroundColor),
           initiallyExpanded: true,
           children: [
             Padding(
@@ -304,9 +303,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
         ),
 
         // 网格设置
-        _buildM3ExpansionTile(
-          context: context,
-          title: l10n.gridSettings,
+        materialExpansionTile(
+          title: Text(l10n.gridSettings),
           initiallyExpanded: true,
           children: [
             Padding(
@@ -316,35 +314,37 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 显示网格选项
-                  SwitchListTile(
-                    title: Text(l10n.showGrid),
-                    value: widget.controller.state.gridVisible,
-                    activeColor: colorScheme.primary,
-                    onChanged: (value) {
-                      // 更新页面属性
-                      widget.onPagePropertiesChanged({'gridVisible': value});
-                      // 同步更新控制器的网格显示状态
-                      widget.controller.state.gridVisible = value;
-                      // 不直接调用 notifyListeners，而是通过属性更新触发控制器的更新
-                      setState(() {});
-                    },
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: SwitchListTile(
+                      title: Text(l10n.showGrid),
+                      value: widget.controller.state.gridVisible,
+                      activeColor: colorScheme.primary,
+                      onChanged: (value) {
+                        // 更新页面属性
+                        widget.onPagePropertiesChanged({'gridVisible': value});
+                        // 同步更新控制器的网格显示状态
+                        widget.controller.state.gridVisible = value;
+                        // 不直接调用 notifyListeners，而是通过属性更新触发控制器的更新
+                        setState(() {});
+                      },
+                    ),
                   ),
-                  const SizedBox(height: 8.0),
+                  const SizedBox(height: 16.0),
 
                   // 网格大小设置
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.gridSize,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                        Slider(
+                  Text('${l10n.gridSize}:',
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
                           value: widget.controller.state.gridSize,
                           min: 5.0,
                           max: 50.0,
@@ -352,7 +352,6 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                           label: widget.controller.state.gridSize
                               .toStringAsFixed(0),
                           activeColor: colorScheme.primary,
-                          inactiveColor: colorScheme.surfaceContainerHighest,
                           thumbColor: colorScheme.primary,
                           onChanged: (value) {
                             setState(() {
@@ -365,15 +364,20 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                             });
                           },
                         ),
-                        Text(
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 1,
+                        child: Text(
                           '${widget.controller.state.gridSize.toStringAsFixed(0)} ${l10n.pixels}',
-                          style: textTheme.bodyMedium?.copyWith(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: colorScheme.onSurface,
                           ),
+                          textAlign: TextAlign.center,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -480,36 +484,17 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   }
 
   /// 构建Material 3风格的ExpansionTile
-  Widget _buildM3ExpansionTile({
-    required BuildContext context,
-    required String title,
+  Widget materialExpansionTile({
+    required Widget title,
     List<Widget> children = const <Widget>[],
     bool initiallyExpanded = false,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Material(
       color: Colors.transparent,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent,
-        ),
-        child: ExpansionTile(
-          title: Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(
-              color: colorScheme.onSurface,
-            ),
-          ),
-          initiallyExpanded: initiallyExpanded,
-          collapsedIconColor: colorScheme.onSurfaceVariant,
-          iconColor: colorScheme.primary,
-          backgroundColor: colorScheme.surfaceContainerLow,
-          collapsedBackgroundColor: colorScheme.surfaceContainerLow,
-          childrenPadding: EdgeInsets.zero,
-          children: children,
-        ),
+      child: ExpansionTile(
+        title: title,
+        initiallyExpanded: initiallyExpanded,
+        children: children,
       ),
     );
   }

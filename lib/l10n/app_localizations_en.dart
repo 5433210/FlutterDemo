@@ -1968,4 +1968,49 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelAutoLineBreakTooltip => 'Auto Line Break';
+
+  @override
+  String get verticalTextModeEnabled => 'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally';
+
+  @override
+  String get groupOperations => 'Group Operations';
+
+  @override
+  String get editGroupContents => 'Edit Group Contents';
+
+  @override
+  String get editGroupContentsDescription => 'Edit the contents of the selected group';
+
+  @override
+  String get ungroupDescription => 'Are you sure you want to ungroup this group?';
+
+  @override
+  String get practiceEditDangerZone => 'Danger Zone';
+
+  @override
+  String get deleteGroup => 'Delete Group';
+
+  @override
+  String get groupElements => 'Group Elements';
+
+  @override
+  String get deleteGroupConfirm => 'Confirm Delete Group';
+
+  @override
+  String get deleteGroupDescription => 'Are you sure you want to delete this group? This action cannot be undone.';
+
+  @override
+  String get deleteGroupElements => 'Delete Group Elements';
+
+  @override
+  String get enterGroupEditMode => 'Enter Group Edit Mode';
+
+  @override
+  String get ungroupConfirm => 'Confirm Ungroup';
+
+  @override
+  String get alignHorizontalCenter => 'Align Horizontal Center';
+
+  @override
+  String get alignVerticalCenter => 'Align Vertical Center';
 }

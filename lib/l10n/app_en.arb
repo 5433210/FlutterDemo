@@ -638,4 +638,21 @@
   "collectionPropertyPanelAutoLineBreak":"Auto Line Break",
   "collectionPropertyPanelAutoLineBreakEnabled":"Enable", 
   "collectionPropertyPanelAutoLineBreakDisabled":"Disable",  
-  "collectionPropertyPanelAutoLineBreakTooltip":"Auto Line Break"}
+  "collectionPropertyPanelAutoLineBreakTooltip":"Auto Line Break",
+  "verticalTextModeEnabled":"Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally",
+  "groupOperations":"Group Operations",
+  "editGroupContents":"Edit Group Contents",
+  "editGroupContentsDescription":"Edit the contents of the selected group",
+  "ungroupDescription":"Ungroup the selected group",
+  "practiceEditDangerZone":"Danger Zone",
+  "deleteGroup":"Delete Group",
+  "groupElements":"Group Elements",
+  "deleteGroupConfirm":"Confirm Delete Group",
+  "deleteGroupDescription":"Are you sure you want to delete this group? This action cannot be undone.",
+  "deleteGroupElements":"Delete Group Elements",
+  "enterGroupEditMode":"Enter Group Edit Mode",
+  "ungroupConfirm":"Confirm Ungroup",
+  "ungroupDescription":"Are you sure you want to ungroup this group?",
+  "alignHorizontalCenter":"Align Horizontal Center",
+  "alignVerticalCenter":"Align Vertical Center"
+  }

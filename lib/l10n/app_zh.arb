@@ -638,5 +638,19 @@
   "collectionPropertyPanelAutoLineBreak":"自动换行",
   "collectionPropertyPanelAutoLineBreakEnabled":"已启用自动换行", 
   "collectionPropertyPanelAutoLineBreakDisabled":"已禁用自动换行",  
-  "collectionPropertyPanelAutoLineBreakTooltip":"自动换行"
+  "collectionPropertyPanelAutoLineBreakTooltip":"自动换行",
+  "verticalTextModeEnabled":"竖排文本预览 - 超出高度自动换列，可横向滚动",
+  "groupOperations":"组合操作",
+  "editGroupContents":"编辑组内容",
+  "editGroupContentsDescription":"编辑已选组的内容",
+  "ungroupDescription":"解散已选组",
+  "practiceEditDangerZone":"危险区域",
+  "deleteGroup":"删除组",
+  "groupElements":"组合元素",
+  "deleteGroupConfirm":"确认删除组",
+  "deleteGroupDescription":"确定要删除此组吗？此操作无法撤消。",
+  "deleteGroupElements":"删除组内元素",
+  "enterGroupEditMode":"进入组编辑模式",
+  "ungroupConfirm":"确认解组",
+  "ungroupDescription":"确定要解散此组吗？"
 }

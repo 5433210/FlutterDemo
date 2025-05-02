@@ -81,112 +81,158 @@ class _M3LayerPropertyPanelContentState
     final totalLayers = widget.controller.state.layers.length;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       children: [
         // 面板标题
-        Row(
-          children: [
-            Icon(
-              Icons.layers,
-              size: 24,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              l10n.practiceEditLayerProperties,
-              style: textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(
+                Icons.layers,
+                size: 24,
+                color: colorScheme.primary,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                l10n.practiceEditLayerProperties,
+                style: textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
-        const Divider(height: 24),
 
-        // 图层名称
+        // 基本信息面板
         Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           elevation: 0,
           color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.basicInfo,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(
-                      child: _isEditingName
-                          ? TextField(
-                              controller: _nameController,
-                              focusNode: _nameFocusNode,
-                              decoration: InputDecoration(
-                                labelText: l10n.name,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                              ),
-                              onSubmitted: (_) => _applyNameChange(),
-                            )
-                          : ListTile(
-                              title: Text(
-                                l10n.name,
-                                style: textTheme.bodyMedium?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              subtitle: Text(
-                                name,
-                                style: textTheme.bodyLarge?.copyWith(
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.edit),
-                                tooltip: l10n.rename,
-                                onPressed: _startEditingName,
-                              ),
-                            ),
+                    Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.basicInfo,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                // 图层名称
+                _isEditingName
+                    ? TextField(
+                        controller: _nameController,
+                        focusNode: _nameFocusNode,
+                        decoration: InputDecoration(
+                          labelText: l10n.name,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surface,
+                        ),
+                        onSubmitted: (_) => _applyNameChange(),
+                      )
+                    : Card(
+                        elevation: 0,
+                        color: colorScheme.surfaceContainerHighest,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            '${l10n.name}:',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            tooltip: l10n.rename,
+                            onPressed: _startEditingName,
+                          ),
+                        ),
+                      ),
                 const SizedBox(height: 8),
-                ListTile(
-                  title: Text(
-                    l10n.position,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                // 图层位置
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  subtitle: Text(
-                    '$layerPosition / $totalLayers',
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurface,
+                  child: ListTile(
+                    title: Text(
+                      '${l10n.position}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '$layerPosition / $totalLayers',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
-                ListTile(
-                  title: Text(
-                    l10n.elements,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                const SizedBox(height: 8),
+                // 图层元素数量
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  subtitle: Text(
-                    '$elementCount ${l10n.elements}',
-                    style: textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurface,
+                  child: ListTile(
+                    title: Text(
+                      '${l10n.elements}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      '$elementCount ${l10n.elements}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),
@@ -195,207 +241,274 @@ class _M3LayerPropertyPanelContentState
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
 
         // 状态与显示
         Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           elevation: 0,
           color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.stateAndDisplay,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.visibility,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.stateAndDisplay,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
                 // 可见性控制
-                SwitchListTile(
-                  title: Text(
-                    l10n.visible,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: SwitchListTile(
+                    title: Text(
+                      l10n.visible,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    value: isVisible,
+                    activeColor: colorScheme.primary,
+                    onChanged: (value) {
+                      widget.onLayerPropertiesChanged({'isVisible': value});
+                    },
+                    secondary: Icon(
+                      isVisible ? Icons.visibility : Icons.visibility_off,
+                      color: isVisible
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  value: isVisible,
-                  activeColor: colorScheme.primary,
-                  onChanged: (value) {
-                    widget.onLayerPropertiesChanged({'isVisible': value});
-                  },
-                  secondary: Icon(
-                    isVisible ? Icons.visibility : Icons.visibility_off,
-                    color: isVisible
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                  ),
                 ),
+
+                const SizedBox(height: 8),
 
                 // 锁定控制
-                SwitchListTile(
-                  title: Text(
-                    l10n.locked,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                    ),
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  value: isLocked,
-                  activeColor: colorScheme.primary,
-                  onChanged: (value) {
-                    widget.onLayerPropertiesChanged({'isLocked': value});
-                  },
-                  secondary: Icon(
-                    isLocked ? Icons.lock : Icons.lock_open,
-                    color: isLocked
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
+                  child: SwitchListTile(
+                    title: Text(
+                      l10n.locked,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    value: isLocked,
+                    activeColor: colorScheme.primary,
+                    onChanged: (value) {
+                      widget.onLayerPropertiesChanged({'isLocked': value});
+                    },
+                    secondary: Icon(
+                      isLocked ? Icons.lock : Icons.lock_open,
+                      color: isLocked
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
 
+                const SizedBox(height: 16),
+
                 // 不透明度控制
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.opacity,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.opacity}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: opacity,
+                                min: 0.0,
+                                max: 1.0,
+                                divisions: 100,
+                                label: '${(opacity * 100).round()}%',
+                                activeColor: colorScheme.primary,
+                                thumbColor: colorScheme.primary,
+                                onChanged: (value) {
+                                  widget.onLayerPropertiesChanged(
+                                      {'opacity': value});
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              width: 50,
+                              child: Text(
+                                '${(opacity * 100).round()}%',
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Slider(
-                              value: opacity,
-                              min: 0.0,
-                              max: 1.0,
-                              divisions: 100,
-                              label: '${(opacity * 100).round()}%',
-                              activeColor: colorScheme.primary,
-                              inactiveColor:
-                                  colorScheme.surfaceContainerHighest,
-                              onChanged: (value) {
-                                widget.onLayerPropertiesChanged(
-                                    {'opacity': value});
-                              },
-                            ),
-                          ),
-                          SizedBox(
-                            width: 50,
-                            child: Text(
-                              '${(opacity * 100).round()}%',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
 
         // 图层操作
         Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           elevation: 0,
           color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.layerOperations,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.swap_vert,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.layerOperations,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 
                 // 图层排序操作
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildActionButton(
-                      context: context,
-                      icon: Icons.vertical_align_top,
-                      label: l10n.bringToFront,
-                      tooltip: l10n.bringLayerToFront,
-                      onPressed: isTopLayer ? null : () => _moveLayer('top'),
-                      colorScheme: colorScheme,
-                      textTheme: textTheme,
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildActionButton(
+                          context: context,
+                          icon: Icons.vertical_align_top,
+                          label: l10n.bringToFront,
+                          tooltip: l10n.bringLayerToFront,
+                          onPressed:
+                              isTopLayer ? null : () => _moveLayer('top'),
+                          colorScheme: colorScheme,
+                          textTheme: textTheme,
+                        ),
+                        _buildActionButton(
+                          context: context,
+                          icon: Icons.arrow_upward,
+                          label: l10n.moveUp,
+                          tooltip: l10n.moveLayerUp,
+                          onPressed: isTopLayer ? null : () => _moveLayer('up'),
+                          colorScheme: colorScheme,
+                          textTheme: textTheme,
+                        ),
+                        _buildActionButton(
+                          context: context,
+                          icon: Icons.arrow_downward,
+                          label: l10n.moveDown,
+                          tooltip: l10n.moveLayerDown,
+                          onPressed:
+                              isBottomLayer ? null : () => _moveLayer('down'),
+                          colorScheme: colorScheme,
+                          textTheme: textTheme,
+                        ),
+                        _buildActionButton(
+                          context: context,
+                          icon: Icons.vertical_align_bottom,
+                          label: l10n.sendToBack,
+                          tooltip: l10n.sendLayerToBack,
+                          onPressed:
+                              isBottomLayer ? null : () => _moveLayer('bottom'),
+                          colorScheme: colorScheme,
+                          textTheme: textTheme,
+                        ),
+                      ],
                     ),
-                    _buildActionButton(
-                      context: context,
-                      icon: Icons.arrow_upward,
-                      label: l10n.moveUp,
-                      tooltip: l10n.moveLayerUp,
-                      onPressed: isTopLayer ? null : () => _moveLayer('up'),
-                      colorScheme: colorScheme,
-                      textTheme: textTheme,
-                    ),
-                    _buildActionButton(
-                      context: context,
-                      icon: Icons.arrow_downward,
-                      label: l10n.moveDown,
-                      tooltip: l10n.moveLayerDown,
-                      onPressed:
-                          isBottomLayer ? null : () => _moveLayer('down'),
-                      colorScheme: colorScheme,
-                      textTheme: textTheme,
-                    ),
-                    _buildActionButton(
-                      context: context,
-                      icon: Icons.vertical_align_bottom,
-                      label: l10n.sendToBack,
-                      tooltip: l10n.sendLayerToBack,
-                      onPressed:
-                          isBottomLayer ? null : () => _moveLayer('bottom'),
-                      colorScheme: colorScheme,
-                      textTheme: textTheme,
-                    ),
-                  ],
+                  ),
                 ),
 
                 const SizedBox(height: 16),
 
                 // 删除图层按钮
                 Center(
-                  child: ElevatedButton.icon(
-                    onPressed: () => _confirmDeleteLayer(context),
-                    icon: Icon(
-                      Icons.delete,
-                      color: colorScheme.error,
-                      size: 18,
-                    ),
-                    label: Text(
-                      l10n.practiceEditDeleteLayer,
-                      style: textTheme.labelLarge?.copyWith(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _confirmDeleteLayer(context),
+                      icon: Icon(
+                        Icons.delete,
                         color: colorScheme.error,
+                        size: 18,
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.errorContainer,
-                      foregroundColor: colorScheme.error,
+                      label: Text(
+                        l10n.practiceEditDeleteLayer,
+                        style: textTheme.labelLarge?.copyWith(
+                          color: colorScheme.error,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colorScheme.errorContainer,
+                        foregroundColor: colorScheme.error,
+                        minimumSize: const Size.fromHeight(48),
+                      ),
                     ),
                   ),
                 ),
@@ -406,53 +519,78 @@ class _M3LayerPropertyPanelContentState
 
         // 图层元素列表
         if (elementCount > 0) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             elevation: 0,
             color: colorScheme.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l10n.layerElements,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.format_list_bulleted,
+                        size: 20,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.layerElements,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
 
                   // 头部操作区
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '${l10n.total}: $elementCount ${l10n.elements}',
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      Row(
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.visibility),
-                            tooltip: l10n.showHideAllElements,
-                            onPressed: () =>
-                                _toggleAllElementsVisibility(elementsInLayer),
-                            iconSize: 20,
+                          Text(
+                            '${l10n.total}: $elementCount ${l10n.elements}',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.lock_outline),
-                            tooltip: l10n.lockUnlockAllElements,
-                            onPressed: () =>
-                                _toggleAllElementsLock(elementsInLayer),
-                            iconSize: 20,
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility),
+                                tooltip: l10n.showHideAllElements,
+                                onPressed: () => _toggleAllElementsVisibility(
+                                    elementsInLayer),
+                                iconSize: 20,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.lock_outline),
+                                tooltip: l10n.lockUnlockAllElements,
+                                onPressed: () =>
+                                    _toggleAllElementsLock(elementsInLayer),
+                                iconSize: 20,
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                   const Divider(),
 
@@ -548,6 +686,9 @@ class _M3LayerPropertyPanelContentState
           foregroundColor: isDisabled
               ? colorScheme.onSurfaceVariant.withOpacity(0.5)
               : colorScheme.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -566,6 +707,7 @@ class _M3LayerPropertyPanelContentState
                 color: isDisabled
                     ? colorScheme.onSurfaceVariant.withOpacity(0.5)
                     : colorScheme.primary,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -629,12 +771,13 @@ class _M3LayerPropertyPanelContentState
             iconData = Icons.crop_square;
         }
 
-        return Container(
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? colorScheme.primaryContainer.withOpacity(0.3)
-                : null,
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+          elevation: 0,
+          color: isSelected
+              ? colorScheme.primaryContainer.withOpacity(0.3)
+              : colorScheme.surfaceContainerHighest,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
           child: ListTile(
@@ -657,6 +800,8 @@ class _M3LayerPropertyPanelContentState
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),
+                      filled: true,
+                      fillColor: colorScheme.surface,
                     ),
                     onSubmitted: (_) => _applyElementNameChange(),
                   )
@@ -665,6 +810,7 @@ class _M3LayerPropertyPanelContentState
                     overflow: TextOverflow.ellipsis,
                     style: textTheme.bodyMedium?.copyWith(
                       color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
             trailing: Row(

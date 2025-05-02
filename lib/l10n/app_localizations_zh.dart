@@ -1968,4 +1968,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelAutoLineBreakTooltip => '自动换行';
+
+  @override
+  String get verticalTextModeEnabled => '竖排文本预览 - 超出高度自动换列，可横向滚动';
+
+  @override
+  String get groupOperations => '组合操作';
+
+  @override
+  String get editGroupContents => '编辑组内容';
+
+  @override
+  String get editGroupContentsDescription => '编辑已选组的内容';
+
+  @override
+  String get ungroupDescription => '确定要解散此组吗？';
+
+  @override
+  String get practiceEditDangerZone => '危险区域';
+
+  @override
+  String get deleteGroup => '删除组';
+
+  @override
+  String get groupElements => '组合元素';
+
+  @override
+  String get deleteGroupConfirm => '确认删除组';
+
+  @override
+  String get deleteGroupDescription => '确定要删除此组吗？此操作无法撤消。';
+
+  @override
+  String get deleteGroupElements => '删除组内元素';
+
+  @override
+  String get enterGroupEditMode => '进入组编辑模式';
+
+  @override
+  String get ungroupConfirm => '确认解组';
+
+  @override
+  String get alignHorizontalCenter => 'Align Horizontal Center';
+
+  @override
+  String get alignVerticalCenter => 'Align Vertical Center';
 }

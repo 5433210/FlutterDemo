@@ -4,7 +4,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'm3_practice_property_panel_base.dart';
 
-/// Material 3 组合内容属性面板
+/// Material 3 组合属性面板
 class M3GroupPropertyPanel extends M3PracticePropertyPanel {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
@@ -18,46 +18,70 @@ class M3GroupPropertyPanel extends M3PracticePropertyPanel {
 
   @override
   Widget build(BuildContext context) {
+    return _M3GroupPropertyPanelContent(
+      controller: controller,
+      element: element,
+      onElementPropertiesChanged: onElementPropertiesChanged,
+    );
+  }
+}
+
+class _M3GroupPropertyPanelContent extends StatefulWidget {
+  final PracticeEditController controller;
+  final Map<String, dynamic> element;
+  final Function(Map<String, dynamic>) onElementPropertiesChanged;
+
+  const _M3GroupPropertyPanelContent({
+    required this.controller,
+    required this.element,
+    required this.onElementPropertiesChanged,
+  });
+
+  @override
+  State<_M3GroupPropertyPanelContent> createState() =>
+      _M3GroupPropertyPanelContentState();
+}
+
+class _M3GroupPropertyPanelContentState
+    extends State<_M3GroupPropertyPanelContent> {
+  // 组名编辑控制器
+  late TextEditingController _nameController;
+  late FocusNode _nameFocusNode;
+  bool _isEditingName = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    // 获取基本属性
-    final x = (element['x'] as num?)?.toDouble() ?? 0.0;
-    final y = (element['y'] as num?)?.toDouble() ?? 0.0;
-    final width = (element['width'] as num?)?.toDouble() ?? 100.0;
-    final height = (element['height'] as num?)?.toDouble() ?? 100.0;
-    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-    final opacity = (element['opacity'] as num?)?.toDouble() ?? 1.0;
-    final name = element['name'] as String? ?? l10n.unnamedGroup;
-    final id = element['id'] as String;
-    final layerId = element['layerId'] as String?;
-    final isLocked = element['locked'] as bool? ?? false;
-    final isHidden = element['hidden'] as bool? ?? false;
-
-    // 获取组合内的元素
-    final content = element['content'] as Map<String, dynamic>? ?? {};
-    final children = content['children'] as List<dynamic>? ?? [];
+    final name = widget.element['name'] as String? ?? l10n.unnamedGroup;
+    final isLocked = widget.element['locked'] as bool? ?? false;
+    final isHidden = widget.element['hidden'] as bool? ?? false;
+    final opacity = (widget.element['opacity'] as num?)?.toDouble() ?? 1.0;
+    final layerId = widget.element['layerId'] as String?;
 
     // 获取图层信息
-    final layer = layerId != null
-        ? controller.state.layers.firstWhere(
-            (l) => l['id'] == layerId,
-            orElse: () => <String, dynamic>{},
-          )
-        : null;
+    Map<String, dynamic>? layer;
+    if (layerId != null) {
+      layer = widget.controller.state.getLayerById(layerId);
+    }
+
+    // 获取组内元素
+    final children = _getGroupChildren(widget.element['id'] as String);
 
     return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       children: [
-        // 组合标题
+        // 面板标题
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
               Icon(
                 Icons.group_work,
-                color: colorScheme.primary,
                 size: 24,
+                color: colorScheme.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -71,149 +95,404 @@ class M3GroupPropertyPanel extends M3PracticePropertyPanel {
           ),
         ),
 
-        // 基本属性卡片
+        // 基本信息面板
         Card(
-          margin: const EdgeInsets.all(8.0),
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           elevation: 0,
           color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.basicInfo,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 元素名称
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: l10n.name,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  controller: TextEditingController(text: name),
-                  onChanged: (value) => _updateProperty('name', value),
-                ),
-                const SizedBox(height: 16),
-
-                // 锁定和可见性控制
                 Row(
                   children: [
-                    // 锁定控制
-                    Expanded(
-                      child: SwitchListTile(
-                        title: Text(
-                          l10n.locked,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        value: isLocked,
-                        activeColor: colorScheme.primary,
-                        onChanged: (value) {
-                          _updateProperty('locked', value);
-                        },
-                        secondary: Icon(
-                          isLocked ? Icons.lock : Icons.lock_open,
-                          color: isLocked
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
-                        ),
-                        dense: true,
-                      ),
+                    Icon(
+                      Icons.info_outline,
+                      size: 20,
+                      color: colorScheme.primary,
                     ),
-
-                    // 可见性控制
-                    Expanded(
-                      child: SwitchListTile(
-                        title: Text(
-                          l10n.visible,
-                          style: textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        value: !isHidden,
-                        activeColor: colorScheme.primary,
-                        onChanged: (value) {
-                          _updateProperty('hidden', !value);
-                        },
-                        secondary: Icon(
-                          isHidden ? Icons.visibility_off : Icons.visibility,
-                          color: isHidden
-                              ? colorScheme.onSurfaceVariant
-                              : colorScheme.primary,
-                        ),
-                        dense: true,
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.basicInfo,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
 
-                // 图层信息
-                if (layer != null) ...[
-                  const SizedBox(height: 16),
-                  ListTile(
-                    leading: Icon(
-                      Icons.layers,
-                      color: colorScheme.primary,
-                    ),
+                // 组名称
+                _isEditingName
+                    ? TextField(
+                        controller: _nameController,
+                        focusNode: _nameFocusNode,
+                        decoration: InputDecoration(
+                          labelText: l10n.name,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          filled: true,
+                          fillColor: colorScheme.surface,
+                        ),
+                        onSubmitted: (_) => _applyNameChange(),
+                      )
+                    : Card(
+                        elevation: 0,
+                        color: colorScheme.surfaceContainerHighest,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            '${l10n.name}:',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            tooltip: l10n.rename,
+                            onPressed: _startEditingName,
+                          ),
+                        ),
+                      ),
+
+                const SizedBox(height: 8),
+
+                // 子元素数量
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: ListTile(
                     title: Text(
-                      l10n.layer,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                      '${l10n.elements}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
                     subtitle: Text(
-                      layer['name'] as String? ?? l10n.unnamedLayer,
-                      style: textTheme.bodyLarge?.copyWith(
+                      '${children.length} ${l10n.elements}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // 图层信息
+                if (layer != null)
+                  Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: ListTile(
+                      title: Text(
+                        '${l10n.layer}:',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      subtitle: Text(
+                        layer['name'] as String? ?? l10n.layer1,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.launch),
+                        tooltip: l10n.selectTargetLayer,
+                        onPressed: () {
+                          if (layerId != null) {
+                            widget.controller.selectLayer(layerId);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // 状态与显示
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          elevation: 0,
+          color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.visibility,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.stateAndDisplay,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          (layer['isVisible'] as bool? ?? true)
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          size: 16,
-                          color: (layer['isVisible'] as bool? ?? true)
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 锁定控制
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: SwitchListTile(
+                    title: Text(
+                      l10n.locked,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    value: isLocked,
+                    activeColor: colorScheme.primary,
+                    onChanged: (value) {
+                      _updateElementProperty('locked', value);
+                    },
+                    secondary: Icon(
+                      isLocked ? Icons.lock : Icons.lock_open,
+                      color: isLocked
+                          ? colorScheme.primary
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // 可见性控制
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: SwitchListTile(
+                    title: Text(
+                      l10n.visible,
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    value: !isHidden,
+                    activeColor: colorScheme.primary,
+                    onChanged: (value) {
+                      _updateElementProperty('hidden', !value);
+                    },
+                    secondary: Icon(
+                      isHidden ? Icons.visibility_off : Icons.visibility,
+                      color: isHidden
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.primary,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 不透明度控制
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.opacity}:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Slider(
+                                value: opacity,
+                                min: 0.0,
+                                max: 1.0,
+                                divisions: 100,
+                                label: '${(opacity * 100).round()}%',
+                                activeColor: colorScheme.primary,
+                                thumbColor: colorScheme.primary,
+                                onChanged: (value) {
+                                  _updateElementProperty('opacity', value);
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              width: 50,
+                              child: Text(
+                                '${(opacity * 100).round()}%',
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          (layer['isLocked'] as bool? ?? false)
-                              ? Icons.lock
-                              : Icons.lock_open,
-                          size: 16,
-                          color: (layer['isLocked'] as bool? ?? false)
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // 组操作
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          elevation: 0,
+          color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.category,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.groupOperations,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 组操作按钮
+                Card(
+                  elevation: 0,
+                  color: colorScheme.surfaceContainerHighest,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      children: [
+                        // 进入编辑组模式
+                        ListTile(
+                          leading: Icon(
+                            Icons.edit,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            l10n.editGroupContents,
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            l10n.editGroupContentsDescription,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          onTap: () {
+                            _enterGroupEditMode();
+                          },
+                        ),
+                        const Divider(),
+                        // 解组
+                        ListTile(
+                          leading: Icon(
+                            Icons.unfold_more,
+                            color: colorScheme.primary,
+                          ),
+                          title: Text(
+                            l10n.ungroup,
+                            style: TextStyle(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            l10n.ungroupDescription,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          onTap: () {
+                            _ungroupElements();
+                          },
                         ),
                       ],
                     ),
-                  ),
-                ],
-
-                // 元素ID（只读）
-                const SizedBox(height: 8),
-                Text(
-                  'ID: $id',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontFamily: 'monospace',
                   ),
                 ),
               ],
@@ -221,72 +500,374 @@ class M3GroupPropertyPanel extends M3PracticePropertyPanel {
           ),
         ),
 
-        // 几何属性部分
-        buildGeometrySection(
-          context: context,
-          title: l10n.practiceEditGeometryProperties,
-          x: x,
-          y: y,
-          width: width,
-          height: height,
-          rotation: rotation,
-          onXChanged: (value) => _updateProperty('x', value),
-          onYChanged: (value) => _updateProperty('y', value),
-          onWidthChanged: (value) => _updateProperty('width', value),
-          onHeightChanged: (value) => _updateProperty('height', value),
-          onRotationChanged: (value) => _updateProperty('rotation', value),
+        // 危险区域 - 删除组
+        const SizedBox(height: 8),
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          elevation: 0,
+          color: colorScheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: colorScheme.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.practiceEditDangerZone,
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // 删除按钮
+                ElevatedButton.icon(
+                  onPressed: () {
+                    _deleteGroup();
+                  },
+                  icon: Icon(
+                    Icons.delete,
+                    color: colorScheme.error,
+                    size: 18,
+                  ),
+                  label: Text(
+                    l10n.deleteGroup,
+                    style: textTheme.labelLarge?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.errorContainer,
+                    foregroundColor: colorScheme.error,
+                    minimumSize: const Size.fromHeight(48),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
 
-        // 视觉属性部分
-        buildVisualSection(
-          context: context,
-          title: l10n.practiceEditVisualProperties,
-          opacity: opacity,
-          onOpacityChanged: (value) => _updateProperty('opacity', value),
-        ),
-
-        // 组合信息部分
-        m3ExpansionTile(
-          context: context,
-          title: l10n.groupInfo,
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        // 组内元素列表
+        if (children.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            elevation: 0,
+            color: colorScheme.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '${l10n.contains} ${children.length} ${l10n.elements}',
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.format_list_bulleted,
+                        size: 20,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.groupElements,
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // 取消组合
-                      controller.ungroupElements(element['id'] as String);
+
+                  // 元素列表
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: children.length,
+                    itemBuilder: (context, index) {
+                      final element = children[index];
+                      final id = element['id'] as String;
+                      final elementName =
+                          element['name'] as String? ?? l10n.unnamedElement;
+                      final type = element['type'] as String;
+                      final isHidden = element['hidden'] as bool? ?? false;
+                      final isLocked = element['locked'] as bool? ?? false;
+                      final opacity =
+                          (element['opacity'] as num?)?.toDouble() ?? 1.0;
+
+                      // 获取元素类型图标
+                      IconData iconData;
+                      switch (type) {
+                        case 'text':
+                          iconData = Icons.text_fields;
+                          break;
+                        case 'image':
+                          iconData = Icons.image;
+                          break;
+                        case 'collection':
+                          iconData = Icons.font_download;
+                          break;
+                        case 'group':
+                          iconData = Icons.group_work;
+                          break;
+                        default:
+                          iconData = Icons.crop_square;
+                      }
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 2, horizontal: 0),
+                        elevation: 0,
+                        color: colorScheme.surfaceContainerHighest,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListTile(
+                          leading: Icon(
+                            iconData,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          title: Text(
+                            elementName,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${l10n.opacity}: ${(opacity * 100).round()}%',
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isHidden
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                size: 16,
+                                color: isHidden
+                                    ? colorScheme.onSurfaceVariant
+                                    : colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                isLocked ? Icons.lock : Icons.lock_open,
+                                size: 16,
+                                color: isLocked
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
                     },
-                    icon: const Icon(Icons.group_off),
-                    label: Text(l10n.ungroup),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primaryContainer,
-                      foregroundColor: colorScheme.primary,
-                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ],
     );
   }
 
-  void _updateProperty(String key, dynamic value) {
-    final updates = {key: value};
-    onElementPropertiesChanged(updates);
+  @override
+  void didUpdateWidget(_M3GroupPropertyPanelContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当选中的元素发生变化时，更新名称控制器
+    if (oldWidget.element['id'] != widget.element['id']) {
+      final name = widget.element['name'] as String? ?? 'Group';
+      _nameController.text = name;
+      _isEditingName = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameFocusNode.removeListener(_onFocusChange);
+    _nameController.dispose();
+    _nameFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 初始化控制器
+    final name = widget.element['name'] as String? ?? 'Group';
+    _nameController = TextEditingController(text: name);
+    _nameFocusNode = FocusNode();
+    _nameFocusNode.addListener(_onFocusChange);
+  }
+
+  // 应用名称更改
+  void _applyNameChange() {
+    final newName = _nameController.text.trim();
+    if (newName.isNotEmpty) {
+      _updateElementProperty('name', newName);
+    } else {
+      // 如果名称为空，恢复原来的名称
+      _nameController.text = widget.element['name'] as String? ?? 'Group';
+    }
+    setState(() {
+      _isEditingName = false;
+    });
+  }
+
+  // 删除组
+  void _deleteGroup() {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteGroupConfirm),
+        content: Text(l10n.deleteGroupDescription),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              l10n.cancel,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              final id = widget.element['id'] as String;
+              widget.controller.deleteElement(id);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.errorContainer,
+              foregroundColor: colorScheme.error,
+            ),
+            child: Text(
+              l10n.delete,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 进入组编辑模式
+  void _enterGroupEditMode() {
+    final id = widget.element['id'] as String;
+    widget.controller.enterGroupEditMode(id);
+  }
+
+  // 获取组内的所有元素
+  List<Map<String, dynamic>> _getGroupChildren(String groupId) {
+    final allElements = widget.controller.state.currentPageElements;
+    final groupData = widget.element['groupData'] as Map<String, dynamic>?;
+
+    if (groupData == null || !groupData.containsKey('children')) {
+      return [];
+    }
+
+    final List<dynamic> childrenIds = groupData['children'] as List<dynamic>;
+    return childrenIds
+        .map((childId) => childId as String)
+        .map((id) => allElements.firstWhere(
+              (e) => e['id'] == id,
+              orElse: () => <String, dynamic>{},
+            ))
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  // 焦点变化处理
+  void _onFocusChange() {
+    if (!_nameFocusNode.hasFocus) {
+      _applyNameChange();
+    }
+  }
+
+  // 开始编辑名称
+  void _startEditingName() {
+    setState(() {
+      _isEditingName = true;
+    });
+    // 确保在下一帧聚焦
+    Future.microtask(() => _nameFocusNode.requestFocus());
+  }
+
+  // 解组元素
+  void _ungroupElements() {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.ungroupConfirm),
+        content: Text(l10n.ungroupDescription),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              l10n.cancel,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              final id = widget.element['id'] as String;
+              widget.controller.ungroupElements(id);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.primary,
+            ),
+            child: Text(
+              l10n.ungroup,
+              style: textTheme.labelLarge?.copyWith(
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 更新元素属性
+  void _updateElementProperty(String key, dynamic value) {
+    final id = widget.element['id'] as String;
+    widget.onElementPropertiesChanged({
+      'id': id,
+      key: value,
+    });
   }
 }

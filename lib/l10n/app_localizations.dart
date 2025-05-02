@@ -3916,6 +3916,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto Line Break'**
   String get collectionPropertyPanelAutoLineBreakTooltip;
+
+  /// No description provided for @verticalTextModeEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally'**
+  String get verticalTextModeEnabled;
+
+  /// No description provided for @groupOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Operations'**
+  String get groupOperations;
+
+  /// No description provided for @editGroupContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Group Contents'**
+  String get editGroupContents;
+
+  /// No description provided for @editGroupContentsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the contents of the selected group'**
+  String get editGroupContentsDescription;
+
+  /// No description provided for @ungroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to ungroup this group?'**
+  String get ungroupDescription;
+
+  /// No description provided for @practiceEditDangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get practiceEditDangerZone;
+
+  /// No description provided for @deleteGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group'**
+  String get deleteGroup;
+
+  /// No description provided for @groupElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Elements'**
+  String get groupElements;
+
+  /// No description provided for @deleteGroupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete Group'**
+  String get deleteGroupConfirm;
+
+  /// No description provided for @deleteGroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this group? This action cannot be undone.'**
+  String get deleteGroupDescription;
+
+  /// No description provided for @deleteGroupElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group Elements'**
+  String get deleteGroupElements;
+
+  /// No description provided for @enterGroupEditMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Group Edit Mode'**
+  String get enterGroupEditMode;
+
+  /// No description provided for @ungroupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Ungroup'**
+  String get ungroupConfirm;
+
+  /// No description provided for @alignHorizontalCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Horizontal Center'**
+  String get alignHorizontalCenter;
+
+  /// No description provided for @alignVerticalCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Vertical Center'**
+  String get alignVerticalCenter;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

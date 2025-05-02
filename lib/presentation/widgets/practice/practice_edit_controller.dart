@@ -460,6 +460,210 @@ class PracticeEditController extends ChangeNotifier {
     _addElement(element);
   }
 
+  /// Aligns the specified elements according to the given alignment type.
+  ///
+  /// [elementIds] is a list of element IDs to align.
+  /// [alignment] can be 'left', 'right', 'centerH', 'top', 'bottom', or 'centerV'.
+  void alignElements(List<String> elementIds, String alignment) {
+    if (elementIds.length < 2) return; // Need at least 2 elements to align
+
+    // Get all elements to be aligned
+    final elements = <Map<String, dynamic>>[];
+    for (final id in elementIds) {
+      final element = _state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (element.isNotEmpty) {
+        elements.add(element);
+      }
+    }
+
+    if (elements.length < 2) return;
+
+    // Save original positions for undo operation
+    final originalPositions = <String, Map<String, double>>{};
+    for (final element in elements) {
+      final id = element['id'] as String;
+      originalPositions[id] = {
+        'x': (element['x'] as num).toDouble(),
+        'y': (element['y'] as num).toDouble(),
+      };
+    }
+
+    // Calculate alignment positions
+    double alignValue = 0;
+
+    switch (alignment) {
+      case 'left':
+        // Align to leftmost element
+        alignValue =
+            elements.map((e) => (e['x'] as num).toDouble()).reduce(math.min);
+        for (final element in elements) {
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['x'] = alignValue;
+          }
+        }
+        break;
+
+      case 'right':
+        // Align to rightmost edge
+        alignValue = elements
+            .map((e) =>
+                (e['x'] as num).toDouble() + (e['width'] as num).toDouble())
+            .reduce(math.max);
+        for (final element in elements) {
+          final width = (element['width'] as num).toDouble();
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['x'] = alignValue - width;
+          }
+        }
+        break;
+
+      case 'centerH':
+        // Align to horizontal center
+        final centerValues = elements.map((e) =>
+            (e['x'] as num).toDouble() + (e['width'] as num).toDouble() / 2);
+        final avgCenter =
+            centerValues.reduce((a, b) => a + b) / centerValues.length;
+
+        for (final element in elements) {
+          final width = (element['width'] as num).toDouble();
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['x'] = avgCenter - width / 2;
+          }
+        }
+        break;
+
+      case 'top':
+        // Align to topmost element
+        alignValue =
+            elements.map((e) => (e['y'] as num).toDouble()).reduce(math.min);
+        for (final element in elements) {
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['y'] = alignValue;
+          }
+        }
+        break;
+
+      case 'bottom':
+        // Align to bottommost edge
+        alignValue = elements
+            .map((e) =>
+                (e['y'] as num).toDouble() + (e['height'] as num).toDouble())
+            .reduce(math.max);
+        for (final element in elements) {
+          final height = (element['height'] as num).toDouble();
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['y'] = alignValue - height;
+          }
+        }
+        break;
+
+      case 'centerV':
+        // Align to vertical center
+        final centerValues = elements.map((e) =>
+            (e['y'] as num).toDouble() + (e['height'] as num).toDouble() / 2);
+        final avgCenter =
+            centerValues.reduce((a, b) => a + b) / centerValues.length;
+
+        for (final element in elements) {
+          final height = (element['height'] as num).toDouble();
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == element['id']);
+          if (index >= 0) {
+            _state.currentPageElements[index]['y'] = avgCenter - height / 2;
+          }
+        }
+        break;
+    }
+
+    // Create an operation for undo/redo
+    final operation = _createCustomOperation(
+      execute: () {
+        // Apply the alignment positions
+        for (final element in elements) {
+          final id = element['id'] as String;
+          final index =
+              _state.currentPageElements.indexWhere((e) => e['id'] == id);
+          if (index >= 0) {
+            switch (alignment) {
+              case 'left':
+                _state.currentPageElements[index]['x'] = alignValue;
+                break;
+              case 'right':
+                _state.currentPageElements[index]['x'] = alignValue -
+                    (_state.currentPageElements[index]['width'] as num)
+                        .toDouble();
+                break;
+              case 'centerH':
+                final width =
+                    (_state.currentPageElements[index]['width'] as num)
+                        .toDouble();
+                final centerValues = elements.map((e) =>
+                    (e['x'] as num).toDouble() +
+                    (e['width'] as num).toDouble() / 2);
+                final avgCenter =
+                    centerValues.reduce((a, b) => a + b) / centerValues.length;
+                _state.currentPageElements[index]['x'] = avgCenter - width / 2;
+                break;
+              case 'top':
+                _state.currentPageElements[index]['y'] = alignValue;
+                break;
+              case 'bottom':
+                _state.currentPageElements[index]['y'] = alignValue -
+                    (_state.currentPageElements[index]['height'] as num)
+                        .toDouble();
+                break;
+              case 'centerV':
+                final height =
+                    (_state.currentPageElements[index]['height'] as num)
+                        .toDouble();
+                final centerValues = elements.map((e) =>
+                    (e['y'] as num).toDouble() +
+                    (e['height'] as num).toDouble() / 2);
+                final avgCenter =
+                    centerValues.reduce((a, b) => a + b) / centerValues.length;
+                _state.currentPageElements[index]['y'] = avgCenter - height / 2;
+                break;
+            }
+          }
+        }
+        _state.hasUnsavedChanges = true;
+        notifyListeners();
+      },
+      undo: () {
+        // Restore original positions
+        for (final entry in originalPositions.entries) {
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == entry.key);
+          if (index >= 0) {
+            _state.currentPageElements[index]['x'] = entry.value['x']!;
+            _state.currentPageElements[index]['y'] = entry.value['y']!;
+          }
+        }
+        _state.hasUnsavedChanges = true;
+        notifyListeners();
+      },
+      description: 'Align elements ($alignment)',
+    );
+
+    _undoRedoManager.addOperation(operation);
+
+    // The operation will be executed when it's added to the manager,
+    // so we don't need to call notifyListeners() here
+  }
+
   /// 从 RepaintBoundary 捕获图像
   Future<Uint8List?> captureFromRepaintBoundary(GlobalKey key) async {
     try {
@@ -816,6 +1020,124 @@ class PracticeEditController extends ChangeNotifier {
     super.dispose();
   }
 
+  /// 将多个元素均匀分布
+  void distributeElements(List<String> elementIds, String direction) {
+    _checkDisposed();
+
+    if (elementIds.length < 3) return; // 至少需要3个元素才能分布
+
+    // 获取元素
+    final elements = elementIds
+        .map((id) => _state.currentPageElements.firstWhere((e) => e['id'] == id,
+            orElse: () => <String, dynamic>{}))
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    if (elements.length < 3) return;
+
+    // 记录变更前的状态
+    final oldState = Map<String, Map<String, dynamic>>.fromEntries(
+      elements.map(
+          (e) => MapEntry(e['id'] as String, Map<String, dynamic>.from(e))),
+    );
+
+    if (direction == 'horizontal') {
+      // 按X坐标排序
+      elements.sort((a, b) => (a['x'] as num).compareTo(b['x'] as num));
+
+      // 获取第一个和最后一个元素的位置
+      final firstX = elements.first['x'] as num;
+      final lastX = elements.last['x'] as num;
+
+      // 计算间距
+      final totalSpacing = lastX - firstX;
+      final step = totalSpacing / (elements.length - 1);
+
+      // 分布元素
+      for (int i = 1; i < elements.length - 1; i++) {
+        final element = elements[i];
+        final newX = firstX + (step * i);
+
+        // 更新元素位置
+        final elementIndex = _state.currentPageElements
+            .indexWhere((e) => e['id'] == element['id']);
+        if (elementIndex != -1) {
+          _state.currentPageElements[elementIndex]['x'] = newX;
+        }
+      }
+    } else if (direction == 'vertical') {
+      // 按Y坐标排序
+      elements.sort((a, b) => (a['y'] as num).compareTo(b['y'] as num));
+
+      // 获取第一个和最后一个元素的位置
+      final firstY = elements.first['y'] as num;
+      final lastY = elements.last['y'] as num;
+
+      // 计算间距
+      final totalSpacing = lastY - firstY;
+      final step = totalSpacing / (elements.length - 1);
+
+      // 分布元素
+      for (int i = 1; i < elements.length - 1; i++) {
+        final element = elements[i];
+        final newY = firstY + (step * i);
+
+        // 更新元素位置
+        final elementIndex = _state.currentPageElements
+            .indexWhere((e) => e['id'] == element['id']);
+        if (elementIndex != -1) {
+          _state.currentPageElements[elementIndex]['y'] = newY;
+        }
+      }
+    }
+
+    // 记录变更后的状态
+    final newState = Map<String, Map<String, dynamic>>.fromEntries(
+      elements.map((e) {
+        final index = _state.currentPageElements
+            .indexWhere((elem) => elem['id'] == e['id']);
+        return MapEntry(
+            e['id'] as String,
+            index != -1
+                ? Map<String, dynamic>.from(_state.currentPageElements[index])
+                : Map<String, dynamic>.from(e));
+      }),
+    );
+
+    // 添加撤销操作
+    final operation = _createCustomOperation(
+      execute: () {
+        // Apply the new state
+        for (var entry in newState.entries) {
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == entry.key);
+          if (index != -1) {
+            _state.currentPageElements[index]['x'] = entry.value['x'];
+            _state.currentPageElements[index]['y'] = entry.value['y'];
+          }
+        }
+        notifyListeners();
+      },
+      undo: () {
+        // Apply the old state
+        for (var entry in oldState.entries) {
+          final index = _state.currentPageElements
+              .indexWhere((e) => e['id'] == entry.key);
+          if (index != -1) {
+            _state.currentPageElements[index]['x'] = entry.value['x'];
+            _state.currentPageElements[index]['y'] = entry.value['y'];
+          }
+        }
+        notifyListeners();
+      },
+      description: '均匀分布元素',
+    );
+
+    _undoRedoManager.addOperation(operation);
+
+    notifyListeners();
+  }
+
   void duplicateLayer(String layerId) {
     if (_state.currentPage == null) return;
 
@@ -916,6 +1238,17 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 进入组编辑模式
+  void enterGroupEditMode(String groupId) {
+    _checkDisposed();
+    // 设置当前编辑的组ID
+    // _state.currentEditingGroupId = groupId;
+    // 清除当前选择
+    _state.selectedElementIds.clear();
+    // 通知UI更新
+    notifyListeners();
   }
 
   /// 获取页面的 GlobalKey 列表
