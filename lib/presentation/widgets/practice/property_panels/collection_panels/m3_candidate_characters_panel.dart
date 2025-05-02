@@ -57,7 +57,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          color: colorScheme.surfaceContainerHighest.withAlpha(76), // 0.3 透明度
           borderRadius: BorderRadius.circular(12.0),
           border: Border.all(color: colorScheme.outline),
         ),
@@ -84,7 +84,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          color: colorScheme.surfaceContainerHighest.withAlpha(76), // 0.3 透明度
           borderRadius: BorderRadius.circular(12.0),
           border: Border.all(color: colorScheme.outline),
         ),
@@ -104,7 +104,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
               Text(
                 '${l10n.collectionPropertyPanelSelectedCharacter}: "$selectedChar"',
                 style: textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                  color: colorScheme.onSurfaceVariant.withAlpha(179), // 0.7 透明度
                 ),
               ),
             if (candidateCharacters.isNotEmpty)
@@ -113,7 +113,8 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                 child: Text(
                   '${l10n.collectionPropertyPanelAvailableCharacters}: ${candidateCharacters.map((e) => e.character).join(", ")}',
                   style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    color:
+                        colorScheme.onSurfaceVariant.withAlpha(179), // 0.7 透明度
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -127,22 +128,13 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color: colorScheme.surfaceContainerHighest.withAlpha(76), // 0.3 透明度
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.collectionPropertyPanelCandidateCharacters,
-            style: textTheme.titleSmall?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12.0),
-
           // Display control buttons
           Padding(
             padding: const EdgeInsets.only(bottom: 12.0),
@@ -157,31 +149,6 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
-                ),
-
-                // Global inversion button
-                FilterChip(
-                  label: Text(l10n.collectionPropertyPanelGlobalInversion),
-                  selected: invertDisplay,
-                  showCheckmark: true,
-                  checkmarkColor: colorScheme.onPrimaryContainer,
-                  backgroundColor: colorScheme.surfaceContainerHighest,
-                  selectedColor: colorScheme.primaryContainer,
-                  labelStyle: TextStyle(
-                    color: invertDisplay
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  avatar: Icon(
-                    Icons.invert_colors,
-                    size: 18.0,
-                    color: invertDisplay
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  onSelected: (value) {
-                    onInvertDisplayToggled(value);
-                  },
                 ),
 
                 // Current character inversion button
@@ -284,7 +251,7 @@ class M3CandidateCharactersPanel extends ConsumerWidget {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: colorScheme.shadow.withOpacity(0.3),
+                          color: colorScheme.shadow.withAlpha(76), // 0.3 透明度
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         )

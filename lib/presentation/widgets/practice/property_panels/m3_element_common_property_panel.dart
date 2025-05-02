@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
+import 'm3_panel_styles.dart';
 
 /// Material 3 元素通用属性面板
 /// 用于显示元素的通用属性，如名称、ID、图层等
@@ -22,7 +23,7 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     final name = element['name'] as String? ?? l10n.unnamedElement;
     final id = element['id'] as String;
     final type = element['type'] as String;
@@ -52,127 +53,113 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
         typeDisplayName = l10n.elements;
     }
 
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerLow,
-      margin: const EdgeInsets.all(8.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return M3PanelStyles.buildPanelCard(
+      context: context,
+      title: typeDisplayName,
+      initiallyExpanded: true,
+      children: [
+        // 元素状态控制
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // 标题
+            // 锁定按钮
             Row(
               children: [
-                Icon(
-                  _getIconForType(type),
-                  size: 20.0,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8.0),
                 Text(
-                  typeDisplayName,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+                  l10n.locked,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const Spacer(),
-                // 锁定按钮
-                IconButton(
-                  icon: Icon(
-                    isLocked ? Icons.lock : Icons.lock_open,
-                    color: isLocked ? colorScheme.tertiary : colorScheme.onSurfaceVariant,
-                  ),
-                  tooltip: isLocked ? l10n.unlockElement : l10n.lockElement,
-                  onPressed: () => _updateProperty('locked', !isLocked),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  iconSize: 20.0,
-                ),
-                const SizedBox(width: 8.0),
-                // 可见性按钮
-                IconButton(
-                  icon: Icon(
-                    isHidden ? Icons.visibility_off : Icons.visibility,
-                    color: isHidden ? colorScheme.onSurfaceVariant : colorScheme.primary,
-                  ),
-                  tooltip: isHidden ? l10n.showElement : l10n.hideElement,
-                  onPressed: () => _updateProperty('hidden', !isHidden),
-                  constraints: const BoxConstraints(),
-                  padding: EdgeInsets.zero,
-                  iconSize: 20.0,
+                const SizedBox(width: 4.0),
+                Switch(
+                  value: isLocked,
+                  activeColor: colorScheme.primary,
+                  onChanged: (value) => _updateProperty('locked', value),
                 ),
               ],
             ),
-            const SizedBox(height: 16.0),
-
-            // 元素名称
-            TextField(
-              decoration: InputDecoration(
-                labelText: l10n.name,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+            const SizedBox(width: 16.0),
+            // 可见性按钮
+            Row(
+              children: [
+                Text(
+                  l10n.visible,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                hintText: l10n.unnamedElement,
-              ),
-              controller: TextEditingController(text: name),
-              onChanged: (value) => _updateProperty('name', value),
-              style: textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12.0),
-
-            // 图层选择
-            if (layers.isNotEmpty)
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: l10n.layer,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                const SizedBox(width: 4.0),
+                Switch(
+                  value: !isHidden,
+                  activeColor: colorScheme.primary,
+                  onChanged: (value) => _updateProperty('hidden', !value),
                 ),
-                value: layerId,
-                items: _buildLayerItems(context),
-                onChanged: (value) {
-                  if (value != null) {
-                    _updateProperty('layerId', value);
-                  }
-                },
-                isExpanded: true,
-                dropdownColor: colorScheme.surfaceContainerHigh,
-              ),
-
-            // ID显示（只读）
-            Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: Row(
-                children: [
-                  Text(
-                    '${l10n.elementId}: ',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      id,
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontFamily: 'monospace',
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
+              ],
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 16.0),
+
+        // 元素名称
+        M3PanelStyles.buildSectionTitle(context, l10n.name),
+        TextField(
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            hintText: l10n.unnamedElement,
+          ),
+          controller: TextEditingController(text: name),
+          onChanged: (value) => _updateProperty('name', value),
+          style: textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 16.0),
+
+        // 图层选择
+        if (layers.isNotEmpty) ...[
+          M3PanelStyles.buildSectionTitle(context, l10n.layer),
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+            ),
+            value: layerId,
+            items: _buildLayerItems(context),
+            onChanged: (value) {
+              if (value != null) {
+                _updateProperty('layerId', value);
+              }
+            },
+            isExpanded: true,
+            dropdownColor: colorScheme.surfaceContainerHigh,
+          ),
+          const SizedBox(height: 16.0),
+        ],
+
+        // ID显示（只读）
+        M3PanelStyles.buildSectionTitle(context, l10n.elementId),
+        Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest
+                .withAlpha(76), // 0.3 透明度，使用withAlpha代替withOpacity
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Text(
+            id,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+              fontFamily: 'monospace',
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -180,7 +167,7 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
   List<DropdownMenuItem<String>> _buildLayerItems(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     final layers = controller.state.layers;
     return layers.map((layer) {
       final layerId = layer['id'] as String;
@@ -191,7 +178,8 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
       // 显示图层状态图标
       Widget icon = const SizedBox(width: 0);
       if (!isVisible) {
-        icon = Icon(Icons.visibility_off, size: 16.0, color: colorScheme.onSurfaceVariant);
+        icon = Icon(Icons.visibility_off,
+            size: 16.0, color: colorScheme.onSurfaceVariant);
       } else if (isLocked) {
         icon = Icon(Icons.lock, size: 16.0, color: colorScheme.tertiary);
       }
@@ -207,22 +195,6 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
         ),
       );
     }).toList();
-  }
-
-  // 根据元素类型获取图标
-  IconData _getIconForType(String type) {
-    switch (type) {
-      case 'text':
-        return Icons.text_fields;
-      case 'image':
-        return Icons.image;
-      case 'collection':
-        return Icons.font_download;
-      case 'group':
-        return Icons.group_work;
-      default:
-        return Icons.crop_square;
-    }
   }
 
   // 更新属性

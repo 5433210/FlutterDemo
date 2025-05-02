@@ -183,22 +183,22 @@ class M3TextFormatPanel extends StatelessWidget {
               ButtonSegment<String>(
                 value: 'left',
                 icon: const Icon(Icons.align_horizontal_left),
-                label: Text(l10n.alignLeft),
+                tooltip: l10n.alignLeft,
               ),
               ButtonSegment<String>(
                 value: 'center',
                 icon: const Icon(Icons.align_horizontal_center),
-                label: Text(l10n.alignCenter),
+                tooltip: l10n.alignCenter,
               ),
               ButtonSegment<String>(
                 value: 'right',
                 icon: const Icon(Icons.align_horizontal_right),
-                label: Text(l10n.alignRight),
+                tooltip: l10n.alignRight,
               ),
               ButtonSegment<String>(
                 value: 'justify',
                 icon: const Icon(Icons.format_align_justify),
-                label: Text(l10n.distributeHorizontally),
+                tooltip: l10n.distributeHorizontally,
               ),
             ],
             selected: {textAlign},
@@ -228,22 +228,22 @@ class M3TextFormatPanel extends StatelessWidget {
               ButtonSegment<String>(
                 value: 'top',
                 icon: const Icon(Icons.vertical_align_top),
-                label: Text(l10n.alignTop),
+                tooltip: l10n.alignTop,
               ),
               ButtonSegment<String>(
                 value: 'middle',
                 icon: const Icon(Icons.vertical_align_center),
-                label: Text(l10n.alignMiddle),
+                tooltip: l10n.alignMiddle,
               ),
               ButtonSegment<String>(
                 value: 'bottom',
                 icon: const Icon(Icons.vertical_align_bottom),
-                label: Text(l10n.alignBottom),
+                tooltip: l10n.alignBottom,
               ),
               ButtonSegment<String>(
                 value: 'justify',
                 icon: const Icon(Icons.format_align_justify),
-                label: Text(l10n.distributeVertically),
+                tooltip: l10n.distributeVertically,
               ),
             ],
             selected: {verticalAlign},

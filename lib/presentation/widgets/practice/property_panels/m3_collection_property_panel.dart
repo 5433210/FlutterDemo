@@ -69,6 +69,7 @@ class _M3CollectionPropertyPanelState
     }
 
     return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       children: [
         // Basic properties section (at the top)
         M3ElementCommonPropertyPanel(
@@ -106,7 +107,6 @@ class _M3CollectionPropertyPanelState
           onInvertDisplayToggled: _onInvertDisplayToggled,
           onCharacterInvertToggled: _onCharacterInvertToggled,
           onContentPropertyChanged: _updateContentProperty,
-          onClearImageCache: _clearImageCache,
         ),
       ],
     );
@@ -128,10 +128,11 @@ class _M3CollectionPropertyPanelState
         _textController.text = characters;
       }
 
-      // Check if characterImages should be preserved
-      final shouldPreserveImages = oldContent.containsKey('characterImages') &&
-          content.containsKey('characterImages') &&
-          oldCharacters == characters;
+      // 检查是否需要保留字符图像信息
+      // 注意：此变量目前未使用，但保留以便将来可能的扩展
+      // final shouldPreserveImages = oldContent.containsKey('characterImages') &&
+      //     content.containsKey('characterImages') &&
+      //     oldCharacters == characters;
 
       // Update candidate characters
       if (oldCharacters != characters) {
@@ -403,47 +404,6 @@ class _M3CollectionPropertyPanelState
     } catch (e) {
       debugPrint('Failed to clean up character image info: $e');
     }
-  }
-
-  // Clear image cache
-  void _clearImageCache() {
-    Future.delayed(const Duration(milliseconds: 100), () async {
-      try {
-        // Clear cache
-        final characterImageService = ref.read(characterImageServiceProvider);
-        await characterImageService.clearAllImageCache();
-
-        // Ensure component is still mounted
-        if (!mounted) return;
-
-        // Show success message
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.collectionPropertyPanelCacheCleared),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-
-        // Refresh UI
-        setState(() {});
-      } catch (e) {
-        // Ensure component is still mounted
-        if (!mounted) return;
-
-        // Show error message
-        final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${l10n.collectionPropertyPanelCacheClearFailed}: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    });
   }
 
   // Convert index-based characterImages to character-based format
