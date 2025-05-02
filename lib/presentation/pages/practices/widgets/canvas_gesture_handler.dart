@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
@@ -115,9 +116,6 @@ class CanvasGestureHandler {
       return;
     }
 
-    // 检查是否点击在选中的元素上
-    bool hitSelectedElement = false;
-
     // 从顶层元素开始检查（视觉上的顶层，即数组的末尾）
     for (int i = elements.length - 1; i >= 0; i--) {
       final element = elements[i];
@@ -153,8 +151,6 @@ class CanvasGestureHandler {
 
         // 如果点击在选中的元素上
         if (controller.state.selectedElementIds.contains(id)) {
-          hitSelectedElement = true;
-
           // 检查元素和图层是否锁定
           final isLocked = element['locked'] == true;
           bool isLayerLocked = false;
@@ -362,7 +358,14 @@ class CanvasGestureHandler {
     // If clicking in a blank area, cancel selection
     bool hitElement = false;
 
-    // Check from top to bottom (visually) - reverse the list to check elements from top
+    // 检查是否按下了Ctrl或Shift键
+    final isMultiSelect = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isShiftPressed;
+
+    debugPrint(
+        '【选择】handleTapUp: 多选模式=$isMultiSelect, 控制键=${HardwareKeyboard.instance.isControlPressed}, 换档键=${HardwareKeyboard.instance.isShiftPressed}');
+
+    // 从顶层元素开始检查（视觉上的顶层，即数组的末尾）
     for (int i = elements.length - 1; i >= 0; i--) {
       final element = elements[i];
       final id = element['id'] as String;
@@ -398,56 +401,39 @@ class CanvasGestureHandler {
       if (isInside) {
         hitElement = true;
 
-        // If element or its layer is locked, only allow selection
+        // 检查元素是否已经被选中
+        final isCurrentlySelected =
+            controller.state.selectedElementIds.contains(id);
+
+        // 如果元素或图层被锁定，只允许选择，不允许拖拽
         if (isLocked || isLayerLocked) {
           // Clear layer selection
           controller.state.selectedLayerId = null;
-          controller.selectElement(id,
-              isMultiSelect: controller.state.isCtrlOrShiftPressed);
+          controller.selectElement(id, isMultiSelect: isMultiSelect);
           break;
         } else {
-          final isCurrentlySelected =
-              controller.state.selectedElementIds.contains(id);
-          final isMultipleSelected =
-              controller.state.selectedElementIds.length > 1;
+          // 清除图层选择
+          controller.state.selectedLayerId = null;
 
-          if (controller.state.isCtrlOrShiftPressed) {
-            // Shift+click: Toggle this element in multi-selection
-            controller.state.selectedLayerId = null;
-            controller.selectElement(id, isMultiSelect: true);
-          } else if (isCurrentlySelected) {
-            // 已经选中的元素，再次点击则取消选中
-            debugPrint('【选择】handleTapUp: 再次点击已选中的元素，取消选中: $id');
-            controller.clearSelection();
-            _isDragging = false;
-            onDragStart(false, Offset.zero, Offset.zero, {});
-            return;
-          } else if (!isCurrentlySelected) {
-            // Not selected: Select and prepare for dragging
-            controller.state.selectedLayerId = null;
-            controller.selectElement(id, isMultiSelect: false);
+          // 选择元素
+          controller.selectElement(id, isMultiSelect: isMultiSelect);
 
-            // Prepare for dragging
-            _isDragging = true;
-            _dragStart = details.localPosition;
-            _elementStartPosition = Offset(x, y);
-            _elementStartPositions.clear();
-            _elementStartPositions[id] = Offset(x, y);
-
-            // onDragStart(_isDragging, _dragStart, _elementStartPosition,
-            //     _elementStartPositions);
-          } else {
-            // Already selected: Prepare for dragging
+          // 如果不是多选模式，或者元素之前没有被选中，准备拖拽
+          if (!isMultiSelect || !isCurrentlySelected) {
+            // 准备拖拽
             _isDragging = true;
             _dragStart = details.localPosition;
             _elementStartPosition = Offset(x, y);
             _elementStartPositions.clear();
 
-            // Prepare all selected elements for dragging
+            // 记录所有选中元素的起始位置
             for (final selectedId in controller.state.selectedElementIds) {
-              final selectedElement = ElementUtils.findElementById(
-                  elements.cast<Map<String, dynamic>>(), selectedId);
-              if (selectedElement != null) {
+              final selectedElement = elements.firstWhere(
+                (e) => e['id'] == selectedId,
+                orElse: () => <String, dynamic>{},
+              );
+
+              if (selectedElement.isNotEmpty) {
                 _elementStartPositions[selectedId] = Offset(
                   (selectedElement['x'] as num).toDouble(),
                   (selectedElement['y'] as num).toDouble(),
@@ -455,10 +441,12 @@ class CanvasGestureHandler {
               }
             }
 
-            onDragStart(_isDragging, _dragStart, _elementStartPosition,
-                _elementStartPositions);
+            // onDragStart(_isDragging, _dragStart, _elementStartPosition,
+            //     _elementStartPositions);
           }
         }
+
+        // 找到了点击的元素，不需要继续检查
         break;
       }
     }
@@ -467,8 +455,8 @@ class CanvasGestureHandler {
       // Click in blank area, cancel selection
       debugPrint('【选择】handleTapUp: 点击空白区域，清除选择');
       controller.clearSelection();
-      _isDragging = false;
-      onDragStart(false, Offset.zero, Offset.zero, {});
+      // _isDragging = false;
+      // onDragStart(false, Offset.zero, Offset.zero, {});
     }
   }
 

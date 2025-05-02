@@ -264,11 +264,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     return AbsorbPointer(
       absorbing: false, // Ensure control points can receive events
       child: GestureDetector(
-        onTapDown: (details) {},
-        onTap: () {
-          // Clear selection when tapping on empty area
-          widget.controller.clearSelection();
-        },
+        // onTapDown: (details) {},
+        // onTap: () {
+        //   // Clear selection when tapping on empty area
+        //   // widget.controller.clearSelection();
+        // },
         child: Stack(
           children: [
             // Transparent overlay to ensure control points receive events
@@ -398,7 +398,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   // Render elements
                   ...elements.map((element) {
                     // Skip hidden elements
-                    if (element['isHidden'] == true) {
+                    final isHidden = element['hidden'] == true;
+                    if (isHidden) {
+                      debugPrint(
+                          '跳过隐藏元素: id=${element['id']}, hidden=$isHidden');
                       return const SizedBox.shrink();
                     }
 
@@ -412,14 +415,23 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                         (element['rotation'] as num?)?.toDouble() ?? 0.0;
                     final elementOpacity =
                         (element['opacity'] as num?)?.toDouble() ?? 1.0;
-                    final isLocked = element['isLocked'] as bool? ?? false;
+                    final isLocked = element['locked'] as bool? ?? false;
+                    debugPrint('元素锁定状态: id=${element['id']}, locked=$isLocked');
                     final isSelected =
                         widget.controller.state.selectedElementIds.contains(id);
 
-                    // Get layer visibility
+                    // Get layer visibility and lock status
                     final layerId = element['layerId'] as String?;
                     final isLayerVisible = layerId == null ||
                         widget.controller.state.isLayerVisible(layerId);
+                    final isLayerLocked = layerId != null &&
+                        widget.controller.state.isLayerLocked(layerId);
+
+                    // 添加调试信息
+                    if (isLayerLocked) {
+                      debugPrint(
+                          '图层锁定: 元素id=${element['id']}, 图层id=$layerId, 图层锁定=$isLayerLocked');
+                    }
 
                     // Skip elements on hidden layers
                     if (!isLayerVisible) return const SizedBox.shrink();
@@ -427,7 +439,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     // Log element properties for debugging
                     if (element['type'] == 'image') {
                       debugPrint(
-                          'Rendering image element: id=$id, opacity=$elementOpacity');
+                          'Rendering image element: id=$id, opacity=$elementOpacity, hidden=${element['hidden']}');
                     }
 
                     // Render element
@@ -452,7 +464,54 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                                     ),
                                   )
                                 : null,
-                            child: _renderElement(element),
+                            child: Stack(
+                              children: [
+                                // Element content
+                                _renderElement(element),
+
+                                // Lock icon (if element or its layer is locked)
+                                if ((isLocked || isLayerLocked) &&
+                                    !widget.isPreviewMode)
+                                  Positioned(
+                                    right: 2,
+                                    top: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withAlpha(204), // 0.8 opacity
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: isLayerLocked
+                                              ? Colors.grey.shade400
+                                              : colorScheme.tertiary,
+                                          width: 1.0,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            isLayerLocked
+                                                ? Icons.layers
+                                                : Icons.lock,
+                                            size: 18,
+                                            color: isLayerLocked
+                                                ? Colors.grey.shade700
+                                                : colorScheme.tertiary,
+                                          ),
+                                          if (isLayerLocked)
+                                            Icon(
+                                              Icons.lock,
+                                              size: 14,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -529,8 +588,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
 
     // Check if element itself is locked
-    final isLocked = element['isLocked'] as bool? ?? false;
+    final isLocked = element['locked'] as bool? ?? false;
     if (isLocked) {
+      debugPrint('跳过控制点更新：元素已锁定 id=$elementId');
       return; // Skip if element is locked
     }
 
