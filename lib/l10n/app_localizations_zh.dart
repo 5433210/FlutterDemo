@@ -1929,4 +1929,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String workImportDialogError(Object error) {
     return '导入失败：$error';
   }
+
+  @override
+  String get horizontalLeftToRight => '横排左起';
+
+  @override
+  String get horizontalRightToLeft => '横排右起';
+
+  @override
+  String get verticalLeftToRight => '竖排左起';
+
+  @override
+  String get verticalRightToLeft => '竖排右起';
 }

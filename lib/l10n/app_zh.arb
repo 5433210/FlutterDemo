@@ -625,5 +625,9 @@
   "workBrowseDeleteSelected": "删除{count}个",
   "workBrowseError": "错误：{message}",
   "workBrowseSelectedCount": "已选{count}个",
-  "workImportDialogError": "导入失败：{error}"
+  "workImportDialogError": "导入失败：{error}",
+  "horizontalLeftToRight": "横排左起",
+  "horizontalRightToLeft": "横排右起",
+  "verticalLeftToRight": "竖排左起",
+  "verticalRightToLeft": "竖排右起"
 }

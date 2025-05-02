@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
 import '../../../widgets/practice/collection_element_renderer.dart';
+import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
@@ -554,6 +555,22 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
   }
 
+  // /// Get BoxFit from fitMode string
+  // BoxFit _getFitMode(String fitMode) {
+  //   switch (fitMode) {
+  //     case 'contain':
+  //       return BoxFit.contain;
+  //     case 'cover':
+  //       return BoxFit.cover;
+  //     case 'fill':
+  //       return BoxFit.fill;
+  //     case 'none':
+  //       return BoxFit.none;
+  //     default:
+  //       return BoxFit.contain;
+  //   }
+  // }
+
   /// Handle control point updates
   void _handleControlPointUpdate(int controlPointIndex, Offset delta) {
     // Add more debug info to understand control point behavior
@@ -1041,33 +1058,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
   /// Render text element
   Widget _renderTextElement(Map<String, dynamic> element) {
-    final content = element['content'] as Map<String, dynamic>? ?? {};
-    final text = content['text'] as String? ?? '';
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
-    final fontColorStr = content['fontColor'] as String? ?? '#000000';
-    final backgroundColor =
-        content['backgroundColor'] as String? ?? 'transparent';
-    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
-
-    // Parse color
-    final fontColor = _parseColor(fontColorStr);
-    final bgColor = _parseColor(backgroundColor);
-
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: bgColor,
-      padding: EdgeInsets.all(padding),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: fontSize,
-            color: fontColor,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
+    // Use the ElementRenderers.buildTextElement method to ensure all text formatting properties are applied
+    return ElementRenderers.buildTextElement(element,
+        isPreviewMode: widget.isPreviewMode);
   }
 }

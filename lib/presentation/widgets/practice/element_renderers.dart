@@ -320,7 +320,7 @@ class ElementRenderers {
           width: constraints.maxWidth,
           height: constraints.maxHeight,
           child: Container(
-            alignment: Alignment.topRight, // 与面板预览区保持一致
+            // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
             decoration: BoxDecoration(
               color: backgroundColor,
               // 移除非选中状态下的灰色边框

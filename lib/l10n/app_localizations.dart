@@ -3838,6 +3838,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import failed: {error}'**
   String workImportDialogError(Object error);
+
+  /// No description provided for @horizontalLeftToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Left-to-Right'**
+  String get horizontalLeftToRight;
+
+  /// No description provided for @horizontalRightToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Right-to-Left'**
+  String get horizontalRightToLeft;
+
+  /// No description provided for @verticalLeftToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Left-to-Right'**
+  String get verticalLeftToRight;
+
+  /// No description provided for @verticalRightToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Right-to-Left'**
+  String get verticalRightToLeft;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

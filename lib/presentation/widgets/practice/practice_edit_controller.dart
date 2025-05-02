@@ -413,11 +413,14 @@ class PracticeEditController extends ChangeNotifier {
         'text': '属性页\n输入文本',
         'fontFamily': 'sans-serif',
         'fontSize': 24.0,
-        'textColor': '#000000',
+        'fontColor': '#000000', // 修改为fontColor以匹配渲染器
         'backgroundColor': '#FFFFFF',
-        'alignment': 'left',
+        'textAlign': 'left', // 修改为textAlign以匹配渲染器
+        'verticalAlign': 'top', // 添加垂直对齐属性
+        'writingMode': 'horizontal-l', // 添加书写模式属性
         'lineHeight': 1.2,
         'letterSpacing': 0.0,
+        'padding': 8.0, // 添加内边距属性
       },
     };
 
@@ -443,11 +446,14 @@ class PracticeEditController extends ChangeNotifier {
         'text': '双击编辑文本',
         'fontFamily': 'sans-serif',
         'fontSize': 24.0,
-        'textColor': '#000000',
+        'fontColor': '#000000', // 修改为fontColor以匹配渲染器
         'backgroundColor': '#FFFFFF',
-        'alignment': 'left',
+        'textAlign': 'left', // 修改为textAlign以匹配渲染器
+        'verticalAlign': 'top', // 添加垂直对齐属性
+        'writingMode': 'horizontal-l', // 添加书写模式属性
         'lineHeight': 1.2,
         'letterSpacing': 0.0,
+        'padding': 8.0, // 添加内边距属性
       },
     };
 

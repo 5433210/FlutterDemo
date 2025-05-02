@@ -625,5 +625,9 @@
   "workBrowseDeleteSelected": "Delete {count}",
   "workBrowseError": "Error: {message}",
   "workBrowseSelectedCount": "{count} selected",
-  "workImportDialogError": "Import failed: {error}"
+  "workImportDialogError": "Import failed: {error}",
+  "horizontalLeftToRight": "Horizontal Left-to-Right",
+  "horizontalRightToLeft": "Horizontal Right-to-Left",
+  "verticalLeftToRight": "Vertical Left-to-Right",
+  "verticalRightToLeft": "Vertical Right-to-Left"
 }

@@ -1929,4 +1929,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String workImportDialogError(Object error) {
     return 'Import failed: $error';
   }
+
+  @override
+  String get horizontalLeftToRight => 'Horizontal Left-to-Right';
+
+  @override
+  String get horizontalRightToLeft => 'Horizontal Right-to-Left';
+
+  @override
+  String get verticalLeftToRight => 'Vertical Left-to-Right';
+
+  @override
+  String get verticalRightToLeft => 'Vertical Right-to-Left';
 }
