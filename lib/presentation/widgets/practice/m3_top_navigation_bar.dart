@@ -6,7 +6,8 @@ import 'file_operations.dart';
 import 'practice_edit_controller.dart';
 
 /// Material 3 top navigation bar for practice edit page
-class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget {
+class M3TopNavigationBar extends StatelessWidget
+    implements PreferredSizeWidget {
   final PracticeEditController controller;
   final String? practiceId;
   final bool isPreviewMode;
@@ -31,7 +32,7 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     // Build title text: if there's a title, show "Practice Edit - xxx", otherwise just "Practice Edit"
     final titleText = controller.practiceTitle != null
         ? '${l10n.practiceEditTitle} - ${controller.practiceTitle}'
@@ -44,7 +45,7 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
           Text(titleText),
           if (controller.practiceTitle != null)
             IconButton(
-              icon: const Icon(Icons.edit, size: 18),
+              icon: const Icon(Icons.edit),
               tooltip: l10n.practiceEditEditTitle,
               onPressed: () => _editTitle(context, l10n),
             ),
@@ -56,6 +57,15 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
         onPressed: () => _handleBackButton(context, l10n),
       ),
       actions: [
+        // 重做、撤销、预览按钮放在右侧所有图标按钮的最左边
+        // Operations group (undo/redo)
+        _buildOperationsGroup(l10n, colorScheme),
+
+        // Preview group
+        _buildPreviewGroup(l10n, colorScheme),
+
+        const SizedBox(width: 16),
+
         // File operations group
         _buildFileOperationsGroup(context, l10n, colorScheme),
 
@@ -63,22 +73,13 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
 
         // View operations group
         _buildViewOperationsGroup(l10n, colorScheme),
-
-        const SizedBox(width: 16),
-
-        // Operations group
-        _buildOperationsGroup(l10n, colorScheme),
-
-        const SizedBox(width: 16),
-
-        // Preview group
-        _buildPreviewGroup(l10n, colorScheme),
       ],
     );
   }
 
   /// Build file operations group
-  Widget _buildFileOperationsGroup(BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
+  Widget _buildFileOperationsGroup(
+      BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
     return Row(
       children: [
         IconButton(
@@ -118,7 +119,10 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
           tooltip: l10n.practiceEditTopNavUndo,
           onPressed: controller.state.canUndo ? controller.undo : null,
           style: IconButton.styleFrom(
-            foregroundColor: controller.state.canUndo ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+            foregroundColor: controller.state.canUndo
+                ? colorScheme.primary
+                : colorScheme.onSurface
+                    .withValues(alpha: 97), // 0.38 * 255 ≈ 97
           ),
         ),
         IconButton(
@@ -126,7 +130,10 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
           tooltip: l10n.practiceEditTopNavRedo,
           onPressed: controller.state.canRedo ? controller.redo : null,
           style: IconButton.styleFrom(
-            foregroundColor: controller.state.canRedo ? colorScheme.primary : colorScheme.onSurface.withOpacity(0.38),
+            foregroundColor: controller.state.canRedo
+                ? colorScheme.primary
+                : colorScheme.onSurface
+                    .withValues(alpha: 97), // 0.38 * 255 ≈ 97
           ),
         ),
       ],
@@ -137,26 +144,33 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
   Widget _buildPreviewGroup(AppLocalizations l10n, ColorScheme colorScheme) {
     return IconButton(
       icon: Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
-      tooltip: isPreviewMode ? l10n.practiceEditTopNavExitPreview : l10n.practiceEditTopNavPreviewMode,
+      tooltip: isPreviewMode
+          ? l10n.practiceEditTopNavExitPreview
+          : l10n.practiceEditTopNavPreviewMode,
       onPressed: onTogglePreviewMode,
       style: IconButton.styleFrom(
-        foregroundColor: isPreviewMode ? colorScheme.tertiary : colorScheme.primary,
+        foregroundColor:
+            isPreviewMode ? colorScheme.tertiary : colorScheme.primary,
       ),
     );
   }
 
   /// Build view operations group
-  Widget _buildViewOperationsGroup(AppLocalizations l10n, ColorScheme colorScheme) {
+  Widget _buildViewOperationsGroup(
+      AppLocalizations l10n, ColorScheme colorScheme) {
     return Row(
       children: [
         IconButton(
           icon: Icon(
             showThumbnails ? Icons.view_carousel : Icons.view_carousel_outlined,
           ),
-          tooltip: showThumbnails ? l10n.practiceEditTopNavHideThumbnails : l10n.practiceEditTopNavShowThumbnails,
+          tooltip: showThumbnails
+              ? l10n.practiceEditTopNavHideThumbnails
+              : l10n.practiceEditTopNavShowThumbnails,
           onPressed: () => onThumbnailToggle(!showThumbnails),
           style: IconButton.styleFrom(
-            foregroundColor: showThumbnails ? colorScheme.tertiary : colorScheme.primary,
+            foregroundColor:
+                showThumbnails ? colorScheme.tertiary : colorScheme.primary,
           ),
         ),
       ],
@@ -184,7 +198,8 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
   }
 
   /// Export practice
-  Future<void> _exportPractice(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _exportPractice(
+      BuildContext context, AppLocalizations l10n) async {
     // Get default filename
     final defaultFileName = controller.practiceTitle ?? l10n.practiceEditTitle;
 
@@ -197,7 +212,8 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
   }
 
   /// Handle back button
-  Future<void> _handleBackButton(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _handleBackButton(
+      BuildContext context, AppLocalizations l10n) async {
     // Check for unsaved changes
     if (controller.state.hasUnsavedChanges) {
       // Show confirmation dialog
@@ -257,7 +273,8 @@ class M3TopNavigationBar extends StatelessWidget implements PreferredSizeWidget 
   }
 
   /// Save practice
-  Future<void> _savePractice(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _savePractice(
+      BuildContext context, AppLocalizations l10n) async {
     await FileOperations.savePractice(
       context,
       controller.state.pages,
