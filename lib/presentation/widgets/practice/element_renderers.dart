@@ -57,31 +57,26 @@ class ElementRenderers {
       color: backgroundColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 计算考虑内边距后的可用空间
-          final availableWidth = constraints.maxWidth - padding * 2;
-          final availableHeight = constraints.maxHeight - padding * 2;
+          // 不再在这里计算内边距，而是直接传递给CollectionElementRenderer
+          // 添加调试信息
+          debugPrint(
+              'buildCollectionElement: 传递内边距 $padding 到 CollectionElementRenderer');
 
-          return Padding(
-            padding: EdgeInsets.all(padding),
-            child: CollectionElementRenderer.buildCollectionLayout(
-              characters: characters,
-              writingMode: writingMode,
-              fontSize: fontSize,
-              letterSpacing: letterSpacing,
-              lineSpacing: lineSpacing,
-              textAlign: textAlign,
-              verticalAlign: verticalAlign,
-              characterImages: characterImages ?? {},
-              constraints: BoxConstraints(
-                maxWidth: availableWidth,
-                maxHeight: availableHeight,
-              ),
-              padding: padding,
-              fontColor: fontColorStr,
-              backgroundColor: backgroundColorStr,
-              enableSoftLineBreak: enableSoftLineBreak,
-              ref: ref,
-            ),
+          return CollectionElementRenderer.buildCollectionLayout(
+            characters: characters,
+            writingMode: writingMode,
+            fontSize: fontSize,
+            letterSpacing: letterSpacing,
+            lineSpacing: lineSpacing,
+            textAlign: textAlign,
+            verticalAlign: verticalAlign,
+            characterImages: characterImages ?? {},
+            constraints: constraints, // 直接传递原始约束
+            padding: padding,
+            fontColor: fontColorStr,
+            backgroundColor: backgroundColorStr,
+            enableSoftLineBreak: enableSoftLineBreak,
+            ref: ref,
           );
         },
       ),

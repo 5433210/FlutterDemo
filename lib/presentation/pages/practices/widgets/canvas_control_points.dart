@@ -230,23 +230,29 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     const controlPointSize = 8.0;
 
     // 计算8个控制点的位置（考虑旋转）- 控制点在元素外部
+    // 注意：这里的顺序必须与_handleResize方法中的case顺序一致
     final unrotatedPoints = [
-      Offset(widget.x - controlPointSize / 2,
-          widget.y - controlPointSize / 2), // 左上
-      Offset(
-          widget.x + widget.width / 2, widget.y - controlPointSize / 2), // 上中
+      // 索引0: 左上角
+      Offset(widget.x - controlPointSize / 2, widget.y - controlPointSize / 2),
+      // 索引1: 上中
+      Offset(widget.x + widget.width / 2, widget.y - controlPointSize / 2),
+      // 索引2: 右上角
       Offset(widget.x + widget.width + controlPointSize / 2,
-          widget.y - controlPointSize / 2), // 右上
+          widget.y - controlPointSize / 2),
+      // 索引3: 右中
       Offset(widget.x + widget.width + controlPointSize / 2,
-          widget.y + widget.height / 2), // 右中
+          widget.y + widget.height / 2),
+      // 索引4: 右下角
       Offset(widget.x + widget.width + controlPointSize / 2,
-          widget.y + widget.height + controlPointSize / 2), // 右下
+          widget.y + widget.height + controlPointSize / 2),
+      // 索引5: 下中
       Offset(widget.x + widget.width / 2,
-          widget.y + widget.height + controlPointSize / 2), // 下中
+          widget.y + widget.height + controlPointSize / 2),
+      // 索引6: 左下角
       Offset(widget.x - controlPointSize / 2,
-          widget.y + widget.height + controlPointSize / 2), // 左下
-      Offset(
-          widget.x - controlPointSize / 2, widget.y + widget.height / 2), // 左中
+          widget.y + widget.height + controlPointSize / 2),
+      // 索引7: 左中
+      Offset(widget.x - controlPointSize / 2, widget.y + widget.height / 2),
     ];
 
     // 对每个点进行旋转
@@ -362,9 +368,42 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     final left = position.dx - hitAreaSize / 2;
     final top = position.dy - hitAreaSize / 2;
 
-    // 添加调试信息
+    // 添加详细的调试信息
+    String controlPointName;
+    switch (index) {
+      case 0:
+        controlPointName = '左上角';
+        break;
+      case 1:
+        controlPointName = '上中';
+        break;
+      case 2:
+        controlPointName = '右上角';
+        break;
+      case 3:
+        controlPointName = '右中';
+        break;
+      case 4:
+        controlPointName = '右下角';
+        break;
+      case 5:
+        controlPointName = '下中';
+        break;
+      case 6:
+        controlPointName = '左下角';
+        break;
+      case 7:
+        controlPointName = '左中';
+        break;
+      case 8:
+        controlPointName = '旋转';
+        break;
+      default:
+        controlPointName = '未知';
+    }
+
     debugPrint(
-        '构建控制点 $index 在位置 $position，点击区域: ($left, $top, $hitAreaSize, $hitAreaSize)');
+        '构建控制点 $index ($controlPointName) 在位置 $position，点击区域: ($left, $top, $hitAreaSize, $hitAreaSize)');
 
     return Positioned(
       left: left,
@@ -385,7 +424,42 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
               widget.onControlPointUpdate(index, Offset.zero);
             },
             onPanUpdate: (details) {
-              debugPrint('控制点 $index 拖拽更新: delta=${details.delta}');
+              // 获取控制点名称
+              String controlPointName;
+              switch (index) {
+                case 0:
+                  controlPointName = '左上角';
+                  break;
+                case 1:
+                  controlPointName = '上中';
+                  break;
+                case 2:
+                  controlPointName = '右上角';
+                  break;
+                case 3:
+                  controlPointName = '右中';
+                  break;
+                case 4:
+                  controlPointName = '右下角';
+                  break;
+                case 5:
+                  controlPointName = '下中';
+                  break;
+                case 6:
+                  controlPointName = '左下角';
+                  break;
+                case 7:
+                  controlPointName = '左中';
+                  break;
+                case 8:
+                  controlPointName = '旋转';
+                  break;
+                default:
+                  controlPointName = '未知';
+              }
+
+              debugPrint(
+                  '控制点 $index ($controlPointName) 拖拽更新: delta=${details.delta}');
               try {
                 // 确保立即处理控制点更新
                 widget.onControlPointUpdate(index, details.delta);

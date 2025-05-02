@@ -35,9 +35,13 @@ class CollectionElementRenderer {
           child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
     }
 
-    // 获取可用区域大小
-    final availableWidth = constraints.maxWidth;
-    final availableHeight = constraints.maxHeight;
+    // 获取可用区域大小，扣减内边距
+    final availableWidth = constraints.maxWidth - padding * 2;
+    final availableHeight = constraints.maxHeight - padding * 2;
+
+    // 添加调试信息
+    debugPrint(
+        'CollectionElementRenderer: 原始尺寸 ${constraints.maxWidth}x${constraints.maxHeight}, 内边距 $padding, 可用尺寸 ${availableWidth}x$availableHeight');
 
     // 处理换行符并创建字符列表
     List<String> charList = [];
@@ -105,9 +109,19 @@ class CollectionElementRenderer {
           setState(() {});
         });
 
-        return CustomPaint(
-          size: Size(availableWidth, availableHeight),
-          painter: painter,
+        // 添加调试信息
+        debugPrint(
+            'CollectionElementRenderer: 创建CustomPaint，尺寸 ${constraints.maxWidth}x${constraints.maxHeight}');
+
+        // 创建一个Container，应用内边距
+        return Container(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          padding: EdgeInsets.all(padding),
+          // CustomPaint会自动填充可用空间，不需要指定尺寸
+          child: CustomPaint(
+            painter: painter,
+          ),
         );
       },
     );

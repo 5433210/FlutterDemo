@@ -410,6 +410,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     final elementHeight = (element['height'] as num).toDouble();
                     final elementRotation =
                         (element['rotation'] as num?)?.toDouble() ?? 0.0;
+                    final elementOpacity =
+                        (element['opacity'] as num?)?.toDouble() ?? 1.0;
                     final isLocked = element['isLocked'] as bool? ?? false;
                     final isSelected =
                         widget.controller.state.selectedElementIds.contains(id);
@@ -422,6 +424,12 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     // Skip elements on hidden layers
                     if (!isLayerVisible) return const SizedBox.shrink();
 
+                    // Log element properties for debugging
+                    if (element['type'] == 'image') {
+                      debugPrint(
+                          'Rendering image element: id=$id, opacity=$elementOpacity');
+                    }
+
                     // Render element
                     return Positioned(
                       left: elementX,
@@ -429,20 +437,23 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       child: Transform.rotate(
                         angle: elementRotation *
                             (3.14159265359 / 180), // Convert degrees to radians
-                        child: Container(
-                          width: elementWidth,
-                          height: elementHeight,
-                          decoration: !widget.isPreviewMode && isSelected
-                              ? BoxDecoration(
-                                  border: Border.all(
-                                    color: isLocked
-                                        ? colorScheme.tertiary
-                                        : colorScheme.primary,
-                                    width: 1.0,
-                                  ),
-                                )
-                              : null,
-                          child: _renderElement(element),
+                        child: Opacity(
+                          opacity: elementOpacity, // Apply element opacity
+                          child: Container(
+                            width: elementWidth,
+                            height: elementHeight,
+                            decoration: !widget.isPreviewMode && isSelected
+                                ? BoxDecoration(
+                                    border: Border.all(
+                                      color: isLocked
+                                          ? colorScheme.tertiary
+                                          : colorScheme.primary,
+                                      width: 1.0,
+                                    ),
+                                  )
+                                : null,
+                            child: _renderElement(element),
+                          ),
                         ),
                       ),
                     );
@@ -553,50 +564,57 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     double y = (element['y'] as num).toDouble();
     double width = (element['width'] as num).toDouble();
     double height = (element['height'] as num).toDouble();
+    double rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
 
-    // Calculate new position and size based on control point index
+    debugPrint(
+        '调整元素大小: 控制点=$controlPointIndex, delta=$delta, 当前属性: x=$x, y=$y, width=$width, height=$height, rotation=$rotation');
+
+    // 如果元素有旋转，我们需要考虑旋转后的坐标系中的调整
+    // 但为了简化，我们先在原始坐标系中进行调整
+
+    // 根据控制点索引计算新的位置和大小
     switch (controlPointIndex) {
-      case 0: // Top-left
+      case 0: // 左上角
         x += delta.dx;
         y += delta.dy;
         width -= delta.dx;
         height -= delta.dy;
         break;
-      case 1: // Top-center
+      case 1: // 上中
         y += delta.dy;
         height -= delta.dy;
         break;
-      case 2: // Top-right
+      case 2: // 右上角
         y += delta.dy;
         width += delta.dx;
         height -= delta.dy;
         break;
-      case 3: // Middle-left
-        x += delta.dx;
-        width -= delta.dx;
-        break;
-      case 4: // Middle-right
+      case 3: // 右中
         width += delta.dx;
         break;
-      case 5: // Bottom-left
+      case 4: // 右下角
+        width += delta.dx;
+        height += delta.dy;
+        break;
+      case 5: // 下中
+        height += delta.dy;
+        break;
+      case 6: // 左下角
         x += delta.dx;
         width -= delta.dx;
         height += delta.dy;
         break;
-      case 6: // Bottom-center
-        height += delta.dy;
-        break;
-      case 7: // Bottom-right
-        width += delta.dx;
-        height += delta.dy;
+      case 7: // 左中
+        x += delta.dx;
+        width -= delta.dx;
         break;
     }
 
-    // Ensure minimum size
+    // 确保最小尺寸
     width = width.clamp(10.0, double.infinity);
     height = height.clamp(10.0, double.infinity);
 
-    // Update element properties
+    // 更新元素属性
     final updates = {
       'x': x,
       'y': y,
@@ -604,6 +622,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       'height': height,
     };
 
+    debugPrint('更新元素属性: $updates');
     widget.controller.updateElementProperties(elementId, updates);
   }
 
@@ -696,6 +715,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
 
     // Use CollectionElementRenderer to render the collection
+    // 添加调试信息
+    debugPrint(
+        '_renderCollectionElement: 传递内边距 $padding 到 CollectionElementRenderer');
+
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -712,7 +735,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             verticalAlign: verticalAlign,
             characterImages: characterImages,
             constraints: constraints,
-            padding: padding,
+            padding: padding, // 确保正确传递内边距参数
             fontColor: fontColor,
             backgroundColor: backgroundColor,
             enableSoftLineBreak: enableSoftLineBreak,
