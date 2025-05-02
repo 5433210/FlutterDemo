@@ -831,26 +831,87 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   /// Render group element
   Widget _renderGroupElement(Map<String, dynamic> element) {
     final content = element['content'] as Map<String, dynamic>? ?? {};
-    final elements = content['elements'] as List<dynamic>? ?? [];
 
-    if (elements.isEmpty) {
+    // 检查是否使用 'children' 键（新版本）或 'elements' 键（旧版本）
+    List<dynamic> children = [];
+    if (content.containsKey('children')) {
+      children = content['children'] as List<dynamic>? ?? [];
+    } else if (content.containsKey('elements')) {
+      children = content['elements'] as List<dynamic>? ?? [];
+    }
+
+    if (children.isEmpty) {
       return Container(
         width: double.infinity,
         height: double.infinity,
         color: Colors.grey.withAlpha(26), // 0.1 opacity (26/255)
         child: const Center(
-          child: Text('Empty Group'),
+          child: Text('空组合'),
         ),
       );
     }
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.transparent,
-      child: Center(
-        child: Text('Group (${elements.length} elements)'),
-      ),
+    // 使用Stack来渲染所有子元素
+    return Stack(
+      clipBehavior: Clip.none,
+      children: children.map<Widget>((child) {
+        final String type = child['type'] as String;
+        final double x = (child['x'] as num).toDouble();
+        final double y = (child['y'] as num).toDouble();
+        final double width = (child['width'] as num).toDouble();
+        final double height = (child['height'] as num).toDouble();
+        final double rotation = (child['rotation'] as num? ?? 0.0).toDouble();
+        final double opacity = (child['opacity'] as num? ?? 1.0).toDouble();
+        final bool isHidden = child['hidden'] as bool? ?? false;
+
+        // 如果元素被隐藏，则不渲染（预览模式）或半透明显示（编辑模式）
+        if (isHidden && widget.isPreviewMode) {
+          return const SizedBox.shrink();
+        }
+
+        // 根据子元素类型渲染不同的内容
+        Widget childWidget;
+        switch (type) {
+          case 'text':
+            childWidget = _renderTextElement(child);
+            break;
+          case 'image':
+            childWidget = _renderImageElement(child);
+            break;
+          case 'collection':
+            childWidget = _renderCollectionElement(child);
+            break;
+          case 'group':
+            // 递归处理嵌套组合
+            childWidget = _renderGroupElement(child);
+            break;
+          default:
+            childWidget = Container(
+              color: Colors.grey.withAlpha(51), // 0.2 的不透明度
+              child: Center(child: Text('未知元素类型: $type')),
+            );
+        }
+
+        // 使用Positioned和Transform确保子元素在正确的位置和角度
+        return Positioned(
+          left: x,
+          top: y,
+          width: width,
+          height: height,
+          child: Transform.rotate(
+            angle: rotation * (3.14159265359 / 180),
+            alignment: Alignment.center,
+            child: Opacity(
+              opacity: isHidden && !widget.isPreviewMode ? 0.5 : opacity,
+              child: SizedBox(
+                width: width,
+                height: height,
+                child: childWidget,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 

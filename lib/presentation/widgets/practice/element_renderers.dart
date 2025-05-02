@@ -89,6 +89,18 @@ class ElementRenderers {
     final content = element['content'] as Map<String, dynamic>;
     final List<dynamic> children = content['children'] as List<dynamic>;
 
+    // 检查children是否为空
+    if (children.isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.grey.withAlpha(26), // 0.1 opacity (26/255)
+        child: const Center(
+          child: Text('空组合'),
+        ),
+      );
+    }
+
     // 使用Stack来渲染所有子元素
     return Stack(
       children: [
@@ -104,6 +116,12 @@ class ElementRenderers {
             final double rotation =
                 (child['rotation'] as num? ?? 0.0).toDouble();
             final double opacity = (child['opacity'] as num? ?? 1.0).toDouble();
+            final bool isHidden = child['hidden'] as bool? ?? false;
+
+            // 如果元素被隐藏，则不渲染（预览模式）或半透明显示（编辑模式）
+            if (isHidden && isPreviewMode) {
+              return const SizedBox.shrink();
+            }
 
             // 根据子元素类型渲染不同的内容
             Widget childWidget;
@@ -134,13 +152,10 @@ class ElementRenderers {
                 );
             }
 
-            // 当组合被选中时，为子元素添加边框显示选中状态
-            // 不再在这里添加边框，而是在Positioned中直接处理
-
             // 使用Positioned和Transform确保子元素在正确的位置和角度
             return Positioned(
-              left: x - 1, //消除1像素边框宽度的影响
-              top: y - 1, //消除1像素边框宽度的影响
+              left: x,
+              top: y,
               width: width,
               height: height,
               child: Transform.rotate(
@@ -148,8 +163,7 @@ class ElementRenderers {
                 // 添加原点参数，确保旋转以元素中心为原点
                 alignment: Alignment.center,
                 child: Opacity(
-                  opacity: opacity,
-                  // 无论组合是否被选中，都为子元素添加边框
+                  opacity: isHidden && !isPreviewMode ? 0.5 : opacity,
                   child: Container(
                     width: width,
                     height: height,
@@ -162,7 +176,7 @@ class ElementRenderers {
                                   ? Colors.blue
                                       .withAlpha(179) // 选中状态：蓝色边框，70% 的不透明度
                                   : Colors.grey
-                                      .withAlpha(179), // 默认状态：灰色边框，70% 的不透明度
+                                      .withAlpha(128), // 默认状态：灰色边框，50% 的不透明度
                               width: 1.0,
                             ),
                           ),
@@ -174,7 +188,12 @@ class ElementRenderers {
           }).toList(),
         ),
 
-        // 不再添加组合控件的边框，因为在 practice_edit_page.dart 中已经添加了边框
+        // 添加一个透明的背景，确保整个组合区域可点击
+        Positioned.fill(
+          child: Container(
+            color: Colors.transparent,
+          ),
+        ),
       ],
     );
   }
