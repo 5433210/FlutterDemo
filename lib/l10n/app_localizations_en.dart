@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -8,8 +7,10 @@ import 'app_localizations.dart';
 /// The translations for English (`en`).
 class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
+
   @override
   String get a4Size => 'A4 (210×297mm)';
+
   @override
   String get a5Size => 'A5 (148×210mm)';
 
@@ -26,15 +27,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backgroundColor => 'Background Color';
 
   @override
-  String get basicInfo => 'Basic Information';
+  String get basicInfo => 'Basic Info';
 
   @override
-  String get bringLayerToFront => 'Bring layer to the front';
+  String get bringLayerToFront => 'Bring Layer to Front';
 
   @override
   String get bringToFront => 'Bring to Front';
+
   @override
   String get cancel => 'Cancel';
+
   @override
   String get canvasPixelSize => 'Canvas Pixel Size';
 
@@ -45,18 +48,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionDeleteConfirm => 'Confirm Deletion';
 
   @override
-  String get characterCollectionDeleteMessage =>
-      'You are about to delete the selected region. This action cannot be undone.';
+  String get characterCollectionDeleteMessage => 'You are about to delete the selected region. This action cannot be undone.';
 
   @override
-  String get characterCollectionDeleteShortcuts =>
-      'Shortcuts: Enter to confirm, Esc to cancel';
+  String get characterCollectionDeleteShortcuts => 'Shortcuts: Enter to confirm, Esc to cancel';
 
   @override
   String get characterCollectionFilterAll => 'All';
 
   @override
-  String get characterCollectionFilterFavorite => 'Favorites';
+  String get characterCollectionFilterFavorite => 'Favorite';
 
   @override
   String get characterCollectionFilterRecent => 'Recent';
@@ -71,15 +72,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionHelpExport => 'Export Help Document';
 
   @override
-  String get characterCollectionHelpExportSoon =>
-      'Help document export coming soon';
+  String get characterCollectionHelpExportSoon => 'Help document export coming soon';
 
   @override
   String get characterCollectionHelpGuide => 'Character Collection Guide';
 
   @override
-  String get characterCollectionHelpIntro =>
-      'Character Collection allows you to extract, edit, and manage characters from images. Here\'s a detailed guide:';
+  String get characterCollectionHelpIntro => 'Character collection allows you to extract, edit, and manage characters from images. Here\'s a detailed guide:';
 
   @override
   String get characterCollectionHelpNotes => 'Notes';
@@ -103,11 +102,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionHelpTitle => 'Character Collection Help';
 
   @override
-  String get characterCollectionImageInvalid =>
-      'Image data is invalid or corrupted';
+  String get characterCollectionImageInvalid => 'Image data is invalid or corrupted';
 
   @override
-  String get characterCollectionImageLoadError => 'Cannot load image';
+  String get characterCollectionImageLoadError => 'Failed to load image';
 
   @override
   String get characterCollectionLeave => 'Leave';
@@ -146,35 +144,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionSearchHint => 'Search characters...';
 
   @override
-  String get characterCollectionSelectRegion =>
-      'Please select a character region in the preview area';
+  String get characterCollectionSelectRegion => 'Please select character regions in the preview area';
 
   @override
-  String get characterCollectionSwitchingPage =>
-      'Switching to character\'s page...';
+  String get characterCollectionSwitchingPage => 'Switching to character page...';
 
   @override
   String get characterCollectionTitle => 'Character Collection';
 
   @override
-  String get characterCollectionToolDelete => 'Delete Selected (Ctrl+D)';
+  String get characterCollectionToolDelete => 'Delete selected (Ctrl+D)';
 
   @override
-  String get characterCollectionToolPan => 'Pan Tool (Ctrl+V)';
+  String get characterCollectionToolPan => 'Pan tool (Ctrl+V)';
 
   @override
-  String get characterCollectionToolSelect => 'Selection Tool (Ctrl+B)';
+  String get characterCollectionToolSelect => 'Selection tool (Ctrl+B)';
 
   @override
   String get characterCollectionUnsavedChanges => 'Unsaved Changes';
 
   @override
-  String get characterCollectionUnsavedChangesMessage =>
-      'You have unsaved region modifications. Leaving will lose these changes.\n\nAre you sure you want to leave?';
+  String get characterCollectionUnsavedChangesMessage => 'You have unsaved region modifications. Leaving will discard these changes.\n\nAre you sure you want to leave?';
 
   @override
-  String get characterCollectionUseSelectionTool =>
-      'Use the selection tool on the left to extract characters from the image';
+  String get characterCollectionUseSelectionTool => 'Use the selection tool on the left to extract characters from the image';
 
   @override
   String get characterDetailAuthor => 'Author';
@@ -216,14 +210,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditCompletingSave => 'Completing save...';
 
   @override
-  String get characterEditImageInvert => 'Image Invert';
+  String get characterEditImageInvert => 'Image Inversion';
 
   @override
-  String get characterEditImageLoadError => 'Image loading error';
+  String get characterEditImageLoadError => 'Image Load Error';
 
   @override
-  String get characterEditImageLoadFailed =>
-      'Failed to load or process character image';
+  String get characterEditImageLoadFailed => 'Failed to load or process character image';
 
   @override
   String get characterEditInitializing => 'Initializing...';
@@ -244,10 +237,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditNoRegionSelected => 'No region selected';
 
   @override
-  String get characterEditOnlyOneCharacter => 'Only one character is allowed';
+  String get characterEditOnlyOneCharacter => 'Only one character allowed';
 
   @override
-  String get characterEditPanImage => 'Pan Image (hold Alt)';
+  String get characterEditPanImage => 'Pan image (hold Alt)';
 
   @override
   String get characterEditPleaseEnterCharacter => 'Please enter a character';
@@ -271,13 +264,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditSaveConfirmTitle => 'Save Character';
 
   @override
-  String get characterEditSavePreview => 'Character Preview:';
+  String get characterEditSavePreview => 'Character preview:';
 
   @override
   String get characterEditSaveShortcuts => 'Press Enter to save, Esc to cancel';
 
   @override
-  String get characterEditSaveTimeout => 'Save timeout';
+  String get characterEditSaveTimeout => 'Save timed out';
 
   @override
   String get characterEditSavingToStorage => 'Saving to storage...';
@@ -286,7 +279,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditShowContour => 'Show Contour';
 
   @override
-  String get characterEditThumbnailCheckFailed => 'Failed to check thumbnail';
+  String get characterEditThumbnailCheckFailed => 'Thumbnail check failed';
 
   @override
   String get characterEditThumbnailEmpty => 'Thumbnail file is empty';
@@ -310,8 +303,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditUnknownError => 'Unknown error';
 
   @override
-  String get characterEditValidChineseCharacter =>
-      'Please enter a valid Chinese character';
+  String get characterEditValidChineseCharacter => 'Please enter a valid Chinese character';
 
   @override
   String get characterFilterAddTag => 'Add Tag';
@@ -335,7 +327,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterFilterExpand => 'Expand Filter Panel';
 
   @override
-  String get characterFilterFavoritesOnly => 'Show Favorites Only';
+  String get characterFilterFavoritesOnly => 'Show favorites only';
 
   @override
   String get characterFilterSelectedTags => 'Selected Tags:';
@@ -362,11 +354,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterManagementDeleteConfirm => 'Confirm Deletion';
 
   @override
-  String get characterManagementDeleteMessage =>
-      'Are you sure you want to delete the selected character(s)? This action cannot be undone.';
+  String get characterManagementDeleteMessage => 'Are you sure you want to delete the selected characters? This action cannot be undone.';
 
   @override
-  String get characterManagementDeleteSelected => 'Delete Selected';
+  String get characterManagementDeleteSelected => 'Delete selected';
 
   @override
   String get characterManagementGridView => 'Grid View';
@@ -381,11 +372,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterManagementNoCharacters => 'No characters found';
 
   @override
-  String get characterManagementNoCharactersHint =>
-      'Try changing your search or filter criteria';
+  String get characterManagementNoCharactersHint => 'Try changing your search or filter criteria';
 
   @override
-  String get characterManagementSearch => 'Search characters, works or authors';
+  String get characterManagementSearch => 'Search characters, works, or authors';
 
   @override
   String get characterManagementTitle => 'Character Management';
@@ -410,16 +400,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelBorderWidth => 'Border Width';
+
   @override
   String get collectionPropertyPanelCacheCleared => 'Image cache cleared';
 
   @override
-  String get collectionPropertyPanelCacheClearFailed =>
-      'Failed to clear image cache';
+  String get collectionPropertyPanelCacheClearFailed => 'Failed to clear image cache';
 
   @override
-  String get collectionPropertyPanelCandidateCharacters =>
-      'Candidate Characters';
+  String get collectionPropertyPanelCandidateCharacters => 'Candidate Characters';
+
   @override
   String get collectionPropertyPanelCharacter => 'Character';
 
@@ -436,15 +426,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionPropertyPanelClearImageCache => 'Clear Image Cache';
 
   @override
-  String get collectionPropertyPanelColorInversion => 'color inversion';
+  String get collectionPropertyPanelColorInversion => 'Color Inversion';
 
   @override
   String get collectionPropertyPanelContent => 'Content Properties';
+
   @override
   String get collectionPropertyPanelDisabled => 'Disabled';
 
   @override
   String get collectionPropertyPanelEnabled => 'Enabled';
+
   @override
   String get collectionPropertyPanelFlip => 'Flip';
 
@@ -465,6 +457,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelHeaderGeometry => 'Geometry Properties';
+
   @override
   String get collectionPropertyPanelHeaderVisual => 'Visual Properties';
 
@@ -472,12 +465,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionPropertyPanelInvertDisplay => 'Invert Display Colors';
 
   @override
-  String get collectionPropertyPanelNoCharacterSelected =>
-      'No character selected';
+  String get collectionPropertyPanelNoCharacterSelected => 'No character selected';
 
   @override
-  String get collectionPropertyPanelNoCharactersFound =>
-      'No matching characters found';
+  String get collectionPropertyPanelNoCharactersFound => 'No matching characters found';
 
   @override
   String get collectionPropertyPanelNoCharacterText => 'No character';
@@ -487,13 +478,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelOpacity => 'Opacity';
+
   @override
   String get collectionPropertyPanelOriginal => 'Original';
+
   @override
   String get collectionPropertyPanelPadding => 'Padding';
 
   @override
   String get collectionPropertyPanelPropertyUpdated => 'Property updated';
+
   @override
   String get collectionPropertyPanelRender => 'Render Mode';
 
@@ -504,19 +498,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionPropertyPanelRotation => 'Rotation';
 
   @override
-  String get collectionPropertyPanelScale => 'scale';
+  String get collectionPropertyPanelScale => 'Scale';
 
   @override
-  String get collectionPropertyPanelSearchInProgress =>
-      'Searching characters...';
+  String get collectionPropertyPanelSearchInProgress => 'Searching characters...';
 
   @override
-  String get collectionPropertyPanelSelectCharacter =>
-      'Please select a character';
+  String get collectionPropertyPanelSelectCharacter => 'Please select a character';
 
   @override
-  String get collectionPropertyPanelSelectCharacterFirst =>
-      'Please select a character first';
+  String get collectionPropertyPanelSelectCharacterFirst => 'Please select a character first';
 
   @override
   String get collectionPropertyPanelSelectedCharacter => 'Selected Character';
@@ -561,23 +552,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAll => 'Delete All';
 
   @override
-  String get deletePage => 'Delete page';
+  String get deletePage => 'Delete Page';
 
   @override
   String get dimensions => 'Dimensions';
 
   @override
-  String get dpiHelperText =>
-      'Used to calculate canvas pixel size, default 300dpi';
+  String get dpiHelperText => 'Used to calculate canvas pixel size, default is 300dpi';
 
   @override
-  String get dpiSetting => 'DPI Setting (Dots Per Inch)';
+  String get dpiSetting => 'DPI Setting (dots per inch)';
 
   @override
   String get edit => 'Edit';
 
   @override
-  String get elements => 'elements';
+  String get elements => 'Elements';
 
   @override
   String get empty => 'Empty';
@@ -661,7 +651,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterSortFieldAuthor => 'Author';
 
   @override
-  String get filterSortFieldCreateTime => 'Create Time';
+  String get filterSortFieldCreateTime => 'Creation Time';
 
   @override
   String get filterSortFieldCreationDate => 'Creation Date';
@@ -704,6 +694,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterStyleSection => 'Calligraphy Style';
+
   @override
   String get filterTitle => 'Filter & Sort';
 
@@ -727,6 +718,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gridSettings => 'Grid Settings';
+
   @override
   String get gridSize => 'Grid Size';
 
@@ -734,13 +726,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get group => 'Group';
 
   @override
-  String get groupInfo => 'Group Information';
+  String get groupInfo => 'Group Info';
 
   @override
   String get height => 'Height';
 
   @override
-  String get hideElement => 'Hide element';
+  String get hideElement => 'Hide Element';
 
   @override
   String get imageCacheCleared => 'Image cache cleared';
@@ -767,12 +759,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelBrightness => 'Brightness';
 
   @override
-  String get imagePropertyPanelCannotApplyNoImage =>
-      'Cannot apply transform: No image set';
+  String get imagePropertyPanelCannotApplyNoImage => 'Cannot apply transform: No image set';
 
   @override
-  String get imagePropertyPanelCannotApplyNoSizeInfo =>
-      'Cannot apply transform: Image size information unavailable';
+  String get imagePropertyPanelCannotApplyNoSizeInfo => 'Cannot apply transform: Image size info not available';
 
   @override
   String get imagePropertyPanelContent => 'Content Properties';
@@ -790,8 +780,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelCropLeft => 'Left Crop';
 
   @override
-  String get imagePropertyPanelCroppingValueTooLarge =>
-      'Cannot apply transform: Crop values too large, resulting in invalid crop area';
+  String get imagePropertyPanelCroppingValueTooLarge => 'Cannot apply transform: Cropping values too large resulting in invalid crop region';
 
   @override
   String get imagePropertyPanelCropRight => 'Right Crop';
@@ -816,6 +805,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelFitCover => 'Cover';
+
   @override
   String get imagePropertyPanelFitFill => 'Fill';
 
@@ -832,16 +822,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelFlip => 'Flip';
 
   @override
-  String get imagePropertyPanelFlipHorizontal => 'Flip Horizontally';
+  String get imagePropertyPanelFlipHorizontal => 'Flip Horizontal';
 
   @override
-  String get imagePropertyPanelFlipVertical => 'Flip Vertically';
+  String get imagePropertyPanelFlipVertical => 'Flip Vertical';
 
   @override
   String get imagePropertyPanelGeometry => 'Geometry Properties';
+
   @override
-  String get imagePropertyPanelGeometryWarning =>
-      'These properties adjust the entire element box, not the image content itself';
+  String get imagePropertyPanelGeometryWarning => 'These properties adjust the entire element box, not the image content itself';
 
   @override
   String get imagePropertyPanelImageSelection => 'Image Selection';
@@ -853,8 +843,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelImageTransform => 'Image Transform';
 
   @override
-  String get imagePropertyPanelNoCropping =>
-      ' (no cropping, other transforms applied)';
+  String get imagePropertyPanelNoCropping => ' (No cropping, other transforms applied)';
 
   @override
   String get imagePropertyPanelNoImage => 'No image selected';
@@ -878,15 +867,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelPreview => 'Image Preview';
 
   @override
-  String get imagePropertyPanelPreviewNotice =>
-      'Note: Repeated logs displayed during preview are normal';
+  String get imagePropertyPanelPreviewNotice => 'Note: Duplicate logs shown during preview are normal';
 
   @override
   String get imagePropertyPanelReset => 'Reset';
 
   @override
-  String get imagePropertyPanelResetSuccess =>
-      'All transformations have been reset';
+  String get imagePropertyPanelResetSuccess => 'All transforms reset';
 
   @override
   String get imagePropertyPanelResetTransform => 'Reset Transform';
@@ -904,8 +891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelTransformApplied => 'Transform applied';
 
   @override
-  String get imagePropertyPanelTransformWarning =>
-      'These transformations modify the image content itself, not just the element frame';
+  String get imagePropertyPanelTransformWarning => 'These transforms modify the image content itself, not just the element frame';
 
   @override
   String get imagePropertyPanelVisual => 'Visual Settings';
@@ -944,19 +930,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get locked => 'Locked';
 
   @override
-  String get lockElement => 'Lock element';
+  String get lockElement => 'Lock Element';
 
   @override
-  String get lockUnlockAllElements => 'Lock/Unlock all elements';
+  String get lockUnlockAllElements => 'Lock/Unlock All Elements';
 
   @override
   String get moveDown => 'Move Down';
 
   @override
-  String get moveLayerDown => 'Move layer down';
+  String get moveLayerDown => 'Move Layer Down';
 
   @override
-  String get moveLayerUp => 'Move layer up';
+  String get moveLayerUp => 'Move Layer Up';
 
   @override
   String get moveUp => 'Move Up';
@@ -1010,8 +996,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditBringToFront => 'Bring to Front (Ctrl+T)';
 
   @override
-  String get practiceEditCannotSaveNoPages =>
-      'Cannot save: Practice has no pages';
+  String get practiceEditCannotSaveNoPages => 'Cannot save: Practice has no pages';
 
   @override
   String get practiceEditCollection => 'Collection';
@@ -1020,8 +1005,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditCollectionProperties => 'Collection Properties';
 
   @override
-  String get practiceEditConfirmDeleteMessage =>
-      'Are you sure you want to delete these elements?';
+  String get practiceEditConfirmDeleteMessage => 'Are you sure you want to delete these elements?';
 
   @override
   String get practiceEditConfirmDeleteTitle => 'Confirm Delete';
@@ -1042,12 +1026,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditDeleteLayer => 'Delete Layer';
 
   @override
-  String get practiceEditDeleteLayerConfirm =>
-      'Are you sure you want to delete this layer?';
+  String get practiceEditDeleteLayerConfirm => 'Are you sure you want to delete this layer?';
 
   @override
-  String get practiceEditDeleteLayerMessage =>
-      'All elements on this layer will be deleted. This action cannot be undone.';
+  String get practiceEditDeleteLayerMessage => 'All elements on this layer will be deleted. This action cannot be undone.';
 
   @override
   String get practiceEditDisableSnap => 'Disable Snap (Ctrl+R)';
@@ -1064,14 +1046,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get practiceEditElements => 'Elements';
 
-  // @override
-  // String get practiceEditElementSelectionInfo => '{count} elements selected';
-
   @override
   String get practiceEditEnableSnap => 'Enable Snap (Ctrl+R)';
 
   @override
-  String get practiceEditEnterTitle => 'Please enter practice title';
+  String get practiceEditEnterTitle => 'Please enter a practice title';
 
   @override
   String get practiceEditExit => 'Exit';
@@ -1116,8 +1095,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditMoveUp => 'Move Up (Ctrl+Shift+T)';
 
   @override
-  String get practiceEditMultiSelectionProperties =>
-      'Multiple Selection Properties';
+  String get practiceEditMultiSelectionProperties => 'Multi-Selection Properties';
 
   @override
   String get practiceEditNoLayers => 'No layers, please add a layer';
@@ -1132,8 +1110,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditPaste => 'Paste (Ctrl+Shift+V)';
 
   @override
-  String get practiceEditPracticeLoadFailed =>
-      'Failed to load practice: Practice does not exist or has been deleted';
+  String get practiceEditPracticeLoadFailed => 'Failed to load practice: Practice does not exist or has been deleted';
 
   @override
   String get practiceEditPracticeTitle => 'Practice Title';
@@ -1142,10 +1119,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditPropertyPanel => 'Properties';
 
   @override
-  String get practiceEditSaveAndExit => 'Save and Exit';
+  String get practiceEditSaveAndExit => 'Save & Exit';
 
   @override
-  String get practiceEditSaveAndLeave => 'Save and Leave';
+  String get practiceEditSaveAndLeave => 'Save & Leave';
 
   @override
   String get practiceEditSaveFailed => 'Save failed';
@@ -1175,11 +1152,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditTitle => 'Practice Edit';
 
   @override
-  String get practiceEditTitleExists => 'Title Already Exists';
+  String get practiceEditTitleExists => 'Title Exists';
 
   @override
-  String get practiceEditTitleExistsMessage =>
-      'A practice with this title already exists. Overwrite?';
+  String get practiceEditTitleExistsMessage => 'A practice with this title already exists. Do you want to overwrite it?';
 
   @override
   String get practiceEditToolbar => 'Edit Toolbar';
@@ -1221,12 +1197,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditUnsavedChanges => 'Unsaved Changes';
 
   @override
-  String get practiceEditUnsavedChangesExitConfirmation =>
-      'You have unsaved changes. Do you want to exit?';
+  String get practiceEditUnsavedChangesExitConfirmation => 'You have unsaved changes. Are you sure you want to exit?';
 
   @override
-  String get practiceEditUnsavedChangesMessage =>
-      'You have unsaved changes. Do you want to leave?';
+  String get practiceEditUnsavedChangesMessage => 'You have unsaved changes. Are you sure you want to leave?';
 
   @override
   String get practiceEditVisualProperties => 'Visual Properties';
@@ -1241,8 +1215,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListDeleteConfirm => 'Confirm Deletion';
 
   @override
-  String get practiceListDeleteMessage =>
-      'Are you sure you want to delete the selected practice sheet(s)? This action cannot be undone.';
+  String get practiceListDeleteMessage => 'Are you sure you want to delete the selected practice sheets? This action cannot be undone.';
 
   @override
   String get practiceListDeleteSelected => 'Delete Selected';
@@ -1252,9 +1225,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceListGridView => 'Grid View';
-
-  @override
-  String get practiceListItemsPerPage => '{count} per page';
 
   @override
   String get practiceListListView => 'List View';
@@ -1290,9 +1260,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListTitle => 'Practice Sheets';
 
   @override
-  String get practiceListTotalItems => '{count} practice sheets';
-
-  @override
   String get practicePageSettings => 'Page Settings';
 
   @override
@@ -1326,7 +1293,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selected => 'Selected';
 
   @override
-  String get sendLayerToBack => 'Send layer to the back';
+  String get sendLayerToBack => 'Send Layer to Back';
 
   @override
   String get sendToBack => 'Send to Back';
@@ -1335,22 +1302,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
-  String get showElement => 'Show element';
+  String get showElement => 'Show Element';
 
   @override
   String get showGrid => 'Show Grid';
 
   @override
-  String get showHideAllElements => 'Show/Hide all elements';
+  String get showHideAllElements => 'Show/Hide All Elements';
 
   @override
-  String get stateAndDisplay => 'State and Display';
+  String get stateAndDisplay => 'State & Display';
 
   @override
   String get storageSettings => 'Storage Settings';
 
   @override
-  String get tagEditorEnterTagHint => 'Enter tag and press Enter';
+  String get tagEditorEnterTagHint => 'Type a tag and press Enter';
 
   @override
   String get tagEditorNoTags => 'No tags';
@@ -1455,7 +1422,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ungroup => 'Ungroup';
 
   @override
-  String get unlockElement => 'Unlock element';
+  String get unlockElement => 'Unlock Element';
 
   @override
   String get unnamedElement => 'Unnamed Element';
@@ -1509,8 +1476,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workBrowseNoWorks => 'No works found';
 
   @override
-  String get workBrowseNoWorksHint =>
-      'Try importing new works or changing filters';
+  String get workBrowseNoWorksHint => 'Try importing new works or changing filters';
 
   @override
   String get workBrowseReload => 'Reload';
@@ -1537,7 +1503,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workDetailCharacters => 'Characters';
 
   @override
-  String get workDetailCreateTime => 'Created';
+  String get workDetailCreateTime => 'Creation Time';
 
   @override
   String get workDetailEdit => 'Edit';
@@ -1546,14 +1512,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workDetailExtract => 'Extract Characters';
 
   @override
-  String get workDetailExtractionError => 'Cannot open character extraction';
+  String get workDetailExtractionError => 'Unable to open character extraction';
 
   @override
   String get workDetailImageCount => 'Image Count';
 
   @override
-  String get workDetailImageLoadError =>
-      'Selected image could not be loaded, please try reimporting the image';
+  String get workDetailImageLoadError => 'The selected image failed to load, try reimporting the image';
 
   @override
   String get workDetailLoading => 'Loading work details...';
@@ -1565,11 +1530,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workDetailNoImages => 'No images to display';
 
   @override
-  String get workDetailNoImagesForExtraction =>
-      'Cannot extract characters: work has no images';
+  String get workDetailNoImagesForExtraction => 'Cannot extract characters: Work has no images';
 
   @override
-  String get workDetailNoWork => 'Work does not exist or has been deleted';
+  String get workDetailNoWork => 'Work doesn\'t exist or has been deleted';
 
   @override
   String get workDetailOtherInfo => 'Other Information';
@@ -1586,16 +1550,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workDetailTags => 'Tags';
 
-  // Work Detail Page
   @override
   String get workDetailTitle => 'Work Details';
 
   @override
-  String get workDetailUnsavedChanges =>
-      'You have unsaved changes. Are you sure you want to discard them?';
+  String get workDetailUnsavedChanges => 'You have unsaved changes. Are you sure you want to discard them?';
 
   @override
-  String get workDetailUpdateTime => 'Updated';
+  String get workDetailUpdateTime => 'Update Time';
 
   @override
   String get workDetailViewMore => 'View More';
@@ -1610,18 +1572,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormAuthorHint => 'Enter author name';
 
   @override
-  String get workFormAuthorMaxLength =>
-      'Author name cannot exceed 50 characters';
+  String get workFormAuthorMaxLength => 'Author name cannot exceed 50 characters';
 
   @override
-  String get workFormAuthorTooltip =>
-      'Press Ctrl+A to quickly jump to the author field';
+  String get workFormAuthorTooltip => 'Press Ctrl+A to quickly jump to the author field';
 
   @override
   String get workFormCreationDate => 'Creation Date';
 
   @override
-  String get workFormDateHelp => 'The completion date of the work';
+  String get workFormDateHelp => 'The date when the work was completed';
 
   @override
   String get workFormDateTooltip => 'Press Tab to navigate to the next field';
@@ -1639,8 +1599,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormRemark => 'Remark';
 
   @override
-  String get workFormRemarkHelp =>
-      'Optional, additional information about the work';
+  String get workFormRemarkHelp => 'Optional, additional information about the work';
 
   @override
   String get workFormRemarkHint => 'Optional';
@@ -1649,8 +1608,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormRemarkMaxLength => 'Remark cannot exceed 500 characters';
 
   @override
-  String get workFormRemarkTooltip =>
-      'Press Ctrl+R to quickly jump to the remark field';
+  String get workFormRemarkTooltip => 'Press Ctrl+R to quickly jump to the remark field';
 
   @override
   String get workFormRequiredField => 'Required field';
@@ -1674,8 +1632,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormTitle => 'Title';
 
   @override
-  String get workFormTitleHelp =>
-      'The main title of the work, displayed in the work list';
+  String get workFormTitleHelp => 'The main title of the work, displayed in the work list';
 
   @override
   String get workFormTitleHint => 'Enter title';
@@ -1690,8 +1647,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workFormTitleRequired => 'Title is required';
 
   @override
-  String get workFormTitleTooltip =>
-      'Press Ctrl+T to quickly jump to the title field';
+  String get workFormTitleTooltip => 'Press Ctrl+T to quickly jump to the title field';
 
   @override
   String get workFormTool => 'Tool';
@@ -1712,8 +1668,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogDeleteImage => 'Delete Image';
 
   @override
-  String get workImportDialogDeleteImageConfirm =>
-      'Are you sure you want to delete this image?';
+  String get workImportDialogDeleteImageConfirm => 'Are you sure you want to delete this image?';
 
   @override
   String get workImportDialogImport => 'Import';
@@ -1745,7 +1700,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workStyleOther => 'Other';
 
-  // Work Style localization
   @override
   String get workStyleRegular => 'Regular Script';
 
@@ -1755,7 +1709,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get workStyleSeal => 'Seal Script';
 
-  // Work Tool localization
   @override
   String get workToolBrush => 'Brush';
 
@@ -1767,7 +1720,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String characterCollectionDeleteBatchConfirm(Object count) {
-    return 'Confirm to delete {count} saved regions?';
+    return 'Confirm deletion of $count saved regions?';
   }
 
   @override
@@ -1782,17 +1735,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String characterCollectionFindSwitchFailed(Object error) {
-    return 'Failed to find and switch page: $error';
+    return 'Find and switch page failed: $error';
   }
 
   @override
   String characterEditCharacterUpdated(Object character) {
-    return ' \"$character\" updated';
+    return '\"$character\" updated';
   }
 
   @override
   String characterEditSaveConfirmMessage(Object character) {
-    return 'Confirm to save \"$character\"?';
+    return 'Confirm saving \"$character\"?';
   }
 
   @override
@@ -1802,29 +1755,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String characterManagementItemsPerPage(Object count) {
-    return '$count items/page';
+    return '$count items per page';
   }
 
   @override
-  String imagePropertyPanelCroppingApplied(
-          Object bottom, Object left, Object right, Object top) =>
-      ' (cropping: left {left}px, top {top}px, right {right}px, bottom {bottom}px)';
+  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top) {
+    return ' (Cropping: Left ${left}px, Top ${top}px, Right ${right}px, Bottom ${bottom}px)';
+  }
 
   @override
-  String imagePropertyPanelFileNotExist(Object path) =>
-      'File does not exist: {path}';
+  String imagePropertyPanelFileNotExist(Object path) {
+    return 'File does not exist: $path';
+  }
 
   @override
-  String imagePropertyPanelLoadError(Object error) =>
-      'Failed to load image: {error}...';
+  String imagePropertyPanelLoadError(Object error) {
+    return 'Failed to load image: $error...';
+  }
 
   @override
-  String imagePropertyPanelProcessingPathError(Object error) =>
-      'Error processing path: {error}';
+  String imagePropertyPanelProcessingPathError(Object error) {
+    return 'Processing path error: $error';
+  }
 
   @override
-  String imagePropertyPanelTransformError(Object error) =>
-      'Failed to apply transform: {error}';
+  String imagePropertyPanelTransformError(Object error) {
+    return 'Failed to apply transform: $error';
+  }
 
   @override
   String initializationFailed(Object error) {
@@ -1832,8 +1789,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String practiceEditElementSelectionInfo(Object count) =>
-      'selected {count} elements';
+  String practiceEditElementSelectionInfo(Object count) {
+    return '$count elements selected';
+  }
 
   @override
   String practiceEditLoadFailed(Object error) {
@@ -1848,6 +1806,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String practiceEditTitleUpdated(Object title) {
     return 'Title updated to \"$title\"';
+  }
+
+  @override
+  String practiceListItemsPerPage(Object count) {
+    return '$count per page';
+  }
+
+  @override
+  String practiceListTotalItems(Object count) {
+    return '$count practice sheets';
   }
 
   @override

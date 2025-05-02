@@ -54,7 +54,7 @@ class M3PaginationControls extends StatelessWidget {
         children: [
           // Total count
           Text(
-            l10n.practiceListTotalItems.replaceAll('{count}', '$totalItems'),
+            l10n.practiceListTotalItems('$totalItems'),
             style: theme.textTheme.bodyMedium,
           ),
 
@@ -113,8 +113,7 @@ class M3PaginationControls extends StatelessWidget {
                           value: size,
                           height: 36,
                           child: Text(
-                            l10n.practiceListItemsPerPage
-                                .replaceAll('{count}', '$size'),
+                            l10n.practiceListItemsPerPage('$size'),
                           ),
                         ))
                     .toList(),
@@ -125,8 +124,7 @@ class M3PaginationControls extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        l10n.practiceListItemsPerPage
-                            .replaceAll('{count}', '$pageSize'),
+                        l10n.practiceListItemsPerPage('$pageSize'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),

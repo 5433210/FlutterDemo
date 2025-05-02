@@ -10,22 +10,6 @@ import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
-AppLocalizations lookupAppLocalizations(Locale locale) {
-  // Lookup logic when only language code is specified.
-  switch (locale.languageCode) {
-    case 'en':
-      return AppLocalizationsEn();
-    case 'zh':
-      return AppLocalizationsZh();
-  }
-
-  throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
-}
-
 /// Callers can lookup localized strings with an instance of AppLocalizations
 /// returned by `AppLocalizations.of(context)`.
 ///
@@ -78,8 +62,15 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -91,8 +82,7 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -104,11 +94,6 @@ abstract class AppLocalizations {
     Locale('en'),
     Locale('zh')
   ];
-
-  final String localeName;
-
-  AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   /// No description provided for @a4Size.
   ///
@@ -149,13 +134,13 @@ abstract class AppLocalizations {
   /// No description provided for @basicInfo.
   ///
   /// In en, this message translates to:
-  /// **'Basic Information'**
+  /// **'Basic Info'**
   String get basicInfo;
 
   /// No description provided for @bringLayerToFront.
   ///
   /// In en, this message translates to:
-  /// **'Bring layer to the front'**
+  /// **'Bring Layer to Front'**
   String get bringLayerToFront;
 
   /// No description provided for @bringToFront.
@@ -209,7 +194,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionFilterFavorite.
   ///
   /// In en, this message translates to:
-  /// **'Favorites'**
+  /// **'Favorite'**
   String get characterCollectionFilterFavorite;
 
   /// No description provided for @characterCollectionFilterRecent.
@@ -251,7 +236,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionHelpIntro.
   ///
   /// In en, this message translates to:
-  /// **'Character Collection allows you to extract, edit, and manage characters from images. Here\'s a detailed guide:'**
+  /// **'Character collection allows you to extract, edit, and manage characters from images. Here\'s a detailed guide:'**
   String get characterCollectionHelpIntro;
 
   /// No description provided for @characterCollectionHelpNotes.
@@ -305,7 +290,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionImageLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Cannot load image'**
+  /// **'Failed to load image'**
   String get characterCollectionImageLoadError;
 
   /// No description provided for @characterCollectionLeave.
@@ -383,13 +368,13 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionSelectRegion.
   ///
   /// In en, this message translates to:
-  /// **'Please select a character region in the preview area'**
+  /// **'Please select character regions in the preview area'**
   String get characterCollectionSelectRegion;
 
   /// No description provided for @characterCollectionSwitchingPage.
   ///
   /// In en, this message translates to:
-  /// **'Switching to character\'s page...'**
+  /// **'Switching to character page...'**
   String get characterCollectionSwitchingPage;
 
   /// No description provided for @characterCollectionTitle.
@@ -401,19 +386,19 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionToolDelete.
   ///
   /// In en, this message translates to:
-  /// **'Delete Selected (Ctrl+D)'**
+  /// **'Delete selected (Ctrl+D)'**
   String get characterCollectionToolDelete;
 
   /// No description provided for @characterCollectionToolPan.
   ///
   /// In en, this message translates to:
-  /// **'Pan Tool (Ctrl+V)'**
+  /// **'Pan tool (Ctrl+V)'**
   String get characterCollectionToolPan;
 
   /// No description provided for @characterCollectionToolSelect.
   ///
   /// In en, this message translates to:
-  /// **'Selection Tool (Ctrl+B)'**
+  /// **'Selection tool (Ctrl+B)'**
   String get characterCollectionToolSelect;
 
   /// No description provided for @characterCollectionUnsavedChanges.
@@ -425,7 +410,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionUnsavedChangesMessage.
   ///
   /// In en, this message translates to:
-  /// **'You have unsaved region modifications. Leaving will lose these changes.\n\nAre you sure you want to leave?'**
+  /// **'You have unsaved region modifications. Leaving will discard these changes.\n\nAre you sure you want to leave?'**
   String get characterCollectionUnsavedChangesMessage;
 
   /// No description provided for @characterCollectionUseSelectionTool.
@@ -515,13 +500,13 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditImageInvert.
   ///
   /// In en, this message translates to:
-  /// **'Image Invert'**
+  /// **'Image Inversion'**
   String get characterEditImageInvert;
 
   /// No description provided for @characterEditImageLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Image loading error'**
+  /// **'Image Load Error'**
   String get characterEditImageLoadError;
 
   /// No description provided for @characterEditImageLoadFailed.
@@ -569,13 +554,13 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditOnlyOneCharacter.
   ///
   /// In en, this message translates to:
-  /// **'Only one character is allowed'**
+  /// **'Only one character allowed'**
   String get characterEditOnlyOneCharacter;
 
   /// No description provided for @characterEditPanImage.
   ///
   /// In en, this message translates to:
-  /// **'Pan Image (hold Alt)'**
+  /// **'Pan image (hold Alt)'**
   String get characterEditPanImage;
 
   /// No description provided for @characterEditPleaseEnterCharacter.
@@ -623,7 +608,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditSavePreview.
   ///
   /// In en, this message translates to:
-  /// **'Character Preview:'**
+  /// **'Character preview:'**
   String get characterEditSavePreview;
 
   /// No description provided for @characterEditSaveShortcuts.
@@ -635,7 +620,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditSaveTimeout.
   ///
   /// In en, this message translates to:
-  /// **'Save timeout'**
+  /// **'Save timed out'**
   String get characterEditSaveTimeout;
 
   /// No description provided for @characterEditSavingToStorage.
@@ -653,7 +638,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditThumbnailCheckFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to check thumbnail'**
+  /// **'Thumbnail check failed'**
   String get characterEditThumbnailCheckFailed;
 
   /// No description provided for @characterEditThumbnailEmpty.
@@ -749,7 +734,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterFilterFavoritesOnly.
   ///
   /// In en, this message translates to:
-  /// **'Show Favorites Only'**
+  /// **'Show favorites only'**
   String get characterFilterFavoritesOnly;
 
   /// No description provided for @characterFilterSelectedTags.
@@ -803,13 +788,13 @@ abstract class AppLocalizations {
   /// No description provided for @characterManagementDeleteMessage.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete the selected character(s)? This action cannot be undone.'**
+  /// **'Are you sure you want to delete the selected characters? This action cannot be undone.'**
   String get characterManagementDeleteMessage;
 
   /// No description provided for @characterManagementDeleteSelected.
   ///
   /// In en, this message translates to:
-  /// **'Delete Selected'**
+  /// **'Delete selected'**
   String get characterManagementDeleteSelected;
 
   /// No description provided for @characterManagementGridView.
@@ -845,7 +830,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterManagementSearch.
   ///
   /// In en, this message translates to:
-  /// **'Search characters, works or authors'**
+  /// **'Search characters, works, or authors'**
   String get characterManagementSearch;
 
   /// No description provided for @characterManagementTitle.
@@ -859,6 +844,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Characters'**
   String get characters;
+
+  /// No description provided for @clearImageCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Image Cache'**
+  String get clearImageCache;
 
   /// No description provided for @collectionPropertyPanel.
   ///
@@ -929,7 +920,7 @@ abstract class AppLocalizations {
   /// No description provided for @collectionPropertyPanelCharIndex.
   ///
   /// In en, this message translates to:
-  /// **'Character Index'**
+  /// **'Character'**
   String get collectionPropertyPanelCharIndex;
 
   /// No description provided for @collectionPropertyPanelClearImageCache.
@@ -995,25 +986,25 @@ abstract class AppLocalizations {
   /// No description provided for @collectionPropertyPanelHeaderContent.
   ///
   /// In en, this message translates to:
-  /// **'Content'**
+  /// **'Content Properties'**
   String get collectionPropertyPanelHeaderContent;
 
   /// No description provided for @collectionPropertyPanelHeaderGeometry.
   ///
   /// In en, this message translates to:
-  /// **'Geometry'**
+  /// **'Geometry Properties'**
   String get collectionPropertyPanelHeaderGeometry;
 
   /// No description provided for @collectionPropertyPanelHeaderVisual.
   ///
   /// In en, this message translates to:
-  /// **'Visual'**
+  /// **'Visual Properties'**
   String get collectionPropertyPanelHeaderVisual;
 
   /// No description provided for @collectionPropertyPanelInvertDisplay.
   ///
   /// In en, this message translates to:
-  /// **'Invert Display'**
+  /// **'Invert Display Colors'**
   String get collectionPropertyPanelInvertDisplay;
 
   /// No description provided for @collectionPropertyPanelNoCharacterSelected.
@@ -1031,7 +1022,7 @@ abstract class AppLocalizations {
   /// No description provided for @collectionPropertyPanelNoCharacterText.
   ///
   /// In en, this message translates to:
-  /// **'Enter text to see character options'**
+  /// **'No character'**
   String get collectionPropertyPanelNoCharacterText;
 
   /// No description provided for @collectionPropertyPanelOf.
@@ -1091,7 +1082,7 @@ abstract class AppLocalizations {
   /// No description provided for @collectionPropertyPanelSearchInProgress.
   ///
   /// In en, this message translates to:
-  /// **'Searching...'**
+  /// **'Searching characters...'**
   String get collectionPropertyPanelSearchInProgress;
 
   /// No description provided for @collectionPropertyPanelSelectCharacter.
@@ -1103,7 +1094,7 @@ abstract class AppLocalizations {
   /// No description provided for @collectionPropertyPanelSelectCharacterFirst.
   ///
   /// In en, this message translates to:
-  /// **'Please select a candidate character first'**
+  /// **'Please select a character first'**
   String get collectionPropertyPanelSelectCharacterFirst;
 
   /// No description provided for @collectionPropertyPanelSelectedCharacter.
@@ -1166,6 +1157,12 @@ abstract class AppLocalizations {
   /// **'Contains'**
   String get contains;
 
+  /// No description provided for @contentSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Settings'**
+  String get contentSettings;
+
   /// No description provided for @customSize.
   ///
   /// In en, this message translates to:
@@ -1187,7 +1184,7 @@ abstract class AppLocalizations {
   /// No description provided for @deletePage.
   ///
   /// In en, this message translates to:
-  /// **'Delete page'**
+  /// **'Delete Page'**
   String get deletePage;
 
   /// No description provided for @dimensions.
@@ -1199,13 +1196,13 @@ abstract class AppLocalizations {
   /// No description provided for @dpiHelperText.
   ///
   /// In en, this message translates to:
-  /// **'Used to calculate canvas pixel size, default 300dpi'**
+  /// **'Used to calculate canvas pixel size, default is 300dpi'**
   String get dpiHelperText;
 
   /// No description provided for @dpiSetting.
   ///
   /// In en, this message translates to:
-  /// **'DPI Setting (Dots Per Inch)'**
+  /// **'DPI Setting (dots per inch)'**
   String get dpiSetting;
 
   /// No description provided for @edit.
@@ -1217,7 +1214,7 @@ abstract class AppLocalizations {
   /// No description provided for @elements.
   ///
   /// In en, this message translates to:
-  /// **'elements'**
+  /// **'Elements'**
   String get elements;
 
   /// No description provided for @empty.
@@ -1385,7 +1382,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterSortFieldCreateTime.
   ///
   /// In en, this message translates to:
-  /// **'Create Time'**
+  /// **'Creation Time'**
   String get filterSortFieldCreateTime;
 
   /// No description provided for @filterSortFieldCreationDate.
@@ -1508,6 +1505,12 @@ abstract class AppLocalizations {
   /// **'General Settings'**
   String get generalSettings;
 
+  /// No description provided for @geometryProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Geometry Properties'**
+  String get geometryProperties;
+
   /// No description provided for @gridSettings.
   ///
   /// In en, this message translates to:
@@ -1529,7 +1532,7 @@ abstract class AppLocalizations {
   /// No description provided for @groupInfo.
   ///
   /// In en, this message translates to:
-  /// **'Group Information'**
+  /// **'Group Info'**
   String get groupInfo;
 
   /// No description provided for @height.
@@ -1541,7 +1544,7 @@ abstract class AppLocalizations {
   /// No description provided for @hideElement.
   ///
   /// In en, this message translates to:
-  /// **'Hide element'**
+  /// **'Hide Element'**
   String get hideElement;
 
   /// No description provided for @imageCacheCleared.
@@ -1601,7 +1604,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelCannotApplyNoSizeInfo.
   ///
   /// In en, this message translates to:
-  /// **'Cannot apply transform: Image size information unavailable'**
+  /// **'Cannot apply transform: Image size info not available'**
   String get imagePropertyPanelCannotApplyNoSizeInfo;
 
   /// No description provided for @imagePropertyPanelContent.
@@ -1637,7 +1640,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelCroppingValueTooLarge.
   ///
   /// In en, this message translates to:
-  /// **'Cannot apply transform: Cropping values too large, resulting in invalid crop area'**
+  /// **'Cannot apply transform: Cropping values too large resulting in invalid crop region'**
   String get imagePropertyPanelCroppingValueTooLarge;
 
   /// No description provided for @imagePropertyPanelCropRight.
@@ -1721,13 +1724,13 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelFlipHorizontal.
   ///
   /// In en, this message translates to:
-  /// **'Horizontal Flip'**
+  /// **'Flip Horizontal'**
   String get imagePropertyPanelFlipHorizontal;
 
   /// No description provided for @imagePropertyPanelFlipVertical.
   ///
   /// In en, this message translates to:
-  /// **'Vertical Flip'**
+  /// **'Flip Vertical'**
   String get imagePropertyPanelFlipVertical;
 
   /// No description provided for @imagePropertyPanelGeometry.
@@ -1739,7 +1742,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelGeometryWarning.
   ///
   /// In en, this message translates to:
-  /// **'The following properties adjust the entire element frame, not the image content itself'**
+  /// **'These properties adjust the entire element box, not the image content itself'**
   String get imagePropertyPanelGeometryWarning;
 
   /// No description provided for @imagePropertyPanelImageSelection.
@@ -1763,7 +1766,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelNoCropping.
   ///
   /// In en, this message translates to:
-  /// **' (no cropping, but other transforms applied)'**
+  /// **' (No cropping, other transforms applied)'**
   String get imagePropertyPanelNoCropping;
 
   /// No description provided for @imagePropertyPanelNoImage.
@@ -1811,7 +1814,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelPreviewNotice.
   ///
   /// In en, this message translates to:
-  /// **'Note: Repeated logs in the console are normal and do not affect functionality'**
+  /// **'Note: Duplicate logs shown during preview are normal'**
   String get imagePropertyPanelPreviewNotice;
 
   /// No description provided for @imagePropertyPanelReset.
@@ -1823,7 +1826,7 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelResetSuccess.
   ///
   /// In en, this message translates to:
-  /// **'All transformations have been reset'**
+  /// **'All transforms reset'**
   String get imagePropertyPanelResetSuccess;
 
   /// No description provided for @imagePropertyPanelResetTransform.
@@ -1853,13 +1856,13 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelTransformApplied.
   ///
   /// In en, this message translates to:
-  /// **'Transform applied to image'**
+  /// **'Transform applied'**
   String get imagePropertyPanelTransformApplied;
 
   /// No description provided for @imagePropertyPanelTransformWarning.
   ///
   /// In en, this message translates to:
-  /// **'The following transformations modify the image content itself, not the element frame'**
+  /// **'These transforms modify the image content itself, not just the element frame'**
   String get imagePropertyPanelTransformWarning;
 
   /// No description provided for @imagePropertyPanelVisual.
@@ -1937,13 +1940,13 @@ abstract class AppLocalizations {
   /// No description provided for @lockElement.
   ///
   /// In en, this message translates to:
-  /// **'Lock element'**
+  /// **'Lock Element'**
   String get lockElement;
 
   /// No description provided for @lockUnlockAllElements.
   ///
   /// In en, this message translates to:
-  /// **'Lock/Unlock all elements'**
+  /// **'Lock/Unlock All Elements'**
   String get lockUnlockAllElements;
 
   /// No description provided for @moveDown.
@@ -1955,13 +1958,13 @@ abstract class AppLocalizations {
   /// No description provided for @moveLayerDown.
   ///
   /// In en, this message translates to:
-  /// **'Move layer down'**
+  /// **'Move Layer Down'**
   String get moveLayerDown;
 
   /// No description provided for @moveLayerUp.
   ///
   /// In en, this message translates to:
-  /// **'Move layer up'**
+  /// **'Move Layer Up'**
   String get moveLayerUp;
 
   /// No description provided for @moveUp.
@@ -2177,7 +2180,7 @@ abstract class AppLocalizations {
   /// No description provided for @practiceEditEnterTitle.
   ///
   /// In en, this message translates to:
-  /// **'Please enter practice title'**
+  /// **'Please enter a practice title'**
   String get practiceEditEnterTitle;
 
   /// No description provided for @practiceEditExit.
@@ -2267,7 +2270,7 @@ abstract class AppLocalizations {
   /// No description provided for @practiceEditMultiSelectionProperties.
   ///
   /// In en, this message translates to:
-  /// **'Multiple Selection Properties'**
+  /// **'Multi-Selection Properties'**
   String get practiceEditMultiSelectionProperties;
 
   /// No description provided for @practiceEditNoLayers.
@@ -2315,13 +2318,13 @@ abstract class AppLocalizations {
   /// No description provided for @practiceEditSaveAndExit.
   ///
   /// In en, this message translates to:
-  /// **'Save and Exit'**
+  /// **'Save & Exit'**
   String get practiceEditSaveAndExit;
 
   /// No description provided for @practiceEditSaveAndLeave.
   ///
   /// In en, this message translates to:
-  /// **'Save and Leave'**
+  /// **'Save & Leave'**
   String get practiceEditSaveAndLeave;
 
   /// No description provided for @practiceEditSaveFailed.
@@ -2381,13 +2384,13 @@ abstract class AppLocalizations {
   /// No description provided for @practiceEditTitleExists.
   ///
   /// In en, this message translates to:
-  /// **'Title Already Exists'**
+  /// **'Title Exists'**
   String get practiceEditTitleExists;
 
   /// No description provided for @practiceEditTitleExistsMessage.
   ///
   /// In en, this message translates to:
-  /// **'A practice with this title already exists. Overwrite?'**
+  /// **'A practice with this title already exists. Do you want to overwrite it?'**
   String get practiceEditTitleExistsMessage;
 
   /// No description provided for @practiceEditToolbar.
@@ -2471,13 +2474,13 @@ abstract class AppLocalizations {
   /// No description provided for @practiceEditUnsavedChangesExitConfirmation.
   ///
   /// In en, this message translates to:
-  /// **'You have unsaved changes. Do you want to exit?'**
+  /// **'You have unsaved changes. Are you sure you want to exit?'**
   String get practiceEditUnsavedChangesExitConfirmation;
 
   /// No description provided for @practiceEditUnsavedChangesMessage.
   ///
   /// In en, this message translates to:
-  /// **'You have unsaved changes. Do you want to leave?'**
+  /// **'You have unsaved changes. Are you sure you want to leave?'**
   String get practiceEditUnsavedChangesMessage;
 
   /// No description provided for @practiceEditVisualProperties.
@@ -2486,32 +2489,118 @@ abstract class AppLocalizations {
   /// **'Visual Properties'**
   String get practiceEditVisualProperties;
 
+  /// No description provided for @practiceListBatchDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
   String get practiceListBatchDone;
 
+  /// No description provided for @practiceListBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Mode'**
   String get practiceListBatchMode;
 
+  /// No description provided for @practiceListDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
   String get practiceListDeleteConfirm;
 
+  /// No description provided for @practiceListDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the selected practice sheets? This action cannot be undone.'**
   String get practiceListDeleteMessage;
 
+  /// No description provided for @practiceListDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Selected'**
   String get practiceListDeleteSelected;
 
+  /// No description provided for @practiceListError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading practice sheets'**
   String get practiceListError;
 
+  /// No description provided for @practiceListGridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid View'**
   String get practiceListGridView;
-  String get practiceListItemsPerPage;
+
+  /// No description provided for @practiceListListView.
+  ///
+  /// In en, this message translates to:
+  /// **'List View'**
   String get practiceListListView;
+
+  /// No description provided for @practiceListLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading practice sheets...'**
   String get practiceListLoading;
+
+  /// No description provided for @practiceListNewPractice.
+  ///
+  /// In en, this message translates to:
+  /// **'New Practice Sheet'**
   String get practiceListNewPractice;
+
+  /// No description provided for @practiceListNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No practice sheets found'**
   String get practiceListNoResults;
+
+  /// No description provided for @practiceListPages.
+  ///
+  /// In en, this message translates to:
+  /// **'pages'**
   String get practiceListPages;
+
+  /// No description provided for @practiceListSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search practice sheets...'**
   String get practiceListSearch;
+
+  /// No description provided for @practiceListSortByCreateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Creation Time'**
   String get practiceListSortByCreateTime;
+
+  /// No description provided for @practiceListSortByTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Title'**
   String get practiceListSortByTitle;
+
+  /// No description provided for @practiceListSortByUpdateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Update Time'**
   String get practiceListSortByUpdateTime;
+
+  /// No description provided for @practiceListThumbnailError.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail load failed'**
   String get practiceListThumbnailError;
+
+  /// No description provided for @practiceListTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice Sheets'**
   String get practiceListTitle;
-  String get practiceListTotalItems;
+
+  /// No description provided for @practicePageSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Settings'**
   String get practicePageSettings;
 
   /// No description provided for @practices.
@@ -2531,6 +2620,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview'**
   String get preview;
+
+  /// No description provided for @previewText.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get previewText;
 
   /// No description provided for @print.
   ///
@@ -2556,6 +2651,12 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @selectCollection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Collection'**
+  String get selectCollection;
+
   /// No description provided for @selected.
   ///
   /// In en, this message translates to:
@@ -2565,7 +2666,7 @@ abstract class AppLocalizations {
   /// No description provided for @sendLayerToBack.
   ///
   /// In en, this message translates to:
-  /// **'Send layer to the back'**
+  /// **'Send Layer to Back'**
   String get sendLayerToBack;
 
   /// No description provided for @sendToBack.
@@ -2583,7 +2684,7 @@ abstract class AppLocalizations {
   /// No description provided for @showElement.
   ///
   /// In en, this message translates to:
-  /// **'Show element'**
+  /// **'Show Element'**
   String get showElement;
 
   /// No description provided for @showGrid.
@@ -2595,13 +2696,13 @@ abstract class AppLocalizations {
   /// No description provided for @showHideAllElements.
   ///
   /// In en, this message translates to:
-  /// **'Show/Hide all elements'**
+  /// **'Show/Hide All Elements'**
   String get showHideAllElements;
 
   /// No description provided for @stateAndDisplay.
   ///
   /// In en, this message translates to:
-  /// **'State and Display'**
+  /// **'State & Display'**
   String get stateAndDisplay;
 
   /// No description provided for @storageSettings.
@@ -2613,7 +2714,7 @@ abstract class AppLocalizations {
   /// No description provided for @tagEditorEnterTagHint.
   ///
   /// In en, this message translates to:
-  /// **'Enter tag and press Enter'**
+  /// **'Type a tag and press Enter'**
   String get tagEditorEnterTagHint;
 
   /// No description provided for @tagEditorNoTags.
@@ -2802,6 +2903,12 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeModeSystem;
 
+  /// No description provided for @toggleTestText.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Test Text'**
+  String get toggleTestText;
+
   /// No description provided for @total.
   ///
   /// In en, this message translates to:
@@ -2817,7 +2924,7 @@ abstract class AppLocalizations {
   /// No description provided for @unlockElement.
   ///
   /// In en, this message translates to:
-  /// **'Unlock element'**
+  /// **'Unlock Element'**
   String get unlockElement;
 
   /// No description provided for @unnamedElement.
@@ -2843,6 +2950,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Visible'**
   String get visible;
+
+  /// No description provided for @visualSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual Settings'**
+  String get visualSettings;
 
   /// No description provided for @width.
   ///
@@ -2945,32 +3058,155 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Works'**
   String get workBrowseTitle;
+
+  /// No description provided for @workDetailBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
   String get workDetailBack;
+
+  /// No description provided for @workDetailBasicInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
   String get workDetailBasicInfo;
+
+  /// No description provided for @workDetailCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
   String get workDetailCancel;
+
+  /// No description provided for @workDetailCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Characters'**
   String get workDetailCharacters;
+
+  /// No description provided for @workDetailCreateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Creation Time'**
   String get workDetailCreateTime;
+
+  /// No description provided for @workDetailEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
   String get workDetailEdit;
+
+  /// No description provided for @workDetailExtract.
+  ///
+  /// In en, this message translates to:
+  /// **'Extract Characters'**
   String get workDetailExtract;
+
+  /// No description provided for @workDetailExtractionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open character extraction'**
   String get workDetailExtractionError;
+
+  /// No description provided for @workDetailImageCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Image Count'**
   String get workDetailImageCount;
+
+  /// No description provided for @workDetailImageLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected image failed to load, try reimporting the image'**
   String get workDetailImageLoadError;
+
+  /// No description provided for @workDetailLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading work details...'**
   String get workDetailLoading;
+
+  /// No description provided for @workDetailNoCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'No characters yet'**
   String get workDetailNoCharacters;
+
+  /// No description provided for @workDetailNoImages.
+  ///
+  /// In en, this message translates to:
+  /// **'No images to display'**
   String get workDetailNoImages;
+
+  /// No description provided for @workDetailNoImagesForExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot extract characters: Work has no images'**
   String get workDetailNoImagesForExtraction;
+
+  /// No description provided for @workDetailNoWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work doesn\'t exist or has been deleted'**
   String get workDetailNoWork;
+
+  /// No description provided for @workDetailOtherInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Other Information'**
   String get workDetailOtherInfo;
 
+  /// No description provided for @workDetailSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
   String get workDetailSave;
+
+  /// No description provided for @workDetailSaveFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed'**
   String get workDetailSaveFailure;
+
+  /// No description provided for @workDetailSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Save successful'**
   String get workDetailSaveSuccess;
+
+  /// No description provided for @workDetailTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
   String get workDetailTags;
-  // Work Detail Page
+
+  /// No description provided for @workDetailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Work Details'**
   String get workDetailTitle;
+
+  /// No description provided for @workDetailUnsavedChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Are you sure you want to discard them?'**
   String get workDetailUnsavedChanges;
+
+  /// No description provided for @workDetailUpdateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Time'**
   String get workDetailUpdateTime;
+
+  /// No description provided for @workDetailViewMore.
+  ///
+  /// In en, this message translates to:
+  /// **'View More'**
   String get workDetailViewMore;
+
+  /// No description provided for @workFormAuthor.
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
   String get workFormAuthor;
 
   /// No description provided for @workFormAuthorHelp.
@@ -3006,7 +3242,7 @@ abstract class AppLocalizations {
   /// No description provided for @workFormDateHelp.
   ///
   /// In en, this message translates to:
-  /// **'The completion date of the work'**
+  /// **'The date when the work was completed'**
   String get workFormDateHelp;
 
   /// No description provided for @workFormDateTooltip.
@@ -3224,25 +3460,65 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Works'**
   String get works;
+
+  /// No description provided for @workStyleClerical.
+  ///
+  /// In en, this message translates to:
+  /// **'Clerical Script'**
   String get workStyleClerical;
+
+  /// No description provided for @workStyleCursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Cursive Script'**
   String get workStyleCursive;
+
+  /// No description provided for @workStyleOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
   String get workStyleOther;
-  // Work Style localization
+
+  /// No description provided for @workStyleRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Script'**
   String get workStyleRegular;
+
+  /// No description provided for @workStyleRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running Script'**
   String get workStyleRunning;
 
+  /// No description provided for @workStyleSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal Script'**
   String get workStyleSeal;
-  // Work Tool localization
+
+  /// No description provided for @workToolBrush.
+  ///
+  /// In en, this message translates to:
+  /// **'Brush'**
   String get workToolBrush;
 
+  /// No description provided for @workToolHardPen.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard Pen'**
   String get workToolHardPen;
 
+  /// No description provided for @workToolOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
   String get workToolOther;
 
   /// No description provided for @characterCollectionDeleteBatchConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Confirm to delete {count} saved regions?'**
+  /// **'Confirm deletion of {count} saved regions?'**
   String characterCollectionDeleteBatchConfirm(Object count);
 
   /// No description provided for @characterCollectionDeleteBatchMessage.
@@ -3260,19 +3536,19 @@ abstract class AppLocalizations {
   /// No description provided for @characterCollectionFindSwitchFailed.
   ///
   /// In en, this message translates to:
-  /// **'Failed to find and switch page: {error}'**
+  /// **'Find and switch page failed: {error}'**
   String characterCollectionFindSwitchFailed(Object error);
 
   /// No description provided for @characterEditCharacterUpdated.
   ///
   /// In en, this message translates to:
-  /// **' \"{character}\" updated'**
+  /// **'\"{character}\" updated'**
   String characterEditCharacterUpdated(Object character);
 
   /// No description provided for @characterEditSaveConfirmMessage.
   ///
   /// In en, this message translates to:
-  /// **'Confirm to save \"{character}\"?'**
+  /// **'Confirm saving \"{character}\"?'**
   String characterEditSaveConfirmMessage(Object character);
 
   /// No description provided for @characterManagementError.
@@ -3284,15 +3560,14 @@ abstract class AppLocalizations {
   /// No description provided for @characterManagementItemsPerPage.
   ///
   /// In en, this message translates to:
-  /// **'{count} per page'**
+  /// **'{count} items per page'**
   String characterManagementItemsPerPage(Object count);
 
   /// No description provided for @imagePropertyPanelCroppingApplied.
   ///
   /// In en, this message translates to:
-  /// **' (cropping: left {left}px, top {top}px, right {right}px, bottom {bottom}px)'**
-  String imagePropertyPanelCroppingApplied(
-      Object bottom, Object left, Object right, Object top);
+  /// **' (Cropping: Left {left}px, Top {top}px, Right {right}px, Bottom {bottom}px)'**
+  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top);
 
   /// No description provided for @imagePropertyPanelFileNotExist.
   ///
@@ -3303,13 +3578,13 @@ abstract class AppLocalizations {
   /// No description provided for @imagePropertyPanelLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Unable to load image: {error}'**
+  /// **'Failed to load image: {error}...'**
   String imagePropertyPanelLoadError(Object error);
 
   /// No description provided for @imagePropertyPanelProcessingPathError.
   ///
   /// In en, this message translates to:
-  /// **'Error processing file path: {error}'**
+  /// **'Processing path error: {error}'**
   String imagePropertyPanelProcessingPathError(Object error);
 
   /// No description provided for @imagePropertyPanelTransformError.
@@ -3348,6 +3623,18 @@ abstract class AppLocalizations {
   /// **'Title updated to \"{title}\"'**
   String practiceEditTitleUpdated(Object title);
 
+  /// No description provided for @practiceListItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String practiceListItemsPerPage(Object count);
+
+  /// No description provided for @practiceListTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} practice sheets'**
+  String practiceListTotalItems(Object count);
+
   /// No description provided for @workBrowseDeleteConfirmMessage.
   ///
   /// In en, this message translates to:
@@ -3377,19 +3664,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import failed: {error}'**
   String workImportDialogError(Object error);
-
-  static AppLocalizations of(BuildContext context) {
-    return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
-  }
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
-
-  @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'zh'].contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) {
@@ -3397,5 +3675,25 @@ class _AppLocalizationsDelegate
   }
 
   @override
+  bool isSupported(Locale locale) => <String>['en', 'zh'].contains(locale.languageCode);
+
+  @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en': return AppLocalizationsEn();
+    case 'zh': return AppLocalizationsZh();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.'
+  );
 }
