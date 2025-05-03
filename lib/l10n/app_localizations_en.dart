@@ -576,6 +576,147 @@ class AppLocalizationsEn extends AppLocalizations {
   String get export => 'Export';
 
   @override
+  String get filterApply => 'Apply';
+
+  @override
+  String get filterClear => 'Clear';
+
+  @override
+  String get filterCollapse => 'Collapse Filter Panel';
+
+  @override
+  String get filterExpand => 'Expand Filter Panel';
+
+  @override
+  String get filterHeader => 'Filter & Sort';
+
+  @override
+  String get filterPanel => 'Filter Panel';
+
+  @override
+  String get filterReset => 'Reset Filters';
+
+  @override
+  String get filterSection => 'Filter Options';
+
+  @override
+  String get filterSearchPlaceholder => 'Search...';
+
+  @override
+  String get filterSortAscending => 'Ascending';
+
+  @override
+  String get filterSortDescending => 'Descending';
+
+  @override
+  String get filterSortDirection => 'Sort Direction';
+
+  @override
+  String get filterSortField => 'Sort By';
+
+  @override
+  String get filterToggle => 'Toggle Filters';
+
+  @override
+  String get filterTagsSection => 'Tags';
+
+  @override
+  String get filterTagsSelected => 'Selected Tags:';
+
+  @override
+  String get filterTagsAdd => 'Add Tag';
+
+  @override
+  String get filterTagsAddHint => 'Enter tag name and press Enter';
+
+  @override
+  String get filterTagsNone => 'No tags selected';
+
+  @override
+  String get filterTagsSuggested => 'Suggested tags:';
+
+  @override
+  String get filterPresetSection => 'Presets';
+
+  @override
+  String get filterCustomRange => 'Custom Range';
+
+  @override
+  String get filterDateRange => 'Date Range';
+
+  @override
+  String get filterStartDate => 'Start Date';
+
+  @override
+  String get filterEndDate => 'End Date';
+
+  @override
+  String get filterSelectDate => 'Select Date';
+
+  @override
+  String get filterFavoritesOnly => 'Show favorites only';
+
+  @override
+  String get filterStyleSection => 'Calligraphy Style';
+
+  @override
+  String get filterStyleClerical => 'Clerical Script';
+
+  @override
+  String get filterStyleCursive => 'Cursive Script';
+
+  @override
+  String get filterStyleRegular => 'Regular Script';
+
+  @override
+  String get filterStyleRunning => 'Running Script';
+
+  @override
+  String get filterStyleSeal => 'Seal Script';
+
+  @override
+  String get filterStyleOther => 'Other';
+
+  @override
+  String get filterToolSection => 'Writing Tool';
+
+  @override
+  String get filterToolBrush => 'Brush';
+
+  @override
+  String get filterToolHardPen => 'Hard Pen';
+
+  @override
+  String get filterToolOther => 'Other';
+
+  @override
+  String get filterBatchSelection => 'Selection';
+
+  @override
+  String get filterSelectAll => 'Select All';
+
+  @override
+  String get filterDeselectAll => 'Deselect All';
+
+  @override
+  String get filterBatchActions => 'Batch Actions';
+
+  @override
+  String filterItemsSelected(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String filterItemsPerPage(Object count) {
+    return '$count per page';
+  }
+
+  @override
+  String filterTotalItems(Object count) {
+    return 'Total: $count items';
+  }
+
+  @override
   String get filterDateApply => 'Apply';
 
   @override
@@ -639,15 +780,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterDateStartDate => 'Start Date';
 
   @override
-  String get filterReset => 'Reset Filters';
-
-  @override
-  String get filterSortAscending => 'Ascending';
-
-  @override
-  String get filterSortDescending => 'Descending';
-
-  @override
   String get filterSortFieldAuthor => 'Author';
 
   @override
@@ -675,40 +807,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterSortSection => 'Sort';
 
   @override
-  String get filterStyleClerical => 'Clerical Script';
-
-  @override
-  String get filterStyleCursive => 'Cursive Script';
-
-  @override
-  String get filterStyleOther => 'Other';
-
-  @override
-  String get filterStyleRegular => 'Regular Script';
-
-  @override
-  String get filterStyleRunning => 'Running Script';
-
-  @override
-  String get filterStyleSeal => 'Seal Script';
-
-  @override
-  String get filterStyleSection => 'Calligraphy Style';
-
-  @override
   String get filterTitle => 'Filter & Sort';
-
-  @override
-  String get filterToolBrush => 'Brush';
-
-  @override
-  String get filterToolHardPen => 'Hard Pen';
-
-  @override
-  String get filterToolOther => 'Other';
-
-  @override
-  String get filterToolSection => 'Writing Tool';
 
   @override
   String get generalSettings => 'General Settings';

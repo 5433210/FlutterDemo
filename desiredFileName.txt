@@ -1,1 +1,35 @@
-{}
+{
+  "zh": [
+    "filterApply",
+    "filterClear",
+    "filterCollapse",
+    "filterExpand",
+    "filterHeader",
+    "filterPanel",
+    "filterSection",
+    "filterSearchPlaceholder",
+    "filterSortDirection",
+    "filterSortField",
+    "filterToggle",
+    "filterTagsSection",
+    "filterTagsSelected",
+    "filterTagsAdd",
+    "filterTagsAddHint",
+    "filterTagsNone",
+    "filterTagsSuggested",
+    "filterPresetSection",
+    "filterCustomRange",
+    "filterDateRange",
+    "filterStartDate",
+    "filterEndDate",
+    "filterSelectDate",
+    "filterFavoritesOnly",
+    "filterBatchSelection",
+    "filterSelectAll",
+    "filterDeselectAll",
+    "filterBatchActions",
+    "filterItemsSelected",
+    "filterItemsPerPage",
+    "filterTotalItems"
+  ]
+}

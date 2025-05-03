@@ -63,14 +63,20 @@ class DateRangeFilter {
   }
 
   DateTimeRange? get effectiveRange {
-    if (preset != null) {
+    if (preset != null && preset != DateRangePreset.custom) {
+      // 对于非自定义预设，使用预设的时间范围
       return preset!.getRange();
     }
 
+    // 对于自定义预设或直接设置了start/end，使用实际的时间范围
     if (start != null || end != null) {
+      final now = DateTime.now();
       return DateTimeRange(
         start: start ?? DateTime(1900),
-        end: end ?? DateTime.now(),
+        // 如果结束日期存在，将其设置为当天的23:59:59
+        end: end != null
+            ? DateTime(end!.year, end!.month, end!.day, 23, 59, 59, 999)
+            : DateTime(now.year, now.month, now.day, 23, 59, 59, 999),
       );
     }
 
@@ -146,6 +152,7 @@ enum DateRangePreset {
   last90Days,
   last365Days,
   all,
+  custom,
 }
 
 extension DateRangePresetX on DateRangePreset {
@@ -163,6 +170,7 @@ extension DateRangePresetX on DateRangePreset {
         DateRangePreset.thisWeek => '本周',
         DateRangePreset.lastWeek => '上周',
         DateRangePreset.all => '全部时间',
+        DateRangePreset.custom => '自定义',
       };
 
   DateTimeRange getRange() {
@@ -219,6 +227,12 @@ extension DateRangePresetX on DateRangePreset {
       DateRangePreset.all => DateTimeRange(
           start: DateTime(1900),
           end: now,
+        ),
+      DateRangePreset.custom => DateTimeRange(
+          // 对于自定义模式，返回一个默认的全时间范围
+          // 实际使用时应该由 DateRangeFilter.effectiveRange 决定真正的范围
+          start: DateTime(1900),
+          end: DateTime(now.year, now.month, now.day, 23, 59, 59, 999),
         ),
     };
   }

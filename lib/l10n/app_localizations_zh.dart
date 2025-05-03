@@ -576,6 +576,147 @@ class AppLocalizationsZh extends AppLocalizations {
   String get export => '导出';
 
   @override
+  String get filterApply => 'Apply';
+
+  @override
+  String get filterClear => 'Clear';
+
+  @override
+  String get filterCollapse => 'Collapse Filter Panel';
+
+  @override
+  String get filterExpand => 'Expand Filter Panel';
+
+  @override
+  String get filterHeader => 'Filter & Sort';
+
+  @override
+  String get filterPanel => 'Filter Panel';
+
+  @override
+  String get filterReset => '重置筛选';
+
+  @override
+  String get filterSection => 'Filter Options';
+
+  @override
+  String get filterSearchPlaceholder => 'Search...';
+
+  @override
+  String get filterSortAscending => '升序';
+
+  @override
+  String get filterSortDescending => '降序';
+
+  @override
+  String get filterSortDirection => 'Sort Direction';
+
+  @override
+  String get filterSortField => 'Sort By';
+
+  @override
+  String get filterToggle => 'Toggle Filters';
+
+  @override
+  String get filterTagsSection => 'Tags';
+
+  @override
+  String get filterTagsSelected => 'Selected Tags:';
+
+  @override
+  String get filterTagsAdd => 'Add Tag';
+
+  @override
+  String get filterTagsAddHint => 'Enter tag name and press Enter';
+
+  @override
+  String get filterTagsNone => 'No tags selected';
+
+  @override
+  String get filterTagsSuggested => 'Suggested tags:';
+
+  @override
+  String get filterPresetSection => 'Presets';
+
+  @override
+  String get filterCustomRange => 'Custom Range';
+
+  @override
+  String get filterDateRange => 'Date Range';
+
+  @override
+  String get filterStartDate => 'Start Date';
+
+  @override
+  String get filterEndDate => 'End Date';
+
+  @override
+  String get filterSelectDate => 'Select Date';
+
+  @override
+  String get filterFavoritesOnly => 'Show favorites only';
+
+  @override
+  String get filterStyleSection => '书法风格';
+
+  @override
+  String get filterStyleClerical => '隶书';
+
+  @override
+  String get filterStyleCursive => '草书';
+
+  @override
+  String get filterStyleRegular => '楷书';
+
+  @override
+  String get filterStyleRunning => '行书';
+
+  @override
+  String get filterStyleSeal => '篆书';
+
+  @override
+  String get filterStyleOther => '其他';
+
+  @override
+  String get filterToolSection => '书写工具';
+
+  @override
+  String get filterToolBrush => '毛笔';
+
+  @override
+  String get filterToolHardPen => '硬笔';
+
+  @override
+  String get filterToolOther => '其他';
+
+  @override
+  String get filterBatchSelection => 'Selection';
+
+  @override
+  String get filterSelectAll => 'Select All';
+
+  @override
+  String get filterDeselectAll => 'Deselect All';
+
+  @override
+  String get filterBatchActions => 'Batch Actions';
+
+  @override
+  String filterItemsSelected(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String filterItemsPerPage(Object count) {
+    return '$count per page';
+  }
+
+  @override
+  String filterTotalItems(Object count) {
+    return 'Total: $count items';
+  }
+
+  @override
   String get filterDateApply => '应用';
 
   @override
@@ -639,15 +780,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterDateStartDate => '开始日期';
 
   @override
-  String get filterReset => '重置筛选';
-
-  @override
-  String get filterSortAscending => '升序';
-
-  @override
-  String get filterSortDescending => '降序';
-
-  @override
   String get filterSortFieldAuthor => '作者';
 
   @override
@@ -675,40 +807,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterSortSection => '排序';
 
   @override
-  String get filterStyleClerical => '隶书';
-
-  @override
-  String get filterStyleCursive => '草书';
-
-  @override
-  String get filterStyleOther => '其他';
-
-  @override
-  String get filterStyleRegular => '楷书';
-
-  @override
-  String get filterStyleRunning => '行书';
-
-  @override
-  String get filterStyleSeal => '篆书';
-
-  @override
-  String get filterStyleSection => '书法风格';
-
-  @override
   String get filterTitle => '筛选与排序';
-
-  @override
-  String get filterToolBrush => '毛笔';
-
-  @override
-  String get filterToolHardPen => '硬笔';
-
-  @override
-  String get filterToolOther => '其他';
-
-  @override
-  String get filterToolSection => '书写工具';
 
   @override
   String get generalSettings => '常规设置';

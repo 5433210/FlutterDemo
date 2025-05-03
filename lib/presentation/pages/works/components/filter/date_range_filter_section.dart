@@ -279,6 +279,7 @@ class _DateRangeFilterSectionState extends State<DateRangeFilterSection>
       DateRangePreset.last90Days => l10n.filterDatePresetLast90Days,
       DateRangePreset.last365Days => l10n.filterDatePresetLast365Days,
       DateRangePreset.all => l10n.filterDatePresetAll,
+      DateRangePreset.custom => l10n.filterDateCustom,
     };
   }
 

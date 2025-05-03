@@ -1229,6 +1229,276 @@ abstract class AppLocalizations {
   /// **'Export'**
   String get export;
 
+  /// No description provided for @filterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get filterApply;
+
+  /// No description provided for @filterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get filterClear;
+
+  /// No description provided for @filterCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse Filter Panel'**
+  String get filterCollapse;
+
+  /// No description provided for @filterExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand Filter Panel'**
+  String get filterExpand;
+
+  /// No description provided for @filterHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter & Sort'**
+  String get filterHeader;
+
+  /// No description provided for @filterPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Panel'**
+  String get filterPanel;
+
+  /// No description provided for @filterReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Filters'**
+  String get filterReset;
+
+  /// No description provided for @filterSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Options'**
+  String get filterSection;
+
+  /// No description provided for @filterSearchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get filterSearchPlaceholder;
+
+  /// No description provided for @filterSortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get filterSortAscending;
+
+  /// No description provided for @filterSortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get filterSortDescending;
+
+  /// No description provided for @filterSortDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Direction'**
+  String get filterSortDirection;
+
+  /// No description provided for @filterSortField.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort By'**
+  String get filterSortField;
+
+  /// No description provided for @filterToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle Filters'**
+  String get filterToggle;
+
+  /// No description provided for @filterTagsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get filterTagsSection;
+
+  /// No description provided for @filterTagsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Tags:'**
+  String get filterTagsSelected;
+
+  /// No description provided for @filterTagsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Tag'**
+  String get filterTagsAdd;
+
+  /// No description provided for @filterTagsAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tag name and press Enter'**
+  String get filterTagsAddHint;
+
+  /// No description provided for @filterTagsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags selected'**
+  String get filterTagsNone;
+
+  /// No description provided for @filterTagsSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested tags:'**
+  String get filterTagsSuggested;
+
+  /// No description provided for @filterPresetSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get filterPresetSection;
+
+  /// No description provided for @filterCustomRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Range'**
+  String get filterCustomRange;
+
+  /// No description provided for @filterDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Range'**
+  String get filterDateRange;
+
+  /// No description provided for @filterStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get filterStartDate;
+
+  /// No description provided for @filterEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get filterEndDate;
+
+  /// No description provided for @filterSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get filterSelectDate;
+
+  /// No description provided for @filterFavoritesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show favorites only'**
+  String get filterFavoritesOnly;
+
+  /// No description provided for @filterStyleSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Calligraphy Style'**
+  String get filterStyleSection;
+
+  /// No description provided for @filterStyleClerical.
+  ///
+  /// In en, this message translates to:
+  /// **'Clerical Script'**
+  String get filterStyleClerical;
+
+  /// No description provided for @filterStyleCursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Cursive Script'**
+  String get filterStyleCursive;
+
+  /// No description provided for @filterStyleRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Script'**
+  String get filterStyleRegular;
+
+  /// No description provided for @filterStyleRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running Script'**
+  String get filterStyleRunning;
+
+  /// No description provided for @filterStyleSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal Script'**
+  String get filterStyleSeal;
+
+  /// No description provided for @filterStyleOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get filterStyleOther;
+
+  /// No description provided for @filterToolSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing Tool'**
+  String get filterToolSection;
+
+  /// No description provided for @filterToolBrush.
+  ///
+  /// In en, this message translates to:
+  /// **'Brush'**
+  String get filterToolBrush;
+
+  /// No description provided for @filterToolHardPen.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard Pen'**
+  String get filterToolHardPen;
+
+  /// No description provided for @filterToolOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get filterToolOther;
+
+  /// No description provided for @filterBatchSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection'**
+  String get filterBatchSelection;
+
+  /// No description provided for @filterSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get filterSelectAll;
+
+  /// No description provided for @filterDeselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get filterDeselectAll;
+
+  /// No description provided for @filterBatchActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Actions'**
+  String get filterBatchActions;
+
+  /// No description provided for @filterItemsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String filterItemsSelected(Object count);
+
+  /// No description provided for @filterItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String filterItemsPerPage(Object count);
+
+  /// No description provided for @filterTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count} items'**
+  String filterTotalItems(Object count);
+
   /// No description provided for @filterDateApply.
   ///
   /// In en, this message translates to:
@@ -1355,24 +1625,6 @@ abstract class AppLocalizations {
   /// **'Start Date'**
   String get filterDateStartDate;
 
-  /// No description provided for @filterReset.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset Filters'**
-  String get filterReset;
-
-  /// No description provided for @filterSortAscending.
-  ///
-  /// In en, this message translates to:
-  /// **'Ascending'**
-  String get filterSortAscending;
-
-  /// No description provided for @filterSortDescending.
-  ///
-  /// In en, this message translates to:
-  /// **'Descending'**
-  String get filterSortDescending;
-
   /// No description provided for @filterSortFieldAuthor.
   ///
   /// In en, this message translates to:
@@ -1427,77 +1679,11 @@ abstract class AppLocalizations {
   /// **'Sort'**
   String get filterSortSection;
 
-  /// No description provided for @filterStyleClerical.
-  ///
-  /// In en, this message translates to:
-  /// **'Clerical Script'**
-  String get filterStyleClerical;
-
-  /// No description provided for @filterStyleCursive.
-  ///
-  /// In en, this message translates to:
-  /// **'Cursive Script'**
-  String get filterStyleCursive;
-
-  /// No description provided for @filterStyleOther.
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get filterStyleOther;
-
-  /// No description provided for @filterStyleRegular.
-  ///
-  /// In en, this message translates to:
-  /// **'Regular Script'**
-  String get filterStyleRegular;
-
-  /// No description provided for @filterStyleRunning.
-  ///
-  /// In en, this message translates to:
-  /// **'Running Script'**
-  String get filterStyleRunning;
-
-  /// No description provided for @filterStyleSeal.
-  ///
-  /// In en, this message translates to:
-  /// **'Seal Script'**
-  String get filterStyleSeal;
-
-  /// No description provided for @filterStyleSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Calligraphy Style'**
-  String get filterStyleSection;
-
   /// No description provided for @filterTitle.
   ///
   /// In en, this message translates to:
   /// **'Filter & Sort'**
   String get filterTitle;
-
-  /// No description provided for @filterToolBrush.
-  ///
-  /// In en, this message translates to:
-  /// **'Brush'**
-  String get filterToolBrush;
-
-  /// No description provided for @filterToolHardPen.
-  ///
-  /// In en, this message translates to:
-  /// **'Hard Pen'**
-  String get filterToolHardPen;
-
-  /// No description provided for @filterToolOther.
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get filterToolOther;
-
-  /// No description provided for @filterToolSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Writing Tool'**
-  String get filterToolSection;
 
   /// No description provided for @generalSettings.
   ///
