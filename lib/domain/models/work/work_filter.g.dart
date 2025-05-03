@@ -23,6 +23,8 @@ _$WorkFilterImpl _$$WorkFilterImplFromJson(Map<String, dynamic> json) =>
       sortOption: json['sortOption'] == null
           ? const SortOption()
           : SortOption.fromJson(json['sortOption'] as Map<String, dynamic>),
+      limit: (json['limit'] as num?)?.toInt(),
+      offset: (json['offset'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$WorkFilterImplToJson(_$WorkFilterImpl instance) =>
@@ -36,4 +38,6 @@ Map<String, dynamic> _$$WorkFilterImplToJson(_$WorkFilterImpl instance) =>
       'updateTimeRange': _dateRangeToJson(instance.updateTimeRange),
       'datePreset': _dateRangePresetToJson(instance.datePreset),
       'sortOption': instance.sortOption,
+      'limit': instance.limit,
+      'offset': instance.offset,
     };

@@ -53,6 +53,12 @@ mixin _$WorkFilter {
   /// 排序选项
   SortOption get sortOption => throw _privateConstructorUsedError;
 
+  /// 分页大小
+  int? get limit => throw _privateConstructorUsedError;
+
+  /// 分页偏移量
+  int? get offset => throw _privateConstructorUsedError;
+
   /// Serializes this WorkFilter to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -85,7 +91,9 @@ abstract class $WorkFilterCopyWith<$Res> {
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       DateRangePreset datePreset,
-      SortOption sortOption});
+      SortOption sortOption,
+      int? limit,
+      int? offset});
 
   $SortOptionCopyWith<$Res> get sortOption;
 }
@@ -114,6 +122,8 @@ class _$WorkFilterCopyWithImpl<$Res, $Val extends WorkFilter>
     Object? updateTimeRange = freezed,
     Object? datePreset = null,
     Object? sortOption = null,
+    Object? limit = freezed,
+    Object? offset = freezed,
   }) {
     return _then(_value.copyWith(
       keyword: freezed == keyword
@@ -152,6 +162,14 @@ class _$WorkFilterCopyWithImpl<$Res, $Val extends WorkFilter>
           ? _value.sortOption
           : sortOption // ignore: cast_nullable_to_non_nullable
               as SortOption,
+      limit: freezed == limit
+          ? _value.limit
+          : limit // ignore: cast_nullable_to_non_nullable
+              as int?,
+      offset: freezed == offset
+          ? _value.offset
+          : offset // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 
@@ -190,7 +208,9 @@ abstract class _$$WorkFilterImplCopyWith<$Res>
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       DateRangePreset datePreset,
-      SortOption sortOption});
+      SortOption sortOption,
+      int? limit,
+      int? offset});
 
   @override
   $SortOptionCopyWith<$Res> get sortOption;
@@ -218,6 +238,8 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
     Object? updateTimeRange = freezed,
     Object? datePreset = null,
     Object? sortOption = null,
+    Object? limit = freezed,
+    Object? offset = freezed,
   }) {
     return _then(_$WorkFilterImpl(
       keyword: freezed == keyword
@@ -256,6 +278,14 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
           ? _value.sortOption
           : sortOption // ignore: cast_nullable_to_non_nullable
               as SortOption,
+      limit: freezed == limit
+          ? _value.limit
+          : limit // ignore: cast_nullable_to_non_nullable
+              as int?,
+      offset: freezed == offset
+          ? _value.offset
+          : offset // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -279,7 +309,9 @@ class _$WorkFilterImpl extends _WorkFilter {
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       this.datePreset = DateRangePreset.all,
-      this.sortOption = const SortOption()})
+      this.sortOption = const SortOption(),
+      this.limit,
+      this.offset})
       : _tags = tags,
         super._();
 
@@ -337,9 +369,17 @@ class _$WorkFilterImpl extends _WorkFilter {
   @JsonKey()
   final SortOption sortOption;
 
+  /// 分页大小
+  @override
+  final int? limit;
+
+  /// 分页偏移量
+  @override
+  final int? offset;
+
   @override
   String toString() {
-    return 'WorkFilter(keyword: $keyword, style: $style, tool: $tool, tags: $tags, dateRange: $dateRange, createTimeRange: $createTimeRange, updateTimeRange: $updateTimeRange, datePreset: $datePreset, sortOption: $sortOption)';
+    return 'WorkFilter(keyword: $keyword, style: $style, tool: $tool, tags: $tags, dateRange: $dateRange, createTimeRange: $createTimeRange, updateTimeRange: $updateTimeRange, datePreset: $datePreset, sortOption: $sortOption, limit: $limit, offset: $offset)';
   }
 
   @override
@@ -360,7 +400,9 @@ class _$WorkFilterImpl extends _WorkFilter {
             (identical(other.datePreset, datePreset) ||
                 other.datePreset == datePreset) &&
             (identical(other.sortOption, sortOption) ||
-                other.sortOption == sortOption));
+                other.sortOption == sortOption) &&
+            (identical(other.limit, limit) || other.limit == limit) &&
+            (identical(other.offset, offset) || other.offset == offset));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -375,7 +417,9 @@ class _$WorkFilterImpl extends _WorkFilter {
       createTimeRange,
       updateTimeRange,
       datePreset,
-      sortOption);
+      sortOption,
+      limit,
+      offset);
 
   /// Create a copy of WorkFilter
   /// with the given fields replaced by the non-null parameter values.
@@ -410,7 +454,9 @@ abstract class _WorkFilter extends WorkFilter {
       @JsonKey(
           fromJson: _dateRangePresetFromJson, toJson: _dateRangePresetToJson)
       final DateRangePreset datePreset,
-      final SortOption sortOption}) = _$WorkFilterImpl;
+      final SortOption sortOption,
+      final int? limit,
+      final int? offset}) = _$WorkFilterImpl;
   const _WorkFilter._() : super._();
 
   factory _WorkFilter.fromJson(Map<String, dynamic> json) =
@@ -457,6 +503,14 @@ abstract class _WorkFilter extends WorkFilter {
   /// 排序选项
   @override
   SortOption get sortOption;
+
+  /// 分页大小
+  @override
+  int? get limit;
+
+  /// 分页偏移量
+  @override
+  int? get offset;
 
   /// Create a copy of WorkFilter
   /// with the given fields replaced by the non-null parameter values.

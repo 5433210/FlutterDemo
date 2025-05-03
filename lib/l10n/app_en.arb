@@ -676,13 +676,13 @@
   "verticalLeftToRight": "Vertical Left-to-Right",
   "verticalRightToLeft": "Vertical Right-to-Left",
   "collectionPropertyPanelAvailableCharacters": "Available Characters",
-  "collectionPropertyPanelGlobalInversion": "Global Inversion",  
-  "collectionPropertyPanelCurrentCharInversion": "Current Character Inversion", 
+  "collectionPropertyPanelGlobalInversion": "Global Inversion",
+  "collectionPropertyPanelCurrentCharInversion": "Current Character Inversion",
   "collectionPropertyPanelColorPicker":"Pick Color",
   "collectionPropertyPanelColorSettings":"Color Setting",
   "collectionPropertyPanelAutoLineBreak":"Auto Line Break",
-  "collectionPropertyPanelAutoLineBreakEnabled":"Enable", 
-  "collectionPropertyPanelAutoLineBreakDisabled":"Disable",  
+  "collectionPropertyPanelAutoLineBreakEnabled":"Enable",
+  "collectionPropertyPanelAutoLineBreakDisabled":"Disable",
   "collectionPropertyPanelAutoLineBreakTooltip":"Auto Line Break",
   "verticalTextModeEnabled":"Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally",
   "groupOperations":"Group Operations",
@@ -709,5 +709,7 @@
   "searchCharactersWorksAuthors":"Search characters, works, or authors",
   "exitBatchMode":"Exit Batch Mode",
   "selectedCount":"{count} selected",
-  "workBrowseDeleteSelected":"Delete Selected"
+  "workBrowseDeleteSelected":"Delete Selected",
+  "workBrowseTotalItems": "Total: {count} works",
+  "workBrowseItemsPerPage": "{count} per page"
 }

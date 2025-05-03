@@ -84,8 +84,11 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   Future<void> loadWorks({bool forceRefresh = false}) async {
     if (state.isLoading && !forceRefresh) return;
 
-    AppLogger.debug('触发加载流程',
-        tag: 'WorkBrowseViewModel', data: {'forceRefresh': forceRefresh});
+    AppLogger.debug('触发加载流程', tag: 'WorkBrowseViewModel', data: {
+      'forceRefresh': forceRefresh,
+      'page': state.page,
+      'pageSize': state.pageSize
+    });
 
     state = state.copyWith(
       isLoading: true,
@@ -94,20 +97,61 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     );
 
     try {
-      final works = await _workService.queryWorks(state.filter);
+      // 使用分页查询
+      final result = await _workService.queryWorksPaginated(
+        filter: state.filter,
+        page: state.page,
+        pageSize: state.pageSize,
+      );
 
       state = state.copyWith(
-        works: works,
+        works: result.items,
         isLoading: false,
         error: null,
+        totalItems: result.totalCount,
+        totalPages: result.totalPages,
+        hasMore: result.hasNextPage,
         requestStatus: LoadRequestStatus.idle,
       );
 
-      AppLogger.debug('加载完成',
-          tag: 'WorkBrowseViewModel', data: {'worksCount': works.length});
+      AppLogger.debug('加载完成', tag: 'WorkBrowseViewModel', data: {
+        'worksCount': result.items.length,
+        'totalItems': result.totalCount,
+        'currentPage': result.currentPage,
+        'totalPages': result.totalPages,
+      });
     } catch (e, stack) {
       _handleLoadError(e, stack);
     }
+  }
+
+  // 切换页码
+  void setPage(int page) {
+    if (page < 1 || (state.totalPages > 0 && page > state.totalPages)) return;
+
+    AppLogger.debug('切换页码', tag: 'WorkBrowseViewModel', data: {
+      'oldPage': state.page,
+      'newPage': page,
+    });
+
+    state = state.copyWith(page: page);
+    loadWorks(forceRefresh: true);
+  }
+
+  // 修改每页数量
+  void setPageSize(int pageSize) {
+    if (pageSize < 1) return;
+
+    AppLogger.debug('修改每页数量', tag: 'WorkBrowseViewModel', data: {
+      'oldPageSize': state.pageSize,
+      'newPageSize': pageSize,
+    });
+
+    state = state.copyWith(
+      pageSize: pageSize,
+      page: 1, // 重置到第一页
+    );
+    loadWorks(forceRefresh: true);
   }
 
   // 搜索相关方法

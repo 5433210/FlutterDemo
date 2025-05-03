@@ -4240,6 +4240,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} selected'**
   String selectedCount(Object count);
+
+  /// No description provided for @workBrowseTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count} works'**
+  String workBrowseTotalItems(Object count);
+
+  /// No description provided for @workBrowseItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String workBrowseItemsPerPage(Object count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

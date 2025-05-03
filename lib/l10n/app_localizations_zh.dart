@@ -2136,4 +2136,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String selectedCount(Object count) {
     return '已选择$count个';
   }
+
+  @override
+  String workBrowseTotalItems(Object count) {
+    return '共 $count 个作品';
+  }
+
+  @override
+  String workBrowseItemsPerPage(Object count) {
+    return '每页 $count 个';
+  }
 }

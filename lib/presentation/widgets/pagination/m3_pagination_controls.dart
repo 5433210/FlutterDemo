@@ -40,6 +40,7 @@ class M3PaginationControls extends StatelessWidget {
     final totalPages = (totalItems / pageSize).ceil();
 
     return Container(
+      width: double.infinity, // Make the container take full width
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -54,7 +55,7 @@ class M3PaginationControls extends StatelessWidget {
         children: [
           // Total count
           Text(
-            l10n.practiceListTotalItems('$totalItems'),
+            l10n.workBrowseTotalItems('$totalItems'),
             style: theme.textTheme.bodyMedium,
           ),
 
@@ -113,7 +114,7 @@ class M3PaginationControls extends StatelessWidget {
                           value: size,
                           height: 36,
                           child: Text(
-                            l10n.practiceListItemsPerPage('$size'),
+                            l10n.workBrowseItemsPerPage('$size'),
                           ),
                         ))
                     .toList(),
@@ -124,7 +125,7 @@ class M3PaginationControls extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        l10n.practiceListItemsPerPage('$pageSize'),
+                        l10n.workBrowseItemsPerPage('$pageSize'),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),

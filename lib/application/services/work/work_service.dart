@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../../domain/models/common/paginated_result.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../domain/models/work/work_filter.dart';
 import '../../../domain/repositories/work_image_repository.dart';
@@ -161,6 +162,72 @@ class WorkService with WorkServiceErrorHandler {
         return results;
       },
       data: {'filter': filter.toString()},
+    );
+  }
+
+  /// 分页查询作品
+  Future<PaginatedResult<WorkEntity>> queryWorksPaginated({
+    required WorkFilter filter,
+    required int page,
+    required int pageSize,
+  }) async {
+    return handleOperation(
+      'queryWorksPaginated',
+      () async {
+        AppLogger.debug(
+          '开始分页查询作品',
+          tag: 'WorkService',
+          data: {
+            'filter': {
+              'style': filter.style?.name,
+              'tool': filter.tool?.name,
+              'keyword': filter.keyword,
+              'tags': filter.tags.toList(),
+              'sortOption': {
+                'field': filter.sortOption.field.name,
+                'descending': filter.sortOption.descending,
+              },
+            },
+            'page': page,
+            'pageSize': pageSize,
+          },
+        );
+
+        // 添加分页参数到过滤器
+        final paginatedFilter = filter.copyWith(
+          limit: pageSize,
+          offset: (page - 1) * pageSize,
+        );
+
+        // 查询当前页数据
+        final results = await _repository.query(paginatedFilter);
+
+        // 获取总记录数
+        final totalCount = await _repository.count(filter);
+
+        AppLogger.debug(
+          '分页查询作品完成',
+          tag: 'WorkService',
+          data: {
+            'resultCount': results.length,
+            'totalCount': totalCount,
+            'page': page,
+            'pageSize': pageSize,
+          },
+        );
+
+        return PaginatedResult<WorkEntity>(
+          items: results,
+          totalCount: totalCount,
+          currentPage: page,
+          pageSize: pageSize,
+        );
+      },
+      data: {
+        'filter': filter.toString(),
+        'page': page,
+        'pageSize': pageSize,
+      },
     );
   }
 

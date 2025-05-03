@@ -13,6 +13,7 @@ import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_grid_view.dart';
 import 'components/content/m3_work_list_view.dart';
 import 'components/filter/m3_work_filter_panel.dart';
@@ -62,55 +63,84 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
 
     return PageLayout(
       toolbar: M3WorkBrowseToolbar(
-          viewMode: state.viewMode,
-          onViewModeChanged: (mode) => viewModel.setViewMode(mode),
-          onImport: () => _showImportDialog(context),
-          onSearch: viewModel.setSearchQuery,
-          batchMode: state.batchMode,
-          onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
-          selectedCount: state.selectedWorks.length,
-          onDeleteSelected: () => {
-                ref.read(workBrowseProvider.notifier).deleteSelected(),
-                ref.read(worksNeedsRefreshProvider.notifier).state =
-                    RefreshInfo.importCompleted()
-              }),
-      body: Column(
+        viewMode: state.viewMode,
+        onViewModeChanged: (mode) => viewModel.setViewMode(mode),
+        onImport: () => _showImportDialog(context),
+        onSearch: viewModel.setSearchQuery,
+        batchMode: state.batchMode,
+        onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
+        selectedCount: state.selectedWorks.length,
+        onDeleteSelected: () => {
+          ref.read(workBrowseProvider.notifier).deleteSelected(),
+          ref.read(worksNeedsRefreshProvider.notifier).state =
+              RefreshInfo.importCompleted()
+        },
+      ),
+      body: Stack(
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(
-                      milliseconds: AppSizes.animationDurationSlow),
-                  width:
-                      state.isSidebarOpen ? AppSizes.workFilterPanelWidth : 0,
-                  child: state.isSidebarOpen
-                      ? M3WorkFilterPanel(
-                          filter: state.filter,
-                          onFilterChanged: viewModel.updateFilter,
-                          onToggleExpand: () => viewModel.toggleSidebar(),
-                        )
-                      : null,
+          Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(
+                        milliseconds: AppSizes.animationDurationSlow,
+                      ),
+                      width: state.isSidebarOpen
+                          ? AppSizes.workFilterPanelWidth
+                          : 0,
+                      child: state.isSidebarOpen
+                          ? M3WorkFilterPanel(
+                              filter: state.filter,
+                              onFilterChanged: viewModel.updateFilter,
+                              onToggleExpand: () => viewModel.toggleSidebar(),
+                            )
+                          : null,
+                    ),
+                    SidebarToggle(
+                      isOpen: state.isSidebarOpen,
+                      onToggle: () => viewModel.toggleSidebar(),
+                      alignRight: false,
+                    ),
+                    AnimatedContainer(
+                      duration: const Duration(
+                        milliseconds: AppSizes.animationDurationSlow,
+                      ),
+                      width: 4,
+                      color: state.isSidebarOpen
+                          ? colorScheme.outlineVariant
+                          : Colors.transparent,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: kToolbarHeight),
+                        child: _buildMainContent(),
+                      ),
+                    ),
+                  ],
                 ),
-                SidebarToggle(
-                  isOpen: state.isSidebarOpen,
-                  onToggle: () => viewModel.toggleSidebar(),
-                  alignRight: false,
-                ),
-                AnimatedContainer(
-                  duration: const Duration(
-                      milliseconds: AppSizes.animationDurationSlow),
-                  width: 4,
-                  color: state.isSidebarOpen
-                      ? colorScheme.outlineVariant
-                      : Colors.transparent,
-                ),
-                Expanded(
-                  child: _buildMainContent(),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (!state.isLoading && state.works.isNotEmpty)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: M3PaginationControls(
+                currentPage: state.page,
+                pageSize: state.pageSize,
+                totalItems: state.totalItems,
+                onPageChanged: (page) {
+                  ref.read(workBrowseProvider.notifier).setPage(page);
+                },
+                onPageSizeChanged: (size) {
+                  ref.read(workBrowseProvider.notifier).setPageSize(size);
+                },
+                availablePageSizes: const [10, 20, 50, 100],
+              ),
+            ),
         ],
       ),
       floatingActionButton: state.isLoading && state.works.isEmpty
@@ -164,7 +194,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   }
 
   Widget _buildMainContent() {
-    // 在这里监听状态变化
     final state = ref.watch(workBrowseProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
@@ -190,72 +219,62 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: state.isLoading
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.workBrowseLoading,
-                        style: TextStyle(color: colorScheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                )
-              : state.works.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox,
-                              size: 64,
-                              color:
-                                  colorScheme.onSurfaceVariant.withAlpha(128)),
-                          const SizedBox(height: 16),
-                          Text(l10n.workBrowseNoWorks,
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 8),
-                          Text(l10n.workBrowseNoWorksHint,
-                              style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant)),
-                          const SizedBox(height: 24),
-                          FilledButton.icon(
-                            onPressed: () => _showImportDialog(context),
-                            icon: const Icon(Icons.add),
-                            label: Text(l10n.workBrowseImport),
-                          ),
-                        ],
-                      ),
-                    )
-                  : state.viewMode == ViewMode.grid
-                      ? M3WorkGridView(
-                          works: state.works,
-                          batchMode: state.batchMode,
-                          selectedWorks: state.selectedWorks,
-                          onSelectionChanged: (workId, selected) => ref
-                              .read(workBrowseProvider.notifier)
-                              .toggleSelection(workId),
-                          onItemTap: (workId) =>
-                              _handleWorkSelected(context, workId),
-                        )
-                      : M3WorkListView(
-                          works: state.works,
-                          batchMode: state.batchMode,
-                          selectedWorks: state.selectedWorks,
-                          onSelectionChanged: (workId, selected) => ref
-                              .read(workBrowseProvider.notifier)
-                              .toggleSelection(workId),
-                          onItemTap: (workId) =>
-                              _handleWorkSelected(context, workId),
-                        ),
-        ),
-      ],
-    );
+    return state.isLoading
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.workBrowseLoading,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          )
+        : state.works.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox,
+                        size: 64,
+                        color: colorScheme.onSurfaceVariant.withAlpha(128)),
+                    const SizedBox(height: 16),
+                    Text(l10n.workBrowseNoWorks,
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(l10n.workBrowseNoWorksHint,
+                        style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () => _showImportDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.workBrowseImport),
+                    ),
+                  ],
+                ),
+              )
+            : state.viewMode == ViewMode.grid
+                ? M3WorkGridView(
+                    works: state.works,
+                    batchMode: state.batchMode,
+                    selectedWorks: state.selectedWorks,
+                    onSelectionChanged: (workId, selected) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleSelection(workId),
+                    onItemTap: (workId) => _handleWorkSelected(context, workId),
+                  )
+                : M3WorkListView(
+                    works: state.works,
+                    batchMode: state.batchMode,
+                    selectedWorks: state.selectedWorks,
+                    onSelectionChanged: (workId, selected) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleSelection(workId),
+                    onItemTap: (workId) => _handleWorkSelected(context, workId),
+                  );
   }
 
   void _handleWorkSelected(BuildContext context, String workId) async {

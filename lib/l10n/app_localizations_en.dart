@@ -2136,4 +2136,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String selectedCount(Object count) {
     return '$count selected';
   }
+
+  @override
+  String workBrowseTotalItems(Object count) {
+    return 'Total: $count works';
+  }
+
+  @override
+  String workBrowseItemsPerPage(Object count) {
+    return '$count per page';
+  }
 }

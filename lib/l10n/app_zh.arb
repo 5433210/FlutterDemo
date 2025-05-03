@@ -631,13 +631,13 @@
   "verticalLeftToRight": "竖排左起",
   "verticalRightToLeft": "竖排右起",
   "collectionPropertyPanelAvailableCharacters": "可用字符",
-  "collectionPropertyPanelGlobalInversion": "全局反转",  
-  "collectionPropertyPanelCurrentCharInversion": "当前字符反转", 
+  "collectionPropertyPanelGlobalInversion": "全局反转",
+  "collectionPropertyPanelCurrentCharInversion": "当前字符反转",
   "collectionPropertyPanelColorPicker":"颜色选择器",
   "collectionPropertyPanelColorSettings":"颜色设置",
   "collectionPropertyPanelAutoLineBreak":"自动换行",
-  "collectionPropertyPanelAutoLineBreakEnabled":"已启用自动换行", 
-  "collectionPropertyPanelAutoLineBreakDisabled":"已禁用自动换行",  
+  "collectionPropertyPanelAutoLineBreakEnabled":"已启用自动换行",
+  "collectionPropertyPanelAutoLineBreakDisabled":"已禁用自动换行",
   "collectionPropertyPanelAutoLineBreakTooltip":"自动换行",
   "verticalTextModeEnabled":"竖排文本预览 - 超出高度自动换列，可横向滚动",
   "groupOperations":"组合操作",
@@ -663,5 +663,7 @@
   "selectedCount":"已选择{count}个",
   "workBrowseDeleteSelected":"删除选中的",
   "alignHorizontalCenter":"水平居中",
-  "alignVerticalCenter":"垂直居中"
+  "alignVerticalCenter":"垂直居中",
+  "workBrowseTotalItems": "共 {count} 个作品",
+  "workBrowseItemsPerPage": "每页 {count} 个"
 }

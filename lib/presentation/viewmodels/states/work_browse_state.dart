@@ -42,6 +42,8 @@ class WorkBrowseState {
   final int pageSize;
   final bool hasMore;
   final bool isLoadingMore;
+  final int totalItems;
+  final int totalPages;
 
   // 添加一个字段表示请求状态
   final LoadRequestStatus requestStatus;
@@ -62,6 +64,8 @@ class WorkBrowseState {
     this.pageSize = 20,
     this.hasMore = true,
     this.isLoadingMore = false,
+    this.totalItems = 0,
+    this.totalPages = 0,
     this.requestStatus = LoadRequestStatus.idle,
   }) : searchController = searchController ?? TextEditingController();
 
@@ -105,7 +109,8 @@ class WorkBrowseState {
     int? pageSize,
     bool? hasMore,
     bool? isLoadingMore,
-    int? totalCount,
+    int? totalItems,
+    int? totalPages,
     LoadRequestStatus? requestStatus,
   }) {
     // Add debug print to verify state updates
@@ -128,6 +133,8 @@ class WorkBrowseState {
       pageSize: pageSize ?? this.pageSize,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      totalItems: totalItems ?? this.totalItems,
+      totalPages: totalPages ?? this.totalPages,
       requestStatus: requestStatus ?? this.requestStatus,
     );
   }
@@ -149,6 +156,8 @@ class WorkBrowseState {
       'page': page,
       'pageSize': pageSize,
       'hasMore': hasMore,
+      'totalItems': totalItems,
+      'totalPages': totalPages,
       // 不序列化状态数据如 isLoading、works、error 等
       // 不序列化 TextEditingController
       // 不序列化 batchMode 和 selectedWorks，因为这些是临时选择状态
@@ -179,6 +188,8 @@ class WorkBrowseState {
         page: json['page'] as int? ?? 1,
         pageSize: json['pageSize'] as int? ?? 20,
         hasMore: json['hasMore'] as bool? ?? true,
+        totalItems: json['totalItems'] as int? ?? 0,
+        totalPages: json['totalPages'] as int? ?? 0,
         // 默认值
         isLoading: false,
         works: const [],

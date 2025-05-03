@@ -91,6 +91,12 @@ class WorkFilter with _$WorkFilter {
 
     /// 排序选项
     @Default(SortOption()) SortOption sortOption,
+
+    /// 分页大小
+    int? limit,
+
+    /// 分页偏移量
+    int? offset,
   }) = _WorkFilter;
 
   factory WorkFilter.fromJson(Map<String, dynamic> json) =>
