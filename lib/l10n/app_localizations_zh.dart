@@ -339,7 +339,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterFilterTags => '标签';
 
   @override
-  String get characterFilterTitle => '筛选选项';
+  String get characterFilterTitle => '筛选与排序';
 
   @override
   String get characterFilterWritingTool => '书写工具';
@@ -2138,13 +2138,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workBrowseTotalItems(Object count) {
-    return '共 $count 个作品';
+  String totalItems(Object count) {
+    return '共 $count 个';
   }
 
   @override
   String workBrowseItemsPerPage(Object count) {
-    return '每页 $count 个';
+    return '$count项/页';
   }
 
   @override

@@ -9,6 +9,7 @@ import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
+import '../../widgets/pagination/m3_pagination_controls.dart';
 import '../works/m3_character_collection_page.dart';
 import 'components/m3_character_detail_panel.dart';
 import 'components/m3_character_filter_panel.dart';
@@ -164,108 +165,13 @@ class _M3CharacterManagementPageState
     CharacterManagementState state,
     AppLocalizations l10n,
   ) {
-    final theme = Theme.of(context);
-    final totalPages = (state.totalCount / state.pageSize).ceil();
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Total count
-          Text(
-            '${state.totalCount} ${l10n.characters}',
-            style: theme.textTheme.bodyMedium,
-          ),
-
-          // Pagination
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.first_page),
-                onPressed:
-                    state.currentPage > 1 ? () => _handlePageChange(1) : null,
-                tooltip: 'First Page',
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: state.currentPage > 1
-                    ? () => _handlePageChange(state.currentPage - 1)
-                    : null,
-                tooltip: 'Previous Page',
-              ),
-              Container(
-                constraints: const BoxConstraints(minWidth: 40),
-                alignment: Alignment.center,
-                child: Text(
-                  '${state.currentPage} / $totalPages',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: state.currentPage < totalPages
-                    ? () => _handlePageChange(state.currentPage + 1)
-                    : null,
-                tooltip: 'Next Page',
-              ),
-              IconButton(
-                icon: const Icon(Icons.last_page),
-                onPressed: state.currentPage < totalPages
-                    ? () => _handlePageChange(totalPages)
-                    : null,
-                tooltip: 'Last Page',
-              ),
-            ],
-          ),
-
-          // Page size selector
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.colorScheme.outline),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: PopupMenuButton<int>(
-              initialValue: state.pageSize,
-              onSelected: _handlePageSizeChange,
-              itemBuilder: (context) => [10, 20, 50, 100]
-                  .map((size) => PopupMenuItem<int>(
-                        value: size,
-                        height: 36,
-                        child: Text(
-                          l10n.characterManagementItemsPerPage('$size'),
-                        ),
-                      ))
-                  .toList(),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      l10n.characterManagementItemsPerPage('${state.pageSize}'),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.arrow_drop_down, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return M3PaginationControls(
+      currentPage: state.currentPage,
+      pageSize: state.pageSize,
+      totalItems: state.totalCount,
+      onPageChanged: _handlePageChange,
+      onPageSizeChanged: _handlePageSizeChange,
+      availablePageSizes: const [10, 20, 50, 100],
     );
   }
 

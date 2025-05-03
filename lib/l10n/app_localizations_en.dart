@@ -339,7 +339,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterFilterTags => 'Tags';
 
   @override
-  String get characterFilterTitle => 'Filter Options';
+  String get characterFilterTitle => 'Filter & Sort';
 
   @override
   String get characterFilterWritingTool => 'Writing Tool';
@@ -1941,7 +1941,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String characterManagementItemsPerPage(Object count) {
-    return '$count items per page';
+    return '$count per page';
   }
 
   @override
@@ -2138,8 +2138,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String workBrowseTotalItems(Object count) {
-    return 'Total: $count works';
+  String totalItems(Object count) {
+    return 'Total: $count';
   }
 
   @override

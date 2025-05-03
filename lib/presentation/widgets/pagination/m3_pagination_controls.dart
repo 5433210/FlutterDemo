@@ -55,7 +55,7 @@ class M3PaginationControls extends StatelessWidget {
         children: [
           // Total count
           Text(
-            l10n.workBrowseTotalItems('$totalItems'),
+            l10n.totalItems('$totalItems'),
             style: theme.textTheme.bodyMedium,
           ),
 

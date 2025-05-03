@@ -758,7 +758,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterFilterTitle.
   ///
   /// In en, this message translates to:
-  /// **'Filter Options'**
+  /// **'Filter & Sort'**
   String get characterFilterTitle;
 
   /// No description provided for @characterFilterWritingTool.
@@ -3920,7 +3920,7 @@ abstract class AppLocalizations {
   /// No description provided for @characterManagementItemsPerPage.
   ///
   /// In en, this message translates to:
-  /// **'{count} items per page'**
+  /// **'{count} per page'**
   String characterManagementItemsPerPage(Object count);
 
   /// No description provided for @imagePropertyPanelCroppingApplied.
@@ -4241,11 +4241,11 @@ abstract class AppLocalizations {
   /// **'{count} selected'**
   String selectedCount(Object count);
 
-  /// No description provided for @workBrowseTotalItems.
+  /// No description provided for @totalItems.
   ///
   /// In en, this message translates to:
-  /// **'Total: {count} works'**
-  String workBrowseTotalItems(Object count);
+  /// **'Total: {count}'**
+  String totalItems(Object count);
 
   /// No description provided for @workBrowseItemsPerPage.
   ///
