@@ -17,7 +17,7 @@ import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_grid_view.dart';
 import 'components/content/m3_work_list_view.dart';
 import 'components/filter/m3_work_filter_panel.dart';
-import 'components/m3_work_browse_toolbar.dart';
+import 'components/m3_work_browse_navigation_bar.dart';
 
 class M3WorkBrowsePage extends ConsumerStatefulWidget {
   const M3WorkBrowsePage({super.key});
@@ -62,7 +62,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     });
 
     return PageLayout(
-      toolbar: M3WorkBrowseToolbar(
+      toolbar: M3WorkBrowseNavigationBar(
         viewMode: state.viewMode,
         onViewModeChanged: (mode) => viewModel.setViewMode(mode),
         onImport: () => _showImportDialog(context),
@@ -74,6 +74,12 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           ref.read(workBrowseProvider.notifier).deleteSelected(),
           ref.read(worksNeedsRefreshProvider.notifier).state =
               RefreshInfo.importCompleted()
+        },
+        onBackPressed: () {
+          // Check if we can safely pop
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          }
         },
       ),
       body: Stack(

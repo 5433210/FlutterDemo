@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
+import '../../pages/works/components/m3_work_import_navigation_bar.dart';
 import '../../providers/work_import_provider.dart';
-import '../../widgets/common/base_navigation_bar.dart';
 import 'components/form/m3_work_import_form.dart';
 import 'components/preview/m3_work_import_preview.dart';
 
@@ -36,36 +36,22 @@ class M3WorkImportDialog extends ConsumerWidget {
             24; // 24 for bottom padding
 
         return Scaffold(
-          appBar: BaseNavigationBar(
-            title: Text(l10n.workImportDialogTitle),
-            actions: [
-              // Cancel button
-              OutlinedButton.icon(
-                onPressed: state.isProcessing
-                    ? null
-                    : () {
-                        viewModel.reset();
-                        Navigator.of(context).pop(false);
-                      },
-                icon: const Icon(Icons.close),
-                label: Text(l10n.workImportDialogCancel),
-              ),
-              const SizedBox(width: AppSizes.s),
-              // Import button
-              FilledButton.icon(
-                onPressed: (state.canSubmit && !state.isProcessing)
-                    ? () async {
-                        final success = await viewModel.importWork();
-                        if (success && context.mounted) {
-                          Navigator.of(context).pop(true);
-                        }
-                      }
-                    : null,
-                icon: const Icon(Icons.save),
-                label: Text(l10n.workImportDialogImport),
-              ),
-              const SizedBox(width: AppSizes.m),
-            ],
+          appBar: M3WorkImportNavigationBar(
+            onClose: () {
+              viewModel.reset();
+              Navigator.of(context).pop(false);
+            },
+            onStart: (state.canSubmit && !state.isProcessing)
+                ? () async {
+                    final success = await viewModel.importWork();
+                    if (success && context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  }
+                : () {},
+            isProcessing: state.isProcessing,
+            totalPages: state.images.length,
+            currentPage: state.selectedImageIndex + 1,
           ),
           body: SafeArea(
             child: Column(

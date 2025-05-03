@@ -35,20 +35,23 @@ class PageLayout extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Toolbar with bottom border (if provided)
+            // Toolbar with consistent styling
             if (toolbar != null)
-              Container(
-                height: toolbarHeight ??
-                    kToolbarHeight, // Use standard toolbar height if not specified
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: theme.dividerColor.withAlpha(50),
-                      width: 1,
+              Material(
+                elevation: 0,
+                color: theme.colorScheme.surface,
+                child: Container(
+                  height: toolbarHeight ?? kToolbarHeight,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: theme.colorScheme.outlineVariant,
+                        width: 1,
+                      ),
                     ),
                   ),
+                  child: toolbar!,
                 ),
-                child: toolbar!,
               ),
 
             // Main content

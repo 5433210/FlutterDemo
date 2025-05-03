@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_collection_provider.dart';
-import '../common/base_navigation_bar.dart';
+import '../common/m3_page_navigation_bar.dart';
 
 class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
   final String workId;
@@ -24,8 +24,9 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
     final collectionState = ref.watch(characterCollectionProvider);
 
     // Calculate status text
@@ -36,48 +37,40 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
       statusText = l10n.characterCollectionError(collectionState.error!);
     }
 
-    return BaseNavigationBar(
-      leading: BaseNavigationBar.createBackButton(context, onPressed: onBack),
-      title: Row(
-        children: [
-          Text(
-            l10n.characterCollectionTitle,
-            style: textTheme.titleMedium,
-          ),
-
-          // Status text (conditional display)
-          if (statusText.isNotEmpty) ...[
-            const SizedBox(width: AppSizes.m),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.s, vertical: AppSizes.xs),
-              decoration: BoxDecoration(
-                color: collectionState.error != null
-                    ? colorScheme.error.withOpacity(0.1)
-                    : colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppSizes.m),
-              ),
-              child: Text(
-                statusText,
-                style: textTheme.bodyMedium?.copyWith(
+    return M3PageNavigationBar(
+      title: l10n.characterCollectionTitle,
+      onBackPressed: onBack,
+      titleActions: statusText.isNotEmpty
+          ? [
+              const SizedBox(width: AppSizes.m),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.s, vertical: AppSizes.xs),
+                decoration: BoxDecoration(
                   color: collectionState.error != null
-                      ? colorScheme.error
-                      : colorScheme.primary,
+                      ? colorScheme.error.withOpacity(0.1)
+                      : colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.m),
+                ),
+                child: Text(
+                  statusText,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: collectionState.error != null
+                        ? colorScheme.error
+                        : colorScheme.primary,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ],
-      ),
+            ]
+          : null,
       actions: [
         // Help button
-        BaseNavigationBar.createActionButton(
-          icon: Icons.help_outline,
+        IconButton(
+          icon: const Icon(Icons.help_outline),
           tooltip: l10n.characterCollectionHelp,
           onPressed: onHelp ?? () => _showHelpDialog(context),
         ),
       ],
-      useElevation: true,
     );
   }
 

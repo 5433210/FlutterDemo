@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import '../../dialogs/practice_title_edit_dialog.dart';
-import '../common/base_navigation_bar.dart';
+import '../common/m3_page_navigation_bar.dart';
 import 'file_operations.dart';
 import 'practice_edit_controller.dart';
 
@@ -33,139 +33,136 @@ class M3TopNavigationBar extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     // Build title text: if there's a title, show "Practice Edit - xxx", otherwise just "Practice Edit"
     final titleText = controller.practiceTitle != null
-        ? '${l10n.practiceEditTitle}123 - ${controller.practiceTitle}'
+        ? '${l10n.practiceEditTitle} - ${controller.practiceTitle}'
         : l10n.practiceEditTitle;
 
-    return BaseNavigationBar(
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(titleText),
-          if (controller.practiceTitle != null)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              tooltip: l10n.practiceEditEditTitle,
-              onPressed: () => _editTitle(context, l10n),
-            ),
-        ],
-      ),
-      leading: BaseNavigationBar.createBackButton(context,
-          onPressed: () => _handleBackButton(context, l10n)),
+    return M3PageNavigationBar(
+      title: titleText,
+      titleActions: [
+        if (controller.practiceTitle != null)
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: l10n.practiceEditEditTitle,
+            onPressed: () => _editTitle(context, l10n),
+          ),
+      ],
+      onBackPressed: () => _handleBackButton(context, l10n),
       actions: [
-        // 重做、撤销、预览按钮放在右侧所有图标按钮的最左边
-        // Operations group (undo/redo)
-        _buildOperationsGroup(l10n, colorScheme),
+        // 左侧操作按钮组 - 撤销/重做
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Undo button
+            IconButton(
+              icon: const Icon(Icons.undo),
+              tooltip: l10n.practiceEditTopNavUndo,
+              onPressed: controller.state.canUndo ? controller.undo : null,
+              style: IconButton.styleFrom(
+                foregroundColor: controller.state.canUndo
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withOpacity(0.38),
+              ),
+            ),
+            const SizedBox(width: AppSizes.s),
 
-        // Preview group
-        _buildPreviewGroup(l10n, colorScheme),
+            // Redo button
+            IconButton(
+              icon: const Icon(Icons.redo),
+              tooltip: l10n.practiceEditTopNavRedo,
+              onPressed: controller.state.canRedo ? controller.redo : null,
+              style: IconButton.styleFrom(
+                foregroundColor: controller.state.canRedo
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withOpacity(0.38),
+              ),
+            ),
+          ],
+        ),
 
-        BaseNavigationBar.createDivider(),
+        const VerticalDivider(indent: 8, endIndent: 8),
 
-        // File operations group
-        _buildFileOperationsGroup(context, l10n, colorScheme),
+        // 中间操作按钮组 - 预览和保存
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Preview mode toggle
+            IconButton(
+              icon:
+                  Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
+              tooltip: isPreviewMode
+                  ? l10n.practiceEditTopNavExitPreview
+                  : l10n.practiceEditTopNavPreviewMode,
+              onPressed: onTogglePreviewMode,
+              style: IconButton.styleFrom(
+                foregroundColor:
+                    isPreviewMode ? colorScheme.tertiary : colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: AppSizes.m),
 
-        BaseNavigationBar.createDivider(),
+            // Save button - using FilledButton.icon for consistency with other pages
+            FilledButton.icon(
+              icon: const Icon(Icons.save),
+              label: Text(l10n.practiceEditTopNavSave),
+              onPressed: () => _savePractice(context, l10n),
+            ),
+          ],
+        ),
 
-        // View operations group
-        _buildViewOperationsGroup(l10n, colorScheme),
+        const VerticalDivider(indent: 8, endIndent: 8),
+
+        // 右侧操作按钮组 - 文件操作
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Save As button
+            IconButton(
+              icon: const Icon(Icons.save_as),
+              tooltip: l10n.practiceEditTopNavSaveAs,
+              onPressed: () => _saveAs(context, l10n),
+            ),
+            const SizedBox(width: AppSizes.s),
+
+            // Export button
+            IconButton(
+              icon: const Icon(Icons.file_download),
+              tooltip: l10n.practiceEditTopNavExport,
+              onPressed: () => _exportPractice(context, l10n),
+            ),
+          ],
+        ),
+
+        const VerticalDivider(indent: 8, endIndent: 8),
+
+        // 视图选项按钮组
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Thumbnails toggle button
+            IconButton(
+              icon: Icon(
+                showThumbnails
+                    ? Icons.view_carousel
+                    : Icons.view_carousel_outlined,
+              ),
+              tooltip: showThumbnails
+                  ? l10n.practiceEditTopNavHideThumbnails
+                  : l10n.practiceEditTopNavShowThumbnails,
+              onPressed: () => onThumbnailToggle(!showThumbnails),
+              style: IconButton.styleFrom(
+                foregroundColor:
+                    showThumbnails ? colorScheme.tertiary : colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
       ],
     );
-  }
-
-  /// Build file operations group
-  Widget _buildFileOperationsGroup(
-      BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
-    return BaseNavigationBar.createToolbarSection([
-      IconButton(
-        icon: const Icon(Icons.save),
-        tooltip: l10n.practiceEditTopNavSave,
-        onPressed: () => _savePractice(context, l10n),
-        style: IconButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-        ),
-      ),
-      IconButton(
-        icon: const Icon(Icons.save_as),
-        tooltip: l10n.practiceEditTopNavSaveAs,
-        onPressed: () => _saveAs(context, l10n),
-        style: IconButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-        ),
-      ),
-      IconButton(
-        icon: const Icon(Icons.file_download),
-        tooltip: l10n.practiceEditTopNavExport,
-        onPressed: () => _exportPractice(context, l10n),
-        style: IconButton.styleFrom(
-          foregroundColor: colorScheme.primary,
-        ),
-      ),
-    ]);
-  }
-
-  /// Build operations group
-  Widget _buildOperationsGroup(AppLocalizations l10n, ColorScheme colorScheme) {
-    return BaseNavigationBar.createToolbarSection([
-      IconButton(
-        icon: const Icon(Icons.undo),
-        tooltip: l10n.practiceEditTopNavUndo,
-        onPressed: controller.state.canUndo ? controller.undo : null,
-        style: IconButton.styleFrom(
-          foregroundColor: controller.state.canUndo
-              ? colorScheme.primary
-              : colorScheme.onSurface.withOpacity(0.38),
-        ),
-      ),
-      IconButton(
-        icon: const Icon(Icons.redo),
-        tooltip: l10n.practiceEditTopNavRedo,
-        onPressed: controller.state.canRedo ? controller.redo : null,
-        style: IconButton.styleFrom(
-          foregroundColor: controller.state.canRedo
-              ? colorScheme.primary
-              : colorScheme.onSurface.withOpacity(0.38),
-        ),
-      ),
-    ]);
-  }
-
-  /// Build preview group
-  Widget _buildPreviewGroup(AppLocalizations l10n, ColorScheme colorScheme) {
-    return IconButton(
-      icon: Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
-      tooltip: isPreviewMode
-          ? l10n.practiceEditTopNavExitPreview
-          : l10n.practiceEditTopNavPreviewMode,
-      onPressed: onTogglePreviewMode,
-      style: IconButton.styleFrom(
-        foregroundColor:
-            isPreviewMode ? colorScheme.tertiary : colorScheme.primary,
-      ),
-    );
-  }
-
-  /// Build view operations group
-  Widget _buildViewOperationsGroup(
-      AppLocalizations l10n, ColorScheme colorScheme) {
-    return BaseNavigationBar.createToolbarSection([
-      IconButton(
-        icon: Icon(
-          showThumbnails ? Icons.view_carousel : Icons.view_carousel_outlined,
-        ),
-        tooltip: showThumbnails
-            ? l10n.practiceEditTopNavHideThumbnails
-            : l10n.practiceEditTopNavShowThumbnails,
-        onPressed: () => onThumbnailToggle(!showThumbnails),
-        style: IconButton.styleFrom(
-          foregroundColor:
-              showThumbnails ? colorScheme.tertiary : colorScheme.primary,
-        ),
-      ),
-    ]);
   }
 
   /// Edit title
@@ -191,9 +188,7 @@ class M3TopNavigationBar extends StatelessWidget
   /// Export practice
   Future<void> _exportPractice(
       BuildContext context, AppLocalizations l10n) async {
-    // Get default filename
     final defaultFileName = controller.practiceTitle ?? l10n.practiceEditTitle;
-
     await FileOperations.exportPractice(
       context,
       controller.state.pages,
@@ -205,9 +200,7 @@ class M3TopNavigationBar extends StatelessWidget
   /// Handle back button
   Future<void> _handleBackButton(
       BuildContext context, AppLocalizations l10n) async {
-    // Check for unsaved changes
     if (controller.state.hasUnsavedChanges) {
-      // Show confirmation dialog
       final bool? result = await showDialog<bool>(
         context: context,
         builder: (BuildContext context) {
@@ -217,23 +210,17 @@ class M3TopNavigationBar extends StatelessWidget
             actions: <Widget>[
               TextButton(
                 child: Text(l10n.cancel),
-                onPressed: () {
-                  Navigator.of(context).pop(false);
-                },
+                onPressed: () => Navigator.of(context).pop(false),
               ),
               TextButton(
                 child: Text(l10n.practiceEditLeave),
-                onPressed: () {
-                  Navigator.of(context).pop(true);
-                },
+                onPressed: () => Navigator.of(context).pop(true),
               ),
               FilledButton(
                 child: Text(l10n.practiceEditSaveAndLeave),
                 onPressed: () async {
-                  // Save changes
                   await _savePractice(context, l10n);
                   if (context.mounted) {
-                    // Return true to confirm leaving
                     Navigator.of(context).pop(true);
                   }
                 },
@@ -243,13 +230,17 @@ class M3TopNavigationBar extends StatelessWidget
         },
       );
 
-      // If user confirms leaving, navigate back
       if (result == true && context.mounted) {
+        // Check if we can safely pop
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      }
+    } else if (context.mounted) {
+      // Check if we can safely pop
+      if (Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }
-    } else {
-      // No unsaved changes, can leave
-      Navigator.of(context).pop();
     }
   }
 

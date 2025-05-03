@@ -4,6 +4,7 @@ import 'package:demo/presentation/pages/characters/character_management_page.dar
 import 'package:demo/presentation/pages/characters/m3_character_management_page.dart';
 import 'package:demo/presentation/pages/practices/m3_practice_edit_page.dart';
 import 'package:demo/presentation/pages/practices/m3_practice_list_page.dart';
+import 'package:demo/presentation/pages/settings/m3_settings_page.dart';
 import 'package:demo/presentation/pages/works/character_collection_page.dart';
 import 'package:demo/presentation/pages/works/m3_character_collection_page.dart';
 import 'package:flutter/material.dart';
@@ -202,7 +203,8 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.settings:
         return MaterialPageRoute(
-          builder: (context) => const SettingsPage(),
+          builder: (context) =>
+              useMaterial3 ? const M3SettingsPage() : const SettingsPage(),
         );
     }
 

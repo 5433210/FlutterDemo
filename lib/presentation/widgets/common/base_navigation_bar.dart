@@ -57,32 +57,54 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     if (padding != null && title != null) {
       titleWidget = Padding(
         padding: padding!,
-        child: title,
+        child: DefaultTextStyle(
+          style: theme.textTheme.titleLarge ?? const TextStyle(),
+          softWrap: false,
+          overflow: TextOverflow.ellipsis,
+          child: title!,
+        ),
       );
     }
 
-    return AppBar(
-      automaticallyImplyLeading: false, // Disable automatic back button
-      title: titleWidget,
-      leading: leading,
-      actions: actions,
-      centerTitle: centerTitle,
-      backgroundColor: backgroundColor ?? colorScheme.surface,
+    return Material(
+      color: backgroundColor ?? colorScheme.surface,
       elevation: useElevation ? 2.0 : 0,
-      scrolledUnderElevation: useElevation ? 4.0 : 0,
-      bottom: bottom ??
-          (useElevation
-              ? null
-              : PreferredSize(
-                  preferredSize: const Size.fromHeight(1.0),
-                  child: Container(
-                    color: colorScheme.outlineVariant,
-                    height: 1.0,
-                  ),
-                )),
-      titleSpacing: padding != null ? 0.0 : NavigationToolbar.kMiddleSpacing,
-      leadingWidth: leading != null ? kToolbarHeight : null,
-      toolbarHeight: AppSizes.appBarHeight,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: AppSizes.appBarHeight,
+            child: NavigationToolbar(
+              leading: leading != null
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints.tightFor(
+                        width: padding?.horizontal != null
+                            ? kToolbarHeight + padding!.horizontal
+                            : kToolbarHeight,
+                      ),
+                      child: leading,
+                    )
+                  : null,
+              middle: titleWidget,
+              trailing: actions != null && actions!.isNotEmpty
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: actions!,
+                    )
+                  : null,
+              centerMiddle: centerTitle,
+              middleSpacing:
+                  padding != null ? 0.0 : NavigationToolbar.kMiddleSpacing,
+            ),
+          ),
+          if (!useElevation)
+            Container(
+              height: 1.0,
+              color: colorScheme.outlineVariant,
+            ),
+          if (bottom != null) bottom!,
+        ],
+      ),
     );
   }
 
@@ -114,7 +136,7 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  /// Helper method to create a standard back button
+  /// Helper method to create a standard back button with safety checks
   static Widget createBackButton(BuildContext context,
       {VoidCallback? onPressed}) {
     final l10n = AppLocalizations.of(context);
@@ -122,7 +144,13 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
       tooltip: l10n.back,
-      onPressed: onPressed ?? () => Navigator.of(context).pop(),
+      onPressed: onPressed ??
+          () {
+            // Default back behavior with safety checks
+            if (Navigator.canPop(context)) {
+              Navigator.of(context).pop();
+            }
+          },
     );
   }
 

@@ -563,7 +563,10 @@ class _M3CharacterCollectionPageState
   void _onBackPressed() {
     _checkUnsavedChanges().then((canPop) {
       if (canPop && mounted) {
-        Navigator.of(context).pop();
+        // Check if we can safely pop
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
       }
     });
   }

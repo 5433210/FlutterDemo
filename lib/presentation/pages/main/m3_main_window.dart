@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
-import '../../../presentation/pages/settings/settings_page.dart';
+import '../../../presentation/pages/settings/m3_settings_page.dart';
 import '../../../presentation/pages/works/m3_character_collection_page.dart';
 import '../../../presentation/pages/works/m3_work_browse_page.dart';
 import '../../../presentation/pages/works/m3_work_detail_page.dart';
@@ -162,7 +162,7 @@ class _M3MainWindowState extends State<M3MainWindow>
           },
         );
       case 3:
-        return const SettingsPage();
+        return const M3SettingsPage();
       default:
         return const Center(child: Text('Page not implemented'));
     }

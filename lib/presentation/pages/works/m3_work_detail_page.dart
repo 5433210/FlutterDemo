@@ -6,7 +6,6 @@ import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../theme/app_sizes.dart';
 import '../../providers/work_detail_provider.dart';
 import '../../providers/work_image_editor_provider.dart';
 import '../../providers/works_providers.dart';
@@ -17,6 +16,7 @@ import '../../widgets/page_layout.dart';
 import './m3_character_collection_page.dart';
 import 'components/m3_unified_work_detail_panel.dart';
 import 'components/m3_view_mode_image_preview.dart';
+import 'components/m3_work_detail_navigation_bar.dart';
 import 'components/work_images_management_view.dart';
 
 /// Material 3 version of the work detail page
@@ -156,59 +156,13 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
   }
 
   Widget _buildEditModeToolbar(BuildContext context, WorkDetailState state) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-    final work = state.editingWork;
-
-    return Container(
-      color: theme.colorScheme.surface,
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.spacingMedium, vertical: 4),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: l10n.workDetailBack,
-            onPressed: () => _handleBackButton(),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  l10n.workDetailTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                if (work != null && work.title.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      '- ${work.title}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.normal,
-                        color: theme.colorScheme.onSurface.withAlpha(128),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // Cancel button
-          OutlinedButton.icon(
-            icon: const Icon(Icons.close),
-            label: Text(l10n.workDetailCancel),
-            onPressed: () => _handleCancelEdit(),
-          ),
-          const SizedBox(width: 8),
-          // Save button
-          FilledButton.icon(
-            icon: const Icon(Icons.save),
-            label: Text(l10n.workDetailSave),
-            onPressed: state.hasChanges ? () => _saveChanges() : null,
-          ),
-        ],
-      ),
+    return M3WorkDetailNavigationBar(
+      title: state.editingWork?.title ?? '',
+      isEditing: true,
+      hasChanges: state.hasChanges,
+      onBack: () => _handleBackButton(),
+      onCancel: _handleCancelEdit,
+      onSave: state.hasChanges ? _saveChanges : null,
     );
   }
 
@@ -247,60 +201,22 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
   }
 
   Widget _buildViewModeToolbar(BuildContext context, WorkDetailState state) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
     final work = state.work;
-
-    return Container(
-      color: theme.colorScheme.surface,
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.spacingMedium, vertical: 4),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: l10n.workDetailBack,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  l10n.workDetailTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-                if (work != null && work.title.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      '- ${work.title}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.normal,
-                        color: theme.colorScheme.onSurface.withAlpha(128),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          // Extract characters button
-          if (work != null && work.images.isNotEmpty)
-            FilledButton.icon(
-              icon: const Icon(Icons.text_fields),
-              label: Text(l10n.workDetailExtract),
-              onPressed: () => _navigateToCharacterExtraction(work),
-            ),
-          const SizedBox(width: 8),
-          // Edit button
-          FilledButton.icon(
-            icon: const Icon(Icons.edit),
-            label: Text(l10n.workDetailEdit),
-            onPressed: () => _enterEditMode(),
-          ),
-        ],
-      ),
+    return M3WorkDetailNavigationBar(
+      title: work?.title ?? '',
+      isEditing: false,
+      hasChanges: false,
+      onBack: () {
+        // Check if we can safely pop
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+      },
+      onEdit: _enterEditMode,
+      onExtract: work != null && work.images.isNotEmpty
+          ? () => _navigateToCharacterExtraction(work)
+          : null,
+      showExtractButton: work != null && work.images.isNotEmpty,
     );
   }
 
