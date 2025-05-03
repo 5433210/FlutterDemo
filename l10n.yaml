@@ -4,3 +4,4 @@ output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
 synthetic-package: false
+untranslated-messages-file: desiredFileName.txt

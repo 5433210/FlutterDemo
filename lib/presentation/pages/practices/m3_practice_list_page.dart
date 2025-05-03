@@ -159,20 +159,25 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                 : l10n.practiceListBatchMode),
             onPressed: _toggleBatchMode,
           ),
-          if (_isBatchMode && _selectedPractices.isNotEmpty)
+          if (_isBatchMode) ...[
+            const SizedBox(width: AppSizes.m),
+            // 显示已选择数量
+            Text(
+              l10n.selectedCount(_selectedPractices.length),
+              style: theme.textTheme.bodyMedium,
+            ),
+            // 使用FilledButton.tonalIcon显示删除按钮，无论是否有选中项目
             Padding(
-              padding: const EdgeInsets.only(left: AppSizes.spacingMedium),
-              child: TextButton.icon(
-                onPressed: _confirmDeleteSelected,
-                icon: Icon(Icons.delete, color: theme.colorScheme.error),
-                label: Text(
-                  '${l10n.practiceListDeleteSelected} (${_selectedPractices.length})',
-                ),
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.error,
-                ),
+              padding: const EdgeInsets.only(left: AppSizes.s),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.delete),
+                label: Text(l10n.practiceListDeleteSelected),
+                onPressed: _selectedPractices.isNotEmpty
+                    ? _confirmDeleteSelected
+                    : null,
               ),
             ),
+          ],
         ],
       ),
       actions: [

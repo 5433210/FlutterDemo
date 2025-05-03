@@ -660,5 +660,8 @@
   "gridView":"网格视图",
   "searchCharactersWorksAuthors":"搜索字符、作品或作者",
   "exitBatchMode":"退出批量模式",
-  "selectedCount":"已选择{count}个"
+  "selectedCount":"已选择{count}个",
+  "workBrowseDeleteSelected":"删除选中的",
+  "alignHorizontalCenter":"水平居中",
+  "alignVerticalCenter":"垂直居中"
 }

@@ -7,6 +7,7 @@ import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
+import '../../widgets/common/base_navigation_bar.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../works/m3_character_collection_page.dart';
@@ -261,18 +262,9 @@ class _M3CharacterManagementPageState
     CharacterManagementState state,
     AppLocalizations l10n,
   ) {
-    return Container(
-      height: AppSizes.appBarHeight,
+    return BaseNavigationBar(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.m),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
+      title: Row(
         children: [
           OutlinedButton.icon(
             icon: Icon(state.isBatchMode ? Icons.close : Icons.checklist),
@@ -281,76 +273,74 @@ class _M3CharacterManagementPageState
                 : l10n.characterManagementBatchMode),
             onPressed: _toggleBatchMode,
           ),
-
-          if (state.isBatchMode)
-            Row(
-              children: [
-                // Delete selected button
-                TextButton.icon(
-                  icon: const Icon(Icons.delete),
-                  label: Text(l10n.characterManagementDeleteSelected),
-                  onPressed: state.selectedCharacters.isNotEmpty
-                      ? _handleDeleteSelectedCharacters
-                      : null,
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                  ),
-                ),
-              ],
+          if (state.isBatchMode) ...[
+            const SizedBox(width: AppSizes.m),
+            // 显示已选择数量
+            Text(
+              l10n.selectedCount(state.selectedCharacters.length),
+              style: theme.textTheme.bodyMedium,
             ),
-
-          const Spacer(),
-          // Search box
-          SizedBox(
-            child: SearchBar(
-              controller: _searchController,
-              onChanged: _handleSearch,
-              hintText: l10n.workBrowseSearch,
-              leading:
-                  const Icon(Icons.search, size: AppSizes.searchBarIconSize),
-              trailing: [
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _searchController,
-                  builder: (context, value, child) {
-                    return AnimatedOpacity(
-                      opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                      duration: const Duration(
-                          milliseconds: AppSizes.animationDurationMedium),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.clear,
-                          size: AppSizes.searchBarClearIconSize,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          _handleSearch('');
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ],
+            // 删除按钮 - 使用FilledButton.tonalIcon
+            Padding(
+              padding: const EdgeInsets.only(left: AppSizes.s),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.delete),
+                label: Text(l10n.characterManagementDeleteSelected),
+                onPressed: state.selectedCharacters.isNotEmpty
+                    ? _handleDeleteSelectedCharacters
+                    : null,
+              ),
             ),
-          ),
-
-          const SizedBox(width: AppSizes.spacingMedium),
-
-          // View mode toggle
-          IconButton(
-            icon: Icon(
-              state.viewMode == ViewMode.grid
-                  ? Icons.view_list
-                  : Icons.grid_view,
-            ),
-            onPressed: _toggleViewMode,
-            tooltip: state.viewMode == ViewMode.grid
-                ? l10n.characterManagementListView
-                : l10n.characterManagementGridView,
-          ),
-
-          // Batch mode toggle
+          ],
         ],
       ),
+      actions: [
+        // Search box
+        SizedBox(
+          child: SearchBar(
+            controller: _searchController,
+            onChanged: _handleSearch,
+            hintText: l10n.workBrowseSearch,
+            leading: const Icon(Icons.search, size: AppSizes.searchBarIconSize),
+            trailing: [
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return AnimatedOpacity(
+                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
+                    duration: const Duration(
+                        milliseconds: AppSizes.animationDurationMedium),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        size: AppSizes.searchBarClearIconSize,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        _handleSearch('');
+                      },
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(width: AppSizes.spacingMedium),
+
+        // View mode toggle - 使用BaseNavigationBar.createActionButton
+        BaseNavigationBar.createActionButton(
+          icon: state.viewMode == ViewMode.grid
+              ? Icons.view_list
+              : Icons.grid_view,
+          tooltip: state.viewMode == ViewMode.grid
+              ? l10n.characterManagementListView
+              : l10n.characterManagementGridView,
+          onPressed: _toggleViewMode,
+          isPrimary: true,
+        ),
+      ],
     );
   }
 

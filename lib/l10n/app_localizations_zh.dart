@@ -1911,9 +1911,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String workBrowseDeleteSelected(Object count) {
-    return '删除$count个';
-  }
+  String get workBrowseDeleteSelected => '删除选中的';
 
   @override
   String workBrowseError(Object message) {
@@ -2009,10 +2007,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ungroupConfirm => '确认解组';
 
   @override
-  String get alignHorizontalCenter => 'Align Horizontal Center';
+  String get alignHorizontalCenter => '水平居中';
 
   @override
-  String get alignVerticalCenter => 'Align Vertical Center';
+  String get alignVerticalCenter => '垂直居中';
 
   @override
   String get imagePropertyPanelCropping => '裁剪';

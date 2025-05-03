@@ -3818,8 +3818,8 @@ abstract class AppLocalizations {
   /// No description provided for @workBrowseDeleteSelected.
   ///
   /// In en, this message translates to:
-  /// **'Delete {count}'**
-  String workBrowseDeleteSelected(Object count);
+  /// **'Delete Selected'**
+  String get workBrowseDeleteSelected;
 
   /// No description provided for @workBrowseError.
   ///

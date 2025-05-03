@@ -1911,9 +1911,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String workBrowseDeleteSelected(Object count) {
-    return 'Delete $count';
-  }
+  String get workBrowseDeleteSelected => 'Delete Selected';
 
   @override
   String workBrowseError(Object message) {

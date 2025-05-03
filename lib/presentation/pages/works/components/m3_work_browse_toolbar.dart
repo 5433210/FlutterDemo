@@ -63,23 +63,22 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
             onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
           ),
 
-          // 批量操作状态 - 移到中间
+          // 批量操作状态 - 统一样式
           if (widget.batchMode) ...[
             const SizedBox(width: AppSizes.m),
             Text(
               l10n.workBrowseSelectedCount(widget.selectedCount),
               style: theme.textTheme.bodyMedium,
             ),
-            if (widget.selectedCount > 0)
-              Padding(
-                padding: const EdgeInsets.only(left: AppSizes.s),
-                child: FilledButton.tonalIcon(
-                  icon: const Icon(Icons.delete),
-                  label:
-                      Text(l10n.workBrowseDeleteSelected(widget.selectedCount)),
-                  onPressed: _showDeleteConfirmation,
-                ),
+            Padding(
+              padding: const EdgeInsets.only(left: AppSizes.s),
+              child: FilledButton.tonalIcon(
+                icon: const Icon(Icons.delete),
+                label: Text(l10n.workBrowseDeleteSelected),
+                onPressed:
+                    widget.selectedCount > 0 ? _showDeleteConfirmation : null,
               ),
+            ),
           ],
         ],
       ),
