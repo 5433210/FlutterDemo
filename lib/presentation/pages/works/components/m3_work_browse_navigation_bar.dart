@@ -59,7 +59,20 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
           ),
       ],
       actions: [
-        // 搜索栏
+        if (widget.batchMode && widget.selectedCount > 0)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: l10n.workBrowseDeleteSelected,
+            onPressed: _showDeleteConfirmation,
+          )
+        else if (!widget.batchMode)
+          FilledButton.icon(
+            icon: const Icon(Icons.add),
+            label: Text(l10n.workBrowseImport),
+            onPressed: widget.onImport,
+          ),
+        // 居中的搜索栏
+        // const Spacer(),
         SizedBox(
           width: AppSizes.searchBarWidth,
           child: SearchBar(
@@ -91,61 +104,34 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
             ],
           ),
         ),
+        // const Spacer(),
 
-        const VerticalDivider(indent: 8, endIndent: 8),
+        // 右侧按钮组：从右向左排序
+        // 导入或删除按钮
 
-        // 视图操作按钮组
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 视图切换按钮
-            IconButton(
-              icon: Icon(widget.viewMode == ViewMode.grid
-                  ? Icons.view_list
-                  : Icons.grid_view),
-              tooltip: widget.viewMode == ViewMode.grid
-                  ? l10n.workBrowseListView
-                  : l10n.workBrowseGridView,
-              onPressed: () => widget.onViewModeChanged(
-                  widget.viewMode == ViewMode.grid
-                      ? ViewMode.list
-                      : ViewMode.grid),
-            ),
-          ],
+        // const SizedBox(width: AppSizes.s),
+
+        // 批量操作按钮
+        IconButton(
+          icon: Icon(widget.batchMode ? Icons.close : Icons.checklist),
+          tooltip: widget.batchMode
+              ? l10n.workBrowseBatchDone
+              : l10n.workBrowseBatchMode,
+          onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
         ),
+        // const SizedBox(width: AppSizes.s),
 
-        const VerticalDivider(indent: 8, endIndent: 8),
-
-        // 操作按钮组
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 导入按钮
-            FilledButton.icon(
-              icon: const Icon(Icons.add),
-              label: Text(l10n.workBrowseImport),
-              onPressed: widget.onImport,
-            ),
-            const SizedBox(width: AppSizes.m),
-
-            // 批量操作按钮
-            IconButton(
-              icon: Icon(widget.batchMode ? Icons.close : Icons.checklist),
-              tooltip: widget.batchMode
-                  ? l10n.workBrowseBatchDone
-                  : l10n.workBrowseBatchMode,
-              onPressed: () => widget.onBatchModeChanged(!widget.batchMode),
-            ),
-          ],
+        // 视图切换按钮
+        IconButton(
+          icon: Icon(widget.viewMode == ViewMode.grid
+              ? Icons.view_list
+              : Icons.grid_view),
+          tooltip: widget.viewMode == ViewMode.grid
+              ? l10n.workBrowseListView
+              : l10n.workBrowseGridView,
+          onPressed: () => widget.onViewModeChanged(
+              widget.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid),
         ),
-
-        // 批量删除按钮
-        if (widget.batchMode && widget.selectedCount > 0)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: l10n.workBrowseDeleteSelected,
-            onPressed: _showDeleteConfirmation,
-          ),
       ],
     );
   }

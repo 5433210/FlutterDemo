@@ -63,7 +63,8 @@ class _M3CharacterManagementNavigationBarState
             ]
           : null,
       actions: [
-        // 搜索框
+        // 居中的搜索框
+        // const Spacer(),
         SizedBox(
           width: 240,
           child: SearchBar(
@@ -96,15 +97,19 @@ class _M3CharacterManagementNavigationBarState
             ],
           ),
         ),
-        const SizedBox(width: AppSizes.m),
+        // const Spacer(),
 
-        // 视图切换按钮
-        IconButton(
-          icon: Icon(widget.isGridView ? Icons.view_list : Icons.grid_view),
-          tooltip: widget.isGridView ? l10n.listView : l10n.gridView,
-          onPressed: widget.onToggleViewMode,
-        ),
-        const SizedBox(width: AppSizes.m),
+        // 右侧按钮组
+        // 批量删除按钮
+        if (widget.isBatchMode && widget.selectedCount > 0)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            tooltip: l10n.characterManagementDeleteSelected,
+            onPressed: widget.onDeleteSelected,
+          ),
+
+        // if (widget.isBatchMode && widget.selectedCount > 0)
+        // const SizedBox(width: AppSizes.s),
 
         // 批量操作按钮
         IconButton(
@@ -112,6 +117,14 @@ class _M3CharacterManagementNavigationBarState
           tooltip:
               widget.isBatchMode ? l10n.exitBatchMode : l10n.batchOperations,
           onPressed: widget.onToggleBatchMode,
+        ),
+        // const SizedBox(width: AppSizes.s),
+
+        // 视图切换按钮
+        IconButton(
+          icon: Icon(widget.isGridView ? Icons.view_list : Icons.grid_view),
+          tooltip: widget.isGridView ? l10n.listView : l10n.gridView,
+          onPressed: widget.onToggleViewMode,
         ),
       ],
     );

@@ -75,6 +75,7 @@ class M3PageNavigationBar extends StatelessWidget
               child: Text(
                 title,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
             if (titleActions != null) ...[
@@ -84,6 +85,7 @@ class M3PageNavigationBar extends StatelessWidget
           ],
         ),
       ),
+      centerTitle: false,
       actions:
           actions != null ? _wrapActionsWithConsistentSpacing(actions!) : null,
       backgroundColor: theme.colorScheme.surface,
