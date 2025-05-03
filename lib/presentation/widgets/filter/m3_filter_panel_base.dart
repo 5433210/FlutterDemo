@@ -28,7 +28,7 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
     super.key,
     required this.filter,
     required this.onFilterChanged,
-    this.width = 250,
+    this.width = AppSizes.filterPanelWidth,
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,

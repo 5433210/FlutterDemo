@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'common/base_navigation_bar.dart';
+
 /// A simplified standard page layout with consistent structure.
 /// Only includes toolbar and body areas - the toolbar should include
 /// all title/navigation/action elements combined.
@@ -29,6 +31,9 @@ class PageLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    // 检查toolbar是否是BaseNavigationBar或其子类
+    final bool isBaseNavigationBar = toolbar is BaseNavigationBar;
+
     return Scaffold(
       // No AppBar, using our own toolbar
       body: SafeArea(
@@ -40,16 +45,19 @@ class PageLayout extends StatelessWidget {
               Material(
                 elevation: 0,
                 color: theme.colorScheme.surface,
-                child: Container(
+                child: SizedBox(
                   height: toolbarHeight ?? kToolbarHeight,
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
-                        width: 1,
-                      ),
-                    ),
-                  ),
+                  // 只有当toolbar不是BaseNavigationBar时才添加底部边框
+                  // decoration: isBaseNavigationBar
+                  //     ? null
+                  //     : BoxDecoration(
+                  //         border: Border(
+                  //           bottom: BorderSide(
+                  //             color: theme.colorScheme.outlineVariant,
+                  //             width: 1,
+                  //           ),
+                  //         ),
+                  //       ),
                   child: toolbar!,
                 ),
               ),

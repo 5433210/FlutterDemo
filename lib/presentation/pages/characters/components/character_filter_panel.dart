@@ -34,7 +34,7 @@ class CharacterFilterPanel extends ConsumerWidget {
     }
 
     return Container(
-      width: 250,
+      width: AppSizes.filterPanelWidth,
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,

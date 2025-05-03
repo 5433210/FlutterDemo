@@ -22,7 +22,7 @@ class WorkFilterPanel extends StatelessWidget {
     return Material(
       color: Theme.of(context).colorScheme.surface,
       child: Container(
-        width: 280,
+        width: AppSizes.filterPanelWidth,
         padding: const EdgeInsets.all(AppSizes.m),
         // 移除所有边框线
         // decoration: BoxDecoration(

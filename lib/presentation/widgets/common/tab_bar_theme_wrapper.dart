@@ -17,7 +17,8 @@ class TabBarThemeWrapper extends StatelessWidget {
         tabBarTheme: TabBarTheme(
           labelColor: theme.colorScheme.primary,
           unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.7),
-          dividerColor: theme.dividerColor,
+          // 将分割线颜色设置为透明，避免重复的分割线
+          dividerColor: Colors.transparent,
           indicatorColor: theme.colorScheme.primary,
           // 添加一些水平内边距，使标签页标题不会靠得太近
           indicatorSize: TabBarIndicatorSize.tab,

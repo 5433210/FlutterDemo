@@ -43,9 +43,13 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(bottom == null
-      ? AppSizes.appBarHeight
-      : AppSizes.appBarHeight + bottom!.preferredSize.height);
+  Size get preferredSize => Size.fromHeight(
+        bottom == null
+            ? (useElevation
+                ? AppSizes.appBarHeight
+                : AppSizes.appBarHeight + 1.0) // Add 1.0 for divider height
+            : AppSizes.appBarHeight + bottom!.preferredSize.height,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +101,8 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
                   padding != null ? 0.0 : NavigationToolbar.kMiddleSpacing,
             ),
           ),
-          if (!useElevation)
+          // 只有在没有底部组件且不使用阴影时才添加分割线
+          if (!useElevation && bottom == null)
             Container(
               height: 1.0,
               color: colorScheme.outlineVariant,
@@ -126,7 +131,8 @@ class BaseNavigationBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: onPressed,
           style: IconButton.styleFrom(
             foregroundColor: !isActive
-                ? colorScheme.onSurface.withOpacity(0.38)
+                ? colorScheme.onSurface
+                    .withAlpha(97) // ~38% opacity (0.38 * 255 ≈ 97)
                 : (isPrimary
                     ? colorScheme.primary
                     : colorScheme.onSurfaceVariant),

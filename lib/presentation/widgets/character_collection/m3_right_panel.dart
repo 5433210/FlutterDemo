@@ -15,6 +15,7 @@ import '../../providers/character/character_grid_provider.dart';
 import '../../providers/character/character_refresh_notifier.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/work_image_provider.dart';
+import '../common/tab_bar_theme_wrapper.dart';
 import 'm3_character_grid_view.dart';
 
 class M3RightPanel extends ConsumerStatefulWidget {
@@ -184,28 +185,16 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
 
   Widget _buildTabBar() {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outlineVariant, width: 2),
-        ),
-      ),
+    // 使用 TabBarThemeWrapper 包装 TabBar，确保一致的样式
+    return TabBarThemeWrapper(
       child: TabBar(
-        indicator: UnderlineTabIndicator(
-            borderSide: BorderSide(color: colorScheme.primary)),
-        indicatorWeight: 1,
-        indicatorPadding: const EdgeInsets.only(bottom: 5.0),
         controller: _tabController,
         tabs: [
           Tab(text: l10n.characterCollectionPreviewTab),
           Tab(text: l10n.characterCollectionResultsTab),
         ],
-        labelColor: colorScheme.primary,
-        unselectedLabelColor: colorScheme.onSurfaceVariant,
-        indicatorColor: colorScheme.primary,
+        indicatorSize: TabBarIndicatorSize.tab,
       ),
     );
   }

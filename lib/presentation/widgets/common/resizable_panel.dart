@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../theme/app_sizes.dart';
+
 /// A panel that can be resized by dragging its edge.
 class ResizablePanel extends StatefulWidget {
   /// The child widget to display inside the panel.
@@ -24,7 +26,7 @@ class ResizablePanel extends StatefulWidget {
   const ResizablePanel({
     Key? key,
     required this.child,
-    this.initialWidth = 250.0,
+    this.initialWidth = AppSizes.filterPanelWidth,
     this.minWidth = 150.0,
     this.maxWidth = 400.0,
     this.isLeftPanel = true,
@@ -38,12 +40,6 @@ class ResizablePanel extends StatefulWidget {
 class _ResizablePanelState extends State<ResizablePanel> {
   late double _width;
   bool _isDragging = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _width = widget.initialWidth;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +86,18 @@ class _ResizablePanelState extends State<ResizablePanel> {
     );
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _width = widget.initialWidth;
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    setState(() {
+      _isDragging = false;
+    });
+  }
+
   void _handleDragStart(DragStartDetails details) {
     setState(() {
       _isDragging = true;
@@ -103,18 +111,12 @@ class _ResizablePanelState extends State<ResizablePanel> {
       } else {
         _width -= details.delta.dx;
       }
-      
+
       // Constrain the width to the min and max values
       _width = _width.clamp(widget.minWidth, widget.maxWidth);
-      
+
       // Notify the parent about the width change
       widget.onWidthChanged?.call(_width);
-    });
-  }
-
-  void _handleDragEnd(DragEndDetails details) {
-    setState(() {
-      _isDragging = false;
     });
   }
 }

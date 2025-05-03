@@ -93,9 +93,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       duration: const Duration(
                         milliseconds: AppSizes.animationDurationSlow,
                       ),
-                      width: state.isSidebarOpen
-                          ? AppSizes.workFilterPanelWidth
-                          : 0,
+                      width:
+                          state.isSidebarOpen ? AppSizes.filterPanelWidth : 0,
                       child: state.isSidebarOpen
                           ? M3WorkFilterPanel(
                               filter: state.filter,

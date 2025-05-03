@@ -64,7 +64,8 @@ class _M3CharacterManagementPageState
                   // Filter panel (collapsible)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    width: _isFilterPanelExpanded ? 250 : 0,
+                    width:
+                        _isFilterPanelExpanded ? AppSizes.filterPanelWidth : 0,
                     clipBehavior: Clip.antiAlias,
                     decoration: const BoxDecoration(),
                     child: _isFilterPanelExpanded
