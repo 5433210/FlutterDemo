@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../dialogs/practice_title_edit_dialog.dart';
+import '../common/base_navigation_bar.dart';
 import 'file_operations.dart';
 import 'practice_edit_controller.dart';
 
@@ -26,7 +28,7 @@ class M3TopNavigationBar extends StatelessWidget
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +37,10 @@ class M3TopNavigationBar extends StatelessWidget
 
     // Build title text: if there's a title, show "Practice Edit - xxx", otherwise just "Practice Edit"
     final titleText = controller.practiceTitle != null
-        ? '${l10n.practiceEditTitle} - ${controller.practiceTitle}'
+        ? '${l10n.practiceEditTitle}123 - ${controller.practiceTitle}'
         : l10n.practiceEditTitle;
 
-    return AppBar(
+    return BaseNavigationBar(
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -51,11 +53,8 @@ class M3TopNavigationBar extends StatelessWidget
             ),
         ],
       ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        tooltip: l10n.practiceEditTopNavBack,
-        onPressed: () => _handleBackButton(context, l10n),
-      ),
+      leading: BaseNavigationBar.createBackButton(context,
+          onPressed: () => _handleBackButton(context, l10n)),
       actions: [
         // 重做、撤销、预览按钮放在右侧所有图标按钮的最左边
         // Operations group (undo/redo)
@@ -64,12 +63,12 @@ class M3TopNavigationBar extends StatelessWidget
         // Preview group
         _buildPreviewGroup(l10n, colorScheme),
 
-        const SizedBox(width: 16),
+        BaseNavigationBar.createDivider(),
 
         // File operations group
         _buildFileOperationsGroup(context, l10n, colorScheme),
 
-        const SizedBox(width: 16),
+        BaseNavigationBar.createDivider(),
 
         // View operations group
         _buildViewOperationsGroup(l10n, colorScheme),
@@ -80,64 +79,58 @@ class M3TopNavigationBar extends StatelessWidget
   /// Build file operations group
   Widget _buildFileOperationsGroup(
       BuildContext context, AppLocalizations l10n, ColorScheme colorScheme) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.save),
-          tooltip: l10n.practiceEditTopNavSave,
-          onPressed: () => _savePractice(context, l10n),
-          style: IconButton.styleFrom(
-            foregroundColor: colorScheme.primary,
-          ),
+    return BaseNavigationBar.createToolbarSection([
+      IconButton(
+        icon: const Icon(Icons.save),
+        tooltip: l10n.practiceEditTopNavSave,
+        onPressed: () => _savePractice(context, l10n),
+        style: IconButton.styleFrom(
+          foregroundColor: colorScheme.primary,
         ),
-        IconButton(
-          icon: const Icon(Icons.save_as),
-          tooltip: l10n.practiceEditTopNavSaveAs,
-          onPressed: () => _saveAs(context, l10n),
-          style: IconButton.styleFrom(
-            foregroundColor: colorScheme.primary,
-          ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.save_as),
+        tooltip: l10n.practiceEditTopNavSaveAs,
+        onPressed: () => _saveAs(context, l10n),
+        style: IconButton.styleFrom(
+          foregroundColor: colorScheme.primary,
         ),
-        IconButton(
-          icon: const Icon(Icons.file_download),
-          tooltip: l10n.practiceEditTopNavExport,
-          onPressed: () => _exportPractice(context, l10n),
-          style: IconButton.styleFrom(
-            foregroundColor: colorScheme.primary,
-          ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.file_download),
+        tooltip: l10n.practiceEditTopNavExport,
+        onPressed: () => _exportPractice(context, l10n),
+        style: IconButton.styleFrom(
+          foregroundColor: colorScheme.primary,
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
   /// Build operations group
   Widget _buildOperationsGroup(AppLocalizations l10n, ColorScheme colorScheme) {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.undo),
-          tooltip: l10n.practiceEditTopNavUndo,
-          onPressed: controller.state.canUndo ? controller.undo : null,
-          style: IconButton.styleFrom(
-            foregroundColor: controller.state.canUndo
-                ? colorScheme.primary
-                : colorScheme.onSurface
-                    .withValues(alpha: 97), // 0.38 * 255 ≈ 97
-          ),
+    return BaseNavigationBar.createToolbarSection([
+      IconButton(
+        icon: const Icon(Icons.undo),
+        tooltip: l10n.practiceEditTopNavUndo,
+        onPressed: controller.state.canUndo ? controller.undo : null,
+        style: IconButton.styleFrom(
+          foregroundColor: controller.state.canUndo
+              ? colorScheme.primary
+              : colorScheme.onSurface.withOpacity(0.38),
         ),
-        IconButton(
-          icon: const Icon(Icons.redo),
-          tooltip: l10n.practiceEditTopNavRedo,
-          onPressed: controller.state.canRedo ? controller.redo : null,
-          style: IconButton.styleFrom(
-            foregroundColor: controller.state.canRedo
-                ? colorScheme.primary
-                : colorScheme.onSurface
-                    .withValues(alpha: 97), // 0.38 * 255 ≈ 97
-          ),
+      ),
+      IconButton(
+        icon: const Icon(Icons.redo),
+        tooltip: l10n.practiceEditTopNavRedo,
+        onPressed: controller.state.canRedo ? controller.redo : null,
+        style: IconButton.styleFrom(
+          foregroundColor: controller.state.canRedo
+              ? colorScheme.primary
+              : colorScheme.onSurface.withOpacity(0.38),
         ),
-      ],
-    );
+      ),
+    ]);
   }
 
   /// Build preview group
@@ -158,23 +151,21 @@ class M3TopNavigationBar extends StatelessWidget
   /// Build view operations group
   Widget _buildViewOperationsGroup(
       AppLocalizations l10n, ColorScheme colorScheme) {
-    return Row(
-      children: [
-        IconButton(
-          icon: Icon(
-            showThumbnails ? Icons.view_carousel : Icons.view_carousel_outlined,
-          ),
-          tooltip: showThumbnails
-              ? l10n.practiceEditTopNavHideThumbnails
-              : l10n.practiceEditTopNavShowThumbnails,
-          onPressed: () => onThumbnailToggle(!showThumbnails),
-          style: IconButton.styleFrom(
-            foregroundColor:
-                showThumbnails ? colorScheme.tertiary : colorScheme.primary,
-          ),
+    return BaseNavigationBar.createToolbarSection([
+      IconButton(
+        icon: Icon(
+          showThumbnails ? Icons.view_carousel : Icons.view_carousel_outlined,
         ),
-      ],
-    );
+        tooltip: showThumbnails
+            ? l10n.practiceEditTopNavHideThumbnails
+            : l10n.practiceEditTopNavShowThumbnails,
+        onPressed: () => onThumbnailToggle(!showThumbnails),
+        style: IconButton.styleFrom(
+          foregroundColor:
+              showThumbnails ? colorScheme.tertiary : colorScheme.primary,
+        ),
+      ),
+    ]);
   }
 
   /// Edit title

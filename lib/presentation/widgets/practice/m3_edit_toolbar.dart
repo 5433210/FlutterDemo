@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import 'practice_edit_controller.dart';
 
 /// Material 3 edit toolbar for practice edit page
-class M3EditToolbar extends StatelessWidget {
+class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final PracticeEditController controller;
   final bool gridVisible;
   final bool snapEnabled;
@@ -39,15 +40,21 @@ class M3EditToolbar extends StatelessWidget {
   });
 
   @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final hasSelection = controller.state.selectedElementIds.isNotEmpty;
     final isMultiSelected = controller.state.selectedElementIds.length > 1;
-    final hasSelectedGroup = hasSelection && !isMultiSelected && _isSelectedElementGroup();
+    final hasSelectedGroup =
+        hasSelection && !isMultiSelected && _isSelectedElementGroup();
 
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      height: 48,
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSizes.xs, horizontal: AppSizes.s),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         border: Border(
@@ -99,9 +106,9 @@ class M3EditToolbar extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
 
             // Layer operations group
             _buildToolbarGroup(
@@ -134,9 +141,9 @@ class M3EditToolbar extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
 
             // Helper functions group
             _buildToolbarGroup(
@@ -145,14 +152,18 @@ class M3EditToolbar extends StatelessWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                  tooltip: gridVisible ? l10n.practiceEditHideGrid : l10n.practiceEditShowGrid,
+                  tooltip: gridVisible
+                      ? l10n.practiceEditHideGrid
+                      : l10n.practiceEditShowGrid,
                   onPressed: onToggleGrid,
                   isActive: gridVisible,
                 ),
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_line_spacing,
-                  tooltip: snapEnabled ? l10n.practiceEditDisableSnap : l10n.practiceEditEnableSnap,
+                  tooltip: snapEnabled
+                      ? l10n.practiceEditDisableSnap
+                      : l10n.practiceEditEnableSnap,
                   onPressed: onToggleSnap,
                   isActive: snapEnabled,
                 ),
@@ -173,16 +184,16 @@ class M3EditToolbar extends StatelessWidget {
     bool isActive = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Tooltip(
       message: tooltip,
       child: IconButton(
         icon: Icon(
           icon,
-          color: isActive 
-              ? colorScheme.primary 
-              : onPressed == null 
-                  ? colorScheme.onSurface.withOpacity(0.38) 
+          color: isActive
+              ? colorScheme.primary
+              : onPressed == null
+                  ? colorScheme.onSurface.withOpacity(0.38)
                   : null,
           size: 20,
         ),
@@ -221,13 +232,13 @@ class M3EditToolbar extends StatelessWidget {
   /// Check if the selected element is a group
   bool _isSelectedElementGroup() {
     if (controller.state.selectedElementIds.length != 1) return false;
-    
+
     final id = controller.state.selectedElementIds.first;
     final element = controller.state.currentPageElements.firstWhere(
       (e) => e['id'] == id,
       orElse: () => <String, dynamic>{},
     );
-    
+
     return element.isNotEmpty && element['type'] == 'group';
   }
 }

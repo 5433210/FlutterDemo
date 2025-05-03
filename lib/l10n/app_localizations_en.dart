@@ -2016,4 +2016,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelCropping => 'Cropping';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get batchOperations => 'Batch Operations';
+
+  @override
+  String get listView => 'List View';
+
+  @override
+  String get gridView => 'Grid View';
+
+  @override
+  String get searchCharactersWorksAuthors => 'Search characters, works, or authors';
+
+  @override
+  String get exitBatchMode => 'Exit Batch Mode';
+
+  @override
+  String selectedCount(Object count) {
+    return '$count selected';
+  }
 }

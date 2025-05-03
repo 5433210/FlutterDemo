@@ -1,11 +1,12 @@
-import 'package:demo/theme/app_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../common/base_navigation_bar.dart';
 
-class M3NavigationBar extends ConsumerWidget {
+class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
   final String workId;
   final VoidCallback onBack;
   final VoidCallback? onHelp;
@@ -16,6 +17,9 @@ class M3NavigationBar extends ConsumerWidget {
     required this.onBack,
     this.onHelp,
   });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,31 +36,10 @@ class M3NavigationBar extends ConsumerWidget {
       statusText = l10n.characterCollectionError(collectionState.error!);
     }
 
-    return Container(
-      height: AppSizes.appBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
+    return BaseNavigationBar(
+      leading: BaseNavigationBar.createBackButton(context, onPressed: onBack),
+      title: Row(
         children: [
-          // Back button
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: l10n.characterCollectionBack,
-            onPressed: onBack,
-          ),
-
-          const SizedBox(width: 16),
-
-          // Title
           Text(
             l10n.characterCollectionTitle,
             style: textTheme.titleMedium,
@@ -64,14 +47,15 @@ class M3NavigationBar extends ConsumerWidget {
 
           // Status text (conditional display)
           if (statusText.isNotEmpty) ...[
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSizes.m),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.s, vertical: AppSizes.xs),
               decoration: BoxDecoration(
                 color: collectionState.error != null
-                    ? colorScheme.error.withValues(alpha: 0.1)
-                    : colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                    ? colorScheme.error.withOpacity(0.1)
+                    : colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.m),
               ),
               child: Text(
                 statusText,
@@ -83,17 +67,17 @@ class M3NavigationBar extends ConsumerWidget {
               ),
             ),
           ],
-
-          const Spacer(),
-
-          // Help button
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: l10n.characterCollectionHelp,
-            onPressed: onHelp ?? () => _showHelpDialog(context),
-          ),
         ],
       ),
+      actions: [
+        // Help button
+        BaseNavigationBar.createActionButton(
+          icon: Icons.help_outline,
+          tooltip: l10n.characterCollectionHelp,
+          onPressed: onHelp ?? () => _showHelpDialog(context),
+        ),
+      ],
+      useElevation: true,
     );
   }
 

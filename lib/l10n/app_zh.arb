@@ -653,5 +653,12 @@
   "enterGroupEditMode":"进入组编辑模式",
   "ungroupConfirm":"确认解组",
   "ungroupDescription":"确定要解散此组吗？",
-  "imagePropertyPanelCropping":"裁剪"
+  "imagePropertyPanelCropping":"裁剪",
+  "back":"返回",
+  "batchOperations":"批量操作",
+  "listView":"列表视图",
+  "gridView":"网格视图",
+  "searchCharactersWorksAuthors":"搜索字符、作品或作者",
+  "exitBatchMode":"退出批量模式",
+  "selectedCount":"已选择{count}个"
 }

@@ -6,6 +6,7 @@ import '../../../domain/models/practice/practice_filter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
+import '../../widgets/common/base_navigation_bar.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/m3_practice_grid_view.dart';
@@ -139,18 +140,9 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   }
 
   Widget _buildToolbar(ThemeData theme, AppLocalizations l10n) {
-    return Container(
-      height: AppSizes.appBarHeight,
+    return BaseNavigationBar(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-      child: Row(
+      title: Row(
         children: [
           // 左侧按钮组
           FilledButton.icon(
@@ -181,156 +173,148 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                 ),
               ),
             ),
-
-          // 中间空白区域
-          const Spacer(),
-
-          // 右侧控制组 - 排序、搜索、视图切换靠右摆放
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // 排序下拉菜单
-              PopupMenuButton<String>(
-                tooltip: 'Sort',
-                icon: const Icon(Icons.sort),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 'updateTime',
-                    child: Row(
-                      children: [
-                        Icon(
-                          _sortOrder == 'desc'
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward,
-                          size: 18,
-                          color: _sortField == 'updateTime'
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(l10n.practiceListSortByUpdateTime),
-                        if (_sortField == 'updateTime')
-                          Icon(
-                            Icons.check,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                      ],
-                    ),
+        ],
+      ),
+      actions: [
+        // 排序下拉菜单
+        PopupMenuButton<String>(
+          tooltip: 'Sort',
+          icon: const Icon(Icons.sort),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'updateTime',
+              child: Row(
+                children: [
+                  Icon(
+                    _sortOrder == 'desc'
+                        ? Icons.arrow_downward
+                        : Icons.arrow_upward,
+                    size: 18,
+                    color: _sortField == 'updateTime'
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
                   ),
-                  PopupMenuItem(
-                    value: 'createTime',
-                    child: Row(
-                      children: [
-                        Icon(
-                          _sortOrder == 'desc'
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward,
-                          size: 18,
-                          color: _sortField == 'createTime'
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(l10n.practiceListSortByCreateTime),
-                        if (_sortField == 'createTime')
-                          Icon(
-                            Icons.check,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                      ],
+                  const SizedBox(width: 8),
+                  Text(l10n.practiceListSortByUpdateTime),
+                  if (_sortField == 'updateTime')
+                    Icon(
+                      Icons.check,
+                      size: 18,
+                      color: theme.colorScheme.primary,
                     ),
-                  ),
-                  PopupMenuItem(
-                    value: 'title',
-                    child: Row(
-                      children: [
-                        Icon(
-                          _sortOrder == 'desc'
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward,
-                          size: 18,
-                          color: _sortField == 'title'
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(l10n.practiceListSortByTitle),
-                        if (_sortField == 'title')
-                          Icon(
-                            Icons.check,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                      ],
-                    ),
-                  ),
                 ],
-                onSelected: (value) {
-                  setState(() {
-                    if (_sortField == value) {
-                      _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc';
-                    } else {
-                      _sortField = value;
-                      _sortOrder = 'desc';
-                    }
-                  });
-                  _loadPractices();
-                },
               ),
-              const SizedBox(width: AppSizes.spacingMedium),
-
-              // 搜索框
-              SizedBox(
-                width: 240,
-                child: SearchBar(
-                  controller: _searchController,
-                  hintText: l10n.practiceListSearch,
-                  leading: const Icon(Icons.search,
-                      size: AppSizes.searchBarIconSize),
-                  padding: const WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+            ),
+            PopupMenuItem(
+              value: 'createTime',
+              child: Row(
+                children: [
+                  Icon(
+                    _sortOrder == 'desc'
+                        ? Icons.arrow_downward
+                        : Icons.arrow_upward,
+                    size: 18,
+                    color: _sortField == 'createTime'
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
                   ),
-                  onChanged: _searchPractices,
-                  trailing: [
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (context, value, child) {
-                        return AnimatedOpacity(
-                          opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                          duration: const Duration(
-                              milliseconds: AppSizes.animationDurationMedium),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.clear,
-                              size: AppSizes.searchBarClearIconSize,
-                            ),
-                            onPressed: () {
-                              _searchController.clear();
-                              _searchPractices('');
-                            },
-                          ),
-                        );
+                  const SizedBox(width: 8),
+                  Text(l10n.practiceListSortByCreateTime),
+                  if (_sortField == 'createTime')
+                    Icon(
+                      Icons.check,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'title',
+              child: Row(
+                children: [
+                  Icon(
+                    _sortOrder == 'desc'
+                        ? Icons.arrow_downward
+                        : Icons.arrow_upward,
+                    size: 18,
+                    color: _sortField == 'title'
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(l10n.practiceListSortByTitle),
+                  if (_sortField == 'title')
+                    Icon(
+                      Icons.check,
+                      size: 18,
+                      color: theme.colorScheme.primary,
+                    ),
+                ],
+              ),
+            ),
+          ],
+          onSelected: (value) {
+            setState(() {
+              if (_sortField == value) {
+                _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc';
+              } else {
+                _sortField = value;
+                _sortOrder = 'desc';
+              }
+            });
+            _loadPractices();
+          },
+        ),
+        const SizedBox(width: AppSizes.spacingMedium),
+
+        // 搜索框
+        SizedBox(
+          width: 240,
+          child: SearchBar(
+            controller: _searchController,
+            hintText: l10n.practiceListSearch,
+            leading: const Icon(Icons.search, size: AppSizes.searchBarIconSize),
+            padding: const WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: AppSizes.spacingMedium),
+            ),
+            onChanged: _searchPractices,
+            trailing: [
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, child) {
+                  return AnimatedOpacity(
+                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
+                    duration: const Duration(
+                        milliseconds: AppSizes.animationDurationMedium),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        size: AppSizes.searchBarClearIconSize,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        _searchPractices('');
                       },
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSizes.spacingMedium),
-
-              // 视图切换按钮
-              IconButton(
-                onPressed: () => setState(() => _isGridView = !_isGridView),
-                icon: Icon(_isGridView ? Icons.list : Icons.grid_view),
-                tooltip: _isGridView
-                    ? l10n.practiceListListView
-                    : l10n.practiceListGridView,
+                  );
+                },
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: AppSizes.spacingMedium),
+
+        // 视图切换按钮 - 改成使用BaseNavigationBar.createActionButton
+        BaseNavigationBar.createActionButton(
+          icon: _isGridView ? Icons.view_list : Icons.grid_view,
+          tooltip: _isGridView
+              ? l10n.practiceListListView
+              : l10n.practiceListGridView,
+          onPressed: () => setState(() => _isGridView = !_isGridView),
+          isPrimary: true,
+        ),
+      ],
     );
   }
 

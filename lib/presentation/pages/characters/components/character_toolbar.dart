@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../viewmodels/states/character_management_state.dart';
+import '../../../widgets/common/base_navigation_bar.dart';
 
 /// Character management toolbar
-class CharacterToolbar extends ConsumerWidget {
+class CharacterToolbar extends ConsumerWidget implements PreferredSizeWidget {
   /// Search callback
   final Function(String) onSearch;
 
@@ -40,26 +42,20 @@ class CharacterToolbar extends ConsumerWidget {
   });
 
   @override
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
+
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
-    return Container(
-      height: AppSizes.appBarHeight,
+    return BaseNavigationBar(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.spacingMedium,
         vertical: AppSizes.spacingSmall,
       ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
+      useElevation: true,
+      title: Row(
         children: [
           // Batch mode toggle
           IconButton(
@@ -68,15 +64,15 @@ class CharacterToolbar extends ConsumerWidget {
               isBatchMode ? Icons.cancel : Icons.check_box_outlined,
               color: isBatchMode ? theme.colorScheme.primary : null,
             ),
-            tooltip: isBatchMode ? '退出批量模式' : '批量操作',
+            tooltip: isBatchMode ? l10n.exitBatchMode : l10n.batchOperations,
           ),
 
           if (isBatchMode) ...[
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
 
             // Selection count and delete button
             Chip(
-              label: Text('已选择: $selectedCount'),
+              label: Text(l10n.selectedCount(selectedCount)),
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
               labelStyle: TextStyle(
                 color: selectedCount > 0
@@ -86,11 +82,11 @@ class CharacterToolbar extends ConsumerWidget {
             ),
 
             if (selectedCount > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.s),
               ElevatedButton.icon(
                 onPressed: onDelete,
                 icon: const Icon(Icons.delete),
-                label: const Text('删除'),
+                label: Text(l10n.delete),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: theme.colorScheme.errorContainer,
                   foregroundColor: theme.colorScheme.onErrorContainer,
@@ -98,38 +94,38 @@ class CharacterToolbar extends ConsumerWidget {
               ),
             ],
           ],
-
-          const Spacer(),
-
-          // View mode toggle
-          IconButton(
-            onPressed: onToggleViewMode,
-            icon: Icon(
-                viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view),
-            tooltip: viewMode == ViewMode.grid ? '列表视图' : '网格视图',
-          ),
-
-          const SizedBox(width: AppSizes.spacingSmall),
-
-          // Search box
-          SizedBox(
-            width: 200,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: '搜索字符、作品或作者',
-                isDense: true,
-                prefixIcon: const Icon(Icons.search, size: 20),
-                contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-                ),
-              ),
-              onChanged: onSearch,
-              textInputAction: TextInputAction.search,
-            ),
-          ),
         ],
       ),
+      actions: [
+        // View mode toggle
+        BaseNavigationBar.createActionButton(
+          icon: viewMode == ViewMode.grid ? Icons.view_list : Icons.grid_view,
+          tooltip: viewMode == ViewMode.grid ? l10n.listView : l10n.gridView,
+          onPressed: onToggleViewMode,
+          isPrimary: true,
+        ),
+
+        const SizedBox(width: AppSizes.s),
+
+        // Search box
+        SizedBox(
+          width: 200,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: l10n.searchCharactersWorksAuthors,
+              isDense: true,
+              prefixIcon:
+                  const Icon(Icons.search, size: AppSizes.searchBarIconSize),
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+              ),
+            ),
+            onChanged: onSearch,
+            textInputAction: TextInputAction.search,
+          ),
+        ),
+      ],
     );
   }
 }

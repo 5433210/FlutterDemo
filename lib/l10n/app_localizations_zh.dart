@@ -2016,4 +2016,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelCropping => '裁剪';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get batchOperations => '批量操作';
+
+  @override
+  String get listView => '列表视图';
+
+  @override
+  String get gridView => '网格视图';
+
+  @override
+  String get searchCharactersWorksAuthors => '搜索字符、作品或作者';
+
+  @override
+  String get exitBatchMode => '退出批量模式';
+
+  @override
+  String selectedCount(Object count) {
+    return '已选择$count个';
+  }
 }

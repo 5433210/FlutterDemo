@@ -4012,6 +4012,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cropping'**
   String get imagePropertyPanelCropping;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @batchOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Operations'**
+  String get batchOperations;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List View'**
+  String get listView;
+
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid View'**
+  String get gridView;
+
+  /// No description provided for @searchCharactersWorksAuthors.
+  ///
+  /// In en, this message translates to:
+  /// **'Search characters, works, or authors'**
+  String get searchCharactersWorksAuthors;
+
+  /// No description provided for @exitBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Batch Mode'**
+  String get exitBatchMode;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(Object count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

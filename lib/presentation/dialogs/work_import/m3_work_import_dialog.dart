@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/work_import_provider.dart';
+import '../../widgets/common/base_navigation_bar.dart';
 import 'components/form/m3_work_import_form.dart';
 import 'components/preview/m3_work_import_preview.dart';
 
@@ -26,82 +28,88 @@ class M3WorkImportDialog extends ConsumerWidget {
         final isMediumScreen = availableWidth >= 800 && availableWidth < 1100;
         final isSmallScreen = availableWidth < 800;
 
-        return Material(
-          color: theme.colorScheme.surface,
-          child: PopScope(
-            // Prevent dialog dismissal during processing
-            canPop: !state.isProcessing,
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // AppBar with action buttons moved here
-                  AppBar(
-                    title: Text(l10n.workImportDialogTitle),
-                    actions: [
-                      // Cancel button
-                      OutlinedButton.icon(
-                        onPressed: state.isProcessing
-                            ? null
-                            : () {
-                                viewModel.reset();
-                                Navigator.of(context).pop(false);
-                              },
-                        icon: const Icon(Icons.close),
-                        label: Text(l10n.workImportDialogCancel),
-                      ),
-                      const SizedBox(width: 8),
-                      // Import button
-                      FilledButton.icon(
-                        onPressed: (state.canSubmit && !state.isProcessing)
-                            ? () async {
-                                final success = await viewModel.importWork();
-                                if (success && context.mounted) {
-                                  Navigator.of(context).pop(true);
-                                }
-                              }
-                            : null,
-                        icon: const Icon(Icons.save),
-                        label: Text(l10n.workImportDialogImport),
-                      ),
-                      const SizedBox(width: 16),
-                    ],
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                          bottom: 24, left: 24, right: 24),
-                      child: _buildResponsiveLayout(
-                        context,
-                        isLargeScreen,
-                        isMediumScreen,
-                        isSmallScreen,
-                        availableHeight,
-                        availableWidth,
-                        state,
-                        viewModel,
-                      ),
-                    ),
-                  ),
-                  // Show processing indicator when importing
-                  if (state.isProcessing)
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          const LinearProgressIndicator(),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.workImportDialogProcessing,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
+        // Calculate content height by subtracting appbar height
+        final contentHeight = availableHeight - AppSizes.appBarHeight;
+        final processingIndicatorHeight = state.isProcessing ? 64.0 : 0.0;
+        final actualContentHeight = contentHeight -
+            processingIndicatorHeight -
+            24; // 24 for bottom padding
+
+        return Scaffold(
+          appBar: BaseNavigationBar(
+            title: Text(l10n.workImportDialogTitle),
+            actions: [
+              // Cancel button
+              OutlinedButton.icon(
+                onPressed: state.isProcessing
+                    ? null
+                    : () {
+                        viewModel.reset();
+                        Navigator.of(context).pop(false);
+                      },
+                icon: const Icon(Icons.close),
+                label: Text(l10n.workImportDialogCancel),
               ),
+              const SizedBox(width: AppSizes.s),
+              // Import button
+              FilledButton.icon(
+                onPressed: (state.canSubmit && !state.isProcessing)
+                    ? () async {
+                        final success = await viewModel.importWork();
+                        if (success && context.mounted) {
+                          Navigator.of(context).pop(true);
+                        }
+                      }
+                    : null,
+                icon: const Icon(Icons.save),
+                label: Text(l10n.workImportDialogImport),
+              ),
+              const SizedBox(width: AppSizes.m),
+            ],
+          ),
+          body: SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 24,
+                      left: 24,
+                      right: 24,
+                      top: 8,
+                    ),
+                    child: _buildResponsiveLayout(
+                      context,
+                      isLargeScreen,
+                      isMediumScreen,
+                      isSmallScreen,
+                      actualContentHeight,
+                      availableWidth,
+                      state,
+                      viewModel,
+                    ),
+                  ),
+                ),
+                // Show processing indicator when importing
+                if (state.isProcessing)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const LinearProgressIndicator(),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.workImportDialogProcessing,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
+          backgroundColor: theme.colorScheme.surface,
         );
       }),
     );

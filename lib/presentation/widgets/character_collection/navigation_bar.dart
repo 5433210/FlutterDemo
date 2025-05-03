@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../common/base_navigation_bar.dart';
 
-class CharacterNavigationBar extends ConsumerWidget {
+class CharacterNavigationBar extends ConsumerWidget
+    implements PreferredSizeWidget {
   final String workId;
   final VoidCallback onBack;
   final VoidCallback? onHelp;
@@ -16,60 +20,42 @@ class CharacterNavigationBar extends ConsumerWidget {
   }) : super(key: key);
 
   @override
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
+
+  @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final collectionState = ref.watch(characterCollectionProvider);
 
     // 计算状态信息文本
     String statusText = '';
     if (collectionState.processing) {
-      statusText = '处理中...';
+      statusText = l10n.characterCollectionProcessing;
     } else if (collectionState.error != null) {
-      statusText = '错误：${collectionState.error}';
+      statusText = l10n.characterCollectionError(collectionState.error!);
     }
 
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
+    return BaseNavigationBar(
+      leading: BaseNavigationBar.createBackButton(context, onPressed: onBack),
+      title: Row(
         children: [
-          // 返回按钮
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            tooltip: '返回',
-            onPressed: () {
-              onBack();
-            },
-          ),
-
-          const SizedBox(width: 16),
-
-          // 标题
           Text(
-            '集字功能',
-            style: theme.textTheme.titleLarge,
+            l10n.characterCollectionTitle,
+            style: theme.textTheme.titleMedium,
           ),
 
           // 状态文本（条件显示）
           if (statusText.isNotEmpty) ...[
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSizes.m),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.s, vertical: AppSizes.xs),
               decoration: BoxDecoration(
                 color: collectionState.error != null
                     ? theme.colorScheme.error.withOpacity(0.1)
                     : theme.colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppSizes.m),
               ),
               child: Text(
                 statusText,
@@ -81,17 +67,17 @@ class CharacterNavigationBar extends ConsumerWidget {
               ),
             ),
           ],
-
-          const Spacer(),
-
-          // 帮助按钮
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: '帮助',
-            onPressed: onHelp ?? () => _showHelpDialog(context),
-          ),
         ],
       ),
+      actions: [
+        // 帮助按钮
+        BaseNavigationBar.createActionButton(
+          icon: Icons.help_outline,
+          tooltip: l10n.characterCollectionHelp,
+          onPressed: onHelp ?? () => _showHelpDialog(context),
+        ),
+      ],
+      useElevation: true,
     );
   }
 

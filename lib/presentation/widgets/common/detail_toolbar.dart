@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
+import 'base_navigation_bar.dart';
 
 class DetailBadge {
   final String text;
@@ -34,22 +35,23 @@ class DetailToolbar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
-        onPressed: onBack ?? () => Navigator.of(context).pop(),
-      ),
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
+
+    return BaseNavigationBar(
+      leading: BaseNavigationBar.createBackButton(context,
+          onPressed: onBack ?? () => Navigator.of(context).pop()),
       title: Row(
         children: [
           if (leadingIcon != null) ...[
             Icon(
               leadingIcon!,
               size: 24,
-              color: Theme.of(context).primaryColor,
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(width: AppSizes.s),
           ],
@@ -62,7 +64,7 @@ class DetailToolbar extends StatelessWidget implements PreferredSizeWidget {
                 if (subtitle != null)
                   Text(
                     subtitle!,
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: theme.textTheme.bodySmall,
                   ),
               ],
             ),
@@ -74,26 +76,24 @@ class DetailToolbar extends StatelessWidget implements PreferredSizeWidget {
                 vertical: AppSizes.xxs,
               ),
               decoration: BoxDecoration(
-                color: badge!.backgroundColor ?? AppColors.primary,
+                color: badge!.backgroundColor ?? theme.colorScheme.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 badge!.text,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: badge!.textColor ?? Colors.white,
-                    ),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: badge!.textColor ?? Colors.white,
+                ),
               ),
             ),
         ],
       ),
       actions: actions.map((action) {
-        return IconButton(
-          icon: Icon(
-            action.icon,
-            color: action.color,
-          ),
+        return BaseNavigationBar.createActionButton(
+          icon: action.icon,
           tooltip: action.tooltip,
           onPressed: action.onPressed,
+          isPrimary: action.primary,
         );
       }).toList(),
     );

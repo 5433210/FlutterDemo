@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
+
 class SelectionToolbar extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
@@ -18,37 +21,48 @@ class SelectionToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!enabled) return const SizedBox.shrink();
 
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(8),
-      color: Colors.white,
+      elevation: 2,
+      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+      color: colorScheme.surface,
+      surfaceTintColor: colorScheme.surfaceTint,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.s, vertical: AppSizes.xs),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Tooltip(
-              message: '确认 (Enter)',
+              message: '${l10n.confirm} (Enter)',
               child: IconButton(
                 icon: const Icon(Icons.check),
                 onPressed: onConfirm,
-                color: Colors.blue,
+                style: IconButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                ),
               ),
             ),
             Tooltip(
-              message: '删除 (Delete)',
+              message: '${l10n.delete} (Delete)',
               child: IconButton(
                 icon: const Icon(Icons.delete_outline),
                 onPressed: onDelete,
-                color: Colors.red,
+                style: IconButton.styleFrom(
+                  foregroundColor: colorScheme.error,
+                ),
               ),
             ),
             Tooltip(
-              message: '取消 (Esc)',
+              message: '${l10n.cancel} (Esc)',
               child: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: onCancel,
-                color: Colors.grey,
+                style: IconButton.styleFrom(
+                  foregroundColor: colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

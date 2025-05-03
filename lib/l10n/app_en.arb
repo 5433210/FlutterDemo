@@ -655,5 +655,12 @@
   "ungroupDescription":"Are you sure you want to ungroup this group?",
   "alignHorizontalCenter":"Align Horizontal Center",
   "alignVerticalCenter":"Align Vertical Center",
-  "imagePropertyPanelCropping":"Cropping"
-  }
+  "imagePropertyPanelCropping":"Cropping",
+  "workBrowseDeleteConfirmTitle":"Confirm Deletion",
+  "back":"Back",
+  "batchOperations":"Batch Operations",
+  "listView":"List View",
+  "gridView":"Grid View",
+  "searchCharactersWorksAuthors":"Search characters, works, or authors",
+  "exitBatchMode":"Exit Batch Mode",
+  "selectedCount":"{count} selected"}

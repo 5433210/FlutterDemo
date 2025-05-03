@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import 'practice_edit_controller.dart';
 
 /// 编辑工具栏
-class EditToolbar extends StatelessWidget {
+class EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final PracticeEditController controller;
   final bool gridVisible;
   final bool snapEnabled;
@@ -38,18 +40,26 @@ class EditToolbar extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final hasSelection = controller.state.selectedElementIds.isNotEmpty;
     final isMultiSelected = controller.state.selectedElementIds.length > 1;
     final hasSelectedGroup =
         hasSelection && !isMultiSelected && _isSelectedElementGroup();
 
     return Container(
-      height: 50,
+      height: 48,
+      padding: const EdgeInsets.symmetric(
+          vertical: AppSizes.xs, horizontal: AppSizes.s),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surfaceContainerLow,
         border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300),
+          bottom: BorderSide(color: colorScheme.outlineVariant),
         ),
       ),
       child: SingleChildScrollView(
@@ -59,85 +69,99 @@ class EditToolbar extends StatelessWidget {
           children: [
             // 编辑操作组
             _buildToolbarGroup(
-              title: '编辑操作',
+              title: l10n.practiceEditEditOperations,
               children: [
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.copy,
-                  tooltip: '复制 (Ctrl+Shift+C)',
+                  tooltip: l10n.practiceEditCopy,
                   onPressed: hasSelection ? onCopy : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.paste,
-                  tooltip: '粘贴 (Ctrl+Shift+V)',
+                  tooltip: l10n.practiceEditPaste,
                   onPressed: onPaste,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.delete,
-                  tooltip: '删除 (Ctrl+D)',
+                  tooltip: l10n.practiceEditDelete,
                   onPressed: hasSelection ? onDelete : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.group,
-                  tooltip: '组合 (Ctrl+J)',
+                  tooltip: l10n.practiceEditGroup,
                   onPressed: isMultiSelected ? onGroupElements : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.format_shapes,
-                  tooltip: '取消组合 (Ctrl+U)',
+                  tooltip: l10n.practiceEditUngroup,
                   onPressed: hasSelectedGroup ? onUngroupElements : null,
                 ),
               ],
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
 
             // 层级操作组
             _buildToolbarGroup(
-              title: '层级操作',
+              title: l10n.practiceEditLayerOperations,
               children: [
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.vertical_align_top,
-                  tooltip: '置于顶层 (Ctrl+T)',
+                  tooltip: l10n.practiceEditBringToFront,
                   onPressed: hasSelection ? onBringToFront : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.vertical_align_bottom,
-                  tooltip: '置于底层 (Ctrl+B)',
+                  tooltip: l10n.practiceEditSendToBack,
                   onPressed: hasSelection ? onSendToBack : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.arrow_upward,
-                  tooltip: '上移一层 (Ctrl+Shift+T)',
+                  tooltip: l10n.practiceEditMoveUp,
                   onPressed: hasSelection ? onMoveUp : null,
                 ),
                 _buildToolbarButton(
+                  context: context,
                   icon: Icons.arrow_downward,
-                  tooltip: '下移一层 (Ctrl+Shift+B)',
+                  tooltip: l10n.practiceEditMoveDown,
                   onPressed: hasSelection ? onMoveDown : null,
                 ),
               ],
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.s),
 
             // 辅助功能组
             _buildToolbarGroup(
-              title: '辅助功能',
+              title: l10n.practiceEditHelperFunctions,
               children: [
                 _buildToolbarButton(
+                  context: context,
                   icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                  tooltip: gridVisible ? '隐藏网格 (Ctrl+G)' : '显示网格 (Ctrl+G)',
+                  tooltip: gridVisible
+                      ? l10n.practiceEditHideGrid
+                      : l10n.practiceEditShowGrid,
                   onPressed: onToggleGrid,
                   isActive: gridVisible,
                 ),
                 _buildToolbarButton(
-                  icon: Icons
-                      .format_line_spacing, // Alternative icon for snapping/alignment
-                  tooltip: snapEnabled ? '禁用吸附 (Ctrl+R)' : '启用吸附 (Ctrl+R)',
+                  context: context,
+                  icon: Icons.format_line_spacing,
+                  tooltip: snapEnabled
+                      ? l10n.practiceEditDisableSnap
+                      : l10n.practiceEditEnableSnap,
                   onPressed: onToggleSnap,
                   isActive: snapEnabled,
                 ),
@@ -151,24 +175,30 @@ class EditToolbar extends StatelessWidget {
 
   /// 构建工具栏按钮
   Widget _buildToolbarButton({
+    required BuildContext context,
     required IconData icon,
     required String tooltip,
     required VoidCallback? onPressed,
     bool isActive = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Tooltip(
       message: tooltip,
       child: IconButton(
         icon: Icon(
           icon,
-          color: isActive ? Colors.blue : null,
+          color: isActive
+              ? colorScheme.primary
+              : onPressed == null
+                  ? colorScheme.onSurface.withOpacity(0.38)
+                  : null,
           size: 20,
         ),
         onPressed: onPressed,
-        padding: const EdgeInsets.all(8),
-        constraints: const BoxConstraints(
-          minWidth: 40,
-          minHeight: 40,
+        style: IconButton.styleFrom(
+          minimumSize: const Size(40, 40),
+          padding: const EdgeInsets.all(8),
         ),
       ),
     );
@@ -185,12 +215,12 @@ class EditToolbar extends StatelessWidget {
         // 工具组标题
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSizes.s),
         // 工具按钮组
         ...children,
       ],
