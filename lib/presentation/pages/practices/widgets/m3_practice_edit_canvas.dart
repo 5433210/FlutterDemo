@@ -461,14 +461,32 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                                       color: isLocked
                                           ? colorScheme.tertiary
                                           : colorScheme.primary,
-                                      width: 1.0,
+                                      width: 2.0, // 增加边框宽度，从 1.0 改为 2.0
+                                      style: BorderStyle.solid,
                                     ),
+                                    // 添加半透明背景色，提高可视性
+                                    color: (isLocked
+                                            ? colorScheme.tertiary
+                                            : colorScheme.primary)
+                                        .withOpacity(0.08),
                                   )
                                 : null,
                             child: Stack(
                               children: [
                                 // Element content
                                 _renderElement(element),
+
+                                // 为选中元素添加角落指示器，增强选中状态的可见性
+                                if (!widget.isPreviewMode && isSelected)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: _SelectionCornerPainter(
+                                        color: isLocked
+                                            ? colorScheme.tertiary
+                                            : colorScheme.surfaceBright,
+                                      ),
+                                    ),
+                                  ),
 
                                 // Lock icon (if element or its layer is locked)
                                 if ((isLocked || isLayerLocked) &&
@@ -1061,5 +1079,50 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     // Use the ElementRenderers.buildTextElement method to ensure all text formatting properties are applied
     return ElementRenderers.buildTextElement(element,
         isPreviewMode: widget.isPreviewMode);
+  }
+}
+
+/// Custom painter for selection corner indicators
+class _SelectionCornerPainter extends CustomPainter {
+  final Color color;
+
+  _SelectionCornerPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    const double cornerLength = 10.0;
+
+    // Draw corners
+    // Top-left
+    canvas.drawLine(const Offset(0, 0), const Offset(cornerLength, 0), paint);
+    canvas.drawLine(const Offset(0, 0), const Offset(0, cornerLength), paint);
+
+    // Top-right
+    canvas.drawLine(
+        Offset(size.width, 0), Offset(size.width - cornerLength, 0), paint);
+    canvas.drawLine(
+        Offset(size.width, 0), Offset(size.width, cornerLength), paint);
+
+    // Bottom-left
+    canvas.drawLine(
+        Offset(0, size.height), Offset(cornerLength, size.height), paint);
+    canvas.drawLine(
+        Offset(0, size.height), Offset(0, size.height - cornerLength), paint);
+
+    // Bottom-right
+    canvas.drawLine(Offset(size.width, size.height),
+        Offset(size.width - cornerLength, size.height), paint);
+    canvas.drawLine(Offset(size.width, size.height),
+        Offset(size.width, size.height - cornerLength), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }

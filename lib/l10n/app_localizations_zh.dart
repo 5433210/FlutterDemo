@@ -2013,4 +2013,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get alignVerticalCenter => 'Align Vertical Center';
+
+  @override
+  String get imagePropertyPanelCropping => '裁剪';
 }

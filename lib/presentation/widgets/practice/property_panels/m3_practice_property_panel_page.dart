@@ -241,14 +241,37 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                   Text('${l10n.dpiSetting}:',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
-                  EditableNumberField(
-                    label: 'DPI',
-                    value: dpi.toDouble(),
-                    suffix: '',
-                    min: 72,
-                    max: 600,
-                    decimalPlaces: 0,
-                    onChanged: (value) => _updateDpi(value.toString()),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Slider(
+                          value: dpi.toDouble(),
+                          min: 72,
+                          max: 600,
+                          divisions: 528, // 600-72 divisions
+                          label: '${dpi.toString()} DPI',
+                          activeColor: colorScheme.primary,
+                          thumbColor: colorScheme.primary,
+                          onChanged: (value) =>
+                              _updateDpi(value.toInt().toString()),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        flex: 2,
+                        child: EditableNumberField(
+                          label: 'DPI',
+                          value: dpi.toDouble(),
+                          suffix: '',
+                          min: 72,
+                          max: 600,
+                          decimalPlaces: 0,
+                          onChanged: (value) =>
+                              _updateDpi(value.toInt().toString()),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8.0),
 
@@ -458,6 +481,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
           ((widget.page!['width'] as num?)?.toDouble() ?? 210.0).toString();
       _heightController.text =
           ((widget.page!['height'] as num?)?.toDouble() ?? 297.0).toString();
+
+      // 设置DPI初始值 - 300 DPI是印刷品的行业标准，适合大多数高质量打印需求
       _dpiController.text =
           ((widget.page!['dpi'] as num?)?.toInt() ?? 300).toString();
 

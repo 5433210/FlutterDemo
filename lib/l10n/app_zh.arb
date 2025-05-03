@@ -652,5 +652,6 @@
   "deleteGroupElements":"删除组内元素",
   "enterGroupEditMode":"进入组编辑模式",
   "ungroupConfirm":"确认解组",
-  "ungroupDescription":"确定要解散此组吗？"
+  "ungroupDescription":"确定要解散此组吗？",
+  "imagePropertyPanelCropping":"裁剪"
 }

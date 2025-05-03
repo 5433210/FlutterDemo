@@ -654,5 +654,6 @@
   "ungroupConfirm":"Confirm Ungroup",
   "ungroupDescription":"Are you sure you want to ungroup this group?",
   "alignHorizontalCenter":"Align Horizontal Center",
-  "alignVerticalCenter":"Align Vertical Center"
+  "alignVerticalCenter":"Align Vertical Center",
+  "imagePropertyPanelCropping":"Cropping"
   }

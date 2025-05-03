@@ -171,540 +171,591 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
         M3LayerInfoPanel(layer: layer),
 
         // Geometry properties section
-        materialExpansionTile(
-          title: Text(l10n.geometryProperties),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Information alert
-                  Container(
-                    padding: const EdgeInsets.all(12.0),
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8.0),
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.geometryProperties),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Information alert
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              color: colorScheme.primary, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.imagePropertyPanelGeometryWarning,
+                              style: TextStyle(
+                                  fontSize: 14, color: colorScheme.primary),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Row(
+
+                    // X and Y position
+                    Row(
                       children: [
-                        Icon(Icons.info_outline,
-                            color: colorScheme.primary, size: 20),
-                        const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            l10n.imagePropertyPanelGeometryWarning,
-                            style: TextStyle(
-                                fontSize: 14, color: colorScheme.primary),
+                          child: EditableNumberField(
+                            label: 'X',
+                            value: x,
+                            suffix: 'px',
+                            min: 0,
+                            max: 10000,
+                            onChanged: (value) => _updateProperty('x', value),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: EditableNumberField(
+                            label: 'Y',
+                            value: y,
+                            suffix: 'px',
+                            min: 0,
+                            max: 10000,
+                            onChanged: (value) => _updateProperty('y', value),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 8.0),
 
-                  // X and Y position
-                  Row(
-                    children: [
-                      Expanded(
-                        child: EditableNumberField(
-                          label: 'X',
-                          value: x,
-                          suffix: 'px',
-                          min: 0,
-                          max: 10000,
-                          onChanged: (value) => _updateProperty('x', value),
+                    // Width and height
+                    Row(
+                      children: [
+                        Expanded(
+                          child: EditableNumberField(
+                            label: l10n.width,
+                            value: width,
+                            suffix: 'px',
+                            min: 10,
+                            max: 10000,
+                            onChanged: (value) =>
+                                _updateProperty('width', value),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: EditableNumberField(
-                          label: 'Y',
-                          value: y,
-                          suffix: 'px',
-                          min: 0,
-                          max: 10000,
-                          onChanged: (value) => _updateProperty('y', value),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: EditableNumberField(
+                            label: l10n.height,
+                            value: height,
+                            suffix: 'px',
+                            min: 10,
+                            max: 10000,
+                            onChanged: (value) =>
+                                _updateProperty('height', value),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
+                      ],
+                    ),
+                    const SizedBox(height: 8.0),
 
-                  // Width and height
-                  Row(
-                    children: [
-                      Expanded(
-                        child: EditableNumberField(
-                          label: l10n.width,
-                          value: width,
-                          suffix: 'px',
-                          min: 10,
-                          max: 10000,
-                          onChanged: (value) => _updateProperty('width', value),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: EditableNumberField(
-                          label: l10n.height,
-                          value: height,
-                          suffix: 'px',
-                          min: 10,
-                          max: 10000,
-                          onChanged: (value) =>
-                              _updateProperty('height', value),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
-
-                  // Rotation
-                  EditableNumberField(
-                    label: l10n.rotation,
-                    value: rotation,
-                    suffix: '°',
-                    min: -360,
-                    max: 360,
-                    decimalPlaces: 1,
-                    onChanged: (value) => _updateProperty('rotation', value),
-                  ),
-                ],
+                    // Rotation
+                    EditableNumberField(
+                      label: l10n.rotation,
+                      value: rotation,
+                      suffix: '°',
+                      min: -360,
+                      max: 360,
+                      decimalPlaces: 1,
+                      onChanged: (value) => _updateProperty('rotation', value),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         // Visual properties section
-        materialExpansionTile(
-          title: Text(l10n.visualSettings),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Opacity
-                  Text('${l10n.opacity}:',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8.0),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Slider(
-                          value: opacity,
-                          min: 0.0,
-                          max: 1.0,
-                          divisions: 100,
-                          label: '${(opacity * 100).toStringAsFixed(0)}%',
-                          activeColor: colorScheme.primary,
-                          thumbColor: colorScheme.primary,
-                          onChanged: (value) =>
-                              _updateProperty('opacity', value),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        flex: 2,
-                        child: EditableNumberField(
-                          label: l10n.opacity,
-                          value: opacity * 100, // Convert to percentage
-                          suffix: '%',
-                          min: 0,
-                          max: 100,
-                          decimalPlaces: 0,
-                          onChanged: (value) {
-                            // Convert back to 0-1 range
-                            _updateProperty('opacity', value / 100);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 16.0),
-
-                  // Background color
-                  Text('${l10n.backgroundColor}:',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8.0),
-                  ColorPaletteWidget(
-                    initialColor: _getBackgroundColor(),
-                    labelText: l10n.backgroundColor,
-                    onColorChanged: (color) {
-                      final hexColor =
-                          '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-                      _updateContentProperty('backgroundColor', hexColor);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        // Image selection section
-        materialExpansionTile(
-          title: Text(l10n.imagePropertyPanelImageSelection),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  FilledButton.tonalIcon(
-                    icon: const Icon(Icons.photo_library),
-                    onPressed: () => _selectImageFromLocal(context),
-                    label: Text(l10n.imagePropertyPanelSelectFromLocal),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        // Fit mode section
-        materialExpansionTile(
-          title: Text(l10n.imagePropertyPanelFitMode),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Card(
-                    elevation: 0,
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SegmentedButton<String>(
-                        segments: [
-                          ButtonSegment<String>(
-                            value: 'contain',
-                            label: Text(l10n.imagePropertyPanelFitContain),
-                            icon: const Icon(Icons.fit_screen),
-                          ),
-                          ButtonSegment<String>(
-                            value: 'cover',
-                            label: Text(l10n.imagePropertyPanelFitCover),
-                            icon: const Icon(Icons.crop),
-                          ),
-                          ButtonSegment<String>(
-                            value: 'fill',
-                            label: Text(l10n.imagePropertyPanelFitFill),
-                            icon: const Icon(Icons.aspect_ratio),
-                          ),
-                          ButtonSegment<String>(
-                            value: 'none',
-                            label: Text(l10n.imagePropertyPanelFitOriginal),
-                            icon: const Icon(Icons.image),
-                          ),
-                        ],
-                        selected: {fitMode},
-                        onSelectionChanged: (Set<String> selection) {
-                          if (selection.isNotEmpty) {
-                            _updateContentProperty('fitMode', selection.first);
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        // Image preview section
-        materialExpansionTile(
-          title: Text(l10n.imagePropertyPanelPreview),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12.0),
-                    margin: const EdgeInsets.only(bottom: 12.0),
-                    decoration: BoxDecoration(
-                      color: colorScheme.tertiaryContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      l10n.imagePropertyPanelPreviewNotice,
-                      style:
-                          TextStyle(fontSize: 12, color: colorScheme.tertiary),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  _buildImagePreviewWithTransformBox(
-                    context: context,
-                    imageUrl: imageUrl,
-                    fitMode: fitMode,
-                    cropTop: cropTop,
-                    cropBottom: cropBottom,
-                    cropLeft: cropLeft,
-                    cropRight: cropRight,
-                    flipHorizontal: isFlippedHorizontally,
-                    flipVertical: isFlippedVertically,
-                    contentRotation: contentRotation,
-                    isTransformApplied: isTransformApplied,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-
-        // Image transform section
-        materialExpansionTile(
-          title: Text(l10n.imagePropertyPanelImageTransform),
-          initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Warning message
-                  Container(
-                    padding: const EdgeInsets.all(12.0),
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    decoration: BoxDecoration(
-                      color: colorScheme.tertiaryContainer.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Row(
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          // shape: RoundedRectangleBorder(
+          //   borderRadius: BorderRadius.circular(12.0),
+          // ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.visualSettings),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Opacity
+                    Text('${l10n.opacity}:',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8.0),
+                    Row(
                       children: [
-                        Icon(Icons.info_outline,
-                            color: colorScheme.tertiary, size: 20),
-                        const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            l10n.imagePropertyPanelTransformWarning,
-                            style: TextStyle(
-                                fontSize: 14, color: colorScheme.tertiary),
+                          flex: 3,
+                          child: Slider(
+                            value: opacity,
+                            min: 0.0,
+                            max: 1.0,
+                            divisions: 100,
+                            label: '${(opacity * 100).toStringAsFixed(0)}%',
+                            activeColor: colorScheme.primary,
+                            thumbColor: colorScheme.primary,
+                            onChanged: (value) =>
+                                _updateProperty('opacity', value),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          flex: 2,
+                          child: EditableNumberField(
+                            label: l10n.opacity,
+                            value: opacity * 100, // Convert to percentage
+                            suffix: '%',
+                            min: 0,
+                            max: 100,
+                            decimalPlaces: 0,
+                            onChanged: (value) {
+                              // Convert back to 0-1 range
+                              _updateProperty('opacity', value / 100);
+                            },
                           ),
                         ),
                       ],
                     ),
-                  ),
 
-                  // Crop settings
-                  Text(l10n.imagePropertyPanelFlip,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8.0),
+                    const SizedBox(height: 16.0),
 
-                  // Top crop slider
-                  _buildCropSlider(
-                    context: context,
-                    label: l10n.imagePropertyPanelCropTop,
-                    cropKey: 'cropTop',
-                    value: cropTop,
-                    max: maxCropHeight,
-                  ),
-
-                  // Bottom crop slider
-                  _buildCropSlider(
-                    context: context,
-                    label: l10n.imagePropertyPanelCropBottom,
-                    cropKey: 'cropBottom',
-                    value: cropBottom,
-                    max: maxCropHeight,
-                  ),
-
-                  // Left crop slider
-                  _buildCropSlider(
-                    context: context,
-                    label: l10n.imagePropertyPanelCropLeft,
-                    cropKey: 'cropLeft',
-                    value: cropLeft,
-                    max: maxCropWidth,
-                  ),
-
-                  // Right crop slider
-                  _buildCropSlider(
-                    context: context,
-                    label: l10n.imagePropertyPanelCropRight,
-                    cropKey: 'cropRight',
-                    value: cropRight,
-                    max: maxCropWidth,
-                  ),
-
-                  const SizedBox(height: 16.0),
-
-                  // Flip buttons
-                  Text(l10n.imagePropertyPanelFlip,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8.0),
-
-                  // Using Material 3 FilterChips for flip toggles with a Card wrapper for consistent style
-                  Card(
-                    elevation: 0,
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+                    // Background color
+                    Text('${l10n.backgroundColor}:',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8.0),
+                    ColorPaletteWidget(
+                      initialColor: _getBackgroundColor(),
+                      labelText: l10n.backgroundColor,
+                      onColorChanged: (color) {
+                        final hexColor =
+                            '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                        _updateContentProperty('backgroundColor', hexColor);
+                      },
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Wrap(
-                        spacing: 8,
-                        children: [
-                          FilterChip(
-                            label: Text(l10n.imagePropertyPanelFlipHorizontal),
-                            selected: isFlippedHorizontally,
-                            onSelected: (value) => _updateContentProperty(
-                                'isFlippedHorizontally', value),
-                            avatar: const Icon(Icons.flip),
-                          ),
-                          FilterChip(
-                            label: Text(l10n.imagePropertyPanelFlipVertical),
-                            selected: isFlippedVertically,
-                            onSelected: (value) => _updateContentProperty(
-                                'isFlippedVertically', value),
-                            avatar: const Icon(Icons.flip),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16.0),
-
-                  // Rotation
-                  Text(l10n.rotation,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8.0),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Slider(
-                          value: contentRotation.clamp(-180.0, 180.0),
-                          min: -180.0,
-                          max: 180.0,
-                          divisions: 360,
-                          label: '${contentRotation.toStringAsFixed(0)}°',
-                          activeColor: colorScheme.primary,
-                          thumbColor: colorScheme.primary,
-                          onChanged: (value) =>
-                              _updateContentProperty('rotation', value),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        flex: 2,
-                        child: EditableNumberField(
-                          label: l10n.rotation,
-                          value: contentRotation,
-                          suffix: '°',
-                          min: -180,
-                          max: 180,
-                          decimalPlaces: 0,
-                          onChanged: (value) =>
-                              _updateContentProperty('rotation', value),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Quick rotation buttons
-                  Card(
-                    elevation: 0,
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildRotationButton(context, '0°', () {
-                            _updateContentProperty('rotation', 0.0);
-                          }),
-                          _buildRotationButton(context, '+90°', () {
-                            double newRotation = contentRotation + 90;
-                            while (newRotation > 180) {
-                              newRotation -= 360;
-                            }
-                            _updateContentProperty('rotation', newRotation);
-                          }),
-                          _buildRotationButton(context, '-90°', () {
-                            double newRotation = contentRotation - 90;
-                            while (newRotation < -180) {
-                              newRotation += 360;
-                            }
-                            _updateContentProperty('rotation', newRotation);
-                          }),
-                          _buildRotationButton(context, '180°', () {
-                            double newRotation = contentRotation + 180;
-                            while (newRotation > 180) {
-                              newRotation -= 360;
-                            }
-                            _updateContentProperty('rotation', newRotation);
-                          }),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24.0),
-
-                  // Apply and Reset buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          icon: const Icon(Icons.check),
-                          onPressed: () => _applyTransform(context),
-                          label: Text(l10n.imagePropertyPanelApplyTransform),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            backgroundColor: colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () => _resetTransform(context),
-                          label: Text(l10n.imagePropertyPanelResetTransform),
-                          style: OutlinedButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                            foregroundColor: colorScheme.error,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+
+        // Image selection section
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.imagePropertyPanelImageSelection),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.photo_library),
+                      onPressed: () => _selectImageFromLocal(context),
+                      label: Text(l10n.imagePropertyPanelSelectFromLocal),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Fit mode section
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.imagePropertyPanelFitMode),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SegmentedButton<String>(
+                          segments: [
+                            ButtonSegment<String>(
+                              value: 'contain',
+                              label: Text(l10n.imagePropertyPanelFitContain),
+                              icon: const Icon(Icons.fit_screen),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'cover',
+                              label: Text(l10n.imagePropertyPanelFitCover),
+                              icon: const Icon(Icons.crop),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'fill',
+                              label: Text(l10n.imagePropertyPanelFitFill),
+                              icon: const Icon(Icons.aspect_ratio),
+                            ),
+                            ButtonSegment<String>(
+                              value: 'none',
+                              label: Text(l10n.imagePropertyPanelFitOriginal),
+                              icon: const Icon(Icons.image),
+                            ),
+                          ],
+                          selected: {fitMode},
+                          onSelectionChanged: (Set<String> selection) {
+                            if (selection.isNotEmpty) {
+                              _updateContentProperty(
+                                  'fitMode', selection.first);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Image preview section
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.imagePropertyPanelPreview),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12.0),
+                      margin: const EdgeInsets.only(bottom: 12.0),
+                      decoration: BoxDecoration(
+                        color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Text(
+                        l10n.imagePropertyPanelPreviewNotice,
+                        style: TextStyle(
+                            fontSize: 12, color: colorScheme.tertiary),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    _buildImagePreviewWithTransformBox(
+                      context: context,
+                      imageUrl: imageUrl,
+                      fitMode: fitMode,
+                      cropTop: cropTop,
+                      cropBottom: cropBottom,
+                      cropLeft: cropLeft,
+                      cropRight: cropRight,
+                      flipHorizontal: isFlippedHorizontally,
+                      flipVertical: isFlippedVertically,
+                      contentRotation: contentRotation,
+                      isTransformApplied: isTransformApplied,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Image transform section
+        Card(
+          elevation: 0,
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: ExpansionTile(
+            title: Text(l10n.imagePropertyPanelImageTransform),
+            initiallyExpanded: true,
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Warning message
+                    Container(
+                      padding: const EdgeInsets.all(12.0),
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      decoration: BoxDecoration(
+                        color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              color: colorScheme.tertiary, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.imagePropertyPanelTransformWarning,
+                              style: TextStyle(
+                                  fontSize: 14, color: colorScheme.tertiary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Crop settings
+                    Text(l10n.imagePropertyPanelCropping,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8.0),
+
+                    // Top crop slider
+                    _buildCropSlider(
+                      context: context,
+                      label: l10n.imagePropertyPanelCropTop,
+                      cropKey: 'cropTop',
+                      value: cropTop,
+                      max: maxCropHeight,
+                    ),
+
+                    // Bottom crop slider
+                    _buildCropSlider(
+                      context: context,
+                      label: l10n.imagePropertyPanelCropBottom,
+                      cropKey: 'cropBottom',
+                      value: cropBottom,
+                      max: maxCropHeight,
+                    ),
+
+                    // Left crop slider
+                    _buildCropSlider(
+                      context: context,
+                      label: l10n.imagePropertyPanelCropLeft,
+                      cropKey: 'cropLeft',
+                      value: cropLeft,
+                      max: maxCropWidth,
+                    ),
+
+                    // Right crop slider
+                    _buildCropSlider(
+                      context: context,
+                      label: l10n.imagePropertyPanelCropRight,
+                      cropKey: 'cropRight',
+                      value: cropRight,
+                      max: maxCropWidth,
+                    ),
+
+                    const SizedBox(height: 16.0),
+
+                    // Flip buttons
+                    Text(l10n.imagePropertyPanelFlip,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8.0),
+
+                    // Using Material 3 FilterChips for flip toggles with a Card wrapper for consistent style
+                    Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Wrap(
+                          spacing: 8,
+                          children: [
+                            FilterChip(
+                              label:
+                                  Text(l10n.imagePropertyPanelFlipHorizontal),
+                              selected: isFlippedHorizontally,
+                              onSelected: (value) => _updateContentProperty(
+                                  'isFlippedHorizontally', value),
+                              avatar: const Icon(Icons.flip),
+                            ),
+                            FilterChip(
+                              label: Text(l10n.imagePropertyPanelFlipVertical),
+                              selected: isFlippedVertically,
+                              onSelected: (value) => _updateContentProperty(
+                                  'isFlippedVertically', value),
+                              avatar: const Icon(Icons.flip),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16.0),
+
+                    // Rotation
+                    Text(l10n.rotation,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8.0),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Slider(
+                            value: contentRotation.clamp(-180.0, 180.0),
+                            min: -180.0,
+                            max: 180.0,
+                            divisions: 360,
+                            label: '${contentRotation.toStringAsFixed(0)}°',
+                            activeColor: colorScheme.primary,
+                            thumbColor: colorScheme.primary,
+                            onChanged: (value) =>
+                                _updateContentProperty('rotation', value),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          flex: 2,
+                          child: EditableNumberField(
+                            label: l10n.rotation,
+                            value: contentRotation,
+                            suffix: '°',
+                            min: -180,
+                            max: 180,
+                            decimalPlaces: 0,
+                            onChanged: (value) =>
+                                _updateContentProperty('rotation', value),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Quick rotation buttons
+                    Card(
+                      elevation: 0,
+                      color: colorScheme.surfaceContainerHighest,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildRotationButton(context, '0°', () {
+                              _updateContentProperty('rotation', 0.0);
+                            }),
+                            _buildRotationButton(context, '+90°', () {
+                              double newRotation = contentRotation + 90;
+                              while (newRotation > 180) {
+                                newRotation -= 360;
+                              }
+                              _updateContentProperty('rotation', newRotation);
+                            }),
+                            _buildRotationButton(context, '-90°', () {
+                              double newRotation = contentRotation - 90;
+                              while (newRotation < -180) {
+                                newRotation += 360;
+                              }
+                              _updateContentProperty('rotation', newRotation);
+                            }),
+                            _buildRotationButton(context, '180°', () {
+                              double newRotation = contentRotation + 180;
+                              while (newRotation > 180) {
+                                newRotation -= 360;
+                              }
+                              _updateContentProperty('rotation', newRotation);
+                            }),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24.0),
+
+                    // Apply and Reset buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            icon: const Icon(Icons.check),
+                            onPressed: () => _applyTransform(context),
+                            label: Text(l10n.imagePropertyPanelApplyTransform),
+                            style: FilledButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              backgroundColor: colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.refresh),
+                            onPressed: () => _resetTransform(context),
+                            label: Text(l10n.imagePropertyPanelResetTransform),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              foregroundColor: colorScheme.error,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -717,8 +768,13 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
     List<Widget> children = const <Widget>[],
     bool initiallyExpanded = false,
   }) {
-    return Material(
-      color: Colors.transparent,
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
         title: title,
         initiallyExpanded: initiallyExpanded,

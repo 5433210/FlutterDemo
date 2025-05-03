@@ -4006,6 +4006,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Align Vertical Center'**
   String get alignVerticalCenter;
+
+  /// No description provided for @imagePropertyPanelCropping.
+  ///
+  /// In en, this message translates to:
+  /// **'Cropping'**
+  String get imagePropertyPanelCropping;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
