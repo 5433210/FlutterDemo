@@ -4252,6 +4252,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} per page'**
   String workBrowseItemsPerPage(Object count);
+
+  /// No description provided for @windowButtonMinimize.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get windowButtonMinimize;
+
+  /// No description provided for @windowButtonMaximize.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get windowButtonMaximize;
+
+  /// No description provided for @windowButtonRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get windowButtonRestore;
+
+  /// No description provided for @windowButtonClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get windowButtonClose;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

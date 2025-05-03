@@ -665,5 +665,9 @@
   "alignHorizontalCenter":"水平居中",
   "alignVerticalCenter":"垂直居中",
   "workBrowseTotalItems": "共 {count} 个作品",
-  "workBrowseItemsPerPage": "每页 {count} 个"
+  "workBrowseItemsPerPage": "每页 {count} 个",
+  "windowButtonMinimize": "最小化",
+  "windowButtonMaximize": "最大化",
+  "windowButtonRestore": "还原",
+  "windowButtonClose": "关闭"
 }

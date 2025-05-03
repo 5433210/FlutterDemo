@@ -711,5 +711,9 @@
   "selectedCount":"{count} selected",
   "workBrowseDeleteSelected":"Delete Selected",
   "workBrowseTotalItems": "Total: {count} works",
-  "workBrowseItemsPerPage": "{count} per page"
+  "workBrowseItemsPerPage": "{count} per page",
+  "windowButtonMinimize": "Minimize",
+  "windowButtonMaximize": "Maximize",
+  "windowButtonRestore": "Restore",
+  "windowButtonClose": "Close"
 }

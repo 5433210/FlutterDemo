@@ -2146,4 +2146,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String workBrowseItemsPerPage(Object count) {
     return '$count per page';
   }
+
+  @override
+  String get windowButtonMinimize => 'Minimize';
+
+  @override
+  String get windowButtonMaximize => 'Maximize';
+
+  @override
+  String get windowButtonRestore => 'Restore';
+
+  @override
+  String get windowButtonClose => 'Close';
 }

@@ -2146,4 +2146,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String workBrowseItemsPerPage(Object count) {
     return '每页 $count 个';
   }
+
+  @override
+  String get windowButtonMinimize => '最小化';
+
+  @override
+  String get windowButtonMaximize => '最大化';
+
+  @override
+  String get windowButtonRestore => '还原';
+
+  @override
+  String get windowButtonClose => '关闭';
 }

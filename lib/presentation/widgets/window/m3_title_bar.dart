@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 
 class M3TitleBar extends StatefulWidget {
@@ -10,6 +11,13 @@ class M3TitleBar extends StatefulWidget {
 
   @override
   State<M3TitleBar> createState() => _M3TitleBarState();
+}
+
+class M3WindowButtons extends StatefulWidget {
+  const M3WindowButtons({super.key});
+
+  @override
+  State<M3WindowButtons> createState() => _M3WindowButtonsState();
 }
 
 class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
@@ -44,7 +52,7 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
                 size: AppSizes.iconMedium,
               ),
             ),
-            
+
             // 标题拖动区域
             Expanded(
               child: DragToMoveArea(
@@ -61,7 +69,7 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
                 ),
               ),
             ),
-            
+
             // 窗口按钮
             const M3WindowButtons(),
           ],
@@ -118,11 +126,49 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
   }
 }
 
-class M3WindowButtons extends StatefulWidget {
-  const M3WindowButtons({super.key});
+class _M3WindowButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final bool isClose;
+
+  const _M3WindowButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.isClose = false,
+  });
 
   @override
-  State<M3WindowButtons> createState() => _M3WindowButtonsState();
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Tooltip(
+      message: tooltip,
+      preferBelow: false,
+      child: SizedBox(
+        height: AppSizes.appBarHeight,
+        width: 46,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            hoverColor: isClose
+                ? colorScheme.error
+                    .withAlpha(25) // ~10% opacity (0.1 * 255 ≈ 25)
+                : colorScheme.onSurface
+                    .withAlpha(13), // ~5% opacity (0.05 * 255 ≈ 13)
+            child: Icon(
+              icon,
+              size: AppSizes.iconSmall,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
@@ -130,21 +176,22 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Row(
       children: [
         _M3WindowButton(
           icon: Icons.remove,
-          tooltip: '最小化',
+          tooltip: l10n.windowButtonMinimize,
           onPressed: () async {
             await windowManager.minimize();
           },
         ),
         _M3WindowButton(
           icon: _isMaximized ? Icons.filter_none : Icons.crop_square,
-          tooltip: _isMaximized ? '还原' : '最大化',
+          tooltip: _isMaximized
+              ? l10n.windowButtonRestore
+              : l10n.windowButtonMaximize,
           onPressed: () async {
             if (_isMaximized) {
               await windowManager.unmaximize();
@@ -155,7 +202,7 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
         ),
         _M3WindowButton(
           icon: Icons.close,
-          tooltip: '关闭',
+          tooltip: l10n.windowButtonClose,
           isClose: true,
           onPressed: () async {
             await windowManager.close();
@@ -202,50 +249,5 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
   void _init() async {
     _isMaximized = await windowManager.isMaximized();
     if (mounted) setState(() {});
-  }
-}
-
-class _M3WindowButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-  final bool isClose;
-
-  const _M3WindowButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-    this.isClose = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Tooltip(
-      message: tooltip,
-      preferBelow: false,
-      child: SizedBox(
-        height: AppSizes.appBarHeight,
-        width: 46,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            hoverColor: isClose
-                ? colorScheme.error.withOpacity(0.1)
-                : colorScheme.onSurface.withOpacity(0.05),
-            child: Icon(
-              icon,
-              size: AppSizes.iconSmall,
-              color: isClose
-                  ? colorScheme.error
-                  : colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
