@@ -1095,7 +1095,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditBringToFront => '置于顶层 (Ctrl+T)';
 
   @override
-  String get practiceEditCannotSaveNoPages => '无法保存：练习无页面';
+  String get practiceEditCannotSaveNoPages => '无法保存：字帖无页面';
 
   @override
   String get practiceEditCollection => '采集';
@@ -1149,7 +1149,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditEnableSnap => '启用对齐 (Ctrl+R)';
 
   @override
-  String get practiceEditEnterTitle => '请输入练习标题';
+  String get practiceEditEnterTitle => '请输入字帖标题';
 
   @override
   String get practiceEditExit => '退出';
@@ -1209,10 +1209,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditPaste => '粘贴 (Ctrl+Shift+V)';
 
   @override
-  String get practiceEditPracticeLoadFailed => '加载练习失败：练习不存在或已被删除';
+  String get practiceEditPracticeLoadFailed => '加载字帖失败：字帖不存在或已被删除';
 
   @override
-  String get practiceEditPracticeTitle => '练习标题';
+  String get practiceEditPracticeTitle => '字帖标题';
 
   @override
   String get practiceEditPropertyPanel => '属性';
@@ -1227,7 +1227,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditSaveFailed => '保存失败';
 
   @override
-  String get practiceEditSavePractice => '保存练习';
+  String get practiceEditSavePractice => '保存字帖';
 
   @override
   String get practiceEditSaveSuccess => '保存成功';
@@ -1248,13 +1248,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditTextProperties => '文本属性';
 
   @override
-  String get practiceEditTitle => '练习编辑';
+  String get practiceEditTitle => '字帖编辑';
 
   @override
   String get practiceEditTitleExists => '标题已存在';
 
   @override
-  String get practiceEditTitleExistsMessage => '已存在同名练习。是否覆盖？';
+  String get practiceEditTitleExistsMessage => '已存在同名字帖。是否覆盖？';
 
   @override
   String get practiceEditToolbar => '编辑工具栏';
@@ -1314,13 +1314,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListDeleteConfirm => '确认删除';
 
   @override
-  String get practiceListDeleteMessage => '确定要删除选中的练习表吗？此操作无法撤消。';
+  String get practiceListDeleteMessage => '确定要删除选中的字帖表吗？此操作无法撤消。';
 
   @override
   String get practiceListDeleteSelected => '删除所选';
 
   @override
-  String get practiceListError => '加载练习表错误';
+  String get practiceListError => '加载字帖表错误';
 
   @override
   String get practiceListGridView => '网格视图';
@@ -1329,19 +1329,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListListView => '列表视图';
 
   @override
-  String get practiceListLoading => '加载练习表中...';
+  String get practiceListLoading => '加载字帖表中...';
 
   @override
-  String get practiceListNewPractice => '新建练习表';
+  String get practiceListNewPractice => '新建字帖表';
 
   @override
-  String get practiceListNoResults => '未找到练习表';
+  String get practiceListNoResults => '未找到字帖表';
 
   @override
   String get practiceListPages => '页';
 
   @override
-  String get practiceListSearch => '搜索练习表...';
+  String get practiceListSearch => '搜索字帖表...';
 
   @override
   String get practiceListSortByCreateTime => '按创建时间排序';
@@ -1356,13 +1356,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListThumbnailError => '缩略图加载失败';
 
   @override
-  String get practiceListTitle => '练习表';
+  String get practiceListTitle => '字帖表';
 
   @override
   String get practicePageSettings => '页面设置';
 
   @override
-  String get practices => '练习';
+  String get practices => '字帖';
 
   @override
   String get presetSize => '预设大小';
@@ -1981,12 +1981,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String practiceEditLoadFailed(Object error) {
-    return '加载练习失败：$error';
+    return '加载字帖失败：$error';
   }
 
   @override
   String practiceEditPracticeLoaded(Object title) {
-    return '练习\"$title\"加载成功';
+    return '字帖\"$title\"加载成功';
   }
 
   @override
@@ -2001,7 +2001,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String practiceListTotalItems(Object count) {
-    return '$count张练习表';
+    return '$count张字帖表';
   }
 
   @override

@@ -156,7 +156,7 @@ class _M3WindowButton extends StatelessWidget {
             onTap: onPressed,
             hoverColor: isClose
                 ? colorScheme.error
-                    .withAlpha(25) // ~10% opacity (0.1 * 255 ≈ 25)
+                    .withAlpha(200) // ~10% opacity (0.1 * 255 ≈ 25)
                 : colorScheme.onSurface
                     .withAlpha(13), // ~5% opacity (0.05 * 255 ≈ 13)
             child: Icon(

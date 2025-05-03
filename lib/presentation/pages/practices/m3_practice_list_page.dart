@@ -81,14 +81,11 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         sortField: _sortField,
         sortOrder: _sortOrder,
         onSortFieldChanged: (value) {
-          setState(() {
-            if (_sortField == value) {
-              _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc';
-            } else {
-              _sortField = value;
-              _sortOrder = 'desc';
-            }
-          });
+          setState(() => _sortField = value);
+          _loadPractices();
+        },
+        onSortOrderChanged: () {
+          setState(() => _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc');
           _loadPractices();
         },
         onBackPressed: () {

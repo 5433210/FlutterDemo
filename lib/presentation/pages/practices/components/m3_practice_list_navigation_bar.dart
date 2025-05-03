@@ -17,6 +17,7 @@ class M3PracticeListNavigationBar extends StatefulWidget
   final String sortField;
   final String sortOrder;
   final ValueChanged<String> onSortFieldChanged;
+  final VoidCallback onSortOrderChanged;
   final VoidCallback? onBackPressed;
 
   const M3PracticeListNavigationBar({
@@ -32,6 +33,7 @@ class M3PracticeListNavigationBar extends StatefulWidget
     required this.sortField,
     required this.sortOrder,
     required this.onSortFieldChanged,
+    required this.onSortOrderChanged,
     this.onBackPressed,
   });
 
@@ -65,35 +67,48 @@ class _M3PracticeListNavigationBarState
             ]
           : null,
       actions: [
-        if (widget.isBatchMode && widget.selectedCount > 0)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: l10n.practiceListDeleteSelected,
-            onPressed: widget.onDeleteSelected,
-          )
-        else if (!widget.isBatchMode)
-          FilledButton.icon(
-            icon: const Icon(Icons.add),
-            label: Text(l10n.practiceListNewPractice),
-            onPressed: widget.onNewPractice,
-          ),
-        // 居中的搜索框
-        // const Spacer(),
-        // 排序按钮
-        PopupMenuButton<String>(
-          tooltip: l10n.filterSortSection,
-          icon: const Icon(Icons.sort),
-          itemBuilder: (context) => [
-            _buildSortMenuItem(
-                l10n.practiceListSortByUpdateTime, 'updateTime', theme),
-            _buildSortMenuItem(
-                l10n.practiceListSortByCreateTime, 'createTime', theme),
-            _buildSortMenuItem(l10n.practiceListSortByTitle, 'title', theme),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.isBatchMode && widget.selectedCount > 0)
+              IconButton(
+                icon: const Icon(Icons.delete),
+                tooltip: l10n.practiceListDeleteSelected,
+                onPressed: widget.onDeleteSelected,
+              )
+            else if (!widget.isBatchMode)
+              FilledButton.icon(
+                icon: const Icon(Icons.add),
+                label: Text(l10n.practiceListNewPractice),
+                onPressed: widget.onNewPractice,
+              ),
+            PopupMenuButton<String>(
+              tooltip: l10n.filterSortSection,
+              icon: const Icon(Icons.sort),
+              itemBuilder: (context) => [
+                _buildSortMenuItem(
+                    l10n.practiceListSortByUpdateTime, 'updateTime', theme),
+                _buildSortMenuItem(
+                    l10n.practiceListSortByCreateTime, 'createTime', theme),
+                _buildSortMenuItem(
+                    l10n.practiceListSortByTitle, 'title', theme),
+              ],
+              onSelected: widget.onSortFieldChanged,
+            ),
+            IconButton(
+              icon: Icon(
+                widget.sortOrder == 'desc'
+                    ? Icons.arrow_downward
+                    : Icons.arrow_upward,
+                size: 20,
+              ),
+              tooltip: widget.sortOrder == 'desc'
+                  ? l10n.filterSortAscending
+                  : l10n.filterSortDescending,
+              onPressed: widget.onSortOrderChanged,
+            ),
           ],
-          onSelected: widget.onSortFieldChanged,
         ),
-        // const SizedBox(width: AppSizes.s),
-
         SizedBox(
           width: 240,
           child: SearchBar(
@@ -126,12 +141,6 @@ class _M3PracticeListNavigationBarState
             ],
           ),
         ),
-        // const Spacer(),
-
-        // 右侧按钮组
-        // 新建字帖或删除按钮
-
-        // const SizedBox(width: AppSizes.s),
 
         // 批量操作按钮
         IconButton(
@@ -141,7 +150,6 @@ class _M3PracticeListNavigationBarState
               : l10n.practiceListBatchMode,
           onPressed: widget.onToggleBatchMode,
         ),
-        // const SizedBox(width: AppSizes.s),
 
         // 视图切换按钮
         IconButton(
@@ -167,23 +175,16 @@ class _M3PracticeListNavigationBarState
       value: value,
       child: Row(
         children: [
-          Icon(
-            widget.sortOrder == 'desc'
-                ? Icons.arrow_downward
-                : Icons.arrow_upward,
-            size: 18,
-            color: widget.sortField == value
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface,
-          ),
           const SizedBox(width: 8),
           Text(title),
-          if (widget.sortField == value)
+          if (widget.sortField == value) ...[
+            const SizedBox(width: 8),
             Icon(
               Icons.check,
               size: 18,
               color: theme.colorScheme.primary,
             ),
+          ],
         ],
       ),
     );
