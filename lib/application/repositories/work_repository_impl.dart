@@ -271,6 +271,8 @@ class WorkRepositoryImpl implements WorkRepository {
       orderBy: filter.sortOption.field != null
           ? '${filter.sortOption.field.name} ${filter.sortOption.descending ? 'DESC' : 'ASC'}'
           : null,
+      limit: filter.limit,
+      offset: filter.offset,
     );
     // AppLogger.debug(
     //   '查询条件构建完成',
