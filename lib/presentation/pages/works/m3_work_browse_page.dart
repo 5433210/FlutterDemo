@@ -79,22 +79,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: _buildMainContent(),
-                ),
-                AnimatedContainer(
-                  duration: const Duration(
-                      milliseconds: AppSizes.animationDurationSlow),
-                  width: 4,
-                  color: state.isSidebarOpen
-                      ? colorScheme.outlineVariant
-                      : Colors.transparent,
-                ),
-                SidebarToggle(
-                  isOpen: state.isSidebarOpen,
-                  onToggle: () => viewModel.toggleSidebar(),
-                  alignRight: true,
-                ),
                 AnimatedContainer(
                   duration: const Duration(
                       milliseconds: AppSizes.animationDurationSlow),
@@ -104,8 +88,25 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       ? M3WorkFilterPanel(
                           filter: state.filter,
                           onFilterChanged: viewModel.updateFilter,
+                          onToggleExpand: () => viewModel.toggleSidebar(),
                         )
                       : null,
+                ),
+                SidebarToggle(
+                  isOpen: state.isSidebarOpen,
+                  onToggle: () => viewModel.toggleSidebar(),
+                  alignRight: false,
+                ),
+                AnimatedContainer(
+                  duration: const Duration(
+                      milliseconds: AppSizes.animationDurationSlow),
+                  width: 4,
+                  color: state.isSidebarOpen
+                      ? colorScheme.outlineVariant
+                      : Colors.transparent,
+                ),
+                Expanded(
+                  child: _buildMainContent(),
                 ),
               ],
             ),

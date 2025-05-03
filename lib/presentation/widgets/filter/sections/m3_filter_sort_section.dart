@@ -46,8 +46,8 @@ class M3FilterSortSection extends StatelessWidget {
         const SizedBox(height: AppSizes.spacingSmall),
 
         // 排序字段选择
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 230),
+        SizedBox(
+          width: double.infinity,
           child: DropdownButtonFormField<SortField>(
             value: sortField,
             isExpanded: true,

@@ -33,7 +33,7 @@ class SidebarToggle extends StatelessWidget {
                 alignRight
                     // 右侧面板（详情页）
                     ? (isOpen ? Icons.chevron_right : Icons.chevron_left)
-                    // 右侧面板（浏览页）- 这里是反的，需要修复
+                    // 右侧面板（浏览页）
                     : (isOpen ? Icons.chevron_left : Icons.chevron_right),
                 size: 10,
                 color: theme.colorScheme.onSurfaceVariant,
