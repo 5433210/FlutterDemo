@@ -34,8 +34,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     final viewModel = ref.read(workBrowseProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
 
-    // 改进刷新监听器
     ref.listen(worksNeedsRefreshProvider, (previous, current) async {
       if (current == null) return;
 
@@ -54,7 +54,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       } catch (e) {
         AppLogger.error('刷新失败', tag: 'WorkBrowsePage', error: e);
       } finally {
-        // 刷新完成后重置状态
         if (mounted) {
           ref.read(worksNeedsRefreshProvider.notifier).state = null;
         }
@@ -75,76 +74,57 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           ref.read(worksNeedsRefreshProvider.notifier).state =
               RefreshInfo.importCompleted()
         },
-        onBackPressed: () {
-          // Check if we can safely pop
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
-          }
-        },
       ),
-      body: Stack(
+      body: Column(
         children: [
-          Column(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(
-                        milliseconds: AppSizes.animationDurationSlow,
-                      ),
-                      width:
-                          state.isSidebarOpen ? AppSizes.filterPanelWidth : 0,
-                      child: state.isSidebarOpen
-                          ? M3WorkFilterPanel(
-                              filter: state.filter,
-                              onFilterChanged: viewModel.updateFilter,
-                              onToggleExpand: () => viewModel.toggleSidebar(),
-                            )
-                          : null,
-                    ),
-                    SidebarToggle(
-                      isOpen: state.isSidebarOpen,
-                      onToggle: () => viewModel.toggleSidebar(),
-                      alignRight: false,
-                    ),
-                    AnimatedContainer(
-                      duration: const Duration(
-                        milliseconds: AppSizes.animationDurationSlow,
-                      ),
-                      width: 4,
-                      color: state.isSidebarOpen
-                          ? colorScheme.outlineVariant
-                          : Colors.transparent,
-                    ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: kToolbarHeight),
-                        child: _buildMainContent(),
-                      ),
-                    ),
-                  ],
+          Expanded(
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: AppSizes.animationDurationSlow,
+                  ),
+                  width: state.isSidebarOpen ? AppSizes.filterPanelWidth : 0,
+                  child: state.isSidebarOpen
+                      ? M3WorkFilterPanel(
+                          filter: state.filter,
+                          onFilterChanged: viewModel.updateFilter,
+                          onToggleExpand: () => viewModel.toggleSidebar(),
+                        )
+                      : null,
                 ),
-              ),
-            ],
+                SidebarToggle(
+                  isOpen: state.isSidebarOpen,
+                  onToggle: () => viewModel.toggleSidebar(),
+                  alignRight: false,
+                ),
+                AnimatedContainer(
+                  duration: const Duration(
+                    milliseconds: AppSizes.animationDurationSlow,
+                  ),
+                  width: 4,
+                  color: state.isSidebarOpen
+                      ? colorScheme.outlineVariant
+                      : Colors.transparent,
+                ),
+                Expanded(
+                  child: _buildMainContent(),
+                ),
+              ],
+            ),
           ),
           if (!state.isLoading && state.works.isNotEmpty)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: M3PaginationControls(
-                currentPage: state.page,
-                pageSize: state.pageSize,
-                totalItems: state.totalItems,
-                onPageChanged: (page) {
-                  ref.read(workBrowseProvider.notifier).setPage(page);
-                },
-                onPageSizeChanged: (size) {
-                  ref.read(workBrowseProvider.notifier).setPageSize(size);
-                },
-                availablePageSizes: const [10, 20, 50, 100],
-              ),
+            M3PaginationControls(
+              currentPage: state.page,
+              pageSize: state.pageSize,
+              totalItems: state.totalItems,
+              onPageChanged: (page) {
+                ref.read(workBrowseProvider.notifier).setPage(page);
+              },
+              onPageSizeChanged: (size) {
+                ref.read(workBrowseProvider.notifier).setPageSize(size);
+              },
+              availablePageSizes: const [10, 20, 50, 100],
             ),
         ],
       ),
@@ -162,14 +142,11 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // 简化生命周期管理，只在应用恢复时刷新
     if (state == AppLifecycleState.resumed) {
       try {
-        // 应用恢复时触发刷新标志，而非直接调用
         ref.read(worksNeedsRefreshProvider.notifier).state =
-            RefreshInfo.appResume(); // 使用工厂方法替代直接构造
+            RefreshInfo.appResume();
       } catch (e) {
-        // 添加错误处理，防止意外异常
         AppLogger.error('Failed to set refresh flag',
             tag: 'WorkBrowsePage', error: e);
       }
@@ -187,7 +164,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // 延迟执行初始加载，确保widget完全初始化
     Future.microtask(() {
       if (!mounted) return;
       ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
@@ -203,7 +179,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
 
-    // 处理错误状态
     if (state.error != null) {
       return Center(
         child: Column(
@@ -283,7 +258,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   }
 
   void _handleWorkSelected(BuildContext context, String workId) async {
-    // 导航到详情页并等待结果
     await Navigator.pushNamed(
       context,
       AppRoutes.workDetail,
@@ -291,7 +265,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     );
   }
 
-  // 增强错误处理的加载方法
   Future<void> _loadWorks({bool force = false}) async {
     try {
       if (!mounted) return;
@@ -302,7 +275,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       const refreshInfo = RefreshInfo(
         reason: 'User manual refresh after error',
         force: true,
-        priority: 10, // 高优先级
+        priority: 10,
       );
 
       if (!mounted) return;
@@ -313,9 +286,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       if (mounted) {
         final scaffoldMessenger = ScaffoldMessenger.of(context);
         final l10n = AppLocalizations.of(context);
-        // 先移除所有已有的SnackBar
         scaffoldMessenger.clearSnackBars();
-        // 显示新的错误提示
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text(l10n.workBrowseError(e.toString()))),
         );
@@ -323,7 +294,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     }
   }
 
-  // 简化为一个统一的导入对话框方法
   Future<void> _showImportDialog(BuildContext context) async {
     final result = await M3WorkImportDialog.show(context);
 

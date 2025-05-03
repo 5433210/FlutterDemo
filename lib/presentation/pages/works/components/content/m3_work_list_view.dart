@@ -23,7 +23,7 @@ class M3WorkListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSizes.xs),
+      padding: const EdgeInsets.all(AppSizes.m),
       itemCount: works.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSizes.s),
       itemBuilder: (context, index) {

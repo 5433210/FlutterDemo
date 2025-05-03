@@ -29,8 +29,7 @@ class M3WorkGridView extends StatelessWidget {
         final crossAxisCount = columns < 2 ? 2 : columns;
 
         const spacing = AppSizes.m;
-        // 使用固定的宽高比
-        const aspectRatio = 1 / 1.4; // 简化计算，保持相同的比例
+        const aspectRatio = 1 / 1.4;
 
         return GridView.builder(
           padding: const EdgeInsets.all(AppSizes.m),
