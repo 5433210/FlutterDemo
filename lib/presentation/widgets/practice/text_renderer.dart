@@ -437,14 +437,17 @@ class TextRenderer {
           developer.log('- 实际字号: ${style.fontSize}');
 
           return SingleChildScrollView(
-            child: Text(
-              softWrap: false,
-              overflow: TextOverflow.clip,
-              text,
-              style: style,
-              textAlign: textAlignEnum,
-              textDirection:
-                  isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+            child: SizedBox(
+              width: constraints.maxWidth - padding * 2, // 确保占据整个容器宽度
+              child: Text(
+                softWrap: true, // 允许文本换行
+                overflow: TextOverflow.clip,
+                text,
+                style: style,
+                textAlign: textAlignEnum,
+                textDirection:
+                    isRightToLeft ? TextDirection.rtl : TextDirection.ltr,
+              ),
             ),
           );
         },
@@ -783,7 +786,7 @@ class TextRenderer {
                 return SizedBox(
                   width: constraints.maxWidth - padding * 2, // 确保占据整个容器宽度
                   child: Text(
-                    softWrap: false,
+                    softWrap: true, // 允许文本换行
                     line,
                     style: style,
                     textAlign: textAlign,
@@ -831,15 +834,11 @@ class TextRenderer {
 
     // 生成所有列的数据
     final allColumns = <Widget>[];
-    int newLineIndex = 0;
-    int currentIndex = 0;
 
     // 为每一行创建列，并记录每行的起始位置
     for (final line in lines) {
       final chars = line.characters.toList();
       int charIdx = 0;
-
-      newLineIndex = currentIndex;
       while (charIdx < chars.length) {
         // 计算当前列要显示多少字符
         final charsInThisColumn =
@@ -901,9 +900,10 @@ class TextRenderer {
                           developer.log('- 使用字重: ${style.fontWeight}');
 
                           return Text(
-                            softWrap: false,
+                            softWrap: true, // 允许文本换行
                             char,
                             style: style,
+                            textAlign: TextAlign.center, // 确保字符居中显示
                           );
                         },
                       ),
@@ -931,9 +931,10 @@ class TextRenderer {
                     width: columnWidth, // 使用与列相同的宽度
                     alignment: alignment,
                     child: Text(
-                      softWrap: false,
+                      softWrap: true, // 允许文本换行
                       char,
                       style: style,
+                      textAlign: TextAlign.center, // 确保字符居中显示
                     ),
                   );
                 }
@@ -950,7 +951,6 @@ class TextRenderer {
         }
 
         allColumns.add(columnWidget);
-        currentIndex++;
         charIdx += charsInThisColumn;
       }
     }
