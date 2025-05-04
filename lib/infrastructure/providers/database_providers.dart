@@ -1,9 +1,9 @@
-import 'package:demo/infrastructure/providers/storage_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../persistence/database_interface.dart';
 import '../persistence/sqlite/migrations.dart';
 import '../persistence/sqlite/sqlite_database.dart';
+import 'storage_providers.dart';
 
 /// 数据库Provider
 final databaseProvider = FutureProvider<DatabaseInterface>((ref) async {

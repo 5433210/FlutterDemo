@@ -3,12 +3,12 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:demo/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
+import '../../../../application/providers/providers.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';

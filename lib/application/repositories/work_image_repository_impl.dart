@@ -1,8 +1,8 @@
-import 'package:demo/domain/models/work/work_image.dart';
-import 'package:demo/domain/repositories/work_image_repository.dart';
-import 'package:demo/infrastructure/logging/logger.dart';
-import 'package:demo/infrastructure/persistence/database_interface.dart';
-import 'package:demo/utils/date_time_helper.dart';
+import '../../domain/models/work/work_image.dart';
+import '../../domain/repositories/repositories.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../../infrastructure/persistence/database_interface.dart';
+import '../../utils/date_time_helper.dart';
 
 class WorkImageRepositoryImpl implements WorkImageRepository {
   final DatabaseInterface _db;

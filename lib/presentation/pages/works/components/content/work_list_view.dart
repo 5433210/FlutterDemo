@@ -1,6 +1,6 @@
-import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../domain/models/work/work_entity.dart';
 import '../../../../../theme/app_sizes.dart';
 import 'items/work_list_item.dart';
 

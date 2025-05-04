@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import 'package:demo/domain/enums/sort_field.dart';
-
+import '../../../domain/enums/sort_field.dart';
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
 import '../../../domain/models/character/character_filter.dart';

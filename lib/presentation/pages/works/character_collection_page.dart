@@ -1,6 +1,5 @@
 import 'dart:math' as Math;
 
-import 'package:demo/presentation/providers/character/selected_region_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../providers/character/character_collection_provider.dart';
+import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
 import '../../widgets/character_collection/delete_confirmation_dialog.dart';

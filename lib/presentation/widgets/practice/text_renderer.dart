@@ -1,9 +1,10 @@
 import 'dart:developer' as developer;
 import 'dart:math' as math;
 
-import 'package:demo/presentation/widgets/practice/property_panels/justified_text_renderer.dart';
-import 'package:demo/presentation/widgets/practice/property_panels/vertical_column_justified_text.dart';
 import 'package:flutter/material.dart';
+
+import 'property_panels/justified_text_renderer.dart';
+import 'property_panels/vertical_column_justified_text.dart';
 
 /// 文本渲染器
 /// 用于在画布和属性面板预览中统一渲染文本

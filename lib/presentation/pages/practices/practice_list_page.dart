@@ -1,10 +1,10 @@
-import 'package:demo/routes/app_routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/practice/practice_filter.dart';
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/page_toolbar.dart';

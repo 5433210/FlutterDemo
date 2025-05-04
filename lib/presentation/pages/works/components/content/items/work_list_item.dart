@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:demo/domain/models/work/work_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../../application/providers/service_providers.dart';
+import '../../../../../../domain/models/work/work_entity.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';

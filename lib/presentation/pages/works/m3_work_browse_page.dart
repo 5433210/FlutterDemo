@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:demo/presentation/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,6 +12,7 @@ import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../viewmodels/states/work_browse_state.dart';
 import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_grid_view.dart';
 import 'components/content/m3_work_list_view.dart';

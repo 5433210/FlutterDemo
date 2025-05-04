@@ -2,6 +2,10 @@
 cmake_minimum_required(VERSION 3.14)
 project(demo LANGUAGES CXX)
 
+# Set PDFium version and architecture for the printing plugin
+set(PDFIUM_VERSION "5981" CACHE STRING "" FORCE)
+set(PDFIUM_ARCH "x64" CACHE STRING "" FORCE)
+
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
 set(BINARY_NAME "demo")

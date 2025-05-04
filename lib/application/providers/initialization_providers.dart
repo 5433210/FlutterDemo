@@ -1,6 +1,6 @@
-import 'package:demo/infrastructure/providers/database_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 
 /// 应用初始化Provider

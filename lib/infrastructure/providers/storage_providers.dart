@@ -1,10 +1,10 @@
-import 'package:demo/infrastructure/storage/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../../infrastructure/storage/storage_interface.dart';
 import '../logging/logger.dart';
+import '../storage/local_storage.dart';
 
 /// 获取已初始化的存储实例
 final initializedStorageProvider = Provider<IStorage>((ref) {

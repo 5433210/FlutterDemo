@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:ui' show Rect;
 
-import 'package:demo/domain/enums/work_tool.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../enums/work_style.dart';
+import '../../enums/work_tool.dart';
 import 'character_region.dart';
 import 'processing_options.dart' show ProcessingOptions;
 

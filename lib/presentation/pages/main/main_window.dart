@@ -1,4 +1,3 @@
-import 'package:demo/presentation/pages/practices/practice_edit_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../../presentation/pages/settings/settings_page.dart';
@@ -9,6 +8,7 @@ import '../../../presentation/widgets/window/title_bar.dart';
 import '../../../routes/app_routes.dart';
 import '../characters/character_management_page.dart'
     show CharacterManagementPage;
+import '../practices/practice_edit_page.dart';
 import '../practices/practice_list_page.dart';
 
 class MainWindow extends StatefulWidget {

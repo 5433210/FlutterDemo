@@ -1,8 +1,8 @@
-import 'package:demo/application/services/services.dart';
-import 'package:demo/domain/models/character/character_image_type.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/services/services.dart';
+import '../../../../domain/models/character/character_image_type.dart';
 import '../../../../domain/models/character/character_view.dart';
 import '../../../../theme/app_sizes.dart';
 import 'character_card.dart';

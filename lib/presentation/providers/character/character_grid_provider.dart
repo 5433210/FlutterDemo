@@ -1,11 +1,11 @@
-import 'package:demo/application/services/storage/character_storage_service.dart';
-import 'package:demo/presentation/providers/work_detail_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/repository_providers.dart';
 import '../../../application/providers/service_providers.dart';
+import '../../../application/services/storage/character_storage_service.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../viewmodels/states/character_grid_state.dart';
+import '../work_detail_provider.dart';
 
 final characterGridProvider =
     StateNotifierProvider<CharacterGridNotifier, CharacterGridState>((ref) {

@@ -1,5 +1,6 @@
-import 'package:demo/domain/models/practice/practice_element.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+
+import 'practice_element.dart';
 
 part 'practice_layer.freezed.dart';
 part 'practice_layer.g.dart';

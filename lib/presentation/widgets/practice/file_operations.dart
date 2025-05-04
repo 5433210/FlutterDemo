@@ -8,7 +8,6 @@ import 'export/export_dialog.dart';
 import 'export/export_service.dart';
 import 'export/page_renderer.dart';
 import 'practice_edit_controller.dart';
-import 'print/print_dialog.dart';
 
 /// 文件操作工具类
 class FileOperations {
@@ -257,16 +256,16 @@ class FileOperations {
         return;
       }
 
-      // 显示打印对话框
-      if (context.mounted) {
-        await showDialog(
-          context: context,
-          builder: (context) => PrintDialog(
-            pageImages: pageImages,
-            documentName: documentName.isNotEmpty ? documentName : '未命名字帖',
-          ),
-        );
-      }
+      // // 显示打印对话框
+      // if (context.mounted) {
+      //   await showDialog(
+      //     context: context,
+      //     builder: (context) => PrintDialog(
+      //       pageImages: pageImages,
+      //       documentName: documentName.isNotEmpty ? documentName : '未命名字帖',
+      //     ),
+      //   );
+      // }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

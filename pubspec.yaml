@@ -1,5 +1,5 @@
-name: demo
-description: A Flutter project for calligraphy practice.
+name: charasgem
+description: A versatile calligraphy management and practice application.
 version: 1.0.0+1
 
 environment:
@@ -38,7 +38,7 @@ dependencies:
   http: ^1.3.0
   flutter_colorpicker: ^1.0.3
   pdf: ^3.10.7
-  printing: ^5.11.1
+  # printing: ^5.14.2 # Temporarily disabled due to PDFium build issues
 
 dev_dependencies:
   flutter_test:

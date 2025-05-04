@@ -1,8 +1,8 @@
-import 'package:demo/theme/app_sizes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import 'm3_delete_confirmation_dialog.dart';

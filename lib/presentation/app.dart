@@ -1,12 +1,5 @@
 import 'dart:io' show Platform;
 
-import 'package:demo/presentation/pages/characters/character_management_page.dart';
-import 'package:demo/presentation/pages/characters/m3_character_management_page.dart';
-import 'package:demo/presentation/pages/practices/m3_practice_edit_page.dart';
-import 'package:demo/presentation/pages/practices/m3_practice_list_page.dart';
-import 'package:demo/presentation/pages/settings/m3_settings_page.dart';
-import 'package:demo/presentation/pages/works/character_collection_page.dart';
-import 'package:demo/presentation/pages/works/m3_character_collection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -27,8 +20,15 @@ import '../presentation/pages/works/work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
+import 'pages/characters/character_management_page.dart';
+import 'pages/characters/m3_character_management_page.dart';
 import 'pages/initialization/initialization_screen.dart';
+import 'pages/practices/m3_practice_edit_page.dart';
+import 'pages/practices/m3_practice_list_page.dart';
 import 'pages/practices/practice_edit_page.dart';
+import 'pages/settings/m3_settings_page.dart';
+import 'pages/works/character_collection_page.dart';
+import 'pages/works/m3_character_collection_page.dart';
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});

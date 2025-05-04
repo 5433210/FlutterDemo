@@ -1,10 +1,10 @@
-import 'package:demo/domain/enums/work_tool.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/enums/sort_field.dart';
 import '../../../domain/enums/work_style.dart';
+import '../../../domain/enums/work_tool.dart';
 import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/models/common/date_range_filter.dart';
 import '../../../domain/models/common/sort_option.dart';
