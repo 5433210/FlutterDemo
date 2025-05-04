@@ -23,7 +23,7 @@ mixin _$CharacterFormatInfo {
   CharacterImageType get format => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
   String get description => throw _privateConstructorUsedError;
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   Future<String> Function(String)? get pathResolver =>
       throw _privateConstructorUsedError;
 
@@ -47,7 +47,8 @@ abstract class $CharacterFormatInfoCopyWith<$Res> {
       {CharacterImageType format,
       String name,
       String description,
-      @JsonKey(ignore: true) Future<String> Function(String)? pathResolver});
+      @JsonKey(includeFromJson: false, includeToJson: false)
+      Future<String> Function(String)? pathResolver});
 }
 
 /// @nodoc
@@ -103,7 +104,8 @@ abstract class _$$CharacterFormatInfoImplCopyWith<$Res>
       {CharacterImageType format,
       String name,
       String description,
-      @JsonKey(ignore: true) Future<String> Function(String)? pathResolver});
+      @JsonKey(includeFromJson: false, includeToJson: false)
+      Future<String> Function(String)? pathResolver});
 }
 
 /// @nodoc
@@ -152,7 +154,7 @@ class _$CharacterFormatInfoImpl extends _CharacterFormatInfo {
       {required this.format,
       required this.name,
       required this.description,
-      @JsonKey(ignore: true) this.pathResolver})
+      @JsonKey(includeFromJson: false, includeToJson: false) this.pathResolver})
       : super._();
 
   factory _$CharacterFormatInfoImpl.fromJson(Map<String, dynamic> json) =>
@@ -165,7 +167,7 @@ class _$CharacterFormatInfoImpl extends _CharacterFormatInfo {
   @override
   final String description;
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final Future<String> Function(String)? pathResolver;
 
   @override
@@ -213,7 +215,7 @@ abstract class _CharacterFormatInfo extends CharacterFormatInfo {
           {required final CharacterImageType format,
           required final String name,
           required final String description,
-          @JsonKey(ignore: true)
+          @JsonKey(includeFromJson: false, includeToJson: false)
           final Future<String> Function(String)? pathResolver}) =
       _$CharacterFormatInfoImpl;
   const _CharacterFormatInfo._() : super._();
@@ -228,7 +230,7 @@ abstract class _CharacterFormatInfo extends CharacterFormatInfo {
   @override
   String get description;
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   Future<String> Function(String)? get pathResolver;
 
   /// Create a copy of CharacterFormatInfo

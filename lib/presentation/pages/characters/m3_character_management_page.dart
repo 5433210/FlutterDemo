@@ -7,6 +7,7 @@ import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
+import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
@@ -108,31 +109,22 @@ class _M3CharacterManagementPageState
                           ),
                   ),
 
-                  // Detail panel (collapsible)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: (state.selectedCharacterId != null &&
-                            state.isDetailOpen)
-                        ? 350
-                        : 0,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(),
-                    child: (state.selectedCharacterId != null &&
-                            state.isDetailOpen)
-                        ? M3CharacterDetailPanel(
-                            characterId: state.selectedCharacterId!,
-                            onClose: _closeDetailPanel,
-                            onEdit: state.selectedCharacterId != null
-                                ? () => _handleEditCharacter(
-                                    state.selectedCharacterId!)
-                                : null,
-                            onToggleFavorite: state.selectedCharacterId != null
-                                ? () => _handleToggleFavorite(
-                                    state.selectedCharacterId!)
-                                : null,
-                          )
-                        : null,
-                  ),
+                  // Detail panel (collapsible and resizable)
+                  if (state.selectedCharacterId != null && state.isDetailOpen)
+                    ResizablePanel(
+                      initialWidth: 350,
+                      minWidth: 250,
+                      maxWidth: 500,
+                      isLeftPanel: false,
+                      child: M3CharacterDetailPanel(
+                        characterId: state.selectedCharacterId!,
+                        onClose: _closeDetailPanel,
+                        onEdit: () =>
+                            _handleEditCharacter(state.selectedCharacterId!),
+                        onToggleFavorite: () =>
+                            _handleToggleFavorite(state.selectedCharacterId!),
+                      ),
+                    ),
                 ],
               ),
             ),

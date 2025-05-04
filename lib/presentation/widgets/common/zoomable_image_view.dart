@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 
 /// A widget that displays an image with zoom and pan capabilities
 class ZoomableImageView extends StatefulWidget {
@@ -85,47 +86,7 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
               maxScale: widget.maxScale,
               onInteractionStart: _handleInteractionStart,
               onInteractionEnd: _handleInteractionEnd,
-              child: Image.file(
-                File(widget.imagePath),
-                fit: BoxFit.contain,
-                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                  if (wasSynchronouslyLoaded) return child;
-
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 200),
-                    child: frame != null
-                        ? child
-                        : widget.loadingBuilder?.call(context) ??
-                            Container(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: const Center(
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                  );
-                },
-                errorBuilder: widget.errorBuilder ??
-                    (context, error, stackTrace) => Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.broken_image,
-                                size: 64,
-                                color: theme.colorScheme.error,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                '无法加载图片',
-                                style: TextStyle(
-                                  color: theme.colorScheme.error,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-              ),
+              child: _buildImageWidget(theme),
             ),
           ),
         ),
@@ -149,6 +110,71 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
   void dispose() {
     _transformationController.dispose();
     super.dispose();
+  }
+
+  /// Builds the appropriate image widget based on file extension
+  Widget _buildImageWidget(ThemeData theme) {
+    final path = widget.imagePath;
+    final extension = path.toLowerCase().split('.').last;
+    final isSvg = extension == 'svg';
+
+    if (isSvg) {
+      // SVG rendering
+      return SvgPicture.file(
+        File(path),
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) =>
+            widget.loadingBuilder?.call(context) ??
+            Container(
+              color: theme.colorScheme.surfaceContainerHighest,
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+      );
+    } else {
+      // Regular image rendering
+      return Image.file(
+        File(path),
+        fit: BoxFit.contain,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded) return child;
+
+          return AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: frame != null
+                ? child
+                : widget.loadingBuilder?.call(context) ??
+                    Container(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+          );
+        },
+        errorBuilder: widget.errorBuilder ??
+            (context, error, stackTrace) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.broken_image,
+                        size: 64,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '无法加载图片',
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+      );
+    }
   }
 
   void _handleInteractionEnd(ScaleEndDetails details) {

@@ -1515,6 +1515,66 @@ class AppLocalizationsEn extends AppLocalizations {
   String get toggleTestText => 'Toggle Test Text';
 
   @override
+  String get characterDetailFormatName => 'Format Name';
+
+  @override
+  String get characterDetailFormatType => 'Type';
+
+  @override
+  String get characterDetailFormatExtension => 'File Format';
+
+  @override
+  String get characterDetailFormatDescription => 'Description';
+
+  @override
+  String get characterDetailFormatOriginal => 'Original';
+
+  @override
+  String get characterDetailFormatBinary => 'Binary';
+
+  @override
+  String get characterDetailFormatThumbnail => 'Thumbnail';
+
+  @override
+  String get characterDetailFormatSquareBinary => 'Square Binary';
+
+  @override
+  String get characterDetailFormatSquareTransparent => 'Square Transparent';
+
+  @override
+  String get characterDetailFormatTransparent => 'Transparent';
+
+  @override
+  String get characterDetailFormatOutline => 'Outline';
+
+  @override
+  String get characterDetailFormatSquareOutline => 'Square Outline';
+
+  @override
+  String get characterDetailFormatOriginalDesc => 'Unprocessed original image';
+
+  @override
+  String get characterDetailFormatBinaryDesc => 'Black and white binary image';
+
+  @override
+  String get characterDetailFormatThumbnailDesc => 'Thumbnail image';
+
+  @override
+  String get characterDetailFormatSquareBinaryDesc => 'Binary image normalized to square';
+
+  @override
+  String get characterDetailFormatSquareTransparentDesc => 'Transparent PNG image normalized to square';
+
+  @override
+  String get characterDetailFormatTransparentDesc => 'Transparent PNG image with background removed';
+
+  @override
+  String get characterDetailFormatOutlineDesc => 'Shows only the outline';
+
+  @override
+  String get characterDetailFormatSquareOutlineDesc => 'Outline image normalized to square';
+
+  @override
   String get total => 'Total';
 
   @override

@@ -26,6 +26,10 @@ class AppTheme {
   static ThemeData darkM3() {
     return ThemeData(
       useMaterial3: true,
+      searchBarTheme: const SearchBarThemeData(
+        constraints: BoxConstraints.tightFor(
+            width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
+      ),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
         brightness: Brightness.dark,

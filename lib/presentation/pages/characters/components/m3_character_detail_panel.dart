@@ -2,14 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../domain/models/character/character_image_type.dart';
 import '../../../../domain/models/character/character_view.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../presentation/widgets/common/zoomable_image_view.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../../widgets/layout/flexible_row.dart';
 import '../../../providers/character/character_detail_provider.dart';
-import '../../../widgets/image/cached_image.dart';
 
 /// Material 3 version of the character detail panel
 class M3CharacterDetailPanel extends ConsumerStatefulWidget {
@@ -42,7 +44,6 @@ class M3CharacterDetailPanel extends ConsumerStatefulWidget {
 class _M3CharacterDetailPanelState
     extends ConsumerState<M3CharacterDetailPanel> {
   int selectedFormat = 0;
-  bool _isDisposed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,6 @@ class _M3CharacterDetailPanelState
       elevation: 0,
       surfaceTintColor: theme.colorScheme.surfaceTint,
       child: Container(
-        width: 350,
         padding: const EdgeInsets.all(AppSizes.spacingMedium),
         child: detailAsync.when(
           data: (state) {
@@ -222,7 +222,6 @@ class _M3CharacterDetailPanelState
 
   @override
   void dispose() {
-    _isDisposed = true;
     super.dispose();
   }
 
@@ -273,12 +272,9 @@ class _M3CharacterDetailPanelState
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: snapshot.hasData
-                          ? Image.file(
-                              File(snapshot.data!),
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.broken_image);
-                              },
+                          ? Tooltip(
+                              message: _getFormatTooltip(format),
+                              child: _buildFormatThumbnail(snapshot.data!),
                             )
                           : const Center(
                               child: SizedBox(
@@ -299,6 +295,30 @@ class _M3CharacterDetailPanelState
       },
       orElse: () => const SizedBox.shrink(),
     );
+  }
+
+  /// 根据文件路径构建缩略图
+  Widget _buildFormatThumbnail(String imagePath) {
+    final extension = imagePath.toLowerCase().split('.').last;
+    final isSvg = extension == 'svg';
+
+    if (isSvg) {
+      // SVG 渲染
+      return SvgPicture.file(
+        File(imagePath),
+        fit: BoxFit.contain,
+        placeholderBuilder: (context) => const Icon(Icons.image),
+      );
+    } else {
+      // 常规图片渲染
+      return Image.file(
+        File(imagePath),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.broken_image);
+        },
+      );
+    }
   }
 
   Widget _buildHeader(
@@ -406,26 +426,40 @@ class _M3CharacterDetailPanelState
         borderRadius: BorderRadius.circular(8),
       ),
       child: imagePath != null && imagePath.isNotEmpty
-          ? CachedImage(
-              path: imagePath,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.broken_image,
-                      size: 48,
-                      color: theme.colorScheme.error,
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: ZoomableImageView(
+                imagePath: imagePath,
+                enableMouseWheel: true,
+                minScale: 0.5,
+                maxScale: 5.0,
+                showControls: true,
+                errorBuilder: (context, error, stackTrace) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.broken_image,
+                        size: 48,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.characterCollectionImageLoadError,
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                    ],
+                  );
+                },
+                loadingBuilder: (context) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                      strokeWidth: 2,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.characterCollectionImageLoadError,
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                  ],
-                );
-              },
+                  );
+                },
+              ),
             )
           : Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -493,5 +527,55 @@ class _M3CharacterDetailPanelState
 
   String _formatDateTime(DateTime dateTime) {
     return DateFormat('yyyy-MM-dd HH:mm').format(dateTime);
+  }
+
+  /// 获取格式的提示文本
+  String _getFormatTooltip(CharacterFormatInfo format) {
+    final l10n = AppLocalizations.of(context);
+
+    // 获取本地化的格式类型名称
+    String formatTypeName;
+    switch (format.format) {
+      case CharacterImageType.original:
+        formatTypeName = l10n.characterDetailFormatOriginal;
+        break;
+      case CharacterImageType.binary:
+        formatTypeName = l10n.characterDetailFormatBinary;
+        break;
+      case CharacterImageType.thumbnail:
+        formatTypeName = l10n.characterDetailFormatThumbnail;
+        break;
+      case CharacterImageType.squareBinary:
+        formatTypeName = l10n.characterDetailFormatSquareBinary;
+        break;
+      case CharacterImageType.squareTransparent:
+        formatTypeName = l10n.characterDetailFormatSquareTransparent;
+        break;
+      case CharacterImageType.transparent:
+        formatTypeName = l10n.characterDetailFormatTransparent;
+        break;
+      case CharacterImageType.outline:
+        formatTypeName = l10n.characterDetailFormatOutline;
+        break;
+      case CharacterImageType.squareOutline:
+        formatTypeName = l10n.characterDetailFormatSquareOutline;
+        break;
+      default:
+        formatTypeName = format.format.toString().split('.').last;
+    }
+
+    // 根据格式类型确定文件扩展名
+    String extension;
+    switch (format.format) {
+      case CharacterImageType.outline:
+      case CharacterImageType.squareOutline:
+        extension = 'SVG';
+        break;
+      default:
+        extension = 'PNG';
+        break;
+    }
+
+    return '${format.name}\n${l10n.characterDetailFormatType}: $formatTypeName\n${l10n.characterDetailFormatExtension}: $extension\n${l10n.characterDetailFormatDescription}: ${format.description}';
   }
 }

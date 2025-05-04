@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
@@ -6,6 +7,7 @@ import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_view.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../l10n/app_localizations.dart';
 
 part 'character_detail_provider.freezed.dart';
 part 'character_detail_provider.g.dart';
@@ -57,56 +59,107 @@ final characterDetailProvider =
 /// Provider for selected format in detail view
 final selectedFormatProvider = StateProvider<int>((ref) => 0);
 
+/// 获取本地化的格式描述
+String getLocalizedFormatDescription(
+    BuildContext context, CharacterImageType format) {
+  final l10n = AppLocalizations.of(context);
+
+  switch (format) {
+    case CharacterImageType.original:
+      return l10n.characterDetailFormatOriginalDesc;
+    case CharacterImageType.binary:
+      return l10n.characterDetailFormatBinaryDesc;
+    case CharacterImageType.thumbnail:
+      return l10n.characterDetailFormatThumbnailDesc;
+    case CharacterImageType.squareBinary:
+      return l10n.characterDetailFormatSquareBinaryDesc;
+    case CharacterImageType.squareTransparent:
+      return l10n.characterDetailFormatSquareTransparentDesc;
+    case CharacterImageType.transparent:
+      return l10n.characterDetailFormatTransparentDesc;
+    case CharacterImageType.outline:
+      return l10n.characterDetailFormatOutlineDesc;
+    case CharacterImageType.squareOutline:
+      return l10n.characterDetailFormatSquareOutlineDesc;
+  }
+}
+
+/// 获取本地化的格式名称
+String getLocalizedFormatName(BuildContext context, CharacterImageType format) {
+  final l10n = AppLocalizations.of(context);
+
+  switch (format) {
+    case CharacterImageType.original:
+      return l10n.characterDetailFormatOriginal;
+    case CharacterImageType.binary:
+      return l10n.characterDetailFormatBinary;
+    case CharacterImageType.thumbnail:
+      return l10n.characterDetailFormatThumbnail;
+    case CharacterImageType.squareBinary:
+      return l10n.characterDetailFormatSquareBinary;
+    case CharacterImageType.squareTransparent:
+      return l10n.characterDetailFormatSquareTransparent;
+    case CharacterImageType.transparent:
+      return l10n.characterDetailFormatTransparent;
+    case CharacterImageType.outline:
+      return l10n.characterDetailFormatOutline;
+    case CharacterImageType.squareOutline:
+      return l10n.characterDetailFormatSquareOutline;
+  }
+}
+
 /// Available character image formats
 List<CharacterFormatInfo> _getAvailableFormats(
     String characterId, CharacterService characterService) {
+  // 注意：这里使用英文字符串，将在UI层通过本地化替换
   return [
     CharacterFormatInfo(
       format: CharacterImageType.original,
-      name: '原始图像',
-      description: '未经处理的原始图像',
+      name: 'Original Image', // 将在UI层通过本地化替换
+      description: 'Unprocessed original image', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.original),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.binary,
-      name: '二值化',
-      description: '黑白二值化图像',
+      name: 'Binary', // 将在UI层通过本地化替换
+      description: 'Black and white binary image', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.binary),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.transparent,
-      name: '透明背景',
-      description: '去背景的透明PNG图像',
+      name: 'Transparent Background', // 将在UI层通过本地化替换
+      description:
+          'Transparent PNG image with background removed', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.transparent),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.squareBinary,
-      name: '方形二值化',
-      description: '规整为正方形的二值化图像',
+      name: 'Square Binary', // 将在UI层通过本地化替换
+      description: 'Binary image normalized to square', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.squareBinary),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.squareTransparent,
-      name: '方形透明',
-      description: '规整为正方形的透明PNG图像',
+      name: 'Square Transparent', // 将在UI层通过本地化替换
+      description: 'Transparent PNG image normalized to square', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.squareTransparent),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.outline,
-      name: '轮廓图像',
-      description: '仅显示轮廓',
+      name: 'Outline', // 将在UI层通过本地化替换
+      description: 'Shows only the outline', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.outline),
     ),
     CharacterFormatInfo(
       format: CharacterImageType.squareOutline,
-      name: '方形轮廓',
-      description: '规整为正方形的轮廓图像',
+      name: 'Square Outline', // 将在UI层通过本地化替换
+      description: 'Outline image normalized to square', // 将在UI层通过本地化替换
       pathResolver: (id) async => await characterService.getCharacterImagePath(
           id, CharacterImageType.squareOutline),
     ),
@@ -143,7 +196,8 @@ class CharacterFormatInfo with _$CharacterFormatInfo {
     required CharacterImageType format,
     required String name,
     required String description,
-    @JsonKey(ignore: true) Future<String> Function(String)? pathResolver,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    Future<String> Function(String)? pathResolver,
   }) = _CharacterFormatInfo;
 
   factory CharacterFormatInfo.fromJson(Map<String, dynamic> json) =>

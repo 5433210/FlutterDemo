@@ -1515,6 +1515,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toggleTestText => '切换测试文本';
 
   @override
+  String get characterDetailFormatName => '格式名称';
+
+  @override
+  String get characterDetailFormatType => '类型';
+
+  @override
+  String get characterDetailFormatExtension => '文件格式';
+
+  @override
+  String get characterDetailFormatDescription => '描述';
+
+  @override
+  String get characterDetailFormatOriginal => '原始';
+
+  @override
+  String get characterDetailFormatBinary => '二值化';
+
+  @override
+  String get characterDetailFormatThumbnail => '缩略图';
+
+  @override
+  String get characterDetailFormatSquareBinary => '方形二值化';
+
+  @override
+  String get characterDetailFormatSquareTransparent => '方形透明';
+
+  @override
+  String get characterDetailFormatTransparent => '透明';
+
+  @override
+  String get characterDetailFormatOutline => '轮廓';
+
+  @override
+  String get characterDetailFormatSquareOutline => '方形轮廓';
+
+  @override
+  String get characterDetailFormatOriginalDesc => '未经处理的原始图像';
+
+  @override
+  String get characterDetailFormatBinaryDesc => '黑白二值化图像';
+
+  @override
+  String get characterDetailFormatThumbnailDesc => '缩略图';
+
+  @override
+  String get characterDetailFormatSquareBinaryDesc => '规整为正方形的二值化图像';
+
+  @override
+  String get characterDetailFormatSquareTransparentDesc => '规整为正方形的透明PNG图像';
+
+  @override
+  String get characterDetailFormatTransparentDesc => '去背景的透明PNG图像';
+
+  @override
+  String get characterDetailFormatOutlineDesc => '仅显示轮廓';
+
+  @override
+  String get characterDetailFormatSquareOutlineDesc => '规整为正方形的轮廓图像';
+
+  @override
   String get total => '总计';
 
   @override

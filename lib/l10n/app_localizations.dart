@@ -3095,6 +3095,126 @@ abstract class AppLocalizations {
   /// **'Toggle Test Text'**
   String get toggleTestText;
 
+  /// No description provided for @characterDetailFormatName.
+  ///
+  /// In en, this message translates to:
+  /// **'Format Name'**
+  String get characterDetailFormatName;
+
+  /// No description provided for @characterDetailFormatType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get characterDetailFormatType;
+
+  /// No description provided for @characterDetailFormatExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'File Format'**
+  String get characterDetailFormatExtension;
+
+  /// No description provided for @characterDetailFormatDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get characterDetailFormatDescription;
+
+  /// No description provided for @characterDetailFormatOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get characterDetailFormatOriginal;
+
+  /// No description provided for @characterDetailFormatBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary'**
+  String get characterDetailFormatBinary;
+
+  /// No description provided for @characterDetailFormatThumbnail.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail'**
+  String get characterDetailFormatThumbnail;
+
+  /// No description provided for @characterDetailFormatSquareBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Binary'**
+  String get characterDetailFormatSquareBinary;
+
+  /// No description provided for @characterDetailFormatSquareTransparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Transparent'**
+  String get characterDetailFormatSquareTransparent;
+
+  /// No description provided for @characterDetailFormatTransparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent'**
+  String get characterDetailFormatTransparent;
+
+  /// No description provided for @characterDetailFormatOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get characterDetailFormatOutline;
+
+  /// No description provided for @characterDetailFormatSquareOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Outline'**
+  String get characterDetailFormatSquareOutline;
+
+  /// No description provided for @characterDetailFormatOriginalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Unprocessed original image'**
+  String get characterDetailFormatOriginalDesc;
+
+  /// No description provided for @characterDetailFormatBinaryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Black and white binary image'**
+  String get characterDetailFormatBinaryDesc;
+
+  /// No description provided for @characterDetailFormatThumbnailDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail image'**
+  String get characterDetailFormatThumbnailDesc;
+
+  /// No description provided for @characterDetailFormatSquareBinaryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary image normalized to square'**
+  String get characterDetailFormatSquareBinaryDesc;
+
+  /// No description provided for @characterDetailFormatSquareTransparentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent PNG image normalized to square'**
+  String get characterDetailFormatSquareTransparentDesc;
+
+  /// No description provided for @characterDetailFormatTransparentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent PNG image with background removed'**
+  String get characterDetailFormatTransparentDesc;
+
+  /// No description provided for @characterDetailFormatOutlineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows only the outline'**
+  String get characterDetailFormatOutlineDesc;
+
+  /// No description provided for @characterDetailFormatSquareOutlineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline image normalized to square'**
+  String get characterDetailFormatSquareOutlineDesc;
+
   /// No description provided for @total.
   ///
   /// In en, this message translates to:
