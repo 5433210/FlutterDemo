@@ -116,13 +116,13 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Calligraphy Collection'**
+  /// **'Character As Gem'**
   String get appName;
 
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Calligraphy Collection'**
+  /// **'Character As Gem'**
   String get appTitle;
 
   /// No description provided for @backgroundColor.

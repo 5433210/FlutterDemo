@@ -18,10 +18,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
-  String get appName => 'Calligraphy Collection';
+  String get appName => 'Character As Gem';
 
   @override
-  String get appTitle => 'Calligraphy Collection';
+  String get appTitle => 'Character As Gem';
 
   @override
   String get backgroundColor => 'Background Color';

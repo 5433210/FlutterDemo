@@ -27,6 +27,7 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onDoubleTap: _handleDoubleClick,
@@ -59,7 +60,7 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
                   child: Text(
-                    widget.title ?? '字字珠玑',
+                    l10n.appTitle,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                       color: colorScheme.onSurface,

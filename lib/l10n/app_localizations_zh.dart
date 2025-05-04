@@ -18,10 +18,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get about => '关于';
 
   @override
-  String get appName => '书法集';
+  String get appName => '字字珠玑';
 
   @override
-  String get appTitle => '书法集';
+  String get appTitle => '字字珠玑';
 
   @override
   String get backgroundColor => '背景颜色';
