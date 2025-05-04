@@ -317,7 +317,58 @@ class CanvasCapture {
     final backgroundColor = content['backgroundColor'] != null
         ? _parseColor(content['backgroundColor'] as String)
         : null;
-    final alignment = content['alignment'] as String? ?? 'left';
+    final alignment = content['textAlign'] as String? ?? 'left';
+    final fontFamily = content['fontFamily'] as String? ?? 'sans-serif';
+    final fontWeight = content['fontWeight'] as String? ?? 'normal';
+    final fontStyle = content['fontStyle'] as String? ?? 'normal';
+
+    // 解析字重
+    FontWeight parsedWeight;
+    if (fontWeight == 'bold') {
+      parsedWeight = FontWeight.bold; // w700
+    } else if (fontWeight == 'normal') {
+      parsedWeight = FontWeight.normal; // w400
+    } else if (fontWeight.startsWith('w')) {
+      // 处理 w100-w900 格式
+      final weightValue = int.tryParse(fontWeight.substring(1));
+      if (weightValue != null) {
+        switch (weightValue) {
+          case 100:
+            parsedWeight = FontWeight.w100;
+            break;
+          case 200:
+            parsedWeight = FontWeight.w200;
+            break;
+          case 300:
+            parsedWeight = FontWeight.w300;
+            break;
+          case 400:
+            parsedWeight = FontWeight.w400;
+            break;
+          case 500:
+            parsedWeight = FontWeight.w500;
+            break;
+          case 600:
+            parsedWeight = FontWeight.w600;
+            break;
+          case 700:
+            parsedWeight = FontWeight.w700;
+            break;
+          case 800:
+            parsedWeight = FontWeight.w800;
+            break;
+          case 900:
+            parsedWeight = FontWeight.w900;
+            break;
+          default:
+            parsedWeight = FontWeight.normal;
+        }
+      } else {
+        parsedWeight = FontWeight.normal;
+      }
+    } else {
+      parsedWeight = FontWeight.normal;
+    }
 
     return Container(
       color: backgroundColor,
@@ -326,6 +377,10 @@ class CanvasCapture {
         style: TextStyle(
           color: fontColor,
           fontSize: fontSize,
+          fontFamily: fontFamily,
+          fontWeight: parsedWeight,
+          fontStyle:
+              fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
         ),
         textAlign: _getTextAlign(alignment),
       ),

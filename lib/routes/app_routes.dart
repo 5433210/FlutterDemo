@@ -26,4 +26,5 @@ class AppRoutes {
   static const String workExtract = '/work/extract';
   static const String characterManagement = '/character_management';
   static const String characterCollection = '/character_collection';
+  static const String fontTester = '/font_tester';
 }

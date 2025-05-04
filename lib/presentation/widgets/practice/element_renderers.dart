@@ -294,22 +294,20 @@ class ElementRenderers {
     if (underline) decorations.add(TextDecoration.underline);
     if (lineThrough) decorations.add(TextDecoration.lineThrough);
 
-    // 解析颜色
-    final fontColor = _parseColor(fontColorStr);
+    // 解析背景颜色（fontColor由TextRenderer处理）
     final backgroundColor = _parseColor(backgroundColorStr);
 
-    // 基本文本样式
-    final textStyle = TextStyle(
+    // 使用TextRenderer创建文本样式，确保正确应用字重
+    final textStyle = TextRenderer.createTextStyle(
       fontSize: fontSize,
       fontFamily: fontFamily,
-      fontWeight: fontWeight == 'bold' ? FontWeight.bold : FontWeight.normal,
-      fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
-      color: fontColor,
+      fontWeight: fontWeight,
+      fontStyle: fontStyle,
+      fontColor: fontColorStr,
       letterSpacing: letterSpacing,
-      height: lineHeight,
-      decoration: decorations.isEmpty
-          ? TextDecoration.none
-          : TextDecoration.combine(decorations),
+      lineHeight: lineHeight,
+      underline: underline,
+      lineThrough: lineThrough,
     );
 
     // 使用 LayoutBuilder 获取容器约束

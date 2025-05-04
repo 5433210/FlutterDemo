@@ -421,6 +421,8 @@ class PracticeEditController extends ChangeNotifier {
         'lineHeight': 1.2,
         'letterSpacing': 0.0,
         'padding': 8.0, // 添加内边距属性
+        'fontWeight': 'normal', // 添加字重属性
+        'fontStyle': 'normal', // 添加字体样式属性
       },
     };
 
@@ -454,6 +456,8 @@ class PracticeEditController extends ChangeNotifier {
         'lineHeight': 1.2,
         'letterSpacing': 0.0,
         'padding': 8.0, // 添加内边距属性
+        'fontWeight': 'normal', // 添加字重属性
+        'fontStyle': 'normal', // 添加字体样式属性
       },
     };
 

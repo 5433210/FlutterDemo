@@ -16,6 +16,7 @@
 .swiftpm/
 migrate_working_dir/
 *.ipynb
+*.zip
 
 # OS generated files #
 ######################

@@ -8,6 +8,7 @@ import '../practice_edit_controller.dart';
 import '../text_renderer.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
+import 'm3_panel_styles.dart';
 import 'practice_property_panel_base.dart';
 
 // 列数据类，用于存储列的Widget和字符
@@ -59,61 +60,29 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         M3LayerInfoPanel(layer: layer),
 
         // 几何属性部分
-        materialExpansionTile(
-          title: Text(l10n.geometryProperties),
+        M3PanelStyles.buildPanelCard(
+          context: context,
+          title: l10n.geometryProperties,
           initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: _buildGeometryPropertiesPanel(context),
-            ),
-          ],
+          children: _buildGeometryPropertiesPanelList(context),
         ),
 
         // 视觉属性部分
-        materialExpansionTile(
-          title: Text(l10n.visualSettings),
+        M3PanelStyles.buildPanelCard(
+          context: context,
+          title: l10n.visualSettings,
           initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: _buildVisualPropertiesPanel(context),
-            ),
-          ],
+          children: _buildVisualPropertiesPanelList(context),
         ),
 
         // 文本设置部分
-        materialExpansionTile(
-          title: Text(l10n.textPropertyPanelTextSettings),
+        M3PanelStyles.buildPanelCard(
+          context: context,
+          title: l10n.textPropertyPanelTextSettings,
           initiallyExpanded: true,
-          children: [
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: _buildTextSettingsPanel(context),
-            ),
-          ],
+          children: _buildTextSettingsPanelList(context),
         ),
       ],
-    );
-  }
-
-  // Helper method to create Material-wrapped ExpansionTile
-  @override
-  Widget materialExpansionTile({
-    required Widget title,
-    List<Widget> children = const <Widget>[],
-    bool initiallyExpanded = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: ExpansionTile(
-        title: title,
-        initiallyExpanded: initiallyExpanded,
-        children: children,
-      ),
     );
   }
 
@@ -130,7 +99,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // X和Y位置
+        // 位置设置
+        M3PanelStyles.buildSectionTitle(context, l10n.position),
         Row(
           children: [
             Expanded(
@@ -156,8 +126,11 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
             ),
           ],
         ),
-        const SizedBox(height: 8.0),
-        // 宽度和高度
+
+        const SizedBox(height: 16.0),
+
+        // 尺寸设置
+        M3PanelStyles.buildSectionTitle(context, '尺寸'),
         Row(
           children: [
             Expanded(
@@ -183,8 +156,11 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
             ),
           ],
         ),
-        const SizedBox(height: 8.0),
-        // 旋转角度
+
+        const SizedBox(height: 16.0),
+
+        // 旋转设置
+        M3PanelStyles.buildSectionTitle(context, l10n.rotation),
         EditableNumberField(
           label: l10n.rotation,
           value: rotation,
@@ -196,6 +172,15 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         ),
       ],
     );
+  }
+
+  // 将几何属性面板内容转换为列表
+  List<Widget> _buildGeometryPropertiesPanelList(BuildContext context) {
+    final Widget panel = _buildGeometryPropertiesPanel(context);
+    if (panel is Column) {
+      return panel.children;
+    }
+    return [panel];
   }
 
   // 构建水平文本预览
@@ -324,9 +309,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 文本内容
-        Text('${l10n.textPropertyPanelTextContent}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelTextContent),
         _buildTextContentField(text, context),
 
         const SizedBox(height: 16.0),
@@ -335,8 +319,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${l10n.textPropertyPanelPreview}:',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            M3PanelStyles.buildSectionTitle(
+                context, l10n.textPropertyPanelPreview),
             // 添加预览文本切换按钮
             FilledButton.tonal(
               onPressed: () {
@@ -427,14 +411,12 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 字体设置
-        Text('${l10n.textPropertyPanelFontFamily}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelFontFamily),
 
         // 字号设置
-        Text('${l10n.textPropertyPanelFontSize}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelFontSize),
         Row(
           children: [
             Expanded(
@@ -446,6 +428,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 divisions: 99,
                 label: '${fontSize.round()}px',
                 activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
                 onChanged: (value) {
                   _updateContentProperty('fontSize', value);
@@ -494,8 +477,12 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                         context,
                         fontColor,
                         (color) {
+                          // Convert color to hex string
+                          final r = (color.r * 255).round();
+                          final g = (color.g * 255).round();
+                          final b = (color.b * 255).round();
                           final hexColor =
-                              '#${color.value.toRadixString(16).substring(2).padLeft(6, '0')}';
+                              '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
                           _updateContentProperty('fontColor', hexColor);
                         },
                       );
@@ -542,8 +529,12 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                             _updateContentProperty(
                                 'backgroundColor', 'transparent');
                           } else {
+                            // Convert color to hex string
+                            final r = (color.r * 255).round();
+                            final g = (color.g * 255).round();
+                            final b = (color.b * 255).round();
                             final hexColor =
-                                '#${color.value.toRadixString(16).substring(2).padLeft(6, '0')}';
+                                '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
                             _updateContentProperty('backgroundColor', hexColor);
                           }
                         },
@@ -579,26 +570,19 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 value: fontFamily,
                 isExpanded: true,
                 items: const [
+                  // System fonts
                   DropdownMenuItem(
                       value: 'sans-serif', child: Text('Sans Serif')),
                   DropdownMenuItem(value: 'serif', child: Text('Serif')),
                   DropdownMenuItem(
                       value: 'monospace', child: Text('Monospace')),
-                  DropdownMenuItem(value: 'cursive', child: Text('Cursive')),
-                  DropdownMenuItem(value: 'fantasy', child: Text('Fantasy')),
-                  // Chinese fonts based on assets/fonts/chinese directory
+                  // Chinese fonts (Free for Commercial Use)
                   DropdownMenuItem(
-                      value: 'SourceHanSansCN', child: Text('思源黑体')),
+                      value: 'SourceHanSans',
+                      child: Text('思源黑体 (Source Han Sans)')),
                   DropdownMenuItem(
-                      value: 'Noto Sans SC', child: Text('Noto Sans SC')),
-                  DropdownMenuItem(
-                      value: 'Microsoft YaHei', child: Text('微软雅黑')),
-                  DropdownMenuItem(value: 'SimSun', child: Text('宋体')),
-                  DropdownMenuItem(value: 'SimHei', child: Text('黑体')),
-                  DropdownMenuItem(value: 'SimKai', child: Text('楷体')),
-                  DropdownMenuItem(value: 'SimFang', child: Text('仿宋')),
-                  DropdownMenuItem(value: 'SimLi', child: Text('隶书')),
-                  DropdownMenuItem(value: 'SimYou', child: Text('幼圆')),
+                      value: 'SourceHanSerif',
+                      child: Text('思源宋体 (Source Han Serif)')),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -612,37 +596,54 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
 
         const SizedBox(height: 16.0),
 
-        // 字体样式
-        Text('${l10n.textPropertyPanelFontStyle}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
-        Wrap(
-          spacing: 8.0, // 水平间距
-          runSpacing: 8.0, // 垂直间距
+        // 字重设置
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelFontWeight),
+        Row(
           children: [
-            // 加粗按钮
-            FilledButton.tonal(
-              style: FilledButton.styleFrom(
-                backgroundColor: fontWeight == 'bold'
-                    ? colorScheme.primary
-                    : colorScheme.surfaceContainerHighest,
-                foregroundColor: fontWeight == 'bold'
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurfaceVariant,
-              ),
-              onPressed: () {
-                _updateContentProperty(
-                    'fontWeight', fontWeight == 'bold' ? 'normal' : 'bold');
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.format_bold, size: 18),
-                  const SizedBox(width: 4),
-                  Text(l10n.textPropertyPanelFontWeight),
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                decoration: InputDecoration(
+                  labelText: l10n.textPropertyPanelFontWeight,
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 8.0),
+                ),
+                value: fontWeight,
+                isExpanded: true,
+                items: const [
+                  // 按照字重从轻到重排序
+                  DropdownMenuItem(value: 'w100', child: Text('Thin (w100)')),
+                  DropdownMenuItem(
+                      value: 'w200', child: Text('Extra Light (w200)')),
+                  DropdownMenuItem(value: 'w300', child: Text('Light (w300)')),
+                  DropdownMenuItem(
+                      value: 'normal', child: Text('Regular (w400)')),
+                  DropdownMenuItem(value: 'w500', child: Text('Medium (w500)')),
+                  DropdownMenuItem(
+                      value: 'w600', child: Text('Semi Bold (w600)')),
+                  DropdownMenuItem(value: 'bold', child: Text('Bold (w700)')),
+                  DropdownMenuItem(
+                      value: 'w800', child: Text('Extra Bold (w800)')),
+                  DropdownMenuItem(value: 'w900', child: Text('Black (w900)')),
                 ],
+                onChanged: (value) {
+                  if (value != null) {
+                    _updateContentProperty('fontWeight', value);
+                  }
+                },
               ),
             ),
+          ],
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // 字体样式
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelFontStyle),
+        Row(
+          children: [
             // 斜体按钮
             FilledButton.tonal(
               style: FilledButton.styleFrom(
@@ -725,9 +726,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 对齐方式
-        Text('${l10n.horizontalAlignment}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(context, l10n.horizontalAlignment),
         Card(
           elevation: 0,
           color: colorScheme.surfaceContainerHighest,
@@ -799,9 +798,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 垂直对齐
-        Text('${l10n.verticalAlignment}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(context, l10n.verticalAlignment),
         Card(
           elevation: 0,
           color: colorScheme.surfaceContainerHighest,
@@ -873,9 +870,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 书写方向
-        Text('${l10n.textPropertyPanelWritingMode}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelWritingMode),
         Card(
           elevation: 0,
           color: colorScheme.surfaceContainerHighest,
@@ -947,9 +943,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 字间距设置
-        Text('${l10n.textPropertyPanelLetterSpacing}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelLetterSpacing),
         Row(
           children: [
             Expanded(
@@ -961,6 +956,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 divisions: 250,
                 label: '${letterSpacing.toStringAsFixed(1)}px',
                 activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
                 onChanged: (value) {
                   _updateContentProperty('letterSpacing', value);
@@ -988,9 +984,8 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 行间距设置
-        Text('${l10n.textPropertyPanelLineHeight}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.textPropertyPanelLineHeight),
         Row(
           children: [
             Expanded(
@@ -1002,6 +997,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 divisions: 25,
                 label: '${lineHeight.toStringAsFixed(1)}x',
                 activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
                 onChanged: (value) {
                   _updateContentProperty('lineHeight', value);
@@ -1027,6 +1023,15 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         ),
       ],
     );
+  }
+
+  // 将文本设置面板内容转换为列表
+  List<Widget> _buildTextSettingsPanelList(BuildContext context) {
+    final Widget panel = _buildTextSettingsPanel(context);
+    if (panel is Column) {
+      return panel.children;
+    }
+    return [panel];
   }
 
   // 构建垂直文本预览
@@ -1094,9 +1099,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 透明度
-        Text('${l10n.opacity}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(context, l10n.opacity),
         Row(
           children: [
             Expanded(
@@ -1108,6 +1111,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 divisions: 100,
                 label: '${(opacity * 100).round()}%',
                 activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
                 onChanged: (value) {
                   _updateProperty('opacity', value);
@@ -1136,9 +1140,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         const SizedBox(height: 16.0),
 
         // 内边距设置
-        Text('${l10n.textPropertyPanelPadding}:',
-            style: const TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8.0),
+        M3PanelStyles.buildSectionTitle(context, l10n.textPropertyPanelPadding),
         Row(
           children: [
             Expanded(
@@ -1150,6 +1152,7 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
                 divisions: 50,
                 label: '${padding.round()}px',
                 activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
                 thumbColor: colorScheme.primary,
                 onChanged: (value) {
                   _updateContentProperty('padding', value);
@@ -1175,6 +1178,15 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         ),
       ],
     );
+  }
+
+  // 将视觉属性面板内容转换为列表
+  List<Widget> _buildVisualPropertiesPanelList(BuildContext context) {
+    final Widget panel = _buildVisualPropertiesPanel(context);
+    if (panel is Column) {
+      return panel.children;
+    }
+    return [panel];
   }
 
   // 颜色选择器对话框
