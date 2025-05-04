@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
-import '../text_renderer.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
 import 'm3_panel_styles.dart';
@@ -204,56 +203,6 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
     return [panel];
   }
 
-  // 构建水平文本预览
-  Widget _buildHorizontalTextPreview({
-    required String text,
-    required double fontSize,
-    required String fontFamily,
-    required String fontWeight,
-    required String fontStyle,
-    required String fontColor,
-    required bool underline,
-    required bool lineThrough,
-    required double letterSpacing,
-    required double lineHeight,
-    required String textAlign,
-    required String verticalAlign,
-    required String writingMode,
-  }) {
-    // 创建文本样式
-    final TextStyle textStyle = TextRenderer.createTextStyle(
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      fontWeight: fontWeight,
-      fontStyle: fontStyle,
-      fontColor: fontColor,
-      letterSpacing: letterSpacing,
-      lineHeight: lineHeight,
-      underline: underline,
-      lineThrough: lineThrough,
-    );
-
-    // 使用共享的文本渲染器
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        developer.log(
-            '水平文本预览参数: textAlign=$textAlign, verticalAlign=$verticalAlign, writingMode=$writingMode');
-        developer.log(
-            '水平文本预览约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-
-        return TextRenderer.renderHorizontalText(
-          text: text,
-          style: textStyle,
-          textAlign: textAlign,
-          verticalAlign: verticalAlign,
-          writingMode: writingMode,
-          constraints: constraints,
-          backgroundColor: Colors.transparent,
-        );
-      },
-    );
-  }
-
   // 辅助方法：构建文本内容输入字段
   Widget _buildTextContentField(String initialText, BuildContext context) {
     // 确保控制器内容与初始文本一致
@@ -333,101 +282,6 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         M3PanelStyles.buildSectionTitle(
             context, l10n.textPropertyPanelTextContent),
         _buildTextContentField(text, context),
-
-        const SizedBox(height: 16.0),
-
-        // 文本预览
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            M3PanelStyles.buildSectionTitle(
-                context, l10n.textPropertyPanelPreview),
-            // 添加预览文本切换按钮
-            FilledButton.tonal(
-              onPressed: () {
-                // 切换预览文本
-                if (text.isEmpty || text == '预览文本内容\n第二行文本\n第三行文本') {
-                  // 使用更长的文本来测试溢出情况
-                  _updateContentProperty('text',
-                      '水平对齐模式测试\n垂直对齐模式测试\n书写方向测试\n这是一段较长的文本\n用于测试文本对齐\n和换行效果\n以及文本溢出处理\n当文本长度超出\n预览容器高度时\n应该显示滚动条\n并且能够正确应用\n不同的对齐选项');
-                } else {
-                  _updateContentProperty('text', '预览文本内容\n第二行文本\n第三行文本');
-                }
-              },
-              child: Text(l10n.toggleTestText),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8.0),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 添加预览模式指示器
-            if (writingMode.startsWith('vertical'))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4.0),
-                child: Wrap(
-                  spacing: 4,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Icon(Icons.info_outline,
-                        size: 16, color: colorScheme.primary),
-                    Text(l10n.verticalTextModeEnabled,
-                        style: TextStyle(
-                            fontSize: 12, color: colorScheme.primary)),
-                  ],
-                ),
-              ),
-            // 使用外层容器定义大小和样式
-            SizedBox(
-              width: double.infinity,
-              height: 200, // 增加高度，便于测试垂直对齐
-              child: Container(
-                // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
-                decoration: BoxDecoration(
-                  color: getBackgroundColor(),
-                  border: Border.all(color: colorScheme.outline),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                // 使用可滚动容器包裹文本预览
-                child: Padding(
-                  padding: EdgeInsets.all(content['padding'] as double? ?? 0.0),
-                  child: writingMode.startsWith('vertical')
-                      ? _buildVerticalTextPreview(
-                          text: text,
-                          fontSize: fontSize,
-                          fontFamily: fontFamily,
-                          fontWeight: fontWeight,
-                          fontStyle: fontStyle,
-                          fontColor: fontColor,
-                          underline: underline,
-                          lineThrough: lineThrough,
-                          letterSpacing: letterSpacing,
-                          lineHeight: lineHeight,
-                          textAlign: textAlign,
-                          verticalAlign: verticalAlign,
-                          writingMode: writingMode,
-                        )
-                      : _buildHorizontalTextPreview(
-                          text: text,
-                          fontSize: fontSize,
-                          fontFamily: fontFamily,
-                          fontWeight: fontWeight,
-                          fontStyle: fontStyle,
-                          fontColor: fontColor,
-                          underline: underline,
-                          lineThrough: lineThrough,
-                          letterSpacing: letterSpacing,
-                          lineHeight: lineHeight,
-                          textAlign: textAlign,
-                          verticalAlign: verticalAlign,
-                          writingMode: writingMode,
-                        ),
-                ),
-              ),
-            ),
-          ],
-        ),
 
         const SizedBox(height: 16.0),
 
@@ -1137,56 +991,6 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
     return [panel];
   }
 
-  // 构建垂直文本预览
-  Widget _buildVerticalTextPreview({
-    required String text,
-    required double fontSize,
-    required String fontFamily,
-    required String fontWeight,
-    required String fontStyle,
-    required String fontColor,
-    required bool underline,
-    required bool lineThrough,
-    required double letterSpacing,
-    required double lineHeight,
-    required String textAlign,
-    required String verticalAlign,
-    required String writingMode,
-  }) {
-    // 创建文本样式
-    final TextStyle textStyle = TextRenderer.createTextStyle(
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      fontWeight: fontWeight,
-      fontStyle: fontStyle,
-      fontColor: fontColor,
-      letterSpacing: letterSpacing,
-      lineHeight: lineHeight,
-      underline: underline,
-      lineThrough: lineThrough,
-    );
-
-    // 使用共享的文本渲染器
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        developer.log(
-            '垂直文本预览参数: textAlign=$textAlign, verticalAlign=$verticalAlign, writingMode=$writingMode');
-        developer.log(
-            '垂直文本预览约束: width=${constraints.maxWidth}, height=${constraints.maxHeight}');
-
-        return TextRenderer.renderVerticalText(
-          text: text,
-          style: textStyle,
-          textAlign: textAlign,
-          verticalAlign: verticalAlign,
-          writingMode: writingMode,
-          constraints: constraints,
-          backgroundColor: Colors.transparent,
-        );
-      },
-    );
-  }
-
   // 构建视觉属性面板
   Widget _buildVisualPropertiesPanel(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -1317,32 +1121,6 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         return 'Regular (400)';
     }
   }
-
-  // // 获取字重标签
-  // String _getFontWeightLabel(String weight) {
-  //   switch (weight) {
-  //     case 'w100':
-  //       return 'Thin (100)';
-  //     case 'w200':
-  //       return 'Extra Light (200)';
-  //     case 'w300':
-  //       return 'Light (300)';
-  //     case 'normal':
-  //       return 'Regular (400)';
-  //     case 'w500':
-  //       return 'Medium (500)';
-  //     case 'w600':
-  //       return 'Semi Bold (600)';
-  //     case 'bold':
-  //       return 'Bold (700)';
-  //     case 'w800':
-  //       return 'Extra Bold (800)';
-  //     case 'w900':
-  //       return 'Black (900)';
-  //     default:
-  //       return 'Regular (400)';
-  //   }
-  // }
 
   // 获取字重值（用于滑块）
   double _getFontWeightValue(String weight) {
