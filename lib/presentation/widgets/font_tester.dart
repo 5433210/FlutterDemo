@@ -21,8 +21,36 @@ class FontTester extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              '这个工具用于测试不同字体的显示效果。每种字体都会显示相同的文本，包括英文、数字和中文。',
+              '这个工具用于测试不同字体的显示效果。每种字体都会显示相同的文本，包括英文、数字和中文。特别测试了字重从w100到w900的完整范围，以验证字体是否正确响应字重变化。',
               style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.shade50,
+                border: Border.all(color: Colors.amber.shade200),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '注意事项:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '1. 思源黑体和思源宋体是可变字体，理论上支持w100-w900的全部字重。',
+                  ),
+                  Text(
+                    '2. 如果字重变化不明显，可能是因为字体文件未正确注册或Flutter对可变字体的支持有限制。',
+                  ),
+                  Text(
+                    '3. 系统默认字体通常只支持有限的字重变化（如normal和bold）。',
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             _buildFontSection(
@@ -82,17 +110,74 @@ class FontTester extends StatelessWidget {
                     FontWeight.w400),
                 const SizedBox(height: 16),
 
-                // 字重变化示例
-                Row(
+                // 字重变化示例 - 完整字重范围测试
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _buildTextSample('细体 Light', '永曰月\n明清风',
-                          fontFamily, fontSize * 0.8, FontWeight.w300),
+                    Text(
+                      '字重范围测试 (w100-w900)',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildTextSample('粗体 Bold', '永曰月\n明清风', fontFamily,
-                          fontSize * 0.8, FontWeight.w700),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextSample('Thin w100', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w100),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('ExtraLight w200', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w200),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('Light w300', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w300),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextSample('Regular w400', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w400),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('Medium w500', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w500),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('SemiBold w600', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildTextSample('Bold w700', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w700),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('ExtraBold w800', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w800),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _buildTextSample('Black w900', '永曰月',
+                              fontFamily, fontSize * 0.7, FontWeight.w900),
+                        ),
+                      ],
                     ),
                   ],
                 ),

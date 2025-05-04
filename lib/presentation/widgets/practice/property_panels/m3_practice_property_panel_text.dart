@@ -86,6 +86,27 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
     );
   }
 
+  // 构建字重按钮
+  Widget _buildFontWeightButton(BuildContext context, String weight,
+      String label, String currentFontWeight) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isSelected = currentFontWeight == weight;
+
+    return FilledButton.tonal(
+      style: FilledButton.styleFrom(
+        backgroundColor: isSelected
+            ? colorScheme.primary
+            : colorScheme.surfaceContainerHighest,
+        foregroundColor:
+            isSelected ? colorScheme.onPrimary : colorScheme.onSurfaceVariant,
+      ),
+      onPressed: () {
+        _updateContentProperty('fontWeight', weight);
+      },
+      child: Text(label),
+    );
+  }
+
   // 构建几何属性面板
   Widget _buildGeometryPropertiesPanel(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -599,41 +620,123 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
         // 字重设置
         M3PanelStyles.buildSectionTitle(
             context, l10n.textPropertyPanelFontWeight),
-        Row(
+
+        // 字重滑块（针对思源字体优化）
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: l10n.textPropertyPanelFontWeight,
-                  border: const OutlineInputBorder(),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12.0, vertical: 8.0),
-                ),
-                value: fontWeight,
-                isExpanded: true,
-                items: const [
-                  // 按照字重从轻到重排序
-                  DropdownMenuItem(value: 'w100', child: Text('Thin (w100)')),
-                  DropdownMenuItem(
-                      value: 'w200', child: Text('Extra Light (w200)')),
-                  DropdownMenuItem(value: 'w300', child: Text('Light (w300)')),
-                  DropdownMenuItem(
-                      value: 'normal', child: Text('Regular (w400)')),
-                  DropdownMenuItem(value: 'w500', child: Text('Medium (w500)')),
-                  DropdownMenuItem(
-                      value: 'w600', child: Text('Semi Bold (w600)')),
-                  DropdownMenuItem(value: 'bold', child: Text('Bold (w700)')),
-                  DropdownMenuItem(
-                      value: 'w800', child: Text('Extra Bold (w800)')),
-                  DropdownMenuItem(value: 'w900', child: Text('Black (w900)')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    _updateContentProperty('fontWeight', value);
-                  }
-                },
-              ),
+            // 字重预设按钮
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: [
+                _buildFontWeightButton(context, 'w300', 'Light', fontWeight),
+                _buildFontWeightButton(
+                    context, 'normal', 'Regular', fontWeight),
+                _buildFontWeightButton(context, 'bold', 'Bold', fontWeight),
+              ],
             ),
+
+            const SizedBox(height: 12.0),
+
+            // 字重滑块
+            Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Slider(
+                    value: _getFontWeightValue(fontWeight),
+                    min: 100,
+                    max: 900,
+                    divisions: 8,
+                    label: _getFontWeightLabel(fontWeight),
+                    activeColor: colorScheme.primary,
+                    inactiveColor: colorScheme.surfaceContainerHighest,
+                    thumbColor: colorScheme.primary,
+                    onChanged: (value) {
+                      // 将滑块值转换为字重字符串
+                      final weightValue = value.round();
+                      String weightString;
+
+                      if (weightValue == 400) {
+                        weightString = 'normal';
+                      } else if (weightValue == 700) {
+                        weightString = 'bold';
+                      } else {
+                        weightString = 'w$weightValue';
+                      }
+
+                      _updateContentProperty('fontWeight', weightString);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    decoration: InputDecoration(
+                      labelText: l10n.textPropertyPanelFontWeight,
+                      border: const OutlineInputBorder(),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 8.0),
+                    ),
+                    value: fontWeight,
+                    isExpanded: true,
+                    items: const [
+                      // 按照字重从轻到重排序
+                      DropdownMenuItem(
+                          value: 'w100', child: Text('Thin (w100)')),
+                      DropdownMenuItem(
+                          value: 'w200', child: Text('Extra Light (w200)')),
+                      DropdownMenuItem(
+                          value: 'w300', child: Text('Light (w300)')),
+                      DropdownMenuItem(
+                          value: 'normal', child: Text('Regular (w400)')),
+                      DropdownMenuItem(
+                          value: 'w500', child: Text('Medium (w500)')),
+                      DropdownMenuItem(
+                          value: 'w600', child: Text('Semi Bold (w600)')),
+                      DropdownMenuItem(
+                          value: 'bold', child: Text('Bold (w700)')),
+                      DropdownMenuItem(
+                          value: 'w800', child: Text('Extra Bold (w800)')),
+                      DropdownMenuItem(
+                          value: 'w900', child: Text('Black (w900)')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        _updateContentProperty('fontWeight', value);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            // 思源字体提示
+            if (fontFamily == 'SourceHanSans' || fontFamily == 'SourceHanSerif')
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '思源字体支持更精确的字重变化',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
 
@@ -1187,6 +1290,73 @@ class M3TextPropertyPanel extends PracticePropertyPanel {
       return panel.children;
     }
     return [panel];
+  }
+
+  // 获取字重标签
+  String _getFontWeightLabel(String weight) {
+    switch (weight) {
+      case 'w100':
+        return 'Thin (100)';
+      case 'w200':
+        return 'Extra Light (200)';
+      case 'w300':
+        return 'Light (300)';
+      case 'normal':
+        return 'Regular (400)';
+      case 'w500':
+        return 'Medium (500)';
+      case 'w600':
+        return 'Semi Bold (600)';
+      case 'bold':
+        return 'Bold (700)';
+      case 'w800':
+        return 'Extra Bold (800)';
+      case 'w900':
+        return 'Black (900)';
+      default:
+        return 'Regular (400)';
+    }
+  }
+
+  // // 获取字重标签
+  // String _getFontWeightLabel(String weight) {
+  //   switch (weight) {
+  //     case 'w100':
+  //       return 'Thin (100)';
+  //     case 'w200':
+  //       return 'Extra Light (200)';
+  //     case 'w300':
+  //       return 'Light (300)';
+  //     case 'normal':
+  //       return 'Regular (400)';
+  //     case 'w500':
+  //       return 'Medium (500)';
+  //     case 'w600':
+  //       return 'Semi Bold (600)';
+  //     case 'bold':
+  //       return 'Bold (700)';
+  //     case 'w800':
+  //       return 'Extra Bold (800)';
+  //     case 'w900':
+  //       return 'Black (900)';
+  //     default:
+  //       return 'Regular (400)';
+  //   }
+  // }
+
+  // 获取字重值（用于滑块）
+  double _getFontWeightValue(String weight) {
+    if (weight == 'normal') return 400;
+    if (weight == 'bold') return 700;
+
+    if (weight.startsWith('w')) {
+      final weightValue = int.tryParse(weight.substring(1));
+      if (weightValue != null && weightValue >= 100 && weightValue <= 900) {
+        return weightValue.toDouble();
+      }
+    }
+
+    return 400; // 默认值
   }
 
   // 颜色选择器对话框

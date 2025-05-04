@@ -19,6 +19,7 @@ import '../presentation/pages/works/work_browse_page.dart';
 import '../presentation/pages/works/work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
 import '../presentation/widgets/font_tester.dart';
+import '../presentation/widgets/font_weight_tester.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/characters/character_management_page.dart';
@@ -211,6 +212,11 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.fontTester:
         return MaterialPageRoute(
           builder: (context) => const FontTester(),
+        );
+
+      case AppRoutes.fontWeightTester:
+        return MaterialPageRoute(
+          builder: (context) => const FontWeightTester(),
         );
     }
 

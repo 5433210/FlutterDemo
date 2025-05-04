@@ -27,4 +27,5 @@ class AppRoutes {
   static const String characterManagement = '/character_management';
   static const String characterCollection = '/character_collection';
   static const String fontTester = '/font_tester';
+  static const String fontWeightTester = '/font_weight_tester';
 }

@@ -186,23 +186,53 @@ class TextRenderer {
       parsedFontColor = Colors.black;
     }
 
-    // 解析和验证字重
+    // 解析字重值
     final finalWeight = _parseFontWeight(fontWeight);
     _validateFontWeightForFamily(fontFamily, finalWeight);
 
+    // 获取字重数值（用于fontVariations）
+    final int weightValue = _getWeightValue(fontWeight);
+    developer.log('字重数值: $weightValue (用于fontVariations)');
+
+    // 检查是否是思源字体，如果是则使用fontVariations
+    bool isSourceHanFont =
+        fontFamily == 'SourceHanSans' || fontFamily == 'SourceHanSerif';
+
     // 创建样式
-    final style = TextStyle(
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      fontWeight: finalWeight,
-      fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
-      color: parsedFontColor,
-      letterSpacing: letterSpacing,
-      height: lineHeight,
-      decoration: decorations.isEmpty
-          ? TextDecoration.none
-          : TextDecoration.combine(decorations),
-    );
+    TextStyle style;
+    if (isSourceHanFont) {
+      // 对思源字体使用fontVariations以获得更精确的字重控制
+      developer.log('使用fontVariations设置思源字体字重: $weightValue');
+      style = TextStyle(
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        // 仍然设置fontWeight以保持向后兼容性
+        fontWeight: finalWeight,
+        fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
+        color: parsedFontColor,
+        letterSpacing: letterSpacing,
+        height: lineHeight,
+        decoration: decorations.isEmpty
+            ? TextDecoration.none
+            : TextDecoration.combine(decorations),
+        // 添加fontVariations属性
+        fontVariations: [FontVariation('wght', weightValue.toDouble())],
+      );
+    } else {
+      // 对其他字体使用标准fontWeight
+      style = TextStyle(
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        fontWeight: finalWeight,
+        fontStyle: fontStyle == 'italic' ? FontStyle.italic : FontStyle.normal,
+        color: parsedFontColor,
+        letterSpacing: letterSpacing,
+        height: lineHeight,
+        decoration: decorations.isEmpty
+            ? TextDecoration.none
+            : TextDecoration.combine(decorations),
+      );
+    }
 
     // 记录最终样式信息
     _logTextStyle(style, prefix: '最终');
@@ -1013,22 +1043,54 @@ class TextRenderer {
     }
   }
 
-  /// 检查字重值是否有效
+  /// 从字重字符串获取数值
+  static int _getWeightValue(String weight) {
+    // 标准化字重值
+    String normalizedWeight = weight.toLowerCase().trim();
+
+    // 处理特殊的字符串值
+    if (normalizedWeight == 'normal') {
+      return 400;
+    } else if (normalizedWeight == 'bold') {
+      return 700;
+    }
+
+    // 处理数值型字重格式（w100-w900）
+    if (normalizedWeight.startsWith('w')) {
+      // 提取数值部分
+      final weightValue = int.tryParse(normalizedWeight.substring(1));
+      if (weightValue != null &&
+          weightValue >= 100 &&
+          weightValue <= 900 &&
+          weightValue % 100 == 0) {
+        return weightValue;
+      }
+    }
+
+    // 默认值
+    return 400;
+  }
+
+  /// 验证字重值是否有效
   static bool _isValidWeight(String weight) {
-    final validWeights = [
-      'w100',
-      'w200',
-      'w300',
-      'w400',
-      'w500',
-      'w600',
-      'w700',
-      'w800',
-      'w900',
-      'normal',
-      'bold'
-    ];
-    return validWeights.contains(weight.toLowerCase());
+    // 标准化字重值
+    String normalizedWeight = weight.toLowerCase().trim();
+
+    // 检查是否是有效的字符串值
+    if (normalizedWeight == 'normal' || normalizedWeight == 'bold') {
+      return true;
+    }
+
+    // 检查是否是有效的数值型字重格式（w100-w900）
+    if (normalizedWeight.startsWith('w')) {
+      final weightValue = int.tryParse(normalizedWeight.substring(1));
+      return weightValue != null &&
+          weightValue >= 100 &&
+          weightValue <= 900 &&
+          weightValue % 100 == 0;
+    }
+
+    return false;
   }
 
   /// 记录文本样式信息
