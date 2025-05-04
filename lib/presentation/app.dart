@@ -96,13 +96,16 @@ class MyApp extends ConsumerWidget {
 
         debugPrint('【系统语言】最终使用的语言: ${finalLocale?.languageCode ?? "null"}');
 
+        // 获取当前语言环境的字符串表示
+        final currentLocale = finalLocale?.languageCode;
+
         return MaterialApp(
           title: '字字珠玑',
           theme: featureFlags.useMaterial3UI
-              ? AppTheme.lightM3() // 新的Material 3主题
+              ? AppTheme.lightM3(locale: currentLocale) // 传递当前语言环境
               : AppTheme.light(), // 现有主题
           darkTheme: featureFlags.useMaterial3UI
-              ? AppTheme.darkM3() // 新的Material 3暗色主题
+              ? AppTheme.darkM3(locale: currentLocale) // 传递当前语言环境
               : AppTheme.dark(), // 现有暗色主题
           themeMode: ref.watch(
               settingsProvider.select((s) => s.themeMode.toFlutterThemeMode())),

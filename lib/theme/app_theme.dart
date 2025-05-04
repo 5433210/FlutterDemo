@@ -23,9 +23,14 @@ class AppTheme {
   }
 
   /// 获取Material 3暗色主题
-  static ThemeData darkM3() {
+  static ThemeData darkM3({String? locale}) {
+    // 检查是否为中文环境
+    final bool isChineseLocale = locale?.startsWith('zh') ?? false;
+
     return ThemeData(
       useMaterial3: true,
+      // 在中文环境下使用思源宋体作为默认字体
+      fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
       searchBarTheme: const SearchBarThemeData(
         constraints: BoxConstraints.tightFor(
             width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
@@ -35,9 +40,16 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       scaffoldBackgroundColor: Colors.black,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
+        // 在中文环境下使用思源宋体作为AppBar字体
+        titleTextStyle: TextStyle(
+          fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+        ),
       ),
       cardTheme: CardTheme(
         elevation: AppSizes.cardElevation,
@@ -116,9 +128,14 @@ class AppTheme {
   }
 
   /// 获取Material 3亮色主题
-  static ThemeData lightM3() {
+  static ThemeData lightM3({String? locale}) {
+    // 检查是否为中文环境
+    final bool isChineseLocale = locale?.startsWith('zh') ?? false;
+
     return ThemeData(
       useMaterial3: true,
+      // 在中文环境下使用思源宋体作为默认字体
+      fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
       searchBarTheme: const SearchBarThemeData(
         constraints: BoxConstraints.tightFor(
             width: AppSizes.searchBarWidth, height: AppSizes.searchBarHeight),
@@ -128,9 +145,15 @@ class AppTheme {
         brightness: Brightness.light,
       ),
       scaffoldBackgroundColor: Colors.white,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
+        // 在中文环境下使用思源宋体作为AppBar字体
+        titleTextStyle: TextStyle(
+          fontFamily: isChineseLocale ? 'SourceHanSerif' : null,
+          fontSize: 20,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       cardTheme: CardTheme(
         elevation: AppSizes.cardElevation,

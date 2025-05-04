@@ -41,7 +41,8 @@ class M3PaginationControls extends StatelessWidget {
 
     return Container(
       width: double.infinity, // Make the container take full width
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.spacingMedium, vertical: AppSizes.spacingSmall),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
@@ -63,16 +64,22 @@ class M3PaginationControls extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.first_page),
+                icon: const Icon(Icons.first_page, size: 20),
                 onPressed: currentPage > 1 ? () => onPageChanged(1) : null,
                 tooltip: 'First Page',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: const EdgeInsets.all(8),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_left),
+                icon: const Icon(Icons.chevron_left, size: 20),
                 onPressed: currentPage > 1
                     ? () => onPageChanged(currentPage - 1)
                     : null,
                 tooltip: 'Previous Page',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: const EdgeInsets.all(8),
               ),
               Container(
                 constraints: const BoxConstraints(minWidth: 40),
@@ -83,18 +90,24 @@ class M3PaginationControls extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right),
+                icon: const Icon(Icons.chevron_right, size: 20),
                 onPressed: currentPage < totalPages
                     ? () => onPageChanged(currentPage + 1)
                     : null,
                 tooltip: 'Next Page',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: const EdgeInsets.all(8),
               ),
               IconButton(
-                icon: const Icon(Icons.last_page),
+                icon: const Icon(Icons.last_page, size: 20),
                 onPressed: currentPage < totalPages
                     ? () => onPageChanged(totalPages)
                     : null,
                 tooltip: 'Last Page',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                padding: const EdgeInsets.all(8),
               ),
             ],
           ),
@@ -102,6 +115,7 @@ class M3PaginationControls extends StatelessWidget {
           // Page size selector (only if onPageSizeChanged is provided)
           if (onPageSizeChanged != null)
             Container(
+              height: 32,
               decoration: BoxDecoration(
                 border: Border.all(color: theme.colorScheme.outline),
                 borderRadius: BorderRadius.circular(4),
@@ -109,18 +123,22 @@ class M3PaginationControls extends StatelessWidget {
               child: PopupMenuButton<int>(
                 initialValue: pageSize,
                 onSelected: onPageSizeChanged,
+                position: PopupMenuPosition.under,
                 itemBuilder: (context) => availablePageSizes
                     .map((size) => PopupMenuItem<int>(
                           value: size,
-                          height: 36,
+                          height: 32,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
                           child: Text(
                             l10n.workBrowseItemsPerPage('$size'),
+                            style: theme.textTheme.bodySmall,
                           ),
                         ))
                     .toList(),
                 child: Padding(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -130,8 +148,8 @@ class M3PaginationControls extends StatelessWidget {
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_drop_down, size: 18),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.arrow_drop_down, size: 16),
                     ],
                   ),
                 ),
