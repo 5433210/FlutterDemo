@@ -5,15 +5,13 @@ import '../../../application/providers/service_providers.dart';
 import '../../../application/services/storage/character_storage_service.dart';
 import '../../../domain/repositories/character_repository.dart';
 import '../../viewmodels/states/character_grid_state.dart';
-import '../work_detail_provider.dart';
 
-final characterGridProvider =
-    StateNotifierProvider<CharacterGridNotifier, CharacterGridState>((ref) {
+final characterGridProvider = StateNotifierProvider.family<
+    CharacterGridNotifier, CharacterGridState, String>((ref, workId) {
   final repository = ref.watch(characterRepositoryProvider);
-  final workId = ref.watch(workDetailProvider).work?.id;
   final storageService = ref.watch(characterStorageServiceProvider);
 
-  return CharacterGridNotifier(repository, workId!, storageService);
+  return CharacterGridNotifier(repository, workId, storageService);
 });
 
 class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
@@ -49,51 +47,69 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
   }
 
   Future<void> loadCharacters() async {
-    try {
-      state = state.copyWith(loading: true, error: null);
+    // 使用 Future 延迟执行，避免在构建过程中修改状态
+    Future(() async {
+      try {
+        state = state.copyWith(loading: true, error: null);
 
-      // 从仓库加载作品相关的字符
-      final characters = await _repository.findByWorkId(workId);
+        // 如果 workId 为空，返回空列表
+        if (workId.isEmpty) {
+          state = state.copyWith(
+            characters: [],
+            filteredCharacters: [],
+            totalPages: 1,
+            currentPage: 1,
+            loading: false,
+            isInitialLoad: false, // workId为空时，也将初始加载标志设置为false
+          );
+          return;
+        }
 
-      // 转换为视图模型
-      final viewModels = characters
-          .map((char) => CharacterViewModel(
-                id: char.id,
-                pageId: char.pageId,
-                character: char.character,
-                thumbnailPath: '', // 需通过仓库获取缩略图路径
-                createdAt: char.createTime ?? DateTime.now(),
-                updatedAt: char.updateTime ?? DateTime.now(),
-                isFavorite: char.isFavorite,
-              ))
-          .toList();
+        // 从仓库加载作品相关的字符
+        final characters = await _repository.findByWorkId(workId);
 
-      // 获取缩略图路径
-      for (int i = 0; i < viewModels.length; i++) {
-        final vm = viewModels[i];
-        final path = await _storageService.getThumbnailPath(vm.id);
-        viewModels[i] = vm.copyWith(thumbnailPath: path);
+        // 转换为视图模型
+        final viewModels = characters
+            .map((char) => CharacterViewModel(
+                  id: char.id,
+                  pageId: char.pageId,
+                  character: char.character,
+                  thumbnailPath: '', // 需通过仓库获取缩略图路径
+                  createdAt: char.createTime ?? DateTime.now(),
+                  updatedAt: char.updateTime ?? DateTime.now(),
+                  isFavorite: char.isFavorite,
+                ))
+            .toList();
+
+        // 获取缩略图路径
+        for (int i = 0; i < viewModels.length; i++) {
+          final vm = viewModels[i];
+          final path = await _storageService.getThumbnailPath(vm.id);
+          viewModels[i] = vm.copyWith(thumbnailPath: path);
+        }
+
+        // 计算分页信息（假设每页16项）
+        const itemsPerPage = 16;
+        final totalPages = (viewModels.length / itemsPerPage).ceil();
+
+        state = state.copyWith(
+          characters: viewModels,
+          filteredCharacters: viewModels,
+          totalPages: totalPages > 0 ? totalPages : 1,
+          currentPage: 1,
+          loading: false,
+          isInitialLoad: false, // 加载完成后，将初始加载标志设置为false
+        );
+
+        _applyFilters();
+      } catch (e) {
+        state = state.copyWith(
+          loading: false,
+          error: e.toString(),
+          isInitialLoad: false, // 即使出错，也将初始加载标志设置为false
+        );
       }
-
-      // 计算分页信息（假设每页16项）
-      const itemsPerPage = 16;
-      final totalPages = (viewModels.length / itemsPerPage).ceil();
-
-      state = state.copyWith(
-        characters: viewModels,
-        filteredCharacters: viewModels,
-        totalPages: totalPages > 0 ? totalPages : 1,
-        currentPage: 1,
-        loading: false,
-      );
-
-      _applyFilters();
-    } catch (e) {
-      state = state.copyWith(
-        loading: false,
-        error: e.toString(),
-      );
-    }
+    });
   }
 
   void setPage(int page) {

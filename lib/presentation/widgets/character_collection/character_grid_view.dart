@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/character/character_grid_provider.dart';
-import '../../viewmodels/states/character_grid_state.dart';
 import 'character_tile.dart';
 import 'pagination_control.dart';
 import 'search_filter_bar.dart';
@@ -19,7 +18,7 @@ class CharacterGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gridState = ref.watch(characterGridProvider);
+    final gridState = ref.watch(characterGridProvider(workId));
 
     // 显示空状态
     if (gridState.characters.isEmpty) {
@@ -36,10 +35,12 @@ class CharacterGridView extends ConsumerWidget {
         SearchFilterBar(
           searchTerm: gridState.searchTerm,
           filterType: gridState.filterType,
-          onSearchChanged: (term) =>
-              ref.read(characterGridProvider.notifier).updateSearch(term),
-          onFilterChanged: (type) =>
-              ref.read(characterGridProvider.notifier).updateFilter(type),
+          onSearchChanged: (term) => ref
+              .read(characterGridProvider(workId).notifier)
+              .updateSearch(term),
+          onFilterChanged: (type) => ref
+              .read(characterGridProvider(workId).notifier)
+              .updateFilter(type),
         ),
 
         // 字符网格
@@ -60,7 +61,7 @@ class CharacterGridView extends ConsumerWidget {
                 isSelected: gridState.selectedIds.contains(character.id),
                 onTap: () => onCharacterSelected(character.id),
                 onLongPress: () => ref
-                    .read(characterGridProvider.notifier)
+                    .read(characterGridProvider(workId).notifier)
                     .toggleSelection(character.id),
               );
             },
@@ -73,7 +74,7 @@ class CharacterGridView extends ConsumerWidget {
             currentPage: gridState.currentPage,
             totalPages: gridState.totalPages,
             onPageChanged: (page) =>
-                ref.read(characterGridProvider.notifier).setPage(page),
+                ref.read(characterGridProvider(workId).notifier).setPage(page),
           ),
       ],
     );

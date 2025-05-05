@@ -30,6 +30,8 @@ mixin _$CharacterGridState {
   int get currentPage => throw _privateConstructorUsedError;
   int get totalPages => throw _privateConstructorUsedError;
   bool get loading => throw _privateConstructorUsedError;
+  bool get isInitialLoad =>
+      throw _privateConstructorUsedError; // 添加初始加载标志，默认为true
   String? get error => throw _privateConstructorUsedError;
 
   /// Serializes this CharacterGridState to a JSON map.
@@ -57,6 +59,7 @@ abstract class $CharacterGridStateCopyWith<$Res> {
       int currentPage,
       int totalPages,
       bool loading,
+      bool isInitialLoad,
       String? error});
 }
 
@@ -83,6 +86,7 @@ class _$CharacterGridStateCopyWithImpl<$Res, $Val extends CharacterGridState>
     Object? currentPage = null,
     Object? totalPages = null,
     Object? loading = null,
+    Object? isInitialLoad = null,
     Object? error = freezed,
   }) {
     return _then(_value.copyWith(
@@ -118,6 +122,10 @@ class _$CharacterGridStateCopyWithImpl<$Res, $Val extends CharacterGridState>
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
               as bool,
+      isInitialLoad: null == isInitialLoad
+          ? _value.isInitialLoad
+          : isInitialLoad // ignore: cast_nullable_to_non_nullable
+              as bool,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -143,6 +151,7 @@ abstract class _$$CharacterGridStateImplCopyWith<$Res>
       int currentPage,
       int totalPages,
       bool loading,
+      bool isInitialLoad,
       String? error});
 }
 
@@ -167,6 +176,7 @@ class __$$CharacterGridStateImplCopyWithImpl<$Res>
     Object? currentPage = null,
     Object? totalPages = null,
     Object? loading = null,
+    Object? isInitialLoad = null,
     Object? error = freezed,
   }) {
     return _then(_$CharacterGridStateImpl(
@@ -202,6 +212,10 @@ class __$$CharacterGridStateImplCopyWithImpl<$Res>
           ? _value.loading
           : loading // ignore: cast_nullable_to_non_nullable
               as bool,
+      isInitialLoad: null == isInitialLoad
+          ? _value.isInitialLoad
+          : isInitialLoad // ignore: cast_nullable_to_non_nullable
+              as bool,
       error: freezed == error
           ? _value.error
           : error // ignore: cast_nullable_to_non_nullable
@@ -222,6 +236,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
       this.currentPage = 1,
       this.totalPages = 1,
       this.loading = false,
+      this.isInitialLoad = true,
       this.error})
       : _characters = characters,
         _filteredCharacters = filteredCharacters,
@@ -275,11 +290,15 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
   @JsonKey()
   final bool loading;
   @override
+  @JsonKey()
+  final bool isInitialLoad;
+// 添加初始加载标志，默认为true
+  @override
   final String? error;
 
   @override
   String toString() {
-    return 'CharacterGridState(characters: $characters, filteredCharacters: $filteredCharacters, searchTerm: $searchTerm, filterType: $filterType, selectedIds: $selectedIds, currentPage: $currentPage, totalPages: $totalPages, loading: $loading, error: $error)';
+    return 'CharacterGridState(characters: $characters, filteredCharacters: $filteredCharacters, searchTerm: $searchTerm, filterType: $filterType, selectedIds: $selectedIds, currentPage: $currentPage, totalPages: $totalPages, loading: $loading, isInitialLoad: $isInitialLoad, error: $error)';
   }
 
   @override
@@ -302,6 +321,8 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
             (identical(other.totalPages, totalPages) ||
                 other.totalPages == totalPages) &&
             (identical(other.loading, loading) || other.loading == loading) &&
+            (identical(other.isInitialLoad, isInitialLoad) ||
+                other.isInitialLoad == isInitialLoad) &&
             (identical(other.error, error) || other.error == error));
   }
 
@@ -317,6 +338,7 @@ class _$CharacterGridStateImpl implements _CharacterGridState {
       currentPage,
       totalPages,
       loading,
+      isInitialLoad,
       error);
 
   /// Create a copy of CharacterGridState
@@ -346,6 +368,7 @@ abstract class _CharacterGridState implements CharacterGridState {
       final int currentPage,
       final int totalPages,
       final bool loading,
+      final bool isInitialLoad,
       final String? error}) = _$CharacterGridStateImpl;
 
   factory _CharacterGridState.fromJson(Map<String, dynamic> json) =
@@ -367,6 +390,8 @@ abstract class _CharacterGridState implements CharacterGridState {
   int get totalPages;
   @override
   bool get loading;
+  @override
+  bool get isInitialLoad; // 添加初始加载标志，默认为true
   @override
   String? get error;
 

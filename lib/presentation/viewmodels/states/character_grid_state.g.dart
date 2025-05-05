@@ -30,6 +30,7 @@ _$CharacterGridStateImpl _$$CharacterGridStateImplFromJson(
       currentPage: (json['currentPage'] as num?)?.toInt() ?? 1,
       totalPages: (json['totalPages'] as num?)?.toInt() ?? 1,
       loading: json['loading'] as bool? ?? false,
+      isInitialLoad: json['isInitialLoad'] as bool? ?? true,
       error: json['error'] as String?,
     );
 
@@ -44,6 +45,7 @@ Map<String, dynamic> _$$CharacterGridStateImplToJson(
       'currentPage': instance.currentPage,
       'totalPages': instance.totalPages,
       'loading': instance.loading,
+      'isInitialLoad': instance.isInitialLoad,
       'error': instance.error,
     };
 

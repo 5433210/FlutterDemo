@@ -21,7 +21,7 @@ class M3CharacterGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final gridState = ref.watch(characterGridProvider);
+    final gridState = ref.watch(characterGridProvider(workId));
 
     // 显示空状态
     if (gridState.characters.isEmpty) {
@@ -38,10 +38,12 @@ class M3CharacterGridView extends ConsumerWidget {
         M3SearchFilterBar(
           searchTerm: gridState.searchTerm,
           filterType: gridState.filterType,
-          onSearchChanged: (term) =>
-              ref.read(characterGridProvider.notifier).updateSearch(term),
-          onFilterChanged: (type) =>
-              ref.read(characterGridProvider.notifier).updateFilter(type),
+          onSearchChanged: (term) => ref
+              .read(characterGridProvider(workId).notifier)
+              .updateSearch(term),
+          onFilterChanged: (type) => ref
+              .read(characterGridProvider(workId).notifier)
+              .updateFilter(type),
         ),
 
         // 字符网格
@@ -93,7 +95,7 @@ class M3CharacterGridView extends ConsumerWidget {
                                 gridState.selectedIds.contains(character.id),
                             onTap: () => onCharacterSelected(character.id),
                             onLongPress: () => ref
-                                .read(characterGridProvider.notifier)
+                                .read(characterGridProvider(workId).notifier)
                                 .toggleSelection(character.id),
                           );
                         },
@@ -150,7 +152,7 @@ class M3CharacterGridView extends ConsumerWidget {
                       isSelected: gridState.selectedIds.contains(character.id),
                       onTap: () => onCharacterSelected(character.id),
                       onLongPress: () => ref
-                          .read(characterGridProvider.notifier)
+                          .read(characterGridProvider(workId).notifier)
                           .toggleSelection(character.id),
                     );
                   },
@@ -166,7 +168,7 @@ class M3CharacterGridView extends ConsumerWidget {
             currentPage: gridState.currentPage,
             totalPages: gridState.totalPages,
             onPageChanged: (page) =>
-                ref.read(characterGridProvider.notifier).setPage(page),
+                ref.read(characterGridProvider(workId).notifier).setPage(page),
           ),
       ],
     );

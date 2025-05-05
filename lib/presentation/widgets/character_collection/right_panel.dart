@@ -93,7 +93,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
 
       // If switching to the grid tab, refresh characters to ensure latest data
       if (_tabController.index == 1) {
-        _refreshCharacterGrid();
+        _refreshCharacterGrid(widget.workId);
       }
     }
   }
@@ -117,7 +117,7 @@ class _RightPanelState extends ConsumerState<RightPanel>
           if (_currentIndex == 1 ||
               refreshEvent == RefreshEventType.characterDeleted ||
               refreshEvent == RefreshEventType.characterSaved) {
-            _refreshCharacterGrid();
+            _refreshCharacterGrid(widget.workId);
 
             // If a character was deleted and we're in preview tab with no selected region,
             // consider switching to grid tab
@@ -155,6 +155,16 @@ class _RightPanelState extends ConsumerState<RightPanel>
   }
 
   Widget _buildGridTab() {
+    // 确保 workId 不为空
+    if (widget.workId.isEmpty) {
+      return const Center(
+        child: Text(
+          '请先选择一个作品',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
     return CharacterGridView(
       workId: widget.workId,
       onCharacterSelected:
@@ -288,13 +298,13 @@ class _RightPanelState extends ConsumerState<RightPanel>
     }
 
     // Refresh grid in any case
-    await _refreshCharacterGrid();
+    await _refreshCharacterGrid(widget.workId);
   }
 
   // Helper method to refresh the character grid
-  Future<void> _refreshCharacterGrid() async {
+  Future<void> _refreshCharacterGrid(String workId) async {
     try {
-      await ref.read(characterGridProvider.notifier).loadCharacters();
+      await ref.read(characterGridProvider(workId).notifier).loadCharacters();
     } catch (e) {
       debugPrint('刷新字符网格失败: $e');
     }

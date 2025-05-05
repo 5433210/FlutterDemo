@@ -14,6 +14,7 @@ class CharacterGridState with _$CharacterGridState {
     @Default(1) int currentPage,
     @Default(1) int totalPages,
     @Default(false) bool loading,
+    @Default(true) bool isInitialLoad, // 添加初始加载标志，默认为true
     String? error,
   }) = _CharacterGridState;
 

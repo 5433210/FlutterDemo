@@ -87,7 +87,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     super.dispose();
   }
 
-  void handleTabChange() {
+  void handleTabChange() async {
     if (!_tabController.indexIsChanging) {
       setState(() {
         _currentIndex = _tabController.index;
@@ -95,7 +95,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
 
       // If switching to the grid tab, refresh characters to ensure latest data
       if (_tabController.index == 1) {
-        _refreshCharacterGrid();
+        await _refreshCharacterGrid(widget.workId);
       }
     }
   }
@@ -119,7 +119,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
           if (_currentIndex == 1 ||
               refreshEvent == RefreshEventType.characterDeleted ||
               refreshEvent == RefreshEventType.characterSaved) {
-            _refreshCharacterGrid();
+            _refreshCharacterGrid(widget.workId);
 
             // If a character was deleted and we're in preview tab with no selected region,
             // consider switching to grid tab
@@ -157,6 +157,19 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
   }
 
   Widget _buildGridTab() {
+    final l10n = AppLocalizations.of(context);
+
+    // 确保 workId 不为空
+    if (widget.workId.isEmpty) {
+      return Center(
+        child: Text(
+          l10n.characterCollectionNoCharacters,
+          style:
+              TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      );
+    }
+
     return M3CharacterGridView(
       workId: widget.workId,
       onCharacterSelected: _handleCharacterSelected,
@@ -289,13 +302,13 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     }
 
     // Refresh grid in any case
-    await _refreshCharacterGrid();
+    await _refreshCharacterGrid(widget.workId);
   }
 
   // Helper method to refresh the character grid
-  Future<void> _refreshCharacterGrid() async {
+  Future<void> _refreshCharacterGrid(String workId) async {
     try {
-      await ref.read(characterGridProvider.notifier).loadCharacters();
+      await ref.read(characterGridProvider(workId).notifier).loadCharacters();
     } catch (e) {
       debugPrint('Failed to refresh character grid: $e');
     }
