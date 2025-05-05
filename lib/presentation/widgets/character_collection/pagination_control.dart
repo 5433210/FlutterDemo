@@ -28,7 +28,7 @@ class PaginationControl extends StatelessWidget {
         children: [
           // 显示范围文本
           Text(
-            '显示: ${_getDisplayRange()}',
+            _getDisplayRange(),
             style: theme.textTheme.bodyMedium,
           ),
 

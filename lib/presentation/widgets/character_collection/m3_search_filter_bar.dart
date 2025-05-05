@@ -30,11 +30,23 @@ class M3SearchFilterBar extends StatelessWidget {
           Expanded(
             flex: 1,
             child: SearchBar(
-              constraints: const BoxConstraints(maxWidth: 10, minWidth: 5),
-              controller: TextEditingController(text: searchTerm),
+              controller: TextEditingController(text: searchTerm)
+                ..selection =
+                    TextSelection.collapsed(offset: searchTerm.length),
               hintText: l10n.characterCollectionSearchHint,
               leading: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
               onChanged: onSearchChanged,
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 8.0),
+              ),
+              trailing: [
+                if (searchTerm.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear, size: 20),
+                    onPressed: () => onSearchChanged(''),
+                    tooltip: '',
+                  ),
+              ],
             ),
           ),
 
@@ -68,14 +80,6 @@ class M3SearchFilterBar extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  DropdownMenuItem<FilterType> _buildDropdownItem(
-      FilterType value, String text, BuildContext context) {
-    return DropdownMenuItem<FilterType>(
-      value: value,
-      child: Text(text),
     );
   }
 }
