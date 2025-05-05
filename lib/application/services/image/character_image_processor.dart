@@ -323,7 +323,10 @@ class CharacterImageProcessor {
     for (final pathData in erasePaths) {
       final points = pathData['points'] as List<dynamic>;
       final brushSize = (pathData['brushSize'] as num?)?.toDouble() ?? 10.0;
-      final brushRadius = brushSize / 2;
+
+      // 确保最小有效半径，解决小笔刷被忽略的问题
+      // 对于小于2.0的笔刷，使用1.0作为最小有效半径
+      final effectiveRadius = math.max(brushSize / 2, 1.0);
 
       // 获取路径的颜色，默认为白色
       final brushColorValue = pathData['brushColor'] as int?;
@@ -347,10 +350,10 @@ class CharacterImageProcessor {
         }
 
         // Skip points completely outside the image
-        if (x < -brushRadius ||
-            y < -brushRadius ||
-            x >= imageWidth + brushRadius ||
-            y >= imageHeight + brushRadius) {
+        if (x < -effectiveRadius ||
+            y < -effectiveRadius ||
+            x >= imageWidth + effectiveRadius ||
+            y >= imageHeight + effectiveRadius) {
           continue;
         }
 
@@ -358,36 +361,40 @@ class CharacterImageProcessor {
         x = x.clamp(0, imageWidth - 1);
         y = y.clamp(0, imageHeight - 1);
 
-        // Apply sharp-edged brush with minimal anti-aliasing at edges
-        for (var dy = -brushRadius; dy <= brushRadius; dy++) {
-          // Skip entire row if outside Y boundaries
-          final py = (y + dy).round();
-          if (py < 0 || py >= imageHeight) continue;
+        // 计算影响范围的整数边界，确保小笔刷至少影响一个完整像素
+        final int minX = math.max(0, (x - effectiveRadius).floor());
+        final int maxX = math.min(imageWidth - 1, (x + effectiveRadius).ceil());
+        final int minY = math.max(0, (y - effectiveRadius).floor());
+        final int maxY =
+            math.min(imageHeight - 1, (y + effectiveRadius).ceil());
 
-          for (var dx = -brushRadius; dx <= brushRadius; dx++) {
-            // Skip pixel if outside X boundaries
-            final px = (x + dx).round();
-            if (px < 0 || px >= imageWidth) continue;
-
-            // Distance check
+        // 使用整数坐标遍历，避免取整问题
+        for (int py = minY; py <= maxY; py++) {
+          for (int px = minX; px <= maxX; px++) {
+            // 计算像素中心到笔刷中心的距离
+            final dx = px - x;
+            final dy = py - y;
             final distSquared = dx * dx + dy * dy;
-            if (distSquared > brushRadius * brushRadius) continue;
 
-            // Calculate anti-aliasing only at the edge of the brush
+            // 使用有效半径进行距离检查
+            final radiusSquared = effectiveRadius * effectiveRadius;
+            if (distSquared > radiusSquared) continue;
+
+            // 计算抗锯齿效果的alpha值
             double alpha = 1.0;
             final dist = math.sqrt(distSquared);
 
-            // Only apply anti-aliasing within 1 pixel of the edge
-            if (dist > brushRadius - 1.0 && dist <= brushRadius) {
-              alpha = brushRadius - dist; // Linear gradient from 0 to 1
+            // 在边缘应用抗锯齿效果
+            if (dist > effectiveRadius - 1.0 && dist <= effectiveRadius) {
+              alpha = effectiveRadius - dist; // 线性渐变
               alpha = alpha.clamp(0.0, 1.0);
             }
 
-            // Apply the color with proper alpha
+            // 应用颜色混合
             if (alpha > 0) {
               final originalPixel = result.getPixel(px, py);
 
-              // Simple alpha-blend without additional blur
+              // 简单的alpha混合，不使用额外的模糊
               final blendedR =
                   (brushColor.r * alpha + originalPixel.r * (1 - alpha))
                       .round()
