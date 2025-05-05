@@ -117,6 +117,11 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     _pathManager.redoPath();
     _updateState();
+
+    // 简单地记录日志，不需要复杂的处理
+    AppLogger.debug('执行重做操作', data: {
+      'totalPaths': _pathManager.completedPaths.length,
+    });
   }
 
   /// 设置笔刷大小
@@ -141,7 +146,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
   /// 切换轮廓显示
   void toggleContour() {
     state = state.copyWith(showContour: !state.showContour);
-    print('轮廓显示状态切换为: ${state.showContour}');
+    AppLogger.debug('轮廓显示状态切换为: ${state.showContour}');
   }
 
   /// 切换图像反转模式
@@ -149,7 +154,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     final wasImageInverted = state.imageInvertMode;
     final newImageInverted = !wasImageInverted;
 
-    print('切换图像反转: $wasImageInverted → $newImageInverted');
+    AppLogger.debug('切换图像反转: $wasImageInverted → $newImageInverted');
 
     // 更新状态 - 只更新当前的设置，不会影响已有路径
     state = state.copyWith(imageInvertMode: newImageInverted);
@@ -163,8 +168,11 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     }
 
     // 日志记录颜色变化
-    print(
-        '图像反转切换后笔刷颜色: ${state.brushColor}, 反转状态: ${state.isReversed}, 图像反转: ${state.imageInvertMode}');
+    AppLogger.debug('图像反转切换后笔刷颜色', data: {
+      'brushColor': state.brushColor.toString(),
+      'isReversed': state.isReversed,
+      'imageInvertMode': state.imageInvertMode,
+    });
 
     // 如果轮廓显示开启，需要强制刷新轮廓
     if (state.showContour) {
@@ -176,7 +184,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
       Future.delayed(const Duration(milliseconds: 50), () {
         state = state.copyWith(showContour: true);
         _updateState();
-        print('图像反转后强制刷新轮廓');
+        AppLogger.debug('图像反转后强制刷新轮廓');
       });
     } else {
       // 确保状态更新被通知
@@ -191,7 +199,10 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     final wasReversed = state.isReversed;
     final newReversed = !wasReversed;
 
-    print('切换笔刷反转: $wasReversed → $newReversed');
+    AppLogger.debug('切换笔刷反转', data: {
+      'from': wasReversed,
+      'to': newReversed,
+    });
 
     // 更新状态 - 只影响未来的路径
     state = state.copyWith(isReversed: newReversed);
@@ -199,12 +210,17 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     // 如果有活动路径，立即更新其颜色
     if (_pathManager.currentPath != null) {
       _pathManager.updateCurrentColor(state.brushColor);
-      print('更新当前路径颜色: ${state.brushColor}');
+      AppLogger.debug('更新当前路径颜色', data: {
+        'color': state.brushColor.toString(),
+      });
     }
 
     // 日志记录颜色变化
-    print(
-        '笔刷反转切换后颜色: ${state.brushColor}, 反转状态: ${state.isReversed}, 图像反转: ${state.imageInvertMode}');
+    AppLogger.debug('笔刷反转切换后颜色', data: {
+      'brushColor': state.brushColor.toString(),
+      'isReversed': state.isReversed,
+      'imageInvertMode': state.imageInvertMode,
+    });
 
     // 确保状态更新被通知
     _updateState();
@@ -216,6 +232,11 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     _pathManager.undo();
     _updateState();
+
+    // 简单地记录日志，不需要复杂的处理
+    AppLogger.debug('执行撤销操作', data: {
+      'remainingPaths': _pathManager.completedPaths.length,
+    });
   }
 
   /// 更新路径

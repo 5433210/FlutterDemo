@@ -111,8 +111,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       if (showContour) {
         final prevPaths = previous?.completedPaths ?? [];
         final currentPaths = current.completedPaths ?? [];
+
+        // 检测路径变化
+        AppLogger.debug('路径变化检测', data: {
+          'from': prevPaths.length,
+          'to': currentPaths.length,
+        });
+
+        // 当路径数量变化时更新轮廓
+        // 这确保了撤销操作后视觉效果会立即更新
         if (prevPaths.length != currentPaths.length) {
-          print('路径变化检测：从 ${prevPaths.length} 到 ${currentPaths.length} 个路径');
           _updateOutline();
         }
       }
@@ -536,10 +544,11 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
     // Only handle taps within image bounds
     if (_isPointWithinImageBounds(position)) {
-      ref.read(eraseStateProvider.notifier).startPath(position);
-      ref.read(eraseStateProvider.notifier).completePath();
-      widget.onEraseStart?.call(position);
-      widget.onEraseEnd?.call();
+      // 使用专门的点击擦除方法，避免重复创建路径
+      ref.read(eraseStateProvider.notifier).clickErase(position);
+
+      // 不调用任何回调，避免创建多余的路径
+      // 点击擦除只需要一个路径，clickErase方法已经处理了路径的创建和完成
     }
   }
 

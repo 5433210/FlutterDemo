@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/path_info.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../presentation/providers/character/erase_providers.dart';
 import 'background_layer.dart';
 import 'preview_layer.dart';
@@ -48,9 +49,15 @@ class EraseLayerStack extends ConsumerStatefulWidget {
 
 class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   DetectedOutline? _outline;
-  List<PathInfo> _paths = [];
+
+  // 以下变量虽然在当前实现中不直接用于渲染，但被updateXXX方法使用
+  // 保留它们是为了保持API兼容性，避免破坏现有代码
+  // ignore: unused_field
   PathInfo? _currentPath;
+  // ignore: unused_field
   Rect? _dirtyBounds;
+  // ignore: unused_field
+  List<PathInfo> _paths = [];
 
   @override
   Widget build(BuildContext context) {
@@ -60,13 +67,20 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     // Check if we're in pan mode from eraseStateProvider
     final isPanMode = eraseState.isPanMode;
 
+    // 不再需要监听forceRefreshProvider
+
+    // 使用AppLogger替代print
     if (_outline != null) {
-      print('EraseLayerStack 轮廓数据存在, 路径数量: ${_outline!.contourPoints.length}');
+      AppLogger.debug('EraseLayerStack 轮廓数据状态', data: {
+        'exists': true,
+        'pathCount': _outline!.contourPoints.length,
+      });
     } else {
-      print('EraseLayerStack 轮廓数据不存在');
+      AppLogger.debug('EraseLayerStack 轮廓数据不存在');
     }
 
-    final displayPaths = renderData.completedPaths ?? _paths;
+    // 修复空值检查
+    final displayPaths = renderData.completedPaths;
     final displayCurrentPath = renderData.currentPath;
     final displayDirtyRect = renderData.dirtyBounds;
 
@@ -104,6 +118,15 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     );
   }
 
+  /// 强制刷新整个图层栈
+  void forceRefresh() {
+    if (mounted) {
+      setState(() {
+        // 强制重建整个图层栈
+      });
+    }
+  }
+
   /// 将当前状态渲染到画布上
   Future<void> renderToCanvas(Canvas canvas, Size size) async {
     // 绘制背景层
@@ -111,7 +134,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
 
     // 绘制预览层 - Use anti-aliasing instead of blur
     final renderData = ref.read(pathRenderDataProvider);
-    final paths = renderData.completedPaths ?? _paths;
+    final paths = renderData.completedPaths;
 
     // 使用与PreviewLayer相同的绘制逻辑但更高效
     final paint = Paint()..blendMode = BlendMode.srcOver;
@@ -157,9 +180,14 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   }
 
   void setOutline(DetectedOutline? outline) {
-    print('EraseLayerStack 收到轮廓设置: ${outline != null}');
+    AppLogger.debug('EraseLayerStack 收到轮廓设置', data: {
+      'hasOutline': outline != null,
+    });
+
     if (outline != null) {
-      print('轮廓包含 ${outline.contourPoints.length} 条路径');
+      AppLogger.debug('轮廓数据', data: {
+        'pathCount': outline.contourPoints.length,
+      });
 
       // Validate the outline data
       bool valid = true;
@@ -181,7 +209,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
       }
 
       if (!valid) {
-        print('轮廓数据包含无效点，进行修复');
+        AppLogger.debug('轮廓数据包含无效点，进行修复');
         // Try to fix the outline by removing invalid contours
         final fixedContours = outline.contourPoints.where((contour) {
           if (contour.isEmpty) return false;
@@ -202,7 +230,9 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
           contourPoints: fixedContours,
         );
 
-        print('修复后轮廓包含 ${outline.contourPoints.length} 条路径');
+        AppLogger.debug('轮廓修复结果', data: {
+          'fixedPathCount': outline.contourPoints.length,
+        });
       }
 
       if (outline.contourPoints.isNotEmpty &&
@@ -217,8 +247,10 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
           maxY = math.max(maxY, point.dy);
         }
 
-        print('第一条轮廓边界: ($minX,$minY) - ($maxX,$maxY)');
-        print('图像大小: ${widget.image.width}x${widget.image.height}');
+        AppLogger.debug('轮廓边界信息', data: {
+          'bounds': '($minX,$minY) - ($maxX,$maxY)',
+          'imageSize': '${widget.image.width}x${widget.image.height}',
+        });
       }
     }
 
@@ -284,8 +316,8 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     final isPanMode = ref.read(eraseStateProvider).isPanMode;
     if (widget.altKeyPressed || isPanMode) return;
 
-    widget.onEraseStart?.call(position);
-    widget.onEraseEnd?.call();
+    // 直接调用onTap回调，让父组件处理点击擦除
+    // 不再调用onEraseStart和onEraseEnd，避免重复创建路径
     widget.onTap?.call(position);
   }
 }
