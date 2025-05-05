@@ -1,7 +1,4 @@
 # Miscellaneous
-*.ttc
-*.ttf
-*.otf
 *.class
 *.log
 *.pyc

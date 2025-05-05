@@ -1,14 +1,14 @@
 [Setup]
 ; Specifies basic installer properties
-AppName=Demo App
+AppName=字字珠玑
 AppVersion=1.0.0
-DefaultDirName={pf}\DemoApp
-DefaultGroupName=DemoApp
-UninstallDisplayIcon={app}\demo.exe
+DefaultDirName={pf}\CharasGem
+DefaultGroupName=字字珠玑
+UninstallDisplayIcon={app}\charasgem.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=.\build\windows\installer
-OutputBaseFilename=DemoAppInstaller
+OutputBaseFilename=CharasGemInstaller
 MinVersion=0,6.1
 DisableDirPage=no
 DisableProgramGroupPage=no
@@ -24,13 +24,13 @@ Name: "SimpChinese"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: ".\build\windows\x64\runner\Release\demo.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\build\windows\x64\runner\Release\demo.exe"; DestDir: "{app}"; DestName: "charasgem.exe"; Flags: ignoreversion
 Source: ".\build\windows\x64\runner\Release\data\*.*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ".\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Demo App"; Filename: "{app}\demo.exe"
-Name: "{commondesktop}\Demo App"; Filename: "{app}\demo.exe"; Tasks: desktopicon
+Name: "{group}\字字珠玑"; Filename: "{app}\charasgem.exe"
+Name: "{commondesktop}\字字珠玑"; Filename: "{app}\charasgem.exe"; Tasks: desktopicon
 
 [Code]
 var

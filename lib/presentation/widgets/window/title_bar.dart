@@ -48,7 +48,7 @@ class _TitleBarState extends State<TitleBar> with WindowListener {
         ),
         child: Row(
           children: [
-            // 应用图标
+            // 应用图标 - 使用与任务栏相同的图标样式
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
               child: Icon(

@@ -58,6 +58,7 @@ flutter:
   generate: true
   assets:
     - assets/fonts/
+    - assets/images/
   fonts:
     - family: CustomIcons
       fonts:

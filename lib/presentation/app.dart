@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import '../application/providers/feature_flag_provider.dart';
 import '../application/providers/initialization_providers.dart';
@@ -41,6 +42,8 @@ class MyApp extends ConsumerWidget {
     final initialization = ref.watch(appInitializationProvider);
     // 监听功能标志
     final featureFlags = ref.watch(featureFlagsProvider);
+
+    // 不再需要这里的窗口标题更新逻辑，我们将使用WindowTitleUpdater组件
 
     // 记录系统语言信息
     final platformLocale = Platform.localeName.toLowerCase();
@@ -99,8 +102,11 @@ class MyApp extends ConsumerWidget {
         // 获取当前语言环境的字符串表示
         final currentLocale = finalLocale?.languageCode;
 
+        // 创建MaterialApp
         return MaterialApp(
-          title: '字字珠玑',
+          title: userLanguage == AppLanguage.en
+              ? 'Character As Gem'
+              : '字字珠玑', // 使用简单的条件判断设置标题
           theme: featureFlags.useMaterial3UI
               ? AppTheme.lightM3(locale: currentLocale) // 传递当前语言环境
               : AppTheme.light(), // 现有主题
@@ -110,9 +116,19 @@ class MyApp extends ConsumerWidget {
           themeMode: ref.watch(
               settingsProvider.select((s) => s.themeMode.toFlutterThemeMode())),
           debugShowCheckedModeBanner: false,
-          home: featureFlags.useMaterial3UI
-              ? const M3MainWindow() // 新的Material 3主窗体
-              : const MainWindow(), // 现有主窗体
+          home: Builder(
+            builder: (context) {
+              // 在MaterialApp初始化后更新窗口标题
+              final l10n = AppLocalizations.of(context);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                windowManager.setTitle(l10n.appTitle);
+              });
+
+              return featureFlags.useMaterial3UI
+                  ? const M3MainWindow() // 新的Material 3主窗体
+                  : const MainWindow(); // 现有主窗体
+            },
+          ),
           onGenerateRoute: (settings) =>
               _generateRoute(settings, featureFlags.useMaterial3UI),
           localizationsDelegates: AppLocalizations.localizationsDelegates,

@@ -26,6 +26,9 @@ void main() async {
   // 初始化窗口管理器
   await windowManager.ensureInitialized();
 
+  // 设置初始窗口标题，后续会在应用中根据语言更新
+  const appTitle = '字字珠玑'; // 默认使用中文标题
+
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1280, 800),
     minimumSize: Size(800, 600),
@@ -33,10 +36,14 @@ void main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
+    title: appTitle,
   );
 
   // 设置窗口
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    // 设置窗口图标，确保与任务栏图标一致
+    // 注意：路径是相对于可执行文件的，不是相对于Flutter项目
+    await windowManager.setIcon('resources/app_icon.ico');
     await windowManager.show();
     await windowManager.focus();
   });

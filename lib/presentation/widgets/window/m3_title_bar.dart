@@ -1,3 +1,4 @@
+import 'package:charasgem/presentation/widgets/window/app_icon.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -44,14 +45,10 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
         ),
         child: Row(
           children: [
-            // 应用图标
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.s),
-              child: Icon(
-                Icons.brush_outlined,
-                color: colorScheme.primary,
-                size: AppSizes.iconMedium,
-              ),
+            // 应用图标 - 使用与任务栏相同的图标样式
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.s),
+              child: AppIconWidget(),
             ),
 
             // 标题拖动区域

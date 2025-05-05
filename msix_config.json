@@ -1,14 +1,14 @@
 {
-  "identityName": "Your.Company.DemoApp",
+  "identityName": "Your.Company.CharasGem",
   "publisher": "CN=Your Company Name",
   "publisherId": "YourCompany",
   "version": "1.0.0.0",
-  "appName": "Demo App",
-  "appDescription": "A demo Flutter application.",
+  "appName": "字字珠玑",
+  "appDescription": "A versatile calligraphy management and practice application.",
   "architecture": "x64",
   "msixVersion": "1.0",
   "logoPath": "assets/images/app_icon.png",
-  "outputName": "DemoAppInstaller",
+  "outputName": "CharasGemInstaller",
   "capabilities": "internetClient, location",
   "createDesktopShortcut": true
 }
