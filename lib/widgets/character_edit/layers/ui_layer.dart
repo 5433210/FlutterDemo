@@ -364,15 +364,15 @@ class _UIPainter extends CustomPainter {
     final mainStrokePaint = Paint()
       ..color = Colors.blue.withOpacity(0.9) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5 / scale // 加粗轮廓线
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
+      ..strokeWidth = 0.5 / scale // 加粗轮廓线
+      // ..strokeCap = StrokeCap.round
+      // ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true; // 确保抗锯齿
 
     final outerStrokePaint = Paint()
       ..color = Colors.white.withOpacity(0.9) // 提高不透明度
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5 / scale // 加粗外边框
+      ..strokeWidth = 1 / scale // 加粗外边框
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true; // 确保抗锯齿
@@ -414,7 +414,7 @@ class _UIPainter extends CustomPainter {
       path.close();
 
       // 先绘制外描边再绘制内描边，确保可见性
-      canvas.drawPath(path, outerStrokePaint);
+      // canvas.drawPath(path, outerStrokePaint);
       canvas.drawPath(path, mainStrokePaint);
 
       contourCount++;

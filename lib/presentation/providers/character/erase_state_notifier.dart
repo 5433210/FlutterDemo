@@ -233,18 +233,6 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     _ref.read(cursorPositionProvider.notifier).state = position;
   }
 
-  /// 将点添加到路径中
-  Path _addPointToPath(Path path, Offset point) {
-    // If the path is empty or has no contours, move to the point
-    if (path.getBounds().isEmpty) {
-      path.moveTo(point.dx, point.dy);
-    } else {
-      // Otherwise, draw line to the new point
-      path.lineTo(point.dx, point.dy);
-    }
-    return path;
-  }
-
   /// Helper to create a path from saved points
   Path _createPathFromPoints(List<dynamic> points) {
     final path = Path();
@@ -290,59 +278,6 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     } catch (e) {
       AppLogger.error('创建路径失败', error: e);
       return path;
-    }
-  }
-
-  // Helper method to parse points in various formats
-  Offset? _parsePoint(dynamic pointData) {
-    try {
-      if (pointData is Offset) {
-        return pointData;
-      } else if (pointData is Map) {
-        // Handle Map format with dx/dy keys (our serialized format)
-        if (pointData.containsKey('dx') && pointData.containsKey('dy')) {
-          return Offset(
-            (pointData['dx'] as num?)?.toDouble() ?? 0.0,
-            (pointData['dy'] as num?)?.toDouble() ?? 0.0,
-          );
-        }
-        // Handle Map format with x/y keys
-        else if (pointData.containsKey('x') && pointData.containsKey('y')) {
-          return Offset(
-            (pointData['x'] as num?)?.toDouble() ?? 0.0,
-            (pointData['y'] as num?)?.toDouble() ?? 0.0,
-          );
-        }
-      } else if (pointData is List && pointData.length >= 2) {
-        // Handle List format [x, y]
-        return Offset(
-          (pointData[0] as num).toDouble(),
-          (pointData[1] as num).toDouble(),
-        );
-      }
-    } catch (e) {
-      AppLogger.error('解析点失败', error: e, data: {'rawData': pointData});
-    }
-    return null;
-  }
-
-  /// 更新路径渲染数据提供器
-  void _updatePathRenderData() {
-    final completedPaths = _pathManager.completedPaths.map((pathEntry) {
-      return PathInfo(
-        path: pathEntry.path,
-        brushSize: pathEntry.brushSize,
-        brushColor: pathEntry.brushColor,
-      );
-    }).toList();
-
-    PathInfo? currentPath;
-    if (_pathManager.currentPath != null) {
-      currentPath = PathInfo(
-        path: _pathManager.currentPath!,
-        brushSize: state.brushSize,
-        brushColor: _pathManager.currentColor ?? state.brushColor,
-      );
     }
   }
 

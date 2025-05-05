@@ -175,7 +175,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                   constrained: false,
                   boundaryMargin: const EdgeInsets.all(double.infinity),
                   minScale: 0.1,
-                  maxScale: 5.0,
+                  maxScale: 10.0,
                   // Enable pan mode if either Alt is pressed or pan mode is toggled on
                   panEnabled: _altKeyNotifier.value || isPanMode,
                   onInteractionUpdate: (details) {
