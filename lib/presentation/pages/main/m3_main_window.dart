@@ -137,7 +137,45 @@ class _M3MainWindowState extends State<M3MainWindow>
           },
         );
       case 1:
-        return const M3CharacterManagementPage();
+        return Navigator(
+          key: ValueKey('character_navigator_$_selectedIndex'),
+          onGenerateRoute: (settings) {
+            if (settings.name == AppRoutes.characterCollection &&
+                settings.arguments != null) {
+              final args = settings.arguments as Map<String, String>;
+              return MaterialPageRoute<bool>(
+                builder: (context) => M3CharacterCollectionPage(
+                  workId: args['workId']!,
+                  initialPageId: args['pageId']!,
+                  initialCharacterId: args['characterId'],
+                ),
+              );
+            }
+            if (settings.name == AppRoutes.workDetail &&
+                settings.arguments != null) {
+              // 支持两种参数类型：字符串和Map
+              String workId;
+              if (settings.arguments is String) {
+                workId = settings.arguments as String;
+              } else if (settings.arguments is Map<String, String>) {
+                final args = settings.arguments as Map<String, String>;
+                workId = args['workId']!;
+              } else {
+                workId = '';
+              }
+
+              return MaterialPageRoute<bool>(
+                builder: (context) => M3WorkDetailPage(
+                  workId: workId,
+                ),
+              );
+            }
+            // Default to character management page
+            return MaterialPageRoute(
+              builder: (context) => const M3CharacterManagementPage(),
+            );
+          },
+        );
       case 2:
         return Navigator(
           key: ValueKey('practice_navigator_$_selectedIndex'),

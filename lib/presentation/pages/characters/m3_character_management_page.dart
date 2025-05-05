@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../routes/app_routes.dart';
 import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
@@ -11,7 +12,6 @@ import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
-import '../works/m3_character_collection_page.dart';
 import 'components/m3_character_detail_panel.dart';
 import 'components/m3_character_filter_panel.dart';
 import 'components/m3_character_grid_view.dart';
@@ -263,24 +263,15 @@ class _M3CharacterManagementPageState
     final state = ref.read(characterManagementProvider);
     final character = state.characters.firstWhere((c) => c.id == characterId);
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => M3CharacterCollectionPage(
-          workId: character.workId,
-          initialCharacterId: character.id,
-          initialPageId: character.pageId,
-        ),
-      ),
+    // 使用命名路由导航到集字功能页，这样会在主窗体内容区域显示
+    Navigator.of(context).pushNamed(
+      AppRoutes.characterCollection,
+      arguments: {
+        'workId': character.workId,
+        'pageId': character.pageId,
+        'characterId': character.id,
+      },
     );
-    // Navigator.pushNamed(
-    //   context,
-    //   '/character_collection',
-    //   arguments: {
-    //     'workId': character.workId,
-    //     'pageId': character.pageId,
-    //     'characterId': character.id,
-    //   },
-    // );
   }
 
   void _handlePageChange(int page) {

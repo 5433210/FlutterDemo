@@ -9,6 +9,7 @@ import '../../../../domain/models/character/character_image_type.dart';
 import '../../../../domain/models/character/character_view.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/widgets/common/zoomable_image_view.dart';
+import '../../../../routes/app_routes.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../../widgets/layout/flexible_row.dart';
 import '../../../providers/character/character_detail_provider.dart';
@@ -179,9 +180,11 @@ class _M3CharacterDetailPanelState
                               l10n.characterCollectionReturnToDetails,
                           onButtonPressed: () {
                             if (character.workId.isNotEmpty) {
-                              Navigator.pushNamed(
-                                context,
-                                '/work_detail',
+                              // 使用命名路由导航到作品详情页
+                              // 注意：这里我们使用的是当前导航器的上下文，而不是根导航器
+                              // 这样可以确保导航发生在当前的嵌套导航器中
+                              Navigator.of(context).pushNamed(
+                                AppRoutes.workDetail,
                                 arguments: character.workId,
                               );
                             }
@@ -430,7 +433,28 @@ class _M3CharacterDetailPanelState
       endSectionWidgets.add(
         IconButton(
           icon: const Icon(Icons.edit),
-          onPressed: widget.onEdit,
+          onPressed: () {
+            // 获取字符详情
+            final characterView = ref
+                .read(characterDetailProvider(widget.characterId))
+                .value
+                ?.character;
+
+            if (characterView != null) {
+              // 使用命名路由导航到集字功能页，这样会在主窗体内容区域显示
+              Navigator.of(context).pushNamed(
+                AppRoutes.characterCollection,
+                arguments: {
+                  'workId': characterView.workId,
+                  'pageId': characterView.pageId,
+                  'characterId': characterView.id,
+                },
+              );
+            } else {
+              // 如果无法获取字符详情，则调用原始的onEdit回调
+              widget.onEdit?.call();
+            }
+          },
           tooltip: l10n.edit,
           constraints: const BoxConstraints(
             minWidth: 40,
