@@ -2,15 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show
-        HardwareKeyboard,
-        KeyDownEvent,
-        KeyRepeatEvent,
-        KeyUpEvent,
-        LogicalKeyboardKey,
-        RawKeyDownEvent,
-        ServicesBinding;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/character_region.dart';
@@ -33,6 +25,11 @@ class M3ImageView extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<M3ImageView> createState() => _ImageViewState();
+
+  // 获取状态的方法
+  static ConsumerState? of(BuildContext context) {
+    return context.findAncestorStateOfType<_ImageViewState>();
+  }
 }
 
 class _ImageViewState extends ConsumerState<M3ImageView>
@@ -53,6 +50,10 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   bool _isZoomed = false;
   // Alt键状态跟踪
   bool _isAltKeyPressed = false;
+  // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
+  late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
+  // 添加防抖计时器，避免频繁更新Alt键状态
+  Timer? _altKeyDebouncer;
   // 选区相关
   Offset? _selectionStart;
   Offset? _selectionCurrent;
@@ -106,29 +107,42 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
     final imageSize = Size(imageState.imageWidth, imageState.imageHeight);
 
-    return RawKeyboardListener(
+    return KeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
-      onKey: (RawKeyEvent event) {
+      onKeyEvent: (KeyEvent event) {
         // Check if Alt key is pressed or released
         bool isAlt = false;
 
         if (event.logicalKey == LogicalKeyboardKey.altLeft ||
             event.logicalKey == LogicalKeyboardKey.altRight) {
           isAlt = true;
-        } else if (event.isAltPressed) {
+        } else if (HardwareKeyboard.instance.isAltPressed) {
           isAlt = true;
         }
 
         if (isAlt) {
-          final bool isPressed = event is RawKeyDownEvent;
+          // 只处理按下和释放事件，忽略重复事件
+          if (event.runtimeType.toString() == 'KeyRepeatEvent') {
+            return;
+          }
+
+          final bool isPressed = event.runtimeType.toString() == 'KeyDownEvent';
+
+          // 只在状态确实发生变化时更新
           if (_isAltKeyPressed != isPressed) {
             setState(() {
               _isAltKeyPressed = isPressed;
+              _altKeyNotifier.value = isPressed;
             });
+
+            final toolMode = ref.read(toolModeProvider);
             AppLogger.debug('Alt键状态变化', data: {
               'isPressed': isPressed,
               'eventType': event.runtimeType.toString(),
+              'hasFocus': _focusNode.hasFocus,
+              'toolMode': toolMode.toString(),
+              'isInSelectionMode': _isInSelectionMode,
             });
           }
         }
@@ -240,10 +254,17 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   void dispose() {
     _mounted = false;
     _transformationDebouncer?.cancel();
+    _altKeyDebouncer?.cancel();
     _animationController?.dispose();
     _transformationController.removeListener(_onTransformationChanged);
     _transformationController.dispose();
+    _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
+    _altKeyNotifier.dispose();
+
+    // 移除全局键盘事件处理器
+    HardwareKeyboard.instance.removeHandler(_handleKeyboardEvent);
+
     super.dispose();
   }
 
@@ -252,6 +273,21 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     super.initState();
     // 添加变换矩阵变化监听
     _transformationController.addListener(_onTransformationChanged);
+
+    // Add focus listener to handle focus changes
+    _focusNode.addListener(_onFocusChange);
+
+    // 添加Alt键状态监听器
+    _altKeyNotifier.addListener(() {
+      // 当ValueNotifier更新时，强制刷新UI
+      setState(() {});
+    });
+
+    // 添加全局键盘事件处理器
+    HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
+
+    // 添加帧回调以检查Alt键状态
+    WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
 
     _initializeView();
 
@@ -329,6 +365,14 @@ class _ImageViewState extends ConsumerState<M3ImageView>
         _tryLoadCharacterData();
       }
     });
+  }
+
+  // Public method to request focus
+  void requestFocus() {
+    if (!_focusNode.hasFocus) {
+      _focusNode.requestFocus();
+      AppLogger.debug('M3ImageView focus requested externally');
+    }
   }
 
   void _activateAdjustmentMode(CharacterRegion region) {
@@ -497,17 +541,20 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     int? frame,
     bool wasSynchronouslyLoaded,
   ) {
-    if (frame != null && !wasSynchronouslyLoaded) {
+    // 图像已加载完成，直接显示
+    if (frame != null) {
       // 只在异步加载完成时触发一次
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_mounted) return;
-        final imageState = ref.read(workImageProvider);
-        final currentImageId =
-            '${imageState.workId}-${imageState.currentPageId}';
-        if (_lastImageId != currentImageId) {
-          _handleImageLoaded(imageState);
-        }
-      });
+      if (!wasSynchronouslyLoaded) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_mounted) return;
+          final imageState = ref.read(workImageProvider);
+          final currentImageId =
+              '${imageState.workId}-${imageState.currentPageId}';
+          if (_lastImageId != currentImageId) {
+            _handleImageLoaded(imageState);
+          }
+        });
+      }
 
       return AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
@@ -515,6 +562,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       );
     }
 
+    // 图像正在加载中
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -549,7 +597,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           minScale: 0.1,
           maxScale: 10.0,
           scaleEnabled: true,
-          panEnabled: isPanMode && !_isAdjusting,
+          panEnabled: _altKeyNotifier.value || isPanMode, // 在Alt键按下或平移模式下启用平移
           boundaryMargin: const EdgeInsets.all(double.infinity),
           onInteractionStart: _handleInteractionStart,
           onInteractionUpdate: _handleInteractionUpdate,
@@ -575,11 +623,15 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                     child: GestureDetector(
                       onTapUp: _onTapUp,
                       // Always allow selection start, handle adjustment cancellation inside
-                      onPanStart:
-                          isPanMode ? _handlePanStart : _handleSelectionStart,
-                      onPanUpdate:
-                          isPanMode ? _handlePanUpdate : _handleSelectionUpdate,
-                      onPanEnd: isPanMode ? _handlePanEnd : _handleSelectionEnd,
+                      onPanStart: isPanMode || _isAltKeyPressed
+                          ? _handlePanStart
+                          : _handleSelectionStart,
+                      onPanUpdate: isPanMode || _isAltKeyPressed
+                          ? _handlePanUpdate
+                          : _handleSelectionUpdate,
+                      onPanEnd: isPanMode || _isAltKeyPressed
+                          ? _handlePanEnd
+                          : _handleSelectionEnd,
                       child: CustomPaint(
                         painter: RegionsPainter(
                           regions: regions,
@@ -596,64 +648,91 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                 // **Adjustment Layer GestureDetector**
                 if (_isAdjusting && _adjustingRegionId != null)
                   Positioned.fill(
-                    child: MouseRegion(
-                      cursor: _getCursor(),
-                      onHover: (event) {
-                        final handleIndex =
-                            _getHandleIndexFromPosition(event.localPosition);
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: _altKeyNotifier,
+                      builder: (context, isAltPressed, child) {
+                        return MouseRegion(
+                          cursor: isAltPressed
+                              ? SystemMouseCursors.move
+                              : _getCursor(),
+                          onHover: (event) {
+                            final handleIndex = _getHandleIndexFromPosition(
+                                event.localPosition);
 
-                        setState(() {
-                          _activeHandleIndex = handleIndex;
-                        });
-                      },
-                      onExit: (_) {
-                        setState(() {
-                          _activeHandleIndex =
-                              null; // Reset active handle index on exit
-                        });
-                      },
-                      child: GestureDetector(
-                        behavior: HitTestBehavior
-                            .opaque, // Capture hits within bounds
-                        onTapUp: _onTapUp,
-                        onPanStart:
-                            _handleAdjustmentPanStart, // Use dedicated handler
-                        onPanUpdate:
-                            _handleAdjustmentPanUpdate, // Use dedicated handler
-                        onPanEnd:
-                            _handleAdjustmentPanEnd, // Use dedicated handler
-                        child: CustomPaint(
-                          painter: AdjustableRegionPainter(
-                            region: _originalRegion!,
-                            transformer: _transformer!,
-                            isActive: true,
-                            isAdjusting: true,
-                            activeHandleIndex: _activeHandleIndex,
-                            currentRotation: _currentRotation,
-                            guideLines: _guideLines,
-                            viewportRect: _adjustingRect,
+                            setState(() {
+                              _activeHandleIndex = handleIndex;
+                            });
+                          },
+                          onExit: (_) {
+                            setState(() {
+                              _activeHandleIndex =
+                                  null; // Reset active handle index on exit
+                            });
+                          },
+                          child: GestureDetector(
+                            behavior: HitTestBehavior
+                                .opaque, // Capture hits within bounds
+                            onTapUp: _onTapUp,
+                            onPanStart: isAltPressed
+                                ? _handlePanStart
+                                : _handleAdjustmentPanStart, // Use dedicated handler
+                            onPanUpdate: isAltPressed
+                                ? _handlePanUpdate
+                                : _handleAdjustmentPanUpdate, // Use dedicated handler
+                            onPanEnd: isAltPressed
+                                ? _handlePanEnd
+                                : _handleAdjustmentPanEnd, // Use dedicated handler
+                            child: CustomPaint(
+                              painter: AdjustableRegionPainter(
+                                region: _originalRegion!,
+                                transformer: _transformer!,
+                                isActive: true,
+                                isAdjusting: true,
+                                activeHandleIndex: _activeHandleIndex,
+                                currentRotation: _currentRotation,
+                                guideLines: _guideLines,
+                                viewportRect: _adjustingRect,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
 
                 // 添加框选层
                 if (isSelectMode && !_isAdjusting)
                   Positioned.fill(
-                    child: GestureDetector(
-                      onTapUp: _onTapUp,
-                      onPanStart: _handleSelectionStart,
-                      onPanUpdate: _handleSelectionUpdate,
-                      onPanEnd: _handleSelectionEnd,
-                      child: CustomPaint(
-                        painter: ActiveSelectionPainter(
-                          startPoint: _selectionStart ?? Offset.zero,
-                          endPoint: _selectionCurrent ?? Offset.zero,
-                          viewportSize: _transformer?.viewportSize ?? Size.zero,
-                          isActive: _selectionStart != null,
-                        ),
-                      ),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: _altKeyNotifier,
+                      builder: (context, isAltPressed, child) {
+                        return MouseRegion(
+                          cursor: isAltPressed
+                              ? SystemMouseCursors.move
+                              : SystemMouseCursors.precise,
+                          child: GestureDetector(
+                            onTapUp: _onTapUp,
+                            onPanStart: isAltPressed
+                                ? _handlePanStart
+                                : _handleSelectionStart,
+                            onPanUpdate: isAltPressed
+                                ? _handlePanUpdate
+                                : _handleSelectionUpdate,
+                            onPanEnd: isAltPressed
+                                ? _handlePanEnd
+                                : _handleSelectionEnd,
+                            child: CustomPaint(
+                              painter: ActiveSelectionPainter(
+                                startPoint: _selectionStart ?? Offset.zero,
+                                endPoint: _selectionCurrent ?? Offset.zero,
+                                viewportSize:
+                                    _transformer?.viewportSize ?? Size.zero,
+                                isActive: _selectionStart != null,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
               ],
@@ -726,7 +805,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                   borderRadius: BorderRadius.circular(4),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withAlpha(26),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -734,7 +813,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                   border: Border.all(
                     color: _activeHandleIndex != null
                         ? Colors.blue
-                        : Colors.blue.withOpacity(0.7),
+                        : Colors.blue.withAlpha(179),
                     width: 1,
                   ),
                 ),
@@ -915,6 +994,11 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   MouseCursor _getCursor() {
     final toolMode = ref.read(toolModeProvider);
 
+    // Alt key pressed always shows move cursor regardless of mode
+    if (_isAltKeyPressed) {
+      return SystemMouseCursors.move;
+    }
+
     if (_isAdjusting) {
       if (_activeHandleIndex != null) {
         // 根据不同控制点返回不同光标
@@ -941,15 +1025,12 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       }
     }
 
-    switch (toolMode) {
-      case Tool.pan:
-        return _isPanning
-            ? SystemMouseCursors.grabbing
-            : SystemMouseCursors.grab;
-      case Tool.select:
-        return SystemMouseCursors.precise;
-      default:
-        return SystemMouseCursors.basic;
+    // Handle all tool modes
+    if (toolMode == Tool.pan) {
+      return _isPanning ? SystemMouseCursors.grabbing : SystemMouseCursors.grab;
+    } else {
+      // Tool.select and any future tools
+      return SystemMouseCursors.precise;
     }
   }
 
@@ -1026,7 +1107,50 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanEnd(DragEndDetails details) {
-    if (!_isAdjusting || _originalRegion == null || _adjustingRect == null) {
+    // If we were temporarily panning with Alt key, end the pan mode
+    if (_isAltKeyPressed && _isPanning) {
+      setState(() {
+        _isPanning = false;
+        _lastPanPosition = null;
+      });
+
+      // 在平移结束后，确保更新原始区域以匹配当前调整的区域
+      if (_isAdjusting && _originalRegion != null && _adjustingRect != null) {
+        final Rect finalImageRect =
+            _transformer!.viewportRectToImageRect(_adjustingRect!);
+
+        final updatedRegion = _originalRegion!.copyWith(
+          rect: finalImageRect,
+          rotation: _currentRotation,
+          updateTime: DateTime.now(),
+          isModified: true, // Mark as modified
+        );
+
+        // 更新本地状态
+        setState(() {
+          _originalRegion = updatedRegion;
+        });
+
+        // 更新provider状态
+        ref
+            .read(characterCollectionProvider.notifier)
+            .updateSelectedRegion(updatedRegion);
+
+        AppLogger.debug('平移结束后更新区域', data: {
+          'regionId': updatedRegion.id,
+          'rect':
+              '${finalImageRect.left},${finalImageRect.top},${finalImageRect.width}x${finalImageRect.height}',
+          'rotation': _currentRotation,
+        });
+      }
+
+      return;
+    }
+
+    if (_isAltKeyPressed ||
+        !_isAdjusting ||
+        _originalRegion == null ||
+        _adjustingRect == null) {
       // Ensure state is reset even if something went wrong
       _resetAdjustmentState();
       return;
@@ -1076,7 +1200,18 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanStart(DragStartDetails details) {
-    if (!_isAdjusting || _adjustingRect == null) return; // Safety check
+    if (_isAltKeyPressed || !_isAdjusting || _adjustingRect == null) {
+      return; // Safety check
+    }
+
+    // If Alt key is pressed, enable temporary panning even in adjustment mode
+    if (_isAltKeyPressed) {
+      setState(() {
+        _isPanning = true;
+        _lastPanPosition = details.localPosition;
+      });
+      return;
+    }
 
     final handleIndex = _getHandleIndexFromPosition(details.localPosition);
 
@@ -1084,6 +1219,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       'localPosition':
           '${details.localPosition.dx},${details.localPosition.dy}',
       'handleIndex': handleIndex,
+      'isAltKeyPressed': _isAltKeyPressed,
     });
 
     if (handleIndex != null) {
@@ -1102,8 +1238,24 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   }
 
   void _handleAdjustmentPanUpdate(DragUpdateDetails details) {
-    if (!_isAdjusting || _activeHandleIndex == null || _adjustingRect == null)
+    if (_isAltKeyPressed || !_isAdjusting) {
       return;
+    }
+
+    // If Alt key is pressed and we're panning, handle the pan
+    if (_isAltKeyPressed && _isPanning && _lastPanPosition != null) {
+      final delta = details.localPosition - _lastPanPosition!;
+      final matrix = _transformationController.value.clone();
+      matrix.translate(delta.dx, delta.dy);
+      _transformationController.value = matrix;
+      _lastPanPosition = details.localPosition;
+      return;
+    }
+
+    // Normal adjustment handling
+    if (_activeHandleIndex == null || _adjustingRect == null) {
+      return;
+    }
 
     setState(() {
       if (_isRotating) {
@@ -1128,14 +1280,26 @@ class _ImageViewState extends ConsumerState<M3ImageView>
             _adjustingRect!.translate(details.delta.dx, details.delta.dy);
         _guideLines = _calculateGuideLines(_adjustingRect!);
       }
-    });
-  }
 
-  void _handleBlankAreaTap() {
-    AppLogger.debug('空白区域点击处理 (_handleBlankAreaTap called)');
-    // 实现点击空白区域退出调整模式的逻辑
-    _cancelAdjustment();
-    _cancelSelection();
+      // 在调整过程中实时更新原始区域，确保平移时使用最新的区域
+      if (_originalRegion != null && _adjustingRect != null) {
+        final Rect finalImageRect =
+            _transformer!.viewportRectToImageRect(_adjustingRect!);
+
+        final updatedRegion = _originalRegion!.copyWith(
+          rect: finalImageRect,
+          rotation: _currentRotation,
+          updateTime: DateTime.now(),
+          isModified: true, // Mark as modified
+        );
+
+        // 更新本地状态
+        _originalRegion = updatedRegion;
+
+        // 不在这里更新provider状态，避免频繁更新导致性能问题
+        // 只在调整结束时更新provider状态
+      }
+    });
   }
 
   /// 处理图片加载完成事件
@@ -1247,34 +1411,135 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     });
   }
 
+  // 全局键盘事件处理器
+  bool _handleKeyboardEvent(KeyEvent event) {
+    if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+        event.logicalKey == LogicalKeyboardKey.altRight) {
+      // 只处理按下和释放事件，忽略重复事件
+      if (event.runtimeType.toString() == 'KeyRepeatEvent') {
+        return false;
+      }
+
+      final bool isPressed = event.runtimeType.toString() == 'KeyDownEvent';
+
+      // 只在状态确实发生变化时更新
+      if (_isAltKeyPressed != isPressed) {
+        setState(() {
+          _isAltKeyPressed = isPressed;
+          _altKeyNotifier.value = isPressed;
+        });
+
+        AppLogger.debug('全局键盘事件处理器检测到Alt键状态变化', data: {
+          'isPressed': isPressed,
+          'eventType': event.runtimeType.toString(),
+          'hasFocus': _focusNode.hasFocus,
+        });
+      }
+
+      // 不消费事件，让其继续传递
+      return false;
+    }
+
+    return false;
+  }
+
   void _handlePanEnd(DragEndDetails details) {
-    if (ref.read(toolModeProvider) != Tool.pan) return;
+    // 无需检查工具模式，只要正在平移就可以结束平移
+    if (!_isPanning) return;
 
     setState(() {
       _isPanning = false;
       _lastPanPosition = null;
     });
+
+    // 在平移结束后，确保更新原始区域以匹配当前调整的区域
+    if (_isAdjusting && _originalRegion != null && _adjustingRect != null) {
+      final Rect finalImageRect =
+          _transformer!.viewportRectToImageRect(_adjustingRect!);
+
+      final updatedRegion = _originalRegion!.copyWith(
+        rect: finalImageRect,
+        rotation: _currentRotation,
+        updateTime: DateTime.now(),
+        isModified: true, // Mark as modified
+      );
+
+      // 更新本地状态
+      setState(() {
+        _originalRegion = updatedRegion;
+      });
+
+      // 更新provider状态
+      ref
+          .read(characterCollectionProvider.notifier)
+          .updateSelectedRegion(updatedRegion);
+
+      AppLogger.debug('平移结束后更新区域 (_handlePanEnd)', data: {
+        'regionId': updatedRegion.id,
+        'rect':
+            '${finalImageRect.left},${finalImageRect.top},${finalImageRect.width}x${finalImageRect.height}',
+        'rotation': _currentRotation,
+      });
+    }
+
+    AppLogger.debug('结束平移 (_handlePanEnd)', data: {
+      'isAltPressed': _isAltKeyPressed,
+    });
   }
 
   // 处理拖拽工具的拖拽操作
   void _handlePanStart(DragStartDetails details) {
-    if (ref.read(toolModeProvider) != Tool.pan) return;
+    // 允许在Pan模式或Alt键按下时进行平移
+    final toolMode = ref.read(toolModeProvider);
+    final isPanMode = toolMode == Tool.pan;
+    final canPan = isPanMode || _isAltKeyPressed;
+
+    if (!canPan) return;
 
     setState(() {
       _isPanning = true;
       _lastPanPosition = details.localPosition;
     });
+
+    AppLogger.debug('开始平移 (_handlePanStart)', data: {
+      'position': '${details.localPosition.dx},${details.localPosition.dy}',
+      'isAltPressed': _isAltKeyPressed,
+      'toolMode': toolMode.toString(),
+    });
   }
 
   void _handlePanUpdate(DragUpdateDetails details) {
-    if (!_isPanning || ref.read(toolModeProvider) != Tool.pan) return;
+    // 允许在Pan模式或Alt键按下时进行平移
+    final toolMode = ref.read(toolModeProvider);
+    final isPanMode = toolMode == Tool.pan;
 
-    if (_lastPanPosition != null) {
-      final delta = details.localPosition - _lastPanPosition!;
-      final matrix = _transformationController.value.clone();
-      matrix.translate(delta.dx, delta.dy);
-      _transformationController.value = matrix;
+    // 简化条件判断，只要Alt键被按下或者在Pan模式下，就允许平移
+    // 不再检查_isPanning状态，因为这可能导致平移中断
+    final canPan = isPanMode || _isAltKeyPressed;
+
+    if (!canPan) return;
+
+    // 如果没有上一个位置，使用当前位置作为起始位置
+    if (_lastPanPosition == null) {
       _lastPanPosition = details.localPosition;
+      return;
+    }
+
+    final delta = details.localPosition - _lastPanPosition!;
+    final matrix = _transformationController.value.clone();
+    matrix.translate(delta.dx, delta.dy);
+    _transformationController.value = matrix;
+    _lastPanPosition = details.localPosition;
+
+    // 添加日志以便调试
+    if (details.delta.distance > 5) {
+      AppLogger.debug('平移更新 (_handlePanUpdate)', data: {
+        'delta':
+            '${delta.dx.toStringAsFixed(1)},${delta.dy.toStringAsFixed(1)}',
+        'position':
+            '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
+        'isAltPressed': _isAltKeyPressed,
+      });
     }
   }
 
@@ -1318,6 +1583,40 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       setState(() {
         _isPanning = false;
         _lastPanPosition = null;
+      });
+
+      // 在平移结束后，确保更新原始区域以匹配当前调整的区域
+      if (_isAdjusting && _originalRegion != null && _adjustingRect != null) {
+        final Rect finalImageRect =
+            _transformer!.viewportRectToImageRect(_adjustingRect!);
+
+        final updatedRegion = _originalRegion!.copyWith(
+          rect: finalImageRect,
+          rotation: _currentRotation,
+          updateTime: DateTime.now(),
+          isModified: true, // Mark as modified
+        );
+
+        // 更新本地状态
+        setState(() {
+          _originalRegion = updatedRegion;
+        });
+
+        // 更新provider状态
+        ref
+            .read(characterCollectionProvider.notifier)
+            .updateSelectedRegion(updatedRegion);
+
+        AppLogger.debug('选择模式平移结束后更新区域', data: {
+          'regionId': updatedRegion.id,
+          'rect':
+              '${finalImageRect.left},${finalImageRect.top},${finalImageRect.width}x${finalImageRect.height}',
+          'rotation': _currentRotation,
+        });
+      }
+
+      AppLogger.debug('Alt键平移结束', data: {
+        'isPanning': false,
       });
       return;
     }
@@ -1368,6 +1667,10 @@ class _ImageViewState extends ConsumerState<M3ImageView>
         _isPanning = true;
         _lastPanPosition = details.localPosition;
       });
+      AppLogger.debug('Alt键按下，启用临时平移模式', data: {
+        'position': '${details.localPosition.dx},${details.localPosition.dy}',
+        'isPanning': _isPanning,
+      });
       return;
     }
 
@@ -1395,12 +1698,28 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   void _handleSelectionUpdate(DragUpdateDetails details) {
     // If Alt key is pressed, handle panning even in selection mode
-    if (_isAltKeyPressed && _lastPanPosition != null) {
+    if (_isAltKeyPressed) {
+      // 如果没有上一个位置，使用当前位置作为起始位置
+      if (_lastPanPosition == null) {
+        _lastPanPosition = details.localPosition;
+        return;
+      }
+
       final delta = details.localPosition - _lastPanPosition!;
       final matrix = _transformationController.value.clone();
       matrix.translate(delta.dx, delta.dy);
       _transformationController.value = matrix;
       _lastPanPosition = details.localPosition;
+
+      // 添加日志以便调试
+      if (details.delta.distance > 5) {
+        AppLogger.debug('Alt键按下，执行平移', data: {
+          'delta':
+              '${delta.dx.toStringAsFixed(1)},${delta.dy.toStringAsFixed(1)}',
+          'position':
+              '${details.localPosition.dx.toStringAsFixed(1)},${details.localPosition.dy.toStringAsFixed(1)}',
+        });
+      }
       return;
     }
 
@@ -1478,6 +1797,49 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     return rect.contains(Offset(rotatedX, rotatedY));
   }
 
+  // Handle focus changes
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      final toolMode = ref.read(toolModeProvider);
+
+      AppLogger.debug('M3ImageView gained focus', data: {
+        'toolMode': toolMode.toString(),
+        'isAltKeyPressed': _isAltKeyPressed,
+      });
+
+      // 获得焦点时，检查当前Alt键状态并同步
+      final isAltActuallyPressed = HardwareKeyboard.instance.isAltPressed;
+      if (_isAltKeyPressed != isAltActuallyPressed) {
+        setState(() {
+          _isAltKeyPressed = isAltActuallyPressed;
+          _altKeyNotifier.value = isAltActuallyPressed;
+        });
+        AppLogger.debug('获得焦点时同步Alt键状态', data: {
+          'newState': isAltActuallyPressed,
+        });
+      }
+    } else {
+      // 失去焦点时，重置Alt键状态
+      if (_isAltKeyPressed) {
+        setState(() {
+          _isAltKeyPressed = false;
+          _altKeyNotifier.value = false;
+        });
+        AppLogger.debug('M3ImageView lost focus, resetting Alt key state');
+      }
+    }
+  }
+
+  // 每帧回调，用于其他目的，不再检查Alt键状态
+  void _onFrameCallback() {
+    if (!_mounted) return;
+
+    // 继续监听下一帧
+    if (_mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
+    }
+  }
+
   // 处理画布点击
   void _onTapUp(TapUpDetails details) {
     final characterCollection = ref.read(characterCollectionProvider);
@@ -1524,8 +1886,9 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
   /// 处理变换矩阵变化事件
   void _onTransformationChanged() {
-    if (!_isAdjusting || _originalRegion == null || _transformer == null)
+    if (!_isAdjusting || _originalRegion == null || _transformer == null) {
       return;
+    }
 
     // 使用防抖处理频繁的变换更新
     _transformationDebouncer?.cancel();
@@ -1745,25 +2108,11 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     }
   }
 
-  // 更新调整中的选区
-  void _updateAdjustingRegion(Rect newRect) {
-    if (_adjustingRegionId == null || _originalRegion == null) return;
-
-    // 检查最小尺寸
-    if (newRect.width < 20 || newRect.height < 20) return;
-
-    setState(() {
-      _adjustingRect = newRect;
-      _guideLines = _calculateGuideLines(newRect);
-    });
-
-    // 不再实时更新预览，而只在onPanEnd时更新右侧预览区
-  }
-
   // 处理窗口大小变化时的选框更新
   void _updateSelectionBoxAfterLayoutChange() {
-    if (!_isAdjusting || _originalRegion == null || _transformer == null)
+    if (!_isAdjusting || _originalRegion == null || _transformer == null) {
       return;
+    }
 
     try {
       // 重新计算选区在新窗口大小下的位置和尺寸

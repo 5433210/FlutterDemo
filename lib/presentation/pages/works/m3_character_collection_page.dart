@@ -407,9 +407,17 @@ class _M3CharacterCollectionPageState
             pageId: widget.initialPageId,
           );
       if (widget.initialCharacterId != null) {
+        // 先选中区域
         ref.read(characterCollectionProvider.notifier).selectRegion(
               widget.initialCharacterId!,
             );
+
+        // 然后设置为adjusting状态
+        ref.read(characterCollectionProvider.notifier).setAdjusting(true);
+
+        AppLogger.debug('从字符管理页进入集字功能页，设置区域为adjusting状态', data: {
+          'characterId': widget.initialCharacterId,
+        });
       }
     } catch (e) {
       AppLogger.error('Failed to load character data',
