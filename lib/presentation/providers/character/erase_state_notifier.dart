@@ -184,12 +184,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     }
   }
 
-  /// 切换绘制/平移模式
-  void togglePanMode() {
-    state = state.copyWith(
-      mode: state.isPanMode ? EraseMode.draw : EraseMode.pan,
-    );
-  }
+  // Pan mode functionality removed - now using Alt key for panning
 
   /// 切换颜色反转
   void toggleReverse() {

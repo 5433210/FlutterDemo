@@ -88,9 +88,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
     }
 
-    // Watch pan mode from erase state provider
-    final isPanMode =
-        ref.watch(eraseStateProvider.select((state) => state.isPanMode));
+    // Pan mode is always enabled by default through Alt key
 
     // Improved outline toggling behavior
     ref.listen(eraseStateProvider.select((state) => state.showContour),
@@ -154,61 +152,57 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           }
         }
       },
-      child: MouseRegion(
-        cursor: _altKeyNotifier.value || isPanMode
-            ? SystemMouseCursors.grab
-            : SystemMouseCursors.precise,
-        child: Focus(
-          focusNode: FocusNode(), // 使用额外的FocusNode来捕获事件
-          onKeyEvent: _handleKeyEvent,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              if (!focusNode.hasFocus) focusNode.requestFocus();
-            },
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                _updateTransformer(constraints.biggest);
+      // 回到精确光标，通常显示为箭头
+      child: Focus(
+        focusNode: FocusNode(), // 使用额外的FocusNode来捕获事件
+        onKeyEvent: _handleKeyEvent,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            if (!focusNode.hasFocus) focusNode.requestFocus();
+          },
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              _updateTransformer(constraints.biggest);
 
-                return InteractiveViewer(
-                  transformationController: _transformationController,
-                  constrained: false,
-                  boundaryMargin: const EdgeInsets.all(double.infinity),
-                  minScale: 0.1,
-                  maxScale: 10.0,
-                  // Enable pan mode if either Alt is pressed or pan mode is toggled on
-                  panEnabled: _altKeyNotifier.value || isPanMode,
-                  onInteractionUpdate: (details) {
-                    _updateTransformer(constraints.biggest);
-                  },
-                  child: SizedBox(
-                    width: widget.image.width.toDouble(),
-                    height: widget.image.height.toDouble(),
-                    child: EraseLayerStack(
-                      key: _layerStackKey,
-                      image: widget.image,
-                      transformationController: _transformationController,
-                      onEraseStart: _handleEraseStart,
-                      onEraseUpdate: _handleEraseUpdate,
-                      onEraseEnd: _handleEraseEnd,
-                      // Pass both alt key state and pan mode to EraseLayerStack
-                      altKeyPressed: _altKeyNotifier.value || isPanMode,
-                      brushSize: widget.brushSize,
-                      brushColor: widget.brushColor,
-                      imageInvertMode: widget.imageInvertMode,
-                      showOutline: widget.showOutline,
-                      onPan: (delta) {
-                        if (_altKeyNotifier.value || isPanMode) {
-                          _transformationController.value
-                              .translate(delta.dx, delta.dy);
-                        }
-                      },
-                      onTap: _handleTap,
-                    ),
+              return InteractiveViewer(
+                transformationController: _transformationController,
+                constrained: false,
+                boundaryMargin: const EdgeInsets.all(double.infinity),
+                minScale: 0.1,
+                maxScale: 10.0,
+                // Always enable panning, but only when Alt is pressed will it actually pan
+                panEnabled: _altKeyNotifier.value,
+                onInteractionUpdate: (details) {
+                  _updateTransformer(constraints.biggest);
+                },
+                child: SizedBox(
+                  width: widget.image.width.toDouble(),
+                  height: widget.image.height.toDouble(),
+                  child: EraseLayerStack(
+                    key: _layerStackKey,
+                    image: widget.image,
+                    transformationController: _transformationController,
+                    onEraseStart: _handleEraseStart,
+                    onEraseUpdate: _handleEraseUpdate,
+                    onEraseEnd: _handleEraseEnd,
+                    // Pass alt key state to EraseLayerStack for pan functionality
+                    altKeyPressed: _altKeyNotifier.value,
+                    brushSize: widget.brushSize,
+                    brushColor: widget.brushColor,
+                    imageInvertMode: widget.imageInvertMode,
+                    showOutline: widget.showOutline,
+                    onPan: (delta) {
+                      if (_altKeyNotifier.value) {
+                        _transformationController.value
+                            .translate(delta.dx, delta.dy);
+                      }
+                    },
+                    onTap: _handleTap,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -535,8 +529,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleTap(Offset position) {
-    if (_isAltKeyPressed || ref.read(eraseStateProvider).isPanMode) {
-      // Alt键按下或处于平移模式时不处理点击事件
+    if (_isAltKeyPressed) {
+      // Alt键按下时不处理点击事件，允许平移
       return;
     }
 

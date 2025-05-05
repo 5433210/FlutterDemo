@@ -936,7 +936,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
           case 8: // 移动整个选区
             return SystemMouseCursors.move;
           default:
-            return SystemMouseCursors.basic;
+            return SystemMouseCursors.precise;
         }
       }
     }

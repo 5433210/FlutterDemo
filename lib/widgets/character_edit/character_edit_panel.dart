@@ -102,9 +102,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         _ToggleContourIntent: CallbackAction(
             onInvoke: (_) =>
                 ref.read(erase.eraseStateProvider.notifier).toggleContour()),
-        _TogglePanModeIntent: CallbackAction(
-            onInvoke: (_) =>
-                ref.read(erase.eraseStateProvider.notifier).togglePanMode()),
+        // Pan mode action removed
         _SetBrushSizeIntent: CallbackAction(
           onInvoke: (intent) => ref
               .read(erase.eraseStateProvider.notifier)
@@ -120,7 +118,7 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
         EditorShortcuts.toggleInvert: const _ToggleInvertIntent(),
         EditorShortcuts.toggleImageInvert: const _ToggleImageInvertIntent(),
         EditorShortcuts.toggleContour: const _ToggleContourIntent(),
-        EditorShortcuts.togglePanMode: const _TogglePanModeIntent(),
+        // Pan mode shortcut removed
       };
 
   @override
@@ -859,15 +857,6 @@ class _CharacterEditPanelState extends ConsumerState<CharacterEditPanel> {
           // 工具按钮组
           _buildToolbarButtonGroup([
             _ToolbarButton(
-              icon: Icons.pan_tool,
-              tooltip: '平移图像(长按alt键)',
-              onPressed: () {
-                ref.read(erase.eraseStateProvider.notifier).togglePanMode();
-              },
-              isActive: eraseState.isPanMode,
-              shortcut: EditorShortcuts.togglePanMode,
-            ),
-            _ToolbarButton(
               icon: Icons.invert_colors,
               tooltip: '反转模式',
               onPressed: () {
@@ -1513,10 +1502,6 @@ class _ToggleImageInvertIntent extends Intent {
 
 class _ToggleInvertIntent extends Intent {
   const _ToggleInvertIntent();
-}
-
-class _TogglePanModeIntent extends Intent {
-  const _TogglePanModeIntent();
 }
 
 class _ToolbarButton {

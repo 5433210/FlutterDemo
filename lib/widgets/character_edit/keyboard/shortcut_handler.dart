@@ -45,11 +45,7 @@ class EditorShortcuts {
     control: true,
   );
 
-  // 切换平移模式快捷键 (更改为ctrl+p)
-  static const togglePanMode = SingleActivator(
-    LogicalKeyboardKey.keyP,
-    control: true,
-  );
+  // 平移模式快捷键已移除 - 现在使用Alt键进行平移
 
   // 增加笔刷大小快捷键
   static const increaseBrushSize = SingleActivator(

@@ -273,65 +273,29 @@ class _UIPainter extends CustomPainter {
     this.outline,
     this.imageSize,
     this.brushSize = 10.0,
-    this.cursorPosition,
-    this.altKeyPressed = false,
+    // 移除不再使用的参数
+    this.cursorPosition, // 保留但不使用，避免修改调用代码
+    this.altKeyPressed = false, // 保留但不使用，避免修改调用代码
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Only print in extreme debug mode
-    if (kDebugMode && DebugFlags.enableEraseDebug && false) {
-      // print(
-      //     'UILayer绘制 - outline: ${outline != null}, imageSize: ${imageSize != null}');
-    }
-
+    // 只绘制轮廓，不再绘制自定义光标
     if (outline != null && imageSize != null) {
       _drawOutline(canvas, size);
     }
 
-    if (cursorPosition != null && altKeyPressed) {
-      _drawPanCursor(canvas, cursorPosition!);
-    }
-    // Remove the _drawBrushCursor call here since we're using the separate BrushCursorPainter
+    // 移除自定义pan光标绘制，使用系统move光标代替
+    // 当按下Alt键时，MouseRegion会自动切换为SystemMouseCursors.move
   }
 
   @override
   bool shouldRepaint(_UIPainter oldDelegate) =>
       outline != oldDelegate.outline ||
       imageSize != oldDelegate.imageSize ||
-      brushSize != oldDelegate.brushSize ||
-      cursorPosition != oldDelegate.cursorPosition ||
-      altKeyPressed != oldDelegate.altKeyPressed;
+      brushSize != oldDelegate.brushSize;
 
-  void _drawArrow(Canvas canvas, Offset start, Offset end, Paint paint) {
-    canvas.drawLine(start, end, paint);
-
-    final dx = end.dx - start.dx;
-    final dy = end.dy - start.dy;
-    final length = math.sqrt(dx * dx + dy * dy);
-    final unitX = dx / length;
-    final unitY = dy / length;
-
-    final perpX = -unitY;
-    final perpY = unitX;
-
-    const arrowSize = 4.0;
-    final arrowPoint1 = Offset(
-      end.dx - unitX * arrowSize + perpX * arrowSize,
-      end.dy - unitY * arrowSize + perpY * arrowSize,
-    );
-    final arrowPoint2 = Offset(
-      end.dx - unitX * arrowSize - perpX * arrowSize,
-      end.dy - unitY * arrowSize - perpY * arrowSize,
-    );
-
-    final path = Path()
-      ..moveTo(end.dx, end.dy)
-      ..lineTo(arrowPoint1.dx, arrowPoint1.dy)
-      ..lineTo(arrowPoint2.dx, arrowPoint2.dy)
-      ..close();
-    canvas.drawPath(path, Paint()..color = Colors.blue);
-  }
+  // _drawArrow方法已移除，不再需要
 
   void _drawOutline(Canvas canvas, Size size) {
     if (outline == null || imageSize == null) {
@@ -425,42 +389,5 @@ class _UIPainter extends CustomPainter {
     canvas.restore();
   }
 
-  void _drawPanCursor(Canvas canvas, Offset position) {
-    final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.7)
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawCircle(
-      position,
-      15.0,
-      Paint()
-        ..color = Colors.blue.withOpacity(0.2)
-        ..style = PaintingStyle.fill,
-    );
-
-    canvas.drawCircle(position, 14.0, paint);
-
-    _drawArrow(canvas, position, Offset(position.dx, position.dy - 12), paint);
-    _drawArrow(canvas, position, Offset(position.dx, position.dy + 12), paint);
-    _drawArrow(canvas, position, Offset(position.dx - 12, position.dy), paint);
-    _drawArrow(canvas, position, Offset(position.dx + 12, position.dy), paint);
-
-    final textPainter = TextPainter(
-      text: const TextSpan(
-        text: 'Pan',
-        style: TextStyle(
-          color: Colors.blue,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    textPainter.paint(
-      canvas,
-      position.translate(-textPainter.width / 2, 16),
-    );
-  }
+  // _drawPanCursor方法已移除，使用系统move光标代替
 }
