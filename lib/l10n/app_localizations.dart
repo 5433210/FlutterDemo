@@ -1151,6 +1151,18 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get confirm;
 
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String days(num count);
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String hours(num count);
+
   /// No description provided for @contains.
   ///
   /// In en, this message translates to:
@@ -2896,6 +2908,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Storage Settings'**
   String get storageSettings;
+
+  /// No description provided for @cacheSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Settings'**
+  String get cacheSettings;
+
+  /// No description provided for @memoryImageCacheCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory Image Cache Capacity'**
+  String get memoryImageCacheCapacity;
+
+  /// No description provided for @memoryImageCacheCapacityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of images to keep in memory'**
+  String get memoryImageCacheCapacityDescription;
+
+  /// No description provided for @memoryDataCacheCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory Data Cache Capacity'**
+  String get memoryDataCacheCapacity;
+
+  /// No description provided for @memoryDataCacheCapacityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of data items to keep in memory'**
+  String get memoryDataCacheCapacityDescription;
+
+  /// No description provided for @diskCacheSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk Cache Size'**
+  String get diskCacheSize;
+
+  /// No description provided for @diskCacheSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum size of disk cache'**
+  String get diskCacheSizeDescription;
+
+  /// No description provided for @diskCacheTtl.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk Cache Lifetime'**
+  String get diskCacheTtl;
+
+  /// No description provided for @diskCacheTtlDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How long to keep cached files on disk'**
+  String get diskCacheTtlDescription;
+
+  /// No description provided for @autoCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Cleanup'**
+  String get autoCleanup;
+
+  /// No description provided for @autoCleanupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically clean up old cache files'**
+  String get autoCleanupDescription;
+
+  /// No description provided for @autoCleanupInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Cleanup Interval'**
+  String get autoCleanupInterval;
+
+  /// No description provided for @autoCleanupIntervalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How often to run automatic cleanup'**
+  String get autoCleanupIntervalDescription;
+
+  /// No description provided for @clearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get clearCache;
+
+  /// No description provided for @resetToDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Defaults'**
+  String get resetToDefaults;
+
+  /// No description provided for @clearCacheConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get clearCacheConfirmTitle;
+
+  /// No description provided for @clearCacheConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.'**
+  String get clearCacheConfirmMessage;
+
+  /// No description provided for @cacheClearedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared successfully'**
+  String get cacheClearedMessage;
+
+  /// No description provided for @settingsResetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings reset to defaults'**
+  String get settingsResetMessage;
+
+  /// No description provided for @resetSettingsConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Settings'**
+  String get resetSettingsConfirmTitle;
+
+  /// No description provided for @resetSettingsConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset all cache settings to default values?'**
+  String get resetSettingsConfirmMessage;
 
   /// No description provided for @tagEditorEnterTagHint.
   ///

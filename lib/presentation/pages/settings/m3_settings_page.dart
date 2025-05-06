@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
-import '../../providers/settings_provider.dart';
 import 'components/appearance_settings.dart';
+import 'components/cache_settings.dart';
 import 'components/developer_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
@@ -16,9 +15,8 @@ class M3SettingsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
-    final hasChanges = false; // In the future, track changes if needed
+    // Remove unused variables to fix warnings
+    const hasChanges = false; // In the future, track changes if needed
 
     return Scaffold(
       appBar: M3SettingsNavigationBar(
@@ -43,6 +41,8 @@ class M3SettingsPage extends ConsumerWidget {
           LanguageSettings(),
           Divider(),
           StorageSettings(),
+          Divider(),
+          CacheSettings(),
           Divider(),
           DeveloperSettings(),
         ],

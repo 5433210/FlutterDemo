@@ -537,6 +537,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
+  String days(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hours(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get contains => 'Contains';
 
   @override
@@ -1414,6 +1436,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageSettings => 'Storage Settings';
+
+  @override
+  String get cacheSettings => 'Cache Settings';
+
+  @override
+  String get memoryImageCacheCapacity => 'Memory Image Cache Capacity';
+
+  @override
+  String get memoryImageCacheCapacityDescription => 'Number of images to keep in memory';
+
+  @override
+  String get memoryDataCacheCapacity => 'Memory Data Cache Capacity';
+
+  @override
+  String get memoryDataCacheCapacityDescription => 'Number of data items to keep in memory';
+
+  @override
+  String get diskCacheSize => 'Disk Cache Size';
+
+  @override
+  String get diskCacheSizeDescription => 'Maximum size of disk cache';
+
+  @override
+  String get diskCacheTtl => 'Disk Cache Lifetime';
+
+  @override
+  String get diskCacheTtlDescription => 'How long to keep cached files on disk';
+
+  @override
+  String get autoCleanup => 'Auto Cleanup';
+
+  @override
+  String get autoCleanupDescription => 'Automatically clean up old cache files';
+
+  @override
+  String get autoCleanupInterval => 'Auto Cleanup Interval';
+
+  @override
+  String get autoCleanupIntervalDescription => 'How often to run automatic cleanup';
+
+  @override
+  String get clearCache => 'Clear Cache';
+
+  @override
+  String get resetToDefaults => 'Reset to Defaults';
+
+  @override
+  String get clearCacheConfirmTitle => 'Clear Cache';
+
+  @override
+  String get clearCacheConfirmMessage => 'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.';
+
+  @override
+  String get cacheClearedMessage => 'Cache cleared successfully';
+
+  @override
+  String get settingsResetMessage => 'Settings reset to defaults';
+
+  @override
+  String get resetSettingsConfirmTitle => 'Reset Settings';
+
+  @override
+  String get resetSettingsConfirmMessage => 'Are you sure you want to reset all cache settings to default values?';
 
   @override
   String get tagEditorEnterTagHint => 'Type a tag and press Enter';

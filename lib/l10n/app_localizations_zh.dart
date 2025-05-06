@@ -537,6 +537,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirm => '确认';
 
   @override
+  String days(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count天',
+      one: '1天',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String hours(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count小时',
+      one: '1小时',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get contains => '包含';
 
   @override
@@ -1414,6 +1436,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get storageSettings => '存储设置';
+
+  @override
+  String get cacheSettings => '缓存设置';
+
+  @override
+  String get memoryImageCacheCapacity => '内存图像缓存容量';
+
+  @override
+  String get memoryImageCacheCapacityDescription => '内存中保留的图像数量';
+
+  @override
+  String get memoryDataCacheCapacity => '内存数据缓存容量';
+
+  @override
+  String get memoryDataCacheCapacityDescription => '内存中保留的数据项数量';
+
+  @override
+  String get diskCacheSize => '磁盘缓存大小';
+
+  @override
+  String get diskCacheSizeDescription => '磁盘缓存的最大大小';
+
+  @override
+  String get diskCacheTtl => '磁盘缓存生命周期';
+
+  @override
+  String get diskCacheTtlDescription => '缓存文件在磁盘上保留的时间';
+
+  @override
+  String get autoCleanup => '自动清理';
+
+  @override
+  String get autoCleanupDescription => '自动清理旧的缓存文件';
+
+  @override
+  String get autoCleanupInterval => '自动清理间隔';
+
+  @override
+  String get autoCleanupIntervalDescription => '自动清理运行的频率';
+
+  @override
+  String get clearCache => '清除缓存';
+
+  @override
+  String get resetToDefaults => '重置为默认值';
+
+  @override
+  String get clearCacheConfirmTitle => '清除缓存';
+
+  @override
+  String get clearCacheConfirmMessage => '确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。';
+
+  @override
+  String get cacheClearedMessage => '缓存已成功清除';
+
+  @override
+  String get settingsResetMessage => '设置已重置为默认值';
+
+  @override
+  String get resetSettingsConfirmTitle => '重置设置';
+
+  @override
+  String get resetSettingsConfirmMessage => '确定要将所有缓存设置重置为默认值吗？';
 
   @override
   String get tagEditorEnterTagHint => '输入标签并按Enter';
