@@ -1,11 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../../logging/logger.dart';
 import '../database_interface.dart';
 import '../models/database_query.dart';
+import 'database_restore_handler_v2.dart';
 
 /// SQLite数据库实现
 class SQLiteDatabase implements DatabaseInterface {
@@ -340,21 +343,73 @@ class SQLiteDatabase implements DatabaseInterface {
       databaseFactory = databaseFactoryFfi;
     }
 
-    final path = join(directory, name);
+    // 检查是否有待恢复的数据库
+    AppLogger.info('检查是否有待恢复的数据库',
+        tag: 'Database', data: {'directory': directory});
+    try {
+      // 使用新的数据库恢复处理器
+      final restored =
+          await DatabaseRestoreHandlerV2.checkAndRestoreDatabase(directory);
+      if (restored) {
+        AppLogger.info('数据库已从备份恢复', tag: 'Database');
+
+        // 如果数据库已恢复，等待一段时间确保文件系统操作完成
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // 确保文件系统缓存已刷新
+        try {
+          final dbPath = path.join(directory, name);
+          final dbFile = File(dbPath);
+          if (await dbFile.exists()) {
+            // 尝试打开并立即关闭数据库，确保文件系统操作已完成
+            final testDb = await openDatabase(dbPath);
+            await testDb.close();
+            AppLogger.info('数据库文件可正常访问', tag: 'Database');
+          }
+        } catch (e) {
+          AppLogger.warning('测试恢复后的数据库访问失败，将继续尝试正常打开',
+              tag: 'Database', error: e);
+        }
+
+        // 检查是否存在自动重启标记文件
+        final autoRestartMarkerPath =
+            path.join(path.dirname(directory), 'auto_restart_pending');
+        final autoRestartMarkerFile = File(autoRestartMarkerPath);
+        if (await autoRestartMarkerFile.exists()) {
+          AppLogger.info('发现自动重启标记文件，应用将在数据库初始化完成后自动重启',
+              tag: 'Database', data: {'path': autoRestartMarkerPath});
+
+          // 删除自动重启标记文件
+          try {
+            await autoRestartMarkerFile.delete();
+            AppLogger.info('已删除自动重启标记文件', tag: 'Database');
+          } catch (e) {
+            AppLogger.warning('删除自动重启标记文件失败', tag: 'Database', error: e);
+          }
+        }
+      } else {
+        AppLogger.info('没有待恢复的数据库', tag: 'Database');
+      }
+    } catch (e, stack) {
+      AppLogger.error('检查待恢复数据库失败',
+          error: e, stackTrace: stack, tag: 'Database');
+    }
+
+    final dbFullPath = path.join(directory, name);
 
     AppLogger.info(
       '数据库配置信息:\n'
       '  - 数据库类型: SQLite3\n'
       '  - 数据库名称: $name\n'
       '  - 数据库目录: $directory\n'
-      '  - 完整路径: $path\n'
+      '  - 完整路径: $dbFullPath\n'
       '  - 数据库版本: ${migrations.length}\n'
       '  - 迁移脚本数量: ${migrations.length}',
       tag: 'Database',
     );
 
     final db = await openDatabase(
-      path,
+      dbFullPath,
       version: migrations.length,
       onCreate: (db, version) async {
         AppLogger.info(

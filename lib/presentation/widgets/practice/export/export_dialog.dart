@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
 import 'export_service.dart';
 import 'page_renderer.dart';
@@ -113,8 +114,10 @@ class _ExportDialogState extends State<ExportDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return AlertDialog(
-      title: const Text('导出字帖'),
+      title: Text(l10n.export),
       content: SizedBox(
         width: 800,
         height: 600,
@@ -155,7 +158,7 @@ class _ExportDialogState extends State<ExportDialog> {
                       Padding(
                         padding: const EdgeInsets.only(top: 16),
                         child: Text(
-                          '注意: 将导出 ${widget.pageCount} 个图片文件，文件名将自动添加页码。',
+                          l10n.exportDialogMultipleFilesNote(widget.pageCount),
                           style: const TextStyle(color: Colors.blue),
                         ),
                       ),
@@ -175,7 +178,7 @@ class _ExportDialogState extends State<ExportDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isExporting ? null : _exportFile,
@@ -185,7 +188,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('导出'),
+              : Text(l10n.export),
         ),
       ],
     );
@@ -213,10 +216,12 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建导出类型选择器
   Widget _buildExportTypeSelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('导出格式:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportFormat}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -241,10 +246,12 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建文件名输入框
   Widget _buildFileNameInput() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('文件名:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.fileName}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
           controller: _fileNameController,
@@ -262,16 +269,18 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建适配方式选择器 (PDF专用)
   Widget _buildFitPolicySelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('适配方式:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogFitPolicy}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: RadioListTile<PdfFitPolicy>(
-                title: const Text('适合宽度'),
+                title: Text(l10n.exportDialogFitWidth),
                 value: PdfFitPolicy.width,
                 groupValue: _fitPolicy,
                 contentPadding: EdgeInsets.zero,
@@ -286,7 +295,7 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
             Expanded(
               child: RadioListTile<PdfFitPolicy>(
-                title: const Text('适合高度'),
+                title: Text(l10n.exportDialogFitHeight),
                 value: PdfFitPolicy.height,
                 groupValue: _fitPolicy,
                 contentPadding: EdgeInsets.zero,
@@ -302,7 +311,7 @@ class _ExportDialogState extends State<ExportDialog> {
           ],
         ),
         RadioListTile<PdfFitPolicy>(
-          title: const Text('包含在页面内'),
+          title: Text(l10n.exportDialogFitContain),
           value: PdfFitPolicy.contain,
           groupValue: _fitPolicy,
           contentPadding: EdgeInsets.zero,
@@ -320,6 +329,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建单个边距输入
   Widget _buildMarginInput(String label, int index) {
+    final l10n = AppLocalizations.of(context);
     // 使用TextEditingController以保持输入框状态
     final controller =
         TextEditingController(text: _margins[index].toStringAsFixed(1));
@@ -349,11 +359,11 @@ class _ExportDialogState extends State<ExportDialog> {
           children: [
             Expanded(
               child: TextField(
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  border: const OutlineInputBorder(),
                   contentPadding:
-                      EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  suffixText: '厘米',
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  suffixText: l10n.exportDialogCentimeter,
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -409,27 +419,29 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建边距输入 (PDF专用)
   Widget _buildMarginsInput() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('页面边距 (厘米):', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogPageMargins}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: _buildMarginInput('上', 0),
+              child: _buildMarginInput(l10n.exportDialogMarginTop, 0),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput('右', 1),
+              child: _buildMarginInput(l10n.exportDialogMarginRight, 1),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput('下', 2),
+              child: _buildMarginInput(l10n.exportDialogMarginBottom, 2),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _buildMarginInput('左', 3),
+              child: _buildMarginInput(l10n.exportDialogMarginLeft, 3),
             ),
           ],
         ),
@@ -439,20 +451,22 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建页面朝向选择器 (PDF专用)
   Widget _buildOrientationSelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('页面朝向:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogPageOrientation}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: RadioListTile<bool>(
-                title: const Row(
+                title: Row(
                   children: [
-                    Icon(Icons.stay_current_portrait),
-                    SizedBox(width: 8),
-                    Text('纵向'),
+                    const Icon(Icons.stay_current_portrait),
+                    const SizedBox(width: 8),
+                    Text(l10n.exportDialogPortrait),
                   ],
                 ),
                 value: false,
@@ -469,11 +483,11 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
             Expanded(
               child: RadioListTile<bool>(
-                title: const Row(
+                title: Row(
                   children: [
-                    Icon(Icons.stay_current_landscape),
-                    SizedBox(width: 8),
-                    Text('横向'),
+                    const Icon(Icons.stay_current_landscape),
+                    const SizedBox(width: 8),
+                    Text(l10n.exportDialogLandscape),
                   ],
                 ),
                 value: true,
@@ -496,10 +510,12 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建导出路径选择器
   Widget _buildOutputPathSelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('导出位置:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogLocation}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -512,7 +528,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  _outputPath ?? '请选择导出位置',
+                  _outputPath ?? l10n.exportDialogSelectLocation,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -520,7 +536,7 @@ class _ExportDialogState extends State<ExportDialog> {
             const SizedBox(width: 8),
             ElevatedButton(
               onPressed: _selectDirectory,
-              child: const Text('浏览...'),
+              child: Text(l10n.exportDialogBrowse),
             ),
           ],
         ),
@@ -530,16 +546,18 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建页面范围选择器 (PDF专用)
   Widget _buildPageRangeSelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('页面范围:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogPageRange}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
               child: RadioListTile<PageRangeType>(
-                title: const Text('全部页面'),
+                title: Text(l10n.exportDialogAllPages),
                 value: PageRangeType.all,
                 groupValue: _pageRangeType,
                 contentPadding: EdgeInsets.zero,
@@ -554,7 +572,7 @@ class _ExportDialogState extends State<ExportDialog> {
             ),
             Expanded(
               child: RadioListTile<PageRangeType>(
-                title: const Text('当前页面'),
+                title: Text(l10n.exportDialogCurrentPage),
                 value: PageRangeType.current,
                 groupValue: _pageRangeType,
                 contentPadding: EdgeInsets.zero,
@@ -572,14 +590,14 @@ class _ExportDialogState extends State<ExportDialog> {
         RadioListTile<PageRangeType>(
           title: Row(
             children: [
-              const Text('自定义范围 '),
+              Text('${l10n.exportDialogCustomRange} '),
               Expanded(
                 child: TextField(
                   controller: _pageRangeController,
-                  decoration: const InputDecoration(
-                    hintText: '例如: 1-3,5,7-9',
+                  decoration: InputDecoration(
+                    hintText: l10n.exportDialogRangeExample,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
+                    contentPadding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 8,
                     ),
@@ -607,6 +625,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建页面大小选择器 (PDF专用)
   Widget _buildPageSizeSelector() {
+    final l10n = AppLocalizations.of(context);
     final pageFormatMap = {
       'A3': PdfPageFormat.a3,
       'A4': PdfPageFormat.a4,
@@ -619,7 +638,8 @@ class _ExportDialogState extends State<ExportDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('页面大小:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogPageSize}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         DropdownButtonFormField<PdfPageFormat>(
           value: _pageFormat,
@@ -633,7 +653,7 @@ class _ExportDialogState extends State<ExportDialog> {
             return DropdownMenuItem<PdfPageFormat>(
               value: entry.value,
               child: Text(
-                  '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} 厘米)'),
+                  '${entry.key} (${widthCm.toStringAsFixed(1)} × ${heightCm.toStringAsFixed(1)} ${l10n.exportDialogCentimeter})'),
             );
           }).toList(),
           onChanged: (value) {
@@ -651,10 +671,12 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建像素比例选择器
   Widget _buildPixelRatioSelector() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('输出质量:', style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('${l10n.exportDialogOutputQuality}:',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -682,6 +704,7 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 构建预览区域
   Widget _buildPreviewArea() {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -694,13 +717,17 @@ class _ExportDialogState extends State<ExportDialog> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                '预览',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                l10n.exportDialogPreview,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               if (widget.pageCount > 1 && _pagePreviewCache.isNotEmpty)
                 Text(
-                  ' (第 ${_previewPageIndex + 1}/${widget.pageCount} 页)',
+                  l10n.exportDialogPreviewPage(
+                    _previewPageIndex + 1,
+                    widget.pageCount,
+                  ),
                   style: const TextStyle(fontSize: 14),
                 ),
             ],
@@ -746,17 +773,21 @@ class _ExportDialogState extends State<ExportDialog> {
                                 fit: BoxFit.contain,
                               ),
                       )
-                    : const Center(
-                        child: Text('无法生成预览'),
+                    : Center(
+                        child: Text(l10n.exportDialogNoPreview),
                       ),
           ),
           const SizedBox(height: 8),
           if (_exportType == ExportType.pdf)
             Center(
               child: Text(
-                '${_getEffectivePageFormat().width / PdfPageFormat.cm}厘米 × '
-                '${_getEffectivePageFormat().height / PdfPageFormat.cm}厘米 '
-                '(${_isLandscape ? "横向" : "纵向"})',
+                l10n.exportDialogDimensions(
+                  _getEffectivePageFormat().width / PdfPageFormat.cm,
+                  _getEffectivePageFormat().height / PdfPageFormat.cm,
+                  _isLandscape
+                      ? l10n.exportDialogLandscape
+                      : l10n.exportDialogPortrait,
+                ),
                 style: const TextStyle(fontSize: 12),
               ),
             ),
@@ -770,7 +801,7 @@ class _ExportDialogState extends State<ExportDialog> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    tooltip: '上一页',
+                    tooltip: l10n.exportDialogPreviousPage,
                     onPressed: _previewPageIndex > 0
                         ? () => _switchPreviewPage(_previewPageIndex - 1)
                         : null,
@@ -778,7 +809,7 @@ class _ExportDialogState extends State<ExportDialog> {
                   Text('${_previewPageIndex + 1} / ${widget.pageCount}'),
                   IconButton(
                     icon: const Icon(Icons.arrow_forward),
-                    tooltip: '下一页',
+                    tooltip: l10n.exportDialogNextPage,
                     onPressed: _previewPageIndex < widget.pageCount - 1
                         ? () => _switchPreviewPage(_previewPageIndex + 1)
                         : null,
@@ -793,12 +824,13 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 导出文件
   void _exportFile() {
+    final l10n = AppLocalizations.of(context);
     debugPrint('ExportDialog: 开始导出文件');
 
     if (_outputPath == null) {
       debugPrint('ExportDialog: 错误 - 未选择导出位置');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请选择导出位置')),
+        SnackBar(content: Text(l10n.selectExportLocation)),
       );
       return;
     }
@@ -809,7 +841,7 @@ class _ExportDialogState extends State<ExportDialog> {
     if (fileName.isEmpty) {
       debugPrint('ExportDialog: 错误 - 文件名为空');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入文件名')),
+        SnackBar(content: Text(l10n.exportDialogEnterFilename)),
       );
       return;
     }
@@ -819,7 +851,7 @@ class _ExportDialogState extends State<ExportDialog> {
     if (invalidChars.hasMatch(fileName)) {
       debugPrint('ExportDialog: 错误 - 文件名包含非法字符');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('文件名不能包含以下字符: \\ / : * ? " < > |')),
+        SnackBar(content: Text(l10n.exportDialogInvalidFilename)),
       );
       return;
     }
@@ -834,7 +866,8 @@ class _ExportDialogState extends State<ExportDialog> {
       } catch (e) {
         debugPrint('ExportDialog: 创建导出目录失败: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('创建导出目录失败: $e')),
+          SnackBar(
+              content: Text('${l10n.exportDialogCreateDirectoryFailed}: $e')),
         );
         return;
       }
@@ -952,10 +985,11 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 获取文件名提示
   String _getFileNameHint() {
+    final l10n = AppLocalizations.of(context);
     if (_exportType == ExportType.pdf || widget.pageCount <= 1) {
-      return '输入文件名';
+      return l10n.enterFileName;
     } else {
-      return '输入文件名前缀（将自动添加页码）';
+      return l10n.exportDialogFilenamePrefix;
     }
   }
 
@@ -973,12 +1007,13 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 获取像素比例标签
   String _getPixelRatioLabel() {
+    final l10n = AppLocalizations.of(context);
     if (_pixelRatio == 1.0) {
-      return '标准 (1x)';
+      return l10n.exportDialogQualityStandard;
     } else if (_pixelRatio == 2.0) {
-      return '高清 (2x)';
+      return l10n.exportDialogQualityHigh;
     } else {
-      return '超清 (3x)';
+      return l10n.exportDialogQualityUltra;
     }
   }
 

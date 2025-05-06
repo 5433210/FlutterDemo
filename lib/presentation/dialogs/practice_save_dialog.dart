@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// 字帖保存对话框
 /// 用于输入字帖标题
 class PracticeSaveDialog extends StatefulWidget {
@@ -30,7 +32,10 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.isSaveAs ? '另存为' : '保存字帖';
+    final l10n = AppLocalizations.of(context);
+    final title = widget.isSaveAs
+        ? l10n.practiceEditTopNavSaveAs
+        : l10n.practiceEditSavePractice;
 
     return AlertDialog(
       title: Text(title),
@@ -40,8 +45,8 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
-              labelText: '字帖标题',
-              hintText: '请输入字帖标题',
+              labelText: l10n.practiceEditPracticeTitle,
+              hintText: l10n.practiceEditEnterTitle,
               errorText: _errorText,
               border: const OutlineInputBorder(),
             ),
@@ -65,15 +70,17 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () async {
             if (await _validateTitle()) {
-              Navigator.of(context).pop(_titleController.text.trim());
+              if (mounted) {
+                Navigator.of(context).pop(_titleController.text.trim());
+              }
             }
           },
-          child: const Text('保存'),
+          child: Text(l10n.save),
         ),
       ],
     );
@@ -93,12 +100,13 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
 
   /// 验证标题
   Future<bool> _validateTitle() async {
+    final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
 
     // 检查标题是否为空
     if (title.isEmpty) {
       setState(() {
-        _errorText = '标题不能为空';
+        _errorText = l10n.practiceEditEnterTitle;
       });
       return false;
     }
@@ -116,7 +124,7 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
         // 如果是另存为操作，标题已存在且非本身的标题，显示错误
         if (exists && (widget.isSaveAs || title != widget.initialTitle)) {
           setState(() {
-            _errorText = '已存在相同标题的字帖，请使用其他标题';
+            _errorText = l10n.practiceEditTitleExistsMessage;
           });
           return false;
         }

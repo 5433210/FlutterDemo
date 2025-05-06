@@ -1163,6 +1163,276 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
   String hours(num count);
 
+  /// No description provided for @backupSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Restore'**
+  String get backupSettings;
+
+  /// No description provided for @autoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Backup'**
+  String get autoBackup;
+
+  /// No description provided for @autoBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically backup your data periodically'**
+  String get autoBackupDescription;
+
+  /// No description provided for @autoBackupInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Backup Interval'**
+  String get autoBackupInterval;
+
+  /// No description provided for @autoBackupIntervalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How often to create automatic backups'**
+  String get autoBackupIntervalDescription;
+
+  /// No description provided for @keepBackupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Backup Count'**
+  String get keepBackupCount;
+
+  /// No description provided for @keepBackupCountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of backups to keep before deleting old ones'**
+  String get keepBackupCountDescription;
+
+  /// No description provided for @lastBackupTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Backup Time'**
+  String get lastBackupTime;
+
+  /// No description provided for @createBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Backup'**
+  String get createBackup;
+
+  /// No description provided for @restoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Backup'**
+  String get restoreBackup;
+
+  /// No description provided for @backupList.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup List'**
+  String get backupList;
+
+  /// No description provided for @noBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups available'**
+  String get noBackups;
+
+  /// No description provided for @loadingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Error'**
+  String get loadingError;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @deleteBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteBackup;
+
+  /// No description provided for @restoreSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore completed successfully'**
+  String get restoreSuccess;
+
+  /// No description provided for @restoreFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore from backup'**
+  String get restoreFailure;
+
+  /// No description provided for @deleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup deleted successfully'**
+  String get deleteSuccess;
+
+  /// No description provided for @deleteFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete backup'**
+  String get deleteFailure;
+
+  /// No description provided for @createBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new backup of your data'**
+  String get createBackupDescription;
+
+  /// No description provided for @backupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (Optional)'**
+  String get backupDescription;
+
+  /// No description provided for @backupDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description for this backup'**
+  String get backupDescriptionHint;
+
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @selectBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Backup'**
+  String get selectBackup;
+
+  /// No description provided for @restoreConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Confirmation'**
+  String get restoreConfirmTitle;
+
+  /// No description provided for @restoreConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to restore from this backup? This will replace all your current data.'**
+  String get restoreConfirmMessage;
+
+  /// No description provided for @deleteBackupConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Backup'**
+  String get deleteBackupConfirmTitle;
+
+  /// No description provided for @deleteBackupConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this backup? This action cannot be undone.'**
+  String get deleteBackupConfirmMessage;
+
+  /// No description provided for @creatingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating backup...'**
+  String get creatingBackup;
+
+  /// No description provided for @restoringBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring from backup...'**
+  String get restoringBackup;
+
+  /// No description provided for @backupSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup created successfully'**
+  String get backupSuccess;
+
+  /// No description provided for @backupFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create backup'**
+  String get backupFailure;
+
+  /// No description provided for @exportBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Backup'**
+  String get exportBackup;
+
+  /// No description provided for @importBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Backup'**
+  String get importBackup;
+
+  /// No description provided for @exportBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Export a backup to an external location'**
+  String get exportBackupDescription;
+
+  /// No description provided for @importBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a backup from an external location'**
+  String get importBackupDescription;
+
+  /// No description provided for @selectExportLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select export location'**
+  String get selectExportLocation;
+
+  /// No description provided for @selectImportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Backup File'**
+  String get selectImportFile;
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup exported successfully'**
+  String get exportSuccess;
+
+  /// No description provided for @exportFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export backup'**
+  String get exportFailure;
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup imported successfully'**
+  String get importSuccess;
+
+  /// No description provided for @importFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import backup'**
+  String get importFailure;
+
+  /// No description provided for @invalidBackupFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid backup file'**
+  String get invalidBackupFile;
+
+  /// No description provided for @exportingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting backup...'**
+  String get exportingBackup;
+
+  /// No description provided for @importingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing backup...'**
+  String get importingBackup;
+
   /// No description provided for @contains.
   ///
   /// In en, this message translates to:
@@ -3407,6 +3677,24 @@ abstract class AppLocalizations {
   /// **'Width'**
   String get width;
 
+  /// No description provided for @fileName.
+  ///
+  /// In en, this message translates to:
+  /// **'File Name'**
+  String get fileName;
+
+  /// No description provided for @enterFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter file name'**
+  String get enterFileName;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Format'**
+  String get exportFormat;
+
   /// No description provided for @alignmentOperations.
   ///
   /// In en, this message translates to:
@@ -4313,6 +4601,252 @@ abstract class AppLocalizations {
   /// **'Available Characters'**
   String get collectionPropertyPanelAvailableCharacters;
 
+  /// No description provided for @exportDialogFitPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit Policy'**
+  String get exportDialogFitPolicy;
+
+  /// No description provided for @exportDialogFitWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to Width'**
+  String get exportDialogFitWidth;
+
+  /// No description provided for @exportDialogFitHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to Height'**
+  String get exportDialogFitHeight;
+
+  /// No description provided for @exportDialogFitContain.
+  ///
+  /// In en, this message translates to:
+  /// **'Contain in Page'**
+  String get exportDialogFitContain;
+
+  /// No description provided for @exportDialogCentimeter.
+  ///
+  /// In en, this message translates to:
+  /// **'cm'**
+  String get exportDialogCentimeter;
+
+  /// No description provided for @exportDialogMarginTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get exportDialogMarginTop;
+
+  /// No description provided for @exportDialogMarginRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get exportDialogMarginRight;
+
+  /// No description provided for @exportDialogMarginBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get exportDialogMarginBottom;
+
+  /// No description provided for @exportDialogMarginLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get exportDialogMarginLeft;
+
+  /// No description provided for @exportDialogPageMargins.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Margins (cm)'**
+  String get exportDialogPageMargins;
+
+  /// No description provided for @exportDialogPageOrientation.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Orientation'**
+  String get exportDialogPageOrientation;
+
+  /// No description provided for @exportDialogPortrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get exportDialogPortrait;
+
+  /// No description provided for @exportDialogLandscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get exportDialogLandscape;
+
+  /// No description provided for @exportDialogLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Location'**
+  String get exportDialogLocation;
+
+  /// No description provided for @exportDialogSelectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select export location'**
+  String get exportDialogSelectLocation;
+
+  /// No description provided for @exportDialogBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse...'**
+  String get exportDialogBrowse;
+
+  /// No description provided for @exportDialogPageRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Range'**
+  String get exportDialogPageRange;
+
+  /// No description provided for @exportDialogAllPages.
+  ///
+  /// In en, this message translates to:
+  /// **'All Pages'**
+  String get exportDialogAllPages;
+
+  /// No description provided for @exportDialogCurrentPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Page'**
+  String get exportDialogCurrentPage;
+
+  /// No description provided for @exportDialogCustomRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Range'**
+  String get exportDialogCustomRange;
+
+  /// No description provided for @exportDialogRangeExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: 1-3,5,7-9'**
+  String get exportDialogRangeExample;
+
+  /// No description provided for @exportDialogPageSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Size'**
+  String get exportDialogPageSize;
+
+  /// No description provided for @exportDialogOutputQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Output Quality'**
+  String get exportDialogOutputQuality;
+
+  /// No description provided for @exportDialogMultipleFilesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Will export {count} image files, filenames will be automatically numbered.'**
+  String exportDialogMultipleFilesNote(Object count);
+
+  /// No description provided for @exportDialogPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get exportDialogPreview;
+
+  /// No description provided for @exportDialogPreviewPage.
+  ///
+  /// In en, this message translates to:
+  /// **' (Page {current}/{total})'**
+  String exportDialogPreviewPage(Object current, Object total);
+
+  /// No description provided for @exportDialogNoPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot generate preview'**
+  String get exportDialogNoPreview;
+
+  /// No description provided for @exportDialogDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'{width}cm × {height}cm ({orientation})'**
+  String exportDialogDimensions(Object height, Object orientation, Object width);
+
+  /// No description provided for @exportDialogPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Page'**
+  String get exportDialogPreviousPage;
+
+  /// No description provided for @exportDialogNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Page'**
+  String get exportDialogNextPage;
+
+  /// No description provided for @exportDialogEnterFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a filename'**
+  String get exportDialogEnterFilename;
+
+  /// No description provided for @exportDialogInvalidFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Filename cannot contain the following characters: \\ / : * ? \" < > |'**
+  String get exportDialogInvalidFilename;
+
+  /// No description provided for @exportDialogCreateDirectoryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create export directory'**
+  String get exportDialogCreateDirectoryFailed;
+
+  /// No description provided for @exportDialogQualityStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard (1x)'**
+  String get exportDialogQualityStandard;
+
+  /// No description provided for @exportDialogQualityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High (2x)'**
+  String get exportDialogQualityHigh;
+
+  /// No description provided for @exportDialogQualityUltra.
+  ///
+  /// In en, this message translates to:
+  /// **'Ultra (3x)'**
+  String get exportDialogQualityUltra;
+
+  /// No description provided for @exportDialogFilenamePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter filename prefix (page numbers will be added automatically)'**
+  String get exportDialogFilenamePrefix;
+
+  /// No description provided for @restartAppRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The application needs to be restarted to complete the restore process.'**
+  String get restartAppRequired;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @restartNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Now'**
+  String get restartNow;
+
+  /// No description provided for @restartLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get restartLater;
+
   /// No description provided for @collectionPropertyPanelGlobalInversion.
   ///
   /// In en, this message translates to:
@@ -4534,6 +5068,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get windowButtonClose;
+
+  /// No description provided for @restartAfterRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: The application will automatically restart after restoration is complete'**
+  String get restartAfterRestored;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -1,8 +1,32 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <windows.h>
+#include <string>
+#include <vector>
 
 #include "flutter/generated_plugin_registrant.h"
+
+// Restart application function
+static void RestartApp() {
+  // Get current executable path
+  wchar_t path[MAX_PATH];
+  GetModuleFileName(NULL, path, MAX_PATH);
+
+  // Prepare startup info
+  STARTUPINFO si = {sizeof(STARTUPINFO)};
+  PROCESS_INFORMATION pi;
+
+  // Create new process
+  if (CreateProcess(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+    // Close process and thread handles
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // Exit current process
+    ExitProcess(0);
+  }
+}
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -27,8 +51,27 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
+  // Setup method channel for restart requests
+  restart_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "app.restart/channel",
+          &flutter::StandardMethodCodec::GetInstance());
+
+  // Set method call handler
+  restart_channel_->SetMethodCallHandler(
+      [](const flutter::MethodCall<flutter::EncodableValue>& call,
+         std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        if (call.method_name() == "restartApp") {
+          RestartApp();
+          result->Success();
+        } else {
+          result->NotImplemented();
+        }
+      });
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    // 注释掉这行，阻止窗口自动显示
+    // Comment out this line to prevent window from showing automatically
     // this->Show();
   });
 

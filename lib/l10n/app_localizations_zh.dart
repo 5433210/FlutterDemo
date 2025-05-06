@@ -559,6 +559,141 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get backupSettings => '备份与恢复';
+
+  @override
+  String get autoBackup => '自动备份';
+
+  @override
+  String get autoBackupDescription => '定期自动备份您的数据';
+
+  @override
+  String get autoBackupInterval => '自动备份间隔';
+
+  @override
+  String get autoBackupIntervalDescription => '自动备份的频率';
+
+  @override
+  String get keepBackupCount => '保留备份数量';
+
+  @override
+  String get keepBackupCountDescription => '删除旧备份前保留的备份数量';
+
+  @override
+  String get lastBackupTime => '上次备份时间';
+
+  @override
+  String get createBackup => '创建备份';
+
+  @override
+  String get restoreBackup => '恢复备份';
+
+  @override
+  String get backupList => '备份列表';
+
+  @override
+  String get noBackups => '没有可用的备份';
+
+  @override
+  String get loadingError => '加载错误';
+
+  @override
+  String get restore => '恢复';
+
+  @override
+  String get deleteBackup => '删除';
+
+  @override
+  String get restoreSuccess => '恢复成功';
+
+  @override
+  String get restoreFailure => '恢复失败';
+
+  @override
+  String get deleteSuccess => '备份删除成功';
+
+  @override
+  String get deleteFailure => '备份删除失败';
+
+  @override
+  String get createBackupDescription => '创建新的数据备份';
+
+  @override
+  String get backupDescription => '描述（可选）';
+
+  @override
+  String get backupDescriptionHint => '输入此备份的描述';
+
+  @override
+  String get create => '创建';
+
+  @override
+  String get selectBackup => '选择备份';
+
+  @override
+  String get restoreConfirmTitle => '恢复确认';
+
+  @override
+  String get restoreConfirmMessage => '确定要从此备份恢复吗？这将替换您当前的所有数据。';
+
+  @override
+  String get deleteBackupConfirmTitle => '删除备份';
+
+  @override
+  String get deleteBackupConfirmMessage => '确定要删除此备份吗？此操作无法撤消。';
+
+  @override
+  String get creatingBackup => '正在创建备份...';
+
+  @override
+  String get restoringBackup => '正在从备份恢复...';
+
+  @override
+  String get backupSuccess => '备份创建成功';
+
+  @override
+  String get backupFailure => '创建备份失败';
+
+  @override
+  String get exportBackup => '导出备份';
+
+  @override
+  String get importBackup => '导入备份';
+
+  @override
+  String get exportBackupDescription => '将备份导出到外部位置';
+
+  @override
+  String get importBackupDescription => '从外部位置导入备份';
+
+  @override
+  String get selectExportLocation => '选择导出位置';
+
+  @override
+  String get selectImportFile => '选择备份文件';
+
+  @override
+  String get exportSuccess => '备份导出成功';
+
+  @override
+  String get exportFailure => '备份导出失败';
+
+  @override
+  String get importSuccess => '备份导入成功';
+
+  @override
+  String get importFailure => '备份导入失败';
+
+  @override
+  String get invalidBackupFile => '无效的备份文件';
+
+  @override
+  String get exportingBackup => '正在导出备份...';
+
+  @override
+  String get importingBackup => '正在导入备份...';
+
+  @override
   String get contains => '包含';
 
   @override
@@ -1687,6 +1822,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get width => '宽度';
 
   @override
+  String get fileName => '文件名';
+
+  @override
+  String get enterFileName => '输入文件名';
+
+  @override
+  String get exportFormat => '导出格式';
+
+  @override
   String get alignmentOperations => '对齐操作';
 
   @override
@@ -2188,6 +2332,135 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collectionPropertyPanelAvailableCharacters => '可用字符';
 
   @override
+  String get exportDialogFitPolicy => '适配方式';
+
+  @override
+  String get exportDialogFitWidth => '适合宽度';
+
+  @override
+  String get exportDialogFitHeight => '适合高度';
+
+  @override
+  String get exportDialogFitContain => '包含在页面内';
+
+  @override
+  String get exportDialogCentimeter => '厘米';
+
+  @override
+  String get exportDialogMarginTop => '上';
+
+  @override
+  String get exportDialogMarginRight => '右';
+
+  @override
+  String get exportDialogMarginBottom => '下';
+
+  @override
+  String get exportDialogMarginLeft => '左';
+
+  @override
+  String get exportDialogPageMargins => '页面边距 (厘米)';
+
+  @override
+  String get exportDialogPageOrientation => '页面朝向';
+
+  @override
+  String get exportDialogPortrait => '纵向';
+
+  @override
+  String get exportDialogLandscape => '横向';
+
+  @override
+  String get exportDialogLocation => '导出位置';
+
+  @override
+  String get exportDialogSelectLocation => '请选择导出位置';
+
+  @override
+  String get exportDialogBrowse => '浏览...';
+
+  @override
+  String get exportDialogPageRange => '页面范围';
+
+  @override
+  String get exportDialogAllPages => '全部页面';
+
+  @override
+  String get exportDialogCurrentPage => '当前页面';
+
+  @override
+  String get exportDialogCustomRange => '自定义范围';
+
+  @override
+  String get exportDialogRangeExample => '例如: 1-3,5,7-9';
+
+  @override
+  String get exportDialogPageSize => '页面大小';
+
+  @override
+  String get exportDialogOutputQuality => '输出质量';
+
+  @override
+  String exportDialogMultipleFilesNote(Object count) {
+    return '注意: 将导出 $count 个图片文件，文件名将自动添加页码。';
+  }
+
+  @override
+  String get exportDialogPreview => '预览';
+
+  @override
+  String exportDialogPreviewPage(Object current, Object total) {
+    return ' (第 $current/$total 页)';
+  }
+
+  @override
+  String get exportDialogNoPreview => '无法生成预览';
+
+  @override
+  String exportDialogDimensions(Object height, Object orientation, Object width) {
+    return '$width厘米 × $height厘米 ($orientation)';
+  }
+
+  @override
+  String get exportDialogPreviousPage => '上一页';
+
+  @override
+  String get exportDialogNextPage => '下一页';
+
+  @override
+  String get exportDialogEnterFilename => '请输入文件名';
+
+  @override
+  String get exportDialogInvalidFilename => '文件名不能包含以下字符: \\ / : * ? \" < > |';
+
+  @override
+  String get exportDialogCreateDirectoryFailed => '创建导出目录失败';
+
+  @override
+  String get exportDialogQualityStandard => '标准 (1x)';
+
+  @override
+  String get exportDialogQualityHigh => '高清 (2x)';
+
+  @override
+  String get exportDialogQualityUltra => '超清 (3x)';
+
+  @override
+  String get exportDialogFilenamePrefix => '输入文件名前缀（将自动添加页码）';
+
+  @override
+  String get restartAppRequired => '需要重启应用以完成恢复过程。';
+
+  @override
+  String get ok => '确定';
+
+  @override
+  String get restartNow => '立即重启';
+
+  @override
+  String get restartLater => '稍后';
+
+  @override
   String get collectionPropertyPanelGlobalInversion => '全局反转';
 
   @override
@@ -2303,4 +2576,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get windowButtonClose => '关闭';
+
+  @override
+  String get restartAfterRestored => '注意：恢复完成后应用将自动重启';
 }

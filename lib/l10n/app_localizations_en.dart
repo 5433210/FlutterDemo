@@ -559,6 +559,141 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get backupSettings => 'Backup & Restore';
+
+  @override
+  String get autoBackup => 'Auto Backup';
+
+  @override
+  String get autoBackupDescription => 'Automatically backup your data periodically';
+
+  @override
+  String get autoBackupInterval => 'Auto Backup Interval';
+
+  @override
+  String get autoBackupIntervalDescription => 'How often to create automatic backups';
+
+  @override
+  String get keepBackupCount => 'Keep Backup Count';
+
+  @override
+  String get keepBackupCountDescription => 'Number of backups to keep before deleting old ones';
+
+  @override
+  String get lastBackupTime => 'Last Backup Time';
+
+  @override
+  String get createBackup => 'Create Backup';
+
+  @override
+  String get restoreBackup => 'Restore Backup';
+
+  @override
+  String get backupList => 'Backup List';
+
+  @override
+  String get noBackups => 'No backups available';
+
+  @override
+  String get loadingError => 'Loading Error';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get deleteBackup => 'Delete';
+
+  @override
+  String get restoreSuccess => 'Restore completed successfully';
+
+  @override
+  String get restoreFailure => 'Failed to restore from backup';
+
+  @override
+  String get deleteSuccess => 'Backup deleted successfully';
+
+  @override
+  String get deleteFailure => 'Failed to delete backup';
+
+  @override
+  String get createBackupDescription => 'Create a new backup of your data';
+
+  @override
+  String get backupDescription => 'Description (Optional)';
+
+  @override
+  String get backupDescriptionHint => 'Enter a description for this backup';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get selectBackup => 'Select Backup';
+
+  @override
+  String get restoreConfirmTitle => 'Restore Confirmation';
+
+  @override
+  String get restoreConfirmMessage => 'Are you sure you want to restore from this backup? This will replace all your current data.';
+
+  @override
+  String get deleteBackupConfirmTitle => 'Delete Backup';
+
+  @override
+  String get deleteBackupConfirmMessage => 'Are you sure you want to delete this backup? This action cannot be undone.';
+
+  @override
+  String get creatingBackup => 'Creating backup...';
+
+  @override
+  String get restoringBackup => 'Restoring from backup...';
+
+  @override
+  String get backupSuccess => 'Backup created successfully';
+
+  @override
+  String get backupFailure => 'Failed to create backup';
+
+  @override
+  String get exportBackup => 'Export Backup';
+
+  @override
+  String get importBackup => 'Import Backup';
+
+  @override
+  String get exportBackupDescription => 'Export a backup to an external location';
+
+  @override
+  String get importBackupDescription => 'Import a backup from an external location';
+
+  @override
+  String get selectExportLocation => 'Select export location';
+
+  @override
+  String get selectImportFile => 'Select Backup File';
+
+  @override
+  String get exportSuccess => 'Backup exported successfully';
+
+  @override
+  String get exportFailure => 'Failed to export backup';
+
+  @override
+  String get importSuccess => 'Backup imported successfully';
+
+  @override
+  String get importFailure => 'Failed to import backup';
+
+  @override
+  String get invalidBackupFile => 'Invalid backup file';
+
+  @override
+  String get exportingBackup => 'Exporting backup...';
+
+  @override
+  String get importingBackup => 'Importing backup...';
+
+  @override
   String get contains => 'Contains';
 
   @override
@@ -1687,6 +1822,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get width => 'Width';
 
   @override
+  String get fileName => 'File Name';
+
+  @override
+  String get enterFileName => 'Enter file name';
+
+  @override
+  String get exportFormat => 'Export Format';
+
+  @override
   String get alignmentOperations => 'Alignment Operations';
 
   @override
@@ -2188,6 +2332,135 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionPropertyPanelAvailableCharacters => 'Available Characters';
 
   @override
+  String get exportDialogFitPolicy => 'Fit Policy';
+
+  @override
+  String get exportDialogFitWidth => 'Fit to Width';
+
+  @override
+  String get exportDialogFitHeight => 'Fit to Height';
+
+  @override
+  String get exportDialogFitContain => 'Contain in Page';
+
+  @override
+  String get exportDialogCentimeter => 'cm';
+
+  @override
+  String get exportDialogMarginTop => 'Top';
+
+  @override
+  String get exportDialogMarginRight => 'Right';
+
+  @override
+  String get exportDialogMarginBottom => 'Bottom';
+
+  @override
+  String get exportDialogMarginLeft => 'Left';
+
+  @override
+  String get exportDialogPageMargins => 'Page Margins (cm)';
+
+  @override
+  String get exportDialogPageOrientation => 'Page Orientation';
+
+  @override
+  String get exportDialogPortrait => 'Portrait';
+
+  @override
+  String get exportDialogLandscape => 'Landscape';
+
+  @override
+  String get exportDialogLocation => 'Export Location';
+
+  @override
+  String get exportDialogSelectLocation => 'Please select export location';
+
+  @override
+  String get exportDialogBrowse => 'Browse...';
+
+  @override
+  String get exportDialogPageRange => 'Page Range';
+
+  @override
+  String get exportDialogAllPages => 'All Pages';
+
+  @override
+  String get exportDialogCurrentPage => 'Current Page';
+
+  @override
+  String get exportDialogCustomRange => 'Custom Range';
+
+  @override
+  String get exportDialogRangeExample => 'Example: 1-3,5,7-9';
+
+  @override
+  String get exportDialogPageSize => 'Page Size';
+
+  @override
+  String get exportDialogOutputQuality => 'Output Quality';
+
+  @override
+  String exportDialogMultipleFilesNote(Object count) {
+    return 'Note: Will export $count image files, filenames will be automatically numbered.';
+  }
+
+  @override
+  String get exportDialogPreview => 'Preview';
+
+  @override
+  String exportDialogPreviewPage(Object current, Object total) {
+    return ' (Page $current/$total)';
+  }
+
+  @override
+  String get exportDialogNoPreview => 'Cannot generate preview';
+
+  @override
+  String exportDialogDimensions(Object height, Object orientation, Object width) {
+    return '${width}cm × ${height}cm ($orientation)';
+  }
+
+  @override
+  String get exportDialogPreviousPage => 'Previous Page';
+
+  @override
+  String get exportDialogNextPage => 'Next Page';
+
+  @override
+  String get exportDialogEnterFilename => 'Please enter a filename';
+
+  @override
+  String get exportDialogInvalidFilename => 'Filename cannot contain the following characters: \\ / : * ? \" < > |';
+
+  @override
+  String get exportDialogCreateDirectoryFailed => 'Failed to create export directory';
+
+  @override
+  String get exportDialogQualityStandard => 'Standard (1x)';
+
+  @override
+  String get exportDialogQualityHigh => 'High (2x)';
+
+  @override
+  String get exportDialogQualityUltra => 'Ultra (3x)';
+
+  @override
+  String get exportDialogFilenamePrefix => 'Enter filename prefix (page numbers will be added automatically)';
+
+  @override
+  String get restartAppRequired => 'The application needs to be restarted to complete the restore process.';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get restartNow => 'Restart Now';
+
+  @override
+  String get restartLater => 'Later';
+
+  @override
   String get collectionPropertyPanelGlobalInversion => 'Global Inversion';
 
   @override
@@ -2303,4 +2576,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get windowButtonClose => 'Close';
+
+  @override
+  String get restartAfterRestored => 'Note: The application will automatically restart after restoration is complete';
 }
