@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../image/cached_image.dart';
 import 'collection_element_renderer.dart';
 import 'text_renderer.dart';
 
@@ -446,9 +446,9 @@ class ElementRenderers {
       // 提取文件路径（去掉file://前缀）
       final filePath = imageUrl.substring(7);
 
-      // 使用File.image加载本地文件
-      return Image.file(
-        File(filePath),
+      // 使用CachedImage加载本地文件
+      return CachedImage(
+        path: filePath,
         fit: fit,
         width: double.infinity,
         height: double.infinity,

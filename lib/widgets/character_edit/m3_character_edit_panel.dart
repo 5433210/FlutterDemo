@@ -20,6 +20,7 @@ import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/selected_region_provider.dart';
+import '../../presentation/widgets/image/cached_image.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/m3_save_confirmation_dialog.dart';
 import 'keyboard/shortcut_handler.dart';
@@ -844,16 +845,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                     ),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: Image.file(
-                    File(thumbnailPath),
+                  child: CachedImage(
+                    path: thumbnailPath,
                     width: 100,
                     height: 100,
                     fit: BoxFit.cover,
                     // Add the timestamp as a cache-busting key
                     key: ValueKey(cacheKey),
-                    // Disable caching to ensure we always load the latest version
-                    cacheWidth: null,
-                    cacheHeight: null,
                     errorBuilder: (context, error, stackTrace) {
                       AppLogger.error(
                           'CharacterEditPanel - Failed to load thumbnail',

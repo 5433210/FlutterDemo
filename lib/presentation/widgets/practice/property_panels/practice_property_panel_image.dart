@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
 import '../../../../application/providers/providers.dart';
+import '../../../widgets/image/cached_image.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../practice_edit_controller.dart';
@@ -1396,54 +1397,10 @@ class ImagePropertyPanel extends PracticePropertyPanel {
 
         return LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final imageProvider = FileImage(file);
-
-            // 预加载图片并获取其尺寸
-            final imageStream = imageProvider.resolve(ImageConfiguration(
-              size: constraints.biggest,
-            ));
-
-            imageStream.addListener(ImageStreamListener(
-              (ImageInfo info, bool _) {
-                final imageSize = Size(
-                  info.image.width.toDouble(),
-                  info.image.height.toDouble(),
-                );
-
-                // 计算渲染尺寸
-                final renderSize = _calculateRenderSize(
-                    imageSize,
-                    constraints.biggest,
-                    fitMode == BoxFit.contain
-                        ? 'contain'
-                        : fitMode == BoxFit.cover
-                            ? 'cover'
-                            : fitMode == BoxFit.fill
-                                ? 'fill'
-                                : 'none');
-
-                // 使用WidgetsBinding.instance.addPostFrameCallback避免在构建过程中调用setState
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  // 调用回调
-                  onImageSizeAvailable(imageSize, renderSize);
-                });
-              },
-              onError: (exception, stackTrace) {
-                debugPrint('图片加载错误: $exception');
-              },
-            ));
-
-            return Image(
-              image: imageProvider,
+            // 使用CachedImage替代FileImage
+            return CachedImage(
+              path: filePath,
               fit: fitMode,
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                if (frame == null) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                return child;
-              },
               errorBuilder: (context, error, stackTrace) {
                 debugPrint('图片加载错误: $error');
                 return Center(
@@ -1460,6 +1417,25 @@ class ImagePropertyPanel extends PracticePropertyPanel {
                     ],
                   ),
                 );
+              },
+              onImageLoaded: (Size size) {
+                // 图像加载完成后获取尺寸
+                final imageSize = size;
+
+                // 计算渲染尺寸
+                final renderSize = _calculateRenderSize(
+                    imageSize,
+                    constraints.biggest,
+                    fitMode == BoxFit.contain
+                        ? 'contain'
+                        : fitMode == BoxFit.cover
+                            ? 'cover'
+                            : fitMode == BoxFit.fill
+                                ? 'fill'
+                                : 'none');
+
+                // 调用回调
+                onImageSizeAvailable(imageSize, renderSize);
               },
             );
           },

@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +6,7 @@ import '../../../../../../domain/models/work/work_entity.dart';
 import '../../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../../theme/app_sizes.dart';
 import '../../../../../../utils/date_formatter.dart';
+import '../../../../../widgets/image/cached_image.dart';
 
 class M3WorkListItem extends ConsumerWidget {
   final WorkEntity work;
@@ -336,8 +335,8 @@ class M3WorkListItem extends ConsumerWidget {
           return _buildPlaceholder(context);
         }
 
-        return Image.file(
-          File(thumbnailPath),
+        return CachedImage(
+          path: thumbnailPath,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => _buildPlaceholder(context),
         );

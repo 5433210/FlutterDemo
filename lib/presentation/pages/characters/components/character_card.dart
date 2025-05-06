@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/models/character/character_view.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../widgets/image/cached_image.dart';
 
 class CharacterCard extends StatelessWidget {
   final CharacterView character;
@@ -196,8 +197,8 @@ class CharacterCard extends StatelessWidget {
         if (fileExists) {
           return Container(
             color: theme.colorScheme.surfaceContainerLowest,
-            child: Image.file(
-              file,
+            child: CachedImage(
+              path: thumbnailPath!,
               fit: BoxFit.contain,
               errorBuilder: (ctx, error, _) => _buildErrorImage(theme),
             ),

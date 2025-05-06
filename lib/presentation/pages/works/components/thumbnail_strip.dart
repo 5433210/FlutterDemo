@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../widgets/image/cached_image.dart';
 
 /// 缩略图条组件
 /// T 可以是 File 或 WorkImage
@@ -246,26 +247,10 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
               if (fileExists)
                 Hero(
                   tag: heroTag,
-                  child: Image.file(
-                    File(path),
+                  child: CachedImage(
+                    path: path,
                     fit: BoxFit.cover,
-                    frameBuilder:
-                        (context, child, frame, wasSynchronouslyLoaded) {
-                      if (wasSynchronouslyLoaded) return child;
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: frame != null
-                            ? child
-                            : Container(
-                                color:
-                                    theme.colorScheme.surfaceContainerHighest,
-                                child: const Center(
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2),
-                                ),
-                              ),
-                      );
-                    },
+                    key: ValueKey(heroTag),
                     errorBuilder: (context, error, stack) => Center(
                       child: Icon(Icons.broken_image,
                           size: 32, color: theme.colorScheme.error),
@@ -502,7 +487,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
   void _scrollToSelected() {
     if (!mounted || !_scrollController.hasClients) return;
 
-    final itemWidth = _thumbWidth + _thumbSpacing * 2;
+    const itemWidth = _thumbWidth + _thumbSpacing * 2;
     final viewportWidth = MediaQuery.of(context).size.width;
     final targetOffset = widget.selectedIndex * itemWidth;
 

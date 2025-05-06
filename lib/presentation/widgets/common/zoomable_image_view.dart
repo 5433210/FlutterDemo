@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
+import '../image/cached_image.dart';
+
 /// A widget that displays an image with zoom and pan capabilities
 class ZoomableImageView extends StatefulWidget {
   /// Path to the image file
@@ -134,25 +136,9 @@ class _ZoomableImageViewState extends State<ZoomableImageView> {
       );
     } else {
       // Regular image rendering
-      return Image.file(
-        File(path),
+      return CachedImage(
+        path: path,
         fit: BoxFit.contain,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (wasSynchronouslyLoaded) return child;
-
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: frame != null
-                ? child
-                : widget.loadingBuilder?.call(context) ??
-                    Container(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    ),
-          );
-        },
         errorBuilder: widget.errorBuilder ??
             (context, error, stackTrace) => Center(
                   child: Column(

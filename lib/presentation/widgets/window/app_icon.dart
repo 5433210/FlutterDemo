@@ -1,8 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_sizes.dart';
+import '../image/cached_image.dart';
 
 /// 应用图标组件，确保与Windows任务栏图标保持一致
 class AppIconWidget extends StatefulWidget {
@@ -34,12 +33,12 @@ class _AppIconWidgetState extends State<AppIconWidget> {
 
     // Try to load from a specific file path
     try {
-      return Image.file(
-        File('assets/images/app_icon.ico'),
+      return CachedImage(
+        path: 'assets/images/app_icon.ico',
         width: widget.size,
         height: widget.size,
-        color: color,
-        colorBlendMode: BlendMode.srcIn,
+        // Note: CachedImage doesn't support color and colorBlendMode directly
+        // Consider using a ColorFiltered widget if needed
       );
     } catch (e) {
       print('Error loading icon: $e');

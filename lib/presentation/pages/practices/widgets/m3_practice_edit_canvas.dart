@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
+import '../../../widgets/image/cached_image.dart';
 import '../../../widgets/practice/collection_element_renderer.dart';
 import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
@@ -1042,8 +1042,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         width: double.infinity,
         height: double.infinity,
         color: bgColor,
-        child: Image.file(
-          File(filePath),
+        child: CachedImage(
+          path: filePath,
           fit: fit,
           errorBuilder: (context, error, stackTrace) {
             debugPrint('Error loading file image: $error');

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../infrastructure/logging/logger.dart';
+import '../image/cached_image.dart';
 
 class BaseImagePreview extends StatefulWidget {
   final List<String> imagePaths;
@@ -94,8 +95,6 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
       );
     }
 
-    final file = File(currentPath);
-
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if (_isZoomed) return; // 如果已缩放则不切换图片
@@ -147,8 +146,8 @@ class _BaseImagePreviewState extends State<BaseImagePreview> {
         child: Center(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: Image.file(
-              file,
+            child: CachedImage(
+              path: currentPath,
               key: ValueKey(currentPath),
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {

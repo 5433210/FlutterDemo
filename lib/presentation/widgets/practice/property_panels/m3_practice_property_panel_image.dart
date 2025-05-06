@@ -12,6 +12,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../providers.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
+import '../../image/cached_image.dart';
 import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
@@ -1256,75 +1257,44 @@ class M3ImagePropertyPanel extends PracticePropertyPanel {
 
         return LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-            final imageProvider = FileImage(file);
-
-            // Preload image and get its size
-            final imageStream = imageProvider.resolve(ImageConfiguration(
-              size: constraints.biggest,
-            ));
-
-            imageStream.addListener(ImageStreamListener(
-              (ImageInfo info, bool _) {
-                final imageSize = Size(
-                  info.image.width.toDouble(),
-                  info.image.height.toDouble(),
-                );
-
-                // Calculate render size
-                final renderSize = _calculateRenderSize(
-                  imageSize,
-                  constraints.biggest,
-                  fitMode == BoxFit.contain
-                      ? 'contain'
-                      : fitMode == BoxFit.cover
-                          ? 'cover'
-                          : fitMode == BoxFit.fill
-                              ? 'fill'
-                              : 'none',
-                );
-
-                // Call the callback after the frame is built
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  onImageSizeAvailable(imageSize, renderSize);
-                });
-              },
-              onError: (exception, stackTrace) {
-                debugPrint('Image loading error: $exception');
-              },
-            ));
-
-            return Image(
-              image: imageProvider,
+            return CachedImage(
+              path: filePath,
               fit: fitMode,
-              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-                if (frame == null) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  );
-                }
-                return child;
-              },
               errorBuilder: (context, error, stackTrace) {
+                debugPrint('图片加载错误: $error');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline,
-                          color: Colors.red, size: 40),
+                      const Icon(Icons.error, color: Colors.red, size: 48),
                       const SizedBox(height: 8),
                       Text(
-                        l10n.imagePropertyPanelLoadError(error
-                            .toString()
-                            .substring(
-                                0, math.min(error.toString().length, 50))),
+                        '无法加载图片: ${error.toString().substring(0, math.min(error.toString().length, 50))}...',
                         style: const TextStyle(color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 );
+              },
+              onImageLoaded: (Size size) {
+                // 图像加载完成后获取尺寸
+                final imageSize = size;
+
+                // 计算渲染尺寸
+                final renderSize = _calculateRenderSize(
+                    imageSize,
+                    constraints.biggest,
+                    fitMode == BoxFit.contain
+                        ? 'contain'
+                        : fitMode == BoxFit.cover
+                            ? 'cover'
+                            : fitMode == BoxFit.fill
+                                ? 'fill'
+                                : 'none');
+
+                // 调用回调
+                onImageSizeAvailable(imageSize, renderSize);
               },
             );
           },

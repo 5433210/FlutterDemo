@@ -23,6 +23,9 @@ class CachedImage extends ConsumerStatefulWidget {
   /// Builder for displaying errors
   final Widget Function(BuildContext, Object, StackTrace?)? errorBuilder;
 
+  /// Callback when image is loaded, provides the image size
+  final Function(Size)? onImageLoaded;
+
   /// Simple constructor
   const CachedImage({
     super.key,
@@ -31,6 +34,7 @@ class CachedImage extends ConsumerStatefulWidget {
     this.width,
     this.height,
     this.errorBuilder,
+    this.onImageLoaded,
   });
 
   @override
@@ -120,6 +124,21 @@ class _CachedImageState extends ConsumerState<CachedImage> {
 
       // 强制重建
       setState(() {});
+
+      // 如果有onImageLoaded回调，获取图像尺寸并调用回调
+      if (widget.onImageLoaded != null) {
+        // 使用ImageStreamListener获取图像尺寸
+        final imageStream = fileImage.resolve(const ImageConfiguration());
+        imageStream.addListener(ImageStreamListener(
+          (ImageInfo info, bool _) {
+            final size = Size(
+              info.image.width.toDouble(),
+              info.image.height.toDouble(),
+            );
+            widget.onImageLoaded!(size);
+          },
+        ));
+      }
 
       // 异步缓存图像数据
       _cacheImageData(file);

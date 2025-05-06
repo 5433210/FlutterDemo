@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../viewmodels/states/character_grid_state.dart';
+import '../image/cached_image.dart';
 
 class M3CharacterTile extends StatelessWidget {
   final CharacterViewModel character;
@@ -63,13 +62,13 @@ class M3CharacterTile extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    character.character.isEmpty 
-                        ? l10n.characterCollectionNoCharacter 
+                    character.character.isEmpty
+                        ? l10n.characterCollectionNoCharacter
                         : character.character,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
               ],
@@ -114,11 +113,11 @@ class M3CharacterTile extends StatelessWidget {
   Widget _buildImage(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    
+
     // Try to load the thumbnail
     try {
-      return Image.file(
-        File(character.thumbnailPath),
+      return CachedImage(
+        path: character.thumbnailPath,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           return _buildPlaceholder(context);
@@ -131,9 +130,9 @@ class M3CharacterTile extends StatelessWidget {
 
   Widget _buildPlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
-      color: colorScheme.surfaceVariant,
+      color: colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(
           Icons.image_not_supported_outlined,
