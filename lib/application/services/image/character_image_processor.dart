@@ -8,26 +8,27 @@ import 'package:image/image.dart' as img;
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/processing_result.dart';
+import '../../../infrastructure/cache/interfaces/i_cache.dart';
 import '../../../infrastructure/image/image_processor.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/cache_providers.dart';
 import '../../providers/service_providers.dart';
-import '../storage/cache_manager.dart';
 
 /// Character Image Processor Provider
 final characterImageProcessorProvider =
     Provider<CharacterImageProcessor>((ref) {
   final imageProcessor = ref.watch(imageProcessorProvider);
-  final cacheManager = ref.watch(cacheManagerProvider);
-  return CharacterImageProcessor(imageProcessor, cacheManager);
+  final binaryCache = ref.watch(tieredImageCacheProvider);
+  return CharacterImageProcessor(imageProcessor, binaryCache);
 });
 
 /// 字符图像处理器
 class CharacterImageProcessor {
   static const int maxPreviewSize = 800;
   final ImageProcessor _processor;
-  final CacheManager _cacheManager;
+  final ICache<String, Uint8List> _binaryCache;
 
-  CharacterImageProcessor(this._processor, this._cacheManager);
+  CharacterImageProcessor(this._processor, this._binaryCache);
 
   String generateSvgOutline(DetectedOutline outline, bool isInverted) {
     final width = outline.boundingRect.width;
@@ -300,7 +301,7 @@ class CharacterImageProcessor {
         boundingBox: outline.boundingRect,
       );
 
-      await _cacheManager.put(cacheKey, await result.toArchiveBytes());
+      await _binaryCache.put(cacheKey, await result.toArchiveBytes());
       return result;
     } catch (e) {
       AppLogger.error('图像处理失败', error: e);

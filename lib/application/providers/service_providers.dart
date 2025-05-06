@@ -1,41 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
-import '../../infrastructure/cache/character_image_cache_service.dart';
 import '../../infrastructure/image/image_processor.dart';
 import '../../infrastructure/image/image_processor_impl.dart';
+import '../../infrastructure/providers/cache_providers.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../infrastructure/services/character_image_service.dart';
+import '../../infrastructure/services/character_image_service_impl.dart';
 import '../services/practice/practice_service.dart';
 import '../services/restoration/state_restoration_service.dart';
-import '../services/storage/cache_manager.dart';
 import '../services/storage/character_storage_service.dart';
 import '../services/storage/work_storage_service.dart';
 import '../services/work/work_image_service.dart';
 import '../services/work/work_service.dart';
 import 'repository_providers.dart';
 
-final cacheManagerProvider = Provider<CacheManager>((ref) {
-  return CacheManager();
-});
-
-/// 集字图片缓存服务提供者
-final characterImageCacheServiceProvider =
-    Provider<CharacterImageCacheService>((ref) {
-  final storage = ref.watch(initializedStorageProvider);
-  return CharacterImageCacheService(storage: storage);
-});
-
 /// 集字图片服务提供者
 final characterImageServiceProvider = Provider<CharacterImageService>((ref) {
   final storage = ref.watch(initializedStorageProvider);
-  final cacheService = ref.watch(characterImageCacheServiceProvider);
+  final imageCacheService = ref.watch(imageCacheServiceProvider);
   final imageProcessor = ref.watch(imageProcessorProvider);
 
-  return CharacterImageService(
+  return CharacterImageServiceImpl(
     storage: storage,
-    cacheService: cacheService,
+    imageCacheService: imageCacheService,
     imageProcessor: imageProcessor,
   );
 });

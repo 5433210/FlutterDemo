@@ -10,26 +10,29 @@ import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/processing_result.dart';
 import '../../../domain/repositories/character_repository.dart';
+import '../../../infrastructure/cache/interfaces/i_cache.dart';
+import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../presentation/viewmodels/states/character_grid_state.dart';
-import '../../../utils/image/image_cache_util.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/service_providers.dart';
 import '../image/character_image_processor.dart';
-import '../storage/cache_manager.dart';
 import '../storage/character_storage_service.dart';
 
 final characterServiceProvider = Provider<CharacterService>((ref) {
   final repository = ref.watch(characterRepositoryProvider);
   final imageProcessor = ref.watch(characterImageProcessorProvider);
-  final cacheManager = ref.watch(cacheManagerProvider);
+  final binaryCache = ref.watch(tieredImageCacheProvider);
   final storageService = ref.watch(characterStorageServiceProvider);
+  final imageCacheService = ref.watch(imageCacheServiceProvider);
 
   return CharacterService(
     repository: repository,
     imageProcessor: imageProcessor,
     storageService: storageService,
-    cacheManager: cacheManager,
+    binaryCache: binaryCache,
+    imageCacheService: imageCacheService,
   );
 });
 
@@ -37,24 +40,27 @@ class CharacterService {
   final CharacterRepository _repository;
   final CharacterImageProcessor _imageProcessor;
   final CharacterStorageService _storageService;
-  final CacheManager _cacheManager;
+  final ICache<String, Uint8List> _binaryCache;
+  final ImageCacheService _imageCacheService;
 
   CharacterService({
     required CharacterRepository repository,
     required CharacterImageProcessor imageProcessor,
     required CharacterStorageService storageService,
-    required CacheManager cacheManager,
+    required ICache<String, Uint8List> binaryCache,
+    required ImageCacheService imageCacheService,
   })  : _repository = repository,
         _imageProcessor = imageProcessor,
         _storageService = storageService,
-        _cacheManager = cacheManager;
+        _binaryCache = binaryCache,
+        _imageCacheService = imageCacheService;
 
   /// 清理缓存
   Future<void> clearCache() async {
     try {
-      await _cacheManager.clear();
+      await _binaryCache.clear();
     } catch (e) {
-      print('清理缓存失败: $e');
+      AppLogger.error('清理缓存失败', error: e);
     }
   }
 
@@ -119,9 +125,9 @@ class CharacterService {
       final id = characterEntity.id;
       try {
         await Future.wait([
-          _cacheManager.put('${id}_original', result.originalCrop),
-          _cacheManager.put('${id}_binary', result.binaryImage),
-          _cacheManager.put('${id}_thumbnail', result.thumbnail),
+          _binaryCache.put('${id}_original', result.originalCrop),
+          _binaryCache.put('${id}_binary', result.binaryImage),
+          _binaryCache.put('${id}_thumbnail', result.thumbnail),
         ]);
 
         AppLogger.debug('图像数据缓存完成', data: {'characterId': id});
@@ -145,10 +151,13 @@ class CharacterService {
       // 批量删除文件
       for (final id in ids) {
         await _deleteCharacterImages(id);
-        _cacheManager.invalidate(id);
+        await _binaryCache.invalidate(id);
+        await _binaryCache.invalidate('${id}_original');
+        await _binaryCache.invalidate('${id}_binary');
+        await _binaryCache.invalidate('${id}_thumbnail');
       }
     } catch (e) {
-      print('批量删除字符失败: $e');
+      AppLogger.error('批量删除字符失败', error: e);
       rethrow;
     }
   }
@@ -163,9 +172,12 @@ class CharacterService {
       await _deleteCharacterImages(id);
 
       // 清除缓存
-      _cacheManager.invalidate(id);
+      await _binaryCache.invalidate(id);
+      await _binaryCache.invalidate('${id}_original');
+      await _binaryCache.invalidate('${id}_binary');
+      await _binaryCache.invalidate('${id}_thumbnail');
     } catch (e) {
-      print('删除字符失败: $e');
+      AppLogger.error('删除字符失败', error: e);
       rethrow;
     }
   }
@@ -179,7 +191,7 @@ class CharacterService {
       }
       return character;
     } catch (e) {
-      print('获取字符详情失败: $e');
+      AppLogger.error('获取字符详情失败', error: e);
       rethrow;
     }
   }
@@ -190,7 +202,7 @@ class CharacterService {
     try {
       // 尝试从缓存获取
       final cacheKey = '${id}_${type.toString()}';
-      final cached = await _cacheManager.get(cacheKey);
+      final cached = await _binaryCache.get(cacheKey);
       if (cached != null) {
         return cached;
       }
@@ -202,7 +214,7 @@ class CharacterService {
 
         // 缓存结果
         if (imageData.isNotEmpty) {
-          await _cacheManager.put(cacheKey, imageData);
+          await _binaryCache.put(cacheKey, imageData);
         }
 
         return imageData;
@@ -210,7 +222,7 @@ class CharacterService {
 
       return null;
     } catch (e) {
-      print('获取字符图像失败: $e');
+      AppLogger.error('获取字符图像失败', error: e);
       rethrow;
     }
   }
@@ -242,7 +254,7 @@ class CharacterService {
     try {
       return await _repository.getRegionsByPageId(pageId);
     } catch (e) {
-      print('获取页面区域失败: $e');
+      AppLogger.error('获取页面区域失败', error: e);
       return [];
     }
   }
@@ -270,7 +282,7 @@ class CharacterService {
 
       return await Future.wait(futures);
     } catch (e) {
-      print('获取字符列表失败: $e');
+      AppLogger.error('获取字符列表失败', error: e);
       rethrow;
     }
   }
@@ -297,7 +309,7 @@ class CharacterService {
 
       return await Future.wait(futures);
     } catch (e) {
-      print('搜索字符失败: $e');
+      AppLogger.error('搜索字符失败', error: e);
       return [];
     }
   }
@@ -364,22 +376,22 @@ class CharacterService {
 
       // Explicitly invalidate any cached images
       await Future.wait([
-        _cacheManager.invalidate(id),
-        _cacheManager.invalidate('${id}_original'),
-        _cacheManager.invalidate('${id}_binary'),
-        _cacheManager.invalidate('${id}_thumbnail'),
+        _binaryCache.invalidate(id),
+        _binaryCache.invalidate('${id}_original'),
+        _binaryCache.invalidate('${id}_binary'),
+        _binaryCache.invalidate('${id}_thumbnail'),
       ]);
 
       final thumbnailPath = await _storageService.getThumbnailPath(id);
       // Clear the UI image cache of the thumbnail file
-      ImageCacheUtil.evictImage(thumbnailPath);
+      _imageCacheService.evictImage(thumbnailPath);
 
       // Clear any memory image caches if we have a new result
       if (result.thumbnail.isNotEmpty) {
-        ImageCacheUtil.evictMemoryImage(result.thumbnail);
+        _imageCacheService.evictMemoryImage(result.thumbnail);
       }
       if (result.originalCrop.isNotEmpty) {
-        ImageCacheUtil.evictMemoryImage(result.originalCrop);
+        _imageCacheService.evictMemoryImage(result.originalCrop);
       }
 
       AppLogger.debug('更新字符完成，缓存已失效', data: {'characterId': id});

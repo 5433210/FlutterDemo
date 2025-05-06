@@ -1,10 +1,13 @@
-import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../infrastructure/cache/services/image_cache_service.dart';
+import '../../../infrastructure/providers/cache_providers.dart';
 
 /// A simple cached image widget for loading file-based images with memory caching
-class CachedImage extends StatefulWidget {
+class CachedImage extends ConsumerStatefulWidget {
   /// The file path to the image
   final String path;
 
@@ -31,53 +34,14 @@ class CachedImage extends StatefulWidget {
   });
 
   @override
-  State<CachedImage> createState() => _CachedImageState();
+  ConsumerState<CachedImage> createState() => _CachedImageState();
 }
 
-/// Simple LRU (Least Recently Used) map implementation for caching
-class LRUMap<K, V> {
-  final int capacity;
-  final LinkedHashMap<K, V> _map = LinkedHashMap<K, V>();
-
-  LRUMap({required this.capacity});
-
-  int get length => _map.length;
-
-  V? operator [](K key) {
-    final value = _map[key];
-    if (value != null) {
-      // Move accessed key to the end (most recently used)
-      _map.remove(key);
-      _map[key] = value;
-    }
-    return value;
-  }
-
-  void operator []=(K key, V value) {
-    if (_map.containsKey(key)) {
-      _map.remove(key);
-    } else if (_map.length >= capacity) {
-      // Remove the first (least recently used) item
-      _map.remove(_map.keys.first);
-    }
-    _map[key] = value;
-  }
-
-  void clear() => _map.clear();
-
-  bool containsKey(K key) => _map.containsKey(key);
-
-  void remove(K key) => _map.remove(key);
-}
-
-class _CachedImageState extends State<CachedImage> {
-  /// Static cache for images across all instances of CachedImage
-  static final LRUMap<String, FileImage> _imageCache =
-      LRUMap<String, FileImage>(capacity: 100);
-
-  FileImage? _image;
+class _CachedImageState extends ConsumerState<CachedImage> {
+  ImageProvider? _imageProvider;
   Object? _error;
   StackTrace? _stackTrace;
+  late ImageCacheService _cacheService;
 
   @override
   Widget build(BuildContext context) {
@@ -85,12 +49,12 @@ class _CachedImageState extends State<CachedImage> {
       return widget.errorBuilder!(context, _error!, _stackTrace);
     }
 
-    if (_image == null) {
+    if (_imageProvider == null) {
       return const SizedBox.shrink();
     }
 
     return Image(
-      image: _image!,
+      image: _imageProvider!,
       fit: widget.fit,
       width: widget.width,
       height: widget.height,
@@ -109,35 +73,61 @@ class _CachedImageState extends State<CachedImage> {
   @override
   void initState() {
     super.initState();
+    _cacheService = ref.read(imageCacheServiceProvider);
     _loadImage();
+  }
+
+  // 异步缓存图像数据
+  Future<void> _cacheImageData(File file) async {
+    try {
+      // 生成缓存键
+      final cacheKey = 'file:${widget.path}';
+
+      // 检查缓存中是否已存在
+      final cachedData = await _cacheService.getBinaryImage(cacheKey);
+      if (cachedData != null) {
+        // 缓存中已存在，无需再次缓存
+        return;
+      }
+
+      // 读取文件数据并缓存
+      final fileData = await file.readAsBytes();
+      await _cacheService.cacheBinaryImage(cacheKey, fileData);
+    } catch (e) {
+      // 缓存失败不影响显示，只记录日志
+      debugPrint('缓存图像数据失败: $e');
+    }
   }
 
   void _loadImage() {
     try {
-      if (!File(widget.path).existsSync()) {
+      final file = File(widget.path);
+      if (!file.existsSync()) {
         setState(() {
           _error = Exception('File does not exist');
-          _image = null;
+          _imageProvider = null;
         });
         return;
       }
 
-      // Check if image is already cached
-      _image = _imageCache[widget.path];
+      // 创建文件图像提供者
+      final fileImage = FileImage(file);
 
-      // If not cached, create new image and cache it
-      if (_image == null) {
-        _image = FileImage(File(widget.path));
-        _imageCache[widget.path] = _image!;
-      }
-
+      // 设置图像提供者
+      _imageProvider = fileImage;
       _error = null;
       _stackTrace = null;
+
+      // 强制重建
+      setState(() {});
+
+      // 异步缓存图像数据
+      _cacheImageData(file);
     } catch (e, stackTrace) {
       setState(() {
         _error = e;
         _stackTrace = stackTrace;
-        _image = null;
+        _imageProvider = null;
       });
     }
   }
