@@ -1,0 +1,17 @@
+output: dist/
+releases:
+  - name: windows
+    jobs:
+      - name: release-windows
+        package:
+          platform: windows
+          target: exe # 可以是 exe, msix, msix-sideload
+          build_args:
+            - --release
+          # 若要生成 MSIX 包，取消注释下面的选项
+          # create_msix: true
+          # publisher_name: "Your Publisher Name"
+          # identity_name: "Your.Company.CharasGem"
+          # msix_version: 1.0.0.0
+          # certificate_path: path/to/certificate.pfx
+          # certificate_password: your-certificate-password

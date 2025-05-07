@@ -24,7 +24,7 @@ Name: "SimpChinese"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: ".\build\windows\x64\runner\Release\demo.exe"; DestDir: "{app}"; DestName: "charasgem.exe"; Flags: ignoreversion
+Source: ".\build\windows\x64\runner\Release\charasgem.exe"; DestDir: "{app}"; DestName: "charasgem.exe"; Flags: ignoreversion
 Source: ".\build\windows\x64\runner\Release\data\*.*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: ".\build\windows\x64\runner\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -68,7 +68,7 @@ begin
 end;
 
 [Run]
-Filename: "{app}\demo.exe"; Description: "{cm:LaunchProgram,'demo.exe'}"; Flags: shellexec postinstall skipifdoesntexist
+Filename: "{app}\charasgem.exe"; Description: "{cm:LaunchProgram,'charasgem.exe'}"; Flags: shellexec postinstall skipifdoesntexist
 
 [UninstallDelete]
 Type: files; Name: "{app}\*"
