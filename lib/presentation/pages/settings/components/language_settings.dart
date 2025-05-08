@@ -14,6 +14,7 @@ class LanguageSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     AppLogger.debug('LanguageSettings.build', tag: 'LanguageSettings', data: {
       'currentLanguage': settings.language.toString(),
@@ -28,8 +29,9 @@ class LanguageSettings extends ConsumerWidget {
         ListTile(
           title: Text(l10n.language),
           subtitle: Text(settings.language.getDisplayName(context)),
-          leading: Icon(settings.language.icon),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          leading: Icon(settings.language.icon, color: colorScheme.primary),
+          trailing: Icon(Icons.arrow_forward_ios,
+              size: 16, color: colorScheme.onSurfaceVariant),
           onTap: () => _showLanguageSelector(context, ref, settings.language),
         ),
       ],
@@ -42,6 +44,7 @@ class LanguageSettings extends ConsumerWidget {
     AppLanguage currentLanguage,
   ) {
     final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     AppLogger.debug('_showLanguageSelector', tag: 'LanguageSettings', data: {
       'currentLanguage': currentLanguage.toString(),
@@ -58,29 +61,34 @@ class LanguageSettings extends ConsumerWidget {
             return RadioListTile<AppLanguage>(
               title: Text(language.getDisplayName(context)),
               value: language,
+              activeColor: colorScheme.primary,
               groupValue: currentLanguage,
               onChanged: (value) async {
                 if (value != null) {
-                  AppLogger.info('用户选择了新的语言设置', tag: 'LanguageSettings', data: {
-                    'newLanguage': value.toString(),
-                    'previousLanguage': currentLanguage.toString(),
-                  });
+                  AppLogger.info('Language settings changed',
+                      tag: 'LanguageSettings',
+                      data: {
+                        'newLanguage': value.toString(),
+                        'previousLanguage': currentLanguage.toString(),
+                      });
 
-                  // 更新语言设置
+                  // Update language settings
                   await ref.read(settingsProvider.notifier).setLanguage(value);
 
-                  // 关闭对话框
+                  // Close dialog
                   if (context.mounted) {
                     Navigator.of(context).pop();
                   }
 
-                  // 延迟一下，确保设置已经保存
+                  // Small delay to ensure settings are saved
                   await Future.delayed(const Duration(milliseconds: 100));
 
-                  // 重新构建整个应用
+                  // Rebuild entire app
                   if (context.mounted) {
-                    AppLogger.info('重新加载应用以应用新的语言设置', tag: 'LanguageSettings');
-                    // 使用 Navigator 重新加载根路由，强制重新构建整个应用
+                    AppLogger.info(
+                        'Reloading app to apply new language settings',
+                        tag: 'LanguageSettings');
+                    // Use Navigator to reload root route, forcing rebuild of entire app
                     Navigator.of(context, rootNavigator: true)
                         .pushNamedAndRemoveUntil(
                       '/',

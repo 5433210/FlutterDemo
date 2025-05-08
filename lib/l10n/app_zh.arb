@@ -468,6 +468,8 @@
   "themeModeDark": "暗色",
   "themeModeLight": "亮色",
   "themeModeSystem": "系统",
+  "themeModeDescription": "使用深色主题获得更好的夜间观看体验",
+  "themeModeSystemDescription": "根据系统设置自动切换深色/亮色主题",
   "toggleTestText": "切换测试文本",
   "characterDetailFormatName": "格式名称",
   "characterDetailFormatType": "类型",
@@ -806,5 +808,12 @@
   "invalidBackupFile": "无效的备份文件",
   "exportingBackup": "正在导出备份...",
   "importingBackup": "正在导入备份...",
-  "restartAfterRestored":"注意：恢复完成后应用将自动重启"
+  "restartAfterRestored":"注意：恢复完成后应用将自动重启",
+  "themeModeDescription":"使用深色主题",
+  "storageLocation":"存储位置",
+  "cacheSize":"缓存大小",
+  "storageUsed":"已使用存储",
+  "fileCount":"文件数量",
+  "workCount":"作品数量",
+  "loadFailed":"加载失败"
 }

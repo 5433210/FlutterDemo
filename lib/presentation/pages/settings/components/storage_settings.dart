@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/providers/storage_info_provider.dart';
-import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_sizes.dart';
-import '../../../../theme/app_text_styles.dart';
 import '../../../../utils/file_size_formatter.dart';
+import '../../../widgets/settings/settings_section.dart';
 
 class StorageSettings extends ConsumerWidget {
   const StorageSettings({super.key});
@@ -13,41 +13,49 @@ class StorageSettings extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final storageInfo = ref.watch(storageInfoProvider);
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('存储空间', style: AppTextStyles.titleLarge),
-            const SizedBox(height: AppSizes.p16),
-            storageInfo.when(
-              data: (info) => _buildStorageInfo(info),
-              loading: () => const CircularProgressIndicator(),
-              error: (err, stack) => Text('加载失败: $err'),
+    return SettingsSection(
+      title: l10n.storageSettings,
+      icon: Icons.storage_outlined,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(AppSizes.p16),
+          child: storageInfo.when(
+            data: (info) => _buildStorageInfo(context, info),
+            loading: () => Center(
+              child: CircularProgressIndicator(color: colorScheme.primary),
             ),
-          ],
+            error: (error, stackTrace) => const Center(),
+          ),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildDetailsSection(StorageInfo info) {
+  Widget _buildDetailsSection(BuildContext context, StorageInfo info) {
+    final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('存储位置: ${info.path}', style: AppTextStyles.bodyMedium),
+        Text(
+          '${l10n.storageLocation}: ${info.path}',
+          style: textTheme.bodyMedium,
+        ),
         const SizedBox(height: AppSizes.p8),
         Text(
-          '缓存大小: ${FileSizeFormatter.format(info.cacheSize)}',
-          style: AppTextStyles.bodyMedium,
+          '${l10n.cacheSize}: ${FileSizeFormatter.format(info.cacheSize)}',
+          style: textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSizes.p16),
         for (final dir in info.subdirectories) ...[
           Text(
             '${dir.name}: ${FileSizeFormatter.format(dir.size)}',
-            style: AppTextStyles.bodyMedium,
+            style: textTheme.bodyMedium,
           ),
           const SizedBox(height: AppSizes.p4),
         ],
@@ -55,72 +63,81 @@ class StorageSettings extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoItem({
+  Widget _buildInfoItem(
+    BuildContext context, {
     required String label,
     required String value,
     required IconData icon,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Row(
       children: [
-        Icon(icon, size: 20),
+        Icon(icon, size: 20, color: colorScheme.primary),
         const SizedBox(width: AppSizes.p8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: AppTextStyles.labelMedium),
-            Text(value, style: AppTextStyles.bodyLarge),
+            Text(label, style: textTheme.labelMedium),
+            Text(value, style: textTheme.bodyLarge),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildStorageBar(StorageInfo info) {
+  Widget _buildStorageBar(BuildContext context, StorageInfo info) {
+    final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final usagePercentage = info.usagePercentage.clamp(0, 100);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '已使用 ${FileSizeFormatter.format(info.usedSize)} / ${FileSizeFormatter.format(info.totalSize)}',
-          style: AppTextStyles.bodyMedium,
+          '${l10n.storageUsed} ${FileSizeFormatter.format(info.usedSize)} / ${FileSizeFormatter.format(info.totalSize)}',
+          style: textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSizes.p8),
         LinearProgressIndicator(
           value: usagePercentage / 100,
-          backgroundColor: AppColors.background,
-          valueColor: const AlwaysStoppedAnimation<Color>(
-            AppColors.primary,
-          ),
+          backgroundColor: colorScheme.surfaceContainerHighest,
+          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
         ),
       ],
     );
   }
 
-  Widget _buildStorageInfo(StorageInfo info) {
+  Widget _buildStorageInfo(BuildContext context, StorageInfo info) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSummarySection(info),
+        _buildSummarySection(context, info),
         const SizedBox(height: AppSizes.p16),
-        _buildStorageBar(info),
+        _buildStorageBar(context, info),
         const SizedBox(height: AppSizes.p16),
-        _buildDetailsSection(info),
+        _buildDetailsSection(context, info),
       ],
     );
   }
 
-  Widget _buildSummarySection(StorageInfo info) {
+  Widget _buildSummarySection(BuildContext context, StorageInfo info) {
+    final l10n = AppLocalizations.of(context);
+
     return Row(
       children: [
         _buildInfoItem(
-          label: '作品数量',
+          context,
+          label: l10n.workCount,
           value: '${info.workCount}',
           icon: Icons.image_outlined,
         ),
         const SizedBox(width: AppSizes.p24),
         _buildInfoItem(
-          label: '文件数量',
+          context,
+          label: l10n.fileCount,
           value: '${info.fileCount}',
           icon: Icons.folder_outlined,
         ),

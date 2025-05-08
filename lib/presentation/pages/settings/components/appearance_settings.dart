@@ -15,6 +15,7 @@ class AppearanceSettings extends ConsumerWidget {
     final isDarkMode = themeMode == AppThemeMode.dark;
     final isSystemMode = themeMode == AppThemeMode.system;
     final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return SettingsSection(
       title: l10n.themeMode,
@@ -22,10 +23,11 @@ class AppearanceSettings extends ConsumerWidget {
       children: [
         ListTile(
           title: Text(l10n.themeModeDark),
-          subtitle: const Text('使用深色主题'),
-          leading: const Icon(Icons.dark_mode),
+          subtitle: Text(l10n.themeModeDescription),
+          leading: Icon(Icons.dark_mode, color: colorScheme.primary),
           trailing: Switch(
             value: isDarkMode,
+            activeColor: colorScheme.primary,
             onChanged: (value) {
               ref.read(settingsProvider.notifier).setThemeMode(
                     value ? AppThemeMode.dark : AppThemeMode.light,
@@ -35,10 +37,12 @@ class AppearanceSettings extends ConsumerWidget {
         ),
         ListTile(
           title: Text(l10n.themeModeSystem),
-          subtitle: const Text('根据系统设置自动切换深色/浅色模式'),
-          leading: const Icon(Icons.settings_system_daydream_outlined),
+          subtitle: Text(l10n.themeModeSystemDescription),
+          leading: Icon(Icons.settings_system_daydream_outlined,
+              color: colorScheme.primary),
           trailing: Switch(
             value: isSystemMode,
+            activeColor: colorScheme.primary,
             onChanged: (value) {
               if (value) {
                 ref

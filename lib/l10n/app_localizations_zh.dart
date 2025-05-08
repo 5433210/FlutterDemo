@@ -1732,6 +1732,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeModeSystem => '系统';
 
   @override
+  String get themeModeDescription => '使用深色主题';
+
+  @override
+  String get themeModeSystemDescription => '根据系统设置自动切换深色/亮色主题';
+
+  @override
   String get toggleTestText => '切换测试文本';
 
   @override
@@ -2579,4 +2585,22 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get restartAfterRestored => '注意：恢复完成后应用将自动重启';
+
+  @override
+  String get storageLocation => '存储位置';
+
+  @override
+  String get cacheSize => '缓存大小';
+
+  @override
+  String get storageUsed => '已使用存储';
+
+  @override
+  String get fileCount => '文件数量';
+
+  @override
+  String get workCount => '作品数量';
+
+  @override
+  String get loadFailed => '加载失败';
 }

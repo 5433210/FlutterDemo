@@ -581,6 +581,8 @@
   "themeModeDark": "Dark",
   "themeModeLight": "Light",
   "themeModeSystem": "System",
+  "themeModeDescription": "Use dark theme for better night viewing",
+  "themeModeSystemDescription": "Automatically switch between light/dark modes based on system settings",
   "toggleTestText": "Toggle Test Text",
   "characterDetailFormatName": "Format Name",
   "characterDetailFormatType": "Type",
@@ -851,5 +853,12 @@
   "windowButtonMaximize": "Maximize",
   "windowButtonRestore": "Restore",
   "windowButtonClose": "Close",
-  "restartAfterRestored":"Note: The application will automatically restart after restoration is complete"
+  "restartAfterRestored":"Note: The application will automatically restart after restoration is complete",
+  "themeModeDescription":"Dark Theme",
+  "storageLocation":"Storage Location",
+  "cacheSize":"Cache Size",
+  "storageUsed":"Storage Used",
+  "fileCount":"File Count",
+  "workCount":"Work Count",
+  "loadFailed":"Load Failed"
 }

@@ -1732,6 +1732,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeSystem => 'System';
 
   @override
+  String get themeModeDescription => 'Dark Theme';
+
+  @override
+  String get themeModeSystemDescription => 'Automatically switch between light/dark modes based on system settings';
+
+  @override
   String get toggleTestText => 'Toggle Test Text';
 
   @override
@@ -2579,4 +2585,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restartAfterRestored => 'Note: The application will automatically restart after restoration is complete';
+
+  @override
+  String get storageLocation => 'Storage Location';
+
+  @override
+  String get cacheSize => 'Cache Size';
+
+  @override
+  String get storageUsed => 'Storage Used';
+
+  @override
+  String get fileCount => 'File Count';
+
+  @override
+  String get workCount => 'Work Count';
+
+  @override
+  String get loadFailed => 'Load Failed';
 }

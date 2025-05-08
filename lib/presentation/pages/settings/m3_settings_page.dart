@@ -5,7 +5,6 @@ import '../../../theme/app_sizes.dart';
 import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
 import 'components/cache_settings.dart';
-import 'components/developer_settings.dart';
 import 'components/language_settings.dart';
 import 'components/m3_settings_navigation_bar.dart';
 import 'components/storage_settings.dart';
@@ -46,8 +45,6 @@ class M3SettingsPage extends ConsumerWidget {
           BackupSettings(),
           Divider(),
           CacheSettings(),
-          Divider(),
-          DeveloperSettings(),
         ],
       ),
     );

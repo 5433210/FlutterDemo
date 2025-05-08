@@ -3497,6 +3497,18 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeModeSystem;
 
+  /// No description provided for @themeModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Theme'**
+  String get themeModeDescription;
+
+  /// No description provided for @themeModeSystemDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically switch between light/dark modes based on system settings'**
+  String get themeModeSystemDescription;
+
   /// No description provided for @toggleTestText.
   ///
   /// In en, this message translates to:
@@ -5074,6 +5086,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Note: The application will automatically restart after restoration is complete'**
   String get restartAfterRestored;
+
+  /// No description provided for @storageLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Location'**
+  String get storageLocation;
+
+  /// No description provided for @cacheSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Size'**
+  String get cacheSize;
+
+  /// No description provided for @storageUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Used'**
+  String get storageUsed;
+
+  /// No description provided for @fileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'File Count'**
+  String get fileCount;
+
+  /// No description provided for @workCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Work Count'**
+  String get workCount;
+
+  /// No description provided for @loadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Failed'**
+  String get loadFailed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
