@@ -11,26 +11,18 @@ import '../infrastructure/logging/logger.dart';
 import '../l10n/app_localizations.dart';
 import '../presentation/pages/characters/character_list_page.dart';
 import '../presentation/pages/main/m3_main_window.dart';
-import '../presentation/pages/main/main_window.dart';
-import '../presentation/pages/practices/practice_list_page.dart';
-import '../presentation/pages/settings/settings_page.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
 import '../presentation/pages/works/m3_work_detail_page.dart';
-import '../presentation/pages/works/work_browse_page.dart';
-import '../presentation/pages/works/work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
 import '../presentation/widgets/font_tester.dart';
 import '../presentation/widgets/font_weight_tester.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
-import 'pages/characters/character_management_page.dart';
 import 'pages/characters/m3_character_management_page.dart';
 import 'pages/initialization/initialization_screen.dart';
 import 'pages/practices/m3_practice_edit_page.dart';
 import 'pages/practices/m3_practice_list_page.dart';
-import 'pages/practices/practice_edit_page.dart';
 import 'pages/settings/m3_settings_page.dart';
-import 'pages/works/character_collection_page.dart';
 import 'pages/works/m3_character_collection_page.dart';
 
 class MyApp extends ConsumerWidget {
@@ -107,12 +99,8 @@ class MyApp extends ConsumerWidget {
           title: userLanguage == AppLanguage.en
               ? 'Character As Gem'
               : '字字珠玑', // 使用简单的条件判断设置标题
-          theme: featureFlags.useMaterial3UI
-              ? AppTheme.lightM3(locale: currentLocale) // 传递当前语言环境
-              : AppTheme.light(), // 现有主题
-          darkTheme: featureFlags.useMaterial3UI
-              ? AppTheme.darkM3(locale: currentLocale) // 传递当前语言环境
-              : AppTheme.dark(), // 现有暗色主题
+          theme: AppTheme.lightM3(locale: currentLocale), // 传递当前语言环境
+          darkTheme: AppTheme.darkM3(locale: currentLocale), // 传递当前语言环境
           themeMode: ref.watch(
               settingsProvider.select((s) => s.themeMode.toFlutterThemeMode())),
           debugShowCheckedModeBanner: false,
@@ -124,9 +112,7 @@ class MyApp extends ConsumerWidget {
                 windowManager.setTitle(l10n.appTitle);
               });
 
-              return featureFlags.useMaterial3UI
-                  ? const M3MainWindow() // 新的Material 3主窗体
-                  : const MainWindow(); // 现有主窗体
+              return const M3MainWindow();
             },
           ),
           onGenerateRoute: (settings) =>
@@ -146,30 +132,23 @@ class MyApp extends ConsumerWidget {
     switch (settings.name) {
       case AppRoutes.home:
         return MaterialPageRoute(
-          builder: (context) =>
-              useMaterial3 ? const M3MainWindow() : const MainWindow(),
+          builder: (context) => const M3MainWindow(),
         );
 
       case AppRoutes.workBrowse:
         return MaterialPageRoute(
-          builder: (context) =>
-              useMaterial3 ? const M3WorkBrowsePage() : const WorkBrowsePage(),
+          builder: (context) => const M3WorkBrowsePage(),
         );
 
       case AppRoutes.workDetail:
         if (args is Map<String, String>) {
           return MaterialPageRoute(
-            builder: (context) => useMaterial3
-                ? M3WorkDetailPage(
-                    workId: args['workId']!, initialPageId: args['pageId']!)
-                : WorkDetailPage(
-                    workId: args['workId']!, initialPageId: args['pageId']!),
+            builder: (context) => M3WorkDetailPage(
+                workId: args['workId']!, initialPageId: args['pageId']!),
           );
         } else if (args is String) {
           return MaterialPageRoute(
-            builder: (context) => useMaterial3
-                ? M3WorkDetailPage(workId: args)
-                : WorkDetailPage(workId: args),
+            builder: (context) => M3WorkDetailPage(workId: args),
           );
         }
         break;
@@ -177,17 +156,11 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.characterCollection:
         if (args is Map<String, String>) {
           return MaterialPageRoute(
-            builder: (context) => useMaterial3
-                ? M3CharacterCollectionPage(
-                    workId: args['workId']!,
-                    initialPageId: args['pageId']!,
-                    initialCharacterId: args['characterId']!,
-                  )
-                : CharacterCollectionPage(
-                    workId: args['workId']!,
-                    initialPageId: args['pageId']!,
-                    initialCharacterId: args['characterId']!,
-                  ),
+            builder: (context) => M3CharacterCollectionPage(
+              workId: args['workId']!,
+              initialPageId: args['pageId']!,
+              initialCharacterId: args['characterId']!,
+            ),
           );
         }
         break;
@@ -199,33 +172,24 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.characterManagement:
         return MaterialPageRoute(
-          builder: (context) => useMaterial3
-              ? const M3CharacterManagementPage()
-              : const CharacterManagementPage(),
+          builder: (context) => const M3CharacterManagementPage(),
         );
 
       case AppRoutes.practiceList:
         return MaterialPageRoute(
-          builder: (context) => useMaterial3
-              ? const M3PracticeListPage()
-              : const PracticeListPage(),
+          builder: (context) => const M3PracticeListPage(),
         );
 
       case AppRoutes.practiceEdit:
         return MaterialPageRoute(
-          builder: (context) => useMaterial3
-              ? M3PracticeEditPage(
-                  practiceId: args as String?,
-                )
-              : PracticeEditPage(
-                  practiceId: args as String?,
-                ),
+          builder: (context) => M3PracticeEditPage(
+            practiceId: args as String?,
+          ),
         );
 
       case AppRoutes.settings:
         return MaterialPageRoute(
-          builder: (context) =>
-              useMaterial3 ? const M3SettingsPage() : const SettingsPage(),
+          builder: (context) => const M3SettingsPage(),
         );
 
       case AppRoutes.fontTester:
@@ -241,8 +205,7 @@ class MyApp extends ConsumerWidget {
 
     // Unknown routes return to home
     return MaterialPageRoute(
-      builder: (context) =>
-          useMaterial3 ? const M3MainWindow() : const MainWindow(),
+      builder: (context) => const M3MainWindow(),
     );
   }
 }

@@ -1,9 +1,0 @@
-// 导出所有属性面板
-export 'collection_property_panel.dart';
-export 'practice_property_panel_base.dart';
-export 'practice_property_panel_group.dart';
-export 'practice_property_panel_image.dart';
-export 'practice_property_panel_layer.dart';
-export 'practice_property_panel_multi.dart';
-export 'practice_property_panel_page.dart';
-export 'practice_property_panel_text.dart';
