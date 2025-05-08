@@ -43,7 +43,7 @@ void main() async {
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     // 设置窗口图标，确保与任务栏图标一致
     // 注意：路径是相对于可执行文件的，不是相对于Flutter项目
-    await windowManager.setIcon('resources/app_icon.ico');
+    await windowManager.setIcon('resources/app_trans_bg.ico');
     await windowManager.show();
     await windowManager.focus();
   });
