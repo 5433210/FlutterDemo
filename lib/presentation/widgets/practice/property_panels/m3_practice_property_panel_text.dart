@@ -8,7 +8,7 @@ import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
 import 'm3_panel_styles.dart';
-import 'practice_property_panel_base.dart';
+import 'm3_practice_property_panel_base.dart';
 
 // 列数据类，用于存储列的Widget和字符
 class ColumnData {
@@ -19,7 +19,7 @@ class ColumnData {
 }
 
 /// 文本内容属性面板
-class M3TextPropertyPanel extends PracticePropertyPanel {
+class M3TextPropertyPanel extends M3PracticePropertyPanel {
   // 文本控制器静态变量
   static final TextEditingController _textController = TextEditingController();
 

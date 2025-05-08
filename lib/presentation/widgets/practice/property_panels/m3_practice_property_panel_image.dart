@@ -16,10 +16,10 @@ import '../../image/cached_image.dart';
 import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
-import 'practice_property_panel_base.dart';
+import 'm3_practice_property_panel_base.dart';
 
 /// Material 3 Image Property Panel
-class M3ImagePropertyPanel extends PracticePropertyPanel {
+class M3ImagePropertyPanel extends M3PracticePropertyPanel {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final VoidCallback onSelectImage;
