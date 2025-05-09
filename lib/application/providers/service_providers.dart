@@ -3,11 +3,14 @@ import 'package:path/path.dart' as path;
 
 import '../../infrastructure/image/image_processor.dart';
 import '../../infrastructure/image/image_processor_impl.dart';
-import '../../infrastructure/providers/cache_providers.dart';
+import '../../infrastructure/providers/cache_providers.dart' as cache;
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../infrastructure/services/character_image_service.dart';
 import '../../infrastructure/services/character_image_service_impl.dart';
+import '../repositories/library_repository_impl.dart';
+import '../services/library_import_service.dart';
+import '../services/library_service.dart';
 import '../services/practice/practice_service.dart';
 import '../services/restoration/state_restoration_service.dart';
 import '../services/storage/character_storage_service.dart';
@@ -19,7 +22,7 @@ import 'repository_providers.dart';
 /// 集字图片服务提供者
 final characterImageServiceProvider = Provider<CharacterImageService>((ref) {
   final storage = ref.watch(initializedStorageProvider);
-  final imageCacheService = ref.watch(imageCacheServiceProvider);
+  final imageCacheService = ref.watch(cache.imageCacheServiceProvider);
   final imageProcessor = ref.watch(imageProcessorProvider);
 
   return CharacterImageServiceImpl(
@@ -40,6 +43,22 @@ final imageProcessorProvider = Provider<ImageProcessor>((ref) {
   final storage = ref.watch(initializedStorageProvider);
   return ImageProcessorImpl(
       cachePath: path.join(storage.getAppDataPath(), 'cache'));
+});
+
+/// 图库导入服务提供者
+final libraryImportServiceProvider = Provider<LibraryImportService>((ref) {
+  final repository =
+      ref.watch(libraryRepositoryProvider) as LibraryRepositoryImpl;
+  final storageService = ref.watch(libraryStorageServiceProvider);
+  return LibraryImportService(repository, storageService);
+});
+
+/// 图库服务提供者
+final libraryServiceProvider = Provider<LibraryService>((ref) {
+  return LibraryService(
+    repository: ref.watch(libraryRepositoryProvider),
+    imageCache: ref.watch(cache.imageCacheServiceProvider),
+  );
 });
 
 final practiceServiceProvider = Provider<PracticeService>((ref) {

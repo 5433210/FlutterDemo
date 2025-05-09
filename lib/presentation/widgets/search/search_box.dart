@@ -1,39 +1,45 @@
 import 'package:flutter/material.dart';
 
-import '../../../theme/app_sizes.dart';
-
+/// 搜索框组件
 class SearchBox extends StatelessWidget {
-  final String? hintText;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onSubmitted;
-  final TextEditingController? controller;
-  final double? width;
+  /// 文本控制器
+  final TextEditingController controller;
 
+  /// 提示文本
+  final String hintText;
+
+  /// 提交回调
+  final void Function(String) onSubmitted;
+
+  /// 构造函数
   const SearchBox({
     super.key,
-    this.hintText,
-    this.onChanged,
-    this.onSubmitted,
-    this.controller,
-    this.width,
+    required this.controller,
+    required this.hintText,
+    required this.onSubmitted,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: width ?? 240,
-      child: SearchBar(
-        controller: controller,
+    final theme = Theme.of(context);
+
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
         hintText: hintText,
-        leading: const Icon(Icons.search),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(
-            horizontal: AppSizes.spacingMedium,
-          ),
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            controller.clear();
+            onSubmitted('');
+          },
         ),
-        onChanged: onChanged,
-        onSubmitted: (value) => onSubmitted?.call(),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
+      onSubmitted: onSubmitted,
     );
   }
 }

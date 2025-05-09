@@ -396,7 +396,6 @@ class SQLiteDatabase implements DatabaseInterface {
     }
 
     final dbFullPath = path.join(directory, name);
-
     AppLogger.info(
       '数据库配置信息:\n'
       '  - 数据库类型: SQLite3\n'
@@ -408,53 +407,93 @@ class SQLiteDatabase implements DatabaseInterface {
       tag: 'Database',
     );
 
-    final db = await openDatabase(
-      dbFullPath,
-      version: migrations.length,
-      onCreate: (db, version) async {
-        AppLogger.info(
-          '首次创建数据库，执行初始化...\n'
-          '执行迁移脚本:\n',
-          tag: 'Database',
-        );
-        for (final sql in migrations) {
+    try {
+      final db = await openDatabase(
+        dbFullPath,
+        version: migrations.length,
+        onCreate: (db, version) async {
           AppLogger.info(
-            '执行SQL:\n$sql',
+            '首次创建数据库，执行初始化...\n'
+            '执行迁移脚本:\n',
             tag: 'Database',
           );
-          await db.execute(sql);
-        }
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        AppLogger.info(
-          '升级数据库:\n'
-          '  - 当前版本: v$oldVersion\n'
-          '  - 目标版本: v$newVersion',
-          tag: 'Database',
-        );
-        for (var i = oldVersion; i < newVersion; i++) {
+          for (int i = 0; i < migrations.length; i++) {
+            final sql = migrations[i];
+            AppLogger.info(
+              '执行SQL (${i + 1}/${migrations.length}):\n$sql',
+              tag: 'Database',
+            );
+            try {
+              await db.execute(sql);
+            } catch (e) {
+              AppLogger.error('执行迁移脚本失败', tag: 'Database', error: e, data: {
+                'script_index': i,
+                'sql': sql,
+              });
+              rethrow;
+            }
+          }
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          AppLogger.info(
+            '升级数据库:\n'
+            '  - 当前版本: v$oldVersion\n'
+            '  - 目标版本: v$newVersion',
+            tag: 'Database',
+          );
+          for (var i = oldVersion; i < newVersion; i++) {
+            final sql = migrations[i];
+            AppLogger.debug(
+              '执行迁移脚本 ${i + 1}:\n$sql',
+              tag: 'Database',
+            );
+            try {
+              await db.execute(sql);
+            } catch (e) {
+              AppLogger.error(
+                '数据库升级失败',
+                tag: 'Database',
+                error: e,
+                data: {
+                  'script_index': i,
+                  'oldVersion': oldVersion,
+                  'newVersion': newVersion,
+                  'sql': sql,
+                },
+              );
+              rethrow;
+            }
+          }
+        },
+        onConfigure: (db) async {
+          await db.execute('PRAGMA foreign_keys = ON');
           AppLogger.debug(
-            '执行迁移脚本 ${i + 1}:\n${migrations[i]}',
+            'SQLite配置完成: 已启用外键约束',
             tag: 'Database',
           );
-          await db.execute(migrations[i]);
-        }
-      },
-      onConfigure: (db) async {
-        await db.execute('PRAGMA foreign_keys = ON');
-        AppLogger.debug(
-          'SQLite配置完成: 已启用外键约束',
-          tag: 'Database',
-        );
-      },
-      onDowngrade: (db, oldVersion, newVersion) => {
-        AppLogger.warning(
-          '数据库降级: 当前版本 v$oldVersion, 目标版本 v$newVersion',
-          tag: 'Database',
-        ),
-        throw Exception('数据库降级不支持'),
-      },
-    );
-    return SQLiteDatabase._(db);
+        },
+        onDowngrade: (db, oldVersion, newVersion) => {
+          AppLogger.warning(
+            '数据库降级: 当前版本 v$oldVersion, 目标版本 v$newVersion',
+            tag: 'Database',
+          ),
+          throw Exception('数据库降级不支持'),
+        },
+      );
+
+      AppLogger.info('数据库初始化成功', tag: 'Database');
+      return SQLiteDatabase._(db);
+    } catch (e, stack) {
+      AppLogger.error(
+        '数据库初始化失败',
+        tag: 'Database',
+        error: e,
+        stackTrace: stack,
+        data: {'path': dbFullPath},
+      );
+
+      // 重新抛出异常，让调用者知道初始化失败
+      rethrow;
+    }
   }
 }

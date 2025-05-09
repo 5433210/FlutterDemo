@@ -1,0 +1,475 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import '../../../infrastructure/logging/logger.dart';
+import '../image/cached_image.dart';
+
+/// 高级图片预览组件
+/// 支持左右切换、全屏显示、黑白背景切换、缩放和平移
+class AdvancedImagePreview extends StatefulWidget {
+  /// 图片路径列表
+  final List<String> imagePaths;
+
+  /// 初始选中的图片索引
+  final int initialIndex;
+
+  /// 图片索引变化回调
+  final Function(int)? onIndexChanged;
+
+  /// 是否显示底部缩略图
+  final bool showThumbnails;
+
+  /// 是否启用缩放
+  final bool enableZoom;
+
+  /// 是否全屏显示
+  final bool isFullScreen;
+
+  /// 全屏状态变化回调
+  final Function(bool)? onFullScreenChanged;
+
+  /// 容器装饰
+  final BoxDecoration? previewDecoration;
+
+  /// 内边距
+  final EdgeInsets? padding;
+
+  const AdvancedImagePreview({
+    super.key,
+    required this.imagePaths,
+    this.initialIndex = 0,
+    this.onIndexChanged,
+    this.showThumbnails = true,
+    this.enableZoom = true,
+    this.isFullScreen = false,
+    this.onFullScreenChanged,
+    this.previewDecoration,
+    this.padding,
+  });
+
+  @override
+  State<AdvancedImagePreview> createState() => _AdvancedImagePreviewState();
+}
+
+class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
+  static const double _minZoomScale = 0.1;
+  static const double _maxZoomScale = 10.0;
+  static const EdgeInsets _viewerPadding = EdgeInsets.all(20.0);
+
+  final TransformationController _transformationController =
+      TransformationController();
+  final FocusNode _focusNode = FocusNode();
+  final Map<String, bool> _fileExistsCache = {};
+
+  late int _currentIndex;
+  bool _isZoomed = false;
+  bool _isDarkBackground = false;
+  bool _isFullScreen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      autofocus: true,
+      onKeyEvent: _handleKeyEvent,
+      child: Container(
+        decoration: widget.previewDecoration ??
+            BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(4),
+              color: _isDarkBackground ? Colors.black : Colors.white,
+            ),
+        child: widget.imagePaths.isEmpty
+            ? const Center(child: Text('没有图片'))
+            : _buildImageViewer(context),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _transformationController.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.imagePaths.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, widget.imagePaths.length - 1);
+    _isFullScreen = widget.isFullScreen;
+    _checkImageFiles();
+
+    // 添加键盘监听
+    _focusNode.requestFocus();
+  }
+
+  Widget _buildControlBar() {
+    return Container(
+      color: Colors.black54,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // 左侧信息
+          Text(
+            '${_currentIndex + 1} / ${widget.imagePaths.length}',
+            style: const TextStyle(color: Colors.white),
+          ),
+
+          // 右侧控制按钮
+          Row(
+            children: [
+              // 背景切换按钮
+              IconButton(
+                icon: Icon(
+                    _isDarkBackground ? Icons.light_mode : Icons.dark_mode),
+                color: Colors.white,
+                onPressed: _toggleBackgroundColor,
+                tooltip: _isDarkBackground ? '切换为白色背景' : '切换为黑色背景',
+              ),
+
+              // 重置缩放按钮
+              IconButton(
+                icon: const Icon(Icons.zoom_out_map),
+                color: Colors.white,
+                onPressed: _resetZoom,
+                tooltip: '重置缩放',
+              ),
+
+              // 全屏按钮
+              IconButton(
+                icon: Icon(
+                    _isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
+                color: Colors.white,
+                onPressed: _toggleFullScreen,
+                tooltip: _isFullScreen ? '退出全屏' : '全屏显示',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageContent() {
+    final currentPath = widget.imagePaths[_currentIndex];
+    final fileExists = _fileExistsCache[currentPath] ?? false;
+
+    if (!fileExists) {
+      return const Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.broken_image, size: 64, color: Colors.grey),
+          SizedBox(height: 16),
+          Text('图片文件不存在', style: TextStyle(color: Colors.white)),
+        ],
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      child: CachedImage(
+        path: currentPath,
+        key: ValueKey(currentPath),
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          AppLogger.error(
+            '图片加载失败',
+            error: error,
+            stackTrace: stackTrace,
+            data: {'path': currentPath},
+          );
+          return const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.broken_image, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text('图片加载失败', style: TextStyle(color: Colors.red)),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildImageViewer(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 主图片区域
+        GestureDetector(
+          onDoubleTap: _toggleFullScreen,
+          onHorizontalDragEnd: (details) {
+            if (_isZoomed) return; // 如果已缩放则不切换图片
+
+            if (details.primaryVelocity == null) return;
+            if (details.primaryVelocity! > 0 && _currentIndex > 0) {
+              // 向右滑动，显示上一张
+              _updateIndex(_currentIndex - 1);
+            } else if (details.primaryVelocity! < 0 &&
+                _currentIndex < widget.imagePaths.length - 1) {
+              // 向左滑动，显示下一张
+              _updateIndex(_currentIndex + 1);
+            }
+          },
+          onTapDown: (details) {
+            if (_isZoomed) return; // 如果已缩放则不切换图片
+
+            final x = details.localPosition.dx;
+            final screenWidth = context.size?.width ?? 0;
+            if (x < screenWidth / 3) {
+              // 点击左侧三分之一区域，显示上一张
+              if (_currentIndex > 0) {
+                _updateIndex(_currentIndex - 1);
+              }
+            } else if (x > screenWidth * 2 / 3) {
+              // 点击右侧三分之一区域，显示下一张
+              if (_currentIndex < widget.imagePaths.length - 1) {
+                _updateIndex(_currentIndex + 1);
+              }
+            }
+          },
+          child: InteractiveViewer(
+            transformationController: _transformationController,
+            boundaryMargin: _viewerPadding,
+            minScale: _minZoomScale,
+            maxScale: _maxZoomScale,
+            onInteractionStart: (details) {
+              if (details.pointerCount > 1) {
+                setState(() => _isZoomed = true);
+              }
+            },
+            onInteractionEnd: (details) {
+              // 检查是否恢复到原始大小
+              final matrix = _transformationController.value;
+              if (matrix == Matrix4.identity()) {
+                setState(() => _isZoomed = false);
+              }
+            },
+            child: Center(
+              child: _buildImageContent(),
+            ),
+          ),
+        ),
+
+        // 底部控制栏
+        if (!_isZoomed)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _buildControlBar(),
+          ),
+
+        // 缩略图栏
+        if (widget.showThumbnails && !_isZoomed && !_isFullScreen)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 50,
+            child: _buildThumbnailStrip(),
+          ),
+
+        // 上一张/下一张按钮
+        if (!_isZoomed) ..._buildNavigationButtons(),
+      ],
+    );
+  }
+
+  List<Widget> _buildNavigationButtons() {
+    return [
+      // 上一张按钮
+      if (_currentIndex > 0)
+        Positioned(
+          left: 16,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back_ios),
+                color: Colors.white,
+                onPressed: () => _updateIndex(_currentIndex - 1),
+                iconSize: 28,
+              ),
+            ),
+          ),
+        ),
+
+      // 下一张按钮
+      if (_currentIndex < widget.imagePaths.length - 1)
+        Positioned(
+          right: 16,
+          top: 0,
+          bottom: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.black54,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_forward_ios),
+                color: Colors.white,
+                onPressed: () => _updateIndex(_currentIndex + 1),
+                iconSize: 28,
+              ),
+            ),
+          ),
+        ),
+    ];
+  }
+
+  Widget _buildThumbnailStrip() {
+    return Container(
+      height: 80,
+      color: Colors.black45,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.imagePaths.length,
+        itemBuilder: (context, index) {
+          final path = widget.imagePaths[index];
+          final isSelected = index == _currentIndex;
+
+          return GestureDetector(
+            onTap: () => _updateIndex(index),
+            child: Container(
+              width: 80,
+              margin: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected ? Colors.blue : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CachedImage(
+                    path: path,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.broken_image,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  if (isSelected)
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.3),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _checkImageFiles() async {
+    for (final path in widget.imagePaths) {
+      try {
+        final file = File(path);
+        _fileExistsCache[path] = await file.exists();
+      } catch (e) {
+        _fileExistsCache[path] = false;
+        AppLogger.error('检查图片文件失败', error: e, data: {'path': path});
+      }
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    switch (event.logicalKey) {
+      case LogicalKeyboardKey.arrowLeft:
+        if (_currentIndex > 0) {
+          _updateIndex(_currentIndex - 1);
+          return KeyEventResult.handled;
+        }
+        break;
+      case LogicalKeyboardKey.arrowRight:
+        if (_currentIndex < widget.imagePaths.length - 1) {
+          _updateIndex(_currentIndex + 1);
+          return KeyEventResult.handled;
+        }
+        break;
+      case LogicalKeyboardKey.escape:
+        if (_isFullScreen) {
+          _toggleFullScreen();
+          return KeyEventResult.handled;
+        }
+        break;
+      case LogicalKeyboardKey.keyF:
+        _toggleFullScreen();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyB:
+        _toggleBackgroundColor();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.keyR:
+        _resetZoom();
+        return KeyEventResult.handled;
+      case LogicalKeyboardKey.digit0:
+      case LogicalKeyboardKey.numpad0:
+        _resetZoom();
+        return KeyEventResult.handled;
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  void _resetZoom() {
+    setState(() {
+      _transformationController.value = Matrix4.identity();
+      _isZoomed = false;
+    });
+  }
+
+  void _toggleBackgroundColor() {
+    setState(() {
+      _isDarkBackground = !_isDarkBackground;
+    });
+  }
+
+  void _toggleFullScreen() {
+    setState(() {
+      _isFullScreen = !_isFullScreen;
+    });
+
+    // 重置缩放状态，避免全屏时出现缩放问题
+    _resetZoom();
+
+    // 通知父组件全屏状态已改变
+    widget.onFullScreenChanged?.call(_isFullScreen);
+  }
+
+  void _updateIndex(int newIndex) {
+    if (newIndex != _currentIndex &&
+        newIndex >= 0 &&
+        newIndex < widget.imagePaths.length) {
+      setState(() {
+        _currentIndex = newIndex;
+        // 重置缩放
+        _transformationController.value = Matrix4.identity();
+        _isZoomed = false;
+      });
+      widget.onIndexChanged?.call(_currentIndex);
+    }
+  }
+}

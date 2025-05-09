@@ -1,10 +1,34 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import '../../infrastructure/cache/interfaces/i_cache.dart';
+import '../../infrastructure/cache/services/image_cache.dart';
+import '../../infrastructure/cache/services/image_cache_service.dart';
+import '../../infrastructure/cache/services/ui_image_cache.dart';
+import '../../infrastructure/storage/library_storage.dart';
+import '../../infrastructure/storage/library_storage_interface.dart';
+import '../../infrastructure/storage/library_storage_service.dart';
 import '../../infrastructure/storage/storage_interface.dart';
 import '../logging/logger.dart';
 import '../storage/local_storage.dart';
+
+/// 图像缓存提供者
+final imageCacheProvider = Provider<ICache<String, Uint8List>>((ref) {
+  return ImageCache();
+});
+
+/// 图像缓存服务提供者
+final imageCacheServiceProvider = Provider<ImageCacheService>((ref) {
+  final binaryCache = ref.watch(imageCacheProvider);
+  return ImageCacheService(
+    binaryCache: binaryCache,
+    uiImageCache: ref.watch(uiImageCacheProvider),
+  );
+});
 
 /// 获取已初始化的存储实例
 final initializedStorageProvider = Provider<IStorage>((ref) {
@@ -14,6 +38,20 @@ final initializedStorageProvider = Provider<IStorage>((ref) {
     loading: () => throw StateError('Storage service not initialized'),
     error: (err, stack) =>
         throw StateError('Storage initialization failed: $err'),
+  );
+});
+
+/// 图库存储服务提供者
+final libraryStorageProvider = Provider<ILibraryStorage>((ref) {
+  final storage = ref.watch(initializedStorageProvider);
+  return LibraryStorage(storage);
+});
+
+/// 图库存储服务提供者
+final libraryStorageServiceProvider = Provider<LibraryStorageService>((ref) {
+  return LibraryStorageService(
+    storage: ref.watch(libraryStorageProvider),
+    imageCache: ref.watch(imageCacheServiceProvider),
   );
 });
 
@@ -41,6 +79,11 @@ final storageProvider = FutureProvider<IStorage>((ref) async {
   }
 });
 
+/// UI图像缓存提供者
+final uiImageCacheProvider = Provider<ICache<String, ui.Image>>((ref) {
+  return UIImageCache();
+});
+
 /// 创建存储服务所需的基础目录结构
 Future<void> _initializeStorageStructure(IStorage storage) async {
   final appDataDir = storage.getAppDataPath();
@@ -54,6 +97,8 @@ Future<void> _initializeStorageStructure(IStorage storage) async {
     storage.ensureDirectoryExists(path.join(appDataDir, 'config')),
     storage.ensureDirectoryExists(path.join(appDataDir, 'temp')),
     storage.ensureDirectoryExists(tempDir.path),
+    // 添加图库目录
+    storage.ensureDirectoryExists(path.join(appDataDir, 'library')),
   ]);
 
   AppLogger.debug('存储目录结构创建完成', tag: 'Storage');

@@ -5122,6 +5122,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Load Failed'**
   String get loadFailed;
+
+  /// No description provided for @libraryManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get libraryManagement;
+
+  /// No description provided for @libraryManagementLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get libraryManagementLoading;
+
+  /// No description provided for @libraryManagementError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {message}'**
+  String libraryManagementError(String message);
+
+  /// No description provided for @libraryManagementNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items'**
+  String get libraryManagementNoItems;
+
+  /// No description provided for @libraryManagementNoItemsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adding some items or changing filters'**
+  String get libraryManagementNoItemsHint;
+
+  /// No description provided for @libraryManagementSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search items...'**
+  String get libraryManagementSearch;
+
+  /// No description provided for @libraryManagementEnterBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter batch mode'**
+  String get libraryManagementEnterBatchMode;
+
+  /// No description provided for @libraryManagementExitBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit batch mode'**
+  String get libraryManagementExitBatchMode;
+
+  /// No description provided for @libraryManagementDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected items'**
+  String get libraryManagementDeleteSelected;
+
+  /// No description provided for @libraryManagementDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion'**
+  String get libraryManagementDeleteConfirm;
+
+  /// No description provided for @libraryManagementDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the selected items? This action cannot be undone.'**
+  String get libraryManagementDeleteMessage;
+
+  /// No description provided for @libraryManagementGridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid view'**
+  String get libraryManagementGridView;
+
+  /// No description provided for @libraryManagementListView.
+  ///
+  /// In en, this message translates to:
+  /// **'List view'**
+  String get libraryManagementListView;
+
+  /// No description provided for @libraryManagementCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get libraryManagementCategories;
+
+  /// No description provided for @libraryManagementSortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get libraryManagementSortBy;
+
+  /// No description provided for @libraryManagementSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get libraryManagementSortByName;
+
+  /// No description provided for @libraryManagementSortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get libraryManagementSortByDate;
+
+  /// No description provided for @libraryManagementSortBySize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get libraryManagementSortBySize;
+
+  /// No description provided for @libraryManagementBasicInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get libraryManagementBasicInfo;
+
+  /// No description provided for @libraryManagementName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get libraryManagementName;
+
+  /// No description provided for @libraryManagementType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get libraryManagementType;
+
+  /// No description provided for @libraryManagementFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get libraryManagementFormat;
+
+  /// No description provided for @libraryManagementSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get libraryManagementSize;
+
+  /// No description provided for @libraryManagementFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get libraryManagementFileSize;
+
+  /// No description provided for @libraryManagementTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get libraryManagementTags;
+
+  /// No description provided for @libraryManagementMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata'**
+  String get libraryManagementMetadata;
+
+  /// No description provided for @libraryManagementTimeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Information'**
+  String get libraryManagementTimeInfo;
+
+  /// No description provided for @libraryManagementCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created at'**
+  String get libraryManagementCreatedAt;
+
+  /// No description provided for @libraryManagementUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated at'**
+  String get libraryManagementUpdatedAt;
+
+  /// No description provided for @libraryManagementDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get libraryManagementDetail;
+
+  /// No description provided for @libraryManagementImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get libraryManagementImport;
+
+  /// No description provided for @libraryManagementImportFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Files'**
+  String get libraryManagementImportFiles;
+
+  /// No description provided for @libraryManagementImportFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Folder'**
+  String get libraryManagementImportFolder;
+
+  /// No description provided for @libraryManagementRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Remarks'**
+  String get libraryManagementRemarks;
+
+  /// No description provided for @libraryManagementRemarksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add remarks'**
+  String get libraryManagementRemarksHint;
+
+  /// No description provided for @libraryManagementNoRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'No remarks'**
+  String get libraryManagementNoRemarks;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

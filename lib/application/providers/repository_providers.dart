@@ -2,13 +2,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/repositories/character/character_view_repository.dart';
 import '../../domain/repositories/character_repository.dart';
+import '../../domain/repositories/library_repository.dart';
 import '../../domain/repositories/practice_repository.dart';
 import '../../domain/repositories/work_image_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../infrastructure/persistence/database_interface.dart';
 import '../../infrastructure/providers/database_providers.dart';
+import '../../infrastructure/providers/cache_providers.dart' as cache;
 import '../repositories/character/character_view_repository_impl.dart';
 import '../repositories/character_repository_impl.dart';
+import '../repositories/library_repository_impl.dart';
 import '../repositories/practice_repository_impl.dart';
 import '../repositories/work_image_repository_impl.dart';
 import '../repositories/work_repository_impl.dart';
@@ -39,6 +42,14 @@ final workImageRepositoryProvider = Provider<WorkImageRepository>((ref) {
 /// Work Repository Provider
 final workRepositoryProvider = Provider<WorkRepository>((ref) {
   return WorkRepositoryImpl(_getInitializedDatabase(ref));
+});
+
+/// 图库仓库提供者
+final libraryRepositoryProvider = Provider<ILibraryRepository>((ref) {
+  return LibraryRepositoryImpl(
+    _getInitializedDatabase(ref),
+    ref.watch(cache.imageCacheServiceProvider),
+  );
 });
 
 /// 提供初始化完成的数据库实例

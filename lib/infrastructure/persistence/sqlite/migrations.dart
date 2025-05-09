@@ -82,7 +82,7 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_work_images_workId ON work_images(workId);
   CREATE INDEX IF NOT EXISTS idx_work_images_index ON work_images(workId, indexInWork);
   CREATE INDEX IF NOT EXISTS idx_work_images_original_path ON work_images(workId, original_path);
-  CREATE UNIQUE INDEX IF NOT EXISTS idx_work_images_unique_path
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_work_images_unique_path 
   ON work_images(workId, original_path)
   WHERE original_path IS NOT NULL;
   ''',
@@ -197,7 +197,7 @@ const migrations = [
   /// 版本 7: 添加CharacterView视图
   '''
   CREATE VIEW IF NOT EXISTS CharacterView AS
-  SELECT
+  SELECT 
     c.id,
     c.character,
     c.isFavorite,
@@ -213,7 +213,7 @@ const migrations = [
     w.title,
     w.author,
     w.creationDate As creationTime
-  FROM
+  FROM 
     characters c
   LEFT JOIN
     works w ON c.workId = w.id;
@@ -222,5 +222,73 @@ const migrations = [
   /// 版本 8: 为 practices 表添加缩略图字段
   '''
   ALTER TABLE practices ADD COLUMN thumbnail BLOB;
+  ''',
+
+  /// 版本 9: 添加图库表结构 - 表
+  '''
+  CREATE TABLE IF NOT EXISTS library_items (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    format TEXT NOT NULL,
+    path TEXT NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
+    size INTEGER NOT NULL,
+    tags TEXT,
+    categories TEXT,
+    metadata TEXT,
+    isFavorite INTEGER DEFAULT 0,
+    thumbnailPath TEXT,
+    thumbnail BLOB,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL
+  );
+  ''',
+
+  /// 版本 10: 添加图库分类表
+  '''
+  CREATE TABLE IF NOT EXISTS library_categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    parentId TEXT,
+    sort_order INTEGER DEFAULT 0,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL
+  );
+  ''',
+
+  /// 版本 11: 添加图库索引
+  '''
+  CREATE INDEX IF NOT EXISTS idx_library_items_name ON library_items(name);
+  ''',
+
+  '''
+  CREATE INDEX IF NOT EXISTS idx_library_items_type ON library_items(type);
+  ''',
+
+  '''
+  CREATE INDEX IF NOT EXISTS idx_library_categories_name ON library_categories(name);
+  ''',
+
+  /// 版本 12: 为library_items表添加新列
+  '''
+  ALTER TABLE library_items ADD COLUMN thumbnail BLOB;
+  ALTER TABLE library_items ADD COLUMN createdAt TEXT;
+  ALTER TABLE library_items ADD COLUMN updatedAt TEXT;
+  
+  -- 将已有的时间戳数据复制到新列
+  UPDATE library_items SET
+    createdAt = createTime,
+    updatedAt = updateTime
+  WHERE createdAt IS NULL;
+  ''',
+
+  /// 版本 13: 为library_items表添加remarks列
+  '''
+  ALTER TABLE library_items ADD COLUMN remarks TEXT;
   ''',
 ];

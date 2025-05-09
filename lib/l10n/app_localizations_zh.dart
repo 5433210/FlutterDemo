@@ -733,31 +733,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get export => '导出';
 
   @override
-  String get filterApply => 'Apply';
+  String get filterApply => '应用';
 
   @override
-  String get filterClear => 'Clear';
+  String get filterClear => '清除';
 
   @override
-  String get filterCollapse => 'Collapse Filter Panel';
+  String get filterCollapse => '收起筛选面板';
 
   @override
-  String get filterExpand => 'Expand Filter Panel';
+  String get filterExpand => '展开筛选面板';
 
   @override
-  String get filterHeader => 'Filter & Sort';
+  String get filterHeader => '筛选与排序';
 
   @override
-  String get filterPanel => 'Filter Panel';
+  String get filterPanel => '筛选面板';
 
   @override
   String get filterReset => '重置筛选';
 
   @override
-  String get filterSection => 'Filter Options';
+  String get filterSection => '筛选选项';
 
   @override
-  String get filterSearchPlaceholder => 'Search...';
+  String get filterSearchPlaceholder => '搜索...';
 
   @override
   String get filterSortAscending => '升序';
@@ -766,52 +766,52 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterSortDescending => '降序';
 
   @override
-  String get filterSortDirection => 'Sort Direction';
+  String get filterSortDirection => '排序方向';
 
   @override
-  String get filterSortField => 'Sort By';
+  String get filterSortField => '排序字段';
 
   @override
-  String get filterToggle => 'Toggle Filters';
+  String get filterToggle => '切换筛选';
 
   @override
-  String get filterTagsSection => 'Tags';
+  String get filterTagsSection => '标签';
 
   @override
-  String get filterTagsSelected => 'Selected Tags:';
+  String get filterTagsSelected => '已选标签：';
 
   @override
-  String get filterTagsAdd => 'Add Tag';
+  String get filterTagsAdd => '添加标签';
 
   @override
-  String get filterTagsAddHint => 'Enter tag name and press Enter';
+  String get filterTagsAddHint => '输入标签名称并按回车';
 
   @override
-  String get filterTagsNone => 'No tags selected';
+  String get filterTagsNone => '未选择标签';
 
   @override
-  String get filterTagsSuggested => 'Suggested tags:';
+  String get filterTagsSuggested => '推荐标签：';
 
   @override
-  String get filterPresetSection => 'Presets';
+  String get filterPresetSection => '预设';
 
   @override
-  String get filterCustomRange => 'Custom Range';
+  String get filterCustomRange => '自定义范围';
 
   @override
-  String get filterDateRange => 'Date Range';
+  String get filterDateRange => '日期范围';
 
   @override
-  String get filterStartDate => 'Start Date';
+  String get filterStartDate => '开始日期';
 
   @override
-  String get filterEndDate => 'End Date';
+  String get filterEndDate => '结束日期';
 
   @override
-  String get filterSelectDate => 'Select Date';
+  String get filterSelectDate => '选择日期';
 
   @override
-  String get filterFavoritesOnly => 'Show favorites only';
+  String get filterFavoritesOnly => '仅显示收藏';
 
   @override
   String get filterStyleSection => '书法风格';
@@ -847,30 +847,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterToolOther => '其他';
 
   @override
-  String get filterBatchSelection => 'Selection';
+  String get filterBatchSelection => '批量选择';
 
   @override
-  String get filterSelectAll => 'Select All';
+  String get filterSelectAll => '全选';
 
   @override
-  String get filterDeselectAll => 'Deselect All';
+  String get filterDeselectAll => '取消全选';
 
   @override
-  String get filterBatchActions => 'Batch Actions';
+  String get filterBatchActions => '批量操作';
 
   @override
   String filterItemsSelected(Object count) {
-    return '$count selected';
+    return '已选择 $count 项';
   }
 
   @override
   String filterItemsPerPage(Object count) {
-    return '$count per page';
+    return '每页 $count 项';
   }
 
   @override
   String filterTotalItems(Object count) {
-    return 'Total: $count items';
+    return '共计：$count 项';
   }
 
   @override
@@ -2603,4 +2603,114 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get loadFailed => '加载失败';
+
+  @override
+  String get libraryManagement => '图库管理';
+
+  @override
+  String get libraryManagementLoading => '加载中...';
+
+  @override
+  String libraryManagementError(String message) {
+    return '加载失败：$message';
+  }
+
+  @override
+  String get libraryManagementNoItems => '暂无项目';
+
+  @override
+  String get libraryManagementNoItemsHint => '尝试添加一些项目或更改筛选条件';
+
+  @override
+  String get libraryManagementSearch => '搜索项目...';
+
+  @override
+  String get libraryManagementEnterBatchMode => '进入批量选择模式';
+
+  @override
+  String get libraryManagementExitBatchMode => '退出批量选择模式';
+
+  @override
+  String get libraryManagementDeleteSelected => '删除选中项目';
+
+  @override
+  String get libraryManagementDeleteConfirm => '确认删除';
+
+  @override
+  String get libraryManagementDeleteMessage => '确定要删除选中的项目吗？此操作不可恢复。';
+
+  @override
+  String get libraryManagementGridView => '网格视图';
+
+  @override
+  String get libraryManagementListView => '列表视图';
+
+  @override
+  String get libraryManagementCategories => '分类';
+
+  @override
+  String get libraryManagementSortBy => '排序方式';
+
+  @override
+  String get libraryManagementSortByName => '按名称';
+
+  @override
+  String get libraryManagementSortByDate => '按日期';
+
+  @override
+  String get libraryManagementSortBySize => '按大小';
+
+  @override
+  String get libraryManagementBasicInfo => '基本信息';
+
+  @override
+  String get libraryManagementName => '名称';
+
+  @override
+  String get libraryManagementType => '类型';
+
+  @override
+  String get libraryManagementFormat => '格式';
+
+  @override
+  String get libraryManagementSize => '尺寸';
+
+  @override
+  String get libraryManagementFileSize => '文件大小';
+
+  @override
+  String get libraryManagementTags => '标签';
+
+  @override
+  String get libraryManagementMetadata => '元数据';
+
+  @override
+  String get libraryManagementTimeInfo => '时间信息';
+
+  @override
+  String get libraryManagementCreatedAt => '创建时间';
+
+  @override
+  String get libraryManagementUpdatedAt => '更新时间';
+
+  @override
+  String get libraryManagementDetail => '详情';
+
+  @override
+  String get libraryManagementImport => '导入';
+
+  @override
+  String get libraryManagementImportFiles => '导入文件';
+
+  @override
+  String get libraryManagementImportFolder => '导入文件夹';
+
+  @override
+  String get libraryManagementRemarks => '备注';
+
+  @override
+  String get libraryManagementRemarksHint => '添加备注信息';
+
+  @override
+  String get libraryManagementNoRemarks => '无备注';
 }

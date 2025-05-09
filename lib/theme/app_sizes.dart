@@ -111,4 +111,73 @@ class AppSizes {
   static const double searchBarHeight = 32.0;
   static const double searchBarIconSize = 16.0;
   static const double searchBarClearIconSize = 16.0;
+
+  /// 间距 - 8
+  static const double spacing8 = 8.0;
+
+  /// 间距 - 16
+  static const double spacing16 = 16.0;
+
+  /// 间距 - 24
+  static const double spacing24 = 24.0;
+
+  /// 间距 - 32
+  static const double spacing32 = 32.0;
+
+  /// 间距 - 40
+  static const double spacing40 = 40.0;
+
+  /// 间距 - 48
+  static const double spacing48 = 48.0;
+
+  /// 图标尺寸 - 小
+  static const double iconSizeSmall = 16.0;
+
+  /// 图标尺寸 - 中
+  static const double iconSizeMedium = 24.0;
+
+  /// 图标尺寸 - 大
+  static const double iconSizeLarge = 32.0;
+
+  /// 图标尺寸 - 超大
+  static const double iconSizeExtraLarge = 48.0;
+
+  /// 边框宽度 - 细
+  static const double borderWidthThin = 1.0;
+
+  /// 边框宽度 - 中
+  static const double borderWidthMedium = 2.0;
+
+  /// 边框宽度 - 粗
+  static const double borderWidthThick = 3.0;
+
+  /// 最小点击区域
+  static const double minTapArea = 48.0;
+
+  /// 最小滑动距离
+  static const double minSwipeDistance = 20.0;
+
+  /// 最小拖动距离
+  static const double minDragDistance = 10.0;
+
+  /// 最小缩放比例
+  static const double minScale = 0.5;
+
+  /// 最大缩放比例
+  static const double maxScale = 3.0;
+
+  /// 最小旋转角度
+  static const double minRotation = -180.0;
+
+  /// 最大旋转角度
+  static const double maxRotation = 180.0;
+
+  /// 最小不透明度
+  static const double minOpacity = 0.0;
+
+  /// 最大不透明度
+  static const double maxOpacity = 1.0;
+
+  /// 动画持续时间 - 标准
+  static const int animationDurationNormal = 300;
 }

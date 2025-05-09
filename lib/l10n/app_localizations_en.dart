@@ -2603,4 +2603,114 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadFailed => 'Load Failed';
+
+  @override
+  String get libraryManagement => 'Library';
+
+  @override
+  String get libraryManagementLoading => 'Loading...';
+
+  @override
+  String libraryManagementError(String message) {
+    return 'Failed to load: $message';
+  }
+
+  @override
+  String get libraryManagementNoItems => 'No items';
+
+  @override
+  String get libraryManagementNoItemsHint => 'Try adding some items or changing filters';
+
+  @override
+  String get libraryManagementSearch => 'Search items...';
+
+  @override
+  String get libraryManagementEnterBatchMode => 'Enter batch mode';
+
+  @override
+  String get libraryManagementExitBatchMode => 'Exit batch mode';
+
+  @override
+  String get libraryManagementDeleteSelected => 'Delete selected items';
+
+  @override
+  String get libraryManagementDeleteConfirm => 'Confirm deletion';
+
+  @override
+  String get libraryManagementDeleteMessage => 'Are you sure you want to delete the selected items? This action cannot be undone.';
+
+  @override
+  String get libraryManagementGridView => 'Grid view';
+
+  @override
+  String get libraryManagementListView => 'List view';
+
+  @override
+  String get libraryManagementCategories => 'Categories';
+
+  @override
+  String get libraryManagementSortBy => 'Sort by';
+
+  @override
+  String get libraryManagementSortByName => 'Name';
+
+  @override
+  String get libraryManagementSortByDate => 'Date';
+
+  @override
+  String get libraryManagementSortBySize => 'Size';
+
+  @override
+  String get libraryManagementBasicInfo => 'Basic Information';
+
+  @override
+  String get libraryManagementName => 'Name';
+
+  @override
+  String get libraryManagementType => 'Type';
+
+  @override
+  String get libraryManagementFormat => 'Format';
+
+  @override
+  String get libraryManagementSize => 'Size';
+
+  @override
+  String get libraryManagementFileSize => 'File size';
+
+  @override
+  String get libraryManagementTags => 'Tags';
+
+  @override
+  String get libraryManagementMetadata => 'Metadata';
+
+  @override
+  String get libraryManagementTimeInfo => 'Time Information';
+
+  @override
+  String get libraryManagementCreatedAt => 'Created at';
+
+  @override
+  String get libraryManagementUpdatedAt => 'Updated at';
+
+  @override
+  String get libraryManagementDetail => 'Details';
+
+  @override
+  String get libraryManagementImport => 'Import';
+
+  @override
+  String get libraryManagementImportFiles => 'Import Files';
+
+  @override
+  String get libraryManagementImportFolder => 'Import Folder';
+
+  @override
+  String get libraryManagementRemarks => 'Remarks';
+
+  @override
+  String get libraryManagementRemarksHint => 'Add remarks';
+
+  @override
+  String get libraryManagementNoRemarks => 'No remarks';
 }

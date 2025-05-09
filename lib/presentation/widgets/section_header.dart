@@ -1,37 +1,31 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_sizes.dart';
 
+/// 区块标题组件
 class SectionHeader extends StatelessWidget {
+  /// 标题
   final String title;
-  final List<Widget>? actions;
-  final EdgeInsets? padding;
 
+  /// 内边距
+  final EdgeInsetsGeometry padding;
+
+  /// 构造函数
   const SectionHeader({
     super.key,
     required this.title,
-    this.actions,
-    this.padding,
+    this.padding = const EdgeInsets.symmetric(vertical: 8),
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Padding(
-      padding: padding ?? const EdgeInsets.all(AppSizes.spacingMedium),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          if (actions != null) ...[
-            const Spacer(),
-            ...actions!,
-          ],
-        ],
+      padding: padding,
+      child: Text(
+        title,
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
       ),
     );
   }
