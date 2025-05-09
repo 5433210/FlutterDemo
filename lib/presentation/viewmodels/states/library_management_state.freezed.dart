@@ -70,6 +70,48 @@ mixin _$LibraryManagementState {
   /// 选中的项目
   LibraryItem? get selectedItem => throw _privateConstructorUsedError;
 
+  /// 类型筛选
+  String? get typeFilter => throw _privateConstructorUsedError;
+
+  /// 是否只显示收藏
+  bool get showFavoritesOnly => throw _privateConstructorUsedError;
+
+  /// 图片后缀筛选
+  String? get formatFilter => throw _privateConstructorUsedError;
+
+  /// 最小宽度筛选
+  int? get minWidth => throw _privateConstructorUsedError;
+
+  /// 最大宽度筛选
+  int? get maxWidth => throw _privateConstructorUsedError;
+
+  /// 最小高度筛选
+  int? get minHeight => throw _privateConstructorUsedError;
+
+  /// 最大高度筛选
+  int? get maxHeight => throw _privateConstructorUsedError;
+
+  /// 最小文件大小筛选（字节）
+  int? get minSize => throw _privateConstructorUsedError;
+
+  /// 最大文件大小筛选（字节）
+  int? get maxSize => throw _privateConstructorUsedError;
+
+  /// 入库开始日期
+  DateTime? get createStartDate => throw _privateConstructorUsedError;
+
+  /// 入库结束日期
+  DateTime? get createEndDate => throw _privateConstructorUsedError;
+
+  /// 更新开始日期
+  DateTime? get updateStartDate => throw _privateConstructorUsedError;
+
+  /// 更新结束日期
+  DateTime? get updateEndDate => throw _privateConstructorUsedError;
+
+  /// 是否显示筛选面板
+  bool get showFilterPanel => throw _privateConstructorUsedError;
+
   /// Create a copy of LibraryManagementState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -101,7 +143,21 @@ abstract class $LibraryManagementStateCopyWith<$Res> {
       int currentPage,
       int pageSize,
       ViewMode viewMode,
-      LibraryItem? selectedItem});
+      LibraryItem? selectedItem,
+      String? typeFilter,
+      bool showFavoritesOnly,
+      String? formatFilter,
+      int? minWidth,
+      int? maxWidth,
+      int? minHeight,
+      int? maxHeight,
+      int? minSize,
+      int? maxSize,
+      DateTime? createStartDate,
+      DateTime? createEndDate,
+      DateTime? updateStartDate,
+      DateTime? updateEndDate,
+      bool showFilterPanel});
 
   $LibraryItemCopyWith<$Res>? get selectedItem;
 }
@@ -140,6 +196,20 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
     Object? pageSize = null,
     Object? viewMode = null,
     Object? selectedItem = freezed,
+    Object? typeFilter = freezed,
+    Object? showFavoritesOnly = null,
+    Object? formatFilter = freezed,
+    Object? minWidth = freezed,
+    Object? maxWidth = freezed,
+    Object? minHeight = freezed,
+    Object? maxHeight = freezed,
+    Object? minSize = freezed,
+    Object? maxSize = freezed,
+    Object? createStartDate = freezed,
+    Object? createEndDate = freezed,
+    Object? updateStartDate = freezed,
+    Object? updateEndDate = freezed,
+    Object? showFilterPanel = null,
   }) {
     return _then(_value.copyWith(
       items: null == items
@@ -214,6 +284,62 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
           ? _value.selectedItem
           : selectedItem // ignore: cast_nullable_to_non_nullable
               as LibraryItem?,
+      typeFilter: freezed == typeFilter
+          ? _value.typeFilter
+          : typeFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      showFavoritesOnly: null == showFavoritesOnly
+          ? _value.showFavoritesOnly
+          : showFavoritesOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      formatFilter: freezed == formatFilter
+          ? _value.formatFilter
+          : formatFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      minWidth: freezed == minWidth
+          ? _value.minWidth
+          : minWidth // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxWidth: freezed == maxWidth
+          ? _value.maxWidth
+          : maxWidth // ignore: cast_nullable_to_non_nullable
+              as int?,
+      minHeight: freezed == minHeight
+          ? _value.minHeight
+          : minHeight // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxHeight: freezed == maxHeight
+          ? _value.maxHeight
+          : maxHeight // ignore: cast_nullable_to_non_nullable
+              as int?,
+      minSize: freezed == minSize
+          ? _value.minSize
+          : minSize // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxSize: freezed == maxSize
+          ? _value.maxSize
+          : maxSize // ignore: cast_nullable_to_non_nullable
+              as int?,
+      createStartDate: freezed == createStartDate
+          ? _value.createStartDate
+          : createStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      createEndDate: freezed == createEndDate
+          ? _value.createEndDate
+          : createEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateStartDate: freezed == updateStartDate
+          ? _value.updateStartDate
+          : updateStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateEndDate: freezed == updateEndDate
+          ? _value.updateEndDate
+          : updateEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      showFilterPanel: null == showFilterPanel
+          ? _value.showFilterPanel
+          : showFilterPanel // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -259,7 +385,21 @@ abstract class _$$LibraryManagementStateImplCopyWith<$Res>
       int currentPage,
       int pageSize,
       ViewMode viewMode,
-      LibraryItem? selectedItem});
+      LibraryItem? selectedItem,
+      String? typeFilter,
+      bool showFavoritesOnly,
+      String? formatFilter,
+      int? minWidth,
+      int? maxWidth,
+      int? minHeight,
+      int? maxHeight,
+      int? minSize,
+      int? maxSize,
+      DateTime? createStartDate,
+      DateTime? createEndDate,
+      DateTime? updateStartDate,
+      DateTime? updateEndDate,
+      bool showFilterPanel});
 
   @override
   $LibraryItemCopyWith<$Res>? get selectedItem;
@@ -298,6 +438,20 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
     Object? pageSize = null,
     Object? viewMode = null,
     Object? selectedItem = freezed,
+    Object? typeFilter = freezed,
+    Object? showFavoritesOnly = null,
+    Object? formatFilter = freezed,
+    Object? minWidth = freezed,
+    Object? maxWidth = freezed,
+    Object? minHeight = freezed,
+    Object? maxHeight = freezed,
+    Object? minSize = freezed,
+    Object? maxSize = freezed,
+    Object? createStartDate = freezed,
+    Object? createEndDate = freezed,
+    Object? updateStartDate = freezed,
+    Object? updateEndDate = freezed,
+    Object? showFilterPanel = null,
   }) {
     return _then(_$LibraryManagementStateImpl(
       items: null == items
@@ -372,6 +526,62 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
           ? _value.selectedItem
           : selectedItem // ignore: cast_nullable_to_non_nullable
               as LibraryItem?,
+      typeFilter: freezed == typeFilter
+          ? _value.typeFilter
+          : typeFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      showFavoritesOnly: null == showFavoritesOnly
+          ? _value.showFavoritesOnly
+          : showFavoritesOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
+      formatFilter: freezed == formatFilter
+          ? _value.formatFilter
+          : formatFilter // ignore: cast_nullable_to_non_nullable
+              as String?,
+      minWidth: freezed == minWidth
+          ? _value.minWidth
+          : minWidth // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxWidth: freezed == maxWidth
+          ? _value.maxWidth
+          : maxWidth // ignore: cast_nullable_to_non_nullable
+              as int?,
+      minHeight: freezed == minHeight
+          ? _value.minHeight
+          : minHeight // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxHeight: freezed == maxHeight
+          ? _value.maxHeight
+          : maxHeight // ignore: cast_nullable_to_non_nullable
+              as int?,
+      minSize: freezed == minSize
+          ? _value.minSize
+          : minSize // ignore: cast_nullable_to_non_nullable
+              as int?,
+      maxSize: freezed == maxSize
+          ? _value.maxSize
+          : maxSize // ignore: cast_nullable_to_non_nullable
+              as int?,
+      createStartDate: freezed == createStartDate
+          ? _value.createStartDate
+          : createStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      createEndDate: freezed == createEndDate
+          ? _value.createEndDate
+          : createEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateStartDate: freezed == updateStartDate
+          ? _value.updateStartDate
+          : updateStartDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      updateEndDate: freezed == updateEndDate
+          ? _value.updateEndDate
+          : updateEndDate // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      showFilterPanel: null == showFilterPanel
+          ? _value.showFilterPanel
+          : showFilterPanel // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -397,7 +607,21 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
       this.currentPage = 1,
       this.pageSize = 20,
       this.viewMode = ViewMode.grid,
-      this.selectedItem})
+      this.selectedItem,
+      this.typeFilter,
+      this.showFavoritesOnly = false,
+      this.formatFilter,
+      this.minWidth,
+      this.maxWidth,
+      this.minHeight,
+      this.maxHeight,
+      this.minSize,
+      this.maxSize,
+      this.createStartDate,
+      this.createEndDate,
+      this.updateStartDate,
+      this.updateEndDate,
+      this.showFilterPanel = true})
       : _items = items,
         _allTags = allTags,
         _categories = categories,
@@ -526,9 +750,67 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
   @override
   final LibraryItem? selectedItem;
 
+  /// 类型筛选
+  @override
+  final String? typeFilter;
+
+  /// 是否只显示收藏
+  @override
+  @JsonKey()
+  final bool showFavoritesOnly;
+
+  /// 图片后缀筛选
+  @override
+  final String? formatFilter;
+
+  /// 最小宽度筛选
+  @override
+  final int? minWidth;
+
+  /// 最大宽度筛选
+  @override
+  final int? maxWidth;
+
+  /// 最小高度筛选
+  @override
+  final int? minHeight;
+
+  /// 最大高度筛选
+  @override
+  final int? maxHeight;
+
+  /// 最小文件大小筛选（字节）
+  @override
+  final int? minSize;
+
+  /// 最大文件大小筛选（字节）
+  @override
+  final int? maxSize;
+
+  /// 入库开始日期
+  @override
+  final DateTime? createStartDate;
+
+  /// 入库结束日期
+  @override
+  final DateTime? createEndDate;
+
+  /// 更新开始日期
+  @override
+  final DateTime? updateStartDate;
+
+  /// 更新结束日期
+  @override
+  final DateTime? updateEndDate;
+
+  /// 是否显示筛选面板
+  @override
+  @JsonKey()
+  final bool showFilterPanel;
+
   @override
   String toString() {
-    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem)';
+    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem, typeFilter: $typeFilter, showFavoritesOnly: $showFavoritesOnly, formatFilter: $formatFilter, minWidth: $minWidth, maxWidth: $maxWidth, minHeight: $minHeight, maxHeight: $maxHeight, minSize: $minSize, maxSize: $maxSize, createStartDate: $createStartDate, createEndDate: $createEndDate, updateStartDate: $updateStartDate, updateEndDate: $updateEndDate, showFilterPanel: $showFilterPanel)';
   }
 
   @override
@@ -568,30 +850,71 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
             (identical(other.viewMode, viewMode) ||
                 other.viewMode == viewMode) &&
             (identical(other.selectedItem, selectedItem) ||
-                other.selectedItem == selectedItem));
+                other.selectedItem == selectedItem) &&
+            (identical(other.typeFilter, typeFilter) ||
+                other.typeFilter == typeFilter) &&
+            (identical(other.showFavoritesOnly, showFavoritesOnly) ||
+                other.showFavoritesOnly == showFavoritesOnly) &&
+            (identical(other.formatFilter, formatFilter) ||
+                other.formatFilter == formatFilter) &&
+            (identical(other.minWidth, minWidth) ||
+                other.minWidth == minWidth) &&
+            (identical(other.maxWidth, maxWidth) ||
+                other.maxWidth == maxWidth) &&
+            (identical(other.minHeight, minHeight) ||
+                other.minHeight == minHeight) &&
+            (identical(other.maxHeight, maxHeight) ||
+                other.maxHeight == maxHeight) &&
+            (identical(other.minSize, minSize) || other.minSize == minSize) &&
+            (identical(other.maxSize, maxSize) || other.maxSize == maxSize) &&
+            (identical(other.createStartDate, createStartDate) ||
+                other.createStartDate == createStartDate) &&
+            (identical(other.createEndDate, createEndDate) ||
+                other.createEndDate == createEndDate) &&
+            (identical(other.updateStartDate, updateStartDate) ||
+                other.updateStartDate == updateStartDate) &&
+            (identical(other.updateEndDate, updateEndDate) ||
+                other.updateEndDate == updateEndDate) &&
+            (identical(other.showFilterPanel, showFilterPanel) ||
+                other.showFilterPanel == showFilterPanel));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      const DeepCollectionEquality().hash(_items),
-      const DeepCollectionEquality().hash(_allTags),
-      const DeepCollectionEquality().hash(_categories),
-      const DeepCollectionEquality().hash(_categoryTree),
-      selectedCategoryId,
-      searchQuery,
-      sortBy,
-      sortDesc,
-      isLoading,
-      isBatchMode,
-      const DeepCollectionEquality().hash(_selectedItems),
-      isDetailOpen,
-      errorMessage,
-      totalCount,
-      currentPage,
-      pageSize,
-      viewMode,
-      selectedItem);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        const DeepCollectionEquality().hash(_items),
+        const DeepCollectionEquality().hash(_allTags),
+        const DeepCollectionEquality().hash(_categories),
+        const DeepCollectionEquality().hash(_categoryTree),
+        selectedCategoryId,
+        searchQuery,
+        sortBy,
+        sortDesc,
+        isLoading,
+        isBatchMode,
+        const DeepCollectionEquality().hash(_selectedItems),
+        isDetailOpen,
+        errorMessage,
+        totalCount,
+        currentPage,
+        pageSize,
+        viewMode,
+        selectedItem,
+        typeFilter,
+        showFavoritesOnly,
+        formatFilter,
+        minWidth,
+        maxWidth,
+        minHeight,
+        maxHeight,
+        minSize,
+        maxSize,
+        createStartDate,
+        createEndDate,
+        updateStartDate,
+        updateEndDate,
+        showFilterPanel
+      ]);
 
   /// Create a copy of LibraryManagementState
   /// with the given fields replaced by the non-null parameter values.
@@ -622,7 +945,21 @@ abstract class _LibraryManagementState implements LibraryManagementState {
       final int currentPage,
       final int pageSize,
       final ViewMode viewMode,
-      final LibraryItem? selectedItem}) = _$LibraryManagementStateImpl;
+      final LibraryItem? selectedItem,
+      final String? typeFilter,
+      final bool showFavoritesOnly,
+      final String? formatFilter,
+      final int? minWidth,
+      final int? maxWidth,
+      final int? minHeight,
+      final int? maxHeight,
+      final int? minSize,
+      final int? maxSize,
+      final DateTime? createStartDate,
+      final DateTime? createEndDate,
+      final DateTime? updateStartDate,
+      final DateTime? updateEndDate,
+      final bool showFilterPanel}) = _$LibraryManagementStateImpl;
 
   /// 图库项目列表
   @override
@@ -695,6 +1032,62 @@ abstract class _LibraryManagementState implements LibraryManagementState {
   /// 选中的项目
   @override
   LibraryItem? get selectedItem;
+
+  /// 类型筛选
+  @override
+  String? get typeFilter;
+
+  /// 是否只显示收藏
+  @override
+  bool get showFavoritesOnly;
+
+  /// 图片后缀筛选
+  @override
+  String? get formatFilter;
+
+  /// 最小宽度筛选
+  @override
+  int? get minWidth;
+
+  /// 最大宽度筛选
+  @override
+  int? get maxWidth;
+
+  /// 最小高度筛选
+  @override
+  int? get minHeight;
+
+  /// 最大高度筛选
+  @override
+  int? get maxHeight;
+
+  /// 最小文件大小筛选（字节）
+  @override
+  int? get minSize;
+
+  /// 最大文件大小筛选（字节）
+  @override
+  int? get maxSize;
+
+  /// 入库开始日期
+  @override
+  DateTime? get createStartDate;
+
+  /// 入库结束日期
+  @override
+  DateTime? get createEndDate;
+
+  /// 更新开始日期
+  @override
+  DateTime? get updateStartDate;
+
+  /// 更新结束日期
+  @override
+  DateTime? get updateEndDate;
+
+  /// 是否显示筛选面板
+  @override
+  bool get showFilterPanel;
 
   /// Create a copy of LibraryManagementState
   /// with the given fields replaced by the non-null parameter values.

@@ -78,10 +78,22 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
+      // 构建查询参数
+      String? type = state.typeFilter;
+      List<String>? categories =
+          state.selectedCategoryId != null ? [state.selectedCategoryId!] : null;
+
+      // 处理标签过滤
+      List<String>? tags;
+
+      // 处理收藏状态
+      // 注意：这里需要修改库存储库以支持收藏过滤
+      // 目前先通过内存筛选实现
+
       final result = await _service.getItems(
-        categories: state.selectedCategoryId != null
-            ? [state.selectedCategoryId!]
-            : null,
+        type: type,
+        categories: categories,
+        tags: tags,
         searchQuery: state.searchQuery,
         page: state.currentPage,
         pageSize: state.pageSize,
@@ -89,17 +101,95 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
         sortDesc: state.sortDesc,
       );
 
+      // 如果选择了只显示收藏，在内存中筛选
+      List<LibraryItem> filteredItems = result.items;
+      if (state.showFavoritesOnly) {
+        filteredItems = filteredItems.where((item) => item.isFavorite).toList();
+      }
+
+      // 应用格式过滤
+      if (state.formatFilter != null && state.formatFilter!.isNotEmpty) {
+        filteredItems = filteredItems
+            .where((item) =>
+                item.format.toLowerCase() == state.formatFilter!.toLowerCase())
+            .toList();
+      }
+
+      // 应用尺寸过滤
+      if (state.minWidth != null) {
+        filteredItems = filteredItems
+            .where((item) => item.width >= state.minWidth!)
+            .toList();
+      }
+      if (state.maxWidth != null) {
+        filteredItems = filteredItems
+            .where((item) => item.width <= state.maxWidth!)
+            .toList();
+      }
+      if (state.minHeight != null) {
+        filteredItems = filteredItems
+            .where((item) => item.height >= state.minHeight!)
+            .toList();
+      }
+      if (state.maxHeight != null) {
+        filteredItems = filteredItems
+            .where((item) => item.height <= state.maxHeight!)
+            .toList();
+      }
+
+      // 应用文件大小过滤
+      if (state.minSize != null) {
+        filteredItems =
+            filteredItems.where((item) => item.size >= state.minSize!).toList();
+      }
+      if (state.maxSize != null) {
+        filteredItems =
+            filteredItems.where((item) => item.size <= state.maxSize!).toList();
+      }
+
+      // 应用日期过滤
+      if (state.createStartDate != null) {
+        filteredItems = filteredItems
+            .where((item) =>
+                item.createdAt.isAfter(state.createStartDate!) ||
+                item.createdAt.isAtSameMomentAs(state.createStartDate!))
+            .toList();
+      }
+      if (state.createEndDate != null) {
+        final endDate = DateTime(state.createEndDate!.year,
+            state.createEndDate!.month, state.createEndDate!.day, 23, 59, 59);
+        filteredItems = filteredItems
+            .where((item) =>
+                item.createdAt.isBefore(endDate) ||
+                item.createdAt.isAtSameMomentAs(endDate))
+            .toList();
+      }
+      if (state.updateStartDate != null) {
+        filteredItems = filteredItems
+            .where((item) =>
+                item.updatedAt.isAfter(state.updateStartDate!) ||
+                item.updatedAt.isAtSameMomentAs(state.updateStartDate!))
+            .toList();
+      }
+      if (state.updateEndDate != null) {
+        final endDate = DateTime(state.updateEndDate!.year,
+            state.updateEndDate!.month, state.updateEndDate!.day, 23, 59, 59);
+        filteredItems = filteredItems
+            .where((item) =>
+                item.updatedAt.isBefore(endDate) ||
+                item.updatedAt.isAtSameMomentAs(endDate))
+            .toList();
+      }
+
       final totalCount = await _service.getItemCount(
-        categories: state.selectedCategoryId != null
-            ? [state.selectedCategoryId!]
-            : null,
+        categories: categories,
         searchQuery: state.searchQuery,
       );
 
       final categoryTree = await _service.getCategoryTree();
 
       state = state.copyWith(
-        items: result.items,
+        items: filteredItems,
         totalCount: totalCount,
         categoryTree: categoryTree,
         isLoading: false,
@@ -110,6 +200,27 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  /// 重置所有筛选条件
+  void resetAllFilters() {
+    state = state.copyWith(
+      typeFilter: null,
+      showFavoritesOnly: false,
+      formatFilter: null,
+      minWidth: null,
+      maxWidth: null,
+      minHeight: null,
+      maxHeight: null,
+      minSize: null,
+      maxSize: null,
+      createStartDate: null,
+      createEndDate: null,
+      updateStartDate: null,
+      updateEndDate: null,
+      currentPage: 1,
+    );
+    loadData();
   }
 
   /// 选择分类
@@ -130,12 +241,86 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     );
   }
 
+  /// 设置创建时间范围
+  void setCreateTimeRange(DateTime? startDate, DateTime? endDate) {
+    state = state.copyWith(
+      createStartDate: startDate,
+      createEndDate: endDate,
+      currentPage: 1,
+    );
+    loadData();
+  }
+
+  /// 设置图片格式筛选
+  void setFormatFilter(String? format) {
+    state = state.copyWith(formatFilter: format, currentPage: 1);
+    loadData();
+  }
+
+  /// 设置高度范围
+  void setHeightRange(int? minHeight, int? maxHeight) {
+    state = state.copyWith(
+      minHeight: minHeight,
+      maxHeight: maxHeight,
+      currentPage: 1,
+    );
+    loadData();
+  }
+
+  /// 设置文件大小范围
+  void setSizeRange(int? minSize, int? maxSize) {
+    state = state.copyWith(
+      minSize: minSize,
+      maxSize: maxSize,
+      currentPage: 1,
+    );
+    loadData();
+  }
+
+  /// 设置类型筛选
+  void setTypeFilter(String? type) {
+    state = state.copyWith(typeFilter: type, currentPage: 1);
+    loadData();
+  }
+
+  /// 设置更新时间范围
+  void setUpdateTimeRange(DateTime? startDate, DateTime? endDate) {
+    state = state.copyWith(
+      updateStartDate: startDate,
+      updateEndDate: endDate,
+      currentPage: 1,
+    );
+    loadData();
+  }
+
+  /// 设置宽度范围
+  void setWidthRange(int? minWidth, int? maxWidth) {
+    state = state.copyWith(
+      minWidth: minWidth,
+      maxWidth: maxWidth,
+      currentPage: 1,
+    );
+    loadData();
+  }
+
   /// 切换批量选择模式
   void toggleBatchMode() {
     state = state.copyWith(
       isBatchMode: !state.isBatchMode,
       selectedItems: {},
     );
+  }
+
+  /// 切换是否只显示收藏
+  void toggleFavoritesOnly() {
+    state = state.copyWith(
+        showFavoritesOnly: !state.showFavoritesOnly, currentPage: 1);
+    loadData();
+  }
+
+  /// 切换筛选面板显示状态
+  void toggleFilterPanel() {
+    state = state.copyWith(showFilterPanel: !state.showFilterPanel);
   }
 
   /// 切换项目选择状态

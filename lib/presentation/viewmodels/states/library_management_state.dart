@@ -1,18 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../domain/entities/library_item.dart';
 import '../../../domain/entities/library_category.dart';
+import '../../../domain/entities/library_item.dart';
 
 part 'library_management_state.freezed.dart';
-
-/// 视图模式
-enum ViewMode {
-  /// 网格视图
-  grid,
-
-  /// 列表视图
-  list,
-}
 
 /// 图库管理状态
 @freezed
@@ -71,8 +62,59 @@ class LibraryManagementState with _$LibraryManagementState {
 
     /// 选中的项目
     LibraryItem? selectedItem,
+
+    /// 类型筛选
+    String? typeFilter,
+
+    /// 是否只显示收藏
+    @Default(false) bool showFavoritesOnly,
+
+    /// 图片后缀筛选
+    String? formatFilter,
+
+    /// 最小宽度筛选
+    int? minWidth,
+
+    /// 最大宽度筛选
+    int? maxWidth,
+
+    /// 最小高度筛选
+    int? minHeight,
+
+    /// 最大高度筛选
+    int? maxHeight,
+
+    /// 最小文件大小筛选（字节）
+    int? minSize,
+
+    /// 最大文件大小筛选（字节）
+    int? maxSize,
+
+    /// 入库开始日期
+    DateTime? createStartDate,
+
+    /// 入库结束日期
+    DateTime? createEndDate,
+
+    /// 更新开始日期
+    DateTime? updateStartDate,
+
+    /// 更新结束日期
+    DateTime? updateEndDate,
+
+    /// 是否显示筛选面板
+    @Default(true) bool showFilterPanel,
   }) = _LibraryManagementState;
 
   /// 初始状态
   factory LibraryManagementState.initial() => const LibraryManagementState();
+}
+
+/// 视图模式
+enum ViewMode {
+  /// 网格视图
+  grid,
+
+  /// 列表视图
+  list,
 }

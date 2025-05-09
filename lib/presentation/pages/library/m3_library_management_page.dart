@@ -62,17 +62,12 @@ class _M3LibraryManagementPageState
         children: [
           // 左侧过滤面板
           if (_isFilterPanelExpanded)
-            ResizablePanel(
+            const ResizablePanel(
               initialWidth: 300,
-              minWidth: 250,
+              minWidth: 280,
               maxWidth: 400,
               isLeftPanel: true,
-              child: M3LibraryFilterPanel(
-                categories: state.categoryTree,
-                selectedCategoryId: state.selectedCategoryId,
-                onCategorySelected: _handleCategorySelected,
-                onSortChanged: _handleSortChanged,
-              ),
+              child: M3LibraryFilterPanel(),
             ),
 
           // 主内容区
@@ -494,12 +489,6 @@ class _M3LibraryManagementPageState
 
   void _handleSearch(String query) {
     ref.read(libraryManagementProvider.notifier).updateSearchQuery(query);
-  }
-
-  void _handleSortChanged(String sortBy, bool sortDesc) {
-    ref
-        .read(libraryManagementProvider.notifier)
-        .updateSorting(sortBy, sortDesc);
   }
 
   /// 刷新数据
