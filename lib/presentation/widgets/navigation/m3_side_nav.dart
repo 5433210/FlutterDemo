@@ -53,6 +53,11 @@ class M3NavigationSidebar extends StatelessWidget {
           label: Text(l10n.works),
         ),
         NavigationRailDestination(
+          icon: const Icon(Icons.photo_library_outlined),
+          selectedIcon: const Icon(Icons.photo_library),
+          label: Text(l10n.libraryManagement),
+        ),
+        NavigationRailDestination(
           icon: const Icon(Icons.font_download_outlined),
           selectedIcon: const Icon(Icons.font_download),
           label: Text(l10n.characters),

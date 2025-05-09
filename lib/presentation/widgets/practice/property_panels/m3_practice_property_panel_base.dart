@@ -243,11 +243,21 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
     // 初始化控制器，如果不存在
     if (!_numberControllers.containsKey(key)) {
       _numberControllers[key] = TextEditingController(text: valueStr);
-    }
-
-    // 如果值发生变化，更新控制器文本
-    if (_numberControllers[key]!.text != valueStr) {
-      _numberControllers[key]!.text = valueStr;
+    } else {
+      // 避免在构建期间更新控制器文本，这会导致错误
+      // 使用 post-frame 回调来更新控制器文本
+      if (_numberControllers[key]!.text != valueStr) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // 确保控制器仍然存在
+          if (_numberControllers.containsKey(key)) {
+            _numberControllers[key]!.value = TextEditingValue(
+              text: valueStr,
+              // 保持当前的选择状态
+              selection: _numberControllers[key]!.selection,
+            );
+          }
+        });
+      }
     }
 
     return Column(

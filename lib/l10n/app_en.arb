@@ -860,5 +860,48 @@
   "storageUsed":"Storage Used",
   "fileCount":"File Count",
   "workCount":"Work Count",
-  "loadFailed":"Load Failed"
+  "loadFailed":"Load Failed",
+  "libraryManagement": "Library",
+  "libraryManagementLoading": "Loading...",
+  "libraryManagementError": "Failed to load: {message}",
+  "@libraryManagementError": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryManagementNoItems": "No items",
+  "libraryManagementNoItemsHint": "Try adding some items or changing filters",
+  "libraryManagementSearch": "Search items...",
+  "libraryManagementEnterBatchMode": "Enter batch mode",
+  "libraryManagementExitBatchMode": "Exit batch mode",
+  "libraryManagementDeleteSelected": "Delete selected items",
+  "libraryManagementDeleteConfirm": "Confirm deletion",
+  "libraryManagementDeleteMessage": "Are you sure you want to delete the selected items? This action cannot be undone.",
+  "libraryManagementGridView": "Grid view",
+  "libraryManagementListView": "List view",
+  "libraryManagementCategories": "Categories",
+  "libraryManagementSortBy": "Sort by",
+  "libraryManagementSortByName": "Name",
+  "libraryManagementSortByDate": "Date",
+  "libraryManagementSortBySize": "Size",
+  "libraryManagementBasicInfo": "Basic Information",
+  "libraryManagementName": "Name",
+  "libraryManagementType": "Type",
+  "libraryManagementFormat": "Format",
+  "libraryManagementSize": "Size",
+  "libraryManagementFileSize": "File size",
+  "libraryManagementTags": "Tags",
+  "libraryManagementMetadata": "Metadata",
+  "libraryManagementTimeInfo": "Time Information",
+  "libraryManagementCreatedAt": "Created at",
+  "libraryManagementUpdatedAt": "Updated at",
+  "libraryManagementDetail": "Details",
+  "libraryManagementImport": "Import",
+  "libraryManagementImportFiles": "Import Files",
+  "libraryManagementImportFolder": "Import Folder",
+  "libraryManagementRemarks": "Remarks",
+  "libraryManagementRemarksHint": "Add remarks",
+  "libraryManagementNoRemarks": "No remarks"
 }

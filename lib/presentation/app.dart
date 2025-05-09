@@ -9,7 +9,6 @@ import '../application/providers/initialization_providers.dart';
 import '../domain/enums/app_language.dart';
 import '../infrastructure/logging/logger.dart';
 import '../l10n/app_localizations.dart';
-import '../presentation/pages/characters/character_list_page.dart';
 import '../presentation/pages/main/m3_main_window.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
 import '../presentation/pages/works/m3_work_detail_page.dart';
@@ -164,11 +163,6 @@ class MyApp extends ConsumerWidget {
           );
         }
         break;
-
-      case AppRoutes.characterList:
-        return MaterialPageRoute(
-          builder: (context) => const CharacterListPage(),
-        );
 
       case AppRoutes.characterManagement:
         return MaterialPageRoute(

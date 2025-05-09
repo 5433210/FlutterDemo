@@ -6,6 +6,8 @@ import 'dart:ui' as ui;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../infrastructure/logging/logger.dart';
 import '../interfaces/i_cache.dart';
@@ -105,6 +107,48 @@ class ImageCacheService {
     final transformString = jsonEncode(transform);
     final transformHash = md5.convert(utf8.encode(transformString)).toString();
     return '$id-$type-$transformHash';
+  }
+
+  /// 生成缩略图
+  Future<Uint8List?> generateThumbnail(Uint8List data) async {
+    try {
+      // 解码图片
+      final image = img.decodeImage(data);
+      if (image == null) return null;
+
+      // 计算缩略图尺寸
+      const maxSize = 200;
+      final width = image.width;
+      final height = image.height;
+      var newWidth = width;
+      var newHeight = height;
+
+      if (width > height) {
+        if (width > maxSize) {
+          newWidth = maxSize;
+          newHeight = (height * maxSize / width).round();
+        }
+      } else {
+        if (height > maxSize) {
+          newHeight = maxSize;
+          newWidth = (width * maxSize / height).round();
+        }
+      }
+
+      // 生成缩略图
+      final thumbnail = img.copyResize(
+        image,
+        width: newWidth,
+        height: newHeight,
+        interpolation: img.Interpolation.linear,
+      );
+
+      // 编码为 JPEG
+      return Uint8List.fromList(img.encodeJpg(thumbnail, quality: 85));
+    } catch (e) {
+      AppLogger.error('生成缩略图失败', error: e);
+      return null;
+    }
   }
 
   /// 获取二进制图像数据

@@ -10,6 +10,7 @@ import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
+import '../library/m3_library_management_page.dart';
 import '../practices/m3_practice_edit_page.dart';
 import '../practices/m3_practice_list_page.dart';
 
@@ -38,6 +39,8 @@ class _M3MainWindowState extends State<M3MainWindow>
             const ActivateTabIntent(2),
         LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
             const ActivateTabIntent(3),
+        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
+            const ActivateTabIntent(4),
 
         // 侧边栏快捷键
         LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
@@ -138,6 +141,15 @@ class _M3MainWindowState extends State<M3MainWindow>
         );
       case 1:
         return Navigator(
+          key: ValueKey('library_navigator_$_selectedIndex'),
+          onGenerateRoute: (settings) {
+            return MaterialPageRoute(
+              builder: (context) => const M3LibraryManagementPage(),
+            );
+          },
+        );
+      case 2:
+        return Navigator(
           key: ValueKey('character_navigator_$_selectedIndex'),
           onGenerateRoute: (settings) {
             if (settings.name == AppRoutes.characterCollection &&
@@ -176,7 +188,7 @@ class _M3MainWindowState extends State<M3MainWindow>
             );
           },
         );
-      case 2:
+      case 3:
         return Navigator(
           key: ValueKey('practice_navigator_$_selectedIndex'),
           onGenerateRoute: (settings) {
@@ -199,7 +211,7 @@ class _M3MainWindowState extends State<M3MainWindow>
             );
           },
         );
-      case 3:
+      case 4:
         return const M3SettingsPage();
       default:
         return const Center(child: Text('Page not implemented'));
