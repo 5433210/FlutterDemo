@@ -255,7 +255,7 @@ const migrations = [
     name TEXT NOT NULL,
     description TEXT,
     parentId TEXT,
-    sort_order INTEGER DEFAULT 0,
+    sortOrder INTEGER DEFAULT 0,
     createTime TEXT NOT NULL,
     updateTime TEXT NOT NULL
   );

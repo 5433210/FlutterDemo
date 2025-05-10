@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../domain/entities/library_category.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/library/library_management_provider.dart';
 import '../../../widgets/section_header.dart';
+import 'library_category_panel.dart'; // 改回使用 LibraryCategoryPanel
 
 /// 图库过滤面板
 class M3LibraryFilterPanel extends ConsumerStatefulWidget {
@@ -49,11 +49,8 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(libraryManagementProvider);
-    final notifier = ref.read(libraryManagementProvider.notifier);
-
     return Container(
-      width: 280,
+      width: double.infinity,
       padding: const EdgeInsets.all(AppSizes.spacing16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -80,16 +77,6 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 onPressed: _resetFilters,
                 tooltip: l10n.filterReset,
               ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  // Hide filter panel
-                  ref
-                      .read(libraryManagementProvider.notifier)
-                      .toggleFilterPanel();
-                },
-                tooltip: l10n.filterCollapse,
-              ),
             ],
           ),
 
@@ -104,9 +91,16 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                   title: l10n.libraryManagementCategories,
                   padding: EdgeInsets.zero,
                 ),
-                const SizedBox(height: AppSizes.spacing8),
-                _buildCategoriesList(
-                    state.categories, state.selectedCategoryId, notifier),
+                const SizedBox(height: AppSizes.spacing8), // 添加分类列表面板
+                const Card(
+                  margin: EdgeInsets.only(bottom: 16.0),
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    height: 300, // 增加高度以适应分类面板
+                    child:
+                        LibraryCategoryPanel(), // 使用 LibraryCategoryPanel 替代 LibraryCategoryListPanel
+                  ),
+                ),
 
                 const Divider(),
 
@@ -294,7 +288,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                       ),
                     ],
                   ),
-                ),                // 入库日期范围筛选
+                ), // 入库日期范围筛选
                 _buildFilterSection(
                   title: '入库日期',
                   child: Column(
@@ -317,7 +311,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                           _buildDatePresetChip('custom', '自定义'),
                         ],
                       ),
-                      
+
                       // 自定义日期范围
                       if (_createDatePreset == 'custom')
                         Padding(
@@ -342,8 +336,10 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                             ],
                           ),
                         ),
-                      
-                      if (_createTimeRange != null || _createDatePreset != null && _createDatePreset != 'all')
+
+                      if (_createTimeRange != null ||
+                          _createDatePreset != null &&
+                              _createDatePreset != 'all')
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: TextButton(
@@ -353,8 +349,9 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                                 _createDatePreset = 'all';
                               });
                               // Apply filter immediately
-                              ref.read(libraryManagementProvider.notifier)
-                                 .setCreateTimeRange(null, null);
+                              ref
+                                  .read(libraryManagementProvider.notifier)
+                                  .setCreateTimeRange(null, null);
                             },
                             child: Text(l10n.filterClear),
                           ),
@@ -386,7 +383,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                           _buildUpdateDatePresetChip('custom', '自定义'),
                         ],
                       ),
-                      
+
                       // 自定义日期范围
                       if (_updateDatePreset == 'custom')
                         Padding(
@@ -411,8 +408,10 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                             ],
                           ),
                         ),
-                      
-                      if (_updateTimeRange != null || _updateDatePreset != null && _updateDatePreset != 'all')
+
+                      if (_updateTimeRange != null ||
+                          _updateDatePreset != null &&
+                              _updateDatePreset != 'all')
                         Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: TextButton(
@@ -422,8 +421,9 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                                 _updateDatePreset = 'all';
                               });
                               // Apply filter immediately
-                              ref.read(libraryManagementProvider.notifier)
-                                 .setUpdateTimeRange(null, null);
+                              ref
+                                  .read(libraryManagementProvider.notifier)
+                                  .setUpdateTimeRange(null, null);
                             },
                             child: Text(l10n.filterClear),
                           ),
@@ -432,7 +432,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                   ),
                 ),
 
-                const Divider(),                // 排序选项
+                const Divider(), // 排序选项
                 SectionHeader(
                   title: l10n.libraryManagementSortBy,
                   padding: EdgeInsets.zero,
@@ -453,7 +453,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                         vertical: 8,
                       ),
                     ),
-                    items: [
+                    items: const [
                       DropdownMenuItem(value: 'name', child: Text('文件名')),
                       DropdownMenuItem(value: 'createdAt', child: Text('入库时间')),
                       DropdownMenuItem(value: 'updatedAt', child: Text('更新时间')),
@@ -465,14 +465,16 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                           _sortBy = value;
                         });
                         // Apply sorting immediately
-                        ref.read(libraryManagementProvider.notifier).updateSorting(_sortBy, _sortDesc);
+                        ref
+                            .read(libraryManagementProvider.notifier)
+                            .updateSorting(_sortBy, _sortDesc);
                       }
                     },
                   ),
                 ),
-                
+
                 const SizedBox(height: AppSizes.spacing8),
-                
+
                 // 排序方向
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,16 +492,18 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                                 _sortDesc = value;
                               });
                               // Apply sorting immediately
-                              ref.read(libraryManagementProvider.notifier).updateSorting(_sortBy, _sortDesc);
+                              ref
+                                  .read(libraryManagementProvider.notifier)
+                                  .updateSorting(_sortBy, _sortDesc);
                             }
                           },
                         ),
-                        Flexible(
+                        const Flexible(
                           child: Text('升序 (A→Z, 旧→新, 小→大)'),
                         )
                       ],
                     ),
-                    
+
                     // 降序
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -513,17 +517,19 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                                 _sortDesc = value;
                               });
                               // Apply sorting immediately
-                              ref.read(libraryManagementProvider.notifier).updateSorting(_sortBy, _sortDesc);
+                              ref
+                                  .read(libraryManagementProvider.notifier)
+                                  .updateSorting(_sortBy, _sortDesc);
                             }
                           },
                         ),
-                        Flexible(
+                        const Flexible(
                           child: Text('降序 (Z→A, 新→旧, 大→小)'),
                         )
                       ],
                     ),
                   ],
-                ),                // 重置筛选按钮
+                ), // 重置筛选按钮
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _resetFilters,
@@ -566,7 +572,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
     if (state.minSize != null || state.maxSize != null) {
       _sizeRange = RangeValues((state.minSize ?? 0) / (1024 * 1024),
           (state.maxSize ?? (10 * 1024 * 1024)) / (1024 * 1024));
-    }    // Initialize create time range
+    } // Initialize create time range
     if (state.createStartDate != null && state.createEndDate != null) {
       _createTimeRange = DateTimeRange(
           start: state.createStartDate!, end: state.createEndDate!);
@@ -588,46 +594,121 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
     _sortBy = state.sortBy;
     _sortDesc = state.sortDesc;
   }
-  Widget _buildCategoriesList(
-    List<LibraryCategory> categories,
-    String? selectedCategoryId,
-    LibraryManagementNotifier notifier,
-  ) {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          return _buildCategoryItem(
-              context, category, selectedCategoryId, notifier);
-        },
+
+  // 使用LibraryCategoryPanel替代原来的分类列表
+  // 构建日期输入字段
+  Widget _buildDateField({
+    required String label,
+    required DateTime? date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
+          ),
+        ),
+        child: Text(
+          date != null ? DateFormat.yMd().format(date) : '选择日期',
+          style: TextStyle(
+            color: date != null ? null : Colors.black38,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildCategoryItem(
-    BuildContext context,
-    LibraryCategory category,
-    String? selectedCategoryId,
-    LibraryManagementNotifier notifier,
-  ) {
-    final theme = Theme.of(context);
-    final isSelected = category.id == selectedCategoryId;
+  // 构建入库日期预设选择芯片
+  Widget _buildDatePresetChip(String preset, String label) {
+    return FilterChip(
+      label: Text(label),
+      selected: _createDatePreset == preset,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _createDatePreset = preset;
 
-    return ListTile(
-      title: Text(category.name),
-      selected: isSelected,
-      dense: true,
-      leading: Icon(
-        Icons.folder_outlined,
-        color: isSelected
-            ? theme.colorScheme.primary
-            : theme.colorScheme.onSurfaceVariant,
-      ),
-      onTap: () => notifier.selectCategory(
-        isSelected ? null : category.id,
-      ),
+            // 根据预设设置日期范围
+            final now = DateTime.now();
+            if (preset == 'today') {
+              final today = DateTime(now.year, now.month, now.day);
+              _createTimeRange = DateTimeRange(start: today, end: now);
+            } else if (preset == 'yesterday') {
+              final yesterday = DateTime(now.year, now.month, now.day - 1);
+              final endOfYesterday = DateTime(now.year, now.month, now.day)
+                  .subtract(const Duration(seconds: 1));
+              _createTimeRange =
+                  DateTimeRange(start: yesterday, end: endOfYesterday);
+            } else if (preset == 'thisWeek') {
+              // 计算本周的开始（周一）
+              final firstDayOfWeek =
+                  now.subtract(Duration(days: now.weekday - 1));
+              final startOfWeek = DateTime(firstDayOfWeek.year,
+                  firstDayOfWeek.month, firstDayOfWeek.day);
+              _createTimeRange = DateTimeRange(start: startOfWeek, end: now);
+            } else if (preset == 'lastWeek') {
+              // 上周
+              final firstDayOfThisWeek =
+                  now.subtract(Duration(days: now.weekday - 1));
+              final lastDayOfLastWeek =
+                  firstDayOfThisWeek.subtract(const Duration(seconds: 1));
+              final firstDayOfLastWeek =
+                  lastDayOfLastWeek.subtract(const Duration(days: 6));
+              _createTimeRange = DateTimeRange(
+                  start: firstDayOfLastWeek, end: lastDayOfLastWeek);
+            } else if (preset == 'thisMonth') {
+              // 本月
+              final startOfMonth = DateTime(now.year, now.month, 1);
+              _createTimeRange = DateTimeRange(start: startOfMonth, end: now);
+            } else if (preset == 'lastMonth') {
+              // 上月
+              final startOfThisMonth = DateTime(now.year, now.month, 1);
+              final lastDayOfLastMonth =
+                  startOfThisMonth.subtract(const Duration(seconds: 1));
+              final startOfLastMonth = DateTime(
+                  lastDayOfLastMonth.year, lastDayOfLastMonth.month, 1);
+              _createTimeRange = DateTimeRange(
+                  start: startOfLastMonth, end: lastDayOfLastMonth);
+            } else if (preset == 'thisYear') {
+              // 今年
+              final startOfYear = DateTime(now.year, 1, 1);
+              _createTimeRange = DateTimeRange(start: startOfYear, end: now);
+            } else if (preset == 'lastYear') {
+              // 去年
+              final startOfThisYear = DateTime(now.year, 1, 1);
+              final lastDayOfLastYear =
+                  startOfThisYear.subtract(const Duration(seconds: 1));
+              final startOfLastYear = DateTime(lastDayOfLastYear.year, 1, 1);
+              _createTimeRange =
+                  DateTimeRange(start: startOfLastYear, end: lastDayOfLastYear);
+            } else if (preset == 'all') {
+              // 全部（不筛选）
+              _createTimeRange = null;
+            } else if (preset == 'custom') {
+              // 自定义，不改变当前范围
+              _createTimeRange ??= DateTimeRange(
+                start: DateTime.now().subtract(const Duration(days: 7)),
+                end: DateTime.now(),
+              );
+            }
+
+            // 立即应用筛选
+            if (preset != 'custom') {
+              ref.read(libraryManagementProvider.notifier).setCreateTimeRange(
+                    _createTimeRange?.start,
+                    _createTimeRange?.end,
+                  );
+            }
+          });
+        }
+      },
     );
   }
 
@@ -645,13 +726,102 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
       ],
     );
   }
+
+  // 构建更新日期预设选择芯片
+  Widget _buildUpdateDatePresetChip(String preset, String label) {
+    return FilterChip(
+      label: Text(label),
+      selected: _updateDatePreset == preset,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _updateDatePreset = preset;
+
+            // 根据预设设置日期范围
+            final now = DateTime.now();
+            if (preset == 'today') {
+              final today = DateTime(now.year, now.month, now.day);
+              _updateTimeRange = DateTimeRange(start: today, end: now);
+            } else if (preset == 'yesterday') {
+              final yesterday = DateTime(now.year, now.month, now.day - 1);
+              final endOfYesterday = DateTime(now.year, now.month, now.day)
+                  .subtract(const Duration(seconds: 1));
+              _updateTimeRange =
+                  DateTimeRange(start: yesterday, end: endOfYesterday);
+            } else if (preset == 'thisWeek') {
+              // 计算本周的开始（周一）
+              final firstDayOfWeek =
+                  now.subtract(Duration(days: now.weekday - 1));
+              final startOfWeek = DateTime(firstDayOfWeek.year,
+                  firstDayOfWeek.month, firstDayOfWeek.day);
+              _updateTimeRange = DateTimeRange(start: startOfWeek, end: now);
+            } else if (preset == 'lastWeek') {
+              // 上周
+              final firstDayOfThisWeek =
+                  now.subtract(Duration(days: now.weekday - 1));
+              final lastDayOfLastWeek =
+                  firstDayOfThisWeek.subtract(const Duration(seconds: 1));
+              final firstDayOfLastWeek =
+                  lastDayOfLastWeek.subtract(const Duration(days: 6));
+              _updateTimeRange = DateTimeRange(
+                  start: firstDayOfLastWeek, end: lastDayOfLastWeek);
+            } else if (preset == 'thisMonth') {
+              // 本月
+              final startOfMonth = DateTime(now.year, now.month, 1);
+              _updateTimeRange = DateTimeRange(start: startOfMonth, end: now);
+            } else if (preset == 'lastMonth') {
+              // 上月
+              final startOfThisMonth = DateTime(now.year, now.month, 1);
+              final lastDayOfLastMonth =
+                  startOfThisMonth.subtract(const Duration(seconds: 1));
+              final startOfLastMonth = DateTime(
+                  lastDayOfLastMonth.year, lastDayOfLastMonth.month, 1);
+              _updateTimeRange = DateTimeRange(
+                  start: startOfLastMonth, end: lastDayOfLastMonth);
+            } else if (preset == 'thisYear') {
+              // 今年
+              final startOfYear = DateTime(now.year, 1, 1);
+              _updateTimeRange = DateTimeRange(start: startOfYear, end: now);
+            } else if (preset == 'lastYear') {
+              // 去年
+              final startOfThisYear = DateTime(now.year, 1, 1);
+              final lastDayOfLastYear =
+                  startOfThisYear.subtract(const Duration(seconds: 1));
+              final startOfLastYear = DateTime(lastDayOfLastYear.year, 1, 1);
+              _updateTimeRange =
+                  DateTimeRange(start: startOfLastYear, end: lastDayOfLastYear);
+            } else if (preset == 'all') {
+              // 全部（不筛选）
+              _updateTimeRange = null;
+            } else if (preset == 'custom') {
+              // 自定义，不改变当前范围
+              _updateTimeRange ??= DateTimeRange(
+                start: DateTime.now().subtract(const Duration(days: 7)),
+                end: DateTime.now(),
+              );
+            }
+
+            // 立即应用筛选
+            if (preset != 'custom') {
+              ref.read(libraryManagementProvider.notifier).setUpdateTimeRange(
+                    _updateTimeRange?.start,
+                    _updateTimeRange?.end,
+                  );
+            }
+          });
+        }
+      },
+    );
+  }
+
   void _resetFilters() {
     // Reset local state
     setState(() {
       _selectedType = null;
       _showFavoritesOnly = false;
       _selectedFormat = null;
-      _widthRange = null;      _heightRange = null;
+      _widthRange = null;
+      _heightRange = null;
       _sizeRange = null;
       _createTimeRange = null;
       _updateTimeRange = null;
@@ -695,186 +865,5 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
         }
       });
     }
-  }
-
-  // 构建日期输入字段
-  Widget _buildDateField({
-    required String label,
-    required DateTime? date,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-        ),
-        child: Text(
-          date != null ? DateFormat.yMd().format(date) : '选择日期',
-          style: TextStyle(
-            color: date != null ? null : Colors.black38,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // 构建入库日期预设选择芯片
-  Widget _buildDatePresetChip(String preset, String label) {
-    return FilterChip(
-      label: Text(label),
-      selected: _createDatePreset == preset,
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _createDatePreset = preset;
-            
-            // 根据预设设置日期范围
-            final now = DateTime.now();
-            if (preset == 'today') {
-              final today = DateTime(now.year, now.month, now.day);
-              _createTimeRange = DateTimeRange(start: today, end: now);
-            } else if (preset == 'yesterday') {
-              final yesterday = DateTime(now.year, now.month, now.day - 1);
-              final endOfYesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(seconds: 1));
-              _createTimeRange = DateTimeRange(start: yesterday, end: endOfYesterday);
-            } else if (preset == 'thisWeek') {
-              // 计算本周的开始（周一）
-              final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
-              final startOfWeek = DateTime(firstDayOfWeek.year, firstDayOfWeek.month, firstDayOfWeek.day);
-              _createTimeRange = DateTimeRange(start: startOfWeek, end: now);
-            } else if (preset == 'lastWeek') {
-              // 上周
-              final firstDayOfThisWeek = now.subtract(Duration(days: now.weekday - 1));
-              final lastDayOfLastWeek = firstDayOfThisWeek.subtract(const Duration(seconds: 1));
-              final firstDayOfLastWeek = lastDayOfLastWeek.subtract(Duration(days: 6));
-              _createTimeRange = DateTimeRange(start: firstDayOfLastWeek, end: lastDayOfLastWeek);
-            } else if (preset == 'thisMonth') {
-              // 本月
-              final startOfMonth = DateTime(now.year, now.month, 1);
-              _createTimeRange = DateTimeRange(start: startOfMonth, end: now);
-            } else if (preset == 'lastMonth') {
-              // 上月
-              final startOfThisMonth = DateTime(now.year, now.month, 1);
-              final lastDayOfLastMonth = startOfThisMonth.subtract(const Duration(seconds: 1));
-              final startOfLastMonth = DateTime(lastDayOfLastMonth.year, lastDayOfLastMonth.month, 1);
-              _createTimeRange = DateTimeRange(start: startOfLastMonth, end: lastDayOfLastMonth);
-            } else if (preset == 'thisYear') {
-              // 今年
-              final startOfYear = DateTime(now.year, 1, 1);
-              _createTimeRange = DateTimeRange(start: startOfYear, end: now);
-            } else if (preset == 'lastYear') {
-              // 去年
-              final startOfThisYear = DateTime(now.year, 1, 1);
-              final lastDayOfLastYear = startOfThisYear.subtract(const Duration(seconds: 1));
-              final startOfLastYear = DateTime(lastDayOfLastYear.year, 1, 1);
-              _createTimeRange = DateTimeRange(start: startOfLastYear, end: lastDayOfLastYear);
-            } else if (preset == 'all') {
-              // 全部（不筛选）
-              _createTimeRange = null;
-            } else if (preset == 'custom') {
-              // 自定义，不改变当前范围
-              if (_createTimeRange == null) {
-                _createTimeRange = DateTimeRange(
-                  start: DateTime.now().subtract(const Duration(days: 7)),
-                  end: DateTime.now(),
-                );
-              }
-            }
-            
-            // 立即应用筛选
-            if (preset != 'custom') {
-              ref.read(libraryManagementProvider.notifier).setCreateTimeRange(
-                _createTimeRange?.start,
-                _createTimeRange?.end,
-              );
-            }
-          });
-        }
-      },
-    );
-  }
-  
-  // 构建更新日期预设选择芯片
-  Widget _buildUpdateDatePresetChip(String preset, String label) {
-    return FilterChip(
-      label: Text(label),
-      selected: _updateDatePreset == preset,
-      onSelected: (selected) {
-        if (selected) {
-          setState(() {
-            _updateDatePreset = preset;
-            
-            // 根据预设设置日期范围
-            final now = DateTime.now();
-            if (preset == 'today') {
-              final today = DateTime(now.year, now.month, now.day);
-              _updateTimeRange = DateTimeRange(start: today, end: now);
-            } else if (preset == 'yesterday') {
-              final yesterday = DateTime(now.year, now.month, now.day - 1);
-              final endOfYesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(seconds: 1));
-              _updateTimeRange = DateTimeRange(start: yesterday, end: endOfYesterday);
-            } else if (preset == 'thisWeek') {
-              // 计算本周的开始（周一）
-              final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
-              final startOfWeek = DateTime(firstDayOfWeek.year, firstDayOfWeek.month, firstDayOfWeek.day);
-              _updateTimeRange = DateTimeRange(start: startOfWeek, end: now);
-            } else if (preset == 'lastWeek') {
-              // 上周
-              final firstDayOfThisWeek = now.subtract(Duration(days: now.weekday - 1));
-              final lastDayOfLastWeek = firstDayOfThisWeek.subtract(const Duration(seconds: 1));
-              final firstDayOfLastWeek = lastDayOfLastWeek.subtract(Duration(days: 6));
-              _updateTimeRange = DateTimeRange(start: firstDayOfLastWeek, end: lastDayOfLastWeek);
-            } else if (preset == 'thisMonth') {
-              // 本月
-              final startOfMonth = DateTime(now.year, now.month, 1);
-              _updateTimeRange = DateTimeRange(start: startOfMonth, end: now);
-            } else if (preset == 'lastMonth') {
-              // 上月
-              final startOfThisMonth = DateTime(now.year, now.month, 1);
-              final lastDayOfLastMonth = startOfThisMonth.subtract(const Duration(seconds: 1));
-              final startOfLastMonth = DateTime(lastDayOfLastMonth.year, lastDayOfLastMonth.month, 1);
-              _updateTimeRange = DateTimeRange(start: startOfLastMonth, end: lastDayOfLastMonth);
-            } else if (preset == 'thisYear') {
-              // 今年
-              final startOfYear = DateTime(now.year, 1, 1);
-              _updateTimeRange = DateTimeRange(start: startOfYear, end: now);
-            } else if (preset == 'lastYear') {
-              // 去年
-              final startOfThisYear = DateTime(now.year, 1, 1);
-              final lastDayOfLastYear = startOfThisYear.subtract(const Duration(seconds: 1));
-              final startOfLastYear = DateTime(lastDayOfLastYear.year, 1, 1);
-              _updateTimeRange = DateTimeRange(start: startOfLastYear, end: lastDayOfLastYear);
-            } else if (preset == 'all') {
-              // 全部（不筛选）
-              _updateTimeRange = null;
-            } else if (preset == 'custom') {
-              // 自定义，不改变当前范围
-              if (_updateTimeRange == null) {
-                _updateTimeRange = DateTimeRange(
-                  start: DateTime.now().subtract(const Duration(days: 7)),
-                  end: DateTime.now(),
-                );
-              }
-            }
-            
-            // 立即应用筛选
-            if (preset != 'custom') {
-              ref.read(libraryManagementProvider.notifier).setUpdateTimeRange(
-                _updateTimeRange?.start,
-                _updateTimeRange?.end,
-              );
-            }
-          });
-        }
-      },
-    );
   }
 }

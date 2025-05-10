@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/entities/library_item.dart';
-import '../../../../theme/app_sizes.dart';
 import '../../../../presentation/providers/library/library_management_provider.dart';
-import 'm3_library_item.dart';
+import 'draggable_library_item_wrapper.dart';
 
 /// 图库网格视图
 class M3LibraryGridView extends ConsumerWidget {
@@ -32,10 +31,8 @@ class M3LibraryGridView extends ConsumerWidget {
     required this.onItemTap,
     required this.onItemLongPress,
   });
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(libraryManagementProvider);
     const spacing = 16.0;
 
     return GridView.builder(
@@ -49,12 +46,15 @@ class M3LibraryGridView extends ConsumerWidget {
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
-        return M3LibraryItem(
+        return DraggableLibraryItemWrapper(
           item: item,
           items: items,
           isSelected: selectedItems.contains(item.id),
           onTap: () => onItemTap(item.id),
           onLongPress: () => onItemLongPress(item.id),
+          onToggleFavorite: () => ref
+              .read(libraryManagementProvider.notifier)
+              .toggleFavorite(item.id),
         );
       },
     );

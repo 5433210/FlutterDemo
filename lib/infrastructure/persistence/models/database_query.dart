@@ -183,6 +183,15 @@ class DatabaseQueryGroup {
     return DatabaseQueryGroup(conditions: conditions, type: 'OR');
   }
 
+  /// Helper to convert a group to a virtual condition for inclusion in a list of conditions
+  DatabaseQueryCondition toCondition() {
+    return DatabaseQueryCondition(
+      field: '_group_',
+      operator: 'GROUP',
+      value: this,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'conditions': conditions.map((e) => e.toJson()).toList(),
         'type': type,

@@ -104,6 +104,9 @@ class LibraryManagementState with _$LibraryManagementState {
 
     /// 是否显示筛选面板
     @Default(true) bool showFilterPanel,
+
+    /// 分类项目计数
+    @Default({}) Map<String, int> categoryItemCounts,
   }) = _LibraryManagementState;
 
   /// 初始状态

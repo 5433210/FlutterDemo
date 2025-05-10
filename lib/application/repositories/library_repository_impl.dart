@@ -67,19 +67,22 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   @override
   Future<void> addCategory(LibraryCategory category) async {
     try {
-      // Convert the category to JSON and ensure dates are set
-      final Map<String, dynamic> categoryData = category.toJson();
+      AppLogger.debug('正在添加图库分类', data: {'category': category.toJson()});
 
-      // Add timestamps if not present
-      if (!categoryData.containsKey('createTime')) {
-        categoryData['createTime'] = DateTime.now().toIso8601String();
-      }
+      // Create base category data with only supported fields
+      final now = DateTime.now();
+      final Map<String, dynamic> dbData = {
+        'id': category.id,
+        'name': category.name,
+        'parentId': category.parentId,
+        'createTime': now.toIso8601String(),
+        'updateTime': now.toIso8601String(),
+      };
 
-      if (!categoryData.containsKey('updateTime')) {
-        categoryData['updateTime'] = DateTime.now().toIso8601String();
-      }
+      // Remove null values to avoid database errors
+      dbData.removeWhere((key, value) => value == null);
 
-      await _db.set(_categoryTable, category.id, categoryData);
+      await _db.set(_categoryTable, category.id, dbData);
       AppLogger.debug('添加图库分类成功', data: {'categoryId': category.id});
     } catch (e, stackTrace) {
       AppLogger.error('添加图库分类失败', error: e, stackTrace: stackTrace);
@@ -147,19 +150,27 @@ class LibraryRepositoryImpl implements ILibraryRepository {
           value: type,
         ));
       }
+
+      // Handle tags using individual LIKE conditions
       if (tags != null && tags.isNotEmpty) {
-        conditions.add(DatabaseQueryCondition(
-          field: 'tags',
-          operator: '@>',
-          value: tags,
-        ));
+        for (final tag in tags) {
+          conditions.add(DatabaseQueryCondition(
+            field: 'tags',
+            operator: 'LIKE',
+            value: '%$tag%',
+          ));
+        }
       }
+
+      // Handle categories using individual LIKE conditions
       if (categories != null && categories.isNotEmpty) {
-        conditions.add(DatabaseQueryCondition(
-          field: 'categories',
-          operator: '@>',
-          value: categories,
-        ));
+        for (final category in categories) {
+          conditions.add(DatabaseQueryCondition(
+            field: 'categories',
+            operator: 'LIKE',
+            value: '%$category%',
+          ));
+        }
       }
 
       // 创建基本查询对象
@@ -355,7 +366,29 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   Future<List<LibraryCategory>> getCategories() async {
     try {
       final result = await _db.getAll(_categoryTable);
-      return result.map((e) => LibraryCategory.fromJson(e)).toList();
+      return result.map((Map<String, dynamic> row) {
+        // 创建可修改的数据副本
+        final mutableData = Map<String, dynamic>.from(row);
+
+        // 处理可能为 null 的字段
+        if (mutableData['parentId'] == null) {
+          mutableData.remove('parentId');
+        }
+
+        // 解析并转换时间字段
+        final createdAt = DateTime.parse(mutableData['createTime'] as String);
+        final updatedAt = DateTime.parse(mutableData['updateTime'] as String);
+
+        return LibraryCategory(
+          id: mutableData['id'] as String,
+          name: mutableData['name'] as String,
+          parentId: mutableData['parentId'] as String?,
+          sortOrder: 0,
+          children: const [],
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+        );
+      }).toList();
     } catch (e, stackTrace) {
       AppLogger.error('获取所有分类失败', error: e, stackTrace: stackTrace);
       rethrow;
@@ -368,13 +401,18 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       final categories = await getCategories();
       final counts = <String, int>{};
 
+      // First get the total count of all items
+      final totalCount = await _db.count(_table, {});
+      counts['total'] = totalCount;
+
       for (final category in categories) {
+        // Create a query with LIKE operator for comma-separated values
         final query = DatabaseQuery(
           conditions: [
             DatabaseQueryCondition(
               field: 'categories',
-              operator: '@>',
-              value: [category.id],
+              operator: 'LIKE',
+              value: '%${category.id}%',
             ),
           ],
         );
@@ -394,22 +432,36 @@ class LibraryRepositoryImpl implements ILibraryRepository {
     try {
       final categories = await getCategories();
       final tree = <LibraryCategory>[];
-      final map = <String, LibraryCategory>{};
+      final categoryMap = <String, LibraryCategory>{};
 
-      // 构建映射
+      // 建立映射关系
       for (final category in categories) {
-        map[category.id] = category;
+        categoryMap[category.id] = category;
       }
 
-      // 构建树
+      // 构建树形结构
       for (final category in categories) {
-        if (category.parentId == null) {
+        if (category.parentId == null || category.parentId!.isEmpty) {
           tree.add(category);
         } else {
-          final parent = map[category.parentId];
+          final parent = categoryMap[category.parentId];
           if (parent != null) {
-            parent.children.add(category);
+            // Create a new list with the existing children plus the new category
+            final children = List<LibraryCategory>.from(parent.children);
+            children.add(category);
+
+            // Update the parent in the map with the new children
+            categoryMap[parent.id] = parent.copyWith(children: children);
+          } else {
+            tree.add(category); // 如果父分类不存在，则作为顶级分类
           }
+        }
+      }
+
+      // 更新树中的节点
+      for (int i = 0; i < tree.length; i++) {
+        if (categoryMap.containsKey(tree[i].id)) {
+          tree[i] = categoryMap[tree[i].id]!;
         }
       }
 
@@ -437,21 +489,26 @@ class LibraryRepositoryImpl implements ILibraryRepository {
           value: type,
         ));
       }
-
       if (tags != null && tags.isNotEmpty) {
-        conditions.add(DatabaseQueryCondition(
-          field: 'tags',
-          operator: '@>',
-          value: tags,
-        ));
+        // Handle tags using individual LIKE conditions
+        for (final tag in tags) {
+          conditions.add(DatabaseQueryCondition(
+            field: 'tags',
+            operator: 'LIKE',
+            value: '%$tag%',
+          ));
+        }
       }
 
       if (categories != null && categories.isNotEmpty) {
-        conditions.add(DatabaseQueryCondition(
-          field: 'categories',
-          operator: '@>',
-          value: categories,
-        ));
+        // Handle categories using individual LIKE conditions
+        for (final category in categories) {
+          conditions.add(DatabaseQueryCondition(
+            field: 'categories',
+            operator: 'LIKE',
+            value: '%$category%',
+          ));
+        }
       }
       if (searchQuery != null && searchQuery.isNotEmpty) {
         // 创建一个OR条件组，实现同时搜索名称和标签
@@ -569,13 +626,19 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   @override
   Future<void> updateCategory(LibraryCategory category) async {
     try {
-      // Convert the category to JSON and ensure dates are set
-      final Map<String, dynamic> categoryData = category.toJson();
+      // Create base category data with only supported fields
+      final Map<String, dynamic> dbData = {
+        'id': category.id,
+        'name': category.name,
+        'parentId': category.parentId,
+        'createTime': category.createdAt.toIso8601String(),
+        'updateTime': DateTime.now().toIso8601String(), // 更新时间总是使用当前时间
+      };
 
-      // Update timestamp
-      categoryData['updateTime'] = DateTime.now().toIso8601String();
+      // Remove null values to avoid database errors
+      dbData.removeWhere((key, value) => value == null);
 
-      await _db.save(_categoryTable, category.id, categoryData);
+      await _db.save(_categoryTable, category.id, dbData);
       AppLogger.debug('更新图库分类成功', data: {'categoryId': category.id});
     } catch (e, stackTrace) {
       AppLogger.error('更新图库分类失败', error: e, stackTrace: stackTrace);

@@ -112,6 +112,9 @@ mixin _$LibraryManagementState {
   /// 是否显示筛选面板
   bool get showFilterPanel => throw _privateConstructorUsedError;
 
+  /// 分类项目计数
+  Map<String, int> get categoryItemCounts => throw _privateConstructorUsedError;
+
   /// Create a copy of LibraryManagementState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -157,7 +160,8 @@ abstract class $LibraryManagementStateCopyWith<$Res> {
       DateTime? createEndDate,
       DateTime? updateStartDate,
       DateTime? updateEndDate,
-      bool showFilterPanel});
+      bool showFilterPanel,
+      Map<String, int> categoryItemCounts});
 
   $LibraryItemCopyWith<$Res>? get selectedItem;
 }
@@ -210,6 +214,7 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
     Object? updateStartDate = freezed,
     Object? updateEndDate = freezed,
     Object? showFilterPanel = null,
+    Object? categoryItemCounts = null,
   }) {
     return _then(_value.copyWith(
       items: null == items
@@ -340,6 +345,10 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
           ? _value.showFilterPanel
           : showFilterPanel // ignore: cast_nullable_to_non_nullable
               as bool,
+      categoryItemCounts: null == categoryItemCounts
+          ? _value.categoryItemCounts
+          : categoryItemCounts // ignore: cast_nullable_to_non_nullable
+              as Map<String, int>,
     ) as $Val);
   }
 
@@ -399,7 +408,8 @@ abstract class _$$LibraryManagementStateImplCopyWith<$Res>
       DateTime? createEndDate,
       DateTime? updateStartDate,
       DateTime? updateEndDate,
-      bool showFilterPanel});
+      bool showFilterPanel,
+      Map<String, int> categoryItemCounts});
 
   @override
   $LibraryItemCopyWith<$Res>? get selectedItem;
@@ -452,6 +462,7 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
     Object? updateStartDate = freezed,
     Object? updateEndDate = freezed,
     Object? showFilterPanel = null,
+    Object? categoryItemCounts = null,
   }) {
     return _then(_$LibraryManagementStateImpl(
       items: null == items
@@ -582,6 +593,10 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
           ? _value.showFilterPanel
           : showFilterPanel // ignore: cast_nullable_to_non_nullable
               as bool,
+      categoryItemCounts: null == categoryItemCounts
+          ? _value._categoryItemCounts
+          : categoryItemCounts // ignore: cast_nullable_to_non_nullable
+              as Map<String, int>,
     ));
   }
 }
@@ -621,12 +636,14 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
       this.createEndDate,
       this.updateStartDate,
       this.updateEndDate,
-      this.showFilterPanel = true})
+      this.showFilterPanel = true,
+      final Map<String, int> categoryItemCounts = const {}})
       : _items = items,
         _allTags = allTags,
         _categories = categories,
         _categoryTree = categoryTree,
-        _selectedItems = selectedItems;
+        _selectedItems = selectedItems,
+        _categoryItemCounts = categoryItemCounts;
 
   /// 图库项目列表
   final List<LibraryItem> _items;
@@ -808,9 +825,22 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
   @JsonKey()
   final bool showFilterPanel;
 
+  /// 分类项目计数
+  final Map<String, int> _categoryItemCounts;
+
+  /// 分类项目计数
+  @override
+  @JsonKey()
+  Map<String, int> get categoryItemCounts {
+    if (_categoryItemCounts is EqualUnmodifiableMapView)
+      return _categoryItemCounts;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_categoryItemCounts);
+  }
+
   @override
   String toString() {
-    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem, typeFilter: $typeFilter, showFavoritesOnly: $showFavoritesOnly, formatFilter: $formatFilter, minWidth: $minWidth, maxWidth: $maxWidth, minHeight: $minHeight, maxHeight: $maxHeight, minSize: $minSize, maxSize: $maxSize, createStartDate: $createStartDate, createEndDate: $createEndDate, updateStartDate: $updateStartDate, updateEndDate: $updateEndDate, showFilterPanel: $showFilterPanel)';
+    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem, typeFilter: $typeFilter, showFavoritesOnly: $showFavoritesOnly, formatFilter: $formatFilter, minWidth: $minWidth, maxWidth: $maxWidth, minHeight: $minHeight, maxHeight: $maxHeight, minSize: $minSize, maxSize: $maxSize, createStartDate: $createStartDate, createEndDate: $createEndDate, updateStartDate: $updateStartDate, updateEndDate: $updateEndDate, showFilterPanel: $showFilterPanel, categoryItemCounts: $categoryItemCounts)';
   }
 
   @override
@@ -876,7 +906,9 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
             (identical(other.updateEndDate, updateEndDate) ||
                 other.updateEndDate == updateEndDate) &&
             (identical(other.showFilterPanel, showFilterPanel) ||
-                other.showFilterPanel == showFilterPanel));
+                other.showFilterPanel == showFilterPanel) &&
+            const DeepCollectionEquality()
+                .equals(other._categoryItemCounts, _categoryItemCounts));
   }
 
   @override
@@ -913,7 +945,8 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
         createEndDate,
         updateStartDate,
         updateEndDate,
-        showFilterPanel
+        showFilterPanel,
+        const DeepCollectionEquality().hash(_categoryItemCounts)
       ]);
 
   /// Create a copy of LibraryManagementState
@@ -928,38 +961,40 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
 
 abstract class _LibraryManagementState implements LibraryManagementState {
   const factory _LibraryManagementState(
-      {final List<LibraryItem> items,
-      final List<String> allTags,
-      final List<LibraryCategory> categories,
-      final List<LibraryCategory> categoryTree,
-      final String? selectedCategoryId,
-      final String searchQuery,
-      final String sortBy,
-      final bool sortDesc,
-      final bool isLoading,
-      final bool isBatchMode,
-      final Set<String> selectedItems,
-      final bool isDetailOpen,
-      final String? errorMessage,
-      final int totalCount,
-      final int currentPage,
-      final int pageSize,
-      final ViewMode viewMode,
-      final LibraryItem? selectedItem,
-      final String? typeFilter,
-      final bool showFavoritesOnly,
-      final String? formatFilter,
-      final int? minWidth,
-      final int? maxWidth,
-      final int? minHeight,
-      final int? maxHeight,
-      final int? minSize,
-      final int? maxSize,
-      final DateTime? createStartDate,
-      final DateTime? createEndDate,
-      final DateTime? updateStartDate,
-      final DateTime? updateEndDate,
-      final bool showFilterPanel}) = _$LibraryManagementStateImpl;
+          {final List<LibraryItem> items,
+          final List<String> allTags,
+          final List<LibraryCategory> categories,
+          final List<LibraryCategory> categoryTree,
+          final String? selectedCategoryId,
+          final String searchQuery,
+          final String sortBy,
+          final bool sortDesc,
+          final bool isLoading,
+          final bool isBatchMode,
+          final Set<String> selectedItems,
+          final bool isDetailOpen,
+          final String? errorMessage,
+          final int totalCount,
+          final int currentPage,
+          final int pageSize,
+          final ViewMode viewMode,
+          final LibraryItem? selectedItem,
+          final String? typeFilter,
+          final bool showFavoritesOnly,
+          final String? formatFilter,
+          final int? minWidth,
+          final int? maxWidth,
+          final int? minHeight,
+          final int? maxHeight,
+          final int? minSize,
+          final int? maxSize,
+          final DateTime? createStartDate,
+          final DateTime? createEndDate,
+          final DateTime? updateStartDate,
+          final DateTime? updateEndDate,
+          final bool showFilterPanel,
+          final Map<String, int> categoryItemCounts}) =
+      _$LibraryManagementStateImpl;
 
   /// 图库项目列表
   @override
@@ -1088,6 +1123,10 @@ abstract class _LibraryManagementState implements LibraryManagementState {
   /// 是否显示筛选面板
   @override
   bool get showFilterPanel;
+
+  /// 分类项目计数
+  @override
+  Map<String, int> get categoryItemCounts;
 
   /// Create a copy of LibraryManagementState
   /// with the given fields replaced by the non-null parameter values.

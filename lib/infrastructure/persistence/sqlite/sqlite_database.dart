@@ -241,8 +241,24 @@ class SQLiteDatabase implements DatabaseInterface {
 
     // 处理普通条件
     for (final condition in query.conditions) {
-      where.add('${condition.field} ${condition.operator} ?');
-      whereArgs.add(condition.value);
+      // Handle special GROUP operator for nested conditions
+      if (condition.operator == 'GROUP' &&
+          condition.value is DatabaseQueryGroup) {
+        final group = condition.value as DatabaseQueryGroup;
+        final groupWheres = <String>[];
+        for (final groupCondition in group.conditions) {
+          groupWheres
+              .add('${groupCondition.field} ${groupCondition.operator} ?');
+          whereArgs.add(groupCondition.value);
+        }
+        if (groupWheres.isNotEmpty) {
+          final groupOperator = group.type == 'AND' ? ' AND ' : ' OR ';
+          where.add('(${groupWheres.join(groupOperator)})');
+        }
+      } else {
+        where.add('${condition.field} ${condition.operator} ?');
+        whereArgs.add(condition.value);
+      }
     }
 
     // 处理条件组

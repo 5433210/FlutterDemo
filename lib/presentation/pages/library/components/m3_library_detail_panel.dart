@@ -49,18 +49,18 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
     final l10n = AppLocalizations.of(context);
     final colorScheme = theme.colorScheme;
     final categories = ref.watch(libraryManagementProvider).categories;
-
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(300 * (1 - _animation.value), 0),
+        // Calculate offset based on parent width instead of fixed value
+        return FractionallySizedBox(
+          widthFactor: 1.0,
           child: Card(
             margin: EdgeInsets.zero,
             elevation: 0,
             shape: const RoundedRectangleBorder(),
             child: SizedBox(
-              width: 300,
+              width: double.infinity,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/library_service.dart';
+import '../../../domain/entities/library_category.dart';
 import '../../../domain/entities/library_item.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/library_management_state.dart';
@@ -18,10 +19,159 @@ final libraryManagementProvider =
 class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
   final LibraryService _service;
 
+  // 添加一个分类计数的本地变量
+  Map<String, int> _categoryItemCounts = {};
+
   LibraryManagementNotifier({
     required LibraryService service,
   })  : _service = service,
-        super(const LibraryManagementState());
+        super(const LibraryManagementState()) {
+    // 初始化时加载分类数据
+    _initializeData();
+  }
+  // 提供一个getter方法来获取分类计数
+  Map<String, int> get categoryItemCounts => _categoryItemCounts;
+
+  /// 添加分类
+  Future<void> addCategory(LibraryCategory category) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      await _service.addCategory(category);
+      await _reloadCategories();
+      await loadCategoryItemCounts();
+    } catch (e) {
+      AppLogger.error('添加分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 为项目批量添加分类
+  Future<void> addCategoryToItems(
+      String categoryId, List<String> itemIds) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      for (final itemId in itemIds) {
+        // 获取项目
+        final item = await _service.getItem(itemId);
+        if (item != null) {
+          // 如果项目没有此分类，则添加
+          if (!item.categories.contains(categoryId)) {
+            final updatedCategories = [...item.categories, categoryId];
+            final updatedItem = item.copyWith(
+              categories: updatedCategories,
+              updatedAt: DateTime.now(),
+            );
+
+            // 更新项目
+            await _service.updateItem(updatedItem);
+          }
+        }
+      }
+
+      // 刷新数据
+      await loadData();
+      await loadCategoryItemCounts();
+    } catch (e) {
+      AppLogger.error('批量添加分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 批量将项目添加到分类
+  Future<void> addItemsToCategory(
+      List<String> itemIds, String categoryId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      for (final itemId in itemIds) {
+        // 获取项目
+        final item = await _service.getItem(itemId);
+        if (item != null && !item.categories.contains(categoryId)) {
+          // 添加新分类
+          final updatedCategories = [...item.categories, categoryId];
+          final updatedItem = item.copyWith(
+            categories: updatedCategories,
+            updatedAt: DateTime.now(),
+          );
+
+          // 更新项目
+          await _service.updateItem(updatedItem);
+        }
+      }
+
+      // 刷新数据
+      await loadData();
+      await loadCategoryItemCounts();
+
+      // 成功提示
+      AppLogger.info('批量添加项目到分类完成', data: {
+        'itemCount': itemIds.length,
+        'categoryId': categoryId,
+      });
+    } catch (e) {
+      AppLogger.error('批量添加项目到分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 将项目添加到分类
+  Future<void> addItemToCategory(String itemId, String categoryId) async {
+    try {
+      // 获取项目
+      final item = await _service.getItem(itemId);
+      if (item != null) {
+        // 检查项目是否已经在分类中
+        if (!item.categories.contains(categoryId)) {
+          // 添加新分类
+          final updatedCategories = [...item.categories, categoryId];
+          final updatedItem = item.copyWith(
+            categories: updatedCategories,
+            updatedAt: DateTime.now(),
+          );
+
+          // 更新项目
+          await _service.updateItem(updatedItem);
+
+          // 如果是当前选中的项目，更新状态
+          if (state.selectedItem?.id == itemId) {
+            state = state.copyWith(selectedItem: updatedItem);
+          }
+
+          // 更新列表中的项目
+          final updatedItems =
+              state.items.map((i) => i.id == itemId ? updatedItem : i).toList();
+
+          state = state.copyWith(items: updatedItems);
+        }
+      }
+
+      // 刷新数据
+      await loadData();
+      await loadCategoryItemCounts();
+
+      // 成功提示
+      AppLogger.info('项目已添加到分类', data: {
+        'itemId': itemId,
+        'categoryId': categoryId,
+      });
+    } catch (e) {
+      AppLogger.error('添加项目到分类失败', error: e);
+      state = state.copyWith(
+        errorMessage: e.toString(),
+      );
+    }
+  }
 
   /// 切换页面
   void changePage(int page) {
@@ -35,6 +185,32 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       isDetailOpen: false,
       selectedItem: null,
     );
+  }
+
+  /// 删除分类
+  Future<void> deleteCategory(String id) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      await _service.deleteCategory(id);
+
+      // 如果当前选中的分类被删除，清除选择
+      if (state.selectedCategoryId == id) {
+        state = state.copyWith(selectedCategoryId: null);
+      }
+
+      await _reloadCategories();
+      await loadCategoryItemCounts();
+
+      // 刷新数据，以更新项目列表
+      await loadData();
+    } catch (e) {
+      AppLogger.error('删除分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   /// 删除项目
@@ -66,6 +242,20 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       );
       await loadData();
     } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 加载分类统计数据
+  Future<void> loadCategoryItemCounts() async {
+    try {
+      _categoryItemCounts = await _service.getCategoryItemCounts();
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      AppLogger.error('加载分类统计数据失败', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -180,13 +370,15 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
                 item.updatedAt.isAtSameMomentAs(endDate))
             .toList();
       }
-
       final totalCount = await _service.getItemCount(
         categories: categories,
         searchQuery: state.searchQuery,
       );
 
       final categoryTree = await _service.getCategoryTree();
+
+      // 加载分类统计数据
+      await loadCategoryItemCounts();
 
       state = state.copyWith(
         items: filteredItems,
@@ -195,6 +387,43 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
         isLoading: false,
       );
     } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 从项目中移除分类
+  Future<void> removeCategoryFromItems(
+      String categoryId, List<String> itemIds) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      for (final itemId in itemIds) {
+        // 获取项目
+        final item = await _service.getItem(itemId);
+        if (item != null) {
+          // 如果项目有此分类，则移除
+          if (item.categories.contains(categoryId)) {
+            final updatedCategories =
+                item.categories.where((id) => id != categoryId).toList();
+            final updatedItem = item.copyWith(
+              categories: updatedCategories,
+              updatedAt: DateTime.now(),
+            );
+
+            // 更新项目
+            await _service.updateItem(updatedItem);
+          }
+        }
+      }
+
+      // 刷新数据
+      await loadData();
+      await loadCategoryItemCounts();
+    } catch (e) {
+      AppLogger.error('批量移除分类失败', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -229,7 +458,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       selectedCategoryId: categoryId,
       currentPage: 1,
     );
-    loadData();
+    loadData().then((_) => loadCategoryItemCounts());
   }
 
   /// 选择项目
@@ -264,6 +493,12 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       maxHeight: maxHeight,
       currentPage: 1,
     );
+    loadData();
+  }
+
+  /// 设置搜索查询
+  void setSearchQuery(String query) {
+    state = state.copyWith(searchQuery: query, currentPage: 1);
     loadData();
   }
 
@@ -305,10 +540,48 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
 
   /// 切换批量选择模式
   void toggleBatchMode() {
+    final newBatchMode = !state.isBatchMode;
+
+    // 如果退出批量模式，清空选择
+    final newSelectedItems = newBatchMode ? state.selectedItems : <String>{};
+
     state = state.copyWith(
-      isBatchMode: !state.isBatchMode,
-      selectedItems: {},
+      isBatchMode: newBatchMode,
+      selectedItems: newSelectedItems,
     );
+  }
+
+  /// 切换项目的收藏状态
+  Future<void> toggleFavorite(String id) async {
+    try {
+      // Call library service to toggle favorite status
+      await _service.toggleFavorite(id);
+
+      // Update the item in the list
+      final updatedItems = state.items.map((item) {
+        if (item.id == id) {
+          return item.copyWith(isFavorite: !item.isFavorite);
+        }
+        return item;
+      }).toList();
+
+      // If this is the selected item, update it in the state
+      final selectedItem = state.selectedItem;
+      if (selectedItem != null && selectedItem.id == id) {
+        state = state.copyWith(
+          items: updatedItems,
+          selectedItem:
+              selectedItem.copyWith(isFavorite: !selectedItem.isFavorite),
+        );
+      } else {
+        state = state.copyWith(items: updatedItems);
+      }
+    } catch (e) {
+      AppLogger.error('切换收藏状态失败', error: e);
+      state = state.copyWith(
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   /// 切换是否只显示收藏
@@ -325,20 +598,40 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
 
   /// 切换项目选择状态
   void toggleItemSelection(String itemId) {
-    final selectedItems = Set<String>.from(state.selectedItems);
-    if (selectedItems.contains(itemId)) {
-      selectedItems.remove(itemId);
+    final newSelectedItems = Set<String>.from(state.selectedItems);
+
+    if (newSelectedItems.contains(itemId)) {
+      newSelectedItems.remove(itemId);
     } else {
-      selectedItems.add(itemId);
+      newSelectedItems.add(itemId);
     }
-    state = state.copyWith(selectedItems: selectedItems);
+
+    state = state.copyWith(selectedItems: newSelectedItems);
   }
 
   /// 切换视图模式
   void toggleViewMode() {
-    state = state.copyWith(
-      viewMode: state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid,
-    );
+    final newViewMode =
+        state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid;
+
+    state = state.copyWith(viewMode: newViewMode);
+  }
+
+  /// 更新分类
+  Future<void> updateCategory(LibraryCategory category) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      await _service.updateCategory(category);
+      await _reloadCategories();
+      await loadCategoryItemCounts();
+    } catch (e) {
+      AppLogger.error('更新分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   /// 更新项目
@@ -371,6 +664,54 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     }
   }
 
+  /// 更新项目分类列表（完全替换）
+  Future<void> updateItemCategories(
+      String itemId, List<String> categories) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // 获取项目
+      final item = await _service.getItem(itemId);
+      if (item != null) {
+        // 完全替换分类
+        final updatedItem = item.copyWith(
+          categories: categories,
+          updatedAt: DateTime.now(),
+        );
+
+        // 更新项目
+        await _service.updateItem(updatedItem);
+
+        // 如果是当前选中的项目，更新状态
+        if (state.selectedItem?.id == itemId) {
+          state = state.copyWith(selectedItem: updatedItem);
+        }
+
+        // 更新列表中的项目
+        final updatedItems =
+            state.items.map((i) => i.id == itemId ? updatedItem : i).toList();
+
+        state = state.copyWith(items: updatedItems);
+      }
+
+      // 刷新数据
+      await loadData();
+      await loadCategoryItemCounts();
+
+      // 成功提示
+      AppLogger.info('更新项目分类', data: {
+        'itemId': itemId,
+        'categories': categories,
+      });
+    } catch (e) {
+      AppLogger.error('更新项目分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   /// 更新每页数量
   void updatePageSize(int pageSize) {
     state = state.copyWith(
@@ -397,5 +738,32 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       currentPage: 1,
     );
     loadData();
+  }
+
+  /// 初始化数据
+  Future<void> _initializeData() async {
+    await _reloadCategories();
+    await loadCategoryItemCounts();
+    loadData();
+  }
+
+  /// 重新加载分类数据
+  Future<void> _reloadCategories() async {
+    try {
+      final categories = await _service.getCategories();
+      final categoryTree = await _service.getCategoryTree();
+
+      state = state.copyWith(
+        categories: categories,
+        categoryTree: categoryTree,
+        isLoading: false,
+      );
+    } catch (e) {
+      AppLogger.error('加载分类数据失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 }

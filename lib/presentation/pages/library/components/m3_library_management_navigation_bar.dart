@@ -18,6 +18,9 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 删除选中项目回调
   final VoidCallback? onDeleteSelected;
 
+  /// 批量设置分类回调
+  final VoidCallback? onAssignCategoryBatch;
+
   /// 是否为网格视图
   final bool isGridView;
 
@@ -29,7 +32,7 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
 
   /// 搜索控制器
   final TextEditingController searchController;
-  
+
   /// 导入文件回调
   final VoidCallback? onImportFiles;
 
@@ -43,6 +46,7 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     required this.onToggleBatchMode,
     required this.selectedCount,
     this.onDeleteSelected,
+    this.onAssignCategoryBatch,
     required this.isGridView,
     required this.onToggleViewMode,
     required this.onSearch,
@@ -94,7 +98,7 @@ class _M3LibraryManagementNavigationBarState
             controller: widget.searchController,
             hintText: l10n.libraryManagementSearch,
             leading: const Icon(Icons.search),
-            padding: const MaterialStatePropertyAll(
+            padding: const WidgetStatePropertyAll(
               EdgeInsets.symmetric(horizontal: 8),
             ),
             onChanged: widget.onSearch,
@@ -118,7 +122,7 @@ class _M3LibraryManagementNavigationBarState
             ],
           ),
         ),
-        
+
         // 导入按钮 (仅在非批量模式下显示)
         if (!widget.isBatchMode)
           PopupMenuButton<String>(
@@ -154,8 +158,18 @@ class _M3LibraryManagementNavigationBarState
               ),
             ],
           ),
-          
+
         // 右侧按钮组
+        // 批量分类按钮
+        if (widget.isBatchMode &&
+            widget.selectedCount > 0 &&
+            widget.onAssignCategoryBatch != null)
+          IconButton(
+            icon: const Icon(Icons.category),
+            tooltip: '设置分类',
+            onPressed: widget.onAssignCategoryBatch,
+          ),
+
         // 批量删除按钮
         if (widget.isBatchMode && widget.selectedCount > 0)
           IconButton(
