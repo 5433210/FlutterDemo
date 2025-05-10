@@ -137,24 +137,19 @@ class M3FilterSortSection extends StatelessWidget {
 
   /// 获取本地化的排序字段名称
   String _getLocalizedSortFieldName(SortField field, AppLocalizations l10n) {
-    switch (field) {
-      case SortField.title:
-        return l10n.filterSortFieldTitle;
-      case SortField.author:
-        return l10n.filterSortFieldAuthor;
-      case SortField.creationDate:
-        return l10n.filterSortFieldCreationDate;
-      case SortField.createTime:
-        return l10n.filterSortFieldCreateTime;
-      case SortField.updateTime:
-        return l10n.filterSortFieldUpdateTime;
-      case SortField.tool:
-        return l10n.filterSortFieldTool;
-      case SortField.style:
-        return l10n.filterSortFieldStyle;
-      default:
-        return l10n.filterSortFieldNone;
-    }
+    return switch (field) {
+      SortField.title => l10n.filterSortFieldTitle,
+      SortField.author => l10n.filterSortFieldAuthor,
+      SortField.creationDate => l10n.filterSortFieldCreationDate,
+      SortField.createTime => l10n.filterSortFieldCreateTime,
+      SortField.updateTime => l10n.filterSortFieldUpdateTime,
+      SortField.tool => l10n.filterSortFieldTool,
+      SortField.style => l10n.filterSortFieldStyle,
+      SortField.fileName => l10n.filterSortFieldFileName,
+      SortField.fileUpdatedAt => l10n.filterSortFieldFileUpdatedAt,
+      SortField.fileSize => l10n.filterSortFieldFileSize,
+      SortField.none => l10n.filterSortFieldNone,
+    };
   }
 }
 

@@ -112,6 +112,9 @@ class AppSizes {
   static const double searchBarIconSize = 16.0;
   static const double searchBarClearIconSize = 16.0;
 
+  /// 间距 - 4
+  static const double spacing4 = 4.0;
+
   /// 间距 - 8
   static const double spacing8 = 8.0;
 

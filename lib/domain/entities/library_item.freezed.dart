@@ -23,8 +23,8 @@ mixin _$LibraryItem {
   /// ID
   String get id => throw _privateConstructorUsedError;
 
-  /// 名称
-  String get name => throw _privateConstructorUsedError;
+  /// 文件名称
+  String get fileName => throw _privateConstructorUsedError;
 
   /// 类型
   String get type => throw _privateConstructorUsedError;
@@ -42,7 +42,7 @@ mixin _$LibraryItem {
   int get height => throw _privateConstructorUsedError;
 
   /// 文件大小（字节）
-  int get size => throw _privateConstructorUsedError;
+  int get fileSize => throw _privateConstructorUsedError;
 
   /// 标签列表
   List<String> get tags => throw _privateConstructorUsedError;
@@ -63,11 +63,11 @@ mixin _$LibraryItem {
   @Uint8ListConverter()
   Uint8List? get thumbnail => throw _privateConstructorUsedError;
 
-  /// 创建时间
-  DateTime get createdAt => throw _privateConstructorUsedError;
+  /// 文件创建时间
+  DateTime get fileCreatedAt => throw _privateConstructorUsedError;
 
-  /// 更新时间
-  DateTime get updatedAt => throw _privateConstructorUsedError;
+  /// 文件修改时间
+  DateTime get fileUpdatedAt => throw _privateConstructorUsedError;
 
   /// Serializes this LibraryItem to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -87,21 +87,21 @@ abstract class $LibraryItemCopyWith<$Res> {
   @useResult
   $Res call(
       {String id,
-      String name,
+      String fileName,
       String type,
       String format,
       String path,
       int width,
       int height,
-      int size,
+      int fileSize,
       List<String> tags,
       List<String> categories,
       Map<String, dynamic> metadata,
       bool isFavorite,
       String remarks,
       @Uint8ListConverter() Uint8List? thumbnail,
-      DateTime createdAt,
-      DateTime updatedAt});
+      DateTime fileCreatedAt,
+      DateTime fileUpdatedAt});
 }
 
 /// @nodoc
@@ -120,30 +120,30 @@ class _$LibraryItemCopyWithImpl<$Res, $Val extends LibraryItem>
   @override
   $Res call({
     Object? id = null,
-    Object? name = null,
+    Object? fileName = null,
     Object? type = null,
     Object? format = null,
     Object? path = null,
     Object? width = null,
     Object? height = null,
-    Object? size = null,
+    Object? fileSize = null,
     Object? tags = null,
     Object? categories = null,
     Object? metadata = null,
     Object? isFavorite = null,
     Object? remarks = null,
     Object? thumbnail = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? fileCreatedAt = null,
+    Object? fileUpdatedAt = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
               as String,
       type: null == type
           ? _value.type
@@ -165,9 +165,9 @@ class _$LibraryItemCopyWithImpl<$Res, $Val extends LibraryItem>
           ? _value.height
           : height // ignore: cast_nullable_to_non_nullable
               as int,
-      size: null == size
-          ? _value.size
-          : size // ignore: cast_nullable_to_non_nullable
+      fileSize: null == fileSize
+          ? _value.fileSize
+          : fileSize // ignore: cast_nullable_to_non_nullable
               as int,
       tags: null == tags
           ? _value.tags
@@ -193,13 +193,13 @@ class _$LibraryItemCopyWithImpl<$Res, $Val extends LibraryItem>
           ? _value.thumbnail
           : thumbnail // ignore: cast_nullable_to_non_nullable
               as Uint8List?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      fileCreatedAt: null == fileCreatedAt
+          ? _value.fileCreatedAt
+          : fileCreatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      updatedAt: null == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      fileUpdatedAt: null == fileUpdatedAt
+          ? _value.fileUpdatedAt
+          : fileUpdatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
     ) as $Val);
   }
@@ -215,21 +215,21 @@ abstract class _$$LibraryItemImplCopyWith<$Res>
   @useResult
   $Res call(
       {String id,
-      String name,
+      String fileName,
       String type,
       String format,
       String path,
       int width,
       int height,
-      int size,
+      int fileSize,
       List<String> tags,
       List<String> categories,
       Map<String, dynamic> metadata,
       bool isFavorite,
       String remarks,
       @Uint8ListConverter() Uint8List? thumbnail,
-      DateTime createdAt,
-      DateTime updatedAt});
+      DateTime fileCreatedAt,
+      DateTime fileUpdatedAt});
 }
 
 /// @nodoc
@@ -246,30 +246,30 @@ class __$$LibraryItemImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? id = null,
-    Object? name = null,
+    Object? fileName = null,
     Object? type = null,
     Object? format = null,
     Object? path = null,
     Object? width = null,
     Object? height = null,
-    Object? size = null,
+    Object? fileSize = null,
     Object? tags = null,
     Object? categories = null,
     Object? metadata = null,
     Object? isFavorite = null,
     Object? remarks = null,
     Object? thumbnail = freezed,
-    Object? createdAt = null,
-    Object? updatedAt = null,
+    Object? fileCreatedAt = null,
+    Object? fileUpdatedAt = null,
   }) {
     return _then(_$LibraryItemImpl(
       id: null == id
           ? _value.id
           : id // ignore: cast_nullable_to_non_nullable
               as String,
-      name: null == name
-          ? _value.name
-          : name // ignore: cast_nullable_to_non_nullable
+      fileName: null == fileName
+          ? _value.fileName
+          : fileName // ignore: cast_nullable_to_non_nullable
               as String,
       type: null == type
           ? _value.type
@@ -291,9 +291,9 @@ class __$$LibraryItemImplCopyWithImpl<$Res>
           ? _value.height
           : height // ignore: cast_nullable_to_non_nullable
               as int,
-      size: null == size
-          ? _value.size
-          : size // ignore: cast_nullable_to_non_nullable
+      fileSize: null == fileSize
+          ? _value.fileSize
+          : fileSize // ignore: cast_nullable_to_non_nullable
               as int,
       tags: null == tags
           ? _value._tags
@@ -319,13 +319,13 @@ class __$$LibraryItemImplCopyWithImpl<$Res>
           ? _value.thumbnail
           : thumbnail // ignore: cast_nullable_to_non_nullable
               as Uint8List?,
-      createdAt: null == createdAt
-          ? _value.createdAt
-          : createdAt // ignore: cast_nullable_to_non_nullable
+      fileCreatedAt: null == fileCreatedAt
+          ? _value.fileCreatedAt
+          : fileCreatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
-      updatedAt: null == updatedAt
-          ? _value.updatedAt
-          : updatedAt // ignore: cast_nullable_to_non_nullable
+      fileUpdatedAt: null == fileUpdatedAt
+          ? _value.fileUpdatedAt
+          : fileUpdatedAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
     ));
   }
@@ -336,21 +336,21 @@ class __$$LibraryItemImplCopyWithImpl<$Res>
 class _$LibraryItemImpl implements _LibraryItem {
   const _$LibraryItemImpl(
       {required this.id,
-      required this.name,
+      required this.fileName,
       required this.type,
       required this.format,
       required this.path,
       required this.width,
       required this.height,
-      required this.size,
+      required this.fileSize,
       final List<String> tags = const [],
       final List<String> categories = const [],
       final Map<String, dynamic> metadata = const {},
       this.isFavorite = false,
       this.remarks = '',
       @Uint8ListConverter() this.thumbnail,
-      required this.createdAt,
-      required this.updatedAt})
+      required this.fileCreatedAt,
+      required this.fileUpdatedAt})
       : _tags = tags,
         _categories = categories,
         _metadata = metadata;
@@ -362,9 +362,9 @@ class _$LibraryItemImpl implements _LibraryItem {
   @override
   final String id;
 
-  /// 名称
+  /// 文件名称
   @override
-  final String name;
+  final String fileName;
 
   /// 类型
   @override
@@ -388,7 +388,7 @@ class _$LibraryItemImpl implements _LibraryItem {
 
   /// 文件大小（字节）
   @override
-  final int size;
+  final int fileSize;
 
   /// 标签列表
   final List<String> _tags;
@@ -441,17 +441,17 @@ class _$LibraryItemImpl implements _LibraryItem {
   @Uint8ListConverter()
   final Uint8List? thumbnail;
 
-  /// 创建时间
+  /// 文件创建时间
   @override
-  final DateTime createdAt;
+  final DateTime fileCreatedAt;
 
-  /// 更新时间
+  /// 文件修改时间
   @override
-  final DateTime updatedAt;
+  final DateTime fileUpdatedAt;
 
   @override
   String toString() {
-    return 'LibraryItem(id: $id, name: $name, type: $type, format: $format, path: $path, width: $width, height: $height, size: $size, tags: $tags, categories: $categories, metadata: $metadata, isFavorite: $isFavorite, remarks: $remarks, thumbnail: $thumbnail, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'LibraryItem(id: $id, fileName: $fileName, type: $type, format: $format, path: $path, width: $width, height: $height, fileSize: $fileSize, tags: $tags, categories: $categories, metadata: $metadata, isFavorite: $isFavorite, remarks: $remarks, thumbnail: $thumbnail, fileCreatedAt: $fileCreatedAt, fileUpdatedAt: $fileUpdatedAt)';
   }
 
   @override
@@ -460,13 +460,15 @@ class _$LibraryItemImpl implements _LibraryItem {
         (other.runtimeType == runtimeType &&
             other is _$LibraryItemImpl &&
             (identical(other.id, id) || other.id == id) &&
-            (identical(other.name, name) || other.name == name) &&
+            (identical(other.fileName, fileName) ||
+                other.fileName == fileName) &&
             (identical(other.type, type) || other.type == type) &&
             (identical(other.format, format) || other.format == format) &&
             (identical(other.path, path) || other.path == path) &&
             (identical(other.width, width) || other.width == width) &&
             (identical(other.height, height) || other.height == height) &&
-            (identical(other.size, size) || other.size == size) &&
+            (identical(other.fileSize, fileSize) ||
+                other.fileSize == fileSize) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             const DeepCollectionEquality()
                 .equals(other._categories, _categories) &&
@@ -475,10 +477,10 @@ class _$LibraryItemImpl implements _LibraryItem {
                 other.isFavorite == isFavorite) &&
             (identical(other.remarks, remarks) || other.remarks == remarks) &&
             const DeepCollectionEquality().equals(other.thumbnail, thumbnail) &&
-            (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt) &&
-            (identical(other.updatedAt, updatedAt) ||
-                other.updatedAt == updatedAt));
+            (identical(other.fileCreatedAt, fileCreatedAt) ||
+                other.fileCreatedAt == fileCreatedAt) &&
+            (identical(other.fileUpdatedAt, fileUpdatedAt) ||
+                other.fileUpdatedAt == fileUpdatedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -486,21 +488,21 @@ class _$LibraryItemImpl implements _LibraryItem {
   int get hashCode => Object.hash(
       runtimeType,
       id,
-      name,
+      fileName,
       type,
       format,
       path,
       width,
       height,
-      size,
+      fileSize,
       const DeepCollectionEquality().hash(_tags),
       const DeepCollectionEquality().hash(_categories),
       const DeepCollectionEquality().hash(_metadata),
       isFavorite,
       remarks,
       const DeepCollectionEquality().hash(thumbnail),
-      createdAt,
-      updatedAt);
+      fileCreatedAt,
+      fileUpdatedAt);
 
   /// Create a copy of LibraryItem
   /// with the given fields replaced by the non-null parameter values.
@@ -521,21 +523,21 @@ class _$LibraryItemImpl implements _LibraryItem {
 abstract class _LibraryItem implements LibraryItem {
   const factory _LibraryItem(
       {required final String id,
-      required final String name,
+      required final String fileName,
       required final String type,
       required final String format,
       required final String path,
       required final int width,
       required final int height,
-      required final int size,
+      required final int fileSize,
       final List<String> tags,
       final List<String> categories,
       final Map<String, dynamic> metadata,
       final bool isFavorite,
       final String remarks,
       @Uint8ListConverter() final Uint8List? thumbnail,
-      required final DateTime createdAt,
-      required final DateTime updatedAt}) = _$LibraryItemImpl;
+      required final DateTime fileCreatedAt,
+      required final DateTime fileUpdatedAt}) = _$LibraryItemImpl;
 
   factory _LibraryItem.fromJson(Map<String, dynamic> json) =
       _$LibraryItemImpl.fromJson;
@@ -544,9 +546,9 @@ abstract class _LibraryItem implements LibraryItem {
   @override
   String get id;
 
-  /// 名称
+  /// 文件名称
   @override
-  String get name;
+  String get fileName;
 
   /// 类型
   @override
@@ -570,7 +572,7 @@ abstract class _LibraryItem implements LibraryItem {
 
   /// 文件大小（字节）
   @override
-  int get size;
+  int get fileSize;
 
   /// 标签列表
   @override
@@ -597,13 +599,13 @@ abstract class _LibraryItem implements LibraryItem {
   @Uint8ListConverter()
   Uint8List? get thumbnail;
 
-  /// 创建时间
+  /// 文件创建时间
   @override
-  DateTime get createdAt;
+  DateTime get fileCreatedAt;
 
-  /// 更新时间
+  /// 文件修改时间
   @override
-  DateTime get updatedAt;
+  DateTime get fileUpdatedAt;
 
   /// Create a copy of LibraryItem
   /// with the given fields replaced by the non-null parameter values.

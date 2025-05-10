@@ -141,15 +141,6 @@ class _M3MainWindowState extends State<M3MainWindow>
         );
       case 1:
         return Navigator(
-          key: ValueKey('library_navigator_$_selectedIndex'),
-          onGenerateRoute: (settings) {
-            return MaterialPageRoute(
-              builder: (context) => const M3LibraryManagementPage(),
-            );
-          },
-        );
-      case 2:
-        return Navigator(
           key: ValueKey('character_navigator_$_selectedIndex'),
           onGenerateRoute: (settings) {
             if (settings.name == AppRoutes.characterCollection &&
@@ -188,7 +179,7 @@ class _M3MainWindowState extends State<M3MainWindow>
             );
           },
         );
-      case 3:
+      case 2:
         return Navigator(
           key: ValueKey('practice_navigator_$_selectedIndex'),
           onGenerateRoute: (settings) {
@@ -208,6 +199,15 @@ class _M3MainWindowState extends State<M3MainWindow>
             }
             return MaterialPageRoute(
               builder: (context) => const M3PracticeListPage(),
+            );
+          },
+        );
+      case 3:
+        return Navigator(
+          key: ValueKey('library_navigator_$_selectedIndex'),
+          onGenerateRoute: (settings) {
+            return MaterialPageRoute(
+              builder: (context) => const M3LibraryManagementPage(),
             );
           },
         );

@@ -611,7 +611,7 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
       final List<LibraryCategory> categoryTree = const [],
       this.selectedCategoryId,
       this.searchQuery = '',
-      this.sortBy = 'name',
+      this.sortBy = 'fileName',
       this.sortDesc = false,
       this.isLoading = false,
       this.isBatchMode = false,

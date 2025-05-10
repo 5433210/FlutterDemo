@@ -112,20 +112,20 @@ class LibraryImportService {
       // 创建图库项目
       final item = LibraryItem(
         id: itemId,
-        name: fileName,
+        fileName: fileName,
         type: 'image',
         format: fileExtension,
         path: managedFilePath, // 使用应用管理的文件路径
         width: imageSize.width.toInt(),
         height: imageSize.height.toInt(),
-        size: fileStats.size,
+        fileSize: fileStats.size,
         tags: [],
         categories: [],
         metadata: {},
         isFavorite: false,
-        thumbnail: thumbnail, // 直接存储缩略图数据到数据库
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        thumbnail: thumbnail,
+        fileCreatedAt: fileStats.changed, // Use file creation time
+        fileUpdatedAt: fileStats.modified, // Use file modification time
       );
 
       // 保存到数据库

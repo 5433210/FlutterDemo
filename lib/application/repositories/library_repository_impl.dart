@@ -179,9 +179,9 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       if (searchQuery != null && searchQuery.isNotEmpty) {
         // 创建一个OR条件组，实现同时搜索名称和标签
         final searchConditions = [
-          // 搜索名称
+          // 搜索文件名
           DatabaseQueryCondition(
-            field: 'name',
+            field: 'fileName',
             operator: 'LIKE',
             value: '%$searchQuery%',
           ),
@@ -314,8 +314,8 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       if (mutableData.containsKey('height')) {
         mutableData['height'] = int.parse(mutableData['height'].toString());
       }
-      if (mutableData.containsKey('size')) {
-        mutableData['size'] = int.parse(mutableData['size'].toString());
+      if (mutableData.containsKey('fileSize')) {
+        mutableData['fileSize'] = int.parse(mutableData['fileSize'].toString());
       }
 
       // Process tags from comma-separated string to List<String>
@@ -513,9 +513,9 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       if (searchQuery != null && searchQuery.isNotEmpty) {
         // 创建一个OR条件组，实现同时搜索名称和标签
         final searchConditions = [
-          // 搜索名称
+          // 搜索文件名
           DatabaseQueryCondition(
-            field: 'name',
+            field: 'fileName',
             operator: 'LIKE',
             value: '%$searchQuery%',
           ),

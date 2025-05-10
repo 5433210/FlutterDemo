@@ -1955,6 +1955,24 @@ abstract class AppLocalizations {
   /// **'Update Time'**
   String get filterSortFieldUpdateTime;
 
+  /// No description provided for @filterSortFieldFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'File Name'**
+  String get filterSortFieldFileName;
+
+  /// No description provided for @filterSortFieldFileUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'File Update Time'**
+  String get filterSortFieldFileUpdatedAt;
+
+  /// No description provided for @filterSortFieldFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size'**
+  String get filterSortFieldFileSize;
+
   /// No description provided for @filterSortSection.
   ///
   /// In en, this message translates to:
@@ -1966,6 +1984,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter & Sort'**
   String get filterTitle;
+
+  /// No description provided for @filterMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get filterMin;
+
+  /// No description provided for @filterMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get filterMax;
+
+  /// No description provided for @filterSelectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get filterSelectDateRange;
 
   /// No description provided for @generalSettings.
   ///
@@ -5228,7 +5264,7 @@ abstract class AppLocalizations {
   /// No description provided for @libraryManagementSortBySize.
   ///
   /// In en, this message translates to:
-  /// **'Size'**
+  /// **'File size'**
   String get libraryManagementSortBySize;
 
   /// No description provided for @libraryManagementBasicInfo.
@@ -5338,6 +5374,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No remarks'**
   String get libraryManagementNoRemarks;
+
+  /// No description provided for @sortAndFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get sortAndFilter;
+
+  /// No description provided for @categoryManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Management'**
+  String get categoryManagement;
+
+  /// No description provided for @addCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get addCategory;
+
+  /// No description provided for @searchCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories...'**
+  String get searchCategories;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All Categories'**
+  String get allCategories;
+
+  /// No description provided for @removedFromAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from all categories'**
+  String get removedFromAllCategories;
+
+  /// No description provided for @addedToCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to category'**
+  String get addedToCategory;
+
+  /// No description provided for @newCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'New Category'**
+  String get newCategory;
+
+  /// No description provided for @deleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Category'**
+  String get deleteCategory;
+
+  /// No description provided for @categoryHasItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items in this category'**
+  String categoryHasItems(Object count);
+
+  /// No description provided for @confirmDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete?'**
+  String get confirmDelete;
+
+  /// No description provided for @confirmDeleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete category'**
+  String get confirmDeleteCategory;
+
+  /// No description provided for @editCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get editCategory;
+
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @categoryPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Panel'**
+  String get categoryPanelTitle;
+
+  /// No description provided for @libraryManagementFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get libraryManagementFavorite;
+
+  /// No description provided for @libraryManagementFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get libraryManagementFavorites;
+
+  /// No description provided for @libraryManagementFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'File Formats'**
+  String get libraryManagementFormats;
+
+  /// No description provided for @libraryManagementTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get libraryManagementTypes;
+
+  /// No description provided for @libraryManagementSortDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Order'**
+  String get libraryManagementSortDesc;
+
+  /// No description provided for @allTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All Types'**
+  String get allTypes;
+
+  /// No description provided for @yes.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @unknownCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Category'**
+  String get unknownCategory;
+
+  /// No description provided for @noCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No Categories'**
+  String get noCategories;
+
+  /// No description provided for @tagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tags...'**
+  String get tagsHint;
+
+  /// No description provided for @noTags.
+  ///
+  /// In en, this message translates to:
+  /// **'No Tags'**
+  String get noTags;
+
+  /// No description provided for @libraryManagementSortByFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size'**
+  String get libraryManagementSortByFileSize;
+
+  /// No description provided for @libraryManagementPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get libraryManagementPath;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

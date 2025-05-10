@@ -9,13 +9,13 @@ part of 'library_item.dart';
 _$LibraryItemImpl _$$LibraryItemImplFromJson(Map<String, dynamic> json) =>
     _$LibraryItemImpl(
       id: json['id'] as String,
-      name: json['name'] as String,
+      fileName: json['fileName'] as String,
       type: json['type'] as String,
       format: json['format'] as String,
       path: json['path'] as String,
       width: (json['width'] as num).toInt(),
       height: (json['height'] as num).toInt(),
-      size: (json['size'] as num).toInt(),
+      fileSize: (json['fileSize'] as num).toInt(),
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
               const [],
@@ -28,26 +28,26 @@ _$LibraryItemImpl _$$LibraryItemImplFromJson(Map<String, dynamic> json) =>
       remarks: json['remarks'] as String? ?? '',
       thumbnail:
           const Uint8ListConverter().fromJson(json['thumbnail'] as String?),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      fileCreatedAt: DateTime.parse(json['fileCreatedAt'] as String),
+      fileUpdatedAt: DateTime.parse(json['fileUpdatedAt'] as String),
     );
 
 Map<String, dynamic> _$$LibraryItemImplToJson(_$LibraryItemImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'name': instance.name,
+      'fileName': instance.fileName,
       'type': instance.type,
       'format': instance.format,
       'path': instance.path,
       'width': instance.width,
       'height': instance.height,
-      'size': instance.size,
+      'fileSize': instance.fileSize,
       'tags': instance.tags,
       'categories': instance.categories,
       'metadata': instance.metadata,
       'isFavorite': instance.isFavorite,
       'remarks': instance.remarks,
       'thumbnail': const Uint8ListConverter().toJson(instance.thumbnail),
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
+      'fileCreatedAt': instance.fileCreatedAt.toIso8601String(),
+      'fileUpdatedAt': instance.fileUpdatedAt.toIso8601String(),
     };

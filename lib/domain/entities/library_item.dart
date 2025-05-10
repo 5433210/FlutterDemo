@@ -15,8 +15,8 @@ class LibraryItem with _$LibraryItem {
     /// ID
     required String id,
 
-    /// 名称
-    required String name,
+    /// 文件名称
+    required String fileName,
 
     /// 类型
     required String type,
@@ -34,7 +34,7 @@ class LibraryItem with _$LibraryItem {
     required int height,
 
     /// 文件大小（字节）
-    required int size,
+    required int fileSize,
 
     /// 标签列表
     @Default([]) List<String> tags,
@@ -54,11 +54,11 @@ class LibraryItem with _$LibraryItem {
     /// 缩略图数据
     @Uint8ListConverter() Uint8List? thumbnail,
 
-    /// 创建时间
-    required DateTime createdAt,
+    /// 文件创建时间
+    required DateTime fileCreatedAt,
 
-    /// 更新时间
-    required DateTime updatedAt,
+    /// 文件修改时间
+    required DateTime fileUpdatedAt,
   }) = _LibraryItem;
 
   /// 创建新实例
@@ -80,21 +80,21 @@ class LibraryItem with _$LibraryItem {
     final now = DateTime.now();
     return LibraryItem(
       id: const Uuid().v4(),
-      name: name,
+      fileName: name,
       type: type,
       format: format,
       path: path,
       width: width,
       height: height,
-      size: size,
+      fileSize: size,
       tags: tags ?? [],
       categories: categories ?? [],
       metadata: metadata ?? {},
       isFavorite: isFavorite ?? false,
       remarks: remarks ?? '',
       thumbnail: thumbnail,
-      createdAt: now,
-      updatedAt: now,
+      fileCreatedAt: now,
+      fileUpdatedAt: now,
     );
   }
 

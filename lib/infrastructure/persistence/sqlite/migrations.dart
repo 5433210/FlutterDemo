@@ -291,4 +291,59 @@ const migrations = [
   '''
   ALTER TABLE library_items ADD COLUMN remarks TEXT;
   ''',
+
+  /// 版本 14: 重命名 library_items 表的字段
+  '''
+  -- 添加新字段
+  ALTER TABLE library_items ADD COLUMN fileName TEXT;
+  ALTER TABLE library_items ADD COLUMN fileSize INTEGER;
+  ALTER TABLE library_items ADD COLUMN fileCreatedAt TEXT;
+  ALTER TABLE library_items ADD COLUMN fileUpdatedAt TEXT;
+  
+  -- 复制数据
+  UPDATE library_items SET
+    fileName = name,
+    fileSize = size,
+    fileCreatedAt = createdAt,
+    fileUpdatedAt = updatedAt;
+  
+  -- 创建新的临时表，不包含旧字段
+  CREATE TABLE library_items_temp (
+    id TEXT PRIMARY KEY,
+    fileName TEXT NOT NULL,
+    type TEXT NOT NULL,
+    format TEXT NOT NULL,
+    path TEXT NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
+    fileSize INTEGER NOT NULL,
+    tags TEXT,
+    categories TEXT,
+    metadata TEXT,
+    isFavorite INTEGER DEFAULT 0,
+    thumbnail BLOB,
+    fileCreatedAt TEXT NOT NULL,
+    fileUpdatedAt TEXT NOT NULL,
+    createTime TEXT NOT NULL,
+    updateTime TEXT NOT NULL,
+    remarks TEXT
+  );
+  
+  -- 复制数据到新表
+  INSERT INTO library_items_temp SELECT
+    id, fileName, type, format, path, width, height, fileSize,
+    tags, categories, metadata, isFavorite, thumbnail,
+    fileCreatedAt, fileUpdatedAt, createTime, updateTime, remarks
+  FROM library_items;
+  
+  -- 删除旧表
+  DROP TABLE library_items;
+  
+  -- 重命名新表
+  ALTER TABLE library_items_temp RENAME TO library_items;
+  
+  -- 重新创建索引
+  CREATE INDEX IF NOT EXISTS idx_library_items_fileName ON library_items(fileName);
+  CREATE INDEX IF NOT EXISTS idx_library_items_type ON library_items(type);
+  ''',
 ];

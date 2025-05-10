@@ -28,7 +28,7 @@ class LibraryManagementState with _$LibraryManagementState {
     @Default('') String searchQuery,
 
     /// 排序字段
-    @Default('name') String sortBy,
+    @Default('fileName') String sortBy,
 
     /// 是否降序排序
     @Default(false) bool sortDesc,

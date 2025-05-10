@@ -745,7 +745,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterExpand => '展开筛选面板';
 
   @override
-  String get filterHeader => '筛选与排序';
+  String get filterHeader => '筛选';
 
   @override
   String get filterPanel => '筛选面板';
@@ -961,10 +961,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterSortFieldUpdateTime => '更新时间';
 
   @override
+  String get filterSortFieldFileName => '文件名称';
+
+  @override
+  String get filterSortFieldFileUpdatedAt => '文件修改时间';
+
+  @override
+  String get filterSortFieldFileSize => '文件大小';
+
+  @override
   String get filterSortSection => '排序';
 
   @override
   String get filterTitle => '筛选与排序';
+
+  @override
+  String get filterMin => '最小';
+
+  @override
+  String get filterMax => '最大';
+
+  @override
+  String get filterSelectDateRange => '选择日期范围';
 
   @override
   String get generalSettings => '常规设置';
@@ -2658,7 +2676,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryManagementSortByDate => '按日期';
 
   @override
-  String get libraryManagementSortBySize => '按大小';
+  String get libraryManagementSortBySize => '按文件大小';
 
   @override
   String get libraryManagementBasicInfo => '基本信息';
@@ -2713,4 +2731,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryManagementNoRemarks => '无备注';
+
+  @override
+  String get sortAndFilter => '排序和筛选';
+
+  @override
+  String get categoryManagement => '分类管理';
+
+  @override
+  String get addCategory => '添加分类';
+
+  @override
+  String get searchCategories => '搜索分类...';
+
+  @override
+  String get allCategories => '所有分类';
+
+  @override
+  String get removedFromAllCategories => '已从所有分类中移除';
+
+  @override
+  String get addedToCategory => '已添加到分类';
+
+  @override
+  String get newCategory => '新建分类';
+
+  @override
+  String get deleteCategory => '删除分类';
+
+  @override
+  String categoryHasItems(Object count) {
+    return '此分类下有 $count 个项目';
+  }
+
+  @override
+  String get confirmDelete => '确认删除？';
+
+  @override
+  String get confirmDeleteCategory => '确认删除分类';
+
+  @override
+  String get editCategory => '编辑分类';
+
+  @override
+  String get categories => '分类';
+
+  @override
+  String get categoryPanelTitle => '分类面板';
+
+  @override
+  String get libraryManagementFavorite => '收藏';
+
+  @override
+  String get libraryManagementFavorites => '收藏';
+
+  @override
+  String get libraryManagementFormats => '格式';
+
+  @override
+  String get libraryManagementTypes => '类型';
+
+  @override
+  String get libraryManagementSortDesc => '降序';
+
+  @override
+  String get allTypes => '所有类型';
+
+  @override
+  String get yes => '是';
+
+  @override
+  String get no => '否';
+
+  @override
+  String get unknownCategory => '未知分类';
+
+  @override
+  String get noCategories => '无分类';
+
+  @override
+  String get tagsHint => '输入标签...';
+
+  @override
+  String get noTags => '无标签';
+
+  @override
+  String get libraryManagementSortByFileSize => '按文件大小';
+
+  @override
+  String get libraryManagementPath => '路径';
 }

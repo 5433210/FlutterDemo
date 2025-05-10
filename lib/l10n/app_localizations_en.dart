@@ -961,10 +961,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterSortFieldUpdateTime => 'Update Time';
 
   @override
+  String get filterSortFieldFileName => 'File Name';
+
+  @override
+  String get filterSortFieldFileUpdatedAt => 'File Update Time';
+
+  @override
+  String get filterSortFieldFileSize => 'File Size';
+
+  @override
   String get filterSortSection => 'Sort';
 
   @override
   String get filterTitle => 'Filter & Sort';
+
+  @override
+  String get filterMin => 'Min';
+
+  @override
+  String get filterMax => 'Max';
+
+  @override
+  String get filterSelectDateRange => 'Select date range';
 
   @override
   String get generalSettings => 'General Settings';
@@ -2658,7 +2676,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryManagementSortByDate => 'Date';
 
   @override
-  String get libraryManagementSortBySize => 'Size';
+  String get libraryManagementSortBySize => 'File size';
 
   @override
   String get libraryManagementBasicInfo => 'Basic Information';
@@ -2713,4 +2731,93 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryManagementNoRemarks => 'No remarks';
+
+  @override
+  String get sortAndFilter => 'Sort & Filter';
+
+  @override
+  String get categoryManagement => 'Category Management';
+
+  @override
+  String get addCategory => 'Add Category';
+
+  @override
+  String get searchCategories => 'Search categories...';
+
+  @override
+  String get allCategories => 'All Categories';
+
+  @override
+  String get removedFromAllCategories => 'Removed from all categories';
+
+  @override
+  String get addedToCategory => 'Added to category';
+
+  @override
+  String get newCategory => 'New Category';
+
+  @override
+  String get deleteCategory => 'Delete Category';
+
+  @override
+  String categoryHasItems(Object count) {
+    return '$count items in this category';
+  }
+
+  @override
+  String get confirmDelete => 'Do you want to delete?';
+
+  @override
+  String get confirmDeleteCategory => 'Do you want to delete category';
+
+  @override
+  String get editCategory => 'Edit Category';
+
+  @override
+  String get categories => 'Categories';
+
+  @override
+  String get categoryPanelTitle => 'Category Panel';
+
+  @override
+  String get libraryManagementFavorite => 'Favorite';
+
+  @override
+  String get libraryManagementFavorites => 'Favorites';
+
+  @override
+  String get libraryManagementFormats => 'File Formats';
+
+  @override
+  String get libraryManagementTypes => 'Types';
+
+  @override
+  String get libraryManagementSortDesc => 'Sort Order';
+
+  @override
+  String get allTypes => 'All Types';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get unknownCategory => 'Unknown Category';
+
+  @override
+  String get noCategories => 'No Categories';
+
+  @override
+  String get tagsHint => 'Enter tags...';
+
+  @override
+  String get noTags => 'No Tags';
+
+  @override
+  String get libraryManagementSortByFileSize => 'File Size';
+
+  @override
+  String get libraryManagementPath => 'Path';
 }

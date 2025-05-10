@@ -64,7 +64,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
             final updatedCategories = [...item.categories, categoryId];
             final updatedItem = item.copyWith(
               categories: updatedCategories,
-              updatedAt: DateTime.now(),
+              fileUpdatedAt: DateTime.now(),
             );
 
             // 更新项目
@@ -99,7 +99,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
           final updatedCategories = [...item.categories, categoryId];
           final updatedItem = item.copyWith(
             categories: updatedCategories,
-            updatedAt: DateTime.now(),
+            fileUpdatedAt: DateTime.now(),
           );
 
           // 更新项目
@@ -137,7 +137,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
           final updatedCategories = [...item.categories, categoryId];
           final updatedItem = item.copyWith(
             categories: updatedCategories,
-            updatedAt: DateTime.now(),
+            fileUpdatedAt: DateTime.now(),
           );
 
           // 更新项目
@@ -329,20 +329,22 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
 
       // 应用文件大小过滤
       if (state.minSize != null) {
-        filteredItems =
-            filteredItems.where((item) => item.size >= state.minSize!).toList();
+        filteredItems = filteredItems
+            .where((item) => item.fileSize >= state.minSize!)
+            .toList();
       }
       if (state.maxSize != null) {
-        filteredItems =
-            filteredItems.where((item) => item.size <= state.maxSize!).toList();
+        filteredItems = filteredItems
+            .where((item) => item.fileSize <= state.maxSize!)
+            .toList();
       }
 
       // 应用日期过滤
       if (state.createStartDate != null) {
         filteredItems = filteredItems
             .where((item) =>
-                item.createdAt.isAfter(state.createStartDate!) ||
-                item.createdAt.isAtSameMomentAs(state.createStartDate!))
+                item.fileCreatedAt.isAfter(state.createStartDate!) ||
+                item.fileCreatedAt.isAtSameMomentAs(state.createStartDate!))
             .toList();
       }
       if (state.createEndDate != null) {
@@ -350,15 +352,15 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
             state.createEndDate!.month, state.createEndDate!.day, 23, 59, 59);
         filteredItems = filteredItems
             .where((item) =>
-                item.createdAt.isBefore(endDate) ||
-                item.createdAt.isAtSameMomentAs(endDate))
+                item.fileCreatedAt.isBefore(endDate) ||
+                item.fileCreatedAt.isAtSameMomentAs(endDate))
             .toList();
       }
       if (state.updateStartDate != null) {
         filteredItems = filteredItems
             .where((item) =>
-                item.updatedAt.isAfter(state.updateStartDate!) ||
-                item.updatedAt.isAtSameMomentAs(state.updateStartDate!))
+                item.fileUpdatedAt.isAfter(state.updateStartDate!) ||
+                item.fileUpdatedAt.isAtSameMomentAs(state.updateStartDate!))
             .toList();
       }
       if (state.updateEndDate != null) {
@@ -366,8 +368,8 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
             state.updateEndDate!.month, state.updateEndDate!.day, 23, 59, 59);
         filteredItems = filteredItems
             .where((item) =>
-                item.updatedAt.isBefore(endDate) ||
-                item.updatedAt.isAtSameMomentAs(endDate))
+                item.fileUpdatedAt.isBefore(endDate) ||
+                item.fileUpdatedAt.isAtSameMomentAs(endDate))
             .toList();
       }
       final totalCount = await _service.getItemCount(
@@ -410,7 +412,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
                 item.categories.where((id) => id != categoryId).toList();
             final updatedItem = item.copyWith(
               categories: updatedCategories,
-              updatedAt: DateTime.now(),
+              fileUpdatedAt: DateTime.now(),
             );
 
             // 更新项目
@@ -450,6 +452,55 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       currentPage: 1,
     );
     loadData();
+  }
+
+  /// 重置所有筛选器
+  Future<void> resetFilters() async {
+    state = state.copyWith(
+      typeFilter: null,
+      formatFilter: null,
+      showFavoritesOnly: false,
+      selectedCategoryId: null,
+      sortBy: 'fileName',
+      sortDesc: false,
+      isLoading: true,
+      errorMessage: null,
+    );
+
+    try {
+      await loadData();
+    } catch (e) {
+      AppLogger.error('重置筛选器失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 搜索分类
+  List<LibraryCategory> searchCategories(String query) {
+    if (query.isEmpty) {
+      return state.categoryTree;
+    }
+
+    query = query.toLowerCase();
+    List<LibraryCategory> results = [];
+
+    void searchInCategory(LibraryCategory category) {
+      if (category.name.toLowerCase().contains(query)) {
+        results.add(category);
+      }
+      for (var child in category.children) {
+        searchInCategory(child);
+      }
+    }
+
+    for (var category in state.categoryTree) {
+      searchInCategory(category);
+    }
+
+    return results;
   }
 
   /// 选择分类
@@ -510,6 +561,26 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       currentPage: 1,
     );
     loadData();
+  }
+
+  /// 设置排序
+  Future<void> setSortBy(String field, bool descending) async {
+    state = state.copyWith(
+      sortBy: field,
+      sortDesc: descending,
+      isLoading: true,
+      errorMessage: null,
+    );
+
+    try {
+      await loadData();
+    } catch (e) {
+      AppLogger.error('设置排序失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   /// 设置类型筛选
@@ -676,7 +747,7 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
         // 完全替换分类
         final updatedItem = item.copyWith(
           categories: categories,
-          updatedAt: DateTime.now(),
+          fileUpdatedAt: DateTime.now(),
         );
 
         // 更新项目

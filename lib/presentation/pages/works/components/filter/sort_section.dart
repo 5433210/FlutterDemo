@@ -166,6 +166,9 @@ class SortSection extends StatelessWidget {
       SortField.tool => l10n.filterSortFieldTool,
       SortField.style => l10n.filterSortFieldStyle,
       SortField.none => l10n.filterSortFieldNone,
+      SortField.fileName => l10n.filterSortFieldFileName,
+      SortField.fileUpdatedAt => l10n.filterSortFieldFileUpdatedAt,
+      SortField.fileSize => l10n.filterSortFieldFileSize,
     };
   }
 }

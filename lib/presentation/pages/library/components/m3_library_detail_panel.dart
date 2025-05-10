@@ -49,10 +49,10 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
     final l10n = AppLocalizations.of(context);
     final colorScheme = theme.colorScheme;
     final categories = ref.watch(libraryManagementProvider).categories;
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        // Calculate offset based on parent width instead of fixed value
         return FractionallySizedBox(
           widthFactor: 1.0,
           child: Card(
@@ -119,94 +119,137 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                         _buildSection(
                           l10n.libraryManagementBasicInfo,
                           [
-                            _buildInfoRow(
-                              l10n.libraryManagementName,
-                              widget.item.name,
-                            ),
+                            if (_isEditing)
+                              TextField(
+                                controller: _nameController,
+                                decoration: InputDecoration(
+                                  labelText: l10n.libraryManagementName,
+                                  isDense: true,
+                                ),
+                              )
+                            else
+                              _buildInfoRow(
+                                l10n.libraryManagementName,
+                                widget.item.fileName,
+                              ),
+                            const SizedBox(height: AppSizes.spacing8),
                             if (_isEditing) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: AppSizes.spacing8),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        l10n.libraryManagementType,
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: DropdownButtonFormField<String>(
-                                        value: _selectedType,
-                                        decoration: const InputDecoration(
-                                          contentPadding: EdgeInsets.symmetric(
-                                            horizontal: AppSizes.spacing8,
-                                            vertical: 0,
-                                          ),
-                                        ),
-                                        items: ['image', 'texture'].map((type) {
-                                          return DropdownMenuItem<String>(
-                                            value: type,
-                                            child: Text(type[0].toUpperCase() +
-                                                type.substring(1)),
-                                          );
-                                        }).toList(),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _selectedType = value!;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: AppSizes.spacing8),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 2,
-                                      child: Text(
-                                        '收藏状态',
-                                        style: theme.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 3,
-                                      child: Switch(
-                                        value: _isFavorite,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _isFavorite = value;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              _buildEditTypeRow(theme, l10n),
+                              _buildEditFavoriteRow(theme, l10n),
                             ] else ...[
                               _buildInfoRow(
                                 l10n.libraryManagementType,
                                 widget.item.type,
                               ),
                               _buildInfoRow(
-                                '收藏状态',
-                                widget.item.isFavorite ? '已收藏' : '未收藏',
+                                l10n.libraryManagementFavorite,
+                                widget.item.isFavorite ? l10n.yes : l10n.no,
                               ),
                             ],
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSizes.spacing16),
+
+                        // 分类组
+                        _buildSection(
+                          l10n.libraryManagementCategories,
+                          [
+                            if (_isEditing)
+                              Wrap(
+                                spacing: AppSizes.spacing8,
+                                children: categories.map((category) {
+                                  final isSelected =
+                                      _selectedCategories.contains(category.id);
+                                  return FilterChip(
+                                    label: Text(category.name),
+                                    selected: isSelected,
+                                    showCheckmark: true,
+                                    onSelected: (selected) {
+                                      setState(() {
+                                        if (selected) {
+                                          _selectedCategories.add(category.id);
+                                        } else {
+                                          _selectedCategories
+                                              .remove(category.id);
+                                        }
+                                      });
+                                    },
+                                  );
+                                }).toList(),
+                              )
+                            else if (widget.item.categories.isNotEmpty)
+                              Wrap(
+                                spacing: AppSizes.spacing8,
+                                children:
+                                    widget.item.categories.map((categoryId) {
+                                  final category = categories.firstWhere(
+                                    (c) => c.id == categoryId,
+                                    orElse: () => LibraryCategory(
+                                      id: categoryId,
+                                      name: l10n.unknownCategory,
+                                      createdAt: DateTime.now(),
+                                      updatedAt: DateTime.now(),
+                                    ),
+                                  );
+                                  return Chip(
+                                    label: Text(category.name),
+                                    backgroundColor:
+                                        colorScheme.surfaceContainerHighest,
+                                  );
+                                }).toList(),
+                              )
+                            else
+                              Text(
+                                l10n.noCategories,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSizes.spacing16),
+
+                        // 标签组
+                        _buildSection(
+                          l10n.libraryManagementTags,
+                          [
+                            if (_isEditing)
+                              TextField(
+                                controller: _tagsController,
+                                decoration: InputDecoration(
+                                  hintText: l10n.tagsHint,
+                                  isDense: true,
+                                ),
+                              )
+                            else if (widget.item.tags.isNotEmpty)
+                              Wrap(
+                                spacing: AppSizes.spacing8,
+                                children: widget.item.tags.map((tag) {
+                                  return Chip(
+                                    label: Text(tag),
+                                    backgroundColor:
+                                        colorScheme.surfaceContainerHighest,
+                                  );
+                                }).toList(),
+                              )
+                            else
+                              Text(
+                                l10n.noTags,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const SizedBox(height: AppSizes.spacing16),
+
+                        // 文件信息组
+                        _buildSection(
+                          l10n.libraryManagementMetadata,
+                          [
                             _buildInfoRow(
                               l10n.libraryManagementFormat,
                               widget.item.format,
@@ -217,134 +260,56 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                             ),
                             _buildInfoRow(
                               l10n.libraryManagementFileSize,
-                              _formatFileSize(widget.item.size),
+                              _formatFileSize(widget.item.fileSize),
+                            ),
+                            _buildInfoRow(
+                              l10n.libraryManagementPath,
+                              widget.item.path,
                             ),
                           ],
                         ),
 
                         const SizedBox(height: AppSizes.spacing16),
 
-                        const SizedBox(height: AppSizes.spacing16), // 时间信息
+                        // 时间信息组
                         _buildSection(
                           l10n.libraryManagementTimeInfo,
                           [
-                            if (widget.item.metadata
-                                .containsKey('fileCreatedAt'))
-                              _buildInfoRow(
-                                '创建时间',
-                                _formatDateTime(
-                                    DateTime.fromMillisecondsSinceEpoch(
-                                  _getInt(
-                                      widget.item.metadata['fileCreatedAt']),
-                                )),
-                              ),
-                            if (widget.item.metadata
-                                .containsKey('fileModifiedAt'))
-                              _buildInfoRow(
-                                '修改时间',
-                                _formatDateTime(
-                                    DateTime.fromMillisecondsSinceEpoch(
-                                  _getInt(
-                                      widget.item.metadata['fileModifiedAt']),
-                                )),
-                              ),
+                            _buildInfoRow(
+                              l10n.libraryManagementCreatedAt,
+                              _formatDateTime(widget.item.fileCreatedAt),
+                            ),
+                            _buildInfoRow(
+                              l10n.libraryManagementUpdatedAt,
+                              _formatDateTime(widget.item.fileUpdatedAt),
+                            ),
                           ],
                         ),
 
                         const SizedBox(height: AppSizes.spacing16),
 
-                        // 备注信息
+                        // 备注信息组
                         _buildSection(
                           l10n.libraryManagementRemarks,
                           [
                             if (_isEditing)
-                              TextFormField(
+                              TextField(
                                 controller: _remarksController,
                                 decoration: InputDecoration(
-                                  labelText: l10n.libraryManagementRemarks,
                                   hintText: l10n.libraryManagementRemarksHint,
+                                  isDense: true,
                                 ),
                                 maxLines: 3,
                               )
                             else
-                              _buildInfoRow(
-                                l10n.libraryManagementRemarks,
+                              Text(
                                 widget.item.remarks.isEmpty
                                     ? l10n.libraryManagementNoRemarks
                                     : widget.item.remarks,
+                                style: theme.textTheme.bodyMedium,
                               ),
                           ],
                         ),
-
-                        // 分类信息
-                        if (_isEditing) ...[
-                          const SizedBox(height: AppSizes.spacing16),
-                          Wrap(
-                            spacing: AppSizes.spacing8,
-                            children: categories.map((category) {
-                              final isSelected =
-                                  _selectedCategories.contains(category.id);
-                              return FilterChip(
-                                label: Text(category.name),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedCategories.add(category.id);
-                                    } else {
-                                      _selectedCategories.remove(category.id);
-                                    }
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                        ] else if (widget.item.categories.isNotEmpty) ...[
-                          const SizedBox(height: AppSizes.spacing8),
-                          Wrap(
-                            spacing: AppSizes.spacing8,
-                            children: widget.item.categories.map((categoryId) {
-                              final category = categories.firstWhere(
-                                (c) => c.id == categoryId,
-                                orElse: () => LibraryCategory(
-                                  id: categoryId,
-                                  name: '未知分类',
-                                  createdAt: DateTime.now(),
-                                  updatedAt: DateTime.now(),
-                                ),
-                              );
-                              return Chip(
-                                label: Text(category.name),
-                                backgroundColor:
-                                    colorScheme.surfaceContainerHighest,
-                              );
-                            }).toList(),
-                          ),
-                        ],
-
-                        // 标签信息
-                        if (_isEditing) ...[
-                          const SizedBox(height: AppSizes.spacing16),
-                          TextFormField(
-                            controller: _tagsController,
-                            decoration: const InputDecoration(
-                              labelText: '标签',
-                              hintText: '用逗号分隔多个标签',
-                            ),
-                          ),
-                        ] else if (widget.item.tags.isNotEmpty) ...[
-                          const SizedBox(height: AppSizes.spacing8),
-                          Wrap(
-                            spacing: AppSizes.spacing8,
-                            children: widget.item.tags.map((tag) {
-                              return Chip(
-                                label: Text(tag),
-                                backgroundColor:
-                                    colorScheme.surfaceContainerHighest,
-                              );
-                            }).toList(),
-                          ),
-                        ],
                       ],
                     ),
                   ),
@@ -377,7 +342,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
       parent: _controller,
       curve: Curves.easeInOut,
     );
-    _nameController = TextEditingController(text: widget.item.name);
+    _nameController = TextEditingController(text: widget.item.fileName);
     _tagsController = TextEditingController(text: widget.item.tags.join(', '));
     _remarksController = TextEditingController(text: widget.item.remarks);
     _selectedType = widget.item.type;
@@ -387,6 +352,79 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
 
     // Try to load file metadata if not present
     _loadFileMetadata();
+  }
+
+  // 收藏编辑行
+  Widget _buildEditFavoriteRow(ThemeData theme, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.spacing8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              l10n.libraryManagementFavorite,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Switch(
+              value: _isFavorite,
+              onChanged: (value) {
+                setState(() => _isFavorite = value);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 类型编辑行
+  Widget _buildEditTypeRow(ThemeData theme, AppLocalizations l10n) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.spacing8),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              l10n.libraryManagementType,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: DropdownButtonFormField<String>(
+              value: _selectedType,
+              decoration: const InputDecoration(
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
+              ),
+              items: ['image', 'texture'].map((type) {
+                return DropdownMenuItem(
+                  value: type,
+                  child: Text(type),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _selectedType = value);
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -438,7 +476,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
   void _cancelEditing() {
     // Reset all values to their original state
     setState(() {
-      _nameController.text = widget.item.name;
+      _nameController.text = widget.item.fileName;
       _tagsController.text = widget.item.tags.join(', ');
       _remarksController.text = widget.item.remarks;
       _selectedType = widget.item.type;
@@ -525,7 +563,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
     if (_formKey.currentState?.validate() ?? true) {
       // Create an updated copy of the item
       final updatedItem = widget.item.copyWith(
-        name: _nameController.text.trim(),
+        fileName: _nameController.text.trim(),
         type: _selectedType,
         tags: _tagsController.text.isEmpty
             ? []

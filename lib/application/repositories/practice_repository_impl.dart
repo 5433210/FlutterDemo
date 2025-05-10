@@ -416,14 +416,14 @@ class PracticeRepositoryImpl implements PracticeRepository {
     }
 
     if (filter.startTime != null) {
-      query['create_time'] = {
+      query['createTime'] = {
         'gte': DateTimeHelper.toStorageFormat(filter.startTime!),
       };
     }
 
     if (filter.endTime != null) {
-      query['create_time'] ??= {};
-      query['create_time']['lte'] =
+      query['createTime'] ??= {};
+      query['createTime']['lte'] =
           DateTimeHelper.toStorageFormat(filter.endTime!);
     }
 

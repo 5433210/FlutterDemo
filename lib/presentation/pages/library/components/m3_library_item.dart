@@ -180,7 +180,7 @@ class M3LibraryItem extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        item.name,
+                        item.fileName,
                         style: theme.textTheme.bodyMedium,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -226,7 +226,7 @@ class M3LibraryItem extends StatelessWidget {
             ),
           ),
         ),
-        title: Text(item.name),
+        title: Text(item.fileName),
         subtitle: Text(
           '${item.width}x${item.height}',
           style: theme.textTheme.bodySmall?.copyWith(

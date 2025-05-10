@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -31,19 +32,6 @@ class M3ImagePreview extends StatefulWidget {
 class _M3ImagePreviewState extends State<M3ImagePreview> {
   late int currentIndex;
   late PageController pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    currentIndex = widget.initialIndex;
-    pageController = PageController(initialPage: widget.initialIndex);
-  }
-
-  @override
-  void dispose() {
-    pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,7 +156,7 @@ class _M3ImagePreviewState extends State<M3ImagePreview> {
                 children: [
                   // 文件名
                   Text(
-                    widget.items[currentIndex].name,
+                    widget.items[currentIndex].fileName,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                     ),
@@ -188,5 +176,18 @@ class _M3ImagePreviewState extends State<M3ImagePreview> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex;
+    pageController = PageController(initialPage: widget.initialIndex);
   }
 }
