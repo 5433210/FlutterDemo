@@ -378,10 +378,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterManagementSearch => '搜索字符、作品或作者';
 
   @override
-  String get characterManagementTitle => '字符管理';
+  String get characterManagementTitle => '集字';
 
   @override
-  String get characters => '字符';
+  String get characters => '集字';
 
   @override
   String get clearImageCache => '清除图像缓存';
@@ -411,7 +411,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collectionPropertyPanelCandidateCharacters => '候选字符';
 
   @override
-  String get collectionPropertyPanelCharacter => '字符';
+  String get collectionPropertyPanelCharacter => '集字';
 
   @override
   String get collectionPropertyPanelCharacterSettings => '字符设置';
@@ -1489,13 +1489,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListDeleteConfirm => '确认删除';
 
   @override
-  String get practiceListDeleteMessage => '确定要删除选中的字帖表吗？此操作无法撤消。';
+  String get practiceListDeleteMessage => '确定要删除选中的字帖吗？此操作无法撤消。';
 
   @override
   String get practiceListDeleteSelected => '删除所选';
 
   @override
-  String get practiceListError => '加载字帖表错误';
+  String get practiceListError => '加载字帖错误';
 
   @override
   String get practiceListGridView => '网格视图';
@@ -1504,19 +1504,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListListView => '列表视图';
 
   @override
-  String get practiceListLoading => '加载字帖表中...';
+  String get practiceListLoading => '加载字帖中...';
 
   @override
-  String get practiceListNewPractice => '新建字帖表';
+  String get practiceListNewPractice => '新建字帖';
 
   @override
-  String get practiceListNoResults => '未找到字帖表';
+  String get practiceListNoResults => '未找到字帖';
 
   @override
   String get practiceListPages => '页';
 
   @override
-  String get practiceListSearch => '搜索字帖表...';
+  String get practiceListSearch => '搜索字帖...';
 
   @override
   String get practiceListSortByCreateTime => '按创建时间排序';
@@ -1531,7 +1531,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListThumbnailError => '缩略图加载失败';
 
   @override
-  String get practiceListTitle => '字帖表';
+  String get practiceListTitle => '字帖';
 
   @override
   String get practicePageSettings => '页面设置';
@@ -2314,7 +2314,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String practiceListTotalItems(Object count) {
-    return '$count张字帖表';
+    return '$count张字帖';
   }
 
   @override
@@ -2617,13 +2617,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fileCount => '文件数量';
 
   @override
+  String get libraryCount => '图库数量';
+
+  @override
+  String get characterCount => '集字数量';
+
+  @override
   String get workCount => '作品数量';
 
   @override
   String get loadFailed => '加载失败';
 
   @override
-  String get libraryManagement => '图库管理';
+  String get libraryManagement => '图库';
 
   @override
   String get libraryManagementLoading => '加载中...';
@@ -2692,6 +2698,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryManagementSize => '尺寸';
+
+  @override
+  String get libraryManagementResolution => '分辨率';
 
   @override
   String get libraryManagementFileSize => '文件大小';
@@ -2820,4 +2829,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryManagementPath => '路径';
+
+  @override
+  String get storageDetails => '存储详情';
+
+  @override
+  String get files => '文件数量';
 }

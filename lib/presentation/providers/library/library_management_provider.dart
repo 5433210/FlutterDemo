@@ -218,6 +218,14 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
+      // 如果删除的是当前选中的项目，关闭详情面板
+      if (state.selectedItem?.id == itemId) {
+        state = state.copyWith(
+          selectedItem: null,
+          isDetailOpen: false,
+        );
+      }
+
       await _service.deleteItem(itemId);
       await loadData();
     } catch (e) {
@@ -233,13 +241,29 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      for (final itemId in state.selectedItems) {
+      final selectedItems = state.selectedItems;
+      final selectedItemId = state.selectedItem?.id;
+
+      // 删除选中的项目
+      for (final itemId in selectedItems) {
         await _service.deleteItem(itemId);
       }
-      state = state.copyWith(
-        selectedItems: {},
-        isBatchMode: false,
-      );
+
+      // 如果当前选中的项目被删除，关闭详情面板
+      if (selectedItemId != null && selectedItems.contains(selectedItemId)) {
+        state = state.copyWith(
+          selectedItems: {},
+          isBatchMode: false,
+          selectedItem: null,
+          isDetailOpen: false,
+        );
+      } else {
+        state = state.copyWith(
+          selectedItems: {},
+          isBatchMode: false,
+        );
+      }
+
       await loadData();
     } catch (e) {
       state = state.copyWith(

@@ -4412,7 +4412,7 @@ abstract class AppLocalizations {
   /// No description provided for @works.
   ///
   /// In en, this message translates to:
-  /// **'Works'**
+  /// **'Work Count'**
   String get works;
 
   /// No description provided for @workStyleClerical.
@@ -5147,6 +5147,18 @@ abstract class AppLocalizations {
   /// **'File Count'**
   String get fileCount;
 
+  /// No description provided for @libraryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Library Count'**
+  String get libraryCount;
+
+  /// No description provided for @characterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Count'**
+  String get characterCount;
+
   /// No description provided for @workCount.
   ///
   /// In en, this message translates to:
@@ -5296,6 +5308,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Size'**
   String get libraryManagementSize;
+
+  /// No description provided for @libraryManagementResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution'**
+  String get libraryManagementResolution;
 
   /// No description provided for @libraryManagementFileSize.
   ///
@@ -5548,6 +5566,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Path'**
   String get libraryManagementPath;
+
+  /// No description provided for @storageDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Details'**
+  String get storageDetails;
+
+  /// No description provided for @files.
+  ///
+  /// In en, this message translates to:
+  /// **'File Count'**
+  String get files;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

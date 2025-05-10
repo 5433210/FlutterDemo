@@ -492,6 +492,7 @@ class BackupService {
         'works',
         'characters',
         'practices',
+        'library', // 添加图库目录
       ];
 
       // 创建应用数据备份目录
@@ -510,6 +511,12 @@ class BackupService {
 
           // 复制目录内容
           await _copyDirectory(sourcePath, targetPath);
+
+          // 记录特定目录的备份情况
+          if (dir == 'library') {
+            AppLogger.info('图库数据备份完成',
+                tag: 'BackupService', data: {'path': sourcePath});
+          }
         }
       }
     } catch (e, stack) {
@@ -847,6 +854,7 @@ class BackupService {
         'works',
         'characters',
         'practices',
+        'library', // 添加图库目录
       ];
 
       // 恢复每个目录
@@ -877,6 +885,12 @@ class BackupService {
 
           AppLogger.info('成功恢复目录',
               tag: 'BackupService', data: {'directory': dir});
+
+          // 为图库目录添加特定日志
+          if (dir == 'library') {
+            AppLogger.info('图库数据恢复完成',
+                tag: 'BackupService', data: {'path': targetPath});
+          }
         } else {
           AppLogger.warning('源目录不存在，跳过恢复',
               tag: 'BackupService',

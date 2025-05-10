@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/library_item.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../../utils/date_formatter.dart';
+import '../../../../utils/file_size_formatter.dart';
 import 'library_drag_data.dart';
 
 /// 图库项目组件
@@ -203,6 +206,8 @@ class M3LibraryItem extends StatelessWidget {
   }
 
   Widget _buildListViewItem(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context);
+
     return Card(
       margin: EdgeInsets.zero,
       color: isSelected
@@ -227,12 +232,70 @@ class M3LibraryItem extends StatelessWidget {
           ),
         ),
         title: Text(item.fileName),
-        subtitle: Text(
-          '${item.width}x${item.height}',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Row 1: Dimensions and file size on same line with modified date
+            Row(
+              children: [
+                // Dimensions
+                Flexible(
+                  flex: 2,
+                  child: Text(
+                    '${item.width}x${item.height}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+                // File size
+                Flexible(
+                  flex: 1,
+                  child: Text(
+                    FileSizeFormatter.format(item.fileSize),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Spacer(),
+                // Date on far right for balanced layout
+                Flexible(
+                  flex: 2,
+                  child: Text(
+                    '${l10n.filterSortFieldUpdateTime}:${DateFormatter.formatWithTime(item.fileUpdatedAt)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            // Row 2: Tags in a single row with a "Modified" label
+            Row(
+              children: [
+                if (item.tags.isNotEmpty) ...[
+                  Flexible(
+                    flex: 5,
+                    child: Text(
+                      item.tags.join(', '),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
         ),
+        isThreeLine: true,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

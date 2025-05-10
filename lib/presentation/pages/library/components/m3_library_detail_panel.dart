@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/library_category.dart';
 import '../../../../domain/entities/library_item.dart';
@@ -10,6 +9,8 @@ import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../presentation/providers/library/library_management_provider.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../../utils/date_formatter.dart';
+import '../../../../utils/file_size_formatter.dart';
 import 'library_image_preview_dialog.dart';
 
 /// 图库详情面板
@@ -131,6 +132,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                               _buildInfoRow(
                                 l10n.libraryManagementName,
                                 widget.item.fileName,
+                                selectable: true,
                               ),
                             const SizedBox(height: AppSizes.spacing8),
                             if (_isEditing) ...[
@@ -192,10 +194,15 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                                       updatedAt: DateTime.now(),
                                     ),
                                   );
-                                  return Chip(
-                                    label: Text(category.name),
-                                    backgroundColor:
-                                        colorScheme.surfaceContainerHighest,
+                                  return InkWell(
+                                    onTap: () {
+                                      // Make empty since we don't want any action on tap
+                                    },
+                                    child: Chip(
+                                      label: SelectableText(category.name),
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                    ),
                                   );
                                 }).toList(),
                               )
@@ -227,10 +234,15 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                               Wrap(
                                 spacing: AppSizes.spacing8,
                                 children: widget.item.tags.map((tag) {
-                                  return Chip(
-                                    label: Text(tag),
-                                    backgroundColor:
-                                        colorScheme.surfaceContainerHighest,
+                                  return InkWell(
+                                    onTap: () {
+                                      // Make empty since we don't want any action on tap
+                                    },
+                                    child: Chip(
+                                      label: SelectableText(tag),
+                                      backgroundColor:
+                                          colorScheme.surfaceContainerHighest,
+                                    ),
                                   );
                                 }).toList(),
                               )
@@ -244,9 +256,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                           ],
                         ),
 
-                        const SizedBox(height: AppSizes.spacing16),
-
-                        // 文件信息组
+                        const SizedBox(height: AppSizes.spacing16), // 文件信息组
                         _buildSection(
                           l10n.libraryManagementMetadata,
                           [
@@ -255,16 +265,17 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                               widget.item.format,
                             ),
                             _buildInfoRow(
-                              l10n.libraryManagementSize,
+                              l10n.libraryManagementResolution,
                               '${widget.item.width}x${widget.item.height}',
                             ),
                             _buildInfoRow(
                               l10n.libraryManagementFileSize,
-                              _formatFileSize(widget.item.fileSize),
+                              FileSizeFormatter.format(widget.item.fileSize),
                             ),
                             _buildInfoRow(
                               l10n.libraryManagementPath,
                               widget.item.path,
+                              selectable: true,
                             ),
                           ],
                         ),
@@ -277,11 +288,13 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                           [
                             _buildInfoRow(
                               l10n.libraryManagementCreatedAt,
-                              _formatDateTime(widget.item.fileCreatedAt),
+                              DateFormatter.formatWithTime(
+                                  widget.item.fileCreatedAt),
                             ),
                             _buildInfoRow(
                               l10n.libraryManagementUpdatedAt,
-                              _formatDateTime(widget.item.fileUpdatedAt),
+                              DateFormatter.formatWithTime(
+                                  widget.item.fileUpdatedAt),
                             ),
                           ],
                         ),
@@ -302,7 +315,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                                 maxLines: 3,
                               )
                             else
-                              Text(
+                              SelectableText(
                                 widget.item.remarks.isEmpty
                                     ? l10n.libraryManagementNoRemarks
                                     : widget.item.remarks,
@@ -427,7 +440,7 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildInfoRow(String label, String value, {bool selectable = false}) {
     final theme = Theme.of(context);
 
     return Padding(
@@ -445,10 +458,15 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
           ),
           Expanded(
             flex: 3,
-            child: Text(
-              value,
-              style: theme.textTheme.bodyMedium,
-            ),
+            child: selectable
+                ? SelectableText(
+                    value,
+                    style: theme.textTheme.bodyMedium,
+                  )
+                : Text(
+                    value,
+                    style: theme.textTheme.bodyMedium,
+                  ),
           ),
         ],
       ),
@@ -484,34 +502,6 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
       _selectedCategories = List.from(widget.item.categories);
       _isEditing = false;
     });
-  }
-
-  String _formatDateTime(DateTime dateTime) {
-    return DateFormat.yMd().add_Hms().format(dateTime);
-  }
-
-  String _formatFileSize(int bytes) {
-    const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    var i = 0;
-    double size = bytes.toDouble();
-
-    while (size >= 1024 && i < suffixes.length - 1) {
-      size /= 1024;
-      i++;
-    }
-
-    return '${size.toStringAsFixed(2)} ${suffixes[i]}';
-  }
-
-  /// 安全地将动态值转换为整数
-  int _getInt(dynamic value) {
-    if (value is int) {
-      return value;
-    } else if (value is String) {
-      return int.tryParse(value) ?? 0;
-    } else {
-      return 0;
-    }
   }
 
   /// 加载文件元数据

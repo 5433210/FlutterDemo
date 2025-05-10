@@ -3,12 +3,15 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/providers/service_providers.dart';
+import '../../application/services/character/character_service.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 
 /// 存储信息提供者
 final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
   final storage = ref.watch(initializedStorageProvider);
   final workService = ref.watch(workServiceProvider);
+  final characterService = ref.watch(characterServiceProvider);
+  final libraryService = ref.watch(libraryServiceProvider);
 
   // 获取应用数据目录
   final basePath = storage.getAppDataPath();
@@ -17,6 +20,14 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
   // 获取作品数量
   final works = await workService.getAllWorks();
   final workCount = works.length;
+
+  // 获取集字数量
+  final characters = await characterService.getAllCharacters();
+  final characterCount = characters.length;
+
+  // 获取图库数量
+  final libraryResult = await libraryService.getItems(pageSize: 1000);
+  final libraryCount = libraryResult.totalCount;
 
   // 计算存储使用情况
   int totalSize = 0;
@@ -51,16 +62,20 @@ final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
   // 获取目标存储空间（100GB）
   const targetSize = 100 * 1024 * 1024 * 1024;
   final usagePercentage = (totalSize / targetSize) * 100;
-
   return StorageInfo(
     path: basePath,
     totalSize: targetSize,
     usedSize: totalSize,
     usagePercentage: usagePercentage,
     workCount: workCount,
+    characterCount: characterCount,
+    libraryCount: libraryCount,
     fileCount: fileCount,
     cacheSize: cacheSize,
     subdirectories: subdirectories,
+    workSize: 0, // You may want to calculate this value appropriately
+    characterSize: 0, // You may want to calculate this value appropriately
+    librarySize: 0, // You may want to calculate this value appropriately
   );
 });
 
@@ -101,8 +116,13 @@ class StorageInfo {
   final int usedSize;
   final double usagePercentage;
   final int workCount;
+  final int characterCount;
+  final int libraryCount;
   final int fileCount;
   final int cacheSize;
+  final int workSize;
+  final int characterSize;
+  final int librarySize;
   final List<DirectoryInfo> subdirectories;
 
   StorageInfo({
@@ -111,8 +131,13 @@ class StorageInfo {
     required this.usedSize,
     required this.usagePercentage,
     required this.workCount,
+    required this.characterCount,
+    required this.libraryCount,
     required this.fileCount,
     required this.cacheSize,
     required this.subdirectories,
+    required this.characterSize,
+    required this.librarySize,
+    required this.workSize,
   });
 }

@@ -864,6 +864,8 @@
   "cacheSize": "Cache Size",
   "storageUsed": "Storage Used",
   "fileCount": "File Count",
+  "libraryCount": "Library Count",
+  "characterCount": "Character Count",
   "workCount": "Work Count",
   "loadFailed": "Load Failed",
   "libraryManagement": "Library",
@@ -896,6 +898,7 @@
   "libraryManagementType": "Type",
   "libraryManagementFormat": "Format",
   "libraryManagementSize": "Size",
+  "libraryManagementResolution": "Resolution",
   "libraryManagementFileSize": "File size",
   "libraryManagementTags": "Tags",
   "libraryManagementMetadata": "Metadata",
@@ -937,5 +940,10 @@
   "tagsHint": "Enter tags...",
   "noTags": "No Tags",
   "libraryManagementSortByFileSize":"File Size",
-  "libraryManagementPath": "Path"
+  "libraryManagementPath": "Path",
+  "storageDetails":"Storage Details",
+  "characterCount":"Character Count",
+  "libraryCount":"Library Count",
+  "files":"File Count",
+  "works":"Work Count"
 }

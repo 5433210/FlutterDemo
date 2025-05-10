@@ -182,6 +182,16 @@ class CharacterService {
     }
   }
 
+  /// 获取所有字符
+  Future<List<CharacterEntity>> getAllCharacters() async {
+    try {
+      return await _repository.getAll();
+    } catch (e) {
+      AppLogger.error('获取所有字符失败', error: e);
+      return [];
+    }
+  }
+
   /// 获取字符详情
   Future<CharacterEntity?> getCharacterDetails(String id) async {
     try {

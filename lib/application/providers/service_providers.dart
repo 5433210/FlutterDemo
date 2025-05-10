@@ -8,6 +8,8 @@ import '../../infrastructure/providers/shared_preferences_provider.dart';
 import '../../infrastructure/providers/storage_providers.dart';
 import '../../infrastructure/services/character_image_service.dart';
 import '../../infrastructure/services/character_image_service_impl.dart';
+import '../../infrastructure/storage/library_storage.dart';
+import '../../infrastructure/storage/library_storage_service.dart';
 import '../repositories/library_repository_impl.dart';
 import '../services/library_import_service.dart';
 import '../services/library_service.dart';
@@ -58,7 +60,21 @@ final libraryServiceProvider = Provider<LibraryService>((ref) {
   return LibraryService(
     repository: ref.watch(libraryRepositoryProvider),
     imageCache: ref.watch(cache.imageCacheServiceProvider),
+    storage: ref.watch(libraryStorageServiceProvider),
   );
+});
+
+/// 图库存储提供者
+final libraryStorageProvider = Provider<LibraryStorage>((ref) {
+  final storage = ref.watch(initializedStorageProvider);
+  return LibraryStorage(storage);
+});
+
+/// 图库存储服务提供者
+final libraryStorageServiceProvider = Provider<LibraryStorageService>((ref) {
+  final storage = ref.watch(libraryStorageProvider);
+  final imageCache = ref.watch(cache.imageCacheServiceProvider);
+  return LibraryStorageService(storage: storage, imageCache: imageCache);
 });
 
 final practiceServiceProvider = Provider<PracticeService>((ref) {

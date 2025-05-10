@@ -2188,7 +2188,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogTitle => 'Import Work';
 
   @override
-  String get works => 'Works';
+  String get works => 'Work Count';
 
   @override
   String get workStyleClerical => 'Clerical Script';
@@ -2617,6 +2617,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fileCount => 'File Count';
 
   @override
+  String get libraryCount => 'Library Count';
+
+  @override
+  String get characterCount => 'Character Count';
+
+  @override
   String get workCount => 'Work Count';
 
   @override
@@ -2692,6 +2698,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryManagementSize => 'Size';
+
+  @override
+  String get libraryManagementResolution => 'Resolution';
 
   @override
   String get libraryManagementFileSize => 'File size';
@@ -2820,4 +2829,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryManagementPath => 'Path';
+
+  @override
+  String get storageDetails => 'Storage Details';
+
+  @override
+  String get files => 'File Count';
 }
