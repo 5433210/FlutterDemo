@@ -1,59 +1,77 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
+import '../../../../application/providers/service_providers.dart';
+import '../../../../domain/entities/library_item.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../../providers.dart';
+import '../../../providers/library/library_management_provider.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../../image/cached_image.dart';
 import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
-import 'm3_practice_property_panel_base.dart';
 
-/// Material 3 Image Property Panel
-class M3ImagePropertyPanel extends M3PracticePropertyPanel {
+/// Material 3 图像属性面板组件
+class M3ImagePropertyPanel extends StatefulWidget {
   final Map<String, dynamic> element;
   final Function(Map<String, dynamic>) onElementPropertiesChanged;
   final VoidCallback onSelectImage;
   final WidgetRef ref;
-  final ValueNotifier<bool> _isImageLoadedNotifier = ValueNotifier<bool>(false);
+  final PracticeEditController controller;
 
-  M3ImagePropertyPanel({
-    Key? key,
-    required PracticeEditController controller,
+  const M3ImagePropertyPanel({
+    super.key,
+    required this.controller,
     required this.element,
     required this.onElementPropertiesChanged,
     required this.onSelectImage,
     required this.ref,
-  }) : super(key: key, controller: controller);
+  });
+
+  @override
+  State<M3ImagePropertyPanel> createState() => _M3ImagePropertyPanelState();
+}
+
+class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
+  // 内部状态
+  late final ValueNotifier<bool> _isImageLoadedNotifier;
+  late final AppLocalizations _l10n;
+  bool _isImporting = false; // 添加导入状态标记
+  BuildContext? _dialogContext; // 添加对话框context引用
 
   double get bottomCrop =>
       (element['content']['cropBottom'] as num?)?.toDouble() ?? 0.0;
-
-  // Image size getters
+  PracticeEditController get controller => widget.controller;
+  Map<String, dynamic> get element => widget.element;
+  // 图像属性访问器
   Size? get imageSize {
     final content = element['content'] as Map<String, dynamic>;
     final width = content['originalWidth'] as num?;
     final height = content['originalHeight'] as num?;
-    if (width != null && height != null) {
-      return Size(width.toDouble(), height.toDouble());
-    }
-    return null;
+    return (width != null && height != null)
+        ? Size(width.toDouble(), height.toDouble())
+        : null;
   }
 
-  // Image loaded state
   bool get isImageLoaded => _isImageLoadedNotifier.value;
 
+  // 访问器
+  AppLocalizations get l10n => _l10n;
+
+  // 裁剪属性访问器
   double get leftCrop =>
       (element['content']['cropLeft'] as num?)?.toDouble() ?? 0.0;
+
+  // 图像属性访问器
   double get maxCropHeight {
     final renderSize = this.renderSize;
     if (renderSize != null) {
@@ -95,23 +113,22 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     return 0.0;
   }
 
+  WidgetRef get ref => widget.ref;
+
   Size? get renderSize {
     final content = element['content'] as Map<String, dynamic>;
     final width = content['renderWidth'] as num?;
     final height = content['renderHeight'] as num?;
-    if (width != null && height != null) {
-      return Size(width.toDouble(), height.toDouble());
-    }
-    return null;
+    return (width != null && height != null)
+        ? Size(width.toDouble(), height.toDouble())
+        : null;
   }
 
   double get rightCrop =>
       (element['content']['cropRight'] as num?)?.toDouble() ?? 0.0;
 
-  // Cropping getters
   double get topCrop =>
       (element['content']['cropTop'] as num?)?.toDouble() ?? 0.0;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -164,7 +181,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
         // Basic element properties
         M3ElementCommonPropertyPanel(
           element: element,
-          onElementPropertiesChanged: onElementPropertiesChanged,
+          onElementPropertiesChanged: _handlePropertyChange,
           controller: controller,
         ),
 
@@ -223,7 +240,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             suffix: 'px',
                             min: 0,
                             max: 10000,
-                            onChanged: (value) => _updateProperty('x', value),
+                            onChanged: (value) => updateProperty('x', value),
                           ),
                         ),
                         const SizedBox(width: 8.0),
@@ -234,7 +251,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             suffix: 'px',
                             min: 0,
                             max: 10000,
-                            onChanged: (value) => _updateProperty('y', value),
+                            onChanged: (value) => updateProperty('y', value),
                           ),
                         ),
                       ],
@@ -252,7 +269,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             min: 10,
                             max: 10000,
                             onChanged: (value) =>
-                                _updateProperty('width', value),
+                                updateProperty('width', value),
                           ),
                         ),
                         const SizedBox(width: 8.0),
@@ -264,7 +281,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             min: 10,
                             max: 10000,
                             onChanged: (value) =>
-                                _updateProperty('height', value),
+                                updateProperty('height', value),
                           ),
                         ),
                       ],
@@ -279,7 +296,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                       min: -360,
                       max: 360,
                       decimalPlaces: 1,
-                      onChanged: (value) => _updateProperty('rotation', value),
+                      onChanged: (value) => updateProperty('rotation', value),
                     ),
                   ],
                 ),
@@ -323,7 +340,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             activeColor: colorScheme.primary,
                             thumbColor: colorScheme.primary,
                             onChanged: (value) =>
-                                _updateProperty('opacity', value),
+                                updateProperty('opacity', value),
                           ),
                         ),
                         const SizedBox(width: 8.0),
@@ -338,7 +355,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             decimalPlaces: 0,
                             onChanged: (value) {
                               // Convert back to 0-1 range
-                              _updateProperty('opacity', value / 100);
+                              updateProperty('opacity', value / 100);
                             },
                           ),
                         ),
@@ -357,7 +374,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                       onColorChanged: (color) {
                         final hexColor =
                             '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-                        _updateContentProperty('backgroundColor', hexColor);
+                        updateContentProperty('backgroundColor', hexColor);
                       },
                     ),
                   ],
@@ -385,6 +402,17 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    FilledButton.tonalIcon(
+                      icon: const Icon(Icons.collections_bookmark),
+                      onPressed: () => _selectImageFromLibrary(context),
+                      label: Text(l10n.imagePropertyPanelSelectFromLibrary),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        backgroundColor: colorScheme.primaryContainer,
+                        foregroundColor: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
                     FilledButton.tonalIcon(
                       icon: const Icon(Icons.photo_library),
                       onPressed: () => _selectImageFromLocal(context),
@@ -452,8 +480,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                           selected: {fitMode},
                           onSelectionChanged: (Set<String> selection) {
                             if (selection.isNotEmpty) {
-                              _updateContentProperty(
-                                  'fitMode', selection.first);
+                              updateContentProperty('fitMode', selection.first);
                             }
                           },
                         ),
@@ -625,14 +652,14 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                               label:
                                   Text(l10n.imagePropertyPanelFlipHorizontal),
                               selected: isFlippedHorizontally,
-                              onSelected: (value) => _updateContentProperty(
+                              onSelected: (value) => updateContentProperty(
                                   'isFlippedHorizontally', value),
                               avatar: const Icon(Icons.flip),
                             ),
                             FilterChip(
                               label: Text(l10n.imagePropertyPanelFlipVertical),
                               selected: isFlippedVertically,
-                              onSelected: (value) => _updateContentProperty(
+                              onSelected: (value) => updateContentProperty(
                                   'isFlippedVertically', value),
                               avatar: const Icon(Icons.flip),
                             ),
@@ -661,7 +688,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             activeColor: colorScheme.primary,
                             thumbColor: colorScheme.primary,
                             onChanged: (value) =>
-                                _updateContentProperty('rotation', value),
+                                updateContentProperty('rotation', value),
                           ),
                         ),
                         const SizedBox(width: 8.0),
@@ -675,7 +702,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             max: 180,
                             decimalPlaces: 0,
                             onChanged: (value) =>
-                                _updateContentProperty('rotation', value),
+                                updateContentProperty('rotation', value),
                           ),
                         ),
                       ],
@@ -694,28 +721,28 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildRotationButton(context, '0°', () {
-                              _updateContentProperty('rotation', 0.0);
+                              updateContentProperty('rotation', 0.0);
                             }),
                             _buildRotationButton(context, '+90°', () {
                               double newRotation = contentRotation + 90;
                               while (newRotation > 180) {
                                 newRotation -= 360;
                               }
-                              _updateContentProperty('rotation', newRotation);
+                              updateContentProperty('rotation', newRotation);
                             }),
                             _buildRotationButton(context, '-90°', () {
                               double newRotation = contentRotation - 90;
                               while (newRotation < -180) {
                                 newRotation += 360;
                               }
-                              _updateContentProperty('rotation', newRotation);
+                              updateContentProperty('rotation', newRotation);
                             }),
                             _buildRotationButton(context, '180°', () {
                               double newRotation = contentRotation + 180;
                               while (newRotation > 180) {
                                 newRotation -= 360;
                               }
-                              _updateContentProperty('rotation', newRotation);
+                              updateContentProperty('rotation', newRotation);
                             }),
                           ],
                         ),
@@ -762,8 +789,26 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     );
   }
 
-  // Helper method to create Material-wrapped ExpansionTile
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _l10n = AppLocalizations.of(context);
+  }
+
+  @override
+  void dispose() {
+    _isImageLoadedNotifier.dispose();
+    super.dispose();
+  }
+
+  // 生命周期方法
+  @override
+  void initState() {
+    super.initState();
+    _isImageLoadedNotifier = ValueNotifier<bool>(false);
+  }
+
+  // Helper method to create Material-wrapped ExpansionTile
   Widget materialExpansionTile({
     required Widget title,
     List<Widget> children = const <Widget>[],
@@ -782,6 +827,27 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
         children: children,
       ),
     );
+  }
+
+  // 处理元素属性变更
+  void onElementPropertiesChanged(Map<String, dynamic> updates) {
+    widget.onElementPropertiesChanged(updates);
+  } // 处理图片选择事件
+
+  void onSelectImage() {
+    // Only call the parent handler if we're not in the middle of an import
+    // This prevents the recursive loop that causes file picker to reopen
+    if (!_isImporting) {
+      widget.onSelectImage();
+    }
+  }
+
+  // Update content property
+  void updateContentProperty(String key, dynamic value) {
+    final content =
+        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+    content[key] = value;
+    updateProperty('content', content);
   }
 
   // Update crop value
@@ -807,7 +873,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
 
       final safeValue = value.clamp(0.0, maxValue);
       content[key] = safeValue;
-      _updateProperty('content', content);
+      updateProperty('content', content);
     });
   }
 
@@ -819,7 +885,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     content['originalHeight'] = imageSize.height;
     content['renderWidth'] = renderSize.width;
     content['renderHeight'] = renderSize.height;
-    _updateProperty('content', content);
+    updateProperty('content', content);
   }
 
   // Update image state
@@ -838,7 +904,27 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     }
 
     updateImageSizeInfo(imageSize, renderSize);
-    _isImageLoadedNotifier.value = true;
+
+    // 防止在组件已销毁后更新通知器
+    if (!mounted) return;
+    try {
+      _isImageLoadedNotifier.value = true;
+    } catch (e) {
+      // 忽略可能的错误，例如通知器已被销毁
+      debugPrint('无法更新图片加载状态: $e');
+    }
+  }
+
+  // Update property
+  void updateProperty(String key, dynamic value) {
+    final updates = {key: value};
+    _handlePropertyChange(updates);
+
+    final currentImageSize = imageSize;
+    final currentRenderSize = renderSize;
+    if (currentImageSize != null && currentRenderSize != null) {
+      updateImageState(currentImageSize, currentRenderSize);
+    }
   }
 
   // Apply transform to the image
@@ -849,6 +935,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     final imageUrl = content['imageUrl'] as String? ?? '';
 
     if (imageUrl.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.imagePropertyPanelCannotApplyNoImage),
@@ -911,7 +998,8 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
       if (invalidCropping) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.imagePropertyPanelCroppingValueTooLarge),
+            content: Text(AppLocalizations.of(context)
+                .imagePropertyPanelCroppingValueTooLarge),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -938,7 +1026,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
           'originalHeight': renderSize.height,
         };
 
-        _updateProperty('content', content);
+        updateProperty('content', content);
         controller.notifyListeners();
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -990,7 +1078,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
 
           final cropRect = Rect.fromLTRB(left, top, right, bottom);
 
-          Uint8List? imageData = await _loadImageFromUrl(imageUrl);
+          Uint8List? imageData = await _loadImageFromUrl(context, imageUrl);
 
           if (imageData == null) {
             if (context.mounted) {
@@ -1035,15 +1123,16 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
           if (noCropping) {
             message += l10n.imagePropertyPanelNoCropping;
           } else {
-            message += l10n.imagePropertyPanelCroppingApplied(
-                originalCropLeft.toInt().toString(),
-                originalCropTop.toInt().toString(),
-                originalCropRight.toInt().toString(),
-                originalCropBottom.toInt().toString());
+            message += AppLocalizations.of(context)
+                .imagePropertyPanelCroppingApplied(
+                    originalCropLeft.toInt().toString(),
+                    originalCropTop.toInt().toString(),
+                    originalCropRight.toInt().toString(),
+                    originalCropBottom.toInt().toString());
           }
 
           if (context.mounted) {
-            _updateProperty('content', content);
+            updateProperty('content', content);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(message),
@@ -1182,9 +1271,15 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             onImageSizeAvailable:
                                 (Size imageSize, Size renderSize) {
                               // Use Future.microtask to update state after the build
-                              Future.microtask(() {
-                                updateImageState(imageSize, renderSize);
-                              });
+                              // 检查当前 widget 是否仍然挂载
+                              if (mounted) {
+                                Future.microtask(() {
+                                  // 再次检查是否仍然挂载
+                                  if (mounted) {
+                                    updateImageState(imageSize, renderSize);
+                                  }
+                                });
+                              }
                             },
                           ),
                         ),
@@ -1261,7 +1356,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
               path: filePath,
               fit: fitMode,
               errorBuilder: (context, error, stackTrace) {
-                debugPrint('图片加载错误: $error');
+                debugPrint('Image loading error: $error');
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1269,7 +1364,10 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                       const Icon(Icons.error, color: Colors.red, size: 48),
                       const SizedBox(height: 8),
                       Text(
-                        '无法加载图片: ${error.toString().substring(0, math.min(error.toString().length, 50))}...',
+                        l10n.imagePropertyPanelLoadError(error
+                            .toString()
+                            .substring(
+                                0, math.min(error.toString().length, 50))),
                         style: const TextStyle(color: Colors.red),
                         textAlign: TextAlign.center,
                       ),
@@ -1291,10 +1389,11 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             ? 'cover'
                             : fitMode == BoxFit.fill
                                 ? 'fill'
-                                : 'none');
-
-                // 调用回调
-                onImageSizeAvailable(imageSize, renderSize);
+                                : 'none'); // 调用回调
+                // 检查当前 widget 是否仍然挂载
+                if (context.mounted) {
+                  onImageSizeAvailable(imageSize, renderSize);
+                }
               },
             );
           },
@@ -1343,9 +1442,11 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
                             ? 'fill'
                             : 'none',
               );
-
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                onImageSizeAvailable(imageSize, renderSize);
+                // 检查当前 widget 是否仍然挂载
+                if (mounted) {
+                  onImageSizeAvailable(imageSize, renderSize);
+                }
               });
             },
             onError: (exception, stackTrace) {
@@ -1486,6 +1587,73 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     }
   }
 
+  Future<bool> _checkImageExists(String imageUrl) async {
+    if (imageUrl.isEmpty) return false;
+
+    // Handle different URL types
+    if (imageUrl.startsWith('http')) {
+      try {
+        final response = await http.head(Uri.parse(imageUrl));
+        return response.statusCode == 200;
+      } catch (e) {
+        return false;
+      }
+    } else {
+      // Local file path
+      try {
+        String filePath = imageUrl;
+        if (imageUrl.startsWith('file://')) {
+          filePath = imageUrl.substring(7);
+        }
+        final file = File(filePath);
+        return await file.exists();
+      } catch (e) {
+        return false;
+      }
+    }
+  }
+
+  // Generate thumbnail for library item
+  Future<Uint8List?> _generateThumbnail(Uint8List imageBytes) async {
+    try {
+      final image = img.decodeImage(imageBytes);
+      if (image == null) return null;
+
+      // 计算缩略图尺寸，保持宽高比
+      const maxSize = 256.0;
+      final ratio = image.width / image.height;
+      int thumbnailWidth;
+      int thumbnailHeight;
+
+      if (ratio > 1) {
+        thumbnailWidth = maxSize.toInt();
+        thumbnailHeight = (maxSize / ratio).toInt();
+      } else {
+        thumbnailHeight = maxSize.toInt();
+        thumbnailWidth = (maxSize * ratio).toInt();
+      }
+
+      // 生成缩略图
+      final thumbnail = img.copyResize(
+        image,
+        width: thumbnailWidth,
+        height: thumbnailHeight,
+        interpolation: img.Interpolation.linear,
+      );
+
+      // 优化图片质量和大小
+      final compressedBytes = img.encodeJpg(
+        thumbnail,
+        quality: 85, // 适中的压缩质量
+      );
+
+      return Uint8List.fromList(compressedBytes);
+    } catch (e) {
+      debugPrint('生成缩略图失败: $e');
+      return null;
+    }
+  }
+
   // Get background color from element content
   Color _getBackgroundColor() {
     final content = element['content'] as Map<String, dynamic>;
@@ -1521,8 +1689,15 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     }
   }
 
+  // 处理属性变更
+  void _handlePropertyChange(Map<String, dynamic> updates) {
+    widget.onElementPropertiesChanged(updates);
+  }
+
   // Load image from URL
-  Future<Uint8List?> _loadImageFromUrl(String imageUrl) async {
+  Future<Uint8List?> _loadImageFromUrl(
+      BuildContext context, String imageUrl) async {
+    final l10n = AppLocalizations.of(context);
     try {
       if (imageUrl.startsWith('file://')) {
         String filePath = imageUrl.substring(7);
@@ -1531,7 +1706,8 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
         if (await file.exists()) {
           return await file.readAsBytes();
         } else {
-          debugPrint('File does not exist: $filePath');
+          debugPrint(
+              l10n.imagePropertyPanelLoadError('File not found: $filePath'));
           return null;
         }
       } else {
@@ -1539,14 +1715,16 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
         if (response.statusCode == 200) {
           return response.bodyBytes;
         } else {
-          debugPrint('HTTP request failed: ${response.statusCode}');
+          debugPrint(l10n.imagePropertyPanelLoadError(
+              'HTTP request failed: ${response.statusCode}'));
           return null;
         }
       }
     } catch (e) {
-      debugPrint('Failed to load image data: $e');
+      debugPrint(AppLocalizations.of(context)
+          .imagePropertyPanelLoadError(e.toString()));
+      return null;
     }
-    return null;
   }
 
   // Reset transform
@@ -1568,7 +1746,7 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     content.remove('transformedImageUrl');
     content.remove('transformRect');
 
-    _updateProperty('content', content);
+    updateProperty('content', content);
 
     if (imageSize != null && renderSize != null) {
       updateImageState(imageSize, renderSize);
@@ -1582,28 +1760,362 @@ class M3ImagePropertyPanel extends M3PracticePropertyPanel {
     );
   }
 
+  // Implementation for selecting an image from the library
+  Future<void> _selectImageFromLibrary(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    try {
+      // 从图库服务获取图片列表
+      final libraryNotifier = ref.read(libraryManagementProvider.notifier);
+      await libraryNotifier.loadData();
+      final state = ref.read(libraryManagementProvider);
+      final items = state.items;
+
+      // Show image selection dialog
+      final result = await showDialog<LibraryItem?>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.imagePropertyPanelSelectFromLibrary),
+            content: SizedBox(
+              width: double.maxFinite,
+              height: 400,
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 1,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return InkWell(
+                    onTap: () => Navigator.of(context).pop(item),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: colorScheme.outline.withOpacity(0.5)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(8)),
+                              child: CachedImage(
+                                path: item.path,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.image,
+                                      size: 48, color: colorScheme.primary);
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: const BorderRadius.vertical(
+                                  bottom: Radius.circular(8)),
+                            ),
+                            child: Text(
+                              item.fileName,
+                              style: const TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (result != null) {
+        // 用户从图库选择了图片
+        final content = Map<String, dynamic>.from(
+            element['content'] as Map<String, dynamic>);
+
+        content['imageUrl'] = 'file://${result.path}';
+        content['sourceId'] = result.id;
+        content['sourceType'] = 'library';
+        content['libraryItem'] = result; // 保存图库项的完整引用        // 重置变换属性
+        content['cropTop'] = 0.0;
+        content['cropBottom'] = 0.0;
+        content['cropLeft'] = 0.0;
+        content['cropRight'] = 0.0;
+        content['isFlippedHorizontally'] = false;
+        content['isFlippedVertically'] = false;
+        content['rotation'] = 0.0;
+        content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+
+        content.remove('transformedImageData');
+        content.remove('transformedImageUrl');
+        content.remove('transformRect'); // 检查文件是否存在
+        final file = File(result.path);
+        if (!await file.exists()) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n.imagePropertyPanelFileNotExist(result.path)),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
+        }
+
+        // 更新元素
+        updateProperty('content', content);
+
+        // 通知UI更新
+        controller.notifyListeners();
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.imagePropertyPanelFileRestored),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error selecting image from library: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.imagePropertyPanelLoadError(e.toString())),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   // Select image from local
   Future<void> _selectImageFromLocal(BuildContext context) async {
-    onSelectImage();
-  }
+    // Guard against multiple simultaneous invocations
+    if (_isImporting) {
+      return; // Already importing, do nothing
+    }
 
-  // Update content property
-  void _updateContentProperty(String key, dynamic value) {
-    final content =
-        Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
-    content[key] = value;
-    _updateProperty('content', content);
-  }
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
-  // Update property
-  void _updateProperty(String key, dynamic value) {
-    final updates = {key: value};
-    onElementPropertiesChanged(updates);
+    // 弹出提示对话框，说明会自动导入图库
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.imagePropertyPanelSelectFromLocal),
+        content: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.imagePropertyPanelAutoImportNotice,
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(l10n.ok),
+          ),
+        ],
+      ),
+    );
 
-    final currentImageSize = imageSize;
-    final currentRenderSize = renderSize;
-    if (currentImageSize != null && currentRenderSize != null) {
-      updateImageState(currentImageSize, currentRenderSize);
+    if (shouldProceed != true) {
+      return; // User cancelled, exit method
+    }
+
+    // Set importing state right away to prevent multiple invocations
+    setState(() {
+      _isImporting = true;
+    });
+
+    try {
+      // 选择文件
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      // 如果没有选择文件直接返回
+      if (result == null || result.files.isEmpty) {
+        setState(() {
+          _isImporting = false;
+        });
+        return;
+      } // Get file path immediately to avoid any race conditions
+      final file = result.files.first;
+      if (file.path == null) {
+        throw Exception('Invalid file path');
+      }
+      final filePath = file.path!;
+
+      // 检查组件是否仍然挂载
+      if (!context.mounted) {
+        setState(() {
+          _isImporting = false;
+        });
+        return;
+      }
+
+      // 显示加载指示器
+      _dialogContext = null; // 确保每次都重置对话框引用
+      if (context.mounted) {
+        // 使用非阻塞方式显示加载对话框
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext ctx) {
+            _dialogContext = ctx;
+            return Center(
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(l10n.imagePropertyPanelImporting),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      }
+
+      // 使用 LibraryImportService 导入文件
+      final importService = ref.read(libraryImportServiceProvider);
+      final importedItem = await importService.importFile(filePath);
+
+      if (importedItem == null) {
+        throw Exception('Failed to import image to library');
+      }
+
+      // 刷新图库
+      final libraryNotifier = ref.read(libraryManagementProvider.notifier);
+      await libraryNotifier.loadData();
+
+      // 更新图片元素
+      if (!context.mounted) {
+        setState(() {
+          _isImporting = false;
+        });
+        return;
+      }
+
+      final content =
+          Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
+
+      content['imageUrl'] = 'file://${importedItem.path}';
+      content['sourceId'] = importedItem.id;
+      content['sourceType'] = 'library';
+      content['libraryItem'] = importedItem; // 重置变换属性
+      content['cropTop'] = 0.0;
+      content['cropBottom'] = 0.0;
+      content['cropLeft'] = 0.0;
+      content['cropRight'] = 0.0;
+      content['isFlippedHorizontally'] = false;
+      content['isFlippedVertically'] = false;
+      content['rotation'] = 0.0;
+      content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+      content.remove('transformedImageData');
+      content.remove('transformedImageUrl');
+      content.remove(
+          'transformRect'); // Update the property (outside of setState to avoid nested setState calls)
+      updateProperty('content', content);
+
+      // 通知UI更新
+      controller.notifyListeners();
+
+      // 显示成功提示
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.imagePropertyPanelImportSuccess),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      // 显示错误提示
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.imagePropertyPanelImportError(e.toString())),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      // Always ensure we clean up, regardless of success or failure
+
+      // 关闭加载指示器
+      if (_dialogContext != null) {
+        Navigator.of(_dialogContext!).pop();
+        _dialogContext = null;
+      }
+
+      // 重置导入状态
+      setState(() {
+        _isImporting = false;
+      });
     }
   }
 }
@@ -1779,7 +2291,7 @@ class _TransformPreviewPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _TransformPreviewPainter oldDelegate) {
+  bool shouldRepaint(_TransformPreviewPainter oldDelegate) {
     return imageSize != oldDelegate.imageSize ||
         renderSize != oldDelegate.renderSize ||
         cropTop != oldDelegate.cropTop ||

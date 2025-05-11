@@ -2351,6 +2351,30 @@ abstract class AppLocalizations {
   /// **'Saturation'**
   String get imagePropertyPanelSaturation;
 
+  /// No description provided for @imagePropertyPanelSelectFromLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Library'**
+  String get imagePropertyPanelSelectFromLibrary;
+
+  /// No description provided for @imagePropertyPanelFileRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'File restored'**
+  String get imagePropertyPanelFileRestored;
+
+  /// No description provided for @imagePropertyPanelFileNotRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'File could not be recovered'**
+  String get imagePropertyPanelFileNotRecovered;
+
+  /// No description provided for @imagePropertyPanelLibraryProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing library...'**
+  String get imagePropertyPanelLibraryProcessing;
+
   /// No description provided for @imagePropertyPanelSelectFromLocal.
   ///
   /// In en, this message translates to:
@@ -4534,6 +4558,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to load image: {error}...'**
   String imagePropertyPanelLoadError(Object error);
+
+  /// No description provided for @imagePropertyPanelAutoImportNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected image will be automatically imported into your library for better management'**
+  String get imagePropertyPanelAutoImportNotice;
+
+  /// No description provided for @imagePropertyPanelImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing image...'**
+  String get imagePropertyPanelImporting;
+
+  /// No description provided for @imagePropertyPanelImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Image imported successfully'**
+  String get imagePropertyPanelImportSuccess;
+
+  /// No description provided for @imagePropertyPanelImportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import image: {error}'**
+  String imagePropertyPanelImportError(Object error);
 
   /// No description provided for @imagePropertyPanelProcessingPathError.
   ///

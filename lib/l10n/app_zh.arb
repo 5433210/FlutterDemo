@@ -637,7 +637,21 @@
   "characterCollectionDeleteBatchConfirm": "确认删除{count}个已保存区域？",
   "characterCollectionDeleteBatchMessage": "您即将删除{count}个已保存区域。此操作无法撤消。",
   "characterCollectionError": "错误：{error}",
+  "@characterCollectionError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "characterCollectionFindSwitchFailed": "查找并切换页面失败：{error}",
+  "@characterCollectionFindSwitchFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "characterEditCharacterUpdated": "「{character}」已更新",
   "characterEditSaveConfirmMessage": "确认保存「{character}」？",
   "characterManagementError": "错误：{message}",
@@ -645,11 +659,46 @@
   "imagePropertyPanelCroppingApplied": " (裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)",
   "imagePropertyPanelFileNotExist": "文件不存在：{path}",
   "imagePropertyPanelLoadError": "加载图像失败：{error}...",
+  "@imagePropertyPanelLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "imagePropertyPanelProcessingPathError": "处理路径错误：{error}",
+  "@imagePropertyPanelProcessingPathError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "imagePropertyPanelTransformError": "应用变换失败：{error}",
+  "@imagePropertyPanelTransformError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "initializationFailed": "初始化失败：{error}",
+  "@initializationFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "practiceEditElementSelectionInfo": "已选择{count}个元素",
   "practiceEditLoadFailed": "加载字帖失败：{error}",
+  "@practiceEditLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "practiceEditPracticeLoaded": "字帖\"{title}\"加载成功",
   "practiceEditTitleUpdated": "标题已更新为\"{title}\"",
   "practiceListItemsPerPage": "每页{count}个",
@@ -659,6 +708,13 @@
   "workBrowseError": "错误：{message}",
   "workBrowseSelectedCount": "已选{count}个",
   "workImportDialogError": "导入失败：{error}",
+  "@workImportDialogError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
   "horizontalLeftToRight": "横排左起",
   "horizontalRightToLeft": "横排右起",
   "verticalLeftToRight": "竖排左起",
@@ -935,11 +991,83 @@
   "tagsHint": "输入标签...",
   "noTags": "无标签",
   "libraryManagementSortByFileSize": "按文件大小",
-  "libraryManagementFavorite":"收藏",
+  "libraryManagementFavorite": "收藏",
 
-  "storageWorks": "作品",
-  "storageCharacters": "集字",
-  "storageGallery": "图库",
+  "imagePropertyPanelSelectFromLocal": "从本地选择",
+  "@imagePropertyPanelSelectFromLocal": {},
+
+  "imagePropertyPanelSelectFromLibrary": "从图库选择",
+  "@imagePropertyPanelSelectFromLibrary": {},
+  "imagePropertyPanelAutoImportNotice": "所选图像将自动导入到您的图库中以便更好地管理",
+  "@imagePropertyPanelAutoImportNotice": {},
+  "imagePropertyPanelImporting": "导入图像中...",
+  "@imagePropertyPanelImporting": {},
+  "imagePropertyPanelImportSuccess": "图像导入成功",
+  "@imagePropertyPanelImportSuccess": {},
+  "imagePropertyPanelImportError": "导入图像失败：{error}",
+  "@imagePropertyPanelImportError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+
+  "imagePropertyPanelSelectFromLocalDescription": "选择的图片将会自动导入到图库",
+  "@imagePropertyPanelSelectFromLocalDescription": {},
+  "imagePropertyPanelLibraryProcessing": "图库功能开发中...",
+  "@imagePropertyPanelLibraryProcessing": {},
+  
+  "imagePropertyPanelImageSelection": "图片选择",
+  "@imagePropertyPanelImageSelection": {},
+  
+  "imagePropertyPanelTitle": "图片属性",
+  "@imagePropertyPanelTitle": {},
+  
+  "imagePropertyPanelLoading": "加载中...",
+  "@imagePropertyPanelLoading": {},
+  
+  "imagePropertyPanelFileRestored": "图片已从图库中恢复",
+  "@imagePropertyPanelFileRestored": {},
+  
+  "imagePropertyPanelFileNotRecovered": "图片文件丢失且无法恢复",
+  "@imagePropertyPanelFileNotRecovered": {},
+  "imagePropertyPanelLoadError": "加载图片时出错: {error}",
+  "@imagePropertyPanelLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+
+  "imagePropertyPanelErrorMessage": "发生错误: {error}",
+  "@imagePropertyPanelErrorMessage": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "imagePropertyPanelNoImageSelected": "未选择图片",
+  "imagePropertyPanelResetSuccess": "重置成功",
+  "imagePropertyPanelFileLoadError": "文件加载失败",
+
+  "imagePropertyPanelTransformApplied": "变换已应用",
+  "@imagePropertyPanelTransformApplied": {},
+
+  "imagePropertyPanelCroppingValueTooLarge": "裁剪值过大",
+  "@imagePropertyPanelCroppingValueTooLarge": {},
+
+  "imagePropertyPanelNoCropping": "（无裁剪）",
+  "@imagePropertyPanelNoCropping": {},
+
+  "imagePropertyPanelCannotApplyNoImage": "没有可用的图片",
+  "@imagePropertyPanelCannotApplyNoImage": {},
+
+  "imagePropertyPanelCannotApplyNoSizeInfo": "无法获取图片尺寸信息",
+  "@imagePropertyPanelCannotApplyNoSizeInfo": {},
+  
   "storageWorks": "作品",
   "storageCharacters": "集字",
   "storageGallery": "图库"

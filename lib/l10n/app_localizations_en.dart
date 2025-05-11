@@ -1159,6 +1159,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelSaturation => 'Saturation';
 
   @override
+  String get imagePropertyPanelSelectFromLibrary => 'Select from Library';
+
+  @override
+  String get imagePropertyPanelFileRestored => 'File restored';
+
+  @override
+  String get imagePropertyPanelFileNotRecovered => 'File could not be recovered';
+
+  @override
+  String get imagePropertyPanelLibraryProcessing => 'Processing library...';
+
+  @override
   String get imagePropertyPanelSelectFromLocal => 'Select from Local';
 
   @override
@@ -2270,6 +2282,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String imagePropertyPanelLoadError(Object error) {
     return 'Failed to load image: $error...';
+  }
+
+  @override
+  String get imagePropertyPanelAutoImportNotice => 'The selected image will be automatically imported into your library for better management';
+
+  @override
+  String get imagePropertyPanelImporting => 'Importing image...';
+
+  @override
+  String get imagePropertyPanelImportSuccess => 'Image imported successfully';
+
+  @override
+  String imagePropertyPanelImportError(Object error) {
+    return 'Failed to import image: $error';
   }
 
   @override

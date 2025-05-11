@@ -1033,10 +1033,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelBrightness => '亮度';
 
   @override
-  String get imagePropertyPanelCannotApplyNoImage => '无法应用变换：未设置图像';
+  String get imagePropertyPanelCannotApplyNoImage => '没有可用的图片';
 
   @override
-  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法应用变换：图像大小信息不可用';
+  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法获取图片尺寸信息';
 
   @override
   String get imagePropertyPanelContent => '内容属性';
@@ -1054,7 +1054,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelCropLeft => '左侧裁剪';
 
   @override
-  String get imagePropertyPanelCroppingValueTooLarge => '无法应用变换：裁剪值过大，导致无效的裁剪区域';
+  String get imagePropertyPanelCroppingValueTooLarge => '裁剪值过大';
 
   @override
   String get imagePropertyPanelCropRight => '右侧裁剪';
@@ -1108,7 +1108,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelGeometryWarning => '这些属性调整整个元素框，而不是图像内容本身';
 
   @override
-  String get imagePropertyPanelImageSelection => '图像选择';
+  String get imagePropertyPanelImageSelection => '图片选择';
 
   @override
   String get imagePropertyPanelImageSize => '图像大小';
@@ -1117,13 +1117,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelImageTransform => '图像变换';
 
   @override
-  String get imagePropertyPanelNoCropping => ' (无裁剪，已应用其他变换)';
+  String get imagePropertyPanelNoCropping => '（无裁剪）';
 
   @override
   String get imagePropertyPanelNoImage => '未选择图像';
 
   @override
-  String get imagePropertyPanelNoImageSelected => '未选择图像';
+  String get imagePropertyPanelNoImageSelected => '未选择图片';
 
   @override
   String get imagePropertyPanelOpacity => '不透明度';
@@ -1147,7 +1147,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelReset => '重置';
 
   @override
-  String get imagePropertyPanelResetSuccess => '所有变换已重置';
+  String get imagePropertyPanelResetSuccess => '重置成功';
 
   @override
   String get imagePropertyPanelResetTransform => '重置变换';
@@ -1157,6 +1157,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelSaturation => '饱和度';
+
+  @override
+  String get imagePropertyPanelSelectFromLibrary => '从图库选择';
+
+  @override
+  String get imagePropertyPanelFileRestored => '图片已从图库中恢复';
+
+  @override
+  String get imagePropertyPanelFileNotRecovered => '图片文件丢失且无法恢复';
+
+  @override
+  String get imagePropertyPanelLibraryProcessing => '图库功能开发中...';
 
   @override
   String get imagePropertyPanelSelectFromLocal => '从本地选择';
@@ -2269,7 +2281,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String imagePropertyPanelLoadError(Object error) {
-    return '加载图像失败：$error...';
+    return '加载图片时出错: $error';
+  }
+
+  @override
+  String get imagePropertyPanelAutoImportNotice => '所选图像将自动导入到您的图库中以便更好地管理';
+
+  @override
+  String get imagePropertyPanelImporting => '导入图像中...';
+
+  @override
+  String get imagePropertyPanelImportSuccess => '图像导入成功';
+
+  @override
+  String imagePropertyPanelImportError(Object error) {
+    return '导入图像失败：$error';
   }
 
   @override
