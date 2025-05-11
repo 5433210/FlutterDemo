@@ -10,12 +10,12 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 
 import '../../../../application/providers/service_providers.dart';
-import '../../../../domain/entities/library_item.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../providers/library/library_management_provider.dart';
 import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
 import '../../image/cached_image.dart';
+import '../../library/m3_library_picker_dialog.dart';
 import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
@@ -1762,150 +1762,97 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
 
   // Implementation for selecting an image from the library
   Future<void> _selectImageFromLibrary(BuildContext context) async {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-
     try {
-      // 从图库服务获取图片列表
-      final libraryNotifier = ref.read(libraryManagementProvider.notifier);
-      await libraryNotifier.loadData();
-      final state = ref.read(libraryManagementProvider);
-      final items = state.items;
+      // 使用新的图库选择对话框
+      final selectedItem = await M3LibraryPickerDialog.show(context);
 
-      // Show image selection dialog
-      final result = await showDialog<LibraryItem?>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(l10n.imagePropertyPanelSelectFromLibrary),
-            content: SizedBox(
-              width: double.maxFinite,
-              height: 400,
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                  childAspectRatio: 1,
+      // 用户从图库选择了图片
+      if (selectedItem != null) {
+        setState(() {
+          _isImporting = true;
+        });
+
+        try {
+          // 更新图层属性
+          final content = Map<String, dynamic>.from(
+              element['content'] as Map<String, dynamic>);
+
+          content['imageUrl'] = 'file://${selectedItem.path}';
+          content['sourceId'] = selectedItem.id;
+          content['sourceType'] = 'library';
+          content['libraryItem'] = selectedItem; // 保存图库项的完整引用
+
+          // 重置变换属性
+          content['cropTop'] = 0.0;
+          content['cropBottom'] = 0.0;
+          content['cropLeft'] = 0.0;
+          content['cropRight'] = 0.0;
+          content['isFlippedHorizontally'] = false;
+          content['isFlippedVertically'] = false;
+          content['rotation'] = 0.0;
+          content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+
+          content.remove('transformedImageData');
+          content.remove('transformedImageUrl');
+          content.remove('transformRect');
+
+          // 检查文件是否存在
+          final file = File(selectedItem.path);
+          if (!await file.exists()) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      l10n.imagePropertyPanelFileNotExist(selectedItem.path)),
+                  behavior: SnackBarBehavior.floating,
                 ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return InkWell(
-                    onTap: () => Navigator.of(context).pop(item),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            color: colorScheme.outline.withOpacity(0.5)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(8)),
-                              child: CachedImage(
-                                path: item.path,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(Icons.image,
-                                      size: 48, color: colorScheme.primary);
-                                },
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 4, horizontal: 8),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: const BorderRadius.vertical(
-                                  bottom: Radius.circular(8)),
-                            ),
-                            child: Text(
-                              item.fileName,
-                              style: const TextStyle(fontSize: 12),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-            ],
-          );
-        },
-      );
+              );
+            }
+            return;
+          }
 
-      if (result != null) {
-        // 用户从图库选择了图片
-        final content = Map<String, dynamic>.from(
-            element['content'] as Map<String, dynamic>);
+          // 更新元素
+          updateProperty('content', content);
 
-        content['imageUrl'] = 'file://${result.path}';
-        content['sourceId'] = result.id;
-        content['sourceType'] = 'library';
-        content['libraryItem'] = result; // 保存图库项的完整引用        // 重置变换属性
-        content['cropTop'] = 0.0;
-        content['cropBottom'] = 0.0;
-        content['cropLeft'] = 0.0;
-        content['cropRight'] = 0.0;
-        content['isFlippedHorizontally'] = false;
-        content['isFlippedVertically'] = false;
-        content['rotation'] = 0.0;
-        content['isTransformApplied'] = true; // 设置为true确保图片立即显示
+          // 通知UI更新
+          controller.notifyListeners();
 
-        content.remove('transformedImageData');
-        content.remove('transformedImageUrl');
-        content.remove('transformRect'); // 检查文件是否存在
-        final file = File(result.path);
-        if (!await file.exists()) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(l10n.imagePropertyPanelFileNotExist(result.path)),
+                content: Text(l10n.imagePropertyPanelFileRestored),
                 behavior: SnackBarBehavior.floating,
               ),
             );
           }
-          return;
-        }
 
-        // 更新元素
-        updateProperty('content', content);
-
-        // 通知UI更新
-        controller.notifyListeners();
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.imagePropertyPanelFileRestored),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          // 通知上层图片已选择
+          onSelectImage();
+        } catch (e) {
+          print('Error importing image from library: $e');
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('导入图片失败: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isImporting = false;
+            });
+          }
         }
       }
     } catch (e) {
-      debugPrint('Error selecting image from library: $e');
+      print('Error showing library picker: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.imagePropertyPanelLoadError(e.toString())),
-            behavior: SnackBarBehavior.floating,
+            content: Text('打开图库失败: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }

@@ -27,12 +27,6 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 切换视图模式回调
   final VoidCallback onToggleViewMode;
 
-  /// 搜索回调
-  final ValueChanged<String> onSearch;
-
-  /// 搜索控制器
-  final TextEditingController searchController;
-
   /// 导入文件回调
   final VoidCallback? onImportFiles;
 
@@ -49,8 +43,6 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     this.onAssignCategoryBatch,
     required this.isGridView,
     required this.onToggleViewMode,
-    required this.onSearch,
-    required this.searchController,
     this.onImportFiles,
     this.onImportFolder,
   });
@@ -91,38 +83,6 @@ class _M3LibraryManagementNavigationBarState
             ]
           : null,
       actions: [
-        // 居中的搜索框
-        SizedBox(
-          width: 240,
-          child: SearchBar(
-            controller: widget.searchController,
-            hintText: l10n.libraryManagementSearch,
-            leading: const Icon(Icons.search),
-            padding: const WidgetStatePropertyAll(
-              EdgeInsets.symmetric(horizontal: 8),
-            ),
-            onChanged: widget.onSearch,
-            trailing: [
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: widget.searchController,
-                builder: (context, value, child) {
-                  return AnimatedOpacity(
-                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 300),
-                    child: IconButton(
-                      icon: const Icon(Icons.clear, size: 20),
-                      onPressed: () {
-                        widget.searchController.clear();
-                        widget.onSearch('');
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-
         // 导入按钮 (仅在非批量模式下显示)
         if (!widget.isBatchMode)
           PopupMenuButton<String>(

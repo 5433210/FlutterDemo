@@ -179,6 +179,14 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     loadData();
   }
 
+  /// 清除所有选中状态
+  void clearSelection() {
+    state = state.copyWith(
+      selectedItems: {},
+      selectedItem: null,
+    );
+  }
+
   /// 关闭详情面板
   void closeDetailPanel() {
     state = state.copyWith(
@@ -420,6 +428,14 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     }
   }
 
+  /// 打开详情面板
+  void openDetailPanel() {
+    // 如果已经选择了项目，确保详情面板打开
+    if (state.selectedItem != null) {
+      state = state.copyWith(isDetailOpen: true);
+    }
+  }
+
   /// 从项目中移除分类
   Future<void> removeCategoryFromItems(
       String categoryId, List<String> itemIds) async {
@@ -553,6 +569,14 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       currentPage: 1,
     );
     loadData();
+  }
+
+  /// 设置详情面板显示的项目
+  void setDetailItem(LibraryItem item) {
+    state = state.copyWith(
+      selectedItem: item,
+      isDetailOpen: true,
+    );
   }
 
   /// 设置图片格式筛选
