@@ -956,8 +956,7 @@ class _CollectionPainter extends CustomPainter {
           _loadAndCacheImage(characterId, type, format);
           // 加载完成后标记需要重绘
           _needsRepaint = true;
-        });
-        // 先绘制文本占位符
+        }); // 先绘制文本占位符
         _drawCharacterText(canvas, position);
         return;
       }
@@ -1059,12 +1058,12 @@ class _CollectionPainter extends CustomPainter {
             } // 如果启用了纹理，直接使用 _paintTexture 方法
             if (textureConfig.enabled && textureConfig.data != null) {
               // 打印Canvas状态
-              debugPrint('🔎 当前Canvas状态: ${canvas.hashCode}');
-
-              // 保存新图层状态 - 重要：字符纹理需要使用 srcATop 混合模式
+              debugPrint(
+                  '🔎 当前Canvas状态: ${canvas.hashCode}'); // 保存新图层状态 - 重要：字符纹理需要使用 srcATop 混合模式
               final blendLayer = Paint()..blendMode = BlendMode.srcATop;
               canvas.saveLayer(rect, blendLayer); // 使用工具方法绘制纹理，确保使用字符模式
               debugPrint('🔍 应用字符纹理，区域: $rect');
+              debugPrint('🔬 详细信息: 字符=$characterId, 类型=$type, 格式=$format');
               _paintTexture(canvas, rect, mode: 'character');
 
               // 恢复新图层状态
@@ -1096,7 +1095,102 @@ class _CollectionPainter extends CustomPainter {
       position.size,
     );
 
-    // 绘制背景
+    // 纹理应用标志
+    final bool hasTexture = textureConfig.enabled && textureConfig.data != null;
+    final bool canApplyBackgroundTexture = hasTexture &&
+        (textureConfig.applicationMode == 'background' ||
+            textureConfig.applicationMode == 'both');
+    final bool canApplyCharacterTexture = hasTexture &&
+        (textureConfig.applicationMode == 'character' ||
+            textureConfig.applicationMode == 'both');
+
+    debugPrint(
+        '🎨 文本绘制纹理配置: bg=$canApplyBackgroundTexture, char=$canApplyCharacterTexture, mode=${textureConfig.applicationMode}');
+
+    // 保存画布状态
+    canvas.save();
+
+    // 绘制背景 (with or without texture)
+    if (canApplyBackgroundTexture) {
+      // 如果有纹理配置，应用背景纹理
+      debugPrint('🎨 字符文本绘制时应用背景纹理: $rect');
+      try {
+        // 使用背景纹理而不是普通背景色
+        _paintTexture(canvas, rect, mode: 'background');
+      } catch (e) {
+        debugPrint('❌ 应用背景纹理失败: $e');
+        // 如果纹理应用失败，回退到普通背景
+        _drawFallbackBackground(canvas, rect, position);
+      }
+    } else {
+      // 没有纹理时绘制普通背景
+      _drawFallbackBackground(canvas, rect, position);
+    }
+    if (canApplyCharacterTexture) {
+      debugPrint('🎨 字符文本绘制时应用字符纹理: ${position.char}');
+      try {
+        // 第1层：保存主画布状态
+        canvas.saveLayer(rect, Paint());
+
+        // 第2层：创建字符蒙版
+        canvas.saveLayer(rect, Paint());
+
+        // 使用黑色绘制字符作为不透明度蒙版
+        final textPainter = TextPainter(
+          text: TextSpan(
+            text: position.char,
+            style: TextStyle(
+              fontSize: position.size * 0.7,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          textDirection: TextDirection.ltr,
+        );
+        textPainter.layout();
+
+        final textOffset = Offset(
+          position.x + (position.size - textPainter.width) / 2,
+          position.y + (position.size - textPainter.height) / 2,
+        );
+
+        textPainter.paint(canvas, textOffset);
+
+        // 第3层：应用字符颜色，使用SrcIn模式确保只在字符形状内上色
+        {
+          final colorPaint = Paint()
+            ..color = position.fontColor
+            ..blendMode = BlendMode.srcIn;
+          canvas.saveLayer(rect, colorPaint);
+          canvas.drawRect(rect, Paint()..color = Colors.white);
+          canvas.restore();
+        }
+
+        // 第4层：应用纹理，使用DstIn模式保持字符形状
+        {
+          canvas.saveLayer(rect, Paint()..blendMode = BlendMode.srcATop);
+          _paintTexture(canvas, rect, mode: 'character');
+          canvas.restore();
+        }
+
+        // 恢复所有图层
+        canvas.restore(); // 恢复字符蒙版图层
+        canvas.restore(); // 恢复主画布状态
+      } catch (e) {
+        debugPrint('❌ 应用字符纹理失败: $e');
+        // 如果纹理应用失败，回退到普通文字绘制
+        _drawFallbackText(canvas, position, rect);
+      }
+    } else {
+      // 普通文字绘制
+      _drawFallbackText(canvas, position, rect);
+    } // 恢复画布状态
+    canvas.restore();
+  }
+
+  /// 绘制普通背景（当不使用纹理或纹理应用失败时）
+  void _drawFallbackBackground(
+      Canvas canvas, Rect rect, _CharacterPosition position) {
     if (position.backgroundColor != Colors.transparent) {
       final bgPaint = Paint()
         ..color = position.backgroundColor
@@ -1109,8 +1203,11 @@ class _CollectionPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
       canvas.drawRect(rect, paint);
     }
+  }
 
-    // 绘制字符文本
+  /// 绘制普通文本（不使用纹理）
+  void _drawFallbackText(
+      Canvas canvas, _CharacterPosition position, Rect rect) {
     final textPainter = TextPainter(
       text: TextSpan(
         text: position.char,
@@ -1128,10 +1225,7 @@ class _CollectionPainter extends CustomPainter {
       position.y + (position.size - textPainter.height) / 2,
     );
 
-    textPainter.paint(
-      canvas,
-      textOffset,
-    );
+    textPainter.paint(canvas, textOffset);
   }
 
   /// 绘制备选纹理（当纹理加载失败时使用）
@@ -1204,36 +1298,36 @@ class _CollectionPainter extends CustomPainter {
     Rect rect,
     CustomPainter painter,
   ) {
-    // 设置重绘回调（根据实际类型处理）
-    if (painter is BackgroundTexturePainter) {
-      painter.repaintCallback = () {
-        debugPrint('⚡ 集字元素收到背景纹理重绘回调');
-        _needsRepaint = true;
-        if (_repaintCallback != null) {
-          debugPrint('⚡ 转发重绘回调到上层');
-          _repaintCallback!();
-        }
-      };
-    } else if (painter is CharacterTexturePainter) {
-      painter.repaintCallback = () {
-        debugPrint('⚡ 集字元素收到字符纹理重绘回调');
-        _needsRepaint = true;
-        if (_repaintCallback != null) {
-          debugPrint('⚡ 转发重绘回调到上层');
-          _repaintCallback!();
-        }
-      };
-    }
-
-    // 记录绘制前画布信息
-    debugPrint('📐 纹理变换绘制:');
-    debugPrint('  🔍 画布HashCode: ${canvas.hashCode}');
-    debugPrint('  📏 目标区域: $rect');
-
-    // 保存画布状态
-    canvas.save();
-
     try {
+      // 设置重绘回调（根据实际类型处理）
+      if (painter is BackgroundTexturePainter) {
+        painter.repaintCallback = () {
+          debugPrint('⚡ 集字元素收到背景纹理重绘回调');
+          _needsRepaint = true;
+          if (_repaintCallback != null) {
+            debugPrint('⚡ 转发重绘回调到上层');
+            _repaintCallback!();
+          }
+        };
+      } else if (painter is CharacterTexturePainter) {
+        painter.repaintCallback = () {
+          debugPrint('⚡ 集字元素收到字符纹理重绘回调');
+          _needsRepaint = true;
+          if (_repaintCallback != null) {
+            debugPrint('⚡ 转发重绘回调到上层');
+            _repaintCallback!();
+          }
+        };
+      }
+
+      // 记录绘制前画布信息
+      debugPrint('📐 纹理变换绘制:');
+      debugPrint('  🔍 画布HashCode: ${canvas.hashCode}');
+      debugPrint('  📏 目标区域: $rect');
+
+      // 保存画布状态
+      canvas.save();
+
       // 先平移到目标位置
       canvas.translate(rect.left, rect.top);
 
@@ -1577,30 +1671,47 @@ class _CollectionPainter extends CustomPainter {
         );
         debugPrint('🎨 创建背景纹理绘制器，模式: ${textureConfig.fillMode}');
       }
+      // 根据模式选择不同的绘制策略
+      if (mode == 'character') {
+        // 对于字符纹理，采用以下步骤：
+        debugPrint('🔄 字符纹理模式 - 处理');
 
-      // 创建统一的绘制配置 - 为字符纹理使用 DstATop，为背景使用 SrcOver
-      final paint = Paint()
-        ..blendMode =
-            mode == 'character' ? BlendMode.dstATop : BlendMode.srcOver;
+        // 1. 保存当前画布状态
+        canvas.saveLayer(rect, Paint());
 
-      debugPrint('🔄 使用混合模式: ${paint.blendMode}');
+        // 2. 绘制纹理
+        _drawTextureWithTransform(canvas, rect, texturePainter);
 
-      // 保存画布状态并绘制
-      // 注意：字符纹理使用 dstATop，让纹理适应字符形状
-      canvas.saveLayer(rect, paint);
-      _drawTextureWithTransform(canvas, rect, texturePainter);
+        // 3. 使用DstIn混合模式，将纹理限制在字符形状内
+        canvas.saveLayer(rect, Paint()..blendMode = BlendMode.dstIn);
 
-      // 检查透明度并应用
-      if (textureConfig.opacity < 1.0) {
-        canvas.saveLayer(
-            rect,
-            Paint()
-              ..color = Colors.white.withOpacity(textureConfig.opacity)
-              ..blendMode = BlendMode.dstIn);
+        // 4. 恢复到主图层
+        canvas.restore();
+        canvas.restore();
+        debugPrint('✅ 绘制字符纹理完成');
+      } else {
+        // 对于背景纹理，直接使用正常绘制
+        debugPrint('🔄 背景纹理模式 - 使用正常绘制');
+
+        // 保存画布状态
+        canvas.saveLayer(rect, Paint());
+
+        // 绘制纹理
+        _drawTextureWithTransform(canvas, rect, texturePainter);
+
+        // 如果需要调整透明度
+        if (textureConfig.opacity < 1.0) {
+          // 应用透明度调整
+          canvas.saveLayer(
+              rect,
+              Paint()
+                ..color = Colors.white.withOpacity(textureConfig.opacity)
+                ..blendMode = BlendMode.dstIn);
+          canvas.restore();
+        }
         canvas.restore();
       }
 
-      canvas.restore();
       final endTime = DateTime.now();
       final duration = endTime.difference(startTime);
       debugPrint('''✅ 纹理渲染完成:

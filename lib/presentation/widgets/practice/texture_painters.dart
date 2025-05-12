@@ -217,11 +217,10 @@ class BackgroundTexturePainter extends CustomPainter {
 
     final Paint paint = Paint()
       ..color = Colors.white.withOpacity(opacity)
-      ..filterQuality = FilterQuality.high
-      // 默认使用SrcOver混合模式，可根据不同应用场景调整
-      ..blendMode = BlendMode.srcOver;
+      ..filterQuality = FilterQuality.high;
+    // 不在这里设置混合模式，而是由调用者控制
 
-    debugPrint('🔧 TEXTURE: 配置绘制画笔: 不透明度=$opacity, 混合模式=${paint.blendMode}');
+    debugPrint('🔧 TEXTURE: 配置绘制画笔: 不透明度=$opacity');
 
     // 确定重复模式，根据填充模式选择
     if (fillMode == 'repeat') {
@@ -589,9 +588,8 @@ class CharacterTexturePainter extends CustomPainter {
 
     final paint = Paint()
       ..color = Colors.white.withOpacity(opacity)
-      ..filterQuality = FilterQuality.high
-      // 使用srcOver来确保纹理可见
-      ..blendMode = BlendMode.srcOver;
+      ..filterQuality = FilterQuality.high;
+    // 不在这里设置混合模式，而是由调用者控制
 
     if (fillMode == 'repeat') {
       _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeat);
