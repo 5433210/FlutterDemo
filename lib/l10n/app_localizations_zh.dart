@@ -9,6 +9,45 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get textureApplicationRange => '纹理应用范围';
+
+  @override
+  String get textureRangeCharacter => '字符';
+
+  @override
+  String get textureRangeBackground => '背景';
+
+  @override
+  String get textureFillMode => '纹理填充模式';
+
+  @override
+  String get textureFillModeRepeat => '重复';
+
+  @override
+  String get textureFillModeRepeatX => '水平重复';
+
+  @override
+  String get textureFillModeRepeatY => '垂直重复';
+
+  @override
+  String get textureFillModeNoRepeat => '不重复';
+
+  @override
+  String get textureFillModeCover => '覆盖';
+
+  @override
+  String get textureFillModeContain => '包含';
+
+  @override
+  String get textureOpacity => '纹理不透明度';
+
+  @override
+  String get textureSelectFromLibrary => '从库中选择';
+
+  @override
+  String get textureRemove => '移除';
+
+  @override
   String get a4Size => 'A4 (210×297mm)';
 
   @override

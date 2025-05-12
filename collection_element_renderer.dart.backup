@@ -1063,8 +1063,9 @@ class _CollectionPainter extends CustomPainter {
 
               // 保存新图层状态 - 重要：字符纹理需要使用 srcATop 混合模式
               final blendLayer = Paint()..blendMode = BlendMode.srcATop;
-              canvas.saveLayer(rect, blendLayer); // 使用工具方法绘制纹理，确保使用字符模式
-              debugPrint('🔍 应用字符纹理，区域: $rect');
+              canvas.saveLayer(rect, blendLayer);
+
+              // 使用工具方法绘制纹理（重用与背景相同的方法）
               _paintTexture(canvas, rect, mode: 'character');
 
               // 恢复新图层状态
@@ -1196,9 +1197,7 @@ class _CollectionPainter extends CustomPainter {
       // 发生错误时恢复画布状态
       canvas.restore();
     }
-  }
-
-  /// 使用变换矩阵绘制纹理
+  }  /// 使用变换矩阵绘制纹理
   void _drawTextureWithTransform(
     Canvas canvas,
     Rect rect,
@@ -1553,11 +1552,10 @@ class _CollectionPainter extends CustomPainter {
   ├─ 填充: ${textureConfig.fillMode}
   ├─ 透明度: ${textureConfig.opacity}
   ├─ 路径: $texturePath
-  └─ 缓存键: $textureCacheKey''');
-    try {
+  └─ 缓存键: $textureCacheKey''');    try {
       // 根据模式选择适当的纹理绘制器
       final CustomPainter texturePainter;
-
+      
       if (mode == 'character') {
         // 字符应用范围使用 CharacterTexturePainter
         texturePainter = CharacterTexturePainter(
@@ -1576,6 +1574,14 @@ class _CollectionPainter extends CustomPainter {
           ref: ref,
         );
         debugPrint('🎨 创建背景纹理绘制器，模式: ${textureConfig.fillMode}');
+      }
+            debugPrint('收到背景纹理重绘回调，触发整个集字重绘');
+            _needsRepaint = true;
+            if (_repaintCallback != null) {
+              _repaintCallback!();
+            }
+          },
+        );
       }
 
       // 创建统一的绘制配置 - 为字符纹理使用 DstATop，为背景使用 SrcOver

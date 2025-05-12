@@ -32,35 +32,52 @@ class ElementRenderers {
     // 获取集字图片列表（实际应用中应该从数据库或其他存储中获取）
     final characterImages = content['characterImages'];
 
-    // 添加调试信息
-    // debugPrint('集字图片列表类型: ${characterImages?.runtimeType}');
-    // if (characterImages != null) {
-    //   if (characterImages is Map) {
-    //     debugPrint('集字图片列表是Map类型，键: ${(characterImages).keys.join(", ")}');
-    //   } else if (characterImages is List) {
-    //     debugPrint('集字图片列表是List类型，长度: ${(characterImages).length}');
-    //   } else {
-    //     debugPrint('集字图片列表是其他类型');
-    //   }
-    // } else {
-    //   debugPrint('集字图片列表为空');
-    // }
+    // 获取背景纹理设置
+    final hasBackgroundTexture = content.containsKey('backgroundTexture') &&
+        content['backgroundTexture'] != null &&
+        content['backgroundTexture'] is Map<String, dynamic> &&
+        (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty;
+    final backgroundTexture = hasBackgroundTexture
+        ? content['backgroundTexture'] as Map<String, dynamic>
+        : null;
+    final textureApplicationRange =
+        content['textureApplicationRange'] as String? ?? 'character';
+    final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
+    final textureOpacity =
+        (content['textureOpacity'] as num?)?.toDouble() ?? 1.0;
 
-    // // 添加 ref 调试信息
-    // debugPrint('buildCollectionElement: ref=${ref != null ? "非空" : "为空"}');
-    // // 添加软回车调试信息
-    // debugPrint('集字元素软回车设置: $enableSoftLineBreak');
+    // 添加调试信息
+    debugPrint(
+        'ElementRenderers.buildCollectionElement: hasBackgroundTexture=$hasBackgroundTexture');
+    if (hasBackgroundTexture) {
+      debugPrint(
+          'ElementRenderers.buildCollectionElement: backgroundTexture=$backgroundTexture');
+      debugPrint(
+          'ElementRenderers.buildCollectionElement: textureApplicationRange=$textureApplicationRange');
+      debugPrint(
+          'ElementRenderers.buildCollectionElement: textureFillMode=$textureFillMode');
+    }
 
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: backgroundColor,
+      // 移除背景图片装饰，改为完全由CollectionElementRenderer处理纹理
+      decoration: BoxDecoration(color: backgroundColor),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 不再在这里计算内边距，而是直接传递给CollectionElementRenderer
           // 添加调试信息
-          debugPrint(
-              'buildCollectionElement: 传递内边距 $padding 到 CollectionElementRenderer');
+          debugPrint('buildCollectionElement纹理参数: \n'
+              '  hasTexture: $hasBackgroundTexture\n'
+              '  textureData: $backgroundTexture\n'
+              '  fillMode: $textureFillMode\n'
+              '  opacity: $textureOpacity\n'
+              '  range: $textureApplicationRange');
+
+          debugPrint('ElementRenderers: 准备构建集字布局');
+          debugPrint('- 纹理数据: $backgroundTexture');
+          debugPrint('- 纹理填充模式: $textureFillMode');
+          debugPrint('- 纹理不透明度: $textureOpacity');
+          debugPrint('- 纹理应用范围: $textureApplicationRange');
 
           return CollectionElementRenderer.buildCollectionLayout(
             characters: characters,
@@ -70,12 +87,19 @@ class ElementRenderers {
             lineSpacing: lineSpacing,
             textAlign: textAlign,
             verticalAlign: verticalAlign,
-            characterImages: characterImages ?? {},
-            constraints: constraints, // 直接传递原始约束
+            characterImages: content, // 传递完整的 content 以包含所有纹理相关设置
+            constraints: constraints,
             padding: padding,
             fontColor: fontColorStr,
             backgroundColor: backgroundColorStr,
             enableSoftLineBreak: enableSoftLineBreak,
+            // 传递纹理设置
+            hasCharacterTexture: hasBackgroundTexture,
+            characterTextureData: backgroundTexture,
+            textureFillMode: textureFillMode,
+            textureOpacity: textureOpacity,
+            applicationMode:
+                textureApplicationRange, // Pass the application mode explicitly
             ref: ref,
           );
         },
@@ -471,6 +495,20 @@ class ElementRenderers {
     }
   }
 
+  /// 根据填充模式获取BoxFit
+  static BoxFit _getBoxFit(String fillMode) {
+    switch (fillMode) {
+      case 'cover':
+        return BoxFit.cover;
+      case 'contain':
+        return BoxFit.contain;
+      case 'noRepeat':
+        return BoxFit.none;
+      default:
+        return BoxFit.none; // 对于repeat/repeatX/repeatY使用none，由ImageRepeat控制
+    }
+  }
+
   /// 获取图片适应模式
   static BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
@@ -484,6 +522,20 @@ class ElementRenderers {
         return BoxFit.none;
       default:
         return BoxFit.contain;
+    }
+  }
+
+  /// 根据填充模式获取ImageRepeat
+  static ImageRepeat _getImageRepeat(String fillMode) {
+    switch (fillMode) {
+      case 'repeat':
+        return ImageRepeat.repeat;
+      case 'repeatX':
+        return ImageRepeat.repeatX;
+      case 'repeatY':
+        return ImageRepeat.repeatY;
+      default:
+        return ImageRepeat.noRepeat;
     }
   }
 

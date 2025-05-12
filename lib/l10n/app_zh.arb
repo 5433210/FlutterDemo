@@ -1,4 +1,56 @@
 {
+    "@textureApplicationRange": {
+        "description": "纹理应用的范围设置"
+    },
+    "textureApplicationRange": "纹理应用范围",
+    "@textureRangeCharacter": {
+        "description": "仅应用纹理到字符"
+    },
+    "textureRangeCharacter": "仅字符",
+    "@textureRangeBackground": {
+        "description": "应用纹理到整个背景"
+    },
+    "textureRangeBackground": "整个背景",
+    "@textureFillMode": {
+        "description": "纹理的填充模式"
+    },
+    "textureFillMode": "填充模式",
+    "@textureFillModeRepeat": {
+        "description": "纹理全部重复"
+    },
+    "textureFillModeRepeat": "重复",
+    "@textureFillModeRepeatX": {
+        "description": "纹理水平重复"
+    },
+    "textureFillModeRepeatX": "水平重复",
+    "@textureFillModeRepeatY": {
+        "description": "纹理垂直重复"
+    },
+    "textureFillModeRepeatY": "垂直重复",
+    "@textureFillModeNoRepeat": {
+        "description": "纹理不重复"
+    },
+    "textureFillModeNoRepeat": "不重复",
+    "@textureFillModeCover": {
+        "description": "纹理覆盖整个区域"
+    },
+    "textureFillModeCover": "覆盖",
+    "@textureFillModeContain": {
+        "description": "纹理保持比例显示"
+    },
+    "textureFillModeContain": "适应",
+    "@textureOpacity": {
+        "description": "纹理的不透明度"
+    },
+    "textureOpacity": "纹理不透明度",
+    "@textureSelectFromLibrary": {
+        "description": "从库中选择纹理"
+    },
+    "textureSelectFromLibrary": "从库中选择",
+    "@textureRemove": {
+        "description": "移除纹理"
+    },
+    "textureRemove": "移除",
   "@@locale": "zh",
   "a4Size": "A4 (210×297mm)",
   "a5Size": "A5 (148×210mm)",
@@ -644,6 +696,17 @@
       }
     }
   },
+  "textureApplicationRange": "纹理应用范围",
+  "textureRangeCharacter": "字符",
+  "textureRangeBackground": "背景",
+  "textureFillMode": "纹理填充模式",
+  "textureFillModeRepeat": "重复",
+  "textureFillModeRepeatX": "水平重复",
+  "textureFillModeRepeatY": "垂直重复",
+  "textureFillModeNoRepeat": "不重复",
+  "textureFillModeCover": "覆盖",
+  "textureFillModeContain": "包含",
+  "textureOpacity": "纹理不透明度",
   "characterCollectionFindSwitchFailed": "查找并切换页面失败：{error}",
   "@characterCollectionFindSwitchFailed": {
     "placeholders": {

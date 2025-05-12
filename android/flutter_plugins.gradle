@@ -1,0 +1,49 @@
+// Flutter plugin loader for Gradle
+import groovy.json.JsonSlurper
+
+// Cannot use dependencies block in settings script
+// Instead, these dependencies should be added to the buildscript block in build.gradle.kts
+
+def flutterPluginsFile = rootProject.projectDir.parentFile.toPath().resolve('.flutter-plugins').toFile()
+def flutterPluginsDependenciesFile = rootProject.projectDir.parentFile.toPath().resolve('.flutter-plugins-dependencies').toFile()
+
+if (flutterPluginsFile.exists()) {
+    Properties plugins = new Properties()
+    flutterPluginsFile.withInputStream { stream -> plugins.load(stream) }
+    
+    plugins.each { name, path ->
+        def pluginDirectory = new File(path)
+        def pluginPathGradle = new File(pluginDirectory, 'android.gradle')
+        if (pluginPathGradle.exists()) {
+            apply from: pluginPathGradle
+        }
+        
+        def pluginPathGradleKts = new File(pluginDirectory, 'android.gradle.kts')
+        if (pluginPathGradleKts.exists()) {
+            apply from: pluginPathGradleKts
+        }
+    }
+}
+
+if (flutterPluginsDependenciesFile.exists()) {
+    try {
+        def jsonSlurper = new JsonSlurper()
+        def pluginsMap = jsonSlurper.parse(flutterPluginsDependenciesFile)
+        
+        if (pluginsMap.plugins && pluginsMap.plugins.android) {
+            pluginsMap.plugins.android.each { pluginMap ->
+                def name = pluginMap.name
+                def path = pluginMap.path
+                def pluginDirectory = new File(path)
+                def pluginPathGradle = new File(pluginDirectory, 'android/build.gradle')
+                if (pluginPathGradle.exists()) {
+                    def pluginProject = name
+                    include ":$pluginProject"
+                    // Modern way to set project directory
+                    settings.project(":$pluginProject").projectDir = new File(pluginPathGradle.parent)
+                }
+            }
+        }    } catch (Exception e) {
+        println "Error processing Flutter plugins: ${e.message}"
+    }
+}

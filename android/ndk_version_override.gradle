@@ -1,0 +1,6 @@
+// This file overrides NDK version requirements for Flutter plugins
+// In settings context, we can't use project.ext, so we use gradle.ext instead
+gradle.ext {
+    // Override the NDK version for all plugins
+    flutterPluginNdkVersion = "27.2.12479018"
+}

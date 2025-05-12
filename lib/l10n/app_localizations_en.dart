@@ -9,6 +9,45 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get textureApplicationRange => 'Texture Application Range';
+
+  @override
+  String get textureRangeCharacter => 'Character Only';
+
+  @override
+  String get textureRangeBackground => 'Entire Background';
+
+  @override
+  String get textureFillMode => 'Fill Mode';
+
+  @override
+  String get textureFillModeRepeat => 'Repeat';
+
+  @override
+  String get textureFillModeRepeatX => 'Repeat Horizontally';
+
+  @override
+  String get textureFillModeRepeatY => 'Repeat Vertically';
+
+  @override
+  String get textureFillModeNoRepeat => 'No Repeat';
+
+  @override
+  String get textureFillModeCover => 'Cover';
+
+  @override
+  String get textureFillModeContain => 'Contain';
+
+  @override
+  String get textureOpacity => 'Texture Opacity';
+
+  @override
+  String get textureSelectFromLibrary => 'Select from Library';
+
+  @override
+  String get textureRemove => 'Remove';
+
+  @override
   String get a4Size => 'A4 (210×297mm)';
 
   @override

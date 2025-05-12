@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -784,17 +785,55 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final verticalAlign = content['verticalAlign'] as String? ?? 'top';
     final fontColor = content['fontColor'] as String? ?? '#000000';
     final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
-    final enableSoftLineBreak =
-        content['enableSoftLineBreak'] as bool? ?? false;
+    final enableSoftLineBreak = content['enableSoftLineBreak'] as bool? ??
+        false; // Get texture-related properties
+    final hasBackgroundTexture = content.containsKey('backgroundTexture') &&
+        content['backgroundTexture'] != null &&
+        content['backgroundTexture'] is Map<String, dynamic> &&
+        (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty;
+    final backgroundTexture = hasBackgroundTexture
+        ? content['backgroundTexture'] as Map<String, dynamic>
+        : null;
+    final textureApplicationRange =
+        content['textureApplicationRange'] as String? ?? 'character';
+    final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
+    final textureOpacity =
+        (content['textureOpacity'] as num?)?.toDouble() ?? 1.0;
+
+    // Enhanced texture debugging
+    print('🧩 TEXTURE: 渲染集字元素开始：元素ID=${element['id']}');
+    print('🧩 TEXTURE: 纹理数据详情:');
+    print('🧩 TEXTURE:   - 是否启用纹理: $hasBackgroundTexture');
+    print('🧩 TEXTURE:   - 纹理数据: $backgroundTexture');
+    print('🧩 TEXTURE:   - 应用范围: $textureApplicationRange');
+    print('🧩 TEXTURE:   - 填充模式: $textureFillMode');
+    print('🧩 TEXTURE:   - 不透明度: $textureOpacity');
+
+    if (backgroundTexture != null) {
+      print('🧩 TEXTURE:   - 纹理路径: ${backgroundTexture['path']}');
+      if (backgroundTexture.containsKey('path')) {
+        // Check if the texture path exists
+        final texturePath = backgroundTexture['path'];
+        if (texturePath != null) {
+          try {
+            final file = File(texturePath.toString());
+            print('🧩 TEXTURE:   - 纹理文件检查: ${file.path}');
+            print('🧩 TEXTURE:   - 文件是否存在: ${file.existsSync()}');
+          } catch (e) {
+            print('🧩 TEXTURE:   - 纹理文件检查失败: $e');
+          }
+        }
+      }
+    }
 
     // Get character images
-    final characterImages =
-        content['characterImages'] as Map<String, dynamic>? ?? {};
+    final characterImages = content;
 
     // Parse color
     final bgColor = _parseColor(backgroundColor);
 
     if (characters.isEmpty) {
+      print('🧩 TEXTURE: 渲染集字元素：字符为空，显示占位符');
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -809,10 +848,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       );
     }
 
-    // Use CollectionElementRenderer to render the collection
-    // 添加调试信息
-    debugPrint(
-        '_renderCollectionElement: 传递内边距 $padding 到 CollectionElementRenderer');
+    print('🧩 TEXTURE: 创建集字渲染器，字符数: ${characters.length}');
+    print('🧩 TEXTURE: 传递的内边距: $padding');
 
     return Container(
       width: double.infinity,
@@ -820,6 +857,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       color: bgColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          print('🧩 TEXTURE: 布局构建器获得约束: $constraints');
           return CollectionElementRenderer.buildCollectionLayout(
             characters: characters,
             writingMode: writingMode,
@@ -830,10 +868,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             verticalAlign: verticalAlign,
             characterImages: characterImages,
             constraints: constraints,
-            padding: padding, // 确保正确传递内边距参数
+            padding: padding,
             fontColor: fontColor,
             backgroundColor: backgroundColor,
             enableSoftLineBreak: enableSoftLineBreak,
+            // Pass texture-related properties
+            hasCharacterTexture: hasBackgroundTexture,
+            characterTextureData: backgroundTexture,
+            textureFillMode: textureFillMode,
+            textureOpacity: textureOpacity,
+            applicationMode:
+                textureApplicationRange, // Pass the application mode explicitly
             ref: ref,
           );
         },

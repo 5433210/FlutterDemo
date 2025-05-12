@@ -5,10 +5,16 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Apply the suppress warnings script
+apply(from = "../suppress_convention_warnings.gradle.kts")
+
 android {
     namespace = "com.example.demo"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.2.12479018" // Using the installed NDK version
+    
+    // 指定 buildToolsVersion 为已安装的版本
+    buildToolsVersion = "33.0.0" // 使用已安装的构建工具版本
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

@@ -95,6 +95,84 @@ abstract class AppLocalizations {
     Locale('zh')
   ];
 
+  /// No description provided for @textureApplicationRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Texture Application Range'**
+  String get textureApplicationRange;
+
+  /// No description provided for @textureRangeCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Only'**
+  String get textureRangeCharacter;
+
+  /// No description provided for @textureRangeBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire Background'**
+  String get textureRangeBackground;
+
+  /// No description provided for @textureFillMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Mode'**
+  String get textureFillMode;
+
+  /// No description provided for @textureFillModeRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get textureFillModeRepeat;
+
+  /// No description provided for @textureFillModeRepeatX.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Horizontally'**
+  String get textureFillModeRepeatX;
+
+  /// No description provided for @textureFillModeRepeatY.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Vertically'**
+  String get textureFillModeRepeatY;
+
+  /// No description provided for @textureFillModeNoRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'No Repeat'**
+  String get textureFillModeNoRepeat;
+
+  /// No description provided for @textureFillModeCover.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get textureFillModeCover;
+
+  /// No description provided for @textureFillModeContain.
+  ///
+  /// In en, this message translates to:
+  /// **'Contain'**
+  String get textureFillModeContain;
+
+  /// No description provided for @textureOpacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Texture Opacity'**
+  String get textureOpacity;
+
+  /// No description provided for @textureSelectFromLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Library'**
+  String get textureSelectFromLibrary;
+
+  /// No description provided for @textureRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get textureRemove;
+
   /// No description provided for @a4Size.
   ///
   /// In en, this message translates to:

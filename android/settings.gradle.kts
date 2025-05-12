@@ -10,16 +10,25 @@ pluginManagement {
     includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
 
     repositories {
-        google()
+        // Add Maven Central first to resolve the missing annotations
         mavenCentral()
+        maven { url = uri("https://repo1.maven.org/maven2") }
+        google()
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
         gradlePluginPortal()
     }
 }
 
 plugins {
-    id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.7.0" apply false
     id("org.jetbrains.kotlin.android") version "1.8.22" apply false
 }
 
+// Include the app module
 include(":app")
+
+// Apply the custom Flutter plugin loader
+apply(from = "flutter_plugins.gradle")
