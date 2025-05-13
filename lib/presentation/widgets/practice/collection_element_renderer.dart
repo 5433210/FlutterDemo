@@ -35,7 +35,7 @@ class CollectionElementRenderer {
     String textureFillMode = 'repeat',
     double textureOpacity = 1.0,
     String applicationMode =
-        'character', // Added explicit applicationMode parameter
+        'background', // Application mode: 'background' or 'characterBackground'
     WidgetRef? ref,
   }) {
     if (characters.isEmpty) {
@@ -116,7 +116,7 @@ class CollectionElementRenderer {
           if (characterImages.containsKey('textureApplicationRange')) {
             applicationMode =
                 characterImages['textureApplicationRange'] as String? ??
-                    'character';
+                    'background';
             debugPrint('使用主content的纹理应用范围: $applicationMode');
           }
 
@@ -125,7 +125,7 @@ class CollectionElementRenderer {
             // 仅当主content没有设置时，才使用嵌套content的应用范围
             if (!characterImages.containsKey('textureApplicationRange')) {
               applicationMode =
-                  content['textureApplicationRange'] as String? ?? 'character';
+                  content['textureApplicationRange'] as String? ?? 'background';
               debugPrint('使用嵌套content的纹理应用范围: $applicationMode');
             }
 
@@ -612,37 +612,49 @@ class TextureConfig {
   final double opacity;
   final String applicationMode;
 
+  /// ApplicationMode values:
+  /// - 'background': texture applies to the entire collection element background
+  /// - 'characterBackground': texture only applies to the rectangular background area of each character
   const TextureConfig({
     this.enabled = false,
     this.data,
     this.fillMode = 'repeat',
     this.opacity = 1.0,
-    this.applicationMode = 'character',
+    this.applicationMode = 'background',
   });
 
   @override
-  int get hashCode {
-    return Object.hash(
-        enabled,
-        fillMode,
-        opacity,
-        applicationMode,
-        // Use a simple hash for the data map
-        data?.length ?? 0);
-  }
+  int get hashCode =>
+      Object.hash(enabled, data.hashCode, fillMode, opacity, applicationMode);
 
   @override
   bool operator ==(Object other) {
-    if (identical(this, other)) return true;
     if (other is! TextureConfig) return false;
-
-    return other.enabled == enabled &&
-        other.fillMode == fillMode &&
-        other.opacity == opacity &&
-        other.applicationMode == applicationMode &&
-        _mapsEqual(other.data, data);
+    return enabled == other.enabled &&
+        _mapsEqual(data, other.data) &&
+        fillMode == other.fillMode &&
+        opacity == other.opacity &&
+        applicationMode == other.applicationMode;
   }
 
+  // 浅拷贝创建一个新实例
+  TextureConfig copyWith({
+    bool? enabled,
+    Map<String, dynamic>? data,
+    String? fillMode,
+    double? opacity,
+    String? applicationMode,
+  }) {
+    return TextureConfig(
+      enabled: enabled ?? this.enabled,
+      data: data ?? this.data,
+      fillMode: fillMode ?? this.fillMode,
+      opacity: opacity ?? this.opacity,
+      applicationMode: applicationMode ?? this.applicationMode,
+    );
+  }
+
+  // Helper method to compare texture data maps
   bool _mapsEqual(Map<String, dynamic>? map1, Map<String, dynamic>? map2) {
     if (map1 == null && map2 == null) return true;
     if (map1 == null || map2 == null) return false;
@@ -813,8 +825,7 @@ class _CollectionPainter extends CustomPainter {
       // 如果是背景模式且纹理有效，先绘制背景纹理
       if (textureConfig.enabled &&
           textureConfig.data != null &&
-          (textureConfig.applicationMode == 'background' ||
-              textureConfig.applicationMode == 'both')) {
+          textureConfig.applicationMode == 'background') {
         _paintTexture(canvas, clipRect, mode: 'background');
       }
 
@@ -1023,62 +1034,40 @@ class _CollectionPainter extends CustomPainter {
         // 处理其他图像
         else {
           canvas.drawImageRect(image, srcRect, rect, basePaint);
-        }
-
-        // 完成绘制
+        } // 完成绘制
         canvas.restore();
 
-        // 检查纹理配置并绘制
-        final canApplyTexture = textureConfig.enabled &&
+        // 检查是否应用字符背景纹理
+        final canApplyCharacterBackgroundTexture = textureConfig.enabled &&
             textureConfig.data != null &&
-            (textureConfig.applicationMode == 'character' ||
-                textureConfig.applicationMode == 'both');
+            textureConfig.applicationMode == 'characterBackground';
 
-        if (canApplyTexture) {
-          debugPrint('''🎨 开始应用字符纹理:
+        if (canApplyCharacterBackgroundTexture) {
+          debugPrint('''🎨 开始应用字符背景纹理:
   字符: ${position.char}
   位置: $rect
-  颜色: ${position.fontColor}
   不透明度: ${textureConfig.opacity}''');
 
           try {
-            // 第1层：创建主图层以保留原始字符形状
-            canvas.saveLayer(rect, Paint());
+            // 保存当前画布状态
+            canvas.save();
 
-            // 第2层：绘制原始字符图像形状（以黑色绘制）
-            final shapePaint = Paint()..color = Colors.black;
-            canvas.drawImageRect(image, srcRect, rect, shapePaint);
+            // 先绘制纹理作为字符背景
+            _paintTexture(canvas, rect, mode: 'characterBackground');
 
-            // 第3层：将黑色形状转换为目标颜色
-            {
-              final colorLayer = Paint()
-                ..color = position.fontColor
-                ..blendMode = BlendMode.srcIn;
-              canvas.drawRect(rect, colorLayer);
-            } // 如果启用了纹理，直接使用 _paintTexture 方法
-            if (textureConfig.enabled && textureConfig.data != null) {
-              // 打印Canvas状态
-              debugPrint(
-                  '🔎 当前Canvas状态: ${canvas.hashCode}'); // 保存新图层状态 - 重要：字符纹理需要使用 srcATop 混合模式
-              final blendLayer = Paint()..blendMode = BlendMode.srcATop;
-              canvas.saveLayer(rect, blendLayer); // 使用工具方法绘制纹理，确保使用字符模式
-              debugPrint('🔍 应用字符纹理，区域: $rect');
-              debugPrint('🔬 详细信息: 字符=$characterId, 类型=$type, 格式=$format');
-              _paintTexture(canvas, rect, mode: 'character');
+            // 然后在纹理上绘制字符
+            // 绘制原始字符图像
+            canvas.drawImageRect(image, srcRect, rect,
+                Paint()..filterQuality = FilterQuality.high);
 
-              // 恢复新图层状态
-              canvas.restore();
-            }
-
-            // 最终恢复画布状态
+            // 恢复画布状态
             canvas.restore();
-            debugPrint('✅ 字符纹理绘制完成');
-          } catch (e, stack) {
-            debugPrint('''❌ 字符纹理绘制失败:
-  错误: $e
-  堆栈: $stack''');
-            canvas.restore();
-            _drawFallbackTexture(canvas, rect, position.fontColor);
+            debugPrint('✅ 字符背景纹理绘制完成');
+          } catch (e) {
+            debugPrint('❌ 字符背景纹理应用失败: $e');
+            // 如果纹理应用失败，直接绘制原始图像
+            canvas.drawImageRect(image, srcRect, rect,
+                Paint()..filterQuality = FilterQuality.high);
           }
         }
       }
@@ -1093,19 +1082,15 @@ class _CollectionPainter extends CustomPainter {
       position.y,
       position.size,
       position.size,
-    );
-
-    // 纹理应用标志
+    ); // 纹理应用标志
     final bool hasTexture = textureConfig.enabled && textureConfig.data != null;
-    final bool canApplyBackgroundTexture = hasTexture &&
-        (textureConfig.applicationMode == 'background' ||
-            textureConfig.applicationMode == 'both');
-    final bool canApplyCharacterTexture = hasTexture &&
-        (textureConfig.applicationMode == 'character' ||
-            textureConfig.applicationMode == 'both');
+    final bool canApplyBackgroundTexture =
+        hasTexture && (textureConfig.applicationMode == 'background');
+    final bool canApplyCharacterBackgroundTexture =
+        hasTexture && (textureConfig.applicationMode == 'characterBackground');
 
     debugPrint(
-        '🎨 文本绘制纹理配置: bg=$canApplyBackgroundTexture, char=$canApplyCharacterTexture, mode=${textureConfig.applicationMode}');
+        '🎨 文本绘制纹理配置: bg=$canApplyBackgroundTexture, charBg=$canApplyCharacterBackgroundTexture, mode=${textureConfig.applicationMode}');
 
     // 保存画布状态
     canvas.save();
@@ -1126,8 +1111,8 @@ class _CollectionPainter extends CustomPainter {
       // 没有纹理时绘制普通背景
       _drawFallbackBackground(canvas, rect, position);
     }
-    if (canApplyCharacterTexture) {
-      debugPrint('🎨 字符文本绘制时应用字符纹理: ${position.char}');
+    if (canApplyCharacterBackgroundTexture) {
+      debugPrint('🎨 字符文本绘制时应用字符背景纹理: ${position.char}');
       try {
         // 第1层：保存主画布状态
         canvas.saveLayer(rect, Paint());
@@ -1164,12 +1149,10 @@ class _CollectionPainter extends CustomPainter {
           canvas.saveLayer(rect, colorPaint);
           canvas.drawRect(rect, Paint()..color = Colors.white);
           canvas.restore();
-        }
-
-        // 第4层：应用纹理，使用DstIn模式保持字符形状
+        } // 第4层：应用纹理，使用DstIn模式保持字符形状
         {
           canvas.saveLayer(rect, Paint()..blendMode = BlendMode.srcATop);
-          _paintTexture(canvas, rect, mode: 'character');
+          _paintTexture(canvas, rect, mode: 'characterBackground');
           canvas.restore();
         }
 
@@ -1640,9 +1623,8 @@ class _CollectionPainter extends CustomPainter {
     final String texturePath = textureConfig.data?['path'] as String? ?? '';
     final String textureCacheKey =
         '${texturePath}_${textureConfig.fillMode}_${textureConfig.opacity}';
-
     debugPrint('''🎨 开始纹理渲染:
-  ┌─ 模式: $mode (${mode == 'character' ? "字符纹理" : "背景纹理"})
+  ┌─ 模式: $mode (${mode == 'characterBackground' ? "字符背景纹理" : mode == 'background' ? "背景纹理" : "未知模式"})
   ├─ 区域: $rect
   ├─ 填充: ${textureConfig.fillMode}
   ├─ 透明度: ${textureConfig.opacity}
@@ -1652,7 +1634,7 @@ class _CollectionPainter extends CustomPainter {
       // 根据模式选择适当的纹理绘制器
       final CustomPainter texturePainter;
 
-      if (mode == 'character') {
+      if (mode == 'characterBackground') {
         // 字符应用范围使用 CharacterTexturePainter
         texturePainter = CharacterTexturePainter(
           textureData: textureConfig.data,
@@ -1670,25 +1652,29 @@ class _CollectionPainter extends CustomPainter {
           ref: ref,
         );
         debugPrint('🎨 创建背景纹理绘制器，模式: ${textureConfig.fillMode}');
-      }
-      // 根据模式选择不同的绘制策略
-      if (mode == 'character') {
-        // 对于字符纹理，采用以下步骤：
-        debugPrint('🔄 字符纹理模式 - 处理');
+      } // 根据模式选择不同的绘制策略
+      if (mode == 'characterBackground') {
+        // 对于字符背景纹理，只应用纹理到字符所在的矩形区域
+        debugPrint('🔄 字符背景纹理模式 - 处理');
 
-        // 1. 保存当前画布状态
+        // 保存画布状态
         canvas.saveLayer(rect, Paint());
 
-        // 2. 绘制纹理
+        // 直接绘制纹理到字符区域
         _drawTextureWithTransform(canvas, rect, texturePainter);
 
-        // 3. 使用DstIn混合模式，将纹理限制在字符形状内
-        canvas.saveLayer(rect, Paint()..blendMode = BlendMode.dstIn);
-
-        // 4. 恢复到主图层
+        // 如果需要调整透明度
+        if (textureConfig.opacity < 1.0) {
+          // 应用透明度调整
+          canvas.saveLayer(
+              rect,
+              Paint()
+                ..color = Colors.white.withOpacity(textureConfig.opacity)
+                ..blendMode = BlendMode.dstIn);
+          canvas.restore();
+        }
         canvas.restore();
-        canvas.restore();
-        debugPrint('✅ 绘制字符纹理完成');
+        debugPrint('✅ 绘制字符背景纹理完成');
       } else {
         // 对于背景纹理，直接使用正常绘制
         debugPrint('🔄 背景纹理模式 - 使用正常绘制');

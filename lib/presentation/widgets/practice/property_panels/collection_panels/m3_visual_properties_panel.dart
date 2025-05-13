@@ -327,16 +327,23 @@ class _M3VisualPropertiesPanelState
               ? (widget.element['content']
                           as Map<String, dynamic>)['textureApplicationRange']
                       as String? ??
-                  'character'
-              : 'character';
-          debugPrint('当前纹理应用范围: $currentApplicationRange');
+                  'characterBackground'
+              : 'characterBackground';
 
+          // 兼容旧版本中使用的'character'应用模式，自动转换为'characterBackground'
+          final effectiveApplicationRange =
+              currentApplicationRange == 'character'
+                  ? 'characterBackground'
+                  : currentApplicationRange;
+
+          debugPrint('当前纹理应用范围: $effectiveApplicationRange');
           return SegmentedButton<String>(
             segments: [
-              ButtonSegment<String>(
-                value: 'character',
-                label: Text(l10n.textureRangeCharacter),
-                icon: const Icon(Icons.text_fields),
+              const ButtonSegment<String>(
+                value: 'characterBackground',
+                label: Text(
+                    '字符背景'), // Temporarily using hardcoded text until we add localization
+                icon: Icon(Icons.text_fields),
               ),
               ButtonSegment<String>(
                 value: 'background',
@@ -344,16 +351,25 @@ class _M3VisualPropertiesPanelState
                 icon: const Icon(Icons.crop_free),
               ),
             ],
-            selected: {currentApplicationRange},
+            selected: {
+              currentApplicationRange == 'character'
+                  ? 'characterBackground'
+                  : currentApplicationRange
+            },
             onSelectionChanged: (selection) {
               debugPrint('纹理应用范围改变: ${selection.first}');
               final updatedContent = Map<String, dynamic>.from(content);
-              updatedContent['textureApplicationRange'] = selection.first;
+
+              // 如果切换到characterBackground，检查原来是否为character
+              final selectedMode = selection.first;
+
+              // 更新纹理应用范围
+              updatedContent['textureApplicationRange'] = selectedMode;
               debugPrint('更新纹理应用范围: $updatedContent');
 
               // 直接更新属性而不是整个content对象
               widget.onContentPropertyChanged(
-                  'textureApplicationRange', selection.first);
+                  'textureApplicationRange', selectedMode);
 
               // 强制刷新UI
               setState(() {});
