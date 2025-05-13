@@ -121,6 +121,9 @@ class AdvancedCollectionPainter extends CustomPainter {
       debugPrint('  书写模式：$writingMode');
       debugPrint('  内边距：$padding');
 
+      // 预先加载字符图像
+      _preloadCharacterImages();
+
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled &&
           textureConfig.data != null &&
@@ -133,11 +136,13 @@ class AdvancedCollectionPainter extends CustomPainter {
       for (int i = 0; i < positions.length; i++) {
         final position = positions[i];
 
-        // 如果是换行符，直接跳过，不做任何绘制
-        if (position.char == '\n') continue;
+        // 跳过换行符，但不做其他特殊处理
+        if (position.char == '\n') {
+          debugPrint('  跳过换行符 (索引: $i)');
+          continue;
+        }
 
-        // 创建字符固有区域 - 这个位置是考虑了内边距、对齐方式和书写模式的
-        // 因为LayoutCalculator已经在计算position时考虑了这些因素
+        // 创建字符固有区域
         final charRect = Rect.fromLTWH(
           position.x,
           position.y,
@@ -162,11 +167,11 @@ class AdvancedCollectionPainter extends CustomPainter {
 
         // 4. 查找字符图片并绘制
         final charImage = _findCharacterImage(position.char, i);
+
+        // 绘制字符（带图像或占位符）
         if (charImage != null) {
-          // 如果有图片信息，尝试绘制图片
           _drawCharacterWithImage(canvas, charRect, position, charImage);
         } else {
-          // 如果没有图片，绘制文本作为占位符
           _drawFallbackText(canvas, position, charRect);
         }
 
@@ -179,13 +184,20 @@ class AdvancedCollectionPainter extends CustomPainter {
                 : Colors.blue.withOpacity(0.3)
             ..style = PaintingStyle.stroke
             ..strokeWidth = 1.0;
+
           canvas.drawRect(charRect, debugPaint);
 
-          // 绘制坐标信息
+          // 绘制索引编号，帮助调试
           final textPainter = TextPainter(
             text: TextSpan(
               text: '${i + 1}',
-              style: const TextStyle(fontSize: 10, color: Colors.red),
+              style: TextStyle(
+                fontSize: 10,
+                color: position.isAfterNewLine ? Colors.red : Colors.blue,
+                fontWeight: position.isAfterNewLine
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
             ),
             textDirection: TextDirection.ltr,
           );
@@ -200,8 +212,9 @@ class AdvancedCollectionPainter extends CustomPainter {
           _repaintCallback!();
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('绘制异常：$e');
+      debugPrint('堆栈跟踪：$stackTrace');
     }
   }
 
@@ -230,15 +243,118 @@ class AdvancedCollectionPainter extends CustomPainter {
         oldDelegate.characterImages != characterImages;
   }
 
+  /// 计算实际字符索引（忽略换行符）
+  int _calculateRealCharIndex(int positionIndex) {
+    int realIndex = 0;
+    int newlineCount = 0;
+
+    // 检查边界条件
+    if (positionIndex < 0 || positions.isEmpty) {
+      return 0;
+    }
+
+    // 计算在当前位置之前的换行符数量和真实字符数量
+    for (int i = 0; i < positionIndex && i < positions.length; i++) {
+      if (positions[i].char == '\n') {
+        newlineCount++;
+      } else {
+        realIndex++;
+      }
+    }
+
+    debugPrint(
+        '  实际字符索引计算: 位置索引=$positionIndex, 换行符数量=$newlineCount, 实际字符索引=$realIndex');
+    return realIndex;
+  }
+
+  /// 计算行内索引（每行重新从0开始计数）
+  int _calculateRowBasedIndex(int positionIndex) {
+    // 检查边界
+    if (positionIndex < 0 ||
+        positions.isEmpty ||
+        positionIndex >= positions.length) {
+      return 0;
+    }
+
+    // 获取当前字符所在的行
+    int currentRow = -1;
+    int rowBasedIndex = 0;
+
+    // 遍历所有的字符位置查找行号并计算行内索引
+    for (int i = 0; i <= positionIndex; i++) {
+      if (i < positions.length) {
+        // 检查是否是换行符
+        if (positions[i].char == '\n') {
+          // 遇到换行符，重置行内索引并更新行号
+          currentRow++;
+          rowBasedIndex = 0;
+          continue;
+        }
+
+        // 检查是否是一行的第一个字符
+        if (positions[i].isAfterNewLine) {
+          // 遇到行的第一个字符，重置行内索引
+          rowBasedIndex = 0;
+          currentRow++;
+        } else if (i > 0 && positions[i - 1].char == '\n') {
+          // 如果前一个是换行符但isAfterNewLine没设置，也视为新行
+          rowBasedIndex = 0;
+          currentRow++;
+        } else if (i == 0) {
+          // 第一个字符也是第一行的开始
+          currentRow = 0;
+        } else {
+          // 其他情况，递增行内索引
+          rowBasedIndex++;
+        }
+      }
+    }
+
+    // 边界检查：如果是第一个字符，行内索引应该是0
+    if (positionIndex == 0 || positions[positionIndex].isAfterNewLine) {
+      rowBasedIndex = 0;
+    }
+
+    debugPrint(
+        '  行内索引计算: 位置=$positionIndex, 行号=$currentRow, 行内索引=$rowBasedIndex');
+    return rowBasedIndex;
+  }
+
+  /// 创建字符图像结果对象
+  Map<String, dynamic> _createCharacterImageResult(
+      Map<String, dynamic> imageInfo) {
+    // 创建基本结果对象
+    final result = {
+      'characterId': imageInfo['characterId'],
+      'type': imageInfo['drawingType'] ?? imageInfo['type'] ?? 'square-binary',
+      'format':
+          imageInfo['drawingFormat'] ?? imageInfo['format'] ?? 'png-binary',
+    };
+
+    // 添加transform属性（如果有）
+    if (imageInfo.containsKey('transform')) {
+      result['transform'] = imageInfo['transform'];
+    } else if (imageInfo.containsKey('invert') && imageInfo['invert'] == true) {
+      result['invert'] = true;
+    }
+
+    return result;
+  }
+
   /// 绘制带图片的字符
   void _drawCharacterWithImage(Canvas canvas, Rect rect,
       CharacterPosition position, Map<String, dynamic> charImage) {
-    // 不需要再次绘制背景，因为背景已经在paint方法中绘制过了
+    // 输出详细调试信息
+    debugPrint('🖼️ 绘制带图片的字符:');
+    debugPrint('  字符: "${position.char}"');
+    debugPrint('  位置: x=${position.x}, y=${position.y}, size=${position.size}');
+    debugPrint('  是否换行后第一个字符: ${position.isAfterNewLine ? "是" : "否"}');
 
     // 检查是否有字符ID等必要信息
     if (charImage['characterId'] == null ||
         charImage['type'] == null ||
         charImage['format'] == null) {
+      debugPrint('  ⚠️ 缺少必要信息，使用占位符文本');
       _drawFallbackText(canvas, position, rect);
       return;
     }
@@ -261,73 +377,135 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 创建缓存键
     final cacheKey = '$characterId-$type-$format';
 
-    // 创建标准化的缓存键（用于兼容原来的逻辑）
-    final normalizedKey = '$characterId-square-binary-png-binary';
+    // 输出调试信息
+    debugPrint('  图片信息:');
+    debugPrint('    字符ID: $characterId');
+    debugPrint('    类型: $type');
+    debugPrint('    格式: $format');
+    debugPrint('    缓存键: $cacheKey');
+    debugPrint('    反转显示: ${invertDisplay ? "是" : "否"}');
 
-    // 检查缓存状态
-    ui.Image? image;
-    if (GlobalImageCache.contains(cacheKey)) {
-      image = GlobalImageCache.get(cacheKey);
-    } else if (GlobalImageCache.contains(normalizedKey)) {
-      image = GlobalImageCache.get(normalizedKey);
-    }
+    // 尝试从缓存中获取图像
+    final image = GlobalImageCache.get(cacheKey);
 
-    // 如果找到了图像，绘制图像
     if (image != null) {
-      _drawImageWithEffects(
-          canvas, rect, image, position.fontColor, invertDisplay);
-    } else {
-      // 如果没有找到图像且不在加载中，开始加载
-      if (!_loadingImages.contains(cacheKey)) {
-        _loadingImages.add(cacheKey);
-        Future.microtask(() async {
-          await _loadAndCacheImage(characterId, type, format);
-          _needsRepaint = true;
-        });
+      // 有图像，绘制图像
+      debugPrint('  ✅ 已从缓存获取图像，开始绘制');
+
+      final paint = Paint()
+        ..isAntiAlias = true
+        ..filterQuality = FilterQuality.high;
+
+      // 应用反转效果
+      if (invertDisplay) {
+        debugPrint('  应用反转效果');
+        paint.colorFilter = const ColorFilter.matrix([
+          -1, 0, 0, 0, 255, // 红色通道反转
+          0, -1, 0, 0, 255, // 绿色通道反转
+          0, 0, -1, 0, 255, // 蓝色通道反转
+          0, 0, 0, 1, 0, // Alpha通道保持不变
+        ]);
       }
 
-      // 绘制文本作为占位符
+      // 绘制图像，铺满整个字符区域
+      final srcRect = Rect.fromLTWH(
+        0,
+        0,
+        image.width.toDouble(),
+        image.height.toDouble(),
+      );
+
+      canvas.drawImageRect(image, srcRect, rect, paint);
+      debugPrint('  ✅ 字符图像绘制完成');
+    } else {
+      // 无图像，绘制占位符
+      debugPrint('  ⚠️ 图像未在缓存中，使用占位符文本');
       _drawFallbackText(canvas, position, rect);
+
+      // 添加到待加载集合
+      if (ref != null && !_loadingImages.contains(cacheKey)) {
+        _loadingImages.add(cacheKey);
+        debugPrint('  🔄 添加到图像加载队列: $cacheKey');
+
+        // 异步加载图像
+        _loadAndCacheImage(characterId, type, format).then((_) {
+          debugPrint('  📥 图像加载完成，标记需要重绘');
+          _needsRepaint = true;
+          if (_repaintCallback != null) {
+            _repaintCallback!();
+          }
+        }).catchError((e) {
+          debugPrint('  ❌ 图像加载失败: $e');
+          _loadingImages.remove(cacheKey);
+        });
+      }
     }
   }
 
-  /// 绘制普通文本 - 支持多种文本对齐方式
+  /// 绘制占位符文本
   void _drawFallbackText(Canvas canvas, CharacterPosition position, Rect rect) {
-    // 首先绘制背景（如果字符本身没有背景色）
-    if (position.backgroundColor == Colors.transparent) {
-      final bgPaint = Paint()
-        ..color = Colors.grey.withOpacity(0.1)
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, bgPaint);
-    }
+    debugPrint('  📝 绘制占位符文本: "${position.char}"');
 
-    // 设置文本样式 - 使用与原始代码一致的大小比例
+    // 创建用于绘制文本的画笔
     final textStyle = TextStyle(
-      fontSize: position.size * 0.7, // 保持与原始代码一致的字体大小比例
       color: position.fontColor,
-      fontWeight: FontWeight.normal,
+      fontSize: position.size * 0.75, // 适当缩小以适应区域
+      fontWeight: FontWeight.bold,
     );
 
-    // 绘制字符
+    // 创建文本绘制器
+    final textSpan = TextSpan(
+      text: position.char,
+      style: textStyle,
+    );
+
     final textPainter = TextPainter(
-      text: TextSpan(
-        text: position.char,
-        style: textStyle,
-      ),
-      textDirection:
-          writingMode == 'horizontal-r' ? TextDirection.rtl : TextDirection.ltr,
+      text: textSpan,
+      textDirection: TextDirection.ltr,
       textAlign: TextAlign.center,
     );
-    textPainter.layout();
 
-    // 计算居中位置 - 确保字符在其区域内居中
-    final offset = Offset(
-      rect.left + (rect.width - textPainter.width) / 2,
-      rect.top + (rect.height - textPainter.height) / 2,
+    textPainter.layout(
+      minWidth: rect.width,
+      maxWidth: rect.width,
     );
 
+    // 计算文本位置，使其在矩形中居中
+    final xCenter = rect.left + (rect.width - textPainter.width) / 2;
+    final yCenter = rect.top + (rect.height - textPainter.height) / 2;
+
+    // 绘制背景，如果字符是换行后的第一个字符，使用淡红色背景以便于调试
+    final bgPaint = Paint()
+      ..color = position.isAfterNewLine
+          ? Colors.red.withOpacity(0.2)
+          : position.backgroundColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(rect, bgPaint);
+
     // 绘制文本
-    textPainter.paint(canvas, offset);
+    textPainter.paint(canvas, Offset(xCenter, yCenter));
+
+    // 如果是换行后第一个字符，添加一个标记
+    if (position.isAfterNewLine) {
+      final markerPaint = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0;
+
+      canvas.drawRect(rect, markerPaint);
+
+      // 添加一个小的换行标记
+      final nlMarkerPaint = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(
+        Offset(rect.left + 4, rect.top + 4),
+        2,
+        nlMarkerPaint,
+      );
+    }
   }
 
   /// 绘制占位符纹理
@@ -367,53 +545,6 @@ class AdvancedCollectionPainter extends CustomPainter {
           Offset(rect.right, rect.top + (rect.right - x)), diagonalPaint);
       x += spacing;
     }
-  }
-
-  /// 使用特效绘制图像
-  void _drawImageWithEffects(Canvas canvas, Rect rect, ui.Image image,
-      Color fontColor, bool invertDisplay) {
-    // 获取图像源矩形
-    final srcRect =
-        Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
-
-    // 检查是否需要应用颜色处理
-    final bool needsColorProcessing =
-        fontColor != Colors.black || invertDisplay;
-
-    // 如果不需要任何颜色处理，直接绘制原始图像
-    if (!needsColorProcessing) {
-      final paint = Paint()
-        ..filterQuality = FilterQuality.high
-        ..isAntiAlias = true;
-      canvas.drawImageRect(image, srcRect, rect, paint);
-      return;
-    }
-
-    // 需要进行颜色处理
-    canvas.saveLayer(rect, Paint());
-
-    if (invertDisplay) {
-      // 反转显示 - 使用字体颜色填充区域，然后使用图像作为遮罩
-      canvas.drawRect(rect, Paint()..color = fontColor);
-
-      // 使用BlendMode.dstOut混合模式实现反转
-      final maskPaint = Paint()..blendMode = BlendMode.dstOut;
-      canvas.drawImageRect(image, srcRect, rect, maskPaint);
-    } else {
-      // 标准处理：将黑色替换为字体颜色
-      // 首先绘制原始图像
-      canvas.drawImageRect(image, srcRect, rect, Paint());
-
-      // 使用BlendMode.srcIn将黑色部分替换为字体颜色
-      final colorPaint = Paint()
-        ..color = fontColor
-        ..blendMode = BlendMode.srcIn;
-
-      canvas.drawRect(rect, colorPaint);
-    }
-
-    // 恢复画布状态
-    canvas.restore();
   }
 
   /// 使用图像绘制纹理
@@ -491,67 +622,115 @@ class AdvancedCollectionPainter extends CustomPainter {
   }
 
   /// 查找字符对应的图片
-  Map<String, dynamic>? _findCharacterImage(String char, int index) {
+  Map<String, dynamic>? _findCharacterImage(String char, int positionIndex) {
     try {
+      // 计算实际字符索引（不包含换行符）
+      int realCharIndex = _calculateRealCharIndex(positionIndex);
+
+      // 检查是否是换行符后的字符
+      bool isAfterNewline = false;
+      if (positionIndex > 0 && positionIndex < positions.length) {
+        isAfterNewline = positions[positionIndex].isAfterNewLine;
+      }
+
+      // 检查换行修正 - 这是关键修复
+      int rowBasedIndex = _calculateRowBasedIndex(positionIndex);
+
+      debugPrint(
+          '查找字符图像: 字符="$char", 位置索引=$positionIndex, 实际字符索引=$realCharIndex, 行内索引=$rowBasedIndex, 是否换行后=${isAfterNewline ? "是" : "否"}');
+
       // 检查 characterImages 是否是 Map 类型
       if (characterImages is Map<String, dynamic>) {
         final charImages = characterImages as Map<String, dynamic>;
 
-        // 直接在 charImages 中查找字符索引
-        if (charImages.containsKey('$index')) {
-          final imageInfo = charImages['$index'] as Map<String, dynamic>;
+        // 查找策略优先顺序:
 
-          // 创建结果对象
-          final result = {
-            'characterId': imageInfo['characterId'],
-            'type': imageInfo['drawingType'] ??
-                imageInfo['type'] ??
-                'square-binary',
-            'format': imageInfo['drawingFormat'] ??
-                imageInfo['format'] ??
-                'png-binary',
-          };
-
-          // 添加transform属性（如果有）
-          if (imageInfo.containsKey('transform')) {
-            result['transform'] = imageInfo['transform'];
-          } else if (imageInfo.containsKey('invert') &&
-              imageInfo['invert'] == true) {
-            result['invert'] = true;
-          }
-
-          return result;
+        // 1. 使用行内索引 (优先级最高，因为这处理了累积偏移问题)
+        if (rowBasedIndex >= 0 && charImages.containsKey('$rowBasedIndex')) {
+          debugPrint('  在行内索引 $rowBasedIndex 处找到图像信息');
+          final imageInfo =
+              charImages['$rowBasedIndex'] as Map<String, dynamic>;
+          return _createCharacterImageResult(imageInfo);
         }
 
-        // 检查嵌套结构
+        // 2. 使用位置索引
+        if (charImages.containsKey('$positionIndex')) {
+          debugPrint('  在位置索引 $positionIndex 处找到图像信息');
+          final imageInfo =
+              charImages['$positionIndex'] as Map<String, dynamic>;
+          return _createCharacterImageResult(imageInfo);
+        }
+
+        // 3. 使用实际字符索引（不包含换行符）
+        if (realCharIndex >= 0 && charImages.containsKey('$realCharIndex')) {
+          debugPrint('  在实际字符索引 $realCharIndex 处找到图像信息');
+          final imageInfo =
+              charImages['$realCharIndex'] as Map<String, dynamic>;
+          return _createCharacterImageResult(imageInfo);
+        }
+
+        // 4. 针对换行后字符的特殊处理
+        if (isAfterNewline) {
+          // 尝试使用行内索引0（第一行的第一个字符）
+          if (charImages.containsKey('0')) {
+            debugPrint('  使用行内索引0找到图像信息（换行后第一个字符特殊处理）');
+            final imageInfo = charImages['0'] as Map<String, dynamic>;
+            return _createCharacterImageResult(imageInfo);
+          }
+        }
+
+        // 5. 直接使用字符作为键
+        if (charImages.containsKey(char)) {
+          debugPrint('  使用字符 "$char" 作为键找到图像信息');
+          final imageInfo = charImages[char] as Map<String, dynamic>;
+          return _createCharacterImageResult(imageInfo);
+        }
+
+        // 6. 检查嵌套结构
         if (charImages.containsKey('content')) {
           final content = charImages['content'] as Map<String, dynamic>?;
           if (content != null && content.containsKey('characterImages')) {
             final images = content['characterImages'] as Map<String, dynamic>?;
+            if (images != null) {
+              // 与上面相同的查找策略，但在嵌套内容中
 
-            if (images != null && images.containsKey('$index')) {
-              final imageInfo = images['$index'] as Map<String, dynamic>;
-
-              // 创建结果对象
-              final result = {
-                'characterId': imageInfo['characterId'],
-                'type': imageInfo['drawingType'] ??
-                    imageInfo['type'] ??
-                    'square-binary',
-                'format': imageInfo['drawingFormat'] ??
-                    imageInfo['format'] ??
-                    'png-binary',
-              };
-
-              // 添加transform属性（如果有）
-              if (imageInfo.containsKey('transform')) {
-                result['transform'] = imageInfo['transform'];
-              } else if (imageInfo.containsKey('invert') &&
-                  imageInfo['invert'] == true) {
-                result['invert'] = true;
+              // 使用行内索引
+              if (rowBasedIndex >= 0 && images.containsKey('$rowBasedIndex')) {
+                debugPrint('  在嵌套内容的行内索引 $rowBasedIndex 处找到图像信息');
+                final imageInfo =
+                    images['$rowBasedIndex'] as Map<String, dynamic>;
+                return _createCharacterImageResult(imageInfo);
               }
 
-              return result;
+              // 使用位置索引
+              if (images.containsKey('$positionIndex')) {
+                debugPrint('  在嵌套内容的位置索引 $positionIndex 处找到图像信息');
+                final imageInfo =
+                    images['$positionIndex'] as Map<String, dynamic>;
+                return _createCharacterImageResult(imageInfo);
+              }
+
+              // 使用实际字符索引
+              if (realCharIndex >= 0 && images.containsKey('$realCharIndex')) {
+                debugPrint('  在嵌套内容的实际字符索引 $realCharIndex 处找到图像信息');
+                final imageInfo =
+                    images['$realCharIndex'] as Map<String, dynamic>;
+                return _createCharacterImageResult(imageInfo);
+              }
+
+              // 换行后字符特殊处理
+              if (isAfterNewline && images.containsKey('0')) {
+                debugPrint('  在嵌套内容中使用行内索引0找到图像信息（换行后特殊处理）');
+                final imageInfo = images['0'] as Map<String, dynamic>;
+                return _createCharacterImageResult(imageInfo);
+              }
+
+              // 使用字符作为键
+              if (images.containsKey(char)) {
+                debugPrint('  在嵌套内容中使用字符 "$char" 作为键找到图像信息');
+                final imageInfo = images[char] as Map<String, dynamic>;
+                return _createCharacterImageResult(imageInfo);
+              }
             }
           }
         }
@@ -563,35 +742,44 @@ class AdvancedCollectionPainter extends CustomPainter {
           final image = charImagesList[i];
 
           if (image is Map<String, dynamic>) {
-            // 检查是否有字符信息
+            // 检查是否有字符信息和索引信息
             if (image.containsKey('character') && image['character'] == char) {
+              debugPrint('  在列表类型中找到字符: $char');
               // 检查是否有字符图像信息
               if (image.containsKey('characterId')) {
-                // 创建结果对象
-                final result = {
-                  'characterId': image['characterId'],
-                  'type':
-                      image['drawingType'] ?? image['type'] ?? 'square-binary',
-                  'format':
-                      image['drawingFormat'] ?? image['format'] ?? 'png-binary',
-                };
+                return _createCharacterImageResult(image);
+              }
+            }
 
-                // 添加transform属性（如果有）
-                if (image.containsKey('transform')) {
-                  result['transform'] = image['transform'];
-                } else if (image.containsKey('invert') &&
-                    image['invert'] == true) {
-                  result['invert'] = true;
+            // 根据索引检查
+            if (image.containsKey('index')) {
+              final imgIndex = int.tryParse('${image['index']}') ?? -1;
+              // 同时检查多种索引
+              if (imgIndex == positionIndex ||
+                  imgIndex == realCharIndex ||
+                  imgIndex == rowBasedIndex) {
+                debugPrint('  在列表类型中找到索引匹配项: $imgIndex');
+                if (image.containsKey('characterId')) {
+                  return _createCharacterImageResult(image);
                 }
-
-                return result;
               }
             }
           }
         }
       }
-    } catch (e) {
+
+      // 如果是换行后的字符，记录特殊错误
+      if (isAfterNewline) {
+        debugPrint(
+            '  ❌ 换行后的第一个字符都没有找对！字符: "$char"，索引: $positionIndex, 行内索引: $rowBasedIndex');
+      } else {
+        // 未找到字符图像，记录错误
+        debugPrint(
+            '  未找到字符图像 "$char"（位置：$positionIndex，实际索引：$realCharIndex，行内索引：$rowBasedIndex）');
+      }
+    } catch (e, stackTrace) {
       debugPrint('查找字符图像失败: $e');
+      debugPrint('堆栈跟踪: $stackTrace');
     }
 
     return null;
@@ -734,7 +922,27 @@ class AdvancedCollectionPainter extends CustomPainter {
     if (texturePath == null || texturePath.isEmpty) return;
 
     // 处理纹理模式，只有在当前模式匹配时才绘制
-    if (mode != textureConfig.textureApplicationRange) return;
+    bool shouldApply = false;
+    switch (mode) {
+      case 'background':
+        shouldApply = textureConfig.textureApplicationRange == 'background';
+        break;
+      case 'characterBackground':
+        shouldApply =
+            textureConfig.textureApplicationRange == 'characterBackground' ||
+                textureConfig.textureApplicationRange == 'character';
+        break;
+      case 'character':
+        shouldApply = textureConfig.textureApplicationRange == 'character' ||
+            textureConfig.textureApplicationRange == 'characterTexture';
+        break;
+      default:
+        shouldApply = textureConfig.textureApplicationRange == mode;
+    }
+
+    if (!shouldApply) return;
+
+    debugPrint('🎨 开始绘制纹理 - 模式: $mode, 纹理路径: $texturePath');
 
     try {
       // 获取图像
@@ -742,19 +950,23 @@ class AdvancedCollectionPainter extends CustomPainter {
 
       if (image != null) {
         // 有纹理图片，绘制纹理
+        debugPrint('✅ 从缓存获取纹理图像成功');
         _drawTextureWithImage(canvas, rect, image);
       } else {
         // 纹理加载中，显示占位符
+        debugPrint('⏳ 纹理图像未加载，显示占位符');
         _drawFallbackTexture(canvas, rect);
 
         // 异步加载纹理图片
         if (!_loadingTextures.contains(texturePath)) {
           _loadingTextures.add(texturePath);
+          debugPrint('🔄 开始加载纹理图像: $texturePath');
 
           // 使用增强版纹理管理器加载纹理
           EnhancedTextureManager.instance.loadTexture(texturePath, ref,
               onLoaded: () {
             _loadingTextures.remove(texturePath);
+            debugPrint('✅ 纹理图像加载完成: $texturePath');
             if (_repaintCallback != null) {
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 _repaintCallback!();
@@ -765,6 +977,55 @@ class AdvancedCollectionPainter extends CustomPainter {
       }
     } catch (e, stack) {
       debugPrint('❌ 纹理绘制错误: $e\n$stack');
+    }
+  }
+
+  // 预先加载字符图像
+  void _preloadCharacterImages() {
+    // 创建缓存键集合，避免重复加载
+    final Set<String> charsToLoad = {};
+
+    // 先扫描所有需要加载的字符图像
+    for (int i = 0; i < positions.length; i++) {
+      final position = positions[i];
+
+      // 跳过换行符
+      if (position.char == '\n') continue;
+
+      // 查找字符图像
+      final charImage = _findCharacterImage(position.char, i);
+
+      // 如果找到了图片信息，则准备加载图片
+      if (charImage != null) {
+        final characterId = charImage['characterId'].toString();
+        final type = charImage['type'] as String;
+        final format = charImage['format'] as String;
+
+        // 创建缓存键
+        final cacheKey = '$characterId-$type-$format';
+
+        // 添加到待加载集合中
+        charsToLoad.add(cacheKey);
+      }
+    }
+
+    // 开始加载所有需要的字符图片
+    if (ref != null) {
+      for (final cacheKey in charsToLoad) {
+        final parts = cacheKey.split('-');
+        if (parts.length >= 3) {
+          final characterId = parts[0];
+          final type = parts[1];
+          final format = parts.sublist(2).join('-');
+
+          // 如果缓存中没有图像且不在加载中，则启动异步加载
+          if (!GlobalImageCache.contains(cacheKey) &&
+              !_loadingImages.contains(cacheKey)) {
+            _loadingImages.add(cacheKey);
+            _loadAndCacheImage(characterId, type, format);
+          }
+        }
+      }
     }
   }
 }

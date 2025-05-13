@@ -116,12 +116,14 @@ class LayoutCalculator {
           isNewLineList.length == processedChars.length) {
         int currentRow = 0;
         int charCountInCurrentRow = 0; // 当前行已有字符数
+        int charIndex = 0; // 实际字符的索引（不包括换行符）
 
         for (int i = 0; i < processedChars.length; i++) {
           if (processedChars[i] == '\n') {
             // 遇到换行符，增加行号但不添加到处理后的字符列表
             currentRow++;
             charCountInCurrentRow = 0;
+            // 注意：不增加charIndex，因为换行符不会被添加到actualChars中
           } else {
             // 普通字符
             actualChars.add(processedChars[i]);
@@ -136,6 +138,7 @@ class LayoutCalculator {
 
             lineIndices.add(currentRow);
             charCountInCurrentRow++;
+            charIndex++; // 实际字符索引递增
           }
         }
       } else {
