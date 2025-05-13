@@ -855,14 +855,36 @@ class _M3VisualPropertiesPanelState
   }
 
   // 加载纹理图片 - 优化版
+  // 使用内存缓存避免重复加载
+  static final Map<String, List<int>> _textureCache = {};
+  
   Future<List<int>> _loadTextureImage(String path) async {
     debugPrint('加载纹理图片: $path');
+    
+    // 检查内存缓存
+    final cacheKey = path.split('/').last;
+    if (_textureCache.containsKey(cacheKey)) {
+      debugPrint('✅ 从内存缓存加载纹理: $cacheKey, 大小: ${_textureCache[cacheKey]!.length} 字节');
+      return _textureCache[cacheKey]!;
+    }
+    
     try {
       final storage = ref.read(initializedStorageProvider);
 
       // 更详细的日志信息帮助调试
       debugPrint('存储服务: ${storage.runtimeType}');
       debugPrint('应用数据路径: ${storage.getAppDataPath()}');
+      
+      // 直接尝试完整路径 - 这是日志中显示的路径
+      if (path.contains('C:\\Users')) {
+        final exists = await storage.fileExists(path);
+        if (exists) {
+          final imageBytes = await storage.readFile(path);
+          debugPrint('✅ 成功从完整路径加载纹理: $path, 大小: ${imageBytes.length} 字节');
+          _textureCache[cacheKey] = imageBytes; // 缓存结果
+          return imageBytes;
+        }
+      }
 
       // 尝试多种路径格式
       final List<String> pathsToTry = [
@@ -884,7 +906,8 @@ class _M3VisualPropertiesPanelState
 
         if (exists) {
           final imageBytes = await storage.readFile(tryPath);
-          debugPrint('成功从 $tryPath 加载纹理, 大小: ${imageBytes.length} 字节');
+          debugPrint('✅ 成功从 $tryPath 加载纹理, 大小: ${imageBytes.length} 字节');
+          _textureCache[cacheKey] = imageBytes; // 缓存结果
           return imageBytes;
         }
       }
@@ -896,17 +919,21 @@ class _M3VisualPropertiesPanelState
         debugPrint('库目录内容: $libraryDir - $dirContents');
 
         final fileName = path.split('/').last.toLowerCase();
+        final fileId = path.split('/').last.split('.').first.toLowerCase();
 
         // 遍历库目录中的文件，查找文件名相似的
         for (final file in dirContents) {
           final fileBaseName = file.split('/').last.toLowerCase();
           if (fileBaseName.contains(fileName) ||
-              fileName.contains(fileBaseName)) {
+              fileName.contains(fileBaseName) ||
+              fileBaseName.contains(fileId) ||
+              fileId.contains(fileBaseName)) {
             debugPrint('找到可能匹配的文件: $file');
             try {
               final fullPath = '$libraryDir/${file.split('/').last}';
               final imageBytes = await storage.readFile(fullPath);
-              debugPrint('使用匹配文件成功加载纹理, 大小: ${imageBytes.length} 字节');
+              debugPrint('✅ 使用匹配文件成功加载纹理, 大小: ${imageBytes.length} 字节');
+              _textureCache[cacheKey] = imageBytes; // 缓存结果
               return imageBytes;
             } catch (fileError) {
               debugPrint('尝试加载匹配文件失败: $fileError');
@@ -920,7 +947,7 @@ class _M3VisualPropertiesPanelState
       // 如果此时仍未找到文件，抛出异常
       throw Exception('找不到纹理图片文件: 已尝试多种路径但均失败');
     } catch (e, stackTrace) {
-      debugPrint('加载纹理图片失败: $e');
+      debugPrint('❌ 加载纹理图片失败: $e');
       debugPrint('堆栈跟踪: $stackTrace');
       rethrow;
     }
@@ -1000,42 +1027,57 @@ class _M3VisualPropertiesPanelState
         'height': selectedTexture.height,
         'type': selectedTexture.type,
         'format': selectedTexture.format,
+        // 添加时间戳确保纹理数据被视为新数据
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
-      // 初始化默认设置
+      // 先完全移除旧的纹理数据（如果存在）
       final updatedContent = Map<String, dynamic>.from(content);
-      updatedContent['backgroundTexture'] = textureData;
-
-      debugPrint('选择的纹理数据：$textureData');
-
-      // 设置默认值（如果尚未设置）
-      if (!updatedContent.containsKey('textureApplicationRange')) {
-        updatedContent['textureApplicationRange'] = 'character';
-      }
-
-      if (!updatedContent.containsKey('textureFillMode')) {
-        updatedContent['textureFillMode'] = 'repeat';
-      }
-
-      if (!updatedContent.containsKey('textureOpacity')) {
-        updatedContent['textureOpacity'] = 1.0;
-      }
-
-      debugPrint(
-          '_selectTexture: 更新内容属性，backgroundTexture=${updatedContent['backgroundTexture']}');
-      debugPrint('更新后的完整内容：$updatedContent'); // 立即应用更新以确保预览能正确显示
+      updatedContent.remove('backgroundTexture');
+      
+      // 确保UI更新，先通知移除
       widget.onContentPropertyChanged('content', updatedContent);
+      
+      // 短暂延迟后添加新纹理，确保状态更新
+      Future.delayed(const Duration(milliseconds: 50), () {
+        // 添加新的纹理数据
+        updatedContent['backgroundTexture'] = textureData;
+        
+        debugPrint('选择的纹理数据：$textureData');
 
-      // 直接更新每个纹理相关属性，确保UI能够反映变化
-      widget.onContentPropertyChanged(
-          'textureApplicationRange', updatedContent['textureApplicationRange']);
-      widget.onContentPropertyChanged(
-          'textureFillMode', updatedContent['textureFillMode']);
-      widget.onContentPropertyChanged(
-          'textureOpacity', updatedContent['textureOpacity']);
+        // 设置默认值（如果尚未设置）
+        if (!updatedContent.containsKey('textureApplicationRange')) {
+          updatedContent['textureApplicationRange'] = 'character';
+        }
 
-      // 强制刷新UI
-      setState(() {});
+        if (!updatedContent.containsKey('textureFillMode')) {
+          updatedContent['textureFillMode'] = 'repeat';
+        }
+
+        if (!updatedContent.containsKey('textureOpacity')) {
+          updatedContent['textureOpacity'] = 1.0;
+        }
+
+        debugPrint(
+            '_selectTexture: 更新内容属性，backgroundTexture=${updatedContent['backgroundTexture']}');
+        debugPrint('更新后的完整内容：$updatedContent');
+        
+        // 立即应用更新以确保预览能正确显示
+        widget.onContentPropertyChanged('content', updatedContent);
+
+        // 直接更新每个纹理相关属性，确保UI能够反映变化
+        widget.onContentPropertyChanged(
+            'textureApplicationRange', updatedContent['textureApplicationRange']);
+        widget.onContentPropertyChanged(
+            'textureFillMode', updatedContent['textureFillMode']);
+        widget.onContentPropertyChanged(
+            'textureOpacity', updatedContent['textureOpacity']);
+
+        // 强制刷新UI
+        if (mounted) {
+          setState(() {});
+        }
+      });
     } else {
       debugPrint('_selectTexture: 未选择纹理');
     }

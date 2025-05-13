@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/providers/storage_providers.dart';
@@ -30,9 +31,42 @@ class BackgroundTexturePainter extends CustomPainter {
     // 立即尝试加载纹理图片
     if (textureData != null && textureData!['path'] != null) {
       final texturePath = textureData!['path'] as String;
-      debugPrint('构造器中立即开始加载纹理: $texturePath');
+      final timestamp =
+          textureData!['timestamp'] ?? DateTime.now().millisecondsSinceEpoch;
+      debugPrint('构造器中开始加载纹理: $texturePath (时间戳: $timestamp)');
+
+      // 检查缓存中是否已有这个纹理
+      final cacheKey = _getCacheKey(texturePath, fillMode, opacity, timestamp);
+      if (_TextureCache.instance.hasTexture(cacheKey)) {
+        debugPrint('✅ 从缓存中加载纹理: $cacheKey');
+        _textureImage = _TextureCache.instance.getTexture(cacheKey);
+        return;
+      }
+
+      // 加载纹理
+      _textureImage = null;
       loadTextureImage(texturePath);
     }
+  }
+
+  // 生成缓存键，使用简化的路径作为缓存键
+  String _getCacheKey(
+      String path, String fillMode, double opacity, dynamic timestamp) {
+    // 提取文件ID作为缓存的一部分
+    String fileId;
+
+    // 处理Windows路径
+    if (path.contains('\\')) {
+      final parts = path.split('\\');
+      final fileName = parts.last;
+      fileId = fileName.split('.').first;
+    } else {
+      final fileName = path.split('/').last;
+      fileId = fileName.split('.').first;
+    }
+
+    // 简化的缓存键
+    return fileId;
   }
 
   // 设置重绘回调
@@ -41,46 +75,84 @@ class BackgroundTexturePainter extends CustomPainter {
   }
 
   Future<void> loadTextureImage(String path) async {
-    // First check if texture is already in cache
-    if (_TextureCache.instance.hasTexture(path)) {
-      debugPrint('⭐ 从缓存中获取纹理: $path');
-      _textureImage = _TextureCache.instance.getTexture(path);
+    // 生成缓存键
+    final timestamp =
+        textureData?['timestamp'] ?? DateTime.now().millisecondsSinceEpoch;
+    final cacheKey = _getCacheKey(path, fillMode, opacity, timestamp);
 
-      // Trigger repaint if texture was loaded from cache
-      print('🔄 从缓存加载纹理成功，准备触发重绘');
-      _TextureRepaintNotifier.instance.notifyRepaint();
+    // 检查缓存中是否已有这个纹理
+    if (_TextureCache.instance.hasTexture(cacheKey)) {
+      _textureImage = _TextureCache.instance.getTexture(cacheKey);
+      debugPrint('✅ TEXTURE: 从缓存中加载纹理: $cacheKey');
+      _isLoading = false;
 
-      // Don't directly call the callback from here as it can cause
-      // "Build scheduled during frame" errors. The notifyRepaint() above
-      // will trigger the CustomPainter to repaint properly
+      // 通知重绘回调
+      if (_repaintCallback != null) {
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          _repaintCallback!();
+        });
+      }
       return;
     }
 
+    // 如果正在加载，跳过
     if (_isLoading) {
       debugPrint('纹理图片正在加载中，跳过重复加载');
       return;
     }
 
-    // Enhanced texture logging
-    print('🔍 TEXTURE: 开始加载纹理图片: $path');
-    print('🔍 TEXTURE: 纹理数据: $textureData');
-    print('🔍 TEXTURE: 填充模式: $fillMode, 不透明度: $opacity');
-
-    // Check if the path is absolute or relative
-    File textureFile = File(path);
-    print('🔍 TEXTURE: 尝试作为绝对路径: ${textureFile.absolute.path}');
-    print('🔍 TEXTURE: 文件是否存在: ${await textureFile.exists()}');
-
+    // 设置加载状态
     _isLoading = true;
+
+    // Enhanced texture logging
+    debugPrint('🔍 TEXTURE: 开始加载纹理图片: $path');
+    debugPrint('🔍 TEXTURE: 纹理数据: $textureData');
+    debugPrint('🔍 TEXTURE: 填充模式: $fillMode, 不透明度: $opacity');
+    debugPrint('🔍 TEXTURE: 缓存键: $cacheKey');
+
+    // 检查是否为绝对路径
+    if (path.contains('C:\\Users')) {
+      File textureFile = File(path);
+      final fileExists = await textureFile.exists();
+      debugPrint('🔍 TEXTURE: 尝试直接访问绝对路径: $path, 存在: $fileExists');
+
+      if (fileExists) {
+        try {
+          final bytes = await textureFile.readAsBytes();
+          final codec = await ui.instantiateImageCodec(bytes);
+          final frame = await codec.getNextFrame();
+          _textureImage = frame.image;
+
+          // 缓存结果 - 使用缓存键而不是路径
+          _TextureCache.instance.putTexture(cacheKey, _textureImage!);
+          debugPrint(
+              '✅ TEXTURE: 直接从文件系统加载纹理成功: ${_textureImage?.width}x${_textureImage?.height}');
+
+          _isLoading = false;
+
+          // 使用 SchedulerBinding 在下一帧触发重绘
+          if (_repaintCallback != null) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              _repaintCallback!();
+            });
+          } else {
+            _TextureRepaintNotifier.instance.notifyRepaint();
+          }
+          return;
+        } catch (e) {
+          debugPrint('❌ TEXTURE: 直接读取文件失败: $e');
+        }
+      }
+    }
 
     try {
       if (ref != null) {
         final storageService = ref!.read(initializedStorageProvider);
-        print('🔍 TEXTURE: 存储服务就绪');
+        debugPrint('🔍 TEXTURE: 存储服务就绪');
 
         // 检查路径是否存在
         final fileExists = await storageService.fileExists(path);
-        print('🔍 TEXTURE: 存储服务文件检查结果: $fileExists');
+        debugPrint('🔍 TEXTURE: 存储服务文件检查结果: $fileExists');
 
         if (!fileExists) {
           // 尝试不同的路径格式
@@ -99,16 +171,19 @@ class BackgroundTexturePainter extends CustomPainter {
             final appDataPath = storageService.getAppDataPath();
             alternativePaths.add('$appDataPath/$path');
             alternativePaths.add('$appDataPath$path');
+            alternativePaths
+                .add('$appDataPath/library/${path.split('/').last}');
           } catch (e) {
-            print('❌ TEXTURE: 获取应用数据路径失败: $e');
+            debugPrint('❌ TEXTURE: 获取应用数据路径失败: $e');
           }
 
-          print('🔍 TEXTURE: 尝试备选路径: $alternativePaths');
+          debugPrint('🔍 TEXTURE: 尝试备选路径: $alternativePaths');
 
           String? workingPath;
+
           for (final altPath in alternativePaths) {
             final exists = await storageService.fileExists(altPath);
-            print('🔍 TEXTURE: 检查路径 $altPath: $exists');
+            debugPrint('🔍 TEXTURE: 检查路径 $altPath: $exists');
             if (exists) {
               workingPath = altPath;
               break;
@@ -117,60 +192,61 @@ class BackgroundTexturePainter extends CustomPainter {
 
           if (workingPath != null) {
             path = workingPath;
-            print('✅ TEXTURE: 使用可用路径: $path');
+            debugPrint('✅ TEXTURE: 使用可用路径: $path');
           } else {
-            print('⚠️ TEXTURE: 警告: 所有尝试的路径都不存在!');
+            debugPrint('⚠️ TEXTURE: 警告: 所有尝试的路径都不存在!');
           }
         }
 
         try {
-          print('🔍 TEXTURE: 尝试读取文件: $path');
+          debugPrint('🔍 TEXTURE: 尝试读取文件: $path');
           final imageBytes = await storageService.readFile(path);
-          print('📊 TEXTURE: 读取的图片数据大小: ${imageBytes.length} 字节');
+          debugPrint('🔎 TEXTURE: 读取的图片数据大小: ${imageBytes.length} 字节');
 
           if (imageBytes.isNotEmpty) {
-            print('🔍 TEXTURE: 解码图像数据');
+            debugPrint('🔍 TEXTURE: 解码图像数据');
             final codec =
                 await ui.instantiateImageCodec(Uint8List.fromList(imageBytes));
             final frame = await codec.getNextFrame();
             _textureImage = frame.image;
-            print(
+            debugPrint(
                 '✅ TEXTURE: 纹理图片加载成功: ${_textureImage?.width}x${_textureImage?.height}');
 
-            // 将加载的纹理存入全局缓存
-            _TextureCache.instance.putTexture(path, _textureImage!);
+            // 将加载的纹理存入全局缓存 - 使用缓存键而不是路径
+            _TextureCache.instance.putTexture(cacheKey, _textureImage!);
 
             // 打印缓存统计
             _TextureCache.instance.printStats();
 
             // 图像加载成功后触发重绘
-            print('🔄 TEXTURE: 图像加载成功，准备触发重绘');
+            debugPrint('🔄 TEXTURE: 图像加载成功，准备触发重绘');
 
-            // 通过重绘通知器强制重绘
-            print('🔄 TEXTURE: 通过通知器触发重绘');
-            _TextureRepaintNotifier.instance.notifyRepaint();
-
-            // 调用重绘回调或使用markNeedsPaint如果在CustomPainter的父Widget中
+            // 使用 SchedulerBinding 在下一帧触发重绘
             if (_repaintCallback != null) {
-              print('🔄 TEXTURE: 执行重绘回调');
-              _repaintCallback!();
+              debugPrint('🔄 TEXTURE: 调度重绘回调到下一帧');
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                _repaintCallback!();
+              });
+            } else {
+              debugPrint('🔄 TEXTURE: 通过通知器触发重绘');
+              _TextureRepaintNotifier.instance.notifyRepaint();
             }
           } else {
-            print('⚠️ TEXTURE: 读取的图片数据为空');
+            debugPrint('⚠️ TEXTURE: 读取的图片数据为空');
           }
         } catch (e) {
-          print('❌ TEXTURE: 读取图片文件失败: $e');
-          print('❌ TEXTURE: 错误堆栈: ${StackTrace.current}');
+          debugPrint('❌ TEXTURE: 读取图片文件失败: $e');
+          debugPrint('❌ TEXTURE: 错误堆栈: ${StackTrace.current}');
         }
       } else {
-        print('⚠️ TEXTURE: 引用为空，无法获取存储服务');
+        debugPrint('⚠️ TEXTURE: 引用为空，无法获取存储服务');
       }
     } catch (e) {
-      print('❌ TEXTURE: 加载纹理图片失败: $e');
-      print('❌ TEXTURE: 错误堆栈: ${StackTrace.current}');
+      debugPrint('❌ TEXTURE: 加载纹理图片失败: $e');
+      debugPrint('❌ TEXTURE: 错误堆栈: ${StackTrace.current}');
     } finally {
       _isLoading = false;
-      print('📝 TEXTURE: 纹理图片加载状态重置');
+      debugPrint('📝 TEXTURE: 纹理图片加载状态重置');
     }
   }
 
@@ -187,12 +263,16 @@ class BackgroundTexturePainter extends CustomPainter {
 
     if (_textureImage == null && textureData!['path'] != null) {
       final texturePath = textureData!['path'] as String;
-      debugPrint('🔍 TEXTURE: 纹理图片未加载，检查缓存: $texturePath');
+      final timestamp =
+          textureData!['timestamp'] ?? DateTime.now().millisecondsSinceEpoch;
+      final cacheKey = _getCacheKey(texturePath, fillMode, opacity, timestamp);
 
-      // Check cache first
-      if (_TextureCache.instance.hasTexture(texturePath)) {
-        debugPrint('⭐ TEXTURE: 从缓存加载纹理图片: $texturePath');
-        _textureImage = _TextureCache.instance.getTexture(texturePath);
+      debugPrint('🔍 TEXTURE: 纹理图片未加载，检查缓存: $cacheKey');
+
+      // Check cache first using the proper cache key
+      if (_TextureCache.instance.hasTexture(cacheKey)) {
+        debugPrint('⭐ TEXTURE: 从缓存加载纹理图片: $cacheKey');
+        _textureImage = _TextureCache.instance.getTexture(cacheKey);
       } else {
         debugPrint('⏳ TEXTURE: 纹理不在缓存中，开始加载: $texturePath');
         loadTextureImage(texturePath);
@@ -321,18 +401,31 @@ class BackgroundTexturePainter extends CustomPainter {
       }
     }
 
-    // 添加"加载中"文本提示
+    // 添加“加载中”文本提示
     final textPainter = TextPainter(
       text: TextSpan(
         text: '纹理加载中...',
         style: TextStyle(
           fontSize: 10,
           color: Colors.grey.withOpacity(0.7),
+          fontWeight: FontWeight.bold,
         ),
       ),
       textDirection: TextDirection.ltr,
     );
     textPainter.layout();
+
+    // 绘制文本背景
+    final textBgRect = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: textPainter.width + 10,
+      height: textPainter.height + 6,
+    );
+    canvas.drawRect(
+      textBgRect,
+      Paint()..color = Colors.white.withOpacity(0.7),
+    );
+
     textPainter.paint(
       canvas,
       Offset(
@@ -340,6 +433,18 @@ class BackgroundTexturePainter extends CustomPainter {
         (size.height - textPainter.height) / 2,
       ),
     );
+
+    // 恢复画布状态
+    canvas.restore();
+
+    // 尝试再次加载纹理
+    if (textureData != null && textureData!['path'] != null) {
+      final texturePath = textureData!['path'] as String;
+      // 使用延迟加载，避免死循环
+      Future.delayed(Duration(milliseconds: 100), () {
+        loadTextureImage(texturePath);
+      });
+    }
   }
 
   void _drawRepeatedTexture(
@@ -451,8 +556,19 @@ class CharacterTexturePainter extends CustomPainter {
     // 立即尝试加载纹理图片
     if (textureData != null && textureData!['path'] != null) {
       final texturePath = textureData!['path'] as String;
-      debugPrint('字符纹理构造器中立即开始加载纹理: $texturePath');
+      final timestamp =
+          textureData!['timestamp'] ?? DateTime.now().millisecondsSinceEpoch;
+      debugPrint('构造器中立即开始加载字符纹理: $texturePath (时间戳: $timestamp)');
+
+      // 强制清除缓存中的纹理，确保重新加载
+      _TextureCache.instance.clearCache();
+
+      // 强制重新加载纹理
+      _textureImage = null;
       loadTextureImage(texturePath);
+
+      // 触发重绘通知
+      _TextureRepaintNotifier.instance.invalidateAndRepaint();
     }
   }
 
@@ -462,20 +578,9 @@ class CharacterTexturePainter extends CustomPainter {
   }
 
   Future<void> loadTextureImage(String path) async {
-    // First check if texture is already in cache
-    if (_TextureCache.instance.hasTexture(path)) {
-      debugPrint('⭐ 从缓存中获取字符纹理: $path');
-      _textureImage = _TextureCache.instance.getTexture(path);
-
-      // Trigger repaint if texture was loaded from cache
-      debugPrint('🔄 从缓存加载字符纹理成功，准备触发重绘');
-      _TextureRepaintNotifier.instance.notifyRepaint();
-
-      // Do not call the callback directly when loaded from cache
-      // This prevents the "Build scheduled during frame" error
-      // The notifyRepaint above will properly mark for repaint without causing build errors
-      return;
-    }
+    // Force reload every time a texture is requested
+    // This ensures texture changes are reflected immediately
+    _textureImage = null;
 
     if (_isLoading) {
       debugPrint('字符纹理正在加载中，跳过重复加载');
@@ -788,12 +893,27 @@ class CharacterTexturePainter extends CustomPainter {
   }
 }
 
+/// Utility class for texture management with public methods
+class TextureManager {
+  static void invalidateTextureCache() {
+    debugPrint('🧹 强制清除纹理缓存并触发重绘');
+    _TextureCache.instance.clearCache();
+    _TextureRepaintNotifier.instance.notifyRepaint();
+  }
+}
+
 /// 全局纹理缓存，避免重复加载相同的纹理
 class _TextureCache {
   static final _TextureCache instance = _TextureCache._();
   final Map<String, ui.Image> _cache = {};
 
   _TextureCache._();
+
+  // Clear the entire texture cache
+  void clearCache() {
+    debugPrint('🧹 纹理缓存: 清空所有纹理缓存 (${_cache.length} 个)');
+    _cache.clear();
+  }
 
   ui.Image? getTexture(String path) {
     return _cache[path];
@@ -815,6 +935,14 @@ class _TextureCache {
     debugPrint('⭐ 纹理缓存: 存储纹理 $path => ${image.width}x${image.height}');
     _cache[path] = image;
   }
+
+  // Remove a specific texture from cache
+  void removeTexture(String path) {
+    if (_cache.containsKey(path)) {
+      debugPrint('🗑️ 纹理缓存: 移除纹理 $path');
+      _cache.remove(path);
+    }
+  }
 }
 
 /// 一个简单的可监听类，用于强制画布重绘
@@ -827,6 +955,13 @@ class _TextureRepaintNotifier extends ChangeNotifier {
   DateTime? _lastNotifyTime;
 
   _TextureRepaintNotifier._();
+
+  // Force invalidate all caches and notify listeners to repaint
+  void invalidateAndRepaint() {
+    _TextureCache.instance.clearCache();
+    debugPrint('🔄 纹理重绘通知器: 清空缓存并强制重绘');
+    notifyListeners();
+  }
 
   void notifyRepaint() {
     final now = DateTime.now();
