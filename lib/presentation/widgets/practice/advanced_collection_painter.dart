@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -8,9 +6,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
-import '../../../infrastructure/providers/storage_providers.dart';
+import '../../../infrastructure/providers/cache_providers.dart' as cache;
 import 'character_position.dart';
-import 'global_image_cache.dart';
 import 'texture_config.dart';
 import 'texture_manager.dart';
 
@@ -96,9 +93,9 @@ class AdvancedCollectionPainter extends CustomPainter {
             final type = parts[1];
             final format = parts.sublist(2).join('-');
 
-            // 如果缓存中没有图像且不在加载中，则启动异步加载
-            if (!GlobalImageCache.contains(cacheKey) &&
-                !_loadingImages.contains(cacheKey)) {
+            // 如果不在加载中，则启动异步加载
+            if (!_loadingImages.contains(cacheKey)) {
+              _loadingImages.add(cacheKey);
               _loadAndCacheImage(characterId, type, format);
             }
           }
@@ -341,9 +338,9 @@ class AdvancedCollectionPainter extends CustomPainter {
     return result;
   }
 
-  /// 绘制带图片的字符
+  /// 绘制带图片的字符 - 使用ImageCacheService
   void _drawCharacterWithImage(Canvas canvas, Rect rect,
-      CharacterPosition position, Map<String, dynamic> charImage) {
+      CharacterPosition position, Map<String, dynamic> charImage) async {
     // 输出详细调试信息
     debugPrint('🖼️ 绘制带图片的字符:');
     debugPrint('  字符: "${position.char}"');
@@ -376,6 +373,7 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     // 创建缓存键
     final cacheKey = '$characterId-$type-$format';
+    final simpleKey = characterId; // 简化的缓存键
 
     // 输出调试信息
     debugPrint('  图片信息:');
@@ -385,12 +383,37 @@ class AdvancedCollectionPainter extends CustomPainter {
     debugPrint('    缓存键: $cacheKey');
     debugPrint('    反转显示: ${invertDisplay ? "是" : "否"}');
 
-    // 尝试从缓存中获取图像
-    final image = GlobalImageCache.get(cacheKey);
+    // 需要Riverpod引用才能获取服务
+    if (ref == null) {
+      debugPrint('  ⚠️ 缺少Riverpod引用，无法获取图像');
+      _drawFallbackText(canvas, position, rect);
+      return;
+    }
+
+    // 获取ImageCacheService
+    final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+    
+    // 尝试从缓存中获取UI图像
+    ui.Image? image;
+    try {
+      image = await imageCacheService.getUiImage(cacheKey);
+      
+      // 如果找不到，尝试使用简化键
+      if (image == null) {
+        image = await imageCacheService.getUiImage(simpleKey);
+        if (image != null) {
+          debugPrint('  ✅ 使用简化缓存键找到图像: $simpleKey');
+        }
+      } else {
+        debugPrint('  ✅ 已从缓存获取图像: $cacheKey');
+      }
+    } catch (e) {
+      debugPrint('  ⚠️ 获取缓存图像时出错: $e');
+    }
 
     if (image != null) {
       // 有图像，绘制图像
-      debugPrint('  ✅ 已从缓存获取图像，开始绘制');
+      debugPrint('  ✅ 已从ImageCacheService获取图像，开始绘制');
 
       final paint = Paint()
         ..isAntiAlias = true
@@ -423,7 +446,7 @@ class AdvancedCollectionPainter extends CustomPainter {
       _drawFallbackText(canvas, position, rect);
 
       // 添加到待加载集合
-      if (ref != null && !_loadingImages.contains(cacheKey)) {
+      if (!_loadingImages.contains(cacheKey)) {
         _loadingImages.add(cacheKey);
         debugPrint('  🔄 添加到图像加载队列: $cacheKey');
 
@@ -777,27 +800,18 @@ class AdvancedCollectionPainter extends CustomPainter {
     return null;
   }
 
-  /// 加载并缓存图像 - 增强版
+  /// 加载并缓存图像 - 使用ImageCacheService实现
   Future<void> _loadAndCacheImage(
       String characterId, String type, String format) async {
     // 构建缓存键
     final cacheKey = '$characterId-$type-$format';
-    final preferredType = type;
-    final preferredFormat = format;
-    final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
+    final simpleKey = characterId; // 简化的缓存键
     
     // 标记正在加载
     _loadingImages.add(cacheKey);
     debugPrint('✨ 开始加载字符图像: $cacheKey');
     
     try {
-      // 跳过已加载的图像
-      if (GlobalImageCache.contains(cacheKey)) {
-        debugPrint('✅ 图像已在缓存中: $cacheKey');
-        _loadingImages.remove(cacheKey);
-        return;
-      }
-
       // 需要Riverpod引用才能加载
       if (ref == null) {
         debugPrint('❌ 缺少Riverpod引用，无法加载图像');
@@ -805,45 +819,46 @@ class AdvancedCollectionPainter extends CustomPainter {
         return;
       }
 
-      // 使用字符图像服务加载
+      // 获取服务
       final characterImageService = ref!.read(characterImageServiceProvider);
-      final storage = ref!.read(initializedStorageProvider);
+      final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
 
-      debugPrint('ℹ️ 使用字符ID: $characterId, 类型: $type, 格式: $format');
-
-      // 获取图片路径
-      String getImagePath(String id, String imgType, String imgFormat) {
-        // 根据类型和格式构建文件名
-        String fileName;
-        switch (imgType) {
-          case 'square-binary':
-            fileName = '$id-square-binary.png';
-            break;
-          case 'square-transparent':
-            fileName = '$id-square-transparent.png';
-            break;
-          case 'square-outline':
-            fileName = '$id-square-outline.svg';
-            break;
-          case 'thumbnail':
-            fileName = '$id-thumbnail.jpg';
-            break;
-          default:
-            fileName = '$id-$imgType.$imgFormat';
+      // 检查是否已经在缓存中
+      final cachedImageData = await imageCacheService.getBinaryImage(cacheKey);
+      if (cachedImageData != null) {
+        debugPrint('✅ 图像已在ImageCacheService缓存中: $cacheKey');
+        
+        // 解码图像
+        final image = await imageCacheService.decodeImageFromBytes(cachedImageData);
+        if (image != null) {
+          // 缓存UI图像
+          await imageCacheService.cacheUiImage(cacheKey, image);
+          await imageCacheService.cacheUiImage(simpleKey, image);
+          
+          // 标记需要重绘
+          _needsRepaint = true;
+          if (_repaintCallback != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _repaintCallback!();
+            });
+          }
         }
-
-        // 构建完整路径
-        return '${storage.getAppDataPath()}/characters/$id/$fileName';
+        
+        _loadingImages.remove(cacheKey);
+        return;
       }
 
-      // 优先尝试使用方形二值化透明背景图
-      String preferredType = type;
-      String preferredFormat = format;
+      debugPrint('ℹ️ 使用字符ID: $characterId, 类型: $type, 格式: $format');
 
       // 检查可用格式
       debugPrint('ℹ️ 检查字符 $characterId 的可用格式');
       final availableFormat =
           await characterImageService.getAvailableFormat(characterId);
+      
+      // 优先使用可用格式
+      String preferredType = type;
+      String preferredFormat = format;
+      
       if (availableFormat != null) {
         preferredType = availableFormat['type']!;
         preferredFormat = availableFormat['format']!;
@@ -852,115 +867,64 @@ class AdvancedCollectionPainter extends CustomPainter {
         debugPrint('⚠️ 未找到可用格式，使用默认值: 类型=$preferredType, 格式=$preferredFormat');
       }
 
-      // 获取图片路径
-      final imagePath =
-          getImagePath(characterId, preferredType, preferredFormat);
-      debugPrint('ℹ️ 图片路径: $imagePath');
-
-      // 检查文件是否存在
-      final file = File(imagePath);
-      Uint8List? imageData;
-
-      if (await file.exists()) {
-        // 如果文件存在，直接从文件读取
-        try {
-          debugPrint('ℹ️ 从文件读取图像数据: $imagePath');
-          imageData = await file.readAsBytes();
-          debugPrint('✅ 成功从文件读取图像数据: ${imageData.length} 字节');
-        } catch (e) {
-          debugPrint('❌ 读取文件失败: $e');
-        }
-      } else {
-        debugPrint('⚠️ 文件不存在: $imagePath');
-      }
-
-      // 如果从文件读取失败，尝试从服务获取
-      if (imageData == null) {
-        debugPrint('ℹ️ 从服务获取图像数据: $characterId');
-        imageData = await characterImageService.getCharacterImage(
-            characterId, preferredType, preferredFormat);
-
-        // 如果获取成功，保存到文件
-        if (imageData != null) {
-          debugPrint('✅ 成功从服务获取图像数据: ${imageData.length} 字节');
-          try {
-            // 确保目录存在
-            final directory = Directory(file.parent.path);
-            if (!await directory.exists()) {
-              await directory.create(recursive: true);
-            }
-
-            // 保存文件
-            await file.writeAsBytes(imageData);
-            debugPrint('✅ 成功保存图像到文件: $imagePath');
-          } catch (e) {
-            debugPrint('❌ 保存文件失败: $e');
-          }
-        } else {
-          debugPrint('❌ 从服务获取图像数据失败');
-        }
-      }
-
-      // 更新缓存键以使用实际加载的类型和格式
+      // 更新实际缓存键
       final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
-      debugPrint('ℹ️ 实际缓存键: $actualCacheKey');
+      
+      // 尝试从CharacterImageService获取图像
+      final imageData = await characterImageService.getCharacterImage(
+          characterId, preferredType, preferredFormat);
 
       if (imageData != null) {
+        debugPrint('✅ 成功获取图像数据: ${imageData.length} 字节');
+        
+        // 缓存到ImageCacheService
+        await imageCacheService.cacheBinaryImage(cacheKey, imageData);
+        await imageCacheService.cacheBinaryImage(actualCacheKey, imageData);
+        await imageCacheService.cacheBinaryImage(simpleKey, imageData); // 简单键
+
         // 解码图像
         debugPrint('ℹ️ 开始解码图像数据');
-        final completer = Completer<ui.Image>();
-        ui.decodeImageFromList(imageData, (ui.Image image) {
-          completer.complete(image);
-        });
+        final image = await imageCacheService.decodeImageFromBytes(imageData);
 
-        try {
-          final image = await completer.future;
+        if (image != null) {
           debugPrint('✅ 成功解码图像: ${image.width}x${image.height}');
 
-          // 确保缓存到所有可能的键，以便能找到图像
-          GlobalImageCache.put(actualCacheKey, image);
-          GlobalImageCache.put(cacheKey, image);
+          // 缓存UI图像
+          await imageCacheService.cacheUiImage(actualCacheKey, image);
+          await imageCacheService.cacheUiImage(cacheKey, image);
+          await imageCacheService.cacheUiImage(simpleKey, image); // 简单键
           
-          // 额外缓存一个不带格式的键，以提高兼容性
-          final simpleKey = characterId;
-          GlobalImageCache.put(simpleKey, image);
-          
-          // 检查缓存是否成功
-          final cachedImage = GlobalImageCache.get(cacheKey);
-          if (cachedImage != null) {
-            debugPrint('✅ 缓存验证成功: $cacheKey');
+          // 验证缓存
+          final cachedImageData = await imageCacheService.getBinaryImage(cacheKey);
+          if (cachedImageData != null) {
+            debugPrint('✅ ImageCacheService缓存验证成功: $cacheKey');
           } else {
-            debugPrint('⚠️ 缓存验证失败: $cacheKey');
+            debugPrint('⚠️ ImageCacheService缓存验证失败: $cacheKey');
           }
-
-          debugPrint('✅ 成功将图像添加到缓存: $actualCacheKey');
 
           // 标记需要重绘
           _needsRepaint = true;
-
-          // 强制重绘
           if (_repaintCallback != null) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _repaintCallback!();
             });
           }
-        } catch (e) {
-          debugPrint('❌ 解码图像失败: $e');
+        } else {
+          debugPrint('❌ 解码图像失败');
         }
       } else {
-        debugPrint('❌ 图像数据为空，无法解码');
+        debugPrint('❌ 获取图像数据失败');
       }
     } catch (e) {
       debugPrint('❌ 加载图像过程中发生错误: $e');
     } finally {
       // 移除加载标记
       _loadingImages.remove(cacheKey);
-      _loadingImages.remove(actualCacheKey);
     }
   }
 
-  /// 绘制纹理背景
-  void _paintTexture(Canvas canvas, Rect rect, {required String mode}) {
+  /// 绘制纹理背景 - 使用ImageCacheService
+  void _paintTexture(Canvas canvas, Rect rect, {required String mode}) async {
     if (!textureConfig.enabled || textureConfig.data == null) return;
 
     final data = textureConfig.data!;
@@ -991,12 +955,27 @@ class AdvancedCollectionPainter extends CustomPainter {
     debugPrint('🎨 开始绘制纹理 - 模式: $mode, 纹理路径: $texturePath');
 
     try {
-      // 获取图像
-      final image = GlobalImageCache.get(texturePath);
+      // 需要Riverpod引用才能获取服务
+      if (ref == null) {
+        debugPrint('⚠️ 缺少Riverpod引用，无法获取纹理图像');
+        _drawFallbackTexture(canvas, rect);
+        return;
+      }
+      
+      // 获取ImageCacheService
+      final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+      
+      // 尝试从缓存中获取UI图像
+      ui.Image? image;
+      try {
+        image = await imageCacheService.getUiImage(texturePath);
+      } catch (e) {
+        debugPrint('⚠️ 获取纹理缓存图像时出错: $e');
+      }
 
       if (image != null) {
         // 有纹理图片，绘制纹理
-        debugPrint('✅ 从缓存获取纹理图像成功');
+        debugPrint('✅ 从ImageCacheService获取纹理图像成功');
         _drawTextureWithImage(canvas, rect, image);
       } else {
         // 纹理加载中，显示占位符
@@ -1026,8 +1005,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     }
   }
 
-  // 预先加载字符图像
-  void _preloadCharacterImages() {
+  // 预先加载字符图像 - 使用ImageCacheService
+  void _preloadCharacterImages() async {
     // 创建缓存键集合，避免重复加载
     final Set<String> charsToLoad = {};
 
@@ -1057,6 +1036,9 @@ class AdvancedCollectionPainter extends CustomPainter {
 
     // 开始加载所有需要的字符图片
     if (ref != null) {
+      // 获取ImageCacheService
+      final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+      
       for (final cacheKey in charsToLoad) {
         final parts = cacheKey.split('-');
         if (parts.length >= 3) {
@@ -1064,11 +1046,16 @@ class AdvancedCollectionPainter extends CustomPainter {
           final type = parts[1];
           final format = parts.sublist(2).join('-');
 
-          // 如果缓存中没有图像且不在加载中，则启动异步加载
-          if (!GlobalImageCache.contains(cacheKey) &&
-              !_loadingImages.contains(cacheKey)) {
-            _loadingImages.add(cacheKey);
-            _loadAndCacheImage(characterId, type, format);
+          // 检查是否已经在缓存中
+          try {
+            final cachedImage = await imageCacheService.getBinaryImage(cacheKey);
+            if (cachedImage == null && !_loadingImages.contains(cacheKey)) {
+              // 如果缓存中没有图像且不在加载中，则启动异步加载
+              _loadingImages.add(cacheKey);
+              _loadAndCacheImage(characterId, type, format);
+            }
+          } catch (e) {
+            debugPrint('⚠️ 检查缓存时出错: $e');
           }
         }
       }
