@@ -5,8 +5,9 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../infrastructure/cache/services/image_cache_service.dart';
+import '../../../infrastructure/providers/cache_providers.dart' as cache_providers;
 import '../../../infrastructure/providers/storage_providers.dart';
-import 'global_image_cache.dart';
 
 /// 增强版纹理管理器 - 提供更强大的纹理加载和缓存功能
 class EnhancedTextureManager {
@@ -14,18 +15,22 @@ class EnhancedTextureManager {
   static final EnhancedTextureManager _instance = EnhancedTextureManager._internal();
   static EnhancedTextureManager get instance => _instance;
   EnhancedTextureManager._internal();
+  
+  // 图像缓存服务
+  late ImageCacheService _imageCacheService;
 
   // 当前正在加载的纹理路径集合
   final Set<String> _loadingTextures = {};
 
   /// 清除纹理缓存
-  void invalidateTextureCache() {
-    GlobalImageCache.clear();
+  Future<void> invalidateTextureCache(WidgetRef ref) async {
+    _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
+    await _imageCacheService.clearAll();
   }
 
   /// 打印缓存统计信息
   void printCacheStats() {
-    debugPrint('📊 纹理缓存统计: ${GlobalImageCache.size} 个纹理图像');
+    debugPrint('📊 纹理缓存统计信息');
   }
   
   /// 从路径中提取文件ID
@@ -40,25 +45,29 @@ class EnhancedTextureManager {
   }
 
   /// 获取纹理图像 - 同步方法，用于检查缓存
-  ui.Image? getTextureSync(String path) {
+  Future<ui.Image?> getTextureSync(String path, WidgetRef ref) async {
+    _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
     final fileId = _extractFileId(path);
-    return GlobalImageCache.get(fileId);
+    return await _imageCacheService.getUiImage(fileId);
   }
 
   /// 加载纹理图像 - 异步方法，支持文件系统和远程加载
-  Future<ui.Image?> loadTexture(String path, WidgetRef? ref, {VoidCallback? onLoaded}) async {
+  Future<ui.Image?> loadTexture(String path, WidgetRef ref, {VoidCallback? onLoaded}) async {
     if (path.isEmpty) {
       debugPrint('❌ 纹理路径为空');
       return null;
     }
 
+    _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
+    
     // 提取文件ID
     final fileId = _extractFileId(path);
     
     // 首先检查缓存
-    if (GlobalImageCache.contains(fileId)) {
+    final cachedImage = await _imageCacheService.getUiImage(fileId);
+    if (cachedImage != null) {
       debugPrint('✅ 从缓存加载纹理: $fileId');
-      return GlobalImageCache.get(fileId);
+      return cachedImage;
     }
 
     // 防止重复加载
@@ -84,7 +93,7 @@ class EnhancedTextureManager {
             final image = await completer.future;
             
             // 缓存图像
-            GlobalImageCache.put(fileId, image);
+            await _imageCacheService.cacheUiImage(fileId, image);
             
             // 触发加载完成回调
             if (onLoaded != null) {
@@ -100,7 +109,7 @@ class EnhancedTextureManager {
       }
 
       // 然后尝试使用存储服务加载
-      if (ref != null) {
+      {
         try {
           final storage = ref.read(initializedStorageProvider);
           final appDataPath = storage.getAppDataPath();
@@ -123,7 +132,7 @@ class EnhancedTextureManager {
             final image = await completer.future;
             
             // 缓存图像
-            GlobalImageCache.put(fileId, image);
+            await _imageCacheService.cacheUiImage(fileId, image);
             
             // 触发加载完成回调
             if (onLoaded != null) {

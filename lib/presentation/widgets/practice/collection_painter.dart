@@ -6,9 +6,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../infrastructure/cache/services/image_cache_service.dart';
+import '../../../infrastructure/providers/cache_providers.dart' as cache_providers;
 import 'character_position.dart';
-import 'global_image_cache.dart';
 import 'texture_config.dart';
 
 /// 用于HTTP响应处理的工具函数
@@ -37,13 +39,16 @@ class CollectionPainter extends CustomPainter {
   final double fontSize;
   final dynamic characterImages;
   final TextureConfig textureConfig;
-  final dynamic ref;
+  final WidgetRef ref;
 
   // 内部状态变量
   final Set<String> _loadingTextures = {};
   bool _needsRepaint = false;
   VoidCallback? _repaintCallback;
   String? _cacheKey;
+  
+  // 图像缓存服务
+  late ImageCacheService _imageCacheService;
 
   /// 构造函数
   CollectionPainter({
@@ -52,19 +57,26 @@ class CollectionPainter extends CustomPainter {
     required this.fontSize,
     required this.characterImages,
     required this.textureConfig,
-    this.ref,
-  });
+    required this.ref,
+  }) {
+    _imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
+  }
 
   /// 主绘制方法
   @override
   void paint(Canvas canvas, Size size) {
+    _paintAsync(canvas, size);
+  }
+  
+  /// 异步绘制方法
+  Future<void> _paintAsync(Canvas canvas, Size size) async {
     try {
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled &&
           textureConfig.data != null &&
           textureConfig.textureApplicationRange == 'background') {
         final rect = Offset.zero & size;
-        _paintTexture(canvas, rect, mode: 'background');
+        await _paintTexture(canvas, rect, mode: 'background');
       }
 
       // 2. 遍历所有字符位置，绘制字符
@@ -87,13 +99,13 @@ class CollectionPainter extends CustomPainter {
         if (textureConfig.enabled &&
             textureConfig.data != null &&
             textureConfig.textureApplicationRange == 'characterBackground') {
-          _paintTexture(canvas, rect, mode: 'characterBackground');
+          await _paintTexture(canvas, rect, mode: 'characterBackground');
         } else {
           _drawFallbackBackground(canvas, rect, position);
         }
 
         // 4. 获取字符图片并绘制
-        final charImage = _findCharacterImage(position.char, position.index);
+        final charImage = await _findCharacterImage(position.char, position.index);
         if (charImage != null) {
           // 如果有图片，绘制图片
           _drawCharacterImage(canvas, rect, position, charImage);
@@ -294,8 +306,8 @@ class CollectionPainter extends CustomPainter {
     }
   }
 
-  /// 查找字符图片
-  ui.Image? _findCharacterImage(String char, int index) {
+  /// 查找字符图片 - 现在返回缓存的Future
+  Future<ui.Image?> _findCharacterImage(String char, int index) async {
     try {
       // 如果characterImages是Map类型
       if (characterImages is Map) {
@@ -308,7 +320,7 @@ class CollectionPainter extends CustomPainter {
           } else if (imageData is String) {
             // 如果是路径，检查缓存
             _cacheKey = imageData;
-            return GlobalImageCache.get(_cacheKey!);
+            return await _imageCacheService.getUiImage(_cacheKey!);
           }
         }
       }
@@ -320,7 +332,7 @@ class CollectionPainter extends CustomPainter {
           return imageData;
         } else if (imageData is String) {
           _cacheKey = imageData;
-          return GlobalImageCache.get(_cacheKey!);
+          return await _imageCacheService.getUiImage(_cacheKey!);
         }
       }
       return null;
@@ -333,8 +345,9 @@ class CollectionPainter extends CustomPainter {
   /// 加载并缓存纹理
   Future<ui.Image?> _loadAndCacheTexture(String path) async {
     // 检查是否已经缓存
-    if (GlobalImageCache.contains(path)) {
-      return GlobalImageCache.get(path);
+    final cachedImage = await _imageCacheService.getUiImage(path);
+    if (cachedImage != null) {
+      return cachedImage;
     }
 
     try {
@@ -343,7 +356,7 @@ class CollectionPainter extends CustomPainter {
         final data = await rootBundle.load(path);
         final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
         final frame = await codec.getNextFrame();
-        GlobalImageCache.put(path, frame.image);
+        await _imageCacheService.cacheUiImage(path, frame.image);
         return frame.image;
       } else if (path.startsWith('http://') || path.startsWith('https://')) {
         // 从网络加载
@@ -353,7 +366,7 @@ class CollectionPainter extends CustomPainter {
         final bytes = await consolidateHttpClientResponseBytes(response);
         final codec = await ui.instantiateImageCodec(bytes);
         final frame = await codec.getNextFrame();
-        GlobalImageCache.put(path, frame.image);
+        await _imageCacheService.cacheUiImage(path, frame.image);
         return frame.image;
       } else if (path.startsWith('file://')) {
         // 从文件加载
@@ -361,7 +374,7 @@ class CollectionPainter extends CustomPainter {
         final bytes = await file.readAsBytes();
         final codec = await ui.instantiateImageCodec(bytes);
         final frame = await codec.getNextFrame();
-        GlobalImageCache.put(path, frame.image);
+        await _imageCacheService.cacheUiImage(path, frame.image);
         return frame.image;
       }
     } catch (e) {
@@ -372,7 +385,7 @@ class CollectionPainter extends CustomPainter {
   }
 
   /// 绘制背景纹理
-  void _paintTexture(Canvas canvas, Rect rect, {required String mode}) {
+  Future<void> _paintTexture(Canvas canvas, Rect rect, {required String mode}) async {
     if (!textureConfig.enabled || textureConfig.data == null) return;
 
     final data = textureConfig.data!;
@@ -384,7 +397,7 @@ class CollectionPainter extends CustomPainter {
 
     try {
       // 获取图像
-      final image = GlobalImageCache.get(texturePath);
+      final image = await _imageCacheService.getUiImage(texturePath);
 
       if (image != null) {
         // 有纹理图片，绘制纹理

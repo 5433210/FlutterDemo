@@ -65,7 +65,9 @@ class CollectionElementRenderer {
     WidgetRef? ref,
   }) {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
-    EnhancedTextureManager.instance.invalidateTextureCache();
+    if (ref != null) {
+      EnhancedTextureManager.instance.invalidateTextureCache(ref);
+    }
 
     // 兼容原有支持 - 无内容时显示提示
     if (characters.isEmpty) {
@@ -253,9 +255,17 @@ class CollectionElementRenderer {
   不透明度：$textureOpacity''');
 
         // 根据情况决定使用基础绘制器还是增强版绘制器
+        if (ref == null) {
+          // 当没有ref时，返回一个错误提示组件
+          return const Center(
+            child: Text('需要WidgetRef才能创建CollectionPainter',
+              style: TextStyle(color: Colors.red)),
+          );
+        }
+        
         CustomPainter painter;
-        if (ref != null) {
-          // 使用增强版绘制器，支持原有的字符图像加载功能
+        // 使用增强版绘制器，支持原有的字符图像加载功能
+        try {
           painter = AdvancedCollectionPainter(
             characters: charList,
             positions: positions,
@@ -274,22 +284,32 @@ class CollectionElementRenderer {
           );
 
           // 设置重绘回调 - 高级版本
-          (painter as AdvancedCollectionPainter).setRepaintCallback(() {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              WidgetsBinding.instance.scheduleForcedFrame();
-            });
-          });
-        } else {
-          // 使用基础绘制器，在无ref情况下使用
+          // 注意：如果 AdvancedCollectionPainter 没有实现 setRepaintCallback方法，这里会抛出异常
+          // 在生产环境中应该添加适当的类型检查
+          try {
+            dynamic dynamicPainter = painter;
+            if (dynamicPainter.setRepaintCallback != null) {
+              dynamicPainter.setRepaintCallback(() {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  WidgetsBinding.instance.scheduleForcedFrame();
+                });
+              });
+            }
+          } catch (e) {
+            debugPrint('设置重绘回调失败: $e');
+          }
+        } catch (e) {
+          // 如果创建AdvancedCollectionPainter失败，尝试使用基础绘制器
+          debugPrint('创建AdvancedCollectionPainter失败，使用CollectionPainter: $e');
           painter = CollectionPainter(
             characters: charList,
             positions: positions,
             fontSize: fontSize,
             characterImages: characterImages,
             textureConfig: textureConfig,
-            ref: null,
+            ref: ref,
           );
-
+          
           // 设置重绘回调 - 基础版本
           (painter as CollectionPainter).setRepaintCallback(() {
             WidgetsBinding.instance.addPostFrameCallback((_) {

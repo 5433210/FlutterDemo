@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'global_image_cache.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../infrastructure/providers/cache_providers.dart' as cache_providers;
 
 /// 工具函数：比较两个Map是否相等
 bool mapsEqual(Map<String, dynamic>? map1, Map<String, dynamic>? map2) {
@@ -99,9 +101,10 @@ class TextureConfig {
 /// 纹理管理器 - 处理纹理缓存和失效
 class TextureManager {
   /// 使纹理缓存失效，强制清除所有纹理缓存
-  static void invalidateTextureCache() {
+  static Future<void> invalidateTextureCache(WidgetRef ref) async {
     // 清除纹理缓存
-    GlobalImageCache.clear();
+    final imageCacheService = ref.read(cache_providers.imageCacheServiceProvider);
+    await imageCacheService.clearAll();
   }
 }
 

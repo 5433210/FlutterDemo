@@ -19,7 +19,7 @@ class AdvancedCollectionPainter extends CustomPainter {
   final double fontSize;
   final dynamic characterImages;
   final TextureConfig textureConfig;
-  final WidgetRef? ref;
+  final WidgetRef ref;
 
   // 布局属性
   final String writingMode;
@@ -43,7 +43,7 @@ class AdvancedCollectionPainter extends CustomPainter {
     required this.fontSize,
     required this.characterImages,
     required this.textureConfig,
-    this.ref,
+    required this.ref,
     this.writingMode = 'horizontal-l',
     this.textAlign = 'left',
     this.verticalAlign = 'top',
@@ -57,51 +57,49 @@ class AdvancedCollectionPainter extends CustomPainter {
         'ℹ️ 高级集字绘制器初始化\n  字体大小: $fontSize\n  内边距: $padding\n  书写模式: $writingMode\n  水平对齐: $textAlign\n  垂直对齐: $verticalAlign\n  字间距: $letterSpacing\n  行间距: $lineSpacing');
 
     // 在初始化时预加载所有字符图片
-    if (ref != null) {
-      // 使用Future.microtask确保在下一个微任务中执行，避免在构造函数中执行异步操作
-      Future.microtask(() {
-        // 创建一个集合来存储需要加载的字符ID和类型
-        final Set<String> charsToLoad = {};
+    // 使用Future.microtask确保在下一个微任务中执行，避免在构造函数中执行异步操作
+    Future.microtask(() {
+      // 创建一个集合来存储需要加载的字符ID和类型
+      final Set<String> charsToLoad = {};
 
-        // 遍历所有字符位置
-        for (int i = 0; i < positions.length; i++) {
-          final position = positions[i];
-          final char = position.char;
+      // 遍历所有字符位置
+      for (int i = 0; i < positions.length; i++) {
+        final position = positions[i];
+        final char = position.char;
 
-          // 查找字符对应的图片信息
-          final charImage = _findCharacterImage(char, i);
+        // 查找字符对应的图片信息
+        final charImage = _findCharacterImage(char, i);
 
-          // 如果找到了图片信息，则准备加载图片
-          if (charImage != null) {
-            final characterId = charImage['characterId'].toString();
-            final type = charImage['type'] as String;
-            final format = charImage['format'] as String;
+        // 如果找到了图片信息，则准备加载图片
+        if (charImage != null) {
+          final characterId = charImage['characterId'].toString();
+          final type = charImage['type'] as String;
+          final format = charImage['format'] as String;
 
-            // 创建缓存键
-            final cacheKey = '$characterId-$type-$format';
+          // 创建缓存键
+          final cacheKey = '$characterId-$type-$format';
 
-            // 添加到待加载集合中
-            charsToLoad.add(cacheKey);
+          // 添加到待加载集合中
+          charsToLoad.add(cacheKey);
+        }
+      }
+
+      // 开始加载所有需要的字符图片
+      for (final cacheKey in charsToLoad) {
+        final parts = cacheKey.split('-');
+        if (parts.length >= 3) {
+          final characterId = parts[0];
+          final type = parts[1];
+          final format = parts.sublist(2).join('-');
+
+          // 如果不在加载中，则启动异步加载
+          if (!_loadingImages.contains(cacheKey)) {
+            _loadingImages.add(cacheKey);
+            _loadAndCacheImage(characterId, type, format);
           }
         }
-
-        // 开始加载所有需要的字符图片
-        for (final cacheKey in charsToLoad) {
-          final parts = cacheKey.split('-');
-          if (parts.length >= 3) {
-            final characterId = parts[0];
-            final type = parts[1];
-            final format = parts.sublist(2).join('-');
-
-            // 如果不在加载中，则启动异步加载
-            if (!_loadingImages.contains(cacheKey)) {
-              _loadingImages.add(cacheKey);
-              _loadAndCacheImage(characterId, type, format);
-            }
-          }
-        }
-      });
-    }
+      }
+    });
   }
 
   @override
@@ -218,6 +216,7 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 设置重绘回调函数
   void setRepaintCallback(VoidCallback callback) {
     _repaintCallback = callback;
+    _needsRepaint = true;
   }
 
   @override
@@ -383,15 +382,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     debugPrint('    缓存键: $cacheKey');
     debugPrint('    反转显示: ${invertDisplay ? "是" : "否"}');
 
-    // 需要Riverpod引用才能获取服务
-    if (ref == null) {
-      debugPrint('  ⚠️ 缺少Riverpod引用，无法获取图像');
-      _drawFallbackText(canvas, position, rect);
-      return;
-    }
-
     // 获取ImageCacheService
-    final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+    final imageCacheService = ref.read(cache.imageCacheServiceProvider);
     
     // 尝试从缓存中获取UI图像
     ui.Image? image;
@@ -812,16 +804,10 @@ class AdvancedCollectionPainter extends CustomPainter {
     debugPrint('✨ 开始加载字符图像: $cacheKey');
     
     try {
-      // 需要Riverpod引用才能加载
-      if (ref == null) {
-        debugPrint('❌ 缺少Riverpod引用，无法加载图像');
-        _loadingImages.remove(cacheKey);
-        return;
-      }
 
       // 获取服务
-      final characterImageService = ref!.read(characterImageServiceProvider);
-      final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+      final characterImageService = ref.read(characterImageServiceProvider);
+      final imageCacheService = ref.read(cache.imageCacheServiceProvider);
 
       // 检查是否已经在缓存中
       final cachedImageData = await imageCacheService.getBinaryImage(cacheKey);
@@ -955,15 +941,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     debugPrint('🎨 开始绘制纹理 - 模式: $mode, 纹理路径: $texturePath');
 
     try {
-      // 需要Riverpod引用才能获取服务
-      if (ref == null) {
-        debugPrint('⚠️ 缺少Riverpod引用，无法获取纹理图像');
-        _drawFallbackTexture(canvas, rect);
-        return;
-      }
-      
       // 获取ImageCacheService
-      final imageCacheService = ref!.read(cache.imageCacheServiceProvider);
+      final imageCacheService = ref.read(cache.imageCacheServiceProvider);
       
       // 尝试从缓存中获取UI图像
       ui.Image? image;
