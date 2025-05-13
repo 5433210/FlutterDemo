@@ -602,33 +602,32 @@ class _M3VisualPropertiesPanelState
     );
   }
 
+  // 递归查找纹理数据
+  Map<String, dynamic>? _findTextureData(Map<String, dynamic> content) {
+    // 首先检查当前层是否有背景纹理
+    if (content.containsKey('backgroundTexture') && 
+        content['backgroundTexture'] != null &&
+        content['backgroundTexture'] is Map<String, dynamic>) {
+      return content['backgroundTexture'] as Map<String, dynamic>;
+    }
+    
+    // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
+    if (content.containsKey('content') && 
+        content['content'] != null && 
+        content['content'] is Map<String, dynamic>) {
+      return _findTextureData(content['content'] as Map<String, dynamic>);
+    }
+    
+    // 如果没有找到任何纹理数据，返回null
+    return null;
+  }
+
   // 增强版的纹理预览
   Widget _buildTexturePreview(Map<String, dynamic> content) {
-    // 检查内容中是否直接包含 backgroundTexture
-    final hasDirectTexture = content.containsKey('backgroundTexture') &&
-        content['backgroundTexture'] != null &&
-        content['backgroundTexture'] is Map<String, dynamic>;
-
-    // 检查嵌套内容中是否包含 backgroundTexture
-    final hasNestedTexture = content.containsKey('content') &&
-        content['content'] is Map<String, dynamic> &&
-        (content['content'] as Map<String, dynamic>)
-            .containsKey('backgroundTexture') &&
-        (content['content'] as Map<String, dynamic>)['backgroundTexture'] !=
-            null;
-
-    debugPrint('纹理预览检查: 直接包含=$hasDirectTexture, 嵌套包含=$hasNestedTexture');
-
-    // 获取纹理数据，优先使用直接的，其次使用嵌套的
-    Map<String, dynamic>? texture;
-    if (hasDirectTexture) {
-      texture = content['backgroundTexture'] as Map<String, dynamic>;
-      debugPrint('使用直接纹理数据: $texture');
-    } else if (hasNestedTexture) {
-      texture = (content['content']
-          as Map<String, dynamic>)['backgroundTexture'] as Map<String, dynamic>;
-      debugPrint('使用嵌套纹理数据: $texture');
-    }
+    // 递归查找纹理数据
+    final texture = _findTextureData(content);
+    
+    debugPrint('纹理预览检查: 找到纹理=${texture != null}');
 
     if (texture == null || texture.isEmpty) {
       debugPrint('未检测到纹理：没有找到有效的 backgroundTexture 数据');
@@ -953,73 +952,36 @@ class _M3VisualPropertiesPanelState
     }
   }
 
-  // 选择纹理 - 优化版
+  // 注意：该方法已被 _deepFlattenContent 方法替代
+
+  // 完全重写的选择纹理方法 - 防止嵌套问题
   Future<void> _selectTexture(
     BuildContext context,
     Map<String, dynamic> content,
     Function(String, dynamic) onContentPropertyChanged,
   ) async {
     final l10n = AppLocalizations.of(context);
-    debugPrint('_selectTexture: 打开纹理选择对话框');
+    debugPrint('✨ 打开纹理选择对话框');
 
+    // 打开选择对话框
     final selectedTexture = await M3LibraryPickerDialog.show(
       context,
       title: l10n.textureSelectFromLibrary,
     );
 
-    if (selectedTexture != null) {
-      debugPrint(
-          '_selectTexture: 已选择纹理，ID=${selectedTexture.id}, 路径=${selectedTexture.path}');
+    // 如果用户取消了选择，直接返回
+    if (selectedTexture == null) {
+      debugPrint('❌ 用户取消了纹理选择');
+      return;
+    }
+    
+    debugPrint('✅ 用户选择了纹理: ID=${selectedTexture.id}, 路径=${selectedTexture.path}');
 
-      // 使用原始路径创建纹理数据
-      String texturePath = selectedTexture.path;
-
-      // 验证选择的纹理路径是否存在
-      try {
-        final storage = ref.read(initializedStorageProvider);
-        final fileExists = await storage.fileExists(texturePath);
-        debugPrint('_selectTexture: 验证纹理文件存在: $fileExists');
-
-        if (!fileExists) {
-          // 尝试不同的路径格式
-          final String libraryPath =
-              '${storage.getAppDataPath()}/library/${texturePath.split('/').last}';
-          final libraryPathExists = await storage.fileExists(libraryPath);
-          debugPrint(
-              '_selectTexture: 尝试库路径: $libraryPath, 存在: $libraryPathExists');
-
-          if (libraryPathExists) {
-            texturePath = libraryPath;
-            debugPrint('_selectTexture: 使用库路径: $texturePath');
-          } else {
-            // 尝试其他路径
-            final absolutePath =
-                texturePath.startsWith('/') ? texturePath : '/$texturePath';
-            final absolutePathExists = await storage.fileExists(absolutePath);
-            debugPrint(
-                '_selectTexture: 尝试绝对路径: $absolutePath, 存在: $absolutePathExists');
-
-            if (absolutePathExists) {
-              texturePath = absolutePath;
-              debugPrint('_selectTexture: 使用绝对路径: $texturePath');
-            } else if (!texturePath.startsWith('/')) {
-              final appDataPath = '${storage.getAppDataPath()}/$texturePath';
-              final appDataPathExists = await storage.fileExists(appDataPath);
-              debugPrint(
-                  '_selectTexture: 尝试应用数据路径: $appDataPath, 存在: $appDataPathExists');
-
-              if (appDataPathExists) {
-                texturePath = appDataPath;
-                debugPrint('_selectTexture: 使用应用数据路径: $texturePath');
-              }
-            }
-          }
-        }
-      } catch (e) {
-        debugPrint('_selectTexture: 验证纹理文件时出错: $e');
-      }
-
-      // 创建纹理数据
+    try {
+      // 验证和处理纹理路径
+      String texturePath = await _validateAndGetTexturePath(selectedTexture.path);
+      
+      // 创建纹理数据对象
       final textureData = {
         'id': selectedTexture.id,
         'path': texturePath,
@@ -1027,59 +989,151 @@ class _M3VisualPropertiesPanelState
         'height': selectedTexture.height,
         'type': selectedTexture.type,
         'format': selectedTexture.format,
-        // 添加时间戳确保纹理数据被视为新数据
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
-
-      // 先完全移除旧的纹理数据（如果存在）
-      final updatedContent = Map<String, dynamic>.from(content);
-      updatedContent.remove('backgroundTexture');
       
-      // 确保UI更新，先通知移除
-      widget.onContentPropertyChanged('content', updatedContent);
+      // 获取元素的完整内容
+      final elementContent = widget.element['content'] as Map<String, dynamic>?;
+      if (elementContent == null) {
+        debugPrint('❌ 元素内容为空，无法应用纹理');
+        return;
+      }
       
-      // 短暂延迟后添加新纹理，确保状态更新
-      Future.delayed(const Duration(milliseconds: 50), () {
-        // 添加新的纹理数据
-        updatedContent['backgroundTexture'] = textureData;
-        
-        debugPrint('选择的纹理数据：$textureData');
-
-        // 设置默认值（如果尚未设置）
-        if (!updatedContent.containsKey('textureApplicationRange')) {
-          updatedContent['textureApplicationRange'] = 'character';
+      // 创建一个全新的内容对象，而不是修改现有的
+      final newContent = <String, dynamic>{};
+      
+      // 首先将原始内容扁平化
+      final flattenedOriginal = _deepFlattenContent(elementContent);
+      
+      // 复制所有原始属性（除了 content 和 backgroundTexture）
+      for (final entry in flattenedOriginal.entries) {
+        if (entry.key != 'content' && entry.key != 'backgroundTexture') {
+          newContent[entry.key] = entry.value;
         }
-
-        if (!updatedContent.containsKey('textureFillMode')) {
-          updatedContent['textureFillMode'] = 'repeat';
-        }
-
-        if (!updatedContent.containsKey('textureOpacity')) {
-          updatedContent['textureOpacity'] = 1.0;
-        }
-
-        debugPrint(
-            '_selectTexture: 更新内容属性，backgroundTexture=${updatedContent['backgroundTexture']}');
-        debugPrint('更新后的完整内容：$updatedContent');
-        
-        // 立即应用更新以确保预览能正确显示
-        widget.onContentPropertyChanged('content', updatedContent);
-
-        // 直接更新每个纹理相关属性，确保UI能够反映变化
-        widget.onContentPropertyChanged(
-            'textureApplicationRange', updatedContent['textureApplicationRange']);
-        widget.onContentPropertyChanged(
-            'textureFillMode', updatedContent['textureFillMode']);
-        widget.onContentPropertyChanged(
-            'textureOpacity', updatedContent['textureOpacity']);
-
-        // 强制刷新UI
-        if (mounted) {
-          setState(() {});
-        }
-      });
-    } else {
-      debugPrint('_selectTexture: 未选择纹理');
+      }
+      
+      // 添加纹理数据
+      newContent['backgroundTexture'] = textureData;
+      
+      // 设置纹理相关属性（如果不存在）
+      newContent['textureApplicationRange'] = 
+          flattenedOriginal['textureApplicationRange'] ?? 'characterBackground';
+      newContent['textureFillMode'] = 
+          flattenedOriginal['textureFillMode'] ?? 'repeat';
+      newContent['textureOpacity'] = 
+          flattenedOriginal['textureOpacity'] ?? 1.0;
+      
+      // 确保其他必要属性存在
+      if (!newContent.containsKey('characters')) {
+        newContent['characters'] = '';
+      }
+      if (!newContent.containsKey('fontSize')) {
+        newContent['fontSize'] = 24.0;
+      }
+      if (!newContent.containsKey('fontColor')) {
+        newContent['fontColor'] = '#000000';
+      }
+      if (!newContent.containsKey('backgroundColor')) {
+        newContent['backgroundColor'] = '#FFFFFF';
+      }
+      if (!newContent.containsKey('direction')) {
+        newContent['direction'] = 'horizontal';
+      }
+      if (!newContent.containsKey('charSpacing')) {
+        newContent['charSpacing'] = 10.0;
+      }
+      if (!newContent.containsKey('lineSpacing')) {
+        newContent['lineSpacing'] = 10.0;
+      }
+      if (!newContent.containsKey('showBackground')) {
+        newContent['showBackground'] = true;
+      }
+      if (!newContent.containsKey('gridLines')) {
+        newContent['gridLines'] = false;
+      }
+      
+      // 最后检查确认没有 content 属性
+      if (newContent.containsKey('content')) {
+        newContent.remove('content');
+        debugPrint('❎ 警告: 在最终处理中移除了嵌套 content');
+      }
+      
+      debugPrint('✨ 已创建新的内容对象，属性数量: ${newContent.length}');
+      
+      // 直接更新元素的内容，使用单一的调用
+      widget.onContentPropertyChanged('content', newContent);
+      
+      // 强制刷新UI
+      if (mounted) {
+        setState(() {});
+      }
+      
+      debugPrint('✅ 纹理应用成功');
+    } catch (e) {
+      debugPrint('❌ 应用纹理时出错: $e');
     }
+  }
+  
+  // 验证和获取有效的纹理路径
+  Future<String> _validateAndGetTexturePath(String originalPath) async {
+    try {
+      final storage = ref.read(initializedStorageProvider);
+      final fileExists = await storage.fileExists(originalPath);
+      
+      if (fileExists) {
+        return originalPath;
+      }
+      
+      // 尝试库路径
+      final String libraryPath = '${storage.getAppDataPath()}/library/${originalPath.split('/').last}';
+      if (await storage.fileExists(libraryPath)) {
+        return libraryPath;
+      }
+      
+      // 尝试绝对路径
+      final absolutePath = originalPath.startsWith('/') ? originalPath : '/$originalPath';
+      if (await storage.fileExists(absolutePath)) {
+        return absolutePath;
+      }
+      
+      // 尝试应用数据路径
+      if (!originalPath.startsWith('/')) {
+        final appDataPath = '${storage.getAppDataPath()}/$originalPath';
+        if (await storage.fileExists(appDataPath)) {
+          return appDataPath;
+        }
+      }
+      
+      // 如果所有尝试都失败，返回原始路径
+      return originalPath;
+    } catch (e) {
+      debugPrint('❌ 验证纹理路径时出错: $e');
+      return originalPath;
+    }
+  }
+  
+  // 深度扁平化内容结构，处理多层嵌套
+  Map<String, dynamic> _deepFlattenContent(Map<String, dynamic> content) {
+    final result = <String, dynamic>{};
+    
+    // 递归提取所有属性
+    void extractProperties(Map<String, dynamic> source) {
+      for (final entry in source.entries) {
+        if (entry.key == 'content' && entry.value is Map<String, dynamic>) {
+          // 如果是嵌套的 content，递归提取其属性
+          extractProperties(entry.value as Map<String, dynamic>);
+        } else {
+          // 对于其他属性，仅当尚未存在时才复制
+          if (!result.containsKey(entry.key)) {
+            result[entry.key] = entry.value;
+          }
+        }
+      }
+    }
+    
+    // 开始提取
+    extractProperties(content);
+    
+    return result;
   }
 }

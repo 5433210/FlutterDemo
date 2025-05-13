@@ -170,7 +170,7 @@ class CollectionElementRenderer {
       builder: (context, setState) {
         // 解析纹理应用范围
         String effectiveApplicationMode = textureApplicationRange;
-        Map<String, dynamic>? nestedTextureData;
+        Map<String, dynamic>? effectiveTextureData;
         bool hasEffectiveTexture = hasCharacterTexture;
 
         // 输出调试信息
@@ -178,34 +178,59 @@ class CollectionElementRenderer {
         debugPrint(
             '初始纹理状态 - 应用模式：$textureApplicationRange，是否有纹理：$hasCharacterTexture');
 
-        if (characterImages is Map<String, dynamic>) {
-          // 首先检查主 content 中的应用范围设置
-          if (characterImages.containsKey('textureApplicationRange')) {
-            effectiveApplicationMode =
-                characterImages['textureApplicationRange'] as String? ??
-                    'background';
-            debugPrint('使用主 content 的纹理应用范围：$effectiveApplicationMode');
+        // 递归查找最深层的有效纹理数据
+        Map<String, dynamic>? findDeepestTextureData(Map<String, dynamic> data) {
+          // 首先检查当前层是否有背景纹理
+          if (data.containsKey('backgroundTexture') && 
+              data['backgroundTexture'] != null &&
+              data['backgroundTexture'] is Map<String, dynamic>) {
+            return data;
           }
+          
+          // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
+          if (data.containsKey('content') && 
+              data['content'] != null && 
+              data['content'] is Map<String, dynamic>) {
+            return findDeepestTextureData(data['content'] as Map<String, dynamic>);
+          }
+          
+          // 如果没有找到任何纹理数据，返回null
+          return null;
+        }
 
-          final content = characterImages['content'] as Map<String, dynamic>?;
-          if (content != null) {
-            // 仅当主 content 没有设置时，才使用嵌套 content 的应用范围
-            if (!characterImages.containsKey('textureApplicationRange')) {
-              effectiveApplicationMode =
-                  content['textureApplicationRange'] as String? ?? 'background';
-              debugPrint('使用嵌套 content 的纹理应用范围：$effectiveApplicationMode');
-            }
+        // 从嵌套结构中提取应用范围
+        String extractApplicationRange(Map<String, dynamic> data) {
+          // 首先检查当前层是否有应用范围设置
+          if (data.containsKey('textureApplicationRange')) {
+            return data['textureApplicationRange'] as String? ?? 'background';
+          }
+          
+          // 如果当前层没有应用范围设置，但有嵌套内容，则递归查找
+          if (data.containsKey('content') && 
+              data['content'] != null && 
+              data['content'] is Map<String, dynamic>) {
+            return extractApplicationRange(data['content'] as Map<String, dynamic>);
+          }
+          
+          // 如果没有找到任何应用范围设置，返回默认值
+          return 'background';
+        }
 
-            // 检查嵌套内容中是否有纹理数据
-            if (content.containsKey('backgroundTexture') &&
-                content['backgroundTexture'] != null) {
-              final backgroundTexture = content['backgroundTexture'];
-              if (backgroundTexture != null &&
-                  backgroundTexture is Map<String, dynamic>) {
-                nestedTextureData = backgroundTexture;
-                hasEffectiveTexture = true;
-                debugPrint('发现有效的嵌套纹理数据：$nestedTextureData');
-              }
+        if (characterImages is Map<String, dynamic>) {
+          // 查找最深层的有效纹理数据
+          final deepestTextureData = findDeepestTextureData(characterImages);
+          
+          if (deepestTextureData != null) {
+            // 提取应用范围
+            effectiveApplicationMode = extractApplicationRange(characterImages);
+            debugPrint('使用提取的纹理应用范围：$effectiveApplicationMode');
+            
+            // 提取纹理数据
+            if (deepestTextureData.containsKey('backgroundTexture') &&
+                deepestTextureData['backgroundTexture'] != null) {
+              effectiveTextureData = deepestTextureData['backgroundTexture'];
+              hasEffectiveTexture = true;
+              debugPrint('发现有效的纹理数据：$effectiveTextureData');
             }
           }
         }
@@ -213,8 +238,8 @@ class CollectionElementRenderer {
         // 创建纹理配置，优先使用显式传入的应用模式参数
         final textureConfig = tc.TextureConfig(
           enabled: hasEffectiveTexture &&
-              (characterTextureData != null || nestedTextureData != null),
-          data: characterTextureData ?? nestedTextureData,
+              (characterTextureData != null || effectiveTextureData != null),
+          data: characterTextureData ?? effectiveTextureData,
           fillMode: textureFillMode,
           opacity: textureOpacity,
           textureApplicationRange: effectiveApplicationMode,
@@ -222,7 +247,7 @@ class CollectionElementRenderer {
 
         debugPrint('''纹理配置详情：
   启用状态：${hasEffectiveTexture ? "✅" : "❌"}
-  纹理数据：${(characterTextureData != null || nestedTextureData != null) ? "✅" : "❌"}
+  纹理数据：${(characterTextureData != null || effectiveTextureData != null) ? "✅" : "❌"}
   应用模式：$effectiveApplicationMode
   填充模式：$textureFillMode
   不透明度：$textureOpacity''');

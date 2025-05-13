@@ -112,11 +112,66 @@ class _M3CollectionPropertyPanelState
     );
   }
 
+  // 递归处理嵌套的 content 结构，提取所有属性到根级别
+  Map<String, dynamic> _deepFlattenContent(Map<String, dynamic> content) {
+    final result = <String, dynamic>{};
+    
+    // 递归提取所有属性
+    void extractProperties(Map<String, dynamic> source) {
+      for (final entry in source.entries) {
+        if (entry.key == 'content' && entry.value is Map<String, dynamic>) {
+          // 如果是嵌套的 content，递归提取其属性
+          extractProperties(entry.value as Map<String, dynamic>);
+        } else {
+          // 对于其他属性，仅当尚未存在时才复制
+          if (!result.containsKey(entry.key)) {
+            result[entry.key] = entry.value;
+          }
+        }
+      }
+    }
+    
+    // 开始提取
+    extractProperties(content);
+    
+    return result;
+  }
+
+  // 清理元素中的嵌套内容结构
+  void _cleanupNestedContent() {
+    try {
+      if (widget.element.containsKey('content') && 
+          widget.element['content'] is Map<String, dynamic>) {
+        final content = widget.element['content'] as Map<String, dynamic>;
+        
+        // 检查是否有嵌套结构
+        if (content.containsKey('content')) {
+          debugPrint('✨ 发现嵌套的 content 结构，开始清理...');
+          
+          // 扁平化嵌套结构
+          final flattenedContent = _deepFlattenContent(content);
+          
+          // 更新元素内容
+          widget.onElementPropertiesChanged({'content': flattenedContent});
+          
+          debugPrint('✅ 嵌套 content 结构清理完成');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ 清理嵌套 content 结构时出错: $e');
+    }
+  }
+
   @override
   void didUpdateWidget(M3CollectionPropertyPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.element != widget.element) {
+      // 检查并清理嵌套的 content 结构
+      Future.microtask(() {
+        _cleanupNestedContent();
+      });
+      
       // Update text controller
       final content = widget.element['content'] as Map<String, dynamic>;
       final characters = content['characters'] as String? ?? '';
@@ -155,6 +210,11 @@ class _M3CollectionPropertyPanelState
     super.dispose();
   }
 
+  // 递归处理嵌套的 content 结构，提取所有属性到根级别
+  // 该方法已被 _deepFlattenContent 替代
+
+  // 该方法已在上面定义
+
   @override
   void initState() {
     super.initState();
@@ -166,6 +226,9 @@ class _M3CollectionPropertyPanelState
 
     // Use addPostFrameCallback to defer state updates to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 首先清理嵌套的 content 结构
+      _cleanupNestedContent();
+      
       // Load candidate characters
       _loadCandidateCharacters();
 
@@ -875,12 +938,57 @@ class _M3CollectionPropertyPanelState
     }
   }
 
-  // Update content property
+  // 更新内容属性 - 完全重写版本，防止嵌套问题
   void _updateContentProperty(String key, dynamic value) {
-    final content = Map<String, dynamic>.from(
-        widget.element['content'] as Map<String, dynamic>? ?? {});
-    content[key] = value;
-    _updateProperty('content', content);
+    try {
+      // 获取当前元素的内容
+      final Map<String, dynamic> originalContent = 
+          Map<String, dynamic>.from(widget.element['content'] as Map<String, dynamic>? ?? {});
+      
+      // 创建一个全新的内容对象，而不是修改现有的
+      final Map<String, dynamic> newContent = <String, dynamic>{};
+      
+      // 首先将原始内容扁平化，确保没有嵌套
+      final flattenedOriginal = _deepFlattenContent(originalContent);
+      
+      // 复制所有原始属性（除了要更新的键和任何嵌套的 content）
+      for (final entry in flattenedOriginal.entries) {
+        if (entry.key != 'content' && entry.key != key) {
+          newContent[entry.key] = entry.value;
+        }
+      }
+      
+      // 特殊处理：如果更新的是 content 属性本身
+      if (key == 'content' && value is Map<String, dynamic>) {
+        // 扁平化要设置的 content 值
+        final flattenedValue = _deepFlattenContent(value);
+        
+        // 将扁平化后的属性合并到新内容中
+        for (final entry in flattenedValue.entries) {
+          if (entry.key != 'content') { // 确保不会再次引入 content 嵌套
+            newContent[entry.key] = entry.value;
+          }
+        }
+        
+        debugPrint('✅ 处理 content 更新：已扁平化并合并属性');
+      } else {
+        // 常规属性更新
+        newContent[key] = value;
+      }
+      
+      // 最后检查确保没有 content 属性
+      if (newContent.containsKey('content')) {
+        newContent.remove('content');
+        debugPrint('⚠️ 警告: 在最终处理中移除了嵌套 content');
+      }
+      
+      // 更新元素属性
+      _updateProperty('content', newContent);
+      
+      debugPrint('✅ 更新内容属性 "$key"，属性数量: ${newContent.length}');
+    } catch (e) {
+      debugPrint('❌ 更新内容属性时出错: $e');
+    }
   }
 
   // Update element property
