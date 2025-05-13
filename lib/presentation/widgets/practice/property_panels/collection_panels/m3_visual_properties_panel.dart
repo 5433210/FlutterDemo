@@ -309,10 +309,15 @@ class _M3VisualPropertiesPanelState
                     icon: const Icon(Icons.delete_outline),
                     label: Text(l10n.textureRemove), // Remove
                     onPressed: () {
-                      final updatedContent = Map<String, dynamic>.from(content);
-                      updatedContent.remove('backgroundTexture');
-                      widget.onContentPropertyChanged(
-                          'content', updatedContent);
+                      debugPrint('✨ 尝试移除背景纹理');
+                      
+                      // 直接调用 onContentPropertyChanged 将 backgroundTexture 设置为 null
+                      widget.onContentPropertyChanged('backgroundTexture', null);
+                      
+                      // 强制刷新UI
+                      setState(() {
+                        debugPrint('✅ 已将 backgroundTexture 设置为 null');
+                      });
                     },
                   ),
               ],

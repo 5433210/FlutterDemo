@@ -621,7 +621,7 @@ class AdvancedCollectionPainter extends CustomPainter {
     }
   }
 
-  /// 查找字符对应的图片
+  /// 查找字符对应的图片 - 增强版
   Map<String, dynamic>? _findCharacterImage(String char, int positionIndex) {
     try {
       // 计算实际字符索引（不包含换行符）
@@ -637,106 +637,78 @@ class AdvancedCollectionPainter extends CustomPainter {
       int rowBasedIndex = _calculateRowBasedIndex(positionIndex);
 
       debugPrint(
-          '查找字符图像: 字符="$char", 位置索引=$positionIndex, 实际字符索引=$realCharIndex, 行内索引=$rowBasedIndex, 是否换行后=${isAfterNewline ? "是" : "否"}');
+          '✨ 查找字符图像: 字符="$char", 位置索引=$positionIndex, 实际字符索引=$realCharIndex, 行内索引=$rowBasedIndex');
 
-      // 检查 characterImages 是否是 Map 类型
-      if (characterImages is Map<String, dynamic>) {
-        final charImages = characterImages as Map<String, dynamic>;
+      // 递归查找字符图像
+      Map<String, dynamic>? findImageInMap(
+          Map<String, dynamic> source, String prefix) {
+        // 首先检查是否有 characterImages 属性
+        Map<String, dynamic>? images;
 
-        // 查找策略优先顺序:
+        if (source.containsKey('characterImages')) {
+          final imagesData = source['characterImages'];
+          if (imagesData is Map<String, dynamic>) {
+            images = imagesData;
+          }
+        }
 
-        // 1. 使用行内索引 (优先级最高，因为这处理了累积偏移问题)
-        if (rowBasedIndex >= 0 && charImages.containsKey('$rowBasedIndex')) {
-          debugPrint('  在行内索引 $rowBasedIndex 处找到图像信息');
-          final imageInfo =
-              charImages['$rowBasedIndex'] as Map<String, dynamic>;
-          return _createCharacterImageResult(imageInfo);
+        // 如果没有找到 characterImages，则使用源对象本身
+        images ??= source;
+
+        // 开始按优先级顺序查找
+
+        // 1. 使用行内索引
+        if (rowBasedIndex >= 0 && images.containsKey('$rowBasedIndex')) {
+          debugPrint('$prefix 在行内索引 $rowBasedIndex 处找到图像信息');
+          return images['$rowBasedIndex'] as Map<String, dynamic>;
         }
 
         // 2. 使用位置索引
-        if (charImages.containsKey('$positionIndex')) {
-          debugPrint('  在位置索引 $positionIndex 处找到图像信息');
-          final imageInfo =
-              charImages['$positionIndex'] as Map<String, dynamic>;
-          return _createCharacterImageResult(imageInfo);
+        if (images.containsKey('$positionIndex')) {
+          debugPrint('$prefix 在位置索引 $positionIndex 处找到图像信息');
+          return images['$positionIndex'] as Map<String, dynamic>;
         }
 
-        // 3. 使用实际字符索引（不包含换行符）
-        if (realCharIndex >= 0 && charImages.containsKey('$realCharIndex')) {
-          debugPrint('  在实际字符索引 $realCharIndex 处找到图像信息');
-          final imageInfo =
-              charImages['$realCharIndex'] as Map<String, dynamic>;
-          return _createCharacterImageResult(imageInfo);
+        // 3. 使用实际字符索引
+        if (realCharIndex >= 0 && images.containsKey('$realCharIndex')) {
+          debugPrint('$prefix 在实际字符索引 $realCharIndex 处找到图像信息');
+          return images['$realCharIndex'] as Map<String, dynamic>;
         }
 
-        // 4. 针对换行后字符的特殊处理
-        if (isAfterNewline) {
-          // 尝试使用行内索引0（第一行的第一个字符）
-          if (charImages.containsKey('0')) {
-            debugPrint('  使用行内索引0找到图像信息（换行后第一个字符特殊处理）');
-            final imageInfo = charImages['0'] as Map<String, dynamic>;
-            return _createCharacterImageResult(imageInfo);
-          }
+        // 4. 换行后字符特殊处理
+        if (isAfterNewline && images.containsKey('0')) {
+          debugPrint('$prefix 使用行内索引0找到图像信息（换行后特殊处理）');
+          return images['0'] as Map<String, dynamic>;
         }
 
-        // 5. 直接使用字符作为键
-        if (charImages.containsKey(char)) {
-          debugPrint('  使用字符 "$char" 作为键找到图像信息');
-          final imageInfo = charImages[char] as Map<String, dynamic>;
-          return _createCharacterImageResult(imageInfo);
+        // 5. 使用字符作为键
+        if (images.containsKey(char)) {
+          debugPrint('$prefix 使用字符 "$char" 作为键找到图像信息');
+          return images[char] as Map<String, dynamic>;
         }
 
         // 6. 检查嵌套结构
-        if (charImages.containsKey('content')) {
-          final content = charImages['content'] as Map<String, dynamic>?;
-          if (content != null && content.containsKey('characterImages')) {
-            final images = content['characterImages'] as Map<String, dynamic>?;
-            if (images != null) {
-              // 与上面相同的查找策略，但在嵌套内容中
+        if (source.containsKey('content') &&
+            source['content'] is Map<String, dynamic>) {
+          final nestedContent = source['content'] as Map<String, dynamic>;
+          debugPrint('$prefix 检查嵌套内容结构');
+          return findImageInMap(nestedContent, '$prefix  嵌套>');
+        }
 
-              // 使用行内索引
-              if (rowBasedIndex >= 0 && images.containsKey('$rowBasedIndex')) {
-                debugPrint('  在嵌套内容的行内索引 $rowBasedIndex 处找到图像信息');
-                final imageInfo =
-                    images['$rowBasedIndex'] as Map<String, dynamic>;
-                return _createCharacterImageResult(imageInfo);
-              }
+        return null;
+      }
 
-              // 使用位置索引
-              if (images.containsKey('$positionIndex')) {
-                debugPrint('  在嵌套内容的位置索引 $positionIndex 处找到图像信息');
-                final imageInfo =
-                    images['$positionIndex'] as Map<String, dynamic>;
-                return _createCharacterImageResult(imageInfo);
-              }
-
-              // 使用实际字符索引
-              if (realCharIndex >= 0 && images.containsKey('$realCharIndex')) {
-                debugPrint('  在嵌套内容的实际字符索引 $realCharIndex 处找到图像信息');
-                final imageInfo =
-                    images['$realCharIndex'] as Map<String, dynamic>;
-                return _createCharacterImageResult(imageInfo);
-              }
-
-              // 换行后字符特殊处理
-              if (isAfterNewline && images.containsKey('0')) {
-                debugPrint('  在嵌套内容中使用行内索引0找到图像信息（换行后特殊处理）');
-                final imageInfo = images['0'] as Map<String, dynamic>;
-                return _createCharacterImageResult(imageInfo);
-              }
-
-              // 使用字符作为键
-              if (images.containsKey(char)) {
-                debugPrint('  在嵌套内容中使用字符 "$char" 作为键找到图像信息');
-                final imageInfo = images[char] as Map<String, dynamic>;
-                return _createCharacterImageResult(imageInfo);
-              }
-            }
-          }
+      // 检查 characterImages 是否是 Map 类型
+      if (characterImages is Map<String, dynamic>) {
+        final result =
+            findImageInMap(characterImages as Map<String, dynamic>, '  ');
+        if (result != null) {
+          return _createCharacterImageResult(result);
         }
       } else if (characterImages is List) {
         // 如果是 List 类型，则遍历查找
         final charImagesList = characterImages as List;
+        debugPrint('  在列表中查找字符图像，列表长度: ${charImagesList.length}');
 
         for (int i = 0; i < charImagesList.length; i++) {
           final image = charImagesList[i];
@@ -764,40 +736,71 @@ class AdvancedCollectionPainter extends CustomPainter {
                 }
               }
             }
+
+            // 检查嵌套结构
+            if (image.containsKey('content') &&
+                image['content'] is Map<String, dynamic>) {
+              final nestedResult = findImageInMap(image, '  列表项[$i]>');
+              if (nestedResult != null) {
+                return _createCharacterImageResult(nestedResult);
+              }
+            }
           }
         }
       }
 
-      // 如果是换行后的字符，记录特殊错误
-      if (isAfterNewline) {
-        debugPrint(
-            '  ❌ 换行后的第一个字符都没有找对！字符: "$char"，索引: $positionIndex, 行内索引: $rowBasedIndex');
-      } else {
-        // 未找到字符图像，记录错误
-        debugPrint(
-            '  未找到字符图像 "$char"（位置：$positionIndex，实际索引：$realCharIndex，行内索引：$rowBasedIndex）');
+      // 未找到字符图像，记录详细信息
+      debugPrint(
+          '❌ 未找到字符图像 "$char"（位置：$positionIndex，实际索引：$realCharIndex，行内索引：$rowBasedIndex）');
+
+      // 输出 characterImages 结构信息以便于调试
+      if (characterImages is Map<String, dynamic>) {
+        final keys = (characterImages as Map<String, dynamic>).keys.join(', ');
+        debugPrint('ℹ️ characterImages 的键列表: $keys');
+
+        if ((characterImages as Map<String, dynamic>)
+            .containsKey('characterImages')) {
+          final innerKeys =
+              ((characterImages as Map<String, dynamic>)['characterImages']
+                          as Map<String, dynamic>?)
+                      ?.keys
+                      .join(', ') ??
+                  '空';
+          debugPrint('ℹ️ characterImages.characterImages 的键列表: $innerKeys');
+        }
       }
     } catch (e, stackTrace) {
-      debugPrint('查找字符图像失败: $e');
+      debugPrint('❌ 查找字符图像失败: $e');
       debugPrint('堆栈跟踪: $stackTrace');
     }
 
     return null;
   }
 
-  /// 加载并缓存图像
+  /// 加载并缓存图像 - 增强版
   Future<void> _loadAndCacheImage(
       String characterId, String type, String format) async {
+    // 构建缓存键
     final cacheKey = '$characterId-$type-$format';
-
+    final preferredType = type;
+    final preferredFormat = format;
+    final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
+    
+    // 标记正在加载
+    _loadingImages.add(cacheKey);
+    debugPrint('✨ 开始加载字符图像: $cacheKey');
+    
     try {
       // 跳过已加载的图像
       if (GlobalImageCache.contains(cacheKey)) {
+        debugPrint('✅ 图像已在缓存中: $cacheKey');
+        _loadingImages.remove(cacheKey);
         return;
       }
 
       // 需要Riverpod引用才能加载
       if (ref == null) {
+        debugPrint('❌ 缺少Riverpod引用，无法加载图像');
         _loadingImages.remove(cacheKey);
         return;
       }
@@ -805,6 +808,8 @@ class AdvancedCollectionPainter extends CustomPainter {
       // 使用字符图像服务加载
       final characterImageService = ref!.read(characterImageServiceProvider);
       final storage = ref!.read(initializedStorageProvider);
+
+      debugPrint('ℹ️ 使用字符ID: $characterId, 类型: $type, 格式: $format');
 
       // 获取图片路径
       String getImagePath(String id, String imgType, String imgFormat) {
@@ -832,20 +837,25 @@ class AdvancedCollectionPainter extends CustomPainter {
       }
 
       // 优先尝试使用方形二值化透明背景图
-      String preferredType = 'square-binary';
-      String preferredFormat = 'png-binary';
+      String preferredType = type;
+      String preferredFormat = format;
 
       // 检查可用格式
+      debugPrint('ℹ️ 检查字符 $characterId 的可用格式');
       final availableFormat =
           await characterImageService.getAvailableFormat(characterId);
       if (availableFormat != null) {
         preferredType = availableFormat['type']!;
         preferredFormat = availableFormat['format']!;
+        debugPrint('✅ 找到可用格式: 类型=$preferredType, 格式=$preferredFormat');
+      } else {
+        debugPrint('⚠️ 未找到可用格式，使用默认值: 类型=$preferredType, 格式=$preferredFormat');
       }
 
       // 获取图片路径
       final imagePath =
           getImagePath(characterId, preferredType, preferredFormat);
+      debugPrint('ℹ️ 图片路径: $imagePath');
 
       // 检查文件是否存在
       final file = File(imagePath);
@@ -854,19 +864,25 @@ class AdvancedCollectionPainter extends CustomPainter {
       if (await file.exists()) {
         // 如果文件存在，直接从文件读取
         try {
+          debugPrint('ℹ️ 从文件读取图像数据: $imagePath');
           imageData = await file.readAsBytes();
+          debugPrint('✅ 成功从文件读取图像数据: ${imageData.length} 字节');
         } catch (e) {
-          debugPrint('读取文件失败: $e');
+          debugPrint('❌ 读取文件失败: $e');
         }
+      } else {
+        debugPrint('⚠️ 文件不存在: $imagePath');
       }
 
       // 如果从文件读取失败，尝试从服务获取
       if (imageData == null) {
+        debugPrint('ℹ️ 从服务获取图像数据: $characterId');
         imageData = await characterImageService.getCharacterImage(
             characterId, preferredType, preferredFormat);
 
         // 如果获取成功，保存到文件
         if (imageData != null) {
+          debugPrint('✅ 成功从服务获取图像数据: ${imageData.length} 字节');
           try {
             // 确保目录存在
             final directory = Directory(file.parent.path);
@@ -876,40 +892,70 @@ class AdvancedCollectionPainter extends CustomPainter {
 
             // 保存文件
             await file.writeAsBytes(imageData);
+            debugPrint('✅ 成功保存图像到文件: $imagePath');
           } catch (e) {
-            debugPrint('保存文件失败: $e');
+            debugPrint('❌ 保存文件失败: $e');
           }
+        } else {
+          debugPrint('❌ 从服务获取图像数据失败');
         }
       }
 
       // 更新缓存键以使用实际加载的类型和格式
       final actualCacheKey = '$characterId-$preferredType-$preferredFormat';
+      debugPrint('ℹ️ 实际缓存键: $actualCacheKey');
 
       if (imageData != null) {
         // 解码图像
+        debugPrint('ℹ️ 开始解码图像数据');
         final completer = Completer<ui.Image>();
         ui.decodeImageFromList(imageData, (ui.Image image) {
           completer.complete(image);
         });
 
-        final image = await completer.future;
+        try {
+          final image = await completer.future;
+          debugPrint('✅ 成功解码图像: ${image.width}x${image.height}');
 
-        // 同时缓存到全局缓存
-        GlobalImageCache.put(actualCacheKey, image);
-
-        // 同时缓存到原始请求的键，以便能找到图像
-        if (cacheKey != actualCacheKey) {
+          // 确保缓存到所有可能的键，以便能找到图像
+          GlobalImageCache.put(actualCacheKey, image);
           GlobalImageCache.put(cacheKey, image);
-        }
+          
+          // 额外缓存一个不带格式的键，以提高兼容性
+          final simpleKey = characterId;
+          GlobalImageCache.put(simpleKey, image);
+          
+          // 检查缓存是否成功
+          final cachedImage = GlobalImageCache.get(cacheKey);
+          if (cachedImage != null) {
+            debugPrint('✅ 缓存验证成功: $cacheKey');
+          } else {
+            debugPrint('⚠️ 缓存验证失败: $cacheKey');
+          }
 
-        // 标记需要重绘
-        _needsRepaint = true;
+          debugPrint('✅ 成功将图像添加到缓存: $actualCacheKey');
+
+          // 标记需要重绘
+          _needsRepaint = true;
+
+          // 强制重绘
+          if (_repaintCallback != null) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _repaintCallback!();
+            });
+          }
+        } catch (e) {
+          debugPrint('❌ 解码图像失败: $e');
+        }
+      } else {
+        debugPrint('❌ 图像数据为空，无法解码');
       }
     } catch (e) {
-      debugPrint('加载图像失败: $e');
+      debugPrint('❌ 加载图像过程中发生错误: $e');
     } finally {
       // 移除加载标记
       _loadingImages.remove(cacheKey);
+      _loadingImages.remove(actualCacheKey);
     }
   }
 
