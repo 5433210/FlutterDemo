@@ -15,29 +15,34 @@ bool mapsEqual(Map<String, dynamic>? map1, Map<String, dynamic>? map2) {
   return true;
 }
 
-/// 纹理配置类 - 定义纹理的属性和行为
+/// 纹理配置类，定义如何应用纹理
+/// This class defines how to apply a texture
 class TextureConfig {
   /// 是否启用纹理
   final bool enabled;
-
+  
   /// 纹理数据
   final Map<String, dynamic>? data;
-
-  /// 填充模式: 'repeat', 'cover', 'contain', 'stretch'
+  
+  /// 填充模式
   final String fillMode;
-
-  /// 不透明度: 0.0 ~ 1.0
+  
+  /// 不透明度
   final double opacity;
-
-  /// 应用模式: 'background', 'characterBackground'
-  final String applicationMode;
+  
+  /// 应用范围
+  final String textureApplicationRange;
+  
+  /// 兼容性getter，允许旧代码访问applicationMode
+  String get applicationMode => textureApplicationRange;
+  
 
   /// 构造函数
   /// * enabled - 是否启用纹理
   /// * data - 纹理数据，包含path等信息
   /// * fillMode - 填充模式：'repeat', 'cover', 'contain', 'stretch'
   /// * opacity - 不透明度：0.0 ~ 1.0
-  /// * applicationMode - 应用模式：
+  /// * textureApplicationRange - 应用范围：
   ///   - 'background'：纹理应用到整个集字元素背景
   ///   - 'characterBackground'：纹理只应用到每个字符的矩形背景区域
   const TextureConfig({
@@ -45,7 +50,7 @@ class TextureConfig {
     this.data,
     this.fillMode = 'repeat',
     this.opacity = 1.0,
-    this.applicationMode = 'background',
+    this.textureApplicationRange = 'background',
   });
 
   /// 创建一个新实例，可选择性覆盖部分属性
@@ -54,14 +59,14 @@ class TextureConfig {
     Map<String, dynamic>? data,
     String? fillMode,
     double? opacity,
-    String? applicationMode,
+    String? textureApplicationRange,
   }) {
     return TextureConfig(
       enabled: enabled ?? this.enabled,
       data: data ?? this.data,
       fillMode: fillMode ?? this.fillMode,
       opacity: opacity ?? this.opacity,
-      applicationMode: applicationMode ?? this.applicationMode,
+      textureApplicationRange: textureApplicationRange ?? this.textureApplicationRange,
     );
   }
   
@@ -74,11 +79,21 @@ class TextureConfig {
         mapsEqual(data, other.data) &&
         fillMode == other.fillMode &&
         opacity == other.opacity &&
-        applicationMode == other.applicationMode;
+        textureApplicationRange == other.textureApplicationRange;
   }
 
   @override
-  int get hashCode => Object.hash(enabled, data, fillMode, opacity, applicationMode);
+  int get hashCode {
+    // 安全生成哈希码，处理可能的空值
+    final range = textureApplicationRange;
+    return Object.hash(
+      enabled,
+      data,
+      fillMode,
+      opacity,
+      range,
+    );
+  }
 }
 
 /// 纹理管理器 - 处理纹理缓存和失效

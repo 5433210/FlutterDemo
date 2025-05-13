@@ -877,7 +877,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             characterTextureData: backgroundTexture,
             textureFillMode: textureFillMode,
             textureOpacity: textureOpacity,
-            applicationMode:
+            textureApplicationRange:
                 textureApplicationRange, // Pass the application mode explicitly
             ref: ref,
           );
