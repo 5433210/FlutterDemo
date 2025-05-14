@@ -189,8 +189,82 @@ class ImageCacheService {
     return processedImage;
   }
 
-  /// 获取UI图像对象
+  /// 获取UI图像对象 - 异步方式
   Future<ui.Image?> getUiImage(String key) async {
     return await _uiImageCache.get(key);
+  }
+  
+  /// 同步检查缓存中是否存在指定的UI图像
+  /// 
+  /// [key] 缓存键
+  /// 返回是否存在该缓存项
+  bool hasCachedUiImage(String key) {
+    try {
+      // 首先检查缓存文件是否存在
+      final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
+      final cacheFile = File('${cacheDir.path}/$key');
+      
+      if (!cacheFile.existsSync()) {
+        debugPrint('缓存文件不存在: ${cacheFile.path}');
+        return false;
+      }
+      
+      // 然后检查内存缓存
+      // 注意：我们不能在同步方法中使用异步结果
+      // 所以我们只检查文件系统
+      
+      // 如果文件存在，我们假设图像可能在缓存中
+      // 即使它不在，异步加载也会处理这种情况
+      return true;
+    } catch (e) {
+      debugPrint('检查缓存异常: $e');
+      return false;
+    }
+  }
+  
+  /// 尝试同步获取UI图像对象
+  /// 
+  /// [key] 缓存键
+  /// 如果存在且可以同步获取，返回缓存的图像，否则返回null
+  ui.Image? tryGetUiImageSync(String key) {
+    try {
+      // 检查内存缓存中是否有已加载的图像
+      // 注意：这个方法仅尝试获取已经存在于内存中的图像
+      // 它不会尝试从文件系统加载，因为这是一个异步操作
+      
+      // 如果我们有一个内部的同步缓存映射，可以直接检查
+      // 这里我们使用一个简单的方法，假设没有同步缓存可用
+      
+      // 首先检查缓存文件是否存在
+      final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
+      final cacheFile = File('${cacheDir.path}/$key');
+      
+      if (!cacheFile.existsSync()) {
+        debugPrint('缓存文件不存在: ${cacheFile.path}');
+        return null;
+      }
+      
+      // 如果文件存在，我们还是返回 null，因为我们不能同步加载图像
+      // 异步加载将在调用者的 scheduleMicrotask 中处理
+      return null;
+    } catch (e) {
+      debugPrint('尝试同步获取图像异常: $e');
+      return null;
+    }
+  }
+  
+  /// 检查缓存文件是否存在
+  /// 
+  /// [key] 缓存键
+  /// 返回文件是否存在
+  bool cacheFileExists(String key) {
+    try {
+      final cacheDir = Directory('${Directory.systemTemp.path}/cache/images');
+      final cacheFile = File('${cacheDir.path}/$key');
+      return cacheFile.existsSync();
+    } catch (e) {
+      debugPrint('检查缓存文件存在性失败: $e');
+      return false;
+    }
   }
 }

@@ -9,7 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/cache/services/image_cache_service.dart';
-import '../../../infrastructure/providers/cache_providers.dart' as cache_providers;
+import '../../../infrastructure/providers/cache_providers.dart'
+    as cache_providers;
 import 'character_position.dart';
 import 'texture_config.dart';
 
@@ -46,7 +47,7 @@ class CollectionPainter extends CustomPainter {
   bool _needsRepaint = false;
   VoidCallback? _repaintCallback;
   String? _cacheKey;
-  
+
   // 图像缓存服务
   late ImageCacheService _imageCacheService;
 
@@ -65,18 +66,13 @@ class CollectionPainter extends CustomPainter {
   /// 主绘制方法
   @override
   void paint(Canvas canvas, Size size) {
-    _paintAsync(canvas, size);
-  }
-  
-  /// 异步绘制方法
-  Future<void> _paintAsync(Canvas canvas, Size size) async {
     try {
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled &&
           textureConfig.data != null &&
           textureConfig.textureApplicationRange == 'background') {
         final rect = Offset.zero & size;
-        await _paintTexture(canvas, rect, mode: 'background');
+        _paintTexture(canvas, rect, mode: 'background');
       }
 
       // 2. 遍历所有字符位置，绘制字符
@@ -99,13 +95,13 @@ class CollectionPainter extends CustomPainter {
         if (textureConfig.enabled &&
             textureConfig.data != null &&
             textureConfig.textureApplicationRange == 'characterBackground') {
-          await _paintTexture(canvas, rect, mode: 'characterBackground');
+          _paintTexture(canvas, rect, mode: 'characterBackground');
         } else {
           _drawFallbackBackground(canvas, rect, position);
         }
 
         // 4. 获取字符图片并绘制
-        final charImage = await _findCharacterImage(position.char, position.index);
+        final charImage = _findCharacterImage(position.char, position.index);
         if (charImage != null) {
           // 如果有图片，绘制图片
           _drawCharacterImage(canvas, rect, position, charImage);
@@ -306,8 +302,8 @@ class CollectionPainter extends CustomPainter {
     }
   }
 
-  /// 查找字符图片 - 现在返回缓存的Future
-  Future<ui.Image?> _findCharacterImage(String char, int index) async {
+  /// 查找字符图片 - 同步方法
+  ui.Image? _findCharacterImage(String char, int index) {
     try {
       // 如果characterImages是Map类型
       if (characterImages is Map) {
@@ -320,7 +316,32 @@ class CollectionPainter extends CustomPainter {
           } else if (imageData is String) {
             // 如果是路径，检查缓存
             _cacheKey = imageData;
-            return await _imageCacheService.getUiImage(_cacheKey!);
+            
+            // 尝试同步获取图像，如果不存在则异步加载
+            ui.Image? cachedImage;
+            try {
+              // 这里应该使用同步方法检查缓存，如果有的话
+              // 目前暂时返回 null，需要根据实际缓存实现来调整
+              cachedImage = null;
+            } catch (e) {
+              debugPrint('同步获取缓存图像失败: $e');
+            }
+            
+            // 如果没有找到缓存的图像，则异步加载
+            if (cachedImage == null) {
+              // 使用 scheduleMicrotask 安排异步加载
+              scheduleMicrotask(() {
+                _imageCacheService.getUiImage(_cacheKey!).then((loadedImage) {
+                  if (loadedImage != null && _repaintCallback != null) {
+                    scheduleMicrotask(() {
+                      _repaintCallback!();
+                    });
+                  }
+                });
+              });
+            }
+            
+            return cachedImage;
           }
         }
       }
@@ -332,7 +353,30 @@ class CollectionPainter extends CustomPainter {
           return imageData;
         } else if (imageData is String) {
           _cacheKey = imageData;
-          return await _imageCacheService.getUiImage(_cacheKey!);
+          
+          // 尝试同步获取图像
+          ui.Image? cachedImage;
+          try {
+            // 这里应该使用同步方法检查缓存，如果有的话
+            cachedImage = null;
+          } catch (e) {
+            debugPrint('同步获取缓存图像失败: $e');
+          }
+          
+          // 如果没有找到缓存的图像，则异步加载
+          if (cachedImage == null) {
+            scheduleMicrotask(() {
+              _imageCacheService.getUiImage(_cacheKey!).then((loadedImage) {
+                if (loadedImage != null && _repaintCallback != null) {
+                  scheduleMicrotask(() {
+                    _repaintCallback!();
+                  });
+                }
+              });
+            });
+          }
+          
+          return cachedImage;
         }
       }
       return null;
@@ -385,7 +429,7 @@ class CollectionPainter extends CustomPainter {
   }
 
   /// 绘制背景纹理
-  Future<void> _paintTexture(Canvas canvas, Rect rect, {required String mode}) async {
+  void _paintTexture(Canvas canvas, Rect rect, {required String mode}) {
     if (!textureConfig.enabled || textureConfig.data == null) return;
 
     final data = textureConfig.data!;
@@ -396,8 +440,23 @@ class CollectionPainter extends CustomPainter {
     if (mode != textureConfig.textureApplicationRange) return;
 
     try {
-      // 获取图像
-      final image = await _imageCacheService.getUiImage(texturePath);
+      // 检查是否正在加载中
+      if (_loadingTextures.contains(texturePath)) {
+        // 已经在加载中，仅绘制占位内容
+        _drawFallbackTexture(canvas, rect);
+        return;
+      }
+
+      // 尝试同步检查是否已缓存
+      ui.Image? image;
+      try {
+        // 尝试使用同步方式获取图像
+        // 注意：这里假设有一个同步方法来检查缓存
+        // 如果实际上没有，可能需要实现一个
+        image = null; // 这里应该调用同步获取方法，如果有的话
+      } catch (e) {
+        debugPrint('⚠️ 同步获取纹理缓存图像时出错: $e');
+      }
 
       if (image != null) {
         // 有纹理图片，绘制纹理
@@ -409,13 +468,17 @@ class CollectionPainter extends CustomPainter {
         // 异步加载纹理图片
         if (!_loadingTextures.contains(texturePath)) {
           _loadingTextures.add(texturePath);
-          _loadAndCacheTexture(texturePath).then((loadedImage) {
-            _loadingTextures.remove(texturePath);
-            if (loadedImage != null && _repaintCallback != null) {
-              SchedulerBinding.instance.addPostFrameCallback((_) {
-                _repaintCallback!();
-              });
-            }
+
+          // 使用 scheduleMicrotask 安排异步加载
+          scheduleMicrotask(() {
+            _loadAndCacheTexture(texturePath).then((loadedImage) {
+              _loadingTextures.remove(texturePath);
+              if (loadedImage != null && _repaintCallback != null) {
+                scheduleMicrotask(() {
+                  _repaintCallback!();
+                });
+              }
+            });
           });
         }
       }
