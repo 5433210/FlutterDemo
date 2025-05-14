@@ -63,42 +63,6 @@ class _M3CharacterManagementNavigationBarState
             ]
           : null,
       actions: [
-        // 居中的搜索框
-        // const Spacer(),
-        SizedBox(
-          width: 240,
-          child: SearchBar(
-            controller: widget.searchController,
-            hintText: l10n.searchCharactersWorksAuthors,
-            leading: const Icon(Icons.search, size: AppSizes.searchBarIconSize),
-            padding: const WidgetStatePropertyAll(
-              EdgeInsets.symmetric(horizontal: AppSizes.m),
-            ),
-            onChanged: widget.onSearch,
-            trailing: [
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: widget.searchController,
-                builder: (context, value, child) {
-                  return AnimatedOpacity(
-                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                    duration: const Duration(
-                        milliseconds: AppSizes.animationDurationMedium),
-                    child: IconButton(
-                      icon: const Icon(Icons.clear,
-                          size: AppSizes.searchBarClearIconSize),
-                      onPressed: () {
-                        widget.searchController.clear();
-                        widget.onSearch('');
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        // const Spacer(),
-
         // 右侧按钮组
         // 批量删除按钮
         if (widget.isBatchMode && widget.selectedCount > 0)

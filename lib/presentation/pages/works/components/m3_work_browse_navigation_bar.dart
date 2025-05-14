@@ -71,40 +71,6 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
             label: Text(l10n.workBrowseImport),
             onPressed: widget.onImport,
           ),
-        // 居中的搜索栏
-        // const Spacer(),
-        SizedBox(
-          width: AppSizes.searchBarWidth,
-          child: SearchBar(
-            controller: _searchController,
-            onChanged: widget.onSearch,
-            hintText: l10n.workBrowseSearch,
-            leading: const Icon(Icons.search, size: AppSizes.searchBarIconSize),
-            trailing: [
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _searchController,
-                builder: (context, value, child) {
-                  return AnimatedOpacity(
-                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                    duration: const Duration(
-                        milliseconds: AppSizes.animationDurationMedium),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.clear,
-                        size: AppSizes.searchBarClearIconSize,
-                      ),
-                      onPressed: () {
-                        _searchController.clear();
-                        widget.onSearch('');
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-        // const Spacer(),
 
         // 右侧按钮组：从右向左排序
         // 导入或删除按钮

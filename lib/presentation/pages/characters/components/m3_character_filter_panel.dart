@@ -13,7 +13,6 @@ import '../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../widgets/filter/sections/m3_filter_favorite_section.dart';
 import '../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import '../../../widgets/filter/sections/m3_filter_style_section.dart';
-import '../../../widgets/filter/sections/m3_filter_tags_section.dart';
 import '../../../widgets/filter/sections/m3_filter_tool_section.dart';
 
 /// Material 3 版本的字符筛选面板
@@ -78,6 +77,10 @@ class M3CharacterFilterPanel extends ConsumerWidget {
         if (newFilter.tags != filter.tags) {
           filterNotifier.updateTags(newFilter.tags);
         }
+
+        if (newFilter.searchText != filter.searchText) {
+          filterNotifier.updateSearchText(newFilter.searchText);
+        }
       },
       collapsible: collapsible,
       isExpanded: isExpanded,
@@ -119,6 +122,22 @@ class _M3CharacterFilterPanelImpl extends M3FilterPanelBase<CharacterFilter> {
     final List<String> commonTags = [];
 
     return [
+      // 搜索框部分
+      buildSectionCard(
+        context,
+        TextField(
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: l10n.characterCollectionSearchHint,
+            isDense: true,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            final newFilter = filter.copyWith(searchText: value);
+            onFilterChanged(newFilter);
+          },
+        ),
+      ),
       // 排序部分
       buildSectionCard(
         context,
@@ -233,19 +252,6 @@ class _M3CharacterFilterPanelImpl extends M3FilterPanelBase<CharacterFilter> {
               );
               onFilterChanged(newFilter);
             }
-          },
-        ),
-      ),
-
-      // 标签部分
-      buildSectionCard(
-        context,
-        M3FilterTagsSection(
-          selectedTags: filter.tags,
-          commonTags: commonTags,
-          onTagsChanged: (tags) {
-            final newFilter = filter.copyWith(tags: tags);
-            onFilterChanged(newFilter);
           },
         ),
       ),

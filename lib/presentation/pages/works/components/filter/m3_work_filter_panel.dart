@@ -11,7 +11,6 @@ import '../../../../widgets/filter/m3_filter_panel_base.dart';
 import '../../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_style_section.dart';
-import '../../../../widgets/filter/sections/m3_filter_tags_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_tool_section.dart';
 
 /// Material 3 版本的作品筛选面板
@@ -83,10 +82,23 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
     // 获取可用的书写工具
     final tools = WorkTool.values.toList();
 
-    // 常用标签
-    final commonTags = <String>[];
-
     return [
+      // 搜索部分
+      buildSectionCard(
+        context,
+        TextField(
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: l10n.workBrowseSearch,
+            isDense: true,
+            border: const OutlineInputBorder(),
+          ),
+          onChanged: (value) {
+            final newFilter = filter.copyWith(keyword: value);
+            onFilterChanged(newFilter);
+          },
+        ),
+      ),
       // 排序部分
       buildSectionCard(
         context,
@@ -160,19 +172,6 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
               );
               onFilterChanged(newFilter);
             }
-          },
-        ),
-      ),
-
-      // 标签部分
-      buildSectionCard(
-        context,
-        M3FilterTagsSection(
-          selectedTags: filter.tags,
-          commonTags: commonTags,
-          onTagsChanged: (tags) {
-            final newFilter = filter.copyWith(tags: tags);
-            onFilterChanged(newFilter);
           },
         ),
       ),
