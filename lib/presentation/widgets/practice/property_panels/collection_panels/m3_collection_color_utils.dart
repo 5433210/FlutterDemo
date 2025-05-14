@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../l10n/app_localizations.dart';
+import '../../../../widgets/common/m3_color_picker.dart';
 
 /// Shows a Material 3 color picker dialog with localization support
 Future<void> showColorPickerDialog(
@@ -8,102 +8,18 @@ Future<void> showColorPickerDialog(
   String initialColor,
   Function(Color) onColorSelected,
 ) async {
-  final l10n = AppLocalizations.of(context);
-  final colorScheme = Theme.of(context).colorScheme;
-  final textTheme = Theme.of(context).textTheme;
+  final color = CollectionColorUtils.hexToColor(initialColor);
 
-  // Preset colors list
-  final presetColors = [
-    Colors.black,
-    Colors.white,
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.deepPurple,
-    Colors.indigo,
-    Colors.blue,
-    Colors.lightBlue,
-    Colors.cyan,
-    Colors.teal,
-    Colors.green,
-    Colors.lightGreen,
-    Colors.lime,
-    Colors.yellow,
-    Colors.amber,
-    Colors.orange,
-    Colors.deepOrange,
-    Colors.brown,
-    Colors.grey,
-    Colors.blueGrey,
-    Colors.transparent,
-  ];
-
-  await showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(l10n.collectionPropertyPanelColorPicker),
-      backgroundColor: colorScheme.surface,
-      surfaceTintColor: colorScheme.surfaceTint,
-      content: SizedBox(
-        width: 300,
-        height: 300,
-        child: GridView.builder(
-          shrinkWrap: true,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-            childAspectRatio: 1,
-          ),
-          itemCount: presetColors.length,
-          itemBuilder: (context, index) {
-            final color = presetColors[index];
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  onColorSelected(color);
-                  Navigator.of(context).pop();
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: color,
-                    border: Border.all(
-                      color:
-                          color == Colors.white || color == Colors.transparent
-                              ? colorScheme.outline
-                              : color,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: color == Colors.transparent
-                      ? Center(
-                          child: Text(
-                            l10n.collectionPropertyPanelOpacity,
-                            style: textTheme.labelSmall,
-                          ),
-                        )
-                      : null,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      actions: <Widget>[
-        TextButton(
-          style: TextButton.styleFrom(
-            foregroundColor: colorScheme.primary,
-          ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
-          child: Text(l10n.cancel),
-        ),
-      ],
-    ),
+  final selectedColor = await M3ColorPicker.show(
+    context,
+    initialColor: color,
+    enableAlpha: true,
+    enableColorCode: true,
   );
+
+  if (selectedColor != null) {
+    onColorSelected(selectedColor);
+  }
 }
 
 /// Collection panel color and drawing utility class with Material 3 support
