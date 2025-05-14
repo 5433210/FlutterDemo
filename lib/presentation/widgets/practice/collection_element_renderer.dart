@@ -1,6 +1,8 @@
 // filepath: c:\Users\wailik\Documents\Code\Flutter\demo\demo\lib\presentation\widgets\practice\collection_element_renderer.dart
 // 完整修复版本 - 集成所有原有功能与新特性
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 
@@ -78,15 +80,17 @@ class CollectionElementRenderer {
     // 检查是否为空字符情况
     final bool isEmpty = characters.isEmpty;
 
-    // 获取可用区域大小，扣减内边距
-    final availableWidth = constraints.maxWidth - padding * 2;
-    final availableHeight = constraints.maxHeight - padding * 2;
+    // 获取绘制区域的布局信息
+    final layoutWidth = constraints.maxWidth;
+    final layoutHeight = constraints.maxHeight;
+    final contentWidth = layoutWidth - padding * 2;
+    final contentHeight = layoutHeight - padding * 2;
 
     // 添加调试信息
     debugPrint('''集字布局初始化：
-  原始尺寸：${constraints.maxWidth}x${constraints.maxHeight}
+  原始尺寸：${layoutWidth}x$layoutHeight
   内边距：$padding
-  可用尺寸：${availableWidth}x$availableHeight''');
+  可用尺寸：${contentWidth}x$contentHeight''');
 
     // 创建字符列表及换行标记列表
     List<String> charList = [];
@@ -127,16 +131,24 @@ class CollectionElementRenderer {
 
     // 计算每列字符数（用于自动换行）
     int charsPerCol = 0;
+    double adjustedFontSize = fontSize;
+
+    // 调整字体大小以适应内边距
+    final maxSize = math.min(contentWidth, contentHeight);
+    if (fontSize > maxSize) {
+      adjustedFontSize = maxSize;
+    }
+
     if (enableSoftLineBreak) {
       // 根据书写模式决定使用宽度还是高度
-      final effectiveSize = isHorizontal ? availableWidth : availableHeight;
+      final effectiveSize = isHorizontal ? contentWidth : contentHeight;
 
       // 计算每行/列可容纳的字符数，考虑字间距
-      if (effectiveSize > 0 && fontSize > 0) {
-        // 使用和原始实现相同的计算方式
-        final maxCharsPerLine =
-            ((effectiveSize + letterSpacing) / (fontSize + letterSpacing))
-                .floor();
+      if (effectiveSize > 0 && adjustedFontSize > 0) {
+        // 计算时已经考虑了内边距后的有效尺寸
+        final maxCharsPerLine = ((effectiveSize + letterSpacing) /
+                (adjustedFontSize + letterSpacing))
+            .floor();
         charsPerCol = maxCharsPerLine > 0 ? maxCharsPerLine : 1;
 
         debugPrint(
@@ -147,14 +159,14 @@ class CollectionElementRenderer {
       }
     }
 
-    // 计算每个字符的位置
+    // 计算每个字符的位置，基于内容区域
     final List<CharacterPosition> positions =
         LayoutCalculator.calculatePositions(
       processedChars: charList,
       isNewLineList: isNewLineList,
-      charSize: fontSize,
-      availableWidth: availableWidth,
-      availableHeight: availableHeight,
+      charSize: adjustedFontSize,
+      availableWidth: contentWidth,
+      availableHeight: contentHeight,
       textAlign: textAlign,
       isVertical: !isHorizontal,
       fontColor: parsedFontColor,
@@ -166,6 +178,20 @@ class CollectionElementRenderer {
       letterSpacing: letterSpacing,
       verticalAlign: verticalAlign,
     );
+
+    // 为所有位置应用内边距偏移
+    final List<CharacterPosition> adjustedPositions = positions.map((pos) {
+      return CharacterPosition(
+        char: pos.char,
+        x: pos.x + padding,
+        y: pos.y + padding,
+        size: pos.size,
+        index: pos.index,
+        fontColor: pos.fontColor,
+        backgroundColor: pos.backgroundColor,
+        isAfterNewLine: pos.isAfterNewLine,
+      );
+    }).toList();
 
     // 使用StatefulBuilder来支持重绘
     return StatefulBuilder(
@@ -271,8 +297,8 @@ class CollectionElementRenderer {
         try {
           painter = AdvancedCollectionPainter(
             characters: charList,
-            positions: positions,
-            fontSize: fontSize,
+            positions: adjustedPositions,
+            fontSize: adjustedFontSize,
             characterImages: characterImages,
             textureConfig: textureConfig,
             ref: ref,
@@ -306,8 +332,8 @@ class CollectionElementRenderer {
           debugPrint('创建AdvancedCollectionPainter失败，使用CollectionPainter: $e');
           painter = CollectionPainter(
             characters: charList,
-            positions: positions,
-            fontSize: fontSize,
+            positions: adjustedPositions,
+            fontSize: adjustedFontSize,
             characterImages: characterImages,
             textureConfig: textureConfig,
             ref: ref,
@@ -332,7 +358,6 @@ class CollectionElementRenderer {
         debugPrint('  自动换行: ${enableSoftLineBreak ? '√' : '✗'}');
 
         // 创建容器并应用尺寸约束
-        // 修复：使用Stack和Positioned代替OverflowBox，避免触摸事件坐标转换问题
         return SizedBox(
           width: constraints.maxWidth,
           height: constraints.maxHeight,

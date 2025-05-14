@@ -91,9 +91,13 @@ class AdvancedCollectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     try {
+      // 计算实际可用区域（考虑内边距）
+      final availableRect = Rect.fromLTWH(padding, padding,
+          size.width - padding * 2, size.height - padding * 2);
+
       // 保存当前画布状态并设置裁剪区域
       canvas.save();
-      canvas.clipRect(Offset.zero & size);
+      canvas.clipRect(availableRect);
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled &&
           textureConfig.data != null &&
