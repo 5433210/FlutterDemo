@@ -336,12 +336,14 @@ class CollectionElementRenderer {
         return SizedBox(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          child: RepaintBoundary(
-            child: CustomPaint(
-              size: Size(constraints.maxWidth, constraints.maxHeight),
-              painter: painter,
-              // 确保子组件扩展以填满整个区域
-              child: const SizedBox.expand(),
+          child: ClipRect(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: painter,
+                // 确保子组件扩展以填满整个区域
+                child: const SizedBox.expand(),
+              ),
             ),
           ),
         );

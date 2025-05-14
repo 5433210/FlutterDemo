@@ -91,6 +91,9 @@ class AdvancedCollectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     try {
+      // 保存当前画布状态并设置裁剪区域
+      canvas.save();
+      canvas.clipRect(Offset.zero & size);
       // 1. 首先绘制整体背景（如果需要）
       if (textureConfig.enabled &&
           textureConfig.data != null &&
@@ -136,6 +139,9 @@ class AdvancedCollectionPainter extends CustomPainter {
           _drawFallbackText(canvas, position, rect);
         }
       }
+
+      // 恢复画布状态
+      canvas.restore();
     } catch (e) {
       debugPrint('绘制异常：$e');
     }
