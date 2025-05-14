@@ -370,9 +370,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
             // Return resizable panel
             return ResizablePanel(
-              initialWidth: 300,
+              initialWidth: 400,
               minWidth: 200,
-              maxWidth: 500,
+              maxWidth: 600,
               isLeftPanel: false,
               child: panel,
             );
@@ -474,9 +474,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         }
 
         return ResizablePanel(
-          initialWidth: 300,
+          initialWidth: 400,
           minWidth: 200,
-          maxWidth: 500,
+          maxWidth: 600,
           isLeftPanel: false,
           child: panel,
         );

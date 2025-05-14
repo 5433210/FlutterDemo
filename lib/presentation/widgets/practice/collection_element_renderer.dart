@@ -181,21 +181,23 @@ class CollectionElementRenderer {
             '初始纹理状态 - 应用模式：$textureApplicationRange，是否有纹理：$hasCharacterTexture');
 
         // 递归查找最深层的有效纹理数据
-        Map<String, dynamic>? findDeepestTextureData(Map<String, dynamic> data) {
+        Map<String, dynamic>? findDeepestTextureData(
+            Map<String, dynamic> data) {
           // 首先检查当前层是否有背景纹理
-          if (data.containsKey('backgroundTexture') && 
+          if (data.containsKey('backgroundTexture') &&
               data['backgroundTexture'] != null &&
               data['backgroundTexture'] is Map<String, dynamic>) {
             return data;
           }
-          
+
           // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
-          if (data.containsKey('content') && 
-              data['content'] != null && 
+          if (data.containsKey('content') &&
+              data['content'] != null &&
               data['content'] is Map<String, dynamic>) {
-            return findDeepestTextureData(data['content'] as Map<String, dynamic>);
+            return findDeepestTextureData(
+                data['content'] as Map<String, dynamic>);
           }
-          
+
           // 如果没有找到任何纹理数据，返回null
           return null;
         }
@@ -206,14 +208,15 @@ class CollectionElementRenderer {
           if (data.containsKey('textureApplicationRange')) {
             return data['textureApplicationRange'] as String? ?? 'background';
           }
-          
+
           // 如果当前层没有应用范围设置，但有嵌套内容，则递归查找
-          if (data.containsKey('content') && 
-              data['content'] != null && 
+          if (data.containsKey('content') &&
+              data['content'] != null &&
               data['content'] is Map<String, dynamic>) {
-            return extractApplicationRange(data['content'] as Map<String, dynamic>);
+            return extractApplicationRange(
+                data['content'] as Map<String, dynamic>);
           }
-          
+
           // 如果没有找到任何应用范围设置，返回默认值
           return 'background';
         }
@@ -221,12 +224,12 @@ class CollectionElementRenderer {
         if (characterImages is Map<String, dynamic>) {
           // 查找最深层的有效纹理数据
           final deepestTextureData = findDeepestTextureData(characterImages);
-          
+
           if (deepestTextureData != null) {
             // 提取应用范围
             effectiveApplicationMode = extractApplicationRange(characterImages);
             debugPrint('使用提取的纹理应用范围：$effectiveApplicationMode');
-            
+
             // 提取纹理数据
             if (deepestTextureData.containsKey('backgroundTexture') &&
                 deepestTextureData['backgroundTexture'] != null) {
@@ -259,10 +262,10 @@ class CollectionElementRenderer {
           // 当没有ref时，返回一个错误提示组件
           return const Center(
             child: Text('需要WidgetRef才能创建CollectionPainter',
-              style: TextStyle(color: Colors.red)),
+                style: TextStyle(color: Colors.red)),
           );
         }
-        
+
         CustomPainter painter;
         // 使用增强版绘制器，支持原有的字符图像加载功能
         try {
@@ -309,7 +312,7 @@ class CollectionElementRenderer {
             textureConfig: textureConfig,
             ref: ref,
           );
-          
+
           // 设置重绘回调 - 基础版本
           (painter as CollectionPainter).setRepaintCallback(() {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -329,16 +332,17 @@ class CollectionElementRenderer {
         debugPrint('  自动换行: ${enableSoftLineBreak ? '√' : '✗'}');
 
         // 创建容器并应用尺寸约束
-        // 注意：这里我们使用SizedBox来确保尺寸符合传入的constraints
-        // 内边距已经在位置计算时考虑，因此不需要额外的Padding组件
+        // 修复：使用Stack和Positioned代替OverflowBox，避免触摸事件坐标转换问题
         return SizedBox(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          child: CustomPaint(
-            // 使用已配置好重绘回调的 painter
-            painter: painter,
-            // 确保子组件扩展以填满整个区域
-            child: const SizedBox.expand(),
+          child: RepaintBoundary(
+            child: CustomPaint(
+              size: Size(constraints.maxWidth, constraints.maxHeight),
+              painter: painter,
+              // 确保子组件扩展以填满整个区域
+              child: const SizedBox.expand(),
+            ),
           ),
         );
       },

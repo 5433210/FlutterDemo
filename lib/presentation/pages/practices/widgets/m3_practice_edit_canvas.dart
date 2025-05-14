@@ -181,7 +181,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       },
       builder: (context, candidateData, rejectedData) {
         return Container(
-          color: colorScheme.surfaceContainerLowest, // Canvas outer background
+          color: colorScheme.inverseSurface.withOpacity(
+              0.1), // Canvas outer background - improved contrast in light theme
           child: InteractiveViewer(
             boundaryMargin: const EdgeInsets.all(double.infinity),
             panEnabled: widget.isPreviewMode ||

@@ -83,9 +83,8 @@ class AppSizes {
   static const double breakpointMd = 905.0;
   static const double breakpointLg = 1240.0;
   static const double breakpointXl = 1440.0;
-
   // Filter panel width (used across the app)
-  static const double filterPanelWidth = 280.0;
+  static const double filterPanelWidth = 320.0;
 
   // Work browse page specific
   static const double workListItemHeight = 160.0;

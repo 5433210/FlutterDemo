@@ -42,16 +42,20 @@ class CharacterPosition {
 
   /// 获取内部可用区域
   Rect get innerRect {
+    // Apply padding to reduce available drawing area
+    final paddingValue = size *
+        0.15; // Increased padding percentage for better visual appearance
     return Rect.fromLTWH(
-      x + padding.left,
-      y + padding.top,
-      size - padding.horizontal,
-      size - padding.vertical,
+      x + paddingValue,
+      y + paddingValue,
+      size - paddingValue * 2,
+      size - paddingValue * 2,
     );
   }
 
   /// 获取内边距
-  EdgeInsets get padding => EdgeInsets.all(size * 0.05);
+  EdgeInsets get padding =>
+      EdgeInsets.all(size * 0.15); // Increased from 0.05 to 0.15
 }
 
 /// 布局计算工具类 - 提供字符位置计算的功能

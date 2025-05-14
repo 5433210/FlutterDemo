@@ -27,8 +27,8 @@ class ResizablePanel extends StatefulWidget {
     Key? key,
     required this.child,
     this.initialWidth = AppSizes.filterPanelWidth,
-    this.minWidth = 150.0,
-    this.maxWidth = 400.0,
+    this.minWidth = 200.0,
+    this.maxWidth = 600.0,
     this.isLeftPanel = true,
     this.onWidthChanged,
   }) : super(key: key);
