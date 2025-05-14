@@ -252,7 +252,7 @@ class LayoutCalculator {
           x: x,
           y: y,
           size: charSize,
-          index: i,
+          index: i + rowIndex,
           fontColor: fontColor,
           backgroundColor: backgroundColor,
           isAfterNewLine: isNewLineList.isNotEmpty && i < isNewLineList.length
@@ -408,7 +408,7 @@ class LayoutCalculator {
           x: x,
           y: y,
           size: charSize,
-          index: i,
+          index: i + colIndex,
           fontColor: fontColor,
           backgroundColor: backgroundColor,
           isAfterNewLine: isNewLineList.isNotEmpty && i < isNewLineList.length

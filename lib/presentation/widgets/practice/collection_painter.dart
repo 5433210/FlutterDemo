@@ -4,13 +4,13 @@ import 'dart:typed_data' show BytesBuilder;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../infrastructure/cache/services/image_cache_service.dart';
-import '../../../infrastructure/providers/cache_providers.dart' as cache_providers;
+import '../../../infrastructure/providers/cache_providers.dart'
+    as cache_providers;
 import '../../../infrastructure/services/character_image_service.dart';
 import 'character_position.dart';
 import 'texture_config.dart';
@@ -45,7 +45,7 @@ class CollectionPainter extends CustomPainter {
 
   // 内部状态变量
   final Set<String> _loadingTextures = {};
-  bool _needsRepaint = false;
+  final bool _needsRepaint = false;
   VoidCallback? _repaintCallback;
 
   // 服务
@@ -120,57 +120,6 @@ class CollectionPainter extends CustomPainter {
   /// 设置重绘回调函数
   void setRepaintCallback(VoidCallback callback) {
     _repaintCallback = callback;
-  }
-
-  /// 加载字符图像
-  Future<bool> _loadCharacterImage(String imageData, String cacheKey) async {
-    try {
-      // 防止重复加载
-      if (_loadingTextures.contains(cacheKey)) {
-        return false;
-      }
-      _loadingTextures.add(cacheKey);
-      
-      ui.Image? image;
-      if (imageData.contains('/')) {
-        // 如果是路径，使用ImageCacheService加载
-        image = await _imageCacheService.getUiImage(imageData);
-      } else {
-        // 如果是字符ID，使用CharacterImageService加载
-        final imageBytes = await _characterImageService.getCharacterImage(
-          imageData, 
-          'default', 
-          'png'
-        );
-        
-        if (imageBytes != null) {
-          // 将字节数据转换为UI图像
-          final completer = Completer<ui.Image>();
-          ui.decodeImageFromList(imageBytes, (ui.Image img) {
-            completer.complete(img);
-          });
-          image = await completer.future;
-          
-          // 缓存图像
-          await _imageCacheService.cacheUiImage(cacheKey, image);
-        }
-      }
-      
-      _loadingTextures.remove(cacheKey);
-      
-      // 触发重绘
-      if (image != null && _repaintCallback != null) {
-        scheduleMicrotask(() {
-          _repaintCallback!();
-        });
-      }
-      
-      return image != null;
-    } catch (e) {
-      debugPrint('加载字符图像失败: $e');
-      _loadingTextures.remove(cacheKey);
-      return false;
-    }
   }
 
   @override
@@ -375,101 +324,56 @@ class CollectionPainter extends CustomPainter {
         return characterImages;
       }
 
-      debugPrint('字符图像类型: ${characterImages.runtimeType}, 当前字符: $char, 索引: $index');
+      debugPrint(
+          '字符图像类型: ${characterImages.runtimeType}, 当前字符: $char, 索引: $index');
 
       // 如果是映射形式，先尝试根据索引获取
       if (characterImages is Map) {
         // 尝试查找索引键
-        debugPrint('尝试查找索引键: $index');
-        
+        debugPrint('尝试查找索引键1: $index');
+
         // 检查是否有子键字典
         if (characterImages.containsKey('characterImages')) {
           final subMap = characterImages['characterImages'];
           if (subMap is Map && subMap.containsKey(index.toString())) {
-            return _processCharacterImageData(subMap[index.toString()], char, index);
+            return _processCharacterImageData(
+                subMap[index.toString()], char, index);
           }
         }
-        
+
         // 直接检查索引键
         if (characterImages.containsKey(index.toString())) {
-          return _processCharacterImageData(characterImages[index.toString()], char, index);
+          return _processCharacterImageData(
+              characterImages[index.toString()], char, index);
         }
-        
+
         // 直接检查数字索引
         if (characterImages.containsKey(index)) {
-          return _processCharacterImageData(characterImages[index], char, index);
+          return _processCharacterImageData(
+              characterImages[index], char, index);
         }
-        
+
         // 检查字符键
         if (characterImages.containsKey(char)) {
           return _processCharacterImageData(characterImages[char], char, index);
         }
-        
+
         // 输出子键信息便于调试
         debugPrint('找到characterImages子键: $characterImages');
       }
-      
+
       // 如果是列表形式，根据索引获取
       if (characterImages is List && index < characterImages.length) {
         final imageData = characterImages[index];
         return _processCharacterImageData(imageData, char, index);
       }
-      
+
       debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
       return null;
     } catch (e) {
       debugPrint('获取字符图像失败: $e');
       return null;
     }
-  }
-  
-  /// 处理字符图像数据
-  ui.Image? _processCharacterImageData(dynamic imageData, String char, int index) {
-    if (imageData == null) {
-      return null;
-    }
-    
-    // 如果是图像对象，直接返回
-    if (imageData is ui.Image) {
-      return imageData;
-    }
-    
-    // 如果是字符串，尝试加载图像
-    if (imageData is String) {
-      final cacheKey = 'char_${imageData}_$fontSize';
-      
-      // 尝试从缓存获取图像
-      ui.Image? cachedImage = _imageCacheService.tryGetUiImageSync(cacheKey);
-      if (cachedImage != null) {
-        return cachedImage;
-      }
-      
-      // 异步加载
-      _loadCharacterImage(imageData, cacheKey);
-      return null;
-    }
-    
-    // 如果是字典，尝试获取characterId
-    if (imageData is Map) {
-      if (imageData.containsKey('characterId')) {
-        final characterId = imageData['characterId'];
-        if (characterId is String) {
-          final cacheKey = 'char_${characterId}_$fontSize';
-          
-          // 尝试从缓存获取图像
-          ui.Image? cachedImage = _imageCacheService.tryGetUiImageSync(cacheKey);
-          if (cachedImage != null) {
-            debugPrint('从内存缓存中找到图像: $cacheKey');
-            return cachedImage;
-          }
-          
-          // 异步加载
-          _loadCharacterImage(characterId, cacheKey);
-        }
-      }
-    }
-    
-    return null;
   }
 
   /// 加载并缓存纹理
@@ -512,6 +416,54 @@ class CollectionPainter extends CustomPainter {
     }
 
     return null;
+  }
+
+  /// 加载字符图像
+  Future<bool> _loadCharacterImage(String imageData, String cacheKey) async {
+    try {
+      // 防止重复加载
+      if (_loadingTextures.contains(cacheKey)) {
+        return false;
+      }
+      _loadingTextures.add(cacheKey);
+
+      ui.Image? image;
+      if (imageData.contains('/')) {
+        // 如果是路径，使用ImageCacheService加载
+        image = await _imageCacheService.getUiImage(imageData);
+      } else {
+        // 如果是字符ID，使用CharacterImageService加载
+        final imageBytes = await _characterImageService.getCharacterImage(
+            imageData, 'default', 'png');
+
+        if (imageBytes != null) {
+          // 将字节数据转换为UI图像
+          final completer = Completer<ui.Image>();
+          ui.decodeImageFromList(imageBytes, (ui.Image img) {
+            completer.complete(img);
+          });
+          image = await completer.future;
+
+          // 缓存图像
+          await _imageCacheService.cacheUiImage(cacheKey, image);
+        }
+      }
+
+      _loadingTextures.remove(cacheKey);
+
+      // 触发重绘
+      if (image != null && _repaintCallback != null) {
+        scheduleMicrotask(() {
+          _repaintCallback!();
+        });
+      }
+
+      return image != null;
+    } catch (e) {
+      debugPrint('加载字符图像失败: $e');
+      _loadingTextures.remove(cacheKey);
+      return false;
+    }
   }
 
   /// 绘制背景纹理
@@ -571,5 +523,56 @@ class CollectionPainter extends CustomPainter {
     } catch (e, stack) {
       debugPrint('❌ 纹理绘制错误: $e\n$stack');
     }
+  }
+
+  /// 处理字符图像数据
+  ui.Image? _processCharacterImageData(
+      dynamic imageData, String char, int index) {
+    if (imageData == null) {
+      return null;
+    }
+
+    // 如果是图像对象，直接返回
+    if (imageData is ui.Image) {
+      return imageData;
+    }
+
+    // 如果是字符串，尝试加载图像
+    if (imageData is String) {
+      final cacheKey = 'char_${imageData}_$fontSize';
+
+      // 尝试从缓存获取图像
+      ui.Image? cachedImage = _imageCacheService.tryGetUiImageSync(cacheKey);
+      if (cachedImage != null) {
+        return cachedImage;
+      }
+
+      // 异步加载
+      _loadCharacterImage(imageData, cacheKey);
+      return null;
+    }
+
+    // 如果是字典，尝试获取characterId
+    if (imageData is Map) {
+      if (imageData.containsKey('characterId')) {
+        final characterId = imageData['characterId'];
+        if (characterId is String) {
+          final cacheKey = 'char_${characterId}_$fontSize';
+
+          // 尝试从缓存获取图像
+          ui.Image? cachedImage =
+              _imageCacheService.tryGetUiImageSync(cacheKey);
+          if (cachedImage != null) {
+            debugPrint('从内存缓存中找到图像: $cacheKey');
+            return cachedImage;
+          }
+
+          // 异步加载
+          _loadCharacterImage(characterId, cacheKey);
+        }
+      }
+    }
+
+    return null;
   }
 }
