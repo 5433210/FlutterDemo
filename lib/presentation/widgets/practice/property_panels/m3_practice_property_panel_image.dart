@@ -12,8 +12,8 @@ import 'package:image/image.dart' as img;
 import '../../../../application/providers/service_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../providers/library/library_management_provider.dart';
-import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
+import '../../common/m3_color_picker.dart';
 import '../../image/cached_image.dart';
 import '../../library/m3_library_picker_dialog.dart';
 import '../practice_edit_controller.dart';
@@ -368,14 +368,52 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
                     Text('${l10n.backgroundColor}:',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8.0),
-                    ColorPaletteWidget(
-                      initialColor: _getBackgroundColor(),
-                      labelText: l10n.backgroundColor,
-                      onColorChanged: (color) {
-                        final hexColor =
-                            '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
-                        updateContentProperty('backgroundColor', hexColor);
-                      },
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () async {
+                            final color = await M3ColorPicker.show(
+                              context,
+                              initialColor: _getBackgroundColor(),
+                              enableAlpha: true,
+                            );
+                            if (color != null) {
+                              if (color == Colors.transparent) {
+                                updateContentProperty(
+                                    'backgroundColor', 'transparent');
+                              } else {
+                                final hexColor =
+                                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                updateContentProperty(
+                                    'backgroundColor', hexColor);
+                              }
+                            }
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _getBackgroundColor(),
+                              border: Border.all(color: colorScheme.outline),
+                              borderRadius: BorderRadius.circular(8),
+                              image: _getBackgroundColor() == Colors.transparent
+                                  ? const DecorationImage(
+                                      image: AssetImage(
+                                          'assets/images/transparent_bg.png'),
+                                      repeat: ImageRepeat.repeat,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          l10n.backgroundColor,
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

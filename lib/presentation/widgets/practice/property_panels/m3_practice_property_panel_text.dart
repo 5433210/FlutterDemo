@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../common/editable_number_field.dart';
+import '../../common/m3_color_picker.dart';
 import '../practice_edit_controller.dart';
 import 'm3_element_common_property_panel.dart';
 import 'm3_layer_info_panel.dart';
@@ -348,19 +349,26 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12.0),
                     onTap: () async {
-                      await _showColorPicker(
+                      final color = await M3ColorPicker.show(
                         context,
-                        fontColor,
-                        (color) {
-                          // Convert color to hex string
-                          final r = (color.r * 255).round();
-                          final g = (color.g * 255).round();
-                          final b = (color.b * 255).round();
-                          final hexColor =
-                              '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
-                          _updateContentProperty('fontColor', hexColor);
-                        },
+                        initialColor: getFontColor(),
+                        enableAlpha: true,
+                        enableColorCode: true,
                       );
+                      if (color != null) {
+                        if (color == Colors.transparent) {
+                          _updateContentProperty('fontColor', 'transparent');
+                        } else {
+                          // Convert color to hex string
+                          final r = color.red.toRadixString(16).padLeft(2, '0');
+                          final g =
+                              color.green.toRadixString(16).padLeft(2, '0');
+                          final b =
+                              color.blue.toRadixString(16).padLeft(2, '0');
+                          final hexColor = '#$r$g$b';
+                          _updateContentProperty('fontColor', hexColor);
+                        }
+                      }
                     },
                     child: Icon(
                       Icons.format_color_text,
@@ -372,8 +380,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 ),
               ),
             ),
-            const SizedBox(width: 8.0),
-            // 背景颜色选择器
+            const SizedBox(width: 8.0), // 背景颜色选择器
             Tooltip(
               message: l10n.textPropertyPanelBgColor,
               child: Container(
@@ -396,29 +403,32 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12.0),
                     onTap: () async {
-                      await _showColorPicker(
+                      final color = await M3ColorPicker.show(
                         context,
-                        backgroundColor,
-                        (color) {
-                          if (color == Colors.transparent) {
-                            _updateContentProperty(
-                                'backgroundColor', 'transparent');
-                          } else {
-                            // Convert color to hex string
-                            final r = (color.r * 255).round();
-                            final g = (color.g * 255).round();
-                            final b = (color.b * 255).round();
-                            final hexColor =
-                                '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}';
-                            _updateContentProperty('backgroundColor', hexColor);
-                          }
-                        },
+                        initialColor: getBackgroundColor(),
+                        enableAlpha: true,
+                        enableColorCode: true,
                       );
+
+                      if (color != null) {
+                        if (color == Colors.transparent) {
+                          _updateContentProperty(
+                              'backgroundColor', 'transparent');
+                        } else {
+                          // Convert color to hex string
+                          final r = color.red.toRadixString(16).padLeft(2, '0');
+                          final g =
+                              color.green.toRadixString(16).padLeft(2, '0');
+                          final b =
+                              color.blue.toRadixString(16).padLeft(2, '0');
+                          final hexColor = '#$r$g$b';
+                          _updateContentProperty('backgroundColor', hexColor);
+                        }
+                      }
                     },
                     child: Icon(
                       Icons.format_color_fill,
-                      color: getBackgroundColor() == Colors.transparent ||
-                              getBackgroundColor().computeLuminance() > 0.5
+                      color: getBackgroundColor().computeLuminance() > 0.5
                           ? Colors.black
                           : Colors.white,
                     ),
@@ -1133,135 +1143,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         return weightValue.toDouble();
       }
     }
-
     return 400; // 默认值
-  }
-
-  // 颜色选择器对话框
-  Future<void> _showColorPicker(BuildContext context, String initialColor,
-      Function(Color) onColorSelected) async {
-    final localizations = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // 打印调试信息
-    developer.log('打开颜色选择器，初始颜色: $initialColor');
-
-    Color currentColor;
-    if (initialColor == 'transparent') {
-      currentColor = Colors.transparent;
-    } else {
-      try {
-        currentColor = Color(int.parse(initialColor.replaceFirst('#', '0xFF')));
-      } catch (e) {
-        developer.log('解析颜色失败: $e');
-        currentColor = Colors.black;
-      }
-    }
-
-    // 构建颜色选择器
-    final List<Color> colors = [
-      Colors.black,
-      Colors.white,
-      Colors.red,
-      Colors.pink,
-      Colors.purple,
-      Colors.deepPurple,
-      Colors.indigo,
-      Colors.blue,
-      Colors.lightBlue,
-      Colors.cyan,
-      Colors.teal,
-      Colors.green,
-      Colors.lightGreen,
-      Colors.lime,
-      Colors.yellow,
-      Colors.amber,
-      Colors.orange,
-      Colors.deepOrange,
-      Colors.brown,
-      Colors.grey,
-      Colors.blueGrey,
-      Colors.transparent,
-    ];
-
-    await showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(localizations.imagePropertyPanelImageSelection),
-          backgroundColor: colorScheme.surface,
-          surfaceTintColor: colorScheme.surfaceTint,
-          content: SizedBox(
-            width: 300,
-            height: 300,
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
-              ),
-              itemCount: colors.length,
-              itemBuilder: (context, index) {
-                final color = colors[index];
-                // 使用颜色的 ARGB 值进行比较
-                // 将浮点数转换为整数进行比较，以避免浮点数精度问题
-                final bool isSelected = (color.r * 255).round() ==
-                        (currentColor.r * 255).round() &&
-                    (color.g * 255).round() == (currentColor.g * 255).round() &&
-                    (color.b * 255).round() == (currentColor.b * 255).round() &&
-                    (color.a * 255).round() == (currentColor.a * 255).round();
-
-                return InkWell(
-                  onTap: () {
-                    // 打印调试信息
-                    developer.log('选择颜色: $color');
-                    developer.log(
-                        '颜色组件: R=${color.r}, G=${color.g}, B=${color.b}, A=${color.a}');
-
-                    // 调用回调函数
-                    onColorSelected(color);
-                    Navigator.of(context).pop();
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: color,
-                      border: Border.all(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.outline,
-                        width: isSelected ? 2 : 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: isSelected
-                          ? Icon(
-                              Icons.check,
-                              color: (color == Colors.white ||
-                                      color == Colors.transparent ||
-                                      color.computeLuminance() > 0.7)
-                                  ? Colors.black
-                                  : Colors.white,
-                              size: 20,
-                            )
-                          : null,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(localizations.cancel),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   // 更新内容属性

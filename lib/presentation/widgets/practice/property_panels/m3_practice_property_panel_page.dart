@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../common/color_palette_widget.dart';
 import '../../common/editable_number_field.dart';
+import '../../common/m3_color_picker.dart';
 import '../practice_edit_controller.dart';
 
 /// Material 3 页面属性面板
@@ -314,10 +314,37 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ColorPaletteWidget(
-                    initialColor: _getBackgroundColor(),
-                    onColorChanged: _updateBackgroundColor,
-                    labelText: l10n.backgroundColor,
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          final color = await M3ColorPicker.show(
+                            context,
+                            initialColor: _getBackgroundColor(),
+                            enableAlpha: false,
+                          );
+                          if (color != null) {
+                            _updateBackgroundColor(color);
+                          }
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _getBackgroundColor(),
+                            border: Border.all(color: colorScheme.outline),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        l10n.backgroundColor,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -645,13 +672,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
 
   /// 更新背景颜色
   void _updateBackgroundColor(Color color) {
-    // 转换为十六进制字符串
-    final r = (color.r * 255).round().toRadixString(16).padLeft(2, '0');
-    final g = (color.g * 255).round().toRadixString(16).padLeft(2, '0');
-    final b = (color.b * 255).round().toRadixString(16).padLeft(2, '0');
-    final colorHex = '#$r$g$b';
-
-    debugPrint('Setting background color to: $colorHex from Color: $color');
+    final colorHex =
+        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
 
     // 使用新格式
     final background = {
@@ -680,8 +702,6 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   void _updateHeight(String value) {
     final newValue = double.tryParse(value);
     if (newValue != null && newValue > 0) {
-      // 直接传递毫米值，不需要转换
-      // 实际的像素转换将在渲染时进行
       widget.onPagePropertiesChanged({'height': newValue});
     } else {
       // 如果输入无效，恢复原来的值
@@ -696,8 +716,6 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   void _updateWidth(String value) {
     final newValue = double.tryParse(value);
     if (newValue != null && newValue > 0) {
-      // 直接传递毫米值，不需要转换
-      // 实际的像素转换将在渲染时进行
       widget.onPagePropertiesChanged({'width': newValue});
     } else {
       // 如果输入无效，恢复原来的值
