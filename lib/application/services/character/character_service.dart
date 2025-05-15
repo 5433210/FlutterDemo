@@ -55,6 +55,44 @@ class CharacterService {
         _binaryCache = binaryCache,
         _imageCacheService = imageCacheService;
 
+  /// Add a tag to a character
+  Future<bool> addTag(String id, String tag) async {
+    try {
+      // Validate tag - non-empty and trimmed
+      final trimmedTag = tag.trim();
+      if (trimmedTag.isEmpty) {
+        return false;
+      }
+
+      // Get character entity
+      final character = await _repository.findById(id);
+      if (character == null) {
+        AppLogger.error('Failed to add tag: character not found',
+            data: {'characterId': id});
+        return false;
+      }
+
+      // Check if tag already exists
+      if (character.tags.contains(trimmedTag)) {
+        // Tag already exists, no need to add
+        return true;
+      }
+
+      // Add the tag and save
+      final updatedTags = [...character.tags, trimmedTag];
+      final updatedCharacter = character.copyWith(tags: updatedTags);
+      await _repository.save(updatedCharacter);
+
+      AppLogger.info('Tag added to character',
+          data: {'characterId': id, 'tag': trimmedTag});
+      return true;
+    } catch (e) {
+      AppLogger.error('Failed to add tag',
+          error: e, data: {'characterId': id, 'tag': tag});
+      return false;
+    }
+  }
+
   /// 清理缓存
   Future<void> clearCache() async {
     try {
@@ -294,6 +332,38 @@ class CharacterService {
     } catch (e) {
       AppLogger.error('获取字符列表失败', error: e);
       rethrow;
+    }
+  }
+
+  /// Remove a tag from a character
+  Future<bool> removeTag(String id, String tag) async {
+    try {
+      // Get character entity
+      final character = await _repository.findById(id);
+      if (character == null) {
+        AppLogger.error('Failed to remove tag: character not found',
+            data: {'characterId': id});
+        return false;
+      }
+
+      // Check if tag exists
+      if (!character.tags.contains(tag)) {
+        // Tag doesn't exist, no need to remove
+        return true;
+      }
+
+      // Remove the tag and save
+      final updatedTags = character.tags.where((t) => t != tag).toList();
+      final updatedCharacter = character.copyWith(tags: updatedTags);
+      await _repository.save(updatedCharacter);
+
+      AppLogger.info('Tag removed from character',
+          data: {'characterId': id, 'tag': tag});
+      return true;
+    } catch (e) {
+      AppLogger.error('Failed to remove tag',
+          error: e, data: {'characterId': id, 'tag': tag});
+      return false;
     }
   }
 

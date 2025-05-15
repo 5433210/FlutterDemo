@@ -95,84 +95,6 @@ abstract class AppLocalizations {
     Locale('zh')
   ];
 
-  /// No description provided for @textureApplicationRange.
-  ///
-  /// In en, this message translates to:
-  /// **'Texture Application Range'**
-  String get textureApplicationRange;
-
-  /// No description provided for @textureRangeCharacter.
-  ///
-  /// In en, this message translates to:
-  /// **'Character Only'**
-  String get textureRangeCharacter;
-
-  /// No description provided for @textureRangeBackground.
-  ///
-  /// In en, this message translates to:
-  /// **'Entire Background'**
-  String get textureRangeBackground;
-
-  /// No description provided for @textureFillMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Fill Mode'**
-  String get textureFillMode;
-
-  /// No description provided for @textureFillModeRepeat.
-  ///
-  /// In en, this message translates to:
-  /// **'Repeat'**
-  String get textureFillModeRepeat;
-
-  /// No description provided for @textureFillModeRepeatX.
-  ///
-  /// In en, this message translates to:
-  /// **'Repeat Horizontally'**
-  String get textureFillModeRepeatX;
-
-  /// No description provided for @textureFillModeRepeatY.
-  ///
-  /// In en, this message translates to:
-  /// **'Repeat Vertically'**
-  String get textureFillModeRepeatY;
-
-  /// No description provided for @textureFillModeNoRepeat.
-  ///
-  /// In en, this message translates to:
-  /// **'No Repeat'**
-  String get textureFillModeNoRepeat;
-
-  /// No description provided for @textureFillModeCover.
-  ///
-  /// In en, this message translates to:
-  /// **'Cover'**
-  String get textureFillModeCover;
-
-  /// No description provided for @textureFillModeContain.
-  ///
-  /// In en, this message translates to:
-  /// **'Contain'**
-  String get textureFillModeContain;
-
-  /// No description provided for @textureOpacity.
-  ///
-  /// In en, this message translates to:
-  /// **'Texture Opacity'**
-  String get textureOpacity;
-
-  /// No description provided for @textureSelectFromLibrary.
-  ///
-  /// In en, this message translates to:
-  /// **'Select from Library'**
-  String get textureSelectFromLibrary;
-
-  /// No description provided for @textureRemove.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove'**
-  String get textureRemove;
-
   /// No description provided for @a4Size.
   ///
   /// In en, this message translates to:
@@ -191,6 +113,90 @@ abstract class AppLocalizations {
   /// **'About'**
   String get about;
 
+  /// No description provided for @addCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Category'**
+  String get addCategory;
+
+  /// No description provided for @addedToCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to category'**
+  String get addedToCategory;
+
+  /// No description provided for @alignBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Bottom'**
+  String get alignBottom;
+
+  /// No description provided for @alignCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Center'**
+  String get alignCenter;
+
+  /// No description provided for @alignHorizontalCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Horizontal Center'**
+  String get alignHorizontalCenter;
+
+  /// No description provided for @alignLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Left'**
+  String get alignLeft;
+
+  /// No description provided for @alignmentOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment Operations'**
+  String get alignmentOperations;
+
+  /// No description provided for @alignmentRequiresMultipleElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Alignment requires at least 2 elements'**
+  String get alignmentRequiresMultipleElements;
+
+  /// No description provided for @alignMiddle.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Middle'**
+  String get alignMiddle;
+
+  /// No description provided for @alignRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Right'**
+  String get alignRight;
+
+  /// No description provided for @alignTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Top'**
+  String get alignTop;
+
+  /// No description provided for @alignVerticalCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Align Vertical Center'**
+  String get alignVerticalCenter;
+
+  /// No description provided for @allCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All Categories'**
+  String get allCategories;
+
+  /// No description provided for @allTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All Types'**
+  String get allTypes;
+
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
@@ -203,17 +209,113 @@ abstract class AppLocalizations {
   /// **'Char As Gem'**
   String get appTitle;
 
+  /// No description provided for @autoBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Backup'**
+  String get autoBackup;
+
+  /// No description provided for @autoBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically backup your data periodically'**
+  String get autoBackupDescription;
+
+  /// No description provided for @autoBackupInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Backup Interval'**
+  String get autoBackupInterval;
+
+  /// No description provided for @autoBackupIntervalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How often to create automatic backups'**
+  String get autoBackupIntervalDescription;
+
+  /// No description provided for @autoCleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Cleanup'**
+  String get autoCleanup;
+
+  /// No description provided for @autoCleanupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically clean up old cache files'**
+  String get autoCleanupDescription;
+
+  /// No description provided for @autoCleanupInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Cleanup Interval'**
+  String get autoCleanupInterval;
+
+  /// No description provided for @autoCleanupIntervalDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How often to run automatic cleanup'**
+  String get autoCleanupIntervalDescription;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
   /// No description provided for @backgroundColor.
   ///
   /// In en, this message translates to:
   /// **'Background Color'**
   String get backgroundColor;
 
+  /// No description provided for @backupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (Optional)'**
+  String get backupDescription;
+
+  /// No description provided for @backupDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a description for this backup'**
+  String get backupDescriptionHint;
+
+  /// No description provided for @backupFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create backup'**
+  String get backupFailure;
+
+  /// No description provided for @backupList.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup List'**
+  String get backupList;
+
+  /// No description provided for @backupSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & Restore'**
+  String get backupSettings;
+
+  /// No description provided for @backupSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup created successfully'**
+  String get backupSuccess;
+
   /// No description provided for @basicInfo.
   ///
   /// In en, this message translates to:
   /// **'Basic Info'**
   String get basicInfo;
+
+  /// No description provided for @batchOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Operations'**
+  String get batchOperations;
 
   /// No description provided for @bringLayerToFront.
   ///
@@ -227,6 +329,24 @@ abstract class AppLocalizations {
   /// **'Bring to Front'**
   String get bringToFront;
 
+  /// No description provided for @cacheClearedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleared successfully'**
+  String get cacheClearedMessage;
+
+  /// No description provided for @cacheSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Settings'**
+  String get cacheSettings;
+
+  /// No description provided for @cacheSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache Size'**
+  String get cacheSize;
+
   /// No description provided for @cancel.
   ///
   /// In en, this message translates to:
@@ -239,11 +359,53 @@ abstract class AppLocalizations {
   /// **'Canvas Pixel Size'**
   String get canvasPixelSize;
 
+  /// No description provided for @categories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categories;
+
+  /// No description provided for @categoryHasItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items in this category'**
+  String categoryHasItems(Object count);
+
+  /// No description provided for @categoryManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Management'**
+  String get categoryManagement;
+
+  /// No description provided for @categoryPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Panel'**
+  String get categoryPanelTitle;
+
+  /// No description provided for @center.
+  ///
+  /// In en, this message translates to:
+  /// **'Center'**
+  String get center;
+
   /// No description provided for @characterCollectionBack.
   ///
   /// In en, this message translates to:
   /// **'Back'**
   String get characterCollectionBack;
+
+  /// No description provided for @characterCollectionDeleteBatchConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion of {count} saved regions?'**
+  String characterCollectionDeleteBatchConfirm(Object count);
+
+  /// No description provided for @characterCollectionDeleteBatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You are about to delete {count} saved regions. This action cannot be undone.'**
+  String characterCollectionDeleteBatchMessage(Object count);
 
   /// No description provided for @characterCollectionDeleteConfirm.
   ///
@@ -263,6 +425,12 @@ abstract class AppLocalizations {
   /// **'Shortcuts: Enter to confirm, Esc to cancel'**
   String get characterCollectionDeleteShortcuts;
 
+  /// No description provided for @characterCollectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String characterCollectionError(Object error);
+
   /// No description provided for @characterCollectionFilterAll.
   ///
   /// In en, this message translates to:
@@ -280,6 +448,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent'**
   String get characterCollectionFilterRecent;
+
+  /// No description provided for @characterCollectionFindSwitchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Find and switch page failed: {error}'**
+  String characterCollectionFindSwitchFailed(Object error);
 
   /// No description provided for @characterCollectionHelp.
   ///
@@ -497,6 +671,18 @@ abstract class AppLocalizations {
   /// **'Use the selection tool on the left to extract characters from the image'**
   String get characterCollectionUseSelectionTool;
 
+  /// No description provided for @characterCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Count'**
+  String get characterCount;
+
+  /// No description provided for @characterDetailAddTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Tag'**
+  String get characterDetailAddTag;
+
   /// No description provided for @characterDetailAuthor.
   ///
   /// In en, this message translates to:
@@ -527,6 +713,126 @@ abstract class AppLocalizations {
   /// **'Creation Time'**
   String get characterDetailCreationTime;
 
+  /// No description provided for @characterDetailFormatBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary'**
+  String get characterDetailFormatBinary;
+
+  /// No description provided for @characterDetailFormatBinaryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Black and white binary image'**
+  String get characterDetailFormatBinaryDesc;
+
+  /// No description provided for @characterDetailFormatDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get characterDetailFormatDescription;
+
+  /// No description provided for @characterDetailFormatExtension.
+  ///
+  /// In en, this message translates to:
+  /// **'File Format'**
+  String get characterDetailFormatExtension;
+
+  /// No description provided for @characterDetailFormatName.
+  ///
+  /// In en, this message translates to:
+  /// **'Format Name'**
+  String get characterDetailFormatName;
+
+  /// No description provided for @characterDetailFormatOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get characterDetailFormatOriginal;
+
+  /// No description provided for @characterDetailFormatOriginalDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Unprocessed original image'**
+  String get characterDetailFormatOriginalDesc;
+
+  /// No description provided for @characterDetailFormatOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline'**
+  String get characterDetailFormatOutline;
+
+  /// No description provided for @characterDetailFormatOutlineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows only the outline'**
+  String get characterDetailFormatOutlineDesc;
+
+  /// No description provided for @characterDetailFormatSquareBinary.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Binary'**
+  String get characterDetailFormatSquareBinary;
+
+  /// No description provided for @characterDetailFormatSquareBinaryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Binary image normalized to square'**
+  String get characterDetailFormatSquareBinaryDesc;
+
+  /// No description provided for @characterDetailFormatSquareOutline.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Outline'**
+  String get characterDetailFormatSquareOutline;
+
+  /// No description provided for @characterDetailFormatSquareOutlineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Outline image normalized to square'**
+  String get characterDetailFormatSquareOutlineDesc;
+
+  /// No description provided for @characterDetailFormatSquareTransparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Square Transparent'**
+  String get characterDetailFormatSquareTransparent;
+
+  /// No description provided for @characterDetailFormatSquareTransparentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent PNG image normalized to square'**
+  String get characterDetailFormatSquareTransparentDesc;
+
+  /// No description provided for @characterDetailFormatThumbnail.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail'**
+  String get characterDetailFormatThumbnail;
+
+  /// No description provided for @characterDetailFormatThumbnailDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Thumbnail image'**
+  String get characterDetailFormatThumbnailDesc;
+
+  /// No description provided for @characterDetailFormatTransparent.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent'**
+  String get characterDetailFormatTransparent;
+
+  /// No description provided for @characterDetailFormatTransparentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent PNG image with background removed'**
+  String get characterDetailFormatTransparentDesc;
+
+  /// No description provided for @characterDetailFormatType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get characterDetailFormatType;
+
   /// No description provided for @characterDetailLoadError.
   ///
   /// In en, this message translates to:
@@ -538,6 +844,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Simplified Character'**
   String get characterDetailSimplifiedChar;
+
+  /// No description provided for @characterDetailTagAddError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add tag, error: {error}'**
+  String characterDetailTagAddError(Object error);
+
+  /// No description provided for @characterDetailTagHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tag name'**
+  String get characterDetailTagHint;
+
+  /// No description provided for @characterDetailTagRemoveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to remove tag, error: {error}'**
+  String characterDetailTagRemoveError(Object error);
 
   /// No description provided for @characterDetailTags.
   ///
@@ -568,6 +892,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Writing Tool'**
   String get characterDetailWritingTool;
+
+  /// No description provided for @characterEditCharacterUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Character updated successfully'**
+  String get characterEditCharacterUpdated;
 
   /// No description provided for @characterEditCompletingSave.
   ///
@@ -676,6 +1006,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save complete'**
   String get characterEditSaveComplete;
+
+  /// No description provided for @characterEditSaveConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm saving \"{character}\"?'**
+  String characterEditSaveConfirmMessage(Object character);
 
   /// No description provided for @characterEditSaveConfirmTitle.
   ///
@@ -875,11 +1211,23 @@ abstract class AppLocalizations {
   /// **'Delete selected'**
   String get characterManagementDeleteSelected;
 
+  /// No description provided for @characterManagementError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String characterManagementError(Object message);
+
   /// No description provided for @characterManagementGridView.
   ///
   /// In en, this message translates to:
   /// **'Grid View'**
   String get characterManagementGridView;
+
+  /// No description provided for @characterManagementItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String characterManagementItemsPerPage(Object count);
 
   /// No description provided for @characterManagementListView.
   ///
@@ -923,17 +1271,71 @@ abstract class AppLocalizations {
   /// **'Characters'**
   String get characters;
 
+  /// No description provided for @clearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get clearCache;
+
+  /// No description provided for @clearCacheConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.'**
+  String get clearCacheConfirmMessage;
+
+  /// No description provided for @clearCacheConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Cache'**
+  String get clearCacheConfirmTitle;
+
   /// No description provided for @clearImageCache.
   ///
   /// In en, this message translates to:
   /// **'Clear Image Cache'**
   String get clearImageCache;
 
+  /// No description provided for @collection.
+  ///
+  /// In en, this message translates to:
+  /// **'Collection'**
+  String get collection;
+
   /// No description provided for @collectionPropertyPanel.
   ///
   /// In en, this message translates to:
   /// **'Collection Properties'**
   String get collectionPropertyPanel;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Line Break'**
+  String get collectionPropertyPanelAutoLineBreak;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disable'**
+  String get collectionPropertyPanelAutoLineBreakDisabled;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable'**
+  String get collectionPropertyPanelAutoLineBreakEnabled;
+
+  /// No description provided for @collectionPropertyPanelAutoLineBreakTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Line Break'**
+  String get collectionPropertyPanelAutoLineBreakTooltip;
+
+  /// No description provided for @collectionPropertyPanelAvailableCharacters.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Characters'**
+  String get collectionPropertyPanelAvailableCharacters;
 
   /// No description provided for @collectionPropertyPanelBackgroundColor.
   ///
@@ -1013,11 +1415,29 @@ abstract class AppLocalizations {
   /// **'Color Inversion'**
   String get collectionPropertyPanelColorInversion;
 
+  /// No description provided for @collectionPropertyPanelColorPicker.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Color'**
+  String get collectionPropertyPanelColorPicker;
+
+  /// No description provided for @collectionPropertyPanelColorSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Color Setting'**
+  String get collectionPropertyPanelColorSettings;
+
   /// No description provided for @collectionPropertyPanelContent.
   ///
   /// In en, this message translates to:
   /// **'Content Properties'**
   String get collectionPropertyPanelContent;
+
+  /// No description provided for @collectionPropertyPanelCurrentCharInversion.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Character Inversion'**
+  String get collectionPropertyPanelCurrentCharInversion;
 
   /// No description provided for @collectionPropertyPanelDisabled.
   ///
@@ -1060,6 +1480,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Geometry Properties'**
   String get collectionPropertyPanelGeometry;
+
+  /// No description provided for @collectionPropertyPanelGlobalInversion.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Inversion'**
+  String get collectionPropertyPanelGlobalInversion;
 
   /// No description provided for @collectionPropertyPanelHeaderContent.
   ///
@@ -1229,287 +1655,17 @@ abstract class AppLocalizations {
   /// **'Confirm'**
   String get confirm;
 
-  /// No description provided for @days.
+  /// No description provided for @confirmDelete.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 day} other{{count} days}}'**
-  String days(num count);
+  /// **'Do you want to delete?'**
+  String get confirmDelete;
 
-  /// No description provided for @hours.
+  /// No description provided for @confirmDeleteCategory.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
-  String hours(num count);
-
-  /// No description provided for @backupSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup & Restore'**
-  String get backupSettings;
-
-  /// No description provided for @autoBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Backup'**
-  String get autoBackup;
-
-  /// No description provided for @autoBackupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically backup your data periodically'**
-  String get autoBackupDescription;
-
-  /// No description provided for @autoBackupInterval.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Backup Interval'**
-  String get autoBackupInterval;
-
-  /// No description provided for @autoBackupIntervalDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'How often to create automatic backups'**
-  String get autoBackupIntervalDescription;
-
-  /// No description provided for @keepBackupCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Keep Backup Count'**
-  String get keepBackupCount;
-
-  /// No description provided for @keepBackupCountDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Number of backups to keep before deleting old ones'**
-  String get keepBackupCountDescription;
-
-  /// No description provided for @lastBackupTime.
-  ///
-  /// In en, this message translates to:
-  /// **'Last Backup Time'**
-  String get lastBackupTime;
-
-  /// No description provided for @createBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Create Backup'**
-  String get createBackup;
-
-  /// No description provided for @restoreBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore Backup'**
-  String get restoreBackup;
-
-  /// No description provided for @backupList.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup List'**
-  String get backupList;
-
-  /// No description provided for @noBackups.
-  ///
-  /// In en, this message translates to:
-  /// **'No backups available'**
-  String get noBackups;
-
-  /// No description provided for @loadingError.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading Error'**
-  String get loadingError;
-
-  /// No description provided for @restore.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore'**
-  String get restore;
-
-  /// No description provided for @deleteBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete'**
-  String get deleteBackup;
-
-  /// No description provided for @restoreSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore completed successfully'**
-  String get restoreSuccess;
-
-  /// No description provided for @restoreFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to restore from backup'**
-  String get restoreFailure;
-
-  /// No description provided for @deleteSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup deleted successfully'**
-  String get deleteSuccess;
-
-  /// No description provided for @deleteFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to delete backup'**
-  String get deleteFailure;
-
-  /// No description provided for @createBackupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a new backup of your data'**
-  String get createBackupDescription;
-
-  /// No description provided for @backupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description (Optional)'**
-  String get backupDescription;
-
-  /// No description provided for @backupDescriptionHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a description for this backup'**
-  String get backupDescriptionHint;
-
-  /// No description provided for @create.
-  ///
-  /// In en, this message translates to:
-  /// **'Create'**
-  String get create;
-
-  /// No description provided for @selectBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Backup'**
-  String get selectBackup;
-
-  /// No description provided for @restoreConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore Confirmation'**
-  String get restoreConfirmTitle;
-
-  /// No description provided for @restoreConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to restore from this backup? This will replace all your current data.'**
-  String get restoreConfirmMessage;
-
-  /// No description provided for @deleteBackupConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Backup'**
-  String get deleteBackupConfirmTitle;
-
-  /// No description provided for @deleteBackupConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this backup? This action cannot be undone.'**
-  String get deleteBackupConfirmMessage;
-
-  /// No description provided for @creatingBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Creating backup...'**
-  String get creatingBackup;
-
-  /// No description provided for @restoringBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Restoring from backup...'**
-  String get restoringBackup;
-
-  /// No description provided for @backupSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup created successfully'**
-  String get backupSuccess;
-
-  /// No description provided for @backupFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to create backup'**
-  String get backupFailure;
-
-  /// No description provided for @exportBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Export Backup'**
-  String get exportBackup;
-
-  /// No description provided for @importBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Import Backup'**
-  String get importBackup;
-
-  /// No description provided for @exportBackupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Export a backup to an external location'**
-  String get exportBackupDescription;
-
-  /// No description provided for @importBackupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Import a backup from an external location'**
-  String get importBackupDescription;
-
-  /// No description provided for @selectExportLocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Select export location'**
-  String get selectExportLocation;
-
-  /// No description provided for @selectImportFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Backup File'**
-  String get selectImportFile;
-
-  /// No description provided for @exportSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup exported successfully'**
-  String get exportSuccess;
-
-  /// No description provided for @exportFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to export backup'**
-  String get exportFailure;
-
-  /// No description provided for @importSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Backup imported successfully'**
-  String get importSuccess;
-
-  /// No description provided for @importFailure.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to import backup'**
-  String get importFailure;
-
-  /// No description provided for @invalidBackupFile.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid backup file'**
-  String get invalidBackupFile;
-
-  /// No description provided for @exportingBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Exporting backup...'**
-  String get exportingBackup;
-
-  /// No description provided for @importingBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Importing backup...'**
-  String get importingBackup;
+  /// **'Do you want to delete category'**
+  String get confirmDeleteCategory;
 
   /// No description provided for @contains.
   ///
@@ -1523,11 +1679,41 @@ abstract class AppLocalizations {
   /// **'Content Settings'**
   String get contentSettings;
 
+  /// No description provided for @create.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get create;
+
+  /// No description provided for @createBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Backup'**
+  String get createBackup;
+
+  /// No description provided for @createBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a new backup of your data'**
+  String get createBackupDescription;
+
+  /// No description provided for @creatingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating backup...'**
+  String get creatingBackup;
+
   /// No description provided for @customSize.
   ///
   /// In en, this message translates to:
   /// **'Custom Size'**
   String get customSize;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String days(num count);
 
   /// No description provided for @delete.
   ///
@@ -1541,17 +1727,131 @@ abstract class AppLocalizations {
   /// **'Delete All'**
   String get deleteAll;
 
+  /// No description provided for @deleteBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteBackup;
+
+  /// No description provided for @deleteBackupConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this backup? This action cannot be undone.'**
+  String get deleteBackupConfirmMessage;
+
+  /// No description provided for @deleteBackupConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Backup'**
+  String get deleteBackupConfirmTitle;
+
+  /// No description provided for @deleteCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Category'**
+  String get deleteCategory;
+
+  /// No description provided for @deleteFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete backup'**
+  String get deleteFailure;
+
+  /// No description provided for @deleteGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group'**
+  String get deleteGroup;
+
+  /// No description provided for @deleteGroupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete Group'**
+  String get deleteGroupConfirm;
+
+  /// No description provided for @deleteGroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this group? This action cannot be undone.'**
+  String get deleteGroupDescription;
+
+  /// No description provided for @deleteGroupElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Group Elements'**
+  String get deleteGroupElements;
+
   /// No description provided for @deletePage.
   ///
   /// In en, this message translates to:
   /// **'Delete Page'**
   String get deletePage;
 
+  /// No description provided for @deleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup deleted successfully'**
+  String get deleteSuccess;
+
   /// No description provided for @dimensions.
   ///
   /// In en, this message translates to:
   /// **'Dimensions'**
   String get dimensions;
+
+  /// No description provided for @diskCacheSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk Cache Size'**
+  String get diskCacheSize;
+
+  /// No description provided for @diskCacheSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum size of disk cache'**
+  String get diskCacheSizeDescription;
+
+  /// No description provided for @diskCacheTtl.
+  ///
+  /// In en, this message translates to:
+  /// **'Disk Cache Lifetime'**
+  String get diskCacheTtl;
+
+  /// No description provided for @diskCacheTtlDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How long to keep cached files on disk'**
+  String get diskCacheTtlDescription;
+
+  /// No description provided for @distributeHorizontally.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute Horizontally'**
+  String get distributeHorizontally;
+
+  /// No description provided for @distributeVertically.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribute Vertically'**
+  String get distributeVertically;
+
+  /// No description provided for @distribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution'**
+  String get distribution;
+
+  /// No description provided for @distributionOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution Operations'**
+  String get distributionOperations;
+
+  /// No description provided for @distributionRequiresThreeElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Distribution requires at least 3 elements'**
+  String get distributionRequiresThreeElements;
 
   /// No description provided for @dpiHelperText.
   ///
@@ -1571,11 +1871,47 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get edit;
 
+  /// No description provided for @editCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Category'**
+  String get editCategory;
+
+  /// No description provided for @editGroupContents.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Group Contents'**
+  String get editGroupContents;
+
+  /// No description provided for @editGroupContentsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the contents of the selected group'**
+  String get editGroupContentsDescription;
+
+  /// No description provided for @elementDistribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Distribution'**
+  String get elementDistribution;
+
+  /// No description provided for @elementId.
+  ///
+  /// In en, this message translates to:
+  /// **'Element ID'**
+  String get elementId;
+
   /// No description provided for @elements.
   ///
   /// In en, this message translates to:
   /// **'Elements'**
   String get elements;
+
+  /// No description provided for @elementType.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Type'**
+  String get elementType;
 
   /// No description provided for @empty.
   ///
@@ -1583,17 +1919,323 @@ abstract class AppLocalizations {
   /// **'Empty'**
   String get empty;
 
+  /// No description provided for @enterFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter file name'**
+  String get enterFileName;
+
+  /// No description provided for @enterGroupEditMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Group Edit Mode'**
+  String get enterGroupEditMode;
+
+  /// No description provided for @exitBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Batch Mode'**
+  String get exitBatchMode;
+
   /// No description provided for @export.
   ///
   /// In en, this message translates to:
   /// **'Export'**
   String get export;
 
+  /// No description provided for @exportBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Backup'**
+  String get exportBackup;
+
+  /// No description provided for @exportBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Export a backup to an external location'**
+  String get exportBackupDescription;
+
+  /// No description provided for @exportDialogAllPages.
+  ///
+  /// In en, this message translates to:
+  /// **'All Pages'**
+  String get exportDialogAllPages;
+
+  /// No description provided for @exportDialogBrowse.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse...'**
+  String get exportDialogBrowse;
+
+  /// No description provided for @exportDialogCentimeter.
+  ///
+  /// In en, this message translates to:
+  /// **'cm'**
+  String get exportDialogCentimeter;
+
+  /// No description provided for @exportDialogCreateDirectoryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create export directory'**
+  String get exportDialogCreateDirectoryFailed;
+
+  /// No description provided for @exportDialogCurrentPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Page'**
+  String get exportDialogCurrentPage;
+
+  /// No description provided for @exportDialogCustomRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Range'**
+  String get exportDialogCustomRange;
+
+  /// No description provided for @exportDialogDimensions.
+  ///
+  /// In en, this message translates to:
+  /// **'{width}cm × {height}cm ({orientation})'**
+  String exportDialogDimensions(Object height, Object orientation, Object width);
+
+  /// No description provided for @exportDialogEnterFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a filename'**
+  String get exportDialogEnterFilename;
+
+  /// No description provided for @exportDialogFilenamePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter filename prefix (page numbers will be added automatically)'**
+  String get exportDialogFilenamePrefix;
+
+  /// No description provided for @exportDialogFitContain.
+  ///
+  /// In en, this message translates to:
+  /// **'Contain in Page'**
+  String get exportDialogFitContain;
+
+  /// No description provided for @exportDialogFitHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to Height'**
+  String get exportDialogFitHeight;
+
+  /// No description provided for @exportDialogFitPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit Policy'**
+  String get exportDialogFitPolicy;
+
+  /// No description provided for @exportDialogFitWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fit to Width'**
+  String get exportDialogFitWidth;
+
+  /// No description provided for @exportDialogInvalidFilename.
+  ///
+  /// In en, this message translates to:
+  /// **'Filename cannot contain the following characters: \\ / : * ? \" < > |'**
+  String get exportDialogInvalidFilename;
+
+  /// No description provided for @exportDialogLandscape.
+  ///
+  /// In en, this message translates to:
+  /// **'Landscape'**
+  String get exportDialogLandscape;
+
+  /// No description provided for @exportDialogLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Location'**
+  String get exportDialogLocation;
+
+  /// No description provided for @exportDialogMarginBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottom'**
+  String get exportDialogMarginBottom;
+
+  /// No description provided for @exportDialogMarginLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get exportDialogMarginLeft;
+
+  /// No description provided for @exportDialogMarginRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get exportDialogMarginRight;
+
+  /// No description provided for @exportDialogMarginTop.
+  ///
+  /// In en, this message translates to:
+  /// **'Top'**
+  String get exportDialogMarginTop;
+
+  /// No description provided for @exportDialogMultipleFilesNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Will export {count} image files, filenames will be automatically numbered.'**
+  String exportDialogMultipleFilesNote(Object count);
+
+  /// No description provided for @exportDialogNextPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Page'**
+  String get exportDialogNextPage;
+
+  /// No description provided for @exportDialogNoPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot generate preview'**
+  String get exportDialogNoPreview;
+
+  /// No description provided for @exportDialogOutputQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Output Quality'**
+  String get exportDialogOutputQuality;
+
+  /// No description provided for @exportDialogPageMargins.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Margins (cm)'**
+  String get exportDialogPageMargins;
+
+  /// No description provided for @exportDialogPageOrientation.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Orientation'**
+  String get exportDialogPageOrientation;
+
+  /// No description provided for @exportDialogPageRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Range'**
+  String get exportDialogPageRange;
+
+  /// No description provided for @exportDialogPageSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Page Size'**
+  String get exportDialogPageSize;
+
+  /// No description provided for @exportDialogPortrait.
+  ///
+  /// In en, this message translates to:
+  /// **'Portrait'**
+  String get exportDialogPortrait;
+
+  /// No description provided for @exportDialogPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get exportDialogPreview;
+
+  /// No description provided for @exportDialogPreviewPage.
+  ///
+  /// In en, this message translates to:
+  /// **' (Page {current}/{total})'**
+  String exportDialogPreviewPage(Object current, Object total);
+
+  /// No description provided for @exportDialogPreviousPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous Page'**
+  String get exportDialogPreviousPage;
+
+  /// No description provided for @exportDialogQualityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High (2x)'**
+  String get exportDialogQualityHigh;
+
+  /// No description provided for @exportDialogQualityStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard (1x)'**
+  String get exportDialogQualityStandard;
+
+  /// No description provided for @exportDialogQualityUltra.
+  ///
+  /// In en, this message translates to:
+  /// **'Ultra (3x)'**
+  String get exportDialogQualityUltra;
+
+  /// No description provided for @exportDialogRangeExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: 1-3,5,7-9'**
+  String get exportDialogRangeExample;
+
+  /// No description provided for @exportDialogSelectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select export location'**
+  String get exportDialogSelectLocation;
+
+  /// No description provided for @exportFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export backup'**
+  String get exportFailure;
+
+  /// No description provided for @exportFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Format'**
+  String get exportFormat;
+
+  /// No description provided for @exportingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting backup...'**
+  String get exportingBackup;
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup exported successfully'**
+  String get exportSuccess;
+
+  /// No description provided for @fileCount.
+  ///
+  /// In en, this message translates to:
+  /// **'File Count'**
+  String get fileCount;
+
+  /// No description provided for @fileName.
+  ///
+  /// In en, this message translates to:
+  /// **'File Name'**
+  String get fileName;
+
+  /// No description provided for @files.
+  ///
+  /// In en, this message translates to:
+  /// **'File Count'**
+  String get files;
+
   /// No description provided for @filterApply.
   ///
   /// In en, this message translates to:
   /// **'Apply'**
   String get filterApply;
+
+  /// No description provided for @filterBatchActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Batch Actions'**
+  String get filterBatchActions;
+
+  /// No description provided for @filterBatchSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Selection'**
+  String get filterBatchSelection;
 
   /// No description provided for @filterClear.
   ///
@@ -1607,257 +2249,11 @@ abstract class AppLocalizations {
   /// **'Collapse Filter Panel'**
   String get filterCollapse;
 
-  /// No description provided for @filterExpand.
-  ///
-  /// In en, this message translates to:
-  /// **'Expand Filter Panel'**
-  String get filterExpand;
-
-  /// No description provided for @filterHeader.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter & Sort'**
-  String get filterHeader;
-
-  /// No description provided for @filterPanel.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter Panel'**
-  String get filterPanel;
-
-  /// No description provided for @filterReset.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset Filters'**
-  String get filterReset;
-
-  /// No description provided for @filterSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Filter Options'**
-  String get filterSection;
-
-  /// No description provided for @filterSearchPlaceholder.
-  ///
-  /// In en, this message translates to:
-  /// **'Search...'**
-  String get filterSearchPlaceholder;
-
-  /// No description provided for @filterSortAscending.
-  ///
-  /// In en, this message translates to:
-  /// **'Ascending'**
-  String get filterSortAscending;
-
-  /// No description provided for @filterSortDescending.
-  ///
-  /// In en, this message translates to:
-  /// **'Descending'**
-  String get filterSortDescending;
-
-  /// No description provided for @filterSortDirection.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort Direction'**
-  String get filterSortDirection;
-
-  /// No description provided for @filterSortField.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort By'**
-  String get filterSortField;
-
-  /// No description provided for @filterToggle.
-  ///
-  /// In en, this message translates to:
-  /// **'Toggle Filters'**
-  String get filterToggle;
-
-  /// No description provided for @filterTagsSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get filterTagsSection;
-
-  /// No description provided for @filterTagsSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected Tags:'**
-  String get filterTagsSelected;
-
-  /// No description provided for @filterTagsAdd.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Tag'**
-  String get filterTagsAdd;
-
-  /// No description provided for @filterTagsAddHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter tag name and press Enter'**
-  String get filterTagsAddHint;
-
-  /// No description provided for @filterTagsNone.
-  ///
-  /// In en, this message translates to:
-  /// **'No tags selected'**
-  String get filterTagsNone;
-
-  /// No description provided for @filterTagsSuggested.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggested tags:'**
-  String get filterTagsSuggested;
-
-  /// No description provided for @filterPresetSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Presets'**
-  String get filterPresetSection;
-
   /// No description provided for @filterCustomRange.
   ///
   /// In en, this message translates to:
   /// **'Custom Range'**
   String get filterCustomRange;
-
-  /// No description provided for @filterDateRange.
-  ///
-  /// In en, this message translates to:
-  /// **'Date Range'**
-  String get filterDateRange;
-
-  /// No description provided for @filterStartDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Start Date'**
-  String get filterStartDate;
-
-  /// No description provided for @filterEndDate.
-  ///
-  /// In en, this message translates to:
-  /// **'End Date'**
-  String get filterEndDate;
-
-  /// No description provided for @filterSelectDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Date'**
-  String get filterSelectDate;
-
-  /// No description provided for @filterFavoritesOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Show favorites only'**
-  String get filterFavoritesOnly;
-
-  /// No description provided for @filterStyleSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Calligraphy Style'**
-  String get filterStyleSection;
-
-  /// No description provided for @filterStyleClerical.
-  ///
-  /// In en, this message translates to:
-  /// **'Clerical Script'**
-  String get filterStyleClerical;
-
-  /// No description provided for @filterStyleCursive.
-  ///
-  /// In en, this message translates to:
-  /// **'Cursive Script'**
-  String get filterStyleCursive;
-
-  /// No description provided for @filterStyleRegular.
-  ///
-  /// In en, this message translates to:
-  /// **'Regular Script'**
-  String get filterStyleRegular;
-
-  /// No description provided for @filterStyleRunning.
-  ///
-  /// In en, this message translates to:
-  /// **'Running Script'**
-  String get filterStyleRunning;
-
-  /// No description provided for @filterStyleSeal.
-  ///
-  /// In en, this message translates to:
-  /// **'Seal Script'**
-  String get filterStyleSeal;
-
-  /// No description provided for @filterStyleOther.
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get filterStyleOther;
-
-  /// No description provided for @filterToolSection.
-  ///
-  /// In en, this message translates to:
-  /// **'Writing Tool'**
-  String get filterToolSection;
-
-  /// No description provided for @filterToolBrush.
-  ///
-  /// In en, this message translates to:
-  /// **'Brush'**
-  String get filterToolBrush;
-
-  /// No description provided for @filterToolHardPen.
-  ///
-  /// In en, this message translates to:
-  /// **'Hard Pen'**
-  String get filterToolHardPen;
-
-  /// No description provided for @filterToolOther.
-  ///
-  /// In en, this message translates to:
-  /// **'Other'**
-  String get filterToolOther;
-
-  /// No description provided for @filterBatchSelection.
-  ///
-  /// In en, this message translates to:
-  /// **'Selection'**
-  String get filterBatchSelection;
-
-  /// No description provided for @filterSelectAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Select All'**
-  String get filterSelectAll;
-
-  /// No description provided for @filterDeselectAll.
-  ///
-  /// In en, this message translates to:
-  /// **'Deselect All'**
-  String get filterDeselectAll;
-
-  /// No description provided for @filterBatchActions.
-  ///
-  /// In en, this message translates to:
-  /// **'Batch Actions'**
-  String get filterBatchActions;
-
-  /// No description provided for @filterItemsSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} selected'**
-  String filterItemsSelected(Object count);
-
-  /// No description provided for @filterItemsPerPage.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} per page'**
-  String filterItemsPerPage(Object count);
-
-  /// No description provided for @filterTotalItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Total: {count} items'**
-  String filterTotalItems(Object count);
 
   /// No description provided for @filterDateApply.
   ///
@@ -1967,6 +2363,12 @@ abstract class AppLocalizations {
   /// **'Yesterday'**
   String get filterDatePresetYesterday;
 
+  /// No description provided for @filterDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Date Range'**
+  String get filterDateRange;
+
   /// No description provided for @filterDateSection.
   ///
   /// In en, this message translates to:
@@ -1985,6 +2387,132 @@ abstract class AppLocalizations {
   /// **'Start Date'**
   String get filterDateStartDate;
 
+  /// No description provided for @filterDeselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get filterDeselectAll;
+
+  /// No description provided for @filterEndDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get filterEndDate;
+
+  /// No description provided for @filterExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand Filter Panel'**
+  String get filterExpand;
+
+  /// No description provided for @filterFavoritesOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show favorites only'**
+  String get filterFavoritesOnly;
+
+  /// No description provided for @filterHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter & Sort'**
+  String get filterHeader;
+
+  /// No description provided for @filterItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String filterItemsPerPage(Object count);
+
+  /// No description provided for @filterItemsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String filterItemsSelected(Object count);
+
+  /// No description provided for @filterMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get filterMax;
+
+  /// No description provided for @filterMin.
+  ///
+  /// In en, this message translates to:
+  /// **'Min'**
+  String get filterMin;
+
+  /// No description provided for @filterPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Panel'**
+  String get filterPanel;
+
+  /// No description provided for @filterPresetSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get filterPresetSection;
+
+  /// No description provided for @filterReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Filters'**
+  String get filterReset;
+
+  /// No description provided for @filterSearchPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search...'**
+  String get filterSearchPlaceholder;
+
+  /// No description provided for @filterSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter Options'**
+  String get filterSection;
+
+  /// No description provided for @filterSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get filterSelectAll;
+
+  /// No description provided for @filterSelectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get filterSelectDate;
+
+  /// No description provided for @filterSelectDateRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Select date range'**
+  String get filterSelectDateRange;
+
+  /// No description provided for @filterSortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get filterSortAscending;
+
+  /// No description provided for @filterSortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get filterSortDescending;
+
+  /// No description provided for @filterSortDirection.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Direction'**
+  String get filterSortDirection;
+
+  /// No description provided for @filterSortField.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort By'**
+  String get filterSortField;
+
   /// No description provided for @filterSortFieldAuthor.
   ///
   /// In en, this message translates to:
@@ -2002,6 +2530,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Creation Date'**
   String get filterSortFieldCreationDate;
+
+  /// No description provided for @filterSortFieldFileName.
+  ///
+  /// In en, this message translates to:
+  /// **'File Name'**
+  String get filterSortFieldFileName;
+
+  /// No description provided for @filterSortFieldFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size'**
+  String get filterSortFieldFileSize;
+
+  /// No description provided for @filterSortFieldFileUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'File Update Time'**
+  String get filterSortFieldFileUpdatedAt;
 
   /// No description provided for @filterSortFieldNone.
   ///
@@ -2033,29 +2579,95 @@ abstract class AppLocalizations {
   /// **'Update Time'**
   String get filterSortFieldUpdateTime;
 
-  /// No description provided for @filterSortFieldFileName.
-  ///
-  /// In en, this message translates to:
-  /// **'File Name'**
-  String get filterSortFieldFileName;
-
-  /// No description provided for @filterSortFieldFileUpdatedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'File Update Time'**
-  String get filterSortFieldFileUpdatedAt;
-
-  /// No description provided for @filterSortFieldFileSize.
-  ///
-  /// In en, this message translates to:
-  /// **'File Size'**
-  String get filterSortFieldFileSize;
-
   /// No description provided for @filterSortSection.
   ///
   /// In en, this message translates to:
   /// **'Sort'**
   String get filterSortSection;
+
+  /// No description provided for @filterStartDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get filterStartDate;
+
+  /// No description provided for @filterStyleClerical.
+  ///
+  /// In en, this message translates to:
+  /// **'Clerical Script'**
+  String get filterStyleClerical;
+
+  /// No description provided for @filterStyleCursive.
+  ///
+  /// In en, this message translates to:
+  /// **'Cursive Script'**
+  String get filterStyleCursive;
+
+  /// No description provided for @filterStyleOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get filterStyleOther;
+
+  /// No description provided for @filterStyleRegular.
+  ///
+  /// In en, this message translates to:
+  /// **'Regular Script'**
+  String get filterStyleRegular;
+
+  /// No description provided for @filterStyleRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running Script'**
+  String get filterStyleRunning;
+
+  /// No description provided for @filterStyleSeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Seal Script'**
+  String get filterStyleSeal;
+
+  /// No description provided for @filterStyleSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Calligraphy Style'**
+  String get filterStyleSection;
+
+  /// No description provided for @filterTagsAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Tag'**
+  String get filterTagsAdd;
+
+  /// No description provided for @filterTagsAddHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tag name and press Enter'**
+  String get filterTagsAddHint;
+
+  /// No description provided for @filterTagsNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags selected'**
+  String get filterTagsNone;
+
+  /// No description provided for @filterTagsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get filterTagsSection;
+
+  /// No description provided for @filterTagsSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Tags:'**
+  String get filterTagsSelected;
+
+  /// No description provided for @filterTagsSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested tags:'**
+  String get filterTagsSuggested;
 
   /// No description provided for @filterTitle.
   ///
@@ -2063,23 +2675,41 @@ abstract class AppLocalizations {
   /// **'Filter & Sort'**
   String get filterTitle;
 
-  /// No description provided for @filterMin.
+  /// No description provided for @filterToggle.
   ///
   /// In en, this message translates to:
-  /// **'Min'**
-  String get filterMin;
+  /// **'Toggle Filters'**
+  String get filterToggle;
 
-  /// No description provided for @filterMax.
+  /// No description provided for @filterToolBrush.
   ///
   /// In en, this message translates to:
-  /// **'Max'**
-  String get filterMax;
+  /// **'Brush'**
+  String get filterToolBrush;
 
-  /// No description provided for @filterSelectDateRange.
+  /// No description provided for @filterToolHardPen.
   ///
   /// In en, this message translates to:
-  /// **'Select date range'**
-  String get filterSelectDateRange;
+  /// **'Hard Pen'**
+  String get filterToolHardPen;
+
+  /// No description provided for @filterToolOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get filterToolOther;
+
+  /// No description provided for @filterToolSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing Tool'**
+  String get filterToolSection;
+
+  /// No description provided for @filterTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count} items'**
+  String filterTotalItems(Object count);
 
   /// No description provided for @generalSettings.
   ///
@@ -2105,17 +2735,35 @@ abstract class AppLocalizations {
   /// **'Grid Size'**
   String get gridSize;
 
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid View'**
+  String get gridView;
+
   /// No description provided for @group.
   ///
   /// In en, this message translates to:
   /// **'Group'**
   String get group;
 
+  /// No description provided for @groupElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Elements'**
+  String get groupElements;
+
   /// No description provided for @groupInfo.
   ///
   /// In en, this message translates to:
   /// **'Group Info'**
   String get groupInfo;
+
+  /// No description provided for @groupOperations.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Operations'**
+  String get groupOperations;
 
   /// No description provided for @height.
   ///
@@ -2128,6 +2776,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hide Element'**
   String get hideElement;
+
+  /// No description provided for @horizontalAlignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Alignment'**
+  String get horizontalAlignment;
+
+  /// No description provided for @horizontalLeftToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Left-to-Right'**
+  String get horizontalLeftToRight;
+
+  /// No description provided for @horizontalRightToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal Right-to-Left'**
+  String get horizontalRightToLeft;
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String hours(num count);
+
+  /// No description provided for @image.
+  ///
+  /// In en, this message translates to:
+  /// **'Image'**
+  String get image;
 
   /// No description provided for @imageCacheCleared.
   ///
@@ -2152,6 +2830,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply Transform'**
   String get imagePropertyPanelApplyTransform;
+
+  /// No description provided for @imagePropertyPanelAutoImportNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected image will be automatically imported into your library for better management'**
+  String get imagePropertyPanelAutoImportNotice;
 
   /// No description provided for @imagePropertyPanelBorder.
   ///
@@ -2219,6 +2903,18 @@ abstract class AppLocalizations {
   /// **'Left Crop'**
   String get imagePropertyPanelCropLeft;
 
+  /// No description provided for @imagePropertyPanelCropping.
+  ///
+  /// In en, this message translates to:
+  /// **'Cropping'**
+  String get imagePropertyPanelCropping;
+
+  /// No description provided for @imagePropertyPanelCroppingApplied.
+  ///
+  /// In en, this message translates to:
+  /// **' (Cropping: Left {left}px, Top {top}px, Right {right}px, Bottom {bottom}px)'**
+  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top);
+
   /// No description provided for @imagePropertyPanelCroppingValueTooLarge.
   ///
   /// In en, this message translates to:
@@ -2248,6 +2944,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display Mode'**
   String get imagePropertyPanelDisplay;
+
+  /// No description provided for @imagePropertyPanelFileNotExist.
+  ///
+  /// In en, this message translates to:
+  /// **'File does not exist: {path}'**
+  String imagePropertyPanelFileNotExist(Object path);
+
+  /// No description provided for @imagePropertyPanelFileNotRecovered.
+  ///
+  /// In en, this message translates to:
+  /// **'File could not be recovered'**
+  String get imagePropertyPanelFileNotRecovered;
+
+  /// No description provided for @imagePropertyPanelFileRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'File restored'**
+  String get imagePropertyPanelFileRestored;
 
   /// No description provided for @imagePropertyPanelFilters.
   ///
@@ -2345,6 +3059,36 @@ abstract class AppLocalizations {
   /// **'Image Transform'**
   String get imagePropertyPanelImageTransform;
 
+  /// No description provided for @imagePropertyPanelImportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import image: {error}'**
+  String imagePropertyPanelImportError(Object error);
+
+  /// No description provided for @imagePropertyPanelImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing image...'**
+  String get imagePropertyPanelImporting;
+
+  /// No description provided for @imagePropertyPanelImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Image imported successfully'**
+  String get imagePropertyPanelImportSuccess;
+
+  /// No description provided for @imagePropertyPanelLibraryProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing library...'**
+  String get imagePropertyPanelLibraryProcessing;
+
+  /// No description provided for @imagePropertyPanelLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load image: {error}...'**
+  String imagePropertyPanelLoadError(Object error);
+
   /// No description provided for @imagePropertyPanelNoCropping.
   ///
   /// In en, this message translates to:
@@ -2399,6 +3143,12 @@ abstract class AppLocalizations {
   /// **'Note: Duplicate logs shown during preview are normal'**
   String get imagePropertyPanelPreviewNotice;
 
+  /// No description provided for @imagePropertyPanelProcessingPathError.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing path error: {error}'**
+  String imagePropertyPanelProcessingPathError(Object error);
+
   /// No description provided for @imagePropertyPanelReset.
   ///
   /// In en, this message translates to:
@@ -2435,24 +3185,6 @@ abstract class AppLocalizations {
   /// **'Select from Library'**
   String get imagePropertyPanelSelectFromLibrary;
 
-  /// No description provided for @imagePropertyPanelFileRestored.
-  ///
-  /// In en, this message translates to:
-  /// **'File restored'**
-  String get imagePropertyPanelFileRestored;
-
-  /// No description provided for @imagePropertyPanelFileNotRecovered.
-  ///
-  /// In en, this message translates to:
-  /// **'File could not be recovered'**
-  String get imagePropertyPanelFileNotRecovered;
-
-  /// No description provided for @imagePropertyPanelLibraryProcessing.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing library...'**
-  String get imagePropertyPanelLibraryProcessing;
-
   /// No description provided for @imagePropertyPanelSelectFromLocal.
   ///
   /// In en, this message translates to:
@@ -2464,6 +3196,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transform applied'**
   String get imagePropertyPanelTransformApplied;
+
+  /// No description provided for @imagePropertyPanelTransformError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to apply transform: {error}'**
+  String imagePropertyPanelTransformError(Object error);
 
   /// No description provided for @imagePropertyPanelTransformWarning.
   ///
@@ -2482,6 +3220,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import'**
   String get import;
+
+  /// No description provided for @importBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Backup'**
+  String get importBackup;
+
+  /// No description provided for @importBackupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a backup from an external location'**
+  String get importBackupDescription;
+
+  /// No description provided for @importFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to import backup'**
+  String get importFailure;
+
+  /// No description provided for @importingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing backup...'**
+  String get importingBackup;
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup imported successfully'**
+  String get importSuccess;
+
+  /// No description provided for @initializationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Initialization failed: {error}'**
+  String initializationFailed(Object error);
+
+  /// No description provided for @invalidBackupFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid backup file'**
+  String get invalidBackupFile;
+
+  /// No description provided for @keepBackupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Backup Count'**
+  String get keepBackupCount;
+
+  /// No description provided for @keepBackupCountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of backups to keep before deleting old ones'**
+  String get keepBackupCountDescription;
 
   /// No description provided for @landscape.
   ///
@@ -2513,6 +3305,12 @@ abstract class AppLocalizations {
   /// **'简体中文'**
   String get languageZh;
 
+  /// No description provided for @lastBackupTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Backup Time'**
+  String get lastBackupTime;
+
   /// No description provided for @layer.
   ///
   /// In en, this message translates to:
@@ -2531,11 +3329,311 @@ abstract class AppLocalizations {
   /// **'Layer Elements'**
   String get layerElements;
 
+  /// No description provided for @layerInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Layer Information'**
+  String get layerInfo;
+
+  /// No description provided for @layerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Layer Name'**
+  String get layerName;
+
   /// No description provided for @layerOperations.
   ///
   /// In en, this message translates to:
   /// **'Layer Operations'**
   String get layerOperations;
+
+  /// No description provided for @libraryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Library Count'**
+  String get libraryCount;
+
+  /// No description provided for @libraryManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get libraryManagement;
+
+  /// No description provided for @libraryManagementBasicInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Information'**
+  String get libraryManagementBasicInfo;
+
+  /// No description provided for @libraryManagementCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get libraryManagementCategories;
+
+  /// No description provided for @libraryManagementCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created at'**
+  String get libraryManagementCreatedAt;
+
+  /// No description provided for @libraryManagementDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion'**
+  String get libraryManagementDeleteConfirm;
+
+  /// No description provided for @libraryManagementDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the selected items? This action cannot be undone.'**
+  String get libraryManagementDeleteMessage;
+
+  /// No description provided for @libraryManagementDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete selected items'**
+  String get libraryManagementDeleteSelected;
+
+  /// No description provided for @libraryManagementDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get libraryManagementDetail;
+
+  /// No description provided for @libraryManagementEnterBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter batch mode'**
+  String get libraryManagementEnterBatchMode;
+
+  /// No description provided for @libraryManagementError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load: {message}'**
+  String libraryManagementError(String message);
+
+  /// No description provided for @libraryManagementExitBatchMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit batch mode'**
+  String get libraryManagementExitBatchMode;
+
+  /// No description provided for @libraryManagementFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get libraryManagementFavorite;
+
+  /// No description provided for @libraryManagementFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get libraryManagementFavorites;
+
+  /// No description provided for @libraryManagementFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get libraryManagementFileSize;
+
+  /// No description provided for @libraryManagementFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get libraryManagementFormat;
+
+  /// No description provided for @libraryManagementFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'File Formats'**
+  String get libraryManagementFormats;
+
+  /// No description provided for @libraryManagementGridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid view'**
+  String get libraryManagementGridView;
+
+  /// No description provided for @libraryManagementImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get libraryManagementImport;
+
+  /// No description provided for @libraryManagementImportFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Files'**
+  String get libraryManagementImportFiles;
+
+  /// No description provided for @libraryManagementImportFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Folder'**
+  String get libraryManagementImportFolder;
+
+  /// No description provided for @libraryManagementListView.
+  ///
+  /// In en, this message translates to:
+  /// **'List view'**
+  String get libraryManagementListView;
+
+  /// No description provided for @libraryManagementLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get libraryManagementLoading;
+
+  /// No description provided for @libraryManagementMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Metadata'**
+  String get libraryManagementMetadata;
+
+  /// No description provided for @libraryManagementName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get libraryManagementName;
+
+  /// No description provided for @libraryManagementNoItems.
+  ///
+  /// In en, this message translates to:
+  /// **'No items'**
+  String get libraryManagementNoItems;
+
+  /// No description provided for @libraryManagementNoItemsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try adding some items or changing filters'**
+  String get libraryManagementNoItemsHint;
+
+  /// No description provided for @libraryManagementNoRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'No remarks'**
+  String get libraryManagementNoRemarks;
+
+  /// No description provided for @libraryManagementPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Path'**
+  String get libraryManagementPath;
+
+  /// No description provided for @libraryManagementRemarks.
+  ///
+  /// In en, this message translates to:
+  /// **'Remarks'**
+  String get libraryManagementRemarks;
+
+  /// No description provided for @libraryManagementRemarksHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add remarks'**
+  String get libraryManagementRemarksHint;
+
+  /// No description provided for @libraryManagementResolution.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolution'**
+  String get libraryManagementResolution;
+
+  /// No description provided for @libraryManagementSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search items...'**
+  String get libraryManagementSearch;
+
+  /// No description provided for @libraryManagementSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get libraryManagementSize;
+
+  /// No description provided for @libraryManagementSortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get libraryManagementSortBy;
+
+  /// No description provided for @libraryManagementSortByDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get libraryManagementSortByDate;
+
+  /// No description provided for @libraryManagementSortByFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File Size'**
+  String get libraryManagementSortByFileSize;
+
+  /// No description provided for @libraryManagementSortByName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get libraryManagementSortByName;
+
+  /// No description provided for @libraryManagementSortBySize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size'**
+  String get libraryManagementSortBySize;
+
+  /// No description provided for @libraryManagementSortDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort Order'**
+  String get libraryManagementSortDesc;
+
+  /// No description provided for @libraryManagementTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get libraryManagementTags;
+
+  /// No description provided for @libraryManagementTimeInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Information'**
+  String get libraryManagementTimeInfo;
+
+  /// No description provided for @libraryManagementType.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get libraryManagementType;
+
+  /// No description provided for @libraryManagementTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get libraryManagementTypes;
+
+  /// No description provided for @libraryManagementUpdatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated at'**
+  String get libraryManagementUpdatedAt;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List View'**
+  String get listView;
+
+  /// No description provided for @loadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load Failed'**
+  String get loadFailed;
+
+  /// No description provided for @loadingError.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading Error'**
+  String get loadingError;
 
   /// No description provided for @locked.
   ///
@@ -2549,11 +3647,41 @@ abstract class AppLocalizations {
   /// **'Lock Element'**
   String get lockElement;
 
+  /// No description provided for @lockStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Lock Status'**
+  String get lockStatus;
+
   /// No description provided for @lockUnlockAllElements.
   ///
   /// In en, this message translates to:
   /// **'Lock/Unlock All Elements'**
   String get lockUnlockAllElements;
+
+  /// No description provided for @memoryDataCacheCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory Data Cache Capacity'**
+  String get memoryDataCacheCapacity;
+
+  /// No description provided for @memoryDataCacheCapacityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of data items to keep in memory'**
+  String get memoryDataCacheCapacityDescription;
+
+  /// No description provided for @memoryImageCacheCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Memory Image Cache Capacity'**
+  String get memoryImageCacheCapacity;
+
+  /// No description provided for @memoryImageCacheCapacityDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of images to keep in memory'**
+  String get memoryImageCacheCapacityDescription;
 
   /// No description provided for @moveDown.
   ///
@@ -2572,6 +3700,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move Layer Up'**
   String get moveLayerUp;
+
+  /// No description provided for @moveSelectedElementsToLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Selected Elements to Layer'**
+  String get moveSelectedElementsToLayer;
 
   /// No description provided for @moveUp.
   ///
@@ -2597,6 +3731,30 @@ abstract class AppLocalizations {
   /// **'Expand Sidebar'**
   String get navExpandSidebar;
 
+  /// No description provided for @newCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'New Category'**
+  String get newCategory;
+
+  /// No description provided for @no.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get no;
+
+  /// No description provided for @noBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups available'**
+  String get noBackups;
+
+  /// No description provided for @noCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No Categories'**
+  String get noCategories;
+
   /// No description provided for @noElementsInLayer.
   ///
   /// In en, this message translates to:
@@ -2614,6 +3772,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No page selected'**
   String get noPageSelected;
+
+  /// No description provided for @noTags.
+  ///
+  /// In en, this message translates to:
+  /// **'No Tags'**
+  String get noTags;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
 
   /// No description provided for @opacity.
   ///
@@ -2723,6 +3893,12 @@ abstract class AppLocalizations {
   /// **'Copy (Ctrl+Shift+C)'**
   String get practiceEditCopy;
 
+  /// No description provided for @practiceEditDangerZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Danger Zone'**
+  String get practiceEditDangerZone;
+
   /// No description provided for @practiceEditDelete.
   ///
   /// In en, this message translates to:
@@ -2776,6 +3952,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Elements'**
   String get practiceEditElements;
+
+  /// No description provided for @practiceEditElementSelectionInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} elements selected'**
+  String practiceEditElementSelectionInfo(Object count);
 
   /// No description provided for @practiceEditEnableSnap.
   ///
@@ -2861,6 +4043,12 @@ abstract class AppLocalizations {
   /// **'Leave'**
   String get practiceEditLeave;
 
+  /// No description provided for @practiceEditLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load practice: {error}'**
+  String practiceEditLoadFailed(Object error);
+
   /// No description provided for @practiceEditMoveDown.
   ///
   /// In en, this message translates to:
@@ -2902,6 +4090,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Paste (Ctrl+Shift+V)'**
   String get practiceEditPaste;
+
+  /// No description provided for @practiceEditPracticeLoaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice \"{title}\" loaded successfully'**
+  String practiceEditPracticeLoaded(Object title);
 
   /// No description provided for @practiceEditPracticeLoadFailed.
   ///
@@ -2998,6 +4192,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A practice with this title already exists. Do you want to overwrite it?'**
   String get practiceEditTitleExistsMessage;
+
+  /// No description provided for @practiceEditTitleUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Title updated to \"{title}\"'**
+  String practiceEditTitleUpdated(Object title);
 
   /// No description provided for @practiceEditToolbar.
   ///
@@ -3137,6 +4337,12 @@ abstract class AppLocalizations {
   /// **'Grid View'**
   String get practiceListGridView;
 
+  /// No description provided for @practiceListItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String practiceListItemsPerPage(Object count);
+
   /// No description provided for @practiceListListView.
   ///
   /// In en, this message translates to:
@@ -3203,6 +4409,12 @@ abstract class AppLocalizations {
   /// **'Practice Sheets'**
   String get practiceListTitle;
 
+  /// No description provided for @practiceListTotalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} practice sheets'**
+  String practiceListTotalItems(Object count);
+
   /// No description provided for @practicePageSettings.
   ///
   /// In en, this message translates to:
@@ -3239,11 +4451,101 @@ abstract class AppLocalizations {
   /// **'Print'**
   String get print;
 
+  /// No description provided for @removedFromAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from all categories'**
+  String get removedFromAllCategories;
+
   /// No description provided for @rename.
   ///
   /// In en, this message translates to:
   /// **'Rename'**
   String get rename;
+
+  /// No description provided for @resetSettingsConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset all cache settings to default values?'**
+  String get resetSettingsConfirmMessage;
+
+  /// No description provided for @resetSettingsConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Settings'**
+  String get resetSettingsConfirmTitle;
+
+  /// No description provided for @resetToDefaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Defaults'**
+  String get resetToDefaults;
+
+  /// No description provided for @restartAfterRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: The application will automatically restart after restoration is complete'**
+  String get restartAfterRestored;
+
+  /// No description provided for @restartAppRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'The application needs to be restarted to complete the restore process.'**
+  String get restartAppRequired;
+
+  /// No description provided for @restartLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get restartLater;
+
+  /// No description provided for @restartNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Now'**
+  String get restartNow;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @restoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Backup'**
+  String get restoreBackup;
+
+  /// No description provided for @restoreConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to restore from this backup? This will replace all your current data.'**
+  String get restoreConfirmMessage;
+
+  /// No description provided for @restoreConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore Confirmation'**
+  String get restoreConfirmTitle;
+
+  /// No description provided for @restoreFailure.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to restore from backup'**
+  String get restoreFailure;
+
+  /// No description provided for @restoreSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore completed successfully'**
+  String get restoreSuccess;
+
+  /// No description provided for @restoringBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring from backup...'**
+  String get restoringBackup;
 
   /// No description provided for @rotation.
   ///
@@ -3257,6 +4559,24 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
+  /// No description provided for @searchCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Search categories...'**
+  String get searchCategories;
+
+  /// No description provided for @searchCharactersWorksAuthors.
+  ///
+  /// In en, this message translates to:
+  /// **'Search characters, works, or authors'**
+  String get searchCharactersWorksAuthors;
+
+  /// No description provided for @selectBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Backup'**
+  String get selectBackup;
+
   /// No description provided for @selectCollection.
   ///
   /// In en, this message translates to:
@@ -3268,6 +4588,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Selected'**
   String get selected;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(Object count);
+
+  /// No description provided for @selectExportLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select export location'**
+  String get selectExportLocation;
+
+  /// No description provided for @selectImportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Backup File'**
+  String get selectImportFile;
+
+  /// No description provided for @selectTargetLayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Target Layer'**
+  String get selectTargetLayer;
 
   /// No description provided for @sendLayerToBack.
   ///
@@ -3287,6 +4631,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settings;
 
+  /// No description provided for @settingsResetMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings reset to defaults'**
+  String get settingsResetMessage;
+
   /// No description provided for @showElement.
   ///
   /// In en, this message translates to:
@@ -3305,11 +4655,29 @@ abstract class AppLocalizations {
   /// **'Show/Hide All Elements'**
   String get showHideAllElements;
 
+  /// No description provided for @sortAndFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort & Filter'**
+  String get sortAndFilter;
+
   /// No description provided for @stateAndDisplay.
   ///
   /// In en, this message translates to:
   /// **'State & Display'**
   String get stateAndDisplay;
+
+  /// No description provided for @storageDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Details'**
+  String get storageDetails;
+
+  /// No description provided for @storageLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Location'**
+  String get storageLocation;
 
   /// No description provided for @storageSettings.
   ///
@@ -3317,131 +4685,11 @@ abstract class AppLocalizations {
   /// **'Storage Settings'**
   String get storageSettings;
 
-  /// No description provided for @cacheSettings.
+  /// No description provided for @storageUsed.
   ///
   /// In en, this message translates to:
-  /// **'Cache Settings'**
-  String get cacheSettings;
-
-  /// No description provided for @memoryImageCacheCapacity.
-  ///
-  /// In en, this message translates to:
-  /// **'Memory Image Cache Capacity'**
-  String get memoryImageCacheCapacity;
-
-  /// No description provided for @memoryImageCacheCapacityDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Number of images to keep in memory'**
-  String get memoryImageCacheCapacityDescription;
-
-  /// No description provided for @memoryDataCacheCapacity.
-  ///
-  /// In en, this message translates to:
-  /// **'Memory Data Cache Capacity'**
-  String get memoryDataCacheCapacity;
-
-  /// No description provided for @memoryDataCacheCapacityDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Number of data items to keep in memory'**
-  String get memoryDataCacheCapacityDescription;
-
-  /// No description provided for @diskCacheSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Disk Cache Size'**
-  String get diskCacheSize;
-
-  /// No description provided for @diskCacheSizeDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Maximum size of disk cache'**
-  String get diskCacheSizeDescription;
-
-  /// No description provided for @diskCacheTtl.
-  ///
-  /// In en, this message translates to:
-  /// **'Disk Cache Lifetime'**
-  String get diskCacheTtl;
-
-  /// No description provided for @diskCacheTtlDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'How long to keep cached files on disk'**
-  String get diskCacheTtlDescription;
-
-  /// No description provided for @autoCleanup.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Cleanup'**
-  String get autoCleanup;
-
-  /// No description provided for @autoCleanupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Automatically clean up old cache files'**
-  String get autoCleanupDescription;
-
-  /// No description provided for @autoCleanupInterval.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Cleanup Interval'**
-  String get autoCleanupInterval;
-
-  /// No description provided for @autoCleanupIntervalDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'How often to run automatic cleanup'**
-  String get autoCleanupIntervalDescription;
-
-  /// No description provided for @clearCache.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear Cache'**
-  String get clearCache;
-
-  /// No description provided for @resetToDefaults.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset to Defaults'**
-  String get resetToDefaults;
-
-  /// No description provided for @clearCacheConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Clear Cache'**
-  String get clearCacheConfirmTitle;
-
-  /// No description provided for @clearCacheConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.'**
-  String get clearCacheConfirmMessage;
-
-  /// No description provided for @cacheClearedMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Cache cleared successfully'**
-  String get cacheClearedMessage;
-
-  /// No description provided for @settingsResetMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings reset to defaults'**
-  String get settingsResetMessage;
-
-  /// No description provided for @resetSettingsConfirmTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset Settings'**
-  String get resetSettingsConfirmTitle;
-
-  /// No description provided for @resetSettingsConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to reset all cache settings to default values?'**
-  String get resetSettingsConfirmMessage;
+  /// **'Storage Used'**
+  String get storageUsed;
 
   /// No description provided for @tagEditorEnterTagHint.
   ///
@@ -3460,6 +4708,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Suggested tags:'**
   String get tagEditorSuggestedTags;
+
+  /// No description provided for @tagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter tags...'**
+  String get tagsHint;
+
+  /// No description provided for @text.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get text;
 
   /// No description provided for @textPropertyPanel.
   ///
@@ -3611,6 +4871,84 @@ abstract class AppLocalizations {
   /// **'Writing Mode'**
   String get textPropertyPanelWritingMode;
 
+  /// No description provided for @textureApplicationRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Texture Application Range'**
+  String get textureApplicationRange;
+
+  /// No description provided for @textureFillMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill Mode'**
+  String get textureFillMode;
+
+  /// No description provided for @textureFillModeContain.
+  ///
+  /// In en, this message translates to:
+  /// **'Contain'**
+  String get textureFillModeContain;
+
+  /// No description provided for @textureFillModeCover.
+  ///
+  /// In en, this message translates to:
+  /// **'Cover'**
+  String get textureFillModeCover;
+
+  /// No description provided for @textureFillModeNoRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'No Repeat'**
+  String get textureFillModeNoRepeat;
+
+  /// No description provided for @textureFillModeRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get textureFillModeRepeat;
+
+  /// No description provided for @textureFillModeRepeatX.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Horizontally'**
+  String get textureFillModeRepeatX;
+
+  /// No description provided for @textureFillModeRepeatY.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat Vertically'**
+  String get textureFillModeRepeatY;
+
+  /// No description provided for @textureOpacity.
+  ///
+  /// In en, this message translates to:
+  /// **'Texture Opacity'**
+  String get textureOpacity;
+
+  /// No description provided for @textureRangeBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Entire Background'**
+  String get textureRangeBackground;
+
+  /// No description provided for @textureRangeCharacter.
+  ///
+  /// In en, this message translates to:
+  /// **'Character Only'**
+  String get textureRangeCharacter;
+
+  /// No description provided for @textureRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get textureRemove;
+
+  /// No description provided for @textureSelectFromLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Library'**
+  String get textureSelectFromLibrary;
+
   /// No description provided for @themeMode.
   ///
   /// In en, this message translates to:
@@ -3622,6 +4960,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get themeModeDark;
+
+  /// No description provided for @themeModeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Theme'**
+  String get themeModeDescription;
 
   /// No description provided for @themeModeLight.
   ///
@@ -3635,12 +4979,6 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeModeSystem;
 
-  /// No description provided for @themeModeDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Dark Theme'**
-  String get themeModeDescription;
-
   /// No description provided for @themeModeSystemDescription.
   ///
   /// In en, this message translates to:
@@ -3653,137 +4991,47 @@ abstract class AppLocalizations {
   /// **'Toggle Test Text'**
   String get toggleTestText;
 
-  /// No description provided for @characterDetailFormatName.
-  ///
-  /// In en, this message translates to:
-  /// **'Format Name'**
-  String get characterDetailFormatName;
-
-  /// No description provided for @characterDetailFormatType.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get characterDetailFormatType;
-
-  /// No description provided for @characterDetailFormatExtension.
-  ///
-  /// In en, this message translates to:
-  /// **'File Format'**
-  String get characterDetailFormatExtension;
-
-  /// No description provided for @characterDetailFormatDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get characterDetailFormatDescription;
-
-  /// No description provided for @characterDetailFormatOriginal.
-  ///
-  /// In en, this message translates to:
-  /// **'Original'**
-  String get characterDetailFormatOriginal;
-
-  /// No description provided for @characterDetailFormatBinary.
-  ///
-  /// In en, this message translates to:
-  /// **'Binary'**
-  String get characterDetailFormatBinary;
-
-  /// No description provided for @characterDetailFormatThumbnail.
-  ///
-  /// In en, this message translates to:
-  /// **'Thumbnail'**
-  String get characterDetailFormatThumbnail;
-
-  /// No description provided for @characterDetailFormatSquareBinary.
-  ///
-  /// In en, this message translates to:
-  /// **'Square Binary'**
-  String get characterDetailFormatSquareBinary;
-
-  /// No description provided for @characterDetailFormatSquareTransparent.
-  ///
-  /// In en, this message translates to:
-  /// **'Square Transparent'**
-  String get characterDetailFormatSquareTransparent;
-
-  /// No description provided for @characterDetailFormatTransparent.
-  ///
-  /// In en, this message translates to:
-  /// **'Transparent'**
-  String get characterDetailFormatTransparent;
-
-  /// No description provided for @characterDetailFormatOutline.
-  ///
-  /// In en, this message translates to:
-  /// **'Outline'**
-  String get characterDetailFormatOutline;
-
-  /// No description provided for @characterDetailFormatSquareOutline.
-  ///
-  /// In en, this message translates to:
-  /// **'Square Outline'**
-  String get characterDetailFormatSquareOutline;
-
-  /// No description provided for @characterDetailFormatOriginalDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Unprocessed original image'**
-  String get characterDetailFormatOriginalDesc;
-
-  /// No description provided for @characterDetailFormatBinaryDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Black and white binary image'**
-  String get characterDetailFormatBinaryDesc;
-
-  /// No description provided for @characterDetailFormatThumbnailDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Thumbnail image'**
-  String get characterDetailFormatThumbnailDesc;
-
-  /// No description provided for @characterDetailFormatSquareBinaryDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Binary image normalized to square'**
-  String get characterDetailFormatSquareBinaryDesc;
-
-  /// No description provided for @characterDetailFormatSquareTransparentDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Transparent PNG image normalized to square'**
-  String get characterDetailFormatSquareTransparentDesc;
-
-  /// No description provided for @characterDetailFormatTransparentDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Transparent PNG image with background removed'**
-  String get characterDetailFormatTransparentDesc;
-
-  /// No description provided for @characterDetailFormatOutlineDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Shows only the outline'**
-  String get characterDetailFormatOutlineDesc;
-
-  /// No description provided for @characterDetailFormatSquareOutlineDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Outline image normalized to square'**
-  String get characterDetailFormatSquareOutlineDesc;
-
   /// No description provided for @total.
   ///
   /// In en, this message translates to:
   /// **'Total'**
   String get total;
 
+  /// No description provided for @totalItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {count}'**
+  String totalItems(Object count);
+
   /// No description provided for @ungroup.
   ///
   /// In en, this message translates to:
   /// **'Ungroup'**
   String get ungroup;
+
+  /// No description provided for @ungroupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Ungroup'**
+  String get ungroupConfirm;
+
+  /// No description provided for @ungroupDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to ungroup this group?'**
+  String get ungroupDescription;
+
+  /// No description provided for @unknownCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Category'**
+  String get unknownCategory;
+
+  /// No description provided for @unlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlocked'**
+  String get unlocked;
 
   /// No description provided for @unlockElement.
   ///
@@ -3809,6 +5057,36 @@ abstract class AppLocalizations {
   /// **'Unnamed Layer'**
   String get unnamedLayer;
 
+  /// No description provided for @verticalAlignment.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Alignment'**
+  String get verticalAlignment;
+
+  /// No description provided for @verticalLeftToRight.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Left-to-Right'**
+  String get verticalLeftToRight;
+
+  /// No description provided for @verticalRightToLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical Right-to-Left'**
+  String get verticalRightToLeft;
+
+  /// No description provided for @verticalTextModeEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally'**
+  String get verticalTextModeEnabled;
+
+  /// No description provided for @visibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Visibility'**
+  String get visibility;
+
   /// No description provided for @visible.
   ///
   /// In en, this message translates to:
@@ -3827,197 +5105,29 @@ abstract class AppLocalizations {
   /// **'Width'**
   String get width;
 
-  /// No description provided for @fileName.
+  /// No description provided for @windowButtonClose.
   ///
   /// In en, this message translates to:
-  /// **'File Name'**
-  String get fileName;
+  /// **'Close'**
+  String get windowButtonClose;
 
-  /// No description provided for @enterFileName.
+  /// No description provided for @windowButtonMaximize.
   ///
   /// In en, this message translates to:
-  /// **'Enter file name'**
-  String get enterFileName;
+  /// **'Maximize'**
+  String get windowButtonMaximize;
 
-  /// No description provided for @exportFormat.
+  /// No description provided for @windowButtonMinimize.
   ///
   /// In en, this message translates to:
-  /// **'Export Format'**
-  String get exportFormat;
+  /// **'Minimize'**
+  String get windowButtonMinimize;
 
-  /// No description provided for @alignmentOperations.
+  /// No description provided for @windowButtonRestore.
   ///
   /// In en, this message translates to:
-  /// **'Alignment Operations'**
-  String get alignmentOperations;
-
-  /// No description provided for @horizontalAlignment.
-  ///
-  /// In en, this message translates to:
-  /// **'Horizontal Alignment'**
-  String get horizontalAlignment;
-
-  /// No description provided for @alignLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Left'**
-  String get alignLeft;
-
-  /// No description provided for @alignCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Center'**
-  String get alignCenter;
-
-  /// No description provided for @alignRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Right'**
-  String get alignRight;
-
-  /// No description provided for @verticalAlignment.
-  ///
-  /// In en, this message translates to:
-  /// **'Vertical Alignment'**
-  String get verticalAlignment;
-
-  /// No description provided for @alignTop.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Top'**
-  String get alignTop;
-
-  /// No description provided for @alignMiddle.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Middle'**
-  String get alignMiddle;
-
-  /// No description provided for @alignBottom.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Bottom'**
-  String get alignBottom;
-
-  /// No description provided for @distributionOperations.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribution Operations'**
-  String get distributionOperations;
-
-  /// No description provided for @elementDistribution.
-  ///
-  /// In en, this message translates to:
-  /// **'Element Distribution'**
-  String get elementDistribution;
-
-  /// No description provided for @distributeHorizontally.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribute Horizontally'**
-  String get distributeHorizontally;
-
-  /// No description provided for @distributeVertically.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribute Vertically'**
-  String get distributeVertically;
-
-  /// No description provided for @alignmentRequiresMultipleElements.
-  ///
-  /// In en, this message translates to:
-  /// **'Alignment requires at least 2 elements'**
-  String get alignmentRequiresMultipleElements;
-
-  /// No description provided for @distributionRequiresThreeElements.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribution requires at least 3 elements'**
-  String get distributionRequiresThreeElements;
-
-  /// No description provided for @distribution.
-  ///
-  /// In en, this message translates to:
-  /// **'Distribution'**
-  String get distribution;
-
-  /// No description provided for @center.
-  ///
-  /// In en, this message translates to:
-  /// **'Center'**
-  String get center;
-
-  /// No description provided for @moveSelectedElementsToLayer.
-  ///
-  /// In en, this message translates to:
-  /// **'Move Selected Elements to Layer'**
-  String get moveSelectedElementsToLayer;
-
-  /// No description provided for @selectTargetLayer.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Target Layer'**
-  String get selectTargetLayer;
-
-  /// No description provided for @layerInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Layer Information'**
-  String get layerInfo;
-
-  /// No description provided for @layerName.
-  ///
-  /// In en, this message translates to:
-  /// **'Layer Name'**
-  String get layerName;
-
-  /// No description provided for @visibility.
-  ///
-  /// In en, this message translates to:
-  /// **'Visibility'**
-  String get visibility;
-
-  /// No description provided for @lockStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Lock Status'**
-  String get lockStatus;
-
-  /// No description provided for @unlocked.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlocked'**
-  String get unlocked;
-
-  /// No description provided for @elementType.
-  ///
-  /// In en, this message translates to:
-  /// **'Element Type'**
-  String get elementType;
-
-  /// No description provided for @elementId.
-  ///
-  /// In en, this message translates to:
-  /// **'Element ID'**
-  String get elementId;
-
-  /// No description provided for @text.
-  ///
-  /// In en, this message translates to:
-  /// **'Text'**
-  String get text;
-
-  /// No description provided for @image.
-  ///
-  /// In en, this message translates to:
-  /// **'Image'**
-  String get image;
-
-  /// No description provided for @collection.
-  ///
-  /// In en, this message translates to:
-  /// **'Collection'**
-  String get collection;
+  /// **'Restore'**
+  String get windowButtonRestore;
 
   /// No description provided for @workBrowseAddFavorite.
   ///
@@ -4049,11 +5159,29 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get workBrowseDelete;
 
+  /// No description provided for @workBrowseDeleteConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} selected works? This action cannot be undone.'**
+  String workBrowseDeleteConfirmMessage(Object count);
+
   /// No description provided for @workBrowseDeleteConfirmTitle.
   ///
   /// In en, this message translates to:
   /// **'Confirm Deletion'**
   String get workBrowseDeleteConfirmTitle;
+
+  /// No description provided for @workBrowseDeleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Selected'**
+  String workBrowseDeleteSelected(Object count);
+
+  /// No description provided for @workBrowseError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {message}'**
+  String workBrowseError(Object message);
 
   /// No description provided for @workBrowseGridView.
   ///
@@ -4066,6 +5194,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Import Work'**
   String get workBrowseImport;
+
+  /// No description provided for @workBrowseItemsPerPage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} per page'**
+  String workBrowseItemsPerPage(Object count);
 
   /// No description provided for @workBrowseListView.
   ///
@@ -4109,11 +5243,23 @@ abstract class AppLocalizations {
   /// **'Search works...'**
   String get workBrowseSearch;
 
+  /// No description provided for @workBrowseSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String workBrowseSelectedCount(Object count);
+
   /// No description provided for @workBrowseTitle.
   ///
   /// In en, this message translates to:
   /// **'Works'**
   String get workBrowseTitle;
+
+  /// No description provided for @workCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Work Count'**
+  String get workCount;
 
   /// No description provided for @workDetailBack.
   ///
@@ -4475,6 +5621,12 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete this image?'**
   String get workImportDialogDeleteImageConfirm;
 
+  /// No description provided for @workImportDialogError.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed: {error}'**
+  String workImportDialogError(Object error);
+
   /// No description provided for @workImportDialogImport.
   ///
   /// In en, this message translates to:
@@ -4571,1139 +5723,11 @@ abstract class AppLocalizations {
   /// **'Other'**
   String get workToolOther;
 
-  /// No description provided for @characterCollectionDeleteBatchConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm deletion of {count} saved regions?'**
-  String characterCollectionDeleteBatchConfirm(Object count);
-
-  /// No description provided for @characterCollectionDeleteBatchMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'You are about to delete {count} saved regions. This action cannot be undone.'**
-  String characterCollectionDeleteBatchMessage(Object count);
-
-  /// No description provided for @characterCollectionError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error: {error}'**
-  String characterCollectionError(Object error);
-
-  /// No description provided for @characterCollectionFindSwitchFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Find and switch page failed: {error}'**
-  String characterCollectionFindSwitchFailed(Object error);
-
-  /// No description provided for @characterEditCharacterUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'\"{character}\" updated'**
-  String characterEditCharacterUpdated(Object character);
-
-  /// No description provided for @characterEditSaveConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm saving \"{character}\"?'**
-  String characterEditSaveConfirmMessage(Object character);
-
-  /// No description provided for @characterManagementError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error: {message}'**
-  String characterManagementError(Object message);
-
-  /// No description provided for @characterManagementItemsPerPage.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} per page'**
-  String characterManagementItemsPerPage(Object count);
-
-  /// No description provided for @imagePropertyPanelCroppingApplied.
-  ///
-  /// In en, this message translates to:
-  /// **' (Cropping: Left {left}px, Top {top}px, Right {right}px, Bottom {bottom}px)'**
-  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top);
-
-  /// No description provided for @imagePropertyPanelFileNotExist.
-  ///
-  /// In en, this message translates to:
-  /// **'File does not exist: {path}'**
-  String imagePropertyPanelFileNotExist(Object path);
-
-  /// No description provided for @imagePropertyPanelLoadError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to load image: {error}...'**
-  String imagePropertyPanelLoadError(Object error);
-
-  /// No description provided for @imagePropertyPanelAutoImportNotice.
-  ///
-  /// In en, this message translates to:
-  /// **'The selected image will be automatically imported into your library for better management'**
-  String get imagePropertyPanelAutoImportNotice;
-
-  /// No description provided for @imagePropertyPanelImporting.
-  ///
-  /// In en, this message translates to:
-  /// **'Importing image...'**
-  String get imagePropertyPanelImporting;
-
-  /// No description provided for @imagePropertyPanelImportSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Image imported successfully'**
-  String get imagePropertyPanelImportSuccess;
-
-  /// No description provided for @imagePropertyPanelImportError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to import image: {error}'**
-  String imagePropertyPanelImportError(Object error);
-
-  /// No description provided for @imagePropertyPanelProcessingPathError.
-  ///
-  /// In en, this message translates to:
-  /// **'Processing path error: {error}'**
-  String imagePropertyPanelProcessingPathError(Object error);
-
-  /// No description provided for @imagePropertyPanelTransformError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to apply transform: {error}'**
-  String imagePropertyPanelTransformError(Object error);
-
-  /// No description provided for @initializationFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Initialization failed: {error}'**
-  String initializationFailed(Object error);
-
-  /// No description provided for @practiceEditElementSelectionInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} elements selected'**
-  String practiceEditElementSelectionInfo(Object count);
-
-  /// No description provided for @practiceEditLoadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to load practice: {error}'**
-  String practiceEditLoadFailed(Object error);
-
-  /// No description provided for @practiceEditPracticeLoaded.
-  ///
-  /// In en, this message translates to:
-  /// **'Practice \"{title}\" loaded successfully'**
-  String practiceEditPracticeLoaded(Object title);
-
-  /// No description provided for @practiceEditTitleUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Title updated to \"{title}\"'**
-  String practiceEditTitleUpdated(Object title);
-
-  /// No description provided for @practiceListItemsPerPage.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} per page'**
-  String practiceListItemsPerPage(Object count);
-
-  /// No description provided for @practiceListTotalItems.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} practice sheets'**
-  String practiceListTotalItems(Object count);
-
-  /// No description provided for @workBrowseDeleteConfirmMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete {count} selected works? This action cannot be undone.'**
-  String workBrowseDeleteConfirmMessage(Object count);
-
-  /// No description provided for @workBrowseDeleteSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Selected'**
-  String get workBrowseDeleteSelected;
-
-  /// No description provided for @workBrowseError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error: {message}'**
-  String workBrowseError(Object message);
-
-  /// No description provided for @workBrowseSelectedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} selected'**
-  String workBrowseSelectedCount(Object count);
-
-  /// No description provided for @workImportDialogError.
-  ///
-  /// In en, this message translates to:
-  /// **'Import failed: {error}'**
-  String workImportDialogError(Object error);
-
-  /// No description provided for @horizontalLeftToRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Horizontal Left-to-Right'**
-  String get horizontalLeftToRight;
-
-  /// No description provided for @horizontalRightToLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Horizontal Right-to-Left'**
-  String get horizontalRightToLeft;
-
-  /// No description provided for @verticalLeftToRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Vertical Left-to-Right'**
-  String get verticalLeftToRight;
-
-  /// No description provided for @verticalRightToLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Vertical Right-to-Left'**
-  String get verticalRightToLeft;
-
-  /// No description provided for @collectionPropertyPanelAvailableCharacters.
-  ///
-  /// In en, this message translates to:
-  /// **'Available Characters'**
-  String get collectionPropertyPanelAvailableCharacters;
-
-  /// No description provided for @exportDialogFitPolicy.
-  ///
-  /// In en, this message translates to:
-  /// **'Fit Policy'**
-  String get exportDialogFitPolicy;
-
-  /// No description provided for @exportDialogFitWidth.
-  ///
-  /// In en, this message translates to:
-  /// **'Fit to Width'**
-  String get exportDialogFitWidth;
-
-  /// No description provided for @exportDialogFitHeight.
-  ///
-  /// In en, this message translates to:
-  /// **'Fit to Height'**
-  String get exportDialogFitHeight;
-
-  /// No description provided for @exportDialogFitContain.
-  ///
-  /// In en, this message translates to:
-  /// **'Contain in Page'**
-  String get exportDialogFitContain;
-
-  /// No description provided for @exportDialogCentimeter.
-  ///
-  /// In en, this message translates to:
-  /// **'cm'**
-  String get exportDialogCentimeter;
-
-  /// No description provided for @exportDialogMarginTop.
-  ///
-  /// In en, this message translates to:
-  /// **'Top'**
-  String get exportDialogMarginTop;
-
-  /// No description provided for @exportDialogMarginRight.
-  ///
-  /// In en, this message translates to:
-  /// **'Right'**
-  String get exportDialogMarginRight;
-
-  /// No description provided for @exportDialogMarginBottom.
-  ///
-  /// In en, this message translates to:
-  /// **'Bottom'**
-  String get exportDialogMarginBottom;
-
-  /// No description provided for @exportDialogMarginLeft.
-  ///
-  /// In en, this message translates to:
-  /// **'Left'**
-  String get exportDialogMarginLeft;
-
-  /// No description provided for @exportDialogPageMargins.
-  ///
-  /// In en, this message translates to:
-  /// **'Page Margins (cm)'**
-  String get exportDialogPageMargins;
-
-  /// No description provided for @exportDialogPageOrientation.
-  ///
-  /// In en, this message translates to:
-  /// **'Page Orientation'**
-  String get exportDialogPageOrientation;
-
-  /// No description provided for @exportDialogPortrait.
-  ///
-  /// In en, this message translates to:
-  /// **'Portrait'**
-  String get exportDialogPortrait;
-
-  /// No description provided for @exportDialogLandscape.
-  ///
-  /// In en, this message translates to:
-  /// **'Landscape'**
-  String get exportDialogLandscape;
-
-  /// No description provided for @exportDialogLocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Export Location'**
-  String get exportDialogLocation;
-
-  /// No description provided for @exportDialogSelectLocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Please select export location'**
-  String get exportDialogSelectLocation;
-
-  /// No description provided for @exportDialogBrowse.
-  ///
-  /// In en, this message translates to:
-  /// **'Browse...'**
-  String get exportDialogBrowse;
-
-  /// No description provided for @exportDialogPageRange.
-  ///
-  /// In en, this message translates to:
-  /// **'Page Range'**
-  String get exportDialogPageRange;
-
-  /// No description provided for @exportDialogAllPages.
-  ///
-  /// In en, this message translates to:
-  /// **'All Pages'**
-  String get exportDialogAllPages;
-
-  /// No description provided for @exportDialogCurrentPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Current Page'**
-  String get exportDialogCurrentPage;
-
-  /// No description provided for @exportDialogCustomRange.
-  ///
-  /// In en, this message translates to:
-  /// **'Custom Range'**
-  String get exportDialogCustomRange;
-
-  /// No description provided for @exportDialogRangeExample.
-  ///
-  /// In en, this message translates to:
-  /// **'Example: 1-3,5,7-9'**
-  String get exportDialogRangeExample;
-
-  /// No description provided for @exportDialogPageSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Page Size'**
-  String get exportDialogPageSize;
-
-  /// No description provided for @exportDialogOutputQuality.
-  ///
-  /// In en, this message translates to:
-  /// **'Output Quality'**
-  String get exportDialogOutputQuality;
-
-  /// No description provided for @exportDialogMultipleFilesNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note: Will export {count} image files, filenames will be automatically numbered.'**
-  String exportDialogMultipleFilesNote(Object count);
-
-  /// No description provided for @exportDialogPreview.
-  ///
-  /// In en, this message translates to:
-  /// **'Preview'**
-  String get exportDialogPreview;
-
-  /// No description provided for @exportDialogPreviewPage.
-  ///
-  /// In en, this message translates to:
-  /// **' (Page {current}/{total})'**
-  String exportDialogPreviewPage(Object current, Object total);
-
-  /// No description provided for @exportDialogNoPreview.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot generate preview'**
-  String get exportDialogNoPreview;
-
-  /// No description provided for @exportDialogDimensions.
-  ///
-  /// In en, this message translates to:
-  /// **'{width}cm × {height}cm ({orientation})'**
-  String exportDialogDimensions(Object height, Object orientation, Object width);
-
-  /// No description provided for @exportDialogPreviousPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Previous Page'**
-  String get exportDialogPreviousPage;
-
-  /// No description provided for @exportDialogNextPage.
-  ///
-  /// In en, this message translates to:
-  /// **'Next Page'**
-  String get exportDialogNextPage;
-
-  /// No description provided for @exportDialogEnterFilename.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a filename'**
-  String get exportDialogEnterFilename;
-
-  /// No description provided for @exportDialogInvalidFilename.
-  ///
-  /// In en, this message translates to:
-  /// **'Filename cannot contain the following characters: \\ / : * ? \" < > |'**
-  String get exportDialogInvalidFilename;
-
-  /// No description provided for @exportDialogCreateDirectoryFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to create export directory'**
-  String get exportDialogCreateDirectoryFailed;
-
-  /// No description provided for @exportDialogQualityStandard.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard (1x)'**
-  String get exportDialogQualityStandard;
-
-  /// No description provided for @exportDialogQualityHigh.
-  ///
-  /// In en, this message translates to:
-  /// **'High (2x)'**
-  String get exportDialogQualityHigh;
-
-  /// No description provided for @exportDialogQualityUltra.
-  ///
-  /// In en, this message translates to:
-  /// **'Ultra (3x)'**
-  String get exportDialogQualityUltra;
-
-  /// No description provided for @exportDialogFilenamePrefix.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter filename prefix (page numbers will be added automatically)'**
-  String get exportDialogFilenamePrefix;
-
-  /// No description provided for @restartAppRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'The application needs to be restarted to complete the restore process.'**
-  String get restartAppRequired;
-
-  /// No description provided for @ok.
-  ///
-  /// In en, this message translates to:
-  /// **'OK'**
-  String get ok;
-
-  /// No description provided for @restartNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Restart Now'**
-  String get restartNow;
-
-  /// No description provided for @restartLater.
-  ///
-  /// In en, this message translates to:
-  /// **'Later'**
-  String get restartLater;
-
-  /// No description provided for @collectionPropertyPanelGlobalInversion.
-  ///
-  /// In en, this message translates to:
-  /// **'Global Inversion'**
-  String get collectionPropertyPanelGlobalInversion;
-
-  /// No description provided for @collectionPropertyPanelCurrentCharInversion.
-  ///
-  /// In en, this message translates to:
-  /// **'Current Character Inversion'**
-  String get collectionPropertyPanelCurrentCharInversion;
-
-  /// No description provided for @collectionPropertyPanelColorPicker.
-  ///
-  /// In en, this message translates to:
-  /// **'Pick Color'**
-  String get collectionPropertyPanelColorPicker;
-
-  /// No description provided for @collectionPropertyPanelColorSettings.
-  ///
-  /// In en, this message translates to:
-  /// **'Color Setting'**
-  String get collectionPropertyPanelColorSettings;
-
-  /// No description provided for @collectionPropertyPanelAutoLineBreak.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Line Break'**
-  String get collectionPropertyPanelAutoLineBreak;
-
-  /// No description provided for @collectionPropertyPanelAutoLineBreakEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable'**
-  String get collectionPropertyPanelAutoLineBreakEnabled;
-
-  /// No description provided for @collectionPropertyPanelAutoLineBreakDisabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Disable'**
-  String get collectionPropertyPanelAutoLineBreakDisabled;
-
-  /// No description provided for @collectionPropertyPanelAutoLineBreakTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto Line Break'**
-  String get collectionPropertyPanelAutoLineBreakTooltip;
-
-  /// No description provided for @verticalTextModeEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally'**
-  String get verticalTextModeEnabled;
-
-  /// No description provided for @groupOperations.
-  ///
-  /// In en, this message translates to:
-  /// **'Group Operations'**
-  String get groupOperations;
-
-  /// No description provided for @editGroupContents.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Group Contents'**
-  String get editGroupContents;
-
-  /// No description provided for @editGroupContentsDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit the contents of the selected group'**
-  String get editGroupContentsDescription;
-
-  /// No description provided for @ungroupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to ungroup this group?'**
-  String get ungroupDescription;
-
-  /// No description provided for @practiceEditDangerZone.
-  ///
-  /// In en, this message translates to:
-  /// **'Danger Zone'**
-  String get practiceEditDangerZone;
-
-  /// No description provided for @deleteGroup.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Group'**
-  String get deleteGroup;
-
-  /// No description provided for @groupElements.
-  ///
-  /// In en, this message translates to:
-  /// **'Group Elements'**
-  String get groupElements;
-
-  /// No description provided for @deleteGroupConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm Delete Group'**
-  String get deleteGroupConfirm;
-
-  /// No description provided for @deleteGroupDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this group? This action cannot be undone.'**
-  String get deleteGroupDescription;
-
-  /// No description provided for @deleteGroupElements.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Group Elements'**
-  String get deleteGroupElements;
-
-  /// No description provided for @enterGroupEditMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter Group Edit Mode'**
-  String get enterGroupEditMode;
-
-  /// No description provided for @ungroupConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm Ungroup'**
-  String get ungroupConfirm;
-
-  /// No description provided for @alignHorizontalCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Horizontal Center'**
-  String get alignHorizontalCenter;
-
-  /// No description provided for @alignVerticalCenter.
-  ///
-  /// In en, this message translates to:
-  /// **'Align Vertical Center'**
-  String get alignVerticalCenter;
-
-  /// No description provided for @imagePropertyPanelCropping.
-  ///
-  /// In en, this message translates to:
-  /// **'Cropping'**
-  String get imagePropertyPanelCropping;
-
-  /// No description provided for @back.
-  ///
-  /// In en, this message translates to:
-  /// **'Back'**
-  String get back;
-
-  /// No description provided for @batchOperations.
-  ///
-  /// In en, this message translates to:
-  /// **'Batch Operations'**
-  String get batchOperations;
-
-  /// No description provided for @listView.
-  ///
-  /// In en, this message translates to:
-  /// **'List View'**
-  String get listView;
-
-  /// No description provided for @gridView.
-  ///
-  /// In en, this message translates to:
-  /// **'Grid View'**
-  String get gridView;
-
-  /// No description provided for @searchCharactersWorksAuthors.
-  ///
-  /// In en, this message translates to:
-  /// **'Search characters, works, or authors'**
-  String get searchCharactersWorksAuthors;
-
-  /// No description provided for @exitBatchMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Exit Batch Mode'**
-  String get exitBatchMode;
-
-  /// No description provided for @selectedCount.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} selected'**
-  String selectedCount(Object count);
-
-  /// No description provided for @totalItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Total: {count}'**
-  String totalItems(Object count);
-
-  /// No description provided for @workBrowseItemsPerPage.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} per page'**
-  String workBrowseItemsPerPage(Object count);
-
-  /// No description provided for @windowButtonMinimize.
-  ///
-  /// In en, this message translates to:
-  /// **'Minimize'**
-  String get windowButtonMinimize;
-
-  /// No description provided for @windowButtonMaximize.
-  ///
-  /// In en, this message translates to:
-  /// **'Maximize'**
-  String get windowButtonMaximize;
-
-  /// No description provided for @windowButtonRestore.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore'**
-  String get windowButtonRestore;
-
-  /// No description provided for @windowButtonClose.
-  ///
-  /// In en, this message translates to:
-  /// **'Close'**
-  String get windowButtonClose;
-
-  /// No description provided for @restartAfterRestored.
-  ///
-  /// In en, this message translates to:
-  /// **'Note: The application will automatically restart after restoration is complete'**
-  String get restartAfterRestored;
-
-  /// No description provided for @storageLocation.
-  ///
-  /// In en, this message translates to:
-  /// **'Storage Location'**
-  String get storageLocation;
-
-  /// No description provided for @cacheSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Cache Size'**
-  String get cacheSize;
-
-  /// No description provided for @storageUsed.
-  ///
-  /// In en, this message translates to:
-  /// **'Storage Used'**
-  String get storageUsed;
-
-  /// No description provided for @fileCount.
-  ///
-  /// In en, this message translates to:
-  /// **'File Count'**
-  String get fileCount;
-
-  /// No description provided for @libraryCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Library Count'**
-  String get libraryCount;
-
-  /// No description provided for @characterCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Character Count'**
-  String get characterCount;
-
-  /// No description provided for @workCount.
-  ///
-  /// In en, this message translates to:
-  /// **'Work Count'**
-  String get workCount;
-
-  /// No description provided for @loadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Load Failed'**
-  String get loadFailed;
-
-  /// No description provided for @libraryManagement.
-  ///
-  /// In en, this message translates to:
-  /// **'Library'**
-  String get libraryManagement;
-
-  /// No description provided for @libraryManagementLoading.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading...'**
-  String get libraryManagementLoading;
-
-  /// No description provided for @libraryManagementError.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed to load: {message}'**
-  String libraryManagementError(String message);
-
-  /// No description provided for @libraryManagementNoItems.
-  ///
-  /// In en, this message translates to:
-  /// **'No items'**
-  String get libraryManagementNoItems;
-
-  /// No description provided for @libraryManagementNoItemsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Try adding some items or changing filters'**
-  String get libraryManagementNoItemsHint;
-
-  /// No description provided for @libraryManagementSearch.
-  ///
-  /// In en, this message translates to:
-  /// **'Search items...'**
-  String get libraryManagementSearch;
-
-  /// No description provided for @libraryManagementEnterBatchMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter batch mode'**
-  String get libraryManagementEnterBatchMode;
-
-  /// No description provided for @libraryManagementExitBatchMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Exit batch mode'**
-  String get libraryManagementExitBatchMode;
-
-  /// No description provided for @libraryManagementDeleteSelected.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete selected items'**
-  String get libraryManagementDeleteSelected;
-
-  /// No description provided for @libraryManagementDeleteConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm deletion'**
-  String get libraryManagementDeleteConfirm;
-
-  /// No description provided for @libraryManagementDeleteMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete the selected items? This action cannot be undone.'**
-  String get libraryManagementDeleteMessage;
-
-  /// No description provided for @libraryManagementGridView.
-  ///
-  /// In en, this message translates to:
-  /// **'Grid view'**
-  String get libraryManagementGridView;
-
-  /// No description provided for @libraryManagementListView.
-  ///
-  /// In en, this message translates to:
-  /// **'List view'**
-  String get libraryManagementListView;
-
-  /// No description provided for @libraryManagementCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'Categories'**
-  String get libraryManagementCategories;
-
-  /// No description provided for @libraryManagementSortBy.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort by'**
-  String get libraryManagementSortBy;
-
-  /// No description provided for @libraryManagementSortByName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get libraryManagementSortByName;
-
-  /// No description provided for @libraryManagementSortByDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get libraryManagementSortByDate;
-
-  /// No description provided for @libraryManagementSortBySize.
-  ///
-  /// In en, this message translates to:
-  /// **'File size'**
-  String get libraryManagementSortBySize;
-
-  /// No description provided for @libraryManagementBasicInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Basic Information'**
-  String get libraryManagementBasicInfo;
-
-  /// No description provided for @libraryManagementName.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get libraryManagementName;
-
-  /// No description provided for @libraryManagementType.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get libraryManagementType;
-
-  /// No description provided for @libraryManagementFormat.
-  ///
-  /// In en, this message translates to:
-  /// **'Format'**
-  String get libraryManagementFormat;
-
-  /// No description provided for @libraryManagementSize.
-  ///
-  /// In en, this message translates to:
-  /// **'Size'**
-  String get libraryManagementSize;
-
-  /// No description provided for @libraryManagementResolution.
-  ///
-  /// In en, this message translates to:
-  /// **'Resolution'**
-  String get libraryManagementResolution;
-
-  /// No description provided for @libraryManagementFileSize.
-  ///
-  /// In en, this message translates to:
-  /// **'File size'**
-  String get libraryManagementFileSize;
-
-  /// No description provided for @libraryManagementTags.
-  ///
-  /// In en, this message translates to:
-  /// **'Tags'**
-  String get libraryManagementTags;
-
-  /// No description provided for @libraryManagementMetadata.
-  ///
-  /// In en, this message translates to:
-  /// **'Metadata'**
-  String get libraryManagementMetadata;
-
-  /// No description provided for @libraryManagementTimeInfo.
-  ///
-  /// In en, this message translates to:
-  /// **'Time Information'**
-  String get libraryManagementTimeInfo;
-
-  /// No description provided for @libraryManagementCreatedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Created at'**
-  String get libraryManagementCreatedAt;
-
-  /// No description provided for @libraryManagementUpdatedAt.
-  ///
-  /// In en, this message translates to:
-  /// **'Updated at'**
-  String get libraryManagementUpdatedAt;
-
-  /// No description provided for @libraryManagementDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Details'**
-  String get libraryManagementDetail;
-
-  /// No description provided for @libraryManagementImport.
-  ///
-  /// In en, this message translates to:
-  /// **'Import'**
-  String get libraryManagementImport;
-
-  /// No description provided for @libraryManagementImportFiles.
-  ///
-  /// In en, this message translates to:
-  /// **'Import Files'**
-  String get libraryManagementImportFiles;
-
-  /// No description provided for @libraryManagementImportFolder.
-  ///
-  /// In en, this message translates to:
-  /// **'Import Folder'**
-  String get libraryManagementImportFolder;
-
-  /// No description provided for @libraryManagementRemarks.
-  ///
-  /// In en, this message translates to:
-  /// **'Remarks'**
-  String get libraryManagementRemarks;
-
-  /// No description provided for @libraryManagementRemarksHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Add remarks'**
-  String get libraryManagementRemarksHint;
-
-  /// No description provided for @libraryManagementNoRemarks.
-  ///
-  /// In en, this message translates to:
-  /// **'No remarks'**
-  String get libraryManagementNoRemarks;
-
-  /// No description provided for @sortAndFilter.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort & Filter'**
-  String get sortAndFilter;
-
-  /// No description provided for @categoryManagement.
-  ///
-  /// In en, this message translates to:
-  /// **'Category Management'**
-  String get categoryManagement;
-
-  /// No description provided for @addCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Category'**
-  String get addCategory;
-
-  /// No description provided for @searchCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'Search categories...'**
-  String get searchCategories;
-
-  /// No description provided for @allCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'All Categories'**
-  String get allCategories;
-
-  /// No description provided for @removedFromAllCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'Removed from all categories'**
-  String get removedFromAllCategories;
-
-  /// No description provided for @addedToCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Added to category'**
-  String get addedToCategory;
-
-  /// No description provided for @newCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'New Category'**
-  String get newCategory;
-
-  /// No description provided for @deleteCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Category'**
-  String get deleteCategory;
-
-  /// No description provided for @categoryHasItems.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} items in this category'**
-  String categoryHasItems(Object count);
-
-  /// No description provided for @confirmDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Do you want to delete?'**
-  String get confirmDelete;
-
-  /// No description provided for @confirmDeleteCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Do you want to delete category'**
-  String get confirmDeleteCategory;
-
-  /// No description provided for @editCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Category'**
-  String get editCategory;
-
-  /// No description provided for @categories.
-  ///
-  /// In en, this message translates to:
-  /// **'Categories'**
-  String get categories;
-
-  /// No description provided for @categoryPanelTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Category Panel'**
-  String get categoryPanelTitle;
-
-  /// No description provided for @libraryManagementFavorite.
-  ///
-  /// In en, this message translates to:
-  /// **'Favorite'**
-  String get libraryManagementFavorite;
-
-  /// No description provided for @libraryManagementFavorites.
-  ///
-  /// In en, this message translates to:
-  /// **'Favorites'**
-  String get libraryManagementFavorites;
-
-  /// No description provided for @libraryManagementFormats.
-  ///
-  /// In en, this message translates to:
-  /// **'File Formats'**
-  String get libraryManagementFormats;
-
-  /// No description provided for @libraryManagementTypes.
-  ///
-  /// In en, this message translates to:
-  /// **'Types'**
-  String get libraryManagementTypes;
-
-  /// No description provided for @libraryManagementSortDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Sort Order'**
-  String get libraryManagementSortDesc;
-
-  /// No description provided for @allTypes.
-  ///
-  /// In en, this message translates to:
-  /// **'All Types'**
-  String get allTypes;
-
   /// No description provided for @yes.
   ///
   /// In en, this message translates to:
   /// **'Yes'**
   String get yes;
-
-  /// No description provided for @no.
-  ///
-  /// In en, this message translates to:
-  /// **'No'**
-  String get no;
-
-  /// No description provided for @unknownCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Unknown Category'**
-  String get unknownCategory;
-
-  /// No description provided for @noCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'No Categories'**
-  String get noCategories;
-
-  /// No description provided for @tagsHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter tags...'**
-  String get tagsHint;
-
-  /// No description provided for @noTags.
-  ///
-  /// In en, this message translates to:
-  /// **'No Tags'**
-  String get noTags;
-
-  /// No description provided for @libraryManagementSortByFileSize.
-  ///
-  /// In en, this message translates to:
-  /// **'File Size'**
-  String get libraryManagementSortByFileSize;
-
-  /// No description provided for @libraryManagementPath.
-  ///
-  /// In en, this message translates to:
-  /// **'Path'**
-  String get libraryManagementPath;
-
-  /// No description provided for @storageDetails.
-  ///
-  /// In en, this message translates to:
-  /// **'Storage Details'**
-  String get storageDetails;
-
-  /// No description provided for @files.
-  ///
-  /// In en, this message translates to:
-  /// **'File Count'**
-  String get files;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

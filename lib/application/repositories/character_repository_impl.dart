@@ -339,11 +339,20 @@ class CharacterRepositoryImpl implements CharacterRepository {
       characterId: map['id'] as String,
     );
 
-    // Parse tags field
-    final tagsJson = map['tags'] as String?;
-    final tags = tagsJson != null && tagsJson.isNotEmpty
-        ? (jsonDecode(tagsJson) as List<dynamic>).cast<String>()
-        : <String>[];
+    // Parse tags field - using comma-separated format
+    final tagsString = map['tags'] as String?;
+    final List<String> tags;
+    if (tagsString != null && tagsString.isNotEmpty) {
+      // New comma-separated format
+      tags = tagsString
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    } else {
+      tags = <String>[];
+    }
+
     return CharacterEntity(
       id: map['id'] as String,
       workId: map['workId'] as String,
@@ -364,7 +373,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
       'pageId': entity.pageId,
       'character': entity.character,
       'region': jsonEncode(entity.region.toJson()),
-      'tags': jsonEncode(entity.tags),
+      'tags': entity.tags.isEmpty ? '' : entity.tags.join(','),
       'createTime': entity.createTime.toIso8601String(),
       'updateTime': entity.updateTime.toIso8601String(),
       'isFavorite': entity.isFavorite ? 1 : 0,

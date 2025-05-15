@@ -9,45 +9,6 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get textureApplicationRange => '纹理应用范围';
-
-  @override
-  String get textureRangeCharacter => '字符';
-
-  @override
-  String get textureRangeBackground => '背景';
-
-  @override
-  String get textureFillMode => '纹理填充模式';
-
-  @override
-  String get textureFillModeRepeat => '重复';
-
-  @override
-  String get textureFillModeRepeatX => '水平重复';
-
-  @override
-  String get textureFillModeRepeatY => '垂直重复';
-
-  @override
-  String get textureFillModeNoRepeat => '不重复';
-
-  @override
-  String get textureFillModeCover => '覆盖';
-
-  @override
-  String get textureFillModeContain => '包含';
-
-  @override
-  String get textureOpacity => '纹理不透明度';
-
-  @override
-  String get textureSelectFromLibrary => '从库中选择';
-
-  @override
-  String get textureRemove => '移除';
-
-  @override
   String get a4Size => 'A4 (210×297mm)';
 
   @override
@@ -57,16 +18,106 @@ class AppLocalizationsZh extends AppLocalizations {
   String get about => '关于';
 
   @override
+  String get addCategory => '添加分类';
+
+  @override
+  String get addedToCategory => '已添加到分类';
+
+  @override
+  String get alignBottom => '底对齐';
+
+  @override
+  String get alignCenter => '居中';
+
+  @override
+  String get alignHorizontalCenter => '水平居中';
+
+  @override
+  String get alignLeft => '左对齐';
+
+  @override
+  String get alignmentOperations => '对齐操作';
+
+  @override
+  String get alignmentRequiresMultipleElements => '对齐操作需要至少2个元素';
+
+  @override
+  String get alignMiddle => '居中';
+
+  @override
+  String get alignRight => '右对齐';
+
+  @override
+  String get alignTop => '顶对齐';
+
+  @override
+  String get alignVerticalCenter => '垂直居中';
+
+  @override
+  String get allCategories => '所有分类';
+
+  @override
+  String get allTypes => '所有类型';
+
+  @override
   String get appName => '字字珠玑';
 
   @override
   String get appTitle => '字字珠玑';
 
   @override
+  String get autoBackup => '自动备份';
+
+  @override
+  String get autoBackupDescription => '定期自动备份您的数据';
+
+  @override
+  String get autoBackupInterval => '自动备份间隔';
+
+  @override
+  String get autoBackupIntervalDescription => '自动备份的频率';
+
+  @override
+  String get autoCleanup => '自动清理';
+
+  @override
+  String get autoCleanupDescription => '自动清理旧的缓存文件';
+
+  @override
+  String get autoCleanupInterval => '自动清理间隔';
+
+  @override
+  String get autoCleanupIntervalDescription => '自动清理运行的频率';
+
+  @override
+  String get back => '返回';
+
+  @override
   String get backgroundColor => '背景颜色';
 
   @override
+  String get backupDescription => '描述（可选）';
+
+  @override
+  String get backupDescriptionHint => '输入此备份的描述';
+
+  @override
+  String get backupFailure => '创建备份失败';
+
+  @override
+  String get backupList => '备份列表';
+
+  @override
+  String get backupSettings => '备份与恢复';
+
+  @override
+  String get backupSuccess => '备份创建成功';
+
+  @override
   String get basicInfo => '基本信息';
+
+  @override
+  String get batchOperations => '批量操作';
 
   @override
   String get bringLayerToFront => '图层置于顶层';
@@ -75,13 +126,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bringToFront => '置于顶层';
 
   @override
+  String get cacheClearedMessage => '缓存已成功清除';
+
+  @override
+  String get cacheSettings => '缓存设置';
+
+  @override
+  String get cacheSize => '缓存大小';
+
+  @override
   String get cancel => '取消';
 
   @override
   String get canvasPixelSize => '画布像素大小';
 
   @override
+  String get categories => '分类';
+
+  @override
+  String categoryHasItems(Object count) {
+    return '此分类下有 $count 个项目';
+  }
+
+  @override
+  String get categoryManagement => '分类管理';
+
+  @override
+  String get categoryPanelTitle => '分类面板';
+
+  @override
+  String get center => '居中';
+
+  @override
   String get characterCollectionBack => '返回';
+
+  @override
+  String characterCollectionDeleteBatchConfirm(Object count) {
+    return '确认删除$count个已保存区域？';
+  }
+
+  @override
+  String characterCollectionDeleteBatchMessage(Object count) {
+    return '您即将删除$count个已保存区域。此操作无法撤消。';
+  }
 
   @override
   String get characterCollectionDeleteConfirm => '确认删除';
@@ -93,6 +180,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCollectionDeleteShortcuts => '快捷键：Enter 确认，Esc 取消';
 
   @override
+  String characterCollectionError(Object error) {
+    return '错误：$error';
+  }
+
+  @override
   String get characterCollectionFilterAll => '全部';
 
   @override
@@ -100,6 +192,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterCollectionFilterRecent => '最近';
+
+  @override
+  String characterCollectionFindSwitchFailed(Object error) {
+    return '查找并切换页面失败：$error';
+  }
 
   @override
   String get characterCollectionHelp => '帮助';
@@ -210,6 +307,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterCollectionUseSelectionTool => '使用左侧的选择工具从图像中提取字符';
 
   @override
+  String get characterCount => '集字数量';
+
+  @override
+  String get characterDetailAddTag => '添加标签';
+
+  @override
   String get characterDetailAuthor => '作者';
 
   @override
@@ -225,10 +328,83 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterDetailCreationTime => '创作时间';
 
   @override
+  String get characterDetailFormatBinary => '二值化';
+
+  @override
+  String get characterDetailFormatBinaryDesc => '黑白二值化图像';
+
+  @override
+  String get characterDetailFormatDescription => '描述';
+
+  @override
+  String get characterDetailFormatExtension => '文件格式';
+
+  @override
+  String get characterDetailFormatName => '格式名称';
+
+  @override
+  String get characterDetailFormatOriginal => '原始';
+
+  @override
+  String get characterDetailFormatOriginalDesc => '未经处理的原始图像';
+
+  @override
+  String get characterDetailFormatOutline => '轮廓';
+
+  @override
+  String get characterDetailFormatOutlineDesc => '仅显示轮廓';
+
+  @override
+  String get characterDetailFormatSquareBinary => '方形二值化';
+
+  @override
+  String get characterDetailFormatSquareBinaryDesc => '规整为正方形的二值化图像';
+
+  @override
+  String get characterDetailFormatSquareOutline => '方形轮廓';
+
+  @override
+  String get characterDetailFormatSquareOutlineDesc => '规整为正方形的轮廓图像';
+
+  @override
+  String get characterDetailFormatSquareTransparent => '方形透明';
+
+  @override
+  String get characterDetailFormatSquareTransparentDesc => '规整为正方形的透明PNG图像';
+
+  @override
+  String get characterDetailFormatThumbnail => '缩略图';
+
+  @override
+  String get characterDetailFormatThumbnailDesc => '缩略图';
+
+  @override
+  String get characterDetailFormatTransparent => '透明';
+
+  @override
+  String get characterDetailFormatTransparentDesc => '去背景的透明PNG图像';
+
+  @override
+  String get characterDetailFormatType => '类型';
+
+  @override
   String get characterDetailLoadError => '加载字符详情失败';
 
   @override
   String get characterDetailSimplifiedChar => '简体字符';
+
+  @override
+  String characterDetailTagAddError(Object error) {
+    return '添加标签失败: $error';
+  }
+
+  @override
+  String get characterDetailTagHint => '输入标签名称';
+
+  @override
+  String characterDetailTagRemoveError(Object error) {
+    return '移除标签失败, 错误: $error';
+  }
 
   @override
   String get characterDetailTags => '标签';
@@ -244,6 +420,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterDetailWritingTool => '书写工具';
+
+  @override
+  String get characterEditCharacterUpdated => '字符已更新';
 
   @override
   String get characterEditCompletingSave => '完成保存...';
@@ -298,6 +477,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterEditSaveComplete => '保存完成';
+
+  @override
+  String characterEditSaveConfirmMessage(Object character) {
+    return '确认保存「$character」？';
+  }
 
   @override
   String get characterEditSaveConfirmTitle => '保存字符';
@@ -399,7 +583,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterManagementDeleteSelected => '删除所选';
 
   @override
+  String characterManagementError(Object message) {
+    return '错误：$message';
+  }
+
+  @override
   String get characterManagementGridView => '网格视图';
+
+  @override
+  String characterManagementItemsPerPage(Object count) {
+    return '$count项/页';
+  }
 
   @override
   String get characterManagementListView => '列表视图';
@@ -423,10 +617,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characters => '集字';
 
   @override
+  String get clearCache => '清除缓存';
+
+  @override
+  String get clearCacheConfirmMessage => '确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。';
+
+  @override
+  String get clearCacheConfirmTitle => '清除缓存';
+
+  @override
   String get clearImageCache => '清除图像缓存';
 
   @override
+  String get collection => '集字';
+
+  @override
   String get collectionPropertyPanel => '采集属性';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreak => '自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakDisabled => '已禁用自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakEnabled => '已启用自动换行';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakTooltip => '自动换行';
+
+  @override
+  String get collectionPropertyPanelAvailableCharacters => '可用字符';
 
   @override
   String get collectionPropertyPanelBackgroundColor => '背景颜色';
@@ -468,7 +689,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collectionPropertyPanelColorInversion => '颜色反转';
 
   @override
+  String get collectionPropertyPanelColorPicker => '颜色选择器';
+
+  @override
+  String get collectionPropertyPanelColorSettings => '颜色设置';
+
+  @override
   String get collectionPropertyPanelContent => '内容属性';
+
+  @override
+  String get collectionPropertyPanelCurrentCharInversion => '当前字符反转';
 
   @override
   String get collectionPropertyPanelDisabled => '已禁用';
@@ -490,6 +720,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelGeometry => '几何属性';
+
+  @override
+  String get collectionPropertyPanelGlobalInversion => '全局反转';
 
   @override
   String get collectionPropertyPanelHeaderContent => '内容属性';
@@ -576,6 +809,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get confirm => '确认';
 
   @override
+  String get confirmDelete => '确认删除？';
+
+  @override
+  String get confirmDeleteCategory => '确认删除分类';
+
+  @override
+  String get contains => '包含';
+
+  @override
+  String get contentSettings => '内容设置';
+
+  @override
+  String get create => '创建';
+
+  @override
+  String get createBackup => '创建备份';
+
+  @override
+  String get createBackupDescription => '创建新的数据备份';
+
+  @override
+  String get creatingBackup => '正在创建备份...';
+
+  @override
+  String get customSize => '自定义大小';
+
+  @override
   String days(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -587,171 +847,73 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String hours(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count小时',
-      one: '1小时',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupSettings => '备份与恢复';
-
-  @override
-  String get autoBackup => '自动备份';
-
-  @override
-  String get autoBackupDescription => '定期自动备份您的数据';
-
-  @override
-  String get autoBackupInterval => '自动备份间隔';
-
-  @override
-  String get autoBackupIntervalDescription => '自动备份的频率';
-
-  @override
-  String get keepBackupCount => '保留备份数量';
-
-  @override
-  String get keepBackupCountDescription => '删除旧备份前保留的备份数量';
-
-  @override
-  String get lastBackupTime => '上次备份时间';
-
-  @override
-  String get createBackup => '创建备份';
-
-  @override
-  String get restoreBackup => '恢复备份';
-
-  @override
-  String get backupList => '备份列表';
-
-  @override
-  String get noBackups => '没有可用的备份';
-
-  @override
-  String get loadingError => '加载错误';
-
-  @override
-  String get restore => '恢复';
-
-  @override
-  String get deleteBackup => '删除';
-
-  @override
-  String get restoreSuccess => '恢复成功';
-
-  @override
-  String get restoreFailure => '恢复失败';
-
-  @override
-  String get deleteSuccess => '备份删除成功';
-
-  @override
-  String get deleteFailure => '备份删除失败';
-
-  @override
-  String get createBackupDescription => '创建新的数据备份';
-
-  @override
-  String get backupDescription => '描述（可选）';
-
-  @override
-  String get backupDescriptionHint => '输入此备份的描述';
-
-  @override
-  String get create => '创建';
-
-  @override
-  String get selectBackup => '选择备份';
-
-  @override
-  String get restoreConfirmTitle => '恢复确认';
-
-  @override
-  String get restoreConfirmMessage => '确定要从此备份恢复吗？这将替换您当前的所有数据。';
-
-  @override
-  String get deleteBackupConfirmTitle => '删除备份';
-
-  @override
-  String get deleteBackupConfirmMessage => '确定要删除此备份吗？此操作无法撤消。';
-
-  @override
-  String get creatingBackup => '正在创建备份...';
-
-  @override
-  String get restoringBackup => '正在从备份恢复...';
-
-  @override
-  String get backupSuccess => '备份创建成功';
-
-  @override
-  String get backupFailure => '创建备份失败';
-
-  @override
-  String get exportBackup => '导出备份';
-
-  @override
-  String get importBackup => '导入备份';
-
-  @override
-  String get exportBackupDescription => '将备份导出到外部位置';
-
-  @override
-  String get importBackupDescription => '从外部位置导入备份';
-
-  @override
-  String get selectExportLocation => '选择导出位置';
-
-  @override
-  String get selectImportFile => '选择备份文件';
-
-  @override
-  String get exportSuccess => '备份导出成功';
-
-  @override
-  String get exportFailure => '备份导出失败';
-
-  @override
-  String get importSuccess => '备份导入成功';
-
-  @override
-  String get importFailure => '备份导入失败';
-
-  @override
-  String get invalidBackupFile => '无效的备份文件';
-
-  @override
-  String get exportingBackup => '正在导出备份...';
-
-  @override
-  String get importingBackup => '正在导入备份...';
-
-  @override
-  String get contains => '包含';
-
-  @override
-  String get contentSettings => '内容设置';
-
-  @override
-  String get customSize => '自定义大小';
-
-  @override
   String get delete => '删除';
 
   @override
   String get deleteAll => '删除全部';
 
   @override
+  String get deleteBackup => '删除';
+
+  @override
+  String get deleteBackupConfirmMessage => '确定要删除此备份吗？此操作无法撤消。';
+
+  @override
+  String get deleteBackupConfirmTitle => '删除备份';
+
+  @override
+  String get deleteCategory => '删除分类';
+
+  @override
+  String get deleteFailure => '备份删除失败';
+
+  @override
+  String get deleteGroup => '删除组';
+
+  @override
+  String get deleteGroupConfirm => '确认删除组';
+
+  @override
+  String get deleteGroupDescription => '确定要删除此组吗？此操作无法撤消。';
+
+  @override
+  String get deleteGroupElements => '删除组内元素';
+
+  @override
   String get deletePage => '删除页面';
 
   @override
+  String get deleteSuccess => '备份删除成功';
+
+  @override
   String get dimensions => '尺寸';
+
+  @override
+  String get diskCacheSize => '磁盘缓存大小';
+
+  @override
+  String get diskCacheSizeDescription => '磁盘缓存的最大大小';
+
+  @override
+  String get diskCacheTtl => '磁盘缓存生命周期';
+
+  @override
+  String get diskCacheTtlDescription => '缓存文件在磁盘上保留的时间';
+
+  @override
+  String get distributeHorizontally => '水平均匀分布';
+
+  @override
+  String get distributeVertically => '垂直均匀分布';
+
+  @override
+  String get distribution => '分布';
+
+  @override
+  String get distributionOperations => '分布操作';
+
+  @override
+  String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
 
   @override
   String get dpiHelperText => '用于计算画布像素大小，默认300dpi';
@@ -763,16 +925,193 @@ class AppLocalizationsZh extends AppLocalizations {
   String get edit => '编辑';
 
   @override
+  String get editCategory => '编辑分类';
+
+  @override
+  String get editGroupContents => '编辑组内容';
+
+  @override
+  String get editGroupContentsDescription => '编辑已选组的内容';
+
+  @override
+  String get elementDistribution => '元素分布';
+
+  @override
+  String get elementId => '元素ID';
+
+  @override
   String get elements => '元素';
+
+  @override
+  String get elementType => '元素类型';
 
   @override
   String get empty => '空';
 
   @override
+  String get enterFileName => '输入文件名';
+
+  @override
+  String get enterGroupEditMode => '进入组编辑模式';
+
+  @override
+  String get exitBatchMode => '退出批量模式';
+
+  @override
   String get export => '导出';
 
   @override
+  String get exportBackup => '导出备份';
+
+  @override
+  String get exportBackupDescription => '将备份导出到外部位置';
+
+  @override
+  String get exportDialogAllPages => '全部页面';
+
+  @override
+  String get exportDialogBrowse => '浏览...';
+
+  @override
+  String get exportDialogCentimeter => '厘米';
+
+  @override
+  String get exportDialogCreateDirectoryFailed => '创建导出目录失败';
+
+  @override
+  String get exportDialogCurrentPage => '当前页面';
+
+  @override
+  String get exportDialogCustomRange => '自定义范围';
+
+  @override
+  String exportDialogDimensions(Object height, Object orientation, Object width) {
+    return '$width厘米 × $height厘米 ($orientation)';
+  }
+
+  @override
+  String get exportDialogEnterFilename => '请输入文件名';
+
+  @override
+  String get exportDialogFilenamePrefix => '输入文件名前缀（将自动添加页码）';
+
+  @override
+  String get exportDialogFitContain => '包含在页面内';
+
+  @override
+  String get exportDialogFitHeight => '适合高度';
+
+  @override
+  String get exportDialogFitPolicy => '适配方式';
+
+  @override
+  String get exportDialogFitWidth => '适合宽度';
+
+  @override
+  String get exportDialogInvalidFilename => '文件名不能包含以下字符: \\ / : * ? \" < > |';
+
+  @override
+  String get exportDialogLandscape => '横向';
+
+  @override
+  String get exportDialogLocation => '导出位置';
+
+  @override
+  String get exportDialogMarginBottom => '下';
+
+  @override
+  String get exportDialogMarginLeft => '左';
+
+  @override
+  String get exportDialogMarginRight => '右';
+
+  @override
+  String get exportDialogMarginTop => '上';
+
+  @override
+  String exportDialogMultipleFilesNote(Object count) {
+    return '注意: 将导出 $count 个图片文件，文件名将自动添加页码。';
+  }
+
+  @override
+  String get exportDialogNextPage => '下一页';
+
+  @override
+  String get exportDialogNoPreview => '无法生成预览';
+
+  @override
+  String get exportDialogOutputQuality => '输出质量';
+
+  @override
+  String get exportDialogPageMargins => '页面边距 (厘米)';
+
+  @override
+  String get exportDialogPageOrientation => '页面朝向';
+
+  @override
+  String get exportDialogPageRange => '页面范围';
+
+  @override
+  String get exportDialogPageSize => '页面大小';
+
+  @override
+  String get exportDialogPortrait => '纵向';
+
+  @override
+  String get exportDialogPreview => '预览';
+
+  @override
+  String exportDialogPreviewPage(Object current, Object total) {
+    return ' (第 $current/$total 页)';
+  }
+
+  @override
+  String get exportDialogPreviousPage => '上一页';
+
+  @override
+  String get exportDialogQualityHigh => '高清 (2x)';
+
+  @override
+  String get exportDialogQualityStandard => '标准 (1x)';
+
+  @override
+  String get exportDialogQualityUltra => '超清 (3x)';
+
+  @override
+  String get exportDialogRangeExample => '例如: 1-3,5,7-9';
+
+  @override
+  String get exportDialogSelectLocation => '请选择导出位置';
+
+  @override
+  String get exportFailure => '备份导出失败';
+
+  @override
+  String get exportFormat => '导出格式';
+
+  @override
+  String get exportingBackup => '导出备份中...';
+
+  @override
+  String get exportSuccess => '备份导出成功';
+
+  @override
+  String get fileCount => '文件数量';
+
+  @override
+  String get fileName => '文件名';
+
+  @override
+  String get files => '文件数量';
+
+  @override
   String get filterApply => '应用';
+
+  @override
+  String get filterBatchActions => '批量操作';
+
+  @override
+  String get filterBatchSelection => '批量选择';
 
   @override
   String get filterClear => '清除';
@@ -781,136 +1120,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterCollapse => '收起筛选面板';
 
   @override
-  String get filterExpand => '展开筛选面板';
-
-  @override
-  String get filterHeader => '筛选';
-
-  @override
-  String get filterPanel => '筛选面板';
-
-  @override
-  String get filterReset => '重置筛选';
-
-  @override
-  String get filterSection => '筛选选项';
-
-  @override
-  String get filterSearchPlaceholder => '搜索...';
-
-  @override
-  String get filterSortAscending => '升序';
-
-  @override
-  String get filterSortDescending => '降序';
-
-  @override
-  String get filterSortDirection => '排序方向';
-
-  @override
-  String get filterSortField => '排序字段';
-
-  @override
-  String get filterToggle => '切换筛选';
-
-  @override
-  String get filterTagsSection => '标签';
-
-  @override
-  String get filterTagsSelected => '已选标签：';
-
-  @override
-  String get filterTagsAdd => '添加标签';
-
-  @override
-  String get filterTagsAddHint => '输入标签名称并按回车';
-
-  @override
-  String get filterTagsNone => '未选择标签';
-
-  @override
-  String get filterTagsSuggested => '推荐标签：';
-
-  @override
-  String get filterPresetSection => '预设';
-
-  @override
   String get filterCustomRange => '自定义范围';
-
-  @override
-  String get filterDateRange => '日期范围';
-
-  @override
-  String get filterStartDate => '开始日期';
-
-  @override
-  String get filterEndDate => '结束日期';
-
-  @override
-  String get filterSelectDate => '选择日期';
-
-  @override
-  String get filterFavoritesOnly => '仅显示收藏';
-
-  @override
-  String get filterStyleSection => '书法风格';
-
-  @override
-  String get filterStyleClerical => '隶书';
-
-  @override
-  String get filterStyleCursive => '草书';
-
-  @override
-  String get filterStyleRegular => '楷书';
-
-  @override
-  String get filterStyleRunning => '行书';
-
-  @override
-  String get filterStyleSeal => '篆书';
-
-  @override
-  String get filterStyleOther => '其他';
-
-  @override
-  String get filterToolSection => '书写工具';
-
-  @override
-  String get filterToolBrush => '毛笔';
-
-  @override
-  String get filterToolHardPen => '硬笔';
-
-  @override
-  String get filterToolOther => '其他';
-
-  @override
-  String get filterBatchSelection => '批量选择';
-
-  @override
-  String get filterSelectAll => '全选';
-
-  @override
-  String get filterDeselectAll => '取消全选';
-
-  @override
-  String get filterBatchActions => '批量操作';
-
-  @override
-  String filterItemsSelected(Object count) {
-    return '已选择 $count 项';
-  }
-
-  @override
-  String filterItemsPerPage(Object count) {
-    return '每页 $count 项';
-  }
-
-  @override
-  String filterTotalItems(Object count) {
-    return '共计：$count 项';
-  }
 
   @override
   String get filterDateApply => '应用';
@@ -967,6 +1177,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterDatePresetYesterday => '昨天';
 
   @override
+  String get filterDateRange => '日期范围';
+
+  @override
   String get filterDateSection => '创建时间';
 
   @override
@@ -976,6 +1189,73 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterDateStartDate => '开始日期';
 
   @override
+  String get filterDeselectAll => '取消全选';
+
+  @override
+  String get filterEndDate => '结束日期';
+
+  @override
+  String get filterExpand => '展开筛选面板';
+
+  @override
+  String get filterFavoritesOnly => '仅显示收藏';
+
+  @override
+  String get filterHeader => '筛选';
+
+  @override
+  String filterItemsPerPage(Object count) {
+    return '每页 $count 项';
+  }
+
+  @override
+  String filterItemsSelected(Object count) {
+    return '已选择 $count 项';
+  }
+
+  @override
+  String get filterMax => '最大';
+
+  @override
+  String get filterMin => '最小';
+
+  @override
+  String get filterPanel => '筛选面板';
+
+  @override
+  String get filterPresetSection => '预设';
+
+  @override
+  String get filterReset => '重置筛选';
+
+  @override
+  String get filterSearchPlaceholder => '搜索...';
+
+  @override
+  String get filterSection => '筛选选项';
+
+  @override
+  String get filterSelectAll => '全选';
+
+  @override
+  String get filterSelectDate => '选择日期';
+
+  @override
+  String get filterSelectDateRange => '选择日期范围';
+
+  @override
+  String get filterSortAscending => '升序';
+
+  @override
+  String get filterSortDescending => '降序';
+
+  @override
+  String get filterSortDirection => '排序方向';
+
+  @override
+  String get filterSortField => '排序字段';
+
+  @override
   String get filterSortFieldAuthor => '作者';
 
   @override
@@ -983,6 +1263,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get filterSortFieldCreationDate => '创作日期';
+
+  @override
+  String get filterSortFieldFileName => '文件名称';
+
+  @override
+  String get filterSortFieldFileSize => '文件大小';
+
+  @override
+  String get filterSortFieldFileUpdatedAt => '文件修改时间';
 
   @override
   String get filterSortFieldNone => '无';
@@ -1000,28 +1289,72 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterSortFieldUpdateTime => '更新时间';
 
   @override
-  String get filterSortFieldFileName => '文件名称';
-
-  @override
-  String get filterSortFieldFileUpdatedAt => '文件修改时间';
-
-  @override
-  String get filterSortFieldFileSize => '文件大小';
-
-  @override
   String get filterSortSection => '排序';
+
+  @override
+  String get filterStartDate => '开始日期';
+
+  @override
+  String get filterStyleClerical => '隶书';
+
+  @override
+  String get filterStyleCursive => '草书';
+
+  @override
+  String get filterStyleOther => '其他';
+
+  @override
+  String get filterStyleRegular => '楷书';
+
+  @override
+  String get filterStyleRunning => '行书';
+
+  @override
+  String get filterStyleSeal => '篆书';
+
+  @override
+  String get filterStyleSection => '书法风格';
+
+  @override
+  String get filterTagsAdd => '添加标签';
+
+  @override
+  String get filterTagsAddHint => '输入标签名称并按回车';
+
+  @override
+  String get filterTagsNone => '未选择标签';
+
+  @override
+  String get filterTagsSection => '标签';
+
+  @override
+  String get filterTagsSelected => '已选标签：';
+
+  @override
+  String get filterTagsSuggested => '推荐标签：';
 
   @override
   String get filterTitle => '筛选与排序';
 
   @override
-  String get filterMin => '最小';
+  String get filterToggle => '切换筛选';
 
   @override
-  String get filterMax => '最大';
+  String get filterToolBrush => '毛笔';
 
   @override
-  String get filterSelectDateRange => '选择日期范围';
+  String get filterToolHardPen => '硬笔';
+
+  @override
+  String get filterToolOther => '其他';
+
+  @override
+  String get filterToolSection => '书写工具';
+
+  @override
+  String filterTotalItems(Object count) {
+    return '共计：$count 项';
+  }
 
   @override
   String get generalSettings => '常规设置';
@@ -1036,16 +1369,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gridSize => '网格大小';
 
   @override
+  String get gridView => '网格视图';
+
+  @override
   String get group => '组合';
 
   @override
+  String get groupElements => '组合元素';
+
+  @override
   String get groupInfo => '组信息';
+
+  @override
+  String get groupOperations => '组合操作';
 
   @override
   String get height => '高度';
 
   @override
   String get hideElement => '隐藏元素';
+
+  @override
+  String get horizontalAlignment => '水平对齐';
+
+  @override
+  String get horizontalLeftToRight => '横排左起';
+
+  @override
+  String get horizontalRightToLeft => '横排右起';
+
+  @override
+  String hours(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count小时',
+      one: '1小时',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get image => '图片';
 
   @override
   String get imageCacheCleared => '图像缓存已清除';
@@ -1060,6 +1425,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelApplyTransform => '应用变换';
 
   @override
+  String get imagePropertyPanelAutoImportNotice => '所选图像将自动导入到您的图库中以便更好地管理';
+
+  @override
   String get imagePropertyPanelBorder => '边框';
 
   @override
@@ -1072,10 +1440,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelBrightness => '亮度';
 
   @override
-  String get imagePropertyPanelCannotApplyNoImage => '没有可用的图片';
+  String get imagePropertyPanelCannotApplyNoImage => '无法应用变换：未设置图像';
 
   @override
-  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法获取图片尺寸信息';
+  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法应用变换：图像大小信息不可用';
 
   @override
   String get imagePropertyPanelContent => '内容属性';
@@ -1093,7 +1461,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelCropLeft => '左侧裁剪';
 
   @override
-  String get imagePropertyPanelCroppingValueTooLarge => '裁剪值过大';
+  String get imagePropertyPanelCropping => '裁剪';
+
+  @override
+  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top) {
+    return ' (裁剪：左${left}px，上${top}px，右${right}px，下${bottom}px)';
+  }
+
+  @override
+  String get imagePropertyPanelCroppingValueTooLarge => '无法应用变换：裁剪值过大，导致无效的裁剪区域';
 
   @override
   String get imagePropertyPanelCropRight => '右侧裁剪';
@@ -1106,6 +1482,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelDisplay => '显示模式';
+
+  @override
+  String imagePropertyPanelFileNotExist(Object path) {
+    return '文件不存在：$path';
+  }
+
+  @override
+  String get imagePropertyPanelFileNotRecovered => '图片文件丢失且无法恢复';
+
+  @override
+  String get imagePropertyPanelFileRestored => '图片已从图库中恢复';
 
   @override
   String get imagePropertyPanelFilters => '图像滤镜';
@@ -1147,7 +1534,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelGeometryWarning => '这些属性调整整个元素框，而不是图像内容本身';
 
   @override
-  String get imagePropertyPanelImageSelection => '图片选择';
+  String get imagePropertyPanelImageSelection => '图像选择';
 
   @override
   String get imagePropertyPanelImageSize => '图像大小';
@@ -1156,13 +1543,32 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelImageTransform => '图像变换';
 
   @override
-  String get imagePropertyPanelNoCropping => '（无裁剪）';
+  String imagePropertyPanelImportError(Object error) {
+    return '导入图像失败：$error';
+  }
+
+  @override
+  String get imagePropertyPanelImporting => '导入图像中...';
+
+  @override
+  String get imagePropertyPanelImportSuccess => '图像导入成功';
+
+  @override
+  String get imagePropertyPanelLibraryProcessing => '图库功能开发中...';
+
+  @override
+  String imagePropertyPanelLoadError(Object error) {
+    return '加载图像失败：$error...';
+  }
+
+  @override
+  String get imagePropertyPanelNoCropping => ' (无裁剪，已应用其他变换)';
 
   @override
   String get imagePropertyPanelNoImage => '未选择图像';
 
   @override
-  String get imagePropertyPanelNoImageSelected => '未选择图片';
+  String get imagePropertyPanelNoImageSelected => '未选择图像';
 
   @override
   String get imagePropertyPanelOpacity => '不透明度';
@@ -1183,6 +1589,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelPreviewNotice => '注意：预览期间显示的重复日志是正常的';
 
   @override
+  String imagePropertyPanelProcessingPathError(Object error) {
+    return '处理路径错误：$error';
+  }
+
+  @override
   String get imagePropertyPanelReset => '重置';
 
   @override
@@ -1201,19 +1612,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelSelectFromLibrary => '从图库选择';
 
   @override
-  String get imagePropertyPanelFileRestored => '图片已从图库中恢复';
-
-  @override
-  String get imagePropertyPanelFileNotRecovered => '图片文件丢失且无法恢复';
-
-  @override
-  String get imagePropertyPanelLibraryProcessing => '图库功能开发中...';
-
-  @override
   String get imagePropertyPanelSelectFromLocal => '从本地选择';
 
   @override
   String get imagePropertyPanelTransformApplied => '变换已应用';
+
+  @override
+  String imagePropertyPanelTransformError(Object error) {
+    return '应用变换失败：$error';
+  }
 
   @override
   String get imagePropertyPanelTransformWarning => '这些变换会修改图像内容本身，而不仅仅是元素框架';
@@ -1223,6 +1630,35 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get import => '导入';
+
+  @override
+  String get importBackup => '导入备份';
+
+  @override
+  String get importBackupDescription => '从外部位置导入备份';
+
+  @override
+  String get importFailure => '备份导入失败';
+
+  @override
+  String get importingBackup => '正在导入备份...';
+
+  @override
+  String get importSuccess => '备份导入成功';
+
+  @override
+  String initializationFailed(Object error) {
+    return '初始化失败：$error';
+  }
+
+  @override
+  String get invalidBackupFile => '无效的备份文件';
+
+  @override
+  String get keepBackupCount => '保留备份数量';
+
+  @override
+  String get keepBackupCountDescription => '删除旧备份前保留的备份数量';
 
   @override
   String get landscape => '横向';
@@ -1240,16 +1676,171 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageZh => '简体中文';
 
   @override
+  String get lastBackupTime => '上次备份时间';
+
+  @override
   String get layer => '图层';
 
   @override
-  String get layer1 => '图层1';
+  String get layer1 => '图层 1';
 
   @override
   String get layerElements => '图层元素';
 
   @override
+  String get layerInfo => '图层信息';
+
+  @override
+  String get layerName => '图层名称';
+
+  @override
   String get layerOperations => '图层操作';
+
+  @override
+  String get libraryCount => '图库数量';
+
+  @override
+  String get libraryManagement => '图库';
+
+  @override
+  String get libraryManagementBasicInfo => '基本信息';
+
+  @override
+  String get libraryManagementCategories => '分类';
+
+  @override
+  String get libraryManagementCreatedAt => '创建时间';
+
+  @override
+  String get libraryManagementDeleteConfirm => '确认删除';
+
+  @override
+  String get libraryManagementDeleteMessage => '确定要删除选中的项目吗？此操作不可恢复。';
+
+  @override
+  String get libraryManagementDeleteSelected => '删除选中项目';
+
+  @override
+  String get libraryManagementDetail => '详情';
+
+  @override
+  String get libraryManagementEnterBatchMode => '进入批量选择模式';
+
+  @override
+  String libraryManagementError(String message) {
+    return '加载失败：$message';
+  }
+
+  @override
+  String get libraryManagementExitBatchMode => '退出批量选择模式';
+
+  @override
+  String get libraryManagementFavorite => '收藏';
+
+  @override
+  String get libraryManagementFavorites => '收藏';
+
+  @override
+  String get libraryManagementFileSize => '文件大小';
+
+  @override
+  String get libraryManagementFormat => '格式';
+
+  @override
+  String get libraryManagementFormats => '格式';
+
+  @override
+  String get libraryManagementGridView => '网格视图';
+
+  @override
+  String get libraryManagementImport => '导入';
+
+  @override
+  String get libraryManagementImportFiles => '导入文件';
+
+  @override
+  String get libraryManagementImportFolder => '导入文件夹';
+
+  @override
+  String get libraryManagementListView => '列表视图';
+
+  @override
+  String get libraryManagementLoading => '加载中...';
+
+  @override
+  String get libraryManagementMetadata => '元数据';
+
+  @override
+  String get libraryManagementName => '名称';
+
+  @override
+  String get libraryManagementNoItems => '暂无项目';
+
+  @override
+  String get libraryManagementNoItemsHint => '尝试添加一些项目或更改筛选条件';
+
+  @override
+  String get libraryManagementNoRemarks => '无备注';
+
+  @override
+  String get libraryManagementPath => '路径';
+
+  @override
+  String get libraryManagementRemarks => '备注';
+
+  @override
+  String get libraryManagementRemarksHint => '添加备注信息';
+
+  @override
+  String get libraryManagementResolution => '分辨率';
+
+  @override
+  String get libraryManagementSearch => '搜索项目...';
+
+  @override
+  String get libraryManagementSize => '尺寸';
+
+  @override
+  String get libraryManagementSortBy => '排序方式';
+
+  @override
+  String get libraryManagementSortByDate => '按日期';
+
+  @override
+  String get libraryManagementSortByFileSize => '按文件大小';
+
+  @override
+  String get libraryManagementSortByName => '按名称';
+
+  @override
+  String get libraryManagementSortBySize => '按文件大小';
+
+  @override
+  String get libraryManagementSortDesc => '降序';
+
+  @override
+  String get libraryManagementTags => '标签';
+
+  @override
+  String get libraryManagementTimeInfo => '时间信息';
+
+  @override
+  String get libraryManagementType => '类型';
+
+  @override
+  String get libraryManagementTypes => '类型';
+
+  @override
+  String get libraryManagementUpdatedAt => '更新时间';
+
+  @override
+  String get listView => '列表视图';
+
+  @override
+  String get loadFailed => '加载失败';
+
+  @override
+  String get loadingError => '加载错误';
 
   @override
   String get locked => '已锁定';
@@ -1258,7 +1849,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lockElement => '锁定元素';
 
   @override
+  String get lockStatus => '锁定状态';
+
+  @override
   String get lockUnlockAllElements => '锁定/解锁所有元素';
+
+  @override
+  String get memoryDataCacheCapacity => '内存数据缓存容量';
+
+  @override
+  String get memoryDataCacheCapacityDescription => '内存中保留的数据项数量';
+
+  @override
+  String get memoryImageCacheCapacity => '内存图像缓存容量';
+
+  @override
+  String get memoryImageCacheCapacityDescription => '内存中保留的图像数量';
 
   @override
   String get moveDown => '下移';
@@ -1268,6 +1874,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get moveLayerUp => '图层上移';
+
+  @override
+  String get moveSelectedElementsToLayer => '移动选中元素到图层';
 
   @override
   String get moveUp => '上移';
@@ -1282,6 +1891,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navExpandSidebar => '展开侧边栏';
 
   @override
+  String get newCategory => '新建分类';
+
+  @override
+  String get no => '否';
+
+  @override
+  String get noBackups => '没有可用的备份';
+
+  @override
+  String get noCategories => '无分类';
+
+  @override
   String get noElementsInLayer => '此图层中没有元素';
 
   @override
@@ -1289,6 +1910,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noPageSelected => '未选择页面';
+
+  @override
+  String get noTags => '无标签';
+
+  @override
+  String get ok => '确定';
 
   @override
   String get opacity => '不透明度';
@@ -1345,6 +1972,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditCopy => '复制 (Ctrl+Shift+C)';
 
   @override
+  String get practiceEditDangerZone => '危险区域';
+
+  @override
   String get practiceEditDelete => '删除 (Ctrl+D)';
 
   @override
@@ -1370,6 +2000,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceEditElements => '元素';
+
+  @override
+  String practiceEditElementSelectionInfo(Object count) {
+    return '已选择$count个元素';
+  }
 
   @override
   String get practiceEditEnableSnap => '启用对齐 (Ctrl+R)';
@@ -1414,6 +2049,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditLeave => '离开';
 
   @override
+  String practiceEditLoadFailed(Object error) {
+    return '加载字帖失败：$error';
+  }
+
+  @override
   String get practiceEditMoveDown => '下移 (Ctrl+Shift+B)';
 
   @override
@@ -1433,6 +2073,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceEditPaste => '粘贴 (Ctrl+Shift+V)';
+
+  @override
+  String practiceEditPracticeLoaded(Object title) {
+    return '字帖\"$title\"加载成功';
+  }
 
   @override
   String get practiceEditPracticeLoadFailed => '加载字帖失败：字帖不存在或已被删除';
@@ -1481,6 +2126,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceEditTitleExistsMessage => '已存在同名字帖。是否覆盖？';
+
+  @override
+  String practiceEditTitleUpdated(Object title) {
+    return '标题已更新为\"$title\"';
+  }
 
   @override
   String get practiceEditToolbar => '编辑工具栏';
@@ -1552,6 +2202,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListGridView => '网格视图';
 
   @override
+  String practiceListItemsPerPage(Object count) {
+    return '每页$count个';
+  }
+
+  @override
   String get practiceListListView => '列表视图';
 
   @override
@@ -1585,6 +2240,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListTitle => '字帖';
 
   @override
+  String practiceListTotalItems(Object count) {
+    return '$count张字帖';
+  }
+
+  @override
   String get practicePageSettings => '页面设置';
 
   @override
@@ -1603,7 +2263,52 @@ class AppLocalizationsZh extends AppLocalizations {
   String get print => '打印';
 
   @override
+  String get removedFromAllCategories => '已从所有分类中移除';
+
+  @override
   String get rename => '重命名';
+
+  @override
+  String get resetSettingsConfirmMessage => '确定要将所有缓存设置重置为默认值吗？';
+
+  @override
+  String get resetSettingsConfirmTitle => '重置设置';
+
+  @override
+  String get resetToDefaults => '重置为默认值';
+
+  @override
+  String get restartAfterRestored => '注意：恢复完成后应用将自动重启';
+
+  @override
+  String get restartAppRequired => '需要重启应用以完成恢复过程。';
+
+  @override
+  String get restartLater => '稍后';
+
+  @override
+  String get restartNow => '立即重启';
+
+  @override
+  String get restore => '恢复';
+
+  @override
+  String get restoreBackup => '恢复备份';
+
+  @override
+  String get restoreConfirmMessage => '确定要从此备份恢复吗？这将替换您当前的所有数据。';
+
+  @override
+  String get restoreConfirmTitle => '恢复确认';
+
+  @override
+  String get restoreFailure => '恢复失败';
+
+  @override
+  String get restoreSuccess => '恢复成功';
+
+  @override
+  String get restoringBackup => '正在从备份恢复...';
 
   @override
   String get rotation => '旋转';
@@ -1612,10 +2317,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '保存';
 
   @override
+  String get searchCategories => '搜索分类...';
+
+  @override
+  String get searchCharactersWorksAuthors => '搜索字符、作品或作者';
+
+  @override
+  String get selectBackup => '选择备份';
+
+  @override
   String get selectCollection => '选择采集';
 
   @override
   String get selected => '已选择';
+
+  @override
+  String selectedCount(Object count) {
+    return '已选择$count个';
+  }
+
+  @override
+  String get selectExportLocation => '选择导出位置';
+
+  @override
+  String get selectImportFile => '选择备份文件';
+
+  @override
+  String get selectTargetLayer => '选择目标图层';
 
   @override
   String get sendLayerToBack => '图层置于底层';
@@ -1627,6 +2355,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settings => '设置';
 
   @override
+  String get settingsResetMessage => '设置已重置为默认值';
+
+  @override
   String get showElement => '显示元素';
 
   @override
@@ -1636,73 +2367,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get showHideAllElements => '显示/隐藏所有元素';
 
   @override
+  String get sortAndFilter => '排序和筛选';
+
+  @override
   String get stateAndDisplay => '状态与显示';
+
+  @override
+  String get storageDetails => '存储详情';
+
+  @override
+  String get storageLocation => '存储位置';
 
   @override
   String get storageSettings => '存储设置';
 
   @override
-  String get cacheSettings => '缓存设置';
-
-  @override
-  String get memoryImageCacheCapacity => '内存图像缓存容量';
-
-  @override
-  String get memoryImageCacheCapacityDescription => '内存中保留的图像数量';
-
-  @override
-  String get memoryDataCacheCapacity => '内存数据缓存容量';
-
-  @override
-  String get memoryDataCacheCapacityDescription => '内存中保留的数据项数量';
-
-  @override
-  String get diskCacheSize => '磁盘缓存大小';
-
-  @override
-  String get diskCacheSizeDescription => '磁盘缓存的最大大小';
-
-  @override
-  String get diskCacheTtl => '磁盘缓存生命周期';
-
-  @override
-  String get diskCacheTtlDescription => '缓存文件在磁盘上保留的时间';
-
-  @override
-  String get autoCleanup => '自动清理';
-
-  @override
-  String get autoCleanupDescription => '自动清理旧的缓存文件';
-
-  @override
-  String get autoCleanupInterval => '自动清理间隔';
-
-  @override
-  String get autoCleanupIntervalDescription => '自动清理运行的频率';
-
-  @override
-  String get clearCache => '清除缓存';
-
-  @override
-  String get resetToDefaults => '重置为默认值';
-
-  @override
-  String get clearCacheConfirmTitle => '清除缓存';
-
-  @override
-  String get clearCacheConfirmMessage => '确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。';
-
-  @override
-  String get cacheClearedMessage => '缓存已成功清除';
-
-  @override
-  String get settingsResetMessage => '设置已重置为默认值';
-
-  @override
-  String get resetSettingsConfirmTitle => '重置设置';
-
-  @override
-  String get resetSettingsConfirmMessage => '确定要将所有缓存设置重置为默认值吗？';
+  String get storageUsed => '已使用存储';
 
   @override
   String get tagEditorEnterTagHint => '输入标签并按Enter';
@@ -1712,6 +2392,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tagEditorSuggestedTags => '建议标签：';
+
+  @override
+  String get tagsHint => '输入标签...';
+
+  @override
+  String get text => '文本';
 
   @override
   String get textPropertyPanel => '文本属性';
@@ -1789,10 +2475,52 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textPropertyPanelWritingMode => '书写模式';
 
   @override
+  String get textureApplicationRange => '纹理应用范围';
+
+  @override
+  String get textureFillMode => '填充模式';
+
+  @override
+  String get textureFillModeContain => '适应';
+
+  @override
+  String get textureFillModeCover => '覆盖';
+
+  @override
+  String get textureFillModeNoRepeat => '不重复';
+
+  @override
+  String get textureFillModeRepeat => '重复';
+
+  @override
+  String get textureFillModeRepeatX => '水平重复';
+
+  @override
+  String get textureFillModeRepeatY => '垂直重复';
+
+  @override
+  String get textureOpacity => '纹理不透明度';
+
+  @override
+  String get textureRangeBackground => '整个背景';
+
+  @override
+  String get textureRangeCharacter => '仅字符';
+
+  @override
+  String get textureRemove => '移除';
+
+  @override
+  String get textureSelectFromLibrary => '从库中选择';
+
+  @override
   String get themeMode => '主题模式';
 
   @override
   String get themeModeDark => '暗色';
+
+  @override
+  String get themeModeDescription => '使用深色主题获得更好的夜间观看体验';
 
   @override
   String get themeModeLight => '亮色';
@@ -1801,79 +2529,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get themeModeSystem => '系统';
 
   @override
-  String get themeModeDescription => '使用深色主题';
-
-  @override
   String get themeModeSystemDescription => '根据系统设置自动切换深色/亮色主题';
 
   @override
   String get toggleTestText => '切换测试文本';
 
   @override
-  String get characterDetailFormatName => '格式名称';
-
-  @override
-  String get characterDetailFormatType => '类型';
-
-  @override
-  String get characterDetailFormatExtension => '文件格式';
-
-  @override
-  String get characterDetailFormatDescription => '描述';
-
-  @override
-  String get characterDetailFormatOriginal => '原始';
-
-  @override
-  String get characterDetailFormatBinary => '二值化';
-
-  @override
-  String get characterDetailFormatThumbnail => '缩略图';
-
-  @override
-  String get characterDetailFormatSquareBinary => '方形二值化';
-
-  @override
-  String get characterDetailFormatSquareTransparent => '方形透明';
-
-  @override
-  String get characterDetailFormatTransparent => '透明';
-
-  @override
-  String get characterDetailFormatOutline => '轮廓';
-
-  @override
-  String get characterDetailFormatSquareOutline => '方形轮廓';
-
-  @override
-  String get characterDetailFormatOriginalDesc => '未经处理的原始图像';
-
-  @override
-  String get characterDetailFormatBinaryDesc => '黑白二值化图像';
-
-  @override
-  String get characterDetailFormatThumbnailDesc => '缩略图';
-
-  @override
-  String get characterDetailFormatSquareBinaryDesc => '规整为正方形的二值化图像';
-
-  @override
-  String get characterDetailFormatSquareTransparentDesc => '规整为正方形的透明PNG图像';
-
-  @override
-  String get characterDetailFormatTransparentDesc => '去背景的透明PNG图像';
-
-  @override
-  String get characterDetailFormatOutlineDesc => '仅显示轮廓';
-
-  @override
-  String get characterDetailFormatSquareOutlineDesc => '规整为正方形的轮廓图像';
-
-  @override
   String get total => '总计';
 
   @override
+  String totalItems(Object count) {
+    return '共 $count 个';
+  }
+
+  @override
   String get ungroup => '取消组合';
+
+  @override
+  String get ungroupConfirm => '确认解组';
+
+  @override
+  String get ungroupDescription => '解散已选组';
+
+  @override
+  String get unknownCategory => '未知分类';
+
+  @override
+  String get unlocked => '未锁定';
 
   @override
   String get unlockElement => '解锁元素';
@@ -1888,6 +2570,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unnamedLayer => '未命名图层';
 
   @override
+  String get verticalAlignment => '垂直对齐';
+
+  @override
+  String get verticalLeftToRight => '竖排左起';
+
+  @override
+  String get verticalRightToLeft => '竖排右起';
+
+  @override
+  String get verticalTextModeEnabled => '竖排文本预览 - 超出高度自动换列，可横向滚动';
+
+  @override
+  String get visibility => '可见性';
+
+  @override
   String get visible => '可见';
 
   @override
@@ -1897,100 +2594,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get width => '宽度';
 
   @override
-  String get fileName => '文件名';
+  String get windowButtonClose => '关闭';
 
   @override
-  String get enterFileName => '输入文件名';
+  String get windowButtonMaximize => '最大化';
 
   @override
-  String get exportFormat => '导出格式';
+  String get windowButtonMinimize => '最小化';
 
   @override
-  String get alignmentOperations => '对齐操作';
-
-  @override
-  String get horizontalAlignment => '水平对齐';
-
-  @override
-  String get alignLeft => '左对齐';
-
-  @override
-  String get alignCenter => '居中';
-
-  @override
-  String get alignRight => '右对齐';
-
-  @override
-  String get verticalAlignment => '垂直对齐';
-
-  @override
-  String get alignTop => '顶对齐';
-
-  @override
-  String get alignMiddle => '居中';
-
-  @override
-  String get alignBottom => '底对齐';
-
-  @override
-  String get distributionOperations => '分布操作';
-
-  @override
-  String get elementDistribution => '元素分布';
-
-  @override
-  String get distributeHorizontally => '水平均匀分布';
-
-  @override
-  String get distributeVertically => '垂直均匀分布';
-
-  @override
-  String get alignmentRequiresMultipleElements => '对齐操作需要至少2个元素';
-
-  @override
-  String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
-
-  @override
-  String get distribution => '分布';
-
-  @override
-  String get center => '居中';
-
-  @override
-  String get moveSelectedElementsToLayer => '移动选中元素到图层';
-
-  @override
-  String get selectTargetLayer => '选择目标图层';
-
-  @override
-  String get layerInfo => '图层信息';
-
-  @override
-  String get layerName => '图层名称';
-
-  @override
-  String get visibility => '可见性';
-
-  @override
-  String get lockStatus => '锁定状态';
-
-  @override
-  String get unlocked => '未锁定';
-
-  @override
-  String get elementType => '元素类型';
-
-  @override
-  String get elementId => '元素ID';
-
-  @override
-  String get text => '文本';
-
-  @override
-  String get image => '图片';
-
-  @override
-  String get collection => '集字';
+  String get windowButtonRestore => '还原';
 
   @override
   String get workBrowseAddFavorite => '添加到收藏';
@@ -2008,13 +2621,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workBrowseDelete => '删除';
 
   @override
+  String workBrowseDeleteConfirmMessage(Object count) {
+    return '确定要删除已选的$count个作品吗？此操作无法撤消。';
+  }
+
+  @override
   String get workBrowseDeleteConfirmTitle => '确认删除';
+
+  @override
+  String workBrowseDeleteSelected(Object count) {
+    return '删除$count个';
+  }
+
+  @override
+  String workBrowseError(Object message) {
+    return '错误：$message';
+  }
 
   @override
   String get workBrowseGridView => '网格视图';
 
   @override
   String get workBrowseImport => '导入作品';
+
+  @override
+  String workBrowseItemsPerPage(Object count) {
+    return '$count项/页';
+  }
 
   @override
   String get workBrowseListView => '列表视图';
@@ -2038,7 +2671,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workBrowseSearch => '搜索作品...';
 
   @override
+  String workBrowseSelectedCount(Object count) {
+    return '已选$count个';
+  }
+
+  @override
   String get workBrowseTitle => '作品';
+
+  @override
+  String get workCount => '作品数量';
 
   @override
   String get workDetailBack => '返回';
@@ -2221,6 +2862,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workImportDialogDeleteImageConfirm => '确定要删除此图像吗？';
 
   @override
+  String workImportDialogError(Object error) {
+    return '导入失败：$error';
+  }
+
+  @override
   String get workImportDialogImport => '导入';
 
   @override
@@ -2269,635 +2915,5 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workToolOther => '其他';
 
   @override
-  String characterCollectionDeleteBatchConfirm(Object count) {
-    return '确认删除$count个已保存区域？';
-  }
-
-  @override
-  String characterCollectionDeleteBatchMessage(Object count) {
-    return '您即将删除$count个已保存区域。此操作无法撤消。';
-  }
-
-  @override
-  String characterCollectionError(Object error) {
-    return '错误：$error';
-  }
-
-  @override
-  String characterCollectionFindSwitchFailed(Object error) {
-    return '查找并切换页面失败：$error';
-  }
-
-  @override
-  String characterEditCharacterUpdated(Object character) {
-    return '「$character」已更新';
-  }
-
-  @override
-  String characterEditSaveConfirmMessage(Object character) {
-    return '确认保存「$character」？';
-  }
-
-  @override
-  String characterManagementError(Object message) {
-    return '错误：$message';
-  }
-
-  @override
-  String characterManagementItemsPerPage(Object count) {
-    return '$count项/页';
-  }
-
-  @override
-  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top) {
-    return ' (裁剪：左${left}px，上${top}px，右${right}px，下${bottom}px)';
-  }
-
-  @override
-  String imagePropertyPanelFileNotExist(Object path) {
-    return '文件不存在：$path';
-  }
-
-  @override
-  String imagePropertyPanelLoadError(Object error) {
-    return '加载图片时出错: $error';
-  }
-
-  @override
-  String get imagePropertyPanelAutoImportNotice => '所选图像将自动导入到您的图库中以便更好地管理';
-
-  @override
-  String get imagePropertyPanelImporting => '导入图像中...';
-
-  @override
-  String get imagePropertyPanelImportSuccess => '图像导入成功';
-
-  @override
-  String imagePropertyPanelImportError(Object error) {
-    return '导入图像失败：$error';
-  }
-
-  @override
-  String imagePropertyPanelProcessingPathError(Object error) {
-    return '处理路径错误：$error';
-  }
-
-  @override
-  String imagePropertyPanelTransformError(Object error) {
-    return '应用变换失败：$error';
-  }
-
-  @override
-  String initializationFailed(Object error) {
-    return '初始化失败：$error';
-  }
-
-  @override
-  String practiceEditElementSelectionInfo(Object count) {
-    return '已选择$count个元素';
-  }
-
-  @override
-  String practiceEditLoadFailed(Object error) {
-    return '加载字帖失败：$error';
-  }
-
-  @override
-  String practiceEditPracticeLoaded(Object title) {
-    return '字帖\"$title\"加载成功';
-  }
-
-  @override
-  String practiceEditTitleUpdated(Object title) {
-    return '标题已更新为\"$title\"';
-  }
-
-  @override
-  String practiceListItemsPerPage(Object count) {
-    return '每页$count个';
-  }
-
-  @override
-  String practiceListTotalItems(Object count) {
-    return '$count张字帖';
-  }
-
-  @override
-  String workBrowseDeleteConfirmMessage(Object count) {
-    return '确定要删除已选的$count个作品吗？此操作无法撤消。';
-  }
-
-  @override
-  String get workBrowseDeleteSelected => '删除选中的';
-
-  @override
-  String workBrowseError(Object message) {
-    return '错误：$message';
-  }
-
-  @override
-  String workBrowseSelectedCount(Object count) {
-    return '已选$count个';
-  }
-
-  @override
-  String workImportDialogError(Object error) {
-    return '导入失败：$error';
-  }
-
-  @override
-  String get horizontalLeftToRight => '横排左起';
-
-  @override
-  String get horizontalRightToLeft => '横排右起';
-
-  @override
-  String get verticalLeftToRight => '竖排左起';
-
-  @override
-  String get verticalRightToLeft => '竖排右起';
-
-  @override
-  String get collectionPropertyPanelAvailableCharacters => '可用字符';
-
-  @override
-  String get exportDialogFitPolicy => '适配方式';
-
-  @override
-  String get exportDialogFitWidth => '适合宽度';
-
-  @override
-  String get exportDialogFitHeight => '适合高度';
-
-  @override
-  String get exportDialogFitContain => '包含在页面内';
-
-  @override
-  String get exportDialogCentimeter => '厘米';
-
-  @override
-  String get exportDialogMarginTop => '上';
-
-  @override
-  String get exportDialogMarginRight => '右';
-
-  @override
-  String get exportDialogMarginBottom => '下';
-
-  @override
-  String get exportDialogMarginLeft => '左';
-
-  @override
-  String get exportDialogPageMargins => '页面边距 (厘米)';
-
-  @override
-  String get exportDialogPageOrientation => '页面朝向';
-
-  @override
-  String get exportDialogPortrait => '纵向';
-
-  @override
-  String get exportDialogLandscape => '横向';
-
-  @override
-  String get exportDialogLocation => '导出位置';
-
-  @override
-  String get exportDialogSelectLocation => '请选择导出位置';
-
-  @override
-  String get exportDialogBrowse => '浏览...';
-
-  @override
-  String get exportDialogPageRange => '页面范围';
-
-  @override
-  String get exportDialogAllPages => '全部页面';
-
-  @override
-  String get exportDialogCurrentPage => '当前页面';
-
-  @override
-  String get exportDialogCustomRange => '自定义范围';
-
-  @override
-  String get exportDialogRangeExample => '例如: 1-3,5,7-9';
-
-  @override
-  String get exportDialogPageSize => '页面大小';
-
-  @override
-  String get exportDialogOutputQuality => '输出质量';
-
-  @override
-  String exportDialogMultipleFilesNote(Object count) {
-    return '注意: 将导出 $count 个图片文件，文件名将自动添加页码。';
-  }
-
-  @override
-  String get exportDialogPreview => '预览';
-
-  @override
-  String exportDialogPreviewPage(Object current, Object total) {
-    return ' (第 $current/$total 页)';
-  }
-
-  @override
-  String get exportDialogNoPreview => '无法生成预览';
-
-  @override
-  String exportDialogDimensions(Object height, Object orientation, Object width) {
-    return '$width厘米 × $height厘米 ($orientation)';
-  }
-
-  @override
-  String get exportDialogPreviousPage => '上一页';
-
-  @override
-  String get exportDialogNextPage => '下一页';
-
-  @override
-  String get exportDialogEnterFilename => '请输入文件名';
-
-  @override
-  String get exportDialogInvalidFilename => '文件名不能包含以下字符: \\ / : * ? \" < > |';
-
-  @override
-  String get exportDialogCreateDirectoryFailed => '创建导出目录失败';
-
-  @override
-  String get exportDialogQualityStandard => '标准 (1x)';
-
-  @override
-  String get exportDialogQualityHigh => '高清 (2x)';
-
-  @override
-  String get exportDialogQualityUltra => '超清 (3x)';
-
-  @override
-  String get exportDialogFilenamePrefix => '输入文件名前缀（将自动添加页码）';
-
-  @override
-  String get restartAppRequired => '需要重启应用以完成恢复过程。';
-
-  @override
-  String get ok => '确定';
-
-  @override
-  String get restartNow => '立即重启';
-
-  @override
-  String get restartLater => '稍后';
-
-  @override
-  String get collectionPropertyPanelGlobalInversion => '全局反转';
-
-  @override
-  String get collectionPropertyPanelCurrentCharInversion => '当前字符反转';
-
-  @override
-  String get collectionPropertyPanelColorPicker => '颜色选择器';
-
-  @override
-  String get collectionPropertyPanelColorSettings => '颜色设置';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreak => '自动换行';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakEnabled => '已启用自动换行';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakDisabled => '已禁用自动换行';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakTooltip => '自动换行';
-
-  @override
-  String get verticalTextModeEnabled => '竖排文本预览 - 超出高度自动换列，可横向滚动';
-
-  @override
-  String get groupOperations => '组合操作';
-
-  @override
-  String get editGroupContents => '编辑组内容';
-
-  @override
-  String get editGroupContentsDescription => '编辑已选组的内容';
-
-  @override
-  String get ungroupDescription => '确定要解散此组吗？';
-
-  @override
-  String get practiceEditDangerZone => '危险区域';
-
-  @override
-  String get deleteGroup => '删除组';
-
-  @override
-  String get groupElements => '组合元素';
-
-  @override
-  String get deleteGroupConfirm => '确认删除组';
-
-  @override
-  String get deleteGroupDescription => '确定要删除此组吗？此操作无法撤消。';
-
-  @override
-  String get deleteGroupElements => '删除组内元素';
-
-  @override
-  String get enterGroupEditMode => '进入组编辑模式';
-
-  @override
-  String get ungroupConfirm => '确认解组';
-
-  @override
-  String get alignHorizontalCenter => '水平居中';
-
-  @override
-  String get alignVerticalCenter => '垂直居中';
-
-  @override
-  String get imagePropertyPanelCropping => '裁剪';
-
-  @override
-  String get back => '返回';
-
-  @override
-  String get batchOperations => '批量操作';
-
-  @override
-  String get listView => '列表视图';
-
-  @override
-  String get gridView => '网格视图';
-
-  @override
-  String get searchCharactersWorksAuthors => '搜索字符、作品或作者';
-
-  @override
-  String get exitBatchMode => '退出批量模式';
-
-  @override
-  String selectedCount(Object count) {
-    return '已选择$count个';
-  }
-
-  @override
-  String totalItems(Object count) {
-    return '共 $count 个';
-  }
-
-  @override
-  String workBrowseItemsPerPage(Object count) {
-    return '$count项/页';
-  }
-
-  @override
-  String get windowButtonMinimize => '最小化';
-
-  @override
-  String get windowButtonMaximize => '最大化';
-
-  @override
-  String get windowButtonRestore => '还原';
-
-  @override
-  String get windowButtonClose => '关闭';
-
-  @override
-  String get restartAfterRestored => '注意：恢复完成后应用将自动重启';
-
-  @override
-  String get storageLocation => '存储位置';
-
-  @override
-  String get cacheSize => '缓存大小';
-
-  @override
-  String get storageUsed => '已使用存储';
-
-  @override
-  String get fileCount => '文件数量';
-
-  @override
-  String get libraryCount => '图库数量';
-
-  @override
-  String get characterCount => '集字数量';
-
-  @override
-  String get workCount => '作品数量';
-
-  @override
-  String get loadFailed => '加载失败';
-
-  @override
-  String get libraryManagement => '图库';
-
-  @override
-  String get libraryManagementLoading => '加载中...';
-
-  @override
-  String libraryManagementError(String message) {
-    return '加载失败：$message';
-  }
-
-  @override
-  String get libraryManagementNoItems => '暂无项目';
-
-  @override
-  String get libraryManagementNoItemsHint => '尝试添加一些项目或更改筛选条件';
-
-  @override
-  String get libraryManagementSearch => '搜索项目...';
-
-  @override
-  String get libraryManagementEnterBatchMode => '进入批量选择模式';
-
-  @override
-  String get libraryManagementExitBatchMode => '退出批量选择模式';
-
-  @override
-  String get libraryManagementDeleteSelected => '删除选中项目';
-
-  @override
-  String get libraryManagementDeleteConfirm => '确认删除';
-
-  @override
-  String get libraryManagementDeleteMessage => '确定要删除选中的项目吗？此操作不可恢复。';
-
-  @override
-  String get libraryManagementGridView => '网格视图';
-
-  @override
-  String get libraryManagementListView => '列表视图';
-
-  @override
-  String get libraryManagementCategories => '分类';
-
-  @override
-  String get libraryManagementSortBy => '排序方式';
-
-  @override
-  String get libraryManagementSortByName => '按名称';
-
-  @override
-  String get libraryManagementSortByDate => '按日期';
-
-  @override
-  String get libraryManagementSortBySize => '按文件大小';
-
-  @override
-  String get libraryManagementBasicInfo => '基本信息';
-
-  @override
-  String get libraryManagementName => '名称';
-
-  @override
-  String get libraryManagementType => '类型';
-
-  @override
-  String get libraryManagementFormat => '格式';
-
-  @override
-  String get libraryManagementSize => '尺寸';
-
-  @override
-  String get libraryManagementResolution => '分辨率';
-
-  @override
-  String get libraryManagementFileSize => '文件大小';
-
-  @override
-  String get libraryManagementTags => '标签';
-
-  @override
-  String get libraryManagementMetadata => '元数据';
-
-  @override
-  String get libraryManagementTimeInfo => '时间信息';
-
-  @override
-  String get libraryManagementCreatedAt => '创建时间';
-
-  @override
-  String get libraryManagementUpdatedAt => '更新时间';
-
-  @override
-  String get libraryManagementDetail => '详情';
-
-  @override
-  String get libraryManagementImport => '导入';
-
-  @override
-  String get libraryManagementImportFiles => '导入文件';
-
-  @override
-  String get libraryManagementImportFolder => '导入文件夹';
-
-  @override
-  String get libraryManagementRemarks => '备注';
-
-  @override
-  String get libraryManagementRemarksHint => '添加备注信息';
-
-  @override
-  String get libraryManagementNoRemarks => '无备注';
-
-  @override
-  String get sortAndFilter => '排序和筛选';
-
-  @override
-  String get categoryManagement => '分类管理';
-
-  @override
-  String get addCategory => '添加分类';
-
-  @override
-  String get searchCategories => '搜索分类...';
-
-  @override
-  String get allCategories => '所有分类';
-
-  @override
-  String get removedFromAllCategories => '已从所有分类中移除';
-
-  @override
-  String get addedToCategory => '已添加到分类';
-
-  @override
-  String get newCategory => '新建分类';
-
-  @override
-  String get deleteCategory => '删除分类';
-
-  @override
-  String categoryHasItems(Object count) {
-    return '此分类下有 $count 个项目';
-  }
-
-  @override
-  String get confirmDelete => '确认删除？';
-
-  @override
-  String get confirmDeleteCategory => '确认删除分类';
-
-  @override
-  String get editCategory => '编辑分类';
-
-  @override
-  String get categories => '分类';
-
-  @override
-  String get categoryPanelTitle => '分类面板';
-
-  @override
-  String get libraryManagementFavorite => '收藏';
-
-  @override
-  String get libraryManagementFavorites => '收藏';
-
-  @override
-  String get libraryManagementFormats => '格式';
-
-  @override
-  String get libraryManagementTypes => '类型';
-
-  @override
-  String get libraryManagementSortDesc => '降序';
-
-  @override
-  String get allTypes => '所有类型';
-
-  @override
   String get yes => '是';
-
-  @override
-  String get no => '否';
-
-  @override
-  String get unknownCategory => '未知分类';
-
-  @override
-  String get noCategories => '无分类';
-
-  @override
-  String get tagsHint => '输入标签...';
-
-  @override
-  String get noTags => '无标签';
-
-  @override
-  String get libraryManagementSortByFileSize => '按文件大小';
-
-  @override
-  String get libraryManagementPath => '路径';
-
-  @override
-  String get storageDetails => '存储详情';
-
-  @override
-  String get files => '文件数量';
 }

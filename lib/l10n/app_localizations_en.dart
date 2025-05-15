@@ -9,45 +9,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get textureApplicationRange => 'Texture Application Range';
-
-  @override
-  String get textureRangeCharacter => 'Character Only';
-
-  @override
-  String get textureRangeBackground => 'Entire Background';
-
-  @override
-  String get textureFillMode => 'Fill Mode';
-
-  @override
-  String get textureFillModeRepeat => 'Repeat';
-
-  @override
-  String get textureFillModeRepeatX => 'Repeat Horizontally';
-
-  @override
-  String get textureFillModeRepeatY => 'Repeat Vertically';
-
-  @override
-  String get textureFillModeNoRepeat => 'No Repeat';
-
-  @override
-  String get textureFillModeCover => 'Cover';
-
-  @override
-  String get textureFillModeContain => 'Contain';
-
-  @override
-  String get textureOpacity => 'Texture Opacity';
-
-  @override
-  String get textureSelectFromLibrary => 'Select from Library';
-
-  @override
-  String get textureRemove => 'Remove';
-
-  @override
   String get a4Size => 'A4 (210×297mm)';
 
   @override
@@ -57,16 +18,106 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About';
 
   @override
+  String get addCategory => 'Add Category';
+
+  @override
+  String get addedToCategory => 'Added to category';
+
+  @override
+  String get alignBottom => 'Align Bottom';
+
+  @override
+  String get alignCenter => 'Align Center';
+
+  @override
+  String get alignHorizontalCenter => 'Align Horizontal Center';
+
+  @override
+  String get alignLeft => 'Align Left';
+
+  @override
+  String get alignmentOperations => 'Alignment Operations';
+
+  @override
+  String get alignmentRequiresMultipleElements => 'Alignment requires at least 2 elements';
+
+  @override
+  String get alignMiddle => 'Align Middle';
+
+  @override
+  String get alignRight => 'Align Right';
+
+  @override
+  String get alignTop => 'Align Top';
+
+  @override
+  String get alignVerticalCenter => 'Align Vertical Center';
+
+  @override
+  String get allCategories => 'All Categories';
+
+  @override
+  String get allTypes => 'All Types';
+
+  @override
   String get appName => 'Char As Gem';
 
   @override
   String get appTitle => 'Char As Gem';
 
   @override
+  String get autoBackup => 'Auto Backup';
+
+  @override
+  String get autoBackupDescription => 'Automatically backup your data periodically';
+
+  @override
+  String get autoBackupInterval => 'Auto Backup Interval';
+
+  @override
+  String get autoBackupIntervalDescription => 'How often to create automatic backups';
+
+  @override
+  String get autoCleanup => 'Auto Cleanup';
+
+  @override
+  String get autoCleanupDescription => 'Automatically clean up old cache files';
+
+  @override
+  String get autoCleanupInterval => 'Auto Cleanup Interval';
+
+  @override
+  String get autoCleanupIntervalDescription => 'How often to run automatic cleanup';
+
+  @override
+  String get back => 'Back';
+
+  @override
   String get backgroundColor => 'Background Color';
 
   @override
+  String get backupDescription => 'Description (Optional)';
+
+  @override
+  String get backupDescriptionHint => 'Enter a description for this backup';
+
+  @override
+  String get backupFailure => 'Failed to create backup';
+
+  @override
+  String get backupList => 'Backup List';
+
+  @override
+  String get backupSettings => 'Backup & Restore';
+
+  @override
+  String get backupSuccess => 'Backup created successfully';
+
+  @override
   String get basicInfo => 'Basic Info';
+
+  @override
+  String get batchOperations => 'Batch Operations';
 
   @override
   String get bringLayerToFront => 'Bring Layer to Front';
@@ -75,13 +126,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bringToFront => 'Bring to Front';
 
   @override
+  String get cacheClearedMessage => 'Cache cleared successfully';
+
+  @override
+  String get cacheSettings => 'Cache Settings';
+
+  @override
+  String get cacheSize => 'Cache Size';
+
+  @override
   String get cancel => 'Cancel';
 
   @override
   String get canvasPixelSize => 'Canvas Pixel Size';
 
   @override
+  String get categories => 'Categories';
+
+  @override
+  String categoryHasItems(Object count) {
+    return '$count items in this category';
+  }
+
+  @override
+  String get categoryManagement => 'Category Management';
+
+  @override
+  String get categoryPanelTitle => 'Category Panel';
+
+  @override
+  String get center => 'Center';
+
+  @override
   String get characterCollectionBack => 'Back';
+
+  @override
+  String characterCollectionDeleteBatchConfirm(Object count) {
+    return 'Confirm deletion of $count saved regions?';
+  }
+
+  @override
+  String characterCollectionDeleteBatchMessage(Object count) {
+    return 'You are about to delete $count saved regions. This action cannot be undone.';
+  }
 
   @override
   String get characterCollectionDeleteConfirm => 'Confirm Deletion';
@@ -93,6 +180,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionDeleteShortcuts => 'Shortcuts: Enter to confirm, Esc to cancel';
 
   @override
+  String characterCollectionError(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
   String get characterCollectionFilterAll => 'All';
 
   @override
@@ -100,6 +192,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterCollectionFilterRecent => 'Recent';
+
+  @override
+  String characterCollectionFindSwitchFailed(Object error) {
+    return 'Find and switch page failed: $error';
+  }
 
   @override
   String get characterCollectionHelp => 'Help';
@@ -210,6 +307,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterCollectionUseSelectionTool => 'Use the selection tool on the left to extract characters from the image';
 
   @override
+  String get characterCount => 'Character Count';
+
+  @override
+  String get characterDetailAddTag => 'Add Tag';
+
+  @override
   String get characterDetailAuthor => 'Author';
 
   @override
@@ -225,10 +328,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterDetailCreationTime => 'Creation Time';
 
   @override
+  String get characterDetailFormatBinary => 'Binary';
+
+  @override
+  String get characterDetailFormatBinaryDesc => 'Black and white binary image';
+
+  @override
+  String get characterDetailFormatDescription => 'Description';
+
+  @override
+  String get characterDetailFormatExtension => 'File Format';
+
+  @override
+  String get characterDetailFormatName => 'Format Name';
+
+  @override
+  String get characterDetailFormatOriginal => 'Original';
+
+  @override
+  String get characterDetailFormatOriginalDesc => 'Unprocessed original image';
+
+  @override
+  String get characterDetailFormatOutline => 'Outline';
+
+  @override
+  String get characterDetailFormatOutlineDesc => 'Shows only the outline';
+
+  @override
+  String get characterDetailFormatSquareBinary => 'Square Binary';
+
+  @override
+  String get characterDetailFormatSquareBinaryDesc => 'Binary image normalized to square';
+
+  @override
+  String get characterDetailFormatSquareOutline => 'Square Outline';
+
+  @override
+  String get characterDetailFormatSquareOutlineDesc => 'Outline image normalized to square';
+
+  @override
+  String get characterDetailFormatSquareTransparent => 'Square Transparent';
+
+  @override
+  String get characterDetailFormatSquareTransparentDesc => 'Transparent PNG image normalized to square';
+
+  @override
+  String get characterDetailFormatThumbnail => 'Thumbnail';
+
+  @override
+  String get characterDetailFormatThumbnailDesc => 'Thumbnail image';
+
+  @override
+  String get characterDetailFormatTransparent => 'Transparent';
+
+  @override
+  String get characterDetailFormatTransparentDesc => 'Transparent PNG image with background removed';
+
+  @override
+  String get characterDetailFormatType => 'Type';
+
+  @override
   String get characterDetailLoadError => 'Failed to load character details';
 
   @override
   String get characterDetailSimplifiedChar => 'Simplified Character';
+
+  @override
+  String characterDetailTagAddError(Object error) {
+    return 'Failed to add tag, error: $error';
+  }
+
+  @override
+  String get characterDetailTagHint => 'Enter tag name';
+
+  @override
+  String characterDetailTagRemoveError(Object error) {
+    return 'Failed to remove tag, error: $error';
+  }
 
   @override
   String get characterDetailTags => 'Tags';
@@ -244,6 +420,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterDetailWritingTool => 'Writing Tool';
+
+  @override
+  String get characterEditCharacterUpdated => 'Character updated successfully';
 
   @override
   String get characterEditCompletingSave => 'Completing save...';
@@ -298,6 +477,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterEditSaveComplete => 'Save complete';
+
+  @override
+  String characterEditSaveConfirmMessage(Object character) {
+    return 'Confirm saving \"$character\"?';
+  }
 
   @override
   String get characterEditSaveConfirmTitle => 'Save Character';
@@ -399,7 +583,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterManagementDeleteSelected => 'Delete selected';
 
   @override
+  String characterManagementError(Object message) {
+    return 'Error: $message';
+  }
+
+  @override
   String get characterManagementGridView => 'Grid View';
+
+  @override
+  String characterManagementItemsPerPage(Object count) {
+    return '$count per page';
+  }
 
   @override
   String get characterManagementListView => 'List View';
@@ -423,10 +617,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characters => 'Characters';
 
   @override
+  String get clearCache => 'Clear Cache';
+
+  @override
+  String get clearCacheConfirmMessage => 'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.';
+
+  @override
+  String get clearCacheConfirmTitle => 'Clear Cache';
+
+  @override
   String get clearImageCache => 'Clear Image Cache';
 
   @override
+  String get collection => 'Collection';
+
+  @override
   String get collectionPropertyPanel => 'Collection Properties';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreak => 'Auto Line Break';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakDisabled => 'Disable';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakEnabled => 'Enable';
+
+  @override
+  String get collectionPropertyPanelAutoLineBreakTooltip => 'Auto Line Break';
+
+  @override
+  String get collectionPropertyPanelAvailableCharacters => 'Available Characters';
 
   @override
   String get collectionPropertyPanelBackgroundColor => 'Background Color';
@@ -468,7 +689,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collectionPropertyPanelColorInversion => 'Color Inversion';
 
   @override
+  String get collectionPropertyPanelColorPicker => 'Pick Color';
+
+  @override
+  String get collectionPropertyPanelColorSettings => 'Color Setting';
+
+  @override
   String get collectionPropertyPanelContent => 'Content Properties';
+
+  @override
+  String get collectionPropertyPanelCurrentCharInversion => 'Current Character Inversion';
 
   @override
   String get collectionPropertyPanelDisabled => 'Disabled';
@@ -490,6 +720,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get collectionPropertyPanelGeometry => 'Geometry Properties';
+
+  @override
+  String get collectionPropertyPanelGlobalInversion => 'Global Inversion';
 
   @override
   String get collectionPropertyPanelHeaderContent => 'Content Properties';
@@ -576,6 +809,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
+  String get confirmDelete => 'Do you want to delete?';
+
+  @override
+  String get confirmDeleteCategory => 'Do you want to delete category';
+
+  @override
+  String get contains => 'Contains';
+
+  @override
+  String get contentSettings => 'Content Settings';
+
+  @override
+  String get create => 'Create';
+
+  @override
+  String get createBackup => 'Create Backup';
+
+  @override
+  String get createBackupDescription => 'Create a new backup of your data';
+
+  @override
+  String get creatingBackup => 'Creating backup...';
+
+  @override
+  String get customSize => 'Custom Size';
+
+  @override
   String days(num count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -587,171 +847,73 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String hours(num count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count hours',
-      one: '1 hour',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get backupSettings => 'Backup & Restore';
-
-  @override
-  String get autoBackup => 'Auto Backup';
-
-  @override
-  String get autoBackupDescription => 'Automatically backup your data periodically';
-
-  @override
-  String get autoBackupInterval => 'Auto Backup Interval';
-
-  @override
-  String get autoBackupIntervalDescription => 'How often to create automatic backups';
-
-  @override
-  String get keepBackupCount => 'Keep Backup Count';
-
-  @override
-  String get keepBackupCountDescription => 'Number of backups to keep before deleting old ones';
-
-  @override
-  String get lastBackupTime => 'Last Backup Time';
-
-  @override
-  String get createBackup => 'Create Backup';
-
-  @override
-  String get restoreBackup => 'Restore Backup';
-
-  @override
-  String get backupList => 'Backup List';
-
-  @override
-  String get noBackups => 'No backups available';
-
-  @override
-  String get loadingError => 'Loading Error';
-
-  @override
-  String get restore => 'Restore';
-
-  @override
-  String get deleteBackup => 'Delete';
-
-  @override
-  String get restoreSuccess => 'Restore completed successfully';
-
-  @override
-  String get restoreFailure => 'Failed to restore from backup';
-
-  @override
-  String get deleteSuccess => 'Backup deleted successfully';
-
-  @override
-  String get deleteFailure => 'Failed to delete backup';
-
-  @override
-  String get createBackupDescription => 'Create a new backup of your data';
-
-  @override
-  String get backupDescription => 'Description (Optional)';
-
-  @override
-  String get backupDescriptionHint => 'Enter a description for this backup';
-
-  @override
-  String get create => 'Create';
-
-  @override
-  String get selectBackup => 'Select Backup';
-
-  @override
-  String get restoreConfirmTitle => 'Restore Confirmation';
-
-  @override
-  String get restoreConfirmMessage => 'Are you sure you want to restore from this backup? This will replace all your current data.';
-
-  @override
-  String get deleteBackupConfirmTitle => 'Delete Backup';
-
-  @override
-  String get deleteBackupConfirmMessage => 'Are you sure you want to delete this backup? This action cannot be undone.';
-
-  @override
-  String get creatingBackup => 'Creating backup...';
-
-  @override
-  String get restoringBackup => 'Restoring from backup...';
-
-  @override
-  String get backupSuccess => 'Backup created successfully';
-
-  @override
-  String get backupFailure => 'Failed to create backup';
-
-  @override
-  String get exportBackup => 'Export Backup';
-
-  @override
-  String get importBackup => 'Import Backup';
-
-  @override
-  String get exportBackupDescription => 'Export a backup to an external location';
-
-  @override
-  String get importBackupDescription => 'Import a backup from an external location';
-
-  @override
-  String get selectExportLocation => 'Select export location';
-
-  @override
-  String get selectImportFile => 'Select Backup File';
-
-  @override
-  String get exportSuccess => 'Backup exported successfully';
-
-  @override
-  String get exportFailure => 'Failed to export backup';
-
-  @override
-  String get importSuccess => 'Backup imported successfully';
-
-  @override
-  String get importFailure => 'Failed to import backup';
-
-  @override
-  String get invalidBackupFile => 'Invalid backup file';
-
-  @override
-  String get exportingBackup => 'Exporting backup...';
-
-  @override
-  String get importingBackup => 'Importing backup...';
-
-  @override
-  String get contains => 'Contains';
-
-  @override
-  String get contentSettings => 'Content Settings';
-
-  @override
-  String get customSize => 'Custom Size';
-
-  @override
   String get delete => 'Delete';
 
   @override
   String get deleteAll => 'Delete All';
 
   @override
+  String get deleteBackup => 'Delete';
+
+  @override
+  String get deleteBackupConfirmMessage => 'Are you sure you want to delete this backup? This action cannot be undone.';
+
+  @override
+  String get deleteBackupConfirmTitle => 'Delete Backup';
+
+  @override
+  String get deleteCategory => 'Delete Category';
+
+  @override
+  String get deleteFailure => 'Failed to delete backup';
+
+  @override
+  String get deleteGroup => 'Delete Group';
+
+  @override
+  String get deleteGroupConfirm => 'Confirm Delete Group';
+
+  @override
+  String get deleteGroupDescription => 'Are you sure you want to delete this group? This action cannot be undone.';
+
+  @override
+  String get deleteGroupElements => 'Delete Group Elements';
+
+  @override
   String get deletePage => 'Delete Page';
 
   @override
+  String get deleteSuccess => 'Backup deleted successfully';
+
+  @override
   String get dimensions => 'Dimensions';
+
+  @override
+  String get diskCacheSize => 'Disk Cache Size';
+
+  @override
+  String get diskCacheSizeDescription => 'Maximum size of disk cache';
+
+  @override
+  String get diskCacheTtl => 'Disk Cache Lifetime';
+
+  @override
+  String get diskCacheTtlDescription => 'How long to keep cached files on disk';
+
+  @override
+  String get distributeHorizontally => 'Distribute Horizontally';
+
+  @override
+  String get distributeVertically => 'Distribute Vertically';
+
+  @override
+  String get distribution => 'Distribution';
+
+  @override
+  String get distributionOperations => 'Distribution Operations';
+
+  @override
+  String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
 
   @override
   String get dpiHelperText => 'Used to calculate canvas pixel size, default is 300dpi';
@@ -763,16 +925,193 @@ class AppLocalizationsEn extends AppLocalizations {
   String get edit => 'Edit';
 
   @override
+  String get editCategory => 'Edit Category';
+
+  @override
+  String get editGroupContents => 'Edit Group Contents';
+
+  @override
+  String get editGroupContentsDescription => 'Edit the contents of the selected group';
+
+  @override
+  String get elementDistribution => 'Element Distribution';
+
+  @override
+  String get elementId => 'Element ID';
+
+  @override
   String get elements => 'Elements';
+
+  @override
+  String get elementType => 'Element Type';
 
   @override
   String get empty => 'Empty';
 
   @override
+  String get enterFileName => 'Enter file name';
+
+  @override
+  String get enterGroupEditMode => 'Enter Group Edit Mode';
+
+  @override
+  String get exitBatchMode => 'Exit Batch Mode';
+
+  @override
   String get export => 'Export';
 
   @override
+  String get exportBackup => 'Export Backup';
+
+  @override
+  String get exportBackupDescription => 'Export a backup to an external location';
+
+  @override
+  String get exportDialogAllPages => 'All Pages';
+
+  @override
+  String get exportDialogBrowse => 'Browse...';
+
+  @override
+  String get exportDialogCentimeter => 'cm';
+
+  @override
+  String get exportDialogCreateDirectoryFailed => 'Failed to create export directory';
+
+  @override
+  String get exportDialogCurrentPage => 'Current Page';
+
+  @override
+  String get exportDialogCustomRange => 'Custom Range';
+
+  @override
+  String exportDialogDimensions(Object height, Object orientation, Object width) {
+    return '${width}cm × ${height}cm ($orientation)';
+  }
+
+  @override
+  String get exportDialogEnterFilename => 'Please enter a filename';
+
+  @override
+  String get exportDialogFilenamePrefix => 'Enter filename prefix (page numbers will be added automatically)';
+
+  @override
+  String get exportDialogFitContain => 'Contain in Page';
+
+  @override
+  String get exportDialogFitHeight => 'Fit to Height';
+
+  @override
+  String get exportDialogFitPolicy => 'Fit Policy';
+
+  @override
+  String get exportDialogFitWidth => 'Fit to Width';
+
+  @override
+  String get exportDialogInvalidFilename => 'Filename cannot contain the following characters: \\ / : * ? \" < > |';
+
+  @override
+  String get exportDialogLandscape => 'Landscape';
+
+  @override
+  String get exportDialogLocation => 'Export Location';
+
+  @override
+  String get exportDialogMarginBottom => 'Bottom';
+
+  @override
+  String get exportDialogMarginLeft => 'Left';
+
+  @override
+  String get exportDialogMarginRight => 'Right';
+
+  @override
+  String get exportDialogMarginTop => 'Top';
+
+  @override
+  String exportDialogMultipleFilesNote(Object count) {
+    return 'Note: Will export $count image files, filenames will be automatically numbered.';
+  }
+
+  @override
+  String get exportDialogNextPage => 'Next Page';
+
+  @override
+  String get exportDialogNoPreview => 'Cannot generate preview';
+
+  @override
+  String get exportDialogOutputQuality => 'Output Quality';
+
+  @override
+  String get exportDialogPageMargins => 'Page Margins (cm)';
+
+  @override
+  String get exportDialogPageOrientation => 'Page Orientation';
+
+  @override
+  String get exportDialogPageRange => 'Page Range';
+
+  @override
+  String get exportDialogPageSize => 'Page Size';
+
+  @override
+  String get exportDialogPortrait => 'Portrait';
+
+  @override
+  String get exportDialogPreview => 'Preview';
+
+  @override
+  String exportDialogPreviewPage(Object current, Object total) {
+    return ' (Page $current/$total)';
+  }
+
+  @override
+  String get exportDialogPreviousPage => 'Previous Page';
+
+  @override
+  String get exportDialogQualityHigh => 'High (2x)';
+
+  @override
+  String get exportDialogQualityStandard => 'Standard (1x)';
+
+  @override
+  String get exportDialogQualityUltra => 'Ultra (3x)';
+
+  @override
+  String get exportDialogRangeExample => 'Example: 1-3,5,7-9';
+
+  @override
+  String get exportDialogSelectLocation => 'Please select export location';
+
+  @override
+  String get exportFailure => 'Failed to export backup';
+
+  @override
+  String get exportFormat => 'Export Format';
+
+  @override
+  String get exportingBackup => 'Exporting backup...';
+
+  @override
+  String get exportSuccess => 'Backup exported successfully';
+
+  @override
+  String get fileCount => 'File Count';
+
+  @override
+  String get fileName => 'File Name';
+
+  @override
+  String get files => 'File Count';
+
+  @override
   String get filterApply => 'Apply';
+
+  @override
+  String get filterBatchActions => 'Batch Actions';
+
+  @override
+  String get filterBatchSelection => 'Selection';
 
   @override
   String get filterClear => 'Clear';
@@ -781,136 +1120,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterCollapse => 'Collapse Filter Panel';
 
   @override
-  String get filterExpand => 'Expand Filter Panel';
-
-  @override
-  String get filterHeader => 'Filter & Sort';
-
-  @override
-  String get filterPanel => 'Filter Panel';
-
-  @override
-  String get filterReset => 'Reset Filters';
-
-  @override
-  String get filterSection => 'Filter Options';
-
-  @override
-  String get filterSearchPlaceholder => 'Search...';
-
-  @override
-  String get filterSortAscending => 'Ascending';
-
-  @override
-  String get filterSortDescending => 'Descending';
-
-  @override
-  String get filterSortDirection => 'Sort Direction';
-
-  @override
-  String get filterSortField => 'Sort By';
-
-  @override
-  String get filterToggle => 'Toggle Filters';
-
-  @override
-  String get filterTagsSection => 'Tags';
-
-  @override
-  String get filterTagsSelected => 'Selected Tags:';
-
-  @override
-  String get filterTagsAdd => 'Add Tag';
-
-  @override
-  String get filterTagsAddHint => 'Enter tag name and press Enter';
-
-  @override
-  String get filterTagsNone => 'No tags selected';
-
-  @override
-  String get filterTagsSuggested => 'Suggested tags:';
-
-  @override
-  String get filterPresetSection => 'Presets';
-
-  @override
   String get filterCustomRange => 'Custom Range';
-
-  @override
-  String get filterDateRange => 'Date Range';
-
-  @override
-  String get filterStartDate => 'Start Date';
-
-  @override
-  String get filterEndDate => 'End Date';
-
-  @override
-  String get filterSelectDate => 'Select Date';
-
-  @override
-  String get filterFavoritesOnly => 'Show favorites only';
-
-  @override
-  String get filterStyleSection => 'Calligraphy Style';
-
-  @override
-  String get filterStyleClerical => 'Clerical Script';
-
-  @override
-  String get filterStyleCursive => 'Cursive Script';
-
-  @override
-  String get filterStyleRegular => 'Regular Script';
-
-  @override
-  String get filterStyleRunning => 'Running Script';
-
-  @override
-  String get filterStyleSeal => 'Seal Script';
-
-  @override
-  String get filterStyleOther => 'Other';
-
-  @override
-  String get filterToolSection => 'Writing Tool';
-
-  @override
-  String get filterToolBrush => 'Brush';
-
-  @override
-  String get filterToolHardPen => 'Hard Pen';
-
-  @override
-  String get filterToolOther => 'Other';
-
-  @override
-  String get filterBatchSelection => 'Selection';
-
-  @override
-  String get filterSelectAll => 'Select All';
-
-  @override
-  String get filterDeselectAll => 'Deselect All';
-
-  @override
-  String get filterBatchActions => 'Batch Actions';
-
-  @override
-  String filterItemsSelected(Object count) {
-    return '$count selected';
-  }
-
-  @override
-  String filterItemsPerPage(Object count) {
-    return '$count per page';
-  }
-
-  @override
-  String filterTotalItems(Object count) {
-    return 'Total: $count items';
-  }
 
   @override
   String get filterDateApply => 'Apply';
@@ -967,6 +1177,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterDatePresetYesterday => 'Yesterday';
 
   @override
+  String get filterDateRange => 'Date Range';
+
+  @override
   String get filterDateSection => 'Creation Time';
 
   @override
@@ -976,6 +1189,73 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterDateStartDate => 'Start Date';
 
   @override
+  String get filterDeselectAll => 'Deselect All';
+
+  @override
+  String get filterEndDate => 'End Date';
+
+  @override
+  String get filterExpand => 'Expand Filter Panel';
+
+  @override
+  String get filterFavoritesOnly => 'Show favorites only';
+
+  @override
+  String get filterHeader => 'Filter & Sort';
+
+  @override
+  String filterItemsPerPage(Object count) {
+    return '$count per page';
+  }
+
+  @override
+  String filterItemsSelected(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String get filterMax => 'Max';
+
+  @override
+  String get filterMin => 'Min';
+
+  @override
+  String get filterPanel => 'Filter Panel';
+
+  @override
+  String get filterPresetSection => 'Presets';
+
+  @override
+  String get filterReset => 'Reset Filters';
+
+  @override
+  String get filterSearchPlaceholder => 'Search...';
+
+  @override
+  String get filterSection => 'Filter Options';
+
+  @override
+  String get filterSelectAll => 'Select All';
+
+  @override
+  String get filterSelectDate => 'Select Date';
+
+  @override
+  String get filterSelectDateRange => 'Select date range';
+
+  @override
+  String get filterSortAscending => 'Ascending';
+
+  @override
+  String get filterSortDescending => 'Descending';
+
+  @override
+  String get filterSortDirection => 'Sort Direction';
+
+  @override
+  String get filterSortField => 'Sort By';
+
+  @override
   String get filterSortFieldAuthor => 'Author';
 
   @override
@@ -983,6 +1263,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterSortFieldCreationDate => 'Creation Date';
+
+  @override
+  String get filterSortFieldFileName => 'File Name';
+
+  @override
+  String get filterSortFieldFileSize => 'File Size';
+
+  @override
+  String get filterSortFieldFileUpdatedAt => 'File Update Time';
 
   @override
   String get filterSortFieldNone => 'None';
@@ -1000,28 +1289,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterSortFieldUpdateTime => 'Update Time';
 
   @override
-  String get filterSortFieldFileName => 'File Name';
-
-  @override
-  String get filterSortFieldFileUpdatedAt => 'File Update Time';
-
-  @override
-  String get filterSortFieldFileSize => 'File Size';
-
-  @override
   String get filterSortSection => 'Sort';
+
+  @override
+  String get filterStartDate => 'Start Date';
+
+  @override
+  String get filterStyleClerical => 'Clerical Script';
+
+  @override
+  String get filterStyleCursive => 'Cursive Script';
+
+  @override
+  String get filterStyleOther => 'Other';
+
+  @override
+  String get filterStyleRegular => 'Regular Script';
+
+  @override
+  String get filterStyleRunning => 'Running Script';
+
+  @override
+  String get filterStyleSeal => 'Seal Script';
+
+  @override
+  String get filterStyleSection => 'Calligraphy Style';
+
+  @override
+  String get filterTagsAdd => 'Add Tag';
+
+  @override
+  String get filterTagsAddHint => 'Enter tag name and press Enter';
+
+  @override
+  String get filterTagsNone => 'No tags selected';
+
+  @override
+  String get filterTagsSection => 'Tags';
+
+  @override
+  String get filterTagsSelected => 'Selected Tags:';
+
+  @override
+  String get filterTagsSuggested => 'Suggested tags:';
 
   @override
   String get filterTitle => 'Filter & Sort';
 
   @override
-  String get filterMin => 'Min';
+  String get filterToggle => 'Toggle Filters';
 
   @override
-  String get filterMax => 'Max';
+  String get filterToolBrush => 'Brush';
 
   @override
-  String get filterSelectDateRange => 'Select date range';
+  String get filterToolHardPen => 'Hard Pen';
+
+  @override
+  String get filterToolOther => 'Other';
+
+  @override
+  String get filterToolSection => 'Writing Tool';
+
+  @override
+  String filterTotalItems(Object count) {
+    return 'Total: $count items';
+  }
 
   @override
   String get generalSettings => 'General Settings';
@@ -1036,16 +1369,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gridSize => 'Grid Size';
 
   @override
+  String get gridView => 'Grid View';
+
+  @override
   String get group => 'Group';
 
   @override
+  String get groupElements => 'Group Elements';
+
+  @override
   String get groupInfo => 'Group Info';
+
+  @override
+  String get groupOperations => 'Group Operations';
 
   @override
   String get height => 'Height';
 
   @override
   String get hideElement => 'Hide Element';
+
+  @override
+  String get horizontalAlignment => 'Horizontal Alignment';
+
+  @override
+  String get horizontalLeftToRight => 'Horizontal Left-to-Right';
+
+  @override
+  String get horizontalRightToLeft => 'Horizontal Right-to-Left';
+
+  @override
+  String hours(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get image => 'Image';
 
   @override
   String get imageCacheCleared => 'Image cache cleared';
@@ -1058,6 +1423,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelApplyTransform => 'Apply Transform';
+
+  @override
+  String get imagePropertyPanelAutoImportNotice => 'The selected image will be automatically imported into your library for better management';
 
   @override
   String get imagePropertyPanelBorder => 'Border';
@@ -1093,6 +1461,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelCropLeft => 'Left Crop';
 
   @override
+  String get imagePropertyPanelCropping => 'Cropping';
+
+  @override
+  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top) {
+    return ' (Cropping: Left ${left}px, Top ${top}px, Right ${right}px, Bottom ${bottom}px)';
+  }
+
+  @override
   String get imagePropertyPanelCroppingValueTooLarge => 'Cannot apply transform: Cropping values too large resulting in invalid crop region';
 
   @override
@@ -1106,6 +1482,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelDisplay => 'Display Mode';
+
+  @override
+  String imagePropertyPanelFileNotExist(Object path) {
+    return 'File does not exist: $path';
+  }
+
+  @override
+  String get imagePropertyPanelFileNotRecovered => 'File could not be recovered';
+
+  @override
+  String get imagePropertyPanelFileRestored => 'File restored';
 
   @override
   String get imagePropertyPanelFilters => 'Image Filters';
@@ -1156,6 +1543,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelImageTransform => 'Image Transform';
 
   @override
+  String imagePropertyPanelImportError(Object error) {
+    return 'Failed to import image: $error';
+  }
+
+  @override
+  String get imagePropertyPanelImporting => 'Importing image...';
+
+  @override
+  String get imagePropertyPanelImportSuccess => 'Image imported successfully';
+
+  @override
+  String get imagePropertyPanelLibraryProcessing => 'Processing library...';
+
+  @override
+  String imagePropertyPanelLoadError(Object error) {
+    return 'Failed to load image: $error...';
+  }
+
+  @override
   String get imagePropertyPanelNoCropping => ' (No cropping, other transforms applied)';
 
   @override
@@ -1183,6 +1589,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelPreviewNotice => 'Note: Duplicate logs shown during preview are normal';
 
   @override
+  String imagePropertyPanelProcessingPathError(Object error) {
+    return 'Processing path error: $error';
+  }
+
+  @override
   String get imagePropertyPanelReset => 'Reset';
 
   @override
@@ -1201,19 +1612,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelSelectFromLibrary => 'Select from Library';
 
   @override
-  String get imagePropertyPanelFileRestored => 'File restored';
-
-  @override
-  String get imagePropertyPanelFileNotRecovered => 'File could not be recovered';
-
-  @override
-  String get imagePropertyPanelLibraryProcessing => 'Processing library...';
-
-  @override
   String get imagePropertyPanelSelectFromLocal => 'Select from Local';
 
   @override
   String get imagePropertyPanelTransformApplied => 'Transform applied';
+
+  @override
+  String imagePropertyPanelTransformError(Object error) {
+    return 'Failed to apply transform: $error';
+  }
 
   @override
   String get imagePropertyPanelTransformWarning => 'These transforms modify the image content itself, not just the element frame';
@@ -1223,6 +1630,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get import => 'Import';
+
+  @override
+  String get importBackup => 'Import Backup';
+
+  @override
+  String get importBackupDescription => 'Import a backup from an external location';
+
+  @override
+  String get importFailure => 'Failed to import backup';
+
+  @override
+  String get importingBackup => 'Importing backup...';
+
+  @override
+  String get importSuccess => 'Backup imported successfully';
+
+  @override
+  String initializationFailed(Object error) {
+    return 'Initialization failed: $error';
+  }
+
+  @override
+  String get invalidBackupFile => 'Invalid backup file';
+
+  @override
+  String get keepBackupCount => 'Keep Backup Count';
+
+  @override
+  String get keepBackupCountDescription => 'Number of backups to keep before deleting old ones';
 
   @override
   String get landscape => 'Landscape';
@@ -1240,6 +1676,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageZh => '简体中文';
 
   @override
+  String get lastBackupTime => 'Last Backup Time';
+
+  @override
   String get layer => 'Layer';
 
   @override
@@ -1249,7 +1688,159 @@ class AppLocalizationsEn extends AppLocalizations {
   String get layerElements => 'Layer Elements';
 
   @override
+  String get layerInfo => 'Layer Information';
+
+  @override
+  String get layerName => 'Layer Name';
+
+  @override
   String get layerOperations => 'Layer Operations';
+
+  @override
+  String get libraryCount => 'Library Count';
+
+  @override
+  String get libraryManagement => 'Library';
+
+  @override
+  String get libraryManagementBasicInfo => 'Basic Information';
+
+  @override
+  String get libraryManagementCategories => 'Categories';
+
+  @override
+  String get libraryManagementCreatedAt => 'Created at';
+
+  @override
+  String get libraryManagementDeleteConfirm => 'Confirm deletion';
+
+  @override
+  String get libraryManagementDeleteMessage => 'Are you sure you want to delete the selected items? This action cannot be undone.';
+
+  @override
+  String get libraryManagementDeleteSelected => 'Delete selected items';
+
+  @override
+  String get libraryManagementDetail => 'Details';
+
+  @override
+  String get libraryManagementEnterBatchMode => 'Enter batch mode';
+
+  @override
+  String libraryManagementError(String message) {
+    return 'Failed to load: $message';
+  }
+
+  @override
+  String get libraryManagementExitBatchMode => 'Exit batch mode';
+
+  @override
+  String get libraryManagementFavorite => 'Favorite';
+
+  @override
+  String get libraryManagementFavorites => 'Favorites';
+
+  @override
+  String get libraryManagementFileSize => 'File size';
+
+  @override
+  String get libraryManagementFormat => 'Format';
+
+  @override
+  String get libraryManagementFormats => 'File Formats';
+
+  @override
+  String get libraryManagementGridView => 'Grid view';
+
+  @override
+  String get libraryManagementImport => 'Import';
+
+  @override
+  String get libraryManagementImportFiles => 'Import Files';
+
+  @override
+  String get libraryManagementImportFolder => 'Import Folder';
+
+  @override
+  String get libraryManagementListView => 'List view';
+
+  @override
+  String get libraryManagementLoading => 'Loading...';
+
+  @override
+  String get libraryManagementMetadata => 'Metadata';
+
+  @override
+  String get libraryManagementName => 'Name';
+
+  @override
+  String get libraryManagementNoItems => 'No items';
+
+  @override
+  String get libraryManagementNoItemsHint => 'Try adding some items or changing filters';
+
+  @override
+  String get libraryManagementNoRemarks => 'No remarks';
+
+  @override
+  String get libraryManagementPath => 'Path';
+
+  @override
+  String get libraryManagementRemarks => 'Remarks';
+
+  @override
+  String get libraryManagementRemarksHint => 'Add remarks';
+
+  @override
+  String get libraryManagementResolution => 'Resolution';
+
+  @override
+  String get libraryManagementSearch => 'Search items...';
+
+  @override
+  String get libraryManagementSize => 'Size';
+
+  @override
+  String get libraryManagementSortBy => 'Sort by';
+
+  @override
+  String get libraryManagementSortByDate => 'Date';
+
+  @override
+  String get libraryManagementSortByFileSize => 'File Size';
+
+  @override
+  String get libraryManagementSortByName => 'Name';
+
+  @override
+  String get libraryManagementSortBySize => 'File size';
+
+  @override
+  String get libraryManagementSortDesc => 'Sort Order';
+
+  @override
+  String get libraryManagementTags => 'Tags';
+
+  @override
+  String get libraryManagementTimeInfo => 'Time Information';
+
+  @override
+  String get libraryManagementType => 'Type';
+
+  @override
+  String get libraryManagementTypes => 'Types';
+
+  @override
+  String get libraryManagementUpdatedAt => 'Updated at';
+
+  @override
+  String get listView => 'List View';
+
+  @override
+  String get loadFailed => 'Load Failed';
+
+  @override
+  String get loadingError => 'Loading Error';
 
   @override
   String get locked => 'Locked';
@@ -1258,7 +1849,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lockElement => 'Lock Element';
 
   @override
+  String get lockStatus => 'Lock Status';
+
+  @override
   String get lockUnlockAllElements => 'Lock/Unlock All Elements';
+
+  @override
+  String get memoryDataCacheCapacity => 'Memory Data Cache Capacity';
+
+  @override
+  String get memoryDataCacheCapacityDescription => 'Number of data items to keep in memory';
+
+  @override
+  String get memoryImageCacheCapacity => 'Memory Image Cache Capacity';
+
+  @override
+  String get memoryImageCacheCapacityDescription => 'Number of images to keep in memory';
 
   @override
   String get moveDown => 'Move Down';
@@ -1268,6 +1874,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moveLayerUp => 'Move Layer Up';
+
+  @override
+  String get moveSelectedElementsToLayer => 'Move Selected Elements to Layer';
 
   @override
   String get moveUp => 'Move Up';
@@ -1282,6 +1891,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navExpandSidebar => 'Expand Sidebar';
 
   @override
+  String get newCategory => 'New Category';
+
+  @override
+  String get no => 'No';
+
+  @override
+  String get noBackups => 'No backups available';
+
+  @override
+  String get noCategories => 'No Categories';
+
+  @override
   String get noElementsInLayer => 'No elements in this layer';
 
   @override
@@ -1289,6 +1910,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noPageSelected => 'No page selected';
+
+  @override
+  String get noTags => 'No Tags';
+
+  @override
+  String get ok => 'OK';
 
   @override
   String get opacity => 'Opacity';
@@ -1345,6 +1972,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditCopy => 'Copy (Ctrl+Shift+C)';
 
   @override
+  String get practiceEditDangerZone => 'Danger Zone';
+
+  @override
   String get practiceEditDelete => 'Delete (Ctrl+D)';
 
   @override
@@ -1370,6 +2000,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceEditElements => 'Elements';
+
+  @override
+  String practiceEditElementSelectionInfo(Object count) {
+    return '$count elements selected';
+  }
 
   @override
   String get practiceEditEnableSnap => 'Enable Snap (Ctrl+R)';
@@ -1414,6 +2049,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceEditLeave => 'Leave';
 
   @override
+  String practiceEditLoadFailed(Object error) {
+    return 'Failed to load practice: $error';
+  }
+
+  @override
   String get practiceEditMoveDown => 'Move Down (Ctrl+Shift+B)';
 
   @override
@@ -1433,6 +2073,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceEditPaste => 'Paste (Ctrl+Shift+V)';
+
+  @override
+  String practiceEditPracticeLoaded(Object title) {
+    return 'Practice \"$title\" loaded successfully';
+  }
 
   @override
   String get practiceEditPracticeLoadFailed => 'Failed to load practice: Practice does not exist or has been deleted';
@@ -1481,6 +2126,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceEditTitleExistsMessage => 'A practice with this title already exists. Do you want to overwrite it?';
+
+  @override
+  String practiceEditTitleUpdated(Object title) {
+    return 'Title updated to \"$title\"';
+  }
 
   @override
   String get practiceEditToolbar => 'Edit Toolbar';
@@ -1552,6 +2202,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListGridView => 'Grid View';
 
   @override
+  String practiceListItemsPerPage(Object count) {
+    return '$count per page';
+  }
+
+  @override
   String get practiceListListView => 'List View';
 
   @override
@@ -1585,6 +2240,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListTitle => 'Practice Sheets';
 
   @override
+  String practiceListTotalItems(Object count) {
+    return '$count practice sheets';
+  }
+
+  @override
   String get practicePageSettings => 'Page Settings';
 
   @override
@@ -1603,7 +2263,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get print => 'Print';
 
   @override
+  String get removedFromAllCategories => 'Removed from all categories';
+
+  @override
   String get rename => 'Rename';
+
+  @override
+  String get resetSettingsConfirmMessage => 'Are you sure you want to reset all cache settings to default values?';
+
+  @override
+  String get resetSettingsConfirmTitle => 'Reset Settings';
+
+  @override
+  String get resetToDefaults => 'Reset to Defaults';
+
+  @override
+  String get restartAfterRestored => 'Note: The application will automatically restart after restoration is complete';
+
+  @override
+  String get restartAppRequired => 'The application needs to be restarted to complete the restore process.';
+
+  @override
+  String get restartLater => 'Later';
+
+  @override
+  String get restartNow => 'Restart Now';
+
+  @override
+  String get restore => 'Restore';
+
+  @override
+  String get restoreBackup => 'Restore Backup';
+
+  @override
+  String get restoreConfirmMessage => 'Are you sure you want to restore from this backup? This will replace all your current data.';
+
+  @override
+  String get restoreConfirmTitle => 'Restore Confirmation';
+
+  @override
+  String get restoreFailure => 'Failed to restore from backup';
+
+  @override
+  String get restoreSuccess => 'Restore completed successfully';
+
+  @override
+  String get restoringBackup => 'Restoring from backup...';
 
   @override
   String get rotation => 'Rotation';
@@ -1612,10 +2317,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
+  String get searchCategories => 'Search categories...';
+
+  @override
+  String get searchCharactersWorksAuthors => 'Search characters, works, or authors';
+
+  @override
+  String get selectBackup => 'Select Backup';
+
+  @override
   String get selectCollection => 'Select Collection';
 
   @override
   String get selected => 'Selected';
+
+  @override
+  String selectedCount(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String get selectExportLocation => 'Select export location';
+
+  @override
+  String get selectImportFile => 'Select Backup File';
+
+  @override
+  String get selectTargetLayer => 'Select Target Layer';
 
   @override
   String get sendLayerToBack => 'Send Layer to Back';
@@ -1627,6 +2355,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings => 'Settings';
 
   @override
+  String get settingsResetMessage => 'Settings reset to defaults';
+
+  @override
   String get showElement => 'Show Element';
 
   @override
@@ -1636,73 +2367,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get showHideAllElements => 'Show/Hide All Elements';
 
   @override
+  String get sortAndFilter => 'Sort & Filter';
+
+  @override
   String get stateAndDisplay => 'State & Display';
+
+  @override
+  String get storageDetails => 'Storage Details';
+
+  @override
+  String get storageLocation => 'Storage Location';
 
   @override
   String get storageSettings => 'Storage Settings';
 
   @override
-  String get cacheSettings => 'Cache Settings';
-
-  @override
-  String get memoryImageCacheCapacity => 'Memory Image Cache Capacity';
-
-  @override
-  String get memoryImageCacheCapacityDescription => 'Number of images to keep in memory';
-
-  @override
-  String get memoryDataCacheCapacity => 'Memory Data Cache Capacity';
-
-  @override
-  String get memoryDataCacheCapacityDescription => 'Number of data items to keep in memory';
-
-  @override
-  String get diskCacheSize => 'Disk Cache Size';
-
-  @override
-  String get diskCacheSizeDescription => 'Maximum size of disk cache';
-
-  @override
-  String get diskCacheTtl => 'Disk Cache Lifetime';
-
-  @override
-  String get diskCacheTtlDescription => 'How long to keep cached files on disk';
-
-  @override
-  String get autoCleanup => 'Auto Cleanup';
-
-  @override
-  String get autoCleanupDescription => 'Automatically clean up old cache files';
-
-  @override
-  String get autoCleanupInterval => 'Auto Cleanup Interval';
-
-  @override
-  String get autoCleanupIntervalDescription => 'How often to run automatic cleanup';
-
-  @override
-  String get clearCache => 'Clear Cache';
-
-  @override
-  String get resetToDefaults => 'Reset to Defaults';
-
-  @override
-  String get clearCacheConfirmTitle => 'Clear Cache';
-
-  @override
-  String get clearCacheConfirmMessage => 'Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.';
-
-  @override
-  String get cacheClearedMessage => 'Cache cleared successfully';
-
-  @override
-  String get settingsResetMessage => 'Settings reset to defaults';
-
-  @override
-  String get resetSettingsConfirmTitle => 'Reset Settings';
-
-  @override
-  String get resetSettingsConfirmMessage => 'Are you sure you want to reset all cache settings to default values?';
+  String get storageUsed => 'Storage Used';
 
   @override
   String get tagEditorEnterTagHint => 'Type a tag and press Enter';
@@ -1712,6 +2392,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tagEditorSuggestedTags => 'Suggested tags:';
+
+  @override
+  String get tagsHint => 'Enter tags...';
+
+  @override
+  String get text => 'Text';
 
   @override
   String get textPropertyPanel => 'Text Properties';
@@ -1789,10 +2475,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textPropertyPanelWritingMode => 'Writing Mode';
 
   @override
+  String get textureApplicationRange => 'Texture Application Range';
+
+  @override
+  String get textureFillMode => 'Fill Mode';
+
+  @override
+  String get textureFillModeContain => 'Contain';
+
+  @override
+  String get textureFillModeCover => 'Cover';
+
+  @override
+  String get textureFillModeNoRepeat => 'No Repeat';
+
+  @override
+  String get textureFillModeRepeat => 'Repeat';
+
+  @override
+  String get textureFillModeRepeatX => 'Repeat Horizontally';
+
+  @override
+  String get textureFillModeRepeatY => 'Repeat Vertically';
+
+  @override
+  String get textureOpacity => 'Texture Opacity';
+
+  @override
+  String get textureRangeBackground => 'Entire Background';
+
+  @override
+  String get textureRangeCharacter => 'Character Only';
+
+  @override
+  String get textureRemove => 'Remove';
+
+  @override
+  String get textureSelectFromLibrary => 'Select from Library';
+
+  @override
   String get themeMode => 'Theme Mode';
 
   @override
   String get themeModeDark => 'Dark';
+
+  @override
+  String get themeModeDescription => 'Dark Theme';
 
   @override
   String get themeModeLight => 'Light';
@@ -1801,79 +2529,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeSystem => 'System';
 
   @override
-  String get themeModeDescription => 'Dark Theme';
-
-  @override
   String get themeModeSystemDescription => 'Automatically switch between light/dark modes based on system settings';
 
   @override
   String get toggleTestText => 'Toggle Test Text';
 
   @override
-  String get characterDetailFormatName => 'Format Name';
-
-  @override
-  String get characterDetailFormatType => 'Type';
-
-  @override
-  String get characterDetailFormatExtension => 'File Format';
-
-  @override
-  String get characterDetailFormatDescription => 'Description';
-
-  @override
-  String get characterDetailFormatOriginal => 'Original';
-
-  @override
-  String get characterDetailFormatBinary => 'Binary';
-
-  @override
-  String get characterDetailFormatThumbnail => 'Thumbnail';
-
-  @override
-  String get characterDetailFormatSquareBinary => 'Square Binary';
-
-  @override
-  String get characterDetailFormatSquareTransparent => 'Square Transparent';
-
-  @override
-  String get characterDetailFormatTransparent => 'Transparent';
-
-  @override
-  String get characterDetailFormatOutline => 'Outline';
-
-  @override
-  String get characterDetailFormatSquareOutline => 'Square Outline';
-
-  @override
-  String get characterDetailFormatOriginalDesc => 'Unprocessed original image';
-
-  @override
-  String get characterDetailFormatBinaryDesc => 'Black and white binary image';
-
-  @override
-  String get characterDetailFormatThumbnailDesc => 'Thumbnail image';
-
-  @override
-  String get characterDetailFormatSquareBinaryDesc => 'Binary image normalized to square';
-
-  @override
-  String get characterDetailFormatSquareTransparentDesc => 'Transparent PNG image normalized to square';
-
-  @override
-  String get characterDetailFormatTransparentDesc => 'Transparent PNG image with background removed';
-
-  @override
-  String get characterDetailFormatOutlineDesc => 'Shows only the outline';
-
-  @override
-  String get characterDetailFormatSquareOutlineDesc => 'Outline image normalized to square';
-
-  @override
   String get total => 'Total';
 
   @override
+  String totalItems(Object count) {
+    return 'Total: $count';
+  }
+
+  @override
   String get ungroup => 'Ungroup';
+
+  @override
+  String get ungroupConfirm => 'Confirm Ungroup';
+
+  @override
+  String get ungroupDescription => 'Are you sure you want to ungroup this group?';
+
+  @override
+  String get unknownCategory => 'Unknown Category';
+
+  @override
+  String get unlocked => 'Unlocked';
 
   @override
   String get unlockElement => 'Unlock Element';
@@ -1888,6 +2570,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unnamedLayer => 'Unnamed Layer';
 
   @override
+  String get verticalAlignment => 'Vertical Alignment';
+
+  @override
+  String get verticalLeftToRight => 'Vertical Left-to-Right';
+
+  @override
+  String get verticalRightToLeft => 'Vertical Right-to-Left';
+
+  @override
+  String get verticalTextModeEnabled => 'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally';
+
+  @override
+  String get visibility => 'Visibility';
+
+  @override
   String get visible => 'Visible';
 
   @override
@@ -1897,100 +2594,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get width => 'Width';
 
   @override
-  String get fileName => 'File Name';
+  String get windowButtonClose => 'Close';
 
   @override
-  String get enterFileName => 'Enter file name';
+  String get windowButtonMaximize => 'Maximize';
 
   @override
-  String get exportFormat => 'Export Format';
+  String get windowButtonMinimize => 'Minimize';
 
   @override
-  String get alignmentOperations => 'Alignment Operations';
-
-  @override
-  String get horizontalAlignment => 'Horizontal Alignment';
-
-  @override
-  String get alignLeft => 'Align Left';
-
-  @override
-  String get alignCenter => 'Align Center';
-
-  @override
-  String get alignRight => 'Align Right';
-
-  @override
-  String get verticalAlignment => 'Vertical Alignment';
-
-  @override
-  String get alignTop => 'Align Top';
-
-  @override
-  String get alignMiddle => 'Align Middle';
-
-  @override
-  String get alignBottom => 'Align Bottom';
-
-  @override
-  String get distributionOperations => 'Distribution Operations';
-
-  @override
-  String get elementDistribution => 'Element Distribution';
-
-  @override
-  String get distributeHorizontally => 'Distribute Horizontally';
-
-  @override
-  String get distributeVertically => 'Distribute Vertically';
-
-  @override
-  String get alignmentRequiresMultipleElements => 'Alignment requires at least 2 elements';
-
-  @override
-  String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
-
-  @override
-  String get distribution => 'Distribution';
-
-  @override
-  String get center => 'Center';
-
-  @override
-  String get moveSelectedElementsToLayer => 'Move Selected Elements to Layer';
-
-  @override
-  String get selectTargetLayer => 'Select Target Layer';
-
-  @override
-  String get layerInfo => 'Layer Information';
-
-  @override
-  String get layerName => 'Layer Name';
-
-  @override
-  String get visibility => 'Visibility';
-
-  @override
-  String get lockStatus => 'Lock Status';
-
-  @override
-  String get unlocked => 'Unlocked';
-
-  @override
-  String get elementType => 'Element Type';
-
-  @override
-  String get elementId => 'Element ID';
-
-  @override
-  String get text => 'Text';
-
-  @override
-  String get image => 'Image';
-
-  @override
-  String get collection => 'Collection';
+  String get windowButtonRestore => 'Restore';
 
   @override
   String get workBrowseAddFavorite => 'Add to Favorites';
@@ -2008,13 +2621,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workBrowseDelete => 'Delete';
 
   @override
+  String workBrowseDeleteConfirmMessage(Object count) {
+    return 'Are you sure you want to delete $count selected works? This action cannot be undone.';
+  }
+
+  @override
   String get workBrowseDeleteConfirmTitle => 'Confirm Deletion';
+
+  @override
+  String workBrowseDeleteSelected(Object count) {
+    return 'Delete Selected';
+  }
+
+  @override
+  String workBrowseError(Object message) {
+    return 'Error: $message';
+  }
 
   @override
   String get workBrowseGridView => 'Grid View';
 
   @override
   String get workBrowseImport => 'Import Work';
+
+  @override
+  String workBrowseItemsPerPage(Object count) {
+    return '$count per page';
+  }
 
   @override
   String get workBrowseListView => 'List View';
@@ -2038,7 +2671,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workBrowseSearch => 'Search works...';
 
   @override
+  String workBrowseSelectedCount(Object count) {
+    return '$count selected';
+  }
+
+  @override
   String get workBrowseTitle => 'Works';
+
+  @override
+  String get workCount => 'Work Count';
 
   @override
   String get workDetailBack => 'Back';
@@ -2221,6 +2862,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogDeleteImageConfirm => 'Are you sure you want to delete this image?';
 
   @override
+  String workImportDialogError(Object error) {
+    return 'Import failed: $error';
+  }
+
+  @override
   String get workImportDialogImport => 'Import';
 
   @override
@@ -2269,635 +2915,5 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workToolOther => 'Other';
 
   @override
-  String characterCollectionDeleteBatchConfirm(Object count) {
-    return 'Confirm deletion of $count saved regions?';
-  }
-
-  @override
-  String characterCollectionDeleteBatchMessage(Object count) {
-    return 'You are about to delete $count saved regions. This action cannot be undone.';
-  }
-
-  @override
-  String characterCollectionError(Object error) {
-    return 'Error: $error';
-  }
-
-  @override
-  String characterCollectionFindSwitchFailed(Object error) {
-    return 'Find and switch page failed: $error';
-  }
-
-  @override
-  String characterEditCharacterUpdated(Object character) {
-    return '\"$character\" updated';
-  }
-
-  @override
-  String characterEditSaveConfirmMessage(Object character) {
-    return 'Confirm saving \"$character\"?';
-  }
-
-  @override
-  String characterManagementError(Object message) {
-    return 'Error: $message';
-  }
-
-  @override
-  String characterManagementItemsPerPage(Object count) {
-    return '$count per page';
-  }
-
-  @override
-  String imagePropertyPanelCroppingApplied(Object bottom, Object left, Object right, Object top) {
-    return ' (Cropping: Left ${left}px, Top ${top}px, Right ${right}px, Bottom ${bottom}px)';
-  }
-
-  @override
-  String imagePropertyPanelFileNotExist(Object path) {
-    return 'File does not exist: $path';
-  }
-
-  @override
-  String imagePropertyPanelLoadError(Object error) {
-    return 'Failed to load image: $error...';
-  }
-
-  @override
-  String get imagePropertyPanelAutoImportNotice => 'The selected image will be automatically imported into your library for better management';
-
-  @override
-  String get imagePropertyPanelImporting => 'Importing image...';
-
-  @override
-  String get imagePropertyPanelImportSuccess => 'Image imported successfully';
-
-  @override
-  String imagePropertyPanelImportError(Object error) {
-    return 'Failed to import image: $error';
-  }
-
-  @override
-  String imagePropertyPanelProcessingPathError(Object error) {
-    return 'Processing path error: $error';
-  }
-
-  @override
-  String imagePropertyPanelTransformError(Object error) {
-    return 'Failed to apply transform: $error';
-  }
-
-  @override
-  String initializationFailed(Object error) {
-    return 'Initialization failed: $error';
-  }
-
-  @override
-  String practiceEditElementSelectionInfo(Object count) {
-    return '$count elements selected';
-  }
-
-  @override
-  String practiceEditLoadFailed(Object error) {
-    return 'Failed to load practice: $error';
-  }
-
-  @override
-  String practiceEditPracticeLoaded(Object title) {
-    return 'Practice \"$title\" loaded successfully';
-  }
-
-  @override
-  String practiceEditTitleUpdated(Object title) {
-    return 'Title updated to \"$title\"';
-  }
-
-  @override
-  String practiceListItemsPerPage(Object count) {
-    return '$count per page';
-  }
-
-  @override
-  String practiceListTotalItems(Object count) {
-    return '$count practice sheets';
-  }
-
-  @override
-  String workBrowseDeleteConfirmMessage(Object count) {
-    return 'Are you sure you want to delete $count selected works? This action cannot be undone.';
-  }
-
-  @override
-  String get workBrowseDeleteSelected => 'Delete Selected';
-
-  @override
-  String workBrowseError(Object message) {
-    return 'Error: $message';
-  }
-
-  @override
-  String workBrowseSelectedCount(Object count) {
-    return '$count selected';
-  }
-
-  @override
-  String workImportDialogError(Object error) {
-    return 'Import failed: $error';
-  }
-
-  @override
-  String get horizontalLeftToRight => 'Horizontal Left-to-Right';
-
-  @override
-  String get horizontalRightToLeft => 'Horizontal Right-to-Left';
-
-  @override
-  String get verticalLeftToRight => 'Vertical Left-to-Right';
-
-  @override
-  String get verticalRightToLeft => 'Vertical Right-to-Left';
-
-  @override
-  String get collectionPropertyPanelAvailableCharacters => 'Available Characters';
-
-  @override
-  String get exportDialogFitPolicy => 'Fit Policy';
-
-  @override
-  String get exportDialogFitWidth => 'Fit to Width';
-
-  @override
-  String get exportDialogFitHeight => 'Fit to Height';
-
-  @override
-  String get exportDialogFitContain => 'Contain in Page';
-
-  @override
-  String get exportDialogCentimeter => 'cm';
-
-  @override
-  String get exportDialogMarginTop => 'Top';
-
-  @override
-  String get exportDialogMarginRight => 'Right';
-
-  @override
-  String get exportDialogMarginBottom => 'Bottom';
-
-  @override
-  String get exportDialogMarginLeft => 'Left';
-
-  @override
-  String get exportDialogPageMargins => 'Page Margins (cm)';
-
-  @override
-  String get exportDialogPageOrientation => 'Page Orientation';
-
-  @override
-  String get exportDialogPortrait => 'Portrait';
-
-  @override
-  String get exportDialogLandscape => 'Landscape';
-
-  @override
-  String get exportDialogLocation => 'Export Location';
-
-  @override
-  String get exportDialogSelectLocation => 'Please select export location';
-
-  @override
-  String get exportDialogBrowse => 'Browse...';
-
-  @override
-  String get exportDialogPageRange => 'Page Range';
-
-  @override
-  String get exportDialogAllPages => 'All Pages';
-
-  @override
-  String get exportDialogCurrentPage => 'Current Page';
-
-  @override
-  String get exportDialogCustomRange => 'Custom Range';
-
-  @override
-  String get exportDialogRangeExample => 'Example: 1-3,5,7-9';
-
-  @override
-  String get exportDialogPageSize => 'Page Size';
-
-  @override
-  String get exportDialogOutputQuality => 'Output Quality';
-
-  @override
-  String exportDialogMultipleFilesNote(Object count) {
-    return 'Note: Will export $count image files, filenames will be automatically numbered.';
-  }
-
-  @override
-  String get exportDialogPreview => 'Preview';
-
-  @override
-  String exportDialogPreviewPage(Object current, Object total) {
-    return ' (Page $current/$total)';
-  }
-
-  @override
-  String get exportDialogNoPreview => 'Cannot generate preview';
-
-  @override
-  String exportDialogDimensions(Object height, Object orientation, Object width) {
-    return '${width}cm × ${height}cm ($orientation)';
-  }
-
-  @override
-  String get exportDialogPreviousPage => 'Previous Page';
-
-  @override
-  String get exportDialogNextPage => 'Next Page';
-
-  @override
-  String get exportDialogEnterFilename => 'Please enter a filename';
-
-  @override
-  String get exportDialogInvalidFilename => 'Filename cannot contain the following characters: \\ / : * ? \" < > |';
-
-  @override
-  String get exportDialogCreateDirectoryFailed => 'Failed to create export directory';
-
-  @override
-  String get exportDialogQualityStandard => 'Standard (1x)';
-
-  @override
-  String get exportDialogQualityHigh => 'High (2x)';
-
-  @override
-  String get exportDialogQualityUltra => 'Ultra (3x)';
-
-  @override
-  String get exportDialogFilenamePrefix => 'Enter filename prefix (page numbers will be added automatically)';
-
-  @override
-  String get restartAppRequired => 'The application needs to be restarted to complete the restore process.';
-
-  @override
-  String get ok => 'OK';
-
-  @override
-  String get restartNow => 'Restart Now';
-
-  @override
-  String get restartLater => 'Later';
-
-  @override
-  String get collectionPropertyPanelGlobalInversion => 'Global Inversion';
-
-  @override
-  String get collectionPropertyPanelCurrentCharInversion => 'Current Character Inversion';
-
-  @override
-  String get collectionPropertyPanelColorPicker => 'Pick Color';
-
-  @override
-  String get collectionPropertyPanelColorSettings => 'Color Setting';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreak => 'Auto Line Break';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakEnabled => 'Enable';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakDisabled => 'Disable';
-
-  @override
-  String get collectionPropertyPanelAutoLineBreakTooltip => 'Auto Line Break';
-
-  @override
-  String get verticalTextModeEnabled => 'Vertical text preview - Automatically flows to new columns when height exceeded, scroll horizontally';
-
-  @override
-  String get groupOperations => 'Group Operations';
-
-  @override
-  String get editGroupContents => 'Edit Group Contents';
-
-  @override
-  String get editGroupContentsDescription => 'Edit the contents of the selected group';
-
-  @override
-  String get ungroupDescription => 'Are you sure you want to ungroup this group?';
-
-  @override
-  String get practiceEditDangerZone => 'Danger Zone';
-
-  @override
-  String get deleteGroup => 'Delete Group';
-
-  @override
-  String get groupElements => 'Group Elements';
-
-  @override
-  String get deleteGroupConfirm => 'Confirm Delete Group';
-
-  @override
-  String get deleteGroupDescription => 'Are you sure you want to delete this group? This action cannot be undone.';
-
-  @override
-  String get deleteGroupElements => 'Delete Group Elements';
-
-  @override
-  String get enterGroupEditMode => 'Enter Group Edit Mode';
-
-  @override
-  String get ungroupConfirm => 'Confirm Ungroup';
-
-  @override
-  String get alignHorizontalCenter => 'Align Horizontal Center';
-
-  @override
-  String get alignVerticalCenter => 'Align Vertical Center';
-
-  @override
-  String get imagePropertyPanelCropping => 'Cropping';
-
-  @override
-  String get back => 'Back';
-
-  @override
-  String get batchOperations => 'Batch Operations';
-
-  @override
-  String get listView => 'List View';
-
-  @override
-  String get gridView => 'Grid View';
-
-  @override
-  String get searchCharactersWorksAuthors => 'Search characters, works, or authors';
-
-  @override
-  String get exitBatchMode => 'Exit Batch Mode';
-
-  @override
-  String selectedCount(Object count) {
-    return '$count selected';
-  }
-
-  @override
-  String totalItems(Object count) {
-    return 'Total: $count';
-  }
-
-  @override
-  String workBrowseItemsPerPage(Object count) {
-    return '$count per page';
-  }
-
-  @override
-  String get windowButtonMinimize => 'Minimize';
-
-  @override
-  String get windowButtonMaximize => 'Maximize';
-
-  @override
-  String get windowButtonRestore => 'Restore';
-
-  @override
-  String get windowButtonClose => 'Close';
-
-  @override
-  String get restartAfterRestored => 'Note: The application will automatically restart after restoration is complete';
-
-  @override
-  String get storageLocation => 'Storage Location';
-
-  @override
-  String get cacheSize => 'Cache Size';
-
-  @override
-  String get storageUsed => 'Storage Used';
-
-  @override
-  String get fileCount => 'File Count';
-
-  @override
-  String get libraryCount => 'Library Count';
-
-  @override
-  String get characterCount => 'Character Count';
-
-  @override
-  String get workCount => 'Work Count';
-
-  @override
-  String get loadFailed => 'Load Failed';
-
-  @override
-  String get libraryManagement => 'Library';
-
-  @override
-  String get libraryManagementLoading => 'Loading...';
-
-  @override
-  String libraryManagementError(String message) {
-    return 'Failed to load: $message';
-  }
-
-  @override
-  String get libraryManagementNoItems => 'No items';
-
-  @override
-  String get libraryManagementNoItemsHint => 'Try adding some items or changing filters';
-
-  @override
-  String get libraryManagementSearch => 'Search items...';
-
-  @override
-  String get libraryManagementEnterBatchMode => 'Enter batch mode';
-
-  @override
-  String get libraryManagementExitBatchMode => 'Exit batch mode';
-
-  @override
-  String get libraryManagementDeleteSelected => 'Delete selected items';
-
-  @override
-  String get libraryManagementDeleteConfirm => 'Confirm deletion';
-
-  @override
-  String get libraryManagementDeleteMessage => 'Are you sure you want to delete the selected items? This action cannot be undone.';
-
-  @override
-  String get libraryManagementGridView => 'Grid view';
-
-  @override
-  String get libraryManagementListView => 'List view';
-
-  @override
-  String get libraryManagementCategories => 'Categories';
-
-  @override
-  String get libraryManagementSortBy => 'Sort by';
-
-  @override
-  String get libraryManagementSortByName => 'Name';
-
-  @override
-  String get libraryManagementSortByDate => 'Date';
-
-  @override
-  String get libraryManagementSortBySize => 'File size';
-
-  @override
-  String get libraryManagementBasicInfo => 'Basic Information';
-
-  @override
-  String get libraryManagementName => 'Name';
-
-  @override
-  String get libraryManagementType => 'Type';
-
-  @override
-  String get libraryManagementFormat => 'Format';
-
-  @override
-  String get libraryManagementSize => 'Size';
-
-  @override
-  String get libraryManagementResolution => 'Resolution';
-
-  @override
-  String get libraryManagementFileSize => 'File size';
-
-  @override
-  String get libraryManagementTags => 'Tags';
-
-  @override
-  String get libraryManagementMetadata => 'Metadata';
-
-  @override
-  String get libraryManagementTimeInfo => 'Time Information';
-
-  @override
-  String get libraryManagementCreatedAt => 'Created at';
-
-  @override
-  String get libraryManagementUpdatedAt => 'Updated at';
-
-  @override
-  String get libraryManagementDetail => 'Details';
-
-  @override
-  String get libraryManagementImport => 'Import';
-
-  @override
-  String get libraryManagementImportFiles => 'Import Files';
-
-  @override
-  String get libraryManagementImportFolder => 'Import Folder';
-
-  @override
-  String get libraryManagementRemarks => 'Remarks';
-
-  @override
-  String get libraryManagementRemarksHint => 'Add remarks';
-
-  @override
-  String get libraryManagementNoRemarks => 'No remarks';
-
-  @override
-  String get sortAndFilter => 'Sort & Filter';
-
-  @override
-  String get categoryManagement => 'Category Management';
-
-  @override
-  String get addCategory => 'Add Category';
-
-  @override
-  String get searchCategories => 'Search categories...';
-
-  @override
-  String get allCategories => 'All Categories';
-
-  @override
-  String get removedFromAllCategories => 'Removed from all categories';
-
-  @override
-  String get addedToCategory => 'Added to category';
-
-  @override
-  String get newCategory => 'New Category';
-
-  @override
-  String get deleteCategory => 'Delete Category';
-
-  @override
-  String categoryHasItems(Object count) {
-    return '$count items in this category';
-  }
-
-  @override
-  String get confirmDelete => 'Do you want to delete?';
-
-  @override
-  String get confirmDeleteCategory => 'Do you want to delete category';
-
-  @override
-  String get editCategory => 'Edit Category';
-
-  @override
-  String get categories => 'Categories';
-
-  @override
-  String get categoryPanelTitle => 'Category Panel';
-
-  @override
-  String get libraryManagementFavorite => 'Favorite';
-
-  @override
-  String get libraryManagementFavorites => 'Favorites';
-
-  @override
-  String get libraryManagementFormats => 'File Formats';
-
-  @override
-  String get libraryManagementTypes => 'Types';
-
-  @override
-  String get libraryManagementSortDesc => 'Sort Order';
-
-  @override
-  String get allTypes => 'All Types';
-
-  @override
   String get yes => 'Yes';
-
-  @override
-  String get no => 'No';
-
-  @override
-  String get unknownCategory => 'Unknown Category';
-
-  @override
-  String get noCategories => 'No Categories';
-
-  @override
-  String get tagsHint => 'Enter tags...';
-
-  @override
-  String get noTags => 'No Tags';
-
-  @override
-  String get libraryManagementSortByFileSize => 'File Size';
-
-  @override
-  String get libraryManagementPath => 'Path';
-
-  @override
-  String get storageDetails => 'Storage Details';
-
-  @override
-  String get files => 'File Count';
 }

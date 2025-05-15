@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../application/services/character/character_service.dart';
 import '../../../../domain/models/character/character_image_type.dart';
 import '../../../../domain/models/character/character_view.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -58,6 +59,7 @@ class M3CharacterDetailPanel extends ConsumerStatefulWidget {
 class _M3CharacterDetailPanelState
     extends ConsumerState<M3CharacterDetailPanel> {
   int selectedFormat = 0;
+  final TextEditingController _tagController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -223,10 +225,17 @@ class _M3CharacterDetailPanelState
                                 labelStyle: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant,
                                 ),
+                                onDeleted: () => _removeTag(character, tag),
                               );
                             }).toList(),
                           ),
                         ],
+                        const SizedBox(height: AppSizes.spacingSmall),
+                        ElevatedButton.icon(
+                          onPressed: () => _showAddTagDialog(character, l10n),
+                          icon: const Icon(Icons.add),
+                          label: Text(l10n.characterDetailAddTag),
+                        ),
                       ],
                     ),
                   ),
@@ -250,7 +259,29 @@ class _M3CharacterDetailPanelState
 
   @override
   void dispose() {
+    _tagController.dispose();
     super.dispose();
+  }
+
+  // Add a tag to the character
+  Future<void> _addTag(CharacterView character, String tag) async {
+    try {
+      final characterService = ref.read(characterServiceProvider);
+      await characterService.addTag(character.id, tag);
+
+      // Refresh character detail
+      await ref.refresh(characterDetailProvider(widget.characterId).future);
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.characterDetailTagAddError(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildFormatSelector(
@@ -731,5 +762,67 @@ class _M3CharacterDetailPanelState
       // 如果格式对象不是预期的类型，返回一个简单的提示
       return '图片格式信息';
     }
+  }
+
+  // Remove a tag from the character
+  Future<void> _removeTag(CharacterView character, String tag) async {
+    try {
+      final characterService = ref.read(characterServiceProvider);
+      await characterService.removeTag(character.id, tag);
+
+      // Refresh character detail
+      await ref.refresh(characterDetailProvider(widget.characterId).future);
+    } catch (e) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.characterDetailTagRemoveError(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  // Show dialog to add a new tag
+  void _showAddTagDialog(CharacterView character, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.characterDetailAddTag),
+          content: TextField(
+            controller: _tagController,
+            autofocus: true,
+            decoration: InputDecoration(
+              hintText: l10n.characterDetailTagHint,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () {
+                final tag = _tagController.text.trim();
+                if (tag.isNotEmpty) {
+                  _addTag(character, tag);
+                }
+                _tagController.clear();
+                Navigator.of(context).pop();
+              },
+              child: Text(l10n.characterDetailAddTag),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

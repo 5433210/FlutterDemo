@@ -62,7 +62,7 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
         if (widget.batchMode && widget.selectedCount > 0)
           IconButton(
             icon: const Icon(Icons.delete),
-            tooltip: l10n.workBrowseDeleteSelected,
+            tooltip: l10n.workBrowseDeleteSelected(widget.selectedCount),
             onPressed: _showDeleteConfirmation,
           )
         else if (!widget.batchMode)

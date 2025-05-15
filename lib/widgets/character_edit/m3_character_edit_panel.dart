@@ -1473,7 +1473,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(l10n.characterEditCharacterUpdated(currentText)),
+              content: Text(l10n.characterEditCharacterUpdated),
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
               width: 200,

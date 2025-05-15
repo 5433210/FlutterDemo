@@ -250,13 +250,12 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   /// Build SQL query from filter
   (String, List<dynamic>) _buildFilterQuery(CharacterFilter filter) {
     final conditions = <String>[];
-    final args = <dynamic>[];
-
-    // Search text filter
+    final args = <dynamic>[]; // Search text filter
     if (filter.searchText != null && filter.searchText!.isNotEmpty) {
-      conditions.add('(character LIKE ? OR title LIKE ? OR author LIKE ?)');
+      conditions.add(
+          '(character LIKE ? OR title LIKE ? OR author LIKE ? OR tags LIKE ?)');
       final searchPattern = '%${filter.searchText}%';
-      args.addAll([searchPattern, searchPattern, searchPattern]);
+      args.addAll([searchPattern, searchPattern, searchPattern, searchPattern]);
     }
 
     // Favorite filter

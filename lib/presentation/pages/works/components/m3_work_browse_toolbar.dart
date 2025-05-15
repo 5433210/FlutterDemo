@@ -74,7 +74,7 @@ class _M3WorkBrowseToolbarState extends State<M3WorkBrowseToolbar> {
               padding: const EdgeInsets.only(left: AppSizes.s),
               child: FilledButton.tonalIcon(
                 icon: const Icon(Icons.delete),
-                label: Text(l10n.workBrowseDeleteSelected),
+                label: Text(l10n.workBrowseDeleteConfirmTitle),
                 onPressed:
                     widget.selectedCount > 0 ? _showDeleteConfirmation : null,
               ),
