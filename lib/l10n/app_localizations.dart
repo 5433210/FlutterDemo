@@ -5740,6 +5740,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Yes'**
   String get yes;
+
+  /// No description provided for @practiceListFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Practice Filter'**
+  String get practiceListFilterTitle;
+
+  /// No description provided for @practiceListSortByStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by Status'**
+  String get practiceListSortByStatus;
+
+  /// No description provided for @practiceListStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get practiceListStatus;
+
+  /// No description provided for @practiceListStatusAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get practiceListStatusAll;
+
+  /// No description provided for @practiceListStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get practiceListStatusCompleted;
+
+  /// No description provided for @practiceListStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get practiceListStatusDraft;
+
+  /// No description provided for @practiceListResetFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Filter'**
+  String get practiceListResetFilter;
+
+  /// No description provided for @practiceListCollapseFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse Filter Panel'**
+  String get practiceListCollapseFilter;
+
+  /// No description provided for @practiceListExpandFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand Filter Panel'**
+  String get practiceListExpandFilter;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

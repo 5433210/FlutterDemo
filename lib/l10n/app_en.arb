@@ -974,5 +974,14 @@
   "workToolBrush": "Brush",
   "workToolHardPen": "Hard Pen",
   "workToolOther": "Other",
-  "yes": "Yes"
+  "yes": "Yes",
+  "practiceListFilterTitle": "Practice Filter",
+  "practiceListSortByStatus": "Sort by Status",
+  "practiceListStatus": "Status",
+  "practiceListStatusAll": "All",
+  "practiceListStatusCompleted": "Completed",
+  "practiceListStatusDraft": "Draft",
+  "practiceListResetFilter": "Reset Filter",
+  "practiceListCollapseFilter": "Collapse Filter Panel",
+  "practiceListExpandFilter": "Expand Filter Panel"
 }

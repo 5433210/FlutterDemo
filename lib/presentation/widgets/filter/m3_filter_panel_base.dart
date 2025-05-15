@@ -95,11 +95,27 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
     );
   }
 
+  /// 获取展开面板的提示消息文本
+  String getExpandMessage(AppLocalizations l10n) {
+    try {
+      // 尝试使用扩展字符串
+      return l10n.practiceListExpandFilter;
+    } catch (e) {
+      // 如果不存在，回退到其他
+      try {
+        return l10n.characterFilterExpand;
+      } catch (e) {
+        // 最后回退到硬编码
+        return 'Expand Filter Panel';
+      }
+    }
+  }
+
   /// 获取筛选面板标题，子类需要实现
   String getFilterTitle(AppLocalizations l10n);
-
-  /// 重置筛选条件，子类需要实现
   void resetFilters();
+
+  /// 构建折叠状态的面板
 
   /// 构建折叠状态的面板
   Widget _buildCollapsedPanel(BuildContext context, AppLocalizations l10n) {
@@ -114,7 +130,7 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
           child: RotatedBox(
             quarterTurns: 1,
             child: Tooltip(
-              message: l10n.filterExpand,
+              message: getExpandMessage(l10n),
               child: const Icon(Icons.tune),
             ),
           ),

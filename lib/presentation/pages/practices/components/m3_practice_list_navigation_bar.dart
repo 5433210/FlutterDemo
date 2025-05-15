@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_sizes.dart';
 import '../../../widgets/common/m3_page_navigation_bar.dart';
 
 class M3PracticeListNavigationBar extends StatefulWidget
@@ -13,11 +12,14 @@ class M3PracticeListNavigationBar extends StatefulWidget
   final VoidCallback? onDeleteSelected;
   final bool isGridView;
   final VoidCallback onToggleViewMode;
+
+  /// 保留这些参数以确保兼容性，但它们已移至过滤面板
   final ValueChanged<String> onSearch;
   final String sortField;
   final String sortOrder;
   final ValueChanged<String> onSortFieldChanged;
   final VoidCallback onSortOrderChanged;
+
   final VoidCallback? onBackPressed;
 
   const M3PracticeListNavigationBar({
@@ -47,8 +49,6 @@ class M3PracticeListNavigationBar extends StatefulWidget
 
 class _M3PracticeListNavigationBarState
     extends State<M3PracticeListNavigationBar> {
-  final TextEditingController _searchController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -82,64 +82,7 @@ class _M3PracticeListNavigationBarState
                 label: Text(l10n.practiceListNewPractice),
                 onPressed: widget.onNewPractice,
               ),
-            PopupMenuButton<String>(
-              tooltip: l10n.filterSortSection,
-              icon: const Icon(Icons.sort),
-              itemBuilder: (context) => [
-                _buildSortMenuItem(
-                    l10n.practiceListSortByUpdateTime, 'updateTime', theme),
-                _buildSortMenuItem(
-                    l10n.practiceListSortByCreateTime, 'createTime', theme),
-                _buildSortMenuItem(
-                    l10n.practiceListSortByTitle, 'title', theme),
-              ],
-              onSelected: widget.onSortFieldChanged,
-            ),
-            IconButton(
-              icon: Icon(
-                widget.sortOrder == 'desc'
-                    ? Icons.arrow_downward
-                    : Icons.arrow_upward,
-                size: 20,
-              ),
-              tooltip: widget.sortOrder == 'desc'
-                  ? l10n.filterSortAscending
-                  : l10n.filterSortDescending,
-              onPressed: widget.onSortOrderChanged,
-            ),
           ],
-        ),
-        SizedBox(
-          width: 240,
-          child: SearchBar(
-            controller: _searchController,
-            hintText: l10n.practiceListSearch,
-            leading: const Icon(Icons.search, size: AppSizes.searchBarIconSize),
-            padding: const WidgetStatePropertyAll(
-              EdgeInsets.symmetric(horizontal: AppSizes.m),
-            ),
-            onChanged: widget.onSearch,
-            trailing: [
-              ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _searchController,
-                builder: (context, value, child) {
-                  return AnimatedOpacity(
-                    opacity: value.text.isNotEmpty ? 1.0 : 0.0,
-                    duration: const Duration(
-                        milliseconds: AppSizes.animationDurationMedium),
-                    child: IconButton(
-                      icon: const Icon(Icons.clear,
-                          size: AppSizes.searchBarClearIconSize),
-                      onPressed: () {
-                        _searchController.clear();
-                        widget.onSearch('');
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
         ),
 
         // 批量操作按钮
@@ -160,33 +103,6 @@ class _M3PracticeListNavigationBarState
           onPressed: widget.onToggleViewMode,
         ),
       ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  PopupMenuItem<String> _buildSortMenuItem(
-      String title, String value, ThemeData theme) {
-    return PopupMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          const SizedBox(width: 8),
-          Text(title),
-          if (widget.sortField == value) ...[
-            const SizedBox(width: 8),
-            Icon(
-              Icons.check,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-          ],
-        ],
-      ),
     );
   }
 }

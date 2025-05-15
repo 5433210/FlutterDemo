@@ -2922,4 +2922,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yes => '是';
+
+  @override
+  String get practiceListFilterTitle => '字帖过滤';
+
+  @override
+  String get practiceListSortByStatus => '按状态排序';
+
+  @override
+  String get practiceListStatus => '状态';
+
+  @override
+  String get practiceListStatusAll => '全部';
+
+  @override
+  String get practiceListStatusCompleted => '已完成';
+
+  @override
+  String get practiceListStatusDraft => '草稿';
+
+  @override
+  String get practiceListResetFilter => '重置过滤器';
+
+  @override
+  String get practiceListCollapseFilter => '折叠过滤面板';
+
+  @override
+  String get practiceListExpandFilter => '展开过滤面板';
 }

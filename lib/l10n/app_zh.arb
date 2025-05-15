@@ -1133,5 +1133,14 @@
   "workToolBrush": "毛笔",
   "workToolHardPen": "硬笔",
   "workToolOther": "其他",
-  "yes": "是"
+  "yes": "是",
+  "practiceListFilterTitle": "字帖过滤",
+  "practiceListSortByStatus": "按状态排序",
+  "practiceListStatus": "状态",
+  "practiceListStatusAll": "全部",
+  "practiceListStatusCompleted": "已完成",
+  "practiceListStatusDraft": "草稿",
+  "practiceListResetFilter": "重置过滤器",
+  "practiceListCollapseFilter": "折叠过滤面板",
+  "practiceListExpandFilter": "展开过滤面板"
 }

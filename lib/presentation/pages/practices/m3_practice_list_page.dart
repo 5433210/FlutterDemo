@@ -5,8 +5,11 @@ import '../../../application/providers/service_providers.dart';
 import '../../../domain/models/practice/practice_filter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
+import '../../widgets/common/resizable_panel.dart';
+import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
+import 'components/m3_practice_filter_panel.dart';
 import 'components/m3_practice_grid_view.dart';
 import 'components/m3_practice_list_navigation_bar.dart';
 import 'components/m3_practice_list_view.dart';
@@ -23,6 +26,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   bool _isGridView = true;
   bool _isBatchMode = false;
   final Set<String> _selectedPractices = {};
+  bool _isFilterPanelExpanded = true;
 
   // List to store practices data
   List<Map<String, dynamic>> _practices = [];
@@ -41,9 +45,12 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   int _pageSize = 20;
   int _totalItems = 0;
 
-  // Sorting
+  // Sorting and filtering
   String _sortField = 'updateTime';
   String _sortOrder = 'desc';
+
+  // 过滤器
+  late PracticeFilter _filter;
 
   // Scroll controller
   final ScrollController _scrollController = ScrollController();
@@ -57,8 +64,10 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     if (_hasError) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
+          // Access a string from the extension to keep the import
+          final errorMsg = '${l10n.practiceListFilterTitle}: $_errorMessage';
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_errorMessage)),
+            SnackBar(content: Text(errorMsg)),
           );
           setState(() {
             _hasError = false;
@@ -77,17 +86,12 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         onDeleteSelected:
             _selectedPractices.isNotEmpty ? _confirmDeleteSelected : null,
         onNewPractice: () => _navigateToEditPage(),
-        onSearch: _searchPractices,
+        // 排序和搜索功能已移至过滤面板
+        onSearch: (_) {},
         sortField: _sortField,
         sortOrder: _sortOrder,
-        onSortFieldChanged: (value) {
-          setState(() => _sortField = value);
-          _loadPractices();
-        },
-        onSortOrderChanged: () {
-          setState(() => _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc');
-          _loadPractices();
-        },
+        onSortFieldChanged: (_) {},
+        onSortOrderChanged: () {},
         onBackPressed: () {
           // Check if we can safely pop
           if (Navigator.canPop(context)) {
@@ -98,33 +102,63 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
       body: Column(
         children: [
           Expanded(
-            child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(
-                      color: theme.colorScheme.primary,
+            child: Row(
+              children: [
+                // 左侧过滤面板
+                if (_isFilterPanelExpanded)
+                  ResizablePanel(
+                    initialWidth: 300,
+                    minWidth: 280,
+                    maxWidth: 400,
+                    isLeftPanel: true,
+                    child: M3PracticeFilterPanel(
+                      filter: _filter,
+                      onFilterChanged: _updateFilter,
+                      onSearch: _searchPractices,
+                      onToggleExpand: _toggleFilterPanel,
                     ),
-                  )
-                : (_isGridView
-                    ? M3PracticeGridView(
-                        practices: _filteredPractices,
-                        isBatchMode: _isBatchMode,
-                        selectedPractices: _selectedPractices,
-                        onPracticeTap: _handlePracticeTap,
-                        onPracticeLongPress: _handlePracticeLongPress,
-                        isLoading: false,
-                        errorMessage: null,
-                      )
-                    : M3PracticeListView(
-                        practices: _filteredPractices,
-                        isBatchMode: _isBatchMode,
-                        selectedPractices: _selectedPractices,
-                        onPracticeTap: _handlePracticeTap,
-                        onPracticeLongPress: _handlePracticeLongPress,
-                        isLoading: false,
-                        errorMessage: null,
-                      )),
+                  ),
+
+                // 过滤面板切换按钮
+                SidebarToggle(
+                  isOpen: _isFilterPanelExpanded,
+                  onToggle: _toggleFilterPanel,
+                  alignRight: false,
+                ),
+
+                // 主内容区域
+                Expanded(
+                  child: _isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
+                      : (_isGridView
+                          ? M3PracticeGridView(
+                              practices: _filteredPractices,
+                              isBatchMode: _isBatchMode,
+                              selectedPractices: _selectedPractices,
+                              onPracticeTap: _handlePracticeTap,
+                              onPracticeLongPress: _handlePracticeLongPress,
+                              isLoading: false,
+                              errorMessage: null,
+                            )
+                          : M3PracticeListView(
+                              practices: _filteredPractices,
+                              isBatchMode: _isBatchMode,
+                              selectedPractices: _selectedPractices,
+                              onPracticeTap: _handlePracticeTap,
+                              onPracticeLongPress: _handlePracticeLongPress,
+                              isLoading: false,
+                              errorMessage: null,
+                            )),
+                ),
+              ],
+            ),
           ),
-          // Pagination controls
+
+          // 分页控件
           if (!_isLoading)
             M3PaginationControls(
               currentPage: _currentPage,
@@ -161,6 +195,13 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   @override
   void initState() {
     super.initState();
+    // 初始化过滤器
+    _filter = PracticeFilter(
+      sortField: _sortField,
+      sortOrder: _sortOrder,
+      limit: _pageSize,
+      offset: (_currentPage - 1) * _pageSize,
+    );
     _loadPractices();
   }
 
@@ -255,10 +296,8 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     try {
       final practiceService = ref.read(practiceServiceProvider);
 
-      // Create filter with sort and pagination parameters
-      final filter = PracticeFilter(
-        sortField: _sortField,
-        sortOrder: _sortOrder,
+      // 更新过滤器的分页信息
+      final filter = _filter.copyWith(
         limit: _pageSize,
         offset: (_currentPage - 1) * _pageSize,
       );
@@ -372,6 +411,13 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     });
   }
 
+  // 切换过滤面板显示/隐藏
+  void _toggleFilterPanel() {
+    setState(() {
+      _isFilterPanelExpanded = !_isFilterPanelExpanded;
+    });
+  }
+
   void _togglePracticeSelection(String id) {
     setState(() {
       if (_selectedPractices.contains(id)) {
@@ -380,5 +426,16 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         _selectedPractices.add(id);
       }
     });
+  }
+
+  // 更新过滤器
+  void _updateFilter(PracticeFilter newFilter) {
+    setState(() {
+      _filter = newFilter;
+      _sortField = newFilter.sortField;
+      _sortOrder = newFilter.sortOrder;
+      _currentPage = 1; // 重置到第一页
+    });
+    _loadPractices();
   }
 }

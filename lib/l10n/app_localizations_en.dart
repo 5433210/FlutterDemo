@@ -2922,4 +2922,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yes => 'Yes';
+
+  @override
+  String get practiceListFilterTitle => 'Practice Filter';
+
+  @override
+  String get practiceListSortByStatus => 'Sort by Status';
+
+  @override
+  String get practiceListStatus => 'Status';
+
+  @override
+  String get practiceListStatusAll => 'All';
+
+  @override
+  String get practiceListStatusCompleted => 'Completed';
+
+  @override
+  String get practiceListStatusDraft => 'Draft';
+
+  @override
+  String get practiceListResetFilter => 'Reset Filter';
+
+  @override
+  String get practiceListCollapseFilter => 'Collapse Filter Panel';
+
+  @override
+  String get practiceListExpandFilter => 'Expand Filter Panel';
 }
