@@ -183,9 +183,7 @@ class WorkRepositoryImpl implements WorkRepository {
         operator: 'contains',
         value: filter.tags,
       ));
-    }
-
-    // 搜索关键字
+    } // 搜索关键字
     if (filter.keyword?.isNotEmpty == true) {
       groups.add(
         DatabaseQueryGroup.or([
@@ -201,6 +199,12 @@ class WorkRepositoryImpl implements WorkRepository {
           ),
           DatabaseQueryCondition(
             field: 'remark',
+            operator: 'like',
+            value: '%${filter.keyword}%',
+          ),
+          // 添加标签模糊搜索
+          DatabaseQueryCondition(
+            field: 'tags',
             operator: 'like',
             value: '%${filter.keyword}%',
           ),

@@ -134,7 +134,17 @@ class CharacterFilterNotifier extends StateNotifier<CharacterFilter> {
   /// 更新搜索文本
   void updateSearchText(String? text) {
     if (state.searchText == text) return;
+
+    // 保存搜索文本以用于显示
     state = state.copyWith(searchText: text);
+
+    // 如果搜索文本为空，则清除标签筛选
+    if (text == null || text.trim().isEmpty) {
+      if (state.tags.isNotEmpty) {
+        state = state.copyWith(tags: []);
+      }
+    }
+
     _notifyFilterChange();
   }
 

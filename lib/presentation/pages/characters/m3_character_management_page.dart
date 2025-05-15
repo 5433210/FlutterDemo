@@ -3,19 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
-import '../../../theme/app_sizes.dart';
 import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../viewmodels/states/character_management_state.dart';
 import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
-import '../../widgets/pagination/m3_pagination_controls.dart';
+import 'components/m3_character_browse_panel.dart';
 import 'components/m3_character_detail_panel.dart';
-import 'components/m3_character_filter_panel.dart';
-import 'components/m3_character_grid_view.dart';
-import 'components/m3_character_list_view.dart';
 import 'components/m3_character_management_navigation_bar.dart';
 
 /// Material 3 version of the character management page
@@ -30,14 +25,11 @@ class M3CharacterManagementPage extends ConsumerStatefulWidget {
 
 class _M3CharacterManagementPageState
     extends ConsumerState<M3CharacterManagementPage> {
-  bool _isFilterPanelExpanded = true;
   late final TextEditingController _searchController;
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(characterManagementProvider);
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
 
     return PageLayout(
       toolbar: M3CharacterManagementNavigationBar(
@@ -57,80 +49,37 @@ class _M3CharacterManagementPageState
           minWidth: 800,
           minHeight: 600,
         ),
-        child: Column(
+        child: Row(
           children: [
-            // Main content with filter, list and detail panels
+            // 主内容区域（包含筛选面板、字符列表和分页）
             Expanded(
-              child: Row(
-                children: [
-                  // Filter panel (collapsible)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width:
-                        _isFilterPanelExpanded ? AppSizes.filterPanelWidth : 0,
-                    clipBehavior: Clip.antiAlias,
-                    decoration: const BoxDecoration(),
-                    child: _isFilterPanelExpanded
-                        ? M3CharacterFilterPanel(
-                            onToggleExpand: _toggleFilterPanel,
-                          )
-                        : null,
-                  ),
-
-                  // Filter panel toggle
-                  SidebarToggle(
-                    isOpen: _isFilterPanelExpanded,
-                    onToggle: _toggleFilterPanel,
-                    alignRight: false,
-                  ),
-
-                  // Main content (character grid or list)
-                  Expanded(
-                    child: state.viewMode == ViewMode.grid
-                        ? M3CharacterGridView(
-                            characters: state.characters,
-                            isBatchMode: state.isBatchMode,
-                            selectedCharacters: state.selectedCharacters,
-                            onCharacterTap: _handleCharacterTap,
-                            onToggleFavorite: _handleToggleFavorite,
-                            isLoading: state.isLoading,
-                            errorMessage: state.errorMessage,
-                          )
-                        : M3CharacterListView(
-                            characters: state.characters,
-                            isBatchMode: state.isBatchMode,
-                            selectedCharacters: state.selectedCharacters,
-                            onCharacterSelect: _handleCharacterTap,
-                            onToggleFavorite: _handleToggleFavorite,
-                            onDelete: _handleDeleteCharacter,
-                            onEdit: _handleEditCharacter,
-                            isLoading: state.isLoading,
-                            errorMessage: state.errorMessage,
-                          ),
-                  ),
-
-                  // Detail panel (collapsible and resizable)
-                  if (state.selectedCharacterId != null && state.isDetailOpen)
-                    ResizablePanel(
-                      initialWidth: 350,
-                      minWidth: 250,
-                      maxWidth: 500,
-                      isLeftPanel: false,
-                      child: M3CharacterDetailPanel(
-                        characterId: state.selectedCharacterId!,
-                        onClose: _closeDetailPanel,
-                        onEdit: () =>
-                            _handleEditCharacter(state.selectedCharacterId!),
-                        onToggleFavorite: () =>
-                            _handleToggleFavorite(state.selectedCharacterId!),
-                      ),
-                    ),
-                ],
+              child: M3CharacterBrowsePanel(
+                initialViewMode: state.viewMode,
+                enableBatchMode: true,
+                isBatchMode: state.isBatchMode,
+                onCharacterSelected: _handleCharacterTap,
+                onCharacterDeleted: _handleDeleteCharacter,
+                onCharacterEdited: _handleEditCharacter,
+                onFavoriteToggled: _handleToggleFavorite,
               ),
             ),
 
-            // Pagination controls
-            _buildPaginationControls(state, l10n),
+            // 详情面板（可折叠和调整大小）
+            if (state.selectedCharacterId != null && state.isDetailOpen)
+              ResizablePanel(
+                initialWidth: 350,
+                minWidth: 250,
+                maxWidth: 500,
+                isLeftPanel: false,
+                child: M3CharacterDetailPanel(
+                  characterId: state.selectedCharacterId!,
+                  onClose: _closeDetailPanel,
+                  onEdit: () =>
+                      _handleEditCharacter(state.selectedCharacterId!),
+                  onToggleFavorite: () =>
+                      _handleToggleFavorite(state.selectedCharacterId!),
+                ),
+              ),
           ],
         ),
       ),
@@ -147,24 +96,6 @@ class _M3CharacterManagementPageState
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    // Load initial data when the page is created
-    Future.microtask(() {
-      ref.read(characterManagementProvider.notifier).loadInitialData();
-    });
-  }
-
-  Widget _buildPaginationControls(
-    CharacterManagementState state,
-    AppLocalizations l10n,
-  ) {
-    return M3PaginationControls(
-      currentPage: state.currentPage,
-      pageSize: state.pageSize,
-      totalItems: state.totalCount,
-      onPageChanged: _handlePageChange,
-      onPageSizeChanged: _handlePageSizeChange,
-      availablePageSizes: const [10, 20, 50, 100],
-    );
   }
 
   void _closeDetailPanel() {
@@ -274,16 +205,6 @@ class _M3CharacterManagementPageState
     );
   }
 
-  void _handlePageChange(int page) {
-    ref.read(characterManagementProvider.notifier).changePage(page);
-  }
-
-  void _handlePageSizeChange(int? size) {
-    if (size != null) {
-      ref.read(characterManagementProvider.notifier).updatePageSize(size);
-    }
-  }
-
   void _handleSearch(String query) {
     final filterNotifier = ref.read(characterFilterProvider.notifier);
     filterNotifier.updateSearchText(query);
@@ -305,12 +226,6 @@ class _M3CharacterManagementPageState
 
   void _toggleBatchMode() {
     ref.read(characterManagementProvider.notifier).toggleBatchMode();
-  }
-
-  void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelExpanded = !_isFilterPanelExpanded;
-    });
   }
 
   void _toggleViewMode() {

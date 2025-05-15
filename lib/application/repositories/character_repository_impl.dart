@@ -220,14 +220,22 @@ class CharacterRepositoryImpl implements CharacterRepository {
         operator: '=',
         value: filter.pageId,
       ));
-    }
-
-    // 文本搜索过滤
+    } // 文本搜索过滤
     if (filter.searchText != null && filter.searchText!.isNotEmpty) {
+      final searchText = filter.searchText!.trim();
+
+      // 使用OR逻辑：如果搜索文本匹配字符或标签，则返回结果
       conditions.add(DatabaseQueryCondition(
         field: 'character',
         operator: 'LIKE',
-        value: '%${filter.searchText}%',
+        value: '%$searchText%',
+      ));
+
+      // 添加标签搜索条件
+      conditions.add(DatabaseQueryCondition(
+        field: 'tags',
+        operator: 'LIKE',
+        value: '%$searchText%',
       ));
     }
 
@@ -336,13 +344,13 @@ class CharacterRepositoryImpl implements CharacterRepository {
     final tags = tagsJson != null && tagsJson.isNotEmpty
         ? (jsonDecode(tagsJson) as List<dynamic>).cast<String>()
         : <String>[];
-
     return CharacterEntity(
       id: map['id'] as String,
       workId: map['workId'] as String,
       pageId: map['pageId'] as String,
       character: map['character'] as String,
       region: region,
+      tags: tags,
       createTime: DateTime.parse(map['createTime'] as String),
       updateTime: DateTime.parse(map['updateTime'] as String),
       isFavorite: (map['isFavorite'] as int) == 1,
@@ -356,6 +364,7 @@ class CharacterRepositoryImpl implements CharacterRepository {
       'pageId': entity.pageId,
       'character': entity.character,
       'region': jsonEncode(entity.region.toJson()),
+      'tags': jsonEncode(entity.tags),
       'createTime': entity.createTime.toIso8601String(),
       'updateTime': entity.updateTime.toIso8601String(),
       'isFavorite': entity.isFavorite ? 1 : 0,

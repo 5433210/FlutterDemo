@@ -167,6 +167,13 @@ class CharacterManagementNotifier
     );
   }
 
+  /// Set view mode directly
+  void setViewMode(ViewMode mode) {
+    if (state.viewMode != mode) {
+      state = state.copyWith(viewMode: mode);
+    }
+  }
+
   /// Toggle batch selection mode
   void toggleBatchMode() {
     final newBatchMode = !state.isBatchMode;
