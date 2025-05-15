@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_sizes.dart';
 import '../../../providers/character/character_management_provider.dart';
 import '../../../viewmodels/states/character_management_state.dart';
+import '../../../widgets/common/resizable_panel.dart';
 import '../../../widgets/common/sidebar_toggle.dart';
 import '../../../widgets/pagination/m3_pagination_controls.dart';
 import 'm3_character_filter_panel.dart';
@@ -94,18 +94,16 @@ class _M3CharacterBrowsePanelState
         Expanded(
           child: Row(
             children: [
-              // 筛选面板（可折叠）
-              if (widget.showFilterPanel)
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: _isFilterPanelExpanded ? AppSizes.filterPanelWidth : 0,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: const BoxDecoration(),
-                  child: _isFilterPanelExpanded
-                      ? M3CharacterFilterPanel(
-                          onToggleExpand: _toggleFilterPanel,
-                        )
-                      : null,
+              // 筛选面板（可折叠和调整大小）
+              if (widget.showFilterPanel && _isFilterPanelExpanded)
+                ResizablePanel(
+                  initialWidth: 300,
+                  minWidth: 280,
+                  maxWidth: 400,
+                  isLeftPanel: true,
+                  child: M3CharacterFilterPanel(
+                    onToggleExpand: _toggleFilterPanel,
+                  ),
                 ),
 
               // 筛选面板切换按钮

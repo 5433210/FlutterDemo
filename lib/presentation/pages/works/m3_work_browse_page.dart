@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
-import '../../../theme/app_sizes.dart';
 import '../../dialogs/work_import/m3_work_import_dialog.dart';
 import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../viewmodels/states/work_browse_state.dart';
+import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
@@ -32,9 +32,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   Widget build(BuildContext context) {
     final state = ref.watch(workBrowseProvider);
     final viewModel = ref.read(workBrowseProvider.notifier);
-    final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
 
     ref.listen(worksNeedsRefreshProvider, (previous, current) async {
       if (current == null) return;
@@ -80,33 +78,25 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           Expanded(
             child: Row(
               children: [
-                AnimatedContainer(
-                  duration: const Duration(
-                    milliseconds: AppSizes.animationDurationSlow,
+                // Filter Panel
+                if (state.isSidebarOpen)
+                  ResizablePanel(
+                    initialWidth: 300,
+                    minWidth: 280,
+                    maxWidth: 400,
+                    isLeftPanel: true,
+                    child: M3WorkFilterPanel(
+                      filter: state.filter,
+                      onFilterChanged: viewModel.updateFilter,
+                      onToggleExpand: () => viewModel.toggleSidebar(),
+                    ),
                   ),
-                  width: state.isSidebarOpen ? AppSizes.filterPanelWidth : 0,
-                  child: state.isSidebarOpen
-                      ? M3WorkFilterPanel(
-                          filter: state.filter,
-                          onFilterChanged: viewModel.updateFilter,
-                          onToggleExpand: () => viewModel.toggleSidebar(),
-                        )
-                      : null,
-                ),
                 SidebarToggle(
                   isOpen: state.isSidebarOpen,
                   onToggle: () => viewModel.toggleSidebar(),
                   alignRight: false,
                 ),
-                AnimatedContainer(
-                  duration: const Duration(
-                    milliseconds: AppSizes.animationDurationSlow,
-                  ),
-                  width: 4,
-                  color: state.isSidebarOpen
-                      ? colorScheme.outlineVariant
-                      : Colors.transparent,
-                ),
+                // 移除了可能导致深色阴影的分隔线
                 Expanded(
                   child: _buildMainContent(),
                 ),

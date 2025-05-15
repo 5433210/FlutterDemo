@@ -11,9 +11,6 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
   /// 筛选条件变化时的回调
   final ValueChanged<T> onFilterChanged;
 
-  /// 面板宽度
-  final double width;
-
   /// 是否允许折叠面板
   final bool collapsible;
 
@@ -28,7 +25,6 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
     super.key,
     required this.filter,
     required this.onFilterChanged,
-    this.width = AppSizes.filterPanelWidth,
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
@@ -48,35 +44,32 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
     return Material(
       color: colorScheme.surfaceContainerLow,
       elevation: 0,
-      child: SizedBox(
-        width: width,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题栏
-            _buildHeader(context, l10n),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          _buildHeader(context, l10n),
 
-            // 内容区域
-            Expanded(
-              child: CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSizes.m),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 各筛选部分
-                          ...buildFilterSections(context),
-                        ],
-                      ),
+          // 内容区域
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.m),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 各筛选部分
+                        ...buildFilterSections(context),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -158,7 +151,7 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.all(0),
                 ),
-              ),              
+              ),
             ],
           ),
         ],

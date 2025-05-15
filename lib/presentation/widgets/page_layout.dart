@@ -45,21 +45,7 @@ class PageLayout extends StatelessWidget {
               Material(
                 elevation: 0,
                 color: theme.colorScheme.surface,
-                child: SizedBox(
-                  height: toolbarHeight ?? kToolbarHeight,
-                  // 只有当toolbar不是BaseNavigationBar时才添加底部边框
-                  // decoration: isBaseNavigationBar
-                  //     ? null
-                  //     : BoxDecoration(
-                  //         border: Border(
-                  //           bottom: BorderSide(
-                  //             color: theme.colorScheme.outlineVariant,
-                  //             width: 1,
-                  //           ),
-                  //         ),
-                  //       ),
-                  child: toolbar!,
-                ),
+                child: toolbar!,
               ),
 
             // Main content

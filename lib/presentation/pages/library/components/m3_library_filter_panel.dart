@@ -74,10 +74,9 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     l10n = AppLocalizations.of(context);
-
     return Container(
-      width: AppSizes.filterPanelWidth,
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.spacing8),
+      // Remove fixed width to allow panel to be responsive
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
