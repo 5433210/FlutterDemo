@@ -33,6 +33,11 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
     AppLogger.debug(
         'Building M3WorkImportPreview with ${state.images.length} images');
 
+    // Log image paths for debugging
+    if (state.images.isNotEmpty) {
+      AppLogger.debug('First image path: ${state.images.first.path}');
+    }
+
     final images = state.images
         .map((file) => WorkImage(
               id: file.path,
@@ -49,6 +54,9 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
               updateTime: DateTime.now(),
             ))
         .toList();
+
+    // Ensure we have valid images for debugging
+    AppLogger.debug('Mapped ${images.length} WorkImage objects for preview');
 
     // Create a function to handle the "Add Image" button click
     VoidCallback? handleAdd =
@@ -91,13 +99,26 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: FilledButton.tonalIcon(
-                              onPressed:
-                                  handleAdd, // Disabled during processing
-                              icon: const Icon(Icons.add_photo_alternate),
-                              label: isSmallWidth
-                                  ? Text(l10n.import)
-                                  : Text(l10n.workImportDialogAddImages),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                FilledButton.tonalIcon(
+                                  onPressed: handleAdd,
+                                  icon: const Icon(Icons.add_photo_alternate),
+                                  label: isSmallWidth
+                                      ? Text(l10n.import)
+                                      : Text(l10n.workImportDialogAddImages),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  onPressed: () => _handleAddFromGallery(),
+                                  icon: const Icon(Icons.collections),
+                                  label: isSmallWidth
+                                      ? Text(l10n.workImportDialogFromGallery)
+                                      : Text(
+                                          l10n.workImportDialogFromGalleryLong),
+                                ),
+                              ],
                             ),
                           ),
                           Padding(
@@ -181,19 +202,88 @@ class _M3WorkImportPreviewState extends ConsumerState<M3WorkImportPreview> {
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton.tonalIcon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add_photo_alternate),
-            label: Text(l10n.workImportDialogAddImages),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add_photo_alternate),
+                label: Text(l10n.workImportDialogAddImages),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _handleAddFromGallery(),
+                icon: const Icon(Icons.collections),
+                label: Text(l10n.workImportDialogFromGallery),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
+  /// 处理从图库添加图片
+  Future<void> _handleAddFromGallery() async {
+    final viewModel = ref.read(workImportProvider.notifier);
+    AppLogger.debug('M3WorkImportPreview handling addImages from gallery');
+    print('【WorkImportPreview】开始从图库添加图片，对话框context: $context');
+
+    try {
+      // 添加前获取当前图片数量
+      final countBefore = ref.read(workImportProvider).images.length;
+      print('【WorkImportPreview】添加前图片数量: $countBefore');
+
+      // 确保在正确的上下文中调用，并使用非根导航器
+      if (!mounted) {
+        print('【WorkImportPreview】组件已卸载，取消操作');
+        return;
+      }
+
+      // 在调用前记录当前的导航状态
+      final navigator = Navigator.of(context);
+      final canPop = navigator.canPop();
+      print(
+          '【WorkImportPreview】导航器状态：canPop = $canPop, navigatorContext = ${navigator.context}');
+
+      await viewModel.addImagesFromGallery(context);
+
+      // 检查组件是否仍然挂载
+      if (!mounted) {
+        print('【WorkImportPreview】addImagesFromGallery后组件已卸载');
+        return;
+      }
+
+      // 检查导航器状态是否改变
+      final navigatorAfter = Navigator.of(context);
+      final canPopAfter = navigatorAfter.canPop();
+      print(
+          '【WorkImportPreview】addImagesFromGallery后导航器状态：canPop = $canPopAfter');
+
+      // 添加后获取图片数量，用于确认添加成功
+      final countAfter = ref.read(workImportProvider).images.length;
+      AppLogger.debug(
+          'Gallery images added: ${countAfter - countBefore} new images');
+      print('【WorkImportPreview】添加后图片数量: $countAfter');
+
+      // 如果图片数量没变，可能添加失败但未抛出异常
+      if (countAfter == countBefore) {
+        AppLogger.warning('No images added from gallery');
+        print('【WorkImportPreview】未添加任何图片');
+      }
+    } catch (e) {
+      print('【WorkImportPreview】从图库添加图片出错: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('从图库添加图片失败: $e')),
+      );
+    }
+  }
+
+  /// 处理从本地文件系统添加图片
   Future<void> _handleAddImages() async {
     final viewModel = ref.read(workImportProvider.notifier);
-    AppLogger.debug('M3WorkImportPreview handling addImages');
+    AppLogger.debug('M3WorkImportPreview handling addImages from local');
     await viewModel.addImages([]);
   }
 

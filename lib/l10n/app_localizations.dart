@@ -2456,7 +2456,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterReset.
   ///
   /// In en, this message translates to:
-  /// **'Reset Filters'**
+  /// **'Reset All Filters'**
   String get filterReset;
 
   /// No description provided for @filterSearchPlaceholder.
@@ -2630,7 +2630,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterStyleSection.
   ///
   /// In en, this message translates to:
-  /// **'Calligraphy Style'**
+  /// **'Style'**
   String get filterStyleSection;
 
   /// No description provided for @filterTagsAdd.
@@ -2702,7 +2702,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterToolSection.
   ///
   /// In en, this message translates to:
-  /// **'Writing Tool'**
+  /// **'Tool'**
   String get filterToolSection;
 
   /// No description provided for @filterTotalItems.
@@ -4598,7 +4598,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectExportLocation.
   ///
   /// In en, this message translates to:
-  /// **'Select export location'**
+  /// **'Select Export Location'**
   String get selectExportLocation;
 
   /// No description provided for @selectImportFile.
@@ -4964,7 +4964,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeModeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Dark Theme'**
+  /// **'Use dark theme for better night viewing'**
   String get themeModeDescription;
 
   /// No description provided for @themeModeLight.
@@ -5018,7 +5018,7 @@ abstract class AppLocalizations {
   /// No description provided for @ungroupDescription.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to ungroup this group?'**
+  /// **'Ungroup the selected group'**
   String get ungroupDescription;
 
   /// No description provided for @unknownCategory.
@@ -5174,7 +5174,7 @@ abstract class AppLocalizations {
   /// No description provided for @workBrowseDeleteSelected.
   ///
   /// In en, this message translates to:
-  /// **'Delete Selected'**
+  /// **'Delete {count}'**
   String workBrowseDeleteSelected(Object count);
 
   /// No description provided for @workBrowseError.
@@ -5627,6 +5627,18 @@ abstract class AppLocalizations {
   /// **'Import failed: {error}'**
   String workImportDialogError(Object error);
 
+  /// No description provided for @workImportDialogFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'From Gallery'**
+  String get workImportDialogFromGallery;
+
+  /// No description provided for @workImportDialogFromGalleryLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Import images from your device\'s gallery'**
+  String get workImportDialogFromGalleryLong;
+
   /// No description provided for @workImportDialogImport.
   ///
   /// In en, this message translates to:
@@ -5666,7 +5678,7 @@ abstract class AppLocalizations {
   /// No description provided for @works.
   ///
   /// In en, this message translates to:
-  /// **'Work Count'**
+  /// **'Works'**
   String get works;
 
   /// No description provided for @workStyleClerical.

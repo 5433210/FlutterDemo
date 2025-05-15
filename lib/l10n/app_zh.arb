@@ -1115,6 +1115,8 @@
   "workImportDialogDeleteImage": "删除图像",
   "workImportDialogDeleteImageConfirm": "确定要删除此图像吗？",
   "workImportDialogError": "导入失败：{error}",
+  "workImportDialogFromGallery": "从图库",
+  "workImportDialogFromGalleryLong": "从图库中选择图像",
   "workImportDialogImport": "导入",
   "workImportDialogNoImages": "未选择图像",
   "workImportDialogNoImagesHint": "点击添加图像",

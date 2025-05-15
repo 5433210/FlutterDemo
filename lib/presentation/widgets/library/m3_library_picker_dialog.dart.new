@@ -85,6 +85,19 @@ class _LibraryPickerDialogViewState
   List<LibraryItem> _selectedItems = [];
 
   @override
+  void initState() {
+    super.initState();
+    // 组件初始化时不直接清空选择，而是使用Future延迟执行
+    // 这样可以避免在构建阶段修改状态
+    Future.microtask(() {
+      if (mounted) {
+        ref.read(libraryManagementProvider.notifier).clearSelection();
+        print('【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态');
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
@@ -170,19 +183,6 @@ class _LibraryPickerDialogViewState
         ),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // 组件初始化时不直接清空选择，而是使用Future延迟执行
-    // 这样可以避免在构建阶段修改状态
-    Future.microtask(() {
-      if (mounted) {
-        ref.read(libraryManagementProvider.notifier).clearSelection();
-        print('【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态');
-      }
-    });
   }
 }
 

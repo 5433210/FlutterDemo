@@ -2867,6 +2867,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get workImportDialogFromGallery => '从图库';
+
+  @override
+  String get workImportDialogFromGalleryLong => '从图库中选择图像';
+
+  @override
   String get workImportDialogImport => '导入';
 
   @override

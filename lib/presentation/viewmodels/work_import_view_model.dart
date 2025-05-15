@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -9,6 +10,8 @@ import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../infrastructure/image/image_processor.dart';
+import '../../infrastructure/logging/logger.dart';
+import '../widgets/library/m3_library_picker_dialog.dart';
 import 'states/work_import_state.dart';
 
 /// 作品导入视图模型
@@ -26,7 +29,7 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         !state.isProcessing;
   }
 
-  /// 添加图片
+  /// 添加图片（从本地文件系统或传入的文件列表）
   Future<void> addImages([List<File>? files]) async {
     try {
       state = state.copyWith(error: null);
@@ -64,6 +67,73 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         isProcessing: false,
         error: '添加图片失败: $e',
       );
+    }
+  }
+
+  /// 从图库中选择并添加图片（确保不会导致父对话框关闭）
+  Future<void> addImagesFromGallery(BuildContext context) async {
+    try {
+      state = state.copyWith(error: null);
+      print('【WorkImportViewModel】准备从图库添加图片，传入context: $context');
+
+      // 使用图库选择对话框选择图片，确保使用rootNavigator=false，避免关闭父对话框
+      // 注意这里的context是WorkImportDialog的context
+      print(
+          '【WorkImportViewModel】将显示图库选择对话框，当前状态: ${state.isProcessing ? "处理中" : "空闲"}');
+      final selectedItems = await M3LibraryPickerDialog.showMulti(
+        context,
+      );
+
+      print(
+          '【WorkImportViewModel】图库选择对话框关闭，选择结果: ${selectedItems?.length ?? 0}项');
+      AppLogger.debug('选择图库项', data: {'count': selectedItems?.length ?? 0});
+
+      // 如果没有选择任何项目，则直接返回
+      if (selectedItems == null || selectedItems.isEmpty) {
+        AppLogger.debug('没有选择图库项，返回');
+        print('【WorkImportViewModel】没有选择图库项，操作取消');
+        return;
+      }
+
+      state = state.copyWith(
+        isProcessing: true,
+        error: null,
+      );
+      print('【WorkImportViewModel】已设置isProcessing=true');
+
+      // 将选择的图库项目转换为文件
+      print('【WorkImportViewModel】处理选中的图库项...');
+      final selectedFiles = selectedItems
+          .map((item) => File(item.path))
+          .where((file) => file.existsSync())
+          .toList();
+
+      if (selectedFiles.isEmpty) {
+        print('【WorkImportViewModel】没有找到有效的图片文件');
+        throw Exception('没有找到有效的图片文件');
+      }
+
+      // 添加文件并确保强制更新状态
+      final updatedImages = [...state.images, ...selectedFiles];
+
+      print('【WorkImportViewModel】准备更新状态: ${selectedFiles.length}个新图片');
+      AppLogger.debug('从图库添加图片', data: {
+        'selectedCount': selectedFiles.length,
+        'totalCount': updatedImages.length
+      });
+
+      // 更新状态，设置选中索引为第一张新图片
+      state = state.copyWith(
+        images: updatedImages,
+        isProcessing: false,
+        selectedImageIndex: state.images.length,
+      );
+    } catch (e) {
+      state = state.copyWith(
+        isProcessing: false,
+        error: '从图库添加图片失败: $e',
+      );
+      rethrow;
     }
   }
 

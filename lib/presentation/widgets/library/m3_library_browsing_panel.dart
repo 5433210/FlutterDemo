@@ -142,7 +142,12 @@ class _M3LibraryBrowsingPanelState
     _searchController = TextEditingController();
     // 组件创建时加载初始数据
     Future.microtask(() {
-      ref.read(libraryManagementProvider.notifier).loadData();
+      if (mounted) {
+        // 每次打开面板时，先清空选择状态，再加载数据
+        ref.read(libraryManagementProvider.notifier).clearSelection();
+        print('【M3LibraryBrowsingPanel】initState - 已重置所有选择状态');
+        ref.read(libraryManagementProvider.notifier).loadData();
+      }
     });
   }
 
@@ -167,7 +172,9 @@ class _M3LibraryBrowsingPanelState
         children: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop();
+              print('【LibraryBrowsingPanel】点击取消按钮');
+              // 使用普通的Navigator.pop，而不是指定rootNavigator
+              Navigator.pop(context);
             },
             child: Text(l10n.cancel),
           ),
@@ -176,24 +183,34 @@ class _M3LibraryBrowsingPanelState
             onPressed: state.selectedItems.isEmpty
                 ? null
                 : () {
+                    print('【LibraryBrowsingPanel】点击确认按钮');
                     final selectedItems = state.items
                         .where((item) => state.selectedItems.contains(item.id))
                         .toList();
 
-                    if (widget.enableMultiSelect &&
-                        widget.onItemsSelected != null) {
-                      widget.onItemsSelected!(selectedItems);
-                    } else if (!widget.enableMultiSelect &&
-                        widget.onItemSelected != null &&
-                        selectedItems.isNotEmpty) {
-                      widget.onItemSelected!(selectedItems.first);
+                    if (selectedItems.isEmpty) {
+                      return;
                     }
 
-                    Navigator.of(context).pop(selectedItems.isNotEmpty
-                        ? (widget.enableMultiSelect
-                            ? selectedItems
-                            : selectedItems.first)
-                        : null);
+                    print(
+                        '【LibraryBrowsingPanel】已选择${selectedItems.length}个项目');
+
+                    // 先调用回调，然后再关闭对话框
+                    if (widget.enableMultiSelect &&
+                        widget.onItemsSelected != null) {
+                      print('【LibraryBrowsingPanel】调用onItemsSelected回调');
+                      // 调用回调前不关闭对话框，让回调处理关闭
+                      widget.onItemsSelected!(selectedItems);
+                    } else if (!widget.enableMultiSelect &&
+                        widget.onItemSelected != null) {
+                      print('【LibraryBrowsingPanel】调用onItemSelected回调');
+                      // 调用回调前不关闭对话框，让回调处理关闭
+                      widget.onItemSelected!(selectedItems.first);
+                    } else {
+                      // 如果没有回调，才由这里关闭对话框
+                      print('【LibraryBrowsingPanel】没有回调函数，直接关闭对话框');
+                      Navigator.pop(context);
+                    }
                   },
             child: Text(l10n.confirm),
           ),
@@ -292,14 +309,17 @@ class _M3LibraryBrowsingPanelState
         notifier.clearSelection();
         notifier.selectItem(itemId);
         if (widget.onItemSelected != null) {
+          print('【LibraryBrowsingPanel】单击项目，调用onItemSelected回调');
           widget.onItemSelected!(selectedItem);
         }
       }
     } else if (state.isBatchMode || widget.enableMultiSelect) {
       // 批量选择模式 - 切换选择状态
+      print('【LibraryBrowsingPanel】批量选择模式 - 切换选择状态');
       notifier.toggleItemSelection(itemId);
     } else if (widget.onItemSelected != null) {
       // 有选择回调的单选模式
+      print('【LibraryBrowsingPanel】有选择回调的单选模式');
       notifier.selectItem(itemId);
       widget.onItemSelected!(selectedItem);
     } else {

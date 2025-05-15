@@ -1226,7 +1226,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterPresetSection => 'Presets';
 
   @override
-  String get filterReset => 'Reset Filters';
+  String get filterReset => 'Reset All Filters';
 
   @override
   String get filterSearchPlaceholder => 'Search...';
@@ -1313,7 +1313,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterStyleSeal => 'Seal Script';
 
   @override
-  String get filterStyleSection => 'Calligraphy Style';
+  String get filterStyleSection => 'Style';
 
   @override
   String get filterTagsAdd => 'Add Tag';
@@ -1349,7 +1349,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterToolOther => 'Other';
 
   @override
-  String get filterToolSection => 'Writing Tool';
+  String get filterToolSection => 'Tool';
 
   @override
   String filterTotalItems(Object count) {
@@ -2337,7 +2337,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectExportLocation => 'Select export location';
+  String get selectExportLocation => 'Select Export Location';
 
   @override
   String get selectImportFile => 'Select Backup File';
@@ -2520,7 +2520,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeDark => 'Dark';
 
   @override
-  String get themeModeDescription => 'Dark Theme';
+  String get themeModeDescription => 'Use dark theme for better night viewing';
 
   @override
   String get themeModeLight => 'Light';
@@ -2549,7 +2549,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ungroupConfirm => 'Confirm Ungroup';
 
   @override
-  String get ungroupDescription => 'Are you sure you want to ungroup this group?';
+  String get ungroupDescription => 'Ungroup the selected group';
 
   @override
   String get unknownCategory => 'Unknown Category';
@@ -2630,7 +2630,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workBrowseDeleteSelected(Object count) {
-    return 'Delete Selected';
+    return 'Delete $count';
   }
 
   @override
@@ -2867,6 +2867,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get workImportDialogFromGallery => 'From Gallery';
+
+  @override
+  String get workImportDialogFromGalleryLong => 'Import images from your device\'s gallery';
+
+  @override
   String get workImportDialogImport => 'Import';
 
   @override
@@ -2885,7 +2891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogTitle => 'Import Work';
 
   @override
-  String get works => 'Work Count';
+  String get works => 'Works';
 
   @override
   String get workStyleClerical => 'Clerical Script';
