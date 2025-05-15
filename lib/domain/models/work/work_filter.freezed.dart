@@ -59,6 +59,9 @@ mixin _$WorkFilter {
   /// 分页偏移量
   int? get offset => throw _privateConstructorUsedError;
 
+  /// 是否只显示收藏
+  bool get isFavoriteOnly => throw _privateConstructorUsedError;
+
   /// Serializes this WorkFilter to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -93,7 +96,8 @@ abstract class $WorkFilterCopyWith<$Res> {
       DateRangePreset datePreset,
       SortOption sortOption,
       int? limit,
-      int? offset});
+      int? offset,
+      bool isFavoriteOnly});
 
   $SortOptionCopyWith<$Res> get sortOption;
 }
@@ -124,6 +128,7 @@ class _$WorkFilterCopyWithImpl<$Res, $Val extends WorkFilter>
     Object? sortOption = null,
     Object? limit = freezed,
     Object? offset = freezed,
+    Object? isFavoriteOnly = null,
   }) {
     return _then(_value.copyWith(
       keyword: freezed == keyword
@@ -170,6 +175,10 @@ class _$WorkFilterCopyWithImpl<$Res, $Val extends WorkFilter>
           ? _value.offset
           : offset // ignore: cast_nullable_to_non_nullable
               as int?,
+      isFavoriteOnly: null == isFavoriteOnly
+          ? _value.isFavoriteOnly
+          : isFavoriteOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 
@@ -210,7 +219,8 @@ abstract class _$$WorkFilterImplCopyWith<$Res>
       DateRangePreset datePreset,
       SortOption sortOption,
       int? limit,
-      int? offset});
+      int? offset,
+      bool isFavoriteOnly});
 
   @override
   $SortOptionCopyWith<$Res> get sortOption;
@@ -240,6 +250,7 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
     Object? sortOption = null,
     Object? limit = freezed,
     Object? offset = freezed,
+    Object? isFavoriteOnly = null,
   }) {
     return _then(_$WorkFilterImpl(
       keyword: freezed == keyword
@@ -286,6 +297,10 @@ class __$$WorkFilterImplCopyWithImpl<$Res>
           ? _value.offset
           : offset // ignore: cast_nullable_to_non_nullable
               as int?,
+      isFavoriteOnly: null == isFavoriteOnly
+          ? _value.isFavoriteOnly
+          : isFavoriteOnly // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -311,7 +326,8 @@ class _$WorkFilterImpl extends _WorkFilter {
       this.datePreset = DateRangePreset.all,
       this.sortOption = const SortOption(),
       this.limit,
-      this.offset})
+      this.offset,
+      this.isFavoriteOnly = false})
       : _tags = tags,
         super._();
 
@@ -377,9 +393,14 @@ class _$WorkFilterImpl extends _WorkFilter {
   @override
   final int? offset;
 
+  /// 是否只显示收藏
+  @override
+  @JsonKey()
+  final bool isFavoriteOnly;
+
   @override
   String toString() {
-    return 'WorkFilter(keyword: $keyword, style: $style, tool: $tool, tags: $tags, dateRange: $dateRange, createTimeRange: $createTimeRange, updateTimeRange: $updateTimeRange, datePreset: $datePreset, sortOption: $sortOption, limit: $limit, offset: $offset)';
+    return 'WorkFilter(keyword: $keyword, style: $style, tool: $tool, tags: $tags, dateRange: $dateRange, createTimeRange: $createTimeRange, updateTimeRange: $updateTimeRange, datePreset: $datePreset, sortOption: $sortOption, limit: $limit, offset: $offset, isFavoriteOnly: $isFavoriteOnly)';
   }
 
   @override
@@ -402,7 +423,9 @@ class _$WorkFilterImpl extends _WorkFilter {
             (identical(other.sortOption, sortOption) ||
                 other.sortOption == sortOption) &&
             (identical(other.limit, limit) || other.limit == limit) &&
-            (identical(other.offset, offset) || other.offset == offset));
+            (identical(other.offset, offset) || other.offset == offset) &&
+            (identical(other.isFavoriteOnly, isFavoriteOnly) ||
+                other.isFavoriteOnly == isFavoriteOnly));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -419,7 +442,8 @@ class _$WorkFilterImpl extends _WorkFilter {
       datePreset,
       sortOption,
       limit,
-      offset);
+      offset,
+      isFavoriteOnly);
 
   /// Create a copy of WorkFilter
   /// with the given fields replaced by the non-null parameter values.
@@ -456,7 +480,8 @@ abstract class _WorkFilter extends WorkFilter {
       final DateRangePreset datePreset,
       final SortOption sortOption,
       final int? limit,
-      final int? offset}) = _$WorkFilterImpl;
+      final int? offset,
+      final bool isFavoriteOnly}) = _$WorkFilterImpl;
   const _WorkFilter._() : super._();
 
   factory _WorkFilter.fromJson(Map<String, dynamic> json) =
@@ -511,6 +536,10 @@ abstract class _WorkFilter extends WorkFilter {
   /// 分页偏移量
   @override
   int? get offset;
+
+  /// 是否只显示收藏
+  @override
+  bool get isFavoriteOnly;
 
   /// Create a copy of WorkFilter
   /// with the given fields replaced by the non-null parameter values.

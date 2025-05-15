@@ -14,12 +14,16 @@ class M3WorkListItem extends ConsumerWidget {
   final bool isSelectionMode;
   final VoidCallback onTap;
 
+  /// 切换收藏状态的回调
+  final VoidCallback? onToggleFavorite;
+
   const M3WorkListItem({
     super.key,
     required this.work,
     required this.isSelected,
     required this.isSelectionMode,
     required this.onTap,
+    this.onToggleFavorite,
   });
 
   @override
@@ -106,6 +110,26 @@ class M3WorkListItem extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+
+                          // 收藏按钮
+                          if (!isSelectionMode && onToggleFavorite != null)
+                            IconButton(
+                              icon: Icon(
+                                work.isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: work.isFavorite
+                                    ? colorScheme.error
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                              iconSize: AppSizes.iconMedium,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                              padding: const EdgeInsets.all(AppSizes.xs),
+                              onPressed: onToggleFavorite,
+                            ),
                           if (work.imageCount != null && work.imageCount! > 0)
                             _buildImageCount(context, work.imageCount!),
                         ],

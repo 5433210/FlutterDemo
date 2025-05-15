@@ -183,7 +183,18 @@ class WorkRepositoryImpl implements WorkRepository {
         operator: 'contains',
         value: filter.tags,
       ));
-    } // 搜索关键字
+    }
+
+    // 收藏过滤
+    if (filter.isFavoriteOnly) {
+      conditions.add(DatabaseQueryCondition(
+        field: 'isFavorite',
+        operator: '=',
+        value: 1,
+      ));
+    }
+
+    // 搜索关键字
     if (filter.keyword?.isNotEmpty == true) {
       groups.add(
         DatabaseQueryGroup.or([
@@ -307,6 +318,7 @@ class WorkRepositoryImpl implements WorkRepository {
       'createTime': data['createTime'],
       'updateTime': data['updateTime'],
       'lastImageUpdateTime': data['lastImageUpdateTime'],
+      'isFavorite': data['isFavorite'] == 1,
     };
   }
 
@@ -342,7 +354,8 @@ class WorkRepositoryImpl implements WorkRepository {
       'status': work.status.name,
       'firstImageId': work.firstImageId,
       'tags': work.tags.join(','),
-      'imageCount': work.imageCount
+      'imageCount': work.imageCount,
+      'isFavorite': work.isFavorite ? 1 : 0,
     };
   }
 }

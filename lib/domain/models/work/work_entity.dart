@@ -16,6 +16,15 @@ String _workStyleToJson(WorkStyle style) => style.value;
 WorkTool _workToolFromJson(dynamic value) => WorkTool.fromValue(value);
 String _workToolToJson(WorkTool tool) => tool.value;
 
+bool _isFavoriteFromJson(dynamic value) {
+  if (value == null) return false;
+  if (value is bool) return value;
+  if (value is int) return value == 1;
+  return false;
+}
+
+int _isFavoriteToJson(bool value) => value ? 1 : 0;
+
 /// 作品实体
 @freezed
 class WorkEntity with _$WorkEntity {
@@ -51,6 +60,10 @@ class WorkEntity with _$WorkEntity {
     /// 修改时间
 
     required DateTime updateTime,
+
+    /// 是否收藏
+    @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+    @Default(false) bool isFavorite,
 
     /// 图片最后更新时间
 
@@ -108,6 +121,11 @@ class WorkEntity with _$WorkEntity {
   /// 移除标签
   WorkEntity removeTag(String tag) {
     return copyWith(tags: tags.where((t) => t != tag).toList());
+  }
+
+  /// 切换收藏状态
+  WorkEntity toggleFavorite() {
+    return copyWith(isFavorite: !isFavorite);
   }
 
   /// 更新首图

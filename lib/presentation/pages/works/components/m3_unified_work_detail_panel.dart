@@ -21,10 +21,14 @@ class M3UnifiedWorkDetailPanel extends ConsumerStatefulWidget {
   /// Whether the panel is in editing mode
   final bool isEditing;
 
+  /// Function to toggle favorite status
+  final VoidCallback? onToggleFavorite;
+
   const M3UnifiedWorkDetailPanel({
     super.key,
     required this.work,
     required this.isEditing,
+    this.onToggleFavorite,
   });
 
   @override
@@ -142,9 +146,35 @@ class _M3UnifiedWorkDetailPanelState
   }
 
   Widget _buildBasicInfoTab(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return ListView(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       children: [
+        // 收藏状态行
+        if (!widget.isEditing)
+          Row(
+            children: [
+              Text(
+                '收藏状态',
+                style: theme.textTheme.titleSmall,
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(
+                  widget.work.isFavorite
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                  color: widget.work.isFavorite
+                      ? colorScheme.error
+                      : colorScheme.onSurfaceVariant,
+                ),
+                onPressed: widget.onToggleFavorite,
+              ),
+            ],
+          ),
+
         // Use M3WorkForm for both view and edit modes
         M3WorkForm(
           title: AppLocalizations.of(context).workDetailBasicInfo,

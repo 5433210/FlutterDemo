@@ -185,6 +185,42 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     );
   }
 
+  // 切换收藏状态
+  Future<void> toggleFavorite(String workId) async {
+    if (state.isLoading) return;
+
+    try {
+      AppLogger.debug('切换收藏状态', tag: 'WorkBrowseViewModel', data: {
+        'workId': workId,
+      });
+
+      // 调用服务切换收藏状态
+      final updatedWork = await _workService.toggleFavorite(workId);
+
+      // 更新本地状态
+      final updatedWorks = state.works.map((work) {
+        if (work.id == workId) {
+          return updatedWork;
+        }
+        return work;
+      }).toList();
+
+      state = state.copyWith(works: updatedWorks);
+
+      // 如果启用了只显示收藏过滤，且取消了收藏，则需要刷新列表
+      if (state.filter.isFavoriteOnly && !updatedWork.isFavorite) {
+        await loadWorks(forceRefresh: true);
+      }
+    } catch (e, stack) {
+      AppLogger.error('切换收藏状态失败',
+          tag: 'WorkBrowseViewModel', error: e, stackTrace: stack);
+
+      state = state.copyWith(
+        error: e.toString(),
+      );
+    }
+  }
+
   void toggleSelection(String workId) {
     final newSelection = Set<String>.from(state.selectedWorks);
     if (newSelection.contains(workId)) {

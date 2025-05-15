@@ -5,10 +5,10 @@ import '../../../../l10n/app_localizations.dart';
 /// 通用的收藏筛选部分组件
 class M3FilterFavoriteSection extends StatelessWidget {
   /// 是否只显示收藏项
-  final bool? isFavoriteOnly;
+  final bool isFavoriteOnly;
 
   /// 收藏状态变化时的回调
-  final ValueChanged<bool?> onFavoriteChanged;
+  final ValueChanged<bool> onFavoriteChanged;
 
   /// 构造函数
   const M3FilterFavoriteSection({
@@ -25,8 +25,8 @@ class M3FilterFavoriteSection extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Checkbox(
-          value: isFavoriteOnly ?? false,
-          onChanged: onFavoriteChanged,
+          value: isFavoriteOnly,
+          onChanged: (value) => onFavoriteChanged(value ?? false),
         ),
         Flexible(
           child: Text(

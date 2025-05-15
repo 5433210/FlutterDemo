@@ -49,6 +49,10 @@ mixin _$WorkEntity {
   /// 修改时间
   DateTime get updateTime => throw _privateConstructorUsedError;
 
+  /// 是否收藏
+  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+  bool get isFavorite => throw _privateConstructorUsedError;
+
   /// 图片最后更新时间
   DateTime? get lastImageUpdateTime => throw _privateConstructorUsedError;
 
@@ -99,6 +103,8 @@ abstract class $WorkEntityCopyWith<$Res> {
       DateTime creationDate,
       DateTime createTime,
       DateTime updateTime,
+      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+      bool isFavorite,
       DateTime? lastImageUpdateTime,
       WorkStatus status,
       String? firstImageId,
@@ -132,6 +138,7 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
     Object? creationDate = null,
     Object? createTime = null,
     Object? updateTime = null,
+    Object? isFavorite = null,
     Object? lastImageUpdateTime = freezed,
     Object? status = null,
     Object? firstImageId = freezed,
@@ -177,6 +184,10 @@ class _$WorkEntityCopyWithImpl<$Res, $Val extends WorkEntity>
           ? _value.updateTime
           : updateTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
       lastImageUpdateTime: freezed == lastImageUpdateTime
           ? _value.lastImageUpdateTime
           : lastImageUpdateTime // ignore: cast_nullable_to_non_nullable
@@ -229,6 +240,8 @@ abstract class _$$WorkEntityImplCopyWith<$Res>
       DateTime creationDate,
       DateTime createTime,
       DateTime updateTime,
+      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+      bool isFavorite,
       DateTime? lastImageUpdateTime,
       WorkStatus status,
       String? firstImageId,
@@ -260,6 +273,7 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
     Object? creationDate = null,
     Object? createTime = null,
     Object? updateTime = null,
+    Object? isFavorite = null,
     Object? lastImageUpdateTime = freezed,
     Object? status = null,
     Object? firstImageId = freezed,
@@ -305,6 +319,10 @@ class __$$WorkEntityImplCopyWithImpl<$Res>
           ? _value.updateTime
           : updateTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
       lastImageUpdateTime: freezed == lastImageUpdateTime
           ? _value.lastImageUpdateTime
           : lastImageUpdateTime // ignore: cast_nullable_to_non_nullable
@@ -352,6 +370,8 @@ class _$WorkEntityImpl extends _WorkEntity {
       required this.creationDate,
       required this.createTime,
       required this.updateTime,
+      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+      this.isFavorite = false,
       this.lastImageUpdateTime,
       this.status = WorkStatus.draft,
       this.firstImageId,
@@ -404,6 +424,11 @@ class _$WorkEntityImpl extends _WorkEntity {
   /// 修改时间
   @override
   final DateTime updateTime;
+
+  /// 是否收藏
+  @override
+  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+  final bool isFavorite;
 
   /// 图片最后更新时间
   @override
@@ -460,7 +485,7 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   @override
   String toString() {
-    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, creationDate: $creationDate, createTime: $createTime, updateTime: $updateTime, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
+    return 'WorkEntity(id: $id, title: $title, author: $author, remark: $remark, style: $style, tool: $tool, creationDate: $creationDate, createTime: $createTime, updateTime: $updateTime, isFavorite: $isFavorite, lastImageUpdateTime: $lastImageUpdateTime, status: $status, firstImageId: $firstImageId, images: $images, collectedChars: $collectedChars, tags: $tags, imageCount: $imageCount)';
   }
 
   @override
@@ -480,6 +505,8 @@ class _$WorkEntityImpl extends _WorkEntity {
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
                 other.updateTime == updateTime) &&
+            (identical(other.isFavorite, isFavorite) ||
+                other.isFavorite == isFavorite) &&
             (identical(other.lastImageUpdateTime, lastImageUpdateTime) ||
                 other.lastImageUpdateTime == lastImageUpdateTime) &&
             (identical(other.status, status) || other.status == status) &&
@@ -506,6 +533,7 @@ class _$WorkEntityImpl extends _WorkEntity {
       creationDate,
       createTime,
       updateTime,
+      isFavorite,
       lastImageUpdateTime,
       status,
       firstImageId,
@@ -543,6 +571,8 @@ abstract class _WorkEntity extends WorkEntity {
       required final DateTime creationDate,
       required final DateTime createTime,
       required final DateTime updateTime,
+      @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+      final bool isFavorite,
       final DateTime? lastImageUpdateTime,
       final WorkStatus status,
       final String? firstImageId,
@@ -592,6 +622,11 @@ abstract class _WorkEntity extends WorkEntity {
   /// 修改时间
   @override
   DateTime get updateTime;
+
+  /// 是否收藏
+  @override
+  @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
+  bool get isFavorite;
 
   /// 图片最后更新时间
   @override

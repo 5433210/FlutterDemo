@@ -194,6 +194,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
             child: M3UnifiedWorkDetailPanel(
               work: work,
               isEditing: false,
+              onToggleFavorite: () =>
+                  ref.read(workDetailProvider.notifier).toggleFavorite(),
             ),
           ),
       ],

@@ -231,6 +231,27 @@ class WorkService with WorkServiceErrorHandler {
     );
   }
 
+  /// 切换作品收藏状态
+  Future<WorkEntity> toggleFavorite(String workId) async {
+    return handleOperation(
+      'toggleFavorite',
+      () async {
+        // 获取作品
+        final work = await getWork(workId);
+        if (work == null) {
+          throw Exception('作品不存在: $workId');
+        }
+
+        // 切换收藏状态
+        final updatedWork = work.toggleFavorite();
+
+        // 保存更改
+        return await _repository.save(updatedWork);
+      },
+      data: {'workId': workId},
+    );
+  }
+
   /// 更新作品实体
   Future<WorkEntity> updateWorkEntity(WorkEntity work) async {
     return handleOperation(

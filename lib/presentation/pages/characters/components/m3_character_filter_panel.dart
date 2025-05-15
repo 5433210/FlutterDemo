@@ -164,7 +164,7 @@ class _M3CharacterFilterPanelImpl extends M3FilterPanelBase<CharacterFilter> {
       buildSectionCard(
         context,
         M3FilterFavoriteSection(
-          isFavoriteOnly: filter.isFavorite,
+          isFavoriteOnly: filter.isFavorite ?? false,
           onFavoriteChanged: (value) {
             final newFilter = filter.copyWith(isFavorite: value);
             onFilterChanged(newFilter);

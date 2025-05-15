@@ -13,12 +13,16 @@ class M3WorkGridItem extends ConsumerWidget {
   final bool isSelectionMode;
   final VoidCallback onTap;
 
+  /// 切换收藏状态的回调
+  final VoidCallback? onToggleFavorite;
+
   const M3WorkGridItem({
     super.key,
     required this.work,
     required this.isSelected,
     required this.isSelectionMode,
     required this.onTap,
+    this.onToggleFavorite,
   });
 
   @override
@@ -53,6 +57,36 @@ class M3WorkGridItem extends ConsumerWidget {
                     alignment: Alignment.center,
                     child: _buildThumbnail(context, ref),
                   ),
+                  // 收藏按钮
+                  if (!isSelectionMode && onToggleFavorite != null)
+                    Positioned(
+                      top: AppSizes.s,
+                      right: AppSizes.s,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest
+                              .withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            work.isFavorite
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: work.isFavorite
+                                ? colorScheme.error
+                                : colorScheme.onSurfaceVariant,
+                          ),
+                          iconSize: AppSizes.iconMedium,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                          padding: const EdgeInsets.all(AppSizes.xs),
+                          onPressed: onToggleFavorite,
+                        ),
+                      ),
+                    ),
                   // 选择指示器
                   if (isSelectionMode)
                     Positioned(
@@ -63,7 +97,7 @@ class M3WorkGridItem extends ConsumerWidget {
                           color: isSelected
                               ? colorScheme.primaryContainer
                               : colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.7),
+                                  .withOpacity(0.7),
                           shape: BoxShape.circle,
                         ),
                         child: Padding(

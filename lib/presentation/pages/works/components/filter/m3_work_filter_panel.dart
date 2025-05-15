@@ -9,6 +9,7 @@ import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../widgets/filter/m3_filter_panel_base.dart';
 import '../../../../widgets/filter/sections/m3_filter_date_range_section.dart';
+import '../../../../widgets/filter/sections/m3_filter_favorite_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_style_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_tool_section.dart';
@@ -172,6 +173,18 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
               );
               onFilterChanged(newFilter);
             }
+          },
+        ),
+      ),
+      
+      // 收藏部分
+      buildSectionCard(
+        context,
+        M3FilterFavoriteSection(
+          isFavoriteOnly: filter.isFavoriteOnly,
+          onFavoriteChanged: (value) {
+            final newFilter = filter.copyWith(isFavoriteOnly: value);
+            onFilterChanged(newFilter);
           },
         ),
       ),

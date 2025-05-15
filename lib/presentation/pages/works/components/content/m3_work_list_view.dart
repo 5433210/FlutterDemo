@@ -11,6 +11,9 @@ class M3WorkListView extends StatelessWidget {
   final void Function(String workId, bool selected) onSelectionChanged;
   final Function(String)? onItemTap;
 
+  /// 切换收藏状态的回调
+  final Function(String)? onToggleFavorite;
+
   const M3WorkListView({
     super.key,
     required this.works,
@@ -18,6 +21,7 @@ class M3WorkListView extends StatelessWidget {
     required this.selectedWorks,
     required this.onSelectionChanged,
     this.onItemTap,
+    this.onToggleFavorite,
   });
 
   @override
@@ -35,6 +39,9 @@ class M3WorkListView extends StatelessWidget {
           onTap: () => batchMode
               ? onSelectionChanged(work.id, !selectedWorks.contains(work.id))
               : onItemTap?.call(work.id),
+          onToggleFavorite: onToggleFavorite != null
+              ? () => onToggleFavorite!.call(work.id)
+              : null,
         );
       },
     );

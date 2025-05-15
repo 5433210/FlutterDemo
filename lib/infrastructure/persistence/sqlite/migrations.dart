@@ -346,4 +346,9 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_library_items_fileName ON library_items(fileName);
   CREATE INDEX IF NOT EXISTS idx_library_items_type ON library_items(type);
   ''',
+
+  /// 版本 15: 为works表添加收藏字段
+  '''
+  ALTER TABLE works ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
+  ''',
 ];

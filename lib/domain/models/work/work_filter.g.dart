@@ -25,6 +25,7 @@ _$WorkFilterImpl _$$WorkFilterImplFromJson(Map<String, dynamic> json) =>
           : SortOption.fromJson(json['sortOption'] as Map<String, dynamic>),
       limit: (json['limit'] as num?)?.toInt(),
       offset: (json['offset'] as num?)?.toInt(),
+      isFavoriteOnly: json['isFavoriteOnly'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$WorkFilterImplToJson(_$WorkFilterImpl instance) =>
@@ -40,4 +41,5 @@ Map<String, dynamic> _$$WorkFilterImplToJson(_$WorkFilterImpl instance) =>
       'sortOption': instance.sortOption,
       'limit': instance.limit,
       'offset': instance.offset,
+      'isFavoriteOnly': instance.isFavoriteOnly,
     };

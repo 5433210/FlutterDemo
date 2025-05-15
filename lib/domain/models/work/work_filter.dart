@@ -97,6 +97,9 @@ class WorkFilter with _$WorkFilter {
 
     /// 分页偏移量
     int? offset,
+
+    /// 是否只显示收藏
+    @Default(false) bool isFavoriteOnly,
   }) = _WorkFilter;
 
   factory WorkFilter.fromJson(Map<String, dynamic> json) =>
@@ -114,7 +117,8 @@ class WorkFilter with _$WorkFilter {
       createTimeRange == null &&
       updateTimeRange == null &&
       datePreset == DateRangePreset.all &&
-      sortOption.isDefault;
+      sortOption.isDefault &&
+      isFavoriteOnly == false;
 
   /// 添加标签
   WorkFilter addTag(String tag) {

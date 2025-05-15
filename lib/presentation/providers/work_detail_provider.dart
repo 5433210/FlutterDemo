@@ -171,6 +171,38 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     );
   }
 
+  /// 切换收藏状态
+  Future<void> toggleFavorite() async {
+    if (state.work == null) return;
+
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+
+      final workId = state.work!.id;
+
+      // 调用服务切换收藏状态
+      final updatedWork = await _workService.toggleFavorite(workId);
+
+      // 更新状态
+      state = state.copyWith(
+        work: updatedWork,
+        editingWork: state.isEditing ? updatedWork : state.editingWork,
+        isLoading: false,
+      );
+
+      AppLogger.debug('收藏状态已切换', tag: 'WorkDetailProvider', data: {
+        'workId': workId,
+        'isFavorite': updatedWork.isFavorite,
+      });
+    } catch (e) {
+      AppLogger.error('切换收藏状态失败', tag: 'WorkDetailProvider', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        error: '操作失败: $e',
+      );
+    }
+  }
+
   /// 尝试恢复编辑状态
   Future<void> tryRestoreEditState(String workId) async {
     try {

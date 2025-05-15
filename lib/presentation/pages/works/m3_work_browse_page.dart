@@ -245,6 +245,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                         .read(workBrowseProvider.notifier)
                         .toggleSelection(workId),
                     onItemTap: (workId) => _handleWorkSelected(context, workId),
+                    onToggleFavorite: (workId) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleFavorite(workId),
                   )
                 : M3WorkListView(
                     works: state.works,
@@ -254,6 +257,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                         .read(workBrowseProvider.notifier)
                         .toggleSelection(workId),
                     onItemTap: (workId) => _handleWorkSelected(context, workId),
+                    onToggleFavorite: (workId) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleFavorite(workId),
                   );
   }
 

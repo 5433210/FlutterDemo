@@ -11,6 +11,9 @@ class M3WorkGridView extends StatelessWidget {
   final Function(String, bool) onSelectionChanged;
   final Function(String)? onItemTap;
 
+  /// 切换收藏状态的回调
+  final Function(String)? onToggleFavorite;
+
   const M3WorkGridView({
     super.key,
     required this.works,
@@ -18,6 +21,7 @@ class M3WorkGridView extends StatelessWidget {
     required this.selectedWorks,
     required this.onSelectionChanged,
     this.onItemTap,
+    this.onToggleFavorite,
   });
 
   @override
@@ -50,6 +54,9 @@ class M3WorkGridView extends StatelessWidget {
                   ? onSelectionChanged(
                       work.id, !selectedWorks.contains(work.id))
                   : onItemTap?.call(work.id),
+              onToggleFavorite: onToggleFavorite != null
+                  ? () => onToggleFavorite!.call(work.id)
+                  : null,
             );
           },
         );
