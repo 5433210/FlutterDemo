@@ -68,18 +68,6 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
                         children: [
                           // 各筛选部分
                           ...buildFilterSections(context),
-
-                          const SizedBox(height: AppSizes.m),
-
-                          // 重置按钮
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.refresh),
-                              label: Text(l10n.filterReset),
-                              onPressed: resetFilters,
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -158,16 +146,21 @@ abstract class M3FilterPanelBase<T> extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (collapsible)
-            Tooltip(
-              message: l10n.filterCollapse,
-              child: IconButton(
-                onPressed: onToggleExpand,
-                icon: const Icon(Icons.chevron_left),
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.all(0),
-              ),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 重置按钮
+              Tooltip(
+                message: l10n.filterReset,
+                child: IconButton(
+                  onPressed: resetFilters,
+                  icon: const Icon(Icons.refresh),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(0),
+                ),
+              ),              
+            ],
+          ),
         ],
       ),
     );
