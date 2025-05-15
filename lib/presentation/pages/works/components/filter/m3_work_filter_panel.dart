@@ -99,8 +99,7 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
             onFilterChanged(newFilter);
           },
         ),
-      ),
-      // 排序部分
+      ), // 排序部分
       buildSectionCard(
         context,
         M3FilterSortSection(
@@ -117,6 +116,18 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
             final newFilter = filter.copyWith(
               sortOption: filter.sortOption.copyWith(descending: isDescending),
             );
+            onFilterChanged(newFilter);
+          },
+        ),
+      ),
+
+      // 收藏部分 (移动到排序部分下方)
+      buildSectionCard(
+        context,
+        M3FilterFavoriteSection(
+          isFavoriteOnly: filter.isFavoriteOnly,
+          onFavoriteChanged: (value) {
+            final newFilter = filter.copyWith(isFavoriteOnly: value);
             onFilterChanged(newFilter);
           },
         ),
@@ -173,18 +184,6 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
               );
               onFilterChanged(newFilter);
             }
-          },
-        ),
-      ),
-      
-      // 收藏部分
-      buildSectionCard(
-        context,
-        M3FilterFavoriteSection(
-          isFavoriteOnly: filter.isFavoriteOnly,
-          onFavoriteChanged: (value) {
-            final newFilter = filter.copyWith(isFavoriteOnly: value);
-            onFilterChanged(newFilter);
           },
         ),
       ),

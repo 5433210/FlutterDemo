@@ -167,21 +167,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
             ),
           ),
 
-          // Categories section
-          SliverToBoxAdapter(
-            child: _buildCollapsibleSection(
-              title: l10n.libraryManagementCategories,
-              isExpanded: _isCategoriesExpanded,
-              onToggle: () => setState(
-                  () => _isCategoriesExpanded = !_isCategoriesExpanded),
-              child: const SizedBox(
-                height: 300,
-                child: LibraryCategoryPanel(),
-              ),
-            ),
-          ),
-
-          // Favorites section
+          // Favorites section (现在位于排序下方)
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
               title: l10n.libraryManagementFavorites,
@@ -203,6 +189,20 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                         .toggleFavoritesOnly();
                   }
                 },
+              ),
+            ),
+          ),
+
+          // Categories section
+          SliverToBoxAdapter(
+            child: _buildCollapsibleSection(
+              title: l10n.libraryManagementCategories,
+              isExpanded: _isCategoriesExpanded,
+              onToggle: () => setState(
+                  () => _isCategoriesExpanded = !_isCategoriesExpanded),
+              child: const SizedBox(
+                height: 300,
+                child: LibraryCategoryPanel(),
               ),
             ),
           ),
