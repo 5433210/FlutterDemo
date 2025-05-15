@@ -10,7 +10,17 @@ import 'library_category_panel.dart';
 
 /// 图库过滤面板
 class M3LibraryFilterPanel extends ConsumerStatefulWidget {
-  const M3LibraryFilterPanel({super.key});
+  /// 搜索控制器
+  final TextEditingController? searchController;
+
+  /// 搜索回调
+  final Function(String)? onSearch;
+
+  const M3LibraryFilterPanel({
+    super.key,
+    this.searchController,
+    this.onSearch,
+  });
 
   @override
   ConsumerState<M3LibraryFilterPanel> createState() =>
@@ -97,6 +107,28 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                     tooltip: l10n.filterReset,
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // 搜索框部分 - 位于重置按钮下方
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.spacing16,
+                  AppSizes.spacing8, AppSizes.spacing16, AppSizes.spacing16),
+              child: TextField(
+                controller: widget.searchController,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.search),
+                  hintText: l10n.libraryManagementSearch,
+                  isDense: true,
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  if (widget.onSearch != null) {
+                    widget.onSearch!(value);
+                  }
+                },
               ),
             ),
           ),
@@ -475,6 +507,14 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
       _sortBy = 'fileName';
       _sortDesc = false;
     });
+
+    // 清空搜索框
+    if (widget.searchController != null) {
+      widget.searchController!.clear();
+      if (widget.onSearch != null) {
+        widget.onSearch!('');
+      }
+    }
 
     ref.read(libraryManagementProvider.notifier).resetFilters();
   }

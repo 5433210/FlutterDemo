@@ -75,30 +75,12 @@ class _M3LibraryBrowsingPanelState
                   isLeftPanel: true,
                   child: Column(
                     children: [
-                      // 搜索框 - 移到筛选面板顶部
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: SearchBar(
-                          controller: _searchController,
-                          hintText: l10n.libraryManagementSearch,
-                          leading: const Icon(Icons.search),
-                          trailing: [
-                            if (_searchController.text.isNotEmpty)
-                              IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _handleSearch('');
-                                },
-                              ),
-                          ],
-                          onChanged: _handleSearch,
+                      // 筛选面板内容（搜索框已移至筛选面板内部）
+                      Expanded(
+                        child: M3LibraryFilterPanel(
+                          searchController: _searchController,
+                          onSearch: _handleSearch,
                         ),
-                      ),
-
-                      // 筛选面板内容
-                      const Expanded(
-                        child: M3LibraryFilterPanel(),
                       ),
                     ],
                   ),
@@ -143,10 +125,23 @@ class _M3LibraryBrowsingPanelState
     // 组件创建时加载初始数据
     Future.microtask(() {
       if (mounted) {
-        // 每次打开面板时，先清空选择状态，再加载数据
-        ref.read(libraryManagementProvider.notifier).clearSelection();
-        print('【M3LibraryBrowsingPanel】initState - 已重置所有选择状态');
-        ref.read(libraryManagementProvider.notifier).loadData();
+        // 每次打开面板时，先清空选择状态和搜索条件，再加载数据
+        final notifier = ref.read(libraryManagementProvider.notifier);
+
+        // 清空选择状态
+        notifier.clearSelection();
+
+        // 重置搜索条件
+        notifier.updateSearchQuery('');
+        _searchController.clear(); // 确保搜索框UI也被清空
+
+        // 重置所有筛选条件，确保每次打开面板时都是干净的状态
+        notifier.resetAllFilters();
+
+        print('【M3LibraryBrowsingPanel】initState - 已重置所有选择状态和搜索条件');
+
+        // 加载数据
+        notifier.loadData();
       }
     });
   }

@@ -179,8 +179,13 @@ class _LibraryPickerDialogViewState
     // 这样可以避免在构建阶段修改状态
     Future.microtask(() {
       if (mounted) {
-        ref.read(libraryManagementProvider.notifier).clearSelection();
-        print('【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态');
+        final notifier = ref.read(libraryManagementProvider.notifier);
+        // 清空选择状态
+        notifier.clearSelection();
+        // 重置搜索条件
+        notifier.updateSearchQuery('');
+        print(
+            '【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态和搜索条件');
       }
     });
   }
