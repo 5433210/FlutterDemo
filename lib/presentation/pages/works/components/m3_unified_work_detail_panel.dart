@@ -1,13 +1,15 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../application/providers/repository_providers.dart';
+import '../../../../domain/models/character/character_view.dart';
 import '../../../../domain/models/work/work_entity.dart';
 import '../../../../infrastructure/logging/logger.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../pages/characters/components/m3_character_detail_panel.dart';
+import '../../../pages/characters/components/m3_character_grid_view.dart';
 import '../../../providers/work_detail_provider.dart';
 import '../../../widgets/common/tab_bar_theme_wrapper.dart';
 import '../../../widgets/forms/m3_work_form.dart';
@@ -220,67 +222,155 @@ class _M3UnifiedWorkDetailPanelState
     );
   }
 
-  Widget _buildCharacterChip(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Text(
-          '字',
-          style: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 20,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCharactersSection(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
-    final charCount = widget.work.collectedChars.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('$charCount ${l10n.characters}', style: theme.textTheme.bodySmall),
-        if (charCount == 0)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: Text(l10n.workDetailNoCharacters)),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(
-              math.min(charCount, 20),
-              (index) => _buildCharacterChip(context),
-            ),
-          ),
-        if (charCount > 20)
-          Center(
-            child: TextButton(
-              onPressed: () {},
-              child: Text(l10n.workDetailViewMore),
-            ),
-          ),
-      ],
-    );
-  }
-
   Widget _buildCharactersTab(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.spacingMedium),
-      child: _buildCharactersSection(context),
+    final l10n = AppLocalizations.of(context);
+
+    // 添加日志检查集字数量
+    AppLogger.debug(
+      'Building characters tab',
+      tag: 'WorkDetail',
+      data: {
+        'workId': widget.work.id,
+        'collectedCharsCount': widget.work.collectedChars.length,
+        'collectedCharIds':
+            widget.work.collectedChars.map((c) => c.id).toList(),
+      },
     );
+
+    return widget.work.collectedChars.isEmpty
+        ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.spacingMedium),
+              child: Text(l10n.workDetailNoCharacters),
+            ),
+          )
+        : FutureBuilder<List<CharacterView>>(
+            future: () async {
+              final repo = ref.read(characterViewRepositoryProvider);
+              final charIds =
+                  widget.work.collectedChars.map((c) => c.id).toList();
+
+              AppLogger.debug(
+                'Loading characters',
+                tag: 'WorkDetail',
+                data: {
+                  'workId': widget.work.id,
+                  'charCount': charIds.length,
+                },
+              );
+
+              // 使用批量查询API
+              final characters = await repo.getCharactersByIds(charIds);
+
+              AppLogger.debug(
+                'Character loading complete',
+                tag: 'WorkDetail',
+                data: {
+                  'workId': widget.work.id,
+                  'requestedCount': charIds.length,
+                  'loadedCount': characters.length,
+                },
+              );
+
+              if (characters.length != charIds.length) {
+                AppLogger.warning(
+                  'Some characters failed to load',
+                  tag: 'WorkDetail',
+                  data: {
+                    'expected': charIds.length,
+                    'loaded': characters.length,
+                  },
+                );
+              }
+
+              return characters;
+            }(),
+            builder: (context, snapshot) {
+              // 添加日志检查 snapshot 状态
+              AppLogger.debug(
+                'FutureBuilder snapshot',
+                tag: 'WorkDetail',
+                data: {
+                  'connectionState': snapshot.connectionState.toString(),
+                  'hasData': snapshot.hasData,
+                  'hasError': snapshot.hasError,
+                  'error': snapshot.hasError ? snapshot.error.toString() : null,
+                  'dataLength': snapshot.hasData ? snapshot.data?.length : null,
+                },
+              );
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: AppSizes.spacingSmall),
+                      Text(
+                        '${l10n.loadingError}: ${snapshot.error}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final characters = snapshot.data!;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(AppSizes.spacingMedium),
+                    child: Text(
+                      '${characters.length} ${l10n.characters}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  Expanded(
+                    child: M3CharacterGridView(
+                      characters: characters,
+                      onCharacterTap: (characterId) {
+                        showDialog(
+                          context: context,
+                          builder: (context) => Dialog(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 800,
+                                maxHeight: 600,
+                              ),
+                              child: M3CharacterDetailPanel(
+                                characterId: characterId,
+                                onClose: () => Navigator.of(context).pop(),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      onToggleFavorite: (characterId) async {
+                        await ref
+                            .read(characterViewRepositoryProvider)
+                            .toggleFavorite(characterId);
+                        // 刷新字符列表
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
   }
 
   Widget _buildInfoRow(String label, String value) {

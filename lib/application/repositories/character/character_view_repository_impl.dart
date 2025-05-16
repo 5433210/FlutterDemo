@@ -70,22 +70,8 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
 
   @override
   Future<CharacterView?> getCharacterById(String id) async {
-    try {
-      final result = await _database.rawQuery(
-        'SELECT * FROM $_viewName WHERE id = ?',
-        [id],
-      );
-
-      if (result.isEmpty) {
-        return null;
-      }
-
-      return _mapToCharacterView(result.first);
-    } catch (e) {
-      AppLogger.error('Failed to get character by id',
-          tag: 'CharacterViewRepository', error: e, data: {'id': id});
-      return null;
-    }
+    final characters = await getCharactersByIds([id]);
+    return characters.isEmpty ? null : characters.first;
   }
 
   @override
@@ -141,6 +127,32 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
         currentPage: page,
         pageSize: pageSize,
       );
+    }
+  }
+
+  /// 批量获取指定ID的字符数据
+  Future<List<CharacterView>> getCharactersByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+
+    try {
+      // 构建IN查询的占位符
+      final placeholders = List.filled(ids.length, '?').join(',');
+
+      final results = await _database.rawQuery(
+        'SELECT * FROM $_viewName WHERE id IN ($placeholders)',
+        ids,
+      );
+
+      AppLogger.debug('批量获取字符数据', data: {
+        'requestedCount': ids.length,
+        'returnedCount': results.length,
+      });
+
+      return results.map(_mapToCharacterView).toList();
+    } catch (e) {
+      AppLogger.error('批量获取字符数据失败',
+          tag: 'CharacterViewRepository', error: e, data: {'ids': ids});
+      return [];
     }
   }
 

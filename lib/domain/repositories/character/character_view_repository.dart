@@ -49,6 +49,9 @@ abstract class CharacterViewRepository {
     required int pageSize,
   });
 
+  /// Get multiple characters by their IDs
+  Future<List<CharacterView>> getCharactersByIds(List<String> ids);
+
   /// Get character statistics for filter panel
   Future<CharacterStats> getCharacterStats();
 

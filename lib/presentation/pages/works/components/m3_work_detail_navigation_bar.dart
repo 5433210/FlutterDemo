@@ -78,25 +78,14 @@ class M3WorkDetailNavigationBar extends StatelessWidget
             ]
             // 查看模式的操作按钮
             else ...[
-              // 提取字符按钮组
               if (showExtractButton) ...[
-                // 使用垂直分隔线分组相关按钮
-                const VerticalDivider(indent: 8, endIndent: 8),
-
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FilledButton.icon(
-                      icon: const Icon(Icons.text_fields),
-                      label: Text(l10n.workDetailExtract),
-                      onPressed: onExtract,
-                    ),
-                  ],
+                FilledButton.icon(
+                  icon: const Icon(Icons.text_fields),
+                  label: Text(l10n.workDetailExtract),
+                  onPressed: onExtract,
                 ),
-
-                const VerticalDivider(indent: 8, endIndent: 8),
+                const SizedBox(width: AppSizes.m),
               ],
-
               // 编辑按钮
               FilledButton.icon(
                 icon: const Icon(Icons.edit),

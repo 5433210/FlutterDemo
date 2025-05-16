@@ -4,6 +4,7 @@ import '../../application/providers/service_providers.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
+import '../../domain/models/character/character_entity.dart';
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_image.dart';
 import '../../infrastructure/logging/logger.dart';
@@ -20,6 +21,48 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   final WorkService _workService;
 
   WorkDetailNotifier(this._workService) : super(const WorkDetailState());
+
+  /// 将字符添加到作品关联字符列表
+  /// 添加单个字符到作品关联字符列表
+  Future<void> addCollectedChar(CharacterEntity char) async {
+    await addCollectedChars([char]);
+  }
+
+  /// 添加多个字符到作品关联字符列表
+  Future<void> addCollectedChars(List<CharacterEntity> chars) async {
+    if (state.work == null || chars.isEmpty) return;
+
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+
+      var updatedWork = state.work!;
+      for (final char in chars) {
+        updatedWork = updatedWork.addCollectedChar(char);
+      }
+
+      // 保存更新后的作品
+      final savedWork = await _workService.updateWorkEntity(updatedWork);
+
+      // 更新状态
+      state = state.copyWith(
+        work: savedWork,
+        editingWork: state.isEditing ? savedWork : state.editingWork,
+        isLoading: false,
+      );
+
+      AppLogger.debug('字符已添加到作品关联列表', tag: 'WorkDetailProvider', data: {
+        'workId': savedWork.id,
+        'addedCharCount': chars.length,
+        'collectedCharsCount': savedWork.collectedChars.length,
+      });
+    } catch (e) {
+      AppLogger.error('添加字符到作品失败', tag: 'WorkDetailProvider', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        error: '操作失败: $e',
+      );
+    }
+  }
 
   /// 取消编辑
   void cancelEditing() {

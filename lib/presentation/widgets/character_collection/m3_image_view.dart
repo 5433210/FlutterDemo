@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -33,7 +34,7 @@ class M3ImageView extends ConsumerStatefulWidget {
 }
 
 class _ImageViewState extends ConsumerState<M3ImageView>
-    with SingleTickerProviderStateMixin, FocusPersistenceMixin {
+    with TickerProviderStateMixin, FocusPersistenceMixin {
   final TransformationController _transformationController =
       TransformationController();
   final FocusNode _focusNode = FocusNode();
@@ -54,6 +55,8 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
   // 添加防抖计时器，避免频繁更新Alt键状态
   Timer? _altKeyDebouncer;
+  // 添加Ticker用于帧回调
+  Ticker? _ticker;
   // 选区相关
   Offset? _selectionStart;
   Offset? _selectionCurrent;
@@ -255,6 +258,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     _mounted = false;
     _transformationDebouncer?.cancel();
     _altKeyDebouncer?.cancel();
+    _ticker?.dispose(); // Properly dispose the ticker
     _animationController?.dispose();
     _transformationController.removeListener(_onTransformationChanged);
     _transformationController.dispose();
@@ -286,8 +290,8 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     // 添加全局键盘事件处理器
     HardwareKeyboard.instance.addHandler(_handleKeyboardEvent);
 
-    // 添加帧回调以检查Alt键状态
-    WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
+    // 创建并启动Ticker替代帧回调
+    _ticker = createTicker(_onTick)..start();
 
     _initializeView();
 
@@ -1830,16 +1834,6 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     }
   }
 
-  // 每帧回调，用于其他目的，不再检查Alt键状态
-  void _onFrameCallback() {
-    if (!_mounted) return;
-
-    // 继续监听下一帧
-    if (_mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _onFrameCallback());
-    }
-  }
-
   // 处理画布点击
   void _onTapUp(TapUpDetails details) {
     final characterCollection = ref.read(characterCollectionProvider);
@@ -1882,6 +1876,14 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       ref.read(characterCollectionProvider.notifier).clearSelections();
       return;
     }
+  }
+
+  // 每帧回调，用于帧级别的更新
+  void _onTick(Duration elapsed) {
+    if (!_mounted) return;
+
+    // 执行原来在_onFrameCallback中需要的操作
+    // 当前它是空的，但如果将来需要添加功能，可以在这里添加
   }
 
   /// 处理变换矩阵变化事件
