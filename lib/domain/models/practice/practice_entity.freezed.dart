@@ -45,6 +45,9 @@ mixin _$PracticeEntity {
   /// 更新时间
   DateTime get updateTime => throw _privateConstructorUsedError;
 
+  /// 是否收藏
+  bool get isFavorite => throw _privateConstructorUsedError;
+
   /// Serializes this PracticeEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -70,7 +73,8 @@ abstract class $PracticeEntityCopyWith<$Res> {
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
       Uint8List? thumbnail,
       DateTime createTime,
-      DateTime updateTime});
+      DateTime updateTime,
+      bool isFavorite});
 }
 
 /// @nodoc
@@ -96,6 +100,7 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
     Object? thumbnail = freezed,
     Object? createTime = null,
     Object? updateTime = null,
+    Object? isFavorite = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -130,6 +135,10 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
           ? _value.updateTime
           : updateTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -151,7 +160,8 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
       Uint8List? thumbnail,
       DateTime createTime,
-      DateTime updateTime});
+      DateTime updateTime,
+      bool isFavorite});
 }
 
 /// @nodoc
@@ -175,6 +185,7 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
     Object? thumbnail = freezed,
     Object? createTime = null,
     Object? updateTime = null,
+    Object? isFavorite = null,
   }) {
     return _then(_$PracticeEntityImpl(
       id: null == id
@@ -209,6 +220,10 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
           ? _value.updateTime
           : updateTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -225,7 +240,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
       this.thumbnail,
       required this.createTime,
-      required this.updateTime})
+      required this.updateTime,
+      this.isFavorite = false})
       : _pages = pages,
         _tags = tags,
         super._();
@@ -283,6 +299,11 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   @override
   final DateTime updateTime;
 
+  /// 是否收藏
+  @override
+  @JsonKey()
+  final bool isFavorite;
+
   @override
   bool operator ==(Object other) {
     return identical(this, other) ||
@@ -297,7 +318,9 @@ class _$PracticeEntityImpl extends _PracticeEntity {
             (identical(other.createTime, createTime) ||
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
-                other.updateTime == updateTime));
+                other.updateTime == updateTime) &&
+            (identical(other.isFavorite, isFavorite) ||
+                other.isFavorite == isFavorite));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -311,7 +334,8 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       status,
       const DeepCollectionEquality().hash(thumbnail),
       createTime,
-      updateTime);
+      updateTime,
+      isFavorite);
 
   /// Create a copy of PracticeEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -340,7 +364,8 @@ abstract class _PracticeEntity extends PracticeEntity {
       @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
       final Uint8List? thumbnail,
       required final DateTime createTime,
-      required final DateTime updateTime}) = _$PracticeEntityImpl;
+      required final DateTime updateTime,
+      final bool isFavorite}) = _$PracticeEntityImpl;
   const _PracticeEntity._() : super._();
 
   factory _PracticeEntity.fromJson(Map<String, dynamic> json) =
@@ -378,6 +403,10 @@ abstract class _PracticeEntity extends PracticeEntity {
   /// 更新时间
   @override
   DateTime get updateTime;
+
+  /// 是否收藏
+  @override
+  bool get isFavorite;
 
   /// Create a copy of PracticeEntity
   /// with the given fields replaced by the non-null parameter values.

@@ -141,6 +141,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                               selectedPractices: _selectedPractices,
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
+                              onToggleFavorite: _handleToggleFavorite,
                               isLoading: false,
                               errorMessage: null,
                             )
@@ -150,6 +151,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                               selectedPractices: _selectedPractices,
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
+                              onToggleFavorite: _handleToggleFavorite,
                               isLoading: false,
                               errorMessage: null,
                             )),
@@ -287,6 +289,57 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     }
   }
 
+  /// Handle toggling the favorite status of a practice
+  Future<void> _handleToggleFavorite(String id) async {
+    debugPrint('开始切换收藏状态: ID=$id');
+    try {
+      final practiceService = ref.read(practiceServiceProvider);
+      debugPrint('获取practiceService成功，准备调用toggleFavorite');
+      final updatedPractice = await practiceService.toggleFavorite(id);
+      debugPrint(
+          'toggleFavorite调用结果: ${updatedPractice != null ? '成功' : '失败'}');
+
+      if (updatedPractice != null) {
+        debugPrint('更新UI状态，新的收藏状态: ${updatedPractice.isFavorite}');
+        setState(() {
+          // Update the local practice data with the updated favorite status
+          for (int i = 0; i < _practices.length; i++) {
+            if (_practices[i]['id'] == id) {
+              _practices[i]['isFavorite'] = updatedPractice.isFavorite;
+              debugPrint('更新_practices中的收藏状态成功');
+
+              // Also update in filtered practices
+              for (int j = 0; j < _filteredPractices.length; j++) {
+                if (_filteredPractices[j]['id'] == id) {
+                  _filteredPractices[j]['isFavorite'] =
+                      updatedPractice.isFavorite;
+                  debugPrint('更新_filteredPractices中的收藏状态成功');
+                  break;
+                }
+              }
+              break;
+            }
+          }
+
+          // If we're filtering by favorites and this was unfavorited, remove it from the filtered list
+          if (_filter.isFavorite && !updatedPractice.isFavorite) {
+            _filteredPractices.removeWhere((practice) => practice['id'] == id);
+            debugPrint('从筛选列表中移除取消收藏的项目');
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Toggle favorite failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  '${AppLocalizations.of(context).practiceListError}: $e')),
+        );
+      }
+    }
+  }
+
   Future<void> _loadPractices() async {
     setState(() {
       _isLoading = true;
@@ -302,10 +355,13 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         offset: (_currentPage - 1) * _pageSize,
       );
 
+      debugPrint('加载练习：过滤条件 isFavorite=${filter.isFavorite}');
+
       // Query practices
       var practicesResult = [];
       try {
         practicesResult = await practiceService.queryPractices(filter);
+        debugPrint('查询结果：${practicesResult.length} 个练习');
       } catch (e) {
         debugPrint('Query practices failed: $e');
         if (mounted) {
@@ -340,6 +396,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
             'updateTime': practice.updateTime.toIso8601String(),
             'pageCount': practice.pages.length,
             'thumbnail': practice.thumbnail,
+            'isFavorite': practice.isFavorite,
           };
 
           practicesMap.add(practiceMap);
@@ -430,12 +487,14 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
 
   // 更新过滤器
   void _updateFilter(PracticeFilter newFilter) {
+    debugPrint('更新筛选条件: isFavorite=${newFilter.isFavorite}');
     setState(() {
       _filter = newFilter;
       _sortField = newFilter.sortField;
       _sortOrder = newFilter.sortOrder;
       _currentPage = 1; // 重置到第一页
     });
+    // 重新加载数据以应用新的筛选条件
     _loadPractices();
   }
 }

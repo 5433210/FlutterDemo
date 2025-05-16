@@ -8,22 +8,25 @@ import 'm3_practice_list_item.dart';
 class M3PracticeListView extends StatelessWidget {
   /// List of practices
   final List<Map<String, dynamic>> practices;
-  
+
   /// Whether in batch mode
   final bool isBatchMode;
-  
+
   /// Set of selected practice IDs
   final Set<String> selectedPractices;
-  
+
   /// Callback when a practice is tapped
   final Function(String) onPracticeTap;
-  
+
   /// Callback when a practice is long pressed
   final Function(String)? onPracticeLongPress;
-  
+
+  /// Callback when favorite is toggled
+  final Function(String)? onToggleFavorite;
+
   /// Whether the view is loading
   final bool isLoading;
-  
+
   /// Error message to display
   final String? errorMessage;
 
@@ -34,6 +37,7 @@ class M3PracticeListView extends StatelessWidget {
     required this.selectedPractices,
     required this.onPracticeTap,
     this.onPracticeLongPress,
+    this.onToggleFavorite,
     this.isLoading = false,
     this.errorMessage,
   });
@@ -42,7 +46,7 @@ class M3PracticeListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    
+
     if (isLoading) {
       return Center(
         child: Column(
@@ -60,7 +64,7 @@ class M3PracticeListView extends StatelessWidget {
         ),
       );
     }
-    
+
     if (errorMessage != null) {
       return Center(
         child: Column(
@@ -80,7 +84,7 @@ class M3PracticeListView extends StatelessWidget {
         ),
       );
     }
-    
+
     if (practices.isEmpty) {
       return Center(
         child: Column(
@@ -100,22 +104,24 @@ class M3PracticeListView extends StatelessWidget {
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppSizes.spacingMedium),
       itemCount: practices.length,
       itemBuilder: (context, index) {
         final practice = practices[index];
         final id = practice['id'] as String;
-        
+
         return M3PracticeListItem(
           practice: practice,
           isSelected: selectedPractices.contains(id),
           isSelectionMode: isBatchMode,
           onTap: () => onPracticeTap(id),
-          onLongPress: onPracticeLongPress != null 
+          onLongPress: onPracticeLongPress != null
               ? () => onPracticeLongPress!(id)
               : null,
+          onToggleFavorite:
+              onToggleFavorite != null ? () => onToggleFavorite!(id) : null,
         );
       },
     );

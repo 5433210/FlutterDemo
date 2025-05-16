@@ -23,6 +23,7 @@ _$PracticeFilterImpl _$$PracticeFilterImplFromJson(Map<String, dynamic> json) =>
       offset: (json['offset'] as num?)?.toInt() ?? 0,
       sortField: json['sortField'] as String? ?? 'updateTime',
       sortOrder: json['sortOrder'] as String? ?? 'desc',
+      isFavorite: json['isFavorite'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$PracticeFilterImplToJson(
@@ -37,4 +38,5 @@ Map<String, dynamic> _$$PracticeFilterImplToJson(
       'offset': instance.offset,
       'sortField': instance.sortField,
       'sortOrder': instance.sortOrder,
+      'isFavorite': instance.isFavorite,
     };

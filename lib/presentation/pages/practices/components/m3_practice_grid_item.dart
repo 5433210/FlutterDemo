@@ -21,6 +21,9 @@ class M3PracticeGridItem extends StatelessWidget {
   /// Callback when the item is long pressed
   final VoidCallback? onLongPress;
 
+  /// Callback when favorite is toggled
+  final VoidCallback? onToggleFavorite;
+
   const M3PracticeGridItem({
     super.key,
     required this.practice,
@@ -28,6 +31,7 @@ class M3PracticeGridItem extends StatelessWidget {
     required this.isSelectionMode,
     required this.onTap,
     this.onLongPress,
+    this.onToggleFavorite,
   });
 
   @override
@@ -84,6 +88,39 @@ class M3PracticeGridItem extends StatelessWidget {
                                 ? colorScheme.primary
                                 : colorScheme.outline,
                             size: 24,
+                          ),
+                        ),
+                      ),
+                    if (!isSelectionMode && onToggleFavorite != null)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: colorScheme.surface
+                                .withAlpha(204), // 0.8 opacity
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              debugPrint(
+                                  'Grid item收藏按钮点击: isFavorite=${practice['isFavorite']}');
+                              onToggleFavorite?.call();
+                            },
+                            icon: Icon(
+                              practice['isFavorite'] == true
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: practice['isFavorite'] == true
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            iconSize: 20,
+                            splashRadius: 20,
+                            tooltip: AppLocalizations.of(context)
+                                .filterFavoritesOnly,
                           ),
                         ),
                       ),
@@ -198,7 +235,6 @@ class M3PracticeGridItem extends StatelessWidget {
 
   /// Build thumbnail widget
   Widget _buildThumbnail(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final thumbnail = practice['thumbnail'] as Uint8List?;
 

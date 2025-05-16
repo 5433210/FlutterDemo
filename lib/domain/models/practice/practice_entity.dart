@@ -57,6 +57,9 @@ class PracticeEntity with _$PracticeEntity {
 
     /// 更新时间
     required DateTime updateTime,
+
+    /// 是否收藏
+    @Default(false) bool isFavorite,
   }) = _PracticeEntity;
 
   /// 新建练习，自动生成ID和时间戳

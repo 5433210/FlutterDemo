@@ -21,6 +21,7 @@ _$PracticeEntityImpl _$$PracticeEntityImplFromJson(Map<String, dynamic> json) =>
       thumbnail: _uint8ListFromJson(json['thumbnail'] as String?),
       createTime: DateTime.parse(json['createTime'] as String),
       updateTime: DateTime.parse(json['updateTime'] as String),
+      isFavorite: json['isFavorite'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$PracticeEntityImplToJson(
@@ -34,4 +35,5 @@ Map<String, dynamic> _$$PracticeEntityImplToJson(
       'thumbnail': _uint8ListToJson(instance.thumbnail),
       'createTime': instance.createTime.toIso8601String(),
       'updateTime': instance.updateTime.toIso8601String(),
+      'isFavorite': instance.isFavorite,
     };

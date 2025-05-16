@@ -47,6 +47,9 @@ mixin _$PracticeFilter {
   /// 排序方向(asc/desc)
   String get sortOrder => throw _privateConstructorUsedError;
 
+  /// 是否只显示收藏
+  bool get isFavorite => throw _privateConstructorUsedError;
+
   /// Serializes this PracticeFilter to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
@@ -72,7 +75,8 @@ abstract class $PracticeFilterCopyWith<$Res> {
       int limit,
       int offset,
       String sortField,
-      String sortOrder});
+      String sortOrder,
+      bool isFavorite});
 }
 
 /// @nodoc
@@ -99,6 +103,7 @@ class _$PracticeFilterCopyWithImpl<$Res, $Val extends PracticeFilter>
     Object? offset = null,
     Object? sortField = null,
     Object? sortOrder = null,
+    Object? isFavorite = null,
   }) {
     return _then(_value.copyWith(
       keyword: freezed == keyword
@@ -137,6 +142,10 @@ class _$PracticeFilterCopyWithImpl<$Res, $Val extends PracticeFilter>
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as String,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -158,7 +167,8 @@ abstract class _$$PracticeFilterImplCopyWith<$Res>
       int limit,
       int offset,
       String sortField,
-      String sortOrder});
+      String sortOrder,
+      bool isFavorite});
 }
 
 /// @nodoc
@@ -183,6 +193,7 @@ class __$$PracticeFilterImplCopyWithImpl<$Res>
     Object? offset = null,
     Object? sortField = null,
     Object? sortOrder = null,
+    Object? isFavorite = null,
   }) {
     return _then(_$PracticeFilterImpl(
       keyword: freezed == keyword
@@ -221,6 +232,10 @@ class __$$PracticeFilterImplCopyWithImpl<$Res>
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as String,
+      isFavorite: null == isFavorite
+          ? _value.isFavorite
+          : isFavorite // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -237,7 +252,8 @@ class _$PracticeFilterImpl extends _PracticeFilter {
       this.limit = 20,
       this.offset = 0,
       this.sortField = 'updateTime',
-      this.sortOrder = 'desc'})
+      this.sortOrder = 'desc',
+      this.isFavorite = false})
       : _tags = tags,
         super._();
 
@@ -292,9 +308,14 @@ class _$PracticeFilterImpl extends _PracticeFilter {
   @JsonKey()
   final String sortOrder;
 
+  /// 是否只显示收藏
+  @override
+  @JsonKey()
+  final bool isFavorite;
+
   @override
   String toString() {
-    return 'PracticeFilter(keyword: $keyword, tags: $tags, startTime: $startTime, endTime: $endTime, status: $status, limit: $limit, offset: $offset, sortField: $sortField, sortOrder: $sortOrder)';
+    return 'PracticeFilter(keyword: $keyword, tags: $tags, startTime: $startTime, endTime: $endTime, status: $status, limit: $limit, offset: $offset, sortField: $sortField, sortOrder: $sortOrder, isFavorite: $isFavorite)';
   }
 
   @override
@@ -313,7 +334,9 @@ class _$PracticeFilterImpl extends _PracticeFilter {
             (identical(other.sortField, sortField) ||
                 other.sortField == sortField) &&
             (identical(other.sortOrder, sortOrder) ||
-                other.sortOrder == sortOrder));
+                other.sortOrder == sortOrder) &&
+            (identical(other.isFavorite, isFavorite) ||
+                other.isFavorite == isFavorite));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -328,7 +351,8 @@ class _$PracticeFilterImpl extends _PracticeFilter {
       limit,
       offset,
       sortField,
-      sortOrder);
+      sortOrder,
+      isFavorite);
 
   /// Create a copy of PracticeFilter
   /// with the given fields replaced by the non-null parameter values.
@@ -357,7 +381,8 @@ abstract class _PracticeFilter extends PracticeFilter {
       final int limit,
       final int offset,
       final String sortField,
-      final String sortOrder}) = _$PracticeFilterImpl;
+      final String sortOrder,
+      final bool isFavorite}) = _$PracticeFilterImpl;
   const _PracticeFilter._() : super._();
 
   factory _PracticeFilter.fromJson(Map<String, dynamic> json) =
@@ -398,6 +423,10 @@ abstract class _PracticeFilter extends PracticeFilter {
   /// 排序方向(asc/desc)
   @override
   String get sortOrder;
+
+  /// 是否只显示收藏
+  @override
+  bool get isFavorite;
 
   /// Create a copy of PracticeFilter
   /// with the given fields replaced by the non-null parameter values.

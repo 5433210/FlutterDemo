@@ -254,8 +254,13 @@ class PracticeRepositoryImpl implements PracticeRepository {
   @override
   Future<List<PracticeEntity>> query(PracticeFilter filter) async {
     try {
+      debugPrint('查询字帖: filter.isFavorite=${filter.isFavorite}');
       final queryParams = _buildQuery(filter);
+      debugPrint('生成查询参数: $queryParams');
+
       final list = await _db.query(_table, queryParams);
+      debugPrint('查询结果数量: ${list.length}');
+
       final result = <PracticeEntity>[];
 
       for (final item in list) {
@@ -312,17 +317,45 @@ class PracticeRepositoryImpl implements PracticeRepository {
 
   @override
   Future<PracticeEntity> save(PracticeEntity practice) async {
-    await _db.save(_table, practice.id, practice.toJson());
-    return practice;
+    try {
+      debugPrint('PracticeRepositoryImpl.save: ID=${practice.id}');
+
+      // 转换practice对象为JSON
+      final json = practice.toJson();
+      debugPrint('转换为JSON成功, JSON包含 ${json.length} 个字段');
+
+      // 准备保存数据：处理复杂数据类型和类型转换
+      final preparedData = _prepareForSave(json);
+      debugPrint('数据准备完成，准备保存到数据库');
+
+      await _db.save(_table, practice.id, preparedData);
+      debugPrint('保存到数据库成功');
+      return practice;
+    } catch (e) {
+      debugPrint('保存实体失败: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<List<PracticeEntity>> saveMany(List<PracticeEntity> practices) async {
-    final map = {
-      for (var p in practices) p.id: p.toJson(),
-    };
-    await _db.saveMany(_table, map);
-    return practices;
+    try {
+      debugPrint('saveMany: 开始保存 ${practices.length} 个实体');
+      final map = <String, Map<String, dynamic>>{};
+
+      // 为每个实体准备数据
+      for (var p in practices) {
+        debugPrint('saveMany: 处理ID=${p.id}的实体');
+        map[p.id] = _prepareForSave(p.toJson());
+      }
+
+      await _db.saveMany(_table, map);
+      debugPrint('saveMany: 批量保存成功');
+      return practices;
+    } catch (e) {
+      debugPrint('saveMany失败: $e');
+      rethrow;
+    }
   }
 
   @override
@@ -399,46 +432,106 @@ class PracticeRepositoryImpl implements PracticeRepository {
         .toList();
   }
 
+  /// 只更新收藏状态
+  Future<bool> updateFavoriteStatus(String id, bool isFavorite) async {
+    try {
+      debugPrint('updateFavoriteStatus: id=$id, isFavorite=$isFavorite');
+
+      // 获取当前记录
+      final practice = await get(id);
+      if (practice == null) {
+        debugPrint('updateFavoriteStatus: 找不到ID=$id的记录');
+        return false;
+      }
+
+      // 准备更新数据
+      final data = {
+        'id': id,
+        'isFavorite': isFavorite ? 1 : 0,
+      };
+
+      // 更新数据库
+      await _db.save(_table, id, data);
+      debugPrint('updateFavoriteStatus: 成功更新收藏状态');
+      return true;
+    } catch (e) {
+      debugPrint('updateFavoriteStatus失败: $e');
+      return false;
+    }
+  }
+
   /// 构建查询条件
   Map<String, dynamic> _buildQuery(PracticeFilter filter) {
     final query = <String, dynamic>{};
 
+    // 初始化conditions数组
+    final conditions = <Map<String, dynamic>>[];
+
+    // 添加标题关键词查询
     if (filter.keyword?.isNotEmpty == true) {
-      query['title'] = {'contains': filter.keyword};
+      conditions
+          .add({'field': 'title', 'op': 'LIKE', 'val': '%${filter.keyword}%'});
+      debugPrint('添加关键词筛选条件: title LIKE %${filter.keyword}%');
     }
 
+    // 添加标签查询
     if (filter.tags.isNotEmpty) {
-      query['tags'] = {'contains': filter.tags};
+      // 为每个标签构建一个包含查询
+      for (final tag in filter.tags) {
+        conditions.add({'field': 'tags', 'op': 'LIKE', 'val': '%$tag%'});
+        debugPrint('添加标签筛选条件: tags LIKE %$tag%');
+      }
     }
 
+    // 添加状态查询
     if (filter.status?.isNotEmpty == true) {
-      query['status'] = filter.status;
+      conditions.add({'field': 'status', 'op': '=', 'val': filter.status});
+      debugPrint('添加状态筛选条件: status=${filter.status}');
     }
 
+    // 添加创建时间查询
     if (filter.startTime != null) {
-      query['createTime'] = {
-        'gte': DateTimeHelper.toStorageFormat(filter.startTime!),
-      };
+      conditions.add({
+        'field': 'createTime',
+        'op': '>=',
+        'val': DateTimeHelper.toStorageFormat(filter.startTime!)
+      });
+      debugPrint(
+          '添加开始时间筛选条件: createTime>=${DateTimeHelper.toStorageFormat(filter.startTime!)}');
     }
 
     if (filter.endTime != null) {
-      query['createTime'] ??= {};
-      query['createTime']['lte'] =
-          DateTimeHelper.toStorageFormat(filter.endTime!);
+      conditions.add({
+        'field': 'createTime',
+        'op': '<=',
+        'val': DateTimeHelper.toStorageFormat(filter.endTime!)
+      });
+      debugPrint(
+          '添加结束时间筛选条件: createTime<=${DateTimeHelper.toStorageFormat(filter.endTime!)}');
     }
 
-    // 设置排序字段，将驼峰命名转换为下划线命名
+    // 添加收藏过滤
+    if (filter.isFavorite) {
+      conditions.add({'field': 'isFavorite', 'op': '=', 'val': 1});
+      debugPrint('添加收藏筛选条件: isFavorite=1 (使用条件格式)');
+    }
+
+    // 如果有条件，将它们添加到查询对象中
+    if (conditions.isNotEmpty) {
+      query['conditions'] = conditions;
+    }
+
+    // 设置排序字段
     final dbSortField = _convertFieldNameToDb(filter.sortField);
     query['orderBy'] = '$dbSortField ${filter.sortOrder}';
-
-    // 添加调试日志
-    debugPrint(
-        '构建查询参数: sortField=${filter.sortField}, dbSortField=$dbSortField, sortOrder=${filter.sortOrder}');
-    debugPrint('排序字段: ${query['orderBy']}');
+    debugPrint('设置排序: ${query['orderBy']}');
 
     // 设置分页参数
     query['limit'] = filter.limit;
     query['offset'] = filter.offset;
+
+    // 添加整体查询调试日志
+    debugPrint('最终查询参数: $query');
 
     return query;
   }
@@ -448,6 +541,49 @@ class PracticeRepositoryImpl implements PracticeRepository {
     // 根据数据库迁移脚本，practices 表中的字段名是 createTime 和 updateTime
     // 不需要转换为下划线命名
     return fieldName;
+  }
+
+  Map<String, dynamic> _prepareForSave(Map<String, dynamic> json) {
+    debugPrint('_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段');
+    // 创建一个新的Map来避免修改原始数据
+    final result = Map<String, dynamic>.from(json);
+
+    // 确保isFavorite字段被转换为SQLite兼容的整数值
+    if (result.containsKey('isFavorite')) {
+      result['isFavorite'] = result['isFavorite'] == true ? 1 : 0;
+      debugPrint('_prepareForSave: isFavorite=${result['isFavorite']}');
+    } else {
+      // 如果不存在，设置默认值
+      result['isFavorite'] = 0;
+      debugPrint('_prepareForSave: isFavorite字段不存在，设为默认值0');
+    }
+
+    // 处理pages字段，将复杂的List<Map>结构转换为JSON字符串
+    if (result.containsKey('pages') && result['pages'] != null) {
+      try {
+        if (result['pages'] is List) {
+          debugPrint(
+              '_prepareForSave: 将pages字段转换为JSON字符串，pages数量: ${result['pages'].length}');
+          result['pages'] = jsonEncode(result['pages']);
+        } else if (result['pages'] is String) {
+          // 如果已经是字符串，不需要处理
+          debugPrint('_prepareForSave: pages字段已经是字符串');
+        } else {
+          // 如果是其他类型，设置为空字符串
+          debugPrint('_prepareForSave: pages字段类型未知，设为空字符串');
+          result['pages'] = '[]';
+        }
+      } catch (e) {
+        debugPrint('_prepareForSave: 转换pages字段失败: $e，设为空字符串');
+        result['pages'] = '[]';
+      }
+    } else {
+      // 如果不存在，设置为空列表的JSON字符串
+      result['pages'] = '[]';
+      debugPrint('_prepareForSave: pages字段不存在，设为空列表');
+    }
+
+    return result;
   }
 
   /// 处理从数据库获取的数据，确保pages字段格式正确
@@ -479,6 +615,18 @@ class PracticeRepositoryImpl implements PracticeRepository {
       }
     } else if (processedData['pages'] == null) {
       processedData['pages'] = []; // null时使用空列表
+    }
+
+    // 处理isFavorite字段，确保是布尔类型
+    if (processedData.containsKey('isFavorite')) {
+      // SQLite中0表示false，1表示true
+      processedData['isFavorite'] = processedData['isFavorite'] == 1;
+      debugPrint(
+          '_processDbData: 从数据库读取 isFavorite=${processedData['isFavorite']}');
+    } else {
+      // 如果不存在，设置为默认值false
+      processedData['isFavorite'] = false;
+      debugPrint('_processDbData: isFavorite字段不存在，设为默认值false');
     }
 
     return processedData;

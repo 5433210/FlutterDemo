@@ -33,6 +33,9 @@ class PracticeFilter with _$PracticeFilter {
 
     /// 排序方向(asc/desc)
     @Default('desc') String sortOrder,
+
+    /// 是否只显示收藏
+    @Default(false) bool isFavorite,
   }) = _PracticeFilter;
 
   /// 从JSON创建实例

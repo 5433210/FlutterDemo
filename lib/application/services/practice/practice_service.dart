@@ -1,10 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/models/practice/practice_filter.dart';
 import '../../../domain/repositories/practice_repository.dart';
+import '../../repositories/practice_repository_impl.dart';
 
 /// 字帖练习服务
 class PracticeService {
@@ -129,6 +128,45 @@ class PracticeService {
   /// 获取标签建议
   Future<List<String>> suggestTags(String prefix, {int limit = 10}) {
     return _repository.suggestTags(prefix, limit: limit);
+  }
+
+  /// 切换收藏状态
+  Future<PracticeEntity?> toggleFavorite(String id) async {
+    try {
+      debugPrint('PracticeService.toggleFavorite 开始: ID=$id');
+      // 获取当前字帖
+      final practice = await _repository.get(id);
+      debugPrint('获取字帖结果: ${practice != null ? '成功' : '未找到字帖'}');
+      if (practice == null) return null;
+
+      // 打印当前收藏状态
+      debugPrint('当前收藏状态: ${practice.isFavorite}');
+
+      // 新的收藏状态
+      final newFavoriteStatus = !practice.isFavorite;
+      debugPrint('新的收藏状态: $newFavoriteStatus');
+
+      // 尝试使用轻量级方法更新收藏状态
+      if (_repository is PracticeRepositoryImpl) {
+        final repo = _repository as PracticeRepositoryImpl;
+        final success = await repo.updateFavoriteStatus(id, newFavoriteStatus);
+
+        if (success) {
+          debugPrint('使用轻量级方法更新收藏状态成功');
+          // 返回更新后的实体
+          return practice.copyWith(isFavorite: newFavoriteStatus);
+        } else {
+          debugPrint('轻量级方法失败，尝试完整保存');
+        }
+      } // 如果轻量级方法不可用或失败，则使用完整的实体保存
+      final updated = practice.copyWith(isFavorite: newFavoriteStatus);
+      final result = await _repository.save(updated);
+      debugPrint('保存结果: 成功');
+      return result;
+    } catch (e) {
+      debugPrint('Failed to toggle favorite: $e');
+      return null;
+    }
   }
 
   /// 更新字帖练习

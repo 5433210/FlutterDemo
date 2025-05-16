@@ -351,4 +351,9 @@ const migrations = [
   '''
   ALTER TABLE works ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
   ''',
+
+  /// 版本 16: 为practices表添加收藏字段
+  '''
+  ALTER TABLE practices ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
+  ''',
 ];

@@ -2187,6 +2187,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListBatchMode => '批量模式';
 
   @override
+  String get practiceListCollapseFilter => '折叠过滤面板';
+
+  @override
   String get practiceListDeleteConfirm => '确认删除';
 
   @override
@@ -2197,6 +2200,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceListError => '加载字帖错误';
+
+  @override
+  String get practiceListExpandFilter => '展开过滤面板';
+
+  @override
+  String get practiceListFilterFavorites => '收藏';
+
+  @override
+  String get practiceListFilterTitle => '字帖过滤';
 
   @override
   String get practiceListGridView => '网格视图';
@@ -2222,16 +2234,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceListPages => '页';
 
   @override
+  String get practiceListResetFilter => '重置过滤器';
+
+  @override
   String get practiceListSearch => '搜索字帖...';
 
   @override
   String get practiceListSortByCreateTime => '按创建时间排序';
 
   @override
+  String get practiceListSortByStatus => '按状态排序';
+
+  @override
   String get practiceListSortByTitle => '按标题排序';
 
   @override
   String get practiceListSortByUpdateTime => '按更新时间排序';
+
+  @override
+  String get practiceListStatus => '状态';
+
+  @override
+  String get practiceListStatusAll => '全部';
+
+  @override
+  String get practiceListStatusCompleted => '已完成';
+
+  @override
+  String get practiceListStatusDraft => '草稿';
 
   @override
   String get practiceListThumbnailError => '缩略图加载失败';
@@ -2922,31 +2952,4 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get yes => '是';
-
-  @override
-  String get practiceListFilterTitle => '字帖过滤';
-
-  @override
-  String get practiceListSortByStatus => '按状态排序';
-
-  @override
-  String get practiceListStatus => '状态';
-
-  @override
-  String get practiceListStatusAll => '全部';
-
-  @override
-  String get practiceListStatusCompleted => '已完成';
-
-  @override
-  String get practiceListStatusDraft => '草稿';
-
-  @override
-  String get practiceListResetFilter => '重置过滤器';
-
-  @override
-  String get practiceListCollapseFilter => '折叠过滤面板';
-
-  @override
-  String get practiceListExpandFilter => '展开过滤面板';
 }

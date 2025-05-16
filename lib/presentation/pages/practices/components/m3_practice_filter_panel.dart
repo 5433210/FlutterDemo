@@ -1,4 +1,3 @@
-import 'package:charasgem/presentation/pages/practices/components/practice_l10n_extension.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/models/practice/practice_filter.dart';
@@ -90,6 +89,37 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
         ),
       ),
 
+      // 收藏部分
+      buildSectionCard(
+        context,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.practiceListFilterFavorites,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8.0),
+            // 收藏过滤选项
+            Row(
+              children: [
+                Checkbox(
+                  value: filter.isFavorite,
+                  onChanged: (value) {
+                    final newFilter =
+                        filter.copyWith(isFavorite: value ?? false);
+                    onFilterChanged(newFilter);
+                  },
+                ),
+                Expanded(
+                  child: Text(l10n.filterFavoritesOnly),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+
       // 排序部分
       buildSectionCard(
         context,
@@ -145,8 +175,8 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
                     const SizedBox(width: 8),
                     Text(
                       filter.sortOrder == 'desc'
-                          ? l10n.sortOrderDesc
-                          : l10n.sortOrderAsc,
+                          ? l10n.filterSortAscending
+                          : l10n.filterSortDescending,
                     ),
                   ],
                 ),

@@ -8,18 +8,21 @@ import '../../../../theme/app_sizes.dart';
 class M3PracticeListItem extends StatelessWidget {
   /// Practice data
   final Map<String, dynamic> practice;
-  
+
   /// Whether the item is selected
   final bool isSelected;
-  
+
   /// Whether in selection mode
   final bool isSelectionMode;
-  
+
   /// Callback when the item is tapped
   final VoidCallback onTap;
-  
+
   /// Callback when the item is long pressed
   final VoidCallback? onLongPress;
+
+  /// Callback when favorite is toggled
+  final VoidCallback? onToggleFavorite;
 
   const M3PracticeListItem({
     super.key,
@@ -28,6 +31,7 @@ class M3PracticeListItem extends StatelessWidget {
     required this.isSelectionMode,
     required this.onTap,
     this.onLongPress,
+    this.onToggleFavorite,
   });
 
   @override
@@ -35,11 +39,10 @@ class M3PracticeListItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
-    
+
     return Card(
-      elevation: isSelected 
-          ? AppSizes.cardElevationSelected 
-          : AppSizes.cardElevation,
+      elevation:
+          isSelected ? AppSizes.cardElevationSelected : AppSizes.cardElevation,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.cardRadius),
         side: isSelected
@@ -75,15 +78,16 @@ class M3PracticeListItem extends StatelessWidget {
                       top: 8,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: colorScheme.surface.withAlpha(204), // 0.8 opacity
+                          color:
+                              colorScheme.surface.withAlpha(204), // 0.8 opacity
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          isSelected 
-                              ? Icons.check_circle 
+                          isSelected
+                              ? Icons.check_circle
                               : Icons.circle_outlined,
-                          color: isSelected 
-                              ? colorScheme.primary 
+                          color: isSelected
+                              ? colorScheme.primary
                               : colorScheme.outline,
                           size: 20,
                         ),
@@ -121,8 +125,30 @@ class M3PracticeListItem extends StatelessWidget {
                       const Spacer(),
                       if (!isSelectionMode)
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            if (onToggleFavorite != null)
+                              IconButton(
+                                onPressed: () {
+                                  debugPrint(
+                                      'List item收藏按钮点击: isFavorite=${practice['isFavorite']}');
+                                  onToggleFavorite?.call();
+                                },
+                                icon: Icon(
+                                  practice['isFavorite'] == true
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: practice['isFavorite'] == true
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 20,
+                                splashRadius: 20,
+                                tooltip: l10n.filterFavoritesOnly,
+                              ),
                             Icon(
                               Icons.chevron_right,
                               color: colorScheme.onSurfaceVariant,
@@ -141,16 +167,76 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
+  /// Build error placeholder
+  Widget _buildErrorPlaceholder(BuildContext context, AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.image_not_supported,
+              size: 24,
+              color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.practiceListThumbnailError,
+              style: TextStyle(
+                color:
+                    colorScheme.onSurfaceVariant.withAlpha(178), // 0.7 opacity
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build loading indicator
+  Widget _buildLoadingIndicator(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: CircularProgressIndicator(
+          color: colorScheme.primary,
+        ),
+      ),
+    );
+  }
+
+  /// Build placeholder widget
+  Widget _buildPlaceholder(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      color: colorScheme.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.note_alt_outlined,
+          size: 48,
+          color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
+        ),
+      ),
+    );
+  }
+
   /// Build thumbnail widget
   Widget _buildThumbnail(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final thumbnail = practice['thumbnail'] as Uint8List?;
-    
+
     if (thumbnail == null || thumbnail.isEmpty) {
       return _buildPlaceholder(context);
     }
-    
+
     return AspectRatio(
       aspectRatio: 4 / 3, // 保持4:3比例，与作品浏览页一致
       child: Container(
@@ -175,65 +261,6 @@ class M3PracticeListItem extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) {
             return _buildErrorPlaceholder(context, l10n);
           },
-        ),
-      ),
-    );
-  }
-
-  /// Build placeholder widget
-  Widget _buildPlaceholder(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.note_alt_outlined,
-          size: 48,
-          color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
-        ),
-      ),
-    );
-  }
-
-  /// Build loading indicator
-  Widget _buildLoadingIndicator(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
-        ),
-      ),
-    );
-  }
-
-  /// Build error placeholder
-  Widget _buildErrorPlaceholder(BuildContext context, AppLocalizations l10n) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_not_supported,
-              size: 24,
-              color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
-            ),
-            const SizedBox(height: 4),
-            Text(
-              l10n.practiceListThumbnailError,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant.withAlpha(178), // 0.7 opacity
-                fontSize: 12,
-              ),
-            ),
-          ],
         ),
       ),
     );

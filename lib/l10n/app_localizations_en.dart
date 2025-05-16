@@ -2187,6 +2187,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListBatchMode => 'Batch Mode';
 
   @override
+  String get practiceListCollapseFilter => 'Collapse Filter Panel';
+
+  @override
   String get practiceListDeleteConfirm => 'Confirm Deletion';
 
   @override
@@ -2197,6 +2200,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceListError => 'Error loading practice sheets';
+
+  @override
+  String get practiceListExpandFilter => 'Expand Filter Panel';
+
+  @override
+  String get practiceListFilterFavorites => 'Favorites';
+
+  @override
+  String get practiceListFilterTitle => 'Filter & Sort ';
 
   @override
   String get practiceListGridView => 'Grid View';
@@ -2222,16 +2234,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get practiceListPages => 'pages';
 
   @override
+  String get practiceListResetFilter => 'Reset Filter';
+
+  @override
   String get practiceListSearch => 'Search practice sheets...';
 
   @override
   String get practiceListSortByCreateTime => 'Sort by Creation Time';
 
   @override
+  String get practiceListSortByStatus => 'Sort by Status';
+
+  @override
   String get practiceListSortByTitle => 'Sort by Title';
 
   @override
   String get practiceListSortByUpdateTime => 'Sort by Update Time';
+
+  @override
+  String get practiceListStatus => 'Status';
+
+  @override
+  String get practiceListStatusAll => 'All';
+
+  @override
+  String get practiceListStatusCompleted => 'Completed';
+
+  @override
+  String get practiceListStatusDraft => 'Draft';
 
   @override
   String get practiceListThumbnailError => 'Thumbnail load failed';
@@ -2922,31 +2952,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get yes => 'Yes';
-
-  @override
-  String get practiceListFilterTitle => 'Practice Filter';
-
-  @override
-  String get practiceListSortByStatus => 'Sort by Status';
-
-  @override
-  String get practiceListStatus => 'Status';
-
-  @override
-  String get practiceListStatusAll => 'All';
-
-  @override
-  String get practiceListStatusCompleted => 'Completed';
-
-  @override
-  String get practiceListStatusDraft => 'Draft';
-
-  @override
-  String get practiceListResetFilter => 'Reset Filter';
-
-  @override
-  String get practiceListCollapseFilter => 'Collapse Filter Panel';
-
-  @override
-  String get practiceListExpandFilter => 'Expand Filter Panel';
 }
