@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import 'dialogs/m3_practice_tag_edit_dialog.dart';
@@ -300,14 +299,14 @@ class M3PracticeGridItem extends ConsumerWidget {
       return _buildPlaceholder(context);
     }
 
-    // 用内存缓存临时保存缩略图数据
-    final imageCache = ref.watch(imageCacheProvider);
-    final cacheKey = 'practice_thumbnail_$practiceId';
-    // 检查缓存中是否已存在该缩略图
-    if (imageCache.containsKey(cacheKey) != true) {
-      // 缓存缩略图数据
-      imageCache.put(cacheKey, thumbnail);
-    }
+    // // 用内存缓存临时保存缩略图数据
+    // final imageCache = ref.watch(imageCacheProvider);
+    // final cacheKey = 'practice_thumbnail_$practiceId';
+    // // 检查缓存中是否已存在该缩略图
+    // if (imageCache.containsKey(cacheKey) != true) {
+    //   // 缓存缩略图数据
+    //   imageCache.put(cacheKey, thumbnail);
+    // }
 
     // 设置缩略图的适当留白（与WorkGridItem保持一致）
     return Image.memory(
