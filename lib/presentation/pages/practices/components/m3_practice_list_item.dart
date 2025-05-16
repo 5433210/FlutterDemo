@@ -62,7 +62,7 @@ class M3PracticeListItem extends StatelessWidget {
         onTap: onTap,
         onLongPress: onLongPress,
         child: SizedBox(
-          height: 120, // 固定高度
+          height: AppSizes.workListItemHeight, // 使用统一的高度
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,31 +70,36 @@ class M3PracticeListItem extends StatelessWidget {
               Stack(
                 children: [
                   SizedBox(
-                    width: 160,
+                    width: AppSizes.workListThumbnailWidth,
                     child: Container(
                       alignment: Alignment.center,
                       child: _buildThumbnail(context),
                     ),
                   ),
-                  // Selection indicator
+                  // 选择指示器
                   if (isSelectionMode)
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: AppSizes.s,
+                      top: AppSizes.s,
                       child: Container(
                         decoration: BoxDecoration(
-                          color:
-                              colorScheme.surface.withAlpha(204), // 0.8 opacity
+                          color: isSelected
+                              ? colorScheme.primaryContainer
+                              : colorScheme.surfaceContainerHighest
+                                  .withAlpha(100),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          isSelected
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          color: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.outline,
-                          size: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSizes.xs),
+                          child: Icon(
+                            isSelected
+                                ? Icons.check_circle
+                                : Icons.circle_outlined,
+                            color: isSelected
+                                ? colorScheme.primary
+                                : colorScheme.onSurfaceVariant,
+                            size: AppSizes.iconMedium,
+                          ),
                         ),
                       ),
                     ),
@@ -107,83 +112,79 @@ class M3PracticeListItem extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        practice['title'] ?? '',
-                        style: theme.textTheme.titleMedium,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _formatDateTime(practice['updateTime']),
-                        style: theme.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${practice['pageCount'] ?? 0}${l10n.practiceListPages}',
-                        style: theme.textTheme.bodySmall,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              practice['title'] ?? '',
+                              style: theme.textTheme.titleMedium,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (!isSelectionMode && onToggleFavorite != null)
+                            IconButton(
+                              onPressed: onToggleFavorite,
+                              icon: Icon(
+                                practice['isFavorite'] == true
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: practice['isFavorite'] == true
+                                    ? colorScheme.error
+                                    : colorScheme.onSurfaceVariant,
+                              ),
+                              iconSize: AppSizes.iconMedium,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(AppSizes.xs),
+                              tooltip: l10n.filterFavoritesOnly,
+                            ),
+                        ],
                       ),
 
-                      // Display tags if available
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildTagsList(context),
-                            ),
-                            if (onTagsEdited != null && !isSelectionMode)
-                              IconButton(
-                                onPressed: () => _showTagEditDialog(context),
-                                icon: const Icon(Icons.edit_outlined),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                iconSize: 16,
-                                splashRadius: 20,
-                                tooltip: l10n.edit,
-                              ),
-                          ],
-                        ),
-                      ),
+                      const SizedBox(height: AppSizes.xs),
 
-                      const Spacer(),
-                      if (!isSelectionMode)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (onToggleFavorite != null)
-                              IconButton(
-                                onPressed: () {
-                                  debugPrint(
-                                      'List item收藏按钮点击: isFavorite=${practice['isFavorite']}');
-                                  onToggleFavorite?.call();
-                                },
-                                icon: Icon(
-                                  practice['isFavorite'] == true
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: practice['isFavorite'] == true
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                  size: 20,
-                                ),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                iconSize: 20,
-                                splashRadius: 20,
-                                tooltip: l10n.filterFavoritesOnly,
+                      // 信息行
+                      Row(
+                        children: [
+                          _buildInfoChip(
+                            context,
+                            Icons.calendar_today_outlined,
+                            _formatDateTime(practice['updateTime']),
+                          ),
+                          const SizedBox(width: AppSizes.s),
+                          _buildInfoChip(
+                            context,
+                            Icons.article_outlined,
+                            '${practice['pageCount'] ?? 0}${l10n.practiceListPages}',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSizes.xs),
+
+                      // 标签和编辑按钮
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTagsList(context),
+                          ),
+                          if (!isSelectionMode && onTagsEdited != null)
+                            IconButton(
+                              onPressed: () => _showTagEditDialog(context),
+                              icon: const Icon(Icons.edit_outlined),
+                              iconSize: AppSizes.iconMedium,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
                               ),
-                            Icon(
-                              Icons.chevron_right,
-                              color: colorScheme.onSurfaceVariant,
-                              size: 20,
+                              padding: const EdgeInsets.all(AppSizes.xs),
+                              tooltip: l10n.edit,
                             ),
-                          ],
-                        ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -225,6 +226,36 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
+  /// 构建带图标的信息标签
+  Widget _buildInfoChip(BuildContext context, IconData icon, String text) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.xs,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.secondaryContainer.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colorScheme.onSecondaryContainer),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSecondaryContainer,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Build loading indicator
   Widget _buildLoadingIndicator(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -255,11 +286,34 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
-  /// Build tags list widget
-  Widget _buildTagsList(BuildContext context) {
+  /// 构建标签项
+  Widget _buildTagChip(BuildContext context, dynamic tag) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.tagChipHorizontalPadding,
+        vertical: AppSizes.tagChipVerticalPadding,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
+      ),
+      child: Text(
+        '#$tag',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: colorScheme.primary,
+          fontSize: AppSizes.tagChipFontSize,
+        ),
+      ),
+    );
+  }
+
+  /// 构建标签列表
+  Widget _buildTagsList(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final tags = (practice['tags'] as List<dynamic>?) ?? [];
 
     if (tags.isEmpty) {
@@ -274,26 +328,10 @@ class M3PracticeListItem extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (var i = 0; i < tags.length; i++)
-            Padding(
-              padding: EdgeInsets.only(right: i < tags.length - 1 ? 4 : 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '#${tags[i]}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                  ),
-                ),
-              ),
-            ),
-        ],
+      child: Wrap(
+        spacing: AppSizes.tagChipSpacing,
+        runSpacing: AppSizes.tagChipSpacing,
+        children: tags.map((tag) => _buildTagChip(context, tag)).toList(),
       ),
     );
   }
