@@ -55,7 +55,7 @@ class M3WorkListItem extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 缩略图区域 - 固定200px宽，维持4:3比例
+              // 缩略图区域 - 固定宽度
               Stack(
                 children: [
                   SizedBox(
@@ -102,6 +102,7 @@ class M3WorkListItem extends ConsumerWidget {
                   padding: const EdgeInsets.all(AppSizes.m),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       // 顶部：标题行
                       Row(
@@ -171,31 +172,32 @@ class M3WorkListItem extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppSizes.xs),
 
-                      // 元数据信息预览 - 设置为可滚动且有最大高度
-                      Expanded(
-                        child: _buildMetadataPreview(context),
-                      ),
-
-                      const Spacer(flex: 1),
-
-                      // 底部日期信息
+                      // 底部日期和元数据信息
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           // 创作日期
-                          _buildInfoItem(
-                            context,
-                            Icons.palette_outlined,
-                            '创作于 ${DateFormatter.formatCompact(work.creationDate)}',
+                          Flexible(
+                            child: _buildInfoItem(
+                              context,
+                              Icons.palette_outlined,
+                              '创作于 ${DateFormatter.formatCompact(work.creationDate)}',
+                            ),
                           ),
-
+                          const SizedBox(width: AppSizes.s),
                           // 导入日期
-                          _buildInfoItem(
-                            context,
-                            Icons.add_circle_outline,
-                            '导入于 ${DateFormatter.formatCompact(work.createTime)}',
+                          Flexible(
+                            child: _buildInfoItem(
+                              context,
+                              Icons.add_circle_outline,
+                              '导入于 ${DateFormatter.formatCompact(work.createTime)}',
+                            ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: AppSizes.xs),
+                      // 元数据预览
+                      Flexible(
+                        child: _buildMetadataPreview(context),
                       ),
                     ],
                   ),
@@ -279,10 +281,13 @@ class M3WorkListItem extends ConsumerWidget {
       children: [
         Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: colorScheme.onSurfaceVariant,
+        Flexible(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -294,55 +299,16 @@ class M3WorkListItem extends ConsumerWidget {
     final tags = work.tags;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-
     if (tags.isEmpty && onTagsEdited == null) {
       return const SizedBox.shrink();
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 标签标题行，包含编辑按钮
-        if (tags.isNotEmpty || onTagsEdited != null)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              if (tags.isNotEmpty)
-                Text(
-                  'Tags:',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              if (!isSelectionMode && onTagsEdited != null)
-                IconButton(
-                  onPressed: onTagsEdited,
-                  icon: const Icon(Icons.edit_outlined),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  iconSize: 16,
-                  splashRadius: 20,
-                  tooltip: 'Edit Tags',
-                ),
-            ],
-          ),
-
-        // 标签内容
-        if (tags.isNotEmpty)
-          Container(
-            constraints:
-                const BoxConstraints(maxHeight: AppSizes.tagContainerMaxHeight),
-            child: SingleChildScrollView(
-              child: Wrap(
-                spacing: AppSizes.tagChipSpacing,
-                runSpacing: AppSizes.tagChipSpacing,
-                children:
-                    tags.map((tag) => _buildTagChip(context, tag)).toList(),
-              ),
-            ),
-          ),
-      ],
+    return SingleChildScrollView(
+      child: Wrap(
+        spacing: AppSizes.tagChipSpacing,
+        runSpacing: AppSizes.tagChipSpacing,
+        children: tags.map((tag) => _buildTagChip(context, tag)).toList(),
+      ),
     );
   }
 
@@ -356,7 +322,7 @@ class M3WorkListItem extends ConsumerWidget {
         child: Icon(
           Icons.image_outlined,
           size: 48,
-          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          color: colorScheme.onSurfaceVariant.withAlpha(128),
         ),
       ),
     );
@@ -372,7 +338,7 @@ class M3WorkListItem extends ConsumerWidget {
           horizontal: AppSizes.tagChipHorizontalPadding,
           vertical: AppSizes.tagChipVerticalPadding),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.1),
+        color: colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
       ),
       child: Text(
