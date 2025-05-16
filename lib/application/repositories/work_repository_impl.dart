@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -308,39 +306,39 @@ class WorkRepositoryImpl implements WorkRepository {
 
   /// 将数据库中的时间戳转换为ISO8601字符串
   Map<String, dynamic> _convertDates(Map<String, dynamic> data) {
-    AppLogger.debug(
-      '转换作品数据',
-      tag: 'WorkRepositoryImpl',
-      data: {
-        'hasCollectedChars': data.containsKey('collectedChars'),
-        'collectedCharsRaw': data['collectedChars'],
-      },
-    );
+    // AppLogger.debug(
+    //   '转换作品数据',
+    //   tag: 'WorkRepositoryImpl',
+    //   data: {
+    //     'hasCollectedChars': data.containsKey('collectedChars'),
+    //     'collectedCharsRaw': data['collectedChars'],
+    //   },
+    // );
 
-    List<dynamic> collectedChars = [];
-    if (data['collectedChars'] != null) {
-      try {
-        if (data['collectedChars'] is String) {
-          // 如果是字符串，尝试解析JSON
-          collectedChars = jsonDecode(data['collectedChars'] as String) as List;
-        } else if (data['collectedChars'] is List) {
-          // 如果已经是列表，直接使用
-          collectedChars = data['collectedChars'] as List;
-        }
-        AppLogger.debug(
-          '解析集字数据成功',
-          tag: 'WorkRepositoryImpl',
-          data: {'parsedCount': collectedChars.length},
-        );
-      } catch (e) {
-        AppLogger.error(
-          '解析集字数据失败',
-          tag: 'WorkRepositoryImpl',
-          error: e,
-          data: {'raw': data['collectedChars']},
-        );
-      }
-    }
+    // List<dynamic> collectedChars = [];
+    // if (data['collectedChars'] != null) {
+    //   try {
+    //     if (data['collectedChars'] is String) {
+    //       // 如果是字符串，尝试解析JSON
+    //       collectedChars = jsonDecode(data['collectedChars'] as String) as List;
+    //     } else if (data['collectedChars'] is List) {
+    //       // 如果已经是列表，直接使用
+    //       collectedChars = data['collectedChars'] as List;
+    //     }
+    //     AppLogger.debug(
+    //       '解析集字数据成功',
+    //       tag: 'WorkRepositoryImpl',
+    //       data: {'parsedCount': collectedChars.length},
+    //     );
+    //   } catch (e) {
+    //     AppLogger.error(
+    //       '解析集字数据失败',
+    //       tag: 'WorkRepositoryImpl',
+    //       error: e,
+    //       data: {'raw': data['collectedChars']},
+    //     );
+    //   }
+    // }
 
     return {
       ...data,
@@ -350,7 +348,7 @@ class WorkRepositoryImpl implements WorkRepository {
               .where((tag) => tag.isNotEmpty)
               .toList() ??
           const [],
-      'collectedChars': collectedChars,
+      // 'collectedChars': collectedChars,
       'creationDate': data['creationDate'],
       'createTime': data['createTime'],
       'updateTime': data['updateTime'],
@@ -359,32 +357,32 @@ class WorkRepositoryImpl implements WorkRepository {
     };
   }
 
-  /// 将时间字段转换为ISO8601字符串
-  String? _convertToIso8601String(dynamic value) {
-    if (value == null) {
-      return null;
-    }
+  // /// 将时间字段转换为ISO8601字符串
+  // String? _convertToIso8601String(dynamic value) {
+  //   if (value == null) {
+  //     return null;
+  //   }
 
-    // 如果已经是字符串格式，检查是否为ISO8601格式
-    if (value is String && value.contains('T')) {
-      return value;
-    }
+  //   // 如果已经是字符串格式，检查是否为ISO8601格式
+  //   if (value is String && value.contains('T')) {
+  //     return value;
+  //   }
 
-    // 否则作为时间戳处理
-    return DateTime.fromMillisecondsSinceEpoch(value as int).toIso8601String();
-  }
+  //   // 否则作为时间戳处理
+  //   return DateTime.fromMillisecondsSinceEpoch(value as int).toIso8601String();
+  // }
 
   /// 将WorkEntity转换为数据库表字段
   Map<String, dynamic> _toTableJson(WorkEntity work) {
-    AppLogger.debug(
-      '保存作品数据',
-      tag: 'WorkRepositoryImpl',
-      data: {
-        'workId': work.id,
-        'collectedCharsCount': work.collectedChars.length,
-        'collectedCharIds': work.collectedChars.map((c) => c.id).toList(),
-      },
-    );
+    // AppLogger.debug(
+    //   '保存作品数据',
+    //   tag: 'WorkRepositoryImpl',
+    //   data: {
+    //     'workId': work.id,
+    //     'collectedCharsCount': work.collectedChars.length,
+    //     'collectedCharIds': work.collectedChars.map((c) => c.id).toList(),
+    //   },
+    // );
 
     final Map<String, dynamic> data = {
       'id': work.id,
@@ -405,34 +403,34 @@ class WorkRepositoryImpl implements WorkRepository {
       'isFavorite': work.isFavorite ? 1 : 0,
     };
 
-    try {
-      // 序列化集字数据
-      if (work.collectedChars.isNotEmpty) {
-        final collectedCharsJson = jsonEncode(
-          work.collectedChars.map((c) => c.toJson()).toList(),
-        );
-        data['collectedChars'] = collectedCharsJson;
+    // try {
+    //   // 序列化集字数据
+    //   if (work.collectedChars.isNotEmpty) {
+    //     final collectedCharsJson = jsonEncode(
+    //       work.collectedChars.map((c) => c.toJson()).toList(),
+    //     );
+    //     data['collectedChars'] = collectedCharsJson;
 
-        AppLogger.debug(
-          '集字数据序列化成功',
-          tag: 'WorkRepositoryImpl',
-          data: {
-            'workId': work.id,
-            'jsonLength': collectedCharsJson.length,
-          },
-        );
-      }
-    } catch (e) {
-      AppLogger.error(
-        '集字数据序列化失败',
-        tag: 'WorkRepositoryImpl',
-        error: e,
-        data: {
-          'workId': work.id,
-          'collectedCharsCount': work.collectedChars.length,
-        },
-      );
-    }
+    //     AppLogger.debug(
+    //       '集字数据序列化成功',
+    //       tag: 'WorkRepositoryImpl',
+    //       data: {
+    //         'workId': work.id,
+    //         'jsonLength': collectedCharsJson.length,
+    //       },
+    //     );
+    //   }
+    // } catch (e) {
+    //   AppLogger.error(
+    //     '集字数据序列化失败',
+    //     tag: 'WorkRepositoryImpl',
+    //     error: e,
+    //     data: {
+    //       'workId': work.id,
+    //       'collectedCharsCount': work.collectedChars.length,
+    //     },
+    //   );
+    // }
 
     return data;
   }

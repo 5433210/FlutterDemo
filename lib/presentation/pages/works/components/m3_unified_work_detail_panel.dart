@@ -158,10 +158,6 @@ class _M3UnifiedWorkDetailPanelState
         if (!widget.isEditing)
           Row(
             children: [
-              Text(
-                '收藏状态',
-                style: theme.textTheme.titleSmall,
-              ),
               const Spacer(),
               IconButton(
                 icon: Icon(
