@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../widgets/tag_editor.dart';
 
-/// Practice tag edit dialog
-class M3PracticeTagEditDialog extends StatefulWidget {
+/// Work tag edit dialog
+class M3WorkTagEditDialog extends StatefulWidget {
   /// Current tags
   final List<String> tags;
 
@@ -14,7 +14,7 @@ class M3PracticeTagEditDialog extends StatefulWidget {
   /// Callback when tags are saved
   final Function(List<String>) onSaved;
 
-  const M3PracticeTagEditDialog({
+  const M3WorkTagEditDialog({
     super.key,
     required this.tags,
     required this.suggestedTags,
@@ -22,11 +22,10 @@ class M3PracticeTagEditDialog extends StatefulWidget {
   });
 
   @override
-  State<M3PracticeTagEditDialog> createState() =>
-      _M3PracticeTagEditDialogState();
+  State<M3WorkTagEditDialog> createState() => _M3WorkTagEditDialogState();
 }
 
-class _M3PracticeTagEditDialogState extends State<M3PracticeTagEditDialog> {
+class _M3WorkTagEditDialogState extends State<M3WorkTagEditDialog> {
   List<String> _currentTags = [];
 
   @override

@@ -370,11 +370,13 @@ class M3PracticeListItem extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => M3PracticeTagEditDialog(
         tags: currentTags,
         suggestedTags: const [], // We'll implement suggested tags later
         onSaved: (newTags) {
           onTagsEdited!(practiceId, newTags);
+          Navigator.of(context).pop();
         },
       ),
     );

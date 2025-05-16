@@ -14,6 +14,9 @@ class M3WorkListView extends StatelessWidget {
   /// 切换收藏状态的回调
   final Function(String)? onToggleFavorite;
 
+  /// 编辑标签的回调
+  final Function(String)? onTagsEdited;
+
   const M3WorkListView({
     super.key,
     required this.works,
@@ -22,6 +25,7 @@ class M3WorkListView extends StatelessWidget {
     required this.onSelectionChanged,
     this.onItemTap,
     this.onToggleFavorite,
+    this.onTagsEdited,
   });
 
   @override
@@ -42,6 +46,8 @@ class M3WorkListView extends StatelessWidget {
           onToggleFavorite: onToggleFavorite != null
               ? () => onToggleFavorite!.call(work.id)
               : null,
+          onTagsEdited:
+              onTagsEdited != null ? () => onTagsEdited!.call(work.id) : null,
         );
       },
     );

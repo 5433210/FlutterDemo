@@ -16,6 +16,9 @@ class M3WorkGridItem extends ConsumerWidget {
   /// 切换收藏状态的回调
   final VoidCallback? onToggleFavorite;
 
+  /// 编辑标签的回调
+  final VoidCallback? onTagsEdited;
+
   const M3WorkGridItem({
     super.key,
     required this.work,
@@ -23,6 +26,7 @@ class M3WorkGridItem extends ConsumerWidget {
     required this.isSelectionMode,
     required this.onTap,
     this.onToggleFavorite,
+    this.onTagsEdited,
   });
 
   @override
@@ -140,21 +144,41 @@ class M3WorkGridItem extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSizes.xs),
-                  // 添加标签行
-                  if (work.tags.isNotEmpty)
-                    SizedBox(
-                      height: AppSizes.workGridItemTagHeight,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: work.tags.length > 3 ? 3 : work.tags.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: AppSizes.tagChipSpacing),
-                        itemBuilder: (context, index) {
-                          final tag = work.tags[index];
-                          return _buildTagChip(context, tag);
-                        },
-                      ),
-                    ),
+                  // 添加标签行和编辑按钮
+                  Row(
+                    children: [
+                      // 标签区域
+                      if (work.tags.isNotEmpty)
+                        Expanded(
+                          child: SizedBox(
+                            height: AppSizes.workGridItemTagHeight,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount:
+                                  work.tags.length > 3 ? 3 : work.tags.length,
+                              separatorBuilder: (_, __) => const SizedBox(
+                                  width: AppSizes.tagChipSpacing),
+                              itemBuilder: (context, index) {
+                                final tag = work.tags[index];
+                                return _buildTagChip(context, tag);
+                              },
+                            ),
+                          ),
+                        ),
+
+                      // 编辑标签按钮
+                      if (!isSelectionMode && onTagsEdited != null)
+                        IconButton(
+                          onPressed: onTagsEdited,
+                          icon: const Icon(Icons.edit_outlined),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          iconSize: 16,
+                          splashRadius: 20,
+                          tooltip: 'Edit Tags',
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

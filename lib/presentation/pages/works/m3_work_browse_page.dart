@@ -16,6 +16,7 @@ import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_grid_view.dart';
 import 'components/content/m3_work_list_view.dart';
+import 'components/dialogs/m3_work_tag_edit_dialog.dart';
 import 'components/filter/m3_work_filter_panel.dart';
 import 'components/m3_work_browse_navigation_bar.dart';
 
@@ -238,6 +239,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                     onToggleFavorite: (workId) => ref
                         .read(workBrowseProvider.notifier)
                         .toggleFavorite(workId),
+                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
                   )
                 : M3WorkListView(
                     works: state.works,
@@ -250,7 +252,58 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                     onToggleFavorite: (workId) => ref
                         .read(workBrowseProvider.notifier)
                         .toggleFavorite(workId),
+                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
                   );
+  }
+
+  /// Handle tag editing for a work
+  Future<void> _handleTagEdited(BuildContext context, String workId) async {
+    final l10n = AppLocalizations.of(context);
+
+    try {
+      final work =
+          ref.read(workBrowseProvider).works.firstWhere((w) => w.id == workId);
+
+      // Get all existing tags for suggestions
+      final allTags = ref
+          .read(workBrowseProvider)
+          .works
+          .expand((work) => work.tags)
+          .toSet()
+          .toList();
+      final result = await showDialog<List<String>>(
+        context: context,
+        builder: (context) => M3WorkTagEditDialog(
+          tags: work.tags,
+          suggestedTags: allTags,
+          onSaved: (newTags) {
+            Navigator.of(context).pop(newTags);
+          },
+        ),
+        barrierDismissible: false,
+      );
+
+      if (result != null) {
+        AppLogger.debug('更新作品标签', tag: 'WorkBrowsePage', data: {
+          'workId': workId,
+          'oldTags': work.tags,
+          'newTags': result,
+        });
+
+        // Update the tags
+        await ref.read(workBrowseProvider.notifier).updateTags(workId, result);
+      }
+    } catch (e) {
+      AppLogger.error('编辑标签失败', tag: 'WorkBrowsePage', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.workBrowseError(e.toString())),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   void _handleWorkSelected(BuildContext context, String workId) async {

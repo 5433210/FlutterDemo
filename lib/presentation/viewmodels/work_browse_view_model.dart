@@ -324,6 +324,37 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     loadWorks(forceRefresh: true);
   }
 
+  // 更新标签
+  Future<void> updateTags(String workId, List<String> newTags) async {
+    if (state.isLoading) return;
+
+    try {
+      AppLogger.debug('更新作品标签', tag: 'WorkBrowseViewModel', data: {
+        'workId': workId,
+        'newTags': newTags,
+      });
+
+      // 查找要更新的作品
+      final workToUpdate = state.works.firstWhere((w) => w.id == workId);
+
+      // 更新标签
+      final updatedWork = workToUpdate.updateTags(newTags);
+
+      // 保存到服务器
+      final savedWork = await _workService.updateWorkEntity(updatedWork);
+
+      // 更新本地状态
+      final updatedWorks = state.works.map((work) {
+        return work.id == workId ? savedWork : work;
+      }).toList();
+
+      state = state.copyWith(works: updatedWorks);
+    } catch (e) {
+      AppLogger.error('更新标签失败',
+          tag: 'WorkBrowseViewModel', error: e, data: {'workId': workId});
+    }
+  }
+
   void _handleLoadError(dynamic error, StackTrace stack) {
     AppLogger.error('加载作品列表失败',
         tag: 'WorkBrowseViewModel', error: error, stackTrace: stack);

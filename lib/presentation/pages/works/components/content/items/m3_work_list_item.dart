@@ -17,6 +17,9 @@ class M3WorkListItem extends ConsumerWidget {
   /// 切换收藏状态的回调
   final VoidCallback? onToggleFavorite;
 
+  /// 编辑标签的回调
+  final VoidCallback? onTagsEdited;
+
   const M3WorkListItem({
     super.key,
     required this.work,
@@ -24,6 +27,7 @@ class M3WorkListItem extends ConsumerWidget {
     required this.isSelectionMode,
     required this.onTap,
     this.onToggleFavorite,
+    this.onTagsEdited,
   });
 
   @override
@@ -288,22 +292,57 @@ class M3WorkListItem extends ConsumerWidget {
   // 构建元数据预览
   Widget _buildMetadataPreview(BuildContext context) {
     final tags = work.tags;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
-    if (tags.isEmpty) {
+    if (tags.isEmpty && onTagsEdited == null) {
       return const SizedBox.shrink();
     }
 
-    // 显示标签
-    return Container(
-      constraints: const BoxConstraints(
-          maxHeight: AppSizes.tagContainerMaxHeight), // 限制最大高度
-      child: SingleChildScrollView(
-        child: Wrap(
-          spacing: AppSizes.tagChipSpacing,
-          runSpacing: AppSizes.tagChipSpacing,
-          children: tags.map((tag) => _buildTagChip(context, tag)).toList(),
-        ),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 标签标题行，包含编辑按钮
+        if (tags.isNotEmpty || onTagsEdited != null)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              if (tags.isNotEmpty)
+                Text(
+                  'Tags:',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              if (!isSelectionMode && onTagsEdited != null)
+                IconButton(
+                  onPressed: onTagsEdited,
+                  icon: const Icon(Icons.edit_outlined),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  iconSize: 16,
+                  splashRadius: 20,
+                  tooltip: 'Edit Tags',
+                ),
+            ],
+          ),
+
+        // 标签内容
+        if (tags.isNotEmpty)
+          Container(
+            constraints:
+                const BoxConstraints(maxHeight: AppSizes.tagContainerMaxHeight),
+            child: SingleChildScrollView(
+              child: Wrap(
+                spacing: AppSizes.tagChipSpacing,
+                runSpacing: AppSizes.tagChipSpacing,
+                children:
+                    tags.map((tag) => _buildTagChip(context, tag)).toList(),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
