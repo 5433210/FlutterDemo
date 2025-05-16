@@ -48,14 +48,19 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   @override
   Future<List<String>> getAllTags() async {
     try {
-      // This query needs to be adjusted based on how tags are stored
-      // Assuming tags are stored in a JSON array column
+      // 添加JSON类型检查并处理非数组或空值情况
       final result = await _database.rawQuery(
         '''SELECT DISTINCT value AS tag
-           FROM $_viewName, json_each($_viewName.tags)''',
+           FROM $_viewName, json_each($_viewName.tags)
+           WHERE json_valid($_viewName.tags)
+           AND json_type($_viewName.tags) = 'array'
+           AND $_viewName.tags IS NOT NULL
+           AND $_viewName.tags != '[]' ''',
       );
 
-      return result.map((row) => row['tag'] as String).toList();
+      final tags = result.map((row) => row['tag'] as String).toList();
+      tags.sort(); // 对标签进行排序
+      return tags;
     } catch (e) {
       AppLogger.error('Failed to get all tags',
           tag: 'CharacterViewRepository', error: e);
@@ -307,7 +312,7 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
           conditions.add('OR');
         }
         conditions.add(
-            'json_array_length(tags) > 0 AND json_type(tags) = \'array\' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)');
+            'json_valid(tags) AND json_type(tags) = \'array\' AND tags IS NOT NULL AND tags != \'[]\' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)');
         args.add(filter.tags[i]);
       }
       conditions.add(')');
@@ -360,11 +365,15 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   /// Get tag usage counts
   Future<Map<String, int>> _getTagCounts() async {
     try {
-      // This query needs to be adjusted based on how tags are stored
       final result = await _database.rawQuery(
         '''SELECT value AS tag, COUNT(*) AS count
            FROM $_viewName, json_each($_viewName.tags)
-           GROUP BY value''',
+           WHERE json_valid($_viewName.tags)
+           AND json_type($_viewName.tags) = 'array'
+           AND $_viewName.tags IS NOT NULL
+           AND $_viewName.tags != '[]'
+           GROUP BY value
+           ORDER BY value''',
       );
 
       final tagCounts = <String, int>{};

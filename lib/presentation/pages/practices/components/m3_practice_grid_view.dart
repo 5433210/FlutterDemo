@@ -115,13 +115,16 @@ class M3PracticeGridView extends StatelessWidget {
         final columns = (width / AppSizes.gridCardWidth).floor();
         final crossAxisCount = columns < 2 ? 2 : columns;
 
+        const spacing = AppSizes.m;
+        const aspectRatio = 1 / 1.4;
+
         return GridView.builder(
-          padding: const EdgeInsets.all(AppSizes.spacingMedium),
+          padding: const EdgeInsets.all(AppSizes.m),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            mainAxisSpacing: AppSizes.gridMainAxisSpacing,
-            crossAxisSpacing: AppSizes.gridCrossAxisSpacing,
-            childAspectRatio: 0.75, // 3:4 aspect ratio
+            mainAxisSpacing: spacing,
+            crossAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
           ),
           itemCount: practices.length,
           itemBuilder: (context, index) {

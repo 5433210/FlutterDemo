@@ -166,13 +166,13 @@ class M3CharacterListView extends ConsumerWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(width: AppSizes.spacingSmall),
-                            if (character.isFavorite)
-                              Icon(
-                                Icons.star,
-                                color: theme.colorScheme.primary,
-                                size: 16,
-                              ),
+                            // const SizedBox(width: AppSizes.spacingSmall),
+                            // if (character.isFavorite)
+                            //   Icon(
+                            //     Icons.favorite,
+                            //     color: theme.colorScheme.error,
+                            //     size: 16,
+                            //   ),
                           ],
                         ),
                         subtitle: Column(
@@ -199,10 +199,10 @@ class M3CharacterListView extends ConsumerWidget {
                                   IconButton(
                                     icon: Icon(
                                       character.isFavorite
-                                          ? Icons.star
-                                          : Icons.star_border,
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
                                       color: character.isFavorite
-                                          ? theme.colorScheme.primary
+                                          ? theme.colorScheme.error
                                           : null,
                                     ),
                                     onPressed: () =>
@@ -270,8 +270,8 @@ class M3CharacterListView extends ConsumerWidget {
                         const SizedBox(width: AppSizes.spacingSmall),
                         if (character.isFavorite)
                           Icon(
-                            Icons.star,
-                            color: theme.colorScheme.primary,
+                            Icons.favorite,
+                            color: theme.colorScheme.error,
                             size: 16,
                           ),
                       ],
@@ -299,10 +299,10 @@ class M3CharacterListView extends ConsumerWidget {
                               IconButton(
                                 icon: Icon(
                                   character.isFavorite
-                                      ? Icons.star
-                                      : Icons.star_border,
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
                                   color: character.isFavorite
-                                      ? theme.colorScheme.primary
+                                      ? theme.colorScheme.error
                                       : null,
                                 ),
                                 onPressed: () => onToggleFavorite(character.id),

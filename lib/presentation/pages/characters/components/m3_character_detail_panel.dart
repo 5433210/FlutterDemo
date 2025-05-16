@@ -425,11 +425,11 @@ class _M3CharacterDetailPanelState
         ),
         overflow: TextOverflow.ellipsis,
       ),
-      if (character.isFavorite)
-        Icon(
-          Icons.star,
-          color: theme.colorScheme.primary,
-        ),
+      // if (character.isFavorite)
+      //   Icon(
+      //     Icons.favorite,
+      //     color: theme.colorScheme.error,
+      //   ),
     ];
 
     final endSectionWidgets = <Widget>[];
@@ -439,9 +439,9 @@ class _M3CharacterDetailPanelState
       endSectionWidgets.add(
         IconButton(
           icon: Icon(
-            character.isFavorite ? Icons.star : Icons.star_border,
+            character.isFavorite ? Icons.favorite : Icons.favorite_border,
             color: character.isFavorite
-                ? theme.colorScheme.primary
+                ? theme.colorScheme.error
                 : theme.colorScheme.onSurface,
           ),
           onPressed: () async {

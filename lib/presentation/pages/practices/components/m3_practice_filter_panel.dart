@@ -68,10 +68,9 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
 
     // 定义可用的排序字段
     final sortFieldOptions = [
+      {'value': 'updateTime', 'label': l10n.practiceListSortByUpdateTime},
       {'value': 'title', 'label': l10n.practiceListSortByTitle},
       {'value': 'createTime', 'label': l10n.practiceListSortByCreateTime},
-      {'value': 'updateTime', 'label': l10n.practiceListSortByUpdateTime},
-      {'value': 'status', 'label': l10n.practiceListSortByStatus},
     ];
 
     return [
@@ -89,7 +88,109 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
         ),
       ),
 
-      // 收藏部分
+      // 排序部分
+      buildSectionCard(
+        context,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.filterSortSection,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 8),
+            // 排序字段选择
+            SizedBox(
+              width: double.infinity,
+              child: DropdownButtonFormField<String>(
+                value: filter.sortField,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+                items: sortFieldOptions.map((field) {
+                  return DropdownMenuItem<String>(
+                    value: field['value'],
+                    child: Text(
+                      field['label']!,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    final newFilter = filter.copyWith(sortField: value);
+                    onFilterChanged(newFilter);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 排序方向
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 升序
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: false,
+                      groupValue: filter.sortOrder == 'desc',
+                      onChanged: (value) {
+                        if (value != null) {
+                          final newFilter = filter.copyWith(
+                            sortOrder: value ? 'desc' : 'asc',
+                          );
+                          onFilterChanged(newFilter);
+                        }
+                      },
+                    ),
+                    Flexible(
+                      child: Text(
+                        l10n.filterSortAscending,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                // 降序
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Radio<bool>(
+                      value: true,
+                      groupValue: filter.sortOrder == 'desc',
+                      onChanged: (value) {
+                        if (value != null) {
+                          final newFilter = filter.copyWith(
+                            sortOrder: value ? 'desc' : 'asc',
+                          );
+                          onFilterChanged(newFilter);
+                        }
+                      },
+                    ),
+                    Flexible(
+                      child: Text(
+                        l10n.filterSortDescending,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+
+      // 收藏过滤部分
       buildSectionCard(
         context,
         Column(
@@ -99,7 +200,7 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
               l10n.practiceListFilterFavorites,
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            const SizedBox(height: 8.0),
+            const SizedBox(height: 8),
             // 收藏过滤选项
             Row(
               children: [
@@ -114,98 +215,6 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
                 Expanded(
                   child: Text(l10n.filterFavoritesOnly),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-
-      // 排序部分
-      buildSectionCard(
-        context,
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.filterSortSection,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8.0),
-            // 排序字段选择
-            DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
-                isDense: true,
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              ),
-              value: filter.sortField,
-              items: sortFieldOptions.map((field) {
-                return DropdownMenuItem<String>(
-                  value: field['value'],
-                  child: Text(field['label']!),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  final newFilter = filter.copyWith(sortField: value);
-                  onFilterChanged(newFilter);
-                }
-              },
-            ),
-            const SizedBox(height: 8.0),
-            // 排序方向选择
-            InkWell(
-              onTap: () {
-                final newSortOrder =
-                    filter.sortOrder == 'desc' ? 'asc' : 'desc';
-                final newFilter = filter.copyWith(sortOrder: newSortOrder);
-                onFilterChanged(newFilter);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  children: [
-                    Icon(
-                      filter.sortOrder == 'desc'
-                          ? Icons.arrow_downward
-                          : Icons.arrow_upward,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      filter.sortOrder == 'desc'
-                          ? l10n.filterSortAscending
-                          : l10n.filterSortDescending,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      // 状态过滤部分
-      buildSectionCard(
-        context,
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.practiceListStatus,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8.0),
-            Wrap(
-              spacing: 8.0,
-              children: [
-                _buildStatusFilterChip(
-                    context, null, l10n.practiceListStatusAll),
-                _buildStatusFilterChip(
-                    context, 'draft', l10n.practiceListStatusDraft),
-                _buildStatusFilterChip(
-                    context, 'completed', l10n.practiceListStatusCompleted),
               ],
             ),
           ],

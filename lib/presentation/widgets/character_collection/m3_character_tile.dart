@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../theme/app_sizes.dart';
 import '../../viewmodels/states/character_grid_state.dart';
 import '../image/cached_image.dart';
 
@@ -96,12 +97,15 @@ class M3CharacterTile extends StatelessWidget {
             // Favorite indicator
             if (character.isFavorite)
               Positioned(
-                top: 4,
-                left: 4,
-                child: Icon(
-                  Icons.favorite,
-                  size: 16,
-                  color: colorScheme.error,
+                top: AppSizes.s,
+                left: AppSizes.s,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    Icons.favorite,
+                    size: AppSizes.iconMedium,
+                    color: colorScheme.error,
+                  ),
                 ),
               ),
           ],

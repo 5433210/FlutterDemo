@@ -375,7 +375,7 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
-  /// Format date time string
+  /// Format date time string with seconds
   String _formatDateTime(dynamic dateTimeValue) {
     if (dateTimeValue == null) return '';
 
@@ -390,8 +390,15 @@ class M3PracticeListItem extends StatelessWidget {
         return '';
       }
 
-      // Format as YYYY-MM-DD
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}';
+      // Format as YYYY-MM-DD HH:mm:ss
+      final year = dateTime.year.toString();
+      final month = dateTime.month.toString().padLeft(2, '0');
+      final day = dateTime.day.toString().padLeft(2, '0');
+      final hour = dateTime.hour.toString().padLeft(2, '0');
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      final second = dateTime.second.toString().padLeft(2, '0');
+
+      return '$year-$month-$day $hour:$minute:$second';
     } catch (e) {
       debugPrint('Format date time failed: $e');
       return dateTimeValue is String ? dateTimeValue : '';

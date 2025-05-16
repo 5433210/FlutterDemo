@@ -95,14 +95,14 @@ class M3CharacterCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (character.isFavorite) ...[
-                              const SizedBox(width: 2),
-                              Icon(
-                                Icons.star,
-                                color: theme.colorScheme.primary,
-                                size: 12, // Reduce icon size
-                              ),
-                            ],
+                            // if (character.isFavorite) ...[
+                            //   const SizedBox(width: 2),
+                            //   Icon(
+                            //     Icons.favorite,
+                            //     color: theme.colorScheme.error,
+                            //     size: 12, // Reduce icon size
+                            //   ),
+                            // ],
                           ],
                         ),
 
@@ -163,9 +163,11 @@ class M3CharacterCard extends StatelessWidget {
                 right: 4,
                 child: IconButton(
                   icon: Icon(
-                    character.isFavorite ? Icons.star : Icons.star_border,
+                    character.isFavorite
+                        ? Icons.favorite
+                        : Icons.favorite_border,
                     color: character.isFavorite
-                        ? theme.colorScheme.primary
+                        ? theme.colorScheme.error
                         : theme.colorScheme.onSurfaceVariant,
                   ),
                   onPressed: onToggleFavorite,

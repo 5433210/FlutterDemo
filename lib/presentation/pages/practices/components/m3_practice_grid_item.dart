@@ -1,12 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import 'dialogs/m3_practice_tag_edit_dialog.dart';
 
 /// Material 3 practice grid item
-class M3PracticeGridItem extends StatelessWidget {
+class M3PracticeGridItem extends ConsumerWidget {
   /// Practice data
   final Map<String, dynamic> practice;
 
@@ -40,9 +42,10 @@ class M3PracticeGridItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Card(
       elevation: isSelected ? 3 : 1,
@@ -65,79 +68,80 @@ class M3PracticeGridItem extends StatelessWidget {
           children: [
             // 缩略图区域
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(40.0),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Container(
-                      alignment: Alignment.center,
-                      child: _buildThumbnail(context),
-                    ),
-                    // Selection indicator
-                    if (isSelectionMode)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface
-                                .withAlpha(204), // 0.8 opacity
-                            shape: BoxShape.circle,
-                          ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    child: _buildThumbnail(context, ref),
+                  ),
+                  // 选择指示器
+                  if (isSelectionMode)
+                    Positioned(
+                      right: AppSizes.s,
+                      top: AppSizes.s,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colorScheme.primaryContainer
+                              : colorScheme.surfaceContainerHighest
+                                  .withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSizes.xs),
                           child: Icon(
                             isSelected
                                 ? Icons.check_circle
                                 : Icons.circle_outlined,
                             color: isSelected
                                 ? colorScheme.primary
-                                : colorScheme.outline,
-                            size: 24,
+                                : colorScheme.onSurfaceVariant,
+                            size: AppSizes.iconMedium,
                           ),
                         ),
                       ),
-                    if (!isSelectionMode && onToggleFavorite != null)
-                      Positioned(
-                        right: 8,
-                        top: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface
-                                .withAlpha(204), // 0.8 opacity
-                            shape: BoxShape.circle,
+                    ),
+                  // 收藏按钮
+                  if (!isSelectionMode && onToggleFavorite != null)
+                    Positioned(
+                      right: AppSizes.s,
+                      top: AppSizes.s,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerHighest
+                              .withOpacity(0.7),
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            practice['isFavorite'] == true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: practice['isFavorite'] == true
+                                ? colorScheme.error
+                                : colorScheme.onSurfaceVariant,
                           ),
-                          child: IconButton(
-                            onPressed: () {
-                              debugPrint(
-                                  'Grid item收藏按钮点击: isFavorite=${practice['isFavorite']}');
-                              onToggleFavorite?.call();
-                            },
-                            icon: Icon(
-                              practice['isFavorite'] == true
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: practice['isFavorite'] == true
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurfaceVariant,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            iconSize: 20,
-                            splashRadius: 20,
-                            tooltip: AppLocalizations.of(context)
-                                .filterFavoritesOnly,
+                          iconSize: AppSizes.iconMedium,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
                           ),
+                          padding: const EdgeInsets.all(AppSizes.xs),
+                          onPressed: onToggleFavorite,
+                          tooltip: l10n.filterFavoritesOnly,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
             // 底部信息区域
             Padding(
-              padding: const EdgeInsets.all(AppSizes.spacingMedium),
+              padding: const EdgeInsets.all(AppSizes.s),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     practice['title'] ?? '',
@@ -145,52 +149,50 @@ class M3PracticeGridItem extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.xs),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Flexible(
-                        flex: 3,
-                        child: Text(
-                          _formatDateTime(practice['updateTime']),
-                          style: theme.textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                      Text(
+                        _formatDateTime(practice['updateTime']),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        flex: 1,
-                        child: Text(
-                          '${practice['pageCount'] ?? 0}${AppLocalizations.of(context).practiceListPages}',
-                          style: theme.textTheme.bodySmall,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                      Text(
+                        '${practice['pageCount'] ?? 0}${l10n.practiceListPages}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  // Display tags if available
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildTagsList(context),
-                        ),
-                        if (onTagsEdited != null && !isSelectionMode)
-                          IconButton(
-                            onPressed: () => _showTagEditDialog(context),
-                            icon: const Icon(Icons.edit_outlined),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            iconSize: 16,
-                            splashRadius: 20,
-                            tooltip: AppLocalizations.of(context).edit,
+                  // 标签和编辑按钮
+                  if ((practice['tags'] != null &&
+                          practice['tags'].isNotEmpty) ||
+                      onTagsEdited != null)
+                    Container(
+                      margin: const EdgeInsets.only(top: AppSizes.s),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildTagsList(context),
                           ),
-                      ],
+                          if (!isSelectionMode && onTagsEdited != null)
+                            IconButton(
+                              onPressed: () => _showTagEditDialog(context),
+                              icon: const Icon(Icons.edit_outlined),
+                              iconSize: AppSizes.iconMedium,
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(AppSizes.xs),
+                              tooltip: l10n.edit,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -224,20 +226,6 @@ class M3PracticeGridItem extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  /// Build loading indicator
-  Widget _buildLoadingIndicator(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
         ),
       ),
     );
@@ -303,31 +291,31 @@ class M3PracticeGridItem extends StatelessWidget {
   }
 
   /// Build thumbnail widget
-  Widget _buildThumbnail(BuildContext context) {
+  Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final thumbnail = practice['thumbnail'] as Uint8List?;
+    final practiceId = practice['id'] as String?;
 
-    if (thumbnail == null || thumbnail.isEmpty) {
+    if (thumbnail == null || thumbnail.isEmpty || practiceId == null) {
       return _buildPlaceholder(context);
     }
 
-    return AspectRatio(
-      aspectRatio: 4 / 3, // 保持4:3比例，与作品浏览页一致
-      child: Image.memory(
-        thumbnail,
-        fit: BoxFit.contain, // 使用cover而不是contain，与作品浏览页一致
-        alignment: Alignment.center,
-        gaplessPlayback: true,
-        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (frame == null) {
-            return _buildLoadingIndicator(context);
-          }
-          return child;
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return _buildErrorPlaceholder(context, l10n);
-        },
-      ),
+    // 用内存缓存临时保存缩略图数据
+    final imageCache = ref.watch(imageCacheProvider);
+    final cacheKey = 'practice_thumbnail_$practiceId';
+    // 检查缓存中是否已存在该缩略图
+    if (imageCache.containsKey(cacheKey) != true) {
+      // 缓存缩略图数据
+      imageCache.put(cacheKey, thumbnail);
+    }
+
+    // 设置缩略图的适当留白（与WorkGridItem保持一致）
+    return Image.memory(
+      thumbnail,
+      fit: BoxFit.cover, // 使用cover与WorkGridItem保持一致
+      errorBuilder: (context, error, stackTrace) {
+        return _buildErrorPlaceholder(context, l10n);
+      },
     );
   }
 
