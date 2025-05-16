@@ -142,6 +142,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
                               onToggleFavorite: _handleToggleFavorite,
+                              onTagsEdited: _handleTagEdited,
                               isLoading: false,
                               errorMessage: null,
                             )
@@ -152,6 +153,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
                               onToggleFavorite: _handleToggleFavorite,
+                              onTagsEdited: _handleTagEdited,
                               isLoading: false,
                               errorMessage: null,
                             )),
@@ -289,6 +291,58 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     }
   }
 
+  /// Handle tag editing
+  Future<void> _handleTagEdited(String id, List<String> newTags) async {
+    try {
+      final practiceService = ref.read(practiceServiceProvider);
+
+      // Get the current practice entity
+      final practice = await practiceService.getPractice(id);
+      if (practice == null) {
+        debugPrint('Practice not found: $id');
+        return;
+      }
+
+      // Update the practice with new tags
+      final updatedPractice = practice.copyWith(tags: newTags);
+      final result = await practiceService.updatePractice(updatedPractice);
+
+      if (result.id == id) {
+        debugPrint('Updated tags successfully for practice: $id');
+
+        // Update the UI
+        setState(() {
+          // Update in _practices
+          for (int i = 0; i < _practices.length; i++) {
+            if (_practices[i]['id'] == id) {
+              _practices[i]['tags'] = newTags;
+              break;
+            }
+          }
+
+          // Update in _filteredPractices
+          for (int i = 0; i < _filteredPractices.length; i++) {
+            if (_filteredPractices[i]['id'] == id) {
+              _filteredPractices[i]['tags'] = newTags;
+              break;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to update tags: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('${AppLocalizations.of(context).practiceListError}: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   /// Handle toggling the favorite status of a practice
   Future<void> _handleToggleFavorite(String id) async {
     debugPrint('开始切换收藏状态: ID=$id');
@@ -397,6 +451,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
             'pageCount': practice.pages.length,
             'thumbnail': practice.thumbnail,
             'isFavorite': practice.isFavorite,
+            'tags': practice.tags,
           };
 
           practicesMap.add(practiceMap);

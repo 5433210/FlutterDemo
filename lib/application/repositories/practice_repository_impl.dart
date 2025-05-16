@@ -548,6 +548,12 @@ class PracticeRepositoryImpl implements PracticeRepository {
     // 创建一个新的Map来避免修改原始数据
     final result = Map<String, dynamic>.from(json);
 
+    // 移除数据库中不存在的status字段
+    if (result.containsKey('status')) {
+      debugPrint('_prepareForSave: 移除status字段，数据库中不存在该列');
+      result.remove('status');
+    }
+
     // 确保isFavorite字段被转换为SQLite兼容的整数值
     if (result.containsKey('isFavorite')) {
       result['isFavorite'] = result['isFavorite'] == true ? 1 : 0;
@@ -556,6 +562,31 @@ class PracticeRepositoryImpl implements PracticeRepository {
       // 如果不存在，设置默认值
       result['isFavorite'] = 0;
       debugPrint('_prepareForSave: isFavorite字段不存在，设为默认值0');
+    }
+
+    // 处理tags字段，将List<String>转换为JSON字符串
+    if (result.containsKey('tags') && result['tags'] != null) {
+      try {
+        if (result['tags'] is List) {
+          debugPrint(
+              '_prepareForSave: 将tags字段转换为JSON字符串，tags数量: ${result['tags'].length}');
+          result['tags'] = jsonEncode(result['tags']);
+        } else if (result['tags'] is String) {
+          // 如果已经是字符串，不需要处理
+          debugPrint('_prepareForSave: tags字段已经是字符串');
+        } else {
+          // 如果是其他类型，设置为空字符串
+          debugPrint('_prepareForSave: tags字段类型未知，设为空字符串');
+          result['tags'] = '[]';
+        }
+      } catch (e) {
+        debugPrint('_prepareForSave: 转换tags字段失败: $e，设为空字符串');
+        result['tags'] = '[]';
+      }
+    } else {
+      // 如果不存在，设置为空列表的JSON字符串
+      result['tags'] = '[]';
+      debugPrint('_prepareForSave: tags字段不存在，设为空列表');
     }
 
     // 处理pages字段，将复杂的List<Map>结构转换为JSON字符串
@@ -586,10 +617,36 @@ class PracticeRepositoryImpl implements PracticeRepository {
     return result;
   }
 
-  /// 处理从数据库获取的数据，确保pages字段格式正确
+  /// 处理从数据库获取的数据，确保pages和tags字段格式正确
   Map<String, dynamic> _processDbData(Map<String, dynamic> data) {
     // 创建一个新的Map来存储处理后的数据
     final processedData = Map<String, dynamic>.from(data);
+
+    // 处理tags字段，如果是字符串，则解析为JSON
+    if (processedData['tags'] is String) {
+      final tagsJson = processedData['tags'] as String;
+      if (tagsJson.isNotEmpty) {
+        try {
+          // 解析JSON字符串
+          final decodedTags = jsonDecode(tagsJson);
+
+          // 如果解析结果是列表，则直接使用
+          if (decodedTags is List) {
+            processedData['tags'] = decodedTags;
+          } else {
+            // 如果不是列表，则使用空列表
+            processedData['tags'] = [];
+          }
+        } catch (e) {
+          debugPrint('解析tags字段失败: $e');
+          processedData['tags'] = []; // 解析失败时使用空列表
+        }
+      } else {
+        processedData['tags'] = []; // 空字符串时使用空列表
+      }
+    } else if (processedData['tags'] == null) {
+      processedData['tags'] = []; // null时使用空列表
+    }
 
     // 处理pages字段，如果是字符串，则解析为JSON
     if (processedData['pages'] is String) {
@@ -615,9 +672,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
       }
     } else if (processedData['pages'] == null) {
       processedData['pages'] = []; // null时使用空列表
-    }
-
-    // 处理isFavorite字段，确保是布尔类型
+    } // 处理isFavorite字段，确保是布尔类型
     if (processedData.containsKey('isFavorite')) {
       // SQLite中0表示false，1表示true
       processedData['isFavorite'] = processedData['isFavorite'] == 1;
@@ -627,6 +682,12 @@ class PracticeRepositoryImpl implements PracticeRepository {
       // 如果不存在，设置为默认值false
       processedData['isFavorite'] = false;
       debugPrint('_processDbData: isFavorite字段不存在，设为默认值false');
+    }
+
+    // 处理status字段，数据库表中不存在但实体模型中需要
+    if (!processedData.containsKey('status')) {
+      processedData['status'] = 'active'; // 使用默认值
+      debugPrint('_processDbData: status字段不存在于数据库，设为默认值active');
     }
 
     return processedData;

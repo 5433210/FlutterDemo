@@ -24,6 +24,9 @@ class M3PracticeGridView extends StatelessWidget {
   /// Callback when favorite is toggled
   final Function(String)? onToggleFavorite;
 
+  /// Callback when tags are edited
+  final Function(String, List<String>)? onTagsEdited;
+
   /// Whether the view is loading
   final bool isLoading;
 
@@ -38,6 +41,7 @@ class M3PracticeGridView extends StatelessWidget {
     required this.onPracticeTap,
     this.onPracticeLongPress,
     this.onToggleFavorite,
+    this.onTagsEdited,
     this.isLoading = false,
     this.errorMessage,
   });
@@ -134,6 +138,11 @@ class M3PracticeGridView extends StatelessWidget {
                   : null,
               onToggleFavorite:
                   onToggleFavorite != null ? () => onToggleFavorite!(id) : null,
+              onTagsEdited: (practiceId, newTags) {
+                if (onTagsEdited != null) {
+                  onTagsEdited!(id, newTags);
+                }
+              },
             );
           },
         );

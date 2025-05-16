@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
+import 'dialogs/m3_practice_tag_edit_dialog.dart';
 
 /// Material 3 practice list item
 class M3PracticeListItem extends StatelessWidget {
@@ -24,6 +25,9 @@ class M3PracticeListItem extends StatelessWidget {
   /// Callback when favorite is toggled
   final VoidCallback? onToggleFavorite;
 
+  /// Callback when tags are edited
+  final Function(String, List<String>)? onTagsEdited;
+
   const M3PracticeListItem({
     super.key,
     required this.practice,
@@ -32,6 +36,7 @@ class M3PracticeListItem extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.onToggleFavorite,
+    this.onTagsEdited,
   });
 
   @override
@@ -122,6 +127,29 @@ class M3PracticeListItem extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
+
+                      // Display tags if available
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: _buildTagsList(context),
+                            ),
+                            if (onTagsEdited != null && !isSelectionMode)
+                              IconButton(
+                                onPressed: () => _showTagEditDialog(context),
+                                icon: const Icon(Icons.edit_outlined),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: 16,
+                                splashRadius: 20,
+                                tooltip: l10n.edit,
+                              ),
+                          ],
+                        ),
+                      ),
+
                       const Spacer(),
                       if (!isSelectionMode)
                         Row(
@@ -227,6 +255,49 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
+  /// Build tags list widget
+  Widget _buildTagsList(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final tags = (practice['tags'] as List<dynamic>?) ?? [];
+
+    if (tags.isEmpty) {
+      return Text(
+        AppLocalizations.of(context).tagEditorNoTags,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.hintColor,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < tags.length; i++)
+            Padding(
+              padding: EdgeInsets.only(right: i < tags.length - 1 ? 4 : 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '#${tags[i]}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// Build thumbnail widget
   Widget _buildThumbnail(BuildContext context) {
     final theme = Theme.of(context);
@@ -287,5 +358,25 @@ class M3PracticeListItem extends StatelessWidget {
       debugPrint('Format date time failed: $e');
       return dateTimeValue is String ? dateTimeValue : '';
     }
+  }
+
+  /// Show tag edit dialog
+  void _showTagEditDialog(BuildContext context) {
+    if (onTagsEdited == null) return;
+
+    final practiceId = practice['id'] as String;
+    final currentTags =
+        List<String>.from(practice['tags'] as List<dynamic>? ?? []);
+
+    showDialog(
+      context: context,
+      builder: (context) => M3PracticeTagEditDialog(
+        tags: currentTags,
+        suggestedTags: const [], // We'll implement suggested tags later
+        onSaved: (newTags) {
+          onTagsEdited!(practiceId, newTags);
+        },
+      ),
+    );
   }
 }
