@@ -303,12 +303,33 @@ class M3WorkListItem extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    return SingleChildScrollView(
-      child: Wrap(
-        spacing: AppSizes.tagChipSpacing,
-        runSpacing: AppSizes.tagChipSpacing,
-        children: tags.map((tag) => _buildTagChip(context, tag)).toList(),
-      ),
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Wrap(
+              spacing: AppSizes.tagChipSpacing,
+              runSpacing: AppSizes.tagChipSpacing,
+              children: tags.map((tag) => _buildTagChip(context, tag)).toList(),
+            ),
+          ),
+        ),
+        if (onTagsEdited != null)
+          IconButton(
+            icon: Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: colorScheme.onSurfaceVariant,
+            ),
+            constraints: const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            ),
+            padding: const EdgeInsets.all(AppSizes.xs),
+            onPressed: onTagsEdited,
+            tooltip: '编辑标签',
+          ),
+      ],
     );
   }
 
