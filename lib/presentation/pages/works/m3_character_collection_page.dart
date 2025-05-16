@@ -15,6 +15,7 @@ import '../../widgets/character_collection/m3_delete_confirmation_dialog.dart';
 import '../../widgets/character_collection/m3_image_preview_panel.dart';
 import '../../widgets/character_collection/m3_navigation_bar.dart';
 import '../../widgets/character_collection/m3_right_panel.dart';
+import '../../widgets/common/resizable_panel.dart';
 
 // Keyboard shortcuts definition
 class CollectionShortcuts {
@@ -104,6 +105,7 @@ class _M3CharacterCollectionPageState
     extends ConsumerState<M3CharacterCollectionPage> {
   bool _isImageValid = false;
   String? _imageError;
+  double _panelWidth = 400; // Track the right panel width
 
   @override
   Widget build(BuildContext context) {
@@ -184,9 +186,17 @@ class _M3CharacterCollectionPageState
                               child: M3ImagePreviewPanel(),
                             ),
 
-                            // Right panel
-                            Expanded(
-                              flex: 4,
+                            // Right panel with ResizablePanel
+                            ResizablePanel(
+                              initialWidth: _panelWidth,
+                              minWidth: 350,
+                              maxWidth: 1000,
+                              isLeftPanel: false,
+                              onWidthChanged: (width) {
+                                setState(() {
+                                  _panelWidth = width;
+                                });
+                              },
                               child: M3RightPanel(workId: widget.workId),
                             ),
                           ],

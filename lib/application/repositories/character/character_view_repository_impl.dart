@@ -131,24 +131,62 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
   }
 
   /// 批量获取指定ID的字符数据
+  @override
   Future<List<CharacterView>> getCharactersByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
 
     try {
       // 构建IN查询的占位符
       final placeholders = List.filled(ids.length, '?').join(',');
+      final query = 'SELECT * FROM $_viewName WHERE id IN ($placeholders)';
 
-      final results = await _database.rawQuery(
-        'SELECT * FROM $_viewName WHERE id IN ($placeholders)',
-        ids,
-      );
-
-      AppLogger.debug('批量获取字符数据', data: {
-        'requestedCount': ids.length,
-        'returnedCount': results.length,
+      AppLogger.debug('开始批量查询字符', tag: 'CharacterViewRepository', data: {
+        'query': query,
+        'ids': ids,
       });
 
-      return results.map(_mapToCharacterView).toList();
+      final results = await _database.rawQuery(query, ids);
+
+      AppLogger.debug('获取字符数据结果', tag: 'CharacterViewRepository', data: {
+        'requestedCount': ids.length,
+        'returnedCount': results.length,
+        'firstRow': results.isNotEmpty
+            ? {
+                'id': results.first['id'],
+                'character': results.first['character'],
+                'workId': results.first['workId'],
+              }
+            : null,
+      });
+
+      // 转换每个结果行
+      final characters = <CharacterView>[];
+      for (final row in results) {
+        try {
+          final character = _mapToCharacterView(row);
+          characters.add(character);
+        } catch (e) {
+          AppLogger.error(
+            '字符数据转换失败',
+            tag: 'CharacterViewRepository',
+            error: e,
+            data: {'row': row},
+          );
+        }
+      }
+
+      AppLogger.debug('字符数据转换完成', tag: 'CharacterViewRepository', data: {
+        'convertedCount': characters.length,
+        'characters': characters
+            .map((c) => {
+                  'id': c.id,
+                  'character': c.character,
+                  'workId': c.workId,
+                })
+            .toList(),
+      });
+
+      return characters;
     } catch (e) {
       AppLogger.error('批量获取字符数据失败',
           tag: 'CharacterViewRepository', error: e, data: {'ids': ids});
@@ -425,50 +463,135 @@ class CharacterViewRepositoryImpl implements CharacterViewRepository {
 
   /// Map database row to CharacterView
   CharacterView _mapToCharacterView(Map<String, dynamic> map) {
-    // Parse tags from JSON string if needed
-    List<String> tags = [];
-    if (map['tags'] != null) {
-      // This assumes tags are stored as a string that can be parsed as a list
-      // Adjust based on actual storage format
-      final tagString = map['tags'] as String;
-      if (tagString.isNotEmpty) {
-        try {
-          if (tagString.startsWith('[') && tagString.endsWith(']')) {
-            // Handle JSON array format
-            tags = (jsonDecode(tagString) as List).cast<String>();
-          } else {
-            // Handle comma-separated format
-            tags = tagString.split(',').map((e) => e.trim()).toList();
-          }
-        } catch (e) {
-          AppLogger.warning('Failed to parse tags',
+    AppLogger.debug(
+      '开始映射字符数据',
+      tag: 'CharacterViewRepository',
+      data: {
+        'id': map['id'],
+        'character': map['character'],
+        'workId': map['workId'],
+      },
+    );
+
+    try {
+      // 解析并验证必需字段
+      final id =
+          map['id'] as String? ?? (throw const FormatException('字符ID不能为空'));
+      final character = map['character'] as String? ??
+          (throw const FormatException('字符内容不能为空'));
+      final workId =
+          map['workId'] as String? ?? (throw const FormatException('作品ID不能为空'));
+      final title = map['title'] as String? ?? '';
+
+      // 解析标签
+      List<String> tags = [];
+      if (map['tags'] != null) {
+        final tagString = map['tags'] as String;
+        if (tagString.isNotEmpty) {
+          try {
+            if (tagString.startsWith('[') && tagString.endsWith(']')) {
+              tags = (jsonDecode(tagString) as List).cast<String>();
+            } else {
+              tags = tagString.split(',').map((e) => e.trim()).toList();
+            }
+            AppLogger.debug(
+              '标签解析成功',
+              tag: 'CharacterViewRepository',
+              data: {'tags': tags},
+            );
+          } catch (e) {
+            AppLogger.warning(
+              '标签解析失败',
               tag: 'CharacterViewRepository',
               error: e,
-              data: {'tagString': tagString});
+              data: {'tagString': tagString},
+            );
+          }
         }
       }
-    }
 
-    return CharacterView(
-        id: map['id'] as String,
-        character: map['character'] as String,
-        workId: map['workId'] as String,
-        title: map['title'] as String,
+      // 解析日期时间
+      DateTime? creationTime;
+      if (map['creationTime'] != null) {
+        try {
+          creationTime = DateTime.parse(map['creationTime'] as String);
+        } catch (e) {
+          AppLogger.warning(
+            '创建时间解析失败',
+            tag: 'CharacterViewRepository',
+            error: e,
+            data: {'creationTime': map['creationTime']},
+          );
+        }
+      }
+
+      DateTime collectionTime;
+      try {
+        collectionTime = DateTime.parse(map['collectionTime'] as String);
+      } catch (e) {
+        AppLogger.warning(
+          '收集时间解析失败，使用当前时间',
+          tag: 'CharacterViewRepository',
+          error: e,
+        );
+        collectionTime = DateTime.now();
+      }
+
+      // 解析区域信息
+      CharacterRegion region;
+      try {
+        region = map['region'] != null
+            ? CharacterRegion.fromJson(jsonDecode(map['region'] as String))
+            : CharacterRegion.fromJson({});
+      } catch (e) {
+        AppLogger.warning(
+          '区域信息解析失败',
+          tag: 'CharacterViewRepository',
+          error: e,
+          data: {'region': map['region']},
+        );
+        region = CharacterRegion.fromJson({});
+      }
+
+      final view = CharacterView(
+        id: id,
+        character: character,
+        workId: workId,
+        title: title,
         author: map['author'] as String?,
-        creationTime: map['creationTime'] != null
-            ? DateTime.parse(map['creationTime'] as String)
-            : null,
-        collectionTime: DateTime.parse(map['collectionTime'] as String),
+        creationTime: creationTime,
+        collectionTime: collectionTime,
         isFavorite: (map['isFavorite'] as int?) == 1,
         tags: tags,
         pageId: map['pageId'] as String? ?? '',
         updateTime: map['updateTime'] != null
             ? DateTime.parse(map['updateTime'] as String)
             : DateTime.now(),
-        region: map['region'] != null
-            ? CharacterRegion.fromJson(jsonDecode(map['region'] as String))
-            : CharacterRegion.fromJson({}),
-        tool: WorkTool.fromString(map['tool'] as String),
-        style: WorkStyle.fromString(map['style'] as String));
+        region: region,
+        tool: WorkTool.fromString(map['tool'] as String? ?? ''),
+        style: WorkStyle.fromString(map['style'] as String? ?? ''),
+      );
+
+      AppLogger.debug(
+        '字符数据映射完成',
+        tag: 'CharacterViewRepository',
+        data: {
+          'id': view.id,
+          'character': view.character,
+          'workId': view.workId,
+          'tagCount': view.tags.length,
+        },
+      );
+
+      return view;
+    } catch (e) {
+      AppLogger.error(
+        '字符数据映射失败',
+        tag: 'CharacterViewRepository',
+        error: e,
+        data: map,
+      );
+      rethrow;
+    }
   }
 }

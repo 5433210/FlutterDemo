@@ -3,6 +3,7 @@ import 'dart:io';
 import '../../../domain/models/common/paginated_result.dart';
 import '../../../domain/models/work/work_entity.dart';
 import '../../../domain/models/work/work_filter.dart';
+import '../../../domain/repositories/character_repository.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../domain/repositories/work_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
@@ -16,16 +17,19 @@ class WorkService with WorkServiceErrorHandler {
   final WorkImageService _imageService;
   final IStorage _storage;
   final WorkImageRepository _workImageRepository;
+  final CharacterRepository _characterRepository;
 
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
     required IStorage storage,
     required WorkImageRepository workImageRepository,
+    required CharacterRepository characterRepository,
   })  : _repository = repository,
         _imageService = imageService,
         _storage = storage,
-        _workImageRepository = workImageRepository;
+        _workImageRepository = workImageRepository,
+        _characterRepository = characterRepository;
 
   /// 统计作品数量
   Future<int> count(WorkFilter? filter) async {
@@ -62,20 +66,44 @@ class WorkService with WorkServiceErrorHandler {
     return handleOperation(
       'getWorkEntity',
       () async {
+        // 获取基本作品数据
         final work = await _repository.get(workId);
         if (work != null) {
-          // Load work images
+          // 加载作品图片和字符数据
           final images = await _workImageRepository.getAllByWorkId(workId);
+          // 从作品关联的字符ID列表中获取字符数据
+          final characters = await _characterRepository
+              .getAll(); // 暂时获取所有字符，稍后需要实现按workId筛选的方法
+          final workCharacters =
+              characters.where((c) => c.workId == workId).toList();
+
           AppLogger.debug(
-            'Loading work with images',
+            'Found characters for work',
+            tag: 'WorkService',
+            data: {
+              'workId': workId,
+              'totalChars': characters.length,
+              'workChars': workCharacters.length,
+            },
+          );
+
+          AppLogger.debug(
+            'Loading work with all relations',
             tag: 'WorkService',
             data: {
               'workId': workId,
               'imageCount': images.length,
               'imagePaths': images.map((img) => img.path).toList(),
+              'collectedCharsCount': characters.length,
+              'collectedCharIds': characters.map((c) => c.id).toList(),
             },
           );
-          return work.copyWith(images: images);
+
+          // 复制作品实体，包含图片和字符数据
+          return work.copyWith(
+            images: images,
+            collectedChars: workCharacters,
+          );
         }
         return work;
       },

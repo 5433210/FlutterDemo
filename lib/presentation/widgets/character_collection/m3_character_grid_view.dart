@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../providers/character/character_grid_provider.dart';
+import '../pagination/m3_pagination_controls.dart';
 import 'm3_character_tile.dart';
 import 'm3_empty_state.dart';
 import 'm3_search_filter_bar.dart';
-import 'pagination_control.dart';
 
 class M3CharacterGridView extends ConsumerWidget {
   final String workId;
@@ -160,13 +160,12 @@ class M3CharacterGridView extends ConsumerWidget {
               }
             },
           ),
-        ),
-
-        // 分页控制
+        ), // 分页控制
         if (gridState.totalPages > 1)
-          PaginationControl(
+          M3PaginationControls(
             currentPage: gridState.currentPage,
-            totalPages: gridState.totalPages,
+            pageSize: 20, // 使用固定的每页显示数量
+            totalItems: gridState.totalPages * 20, // 估算总项目数
             onPageChanged: (page) =>
                 ref.read(characterGridProvider(workId).notifier).setPage(page),
           ),

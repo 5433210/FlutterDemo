@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../domain/models/work/work_entity.dart';
 import '../../domain/models/work/work_filter.dart';
 import '../../domain/repositories/work_repository.dart';
@@ -187,7 +189,7 @@ class WorkRepositoryImpl implements WorkRepository {
 
     // 收藏过滤
     if (filter.isFavoriteOnly) {
-      conditions.add(DatabaseQueryCondition(
+      conditions.add(const DatabaseQueryCondition(
         field: 'isFavorite',
         operator: '=',
         value: 1,
@@ -306,6 +308,40 @@ class WorkRepositoryImpl implements WorkRepository {
 
   /// 将数据库中的时间戳转换为ISO8601字符串
   Map<String, dynamic> _convertDates(Map<String, dynamic> data) {
+    AppLogger.debug(
+      '转换作品数据',
+      tag: 'WorkRepositoryImpl',
+      data: {
+        'hasCollectedChars': data.containsKey('collectedChars'),
+        'collectedCharsRaw': data['collectedChars'],
+      },
+    );
+
+    List<dynamic> collectedChars = [];
+    if (data['collectedChars'] != null) {
+      try {
+        if (data['collectedChars'] is String) {
+          // 如果是字符串，尝试解析JSON
+          collectedChars = jsonDecode(data['collectedChars'] as String) as List;
+        } else if (data['collectedChars'] is List) {
+          // 如果已经是列表，直接使用
+          collectedChars = data['collectedChars'] as List;
+        }
+        AppLogger.debug(
+          '解析集字数据成功',
+          tag: 'WorkRepositoryImpl',
+          data: {'parsedCount': collectedChars.length},
+        );
+      } catch (e) {
+        AppLogger.error(
+          '解析集字数据失败',
+          tag: 'WorkRepositoryImpl',
+          error: e,
+          data: {'raw': data['collectedChars']},
+        );
+      }
+    }
+
     return {
       ...data,
       'tags': data['tags']
@@ -314,6 +350,7 @@ class WorkRepositoryImpl implements WorkRepository {
               .where((tag) => tag.isNotEmpty)
               .toList() ??
           const [],
+      'collectedChars': collectedChars,
       'creationDate': data['creationDate'],
       'createTime': data['createTime'],
       'updateTime': data['updateTime'],
@@ -339,7 +376,17 @@ class WorkRepositoryImpl implements WorkRepository {
 
   /// 将WorkEntity转换为数据库表字段
   Map<String, dynamic> _toTableJson(WorkEntity work) {
-    return {
+    AppLogger.debug(
+      '保存作品数据',
+      tag: 'WorkRepositoryImpl',
+      data: {
+        'workId': work.id,
+        'collectedCharsCount': work.collectedChars.length,
+        'collectedCharIds': work.collectedChars.map((c) => c.id).toList(),
+      },
+    );
+
+    final Map<String, dynamic> data = {
       'id': work.id,
       'title': work.title,
       'author': work.author,
@@ -357,5 +404,36 @@ class WorkRepositoryImpl implements WorkRepository {
       'imageCount': work.imageCount,
       'isFavorite': work.isFavorite ? 1 : 0,
     };
+
+    try {
+      // 序列化集字数据
+      if (work.collectedChars.isNotEmpty) {
+        final collectedCharsJson = jsonEncode(
+          work.collectedChars.map((c) => c.toJson()).toList(),
+        );
+        data['collectedChars'] = collectedCharsJson;
+
+        AppLogger.debug(
+          '集字数据序列化成功',
+          tag: 'WorkRepositoryImpl',
+          data: {
+            'workId': work.id,
+            'jsonLength': collectedCharsJson.length,
+          },
+        );
+      }
+    } catch (e) {
+      AppLogger.error(
+        '集字数据序列化失败',
+        tag: 'WorkRepositoryImpl',
+        error: e,
+        data: {
+          'workId': work.id,
+          'collectedCharsCount': work.collectedChars.length,
+        },
+      );
+    }
+
+    return data;
   }
 }

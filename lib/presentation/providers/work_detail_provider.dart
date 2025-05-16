@@ -174,14 +174,24 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
             'tagCount': updatedWork.tags.length,
           });
 
+      // 保存后直接更新状态，不重新加载
+      AppLogger.debug(
+        'Work saved successfully',
+        tag: 'WorkDetailProvider',
+        data: {
+          'workId': updatedWork.id,
+          'title': updatedWork.title,
+          'tagCount': updatedWork.tags.length,
+          'collectedCharsCount': updatedWork.collectedChars.length,
+        },
+      );
+
       state = state.copyWith(
         work: updatedWork,
         editingWork: updatedWork,
         isSaving: false,
         hasChanges: false,
       );
-
-      loadWorkDetails(updatedWork.id);
 
       return true;
     } catch (e) {

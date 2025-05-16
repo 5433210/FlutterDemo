@@ -104,6 +104,7 @@ final workServiceProvider = Provider<WorkService>((ref) {
     imageService: ref.watch(workImageServiceProvider),
     storage: ref.watch(initializedStorageProvider),
     workImageRepository: ref.watch(workImageRepositoryProvider),
+    characterRepository: ref.watch(characterRepositoryProvider),
   );
 });
 

@@ -874,11 +874,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   Widget _buildToolbar(AppLocalizations l10n) {
     final eraseState = ref.watch(erase.eraseStateProvider);
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: colorScheme.surface,
       child: Row(
+        mainAxisSize: MainAxisSize.max, // Ensure the row takes the full width
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Undo/redo button group
           _buildToolbarButtonGroup([
@@ -900,11 +901,11 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
           ]),
 
-          const SizedBox(width: 16),
-
-          // Brush size control
+          const SizedBox(width: 16), // Brush size control
           Expanded(
             child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Icon(Icons.brush,
                     size: 16, color: colorScheme.onSurfaceVariant),
@@ -924,11 +925,15 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                     },
                   ),
                 ),
-                Text(
-                  eraseState.brushSize.toStringAsFixed(1),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
+                Container(
+                  width: 28, // Fixed width for the text display
+                  alignment: Alignment.center,
+                  child: Text(
+                    eraseState.brushSize.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],

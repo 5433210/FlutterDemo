@@ -11,6 +11,7 @@ import '../../providers/work_image_editor_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
+import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import './m3_character_collection_page.dart';
@@ -41,6 +42,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
     with WidgetsBindingObserver {
   bool _isPanelOpen = true;
   bool _hasCheckedStateRestoration = false;
+  double _panelWidth = 350; // 添加面板宽度状态
 
   @override
   Widget build(BuildContext context) {
@@ -143,8 +145,16 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
         // Right side panel - conditionally shown
         if (_isPanelOpen)
-          SizedBox(
-            width: 350,
+          ResizablePanel(
+            initialWidth: _panelWidth,
+            minWidth: 280,
+            maxWidth: 500,
+            isLeftPanel: false,
+            onWidthChanged: (width) {
+              setState(() {
+                _panelWidth = width;
+              });
+            },
             child: M3UnifiedWorkDetailPanel(
               key: ValueKey('form_${work.id}'),
               work: work,
@@ -189,8 +199,16 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
           alignRight: true,
         ),
         if (_isPanelOpen)
-          SizedBox(
-            width: 350,
+          ResizablePanel(
+            initialWidth: _panelWidth,
+            minWidth: 280,
+            maxWidth: 500,
+            isLeftPanel: false,
+            onWidthChanged: (width) {
+              setState(() {
+                _panelWidth = width;
+              });
+            },
             child: M3UnifiedWorkDetailPanel(
               work: work,
               isEditing: false,
