@@ -5,12 +5,38 @@ import 'package:flutter/material.dart';
 import 'base_layer.dart';
 
 /// 背景图层，显示原始图像
-class BackgroundLayer extends BaseLayer {
+class BackgroundLayer extends StatelessWidget {
   final ui.Image image;
   final bool hasChanged;
   final bool invertMode;
 
   const BackgroundLayer({
+    Key? key,
+    required this.image,
+    this.hasChanged = false,
+    this.invertMode = false,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    // Use RepaintBoundary to isolate this layer and prevent parent rebuilds from causing repaints
+    return RepaintBoundary(
+      child: _BackgroundLayerContent(
+        image: image,
+        hasChanged: hasChanged,
+        invertMode: invertMode,
+      ),
+    );
+  }
+}
+
+/// The actual content of the background layer, now separated for better isolation
+class _BackgroundLayerContent extends BaseLayer {
+  final ui.Image image;
+  final bool hasChanged;
+  final bool invertMode;
+
+  const _BackgroundLayerContent({
     Key? key,
     required this.image,
     this.hasChanged = false,

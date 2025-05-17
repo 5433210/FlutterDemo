@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/path_info.dart';
 import '../../../infrastructure/logging/logger.dart';
-import 'erase_providers.dart';
+import 'erase_providers.dart'; // Add import for cursorPositionProvider
 import 'erase_state.dart';
 import 'path_manager.dart';
 
@@ -54,17 +54,11 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     if (_pathManager.currentPath != null) {
       // Always update the color before completing the path
       _pathManager.updateCurrentColor(state.brushColor);
+      print('完成路径前设置颜色: ${state.brushColor}');
     }
 
     _pathManager.completePath();
     _updateState();
-  }
-
-  /// Dispose method to clean up resources
-  @override
-  void dispose() {
-    _delayedUpdateTimer?.cancel();
-    super.dispose();
   }
 
   /// 初始化擦除状态，用于加载保存的擦除路径数据
@@ -177,24 +171,11 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     }
   }
 
-  /// 更新噪声消除 - 优化版本
-  void setNoiseReductionOptimized(double value) {
-    // 如果值没有变化，跳过更新
-    if (state.processingOptions.noiseReduction == value) {
-      return;
-    }
-
-    // 直接更新状态，不设置forceImageUpdate标志
-    final newOptions = state.processingOptions.copyWith(
-      noiseReduction: value,
-    );
-
-    state = state.copyWith(
-      processingOptions: newOptions,
-    );
-
-    // 触发延迟图像更新（防抖处理）
-    triggerDelayedImageUpdate();
+  /// 开关降噪功能 - 简化版本
+  void setNoiseReductionEnabled(bool enabled) {
+    // 根据启用状态设置降噪值
+    final newValue = enabled ? 0.5 : 0.0;
+    setNoiseReduction(newValue, updateImage: true);
   }
 
   /// 更新阈值
@@ -225,6 +206,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
   }
 
   /// 更新阈值 - 优化版本
+  /// 类似于setBrushSize的实现，只在值变化时更新图像
   void setThresholdOptimized(double threshold) {
     // 如果值没有变化，跳过更新
     if (state.processingOptions.threshold == threshold) {
@@ -239,9 +221,56 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     state = state.copyWith(
       processingOptions: newOptions,
     );
-
+    
     // 触发延迟图像更新（防抖处理）
     triggerDelayedImageUpdate();
+  }
+
+  /// 更新噪声消除 - 优化版本
+  /// 类似于setBrushSize的实现，只在值变化时更新图像
+  void setNoiseReductionOptimized(double value) {
+    // 如果值没有变化，跳过更新
+    if (state.processingOptions.noiseReduction == value) {
+      return;
+    }
+
+    // 直接更新状态，不设置forceImageUpdate标志
+    final newOptions = state.processingOptions.copyWith(
+      noiseReduction: value,
+    );
+
+    state = state.copyWith(
+      processingOptions: newOptions,
+    );
+    
+    // 触发延迟图像更新（防抖处理）
+    triggerDelayedImageUpdate();
+  }
+
+  /// Trigger a delayed image update with a 200ms debounce
+  void triggerDelayedImageUpdate() {
+    _isDelayedUpdatePending = true;
+    
+    // Cancel existing timer if any
+    _delayedUpdateTimer?.cancel();
+    
+    // Start a new timer
+    _delayedUpdateTimer = Timer(const Duration(milliseconds: 200), () {
+      if (_isDelayedUpdatePending) {
+        // Actual update - apply all pending changes at once
+        final currentState = state;
+        
+        // Force an image update with current values
+        state = currentState.copyWith(
+          forceImageUpdate: true
+        );
+        
+        // Reset pending flag
+        _isDelayedUpdatePending = false;
+        
+        AppLogger.debug('Applied batched slider updates with delayed image processing');
+      }
+    });
   }
 
   /// 开始一个新的路径
@@ -256,6 +285,8 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     );
     _updateState();
   }
+
+  // Pan mode functionality removed - now using Alt key for panning
 
   /// 切换轮廓显示
   void toggleContour() {
@@ -364,31 +395,6 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     _updateState();
   }
 
-  /// Trigger a delayed image update with a 500ms debounce
-  void triggerDelayedImageUpdate() {
-    _isDelayedUpdatePending = true;
-
-    // Cancel existing timer if any
-    _delayedUpdateTimer?.cancel();
-
-    // Start a new timer with increased debounce time (500ms instead of 200ms)
-    _delayedUpdateTimer = Timer(const Duration(milliseconds: 500), () {
-      if (_isDelayedUpdatePending) {
-        // Actual update - apply all pending changes at once
-        final currentState = state;
-
-        // Force an image update with current values
-        state = currentState.copyWith(forceImageUpdate: true);
-
-        // Reset pending flag
-        _isDelayedUpdatePending = false;
-
-        AppLogger.debug(
-            'Applied batched slider updates with delayed image processing');
-      }
-    });
-  }
-
   /// 撤销最后一个操作
   void undo() {
     if (!state.canUndo) return;
@@ -421,17 +427,35 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     try {
       // Get the first point
       final firstPoint = points.first;
-      double x = (firstPoint['dx'] as num).toDouble();
-      double y = (firstPoint['dy'] as num).toDouble();
+      double x, y;
 
-      // Move to the first point
+      if (firstPoint is Map<String, dynamic>) {
+        x = (firstPoint['dx'] ?? firstPoint['x'] as num).toDouble();
+        y = (firstPoint['dy'] ?? firstPoint['y'] as num).toDouble();
+      } else if (firstPoint is Offset) {
+        x = firstPoint.dx;
+        y = firstPoint.dy;
+      } else {
+        return path; // Invalid data
+      }
+
+      // Start the path
       path.moveTo(x, y);
 
-      // Add lines to all other points
+      // Add line segments to all other points
       for (int i = 1; i < points.length; i++) {
         final point = points[i];
-        x = (point['dx'] as num).toDouble();
-        y = (point['dy'] as num).toDouble();
+
+        if (point is Map<String, dynamic>) {
+          x = (point['dx'] ?? point['x'] as num).toDouble();
+          y = (point['dy'] ?? point['y'] as num).toDouble();
+        } else if (point is Offset) {
+          x = point.dx;
+          y = point.dy;
+        } else {
+          continue; // Skip invalid points
+        }
+
         path.lineTo(x, y);
       }
 

@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_region.dart';
-import '../../../domain/models/character/processing_options.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../presentation/providers/character/erase_providers.dart';
+import '../../../presentation/providers/character/erase_providers.dart'
+    as erase;
 import '../../../widgets/character_edit/m3_character_edit_panel.dart';
 import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/character_grid_provider.dart';
@@ -41,8 +41,6 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
   Widget build(BuildContext context) {
     final imageState = ref.watch(workImageProvider);
     final selectedRegion = ref.watch(selectedRegionProvider);
-    // Monitor processing options
-    final processingOptions = ref.watch(processingOptionsProvider);
 
     // Monitor region adjustment state
     final isAdjusting = ref.watch(characterCollectionProvider).isAdjusting;
@@ -71,7 +69,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
             controller: _tabController,
             children: [
               // Tab 1: Character Preview
-              _buildPreviewTab(selectedRegion, imageState, processingOptions),
+              _buildPreviewTab(selectedRegion, imageState),
               // Tab 2: Collection Results
               _buildGridTab(),
             ],
@@ -109,7 +107,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
 
     // Clear erase state on initialization
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(eraseStateProvider.notifier).clear();
+      ref.read(erase.eraseStateProvider.notifier).clear();
 
       // Setup listener for character refresh events
       ref.listenManual(characterRefreshNotifierProvider, (previous, current) {
@@ -142,18 +140,28 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
   Widget _buildCharacterEditor(
     CharacterRegion selectedRegion,
     WorkImageState imageState,
-    ProcessingOptions processingOptions,
   ) {
-    // Use selectedRegion's id, rect and rotation as part of the key to ensure rebuilding when selection changes
-    return M3CharacterEditPanel(
-      key: ValueKey(
-          'editor_${selectedRegion.id}_${selectedRegion.rect.left}_${selectedRegion.rect.top}_${selectedRegion.rect.width}_${selectedRegion.rect.height}_${selectedRegion.rotation}'),
-      selectedRegion: selectedRegion,
-      workId: widget.workId,
-      pageId: imageState.currentPageId,
-      imageData: imageState.imageData,
-      processingOptions: processingOptions,
-      onEditComplete: _handleEditComplete,
+    // 使用RepaintBoundary包装编辑面板，并使用Consumer来隔离处理选项的刷新
+    return RepaintBoundary(
+      child: Consumer(
+        builder: (context, ref, _) {
+          // 使用memoized选项提供者，避免整个编辑面板因其他状态变化而重建
+          final processingOptions =
+              ref.watch(erase.memoizedProcessingOptionsProvider);
+
+          // Use selectedRegion's id, rect and rotation as part of the key
+          return M3CharacterEditPanel(
+            key: ValueKey(
+                'editor_${selectedRegion.id}_${selectedRegion.rect.left}_${selectedRegion.rect.top}_${selectedRegion.rect.width}_${selectedRegion.rect.height}_${selectedRegion.rotation}'),
+            selectedRegion: selectedRegion,
+            workId: widget.workId,
+            pageId: imageState.currentPageId,
+            imageData: imageState.imageData,
+            processingOptions: processingOptions,
+            onEditComplete: _handleEditComplete,
+          );
+        },
+      ),
     );
   }
 
@@ -180,7 +188,6 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
   Widget _buildPreviewTab(
     CharacterRegion? selectedRegion,
     WorkImageState imageState,
-    ProcessingOptions processingOptions,
   ) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
@@ -194,7 +201,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
       );
     }
 
-    return _buildCharacterEditor(selectedRegion, imageState, processingOptions);
+    return _buildCharacterEditor(selectedRegion, imageState);
   }
 
   Widget _buildTabBar() {

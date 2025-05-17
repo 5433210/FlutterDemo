@@ -58,6 +58,35 @@ class M3CharacterEditPanel extends ConsumerStatefulWidget {
       _M3CharacterEditPanelState();
 }
 
+/// Brush size slider widget with optimized rebuilds
+class _BrushSizeSlider extends ConsumerWidget {
+  const _BrushSizeSlider({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Use the memoized brush size provider for more efficient rebuilds
+    final brushSize = ref.watch(erase.memoizedBrushSizeProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 24, // Fixed height to prevent layout shifts
+        child: Slider(
+          value: brushSize,
+          min: 1.0,
+          max: 50.0,
+          activeColor: colorScheme.primary,
+          inactiveColor: colorScheme.surfaceContainerHighest,
+          thumbColor: colorScheme.primary,
+          onChanged: (double value) {
+            ref.read(erase.eraseStateProvider.notifier).setBrushSize(value);
+          },
+        ),
+      ),
+    );
+  }
+}
+
 /// Character edit panel input validator
 class _CharacterInputValidator {
   static _ValidationResult validateCharacter(
@@ -88,12 +117,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   final FocusNode _mainPanelFocusNode = FocusNode();
   bool _isEditing = false;
   bool _isNewSelection = false;
-
   // State for internal image loading
   Future<ui.Image?>? _imageLoadingFuture;
   ui.Image? _loadedImage;
-  double _threshold = 0.0;
-  double _noiseReduction = 0.0;
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -142,12 +168,9 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         EditorShortcuts.toggleContour: const _ToggleContourIntent(),
         // Pan mode shortcut removed
       };
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    _threshold = widget.processingOptions.threshold;
-    _noiseReduction = widget.processingOptions.noiseReduction;
 
     ref.listen(characterRefreshNotifierProvider, (previous, current) {
       if (previous != current) {
@@ -212,9 +235,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         'newRegionId': widget.selectedRegion.id,
         'timestamp': _thumbnailRefreshTimestamp,
       });
-    }
-
-    // Reload image if selected region or image data changes
+    } // Reload image if selected region or image data changes
     if (widget.selectedRegion.id != oldWidget.selectedRegion.id ||
         widget.imageData != oldWidget.imageData ||
         widget.processingOptions != oldWidget.processingOptions) {
@@ -511,7 +532,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
   Widget _buildContent(AppLocalizations l10n) {
     final saveState = ref.watch(characterSaveNotifierProvider);
-    final eraseState = ref.watch(erase.eraseStateProvider);
     final processedImageNotifier = ref.watch(processedImageProvider.notifier);
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -567,19 +587,16 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                   child: Stack(
                     children: [
                       // Canvas
-                      CharacterEditCanvas(
-                        region: region,
-                        key: _canvasKey,
-                        image: loadedImageForCanvas,
-                        showOutline: eraseState.showContour,
-                        invertMode: eraseState.isReversed,
-                        imageInvertMode: eraseState.imageInvertMode,
-                        brushSize: eraseState.brushSize,
-                        brushColor: eraseState.brushColor,
-                        onEraseStart: _handleEraseStart,
-                        onEraseUpdate: _handleEraseUpdate,
-                        onEraseEnd: _handleEraseEnd,
-                      ),
+                      region != null
+                          ? _OptimizedEraseLayerStack(
+                              region: region,
+                              canvasKey: _canvasKey,
+                              image: loadedImageForCanvas,
+                              handleEraseStart: _handleEraseStart,
+                              handleEraseUpdate: _handleEraseUpdate,
+                              handleEraseEnd: _handleEraseEnd,
+                            )
+                          : const SizedBox(),
 
                       // Thumbnail preview
                       if (region != null)
@@ -952,180 +969,166 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ),
               ]),
             ],
-          ), // Second row with brush size control
+          ),
+          // Second row with brush size control
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Tooltip(
-                  message: l10n.characterEditBrushSize,
-                  child: Icon(Icons.brush,
-                      size: 16, color: colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Slider(
-                    value: eraseState.brushSize,
-                    min: 1.0,
-                    max: 50.0,
-                    activeColor: colorScheme.primary,
-                    inactiveColor: colorScheme.surfaceContainerHighest,
-                    thumbColor: colorScheme.primary,
-                    onChanged: (value) {
-                      ref
-                          .read(erase.eraseStateProvider.notifier)
-                          .setBrushSize(value);
-                    },
-                  ),
-                ),
-                Container(
-                  width: 32, // Fixed width for the text display
-                  alignment: Alignment.center,
-                  child: Text(
-                    eraseState.brushSize.toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
+          RepaintBoundary(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  RepaintBoundary(
+                    child: Tooltip(
+                      message: l10n.characterEditBrushSize,
+                      child: Icon(Icons.brush,
+                          size: 16, color: colorScheme.onSurfaceVariant),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: _BrushSizeSlider(),
+                  ),
+                  Container(
+                    width: 32, // Fixed width for the text display
+                    alignment: Alignment.center,
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        // Use dedicated text provider to only listen to the text value changes
+                        final brushSizeText =
+                            ref.watch(erase.brushSizeTextProvider);
+                        return Text(
+                          brushSizeText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-
-          // Third row with threshold slider
+          ), // Third row with threshold slider
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Tooltip(
-                  message: l10n.characterEditThreshold,
-                  child: Icon(Icons.contrast,
-                      size: 16, color: colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final eraseState = ref.read(erase.eraseStateProvider);
-                      double localThreshold =
-                          eraseState.processingOptions.threshold;
-
-                      return Slider(
-                        value: localThreshold,
-                        min: 0.0,
-                        max: 255.0,
-                        activeColor: colorScheme.primary,
-                        inactiveColor: colorScheme.surfaceContainerHighest,
-                        thumbColor: colorScheme.primary,
-                        onChanged: (double value) {
-                          ref
-                              .read(erase.eraseStateProvider.notifier)
-                              .setThreshold(value, updateImage: false);
-                        },
-                        onChangeEnd: (value) {
-                          ref
-                              .read(erase.eraseStateProvider.notifier)
-                              .setThreshold(value, updateImage: true);
-                        },
-                      );
-                    },
+          RepaintBoundary(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  RepaintBoundary(
+                    child: Tooltip(
+                      message: l10n.characterEditThreshold,
+                      child: Icon(Icons.contrast,
+                          size: 16, color: colorScheme.onSurfaceVariant),
+                    ),
                   ),
-                ),
-                Container(
-                  width: 32, // Fixed width for the text display
-                  alignment: Alignment.center,
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final threshold = ref
-                          .watch(erase.eraseStateProvider)
-                          .processingOptions
-                          .threshold;
-                      return Text(
-                        threshold.toStringAsFixed(0),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      );
-                    },
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: _ThresholdSlider(),
                   ),
-                ),
-              ],
+                  RepaintBoundary(
+                    child: Container(
+                      width: 32, // Fixed width for the text display
+                      alignment: Alignment.center,
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          // Use dedicated text provider to only listen to the text value changes
+                          final thresholdText =
+                              ref.watch(erase.thresholdTextProvider);
+                          return Text(
+                            thresholdText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ), // Fourth row with noise reduction toggle and slider
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Tooltip(
-                  message: l10n.characterEditNoiseReduction,
-                  child: Icon(Icons.blur_on,
-                      size: 16, color: colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(width: 8),
-                Switch(
-                  value: eraseState.processingOptions.noiseReduction > 0,
-                  onChanged: (value) {
-                    ref
-                        .read(erase.eraseStateProvider.notifier)
-                        .toggleNoiseReduction(value);
-                  },
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Slider(
-                    value: _noiseReduction.clamp(0.0, 1.0),
-                    min: 0.0,
-                    max: 1.0,
-                    divisions: 10,
-                    activeColor: eraseState.processingOptions.noiseReduction > 0
-                        ? colorScheme.primary
-                        : colorScheme.surfaceContainerHighest,
-                    inactiveColor: colorScheme.surfaceContainerHighest,
-                    thumbColor: eraseState.processingOptions.noiseReduction > 0
-                        ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
-                    onChanged: _noiseReduction > 0 ? (value) {} : null,
-                    onChangeEnd: _noiseReduction > 0 ? (value) {} : null,
-                  ),
-                ),
-                Container(
-                  width: 32, // Fixed width for the text display
-                  alignment: Alignment.center,
-                  child: Text(
-                    eraseState.processingOptions.noiseReduction
-                        .toStringAsFixed(1),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: eraseState.processingOptions.noiseReduction > 0
-                          ? colorScheme.onSurfaceVariant
-                          : colorScheme.onSurfaceVariant.withOpacity(0.5),
+          RepaintBoundary(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  RepaintBoundary(
+                    child: Tooltip(
+                      message: l10n.characterEditNoiseReduction,
+                      child: Icon(Icons.blur_on,
+                          size: 16, color: colorScheme.onSurfaceVariant),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  RepaintBoundary(
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        // Use dedicated provider for more efficient rebuilds
+                        final noiseReduction =
+                            ref.watch(erase.noiseReductionProvider);
+                        return Switch(
+                          value: noiseReduction > 0,
+                          onChanged: (value) {
+                            ref
+                                .read(erase.eraseStateProvider.notifier)
+                                .toggleNoiseReduction(value);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: _NoiseReductionSlider(),
+                  ),
+                  RepaintBoundary(
+                    child: Container(
+                      width: 32, // Fixed width for the text display
+                      alignment: Alignment.center,
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          // Use dedicated text provider to only listen to the text value changes
+                          final noiseReductionText =
+                              ref.watch(erase.noiseReductionTextProvider);
+                          return Text(
+                            noiseReductionText,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: noiseReductionText != '0.0'
+                                  ? colorScheme.onSurfaceVariant
+                                  : colorScheme.onSurfaceVariant
+                                      .withOpacity(0.5),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1484,7 +1487,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               .toList(),
         });
       }
-
       final processingOptions = ProcessingOptions(
         inverted: eraseState.imageInvertMode,
         showContour: eraseState.showContour,
@@ -1703,8 +1705,102 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   }
 }
 
+/// Noise reduction slider widget with optimized rebuilds
+class _NoiseReductionSlider extends ConsumerWidget {
+  const _NoiseReductionSlider({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Use the memoized noise reduction provider for more efficient rebuilds
+    final noiseReduction = ref.watch(erase.memoizedNoiseReductionProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final eraseStateNotifier = ref.read(erase.eraseStateProvider.notifier);
+
+    // Only enabled if noiseReduction > 0
+    final isEnabled = noiseReduction > 0;
+
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 24, // Fixed height to prevent layout shifts
+        child: Slider(
+          value: noiseReduction.clamp(0.0, 1.0),
+          min: 0.0,
+          max: 1.0,
+          divisions: 10,
+          activeColor: isEnabled
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
+          inactiveColor: colorScheme.surfaceContainerHighest,
+          thumbColor:
+              isEnabled ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          onChanged: isEnabled
+              ? (value) {
+                  // Use optimized method for smoother slider interaction
+                  eraseStateNotifier.setNoiseReductionOptimized(value);
+                }
+              : null,
+          // Remove onChangeEnd to match brush slider behavior
+        ),
+      ),
+    );
+  }
+}
+
 class _OpenInputIntent extends Intent {
   const _OpenInputIntent();
+}
+
+/// An optimized wrapper for CharacterEditCanvas that prevents unnecessary rebuilds
+class _OptimizedEraseLayerStack extends ConsumerWidget {
+  final CharacterRegion region;
+  final GlobalKey<CharacterEditCanvasState> canvasKey;
+  final ui.Image image;
+  final Function(Offset) handleEraseStart;
+  final Function(Offset, Offset) handleEraseUpdate;
+  final Function() handleEraseEnd;
+
+  const _OptimizedEraseLayerStack({
+    Key? key,
+    required this.region,
+    required this.canvasKey,
+    required this.image,
+    required this.handleEraseStart,
+    required this.handleEraseUpdate,
+    required this.handleEraseEnd,
+  }) : super(key: key);
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Use select for each property to prevent unnecessary rebuilds
+    final showOutline = ref.watch(
+      erase.eraseStateProvider.select((s) => s.showContour),
+    );
+    final isReversed = ref.watch(
+      erase.eraseStateProvider.select((s) => s.isReversed),
+    );
+    final imageInvertMode = ref.watch(
+      erase.eraseStateProvider.select((s) => s.imageInvertMode),
+    );
+    final brushSize = ref.watch(
+      erase.eraseStateProvider.select((s) => s.brushSize),
+    );
+    // We need to derive the brushColor based on isReversed
+    final brushColor = isReversed ? Colors.black : Colors.white;
+    // Wrap in RepaintBoundary to isolate this component's repaints
+    return RepaintBoundary(
+      child: CharacterEditCanvas(
+        region: region,
+        key: canvasKey,
+        image: image,
+        showOutline: showOutline,
+        invertMode: isReversed,
+        imageInvertMode: imageInvertMode,
+        brushSize: brushSize,
+        brushColor: brushColor,
+        onEraseStart: handleEraseStart,
+        onEraseUpdate: handleEraseUpdate,
+        onEraseEnd: handleEraseEnd,
+      ),
+    );
+  }
 }
 
 class _RedoIntent extends Intent {
@@ -1727,6 +1823,37 @@ class _SaveIntent extends Intent {
 class _SetBrushSizeIntent extends Intent {
   final double size;
   const _SetBrushSizeIntent(this.size);
+}
+
+/// Threshold slider widget with optimized rebuilds
+class _ThresholdSlider extends ConsumerWidget {
+  const _ThresholdSlider({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Use the memoized threshold provider for more efficient rebuilds
+    final threshold = ref.watch(erase.memoizedThresholdProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final eraseStateNotifier = ref.read(erase.eraseStateProvider.notifier);
+
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 24, // Fixed height to prevent layout shifts
+        child: Slider(
+          value: threshold,
+          min: 0.0,
+          max: 255.0,
+          activeColor: colorScheme.primary,
+          inactiveColor: colorScheme.surfaceContainerHighest,
+          thumbColor: colorScheme.primary,
+          onChanged: (double value) {
+            // Use a single state update to improve performance
+            eraseStateNotifier.setThresholdOptimized(value);
+          },
+        ),
+      ),
+    );
+  }
 }
 
 class _ToggleContourIntent extends Intent {

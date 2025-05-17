@@ -17,7 +17,7 @@ import '../../presentation/providers/character/erase_providers.dart';
 import '../../utils/coordinate_transformer.dart';
 import '../../utils/focus/focus_persistence.dart';
 import '../../utils/image/image_utils.dart';
-import 'layers/erase_layer_stack.dart';
+import 'layers/optimized_erase_layer_stack.dart';
 
 /// 编辑画布组件
 class CharacterEditCanvas extends ConsumerStatefulWidget {
@@ -60,7 +60,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       TransformationController();
   late CoordinateTransformer _transformer;
 
-  final GlobalKey<EraseLayerStackState> _layerStackKey = GlobalKey();
+  final GlobalKey<OptimizedEraseLayerStackState> _layerStackKey = GlobalKey();
 
   bool _isProcessing = false;
 
@@ -139,17 +139,15 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     });
 
     // Listen for forceImageUpdate flag changes to update the image processing
-    // ref.listen(eraseStateProvider.select((state) => state.forceImageUpdate),
-    //     (_, current) {
-    //   // Use null-safe approach to check if forceImageUpdate is true
-    //   if (current ?? false) {
-    //     ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
-    //     AppLogger.debug('检测到强制更新图像标志，更新处理图像');
-    //     Future.delayed(const Duration(milliseconds: 100), () {
-    //       _updateOutline();
-    //     });
-    //   }
-    // });
+    ref.listen(eraseStateProvider.select((state) => state.forceImageUpdate),
+        (_, current) {
+      // Use null-safe approach to check if forceImageUpdate is true
+      if (current ?? false) {
+        ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
+        AppLogger.debug('检测到强制更新图像标志，更新处理图像');
+        _updateOutline(); // Uses internal debouncing mechanism
+      }
+    });
 
     // 监听Alt键状态
     _altKeyNotifier.addListener(() {
@@ -202,19 +200,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                 child: SizedBox(
                   width: widget.image.width.toDouble(),
                   height: widget.image.height.toDouble(),
-                  child: EraseLayerStack(
+                  child: OptimizedEraseLayerStack(
                     key: _layerStackKey,
                     image: widget.image,
                     transformationController: _transformationController,
                     onEraseStart: _handleEraseStart,
                     onEraseUpdate: _handleEraseUpdate,
                     onEraseEnd: _handleEraseEnd,
-                    // Pass alt key state to EraseLayerStack for pan functionality
-                    altKeyPressed: _altKeyNotifier.value,
-                    brushSize: widget.brushSize,
-                    brushColor: widget.brushColor,
-                    imageInvertMode: widget.imageInvertMode,
-                    showOutline: widget.showOutline,
                     onPan: (delta) {
                       if (_altKeyNotifier.value) {
                         _transformationController.value
@@ -745,113 +737,124 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   Future<void> _updateOutline() async {
+    // If another update is already in progress, cancel this one
     if (_isProcessing) {
-      print('轮廓正在处理中，跳过更新');
+      AppLogger.debug('轮廓正在处理中，跳过更新');
       return;
     }
 
-    setState(() => _isProcessing = true);
+    // Cancel any previously scheduled debounced updates
+    _updateOutlineDebounceTimer?.cancel();
 
-    try {
-      final imageBytes = await ImageUtils.imageToBytes(widget.image);
-      if (imageBytes == null) {
-        throw Exception('无法将图像转换为字节数组');
-      }
+    // Start a debounce timer to avoid too frequent updates
+    _updateOutlineDebounceTimer =
+        Timer(const Duration(milliseconds: 50), () async {
+      setState(() => _isProcessing = true);
 
-      final imageProcessor = ref.read(characterImageProcessorProvider);
-      final pathRenderData = ref.read(pathRenderDataProvider);
-      final eraseState = ref.read(eraseStateProvider);
+      try {
+        final imageBytes = await ImageUtils.imageToBytes(widget.image);
+        if (imageBytes == null) {
+          throw Exception('无法将图像转换为字节数组');
+        }
 
-      final options = ProcessingOptions(
-        inverted: eraseState.imageInvertMode,
-        threshold: eraseState.processingOptions.threshold,
-        noiseReduction: eraseState.processingOptions.noiseReduction,
-        showContour: true,
-      );
+        final imageProcessor = ref.read(characterImageProcessorProvider);
+        final pathRenderData = ref.read(pathRenderDataProvider);
+        final eraseState = ref.read(eraseStateProvider);
 
-      final fullImageRect = Rect.fromLTWH(
-        0,
-        0,
-        widget.image.width.toDouble(),
-        widget.image.height.toDouble(),
-      );
+        final options = ProcessingOptions(
+          inverted: eraseState.imageInvertMode,
+          threshold: eraseState.processingOptions.threshold,
+          noiseReduction: eraseState.processingOptions.noiseReduction,
+          showContour: true,
+        );
 
-      if (kDebugMode) {
-        print(
-            '轮廓处理选项: inverted=${options.inverted}, showContour=${options.showContour}, imageSize=${widget.image.width}x${widget.image.height}');
-      }
+        final fullImageRect = Rect.fromLTWH(
+          0,
+          0,
+          widget.image.width.toDouble(),
+          widget.image.height.toDouble(),
+        );
 
-      List<Map<String, dynamic>> erasePaths = [];
-      if (pathRenderData.completedPaths.isNotEmpty) {
-        erasePaths = pathRenderData.completedPaths.map((p) {
-          final points = _extractPointsFromPath(p.path);
-          return {
-            'brushSize': p.brushSize,
-            'brushColor': p.brushColor.value,
-            'points': points,
-            'pathId': p.hashCode.toString(),
-          };
-        }).toList();
-      }
-
-      print('开始处理轮廓，传递 ${erasePaths.length} 个路径...');
-
-      // Use a timeout to prevent hanging if outline detection takes too long
-      final result = await _timeoutFuture(
-          imageProcessor.processForPreview(
-            imageBytes,
-            fullImageRect,
-            options,
-            erasePaths,
-            rotation: 0.0, // 图像内容已经旋转过，不需要再次旋转
-          ),
-          const Duration(seconds: 5));
-
-      print('轮廓处理完成');
-
-      if (mounted) {
-        setState(() {
-          _outline = result.outline;
-          _isProcessing = false;
+        AppLogger.debug('轮廓处理选项', data: {
+          'inverted': options.inverted,
+          'threshold': options.threshold,
+          'noiseReduction': options.noiseReduction,
+          'showContour': options.showContour,
+          'imageSize': '${widget.image.width}x${widget.image.height}'
         });
 
-        if (_layerStackKey.currentState != null) {
-          final showContour = ref.read(eraseStateProvider).showContour;
-          print(
-              '传递轮廓数据到 EraseLayerStack, 显示=$showContour, 轮廓数据是否存在=${_outline != null}');
+        List<Map<String, dynamic>> erasePaths = [];
+        if (pathRenderData.completedPaths.isNotEmpty) {
+          erasePaths = pathRenderData.completedPaths.map((p) {
+            final points = _extractPointsFromPath(p.path);
+            return {
+              'brushSize': p.brushSize,
+              'brushColor': p.brushColor.value,
+              'points': points,
+              'pathId': p.hashCode.toString(),
+            };
+          }).toList();
+        }
 
-          // Only set outline if showing contours is enabled AND outline has valid data
-          if (showContour &&
-              _outline != null &&
-              _outline!.contourPoints.isNotEmpty) {
-            print('轮廓包含 ${_outline!.contourPoints.length} 个轮廓路径');
-            _layerStackKey.currentState!.setOutline(_outline);
-          } else {
-            // Clear outline when toggled off or outline is invalid
-            _layerStackKey.currentState!.setOutline(null);
+        print('开始处理轮廓，传递 ${erasePaths.length} 个路径...');
+
+        // Use a timeout to prevent hanging if outline detection takes too long
+        final result = await _timeoutFuture(
+            imageProcessor.processForPreview(
+              imageBytes,
+              fullImageRect,
+              options,
+              erasePaths,
+              rotation: 0.0, // 图像内容已经旋转过，不需要再次旋转
+            ),
+            const Duration(seconds: 5));
+
+        print('轮廓处理完成');
+
+        if (mounted) {
+          setState(() {
+            _outline = result.outline;
+            _isProcessing = false;
+          });
+
+          if (_layerStackKey.currentState != null) {
+            final showContour = ref.read(eraseStateProvider).showContour;
+            print(
+                '传递轮廓数据到 EraseLayerStack, 显示=$showContour, 轮廓数据是否存在=${_outline != null}');
+
+            // Only set outline if showing contours is enabled AND outline has valid data
+            if (showContour &&
+                _outline != null &&
+                _outline!.contourPoints.isNotEmpty) {
+              print('轮廓包含 ${_outline!.contourPoints.length} 个轮廓路径');
+              _layerStackKey.currentState!.setOutline(_outline);
+            } else {
+              // Clear outline when toggled off or outline is invalid
+              _layerStackKey.currentState!.setOutline(null);
+            }
+
+            // // Convert img.Image to ui.Image before updating
+            // final imageBytes = img.encodePng(result.processedImage);
+            // ui.decodeImageFromList(imageBytes, (uiImage) {
+            //   if (mounted && _layerStackKey.currentState != null) {
+            //     _layerStackKey.currentState!.updateImage(uiImage);
+            //   }
+            // });
           }
+        }
+      } catch (e, stack) {
+        print('轮廓检测失败: $e');
+        AppLogger.error('轮廓检测失败', error: e, stackTrace: stack);
+        if (kDebugMode) {
+          print('错误堆栈: $stack');
+        }
 
-          // // Convert img.Image to ui.Image before updating
-          // final imageBytes = img.encodePng(result.processedImage);
-          // ui.decodeImageFromList(imageBytes, (uiImage) {
-          //   if (mounted && _layerStackKey.currentState != null) {
-          //     _layerStackKey.currentState!.updateImage(uiImage);
-          //   }
-          // });
+        // Make sure to reset state on error
+        if (mounted) {
+          setState(() => _isProcessing = false);
         }
       }
-    } catch (e, stack) {
-      print('轮廓检测失败: $e');
-      AppLogger.error('轮廓检测失败', error: e, stackTrace: stack);
-      if (kDebugMode) {
-        print('错误堆栈: $stack');
-      }
-
-      // Make sure to reset state on error
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
-    }
+    });
   }
 
   void _updateTransformer(Size viewportSize) {
