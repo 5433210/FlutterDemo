@@ -49,6 +49,7 @@ class EraseLayerStack extends ConsumerStatefulWidget {
 
 class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   DetectedOutline? _outline;
+  ui.Image? _processedImage;
 
   // 以下变量虽然在当前实现中不直接用于渲染，但被updateXXX方法使用
   // 保留它们是为了保持API兼容性，避免破坏现有代码
@@ -66,6 +67,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     final showContour = eraseState.showContour;
     // Check if we're in pan mode from eraseStateProvider
     final isPanMode = eraseState.isPanMode;
+    _processedImage = widget.image;
 
     // 不再需要监听forceRefreshProvider
 
@@ -89,7 +91,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
         fit: StackFit.expand,
         children: [
           BackgroundLayer(
-            image: widget.image,
+            image: _processedImage!,
             invertMode: widget.imageInvertMode,
           ),
           PreviewLayer(
@@ -130,7 +132,7 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   /// 将当前状态渲染到画布上
   Future<void> renderToCanvas(Canvas canvas, Size size) async {
     // 绘制背景层
-    canvas.drawImage(widget.image, Offset.zero, Paint());
+    canvas.drawImage(_processedImage!, Offset.zero, Paint());
 
     // 绘制预览层 - Use anti-aliasing instead of blur
     final renderData = ref.read(pathRenderDataProvider);
@@ -271,6 +273,14 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
     setState(() {
       _dirtyBounds = rect;
     });
+  }
+
+  void updateImage(ui.Image processedImage) {
+    if (mounted) {
+      setState(() {
+        _processedImage = processedImage;
+      });
+    }
   }
 
   void updatePaths(List<PathInfo> paths) {

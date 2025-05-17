@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../utils/migration/erase_data_migration.dart';
 import '../../application/services/image/character_image_processor.dart';
@@ -144,25 +145,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         (_, current) {
       // Use null-safe approach to check if forceImageUpdate is true
       if (current ?? false) {
+        ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
         AppLogger.debug('检测到强制更新图像标志，更新处理图像');
-
-        // 延迟更长时间执行更新，提高流畅性
-        if (_updateOutlineDebounceTimer?.isActive ?? false) {
-          _updateOutlineDebounceTimer?.cancel();
-        }
-
-        _updateOutlineDebounceTimer =
-            Timer(const Duration(milliseconds: 250), () {
-          if (mounted) {
-            _updateOutline();
-
-            // Reset the flag after processing with a small delay to ensure completion
-            Future.delayed(const Duration(milliseconds: 50), () {
-              if (mounted) {
-                ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
-              }
-            });
-          }
+        Future.delayed(const Duration(milliseconds: 100), () {
+          _updateOutline();
         });
       }
     });
@@ -846,6 +832,14 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             // Clear outline when toggled off or outline is invalid
             _layerStackKey.currentState!.setOutline(null);
           }
+
+          // Convert img.Image to ui.Image before updating
+          final imageBytes = img.encodePng(result.processedImage);
+          ui.decodeImageFromList(imageBytes, (uiImage) {
+            if (mounted && _layerStackKey.currentState != null) {
+              _layerStackKey.currentState!.updateImage(uiImage);
+            }
+          });
         }
       }
     } catch (e, stack) {

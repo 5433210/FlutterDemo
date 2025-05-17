@@ -15,9 +15,9 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
   final Color _defaultEraseColor = Colors.white;
 
   // 记录上次更新降噪值的时间戳，用于节流操作
-  int _lastNoiseReductionUpdateTime = 0;
+  final int _lastNoiseReductionUpdateTime = 0;
 
-  int _lastThresholdUpdateTime = 0;
+  final int _lastThresholdUpdateTime = 0;
 
   EraseStateNotifier(this._pathManager, this._ref)
       : super(EraseState.initial());
@@ -143,95 +143,64 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
     state = state.copyWith(brushSize: size);
   }
 
-  /// 更新降噪值
+  /// 更新噪声消除
   void setNoiseReduction(double value, {bool updateImage = false}) {
-    // 添加时间节流，在滑动过程中限制更新频率
-    final currentTime = DateTime.now().millisecondsSinceEpoch;
-    if (!updateImage) {
-      // 如果与上次更新间隔小于100ms，直接忽略本次更新
-      if (currentTime - _lastNoiseReductionUpdateTime < 100) {
-        return;
-      }
-      _lastNoiseReductionUpdateTime = currentTime;
-    }
-
-    // Skip processing if value hasn't changed and we're not updating the image
-    if (!updateImage && state.processingOptions.noiseReduction == value) {
+    // 如果值没有变化且不需要强制更新图像，则跳过
+    if (state.processingOptions.noiseReduction == value && !updateImage) {
       return;
     }
 
-    // Round value to 1 decimal place to avoid micromovements triggering updates
-    final roundedValue = (value * 10).round() / 10;
-
-    final newProcessingOptions = state.processingOptions.copyWith(
-      noiseReduction: roundedValue,
+    // 更新处理选项
+    final newOptions = state.processingOptions.copyWith(
+      noiseReduction: value,
     );
 
-    // Only log when actually updating the image to reduce overhead
+    // 仅在需要时设置forceImageUpdate标志
     if (updateImage) {
-      AppLogger.debug('更新降噪值', data: {
-        'oldNoiseReduction': state.processingOptions.noiseReduction,
-        'newNoiseReduction': roundedValue,
-        'updateImage': updateImage,
+      state = state.copyWith(
+        processingOptions: newOptions,
+        forceImageUpdate: true, // 只在滑块释放时更新图像
+      );
+      AppLogger.debug('噪声消除已更新，正在处理图像', data: {
+        'noiseReduction': value,
       });
+    } else {
+      // 仅更新UI显示值，不触发图像重新处理
+      state = state.copyWith(
+        processingOptions: newOptions,
+        // 不设置forceImageUpdate
+      );
     }
-
-    // 关键修改: 仅在释放鼠标时(updateImage=true)才设置forceImageUpdate标志
-    // 这样在滑动过程中只会更新UI显示值，不会触发图像处理
-    state = state.copyWith(
-      processingOptions: newProcessingOptions,
-      forceImageUpdate: updateImage, // 只有updateImage为true时才触发图像更新
-    );
-  } // 记录上次更新的时间戳，用于节流操作
+  }
 
   /// 更新阈值
   void setThreshold(double threshold, {bool updateImage = false}) {
-    final currentTime = DateTime.now().millisecondsSinceEpoch;
-
-    // 如果是滑动中(非updateImage)，则添加时间间隔节流，强制至少100ms才允许一次更新
-    if (!updateImage) {
-      // 如果与上次更新间隔小于100ms，直接忽略本次更新
-      if (currentTime - _lastThresholdUpdateTime < 100) {
-        return;
-      }
-      _lastThresholdUpdateTime = currentTime;
-    }
-
-    // Skip processing if value hasn't changed and we're not updating the image
-    if (!updateImage && state.processingOptions.threshold == threshold) {
+    // 如果值没有变化且不需要强制更新图像，则跳过
+    if (state.processingOptions.threshold == threshold && !updateImage) {
       return;
     }
 
-    // 当不需要更新图像时，对值进行更强的约束处理，以减少状态更新
-    final double roundedThreshold;
-    if (!updateImage) {
-      // 在滑动过程中，向下取整到最接近的10的倍数，大幅减少状态更新
-      roundedThreshold = (threshold / 10).floor() * 10.0;
-    } else {
-      // 最终更新时，精确到整数
-      roundedThreshold = threshold.round().toDouble();
-    }
-
-    final newProcessingOptions = state.processingOptions.copyWith(
-      threshold: roundedThreshold,
+    // 更新处理选项
+    final newOptions = state.processingOptions.copyWith(
+      threshold: threshold,
     );
 
-    // Only log when actually updating the image to reduce overhead
+    // 仅在需要时设置forceImageUpdate标志
     if (updateImage) {
-      AppLogger.debug('更新阈值', data: {
-        'oldThreshold': state.processingOptions.threshold,
-        'newThreshold': roundedThreshold,
-        'updateImage': updateImage,
+      state = state.copyWith(
+        processingOptions: newOptions,
+        forceImageUpdate: true, // 只在滑块释放时更新图像
+      );
+      AppLogger.debug('阈值已更新，正在处理图像', data: {
+        'threshold': threshold,
       });
+    } else {
+      // 仅更新UI显示值，不触发图像重新处理
+      state = state.copyWith(
+        processingOptions: newOptions,
+        // 不设置forceImageUpdate
+      );
     }
-
-    // 简化实现：移除forceImageUpdate标志的设置，让模式与setBrushSize一致
-    // 只更新处理选项，不设置forceImageUpdate标志
-    state = state.copyWith(
-      processingOptions: newProcessingOptions,
-      // 只有在最终确认更改(updateImage=true)时才设置forceImageUpdate
-      forceImageUpdate: updateImage ? true : null,
-    );
   }
 
   /// 开始一个新的路径

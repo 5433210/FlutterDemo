@@ -367,42 +367,46 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ],
               ),
             ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (!_isEditing)
-                FilledButton.tonalIcon(
-                  onPressed: isSaving
-                      ? null
-                      : () {
-                          setState(() => _isEditing = true);
-                          // Ensure focus on input field
-                          Future.delayed(const Duration(milliseconds: 50), () {
-                            _inputFocusNode.requestFocus();
-                          });
-                        },
-                  icon: const Icon(Icons.edit, size: 18),
+          SizedBox(
+            width: double.infinity,
+            child: Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 12,
+              children: [
+                if (!_isEditing)
+                  FilledButton.tonalIcon(
+                    onPressed: isSaving
+                        ? null
+                        : () {
+                            setState(() => _isEditing = true);
+                            // Ensure focus on input field
+                            Future.delayed(const Duration(milliseconds: 50),
+                                () {
+                              _inputFocusNode.requestFocus();
+                            });
+                          },
+                    icon: const Icon(Icons.edit, size: 18),
+                    label: Text(ShortcutTooltipBuilder.build(
+                      l10n.characterEditInputCharacter,
+                      EditorShortcuts.openInput,
+                    )),
+                  ),
+                FilledButton.icon(
+                  onPressed: isSaving ? null : () => _handleSave(),
+                  icon: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save, size: 18),
                   label: Text(ShortcutTooltipBuilder.build(
-                    l10n.characterEditInputCharacter,
-                    EditorShortcuts.openInput,
+                    l10n.save,
+                    EditorShortcuts.save,
                   )),
                 ),
-              const SizedBox(width: 12),
-              FilledButton.icon(
-                onPressed: isSaving ? null : () => _handleSave(),
-                icon: isSaving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.save, size: 18),
-                label: Text(ShortcutTooltipBuilder.build(
-                  l10n.save,
-                  EditorShortcuts.save,
-                )),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -1015,7 +1019,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                     value: eraseState.processingOptions.threshold,
                     min: 0.0,
                     max: 255.0, // Keep divisions for better UX
-                    divisions: 25,
+                    // divisions: 25,
                     activeColor: colorScheme.primary,
                     inactiveColor: colorScheme.surfaceContainerHighest,
                     thumbColor: colorScheme.primary,
@@ -1023,7 +1027,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                     onChanged: (double value) {
                       // Round value to reduce updates (keep this optimization)
                       final roundedValue = (value / 10).floor() * 10.0;
-                      // 只有当值变化超过10.0才更新状态
+                      // // 只有当值变化超过10.0才更新状态
                       if ((eraseState.processingOptions.threshold -
                                   roundedValue)
                               .abs() >=

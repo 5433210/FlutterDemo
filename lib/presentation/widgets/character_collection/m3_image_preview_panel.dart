@@ -42,10 +42,10 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
                     // 直接使用FocusScope来请求焦点
-                    final currentFocus = FocusScope.of(context);
-                    if (!currentFocus.hasPrimaryFocus) {
-                      currentFocus.requestFocus();
-                    }
+                    // final currentFocus = FocusScope.of(context);
+                    // if (!currentFocus.hasPrimaryFocus) {
+                    //   currentFocus.requestFocus();
+                    // }
                   }
                 });
               }
@@ -142,7 +142,7 @@ class _M3ImagePreviewPanelState extends ConsumerState<M3ImagePreviewPanel> {
   @override
   void initState() {
     super.initState();
-    _panelFocusNode.addListener(_onFocusChange);
+    // _panelFocusNode.addListener(_onFocusChange);
   }
 
   void _onFocusChange() {

@@ -42,7 +42,7 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
     final imageState = ref.watch(workImageProvider);
     final selectedRegion = ref.watch(selectedRegionProvider);
     // Monitor processing options
-    final processingOptions = ref.watch(processingOptionsProvider);
+    final processingOptions = ref.read(processingOptionsProvider);
     // Monitor region adjustment state
     final isAdjusting = ref.watch(characterCollectionProvider).isAdjusting;
 
