@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image/image.dart' as img;
 
 import '../../../utils/migration/erase_data_migration.dart';
 import '../../application/services/image/character_image_processor.dart';
@@ -16,7 +15,6 @@ import '../../domain/models/character/processing_options.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../../presentation/providers/character/erase_providers.dart';
 import '../../utils/coordinate_transformer.dart';
-import '../../utils/debug/debug_flags.dart';
 import '../../utils/focus/focus_persistence.dart';
 import '../../utils/image/image_utils.dart';
 import 'layers/erase_layer_stack.dart';
@@ -87,10 +85,10 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      print(
-          '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
-    }
+    // if (kDebugMode && DebugFlags.enableEraseDebug) {
+    print(
+        '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
+    // }
 
     // Pan mode is always enabled by default through Alt key
 
@@ -141,17 +139,17 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     });
 
     // Listen for forceImageUpdate flag changes to update the image processing
-    ref.listen(eraseStateProvider.select((state) => state.forceImageUpdate),
-        (_, current) {
-      // Use null-safe approach to check if forceImageUpdate is true
-      if (current ?? false) {
-        ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
-        AppLogger.debug('检测到强制更新图像标志，更新处理图像');
-        Future.delayed(const Duration(milliseconds: 100), () {
-          _updateOutline();
-        });
-      }
-    });
+    // ref.listen(eraseStateProvider.select((state) => state.forceImageUpdate),
+    //     (_, current) {
+    //   // Use null-safe approach to check if forceImageUpdate is true
+    //   if (current ?? false) {
+    //     ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
+    //     AppLogger.debug('检测到强制更新图像标志，更新处理图像');
+    //     Future.delayed(const Duration(milliseconds: 100), () {
+    //       _updateOutline();
+    //     });
+    //   }
+    // });
 
     // 监听Alt键状态
     _altKeyNotifier.addListener(() {
@@ -833,13 +831,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             _layerStackKey.currentState!.setOutline(null);
           }
 
-          // Convert img.Image to ui.Image before updating
-          final imageBytes = img.encodePng(result.processedImage);
-          ui.decodeImageFromList(imageBytes, (uiImage) {
-            if (mounted && _layerStackKey.currentState != null) {
-              _layerStackKey.currentState!.updateImage(uiImage);
-            }
-          });
+          // // Convert img.Image to ui.Image before updating
+          // final imageBytes = img.encodePng(result.processedImage);
+          // ui.decodeImageFromList(imageBytes, (uiImage) {
+          //   if (mounted && _layerStackKey.currentState != null) {
+          //     _layerStackKey.currentState!.updateImage(uiImage);
+          //   }
+          // });
         }
       }
     } catch (e, stack) {

@@ -92,6 +92,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   // State for internal image loading
   Future<ui.Image?>? _imageLoadingFuture;
   ui.Image? _loadedImage;
+  double _threshold = 0.0;
+  double _noiseReduction = 0.0;
 
   // Add a timestamp for cache busting
   int _thumbnailRefreshTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -144,6 +146,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    _threshold = widget.processingOptions.threshold;
+    _noiseReduction = widget.processingOptions.noiseReduction;
 
     ref.listen(characterRefreshNotifierProvider, (previous, current) {
       if (previous != current) {
@@ -1015,45 +1019,50 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Slider(
-                    value: eraseState.processingOptions.threshold,
-                    min: 0.0,
-                    max: 255.0, // Keep divisions for better UX
-                    // divisions: 25,
-                    activeColor: colorScheme.primary,
-                    inactiveColor: colorScheme.surfaceContainerHighest,
-                    thumbColor: colorScheme.primary,
-                    // Simplified to match brush size slider pattern
-                    onChanged: (double value) {
-                      // Round value to reduce updates (keep this optimization)
-                      final roundedValue = (value / 10).floor() * 10.0;
-                      // // 只有当值变化超过10.0才更新状态
-                      if ((eraseState.processingOptions.threshold -
-                                  roundedValue)
-                              .abs() >=
-                          10) {
-                        ref
-                            .read(erase.eraseStateProvider.notifier)
-                            .setThreshold(roundedValue, updateImage: false);
-                      }
-                    },
-                    onChangeEnd: (value) {
-                      // Final update when slider is released
-                      ref
-                          .read(erase.eraseStateProvider.notifier)
-                          .setThreshold(value, updateImage: true);
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final eraseState = ref.read(erase.eraseStateProvider);
+                      double localThreshold =
+                          eraseState.processingOptions.threshold;
+
+                      return Slider(
+                        value: localThreshold,
+                        min: 0.0,
+                        max: 255.0,
+                        activeColor: colorScheme.primary,
+                        inactiveColor: colorScheme.surfaceContainerHighest,
+                        thumbColor: colorScheme.primary,
+                        onChanged: (double value) {
+                          ref
+                              .read(erase.eraseStateProvider.notifier)
+                              .setThreshold(value, updateImage: false);
+                        },
+                        onChangeEnd: (value) {
+                          ref
+                              .read(erase.eraseStateProvider.notifier)
+                              .setThreshold(value, updateImage: true);
+                        },
+                      );
                     },
                   ),
                 ),
                 Container(
                   width: 32, // Fixed width for the text display
                   alignment: Alignment.center,
-                  child: Text(
-                    eraseState.processingOptions.threshold.toStringAsFixed(0),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final threshold = ref
+                          .watch(erase.eraseStateProvider)
+                          .processingOptions
+                          .threshold;
+                      return Text(
+                        threshold.toStringAsFixed(0),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -1087,8 +1096,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Slider(
-                    value: eraseState.processingOptions.noiseReduction
-                        .clamp(0.0, 1.0),
+                    value: _noiseReduction.clamp(0.0, 1.0),
                     min: 0.0,
                     max: 1.0,
                     divisions: 10,
@@ -1099,29 +1107,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                     thumbColor: eraseState.processingOptions.noiseReduction > 0
                         ? colorScheme.primary
                         : colorScheme.onSurfaceVariant,
-                    onChanged: eraseState.processingOptions.noiseReduction > 0
-                        ? (double value) {
-                            // 把值四舍五入到最近的0.1，减少微小变化触发的更新
-                            final roundedValue = (value * 10).round() / 10;
-                            // 只有当值变化超过0.1时才更新
-                            if ((eraseState.processingOptions.noiseReduction -
-                                        roundedValue)
-                                    .abs() >=
-                                0.1) {
-                              ref
-                                  .read(erase.eraseStateProvider.notifier)
-                                  .setNoiseReduction(roundedValue,
-                                      updateImage: false);
-                            }
-                          }
-                        : null,
-                    onChangeEnd: eraseState.processingOptions.noiseReduction > 0
-                        ? (value) {
-                            ref
-                                .read(erase.eraseStateProvider.notifier)
-                                .setNoiseReduction(value, updateImage: true);
-                          }
-                        : null,
+                    onChanged: _noiseReduction > 0 ? (value) {} : null,
+                    onChangeEnd: _noiseReduction > 0 ? (value) {} : null,
                   ),
                 ),
                 Container(
