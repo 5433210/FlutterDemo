@@ -19,6 +19,7 @@ class OptimizedEraseLayerStack extends ConsumerStatefulWidget {
   final Function()? onEraseEnd;
   final Function(Offset)? onPan;
   final Function(Offset)? onTap;
+  final bool altKeyPressed; // Add the Alt key state parameter
 
   const OptimizedEraseLayerStack({
     Key? key,
@@ -29,6 +30,7 @@ class OptimizedEraseLayerStack extends ConsumerStatefulWidget {
     this.onEraseEnd,
     this.onPan,
     this.onTap,
+    this.altKeyPressed = false, // Default to false
   }) : super(key: key);
 
   @override
@@ -49,9 +51,7 @@ class OptimizedEraseLayerStackState
     final imageInvertMode = ref.watch(
       eraseStateProvider.select((s) => s.imageInvertMode),
     );
-    final isPanMode = ref.watch(
-      eraseStateProvider.select((s) => s.isPanMode),
-    );
+    // Not using isPanMode from provider anymore
     final brushSize = ref.watch(
       eraseStateProvider.select((s) => s.brushSize),
     );
@@ -78,9 +78,7 @@ class OptimizedEraseLayerStackState
             currentPath: renderData.currentPath,
             dirtyRect: renderData.dirtyBounds,
           ),
-        ),
-
-        // UI层处理交互事件
+        ), // UI层处理交互事件
         UILayer(
           onPointerDown: _handlePointerDown,
           onPointerMove: _handlePointerMove,
@@ -92,7 +90,8 @@ class OptimizedEraseLayerStackState
             widget.image.width.toDouble(),
             widget.image.height.toDouble(),
           ),
-          altKeyPressed: isPanMode,
+          altKeyPressed: widget
+              .altKeyPressed, // Use widget.altKeyPressed instead of isPanMode
           brushSize: brushSize,
           cursorPosition: _getCursorPosition(),
         ),
@@ -157,19 +156,22 @@ class OptimizedEraseLayerStackState
 
   // 处理指针按下事件
   void _handlePointerDown(Offset position) {
-    if (ref.read(eraseStateProvider).isPanMode) return;
+    // Use widget.altKeyPressed instead of state provider
+    if (widget.altKeyPressed) return;
     widget.onEraseStart?.call(position);
   }
 
   // 处理指针移动事件
   void _handlePointerMove(Offset position, Offset delta) {
-    if (ref.read(eraseStateProvider).isPanMode) return;
+    // Use widget.altKeyPressed instead of state provider
+    if (widget.altKeyPressed) return;
     widget.onEraseUpdate?.call(position, delta);
   }
 
   // 处理指针抬起事件
   void _handlePointerUp(Offset position) {
-    if (ref.read(eraseStateProvider).isPanMode) return;
+    // Use widget.altKeyPressed instead of state provider
+    if (widget.altKeyPressed) return;
     widget.onEraseEnd?.call();
   }
 

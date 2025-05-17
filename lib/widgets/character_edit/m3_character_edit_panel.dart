@@ -243,6 +243,8 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
       // Clear erase state when region changes
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(erase.eraseStateProvider.notifier).clear();
+        // Recalculate dynamic brush size when the selected region changes
+        _setDynamicBrushSize();
       });
     }
   }
@@ -1683,6 +1685,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         final area = width * height;
 
         // Calculate brush size as 1/10000 of selected region pixels, with minimum and maximum constraints
+        // 万分之一 (1/10000) is the desired ratio per the requirements
         final calculatedSize = area / 10000;
         final dynamicBrushSize = calculatedSize.clamp(1.0, 50.0);
 
@@ -1692,12 +1695,24 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           'regionPixels': area,
           'calculatedSize': calculatedSize,
           'dynamicBrushSize': dynamicBrushSize,
-        });
-
-        // Update brush size
+        }); // Update brush size
         ref
             .read(erase.eraseStateProvider.notifier)
             .setBrushSize(dynamicBrushSize);
+
+        // Show a brief notification to inform the user that brush size was automatically adjusted
+        if (mounted && context.mounted) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  '笔刷大小已根据图像尺寸自动调整为 ${dynamicBrushSize.toStringAsFixed(1)}'),
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              width: 300,
+            ),
+          );
+        }
       } catch (e) {
         AppLogger.error('计算动态笔刷大小时出错', error: e);
       }

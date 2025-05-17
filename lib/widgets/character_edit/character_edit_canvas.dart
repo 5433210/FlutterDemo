@@ -214,6 +214,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
                       }
                     },
                     onTap: _handleTap,
+                    altKeyPressed:
+                        _altKeyNotifier.value, // Pass the Alt key state
                   ),
                 ),
               );

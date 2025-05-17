@@ -177,7 +177,9 @@ class _UILayerState extends ConsumerState<UILayer> {
                   print(
                       '手势开始: ${details.localPosition}, Alt键: ${widget.altKeyPressed}');
                 }
-                if (widget.onPointerDown != null) {
+
+                // 当Alt键没有按下时，调用擦除开始回调
+                if (!widget.altKeyPressed && widget.onPointerDown != null) {
                   widget.onPointerDown!(details.localPosition);
                 }
               }
@@ -193,7 +195,14 @@ class _UILayerState extends ConsumerState<UILayer> {
                   print(
                       '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: ${widget.altKeyPressed}');
                 }
-                if (widget.onPointerMove != null) {
+
+                // 当Alt键按下时，使用onPan回调进行平移操作
+                if (widget.altKeyPressed) {
+                  if (widget.onPan != null) {
+                    widget.onPan!(details.delta);
+                  }
+                } else if (widget.onPointerMove != null) {
+                  // 否则正常擦除
                   widget.onPointerMove!(details.localPosition, details.delta);
                 }
               }
@@ -204,11 +213,14 @@ class _UILayerState extends ConsumerState<UILayer> {
               if (kDebugMode && DebugFlags.enableEraseDebug) {
                 print('手势结束, Alt键: ${widget.altKeyPressed}');
               }
-              if (_mousePosition != null && widget.onPointerUp != null) {
-                widget.onPointerUp!(_mousePosition!);
-              } else if (widget.cursorPosition != null &&
-                  widget.onPointerUp != null) {
-                widget.onPointerUp!(widget.cursorPosition!);
+
+              // 当Alt键没有按下时，才调用擦除结束回调
+              if (!widget.altKeyPressed && widget.onPointerUp != null) {
+                if (_mousePosition != null) {
+                  widget.onPointerUp!(_mousePosition!);
+                } else if (widget.cursorPosition != null) {
+                  widget.onPointerUp!(widget.cursorPosition!);
+                }
               }
             },
             behavior: HitTestBehavior.opaque,
