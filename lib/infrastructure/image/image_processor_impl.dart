@@ -357,6 +357,7 @@ class ImageProcessorImpl implements ImageProcessor {
 
   @override
   img.Image denoiseImage(img.Image source, double strength) {
+    if (strength == 0) return source;
     final radius = (strength * 5).clamp(1.0, 3.0);
     final blurred = img.gaussianBlur(source, radius: radius.toInt());
 

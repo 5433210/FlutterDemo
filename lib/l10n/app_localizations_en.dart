@@ -422,6 +422,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterDetailWritingTool => 'Writing Tool';
 
   @override
+  String get characterEditBrushSize => 'Brush Size';
+
+  @override
   String get characterEditCharacterUpdated => 'Character updated successfully';
 
   @override
@@ -450,6 +453,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterEditLoadingImage => 'Loading character image...';
+
+  @override
+  String get characterEditNoiseReduction => 'Noise Reduction';
 
   @override
   String get characterEditNoRegionSelected => 'No region selected';
@@ -500,6 +506,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get characterEditShowContour => 'Show Contour';
+
+  @override
+  String get characterEditThreshold => 'Threshold';
 
   @override
   String get characterEditThumbnailCheckFailed => 'Thumbnail check failed';

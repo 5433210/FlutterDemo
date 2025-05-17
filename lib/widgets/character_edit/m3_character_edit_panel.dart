@@ -256,6 +256,10 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     // Clear erase state on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(erase.eraseStateProvider.notifier).clear();
+
+      // Set dynamic brush size based on image size
+      _setDynamicBrushSize();
+
       //Set invert mode based on actual conditions
       if ((widget.selectedRegion.options.inverted &&
               !ref.read(erase.eraseStateProvider).imageInvertMode) ||
@@ -877,38 +881,86 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: colorScheme.surface,
-      child: Row(
-        mainAxisSize: MainAxisSize.max, // Ensure the row takes the full width
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Undo/redo button group
-          _buildToolbarButtonGroup([
-            _ToolbarButton(
-              icon: Icons.undo,
-              tooltip: l10n.characterEditUndo,
-              onPressed: eraseState.canUndo
-                  ? () => ref.read(erase.eraseStateProvider.notifier).undo()
-                  : null,
-              shortcut: EditorShortcuts.undo,
-            ),
-            _ToolbarButton(
-              icon: Icons.redo,
-              tooltip: l10n.characterEditRedo,
-              onPressed: eraseState.canRedo
-                  ? () => ref.read(erase.eraseStateProvider.notifier).redo()
-                  : null,
-              shortcut: EditorShortcuts.redo,
-            ),
-          ]),
+          // First row with undo/redo and toggle buttons
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Undo/redo button group
+              _buildToolbarButtonGroup([
+                _ToolbarButton(
+                  icon: Icons.undo,
+                  tooltip: l10n.characterEditUndo,
+                  onPressed: eraseState.canUndo
+                      ? () => ref.read(erase.eraseStateProvider.notifier).undo()
+                      : null,
+                  shortcut: EditorShortcuts.undo,
+                ),
+                _ToolbarButton(
+                  icon: Icons.redo,
+                  tooltip: l10n.characterEditRedo,
+                  onPressed: eraseState.canRedo
+                      ? () => ref.read(erase.eraseStateProvider.notifier).redo()
+                      : null,
+                  shortcut: EditorShortcuts.redo,
+                ),
+              ]),
 
-          const SizedBox(width: 16), // Brush size control
-          Expanded(
+              const Spacer(),
+
+              // Tool button group
+              _buildToolbarButtonGroup([
+                _ToolbarButton(
+                  icon: Icons.invert_colors,
+                  tooltip: l10n.characterEditInvertMode,
+                  onPressed: () {
+                    ref.read(erase.eraseStateProvider.notifier).toggleReverse();
+                  },
+                  isActive: eraseState.isReversed,
+                  shortcut: EditorShortcuts.toggleInvert,
+                ),
+                _ToolbarButton(
+                  icon: Icons.flip,
+                  tooltip: l10n.characterEditImageInvert,
+                  onPressed: () {
+                    ref
+                        .read(erase.eraseStateProvider.notifier)
+                        .toggleImageInvert();
+                  },
+                  isActive: eraseState.imageInvertMode,
+                  shortcut: EditorShortcuts.toggleImageInvert,
+                ),
+                _ToolbarButton(
+                  icon: Icons.border_all,
+                  tooltip: l10n.characterEditShowContour,
+                  onPressed: () {
+                    ref.read(erase.eraseStateProvider.notifier).toggleContour();
+                  },
+                  isActive: eraseState.showContour,
+                  shortcut: EditorShortcuts.toggleContour,
+                ),
+              ]),
+            ],
+          ), // Second row with brush size control
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(Icons.brush,
-                    size: 16, color: colorScheme.onSurfaceVariant),
+                Tooltip(
+                  message: l10n.characterEditBrushSize,
+                  child: Icon(Icons.brush,
+                      size: 16, color: colorScheme.onSurfaceVariant),
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Slider(
@@ -926,7 +978,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                   ),
                 ),
                 Container(
-                  width: 28, // Fixed width for the text display
+                  width: 32, // Fixed width for the text display
                   alignment: Alignment.center,
                   child: Text(
                     eraseState.brushSize.toStringAsFixed(1),
@@ -940,38 +992,151 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
             ),
           ),
 
-          const SizedBox(width: 16),
-
-          // Tool button group
-          _buildToolbarButtonGroup([
-            _ToolbarButton(
-              icon: Icons.invert_colors,
-              tooltip: l10n.characterEditInvertMode,
-              onPressed: () {
-                ref.read(erase.eraseStateProvider.notifier).toggleReverse();
-              },
-              isActive: eraseState.isReversed,
-              shortcut: EditorShortcuts.toggleInvert,
+          // Third row with threshold slider
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
             ),
-            _ToolbarButton(
-              icon: Icons.flip,
-              tooltip: l10n.characterEditImageInvert,
-              onPressed: () {
-                ref.read(erase.eraseStateProvider.notifier).toggleImageInvert();
-              },
-              isActive: eraseState.imageInvertMode,
-              shortcut: EditorShortcuts.toggleImageInvert,
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Tooltip(
+                  message: l10n.characterEditThreshold,
+                  child: Icon(Icons.contrast,
+                      size: 16, color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: eraseState.processingOptions.threshold,
+                    min: 0.0,
+                    max: 255.0, // Keep divisions for better UX
+                    divisions: 25,
+                    activeColor: colorScheme.primary,
+                    inactiveColor: colorScheme.surfaceContainerHighest,
+                    thumbColor: colorScheme.primary,
+                    // Simplified to match brush size slider pattern
+                    onChanged: (double value) {
+                      // Round value to reduce updates (keep this optimization)
+                      final roundedValue = (value / 10).floor() * 10.0;
+                      // 只有当值变化超过10.0才更新状态
+                      if ((eraseState.processingOptions.threshold -
+                                  roundedValue)
+                              .abs() >=
+                          10) {
+                        ref
+                            .read(erase.eraseStateProvider.notifier)
+                            .setThreshold(roundedValue, updateImage: false);
+                      }
+                    },
+                    onChangeEnd: (value) {
+                      // Final update when slider is released
+                      ref
+                          .read(erase.eraseStateProvider.notifier)
+                          .setThreshold(value, updateImage: true);
+                    },
+                  ),
+                ),
+                Container(
+                  width: 32, // Fixed width for the text display
+                  alignment: Alignment.center,
+                  child: Text(
+                    eraseState.processingOptions.threshold.toStringAsFixed(0),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            _ToolbarButton(
-              icon: Icons.border_all,
-              tooltip: l10n.characterEditShowContour,
-              onPressed: () {
-                ref.read(erase.eraseStateProvider.notifier).toggleContour();
-              },
-              isActive: eraseState.showContour,
-              shortcut: EditorShortcuts.toggleContour,
+          ), // Fourth row with noise reduction toggle and slider
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(8),
             ),
-          ]),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Tooltip(
+                  message: l10n.characterEditNoiseReduction,
+                  child: Icon(Icons.blur_on,
+                      size: 16, color: colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: eraseState.processingOptions.noiseReduction > 0,
+                  onChanged: (value) {
+                    ref
+                        .read(erase.eraseStateProvider.notifier)
+                        .toggleNoiseReduction(value);
+                  },
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Slider(
+                    value: eraseState.processingOptions.noiseReduction
+                        .clamp(0.0, 1.0),
+                    min: 0.0,
+                    max: 1.0,
+                    divisions: 10,
+                    activeColor: eraseState.processingOptions.noiseReduction > 0
+                        ? colorScheme.primary
+                        : colorScheme.surfaceContainerHighest,
+                    inactiveColor: colorScheme.surfaceContainerHighest,
+                    thumbColor: eraseState.processingOptions.noiseReduction > 0
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
+                    onChanged: eraseState.processingOptions.noiseReduction > 0
+                        ? (double value) {
+                            // 把值四舍五入到最近的0.1，减少微小变化触发的更新
+                            final roundedValue = (value * 10).round() / 10;
+                            // 只有当值变化超过0.1时才更新
+                            if ((eraseState.processingOptions.noiseReduction -
+                                        roundedValue)
+                                    .abs() >=
+                                0.1) {
+                              ref
+                                  .read(erase.eraseStateProvider.notifier)
+                                  .setNoiseReduction(roundedValue,
+                                      updateImage: false);
+                            }
+                          }
+                        : null,
+                    onChangeEnd: eraseState.processingOptions.noiseReduction > 0
+                        ? (value) {
+                            ref
+                                .read(erase.eraseStateProvider.notifier)
+                                .setNoiseReduction(value, updateImage: true);
+                          }
+                        : null,
+                  ),
+                ),
+                Container(
+                  width: 32, // Fixed width for the text display
+                  alignment: Alignment.center,
+                  child: Text(
+                    eraseState.processingOptions.noiseReduction
+                        .toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: eraseState.processingOptions.noiseReduction > 0
+                          ? colorScheme.onSurfaceVariant
+                          : colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1331,12 +1496,12 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
 
       final processingOptions = ProcessingOptions(
         inverted: eraseState.imageInvertMode,
-        threshold: 128.0,
-        noiseReduction: 0.5,
         showContour: eraseState.showContour,
         brushSize: eraseState.brushSize,
         contrast: widget.processingOptions.contrast,
         brightness: widget.processingOptions.brightness,
+        threshold: widget.processingOptions.threshold,
+        noiseReduction: widget.processingOptions.noiseReduction,
       );
 
       // Get current selection from selectedRegionProvider
@@ -1512,6 +1677,38 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         });
       }
     });
+  }
+
+  // Set dynamic brush size based on selected region size
+  Future<void> _setDynamicBrushSize() async {
+    if (widget.imageData != null) {
+      try {
+        // Use the selected region's dimensions rather than the entire image
+        final rect = widget.selectedRegion.rect;
+        final width = rect.width.toInt();
+        final height = rect.height.toInt();
+        final area = width * height;
+
+        // Calculate brush size as 1/10000 of selected region pixels, with minimum and maximum constraints
+        final calculatedSize = area / 10000;
+        final dynamicBrushSize = calculatedSize.clamp(1.0, 50.0);
+
+        AppLogger.debug('设置动态笔刷大小', data: {
+          'regionWidth': width,
+          'regionHeight': height,
+          'regionPixels': area,
+          'calculatedSize': calculatedSize,
+          'dynamicBrushSize': dynamicBrushSize,
+        });
+
+        // Update brush size
+        ref
+            .read(erase.eraseStateProvider.notifier)
+            .setBrushSize(dynamicBrushSize);
+      } catch (e) {
+        AppLogger.error('计算动态笔刷大小时出错', error: e);
+      }
+    }
   }
 }
 

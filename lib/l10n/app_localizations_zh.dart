@@ -422,6 +422,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterDetailWritingTool => '书写工具';
 
   @override
+  String get characterEditBrushSize => '笔刷尺寸';
+
+  @override
   String get characterEditCharacterUpdated => '字符已更新';
 
   @override
@@ -450,6 +453,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterEditLoadingImage => '加载字符图像中...';
+
+  @override
+  String get characterEditNoiseReduction => '降噪';
 
   @override
   String get characterEditNoRegionSelected => '未选择区域';
@@ -500,6 +506,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get characterEditShowContour => '显示轮廓';
+
+  @override
+  String get characterEditThreshold => '阈值';
 
   @override
   String get characterEditThumbnailCheckFailed => '缩略图检查失败';

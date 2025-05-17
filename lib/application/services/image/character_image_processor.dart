@@ -141,9 +141,9 @@ class CharacterImageProcessor {
       }
 
       // 应用降噪
-      if (params.options.noiseReduction > 0.3) {
-        finalImage = _denoise(finalImage, params.options.noiseReduction);
-      }
+      // if (params.options.noiseReduction > 0.3) {
+      finalImage = _denoise(finalImage, params.options.noiseReduction);
+      // }
 
       // 进行轮廓检测
       final outline = options.showContour
@@ -235,9 +235,9 @@ class CharacterImageProcessor {
       }
 
       // 应用降噪
-      if (params.options.noiseReduction > 0.3) {
-        binaryImage = _denoise(binaryImage, params.options.noiseReduction);
-      }
+      // if (params.options.noiseReduction > 0.3) {
+      binaryImage = _denoise(binaryImage, params.options.noiseReduction);
+      // }
 
       // 获取处理后的二值化图像数据 (确保为透明背景)
       final binaryBytes =

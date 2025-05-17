@@ -42,6 +42,7 @@ class EraseState {
 
   // 重做路径列表(通过PathManager访问)
   final List<PathInfo>? _redoPaths;
+  final bool? forceImageUpdate;
 
   // 构造函数
   const EraseState({
@@ -56,18 +57,14 @@ class EraseState {
     this.imageInvertMode = false,
     this.processingOptions = const ProcessingOptions(),
     this.mode = EraseMode.draw,
+    this.forceImageUpdate = false,
     List<PathInfo>? redoPaths,
   }) : _redoPaths = redoPaths;
 
   // 创建初始状态
   factory EraseState.initial() {
     return const EraseState(
-      processingOptions: ProcessingOptions(
-        inverted: false,
-        threshold: 128.0,
-        noiseReduction: 0.5,
-        showContour: false,
-      ),
+      processingOptions: ProcessingOptions(),
     );
   }
 
@@ -94,7 +91,6 @@ class EraseState {
 
   // 是否处于平移模式
   bool get isPanMode => mode == EraseMode.pan;
-
   // 复制并修改部分属性
   EraseState copyWith({
     List<List<PathInfo>>? history,
@@ -109,6 +105,7 @@ class EraseState {
     ProcessingOptions? processingOptions,
     EraseMode? mode,
     List<PathInfo>? redoPaths,
+    bool? forceImageUpdate,
   }) {
     return EraseState(
       history: history ?? this.history,
@@ -122,6 +119,7 @@ class EraseState {
       imageInvertMode: imageInvertMode ?? this.imageInvertMode,
       processingOptions: processingOptions ?? this.processingOptions,
       mode: mode ?? this.mode,
+      forceImageUpdate: forceImageUpdate,
       redoPaths: redoPaths ?? _redoPaths, // 添加redoPaths参数
     );
   }

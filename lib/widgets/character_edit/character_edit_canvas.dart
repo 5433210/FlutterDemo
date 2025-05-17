@@ -71,6 +71,9 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
   late final ValueNotifier<bool> _altKeyNotifier = ValueNotifier<bool>(false);
 
+  // 用于延迟更新轮廓的计时器，防止频繁刷新
+  Timer? _updateOutlineDebounceTimer;
+
   DateTime _lastAltToggleTime = DateTime.now();
 
   DetectedOutline? _outline;
@@ -110,7 +113,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       final showContour = ref.read(eraseStateProvider).showContour;
       if (showContour) {
         final prevPaths = previous?.completedPaths ?? [];
-        final currentPaths = current.completedPaths ?? [];
+        final currentPaths = current.completedPaths;
 
         // 检测路径变化
         AppLogger.debug('路径变化检测', data: {
@@ -132,6 +135,34 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         print('图像反转状态变化，强制更新轮廓');
         Future.delayed(const Duration(milliseconds: 100), () {
           _updateOutline();
+        });
+      }
+    });
+
+    // Listen for forceImageUpdate flag changes to update the image processing
+    ref.listen(eraseStateProvider.select((state) => state.forceImageUpdate),
+        (_, current) {
+      // Use null-safe approach to check if forceImageUpdate is true
+      if (current ?? false) {
+        AppLogger.debug('检测到强制更新图像标志，更新处理图像');
+
+        // 延迟更长时间执行更新，提高流畅性
+        if (_updateOutlineDebounceTimer?.isActive ?? false) {
+          _updateOutlineDebounceTimer?.cancel();
+        }
+
+        _updateOutlineDebounceTimer =
+            Timer(const Duration(milliseconds: 250), () {
+          if (mounted) {
+            _updateOutline();
+
+            // Reset the flag after processing with a small delay to ensure completion
+            Future.delayed(const Duration(milliseconds: 50), () {
+              if (mounted) {
+                ref.read(eraseStateProvider.notifier).resetForceImageUpdate();
+              }
+            });
+          }
         });
       }
     });
@@ -427,14 +458,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       ..scale(scale, scale);
 
     _transformationController.value = matrix;
-  }
-
-  // Helper to extract the current scale factor from the transformation matrix
-  double _getMatrixScale(Matrix4 matrix) {
-    // The scale is in the diagonal elements of the matrix
-    // We use the average of the x and y scale factors
-    final scaleX = matrix.getMaxScaleOnAxis();
-    return scaleX > 0 ? scaleX : 1.0;
   }
 
   void _handleEraseEnd() {
@@ -757,8 +780,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
       final options = ProcessingOptions(
         inverted: eraseState.imageInvertMode,
-        threshold: 128.0,
-        noiseReduction: 0.5,
+        threshold: eraseState.processingOptions.threshold,
+        noiseReduction: eraseState.processingOptions.noiseReduction,
         showContour: true,
       );
 

@@ -893,6 +893,12 @@ abstract class AppLocalizations {
   /// **'Writing Tool'**
   String get characterDetailWritingTool;
 
+  /// No description provided for @characterEditBrushSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Brush Size'**
+  String get characterEditBrushSize;
+
   /// No description provided for @characterEditCharacterUpdated.
   ///
   /// In en, this message translates to:
@@ -952,6 +958,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading character image...'**
   String get characterEditLoadingImage;
+
+  /// No description provided for @characterEditNoiseReduction.
+  ///
+  /// In en, this message translates to:
+  /// **'Noise Reduction'**
+  String get characterEditNoiseReduction;
 
   /// No description provided for @characterEditNoRegionSelected.
   ///
@@ -1048,6 +1060,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show Contour'**
   String get characterEditShowContour;
+
+  /// No description provided for @characterEditThreshold.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold'**
+  String get characterEditThreshold;
 
   /// No description provided for @characterEditThumbnailCheckFailed.
   ///
