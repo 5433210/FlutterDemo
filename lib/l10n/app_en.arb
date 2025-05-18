@@ -971,5 +971,10 @@
   "workToolBrush": "Brush",
   "workToolHardPen": "Hard Pen",
   "workToolOther": "Other",
-  "yes": "Yes"
+  "yes": "Yes",
+  "adjustGridSize": "Adjust Grid Size",
+  "gridSizeSmall": "Small",
+  "gridSizeMedium": "Medium",
+  "gridSizeLarge": "Large",
+  "gridSizeExtraLarge": "Extra Large"
 }

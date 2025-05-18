@@ -80,6 +80,15 @@ class _ResizableImagePreviewPanelState
   }
 
   @override
+  void deactivate() {
+    // Save current height when deactivated (but before dispose)
+    // This is a safer place to use ref than in dispose()
+    final height = ref.read(imagePreviewPanelHeightProvider);
+    ref.read(imagePreviewPanelHeightProvider.notifier).state = height;
+    super.deactivate();
+  }
+
+  @override
   void didUpdateWidget(ResizableImagePreviewPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
 
@@ -101,12 +110,8 @@ class _ResizableImagePreviewPanelState
 
   @override
   void dispose() {
-    // If the panel is being closed/removed, save the current height
-    // so it can be restored later
-    if (mounted) {
-      final height = ref.read(imagePreviewPanelHeightProvider);
-      ref.read(imagePreviewPanelHeightProvider.notifier).state = height;
-    }
+    // No longer try to read or update the provider in dispose()
+    // This avoids "Cannot use ref after widget was disposed" errors
     super.dispose();
   }
 

@@ -125,6 +125,12 @@ abstract class AppLocalizations {
   /// **'已添加到分类'**
   String get addedToCategory;
 
+  /// No description provided for @adjustGridSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整网格大小'**
+  String get adjustGridSize;
+
   /// No description provided for @alignBottom.
   ///
   /// In zh, this message translates to:
@@ -902,8 +908,8 @@ abstract class AppLocalizations {
   /// No description provided for @characterEditCharacterUpdated.
   ///
   /// In zh, this message translates to:
-  /// **'「{character}」已更新'**
-  String characterEditCharacterUpdated(Object character);
+  /// **'「字符已更新'**
+  String get characterEditCharacterUpdated;
 
   /// No description provided for @characterEditCompletingSave.
   ///
@@ -2776,6 +2782,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'网格大小'**
   String get gridSize;
+
+  /// No description provided for @gridSizeExtraLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'特大'**
+  String get gridSizeExtraLarge;
+
+  /// No description provided for @gridSizeLarge.
+  ///
+  /// In zh, this message translates to:
+  /// **'大'**
+  String get gridSizeLarge;
+
+  /// No description provided for @gridSizeMedium.
+  ///
+  /// In zh, this message translates to:
+  /// **'中'**
+  String get gridSizeMedium;
+
+  /// No description provided for @gridSizeSmall.
+  ///
+  /// In zh, this message translates to:
+  /// **'小'**
+  String get gridSizeSmall;
 
   /// No description provided for @gridView.
   ///

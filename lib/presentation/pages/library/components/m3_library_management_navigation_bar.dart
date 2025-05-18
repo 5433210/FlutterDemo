@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/common/m3_page_navigation_bar.dart';
+import 'grid_size_selector.dart';
 
 /// 图库管理导航栏 - 使用与角色管理页面相同的设计风格
 class M3LibraryManagementNavigationBar extends StatefulWidget
@@ -200,14 +201,15 @@ class _M3LibraryManagementNavigationBarState
           tooltip:
               widget.isBatchMode ? l10n.exitBatchMode : l10n.batchOperations,
           onPressed: widget.onToggleBatchMode,
-        ),
-
-        // 视图切换按钮
+        ), // 视图切换按钮
         IconButton(
           icon: Icon(widget.isGridView ? Icons.view_list : Icons.grid_view),
           tooltip: widget.isGridView ? l10n.listView : l10n.gridView,
           onPressed: widget.onToggleViewMode,
         ),
+
+        // Grid size selector (only show when in grid view)
+        if (widget.isGridView) const GridSizeSelector(),
 
         // 图片预览面板切换按钮
         IconButton(

@@ -24,6 +24,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addedToCategory => 'Added to category';
 
   @override
+  String get adjustGridSize => 'Adjust Grid Size';
+
+  @override
   String get alignBottom => 'Align Bottom';
 
   @override
@@ -425,9 +428,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditBrushSize => 'Brush Size';
 
   @override
-  String characterEditCharacterUpdated(Object character) {
-    return 'Character updated successfully';
-  }
+  String get characterEditCharacterUpdated => 'Character updated successfully';
 
   @override
   String get characterEditCompletingSave => 'Completing save...';
@@ -1392,6 +1393,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gridSize => 'Grid Size';
+
+  @override
+  String get gridSizeExtraLarge => 'Extra Large';
+
+  @override
+  String get gridSizeLarge => 'Large';
+
+  @override
+  String get gridSizeMedium => 'Medium';
+
+  @override
+  String get gridSizeSmall => 'Small';
 
   @override
   String get gridView => 'Grid View';

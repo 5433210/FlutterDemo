@@ -24,6 +24,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addedToCategory => '已添加到分类';
 
   @override
+  String get adjustGridSize => '调整网格大小';
+
+  @override
   String get alignBottom => '底对齐';
 
   @override
@@ -425,9 +428,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterEditBrushSize => '笔刷尺寸';
 
   @override
-  String characterEditCharacterUpdated(Object character) {
-    return '「$character」已更新';
-  }
+  String get characterEditCharacterUpdated => '「字符已更新';
 
   @override
   String get characterEditCompletingSave => '完成保存...';
@@ -1392,6 +1393,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get gridSize => '网格大小';
+
+  @override
+  String get gridSizeExtraLarge => '特大';
+
+  @override
+  String get gridSizeLarge => '大';
+
+  @override
+  String get gridSizeMedium => '中';
+
+  @override
+  String get gridSizeSmall => '小';
 
   @override
   String get gridView => '网格视图';
