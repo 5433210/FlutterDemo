@@ -1769,6 +1769,30 @@ abstract class AppLocalizations {
   /// **'Delete Category'**
   String get deleteCategory;
 
+  /// No description provided for @deleteCategoryOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category only'**
+  String get deleteCategoryOnly;
+
+  /// No description provided for @deleteCategoryWithFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category and files'**
+  String get deleteCategoryWithFiles;
+
+  /// No description provided for @deleteCategoryWithFilesConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete category \"{name}\" and its {count} files? This action cannot be undone!'**
+  String deleteCategoryWithFilesConfirmMessage(int count, String name);
+
+  /// No description provided for @deleteCategoryWithFilesWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get deleteCategoryWithFilesWarning;
+
   /// No description provided for @deleteFailure.
   ///
   /// In en, this message translates to:
@@ -2474,7 +2498,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterReset.
   ///
   /// In en, this message translates to:
-  /// **'Reset All Filters'**
+  /// **'Reset Filters'**
   String get filterReset;
 
   /// No description provided for @filterSearchPlaceholder.
@@ -2648,7 +2672,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterStyleSection.
   ///
   /// In en, this message translates to:
-  /// **'Style'**
+  /// **'Calligraphy Style'**
   String get filterStyleSection;
 
   /// No description provided for @filterTagsAdd.
@@ -2720,7 +2744,7 @@ abstract class AppLocalizations {
   /// No description provided for @filterToolSection.
   ///
   /// In en, this message translates to:
-  /// **'Tool'**
+  /// **'Writing Tool'**
   String get filterToolSection;
 
   /// No description provided for @filterTotalItems.
@@ -4661,6 +4685,12 @@ abstract class AppLocalizations {
   /// **'Select Collection'**
   String get selectCollection;
 
+  /// No description provided for @selectDeleteOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Select delete option:'**
+  String get selectDeleteOption;
+
   /// No description provided for @selected.
   ///
   /// In en, this message translates to:
@@ -4676,7 +4706,7 @@ abstract class AppLocalizations {
   /// No description provided for @selectExportLocation.
   ///
   /// In en, this message translates to:
-  /// **'Select Export Location'**
+  /// **'Select export location'**
   String get selectExportLocation;
 
   /// No description provided for @selectImportFile.
@@ -5042,7 +5072,7 @@ abstract class AppLocalizations {
   /// No description provided for @themeModeDescription.
   ///
   /// In en, this message translates to:
-  /// **'Use dark theme for better night viewing'**
+  /// **'Dark Theme'**
   String get themeModeDescription;
 
   /// No description provided for @themeModeLight.
@@ -5096,7 +5126,7 @@ abstract class AppLocalizations {
   /// No description provided for @ungroupDescription.
   ///
   /// In en, this message translates to:
-  /// **'Ungroup the selected group'**
+  /// **'Are you sure you want to ungroup this group?'**
   String get ungroupDescription;
 
   /// No description provided for @unknownCategory.
@@ -5252,7 +5282,7 @@ abstract class AppLocalizations {
   /// No description provided for @workBrowseDeleteSelected.
   ///
   /// In en, this message translates to:
-  /// **'Delete {count}'**
+  /// **'Delete Selected'**
   String workBrowseDeleteSelected(Object count);
 
   /// No description provided for @workBrowseError.
@@ -5756,7 +5786,7 @@ abstract class AppLocalizations {
   /// No description provided for @works.
   ///
   /// In en, this message translates to:
-  /// **'Works'**
+  /// **'Work Count'**
   String get works;
 
   /// No description provided for @workStyleClerical.

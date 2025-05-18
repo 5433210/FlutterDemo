@@ -874,6 +874,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteCategory => 'Delete Category';
 
   @override
+  String get deleteCategoryOnly => 'Delete category only';
+
+  @override
+  String get deleteCategoryWithFiles => 'Delete category and files';
+
+  @override
+  String deleteCategoryWithFilesConfirmMessage(int count, String name) {
+    return 'Are you sure you want to delete category \"$name\" and its $count files? This action cannot be undone!';
+  }
+
+  @override
+  String get deleteCategoryWithFilesWarning => 'Warning';
+
+  @override
   String get deleteFailure => 'Failed to delete backup';
 
   @override
@@ -1235,7 +1249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterPresetSection => 'Presets';
 
   @override
-  String get filterReset => 'Reset All Filters';
+  String get filterReset => 'Reset Filters';
 
   @override
   String get filterSearchPlaceholder => 'Search...';
@@ -1322,7 +1336,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterStyleSeal => 'Seal Script';
 
   @override
-  String get filterStyleSection => 'Style';
+  String get filterStyleSection => 'Calligraphy Style';
 
   @override
   String get filterTagsAdd => 'Add Tag';
@@ -1358,7 +1372,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterToolOther => 'Other';
 
   @override
-  String get filterToolSection => 'Tool';
+  String get filterToolSection => 'Writing Tool';
 
   @override
   String filterTotalItems(Object count) {
@@ -2368,6 +2382,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectCollection => 'Select Collection';
 
   @override
+  String get selectDeleteOption => 'Select delete option:';
+
+  @override
   String get selected => 'Selected';
 
   @override
@@ -2376,7 +2393,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectExportLocation => 'Select Export Location';
+  String get selectExportLocation => 'Select export location';
 
   @override
   String get selectImportFile => 'Select Backup File';
@@ -2559,7 +2576,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeDark => 'Dark';
 
   @override
-  String get themeModeDescription => 'Use dark theme for better night viewing';
+  String get themeModeDescription => 'Dark Theme';
 
   @override
   String get themeModeLight => 'Light';
@@ -2588,7 +2605,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ungroupConfirm => 'Confirm Ungroup';
 
   @override
-  String get ungroupDescription => 'Ungroup the selected group';
+  String get ungroupDescription => 'Are you sure you want to ungroup this group?';
 
   @override
   String get unknownCategory => 'Unknown Category';
@@ -2669,7 +2686,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workBrowseDeleteSelected(Object count) {
-    return 'Delete $count';
+    return 'Delete Selected';
   }
 
   @override
@@ -2930,7 +2947,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogTitle => 'Import Work';
 
   @override
-  String get works => 'Works';
+  String get works => 'Work Count';
 
   @override
   String get workStyleClerical => 'Clerical Script';

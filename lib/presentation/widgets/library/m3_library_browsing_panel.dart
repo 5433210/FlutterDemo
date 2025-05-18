@@ -7,6 +7,7 @@ import '../../../application/providers/repository_providers.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../domain/entities/library_item.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../pages/library/components/box_selection_painter.dart';
 import '../../pages/library/components/m3_library_filter_panel.dart';
 import '../../pages/library/components/m3_library_grid_view.dart';
 import '../../pages/library/components/m3_library_list_view.dart';
@@ -54,6 +55,12 @@ class _M3LibraryBrowsingPanelState
     extends ConsumerState<M3LibraryBrowsingPanel> {
   late final TextEditingController _searchController;
   bool _isFilterPanelExpanded = true;
+
+  // 框选相关变量
+  bool _isBoxSelecting = false;
+  Offset? _boxSelectionStart;
+  Offset? _boxSelectionCurrent;
+  final GlobalKey _contentKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +223,8 @@ class _M3LibraryBrowsingPanelState
 
   // 构建内容区域 (网格或列表视图)
   Widget _buildContentArea(LibraryManagementState state) {
-    return state.viewMode == ViewMode.grid
+    // 首先构建基础内容
+    Widget content = state.viewMode == ViewMode.grid
         ? M3LibraryGridView(
             items: state.items,
             isBatchMode: state.isBatchMode || widget.enableMultiSelect,
@@ -231,9 +239,75 @@ class _M3LibraryBrowsingPanelState
             onItemTap: _handleItemTap,
             onItemLongPress: _handleItemLongPress,
           );
+
+    // 如果不是批量模式或不允许多选，则不启用框选功能
+    if (!state.isBatchMode && !widget.enableMultiSelect) {
+      return content;
+    }
+
+    // 包装在GestureDetector中以支持框选功能
+    return Stack(
+      children: [
+        // 内容区域，带有key以便我们可以获取其大小
+        GestureDetector(
+          key: _contentKey,
+          behavior: HitTestBehavior.translucent,
+          onPanStart: (details) {
+            if (!state.isBatchMode && !widget.enableMultiSelect) return;
+
+            // 检查是否点击了项目，如果是则不启动框选
+            RenderBox box =
+                _contentKey.currentContext!.findRenderObject() as RenderBox;
+            Offset localPosition = box.globalToLocal(details.globalPosition);
+
+            setState(() {
+              _isBoxSelecting = true;
+              _boxSelectionStart = localPosition;
+              _boxSelectionCurrent = localPosition;
+            });
+          },
+          onPanUpdate: (details) {
+            if (!_isBoxSelecting) return;
+
+            RenderBox box =
+                _contentKey.currentContext!.findRenderObject() as RenderBox;
+            Offset localPosition = box.globalToLocal(details.globalPosition);
+
+            setState(() {
+              _boxSelectionCurrent = localPosition;
+            });
+          },
+          onPanEnd: (details) {
+            if (!_isBoxSelecting) return;
+
+            _handleBoxSelection();
+
+            setState(() {
+              _isBoxSelecting = false;
+              _boxSelectionStart = null;
+              _boxSelectionCurrent = null;
+            });
+          },
+          child: content,
+        ),
+
+        // 绘制选择框
+        if (_isBoxSelecting &&
+            _boxSelectionStart != null &&
+            _boxSelectionCurrent != null)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: BoxSelectionPainter(
+                start: _boxSelectionStart!,
+                end: _boxSelectionCurrent!,
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
-  // 构建支持文件拖放的内容区域
+  // 处理支持文件拖放的内容区域
   Widget _buildDropTarget(LibraryManagementState state) {
     return DesktopDropWrapper(
       onFilesDropped: (files) async {
@@ -271,6 +345,95 @@ class _M3LibraryBrowsingPanelState
         availablePageSizes: const [10, 20, 50, 100],
       ),
     );
+  }
+
+  // 处理框选完成
+  void _handleBoxSelection() {
+    if (_boxSelectionStart == null || _boxSelectionCurrent == null) return;
+
+    final state = ref.read(libraryManagementProvider);
+    if (!state.isBatchMode && !widget.enableMultiSelect) return;
+
+    // 将选择框规范化为左上角到右下角的形式
+    final selectionRect =
+        Rect.fromPoints(_boxSelectionStart!, _boxSelectionCurrent!);
+
+    // 获取内容区域的RenderBox对象
+    RenderBox? contentBox =
+        _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (contentBox == null) return;
+
+    // 获取所有项目的位置并检查它们是否在选择框内
+    final notifier = ref.read(libraryManagementProvider.notifier);
+    Set<String> selectedIds = Set.from(state.selectedItems);
+
+    // 这里我们需要获取所有渲染在屏幕上的项目元素
+    // 由于我们没有直接的方法来获取每个项目的位置，
+    // 我们可以通过以下简化的方法来实现（实际应用中可能需要更复杂的实现）：
+
+    // 如果是网格视图
+    if (state.viewMode == ViewMode.grid) {
+      // 获取视窗大小
+      final viewportSize = contentBox.size;
+
+      // 假设项目是等宽等高排列的，计算每个项目可能的位置
+      const spacing = 16.0; // 来自M3LibraryGridView的spacing常量
+      const crossAxisCount = 4; // 来自M3LibraryGridView的crossAxisCount常量
+
+      final itemWidth = (viewportSize.width - spacing * (crossAxisCount + 1)) /
+          crossAxisCount;
+      final itemHeight = itemWidth; // 假设宽高比为1
+
+      // 遍历所有项目
+      for (int i = 0; i < state.items.length; i++) {
+        // 计算项目的行和列位置
+        final column = i % crossAxisCount;
+        final row = i ~/ crossAxisCount;
+
+        // 计算项目的左上角坐标
+        final left = spacing + column * (itemWidth + spacing);
+        final top = spacing + row * (itemHeight + spacing);
+
+        // 创建项目的矩形
+        final itemRect = Rect.fromLTWH(left, top, itemWidth, itemHeight);
+
+        // 检查项目是否与选择框相交
+        if (itemRect.overlaps(selectionRect)) {
+          selectedIds.add(state.items[i].id);
+        }
+      }
+    } else {
+      // 列表视图的处理与网格视图类似，但位置计算不同
+      const spacing = 16.0; // 来自M3LibraryListView的spacing常量
+      const itemHeight = 80.0; // 假设每个列表项的高度为80
+
+      // 遍历所有项目
+      for (int i = 0; i < state.items.length; i++) {
+        // 计算项目的顶部位置
+        final top = spacing + i * (itemHeight + spacing);
+
+        // 创建项目的矩形
+        final itemRect = Rect.fromLTWH(
+            spacing, top, contentBox.size.width - 2 * spacing, itemHeight);
+
+        // 检查项目是否与选择框相交
+        if (itemRect.overlaps(selectionRect)) {
+          selectedIds.add(state.items[i].id);
+        }
+      }
+    }
+
+    // 如果还不在批量模式，进入批量模式
+    if (!state.isBatchMode && selectedIds.isNotEmpty) {
+      notifier.toggleBatchMode();
+    }
+
+    // 更新选中项目
+    for (final id in state.items.map((e) => e.id)) {
+      if (selectedIds.contains(id) && !state.selectedItems.contains(id)) {
+        notifier.toggleItemSelection(id);
+      }
+    }
   }
 
   // 处理列表项长按

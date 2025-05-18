@@ -1146,5 +1146,20 @@
   "workToolBrush": "毛笔",
   "workToolHardPen": "硬笔",
   "workToolOther": "其他",
-  "yes": "是"
+  "yes": "是",
+  "selectDeleteOption": "选择删除选项：",
+  "deleteCategoryOnly": "仅删除分类",
+  "deleteCategoryWithFiles": "删除分类及文件",
+  "deleteCategoryWithFilesWarning": "警告",
+  "deleteCategoryWithFilesConfirmMessage": "确定要删除分类\"{name}\"及其包含的{count}个文件？此操作无法撤销！",
+  "@deleteCategoryWithFilesConfirmMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

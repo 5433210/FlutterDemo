@@ -195,15 +195,77 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     );
   }
 
-  /// 删除分类
+  /// 删除当前筛选条件下的所有项目
+  Future<void> deleteAllItemsUnderFilter() async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // 获取当前筛选条件下的所有项目ID
+      final itemsToDelete = state.items;
+
+      // 如果当前详情页项目也会被删除，关闭详情面板
+      final selectedItemId = state.selectedItem?.id;
+      bool shouldCloseDetailPanel = false;
+
+      if (selectedItemId != null) {
+        // 检查当前选中的项目是否在将被删除的列表中
+        shouldCloseDetailPanel =
+            itemsToDelete.any((item) => item.id == selectedItemId);
+      }
+
+      // 删除所有项目
+      for (final item in itemsToDelete) {
+        await _service.deleteItem(item.id);
+      }
+
+      // 更新状态
+      if (shouldCloseDetailPanel) {
+        state = state.copyWith(
+          selectedItems: {},
+          isBatchMode: false,
+          selectedItem: null,
+          isDetailOpen: false,
+          isLoading: false,
+        );
+      } else {
+        state = state.copyWith(
+          selectedItems: {},
+          isBatchMode: false,
+          isLoading: false,
+        );
+      }
+
+      // 重新加载数据
+      await loadData();
+      await loadCategoryItemCounts();
+
+      AppLogger.info('已删除所有筛选条件下的项目', data: {
+        'deletedCount': itemsToDelete.length,
+      });
+    } catch (e) {
+      AppLogger.error('删除所有项目失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 删除分类（不删除文件）
   Future<void> deleteCategory(String id) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      await _service.deleteCategory(id);
+      // 获取此分类及所有子分类的ID
+      final categoryIds = _getAllSubcategoryIds(id);
+
+      // 删除所有分类（先删除子分类，再删除父分类）
+      for (final categoryId in categoryIds.reversed) {
+        await _service.deleteCategory(categoryId);
+      }
 
       // 如果当前选中的分类被删除，清除选择
-      if (state.selectedCategoryId == id) {
+      if (categoryIds.contains(state.selectedCategoryId)) {
         state = state.copyWith(selectedCategoryId: null);
       }
 
@@ -214,6 +276,51 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       await loadData();
     } catch (e) {
       AppLogger.error('删除分类失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  /// 删除分类和文件
+  Future<void> deleteCategoryWithFiles(String id) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      // 获取此分类及所有子分类的ID
+      final categoryIds = _getAllSubcategoryIds(id);
+
+      // 获取这些分类中的所有文件
+      final itemsToDelete = <String>[];
+      for (final category in state.items) {
+        if (category.categories.any((catId) => categoryIds.contains(catId))) {
+          itemsToDelete.add(category.id);
+        }
+      }
+
+      // 删除所有文件
+      for (final itemId in itemsToDelete) {
+        await _service.deleteItem(itemId);
+      }
+
+      // 删除所有分类（先删除子分类，再删除父分类）
+      for (final categoryId in categoryIds.reversed) {
+        await _service.deleteCategory(categoryId);
+      }
+
+      // 如果当前选中的分类被删除，清除选择
+      if (categoryIds.contains(state.selectedCategoryId)) {
+        state = state.copyWith(selectedCategoryId: null);
+      }
+
+      await _reloadCategories();
+      await loadCategoryItemCounts();
+
+      // 刷新数据，以更新项目列表
+      await loadData();
+    } catch (e) {
+      AppLogger.error('删除分类和文件失败', error: e);
       state = state.copyWith(
         isLoading: false,
         errorMessage: e.toString(),
@@ -473,6 +580,39 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     }
   }
 
+  /// 从当前分类中移除选中的项目
+  Future<void> removeSelectedItemsFromCategory(String categoryId) async {
+    if (state.selectedItems.isEmpty || categoryId.isEmpty) {
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, errorMessage: null);
+
+    try {
+      await removeCategoryFromItems(categoryId, state.selectedItems.toList());
+
+      // 如果当前选中的是将被修改的项目，更新其状态
+      if (state.selectedItem != null &&
+          state.selectedItems.contains(state.selectedItem!.id)) {
+        final updatedItem = await _service.getItem(state.selectedItem!.id);
+        if (updatedItem != null) {
+          state = state.copyWith(selectedItem: updatedItem);
+        }
+      }
+
+      AppLogger.info('已从分类中移除选中项目', data: {
+        'categoryId': categoryId,
+        'itemCount': state.selectedItems.length,
+      });
+    } catch (e) {
+      AppLogger.error('从分类中移除项目失败', error: e);
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   /// 重置所有筛选条件
   void resetAllFilters() {
     state = state.copyWith(
@@ -543,12 +683,41 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     return results;
   }
 
+  /// 选择当前筛选条件下的所有项目
+  void selectAllItems() {
+    if (state.items.isEmpty) {
+      return;
+    }
+
+    // 如果不是批量模式，先进入批量模式
+    final newState =
+        !state.isBatchMode ? state.copyWith(isBatchMode: true) : state;
+
+    // 将所有当前筛选条件下的项目都添加到选中集合中
+    final allItemIds = state.items.map((item) => item.id).toSet();
+
+    state = newState.copyWith(selectedItems: allItemIds);
+
+    AppLogger.info('已选择所有项目', data: {
+      'selectedCount': allItemIds.length,
+    });
+  }
+
   /// 选择分类
   void selectCategory(String? categoryId) {
-    state = state.copyWith(
-      selectedCategoryId: categoryId,
-      currentPage: 1,
-    );
+    // If in batch mode, clear the selected items when changing category
+    if (state.isBatchMode && state.selectedCategoryId != categoryId) {
+      state = state.copyWith(
+        selectedCategoryId: categoryId,
+        currentPage: 1,
+        selectedItems: {}, // Clear selected items when changing category in batch mode
+      );
+    } else {
+      state = state.copyWith(
+        selectedCategoryId: categoryId,
+        currentPage: 1,
+      );
+    }
     loadData().then((_) => loadCategoryItemCounts());
   }
 
@@ -857,6 +1026,26 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       currentPage: 1,
     );
     loadData();
+  }
+
+  /// 获取指定分类及其所有子分类的ID列表
+  List<String> _getAllSubcategoryIds(String categoryId) {
+    final result = <String>[categoryId];
+
+    // 查找所有直接子分类
+    void findChildren(String parentId) {
+      final children = state.categories
+          .where((category) => category.parentId == parentId)
+          .toList();
+
+      for (final child in children) {
+        result.add(child.id);
+        findChildren(child.id); // 递归查找子分类的子分类
+      }
+    }
+
+    findChildren(categoryId);
+    return result;
   }
 
   /// 初始化数据

@@ -1,5 +1,15 @@
 {
   "@@locale": "en",
+  "@deleteCategoryWithFilesConfirmMessage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "@libraryManagementError": {
     "placeholders": {
       "message": {
@@ -289,6 +299,10 @@
   "deleteBackupConfirmMessage": "Are you sure you want to delete this backup? This action cannot be undone.",
   "deleteBackupConfirmTitle": "Delete Backup",
   "deleteCategory": "Delete Category",
+  "deleteCategoryOnly": "Delete category only",
+  "deleteCategoryWithFiles": "Delete category and files",
+  "deleteCategoryWithFilesConfirmMessage": "Are you sure you want to delete category \"{name}\" and its {count} files? This action cannot be undone!",
+  "deleteCategoryWithFilesWarning": "Warning",
   "deleteFailure": "Failed to delete backup",
   "deleteGroup": "Delete Group",
   "deleteGroupConfirm": "Confirm Delete Group",
@@ -407,8 +421,8 @@
   "filterMin": "Min",
   "filterPanel": "Filter Panel",
   "filterPresetSection": "Presets",
-  "filterReset": "Reset Filters",
   "filterReset": "Reset All Filters",
+  "filterReset": "Reset Filters",
   "filterSearchPlaceholder": "Search...",
   "filterSection": "Filter Options",
   "filterSelectAll": "Select All",
@@ -445,8 +459,8 @@
   "filterStyleRunning": "Running Script",
   "filterStyleSeal": "Seal Script",
   "filterStyleSeal": "Seal Script",
-  "filterStyleSection": "Calligraphy Style",
   "filterStyleSection": "Style",
+  "filterStyleSection": "Calligraphy Style",
   "filterTagsAdd": "Add Tag",
   "filterTagsAddHint": "Enter tag name and press Enter",
   "filterTagsNone": "No tags selected",
@@ -461,8 +475,8 @@
   "filterToolHardPen": "Hard Pen",
   "filterToolOther": "Other",
   "filterToolOther": "Other",
-  "filterToolSection": "Writing Tool",
   "filterToolSection": "Tool",
+  "filterToolSection": "Writing Tool",
   "filterTotalItems": "Total: {count} items",
   "generalSettings": "General Settings",
   "geometryProperties": "Geometry Properties",
@@ -789,10 +803,11 @@
   "searchCharactersWorksAuthors": "Search characters, works, or authors",
   "selectBackup": "Select Backup",
   "selectCollection": "Select Collection",
+  "selectDeleteOption": "Select delete option:",
   "selected": "Selected",
   "selectedCount": "{count} selected",
-  "selectExportLocation": "Select export location",
   "selectExportLocation": "Select Export Location",
+  "selectExportLocation": "Select export location",
   "selectImportFile": "Select Backup File",
   "selectTargetLayer": "Select Target Layer",
   "sendLayerToBack": "Send Layer to Back",
@@ -853,8 +868,8 @@
   "textureSelectFromLibrary": "Select from Library",
   "themeMode": "Theme Mode",
   "themeModeDark": "Dark",
-  "themeModeDescription": "Dark Theme",
   "themeModeDescription": "Use dark theme for better night viewing",
+  "themeModeDescription": "Dark Theme",
   "themeModeLight": "Light",
   "themeModeSystem": "System",
   "themeModeSystemDescription": "Automatically switch between light/dark modes based on system settings",
@@ -863,8 +878,8 @@
   "totalItems": "Total: {count}",
   "ungroup": "Ungroup",
   "ungroupConfirm": "Confirm Ungroup",
-  "ungroupDescription": "Are you sure you want to ungroup this group?",
   "ungroupDescription": "Ungroup the selected group",
+  "ungroupDescription": "Are you sure you want to ungroup this group?",
   "unknownCategory": "Unknown Category",
   "unlocked": "Unlocked",
   "unlockElement": "Unlock Element",
@@ -891,8 +906,8 @@
   "workBrowseDeleteConfirmMessage": "Are you sure you want to delete {count} selected works? This action cannot be undone.",
   "workBrowseDeleteConfirmTitle": "Confirm Deletion",
   "workBrowseDeleteConfirmTitle": "Confirm Deletion",
-  "workBrowseDeleteSelected": "Delete Selected",
   "workBrowseDeleteSelected": "Delete {count}",
+  "workBrowseDeleteSelected": "Delete Selected",
   "workBrowseError": "Error: {message}",
   "workBrowseGridView": "Grid View",
   "workBrowseImport": "Import Work",
@@ -976,8 +991,8 @@
   "workImportDialogProcessing": "Processing...",
   "workImportDialogSuccess": "Import successful",
   "workImportDialogTitle": "Import Work",
-  "works": "Work Count",
   "works": "Works",
+  "works": "Work Count",
   "workStyleClerical": "Clerical Script",
   "workStyleCursive": "Cursive Script",
   "workStyleOther": "Other",

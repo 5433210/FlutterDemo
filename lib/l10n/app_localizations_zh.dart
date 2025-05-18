@@ -874,6 +874,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteCategory => '删除分类';
 
   @override
+  String get deleteCategoryOnly => '仅删除分类';
+
+  @override
+  String get deleteCategoryWithFiles => '删除分类及文件';
+
+  @override
+  String deleteCategoryWithFilesConfirmMessage(int count, String name) {
+    return '确定要删除分类\"$name\"及其包含的$count个文件？此操作无法撤销！';
+  }
+
+  @override
+  String get deleteCategoryWithFilesWarning => '警告';
+
+  @override
   String get deleteFailure => '备份删除失败';
 
   @override
@@ -2366,6 +2380,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get selectCollection => '选择采集';
+
+  @override
+  String get selectDeleteOption => '选择删除选项：';
 
   @override
   String get selected => '已选择';

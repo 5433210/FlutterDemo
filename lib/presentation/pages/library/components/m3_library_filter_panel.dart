@@ -190,19 +190,16 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                 },
               ),
             ),
-          ),
-
-          // Categories section
+          ), // Categories section
           SliverToBoxAdapter(
             child: _buildCollapsibleSection(
               title: l10n.libraryManagementCategories,
               isExpanded: _isCategoriesExpanded,
               onToggle: () => setState(
                   () => _isCategoriesExpanded = !_isCategoriesExpanded),
-              child: const SizedBox(
-                height: 300,
-                child: LibraryCategoryPanel(),
-              ),
+              child: _isCategoriesExpanded
+                  ? const LibraryCategoryPanel() // 动态高度，不再使用固定高度的SizedBox
+                  : const SizedBox.shrink(),
             ),
           ),
 

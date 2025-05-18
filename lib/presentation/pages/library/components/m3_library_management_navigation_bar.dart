@@ -18,8 +18,20 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 删除选中项目回调
   final VoidCallback? onDeleteSelected;
 
+  /// 删除所有项目回调
+  final VoidCallback? onDeleteAll;
+
   /// 批量设置分类回调
   final VoidCallback? onAssignCategoryBatch;
+
+  /// 从当前分类中移除回调
+  final VoidCallback? onRemoveFromCategory;
+
+  /// 选择所有项目回调
+  final VoidCallback? onSelectAll;
+
+  /// 取消选择回调
+  final VoidCallback? onCancelSelection;
 
   /// 是否为网格视图
   final bool isGridView;
@@ -40,7 +52,11 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     required this.onToggleBatchMode,
     required this.selectedCount,
     this.onDeleteSelected,
+    this.onDeleteAll,
     this.onAssignCategoryBatch,
+    this.onRemoveFromCategory,
+    this.onSelectAll,
+    this.onCancelSelection,
     required this.isGridView,
     required this.onToggleViewMode,
     this.onImportFiles,
@@ -119,23 +135,55 @@ class _M3LibraryManagementNavigationBarState
             ],
           ),
 
-        // 右侧按钮组
-        // 批量分类按钮
-        if (widget.isBatchMode &&
-            widget.selectedCount > 0 &&
-            widget.onAssignCategoryBatch != null)
-          IconButton(
-            icon: const Icon(Icons.category),
-            tooltip: '设置分类',
-            onPressed: widget.onAssignCategoryBatch,
-          ),
+        // 右侧按钮组 - 批量模式下显示的按钮
+        if (widget.isBatchMode) ...[
+          // 批量选择工具栏中的"全选"按钮
+          if (widget.onSelectAll != null)
+            IconButton(
+              icon: const Icon(Icons.select_all),
+              tooltip: '全选',
+              onPressed: widget.onSelectAll,
+            ),
 
-        // 批量删除按钮
-        if (widget.isBatchMode && widget.selectedCount > 0)
+          // 取消选择按钮
+          if (widget.onCancelSelection != null && widget.selectedCount > 0)
+            IconButton(
+              icon: const Icon(Icons.deselect),
+              tooltip: '取消选择',
+              onPressed: widget.onCancelSelection,
+            ),
+
+          // 从当前分类中移除按钮
+          if (widget.onRemoveFromCategory != null && widget.selectedCount > 0)
+            IconButton(
+              icon: const Icon(Icons.category_outlined),
+              tooltip: '从当前分类移除',
+              onPressed: widget.onRemoveFromCategory,
+            ),
+
+          // 批量分类按钮
+          if (widget.selectedCount > 0 && widget.onAssignCategoryBatch != null)
+            IconButton(
+              icon: const Icon(Icons.category),
+              tooltip: '设置分类',
+              onPressed: widget.onAssignCategoryBatch,
+            ),
+
+          // 批量删除按钮
+          if (widget.selectedCount > 0)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: l10n.libraryManagementDeleteSelected,
+              onPressed: widget.onDeleteSelected,
+            ),
+        ],
+
+        // 删除全部按钮 - 在非批量模式下显示
+        if (!widget.isBatchMode && widget.onDeleteAll != null)
           IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: l10n.libraryManagementDeleteSelected,
-            onPressed: widget.onDeleteSelected,
+            icon: const Icon(Icons.delete_sweep),
+            tooltip: '删除全部',
+            onPressed: widget.onDeleteAll,
           ),
 
         // 批量操作按钮

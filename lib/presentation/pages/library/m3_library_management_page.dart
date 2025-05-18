@@ -35,8 +35,16 @@ class _M3LibraryManagementPageState
         selectedCount: state.selectedItems.length,
         onDeleteSelected:
             state.selectedItems.isNotEmpty ? _handleDeleteSelectedItems : null,
+        onDeleteAll: _handleDeleteAllItems,
         onAssignCategoryBatch:
             state.selectedItems.isNotEmpty ? _showCategoryBatchDialog : null,
+        onRemoveFromCategory:
+            state.selectedCategoryId != null && state.selectedItems.isNotEmpty
+                ? () => _handleRemoveFromCategory(state.selectedCategoryId!)
+                : null,
+        onSelectAll: _handleSelectAll,
+        onCancelSelection:
+            state.selectedItems.isNotEmpty ? _handleCancelSelection : null,
         isGridView: state.viewMode == ViewMode.grid,
         onToggleViewMode: _toggleViewMode,
         onImportFiles: _handleImportFiles,
@@ -78,6 +86,50 @@ class _M3LibraryManagementPageState
     Future.microtask(() {
       ref.read(libraryManagementProvider.notifier).loadData();
     });
+  }
+
+  /// 处理取消选择
+  void _handleCancelSelection() {
+    if (!mounted) return;
+    ref.read(libraryManagementProvider.notifier).clearSelection();
+  }
+
+  /// 处理删除所有项目
+  void _handleDeleteAllItems() {
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final state = ref.read(libraryManagementProvider);
+
+    if (state.items.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('确认删除所有项目'),
+        content: Text('确定要删除当前筛选条件下的所有${state.items.length}个项目吗？此操作无法撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (mounted) {
+                ref
+                    .read(libraryManagementProvider.notifier)
+                    .deleteAllItemsUnderFilter();
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleDeleteSelectedItems() {
@@ -211,6 +263,47 @@ class _M3LibraryManagementPageState
         );
       }
     }
+  }
+
+  /// 处理从分类中移除选中项目
+  void _handleRemoveFromCategory(String categoryId) {
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    final state = ref.read(libraryManagementProvider);
+
+    if (state.selectedItems.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('从分类中移除'),
+        content: Text('确定要将选中的${state.selectedItems.length}个项目从当前分类中移除吗？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (mounted) {
+                ref
+                    .read(libraryManagementProvider.notifier)
+                    .removeSelectedItemsFromCategory(categoryId);
+              }
+            },
+            child: const Text('移除'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 处理全选操作
+  void _handleSelectAll() {
+    if (!mounted) return;
+    ref.read(libraryManagementProvider.notifier).selectAllItems();
   }
 
   /// 显示批量分类对话框
