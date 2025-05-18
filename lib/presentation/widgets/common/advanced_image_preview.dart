@@ -185,6 +185,17 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   Widget _buildImageViewer(BuildContext context) {
+    // Add debug logging to understand UI state
+    print('【AdvancedImagePreview】Building image viewer:');
+    print(
+        '【AdvancedImagePreview】Image paths count: ${widget.imagePaths.length}');
+    print('【AdvancedImagePreview】Current index: $_currentIndex');
+    print(
+        '【AdvancedImagePreview】Should show previous button: ${_currentIndex > 0}');
+    print(
+        '【AdvancedImagePreview】Should show next button: ${_currentIndex < widget.imagePaths.length - 1}');
+    print('【AdvancedImagePreview】Image paths: ${widget.imagePaths}');
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -266,7 +277,11 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
                 child: IconButton(
                   icon: const Icon(Icons.arrow_back_ios),
                   color: Colors.white,
-                  onPressed: () => _updateIndex(_currentIndex - 1),
+                  onPressed: () {
+                    print(
+                        '【AdvancedImagePreview】Previous button pressed, moving from $_currentIndex to ${_currentIndex - 1}');
+                    _updateIndex(_currentIndex - 1);
+                  },
                   iconSize: 30,
                 ),
               ),
@@ -295,7 +310,11 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
                 child: IconButton(
                   icon: const Icon(Icons.arrow_forward_ios),
                   color: Colors.white,
-                  onPressed: () => _updateIndex(_currentIndex + 1),
+                  onPressed: () {
+                    print(
+                        '【AdvancedImagePreview】Next button pressed, moving from $_currentIndex to ${_currentIndex + 1}');
+                    _updateIndex(_currentIndex + 1);
+                  },
                   iconSize: 30,
                 ),
               ),
@@ -363,11 +382,26 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   Future<void> _checkImageFiles() async {
-    for (final path in widget.imagePaths) {
+    // Debug logging for image file checking
+    print('【AdvancedImagePreview】Checking image files:');
+    print(
+        '【AdvancedImagePreview】Total paths to check: ${widget.imagePaths.length}');
+
+    for (int i = 0; i < widget.imagePaths.length; i++) {
+      final path = widget.imagePaths[i];
       try {
         final file = File(path);
-        _fileExistsCache[path] = await file.exists();
+        final exists = await file.exists();
+        _fileExistsCache[path] = exists;
+
+        print('【AdvancedImagePreview】Image $i - Path: $path, Exists: $exists');
+
+        if (!exists) {
+          print(
+              '【AdvancedImagePreview】WARNING: Image file does not exist: $path');
+        }
       } catch (e) {
+        print('【AdvancedImagePreview】ERROR checking file $path: $e');
         _fileExistsCache[path] = false;
         AppLogger.error('检查图片文件失败', error: e, data: {'path': path});
       }
@@ -445,6 +479,13 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   void _updateIndex(int newIndex) {
+    print(
+        '【AdvancedImagePreview】_updateIndex called with new index: $newIndex');
+    print('【AdvancedImagePreview】Current index: $_currentIndex');
+    print('【AdvancedImagePreview】Available paths: ${widget.imagePaths.length}');
+    print(
+        '【AdvancedImagePreview】First few paths: ${widget.imagePaths.take(3).toList()}');
+
     if (newIndex != _currentIndex &&
         newIndex >= 0 &&
         newIndex < widget.imagePaths.length) {
@@ -455,6 +496,10 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
         _isZoomed = false;
       });
       widget.onIndexChanged?.call(_currentIndex);
+      print('【AdvancedImagePreview】Updated to index: $_currentIndex');
+    } else {
+      print(
+          '【AdvancedImagePreview】Invalid index update request. Valid range: 0-${widget.imagePaths.length - 1}');
     }
   }
 }

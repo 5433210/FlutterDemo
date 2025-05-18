@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/entities/library_item.dart';
+import '../../../providers/library/library_management_provider.dart';
 import '../../../widgets/common/advanced_image_preview.dart';
 
 // State provider for the resizable image preview panel's height
@@ -279,16 +280,37 @@ class _ResizableImagePreviewPanelState
   void _openFullScreen() {
     if (widget.selectedItem == null) return;
 
-    // Show the image in fullscreen using an existing dialog or component
+    // Get all library items to enable navigation in fullscreen mode
+    final libraryProvider = ref.read(libraryManagementProvider);
+    final allItems = libraryProvider.items;
+
+    // Convert to image paths list
+    final allImagePaths = allItems.map((item) => item.path).toList();
+
+    // Find current index
+    int currentIndex = 0;
+    if (allImagePaths.contains(widget.selectedItem!.path)) {
+      currentIndex = allImagePaths.indexOf(widget.selectedItem!.path);
+    }
+
+    // Debug logging
+    print('【ResizableImagePreviewPanel】Opening fullscreen preview:');
+    print(
+        '【ResizableImagePreviewPanel】Selected item path: ${widget.selectedItem!.path}');
+    print(
+        '【ResizableImagePreviewPanel】Total available images: ${allImagePaths.length}');
+    print('【ResizableImagePreviewPanel】Current image index: $currentIndex');
+
+    // Show the image in fullscreen with all available images
     showDialog(
       context: context,
       builder: (context) => Dialog.fullscreen(
         child: Stack(
           children: [
-            // Full screen preview
+            // Full screen preview with all images
             AdvancedImagePreview(
-              imagePaths: [widget.selectedItem!.path],
-              initialIndex: 0,
+              imagePaths: allImagePaths,
+              initialIndex: currentIndex,
               enableZoom: true,
               showThumbnails: true, // Enable thumbnails in full screen mode
               isFullScreen: true,
