@@ -430,41 +430,60 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   Future<List<LibraryCategory>> getCategoryTree() async {
     try {
       final categories = await getCategories();
-      final tree = <LibraryCategory>[];
       final categoryMap = <String, LibraryCategory>{};
+      final rootCategories = <LibraryCategory>[];
 
-      // 建立映射关系
+      // 第一步：建立初始映射关系
       for (final category in categories) {
         categoryMap[category.id] = category;
       }
 
-      // 构建树形结构
+      // 第二步：构建父子关系
       for (final category in categories) {
         if (category.parentId == null || category.parentId!.isEmpty) {
-          tree.add(category);
+          // 这是一个根分类
+          rootCategories.add(category);
         } else {
+          // 这是一个子分类，将其添加到父分类的children中
           final parent = categoryMap[category.parentId];
           if (parent != null) {
-            // Create a new list with the existing children plus the new category
-            final children = List<LibraryCategory>.from(parent.children);
-            children.add(category);
-
-            // Update the parent in the map with the new children
-            categoryMap[parent.id] = parent.copyWith(children: children);
+            final parentWithNewChild = parent.copyWith(
+              children: [...parent.children, category],
+            );
+            categoryMap[parent.id] = parentWithNewChild;
           } else {
-            tree.add(category); // 如果父分类不存在，则作为顶级分类
+            // 如果找不到父分类，将其作为根分类
+            rootCategories.add(category);
           }
         }
       }
 
-      // 更新树中的节点
-      for (int i = 0; i < tree.length; i++) {
-        if (categoryMap.containsKey(tree[i].id)) {
-          tree[i] = categoryMap[tree[i].id]!;
-        }
+      // 第三步：递归更新所有分类的完整子树
+      List<LibraryCategory> buildCategoryTree(
+          List<LibraryCategory> categories) {
+        return categories.map((category) {
+          final updatedChildren = buildCategoryTree(
+            categoryMap[category.id]?.children ?? [],
+          );
+          return category.copyWith(children: updatedChildren);
+        }).toList();
       }
 
-      return tree;
+      // 构建完整的树结构
+      final tree = buildCategoryTree(rootCategories);
+
+      // 按名称对每个层级的分类进行排序
+      List<LibraryCategory> sortCategoriesRecursively(
+          List<LibraryCategory> categories) {
+        return categories.map((category) {
+          final sortedChildren = sortCategoriesRecursively(category.children)
+            ..sort((a, b) => a.name.compareTo(b.name));
+          return category.copyWith(children: sortedChildren);
+        }).toList()
+          ..sort((a, b) => a.name.compareTo(b.name));
+      }
+
+      return sortCategoriesRecursively(tree);
     } catch (e, stackTrace) {
       AppLogger.error('获取分类树失败', error: e, stackTrace: stackTrace);
       rethrow;

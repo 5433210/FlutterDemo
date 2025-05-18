@@ -160,6 +160,7 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
   ) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
+    // 使用'all'键获取总数，这与仓库实现中的'all'键匹配
     final count = notifier.categoryItemCounts['all'] ?? 0;
 
     return ListTile(
@@ -301,8 +302,8 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
               ),
             );
           },
-        ),
-        // Only display children if this category is expanded
+        ), // Only display children if this category is expanded
+        // 移除了层级限制，可以显示任意层级的子分类
         if (hasChildren && isExpanded)
           ...category.children.map((child) => _buildCategoryItem(
                 context,

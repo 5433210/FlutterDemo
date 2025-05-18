@@ -425,7 +425,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterEditBrushSize => '笔刷尺寸';
 
   @override
-  String get characterEditCharacterUpdated => '字符已更新';
+  String characterEditCharacterUpdated(Object character) {
+    return '「$character」已更新';
+  }
 
   @override
   String get characterEditCompletingSave => '完成保存...';
@@ -880,7 +882,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteCategoryWithFiles => '删除分类及文件';
 
   @override
-  String deleteCategoryWithFilesConfirmMessage(int count, String name) {
+  String deleteCategoryWithFilesConfirmMessage(Object count, Object name) {
     return '确定要删除分类\"$name\"及其包含的$count个文件？此操作无法撤销！';
   }
 
@@ -1463,10 +1465,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelBrightness => '亮度';
 
   @override
-  String get imagePropertyPanelCannotApplyNoImage => '无法应用变换：未设置图像';
+  String get imagePropertyPanelCannotApplyNoImage => '没有可用的图片';
 
   @override
-  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法应用变换：图像大小信息不可用';
+  String get imagePropertyPanelCannotApplyNoSizeInfo => '无法获取图片尺寸信息';
 
   @override
   String get imagePropertyPanelContent => '内容属性';
@@ -1505,6 +1507,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelDisplay => '显示模式';
+
+  @override
+  String imagePropertyPanelErrorMessage(Object error) {
+    return '发生错误: $error';
+  }
+
+  @override
+  String imagePropertyPanelFileLoadError(Object error) {
+    return '文件加载失败';
+  }
 
   @override
   String imagePropertyPanelFileNotExist(Object path) {
@@ -1557,7 +1569,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelGeometryWarning => '这些属性调整整个元素框，而不是图像内容本身';
 
   @override
-  String get imagePropertyPanelImageSelection => '图像选择';
+  String get imagePropertyPanelImageSelection => '图片选择';
 
   @override
   String get imagePropertyPanelImageSize => '图像大小';
@@ -1585,13 +1597,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get imagePropertyPanelNoCropping => ' (无裁剪，已应用其他变换)';
+  String get imagePropertyPanelLoading => '加载中...';
+
+  @override
+  String get imagePropertyPanelNoCropping => '（无裁剪）';
 
   @override
   String get imagePropertyPanelNoImage => '未选择图像';
 
   @override
-  String get imagePropertyPanelNoImageSelected => '未选择图像';
+  String get imagePropertyPanelNoImageSelected => '未选择图片';
 
   @override
   String get imagePropertyPanelOpacity => '不透明度';
@@ -1636,6 +1651,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imagePropertyPanelSelectFromLocal => '从本地选择';
+
+  @override
+  String get imagePropertyPanelSelectFromLocalDescription => '选择的图片将会自动导入到图库';
+
+  @override
+  String get imagePropertyPanelTitle => '图片属性';
 
   @override
   String get imagePropertyPanelTransformApplied => '变换已应用';
@@ -1750,7 +1771,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryManagementEnterBatchMode => '进入批量选择模式';
 
   @override
-  String libraryManagementError(String message) {
+  String libraryManagementError(Object message) {
     return '加载失败：$message';
   }
 
@@ -1791,6 +1812,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get libraryManagementLoading => '加载中...';
 
   @override
+  String get libraryManagementLocation => '位置';
+
+  @override
   String get libraryManagementMetadata => '元数据';
 
   @override
@@ -1822,6 +1846,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get libraryManagementSize => '尺寸';
+
+  @override
+  String get libraryManagementSizeHeight => '高度';
+
+  @override
+  String get libraryManagementSizeWidth => '宽度';
 
   @override
   String get libraryManagementSortBy => '排序方式';
@@ -1915,6 +1945,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get newCategory => '新建分类';
+
+  @override
+  String get nextImage => '下一张图片';
 
   @override
   String get no => '否';
@@ -2313,6 +2346,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get previewText => '预览';
 
   @override
+  String get previousImage => '上一张图片';
+
+  @override
   String get print => '打印';
 
   @override
@@ -2429,7 +2465,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stateAndDisplay => '状态与显示';
 
   @override
+  String get storageCharacters => '集字';
+
+  @override
   String get storageDetails => '存储详情';
+
+  @override
+  String get storageGallery => '图库';
 
   @override
   String get storageLocation => '存储位置';
@@ -2439,6 +2481,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get storageUsed => '已使用存储';
+
+  @override
+  String get storageWorks => '作品';
 
   @override
   String get tagEditorEnterTagHint => '输入标签并按Enter';
@@ -2534,10 +2579,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get textureApplicationRange => '纹理应用范围';
 
   @override
-  String get textureFillMode => '填充模式';
+  String get textureFillMode => '纹理填充模式';
 
   @override
-  String get textureFillModeContain => '适应';
+  String get textureFillModeContain => '包含';
 
   @override
   String get textureFillModeCover => '覆盖';
@@ -2605,7 +2650,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ungroupConfirm => '确认解组';
 
   @override
-  String get ungroupDescription => '解散已选组';
+  String get ungroupDescription => '确定要解散此组吗？';
 
   @override
   String get unknownCategory => '未知分类';

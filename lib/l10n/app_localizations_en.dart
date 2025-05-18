@@ -425,7 +425,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditBrushSize => 'Brush Size';
 
   @override
-  String get characterEditCharacterUpdated => 'Character updated successfully';
+  String characterEditCharacterUpdated(Object character) {
+    return 'Character updated successfully';
+  }
 
   @override
   String get characterEditCompletingSave => 'Completing save...';
@@ -880,7 +882,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteCategoryWithFiles => 'Delete category and files';
 
   @override
-  String deleteCategoryWithFilesConfirmMessage(int count, String name) {
+  String deleteCategoryWithFilesConfirmMessage(Object count, Object name) {
     return 'Are you sure you want to delete category \"$name\" and its $count files? This action cannot be undone!';
   }
 
@@ -1507,6 +1509,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelDisplay => 'Display Mode';
 
   @override
+  String imagePropertyPanelErrorMessage(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String imagePropertyPanelFileLoadError(Object error) {
+    return 'Failed to load image: $error';
+  }
+
+  @override
   String imagePropertyPanelFileNotExist(Object path) {
     return 'File does not exist: $path';
   }
@@ -1585,6 +1597,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get imagePropertyPanelLoading => 'Loading image...';
+
+  @override
   String get imagePropertyPanelNoCropping => ' (No cropping, other transforms applied)';
 
   @override
@@ -1636,6 +1651,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imagePropertyPanelSelectFromLocal => 'Select from Local';
+
+  @override
+  String get imagePropertyPanelSelectFromLocalDescription => 'The selected image will be automatically imported to the library';
+
+  @override
+  String get imagePropertyPanelTitle => 'Image Properties';
 
   @override
   String get imagePropertyPanelTransformApplied => 'Transform applied';
@@ -1750,7 +1771,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryManagementEnterBatchMode => 'Enter batch mode';
 
   @override
-  String libraryManagementError(String message) {
+  String libraryManagementError(Object message) {
     return 'Failed to load: $message';
   }
 
@@ -1791,6 +1812,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryManagementLoading => 'Loading...';
 
   @override
+  String get libraryManagementLocation => 'Location';
+
+  @override
   String get libraryManagementMetadata => 'Metadata';
 
   @override
@@ -1822,6 +1846,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryManagementSize => 'Size';
+
+  @override
+  String get libraryManagementSizeHeight => 'Height';
+
+  @override
+  String get libraryManagementSizeWidth => 'Width';
 
   @override
   String get libraryManagementSortBy => 'Sort by';
@@ -1915,6 +1945,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newCategory => 'New Category';
+
+  @override
+  String get nextImage => 'Next Image';
 
   @override
   String get no => 'No';
@@ -2313,6 +2346,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get previewText => 'Preview';
 
   @override
+  String get previousImage => 'Previous Image';
+
+  @override
   String get print => 'Print';
 
   @override
@@ -2393,7 +2429,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get selectExportLocation => 'Select export location';
+  String get selectExportLocation => 'Select Export Location';
 
   @override
   String get selectImportFile => 'Select Backup File';
@@ -2429,7 +2465,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stateAndDisplay => 'State & Display';
 
   @override
+  String get storageCharacters => 'Storage of Characters';
+
+  @override
   String get storageDetails => 'Storage Details';
+
+  @override
+  String get storageGallery => 'Storage of Gallery';
 
   @override
   String get storageLocation => 'Storage Location';
@@ -2439,6 +2481,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageUsed => 'Storage Used';
+
+  @override
+  String get storageWorks => 'Storage of Works';
 
   @override
   String get tagEditorEnterTagHint => 'Type a tag and press Enter';
@@ -2576,7 +2621,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeDark => 'Dark';
 
   @override
-  String get themeModeDescription => 'Dark Theme';
+  String get themeModeDescription => 'Use dark theme for better night viewing';
 
   @override
   String get themeModeLight => 'Light';
@@ -2947,7 +2992,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workImportDialogTitle => 'Import Work';
 
   @override
-  String get works => 'Work Count';
+  String get works => 'Works';
 
   @override
   String get workStyleClerical => 'Clerical Script';

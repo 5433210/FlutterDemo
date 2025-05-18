@@ -1,159 +1,5 @@
 {
   "@@locale": "zh",
-  "@characterCollectionError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@characterCollectionFindSwitchFailed": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@characterDetailTagAddError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@characterDetailTagRemoveError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@characterEditCharacterUpdated": {
-    "placeholders": {
-      "character": {
-        "type": "Object"
-      }
-    }
-  },
-  "@imagePropertyPanelAutoImportNotice": {},
-  "@imagePropertyPanelCannotApplyNoImage": {},
-  "@imagePropertyPanelCannotApplyNoSizeInfo": {},
-  "@imagePropertyPanelCroppingValueTooLarge": {},
-  "@imagePropertyPanelErrorMessage": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@imagePropertyPanelFileNotRecovered": {},
-  "@imagePropertyPanelFileRestored": {},
-  "@imagePropertyPanelImageSelection": {},
-  "@imagePropertyPanelImportError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@imagePropertyPanelImporting": {},
-  "@imagePropertyPanelImportSuccess": {},
-  "@imagePropertyPanelLibraryProcessing": {},
-  "@imagePropertyPanelLoadError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@imagePropertyPanelLoading": {},
-  "@imagePropertyPanelNoCropping": {},
-  "@imagePropertyPanelProcessingPathError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@imagePropertyPanelSelectFromLibrary": {},
-  "@imagePropertyPanelSelectFromLocal": {},
-  "@imagePropertyPanelSelectFromLocalDescription": {},
-  "@imagePropertyPanelTitle": {},
-  "@imagePropertyPanelTransformApplied": {},
-  "@imagePropertyPanelTransformError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@initializationFailed": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@libraryManagementError": {
-    "placeholders": {
-      "message": {
-        "type": "String"
-      }
-    }
-  },
-  "@practiceEditLoadFailed": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
-  "@textureApplicationRange": {
-    "description": "纹理应用的范围设置"
-  },
-  "@textureFillMode": {
-    "description": "纹理的填充模式"
-  },
-  "@textureFillModeContain": {
-    "description": "纹理保持比例显示"
-  },
-  "@textureFillModeCover": {
-    "description": "纹理覆盖整个区域"
-  },
-  "@textureFillModeNoRepeat": {
-    "description": "纹理不重复"
-  },
-  "@textureFillModeRepeat": {
-    "description": "纹理全部重复"
-  },
-  "@textureFillModeRepeatX": {
-    "description": "纹理水平重复"
-  },
-  "@textureFillModeRepeatY": {
-    "description": "纹理垂直重复"
-  },
-  "@textureOpacity": {
-    "description": "纹理的不透明度"
-  },
-  "@textureRangeBackground": {
-    "description": "应用纹理到整个背景"
-  },
-  "@textureRangeCharacter": {
-    "description": "仅应用纹理到字符"
-  },
-  "@textureRemove": {
-    "description": "移除纹理"
-  },
-  "@textureSelectFromLibrary": {
-    "description": "从库中选择纹理"
-  },
-  "@workImportDialogError": {
-    "placeholders": {
-      "error": {
-        "type": "Object"
-      }
-    }
-  },
   "a4Size": "A4 (210×297mm)",
   "a5Size": "A5 (148×210mm)",
   "about": "关于",
@@ -252,7 +98,6 @@
   "characterCollectionUseSelectionTool": "使用左侧的选择工具从图像中提取字符",
   "characterCount": "集字数量",
   "characterDetailAddTag": "添加标签",
-  "characterDetailAddTag": "添加标签",
   "characterDetailAuthor": "作者",
   "characterDetailBasicInfo": "基本信息",
   "characterDetailCalligraphyStyle": "书法风格",
@@ -290,7 +135,6 @@
   "characterDetailWritingTool": "书写工具",
   "characterEditBrushSize": "笔刷尺寸",
   "characterEditCharacterUpdated": "「{character}」已更新",
-  "characterEditCharacterUpdated": "字符已更新",
   "characterEditCompletingSave": "完成保存...",
   "characterEditImageInvert": "图像反转",
   "characterEditImageLoadError": "图像加载错误",
@@ -419,7 +263,6 @@
   "collectionPropertyPanelWorkSource": "作品来源",
   "commonProperties": "通用属性",
   "confirm": "确认",
-  "confirm": "确认",
   "confirmDelete": "确认删除？",
   "confirmDeleteCategory": "确认删除分类",
   "contains": "包含",
@@ -436,6 +279,10 @@
   "deleteBackupConfirmMessage": "确定要删除此备份吗？此操作无法撤消。",
   "deleteBackupConfirmTitle": "删除备份",
   "deleteCategory": "删除分类",
+  "deleteCategoryOnly": "仅删除分类",
+  "deleteCategoryWithFiles": "删除分类及文件",
+  "deleteCategoryWithFilesConfirmMessage": "确定要删除分类\"{name}\"及其包含的{count}个文件？此操作无法撤销！",
+  "deleteCategoryWithFilesWarning": "警告",
   "deleteFailure": "备份删除失败",
   "deleteGroup": "删除组",
   "deleteGroupConfirm": "确认删除组",
@@ -509,7 +356,6 @@
   "exportDialogSelectLocation": "请选择导出位置",
   "exportFailure": "备份导出失败",
   "exportFormat": "导出格式",
-  "exportingBackup": "正在导出备份...",
   "exportingBackup": "导出备份中...",
   "exportSuccess": "备份导出成功",
   "fileCount": "文件数量",
@@ -623,9 +469,7 @@
   "imagePropertyPanelBorderWidth": "边框宽度",
   "imagePropertyPanelBrightness": "亮度",
   "imagePropertyPanelCannotApplyNoImage": "没有可用的图片",
-  "imagePropertyPanelCannotApplyNoImage": "无法应用变换：未设置图像",
   "imagePropertyPanelCannotApplyNoSizeInfo": "无法获取图片尺寸信息",
-  "imagePropertyPanelCannotApplyNoSizeInfo": "无法应用变换：图像大小信息不可用",
   "imagePropertyPanelContent": "内容属性",
   "imagePropertyPanelContrast": "对比度",
   "imagePropertyPanelCornerRadius": "圆角半径",
@@ -633,7 +477,6 @@
   "imagePropertyPanelCropLeft": "左侧裁剪",
   "imagePropertyPanelCropping": "裁剪",
   "imagePropertyPanelCroppingApplied": " (裁剪：左{left}px，上{top}px，右{right}px，下{bottom}px)",
-  "imagePropertyPanelCroppingValueTooLarge": "裁剪值过大",
   "imagePropertyPanelCroppingValueTooLarge": "无法应用变换：裁剪值过大，导致无效的裁剪区域",
   "imagePropertyPanelCropRight": "右侧裁剪",
   "imagePropertyPanelCropTop": "顶部裁剪",
@@ -658,21 +501,17 @@
   "imagePropertyPanelGeometry": "几何属性",
   "imagePropertyPanelGeometryWarning": "这些属性调整整个元素框，而不是图像内容本身",
   "imagePropertyPanelImageSelection": "图片选择",
-  "imagePropertyPanelImageSelection": "图像选择",
   "imagePropertyPanelImageSize": "图像大小",
   "imagePropertyPanelImageTransform": "图像变换",
   "imagePropertyPanelImportError": "导入图像失败：{error}",
   "imagePropertyPanelImporting": "导入图像中...",
   "imagePropertyPanelImportSuccess": "图像导入成功",
   "imagePropertyPanelLibraryProcessing": "图库功能开发中...",
-  "imagePropertyPanelLoadError": "加载图片时出错: {error}",
   "imagePropertyPanelLoadError": "加载图像失败：{error}...",
   "imagePropertyPanelLoading": "加载中...",
   "imagePropertyPanelNoCropping": "（无裁剪）",
-  "imagePropertyPanelNoCropping": " (无裁剪，已应用其他变换)",
   "imagePropertyPanelNoImage": "未选择图像",
   "imagePropertyPanelNoImageSelected": "未选择图片",
-  "imagePropertyPanelNoImageSelected": "未选择图像",
   "imagePropertyPanelOpacity": "不透明度",
   "imagePropertyPanelOriginalSize": "原始大小",
   "imagePropertyPanelPosition": "位置",
@@ -710,14 +549,11 @@
   "languageZh": "简体中文",
   "lastBackupTime": "上次备份时间",
   "layer": "图层",
-  "layer1": "图层1",
   "layer1": "图层 1",
   "layerElements": "图层元素",
   "layerInfo": "图层信息",
   "layerName": "图层名称",
   "layerOperations": "图层操作",
-  "layerOperations": "图层操作",
-  "libraryCount": "图库数量",
   "libraryCount": "图库数量",
   "libraryManagement": "图库",
   "libraryManagementBasicInfo": "基本信息",
@@ -786,6 +622,7 @@
   "navCollapseSidebar": "收起侧边栏",
   "navExpandSidebar": "展开侧边栏",
   "newCategory": "新建分类",
+  "nextImage": "下一张图片",
   "no": "否",
   "noBackups": "没有可用的备份",
   "noCategories": "无分类",
@@ -914,6 +751,7 @@
   "presetSize": "预设大小",
   "preview": "预览",
   "previewText": "预览",
+  "previousImage": "上一张图片",
   "print": "打印",
   "removedFromAllCategories": "已从所有分类中移除",
   "rename": "重命名",
@@ -937,6 +775,7 @@
   "searchCharactersWorksAuthors": "搜索字符、作品或作者",
   "selectBackup": "选择备份",
   "selectCollection": "选择采集",
+  "selectDeleteOption": "选择删除选项：",
   "selected": "已选择",
   "selectedCount": "已选择{count}个",
   "selectExportLocation": "选择导出位置",
@@ -989,32 +828,20 @@
   "textPropertyPanelVisual": "视觉设置",
   "textPropertyPanelWritingMode": "书写模式",
   "textureApplicationRange": "纹理应用范围",
-  "textureApplicationRange": "纹理应用范围",
   "textureFillMode": "纹理填充模式",
-  "textureFillMode": "填充模式",
   "textureFillModeContain": "包含",
-  "textureFillModeContain": "适应",
-  "textureFillModeCover": "覆盖",
   "textureFillModeCover": "覆盖",
   "textureFillModeNoRepeat": "不重复",
-  "textureFillModeNoRepeat": "不重复",
-  "textureFillModeRepeat": "重复",
   "textureFillModeRepeat": "重复",
   "textureFillModeRepeatX": "水平重复",
-  "textureFillModeRepeatX": "水平重复",
-  "textureFillModeRepeatY": "垂直重复",
   "textureFillModeRepeatY": "垂直重复",
   "textureOpacity": "纹理不透明度",
-  "textureOpacity": "纹理不透明度",
-  "textureRangeBackground": "背景",
   "textureRangeBackground": "整个背景",
-  "textureRangeCharacter": "字符",
   "textureRangeCharacter": "仅字符",
   "textureRemove": "移除",
   "textureSelectFromLibrary": "从库中选择",
   "themeMode": "主题模式",
   "themeModeDark": "暗色",
-  "themeModeDescription": "使用深色主题",
   "themeModeDescription": "使用深色主题获得更好的夜间观看体验",
   "themeModeLight": "亮色",
   "themeModeSystem": "系统",
@@ -1025,7 +852,6 @@
   "ungroup": "取消组合",
   "ungroupConfirm": "确认解组",
   "ungroupDescription": "确定要解散此组吗？",
-  "ungroupDescription": "解散已选组",
   "unknownCategory": "未知分类",
   "unlocked": "未锁定",
   "unlockElement": "解锁元素",
@@ -1051,7 +877,6 @@
   "workBrowseDelete": "删除",
   "workBrowseDeleteConfirmMessage": "确定要删除已选的{count}个作品吗？此操作无法撤消。",
   "workBrowseDeleteConfirmTitle": "确认删除",
-  "workBrowseDeleteSelected": "删除选中的",
   "workBrowseDeleteSelected": "删除{count}个",
   "workBrowseError": "错误：{message}",
   "workBrowseGridView": "网格视图",
@@ -1146,20 +971,5 @@
   "workToolBrush": "毛笔",
   "workToolHardPen": "硬笔",
   "workToolOther": "其他",
-  "yes": "是",
-  "selectDeleteOption": "选择删除选项：",
-  "deleteCategoryOnly": "仅删除分类",
-  "deleteCategoryWithFiles": "删除分类及文件",
-  "deleteCategoryWithFilesWarning": "警告",
-  "deleteCategoryWithFilesConfirmMessage": "确定要删除分类\"{name}\"及其包含的{count}个文件？此操作无法撤销！",
-  "@deleteCategoryWithFilesConfirmMessage": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "count": {
-        "type": "int"
-      }
-    }
-  }
+  "yes": "是"
 }
