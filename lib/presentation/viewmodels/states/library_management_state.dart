@@ -45,6 +45,9 @@ class LibraryManagementState with _$LibraryManagementState {
     /// 是否显示详情面板
     @Default(false) bool isDetailOpen,
 
+    /// 是否显示图片预览面板
+    @Default(false) bool isImagePreviewOpen,
+
     /// 错误信息
     String? errorMessage,
 

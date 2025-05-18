@@ -189,7 +189,7 @@ class _$ProcessingOptionsImpl implements _ProcessingOptions {
       {this.inverted = false,
       this.showContour = false,
       this.threshold = 128.0,
-      this.noiseReduction = 0.5,
+      this.noiseReduction = 0.0,
       this.brushSize = 10.0,
       this.contrast = 1.0,
       this.brightness = 0.0});

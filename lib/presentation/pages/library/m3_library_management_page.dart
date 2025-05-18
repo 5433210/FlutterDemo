@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
+import '../../../domain/entities/library_item.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/library/library_management_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
@@ -11,6 +12,13 @@ import '../../widgets/page_layout.dart';
 import 'components/category_batch_assign_dialog.dart';
 import 'components/m3_library_detail_panel.dart';
 import 'components/m3_library_management_navigation_bar.dart';
+
+/// Image preview visibility state provider
+final imagePreviewVisibleProvider = StateProvider<bool>((ref) {
+  // Initialize with the same value from library management state
+  final libraryState = ref.watch(libraryManagementProvider);
+  return libraryState.isImagePreviewOpen;
+});
 
 /// Material 3 风格的图库管理页面
 class M3LibraryManagementPage extends ConsumerStatefulWidget {
@@ -24,6 +32,9 @@ class M3LibraryManagementPage extends ConsumerStatefulWidget {
 
 class _M3LibraryManagementPageState
     extends ConsumerState<M3LibraryManagementPage> {
+  /// Get the current image preview visibility state
+  bool get isImagePreviewVisible => ref.watch(imagePreviewVisibleProvider);
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(libraryManagementProvider);
@@ -47,6 +58,8 @@ class _M3LibraryManagementPageState
             state.selectedItems.isNotEmpty ? _handleCancelSelection : null,
         isGridView: state.viewMode == ViewMode.grid,
         onToggleViewMode: _toggleViewMode,
+        isImagePreviewOpen: state.isImagePreviewOpen,
+        onToggleImagePreview: _toggleImagePreviewPanel,
         onImportFiles: _handleImportFiles,
         onImportFolder: _handleImportFolder,
       ),
@@ -55,24 +68,36 @@ class _M3LibraryManagementPageState
           minWidth: 800,
           minHeight: 600,
         ),
-        child: Row(
+        child: Column(
           children: [
-            // 主内容区域: 图库检索面板
+            // Main content area
             Expanded(
-              child: M3LibraryBrowsingPanel(
-                enableFileDrop: true,
-                enableMultiSelect: state.isBatchMode, // 只在批量操作模式时启用多选
+              child: Row(
+                children: [
+                  // 主内容区域: 图库检索面板
+                  Expanded(
+                    child: M3LibraryBrowsingPanel(
+                      enableFileDrop: true,
+                      enableMultiSelect: state.isBatchMode, // 只在批量操作模式时启用多选
+                      onItemSelected:
+                          _handleImageSelected, // Add handler for image selection
+                      imagePreviewVisible: isImagePreviewVisible,
+                      onToggleImagePreview: _toggleImagePreviewPanel,
+                      selectedItem: state.selectedItem,
+                    ),
+                  ),
+
+                  // 右侧详情面板
+                  if (state.selectedItem != null && state.isDetailOpen)
+                    SizedBox(
+                      width: 350,
+                      child: M3LibraryDetailPanel(
+                        item: state.selectedItem!,
+                      ),
+                    ),
+                ],
               ),
             ),
-
-            // 右侧详情面板
-            if (state.selectedItem != null && state.isDetailOpen)
-              SizedBox(
-                width: 350,
-                child: M3LibraryDetailPanel(
-                  item: state.selectedItem!,
-                ),
-              ),
           ],
         ),
       ),
@@ -167,6 +192,18 @@ class _M3LibraryManagementPageState
         ],
       ),
     );
+  }
+
+  void _handleImageSelected(LibraryItem item) {
+    // Save the selected item for reference
+    ref.read(libraryManagementProvider.notifier).setDetailItem(item);
+
+    // Automatically show the preview panel if an image is selected
+    if (!ref.read(imagePreviewVisibleProvider)) {
+      // Toggle both providers to keep them in sync
+      ref.read(imagePreviewVisibleProvider.notifier).state = true;
+      ref.read(libraryManagementProvider.notifier).toggleImagePreviewPanel();
+    }
   }
 
   /// 处理导入文件
@@ -378,6 +415,15 @@ class _M3LibraryManagementPageState
 
   void _toggleBatchMode() {
     ref.read(libraryManagementProvider.notifier).toggleBatchMode();
+  }
+
+  void _toggleImagePreviewPanel() {
+    // Toggle the local provider
+    final newValue = !ref.read(imagePreviewVisibleProvider);
+    ref.read(imagePreviewVisibleProvider.notifier).state = newValue;
+
+    // Also toggle the main state provider to keep them in sync
+    ref.read(libraryManagementProvider.notifier).toggleImagePreviewPanel();
   }
 
   void _toggleViewMode() {

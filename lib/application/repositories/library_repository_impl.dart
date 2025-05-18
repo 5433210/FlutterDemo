@@ -399,11 +399,10 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   Future<Map<String, int>> getCategoryItemCounts() async {
     try {
       final categories = await getCategories();
-      final counts = <String, int>{};
-
-      // First get the total count of all items
+      final counts = <String, int>{}; // First get the total count of all items
       final totalCount = await _db.count(_table, {});
       counts['total'] = totalCount;
+      counts['all'] = totalCount; // Add 'all' key for compatibility
 
       for (final category in categories) {
         // Create a query with LIKE operator for comma-separated values

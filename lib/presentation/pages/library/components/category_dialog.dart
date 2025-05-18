@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../domain/entities/library_category.dart';
 import '../../../providers/library/library_management_provider.dart';
 
 /// 分类对话框
@@ -8,6 +9,7 @@ class CategoryDialog extends ConsumerStatefulWidget {
   final String title;
   final String? initialName;
   final String? initialParentId;
+  final String? editingCategoryId; // Added to track the category being edited
   final Function(String name, String? parentId) onConfirm;
 
   const CategoryDialog({
@@ -15,6 +17,7 @@ class CategoryDialog extends ConsumerStatefulWidget {
     required this.title,
     this.initialName,
     this.initialParentId,
+    this.editingCategoryId,
     required this.onConfirm,
   });
 
@@ -29,7 +32,53 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(libraryManagementProvider);
-    final categories = state.categories;
+    final allCategories = state.categories;
+
+    // Find the category ID if we're editing an existing category
+    String? editingCategoryId;
+    if (widget.initialName != null) {
+      // Find the category being edited
+      for (var category in allCategories) {
+        if (category.name == widget.initialName &&
+            ((widget.initialParentId == null && category.parentId == null) ||
+                (category.parentId == widget.initialParentId))) {
+          editingCategoryId = category.id;
+          break;
+        }
+      }
+    }
+
+    // Filter categories to prevent circular references
+    final availableParentCategories = allCategories.where((category) {
+      // Skip if this is the category we're editing
+      if (editingCategoryId != null && category.id == editingCategoryId) {
+        return false;
+      }
+
+      // Skip if this would create a circular reference
+      if (editingCategoryId != null && category.parentId != null) {
+        // Check if this category is a child of the one we're editing
+        String? currentParentId = category.parentId;
+        while (currentParentId != null) {
+          if (currentParentId == editingCategoryId) {
+            return false; // This would create a cycle
+          } // Move up to the parent's parent
+          final parentCategory = allCategories.firstWhere(
+            (cat) => cat.id == currentParentId,
+            orElse: () => LibraryCategory(
+              id: '',
+              name: '',
+              parentId: null,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            ),
+          );
+          currentParentId = parentCategory.parentId;
+        }
+      }
+
+      return true;
+    }).toList();
 
     return AlertDialog(
       title: Text(widget.title),
@@ -62,10 +111,11 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
                   value: null,
                   child: Text('无（顶级分类）'),
                 ),
-                ...categories.map((category) => DropdownMenuItem<String>(
-                      value: category.id,
-                      child: Text(category.name),
-                    )),
+                ...availableParentCategories
+                    .map((category) => DropdownMenuItem<String>(
+                          value: category.id,
+                          child: Text(category.name),
+                        )),
               ],
               onChanged: (value) {
                 setState(() {
@@ -112,5 +162,51 @@ class _CategoryDialogState extends ConsumerState<CategoryDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName ?? '');
     _selectedParentId = widget.initialParentId;
+  }
+
+  // Helper method to filter categories to prevent circular references
+  List<LibraryCategory> _getAvailableParentCategories(
+      List<LibraryCategory> allCategories) {
+    if (widget.editingCategoryId == null) {
+      // For new categories, we can choose any existing category as parent
+      return allCategories;
+    }
+
+    // For existing categories, we need to filter out the category itself and its descendants
+    return allCategories.where((category) {
+      // Skip self
+      if (category.id == widget.editingCategoryId) return false;
+
+      // Skip descendants to prevent circular references
+      return !_isCategoryDescendant(
+          widget.editingCategoryId!, category.id, allCategories);
+    }).toList();
+  }
+
+  // Helper method to check if a category is a descendant of another category
+  bool _isCategoryDescendant(String categoryId, String potentialParentId,
+      List<LibraryCategory> allCategories) {
+    // If they're the same, it's a circular reference
+    if (categoryId == potentialParentId)
+      return true; // Get the potential parent category
+    final parentCategory = allCategories.firstWhere(
+      (cat) => cat.id == potentialParentId,
+      orElse: () => LibraryCategory(
+        id: '',
+        name: '',
+        parentId: null,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    // Check if the parent's parent is the category (would create a cycle)
+    if (parentCategory.parentId == categoryId) return true;
+
+    // Recursively check the parent's parent
+    return parentCategory.parentId == null
+        ? false
+        : _isCategoryDescendant(
+            categoryId, parentCategory.parentId!, allCategories);
   }
 }

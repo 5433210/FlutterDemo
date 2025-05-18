@@ -11,6 +11,7 @@ import '../../pages/library/components/box_selection_painter.dart';
 import '../../pages/library/components/m3_library_filter_panel.dart';
 import '../../pages/library/components/m3_library_grid_view.dart';
 import '../../pages/library/components/m3_library_list_view.dart';
+import '../../pages/library/components/resizable_image_preview_panel.dart';
 import '../../pages/library/desktop_drop_wrapper.dart';
 import '../../providers/library/library_management_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
@@ -36,6 +37,15 @@ class M3LibraryBrowsingPanel extends ConsumerStatefulWidget {
   /// 是否显示确认/取消按钮 (对话框模式)
   final bool showConfirmButtons;
 
+  /// 预览面板是否可见
+  final bool imagePreviewVisible;
+
+  /// 切换预览面板回调
+  final VoidCallback? onToggleImagePreview;
+
+  /// 选中的项目
+  final LibraryItem? selectedItem;
+
   /// 构造函数
   const M3LibraryBrowsingPanel({
     super.key,
@@ -44,6 +54,9 @@ class M3LibraryBrowsingPanel extends ConsumerStatefulWidget {
     this.onItemSelected,
     this.onItemsSelected,
     this.showConfirmButtons = false,
+    this.imagePreviewVisible = false,
+    this.onToggleImagePreview,
+    this.selectedItem,
   });
 
   @override
@@ -223,22 +236,37 @@ class _M3LibraryBrowsingPanelState
 
   // 构建内容区域 (网格或列表视图)
   Widget _buildContentArea(LibraryManagementState state) {
-    // 首先构建基础内容
-    Widget content = state.viewMode == ViewMode.grid
-        ? M3LibraryGridView(
-            items: state.items,
-            isBatchMode: state.isBatchMode || widget.enableMultiSelect,
-            selectedItems: state.selectedItems,
-            onItemTap: _handleItemTap,
-            onItemLongPress: _handleItemLongPress,
-          )
-        : M3LibraryListView(
-            items: state.items,
-            isBatchMode: state.isBatchMode || widget.enableMultiSelect,
-            selectedItems: state.selectedItems,
-            onItemTap: _handleItemTap,
-            onItemLongPress: _handleItemLongPress,
-          );
+    // 创建基础内容
+    Widget content = Column(
+      children: [
+        // 图片预览面板 (如果可见并且有选中的项目)
+        if (widget.imagePreviewVisible && widget.selectedItem != null)
+          ResizableImagePreviewPanel(
+            selectedItem: widget.selectedItem,
+            isVisible: widget.imagePreviewVisible,
+            onClose: widget.onToggleImagePreview,
+          ),
+
+        // 图库内容 (网格或列表)
+        Expanded(
+          child: state.viewMode == ViewMode.grid
+              ? M3LibraryGridView(
+                  items: state.items,
+                  isBatchMode: state.isBatchMode || widget.enableMultiSelect,
+                  selectedItems: state.selectedItems,
+                  onItemTap: _handleItemTap,
+                  onItemLongPress: _handleItemLongPress,
+                )
+              : M3LibraryListView(
+                  items: state.items,
+                  isBatchMode: state.isBatchMode || widget.enableMultiSelect,
+                  selectedItems: state.selectedItems,
+                  onItemTap: _handleItemTap,
+                  onItemLongPress: _handleItemLongPress,
+                ),
+        ),
+      ],
+    );
 
     // 如果不是批量模式或不允许多选，则不启用框选功能
     if (!state.isBatchMode && !widget.enableMultiSelect) {
@@ -479,6 +507,7 @@ class _M3LibraryBrowsingPanelState
       // 有选择回调的单选模式
       print('【LibraryBrowsingPanel】有选择回调的单选模式');
       notifier.selectItem(itemId);
+      notifier.setDetailItem(selectedItem); // Also update the detail item
       widget.onItemSelected!(selectedItem);
     } else {
       // 图库管理页模式 - 不选中项目，只显示详情

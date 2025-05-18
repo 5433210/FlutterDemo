@@ -39,6 +39,12 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 切换视图模式回调
   final VoidCallback onToggleViewMode;
 
+  /// 是否显示图片预览面板
+  final bool isImagePreviewOpen;
+
+  /// 切换图片预览面板回调
+  final VoidCallback onToggleImagePreview;
+
   /// 导入文件回调
   final VoidCallback? onImportFiles;
 
@@ -59,6 +65,8 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     this.onCancelSelection,
     required this.isGridView,
     required this.onToggleViewMode,
+    required this.isImagePreviewOpen,
+    required this.onToggleImagePreview,
     this.onImportFiles,
     this.onImportFolder,
   });
@@ -199,6 +207,15 @@ class _M3LibraryManagementNavigationBarState
           icon: Icon(widget.isGridView ? Icons.view_list : Icons.grid_view),
           tooltip: widget.isGridView ? l10n.listView : l10n.gridView,
           onPressed: widget.onToggleViewMode,
+        ),
+
+        // 图片预览面板切换按钮
+        IconButton(
+          icon: Icon(widget.isImagePreviewOpen
+              ? Icons.image_not_supported
+              : Icons.image),
+          tooltip: widget.isImagePreviewOpen ? '隐藏图片预览' : '显示图片预览',
+          onPressed: widget.onToggleImagePreview,
         ),
       ],
     );

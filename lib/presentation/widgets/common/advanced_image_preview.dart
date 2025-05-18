@@ -89,6 +89,32 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   @override
+  void didUpdateWidget(AdvancedImagePreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Handle image path changes
+    if (widget.imagePaths != oldWidget.imagePaths) {
+      print('【AdvancedImagePreview】Image paths changed, updating');
+      _checkImageFiles();
+
+      // Update current index if needed
+      if (_currentIndex >= widget.imagePaths.length) {
+        _currentIndex =
+            widget.imagePaths.isEmpty ? 0 : widget.imagePaths.length - 1;
+      }
+
+      // Reset zoom when image changes
+      _resetZoom();
+    }
+
+    // Handle initial index changes
+    if (widget.initialIndex != oldWidget.initialIndex &&
+        widget.initialIndex < widget.imagePaths.length) {
+      _updateIndex(widget.initialIndex);
+    }
+  }
+
+  @override
   void dispose() {
     _transformationController.dispose();
     _focusNode.dispose();
@@ -108,56 +134,17 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
     _focusNode.requestFocus();
   }
 
-  Widget _buildControlBar() {
-    return Container(
-      color: Colors.black54,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // 左侧信息
-          Text(
-            '${_currentIndex + 1} / ${widget.imagePaths.length}',
-            style: const TextStyle(color: Colors.white),
-          ),
-
-          // 右侧控制按钮
-          Row(
-            children: [
-              // 背景切换按钮
-              IconButton(
-                icon: Icon(
-                    _isDarkBackground ? Icons.light_mode : Icons.dark_mode),
-                color: Colors.white,
-                onPressed: _toggleBackgroundColor,
-                tooltip: _isDarkBackground ? '切换为白色背景' : '切换为黑色背景',
-              ),
-
-              // 重置缩放按钮
-              IconButton(
-                icon: const Icon(Icons.zoom_out_map),
-                color: Colors.white,
-                onPressed: _resetZoom,
-                tooltip: '重置缩放',
-              ),
-
-              // 全屏按钮
-              IconButton(
-                icon: Icon(
-                    _isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen),
-                color: Colors.white,
-                onPressed: _toggleFullScreen,
-                tooltip: _isFullScreen ? '退出全屏' : '全屏显示',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildImageContent() {
+    if (_currentIndex >= widget.imagePaths.length) {
+      print(
+          '【AdvancedImagePreview】Current index out of bounds: $_currentIndex');
+      return const Center(
+        child: Text('图片索引错误', style: TextStyle(color: Colors.red)),
+      );
+    }
+
     final currentPath = widget.imagePaths[_currentIndex];
+    print('【AdvancedImagePreview】Building image content for: $currentPath');
     final fileExists = _fileExistsCache[currentPath] ?? false;
 
     if (!fileExists) {
@@ -175,7 +162,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
       duration: const Duration(milliseconds: 200),
       child: CachedImage(
         path: currentPath,
-        key: ValueKey(currentPath),
+        key: ValueKey(currentPath), // Use ValueKey to ensure proper rebuilding
         fit: BoxFit.contain,
         errorBuilder: (context, error, stackTrace) {
           AppLogger.error(
@@ -255,80 +242,76 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
               child: _buildImageContent(),
             ),
           ),
-        ),
+        ), // 上一张按钮 - 设置更高对比度和更明显的样式
+        if (_currentIndex > 0)
+          Positioned(
+            left: 16,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back_ios),
+                  color: Colors.white,
+                  onPressed: () => _updateIndex(_currentIndex - 1),
+                  iconSize: 30,
+                ),
+              ),
+            ),
+          ), // 下一张按钮 - 设置更高对比度和更明显的样式
+        if (_currentIndex < widget.imagePaths.length - 1)
+          Positioned(
+            right: 16,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 8,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_forward_ios),
+                  color: Colors.white,
+                  onPressed: () => _updateIndex(_currentIndex + 1),
+                  iconSize: 30,
+                ),
+              ),
+            ),
+          ),
 
-        // 底部控制栏
-        if (!_isZoomed)
+        // 添加缩略图条 - 仅在启用且非缩放状态显示
+        if (widget.showThumbnails && !_isZoomed && widget.imagePaths.length > 1)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _buildControlBar(),
-          ),
-
-        // 缩略图栏
-        if (widget.showThumbnails && !_isZoomed && !_isFullScreen)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 50,
             child: _buildThumbnailStrip(),
           ),
-
-        // 上一张/下一张按钮
-        if (!_isZoomed) ..._buildNavigationButtons(),
       ],
     );
-  }
-
-  List<Widget> _buildNavigationButtons() {
-    return [
-      // 上一张按钮
-      if (_currentIndex > 0)
-        Positioned(
-          left: 16,
-          top: 0,
-          bottom: 0,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back_ios),
-                color: Colors.white,
-                onPressed: () => _updateIndex(_currentIndex - 1),
-                iconSize: 28,
-              ),
-            ),
-          ),
-        ),
-
-      // 下一张按钮
-      if (_currentIndex < widget.imagePaths.length - 1)
-        Positioned(
-          right: 16,
-          top: 0,
-          bottom: 0,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.black54,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_forward_ios),
-                color: Colors.white,
-                onPressed: () => _updateIndex(_currentIndex + 1),
-                iconSize: 28,
-              ),
-            ),
-          ),
-        ),
-    ];
   }
 
   Widget _buildThumbnailStrip() {
@@ -435,6 +418,8 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   void _resetZoom() {
+    print(
+        '【AdvancedImagePreview】Resetting zoom for image: ${widget.imagePaths[_currentIndex]}');
     setState(() {
       _transformationController.value = Matrix4.identity();
       _isZoomed = false;

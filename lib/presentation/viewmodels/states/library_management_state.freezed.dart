@@ -52,6 +52,9 @@ mixin _$LibraryManagementState {
   /// 是否显示详情面板
   bool get isDetailOpen => throw _privateConstructorUsedError;
 
+  /// 是否显示图片预览面板
+  bool get isImagePreviewOpen => throw _privateConstructorUsedError;
+
   /// 错误信息
   String? get errorMessage => throw _privateConstructorUsedError;
 
@@ -141,6 +144,7 @@ abstract class $LibraryManagementStateCopyWith<$Res> {
       bool isBatchMode,
       Set<String> selectedItems,
       bool isDetailOpen,
+      bool isImagePreviewOpen,
       String? errorMessage,
       int totalCount,
       int currentPage,
@@ -194,6 +198,7 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
     Object? isBatchMode = null,
     Object? selectedItems = null,
     Object? isDetailOpen = null,
+    Object? isImagePreviewOpen = null,
     Object? errorMessage = freezed,
     Object? totalCount = null,
     Object? currentPage = null,
@@ -264,6 +269,10 @@ class _$LibraryManagementStateCopyWithImpl<$Res,
       isDetailOpen: null == isDetailOpen
           ? _value.isDetailOpen
           : isDetailOpen // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isImagePreviewOpen: null == isImagePreviewOpen
+          ? _value.isImagePreviewOpen
+          : isImagePreviewOpen // ignore: cast_nullable_to_non_nullable
               as bool,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
@@ -389,6 +398,7 @@ abstract class _$$LibraryManagementStateImplCopyWith<$Res>
       bool isBatchMode,
       Set<String> selectedItems,
       bool isDetailOpen,
+      bool isImagePreviewOpen,
       String? errorMessage,
       int totalCount,
       int currentPage,
@@ -442,6 +452,7 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
     Object? isBatchMode = null,
     Object? selectedItems = null,
     Object? isDetailOpen = null,
+    Object? isImagePreviewOpen = null,
     Object? errorMessage = freezed,
     Object? totalCount = null,
     Object? currentPage = null,
@@ -512,6 +523,10 @@ class __$$LibraryManagementStateImplCopyWithImpl<$Res>
       isDetailOpen: null == isDetailOpen
           ? _value.isDetailOpen
           : isDetailOpen // ignore: cast_nullable_to_non_nullable
+              as bool,
+      isImagePreviewOpen: null == isImagePreviewOpen
+          ? _value.isImagePreviewOpen
+          : isImagePreviewOpen // ignore: cast_nullable_to_non_nullable
               as bool,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
@@ -617,6 +632,7 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
       this.isBatchMode = false,
       final Set<String> selectedItems = const {},
       this.isDetailOpen = false,
+      this.isImagePreviewOpen = false,
       this.errorMessage,
       this.totalCount = 0,
       this.currentPage = 1,
@@ -739,6 +755,11 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
   @JsonKey()
   final bool isDetailOpen;
 
+  /// 是否显示图片预览面板
+  @override
+  @JsonKey()
+  final bool isImagePreviewOpen;
+
   /// 错误信息
   @override
   final String? errorMessage;
@@ -840,7 +861,7 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
 
   @override
   String toString() {
-    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem, typeFilter: $typeFilter, showFavoritesOnly: $showFavoritesOnly, formatFilter: $formatFilter, minWidth: $minWidth, maxWidth: $maxWidth, minHeight: $minHeight, maxHeight: $maxHeight, minSize: $minSize, maxSize: $maxSize, createStartDate: $createStartDate, createEndDate: $createEndDate, updateStartDate: $updateStartDate, updateEndDate: $updateEndDate, showFilterPanel: $showFilterPanel, categoryItemCounts: $categoryItemCounts)';
+    return 'LibraryManagementState(items: $items, allTags: $allTags, categories: $categories, categoryTree: $categoryTree, selectedCategoryId: $selectedCategoryId, searchQuery: $searchQuery, sortBy: $sortBy, sortDesc: $sortDesc, isLoading: $isLoading, isBatchMode: $isBatchMode, selectedItems: $selectedItems, isDetailOpen: $isDetailOpen, isImagePreviewOpen: $isImagePreviewOpen, errorMessage: $errorMessage, totalCount: $totalCount, currentPage: $currentPage, pageSize: $pageSize, viewMode: $viewMode, selectedItem: $selectedItem, typeFilter: $typeFilter, showFavoritesOnly: $showFavoritesOnly, formatFilter: $formatFilter, minWidth: $minWidth, maxWidth: $maxWidth, minHeight: $minHeight, maxHeight: $maxHeight, minSize: $minSize, maxSize: $maxSize, createStartDate: $createStartDate, createEndDate: $createEndDate, updateStartDate: $updateStartDate, updateEndDate: $updateEndDate, showFilterPanel: $showFilterPanel, categoryItemCounts: $categoryItemCounts)';
   }
 
   @override
@@ -869,6 +890,8 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
                 .equals(other._selectedItems, _selectedItems) &&
             (identical(other.isDetailOpen, isDetailOpen) ||
                 other.isDetailOpen == isDetailOpen) &&
+            (identical(other.isImagePreviewOpen, isImagePreviewOpen) ||
+                other.isImagePreviewOpen == isImagePreviewOpen) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             (identical(other.totalCount, totalCount) ||
@@ -926,6 +949,7 @@ class _$LibraryManagementStateImpl implements _LibraryManagementState {
         isBatchMode,
         const DeepCollectionEquality().hash(_selectedItems),
         isDetailOpen,
+        isImagePreviewOpen,
         errorMessage,
         totalCount,
         currentPage,
@@ -973,6 +997,7 @@ abstract class _LibraryManagementState implements LibraryManagementState {
           final bool isBatchMode,
           final Set<String> selectedItems,
           final bool isDetailOpen,
+          final bool isImagePreviewOpen,
           final String? errorMessage,
           final int totalCount,
           final int currentPage,
@@ -1043,6 +1068,10 @@ abstract class _LibraryManagementState implements LibraryManagementState {
   /// 是否显示详情面板
   @override
   bool get isDetailOpen;
+
+  /// 是否显示图片预览面板
+  @override
+  bool get isImagePreviewOpen;
 
   /// 错误信息
   @override

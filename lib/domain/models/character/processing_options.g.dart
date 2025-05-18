@@ -12,7 +12,7 @@ _$ProcessingOptionsImpl _$$ProcessingOptionsImplFromJson(
       inverted: json['inverted'] as bool? ?? false,
       showContour: json['showContour'] as bool? ?? false,
       threshold: (json['threshold'] as num?)?.toDouble() ?? 128.0,
-      noiseReduction: (json['noiseReduction'] as num?)?.toDouble() ?? 0.5,
+      noiseReduction: (json['noiseReduction'] as num?)?.toDouble() ?? 0.0,
       brushSize: (json['brushSize'] as num?)?.toDouble() ?? 10.0,
       contrast: (json['contrast'] as num?)?.toDouble() ?? 1.0,
       brightness: (json['brightness'] as num?)?.toDouble() ?? 0.0,

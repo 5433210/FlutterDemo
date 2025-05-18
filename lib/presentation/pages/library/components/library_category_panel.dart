@@ -394,6 +394,7 @@ class _LibraryCategoryPanelState extends ConsumerState<LibraryCategoryPanel> {
         title: AppLocalizations.of(context).edit,
         initialName: category.name,
         initialParentId: category.parentId,
+        editingCategoryId: category.id, // Add this line
         onConfirm: (name, parentId) async {
           // 更新分类
           final updatedCategory = category.copyWith(

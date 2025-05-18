@@ -884,6 +884,14 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     state = state.copyWith(showFilterPanel: !state.showFilterPanel);
   }
 
+  /// 切换图片预览面板的可见性
+  void toggleImagePreviewPanel() {
+    // The state now has isImagePreviewOpen properly defined
+    state = state.copyWith(
+      isImagePreviewOpen: !state.isImagePreviewOpen,
+    );
+  }
+
   /// 切换项目选择状态
   void toggleItemSelection(String itemId) {
     final newSelectedItems = Set<String>.from(state.selectedItems);

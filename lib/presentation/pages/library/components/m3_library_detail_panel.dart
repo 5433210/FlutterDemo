@@ -11,7 +11,6 @@ import '../../../../presentation/providers/library/library_management_provider.d
 import '../../../../theme/app_sizes.dart';
 import '../../../../utils/date_formatter.dart';
 import '../../../../utils/file_size_formatter.dart';
-import 'library_image_preview_dialog.dart';
 
 /// 图库详情面板
 class M3LibraryDetailPanel extends ConsumerStatefulWidget {
@@ -100,11 +99,6 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
                             icon: const Icon(Icons.edit),
                             onPressed: _startEditing,
                             tooltip: l10n.edit,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.visibility),
-                            onPressed: _showPreview,
-                            tooltip: l10n.preview,
                           ),
                         ],
                       ],
@@ -585,18 +579,6 @@ class _M3LibraryDetailPanelState extends ConsumerState<M3LibraryDetailPanel>
         }
       }
     }
-  }
-
-  void _showPreview() {
-    if (widget.item.thumbnail == null) {
-      AppLogger.warning('缩略图不存在', data: {'itemId': widget.item.id});
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => LibraryImagePreviewDialog(item: widget.item),
-    );
   }
 
   void _startEditing() {
