@@ -53,12 +53,8 @@ class PracticeEditController extends ChangeNotifier {
       },
     );
 
-    // 初始化吸附管理器
-    // _snapManager = SnapManager(
-    //   gridSize: _state.gridSize,
-    //   enabled: _state.snapEnabled,
-    //   snapThreshold: 10.0,
-    // );
+    // 初始化默认数据
+    _initDefaultData();
 
     // 初始化默认数据
     _initDefaultData();
@@ -2522,62 +2518,9 @@ class PracticeEditController extends ChangeNotifier {
         newY = origY;
       }
 
-      // 如果启用了吸附功能，使用平滑吸附
-      // if (_state.snapEnabled) {
-      //   // 更新 _snapManager 设置确保使用最新的网格设置
-      //   _snapManager.updateSettings(
-      //     gridSize: _state.gridSize,
-      //     enabled: _state.snapEnabled,
-      //     snapThreshold: 10.0,
-      //   );
+      // 拖动过程中不应用网格吸附，只在拖动结束时应用
 
-      //   // 创建临时元素信息供SnapManager使用
-      //   final tempElement = {
-      //     'id': id,
-      //     'x': newX,
-      //     'y': newY,
-      //     'width': element['width'],
-      //     'height': element['height'],
-      //   };
-
-      //   // 根据缩放因子调整吸附阈值 - 放大时需要更小的阈值，缩小时需要更大的阈值
-      //   // 使用与缩放因子成反比的阈值，但设置最小和最大限制，防止极端值
-      //   final adjustedSnapThreshold = (10.0 / scaleFactor).clamp(5.0, 20.0);
-      //   _snapManager.updateSettings(
-      //     snapThreshold: adjustedSnapThreshold,
-      //   );
-
-      //   debugPrint(
-      //       '拖拽更新: 调整吸附阈值: 缩放因子=$scaleFactor, 阈值=$adjustedSnapThreshold');
-
-      //   // 应用平滑吸附 - 在拖拽过程中使用snapFactor=0.3实现平滑效果
-      //   final snappedPosition = _snapManager.snapPosition(
-      //     Offset(newX, newY),
-      //     [tempElement],
-      //     id,
-      //     isDragging: true,
-      //     snapFactor: 0.3,
-      //   );
-
-      //   // 确保位置有变化 - 避免卡住不动
-      //   final xDiff = (snappedPosition.dx - newX).abs();
-      //   final yDiff = (snappedPosition.dy - newY).abs();
-      //   if (xDiff > 0.001 || yDiff > 0.001) {
-      //     // 更新位置
-      //     properties['x'] = snappedPosition.dx;
-      //     properties['y'] = snappedPosition.dy;
-
-      //     debugPrint(
-      //         '平滑吸附: 将元素 $id 平滑吸附到 (${snappedPosition.dx}, ${snappedPosition.dy}), '
-      //         '原始位置=($newX, $newY), 变化量=(${snappedPosition.dx - newX}, ${snappedPosition.dy - newY}), '
-      //         '缩放因子=$scaleFactor');
-      //   } else {
-      //     // 即使没有吸附变化，也更新原始位置
-      //     properties['x'] = newX;
-      //     properties['y'] = newY;
-      //     debugPrint('跳过吸附: 位置变化太小，使用原始位置 ($newX, $newY), 缩放因子=$scaleFactor');
-      //   }
-      // }
+      // 拖动过程中不应用网格吸附，只在拖动结束时应用
 
       // 直接更新元素属性，不记录撤销/重做
       properties.forEach((key, value) {

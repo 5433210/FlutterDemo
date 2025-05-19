@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -137,6 +138,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         setState(() {
           _isDragging = false;
         });
+
+        // 处理元素平移后的网格吸附
+        _applyGridSnapToSelectedElements();
       },
       getScaleFactor: () {
         // Extract the scale from the transformation matrix
@@ -145,6 +149,55 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         return matrix.getMaxScaleOnAxis();
       },
     );
+  }
+
+  /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
+  void _applyGridSnapToSelectedElements() {
+    // 只有在启用了网格吸附的情况下才进行网格吸附
+    if (!widget.controller.state.snapEnabled) {
+      return;
+    }
+
+    final gridSize = widget.controller.state.gridSize;
+
+    // 处理所有选中元素
+    for (final elementId in widget.controller.state.selectedElementIds) {
+      final element = widget.controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == elementId,
+        orElse: () => <String, dynamic>{},
+      );
+
+      if (element.isEmpty) continue;
+
+      // 跳过锁定的元素
+      final isLocked = element['locked'] as bool? ?? false;
+      if (isLocked) continue;
+
+      // 跳过锁定图层上的元素
+      final layerId = element['layerId'] as String?;
+      if (layerId != null && widget.controller.state.isLayerLocked(layerId)) {
+        continue;
+      }
+
+      // 获取当前位置和尺寸
+      final x = (element['x'] as num).toDouble();
+      final y = (element['y'] as num).toDouble();
+
+      // 计算吸附后的位置（向最近的网格线吸附）
+      final snappedX = (x / gridSize).round() * gridSize;
+      final snappedY = (y / gridSize).round() * gridSize;
+
+      // 如果位置有变化，更新元素属性
+      if (snappedX != x || snappedY != y) {
+        debugPrint(
+            '网格吸附: 元素 $elementId 位置从 ($x, $y) 吸附到 ($snappedX, $snappedY)');
+
+        widget.controller.updateElementProperties(elementId, {
+          'x': snappedX,
+          'y': snappedY,
+        });
+      }
+    }
   }
 
   /// Build the main canvas
@@ -654,7 +707,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     );
   }
 
-  /// Get BoxFit from fitMode string
   BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
       case 'fill':
@@ -674,6 +726,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         return BoxFit.contain;
     }
   }
+
+  /// 处理控制点拖拽结束事件
 
   /// 处理控制点拖拽结束事件
   void _handleControlPointDragEnd(int controlPointIndex) {
@@ -699,6 +753,40 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     if (controlPointIndex == 8) {
       debugPrint('旋转控制点拖拽结束');
       return;
+    }
+
+    // 只有在启用了网格吸附的情况下才进行网格吸附
+    if (widget.controller.state.snapEnabled) {
+      // 获取元素的当前位置和尺寸
+      final x = (element['x'] as num).toDouble();
+      final y = (element['y'] as num).toDouble();
+      final width = (element['width'] as num).toDouble();
+      final height = (element['height'] as num).toDouble();
+      final gridSize = widget.controller.state.gridSize;
+
+      // 计算吸附后的位置和尺寸（向最近的网格线吸附）
+      final snappedX = (x / gridSize).round() * gridSize;
+      final snappedY = (y / gridSize).round() * gridSize;
+      final snappedWidth = (width / gridSize).round() * gridSize;
+      final snappedHeight = (height / gridSize).round() * gridSize;
+
+      // 确保尺寸不小于最小值
+      final finalWidth = math.max(snappedWidth, 10.0);
+      final finalHeight = math.max(snappedHeight, 10.0);
+
+      // 更新元素属性
+      final updates = {
+        'x': snappedX,
+        'y': snappedY,
+        'width': finalWidth,
+        'height': finalHeight,
+      };
+
+      debugPrint('网格吸附: 元素 $elementId 位置从 ($x, $y) 吸附到 ($snappedX, $snappedY)');
+      debugPrint(
+          '网格吸附: 元素 $elementId 尺寸从 ($width, $height) 吸附到 ($finalWidth, $finalHeight)');
+
+      widget.controller.updateElementProperties(elementId, updates);
     }
   }
 
