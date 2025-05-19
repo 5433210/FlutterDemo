@@ -102,6 +102,19 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
             isDense: true,
             border: const OutlineInputBorder(),
           ),
+          // Prevent text selection behavior
+          enableInteractiveSelection: true,
+          // Set to false to prevent default selection behavior
+          autofocus: false,
+          // Use onTap to clear selection when the field is tapped
+          onTap: () {
+            if (searchController != null) {
+              // Move cursor to end instead of selecting all text
+              searchController!.selection = TextSelection.fromPosition(
+                TextPosition(offset: searchController!.text.length),
+              );
+            }
+          },
           onChanged: onSearch,
         ),
       ),

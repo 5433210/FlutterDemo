@@ -35,10 +35,19 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     final viewModel = ref.read(workBrowseProvider.notifier);
     final l10n = AppLocalizations.of(context);
 
+    // Use a local variable to store whether a refresh is in progress
+    bool isRefreshing = false;
+    
     ref.listen(worksNeedsRefreshProvider, (previous, current) async {
-      if (current == null) return;
-
+      if (current == null || isRefreshing || !mounted) return;
+      
+      // Set flag to prevent multiple concurrent refreshes
+      isRefreshing = true;
+      
       try {
+        // Check mounted state again before proceeding
+        if (!mounted) return;
+        
         AppLogger.debug(
           '收到刷新请求',
           tag: 'WorkBrowsePage',
@@ -49,12 +58,23 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
           },
         );
 
-        await viewModel.loadWorks(forceRefresh: current.force);
+        // Capture the force value before the async gap
+        final shouldForceRefresh = current.force;
+        
+        // Check mounted before starting async operation
+        if (!mounted) return;
+        
+        await viewModel.loadWorks(forceRefresh: shouldForceRefresh);
       } catch (e) {
         AppLogger.error('刷新失败', tag: 'WorkBrowsePage', error: e);
       } finally {
+        isRefreshing = false;
+        
+        // Using a local variable to store the notifier before checking mounted
+        // This prevents accessing the provider after widget deactivation
         if (mounted) {
-          ref.read(worksNeedsRefreshProvider.notifier).state = null;
+          final notifier = ref.read(worksNeedsRefreshProvider.notifier);
+          notifier.state = null;
         }
       }
     });
@@ -67,10 +87,9 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         batchMode: state.batchMode,
         onBatchModeChanged: (_) => viewModel.toggleBatchMode(),
         selectedCount: state.selectedWorks.length,
-        onDeleteSelected: () => {
-          ref.read(workBrowseProvider.notifier).deleteSelected(),
-          ref.read(worksNeedsRefreshProvider.notifier).state =
-              RefreshInfo.importCompleted()
+        onDeleteSelected: () {
+          // Use a method instead of an inline callback to handle deletion
+          _handleDeleteSelected(context);
         },
       ),
       body: Column(
@@ -132,12 +151,27 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     );
   }
 
+  // Store provider reference during initialization to avoid accessing it during lifecycle changes
+  StateController<RefreshInfo?>? _refreshNotifier;
+  
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Only proceed if the widget is still mounted
+    if (!mounted) return;
+    
     if (state == AppLifecycleState.resumed) {
       try {
-        ref.read(worksNeedsRefreshProvider.notifier).state =
-            RefreshInfo.appResume();
+        // Use the stored notifier or get it safely if we don't have it yet
+        if (_refreshNotifier == null) {
+          // Only try to access the provider if the widget is still mounted
+          if (!mounted) return;
+          _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
+        }
+        
+        // Now use the stored notifier reference
+        if (_refreshNotifier != null) {
+          _refreshNotifier!.state = RefreshInfo.appResume();
+        }
       } catch (e) {
         AppLogger.error('Failed to set refresh flag',
             tag: 'WorkBrowsePage', error: e);
@@ -155,14 +189,23 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    // Initialize the refresh notifier reference
+    if (mounted) {
+      _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
+    }
 
     Future.microtask(() {
       if (!mounted) return;
-      ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
-        reason: 'App initialization',
-        force: true,
-        priority: 10,
-      );
+      
+      // Use the stored notifier if available
+      if (_refreshNotifier != null) {
+        _refreshNotifier!.state = const RefreshInfo(
+          reason: 'App initialization',
+          force: true,
+          priority: 10,
+        );
+      }
     });
   }
 
@@ -350,13 +393,43 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     if (result == true) {
       AppLogger.debug('Import completed, preparing to refresh list',
           tag: 'WorkBrowsePage');
-      if (!mounted) return;
 
+      if (!mounted) return;
       ref.read(worksNeedsRefreshProvider.notifier).state = const RefreshInfo(
-        reason: 'Refresh after import completed',
+        reason: 'Import completed',
         force: true,
-        priority: 9,
+        priority: 10,
       );
+    }
+  }
+
+  /// Safely handle deletion of selected works
+  void _handleDeleteSelected(BuildContext context) {
+    // Verify the widget is still mounted before proceeding
+    if (!mounted) return;
+    
+    try {
+      // Store references to providers locally before any async operations
+      final viewModelNotifier = ref.read(workBrowseProvider.notifier);
+      final refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
+      
+      // Execute deletion
+      viewModelNotifier.deleteSelected();
+      
+      // Schedule refresh
+      if (mounted) {
+        refreshNotifier.state = RefreshInfo.importCompleted();
+      }
+    } catch (e) {
+      AppLogger.error('Failed to delete selected works', 
+          tag: 'WorkBrowsePage', error: e);
+      
+      // Show error to user if still mounted
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: ${e.toString()}'))
+        );
+      }
     }
   }
 }

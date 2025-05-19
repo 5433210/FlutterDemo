@@ -81,42 +81,58 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   Future<void> loadWorks({bool forceRefresh = false}) async {
     if (state.isLoading && !forceRefresh) return;
 
+    // Capture the current state values before any async operations
+    final currentPage = state.page;
+    final currentPageSize = state.pageSize;
+    
     AppLogger.debug('触发加载流程', tag: 'WorkBrowseViewModel', data: {
       'forceRefresh': forceRefresh,
-      'page': state.page,
-      'pageSize': state.pageSize
+      'page': currentPage,
+      'pageSize': currentPageSize
     });
 
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      requestStatus: LoadRequestStatus.loading,
-    );
+    // Update state to loading - use try/catch to handle potential state update errors
+    try {
+      state = state.copyWith(
+        isLoading: true,
+        error: null,
+        requestStatus: LoadRequestStatus.loading,
+      );
+    } catch (e) {
+      AppLogger.error('Failed to update loading state', tag: 'WorkBrowseViewModel', error: e);
+      return; // Exit early if we can't update state
+    }
 
     try {
       // 使用分页查询
       final result = await _workService.queryWorksPaginated(
         filter: state.filter,
-        page: state.page,
-        pageSize: state.pageSize,
+        page: currentPage,
+        pageSize: currentPageSize,
       );
-
-      state = state.copyWith(
-        works: result.items,
-        isLoading: false,
-        error: null,
-        totalItems: result.totalCount,
-        totalPages: result.totalPages,
-        hasMore: result.hasNextPage,
-        requestStatus: LoadRequestStatus.idle,
-      );
-
+      
+      // Log completion before attempting to update state
       AppLogger.debug('加载完成', tag: 'WorkBrowseViewModel', data: {
         'worksCount': result.items.length,
         'totalItems': result.totalCount,
         'currentPage': result.currentPage,
         'totalPages': result.totalPages,
       });
+
+      // Update state with results - wrap in try/catch to handle potential errors
+      try {
+        state = state.copyWith(
+          works: result.items,
+          isLoading: false,
+          error: null,
+          totalItems: result.totalCount,
+          totalPages: result.totalPages,
+          hasMore: result.hasNextPage,
+          requestStatus: LoadRequestStatus.idle,
+        );
+      } catch (e) {
+        AppLogger.error('Failed to update state with results', tag: 'WorkBrowseViewModel', error: e);
+      }
     } catch (e, stack) {
       _handleLoadError(e, stack);
     }

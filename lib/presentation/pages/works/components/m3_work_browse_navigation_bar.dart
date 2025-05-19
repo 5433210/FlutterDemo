@@ -39,8 +39,6 @@ class M3WorkBrowseNavigationBar extends StatefulWidget
 }
 
 class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
-  late final TextEditingController _searchController;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -105,7 +103,6 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
 
   @override
   void dispose() {
-    _searchController.dispose();
     super.dispose();
   }
 

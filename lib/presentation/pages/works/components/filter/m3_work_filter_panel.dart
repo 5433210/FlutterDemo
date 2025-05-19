@@ -110,6 +110,19 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
             border: const OutlineInputBorder(),
           ),
           controller: searchController,
+          // Prevent text selection behavior
+          enableInteractiveSelection: true,
+          // Set to false to prevent default selection behavior
+          autofocus: false,
+          // Use onTap to clear selection when the field is tapped
+          onTap: () {
+            if (searchController != null) {
+              // Move cursor to end instead of selecting all text
+              searchController!.selection = TextSelection.fromPosition(
+                TextPosition(offset: searchController!.text.length),
+              );
+            }
+          },
           onChanged: (value) {
             final newFilter = filter.copyWith(keyword: value);
             onFilterChanged(newFilter);
