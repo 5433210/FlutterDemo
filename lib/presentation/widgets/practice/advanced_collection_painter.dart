@@ -516,13 +516,13 @@ class AdvancedCollectionPainter extends CustomPainter {
           // 检查是否有characterImages子键
           if (characterImages.containsKey('characterImages')) {
             final charImages = characterImages['characterImages'];
-            debugPrint('找到characterImages子键: $charImages');
+            // debugPrint('找到characterImages子键: $charImages');
 
             if (charImages is Map) {
               // 再次尝试索引键
               if (charImages.containsKey(indexKey)) {
                 final subImageData = charImages[indexKey];
-                debugPrint('在子键中找到索引 $indexKey 的数据: $subImageData');
+                // debugPrint('在子键中找到索引 $indexKey 的数据: $subImageData');
 
                 if (subImageData is Map &&
                     subImageData.containsKey('characterId')) {
@@ -569,7 +569,7 @@ class AdvancedCollectionPainter extends CustomPainter {
       }
 
       // 如果没有找到匹配的图像
-      debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
+      // debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
       return null;
     } catch (e) {
       debugPrint('获取字符图像时出错: $e');

@@ -180,75 +180,159 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         }
       },
       builder: (context, candidateData, rejectedData) {
-        return Container(
-          color: colorScheme.inverseSurface.withOpacity(
-              0.1), // Canvas outer background - improved contrast in light theme
-          child: InteractiveViewer(
-            boundaryMargin: const EdgeInsets.all(double.infinity),
-            panEnabled: widget.isPreviewMode ||
-                !_isDragging, // Enable pan in preview mode or when not dragging elements
-            scaleEnabled: true,
-            minScale: 0.1,
-            maxScale: 15.0,
-            scaleFactor: 200.0, // Increase scale factor to reduce zoom speed
-            transformationController: widget.transformationController,
-            onInteractionStart: (ScaleStartDetails details) {},
-            onInteractionUpdate: (ScaleUpdateDetails details) {},
-            onInteractionEnd: (ScaleEndDetails details) {
-              // Update final zoom value
-              final scale =
-                  widget.transformationController.value.getMaxScaleOnAxis();
-              widget.controller.zoomTo(scale);
-            },
-            constrained: false, // Allow content to be unconstrained
-            child: GestureDetector(
-              behavior: HitTestBehavior
-                  .translucent, // Ensure gesture events are properly passed
-              onTapUp: (details) => _gestureHandler.handleTapUp(
-                  details, elements.cast<Map<String, dynamic>>()),
-              onSecondaryTapUp: (details) =>
-                  _gestureHandler.handleSecondaryTapUp(
-                      details, elements.cast<Map<String, dynamic>>()),
-              onPanStart: (details) => _gestureHandler.handlePanStart(
-                  details, elements.cast<Map<String, dynamic>>()),
-              onPanUpdate: (details) {
-                // If not dragging elements and not in preview mode, handle panning directly
-                if (!_isDragging && !widget.isPreviewMode) {
-                  // Create new transformation matrix
-                  final Matrix4 newMatrix = Matrix4.identity();
+        // Get current zoom level
+        final scale = widget.transformationController.value.getMaxScaleOnAxis();
+        final zoomPercentage = (scale * 100).toInt();
 
-                  // Set same scale factor as current
+        return Stack(
+          children: [
+            Container(
+              color: colorScheme.inverseSurface.withOpacity(
+                  0.1), // Canvas outer background - improved contrast in light theme
+              child: InteractiveViewer(
+                boundaryMargin: const EdgeInsets.all(double.infinity),
+                panEnabled: widget.isPreviewMode ||
+                    !_isDragging, // Enable pan in preview mode or when not dragging elements
+                scaleEnabled: true,
+                minScale: 0.1,
+                maxScale: 15.0,
+                scaleFactor:
+                    200.0, // Increase scale factor to reduce zoom speed
+                transformationController: widget.transformationController,
+                onInteractionStart: (ScaleStartDetails details) {},
+                onInteractionUpdate: (ScaleUpdateDetails details) {},
+                onInteractionEnd: (ScaleEndDetails details) {
+                  // Update final zoom value
                   final scale =
                       widget.transformationController.value.getMaxScaleOnAxis();
-                  newMatrix.setEntry(0, 0, scale);
-                  newMatrix.setEntry(1, 1, scale);
-                  newMatrix.setEntry(2, 2, scale);
+                  widget.controller.zoomTo(scale);
+                  setState(
+                      () {}); // Update to reflect the new zoom level in the status bar
+                },
+                constrained: false, // Allow content to be unconstrained
+                child: GestureDetector(
+                  behavior: HitTestBehavior
+                      .translucent, // Ensure gesture events are properly passed
+                  onTapUp: (details) => _gestureHandler.handleTapUp(
+                      details, elements.cast<Map<String, dynamic>>()),
+                  onSecondaryTapUp: (details) =>
+                      _gestureHandler.handleSecondaryTapUp(
+                          details, elements.cast<Map<String, dynamic>>()),
+                  onPanStart: (details) => _gestureHandler.handlePanStart(
+                      details, elements.cast<Map<String, dynamic>>()),
+                  onPanUpdate: (details) {
+                    // If not dragging elements and not in preview mode, handle panning directly
+                    if (!_isDragging && !widget.isPreviewMode) {
+                      // Create new transformation matrix
+                      final Matrix4 newMatrix = Matrix4.identity();
 
-                  // Get current translation
-                  final Vector3 translation =
-                      widget.transformationController.value.getTranslation();
+                      // Set same scale factor as current
+                      final scale = widget.transformationController.value
+                          .getMaxScaleOnAxis();
+                      newMatrix.setEntry(0, 0, scale);
+                      newMatrix.setEntry(1, 1, scale);
+                      newMatrix.setEntry(2, 2, scale);
 
-                  // Set new translation
-                  newMatrix.setTranslation(Vector3(
-                    translation.x + details.delta.dx,
-                    translation.y + details.delta.dy,
-                    0.0,
-                  ));
+                      // Get current translation
+                      final Vector3 translation = widget
+                          .transformationController.value
+                          .getTranslation();
 
-                  widget.transformationController.value = newMatrix;
+                      // Set new translation
+                      newMatrix.setTranslation(Vector3(
+                        translation.x + details.delta.dx,
+                        translation.y + details.delta.dy,
+                        0.0,
+                      ));
 
-                  // Force refresh
-                  setState(() {});
-                }
+                      widget.transformationController.value = newMatrix;
 
-                // Call original handlePanUpdate
-                _gestureHandler.handlePanUpdate(details);
-              },
-              onPanEnd: (details) => _gestureHandler.handlePanEnd(details),
-              child: _buildPageContent(currentPage,
-                  elements.cast<Map<String, dynamic>>(), colorScheme),
+                      // Force refresh
+                      setState(() {});
+                    }
+
+                    // Call original handlePanUpdate
+                    _gestureHandler.handlePanUpdate(details);
+                  },
+                  onPanEnd: (details) => _gestureHandler.handlePanEnd(details),
+                  child: _buildPageContent(currentPage,
+                      elements.cast<Map<String, dynamic>>(), colorScheme),
+                ),
+              ),
             ),
-          ),
+
+            // Status bar showing zoom level (only visible in edit mode)
+            if (!widget.isPreviewMode)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                  color: colorScheme.surface.withOpacity(0.85),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      // Reset position button
+                      Tooltip(
+                        message: '重置视图位置',
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _resetCanvasPosition,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.center_focus_strong,
+                                    size: 14,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '复位',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Zoom indicator
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.zoom_in,
+                            size: 16,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$zoomPercentage%',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -763,6 +847,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     // Update controller with new scale
     final scale = widget.transformationController.value.getMaxScaleOnAxis();
     widget.controller.zoomTo(scale);
+
+    // Force a rebuild to update the zoom percentage in the status bar
+    setState(() {});
   }
 
   /// Parse color from string
@@ -1125,6 +1212,22 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     // Use the ElementRenderers.buildTextElement method to ensure all text formatting properties are applied
     return ElementRenderers.buildTextElement(element,
         isPreviewMode: widget.isPreviewMode);
+  }
+
+  /// Reset canvas position to the initial state
+  void _resetCanvasPosition() {
+    // Create an identity matrix (1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)
+    final Matrix4 identityMatrix = Matrix4.identity();
+
+    // Animate to the identity matrix (default position and scale)
+    widget.transformationController.value = identityMatrix;
+
+    // Notify the controller that zoom has changed
+    final scale = widget.transformationController.value.getMaxScaleOnAxis();
+    widget.controller.zoomTo(scale);
+
+    // Update UI
+    setState(() {});
   }
 }
 
