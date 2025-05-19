@@ -50,6 +50,7 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
       title: l10n.workBrowseTitle,
       showBackButton: true, // 所有导航栏都应该有返回按钮
       onBackPressed: widget.onBackPressed,
+
       titleActions: [
         const SizedBox(width: AppSizes.s),
         if (widget.batchMode)
@@ -111,7 +112,6 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
   }
 
   void _showDeleteConfirmation() async {

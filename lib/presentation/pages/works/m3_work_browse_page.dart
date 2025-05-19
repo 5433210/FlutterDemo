@@ -58,7 +58,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
         }
       }
     });
-
     return PageLayout(
       toolbar: M3WorkBrowseNavigationBar(
         viewMode: state.viewMode,
@@ -90,6 +89,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       filter: state.filter,
                       onFilterChanged: viewModel.updateFilter,
                       onToggleExpand: () => viewModel.toggleSidebar(),
+                      searchController: state.searchController,
+                      initialSearchValue: state.searchQuery,
                     ),
                   ),
                 SidebarToggle(

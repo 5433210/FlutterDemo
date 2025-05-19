@@ -31,6 +31,12 @@ class M3WorkFilterPanel extends ConsumerWidget {
   /// 展开/折叠状态变化时的回调
   final VoidCallback? onToggleExpand;
 
+  /// 搜索文本控制器
+  final TextEditingController? searchController;
+
+  /// 初始搜索值
+  final String? initialSearchValue;
+
   /// 构造函数
   const M3WorkFilterPanel({
     super.key,
@@ -39,6 +45,8 @@ class M3WorkFilterPanel extends ConsumerWidget {
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
+    this.searchController,
+    this.initialSearchValue,
   });
 
   @override
@@ -49,18 +57,25 @@ class M3WorkFilterPanel extends ConsumerWidget {
       collapsible: collapsible,
       isExpanded: isExpanded,
       onToggleExpand: onToggleExpand,
+      searchController: searchController,
+      initialSearchValue: initialSearchValue,
     );
   }
 }
 
 /// 作品筛选面板实现
 class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
+  final TextEditingController? searchController;
+  final String? initialSearchValue;
+
   const _M3WorkFilterPanelImpl({
     required super.filter,
     required super.onFilterChanged,
     super.collapsible = true,
     super.isExpanded = true,
     super.onToggleExpand,
+    this.searchController,
+    this.initialSearchValue,
   });
 
   @override
@@ -94,6 +109,7 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
             isDense: true,
             border: const OutlineInputBorder(),
           ),
+          controller: searchController,
           onChanged: (value) {
             final newFilter = filter.copyWith(keyword: value);
             onFilterChanged(newFilter);

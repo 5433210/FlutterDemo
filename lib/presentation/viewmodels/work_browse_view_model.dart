@@ -160,6 +160,10 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
       _searchDebounce?.cancel();
     }
 
+    // Update the search query in state immediately for UI feedback
+    state = state.copyWith(searchQuery: query.trim());
+    state.searchController.text = query.trim();
+
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
       final newFilter = state.filter.copyWith(keyword: query.trim());
       updateFilter(newFilter);
@@ -304,15 +308,27 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         page: 1,
         hasMore: true,
         error: null,
+        searchQuery: '', // Clear the search query when resetting filter
       );
+
+      // Update the controller text to empty
+      state.searchController.text = '';
     } else {
+      // Sync the search query with the filter keyword
+      final searchQuery = filter.keyword ?? '';
+
       state = state.copyWith(
         works: [],
         filter: filter,
         page: 1,
         hasMore: true,
         error: null,
+        searchQuery:
+            searchQuery, // Set the search query to match filter keyword
       );
+
+      // Update the controller text to match the filter keyword
+      state.searchController.text = searchQuery;
     }
 
     loadWorks(forceRefresh: true);
@@ -366,18 +382,22 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
           tag: 'WorkBrowseViewModel',
           data: {'initialFilter': state.filter.toString()});
 
+      // If we have a keyword in the filter, ensure it's reflected in the search query
+      final searchQuery = state.filter.keyword ?? '';
+
       state = state.copyWith(
         isLoading: true,
         error: null,
-        filter: const WorkFilter(),
         works: const [],
+        searchQuery: searchQuery,
       );
+
+      // Update the controller text to match the filter keyword
+      state.searchController.text = searchQuery;
 
       await loadWorks(forceRefresh: true);
     } catch (e, stack) {
       _handleLoadError(e, stack);
     }
   }
-
-
 }
