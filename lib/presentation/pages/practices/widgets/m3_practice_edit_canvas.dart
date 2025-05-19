@@ -375,16 +375,24 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
               right: 0,
               bottom: 0,
               child: RepaintBoundary(
-                child: CanvasControlPoints(
-                  key: ValueKey('control_points_$elementId'),
-                  elementId: elementId,
-                  x: x,
-                  y: y,
-                  width: width,
-                  height: height,
-                  rotation: rotation,
-                  onControlPointUpdate: _handleControlPointUpdate,
-                ),
+                child: Builder(builder: (context) {
+                  // 获取当前缩放值
+                  final scale =
+                      widget.transformationController.value.getMaxScaleOnAxis();
+                  return CanvasControlPoints(
+                    key: ValueKey(
+                        'control_points_${elementId}_${scale.toStringAsFixed(2)}'),
+                    elementId: elementId,
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                    rotation: rotation,
+                    initialScale:
+                        scale, // Pass the current scale to ensure proper control point sizing
+                    onControlPointUpdate: _handleControlPointUpdate,
+                  );
+                }),
               ),
             ),
 
@@ -550,29 +558,25 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                                       color: isLocked
                                           ? colorScheme.tertiary
                                           : colorScheme.primary,
-                                      width: 2.0, // 增加边框宽度，从 1.0 改为 2.0
+                                      width: 0.5, // 将边框宽度从2.0减小到0.5像素
                                       style: BorderStyle.solid,
                                     ),
-                                    // 添加半透明背景色，提高可视性
-                                    color: (isLocked
-                                            ? colorScheme.tertiary
-                                            : colorScheme.primary)
-                                        .withOpacity(0.08),
+                                    // 使用完全透明的遮盖层，不再使用半透明背景色
+                                    color: Colors.transparent,
                                   )
                                 : null,
                             child: Stack(
                               children: [
                                 // Element content
-                                _renderElement(element),
-
-                                // 为选中元素添加角落指示器，增强选中状态的可见性
+                                _renderElement(
+                                    element), // 为选中元素添加角落指示器，增强选中状态的可见性
                                 if (!widget.isPreviewMode && isSelected)
                                   Positioned.fill(
                                     child: CustomPaint(
                                       painter: _SelectionCornerPainter(
                                         color: isLocked
                                             ? colorScheme.tertiary
-                                            : colorScheme.surfaceBright,
+                                            : colorScheme.primary,
                                       ),
                                     ),
                                   ),
@@ -1239,13 +1243,12 @@ class _SelectionCornerPainter extends CustomPainter {
   final Color color;
 
   _SelectionCornerPainter({required this.color});
-
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
+      ..strokeWidth = 0.5 // 更细的线条，与边框宽度一致
+      ..style = PaintingStyle.stroke; // 确保只绘制描边而不填充
 
     const double cornerLength = 10.0;
 
