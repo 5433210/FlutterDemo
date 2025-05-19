@@ -254,12 +254,24 @@ class PracticeRepositoryImpl implements PracticeRepository {
   @override
   Future<List<PracticeEntity>> query(PracticeFilter filter) async {
     try {
-      debugPrint('查询字帖: filter.isFavorite=${filter.isFavorite}');
+      debugPrint(
+          '查询字帖: filter.isFavorite=${filter.isFavorite}, keyword=${filter.keyword}');
       final queryParams = _buildQuery(filter);
       debugPrint('生成查询参数: $queryParams');
 
       final list = await _db.query(_table, queryParams);
       debugPrint('查询结果数量: ${list.length}');
+
+      // 如果没有结果，检查所有数据的数量以确定是否有任何记录
+      if (list.isEmpty) {
+        final totalCount = await _db.count(_table);
+        debugPrint('数据库中总共有 $totalCount 条练习记录');
+        if (totalCount == 0) {
+          debugPrint('⚠️ 警告: 数据库中没有任何练习记录，请先创建练习');
+        } else {
+          debugPrint('⚠️ 警告: 数据库中有记录，但当前过滤条件没有匹配的结果');
+        }
+      }
 
       final result = <PracticeEntity>[];
 
@@ -508,12 +520,11 @@ class PracticeRepositoryImpl implements PracticeRepository {
       });
       debugPrint(
           '添加结束时间筛选条件: createTime<=${DateTimeHelper.toStorageFormat(filter.endTime!)}');
-    }
-
-    // 添加收藏过滤
+    } // 添加收藏过滤
     if (filter.isFavorite) {
       conditions.add({'field': 'isFavorite', 'op': '=', 'val': 1});
       debugPrint('添加收藏筛选条件: isFavorite=1 (使用条件格式)');
+      debugPrint('⚠️ 注意: 如果没有收藏的练习，带有isFavorite=1条件的查询将不返回结果');
     }
 
     // 如果有条件，将它们添加到查询对象中

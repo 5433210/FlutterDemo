@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../application/providers/service_providers.dart';
-import '../../../domain/models/practice/practice_filter.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
+import '../../providers/practice_list_provider.dart';
+import '../../viewmodels/states/practice_list_state.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
@@ -23,77 +23,42 @@ class M3PracticeListPage extends ConsumerStatefulWidget {
 }
 
 class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
-  bool _isGridView = true;
-  bool _isBatchMode = false;
-  final Set<String> _selectedPractices = {};
-  bool _isFilterPanelExpanded = true;
-
-  // List to store practices data
-  List<Map<String, dynamic>> _practices = [];
-  final List<Map<String, dynamic>> _filteredPractices = [];
-
-  // Loading and error states
-  bool _isLoading = true;
-  bool _hasError = false;
-  String _errorMessage = '';
-
-  // Search controller
-  final TextEditingController _searchController = TextEditingController();
-
-  // Pagination
-  int _currentPage = 1;
-  int _pageSize = 20;
-  int _totalItems = 0;
-
-  // Sorting and filtering
-  String _sortField = 'updateTime';
-  String _sortOrder = 'desc';
-
-  // 过滤器
-  late PracticeFilter _filter;
-
-  // Scroll controller
-  final ScrollController _scrollController = ScrollController();
-
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(practiceListProvider);
+    final viewModel = ref.read(practiceListProvider.notifier);
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
 
     // Show error snackbar if needed
-    if (_hasError) {
+    if (state.error != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          // Access a string from the extension to keep the import
-          final errorMsg = '${l10n.practiceListFilterTitle}: $_errorMessage';
+          final errorMsg = '${l10n.practiceListFilterTitle}: ${state.error}';
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMsg)),
           );
-          setState(() {
-            _hasError = false;
-          });
+          viewModel.updateFilter(state.filter.copyWith()); // Clear error
         }
       });
     }
 
     return PageLayout(
       toolbar: M3PracticeListNavigationBar(
-        isGridView: _isGridView,
-        onToggleViewMode: () => setState(() => _isGridView = !_isGridView),
-        isBatchMode: _isBatchMode,
-        onToggleBatchMode: _toggleBatchMode,
-        selectedCount: _selectedPractices.length,
+        isGridView: state.viewMode == PracticeViewMode.grid,
+        onToggleViewMode: () => viewModel.toggleViewMode(),
+        isBatchMode: state.batchMode,
+        onToggleBatchMode: () => viewModel.toggleBatchMode(),
+        selectedCount: state.selectedPractices.length,
         onDeleteSelected:
-            _selectedPractices.isNotEmpty ? _confirmDeleteSelected : null,
+            state.selectedPractices.isNotEmpty ? _confirmDeleteSelected : null,
         onNewPractice: () => _navigateToEditPage(),
-        // 排序和搜索功能已移至过滤面板
+        sortField: state.filter.sortField,
+        sortOrder: state.filter.sortOrder,
         onSearch: (_) {},
-        sortField: _sortField,
-        sortOrder: _sortOrder,
         onSortFieldChanged: (_) {},
         onSortOrderChanged: () {},
         onBackPressed: () {
-          // Check if we can safely pop
           if (Navigator.canPop(context)) {
             Navigator.of(context).pop();
           }
@@ -105,55 +70,61 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
             child: Row(
               children: [
                 // 左侧过滤面板
-                if (_isFilterPanelExpanded)
+                if (state.isFilterPanelExpanded)
                   ResizablePanel(
                     initialWidth: 300,
                     minWidth: 280,
                     maxWidth: 400,
                     isLeftPanel: true,
                     child: M3PracticeFilterPanel(
-                      filter: _filter,
-                      onFilterChanged: _updateFilter,
+                      filter: state.filter,
+                      onFilterChanged: viewModel.updateFilter,
                       onSearch: _searchPractices,
-                      onToggleExpand: _toggleFilterPanel,
+                      onToggleExpand: () => viewModel.toggleFilterPanel(),
+                      initialSearchValue: state.searchQuery,
+                      searchController: state.searchController,
                     ),
                   ),
 
                 // 过滤面板切换按钮
                 SidebarToggle(
-                  isOpen: _isFilterPanelExpanded,
-                  onToggle: _toggleFilterPanel,
+                  isOpen: state.isFilterPanelExpanded,
+                  onToggle: () => viewModel.toggleFilterPanel(),
                   alignRight: false,
                 ),
 
                 // 主内容区域
                 Expanded(
-                  child: _isLoading
+                  child: state.isLoading
                       ? Center(
                           child: CircularProgressIndicator(
                             color: theme.colorScheme.primary,
                           ),
                         )
-                      : (_isGridView
+                      : (state.viewMode == PracticeViewMode.grid
                           ? M3PracticeGridView(
-                              practices: _filteredPractices,
-                              isBatchMode: _isBatchMode,
-                              selectedPractices: _selectedPractices,
+                              practices: state.practices,
+                              isBatchMode: state.batchMode,
+                              selectedPractices: state.selectedPractices,
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
-                              onToggleFavorite: _handleToggleFavorite,
-                              onTagsEdited: _handleTagEdited,
+                              onToggleFavorite: (id) =>
+                                  viewModel.handleToggleFavorite(id),
+                              onTagsEdited: (id, tags) =>
+                                  viewModel.handleTagEdited(id, tags),
                               isLoading: false,
                               errorMessage: null,
                             )
                           : M3PracticeListView(
-                              practices: _filteredPractices,
-                              isBatchMode: _isBatchMode,
-                              selectedPractices: _selectedPractices,
+                              practices: state.practices,
+                              isBatchMode: state.batchMode,
+                              selectedPractices: state.selectedPractices,
                               onPracticeTap: _handlePracticeTap,
                               onPracticeLongPress: _handlePracticeLongPress,
-                              onToggleFavorite: _handleToggleFavorite,
-                              onTagsEdited: _handleTagEdited,
+                              onToggleFavorite: (id) =>
+                                  viewModel.handleToggleFavorite(id),
+                              onTagsEdited: (id, tags) =>
+                                  viewModel.handleTagEdited(id, tags),
                               isLoading: false,
                               errorMessage: null,
                             )),
@@ -163,25 +134,13 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
           ),
 
           // 分页控件
-          if (!_isLoading)
+          if (!state.isLoading)
             M3PaginationControls(
-              currentPage: _currentPage,
-              pageSize: _pageSize,
-              totalItems: _totalItems,
-              onPageChanged: (page) {
-                setState(() {
-                  _currentPage = page;
-                });
-                _loadPractices();
-              },
-              onPageSizeChanged: (size) {
-                setState(() {
-                  _pageSize = size;
-                  _currentPage =
-                      1; // Reset to first page when changing page size
-                });
-                _loadPractices();
-              },
+              currentPage: state.page,
+              pageSize: state.pageSize,
+              totalItems: state.totalItems,
+              onPageChanged: (page) => viewModel.setPage(page),
+              onPageSizeChanged: (size) => viewModel.setPageSize(size),
               availablePageSizes: const [10, 20, 50, 100],
             ),
         ],
@@ -191,26 +150,12 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
-    _scrollController.dispose();
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // 初始化过滤器
-    _filter = PracticeFilter(
-      sortField: _sortField,
-      sortOrder: _sortOrder,
-      limit: _pageSize,
-      offset: (_currentPage - 1) * _pageSize,
-    );
-    _loadPractices();
   }
 
   void _confirmDeleteSelected() {
     final l10n = AppLocalizations.of(context);
+    final viewModel = ref.read(practiceListProvider.notifier);
 
     showDialog(
       context: context,
@@ -225,7 +170,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _deleteSelectedPractices();
+              viewModel.deleteSelectedPractices();
             },
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
@@ -237,250 +182,25 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     );
   }
 
-  Future<void> _deleteSelectedPractices() async {
-    if (_selectedPractices.isEmpty) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final practiceService = ref.read(practiceServiceProvider);
-      await practiceService.deletePractices(_selectedPractices.toList());
-
-      setState(() {
-        _isLoading = false;
-        _isBatchMode = false;
-        _selectedPractices.clear();
-      });
-
-      // Reload practices
-      _loadPractices();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).delete),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-        _errorMessage = '${AppLocalizations.of(context).practiceListError}: $e';
-      });
-    }
-  }
-
   void _handlePracticeLongPress(String practiceId) {
-    if (!_isBatchMode) {
-      setState(() {
-        _isBatchMode = true;
-        _togglePracticeSelection(practiceId);
-      });
+    final viewModel = ref.read(practiceListProvider.notifier);
+    final state = ref.read(practiceListProvider);
+
+    if (!state.batchMode) {
+      viewModel.toggleBatchMode();
+      viewModel.togglePracticeSelection(practiceId);
     }
   }
 
   void _handlePracticeTap(String practiceId) {
-    if (_isBatchMode) {
-      _togglePracticeSelection(practiceId);
+    final state = ref.read(practiceListProvider);
+
+    if (state.batchMode) {
+      ref
+          .read(practiceListProvider.notifier)
+          .togglePracticeSelection(practiceId);
     } else {
       _navigateToPracticeDetail(context, practiceId);
-    }
-  }
-
-  /// Handle tag editing
-  Future<void> _handleTagEdited(String id, List<String> newTags) async {
-    try {
-      final practiceService = ref.read(practiceServiceProvider);
-
-      // Get the current practice entity
-      final practice = await practiceService.getPractice(id);
-      if (practice == null) {
-        debugPrint('Practice not found: $id');
-        return;
-      }
-
-      // Update the practice with new tags
-      final updatedPractice = practice.copyWith(tags: newTags);
-      final result = await practiceService.updatePractice(updatedPractice);
-
-      if (result.id == id) {
-        debugPrint('Updated tags successfully for practice: $id');
-
-        // Update the UI
-        setState(() {
-          // Update in _practices
-          for (int i = 0; i < _practices.length; i++) {
-            if (_practices[i]['id'] == id) {
-              _practices[i]['tags'] = newTags;
-              break;
-            }
-          }
-
-          // Update in _filteredPractices
-          for (int i = 0; i < _filteredPractices.length; i++) {
-            if (_filteredPractices[i]['id'] == id) {
-              _filteredPractices[i]['tags'] = newTags;
-              break;
-            }
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint('Failed to update tags: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('${AppLocalizations.of(context).practiceListError}: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
-  }
-
-  /// Handle toggling the favorite status of a practice
-  Future<void> _handleToggleFavorite(String id) async {
-    debugPrint('开始切换收藏状态: ID=$id');
-    try {
-      final practiceService = ref.read(practiceServiceProvider);
-      debugPrint('获取practiceService成功，准备调用toggleFavorite');
-      final updatedPractice = await practiceService.toggleFavorite(id);
-      debugPrint(
-          'toggleFavorite调用结果: ${updatedPractice != null ? '成功' : '失败'}');
-
-      if (updatedPractice != null) {
-        debugPrint('更新UI状态，新的收藏状态: ${updatedPractice.isFavorite}');
-        setState(() {
-          // Update the local practice data with the updated favorite status
-          for (int i = 0; i < _practices.length; i++) {
-            if (_practices[i]['id'] == id) {
-              _practices[i]['isFavorite'] = updatedPractice.isFavorite;
-              debugPrint('更新_practices中的收藏状态成功');
-
-              // Also update in filtered practices
-              for (int j = 0; j < _filteredPractices.length; j++) {
-                if (_filteredPractices[j]['id'] == id) {
-                  _filteredPractices[j]['isFavorite'] =
-                      updatedPractice.isFavorite;
-                  debugPrint('更新_filteredPractices中的收藏状态成功');
-                  break;
-                }
-              }
-              break;
-            }
-          }
-
-          // If we're filtering by favorites and this was unfavorited, remove it from the filtered list
-          if (_filter.isFavorite && !updatedPractice.isFavorite) {
-            _filteredPractices.removeWhere((practice) => practice['id'] == id);
-            debugPrint('从筛选列表中移除取消收藏的项目');
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint('Toggle favorite failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(
-                  '${AppLocalizations.of(context).practiceListError}: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadPractices() async {
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
-
-    try {
-      final practiceService = ref.read(practiceServiceProvider);
-
-      // 更新过滤器的分页信息
-      final filter = _filter.copyWith(
-        limit: _pageSize,
-        offset: (_currentPage - 1) * _pageSize,
-      );
-
-      debugPrint('加载练习：过滤条件 isFavorite=${filter.isFavorite}');
-
-      // Query practices
-      var practicesResult = [];
-      try {
-        practicesResult = await practiceService.queryPractices(filter);
-        debugPrint('查询结果：${practicesResult.length} 个练习');
-      } catch (e) {
-        debugPrint('Query practices failed: $e');
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _hasError = true;
-            _errorMessage =
-                '${AppLocalizations.of(context).practiceListError}: $e';
-          });
-        }
-        return;
-      }
-
-      // Get total count
-      int totalCount = 0;
-      try {
-        totalCount = await practiceService.count(filter);
-      } catch (e) {
-        debugPrint('Get total count failed: $e');
-      }
-
-      // Convert PracticeEntity list to Map<String, dynamic> list
-      final List<Map<String, dynamic>> practicesMap = [];
-
-      for (final practice in practicesResult) {
-        try {
-          final Map<String, dynamic> practiceMap = {
-            'id': practice.id,
-            'title': practice.title,
-            'status': practice.status,
-            'createTime': practice.createTime.toIso8601String(),
-            'updateTime': practice.updateTime.toIso8601String(),
-            'pageCount': practice.pages.length,
-            'thumbnail': practice.thumbnail,
-            'isFavorite': practice.isFavorite,
-            'tags': practice.tags,
-          };
-
-          practicesMap.add(practiceMap);
-        } catch (e) {
-          debugPrint('Convert practice entity failed: $e');
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _practices = practicesMap;
-          _filteredPractices.clear();
-          _filteredPractices.addAll(practicesMap);
-          _totalItems = totalCount;
-          _isLoading = false;
-        });
-      }
-    } catch (e, stackTrace) {
-      debugPrint('Load practices failed: $e');
-      debugPrint('Stack trace: $stackTrace');
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _hasError = true;
-          _errorMessage =
-              '${AppLocalizations.of(context).practiceListError}: $e';
-        });
-      }
     }
   }
 
@@ -492,7 +212,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
     );
 
     // Refresh practices when returning
-    _loadPractices();
+    ref.read(practiceListProvider.notifier).loadPractices();
   }
 
   void _navigateToPracticeDetail(BuildContext context, String practiceId) {
@@ -500,56 +220,7 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
   }
 
   void _searchPractices(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredPractices.clear();
-        _filteredPractices.addAll(_practices);
-      } else {
-        _filteredPractices.clear();
-        _filteredPractices.addAll(_practices.where((practice) {
-          final title = practice['title'] as String? ?? '';
-          return title.toLowerCase().contains(query.toLowerCase());
-        }));
-      }
-    });
-  }
-
-  void _toggleBatchMode() {
-    setState(() {
-      _isBatchMode = !_isBatchMode;
-      if (!_isBatchMode) {
-        _selectedPractices.clear();
-      }
-    });
-  }
-
-  // 切换过滤面板显示/隐藏
-  void _toggleFilterPanel() {
-    setState(() {
-      _isFilterPanelExpanded = !_isFilterPanelExpanded;
-    });
-  }
-
-  void _togglePracticeSelection(String id) {
-    setState(() {
-      if (_selectedPractices.contains(id)) {
-        _selectedPractices.remove(id);
-      } else {
-        _selectedPractices.add(id);
-      }
-    });
-  }
-
-  // 更新过滤器
-  void _updateFilter(PracticeFilter newFilter) {
-    debugPrint('更新筛选条件: isFavorite=${newFilter.isFavorite}');
-    setState(() {
-      _filter = newFilter;
-      _sortField = newFilter.sortField;
-      _sortOrder = newFilter.sortOrder;
-      _currentPage = 1; // 重置到第一页
-    });
-    // 重新加载数据以应用新的筛选条件
-    _loadPractices();
+    // This is now handled within the provider
+    ref.read(practiceListProvider.notifier).setSearchQuery(query);
   }
 }

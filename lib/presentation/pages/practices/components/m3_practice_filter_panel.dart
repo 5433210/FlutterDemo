@@ -9,6 +9,12 @@ class M3PracticeFilterPanel extends StatelessWidget {
   /// 当前过滤条件
   final PracticeFilter filter;
 
+  /// 当前搜索关键字
+  final String? initialSearchValue;
+
+  /// 搜索文本控制器
+  final TextEditingController? searchController;
+
   /// 过滤条件变化时的回调
   final ValueChanged<PracticeFilter> onFilterChanged;
 
@@ -30,11 +36,12 @@ class M3PracticeFilterPanel extends StatelessWidget {
     required this.filter,
     required this.onFilterChanged,
     required this.onSearch,
+    this.initialSearchValue,
+    this.searchController,
     this.collapsible = true,
     this.isExpanded = true,
     this.onToggleExpand,
   });
-
   @override
   Widget build(BuildContext context) {
     return _M3PracticeFilterPanelImpl(
@@ -44,6 +51,8 @@ class M3PracticeFilterPanel extends StatelessWidget {
       collapsible: collapsible,
       isExpanded: isExpanded,
       onToggleExpand: onToggleExpand,
+      initialSearchValue: initialSearchValue,
+      searchController: searchController,
     );
   }
 }
@@ -53,10 +62,18 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
   /// 搜索回调
   final ValueChanged<String> onSearch;
 
+  /// 初始搜索值
+  final String? initialSearchValue;
+
+  /// 搜索文本控制器
+  final TextEditingController? searchController;
+
   const _M3PracticeFilterPanelImpl({
     required super.filter,
     required super.onFilterChanged,
     required this.onSearch,
+    this.initialSearchValue,
+    this.searchController,
     super.collapsible = true,
     super.isExpanded = true,
     super.onToggleExpand,
@@ -78,6 +95,7 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
       buildSectionCard(
         context,
         TextField(
+          controller: searchController,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
             hintText: l10n.practiceListSearch,
@@ -234,6 +252,8 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
     onSearch('');
   }
 
+// The following functions are not used but kept for future reference
+/*
   Widget _buildStatusFilterChip(
       BuildContext context, String? status, String label) {
     final isSelected = filter.status == status;
@@ -251,4 +271,5 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
       checkmarkColor: colorScheme.primary,
     );
   }
+*/
 }
