@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/common/resizable_panel.dart';
+import '../../widgets/common/sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 // import '../../widgets/practice/edit_toolbar.dart';
 // import '../../widgets/practice/file_operations.dart';
@@ -61,6 +62,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Control page thumbnails display state
   bool _showThumbnails = false;
+
+  // Control panel visibility
+  bool _isLeftPanelOpen = true;
+  bool _isRightPanelOpen = true;
 
   // Keyboard handler
   late KeyboardHandler _keyboardHandler;
@@ -191,6 +196,16 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       toggleSelectedElementsVisibility: _toggleSelectedElementsVisibility,
       toggleSelectedElementsLock: _toggleSelectedElementsLock,
       showExportDialog: _showExportDialog,
+      toggleLeftPanel: () {
+        setState(() {
+          _isLeftPanelOpen = !_isLeftPanelOpen;
+        });
+      },
+      toggleRightPanel: () {
+        setState(() {
+          _isRightPanelOpen = !_isRightPanelOpen;
+        });
+      },
       moveSelectedElements: _moveSelectedElements,
     );
 
@@ -222,7 +237,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         return Row(
           children: [
             // Left panel
-            if (!_isPreviewMode) _buildLeftPanel(),
+            if (!_isPreviewMode && _isLeftPanelOpen) _buildLeftPanel(),
+
+            // Left panel toggle
+            if (!_isPreviewMode)
+              SidebarToggle(
+                isOpen: _isLeftPanelOpen,
+                onToggle: () => setState(() {
+                  _isLeftPanelOpen = !_isLeftPanelOpen;
+                }),
+                alignRight: false,
+              ),
 
             // Central edit area
             Expanded(
@@ -250,8 +275,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
               ),
             ),
 
+            // Right panel toggle
+            if (!_isPreviewMode)
+              SidebarToggle(
+                isOpen: _isRightPanelOpen,
+                onToggle: () => setState(() {
+                  _isRightPanelOpen = !_isRightPanelOpen;
+                }),
+                alignRight: true,
+              ),
+
             // Right properties panel
-            if (!_isPreviewMode) _buildRightPanel(),
+            if (!_isPreviewMode && _isRightPanelOpen) _buildRightPanel(),
           ],
         );
       },
@@ -286,7 +321,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     return ResizablePanel(
       initialWidth: 250,
-      minWidth: 150,
+      minWidth: 250,
       maxWidth: 400,
       isLeftPanel: true,
       child: Column(
@@ -371,8 +406,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
             // Return resizable panel
             return ResizablePanel(
               initialWidth: 400,
-              minWidth: 200,
-              maxWidth: 600,
+              minWidth: 300,
+              maxWidth: 800,
               isLeftPanel: false,
               child: panel,
             );
@@ -475,8 +510,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
         return ResizablePanel(
           initialWidth: 400,
-          minWidth: 200,
-          maxWidth: 600,
+          minWidth: 300,
+          maxWidth: 800,
           isLeftPanel: false,
           child: panel,
         );

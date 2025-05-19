@@ -10,6 +10,7 @@ class CanvasGestureHandler {
   final Function(bool, Offset, Offset, Map<String, Offset>) onDragStart;
   final VoidCallback onDragUpdate;
   final VoidCallback onDragEnd;
+  final double Function() getScaleFactor;
 
   // Drag tracking
   bool _isDragging = false;
@@ -25,6 +26,7 @@ class CanvasGestureHandler {
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
+    required this.getScaleFactor,
   });
 
   /// Handle pan end on canvas
@@ -216,23 +218,38 @@ class CanvasGestureHandler {
     // 获取当前位置
     final currentPosition = details.localPosition;
 
-    // 在预览模式下，只处理画布平移
+    // 获取当前缩放因子，用于调整拖拽的距离
+    final scaleFactor = getScaleFactor();
+    // 缩放因子的倒数，用于调整拖拽偏移量
+    final inverseScale =
+        scaleFactor > 0 ? 1.0 / scaleFactor : 1.0; // 在预览模式下，只处理画布平移
     if (controller.state.isPreviewMode) {
-      // 计算拖拽偏移量
-      final dx = currentPosition.dx - _dragStart.dx;
-      final dy = currentPosition.dy - _dragStart.dy;
+      // 计算拖拽偏移量并应用缩放因子的倒数
+      final rawDx = currentPosition.dx - _dragStart.dx;
+      final rawDy = currentPosition.dy - _dragStart.dy;
+
+      // 应用缩放因子的倒数来修正坐标变换，确保平移匹配鼠标实际移动距离
+      final dx = rawDx * inverseScale;
+      final dy = rawDy * inverseScale;
 
       // 记录拖拽信息，让父组件处理平移
       _elementStartPosition = Offset(dx, dy);
+      // 添加日志跟踪
+      debugPrint(
+          '【预览平移】handlePanUpdate: 平移画布，原始偏移=($rawDx, $rawDy), 调整后偏移=($dx, $dy), 缩放因子=$scaleFactor, 反向缩放=$inverseScale');
 
       onDragUpdate();
       return;
-    }
-
-    // 如果正在拖拽选中的元素
+    } // 如果正在拖拽选中的元素
     if (_isDragging && controller.state.selectedElementIds.isNotEmpty) {
-      final dx = currentPosition.dx - _dragStart.dx;
-      final dy = currentPosition.dy - _dragStart.dy;
+      // 计算拖拽偏移量并应用缩放因子的倒数来修正坐标变换
+      // 确保水平和垂直方向使用相同的缩放计算方式
+      final dx = (currentPosition.dx - _dragStart.dx);
+      final dy = (currentPosition.dy - _dragStart.dy);
+
+      debugPrint(
+          '拖拽选中元素: 原始偏移=(${currentPosition.dx - _dragStart.dx}, ${currentPosition.dy - _dragStart.dy}), '
+          '缩放因子=$scaleFactor, 反向缩放=$inverseScale, 调整后偏移=($dx, $dy)');
 
       // 更新所有选中元素的位置
       for (final elementId in controller.state.selectedElementIds) {
@@ -266,27 +283,28 @@ class CanvasGestureHandler {
         double newX = startPosition.dx + dx;
         double newY = startPosition.dy + dy;
 
-        // 如果启用了网格吸附
-        if (controller.state.snapEnabled) {
-          final gridSize = controller.state.gridSize;
-          newX = (newX / gridSize).round() * gridSize;
-          newY = (newY / gridSize).round() * gridSize;
-        }
-
-        // 更新元素位置
-        controller.updateElementPropertiesDuringDrag(elementId, {
-          'x': newX,
-          'y': newY,
-        });
+        // 使用平滑吸附 - 通过controller调用updateElementPropertiesDuringDragWithSmooth来处理
+        controller.updateElementPropertiesDuringDragWithSmooth(
+          elementId,
+          {
+            'x': newX,
+            'y': newY,
+          },
+          scaleFactor: scaleFactor,
+        );
       }
 
       onDragUpdate();
-    }
-    // 如果不是在拖拽元素，则平移画布
+    } // 如果不是在拖拽元素，则平移画布
     else {
-      // 计算拖拽偏移量
-      final dx = currentPosition.dx - _dragStart.dx;
-      final dy = currentPosition.dy - _dragStart.dy;
+      // 计算拖拽偏移量并应用缩放因子的倒数
+      // 对于画布平移，需要应用缩放因子以确保在不同缩放级别下平移距离与鼠标移动一致
+      final rawDx = currentPosition.dx - _dragStart.dx;
+      final rawDy = currentPosition.dy - _dragStart.dy;
+
+      // 应用缩放因子的倒数来修正坐标变换，确保平移匹配鼠标实际移动距离
+      final dx = rawDx * inverseScale;
+      final dy = rawDy * inverseScale;
 
       // 检查偏移量是否有效
       if (dx.isNaN || dy.isNaN) {
@@ -295,12 +313,12 @@ class CanvasGestureHandler {
       }
 
       // 记录拖拽信息，让父组件处理平移
-      final oldPosition = _elementStartPosition;
       _elementStartPosition = Offset(dx, dy);
 
       // 添加日志跟踪
       debugPrint(
-          '【平移】handlePanUpdate: 平移画布，当前位置=$currentPosition, 起始位置=$_dragStart, 偏移量=($dx, $dy), 旧偏移量=$oldPosition');
+          '【平移】handlePanUpdate: 平移画布，当前位置=$currentPosition, 起始位置=$_dragStart, '
+          '原始偏移=($rawDx, $rawDy), 调整后偏移=($dx, $dy), 缩放因子=$scaleFactor, 反向缩放=$inverseScale');
 
       // 确保调用回调
       onDragUpdate();

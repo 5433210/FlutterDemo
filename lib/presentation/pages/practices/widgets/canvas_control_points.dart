@@ -14,6 +14,7 @@ class CanvasControlPoints extends StatefulWidget {
   final double rotation;
   final double initialScale;
   final Function(int, Offset) onControlPointUpdate;
+  final Function(int)? onControlPointDragEnd;
 
   const CanvasControlPoints({
     Key? key,
@@ -24,6 +25,7 @@ class CanvasControlPoints extends StatefulWidget {
     required this.height,
     required this.rotation,
     required this.onControlPointUpdate,
+    this.onControlPointDragEnd,
     this.initialScale = 1.0,
   }) : super(key: key);
 
@@ -56,12 +58,6 @@ class ElementBorderPainter extends CustomPainter {
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
 
-    // // 绘制虚线边框
-    // final dashPaint = Paint()
-    //   ..color = Colors.yellow
-    //   ..strokeWidth = strokeWidth - 1.0
-    //   ..style = PaintingStyle.stroke;
-
     // 绘制元素边框 - 连接四个角点
     final path = Path();
     path.moveTo(points[0].dx, points[0].dy); // 左上
@@ -75,33 +71,6 @@ class ElementBorderPainter extends CustomPainter {
 
     // 再绘制边框
     canvas.drawPath(path, strokePaint);
-
-    // // 绘制虚线边框
-    // const dashLength = 5.0;
-    // const gapLength = 5.0;
-
-    // // 绘制左上到右上
-    // _drawDashedLine(
-    //     canvas, points[0], points[2], dashPaint, dashLength, gapLength);
-    // // 绘制右上到右下
-    // _drawDashedLine(
-    //     canvas, points[2], points[4], dashPaint, dashLength, gapLength);
-    // // 绘制右下到左下
-    // _drawDashedLine(
-    //     canvas, points[4], points[6], dashPaint, dashLength, gapLength);
-    // // 绘制左下到左上
-    // _drawDashedLine(
-    //     canvas, points[6], points[0], dashPaint, dashLength, gapLength);
-
-    // // 在每个角点绘制一个小圆点
-    // final cornerPaint = Paint()
-    //   ..color = Colors.yellow
-    //   ..style = PaintingStyle.fill;
-
-    // for (var i = 0; i < 8; i += 2) {
-    //   // 只绘制四个角点
-    //   canvas.drawCircle(points[i], 4.0, cornerPaint);
-    // }
   }
 
   @override
@@ -110,34 +79,6 @@ class ElementBorderPainter extends CustomPainter {
         color != oldDelegate.color ||
         strokeWidth != oldDelegate.strokeWidth;
   }
-
-  // 绘制虚线
-  // void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint,
-  //     double dashLength, double gapLength) {
-  //   final dx = end.dx - start.dx;
-  //   final dy = end.dy - start.dy;
-  //   final distance = sqrt(dx * dx + dy * dy);
-  //   final unitX = dx / distance;
-  //   final unitY = dy / distance;
-
-  //   var currentDistance = 0.0;
-  //   while (currentDistance < distance) {
-  //     final startX = start.dx + unitX * currentDistance;
-  //     final startY = start.dy + unitY * currentDistance;
-  //     final endX =
-  //         start.dx + unitX * min(currentDistance + dashLength, distance);
-  //     final endY =
-  //         start.dy + unitX * min(currentDistance + dashLength, distance);
-
-  //     canvas.drawLine(
-  //       Offset(startX, startY),
-  //       Offset(endX, endY),
-  //       paint,
-  //     );
-
-  //     currentDistance += dashLength + gapLength;
-  //   }
-  // }
 }
 
 /// 绘制旋转控制点连接线
@@ -188,39 +129,6 @@ class RotationLinePainter extends CustomPainter {
       Offset(centerX, centerY + 6),
       centerPaint,
     );
-
-    // // 添加一个虚线效果，使旋转线更加明显
-    // final dashPaint = Paint()
-    //   ..color = Colors.yellow
-    //   ..strokeWidth = 2.0
-    //   ..style = PaintingStyle.stroke;
-
-    // // 绘制虚线
-    // const dashLength = 5.0;
-    // const gapLength = 5.0;
-    // final dx = rotationX - centerX;
-    // final dy = rotationY - centerY;
-    // final distance = sqrt(dx * dx + dy * dy);
-    // final unitX = dx / distance;
-    // final unitY = dy / distance;
-
-    // var currentDistance = 0.0;
-    // while (currentDistance < distance) {
-    //   final startX = centerX + unitX * currentDistance;
-    //   final startY = centerY + unitY * currentDistance;
-    //   final endX =
-    //       centerX + unitX * min(currentDistance + dashLength, distance);
-    //   final endY =
-    //       centerY + unitY * min(currentDistance + dashLength, distance);
-
-    //   // canvas.drawLine(
-    //   //   Offset(startX, startY),
-    //   //   Offset(endX, endY),
-    //   //   dashPaint,
-    //   // );
-
-    //   currentDistance += dashLength + gapLength;
-    // }
   }
 
   @override
@@ -234,7 +142,12 @@ class RotationLinePainter extends CustomPainter {
 
 class _CanvasControlPointsState extends State<CanvasControlPoints> {
   // 跟踪是否正在进行旋转操作
-  bool _isRotating = false; // 获取当前缩放比例
+  bool _isRotating = false;
+  // 添加变量跟踪累积偏移量和当前拖拽的控制点索引
+  // final Map<int, Offset> _accumulatedDeltas = {};
+  int? _currentDraggingPoint;
+
+  // 获取当前缩放比例
   double get _currentScale {
     if (!mounted) {
       debugPrint('控制点未挂载，使用初始缩放比例: ${widget.initialScale}');
@@ -495,6 +408,9 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                   _isRotating = true;
                 });
               }
+              // 初始化累积偏移量和当前拖拽的控制点索引
+              // _accumulatedDeltas[index] = Offset.zero;
+              // _currentDraggingPoint = index;
               // 立即触发一次更新，确保控制点能够立即响应
               widget.onControlPointUpdate(index, Offset.zero);
             },
@@ -515,6 +431,10 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                 debugPrint(
                     '控制点 $index 拖拽更新: 原始delta=${details.delta}, 缩放比例=$scale, 调整后delta=$adjustedDelta');
 
+                // // 更新累积偏移量
+                // _accumulatedDeltas[index] =
+                //     _accumulatedDeltas[index]! + adjustedDelta;
+
                 // 确保立即处理控制点更新
                 widget.onControlPointUpdate(index, adjustedDelta);
               } catch (e) {
@@ -528,6 +448,17 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                   _isRotating = false;
                 });
               }
+
+              // // 处理网格吸附逻辑
+              // final accumulatedDelta = _accumulatedDeltas[index]!;
+              // debugPrint('控制点 $index 结束拖拽，最终累积偏移量: $accumulatedDelta');
+
+              // 调用拖拽结束回调，通知外部可以进行网格吸附处理
+              widget.onControlPointDragEnd?.call(index);
+
+              // 清除累积偏移量
+              // _accumulatedDeltas.remove(index);
+              _currentDraggingPoint = null;
             },
             child: Container(
               decoration: BoxDecoration(

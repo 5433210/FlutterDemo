@@ -61,6 +61,8 @@ class KeyboardHandler {
   final Function() toggleSelectedElementsVisibility;
   final Function() toggleSelectedElementsLock;
   final Function() showExportDialog;
+  final Function() toggleLeftPanel;
+  final Function() toggleRightPanel;
   final Function(double dx, double dy) moveSelectedElements;
 
   KeyboardHandler({
@@ -85,6 +87,8 @@ class KeyboardHandler {
     required this.toggleSelectedElementsVisibility,
     required this.toggleSelectedElementsLock,
     required this.showExportDialog,
+    required this.toggleLeftPanel,
+    required this.toggleRightPanel,
     required this.moveSelectedElements,
   });
 
@@ -291,6 +295,16 @@ class KeyboardHandler {
           // Ctrl+O: Page thumbnails toggle
           case LogicalKeyboardKey.keyO:
             onToggleThumbnails();
+            return true;
+            
+          // Ctrl+[: Toggle left panel
+          case LogicalKeyboardKey.bracketLeft:
+            toggleLeftPanel();
+            return true;
+            
+          // Ctrl+]: Toggle right panel
+          case LogicalKeyboardKey.bracketRight:
+            toggleRightPanel();
             return true;
         }
       }

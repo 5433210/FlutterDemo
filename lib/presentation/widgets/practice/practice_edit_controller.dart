@@ -20,6 +20,9 @@ class PracticeEditController extends ChangeNotifier {
   // 撤销/重做管理器
   late final UndoRedoManager _undoRedoManager;
 
+  // 吸附管理器 - 用于元素拖拽和调整大小时的吸附
+  // late final SnapManager _snapManager;
+
   // UUID生成器
   final Uuid _uuid = const Uuid();
 
@@ -49,6 +52,13 @@ class PracticeEditController extends ChangeNotifier {
         notifyListeners();
       },
     );
+
+    // 初始化吸附管理器
+    // _snapManager = SnapManager(
+    //   gridSize: _state.gridSize,
+    //   enabled: _state.snapEnabled,
+    //   snapThreshold: 10.0,
+    // );
 
     // 初始化默认数据
     _initDefaultData();
@@ -2310,17 +2320,6 @@ class PracticeEditController extends ChangeNotifier {
     double newX = x + delta.dx;
     double newY = y + delta.dy;
 
-    // 如果启用了吸附功能，这里可以添加吸附逻辑
-    if (state.snapEnabled) {
-      // 使用 state 中的 gridSize
-      final gridSize = state.gridSize;
-      newX = (newX / gridSize).round() * gridSize;
-      newY = (newY / gridSize).round() * gridSize;
-
-      // 打印吸附信息
-      debugPrint('吸附功能生效: 将元素 $id 吸附到网格位置 ($newX, $newY)');
-    }
-
     // 更新元素位置
     updateElementProperties(id, {'x': newX, 'y': newY});
   }
@@ -2339,84 +2338,6 @@ class PracticeEditController extends ChangeNotifier {
     if (elementIndex >= 0) {
       final element = elements[elementIndex] as Map<String, dynamic>;
       final oldProperties = Map<String, dynamic>.from(element);
-
-      // 处理吸附功能
-      if (_state.snapEnabled) {
-        final gridSize = _state.gridSize;
-        bool hasSnapped = false;
-
-        // 处理位置吸附 (x, y)
-        if (properties.containsKey('x') || properties.containsKey('y')) {
-          // 获取新的位置
-          double newX = properties.containsKey('x')
-              ? (properties['x'] as num).toDouble()
-              : (element['x'] as num).toDouble();
-          double newY = properties.containsKey('y')
-              ? (properties['y'] as num).toDouble()
-              : (element['y'] as num).toDouble();
-
-          // 吸附到网格
-          double snappedX = (newX / gridSize).round() * gridSize;
-          double snappedY = (newY / gridSize).round() * gridSize;
-
-          // 更新属性中的位置
-          if (properties.containsKey('x')) {
-            properties['x'] = snappedX;
-            if (snappedX != newX) {
-              hasSnapped = true;
-            }
-          }
-          if (properties.containsKey('y')) {
-            properties['y'] = snappedY;
-            if (snappedY != newY) {
-              hasSnapped = true;
-            }
-          }
-
-          if (hasSnapped) {
-            debugPrint('吸附功能生效: 将元素 $id 的位置吸附到网格 ($snappedX, $snappedY)');
-          }
-        }
-
-        // 处理大小吸附 (width, height)
-        if (properties.containsKey('width') ||
-            properties.containsKey('height')) {
-          // 获取新的尺寸
-          double newWidth = properties.containsKey('width')
-              ? (properties['width'] as num).toDouble()
-              : (element['width'] as num).toDouble();
-          double newHeight = properties.containsKey('height')
-              ? (properties['height'] as num).toDouble()
-              : (element['height'] as num).toDouble();
-
-          // 吸附到网格
-          double snappedWidth = (newWidth / gridSize).round() * gridSize;
-          double snappedHeight = (newHeight / gridSize).round() * gridSize;
-
-          // 确保最小尺寸
-          snappedWidth = math.max(snappedWidth, 10.0);
-          snappedHeight = math.max(snappedHeight, 10.0);
-
-          // 更新属性中的尺寸
-          if (properties.containsKey('width')) {
-            properties['width'] = snappedWidth;
-            if (snappedWidth != newWidth) {
-              hasSnapped = true;
-            }
-          }
-          if (properties.containsKey('height')) {
-            properties['height'] = snappedHeight;
-            if (snappedHeight != newHeight) {
-              hasSnapped = true;
-            }
-          }
-
-          if (hasSnapped) {
-            debugPrint(
-                '吸附功能生效: 将元素 $id 的尺寸吸附到网格 (宽=$snappedWidth, 高=$snappedHeight)');
-          }
-        }
-      }
 
       // 更新属性
       final newProperties = {...element};
@@ -2553,9 +2474,10 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
-  /// 更新元素属性 - 拖动过程中使用，不应用吸附
-  void updateElementPropertiesDuringDrag(
-      String id, Map<String, dynamic> properties) {
+  /// 更新元素属性 - 拖动过程中使用，使用平滑吸附
+  void updateElementPropertiesDuringDragWithSmooth(
+      String id, Map<String, dynamic> properties,
+      {double scaleFactor = 1.0}) {
     if (_state.currentPageIndex >= _state.pages.length) return;
 
     final page = _state.pages[_state.currentPageIndex];
@@ -2564,6 +2486,8 @@ class PracticeEditController extends ChangeNotifier {
 
     if (elementIndex >= 0) {
       final element = elements[elementIndex] as Map<String, dynamic>;
+
+      debugPrint('拖拽更新: 元素ID=$id, 缩放因子=$scaleFactor');
 
       // 确保大小不小于最小值
       if (properties.containsKey('width')) {
@@ -2575,7 +2499,87 @@ class PracticeEditController extends ChangeNotifier {
         properties['height'] = math.max(height, 10.0);
       }
 
-      // 直接更新元素属性，不应用吸附，不记录撤销/重做
+      // 获取元素原始位置
+      final origX = (element['x'] as num).toDouble();
+      final origY = (element['y'] as num).toDouble();
+
+      // 获取新位置并应用缩放因子
+      double newX, newY;
+
+      if (properties.containsKey('x')) {
+        // canvas_gesture_handler已经应用了反向缩放，所以这里不需要额外处理
+        newX = (properties['x'] as num).toDouble();
+        debugPrint('拖拽更新: 使用新的X坐标: $newX (已经应用缩放调整)');
+      } else {
+        newX = origX;
+      }
+
+      if (properties.containsKey('y')) {
+        // canvas_gesture_handler已经应用了反向缩放，所以这里不需要额外处理
+        newY = (properties['y'] as num).toDouble();
+        debugPrint('拖拽更新: 使用新的Y坐标: $newY (已经应用缩放调整)');
+      } else {
+        newY = origY;
+      }
+
+      // 如果启用了吸附功能，使用平滑吸附
+      // if (_state.snapEnabled) {
+      //   // 更新 _snapManager 设置确保使用最新的网格设置
+      //   _snapManager.updateSettings(
+      //     gridSize: _state.gridSize,
+      //     enabled: _state.snapEnabled,
+      //     snapThreshold: 10.0,
+      //   );
+
+      //   // 创建临时元素信息供SnapManager使用
+      //   final tempElement = {
+      //     'id': id,
+      //     'x': newX,
+      //     'y': newY,
+      //     'width': element['width'],
+      //     'height': element['height'],
+      //   };
+
+      //   // 根据缩放因子调整吸附阈值 - 放大时需要更小的阈值，缩小时需要更大的阈值
+      //   // 使用与缩放因子成反比的阈值，但设置最小和最大限制，防止极端值
+      //   final adjustedSnapThreshold = (10.0 / scaleFactor).clamp(5.0, 20.0);
+      //   _snapManager.updateSettings(
+      //     snapThreshold: adjustedSnapThreshold,
+      //   );
+
+      //   debugPrint(
+      //       '拖拽更新: 调整吸附阈值: 缩放因子=$scaleFactor, 阈值=$adjustedSnapThreshold');
+
+      //   // 应用平滑吸附 - 在拖拽过程中使用snapFactor=0.3实现平滑效果
+      //   final snappedPosition = _snapManager.snapPosition(
+      //     Offset(newX, newY),
+      //     [tempElement],
+      //     id,
+      //     isDragging: true,
+      //     snapFactor: 0.3,
+      //   );
+
+      //   // 确保位置有变化 - 避免卡住不动
+      //   final xDiff = (snappedPosition.dx - newX).abs();
+      //   final yDiff = (snappedPosition.dy - newY).abs();
+      //   if (xDiff > 0.001 || yDiff > 0.001) {
+      //     // 更新位置
+      //     properties['x'] = snappedPosition.dx;
+      //     properties['y'] = snappedPosition.dy;
+
+      //     debugPrint(
+      //         '平滑吸附: 将元素 $id 平滑吸附到 (${snappedPosition.dx}, ${snappedPosition.dy}), '
+      //         '原始位置=($newX, $newY), 变化量=(${snappedPosition.dx - newX}, ${snappedPosition.dy - newY}), '
+      //         '缩放因子=$scaleFactor');
+      //   } else {
+      //     // 即使没有吸附变化，也更新原始位置
+      //     properties['x'] = newX;
+      //     properties['y'] = newY;
+      //     debugPrint('跳过吸附: 位置变化太小，使用原始位置 ($newX, $newY), 缩放因子=$scaleFactor');
+      //   }
+      // }
+
+      // 直接更新元素属性，不记录撤销/重做
       properties.forEach((key, value) {
         if (key == 'content' && element.containsKey('content')) {
           // 对于content对象，合并而不是替换

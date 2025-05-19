@@ -138,6 +138,12 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           _isDragging = false;
         });
       },
+      getScaleFactor: () {
+        // Extract the scale from the transformation matrix
+        final Matrix4 matrix = widget.transformationController.value;
+        // The scale is the same for x and y in this case (uniform scaling)
+        return matrix.getMaxScaleOnAxis();
+      },
     );
   }
 
@@ -192,8 +198,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   0.1), // Canvas outer background - improved contrast in light theme
               child: InteractiveViewer(
                 boundaryMargin: const EdgeInsets.all(double.infinity),
-                panEnabled: widget.isPreviewMode ||
-                    !_isDragging, // Enable pan in preview mode or when not dragging elements
+                panEnabled: true, // 完全禁用内置平移，由我们自己的代码处理所有平移
                 scaleEnabled: true,
                 minScale: 0.1,
                 maxScale: 15.0,
@@ -223,7 +228,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       details, elements.cast<Map<String, dynamic>>()),
                   onPanUpdate: (details) {
                     // If not dragging elements and not in preview mode, handle panning directly
-                    if (!_isDragging && !widget.isPreviewMode) {
+                    if (!_isDragging) {
                       // Create new transformation matrix
                       final Matrix4 newMatrix = Matrix4.identity();
 
@@ -237,19 +242,24 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       // Get current translation
                       final Vector3 translation = widget
                           .transformationController.value
-                          .getTranslation();
+                          .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
+                      // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
+                      // Use the same approach as in canvas_gesture_handler.dart
 
-                      // Set new translation
                       newMatrix.setTranslation(Vector3(
-                        translation.x + details.delta.dx,
-                        translation.y + details.delta.dy,
+                        translation.x + details.delta.dx * scale,
+                        translation.y + details.delta.dy * scale,
                         0.0,
                       ));
 
-                      widget.transformationController.value = newMatrix;
-
-                      // Force refresh
+                      widget.transformationController.value =
+                          newMatrix; // Force refresh
                       setState(() {});
+
+                      // Add debug logging
+                      debugPrint(
+                          '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
+                          '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
                     }
 
                     // Call original handlePanUpdate
@@ -263,78 +273,76 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             ),
 
             // Status bar showing zoom level (only visible in edit mode)
-            if (!widget.isPreviewMode)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  color: colorScheme.surface.withOpacity(0.85),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      // Reset position button
-                      Tooltip(
-                        message:
-                            AppLocalizations.of(context).canvasResetViewTooltip,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _resetCanvasPosition,
-                            borderRadius: BorderRadius.circular(4),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 2),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.center_focus_strong,
-                                    size: 14,
+
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                color: colorScheme.surface.withOpacity(0.85),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Reset position button
+                    Tooltip(
+                      message:
+                          AppLocalizations.of(context).canvasResetViewTooltip,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _resetCanvasPosition,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.center_focus_strong,
+                                  size: 14,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  AppLocalizations.of(context).canvasResetView,
+                                  style: TextStyle(
                                     color: colorScheme.onSurfaceVariant,
+                                    fontSize: 12,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    AppLocalizations.of(context)
-                                        .canvasResetView,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurfaceVariant,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Zoom indicator
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.zoom_in,
-                            size: 16,
+                    ),
+                    const SizedBox(width: 12),
+                    // Zoom indicator
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.zoom_in,
+                          size: 16,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$zoomPercentage%',
+                          style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$zoomPercentage%',
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
+            ),
           ],
         );
       },
@@ -391,6 +399,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     initialScale:
                         scale, // Pass the current scale to ensure proper control point sizing
                     onControlPointUpdate: _handleControlPointUpdate,
+                    onControlPointDragEnd: _handleControlPointDragEnd,
                   );
                 }),
               ),
@@ -666,31 +675,42 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     }
   }
 
-  // /// Get BoxFit from fitMode string
-  // BoxFit _getFitMode(String fitMode) {
-  //   switch (fitMode) {
-  //     case 'contain':
-  //       return BoxFit.contain;
-  //     case 'cover':
-  //       return BoxFit.cover;
-  //     case 'fill':
-  //       return BoxFit.fill;
-  //     case 'none':
-  //       return BoxFit.none;
-  //     default:
-  //       return BoxFit.contain;
-  //   }
-  // }
+  /// 处理控制点拖拽结束事件
+  void _handleControlPointDragEnd(int controlPointIndex) {
+    debugPrint('控制点 $controlPointIndex 拖拽结束');
+
+    if (widget.controller.state.selectedElementIds.isEmpty) {
+      return;
+    }
+
+    final elementId = widget.controller.state.selectedElementIds.first;
+
+    // 获取当前元素属性
+    final element = widget.controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) {
+      return;
+    }
+
+    // 如果是旋转控制点（索引8），不做处理
+    if (controlPointIndex == 8) {
+      debugPrint('旋转控制点拖拽结束');
+      return;
+    }
+  }
 
   /// Handle control point updates
   void _handleControlPointUpdate(int controlPointIndex, Offset delta) {
-    // Add more debug info to understand control point behavior
+    // 获取当前缩放比例
     final scale = widget.transformationController.value.getMaxScaleOnAxis();
 
-    // Adjust offset based on current scale
+    // 调整增量，考虑当前缩放比例
+    // 注意：在高缩放比例下，小的物理移动会导致很小的逻辑移动，
+    // 而在低缩放比例下，相同的物理移动会导致较大的逻辑移动
     final adjustedDelta = Offset(delta.dx / scale, delta.dy / scale);
-
-    // Use adjusted offset
     delta = adjustedDelta;
 
     if (widget.controller.state.selectedElementIds.isEmpty) {
@@ -704,10 +724,14 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       (e) => e['id'] == elementId,
       orElse: () => <String, dynamic>{},
     );
-
     if (element.isEmpty) {
       return;
-    }
+    } // Recreate the SnapManager with current settings
+    // _snapManager.updateSettings(
+    //   gridSize: widget.controller.state.gridSize,
+    //   enabled: widget.controller.state.snapEnabled,
+    //   snapThreshold: 10.0,
+    // );
 
     // Check if element's layer is locked
     final layerId = element['layerId'] as String?;
@@ -796,11 +820,47 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         x += delta.dx;
         width -= delta.dx;
         break;
-    }
-
-    // 确保最小尺寸
+    } // 确保最小尺寸
     width = width.clamp(10.0, double.infinity);
-    height = height.clamp(10.0, double.infinity);
+    height =
+        height.clamp(10.0, double.infinity); // 注释掉拖拽过程中的平滑吸附，改为只在拖拽结束时应用网格吸附
+    // 应用平滑吸附 - 使用SnapManager
+    // if (widget.controller.state.snapEnabled) {
+    //   // 确保使用最新的网格设置更新SnapManager
+    //   _snapManager.updateSettings(
+    //     gridSize: widget.controller.state.gridSize,
+    //     enabled: widget.controller.state.snapEnabled,
+    //     snapThreshold: 10.0,
+    //   );
+
+    //   // 创建一个临时的元素位置供SnapManager使用
+    //   final tempElement = {
+    //     'id': elementId,
+    //     'x': x,
+    //     'y': y,
+    //     'width': width,
+    //     'height': height,
+    //   }; // 应用平滑吸附到网格 - 在拖拽过程中使用 snapFactor=0.3 实现平滑效果
+    //   final snappedPosition = _snapManager.snapPosition(
+    //     Offset(x, y),
+    //     [tempElement],
+    //     elementId,
+    //     isDragging: true,
+    //     snapFactor: 0.3,
+    //   );
+
+    //   // 确保位置有变化 - 避免卡住不动
+    //   if ((snappedPosition.dx - x).abs() > 0.001 ||
+    //       (snappedPosition.dy - y).abs() > 0.001) {
+    //     // 更新位置，但保持原来计算的宽高
+    //     x = snappedPosition.dx;
+    //     y = snappedPosition.dy;
+
+    //     debugPrint('吸附后的位置: x=$x, y=$y');
+    //   } else {
+    //     debugPrint('跳过吸附: 位置变化太小');
+    //   }
+    // }
 
     // 更新元素属性
     final updates = {
@@ -842,9 +902,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final newRotation = rotation + rotationDelta;
 
     debugPrint(
-        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation');
-
-    // Update rotation
+        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation'); // Update rotation
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
