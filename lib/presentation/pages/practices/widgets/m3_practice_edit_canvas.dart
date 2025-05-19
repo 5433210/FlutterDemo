@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
 
+import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/image/cached_image.dart';
 import '../../../widgets/practice/collection_element_renderer.dart';
 import '../../../widgets/practice/element_renderers.dart';
@@ -276,7 +277,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     children: [
                       // Reset position button
                       Tooltip(
-                        message: '重置视图位置',
+                        message:
+                            AppLocalizations.of(context).canvasResetViewTooltip,
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -295,7 +297,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '复位',
+                                    AppLocalizations.of(context)
+                                        .canvasResetView,
                                     style: TextStyle(
                                       color: colorScheme.onSurfaceVariant,
                                       fontSize: 12,

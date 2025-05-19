@@ -45,6 +45,8 @@
   "cacheSize": "缓存大小",
   "cancel": "取消",
   "canvasPixelSize": "画布像素大小",
+  "canvasResetView": "复位",
+  "canvasResetViewTooltip": "重置视图位置",
   "categories": "分类",
   "categoryHasItems": "此分类下有 {count} 个项目",
   "categoryManagement": "分类管理",

@@ -424,45 +424,24 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
               widget.onControlPointUpdate(index, Offset.zero);
             },
             onPanUpdate: (details) {
-              // 获取控制点名称
-              String controlPointName;
-              switch (index) {
-                case 0:
-                  controlPointName = '左上角';
-                  break;
-                case 1:
-                  controlPointName = '上中';
-                  break;
-                case 2:
-                  controlPointName = '右上角';
-                  break;
-                case 3:
-                  controlPointName = '右中';
-                  break;
-                case 4:
-                  controlPointName = '右下角';
-                  break;
-                case 5:
-                  controlPointName = '下中';
-                  break;
-                case 6:
-                  controlPointName = '左下角';
-                  break;
-                case 7:
-                  controlPointName = '左中';
-                  break;
-                case 8:
-                  controlPointName = '旋转';
-                  break;
-                default:
-                  controlPointName = '未知';
-              }
-
-              debugPrint(
-                  '控制点 $index ($controlPointName) 拖拽更新: delta=${details.delta}');
               try {
+                // 计算相对于元素中心的位置，用于处理缩放
+                final RenderBox renderBox =
+                    context.findRenderObject() as RenderBox;
+                final matrix = renderBox.getTransformTo(null);
+                final scale = matrix.getMaxScaleOnAxis();
+
+                // 根据缩放比例调整delta
+                final adjustedDelta = Offset(
+                  details.delta.dx * scale,
+                  details.delta.dy * scale,
+                );
+
+                debugPrint(
+                    '控制点 $index 拖拽更新: 原始delta=${details.delta}, 缩放比例=$scale, 调整后delta=$adjustedDelta');
+
                 // 确保立即处理控制点更新
-                widget.onControlPointUpdate(index, details.delta);
+                widget.onControlPointUpdate(index, adjustedDelta);
               } catch (e) {
                 debugPrint('控制点更新错误: $e');
               }

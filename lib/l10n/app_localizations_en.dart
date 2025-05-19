@@ -144,6 +144,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get canvasPixelSize => 'Canvas Pixel Size';
 
   @override
+  String get canvasResetView => 'Reset';
+
+  @override
+  String get canvasResetViewTooltip => 'Reset View Position';
+
+  @override
   String get categories => 'Categories';
 
   @override

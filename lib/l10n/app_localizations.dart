@@ -365,6 +365,18 @@ abstract class AppLocalizations {
   /// **'画布像素大小'**
   String get canvasPixelSize;
 
+  /// No description provided for @canvasResetView.
+  ///
+  /// In zh, this message translates to:
+  /// **'复位'**
+  String get canvasResetView;
+
+  /// No description provided for @canvasResetViewTooltip.
+  ///
+  /// In zh, this message translates to:
+  /// **'重置视图位置'**
+  String get canvasResetViewTooltip;
+
   /// No description provided for @categories.
   ///
   /// In zh, this message translates to:

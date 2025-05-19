@@ -144,6 +144,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get canvasPixelSize => '画布像素大小';
 
   @override
+  String get canvasResetView => '复位';
+
+  @override
+  String get canvasResetViewTooltip => '重置视图位置';
+
+  @override
   String get categories => '分类';
 
   @override
