@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/services/restoration/state_restoration_service.dart';
 import '../../application/services/services.dart';
 import '../../domain/models/common/date_range_filter.dart';
 import '../../domain/models/work/work_filter.dart';
@@ -14,13 +13,12 @@ import 'states/work_browse_state.dart';
 /// 作品浏览视图模型
 class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   final WorkService _workService;
-  final StateRestorationService _stateRestorationService;
   Timer? _searchDebounce;
   final ThrottleHelper _loadThrottler = ThrottleHelper(
     minInterval: const Duration(milliseconds: 500),
   );
 
-  WorkBrowseViewModel(this._workService, this._stateRestorationService)
+  WorkBrowseViewModel(this._workService)
       : super(WorkBrowseState(
           isLoading: false,
           filter: const WorkFilter(),
@@ -76,7 +74,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
   void dispose() {
     _searchDebounce?.cancel();
     _loadThrottler.cancel();
-    _saveState();
     super.dispose();
   }
 
@@ -171,7 +168,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   void setViewMode(ViewMode mode) {
     state = state.copyWith(viewMode: mode);
-    _saveState();
   }
 
   // 批量操作相关方法
@@ -238,7 +234,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
   void toggleSidebar() {
     state = state.copyWith(isSidebarOpen: !state.isSidebarOpen);
-    _saveState();
   }
 
   // 视图相关方法
@@ -246,7 +241,6 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     state = state.copyWith(
       viewMode: state.viewMode == ViewMode.grid ? ViewMode.list : ViewMode.grid,
     );
-    _saveState();
   }
 
   void updateDatePreset(DateRangePreset? preset) {
@@ -385,16 +379,5 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     }
   }
 
-  void _saveState() {
-    try {
-      _stateRestorationService.saveWorkBrowseState(state);
-    } catch (e, stack) {
-      AppLogger.error(
-        'Failed to save work browse state',
-        tag: 'WorkBrowseViewModel',
-        error: e,
-        stackTrace: stack,
-      );
-    }
-  }
+
 }
