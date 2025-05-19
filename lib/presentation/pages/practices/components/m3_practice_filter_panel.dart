@@ -92,30 +92,43 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
 
     return [
       // 搜索部分
+      // 找到搜索框部分，替换为以下代码:
+
       buildSectionCard(
         context,
         TextField(
-          controller: searchController,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
             hintText: l10n.practiceListSearch,
             isDense: true,
             border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: l10n.practiceListSearch,
+              onPressed: () {
+                if (searchController != null) {
+                  final newFilter =
+                      filter.copyWith(keyword: searchController!.text);
+                  onFilterChanged(newFilter);
+                }
+              },
+            ),
           ),
-          // Prevent text selection behavior
+          controller: searchController,
           enableInteractiveSelection: true,
-          // Set to false to prevent default selection behavior
           autofocus: false,
-          // Use onTap to clear selection when the field is tapped
           onTap: () {
             if (searchController != null) {
-              // Move cursor to end instead of selecting all text
               searchController!.selection = TextSelection.fromPosition(
                 TextPosition(offset: searchController!.text.length),
               );
             }
           },
-          onChanged: onSearch,
+          onSubmitted: (value) {
+            final newFilter = filter.copyWith(keyword: value);
+            onFilterChanged(newFilter);
+          },
+          textInputAction: TextInputAction.search,
         ),
       ),
 

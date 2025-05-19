@@ -84,7 +84,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
     // Capture the current state values before any async operations
     final currentPage = state.page;
     final currentPageSize = state.pageSize;
-    
+
     AppLogger.debug('触发加载流程', tag: 'WorkBrowseViewModel', data: {
       'forceRefresh': forceRefresh,
       'page': currentPage,
@@ -99,7 +99,8 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         requestStatus: LoadRequestStatus.loading,
       );
     } catch (e) {
-      AppLogger.error('Failed to update loading state', tag: 'WorkBrowseViewModel', error: e);
+      AppLogger.error('Failed to update loading state',
+          tag: 'WorkBrowseViewModel', error: e);
       return; // Exit early if we can't update state
     }
 
@@ -110,7 +111,7 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
         page: currentPage,
         pageSize: currentPageSize,
       );
-      
+
       // Log completion before attempting to update state
       AppLogger.debug('加载完成', tag: 'WorkBrowseViewModel', data: {
         'worksCount': result.items.length,
@@ -131,7 +132,8 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
           requestStatus: LoadRequestStatus.idle,
         );
       } catch (e) {
-        AppLogger.error('Failed to update state with results', tag: 'WorkBrowseViewModel', error: e);
+        AppLogger.error('Failed to update state with results',
+            tag: 'WorkBrowseViewModel', error: e);
       }
     } catch (e, stack) {
       _handleLoadError(e, stack);
@@ -178,7 +180,10 @@ class WorkBrowseViewModel extends StateNotifier<WorkBrowseState> {
 
     // Update the search query in state immediately for UI feedback
     state = state.copyWith(searchQuery: query.trim());
-    state.searchController.text = query.trim();
+    state.searchController.value = TextEditingValue(
+      text: query,
+      selection: TextSelection.collapsed(offset: query.length), // 光标置于文本末尾
+    );
 
     _searchDebounce = Timer(const Duration(milliseconds: 500), () {
       final newFilter = state.filter.copyWith(keyword: query.trim());

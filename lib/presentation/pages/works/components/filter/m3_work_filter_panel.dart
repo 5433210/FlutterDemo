@@ -108,25 +108,37 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
             hintText: l10n.workBrowseSearch,
             isDense: true,
             border: const OutlineInputBorder(),
+            // 添加提交按钮
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: l10n.workBrowseSearch,
+              onPressed: () {
+                if (searchController != null) {
+                  final newFilter =
+                      filter.copyWith(keyword: searchController!.text);
+                  onFilterChanged(newFilter);
+                }
+              },
+            ),
           ),
           controller: searchController,
-          // Prevent text selection behavior
           enableInteractiveSelection: true,
-          // Set to false to prevent default selection behavior
           autofocus: false,
-          // Use onTap to clear selection when the field is tapped
           onTap: () {
             if (searchController != null) {
-              // Move cursor to end instead of selecting all text
               searchController!.selection = TextSelection.fromPosition(
                 TextPosition(offset: searchController!.text.length),
               );
             }
           },
-          onChanged: (value) {
+          // 移除 onChanged 事件处理器
+          // 添加回车键处理
+          onSubmitted: (value) {
             final newFilter = filter.copyWith(keyword: value);
             onFilterChanged(newFilter);
           },
+          // 添加初始文本
+          textInputAction: TextInputAction.search,
         ),
       ), // 排序部分
       buildSectionCard(
