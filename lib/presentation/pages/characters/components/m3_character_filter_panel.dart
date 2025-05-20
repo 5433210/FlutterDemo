@@ -131,11 +131,33 @@ class _M3CharacterFilterPanelImpl extends M3FilterPanelBase<CharacterFilter> {
             hintText: l10n.characterCollectionSearchHint,
             isDense: true,
             border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: l10n.characterCollectionSearchHint,
+              onPressed: () {
+                final newFilter =
+                    filter.copyWith(searchText: filter.searchText);
+                onFilterChanged(newFilter);
+              },
+            ),
           ),
-          onChanged: (value) {
+          controller: TextEditingController(text: filter.searchText),
+          enableInteractiveSelection: true,
+          autofocus: false,
+          onTap: () {
+            // Position cursor at the end of text instead of selecting all text
+            if (filter.searchText != null && filter.searchText!.isNotEmpty) {
+              final controller = TextEditingController(text: filter.searchText);
+              controller.selection = TextSelection.fromPosition(
+                TextPosition(offset: filter.searchText!.length),
+              );
+            }
+          },
+          onSubmitted: (value) {
             final newFilter = filter.copyWith(searchText: value);
             onFilterChanged(newFilter);
           },
+          textInputAction: TextInputAction.search,
         ),
       ),
       // 排序部分
