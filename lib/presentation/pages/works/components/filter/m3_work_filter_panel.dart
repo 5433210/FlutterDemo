@@ -7,7 +7,6 @@ import '../../../../../domain/enums/work_tool.dart';
 import '../../../../../domain/models/common/date_range_filter.dart';
 import '../../../../../domain/models/work/work_filter.dart';
 import '../../../../../l10n/app_localizations.dart';
-import '../../../../widgets/filter/m3_filter_panel_base.dart';
 import '../../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_favorite_section.dart';
 import '../../../../widgets/filter/sections/m3_filter_sort_section.dart';
@@ -64,21 +63,74 @@ class M3WorkFilterPanel extends ConsumerWidget {
 }
 
 /// 作品筛选面板实现
-class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
+class _M3WorkFilterPanelImpl extends StatefulWidget {
+  final WorkFilter filter;
+  final ValueChanged<WorkFilter> onFilterChanged;
+  final bool collapsible;
+  final bool isExpanded;
+  final VoidCallback? onToggleExpand;
   final TextEditingController? searchController;
   final String? initialSearchValue;
 
   const _M3WorkFilterPanelImpl({
-    required super.filter,
-    required super.onFilterChanged,
-    super.collapsible = true,
-    super.isExpanded = true,
-    super.onToggleExpand,
+    required this.filter,
+    required this.onFilterChanged,
+    this.collapsible = true,
+    this.isExpanded = true,
+    this.onToggleExpand,
     this.searchController,
     this.initialSearchValue,
   });
 
   @override
+  State<_M3WorkFilterPanelImpl> createState() => _M3WorkFilterPanelImplState();
+}
+
+class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    // 如果支持折叠并且当前已折叠，则显示折叠状态
+    if (widget.collapsible && !widget.isExpanded) {
+      return _buildCollapsedPanel(context, l10n);
+    }
+
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      elevation: 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          _buildHeader(context, l10n),
+
+          // 内容区域
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: buildFilterSections(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> buildFilterSections(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
@@ -100,7 +152,7 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
 
     return [
       // 搜索部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         TextField(
           decoration: InputDecoration(
@@ -113,117 +165,130 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
               icon: const Icon(Icons.search),
               tooltip: l10n.workBrowseSearch,
               onPressed: () {
-                if (searchController != null) {
-                  final newFilter =
-                      filter.copyWith(keyword: searchController!.text);
-                  onFilterChanged(newFilter);
-                }
+                final newFilter =
+                    widget.filter.copyWith(keyword: _searchController.text);
+                widget.onFilterChanged(newFilter);
+                // Keep focus and cursor at the end of text
+                Future.microtask(() {
+                  FocusScope.of(context).requestFocus(_searchFocusNode);
+                  _searchController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _searchController.text.length),
+                  );
+                });
               },
             ),
           ),
-          controller: searchController,
+          controller: _searchController,
+          focusNode: _searchFocusNode,
           enableInteractiveSelection: true,
           autofocus: false,
           onTap: () {
-            if (searchController != null) {
-              searchController!.selection = TextSelection.fromPosition(
-                TextPosition(offset: searchController!.text.length),
-              );
-            }
+            // Position cursor at the end of text instead of selecting all text
+            _searchController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _searchController.text.length),
+            );
           },
-          // 移除 onChanged 事件处理器
           // 添加回车键处理
           onSubmitted: (value) {
-            final newFilter = filter.copyWith(keyword: value);
-            onFilterChanged(newFilter);
+            final newFilter = widget.filter.copyWith(keyword: value);
+            widget.onFilterChanged(newFilter);
+            // Keep focus and cursor at the end of text
+            Future.microtask(() {
+              FocusScope.of(context).requestFocus(_searchFocusNode);
+              _searchController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _searchController.text.length),
+              );
+            });
           },
-          // 添加初始文本
           textInputAction: TextInputAction.search,
         ),
-      ), // 排序部分
-      buildSectionCard(
+      ),
+
+      // 排序部分
+      _buildSectionCard(
         context,
         M3FilterSortSection(
-          sortField: filter.sortOption.field,
-          descending: filter.sortOption.descending,
+          sortField: widget.filter.sortOption.field,
+          descending: widget.filter.sortOption.descending,
           availableSortFields: sortFields,
           onSortFieldChanged: (field) {
-            final newFilter = filter.copyWith(
-              sortOption: filter.sortOption.copyWith(field: field),
+            final newFilter = widget.filter.copyWith(
+              sortOption: widget.filter.sortOption.copyWith(field: field),
             );
-            onFilterChanged(newFilter);
+            widget.onFilterChanged(newFilter);
           },
           onSortDirectionChanged: (isDescending) {
-            final newFilter = filter.copyWith(
-              sortOption: filter.sortOption.copyWith(descending: isDescending),
+            final newFilter = widget.filter.copyWith(
+              sortOption:
+                  widget.filter.sortOption.copyWith(descending: isDescending),
             );
-            onFilterChanged(newFilter);
+            widget.onFilterChanged(newFilter);
           },
         ),
       ),
 
       // 收藏部分 (移动到排序部分下方)
-      buildSectionCard(
+      _buildSectionCard(
         context,
         M3FilterFavoriteSection(
-          isFavoriteOnly: filter.isFavoriteOnly,
+          isFavoriteOnly: widget.filter.isFavoriteOnly,
           onFavoriteChanged: (value) {
-            final newFilter = filter.copyWith(isFavoriteOnly: value);
-            onFilterChanged(newFilter);
+            final newFilter = widget.filter.copyWith(isFavoriteOnly: value);
+            widget.onFilterChanged(newFilter);
           },
         ),
       ),
 
       // 书法风格部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         M3FilterStyleSection(
-          selectedStyle: filter.style,
+          selectedStyle: widget.filter.style,
           availableStyles: styles,
           onStyleChanged: (style) {
-            final newFilter = filter.copyWith(style: style);
-            onFilterChanged(newFilter);
+            final newFilter = widget.filter.copyWith(style: style);
+            widget.onFilterChanged(newFilter);
           },
         ),
       ),
 
       // 书写工具部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         M3FilterToolSection(
-          selectedTool: filter.tool,
+          selectedTool: widget.filter.tool,
           availableTools: tools,
           onToolChanged: (tool) {
-            final newFilter = filter.copyWith(tool: tool);
-            onFilterChanged(newFilter);
+            final newFilter = widget.filter.copyWith(tool: tool);
+            widget.onFilterChanged(newFilter);
           },
         ),
       ),
 
       // 创建日期部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         M3FilterDateRangeSection(
           title: l10n.filterDateSection,
           filter: DateRangeFilter(
-            preset: filter.datePreset,
-            start: filter.dateRange?.start,
-            end: filter.dateRange?.end,
+            preset: widget.filter.datePreset,
+            start: widget.filter.dateRange?.start,
+            end: widget.filter.dateRange?.end,
           ),
           onChanged: (dateFilter) {
             if (dateFilter == null) {
               // 重置所有相关字段
-              final newFilter = filter.copyWith(
+              final newFilter = widget.filter.copyWith(
                 datePreset: DateRangePreset.all,
                 dateRange: null,
               );
-              onFilterChanged(newFilter);
+              widget.onFilterChanged(newFilter);
             } else {
-              final newFilter = filter.copyWith(
+              final newFilter = widget.filter.copyWith(
                 datePreset: dateFilter.preset!,
                 dateRange: dateFilter.effectiveRange,
               );
-              onFilterChanged(newFilter);
+              widget.onFilterChanged(newFilter);
             }
           },
         ),
@@ -232,12 +297,129 @@ class _M3WorkFilterPanelImpl extends M3FilterPanelBase<WorkFilter> {
   }
 
   @override
-  String getFilterTitle(AppLocalizations l10n) {
-    return l10n.filterTitle;
+  void didUpdateWidget(_M3WorkFilterPanelImpl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If using external controller, don't manage it here
+    if (widget.searchController == null &&
+        oldWidget.initialSearchValue != widget.initialSearchValue) {
+      _searchController.text = widget.initialSearchValue ?? '';
+    }
   }
 
   @override
-  void resetFilters() {
-    onFilterChanged(const WorkFilter());
+  void dispose() {
+    // Only dispose if we created the controller internally
+    if (widget.searchController == null) {
+      _searchController.dispose();
+    }
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = widget.searchController ??
+        TextEditingController(text: widget.initialSearchValue ?? '');
+  }
+
+  Widget _buildCollapsedPanel(BuildContext context, AppLocalizations l10n) {
+    return InkWell(
+      onTap: widget.onToggleExpand,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            const Icon(Icons.filter_list),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(_getExpandMessage(l10n)),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              _getFilterTitle(l10n),
+              style: theme.textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 重置按钮
+              Tooltip(
+                message: l10n.filterReset,
+                child: IconButton(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.refresh),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(0),
+                ),
+              ),
+
+              // 展开/折叠按钮
+              if (widget.collapsible && widget.onToggleExpand != null)
+                Tooltip(
+                  message: widget.isExpanded
+                      ? l10n.filterCollapse
+                      : l10n.filterExpand,
+                  child: IconButton(
+                    onPressed: widget.onToggleExpand,
+                    icon: Icon(
+                      widget.isExpanded
+                          ? Icons.chevron_left
+                          : Icons.chevron_right,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(BuildContext context, Widget child) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        elevation: 0,
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  String _getExpandMessage(AppLocalizations l10n) {
+    // 使用通用回退
+    return l10n.filterExpand;
+  }
+
+  String _getFilterTitle(AppLocalizations l10n) {
+    return l10n.filterTitle;
+  }
+
+  void _resetFilters() {
+    widget.onFilterChanged(const WorkFilter());
   }
 }

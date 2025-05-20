@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/models/practice/practice_filter.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../widgets/filter/m3_filter_panel_base.dart';
 
 /// 字帖过滤面板
 class M3PracticeFilterPanel extends StatelessWidget {
@@ -58,7 +57,13 @@ class M3PracticeFilterPanel extends StatelessWidget {
 }
 
 /// 字帖过滤面板实现
-class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
+class _M3PracticeFilterPanelImpl extends StatefulWidget {
+  /// 当前过滤条件
+  final PracticeFilter filter;
+
+  /// 过滤条件变化时的回调
+  final ValueChanged<PracticeFilter> onFilterChanged;
+
   /// 搜索回调
   final ValueChanged<String> onSearch;
 
@@ -68,18 +73,77 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
   /// 搜索文本控制器
   final TextEditingController? searchController;
 
+  /// 是否允许折叠面板
+  final bool collapsible;
+
+  /// 是否已展开
+  final bool isExpanded;
+
+  /// 展开/折叠状态变化时的回调
+  final VoidCallback? onToggleExpand;
+
   const _M3PracticeFilterPanelImpl({
-    required super.filter,
-    required super.onFilterChanged,
+    required this.filter,
+    required this.onFilterChanged,
     required this.onSearch,
     this.initialSearchValue,
     this.searchController,
-    super.collapsible = true,
-    super.isExpanded = true,
-    super.onToggleExpand,
+    this.collapsible = true,
+    this.isExpanded = true,
+    this.onToggleExpand,
   });
 
   @override
+  State<_M3PracticeFilterPanelImpl> createState() =>
+      _M3PracticeFilterPanelImplState();
+}
+
+class _M3PracticeFilterPanelImplState
+    extends State<_M3PracticeFilterPanelImpl> {
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode = FocusNode();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    // 如果支持折叠并且当前已折叠，则显示折叠状态
+    if (widget.collapsible && !widget.isExpanded) {
+      return _buildCollapsedPanel(context, l10n);
+    }
+
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      elevation: 0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏
+          _buildHeader(context, l10n),
+
+          // 内容区域
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: buildFilterSections(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> buildFilterSections(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
@@ -92,9 +156,7 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
 
     return [
       // 搜索部分
-      // 找到搜索框部分，替换为以下代码:
-
-      buildSectionCard(
+      _buildSectionCard(
         context,
         TextField(
           decoration: InputDecoration(
@@ -106,34 +168,48 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
               icon: const Icon(Icons.search),
               tooltip: l10n.practiceListSearch,
               onPressed: () {
-                if (searchController != null) {
-                  final newFilter =
-                      filter.copyWith(keyword: searchController!.text);
-                  onFilterChanged(newFilter);
-                }
+                final newFilter =
+                    widget.filter.copyWith(keyword: _searchController.text);
+                widget.onFilterChanged(newFilter);
+                widget.onSearch(_searchController.text);
+                // Keep focus and cursor at the end of text
+                Future.microtask(() {
+                  FocusScope.of(context).requestFocus(_searchFocusNode);
+                  _searchController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _searchController.text.length),
+                  );
+                });
               },
             ),
           ),
-          controller: searchController,
+          controller: _searchController,
+          focusNode: _searchFocusNode,
           enableInteractiveSelection: true,
           autofocus: false,
           onTap: () {
-            if (searchController != null) {
-              searchController!.selection = TextSelection.fromPosition(
-                TextPosition(offset: searchController!.text.length),
-              );
-            }
+            // Position cursor at the end of text instead of selecting all text
+            _searchController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _searchController.text.length),
+            );
           },
           onSubmitted: (value) {
-            final newFilter = filter.copyWith(keyword: value);
-            onFilterChanged(newFilter);
+            final newFilter = widget.filter.copyWith(keyword: value);
+            widget.onFilterChanged(newFilter);
+            widget.onSearch(value);
+            // Keep focus and cursor at the end of text
+            Future.microtask(() {
+              FocusScope.of(context).requestFocus(_searchFocusNode);
+              _searchController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _searchController.text.length),
+              );
+            });
           },
           textInputAction: TextInputAction.search,
         ),
       ),
 
       // 排序部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,7 +223,7 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
             SizedBox(
               width: double.infinity,
               child: DropdownButtonFormField<String>(
-                value: filter.sortField,
+                value: widget.filter.sortField,
                 isExpanded: true,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
@@ -169,8 +245,8 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
                 }).toList(),
                 onChanged: (value) {
                   if (value != null) {
-                    final newFilter = filter.copyWith(sortField: value);
-                    onFilterChanged(newFilter);
+                    final newFilter = widget.filter.copyWith(sortField: value);
+                    widget.onFilterChanged(newFilter);
                   }
                 },
               ),
@@ -186,13 +262,13 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
                   children: [
                     Radio<bool>(
                       value: false,
-                      groupValue: filter.sortOrder == 'desc',
+                      groupValue: widget.filter.sortOrder == 'desc',
                       onChanged: (value) {
                         if (value != null) {
-                          final newFilter = filter.copyWith(
+                          final newFilter = widget.filter.copyWith(
                             sortOrder: value ? 'desc' : 'asc',
                           );
-                          onFilterChanged(newFilter);
+                          widget.onFilterChanged(newFilter);
                         }
                       },
                     ),
@@ -210,13 +286,13 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
                   children: [
                     Radio<bool>(
                       value: true,
-                      groupValue: filter.sortOrder == 'desc',
+                      groupValue: widget.filter.sortOrder == 'desc',
                       onChanged: (value) {
                         if (value != null) {
-                          final newFilter = filter.copyWith(
+                          final newFilter = widget.filter.copyWith(
                             sortOrder: value ? 'desc' : 'asc',
                           );
-                          onFilterChanged(newFilter);
+                          widget.onFilterChanged(newFilter);
                         }
                       },
                     ),
@@ -235,7 +311,7 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
       ),
 
       // 收藏过滤部分
-      buildSectionCard(
+      _buildSectionCard(
         context,
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,11 +325,11 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
             Row(
               children: [
                 Checkbox(
-                  value: filter.isFavorite,
+                  value: widget.filter.isFavorite,
                   onChanged: (value) {
                     final newFilter =
-                        filter.copyWith(isFavorite: value ?? false);
-                    onFilterChanged(newFilter);
+                        widget.filter.copyWith(isFavorite: value ?? false);
+                    widget.onFilterChanged(newFilter);
                   },
                 ),
                 Expanded(
@@ -268,34 +344,129 @@ class _M3PracticeFilterPanelImpl extends M3FilterPanelBase<PracticeFilter> {
   }
 
   @override
-  String getFilterTitle(AppLocalizations l10n) {
-    return l10n.practiceListFilterTitle;
+  void didUpdateWidget(_M3PracticeFilterPanelImpl oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If using external controller, don't manage it here
+    if (widget.searchController == null &&
+        oldWidget.initialSearchValue != widget.initialSearchValue) {
+      _searchController.text = widget.initialSearchValue ?? '';
+    }
   }
 
   @override
-  void resetFilters() {
-    onFilterChanged(const PracticeFilter());
-    onSearch('');
+  void dispose() {
+    // Only dispose if we created the controller internally
+    if (widget.searchController == null) {
+      _searchController.dispose();
+    }
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
-// The following functions are not used but kept for future reference
-/*
-  Widget _buildStatusFilterChip(
-      BuildContext context, String? status, String label) {
-    final isSelected = filter.status == status;
-    final colorScheme = Theme.of(context).colorScheme;
+  @override
+  void initState() {
+    super.initState();
+    _searchController = widget.searchController ??
+        TextEditingController(text: widget.initialSearchValue ?? '');
+  }
 
-    return FilterChip(
-      selected: isSelected,
-      label: Text(label),
-      onSelected: (_) {
-        final newFilter = filter.copyWith(status: status);
-        onFilterChanged(newFilter);
-      },
-      backgroundColor: colorScheme.surfaceContainerHigh,
-      selectedColor: colorScheme.primaryContainer,
-      checkmarkColor: colorScheme.primary,
+  Widget _buildCollapsedPanel(BuildContext context, AppLocalizations l10n) {
+    return InkWell(
+      onTap: widget.onToggleExpand,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        child: Row(
+          children: [
+            const Icon(Icons.filter_list),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(_getExpandMessage(l10n)),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
     );
   }
-*/
+
+  Widget _buildHeader(BuildContext context, AppLocalizations l10n) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              _getFilterTitle(l10n),
+              style: theme.textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 重置按钮
+              Tooltip(
+                message: l10n.filterReset,
+                child: IconButton(
+                  onPressed: _resetFilters,
+                  icon: const Icon(Icons.refresh),
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.all(0),
+                ),
+              ),
+
+              // 展开/折叠按钮
+              if (widget.collapsible && widget.onToggleExpand != null)
+                Tooltip(
+                  message: widget.isExpanded
+                      ? l10n.filterCollapse
+                      : l10n.filterExpand,
+                  child: IconButton(
+                    onPressed: widget.onToggleExpand,
+                    icon: Icon(
+                      widget.isExpanded
+                          ? Icons.chevron_left
+                          : Icons.chevron_right,
+                    ),
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.all(0),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard(BuildContext context, Widget child) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        elevation: 0,
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  String _getExpandMessage(AppLocalizations l10n) {
+    return l10n.filterExpand;
+  }
+
+  String _getFilterTitle(AppLocalizations l10n) {
+    return l10n.practiceListFilterTitle;
+  }
+
+  void _resetFilters() {
+    widget.onFilterChanged(const PracticeFilter());
+    widget.onSearch('');
+  }
 }
