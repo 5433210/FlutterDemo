@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,11 +38,51 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     4: GlobalKey<NavigatorState>(),
   };
 
+  // 跟踪已初始化的功能区
+  final Set<int> _initializedSections = {0}; // 默认只初始化第一个功能区
+
+  Timer? _memoryCleanupTimer;
+
+  // // 内存跟踪器
+  // final _memoryTracker = PracticeMemoryTracker();
+
+  // 记录最后一次访问的功能区
+  int _lastSelectedIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     // 从全局导航状态读取状态
     final navState = ref.watch(globalNavigationProvider);
     final selectedIndex = navState.currentSectionIndex;
+
+    // 检测功能区切换
+    if (_lastSelectedIndex != selectedIndex) {
+      // 记录从哪个功能区切换到哪个功能区
+      developer.log('导航从功能区 $_lastSelectedIndex 切换到功能区 $selectedIndex',
+          name: 'MainNavigation');
+
+      // 特别跟踪进入字帖列表页（功能区2）的情况
+      // if (selectedIndex == 2) {
+      //   developer.log('进入字帖列表页，开始监控内存使用', name: 'MemoryTracker');
+
+      //   // 确保功能区被初始化
+      //   if (!_initializedSections.contains(selectedIndex)) {
+      //     setState(() {
+      //       _initializedSections.add(selectedIndex);
+      //     });
+      //   }
+      // }
+
+      // // 特别跟踪离开字帖列表页的情况
+      // if (_lastSelectedIndex == 2 && selectedIndex != 2) {
+      //   developer.log('离开字帖列表页，记录内存使用', name: 'MemoryTracker');
+
+      //   // _memoryTracker.takeMemorySnapshot('离开字帖列表页');
+      // }
+
+      // 更新最后访问的功能区
+      _lastSelectedIndex = selectedIndex;
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -126,20 +169,28 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                                   .read(globalNavigationProvider.notifier)
                                   .toggleNavigationExtended();
                             },
-                          ),
-
-                          // 内容区域
+                          ), // 内容区域
                           Expanded(
-                            // 使用IndexedStack保持所有功能区的状态
-                            child: IndexedStack(
-                              index: selectedIndex,
-                              children: [
-                                _buildNavigator(0),
-                                _buildNavigator(1),
-                                _buildNavigator(2),
-                                _buildNavigator(3),
-                                _buildNavigator(4),
-                              ],
+                            // 使用Stack+Offstage实现懒加载功能区
+                            child: Stack(
+                              children: List.generate(5, (index) {
+                                // 仅当当前选中或已初始化时才创建导航器
+                                if (index == selectedIndex) {
+                                  // 添加到已初始化集合
+                                  _initializedSections.add(index);
+                                  return _buildNavigator(index);
+                                } else if (_initializedSections
+                                    .contains(index)) {
+                                  // 已初始化但非当前选中的功能区隐藏显示
+                                  return Offstage(
+                                    offstage: true,
+                                    child: _buildNavigator(index),
+                                  );
+                                } else {
+                                  // 未初始化的功能区返回空容器
+                                  return const SizedBox.shrink();
+                                }
+                              }),
                             ),
                           ),
                         ],
@@ -156,6 +207,22 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // 当应用进入后台时，执行更积极的内存清理
+    if (state == AppLifecycleState.paused) {
+      _cleanupUnusedSections();
+
+      // // 记录应用进入后台时的内存状态
+      // _memoryTracker.takeMemorySnapshot('应用进入后台');
+    } else if (state == AppLifecycleState.resumed) {
+      // 记录应用恢复前台时的内存状态
+      // _memoryTracker.takeMemorySnapshot('应用恢复前台');
+    }
+  }
+
+  @override
   void didChangePlatformBrightness() {
     super.didChangePlatformBrightness();
     setState(() {}); // 触发重建以应用新的亮度设置
@@ -163,6 +230,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
 
   @override
   void dispose() {
+    _memoryCleanupTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -171,6 +239,11 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // 设置定时器，每120秒检查一次非活跃的功能区并释放资源
+    _memoryCleanupTimer = Timer.periodic(const Duration(seconds: 120), (_) {
+      _cleanupUnusedSections();
+    });
   }
 
   // 构建单个功能区的导航器
@@ -285,5 +358,38 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
         }
       },
     );
+  }
+
+  void _cleanupUnusedSections() {
+    final currentIndex = ref.read(globalNavigationProvider).currentSectionIndex;
+
+    // 找出可以被清理的功能区（除了当前选中的）
+    final sectionsToRemove = <int>{};
+    for (final index in _initializedSections) {
+      // 保留当前选中的功能区
+      if (index == currentIndex) continue;
+
+      // 随机选择一些不是当前选中的功能区进行清理
+      // 为了避免过于激进的清理导致用户体验下降，
+      // 我们使用一定概率来决定是否清理
+      if (_shouldCleanupSection(index)) {
+        sectionsToRemove.add(index);
+      }
+    }
+
+    // 从已初始化集合中移除，触发界面重建
+    if (sectionsToRemove.isNotEmpty) {
+      setState(() {
+        _initializedSections.removeAll(sectionsToRemove);
+      });
+    }
+  }
+
+  bool _shouldCleanupSection(int index) {
+    // 这里可以根据实际需求调整清理策略
+    // 例如可以考虑功能区最后访问时间、内存压力等因素
+
+    // 简单实现：25%的概率清理每个非当前功能区
+    return (index % 4 == 0);
   }
 }
