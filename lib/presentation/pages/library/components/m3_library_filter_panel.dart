@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/enums/sort_field.dart';
+import '../../../../domain/models/common/date_range_filter.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
 import '../../../providers/library/library_management_provider.dart';
+import '../../../widgets/filter/sections/m3_filter_date_range_section.dart';
 import '../../../widgets/filter/sections/m3_filter_sort_section.dart';
 import 'library_category_panel.dart';
 
@@ -46,7 +48,6 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
   String? _selectedFormat;
   String _sortBy = 'fileName';
   bool _sortDesc = false;
-
   // Size range states
   late TextEditingController _minWidthController;
   late TextEditingController _maxWidthController;
@@ -55,9 +56,11 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
   late TextEditingController _minSizeController;
   late TextEditingController _maxSizeController;
 
-  // Date range states
-  DateTimeRange? _creationDateRange;
-  DateTimeRange? _updateDateRange;
+  // Date filter states
+  DateRangeFilter _creationDateFilter =
+      const DateRangeFilter(preset: DateRangePreset.all);
+  DateRangeFilter _updateDateFilter =
+      const DateRangeFilter(preset: DateRangePreset.all);
 
   // Expanded states
   bool _isSortExpanded = true;
@@ -123,7 +126,7 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
                   isDense: true,
                   border: const OutlineInputBorder(),
                 ),
-                onChanged: (value) {
+                onSubmitted: (value) {
                   if (widget.onSearch != null) {
                     widget.onSearch!(value);
                   }
@@ -371,14 +374,36 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
           _isUpdateDateExpanded = !_isUpdateDateExpanded;
         }
       }),
-      child: ListTile(
-        title: Text(
-          isCreationDate
-              ? _getDateRangeText(_creationDateRange)
-              : _getDateRangeText(_updateDateRange),
-        ),
-        onTap: () => _selectDateRange(isCreationDate: isCreationDate),
-        trailing: const Icon(Icons.calendar_today),
+      child: M3FilterDateRangeSection(
+        title: isCreationDate
+            ? l10n.libraryManagementCreatedAt
+            : l10n.libraryManagementUpdatedAt,
+        filter: isCreationDate ? _creationDateFilter : _updateDateFilter,
+        onChanged: (newFilter) {
+          if (isCreationDate) {
+            setState(() {
+              _creationDateFilter = newFilter ??
+                  const DateRangeFilter(preset: DateRangePreset.all);
+            });
+
+            final dateRange = newFilter?.effectiveRange;
+            ref.read(libraryManagementProvider.notifier).setCreateTimeRange(
+                  dateRange?.start,
+                  dateRange?.end,
+                );
+          } else {
+            setState(() {
+              _updateDateFilter = newFilter ??
+                  const DateRangeFilter(preset: DateRangePreset.all);
+            });
+
+            final dateRange = newFilter?.effectiveRange;
+            ref.read(libraryManagementProvider.notifier).setUpdateTimeRange(
+                  dateRange?.start,
+                  dateRange?.end,
+                );
+          }
+        },
       ),
     );
   }
@@ -490,11 +515,6 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
     );
   }
 
-  String _getDateRangeText(DateTimeRange? range) {
-    if (range == null) return l10n.filterSelectDateRange;
-    return '${range.start.toLocal().toString().split(' ')[0]} - ${range.end.toLocal().toString().split(' ')[0]}';
-  }
-
   void _resetFilters() {
     setState(() {
       _selectedType = null;
@@ -502,6 +522,8 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
       _selectedFormat = null;
       _sortBy = 'fileName';
       _sortDesc = false;
+      _creationDateFilter = const DateRangeFilter(preset: DateRangePreset.all);
+      _updateDateFilter = const DateRangeFilter(preset: DateRangePreset.all);
     });
 
     // 清空搜索框
@@ -513,34 +535,6 @@ class _M3LibraryFilterPanelState extends ConsumerState<M3LibraryFilterPanel> {
     }
 
     ref.read(libraryManagementProvider.notifier).resetFilters();
-  }
-
-  Future<void> _selectDateRange({required bool isCreationDate}) async {
-    final initialDateRange =
-        isCreationDate ? _creationDateRange : _updateDateRange;
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      initialDateRange: initialDateRange,
-    );
-    if (picked != null) {
-      setState(() {
-        if (isCreationDate) {
-          _creationDateRange = picked;
-          ref.read(libraryManagementProvider.notifier).setCreateTimeRange(
-                picked.start,
-                picked.end,
-              );
-        } else {
-          _updateDateRange = picked;
-          ref.read(libraryManagementProvider.notifier).setUpdateTimeRange(
-                picked.start,
-                picked.end,
-              );
-        }
-      });
-    }
   }
 
   void _updateFileSizeRange() {

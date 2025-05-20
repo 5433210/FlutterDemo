@@ -184,13 +184,26 @@ class _M3FilterDateRangeSectionState extends State<M3FilterDateRangeSection> {
       ),
     );
   }
-
   Widget _buildPresetChip(DateRangePreset preset, String label) {
     return FilterChip(
       label: Text(label),
       selected: _currentPreset == preset,
       onSelected: (selected) {
-        if (selected) {
+        if (_currentPreset == preset) {
+          // 如果重复点击已选中项，则重置为全部（默认项）
+          setState(() {
+            _currentPreset = DateRangePreset.all;
+            final range = DateRangePreset.all.getRange();
+            _startDate = range.start;
+            _endDate = range.end;
+          });
+          
+          widget.onChanged(const DateRangeFilter(
+            preset: DateRangePreset.all,
+            start: null,
+            end: null,
+          ));
+        } else if (selected) {
           setState(() {
             _currentPreset = preset;
 
