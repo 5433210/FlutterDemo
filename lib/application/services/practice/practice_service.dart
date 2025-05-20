@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/models/practice/practice_filter.dart';
@@ -58,7 +59,9 @@ class PracticeService {
         // 保存缩略图
         if (thumbnail != null && thumbnail.isNotEmpty) {
           debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
-          await _storageService.saveCoverThumbnail(result.id, thumbnail);
+          final compressedThumbnail = await _compressThumbnail(thumbnail);
+          debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+          await _storageService.saveCoverThumbnail(result.id, compressedThumbnail);
           debugPrint('已保存新字帖缩略图到文件系统: ${result.id}');
         }
         
@@ -69,7 +72,9 @@ class PracticeService {
       // 保存缩略图
       if (thumbnail != null && thumbnail.isNotEmpty) {
         debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
-        await _storageService.saveCoverThumbnail(newPractice.id, thumbnail);
+        final compressedThumbnail = await _compressThumbnail(thumbnail);
+        debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+        await _storageService.saveCoverThumbnail(newPractice.id, compressedThumbnail);
         debugPrint('已保存新字帖缩略图到文件系统: ${newPractice.id}');
       }
       
@@ -102,7 +107,9 @@ class PracticeService {
     // 保存缩略图
     if (thumbnail != null && thumbnail.isNotEmpty) {
       debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
-      await _storageService.saveCoverThumbnail(result.id, thumbnail);
+      final compressedThumbnail = await _compressThumbnail(thumbnail);
+      debugPrint('压缩后缩略图大小=${compressedThumbnail.length} 字节');
+      await _storageService.saveCoverThumbnail(result.id, compressedThumbnail);
       debugPrint('已保存现有字帖缩略图到文件系统: ${result.id}');
     }
     
@@ -199,6 +206,48 @@ class PracticeService {
   /// - id: 字帖ID，为null时创建新字帖
   /// - title: 字帖标题
   /// - pages: 字帖页面数据
+  
+  /// 压缩缩略图
+  /// 
+  /// 将图片等比例压缩，使其最大边长为300像素，并转换为JPG格式
+  Future<Uint8List> _compressThumbnail(Uint8List originalBytes) async {
+    // 解码图片
+    final originalImage = img.decodeImage(originalBytes);
+    if (originalImage == null) {
+      debugPrint('警告: 无法解码缩略图，将使用原始数据');
+      return originalBytes;
+    }
+    
+    // 计算新尺寸，保持纵横比
+    final int maxDimension = 300;
+    int newWidth, newHeight;
+    
+    if (originalImage.width > originalImage.height) {
+      // 宽度为主要维度
+      newWidth = maxDimension;
+      newHeight = (originalImage.height * maxDimension / originalImage.width).round();
+    } else {
+      // 高度为主要维度
+      newHeight = maxDimension;
+      newWidth = (originalImage.width * maxDimension / originalImage.height).round();
+    }
+    
+    // 调整图片大小
+    final resizedImage = img.copyResize(
+      originalImage,
+      width: newWidth,
+      height: newHeight,
+      interpolation: img.Interpolation.linear,
+    );
+    
+    // 编码为JPG格式，质量范围0-100
+    final jpgBytes = img.encodeJpg(resizedImage, quality: 85);
+    
+    debugPrint('缩略图已压缩: ${originalImage.width}x${originalImage.height} -> ${newWidth}x${newHeight}');
+    debugPrint('文件大小: ${originalBytes.length} -> ${jpgBytes.length} 字节');
+    
+    return Uint8List.fromList(jpgBytes);
+  }
   /// - thumbnail: 缩略图数据
   ///
   /// 返回包含id的Map

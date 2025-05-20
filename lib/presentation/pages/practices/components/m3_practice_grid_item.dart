@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -62,6 +61,7 @@ class M3PracticeGridItem extends ConsumerWidget {
             : BorderSide.none,
       ),
       clipBehavior: Clip.antiAlias,
+      // child: _buildThumbnail(context, ref),
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -313,9 +313,9 @@ class M3PracticeGridItem extends ConsumerWidget {
         return CachedImage(
           path: thumbnailPath,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _buildErrorPlaceholder(context, l10n);
-          },
+          // errorBuilder: (context, error, stackTrace) {
+          //   return _buildErrorPlaceholder(context, l10n);
+          // },
         );
       },
     );
