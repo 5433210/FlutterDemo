@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/providers/service_providers.dart';
+import '../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
+import '../../../widgets/image/cached_image.dart';
 import 'dialogs/m3_practice_tag_edit_dialog.dart';
 
 /// Material 3 practice grid item
@@ -292,28 +295,28 @@ class M3PracticeGridItem extends ConsumerWidget {
   /// Build thumbnail widget
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final thumbnail = practice['thumbnail'] as Uint8List?;
     final practiceId = practice['id'] as String?;
 
-    if (thumbnail == null || thumbnail.isEmpty || practiceId == null) {
+    if (practiceId == null) {
       return _buildPlaceholder(context);
     }
 
-    // // 用内存缓存临时保存缩略图数据
-    // final imageCache = ref.watch(imageCacheProvider);
-    // final cacheKey = 'practice_thumbnail_$practiceId';
-    // // 检查缓存中是否已存在该缩略图
-    // if (imageCache.containsKey(cacheKey) != true) {
-    //   // 缓存缩略图数据
-    //   imageCache.put(cacheKey, thumbnail);
-    // }
+    final storage = ref.watch(initializedStorageProvider);
+    final practiceStorage = ref.watch(practiceStorageServiceProvider);
+    final thumbnailPath =
+        practiceStorage.getPracticeCoverThumbnailPath(practiceId);
 
-    // 设置缩略图的适当留白（与WorkGridItem保持一致）
-    return Image.memory(
-      thumbnail,
-      fit: BoxFit.cover, // 使用cover与WorkGridItem保持一致
-      errorBuilder: (context, error, stackTrace) {
-        return _buildErrorPlaceholder(context, l10n);
+    return FutureBuilder<bool>(
+      future: storage.fileExists(thumbnailPath),
+      builder: (context, snapshot) {
+        // 显示从文件系统加载的缩略图
+        return CachedImage(
+          path: thumbnailPath,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildErrorPlaceholder(context, l10n);
+          },
+        );
       },
     );
   }

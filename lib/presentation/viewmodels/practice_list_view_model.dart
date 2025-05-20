@@ -174,7 +174,6 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
             'createTime': practice.createTime.toIso8601String(),
             'updateTime': practice.updateTime.toIso8601String(),
             'pageCount': practice.pages.length,
-            'thumbnail': practice.thumbnail,
             'isFavorite': practice.isFavorite,
             'tags': practice.tags,
           };

@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'practice_entity.freezed.dart';
 part 'practice_entity.g.dart';
 
+// Note: Base64 conversion utilities kept for backward compatibility
 /// 将 Base64 字符串转换为 Uint8List
 Uint8List? _uint8ListFromJson(String? base64String) {
   if (base64String == null) return null;
@@ -47,10 +48,6 @@ class PracticeEntity with _$PracticeEntity {
 
     /// 状态
     @Default('active') String status,
-
-    /// 缩略图数据
-    @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-    Uint8List? thumbnail,
 
     /// 创建时间
     required DateTime createTime,

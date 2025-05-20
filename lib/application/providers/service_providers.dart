@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as path;
 
@@ -16,6 +17,7 @@ import '../services/library_service.dart';
 import '../services/practice/practice_service.dart';
 import '../services/restoration/state_restoration_service.dart';
 import '../services/storage/character_storage_service.dart';
+import '../services/storage/practice_storage_service.dart';
 import '../services/storage/work_storage_service.dart';
 import '../services/work/work_image_service.dart';
 import '../services/work/work_service.dart';
@@ -77,10 +79,25 @@ final libraryStorageServiceProvider = Provider<LibraryStorageService>((ref) {
   return LibraryStorageService(storage: storage, imageCache: imageCache);
 });
 
+/// Practice Storage Service Provider
+final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
+  final storage = ref.watch(initializedStorageProvider);
+  debugPrint('正在创建 PracticeStorageService 实例...');
+  final service = PracticeStorageService(storage: storage);
+  debugPrint('PracticeStorageService 实例创建成功');
+  return service;
+});
+
 final practiceServiceProvider = Provider<PracticeService>((ref) {
-  // 使用仓库层版本的构造函数
+  final repository = ref.watch(practiceRepositoryProvider);
+  final storageService = ref.watch(practiceStorageServiceProvider);
+  
+  // 确保 storageService 已正确初始化
+  debugPrint('正在创建 PracticeService 实例');
+  
   return PracticeService(
-    repository: ref.watch(practiceRepositoryProvider),
+    repository: repository,
+    storageService: storageService,
   );
 });
 

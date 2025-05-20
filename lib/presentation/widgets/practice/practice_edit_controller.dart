@@ -1704,7 +1704,7 @@ class PracticeEditController extends ChangeNotifier {
       );
 
       // 更新ID和标题
-      _practiceId = result['id'] as String;
+      _practiceId = result.id;
       _practiceTitle = title;
 
       // 标记为已保存
@@ -1791,7 +1791,7 @@ class PracticeEditController extends ChangeNotifier {
       );
 
       // 更新ID和标题
-      _practiceId = result['id'] as String;
+      _practiceId = result.id;
       _practiceTitle = saveTitle;
 
       // 标记为已保存

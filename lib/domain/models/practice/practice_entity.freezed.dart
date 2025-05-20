@@ -35,10 +35,6 @@ mixin _$PracticeEntity {
   /// 状态
   String get status => throw _privateConstructorUsedError;
 
-  /// 缩略图数据
-  @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-  Uint8List? get thumbnail => throw _privateConstructorUsedError;
-
   /// 创建时间
   DateTime get createTime => throw _privateConstructorUsedError;
 
@@ -70,8 +66,6 @@ abstract class $PracticeEntityCopyWith<$Res> {
       List<Map<String, dynamic>> pages,
       List<String> tags,
       String status,
-      @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-      Uint8List? thumbnail,
       DateTime createTime,
       DateTime updateTime,
       bool isFavorite});
@@ -97,7 +91,6 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
     Object? pages = null,
     Object? tags = null,
     Object? status = null,
-    Object? thumbnail = freezed,
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -123,10 +116,6 @@ class _$PracticeEntityCopyWithImpl<$Res, $Val extends PracticeEntity>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      thumbnail: freezed == thumbnail
-          ? _value.thumbnail
-          : thumbnail // ignore: cast_nullable_to_non_nullable
-              as Uint8List?,
       createTime: null == createTime
           ? _value.createTime
           : createTime // ignore: cast_nullable_to_non_nullable
@@ -157,8 +146,6 @@ abstract class _$$PracticeEntityImplCopyWith<$Res>
       List<Map<String, dynamic>> pages,
       List<String> tags,
       String status,
-      @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-      Uint8List? thumbnail,
       DateTime createTime,
       DateTime updateTime,
       bool isFavorite});
@@ -182,7 +169,6 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
     Object? pages = null,
     Object? tags = null,
     Object? status = null,
-    Object? thumbnail = freezed,
     Object? createTime = null,
     Object? updateTime = null,
     Object? isFavorite = null,
@@ -208,10 +194,6 @@ class __$$PracticeEntityImplCopyWithImpl<$Res>
           ? _value.status
           : status // ignore: cast_nullable_to_non_nullable
               as String,
-      thumbnail: freezed == thumbnail
-          ? _value.thumbnail
-          : thumbnail // ignore: cast_nullable_to_non_nullable
-              as Uint8List?,
       createTime: null == createTime
           ? _value.createTime
           : createTime // ignore: cast_nullable_to_non_nullable
@@ -237,8 +219,6 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       final List<Map<String, dynamic>> pages = const [],
       final List<String> tags = const [],
       this.status = 'active',
-      @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-      this.thumbnail,
       required this.createTime,
       required this.updateTime,
       this.isFavorite = false})
@@ -286,11 +266,6 @@ class _$PracticeEntityImpl extends _PracticeEntity {
   @JsonKey()
   final String status;
 
-  /// 缩略图数据
-  @override
-  @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-  final Uint8List? thumbnail;
-
   /// 创建时间
   @override
   final DateTime createTime;
@@ -314,7 +289,6 @@ class _$PracticeEntityImpl extends _PracticeEntity {
             const DeepCollectionEquality().equals(other._pages, _pages) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.status, status) || other.status == status) &&
-            const DeepCollectionEquality().equals(other.thumbnail, thumbnail) &&
             (identical(other.createTime, createTime) ||
                 other.createTime == createTime) &&
             (identical(other.updateTime, updateTime) ||
@@ -332,7 +306,6 @@ class _$PracticeEntityImpl extends _PracticeEntity {
       const DeepCollectionEquality().hash(_pages),
       const DeepCollectionEquality().hash(_tags),
       status,
-      const DeepCollectionEquality().hash(thumbnail),
       createTime,
       updateTime,
       isFavorite);
@@ -361,8 +334,6 @@ abstract class _PracticeEntity extends PracticeEntity {
       final List<Map<String, dynamic>> pages,
       final List<String> tags,
       final String status,
-      @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-      final Uint8List? thumbnail,
       required final DateTime createTime,
       required final DateTime updateTime,
       final bool isFavorite}) = _$PracticeEntityImpl;
@@ -390,11 +361,6 @@ abstract class _PracticeEntity extends PracticeEntity {
   /// 状态
   @override
   String get status;
-
-  /// 缩略图数据
-  @override
-  @JsonKey(fromJson: _uint8ListFromJson, toJson: _uint8ListToJson)
-  Uint8List? get thumbnail;
 
   /// 创建时间
   @override

@@ -183,12 +183,54 @@ class SQLiteDatabase implements DatabaseInterface {
 
   @override
   Future<void> save(String table, String id, Map<String, dynamic> data) async {
-    await _db.update(
-      table,
-      data,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    debugPrint('SQLiteDatabase.save: 开始保存数据到 $table, id=$id');
+    
+    try {
+      // 首先尝试查询该ID是否存在
+      final exists = await _db.query(
+        table,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      
+      if (exists.isNotEmpty) {
+        // 如果记录存在，更新它
+        debugPrint('SQLiteDatabase.save: 记录已存在，执行更新');
+        final updateCount = await _db.update(
+          table,
+          data,
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+        debugPrint('SQLiteDatabase.save: 更新完成，影响行数: $updateCount');
+      } else {
+        // 如果记录不存在，插入新记录
+        debugPrint('SQLiteDatabase.save: 记录不存在，执行插入');
+        await _db.insert(
+          table,
+          {'id': id, ...data},
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+        debugPrint('SQLiteDatabase.save: 插入完成');
+      }
+      
+      // 验证数据是否已保存
+      final saved = await _db.query(
+        table,
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      
+      if (saved.isEmpty) {
+        throw Exception('SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id');
+      }
+      debugPrint('SQLiteDatabase.save: 数据保存成功，已验证 $table.$id');
+    } catch (e) {
+      debugPrint('SQLiteDatabase.save: 保存失败: $e');
+      rethrow;
+    }
   }
 
   @override

@@ -1,37 +1,140 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/models/practice/practice_entity.dart';
 import '../../../domain/models/practice/practice_filter.dart';
 import '../../../domain/repositories/practice_repository.dart';
 import '../../repositories/practice_repository_impl.dart';
+import '../storage/practice_storage_service.dart';
 
 /// 字帖练习服务
 class PracticeService {
   // 领域层仓库
   final PracticeRepository _repository;
+  // 存储服务
+  final PracticeStorageService _storageService;
 
   /// 构造函数
   const PracticeService({
     required PracticeRepository repository,
-  }) : _repository = repository;
+    required PracticeStorageService storageService,
+  })  : _repository = repository,
+        _storageService = storageService;
 
   /// 获取字帖练习数量
   Future<int> count(PracticeFilter? filter) {
     return _repository.count(filter);
   }
 
+  /// 保存字帖练习
+  Future<PracticeEntity> savePractice({
+    String? id,
+    required String title,
+    List<Map<String, dynamic>> pages = const [],
+    List<String> tags = const [],
+    Uint8List? thumbnail,
+  }) async {
+    debugPrint('=== PracticeService.savePractice 开始 ===');
+    debugPrint('参数: id=$id, title=$title, pages数量=${pages.length}, tags=$tags, 有缩略图=${thumbnail != null}');
+    
+    // 如果是新字帖或ID为空，创建新的字帖
+    if (id == null || id.isEmpty) {
+      debugPrint('检测到空 ID，将创建新字帖');
+      final newPractice = await createPractice(
+        title: title,
+        tags: tags,
+      );
+      debugPrint('创建完成，新ID=${newPractice.id}');
+      
+      // 如果提供了页面数据，更新页面
+      if (pages.isNotEmpty) {
+        debugPrint('检测到页面数据，将更新页面');
+        final updatedPractice = newPractice.copyWith(pages: pages);
+        debugPrint('准备保存更新后的实体，调用 _repository.save...');
+        final result = await _repository.save(updatedPractice);
+        debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+        
+        // 保存缩略图
+        if (thumbnail != null && thumbnail.isNotEmpty) {
+          debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+          await _storageService.saveCoverThumbnail(result.id, thumbnail);
+          debugPrint('已保存新字帖缩略图到文件系统: ${result.id}');
+        }
+        
+        debugPrint('=== PracticeService.savePractice 完成(更新页面分支) ===');
+        return result;
+      }
+      
+      // 保存缩略图
+      if (thumbnail != null && thumbnail.isNotEmpty) {
+        debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+        await _storageService.saveCoverThumbnail(newPractice.id, thumbnail);
+        debugPrint('已保存新字帖缩略图到文件系统: ${newPractice.id}');
+      }
+      
+      debugPrint('=== PracticeService.savePractice 完成(无页面分支) ===');
+      return newPractice;
+    }
+    
+    // 如果是现有字帖，获取字帖数据
+    debugPrint('检测到现有ID=$id，将更新字帖');
+    final existingPractice = await _repository.get(id);
+    if (existingPractice == null) {
+      debugPrint('错误: 无法找到ID=$id的字帖');
+      throw Exception('无法找到指定的字帖: $id');
+    }
+    debugPrint('找到现有字帖: ${existingPractice.title}, 创建时间=${existingPractice.createTime}');
+    
+    // 更新字帖数据
+    final updatedPractice = existingPractice.copyWith(
+      title: title,
+      pages: pages,
+      tags: tags,
+      updateTime: DateTime.now(),
+    );
+    debugPrint('创建了更新后的实体, 准备调用 _repository.save...');
+    
+    // 保存到数据库
+    final result = await _repository.save(updatedPractice);
+    debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+    
+    // 保存缩略图
+    if (thumbnail != null && thumbnail.isNotEmpty) {
+      debugPrint('准备保存缩略图, 大小=${thumbnail.length} 字节');
+      await _storageService.saveCoverThumbnail(result.id, thumbnail);
+      debugPrint('已保存现有字帖缩略图到文件系统: ${result.id}');
+    }
+    
+    debugPrint('=== PracticeService.savePractice 完成(更新字帖分支) ===');
+    return result;
+  }
+  
   /// 创建字帖练习
   Future<PracticeEntity> createPractice({
     required String title,
     List<String> tags = const [],
     String status = 'active',
   }) async {
+    debugPrint('=== PracticeService.createPractice 开始 ===');
+    debugPrint('参数: title=$title, tags=$tags, status=$status');
+    
     final practice = PracticeEntity.create(
       title: title,
       tags: tags,
       status: status,
     );
-    return _repository.save(practice);
+    debugPrint('已创建实体，生成的ID=${practice.id}, 准备调用 _repository.save...');
+    
+    try {
+      final result = await _repository.save(practice);
+      debugPrint('_repository.save 调用成功，返回ID=${result.id}');
+      debugPrint('=== PracticeService.createPractice 完成 ===');
+      return result;
+    } catch (e) {
+      debugPrint('错误: createPractice 失败 - $e');
+      rethrow;
+    }
   }
 
   /// 删除字帖练习
@@ -99,12 +202,12 @@ class PracticeService {
   /// - thumbnail: 缩略图数据
   ///
   /// 返回包含id的Map
-  Future<Map<String, dynamic>> savePractice({
+  Future<Map<String, dynamic>> savePracticeRaw({
     String? id,
     required String title,
     required List<Map<String, dynamic>> pages,
     Uint8List? thumbnail,
-  }) {
+  }) async {
     // 确保每个页面都有ID
     for (final page in pages) {
       if (!page.containsKey('id') || page['id'] == null) {
@@ -112,12 +215,22 @@ class PracticeService {
       }
     }
 
-    return _repository.savePracticeRaw(
+    // 先保存到数据库，但不包含缩略图
+    final result = await _repository.savePracticeRaw(
       id: id,
       title: title,
       pages: pages,
-      thumbnail: thumbnail,
+      thumbnail: null, // 不再将缩略图保存到数据库
     );
+    
+    // 如果有缩略图，单独保存到文件系统
+    if (thumbnail != null && thumbnail.isNotEmpty && result.containsKey('id')) {
+      final practiceId = result['id'] as String;
+      await _storageService.saveCoverThumbnail(practiceId, thumbnail);
+      debugPrint('已保存缩略图到文件系统: $practiceId');
+    }
+    
+    return result;
   }
 
   /// 搜索字帖练习

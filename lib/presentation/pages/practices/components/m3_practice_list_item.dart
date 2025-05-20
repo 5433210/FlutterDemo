@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../application/providers/service_providers.dart';
+import '../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_sizes.dart';
-import 'dialogs/m3_practice_tag_edit_dialog.dart';
+import '../../../widgets/image/cached_image.dart';
 
 /// Material 3 practice list item
-class M3PracticeListItem extends StatelessWidget {
+class M3PracticeListItem extends ConsumerWidget {
   /// Practice data
   final Map<String, dynamic> practice;
 
@@ -40,7 +43,7 @@ class M3PracticeListItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
@@ -73,7 +76,7 @@ class M3PracticeListItem extends StatelessWidget {
                     width: AppSizes.workListThumbnailWidth,
                     child: Container(
                       alignment: Alignment.center,
-                      child: _buildThumbnail(context),
+                      child: _buildThumbnail(context, ref),
                     ),
                   ),
                   // 选择指示器
@@ -256,20 +259,6 @@ class M3PracticeListItem extends StatelessWidget {
     );
   }
 
-  /// Build loading indicator
-  Widget _buildLoadingIndicator(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: CircularProgressIndicator(
-          color: colorScheme.primary,
-        ),
-      ),
-    );
-  }
-
   /// Build placeholder widget
   Widget _buildPlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -337,41 +326,39 @@ class M3PracticeListItem extends StatelessWidget {
   }
 
   /// Build thumbnail widget
-  Widget _buildThumbnail(BuildContext context) {
+  Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
-    final thumbnail = practice['thumbnail'] as Uint8List?;
+    final practiceId = practice['id'] as String;
+    final storage = ref.watch(initializedStorageProvider);
+    final practiceStorage = ref.watch(practiceStorageServiceProvider);
+    final thumbnailPath =
+        practiceStorage.getPracticeCoverThumbnailPath(practiceId);
 
-    if (thumbnail == null || thumbnail.isEmpty) {
-      return _buildPlaceholder(context);
-    }
-
-    return AspectRatio(
-      aspectRatio: 4 / 3, // 保持4:3比例，与作品浏览页一致
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: theme.colorScheme.outlineVariant,
-            width: 1,
+    return FutureBuilder<bool>(
+      future: storage.fileExists(thumbnailPath),
+      builder: (context, snapshot) {
+        // 显示从文件系统加载的缩略图
+        return AspectRatio(
+          aspectRatio: 4 / 3, // 保持4:3比例
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(
+                color: theme.colorScheme.outlineVariant,
+                width: 1,
+              ),
+            ),
+            child: CachedImage(
+              path: thumbnailPath,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return _buildErrorPlaceholder(context, l10n);
+              },
+            ),
           ),
-        ),
-        child: Image.memory(
-          thumbnail,
-          fit: BoxFit.cover, // 使用cover而不是contain，与作品浏览页一致
-          alignment: Alignment.center,
-          gaplessPlayback: true,
-          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (frame == null) {
-              return _buildLoadingIndicator(context);
-            }
-            return child;
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return _buildErrorPlaceholder(context, l10n);
-          },
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -416,14 +403,36 @@ class M3PracticeListItem extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => M3PracticeTagEditDialog(
-        tags: currentTags,
-        suggestedTags: const [], // We'll implement suggested tags later
-        onSaved: (newTags) {
-          onTagsEdited!(practiceId, newTags);
-          Navigator.of(context).pop();
-        },
-      ),
+      builder: (context) => Dialog(
+          child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Edit Tags', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 16),
+            // We'll implement a proper tag editor later
+            const Text('Tag editing functionality will be implemented later'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    onTagsEdited!(practiceId, currentTags);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      )),
     );
   }
 }

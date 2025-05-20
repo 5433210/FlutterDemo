@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -69,7 +70,10 @@ class PracticeRepositoryImpl implements PracticeRepository {
       // 处理数据，确保pages字段格式正确
       final processedData = _processDbData(data);
 
-      return PracticeEntity.fromJson(processedData);
+      // 从实体创建对象
+      final entity = PracticeEntity.fromJson(processedData);
+
+      return entity;
     } catch (e) {
       debugPrint('获取练习失败: $e');
       return null; // 出错时返回null
@@ -235,6 +239,9 @@ class PracticeRepositoryImpl implements PracticeRepository {
         }
       }
 
+      // 从文件系统加载缩略图
+      // final thumbnail = await _loadThumbnailFromFile(practice['id']);
+
       // 返回包含解析后页面数据的字帖信息
       return {
         'id': practice['id'],
@@ -243,7 +250,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
         'tags': practice['tags'],
         'createTime': practice['createTime'],
         'updateTime': practice['updateTime'],
-        'thumbnail': practice['thumbnail'],
+        // 'thumbnail': thumbnail, // 从文件系统加载的缩略图
       };
     } catch (e) {
       debugPrint('加载字帖失败: $e');
@@ -330,21 +337,36 @@ class PracticeRepositoryImpl implements PracticeRepository {
   @override
   Future<PracticeEntity> save(PracticeEntity practice) async {
     try {
-      debugPrint('PracticeRepositoryImpl.save: ID=${practice.id}');
+      debugPrint('=== PracticeRepositoryImpl.save 开始 === [ID=${practice.id}]');
+      debugPrint('调用堆栈: ${StackTrace.current}');
 
       // 转换practice对象为JSON
       final json = practice.toJson();
       debugPrint('转换为JSON成功, JSON包含 ${json.length} 个字段');
+      debugPrint('标题: ${json['title']}, 页面数: ${json['pages'] is List ? (json['pages'] as List).length : '非列表格式'}');
 
       // 准备保存数据：处理复杂数据类型和类型转换
       final preparedData = _prepareForSave(json);
-      debugPrint('数据准备完成，准备保存到数据库');
+      debugPrint('数据准备完成，字段: ${preparedData.keys.join(', ')}');
 
+      debugPrint('开始调用 _db.save(${_table}, ${practice.id}, ...)');
       await _db.save(_table, practice.id, preparedData);
-      debugPrint('保存到数据库成功');
+      debugPrint('调用 _db.save 成功');
+      
+      // 验证保存是否成功
+      final savedData = await _db.get(_table, practice.id);
+      if (savedData == null) {
+        final error = '严重错误: 数据库中没有找到刚刚保存的记录 [ID=${practice.id}]';
+        debugPrint(error);
+        throw Exception(error);
+      }
+      debugPrint('验证成功，数据已保存到数据库: ${savedData['title']}');
+      
+      debugPrint('=== PracticeRepositoryImpl.save 完成 === [ID=${practice.id}]');
       return practice;
     } catch (e) {
-      debugPrint('保存实体失败: $e');
+      debugPrint('错误: 保存实体失败: $e');
+      debugPrint('错误堆栈: ${e is Error ? e.stackTrace : ''}');
       rethrow;
     }
   }
@@ -370,6 +392,15 @@ class PracticeRepositoryImpl implements PracticeRepository {
     }
   }
 
+
+
+  /// 从文件系统加载缩略图
+  /// 此方法已弃用，缩略图加载现在由 PracticeStorageService 处理
+  Future<Uint8List?> _loadThumbnailFromFile(String practiceId) async {
+    debugPrint('警告: _loadThumbnailFromFile 已弃用，缩略图处理现在由 PracticeStorageService 处理');
+    return null; // 返回null以需要时触发回退到旧版本缓存
+  }
+
   @override
   Future<Map<String, dynamic>> savePracticeRaw({
     String? id,
@@ -390,7 +421,6 @@ class PracticeRepositoryImpl implements PracticeRepository {
         'title': title,
         'pages': pagesJson,
         'updateTime': now,
-        'thumbnail': thumbnail != null ? base64Encode(thumbnail) : null,
       };
 
       debugPrint('缩略图数据: ${thumbnail != null ? '已生成' : '无缩略图'}');
@@ -398,20 +428,52 @@ class PracticeRepositoryImpl implements PracticeRepository {
       // 如果是新建的字帖，添加创建时间
       if (id == null) {
         data['createTime'] = now;
+        debugPrint('新建字帖，设置 createTime=$now');
       } else {
         // 对于现有记录，需要获取原有的createTime
+        debugPrint('现有字帖，尝试获取原有 createTime...');
         final existingPractice = await _db.get(_table, id);
+        if (existingPractice == null) {
+          debugPrint('警告: 无法获取现有字帖数据 [ID=$id]');
+        }
+        
         if (existingPractice != null &&
             existingPractice['createTime'] != null) {
           data['createTime'] = existingPractice['createTime'];
+          debugPrint('使用原有的 createTime: ${existingPractice['createTime']}');
         } else {
           // 如果无法获取原有createTime，使用当前时间作为fallback
           data['createTime'] = now;
+          debugPrint('无法获取原有createTime，使用当前时间作为fallback: $now');
         }
       }
 
       // 保存到数据库
-      await _db.set(_table, practiceId, data);
+      debugPrint('=== savePracticeRaw 开始调用 _db.set 方法 ===');
+      debugPrint('参数: _table=$_table, practiceId=$practiceId');
+      debugPrint('数据内容: ${data.keys.join(', ')}');
+      try {
+        await _db.set(_table, practiceId, data);
+        debugPrint('_db.set 调用成功');
+      } catch (e) {
+        debugPrint('错误: _db.set 调用失败: $e');
+        debugPrint('错误堆栈: ${e is Error ? e.stackTrace : ''}');
+        rethrow;
+      }
+      debugPrint('savePracticeRaw: 已保存数据到数据库，ID=$practiceId');
+      
+      // 验证数据是否已保存
+      debugPrint('开始验证数据是否已保存...');
+      final savedData = await _db.get(_table, practiceId);
+      if (savedData == null) {
+        final error = '严重错误: 数据保存后立即查询返回null，ID=$practiceId';
+        debugPrint(error);
+        throw Exception('数据保存失败，无法在数据库中找到记录: $practiceId');
+      }
+      debugPrint('数据保存验证成功: ${savedData['title']}');
+
+      // 注意: 缩略图处理已移至 PracticeStorageService
+      // 这里不再处理缩略图
 
       // 返回保存结果
       return {
@@ -699,6 +761,11 @@ class PracticeRepositoryImpl implements PracticeRepository {
     if (!processedData.containsKey('status')) {
       processedData['status'] = 'active'; // 使用默认值
       debugPrint('_processDbData: status字段不存在于数据库，设为默认值active');
+    }
+
+    // 移除数据库中的旧thumbnail字段，现在缩略图从文件系统加载
+    if (processedData.containsKey('thumbnail')) {
+      processedData.remove('thumbnail');
     }
 
     return processedData;
