@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../presentation/intents/navigation_intents.dart';
 import '../../../presentation/pages/characters/m3_character_management_page.dart';
@@ -10,90 +11,154 @@ import '../../../presentation/pages/works/m3_work_detail_page.dart';
 import '../../../presentation/widgets/navigation/m3_side_nav.dart';
 import '../../../presentation/widgets/window/m3_title_bar.dart';
 import '../../../routes/app_routes.dart';
+import '../../providers/navigation/global_navigation_provider.dart';
+import '../../utils/cross_navigation_helper.dart';
 import '../library/m3_library_management_page.dart';
 import '../practices/m3_practice_edit_page.dart';
 import '../practices/m3_practice_list_page.dart';
 
-class M3MainWindow extends StatefulWidget {
+class M3MainWindow extends ConsumerStatefulWidget {
   const M3MainWindow({super.key});
 
   @override
-  State<M3MainWindow> createState() => _M3MainWindowState();
+  ConsumerState<M3MainWindow> createState() => _M3MainWindowState();
 }
 
-class _M3MainWindowState extends State<M3MainWindow>
+class _M3MainWindowState extends ConsumerState<M3MainWindow>
     with WidgetsBindingObserver {
-  int _selectedIndex = 0;
-  bool _isNavigationExtended = false;
+  // 保存所有功能区的Navigator状态
+  final Map<int, GlobalKey<NavigatorState>> _navigatorKeys = {
+    0: GlobalKey<NavigatorState>(),
+    1: GlobalKey<NavigatorState>(),
+    2: GlobalKey<NavigatorState>(),
+    3: GlobalKey<NavigatorState>(),
+    4: GlobalKey<NavigatorState>(),
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Shortcuts(
-      shortcuts: <LogicalKeySet, Intent>{
-        // 导航快捷键
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
-            const ActivateTabIntent(0),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
-            const ActivateTabIntent(1),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
-            const ActivateTabIntent(2),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
-            const ActivateTabIntent(3),
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
-            const ActivateTabIntent(4),
+    // 从全局导航状态读取状态
+    final navState = ref.watch(globalNavigationProvider);
+    final selectedIndex = navState.currentSectionIndex;
 
-        // 侧边栏快捷键
-        LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
-            const ToggleNavigationIntent(),
-      },
-      child: Actions(
-        actions: <Type, Action<Intent>>{
-          ActivateTabIntent: CallbackAction<ActivateTabIntent>(
-            onInvoke: (intent) => setState(() => _selectedIndex = intent.index),
-          ),
-          ToggleNavigationIntent: CallbackAction<ToggleNavigationIntent>(
-            onInvoke: (intent) =>
-                setState(() => _isNavigationExtended = !_isNavigationExtended),
-          ),
-        },
-        child: Scaffold(
-          body: Column(
-            children: [
-              // 标题栏
-              const M3TitleBar(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return WillPopScope(
+          // 处理返回按钮事件，先尝试在当前功能区内返回，否则尝试跨功能区返回
+          onWillPop: () async {
+            // 如果正在导航过渡中，不处理返回
+            if (navState.isNavigating) return false;
 
-              // 内容区域
-              Expanded(
-                child: Row(
+            // 先尝试在当前功能区内的Navigator返回
+            final currentNavigator =
+                _navigatorKeys[selectedIndex]?.currentState;
+            final canPopInCurrentSection =
+                currentNavigator != null && currentNavigator.canPop();
+
+            if (canPopInCurrentSection) {
+              currentNavigator.pop();
+              return false; // 已在功能区内处理返回，不需要退出应用
+            }
+
+            // 如果当前功能区内无法返回，尝试回到上一个功能区
+            await CrossNavigationHelper.handleBackNavigation(context, ref);
+            return false; // 已处理，不需要退出应用
+          },
+          child: Shortcuts(
+            shortcuts: <LogicalKeySet, Intent>{
+              // 导航快捷键
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
+                  const ActivateTabIntent(0),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit2):
+                  const ActivateTabIntent(1),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit3):
+                  const ActivateTabIntent(2),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit4):
+                  const ActivateTabIntent(3),
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit5):
+                  const ActivateTabIntent(4),
+
+              // 侧边栏快捷键
+              LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.keyN):
+                  const ToggleNavigationIntent(),
+            },
+            child: Actions(
+              actions: <Type, Action<Intent>>{
+                ActivateTabIntent: CallbackAction<ActivateTabIntent>(
+                  onInvoke: (intent) {
+                    ref
+                        .read(globalNavigationProvider.notifier)
+                        .navigateToSection(intent.index);
+                    return null;
+                  },
+                ),
+                ToggleNavigationIntent: CallbackAction<ToggleNavigationIntent>(
+                  onInvoke: (intent) {
+                    ref
+                        .read(globalNavigationProvider.notifier)
+                        .toggleNavigationExtended();
+                    return null;
+                  },
+                ),
+              },
+              child: Scaffold(
+                body: Column(
                   children: [
-                    // 侧边导航栏
-                    M3NavigationSidebar(
-                      selectedIndex: _selectedIndex,
-                      onDestinationSelected: (index) {
-                        setState(() {
-                          _selectedIndex = index;
-                        });
-                      },
-                      extended: _isNavigationExtended,
-                      onToggleExtended: () {
-                        setState(() {
-                          _isNavigationExtended = !_isNavigationExtended;
-                        });
-                      },
-                    ),
+                    // 标题栏
+                    const M3TitleBar(),
 
                     // 内容区域
                     Expanded(
-                      child: _buildContent(),
+                      child: Row(
+                        children: [
+                          // 侧边导航栏
+                          M3NavigationSidebar(
+                            selectedIndex: selectedIndex,
+                            onDestinationSelected: (index) {
+                              // 使用全局导航提供者切换功能区
+                              ref
+                                  .read(globalNavigationProvider.notifier)
+                                  .navigateToSection(index);
+                            },
+                            extended: navState.isNavigationExtended,
+                            onToggleExtended: () {
+                              ref
+                                  .read(globalNavigationProvider.notifier)
+                                  .toggleNavigationExtended();
+                            },
+                          ),
+
+                          // 内容区域
+                          Expanded(
+                            // 使用IndexedStack保持所有功能区的状态
+                            child: IndexedStack(
+                              index: selectedIndex,
+                              children: [
+                                _buildNavigator(0),
+                                _buildNavigator(1),
+                                _buildNavigator(2),
+                                _buildNavigator(3),
+                                _buildNavigator(4),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  @override
+  void didChangePlatformBrightness() {
+    super.didChangePlatformBrightness();
+    setState(() {}); // 触发重建以应用新的亮度设置
   }
 
   @override
@@ -108,13 +173,24 @@ class _M3MainWindowState extends State<M3MainWindow>
     WidgetsBinding.instance.addObserver(this);
   }
 
-  Widget _buildContent() {
-    // 保持与原MainWindow相同的内容构建逻辑
-    switch (_selectedIndex) {
-      case 0:
-        return Navigator(
-          key: ValueKey('work_navigator_$_selectedIndex'),
-          onGenerateRoute: (settings) {
+  // 构建单个功能区的导航器
+  Widget _buildNavigator(int sectionIndex) {
+    return Navigator(
+      key: _navigatorKeys[sectionIndex],
+      // 监听路由变化，记录到全局导航服务
+      onGenerateRoute: (settings) {
+        // 记录当前功能区路由变化
+        if (settings.name != null && settings.name != '/') {
+          ref.read(globalNavigationProvider.notifier).recordSectionRoute(
+              sectionIndex, settings.name!,
+              params: settings.arguments is Map<String, dynamic>
+                  ? settings.arguments as Map<String, dynamic>
+                  : null);
+        }
+
+        // 根据不同功能区生成不同的路由
+        switch (sectionIndex) {
+          case 0: // 作品浏览
             if (settings.name == AppRoutes.workDetail &&
                 settings.arguments != null) {
               final workId = settings.arguments as String;
@@ -137,12 +213,8 @@ class _M3MainWindowState extends State<M3MainWindow>
             return MaterialPageRoute(
               builder: (context) => const M3WorkBrowsePage(),
             );
-          },
-        );
-      case 1:
-        return Navigator(
-          key: ValueKey('character_navigator_$_selectedIndex'),
-          onGenerateRoute: (settings) {
+
+          case 1: // 字符管理
             if (settings.name == AppRoutes.characterCollection &&
                 settings.arguments != null) {
               final args = settings.arguments as Map<String, String>;
@@ -177,18 +249,12 @@ class _M3MainWindowState extends State<M3MainWindow>
             return MaterialPageRoute(
               builder: (context) => const M3CharacterManagementPage(),
             );
-          },
-        );
-      case 2:
-        return Navigator(
-          key: ValueKey('practice_navigator_$_selectedIndex'),
-          onGenerateRoute: (settings) {
+
+          case 2: // 字帖列表
             if (settings.name == AppRoutes.practiceEdit) {
-              String practiceId;
+              String practiceId = '';
               if (settings.arguments != null) {
                 practiceId = settings.arguments as String;
-              } else {
-                practiceId = '';
               }
 
               return MaterialPageRoute<bool>(
@@ -200,21 +266,24 @@ class _M3MainWindowState extends State<M3MainWindow>
             return MaterialPageRoute(
               builder: (context) => const M3PracticeListPage(),
             );
-          },
-        );
-      case 3:
-        return Navigator(
-          key: ValueKey('library_navigator_$_selectedIndex'),
-          onGenerateRoute: (settings) {
+
+          case 3: // 图库管理
             return MaterialPageRoute(
               builder: (context) => const M3LibraryManagementPage(),
             );
-          },
-        );
-      case 4:
-        return const M3SettingsPage();
-      default:
-        return const Center(child: Text('Page not implemented'));
-    }
+
+          case 4: // 设置
+            return MaterialPageRoute(
+              builder: (context) => const M3SettingsPage(),
+            );
+
+          default:
+            return MaterialPageRoute(
+              builder: (context) =>
+                  const Center(child: Text('Page not implemented')),
+            );
+        }
+      },
+    );
   }
 }

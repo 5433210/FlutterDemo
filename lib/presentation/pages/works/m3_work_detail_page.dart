@@ -229,7 +229,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       onBack: () {
         // Check if we can safely pop
         if (Navigator.canPop(context)) {
-          Navigator.of(context).pop();
+          Navigator.of(context, rootNavigator: false).maybePop();
         }
       },
       onEdit: _enterEditMode,
@@ -350,7 +350,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
       if (state.isEditing) {
         _handleBackButton();
       } else {
-        Navigator.of(context).maybePop();
+        Navigator.of(context, rootNavigator: false).maybePop();
       }
       return;
     }

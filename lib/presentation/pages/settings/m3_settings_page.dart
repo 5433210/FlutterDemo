@@ -24,6 +24,11 @@ class M3SettingsPage extends ConsumerWidget {
           // Save settings if needed in the future
         },
         hasChanges: hasChanges,
+        onBackPressed: () {
+          // 设置页面直接在主导航中，使用合适的方式返回
+          // 使用路由替换回到主页，避免透明窗体问题
+          Navigator.of(context, rootNavigator: true).pushReplacementNamed('/');
+        },
       ),
       body: SafeArea(
         child: _buildSettingsContent(context, ref),

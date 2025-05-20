@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../routes/app_routes.dart';
 import '../../providers/practice_list_provider.dart';
+import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/practice_list_state.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
@@ -57,11 +58,8 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         sortOrder: state.filter.sortOrder,
         onSearch: (_) {},
         onSortFieldChanged: (_) {},
-        onSortOrderChanged: () {},
-        onBackPressed: () {
-          if (Navigator.canPop(context)) {
-            Navigator.of(context).pop();
-          }
+        onSortOrderChanged: () {},        onBackPressed: () {
+          CrossNavigationHelper.handleBackNavigation(context, ref);
         },
       ),
       body: Column(

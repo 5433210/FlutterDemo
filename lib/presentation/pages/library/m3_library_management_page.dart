@@ -6,6 +6,7 @@ import '../../../application/providers/service_providers.dart';
 import '../../../domain/entities/library_item.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../providers/library/library_management_provider.dart';
+import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/library_management_state.dart';
 import '../../widgets/library/m3_library_browsing_panel.dart';
 import '../../widgets/page_layout.dart';
@@ -62,6 +63,9 @@ class _M3LibraryManagementPageState
         onToggleImagePreview: _toggleImagePreviewPanel,
         onImportFiles: _handleImportFiles,
         onImportFolder: _handleImportFolder,
+        onBackPressed: () {
+          CrossNavigationHelper.handleBackNavigation(context, ref);
+        },
       ),
       body: ConstrainedBox(
         constraints: const BoxConstraints(

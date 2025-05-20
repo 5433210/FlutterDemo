@@ -52,6 +52,9 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 导入文件夹回调
   final VoidCallback? onImportFolder;
 
+  /// 返回按钮回调
+  final VoidCallback? onBackPressed;
+
   /// 构造函数
   const M3LibraryManagementNavigationBar({
     super.key,
@@ -70,6 +73,7 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     required this.onToggleImagePreview,
     this.onImportFiles,
     this.onImportFolder,
+    this.onBackPressed,
   });
 
   @override
@@ -86,9 +90,9 @@ class _M3LibraryManagementNavigationBarState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-
     return M3PageNavigationBar(
       title: l10n.libraryManagement,
+      onBackPressed: widget.onBackPressed,
       titleActions: widget.isBatchMode
           ? [
               const SizedBox(width: 8),

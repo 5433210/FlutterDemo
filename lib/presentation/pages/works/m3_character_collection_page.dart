@@ -11,6 +11,7 @@ import '../../providers/character/character_collection_provider.dart';
 import '../../providers/character/selected_region_provider.dart';
 import '../../providers/character/tool_mode_provider.dart';
 import '../../providers/character/work_image_provider.dart';
+import '../../utils/cross_navigation_helper.dart';
 import '../../widgets/character_collection/m3_delete_confirmation_dialog.dart';
 import '../../widgets/character_collection/m3_image_preview_panel.dart';
 import '../../widgets/character_collection/m3_navigation_bar.dart';
@@ -581,10 +582,7 @@ class _M3CharacterCollectionPageState
   void _onBackPressed() {
     _checkUnsavedChanges().then((canPop) {
       if (canPop && mounted) {
-        // Check if we can safely pop
-        if (Navigator.canPop(context)) {
-          Navigator.of(context).pop();
-        }
+        CrossNavigationHelper.handleBackNavigation(context, ref);
       }
     });
   }

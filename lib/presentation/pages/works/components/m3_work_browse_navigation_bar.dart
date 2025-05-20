@@ -48,15 +48,14 @@ class _M3WorkBrowseNavigationBarState extends State<M3WorkBrowseNavigationBar> {
       title: l10n.workBrowseTitle,
       showBackButton: true, // 所有导航栏都应该有返回按钮
       onBackPressed: widget.onBackPressed,
-
-      titleActions: [
-        const SizedBox(width: AppSizes.s),
-        if (widget.batchMode)
-          Text(
-            l10n.workBrowseSelectedCount(widget.selectedCount),
-            style: theme.textTheme.bodyMedium,
-          ),
-      ],
+      titleActions: widget.batchMode
+          ? [
+              Text(
+                l10n.workBrowseSelectedCount(widget.selectedCount),
+                style: theme.textTheme.bodyMedium,
+              ),
+            ]
+          : null,
       actions: [
         if (widget.batchMode && widget.selectedCount > 0)
           IconButton(

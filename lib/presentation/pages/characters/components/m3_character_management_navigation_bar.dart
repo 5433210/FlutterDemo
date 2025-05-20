@@ -14,6 +14,7 @@ class M3CharacterManagementNavigationBar extends StatefulWidget
   final VoidCallback onToggleViewMode;
   final ValueChanged<String> onSearch;
   final TextEditingController searchController;
+  final VoidCallback? onBackPressed;
 
   const M3CharacterManagementNavigationBar({
     super.key,
@@ -25,6 +26,7 @@ class M3CharacterManagementNavigationBar extends StatefulWidget
     required this.onToggleViewMode,
     required this.onSearch,
     required this.searchController,
+    this.onBackPressed,
   });
 
   @override
@@ -41,9 +43,9 @@ class _M3CharacterManagementNavigationBarState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-
     return M3PageNavigationBar(
       title: l10n.characterManagementTitle,
+      onBackPressed: widget.onBackPressed,
       titleActions: widget.isBatchMode
           ? [
               const SizedBox(width: AppSizes.m),

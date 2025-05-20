@@ -6,6 +6,7 @@ import '../../../routes/app_routes.dart';
 import '../../providers/character/character_detail_provider.dart';
 import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
+import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/character_management_state.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/page_layout.dart';
@@ -40,9 +41,11 @@ class _M3CharacterManagementPageState
             ? _handleDeleteSelectedCharacters
             : null,
         isGridView: state.viewMode == ViewMode.grid,
-        onToggleViewMode: _toggleViewMode,
-        onSearch: _handleSearch,
+        onToggleViewMode: _toggleViewMode,        onSearch: _handleSearch,
         searchController: _searchController,
+        onBackPressed: () {
+          CrossNavigationHelper.handleBackNavigation(context, ref);
+        },
       ),
       body: ConstrainedBox(
         constraints: const BoxConstraints(
