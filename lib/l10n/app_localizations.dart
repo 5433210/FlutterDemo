@@ -1913,18 +1913,6 @@ abstract class AppLocalizations {
   /// **'分布操作需要至少3个元素'**
   String get distributionRequiresThreeElements;
 
-  /// No description provided for @dpiHelperText.
-  ///
-  /// In zh, this message translates to:
-  /// **'用于计算画布像素大小，默认300dpi'**
-  String get dpiHelperText;
-
-  /// No description provided for @dpiSetting.
-  ///
-  /// In zh, this message translates to:
-  /// **'DPI设置（每英寸点数）'**
-  String get dpiSetting;
-
   /// No description provided for @edit.
   ///
   /// In zh, this message translates to:
@@ -3958,6 +3946,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'位置'**
   String get position;
+
+  /// No description provided for @ppiHelperText.
+  ///
+  /// In zh, this message translates to:
+  /// **'用于计算画布像素大小，默认300ppi'**
+  String get ppiHelperText;
+
+  /// No description provided for @ppiSetting.
+  ///
+  /// In zh, this message translates to:
+  /// **'PPI设置（每英寸像素数）'**
+  String get ppiSetting;
 
   /// No description provided for @practiceEditAddElementTitle.
   ///

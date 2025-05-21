@@ -948,12 +948,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
 
   @override
-  String get dpiHelperText => '用于计算画布像素大小，默认300dpi';
-
-  @override
-  String get dpiSetting => 'DPI设置（每英寸点数）';
-
-  @override
   String get edit => '编辑';
 
   @override
@@ -2009,6 +2003,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get position => '位置';
+
+  @override
+  String get ppiHelperText => '用于计算画布像素大小，默认300ppi';
+
+  @override
+  String get ppiSetting => 'PPI设置（每英寸像素数）';
 
   @override
   String get practiceEditAddElementTitle => '添加元素';

@@ -238,7 +238,7 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                   const SizedBox(height: 16.0),
 
                   // DPI设置
-                  Text('${l10n.dpiSetting}:',
+                  Text('${l10n.ppiSetting}:',
                       style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8.0),
                   Row(
@@ -261,7 +261,7 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                       Expanded(
                         flex: 2,
                         child: EditableNumberField(
-                          label: 'DPI',
+                          label: 'PPI',
                           value: dpi.toDouble(),
                           suffix: '',
                           min: 72,

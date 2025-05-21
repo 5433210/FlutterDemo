@@ -948,12 +948,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
 
   @override
-  String get dpiHelperText => 'Used to calculate canvas pixel size, default is 300dpi';
-
-  @override
-  String get dpiSetting => 'DPI Setting (dots per inch)';
-
-  @override
   String get edit => 'Edit';
 
   @override
@@ -2009,6 +2003,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get position => 'Position';
+
+  @override
+  String get ppiHelperText => 'Used to calculate canvas pixel size, default is 300ppi';
+
+  @override
+  String get ppiSetting => 'PPI Setting (pixels per inch)';
 
   @override
   String get practiceEditAddElementTitle => 'Add Element';
