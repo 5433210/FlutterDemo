@@ -72,6 +72,61 @@ class GlobalNavigationNotifier extends StateNotifier<GlobalNavigationState> {
     return result;
   }
 
+  /// 导航到特定的历史记录项
+  /// 返回true表示成功导航，false表示导航失败
+  Future<bool> navigateToHistoryItem(NavigationHistoryItem item) async {
+    AppLogger.debug('尝试导航到特定历史记录项', tag: 'Navigation', data: {
+      'currentSection': state.currentSectionIndex,
+      'targetSection': item.sectionIndex,
+      'targetRoute': item.routePath,
+      'historyCount': state.history.length,
+    });
+
+    state = state.copyWith(isNavigating: true);
+
+    try {
+      // 在历史记录中找到目标项的位置
+      final itemIndex = state.history.indexWhere((historyItem) => 
+        historyItem.sectionIndex == item.sectionIndex && 
+        historyItem.routePath == item.routePath);
+      
+      if (itemIndex == -1) {
+        // 如果没有找到符合的项，直接导航到目标功能区
+        AppLogger.info('历史记录中未找到目标项，直接导航到该功能区', tag: 'Navigation');
+        await navigateToSection(item.sectionIndex);
+        return true;
+      }
+
+      // 删除从目标项开始的所有历史记录（包括目标项本身）
+      final newHistory = List<NavigationHistoryItem>.from(state.history)
+        ..removeRange(itemIndex, state.history.length);
+
+      state = state.copyWith(
+        currentSectionIndex: item.sectionIndex,
+        history: newHistory,
+        isNavigating: false,
+      );
+
+      // 持久化新状态
+      await _storage.saveNavigationState(
+        currentSectionIndex: item.sectionIndex,
+        history: newHistory,
+        sectionRoutes: state.sectionRoutes,
+      );
+
+      AppLogger.info('成功导航到特定历史记录项', tag: 'Navigation', data: {
+        'newSection': item.sectionIndex,
+        'remainingHistory': newHistory.length,
+      });
+
+      return true;
+    } catch (e, stack) {
+      AppLogger.error('导航到特定历史记录项失败', error: e, stackTrace: stack, tag: 'Navigation');
+      state = state.copyWith(isNavigating: false);
+      return false;
+    }
+  }
+
   /// 返回到上一个功能区
   /// 返回true表示成功导航，false表示没有历史记录
   Future<bool> navigateBack() async {

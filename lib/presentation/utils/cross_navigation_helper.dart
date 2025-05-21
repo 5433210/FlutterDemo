@@ -43,15 +43,14 @@ class CrossNavigationHelper {
 
       if (showDialog && context.mounted) {
         // 有历史记录，显示导航选项
-        final shouldNavigate = await _showNavigationOptionsDialog(
+        final selectedIndex = await _showNavigationOptionsDialog(
           context,
           recentHistory,
         );
-        if (shouldNavigate == true) {
-          // 用户确认返回上一个功能区
-          if (context.mounted) {
-            await navNotifier.navigateBack();
-          }
+        if (selectedIndex != null && context.mounted) {
+          // 用户选择了特定的历史项
+          final selectedItem = recentHistory[selectedIndex];
+          await navNotifier.navigateToHistoryItem(selectedItem);
         }
       } else {
         // 直接返回，不显示对话框
@@ -95,14 +94,14 @@ class CrossNavigationHelper {
   }
 
   /// 显示导航选项对话框
-  static Future<bool?> _showNavigationOptionsDialog(
+  static Future<int?> _showNavigationOptionsDialog(
     BuildContext context,
     List<NavigationHistoryItem> history,
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return showDialog<bool>(
+    return showDialog<int?>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('返回到之前的页面'),
@@ -122,7 +121,8 @@ class CrossNavigationHelper {
               ),
             ),
             const SizedBox(height: 16),
-            ...history.map((item) {
+            ...List.generate(history.length, (index) {
+              final item = history[index];
               final sectionName = sectionNames[item.sectionIndex] ?? '未知区域';
               final subtitle = item.routePath != null
                   ? _getReadableRouteName(item.routePath!)
@@ -152,8 +152,8 @@ class CrossNavigationHelper {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 onTap: () {
-                  // 返回并确认导航
-                  Navigator.of(context).pop(true);
+                  // 返回选中的历史项索引
+                  Navigator.of(context).pop(index);
                 },
               );
             }),
@@ -161,7 +161,7 @@ class CrossNavigationHelper {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(context).pop(null),
             child: const Text('取消'),
           ),
         ],
