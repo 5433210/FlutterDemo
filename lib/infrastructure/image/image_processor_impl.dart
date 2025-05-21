@@ -718,7 +718,7 @@ class ImageProcessorImpl implements ImageProcessor {
         img.Image(width: region.width.round(), height: region.height.round());
 
     // 创建变换矩阵 - 转换旋转角度为弧度
-    final radians = rotation * math.pi / 180.0;
+    final radians = rotation; // * math.pi / 180.0;
     final cos = math.cos(radians);
     final sin = math.sin(radians);
 

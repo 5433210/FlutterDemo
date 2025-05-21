@@ -1147,7 +1147,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
               ref.read(imageProcessorProvider).rotateAndCropImage(
                     image,
                     cropRect,
-                    contentRotation,
+                    (contentRotation / 180) * math.pi,
                     flipHorizontal: flipHorizontal,
                     flipVertical: flipVertical,
                   );
