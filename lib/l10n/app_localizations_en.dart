@@ -647,6 +647,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearImageCache => 'Clear Image Cache';
 
   @override
+  String get clearSelection => 'Clear Selection';
+
+  @override
   String get collection => 'Collection';
 
   @override

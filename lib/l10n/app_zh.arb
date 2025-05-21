@@ -206,6 +206,7 @@
   "clearCacheConfirmMessage": "确定要清除所有缓存数据吗？这将释放磁盘空间，但可能会暂时降低应用程序的速度。",
   "clearCacheConfirmTitle": "清除缓存",
   "clearImageCache": "清除图像缓存",
+  "clearSelection": "取消选择",
   "collection": "集字",
   "collectionPropertyPanel": "采集属性",
   "collectionPropertyPanelAutoLineBreak": "自动换行",

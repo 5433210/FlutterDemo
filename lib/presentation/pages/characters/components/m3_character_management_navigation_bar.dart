@@ -10,6 +10,9 @@ class M3CharacterManagementNavigationBar extends StatefulWidget
   final VoidCallback onToggleBatchMode;
   final int selectedCount;
   final VoidCallback? onDeleteSelected;
+  final VoidCallback? onCopySelected;
+  final VoidCallback? onSelectAll;
+  final VoidCallback? onClearSelection;
   final bool isGridView;
   final VoidCallback onToggleViewMode;
   final ValueChanged<String> onSearch;
@@ -22,6 +25,9 @@ class M3CharacterManagementNavigationBar extends StatefulWidget
     required this.onToggleBatchMode,
     required this.selectedCount,
     this.onDeleteSelected,
+    this.onCopySelected,
+    this.onSelectAll,
+    this.onClearSelection,
     required this.isGridView,
     required this.onToggleViewMode,
     required this.onSearch,
@@ -53,7 +59,7 @@ class _M3CharacterManagementNavigationBarState
                 l10n.selectedCount(widget.selectedCount),
                 style: theme.textTheme.bodyMedium,
               ),
-              if (widget.selectedCount > 0)
+              if (widget.selectedCount > 0) ...[
                 Padding(
                   padding: const EdgeInsets.only(left: AppSizes.s),
                   child: FilledButton.tonalIcon(
@@ -62,6 +68,15 @@ class _M3CharacterManagementNavigationBarState
                     onPressed: widget.onDeleteSelected,
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSizes.s),
+                  child: FilledButton.tonalIcon(
+                    icon: const Icon(Icons.copy),
+                    label: Text(l10n.practiceEditCopy),
+                    onPressed: widget.onCopySelected,
+                  ),
+                ),
+              ],
             ]
           : null,
       actions: [
@@ -72,10 +87,29 @@ class _M3CharacterManagementNavigationBarState
             icon: const Icon(Icons.delete),
             tooltip: l10n.characterManagementDeleteSelected,
             onPressed: widget.onDeleteSelected,
+          ), // 复制按钮
+        if (widget.isBatchMode && widget.selectedCount > 0)
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: l10n.practiceEditCopy,
+            onPressed: widget.onCopySelected,
+          ), // 全选按钮
+        if (widget.isBatchMode && widget.onSelectAll != null)
+          IconButton(
+            icon: const Icon(Icons.select_all),
+            tooltip: l10n.filterSelectAll,
+            onPressed: widget.onSelectAll,
           ),
 
-        // if (widget.isBatchMode && widget.selectedCount > 0)
-        // const SizedBox(width: AppSizes.s),
+        // 取消选择按钮
+        if (widget.isBatchMode &&
+            widget.selectedCount > 0 &&
+            widget.onClearSelection != null)
+          IconButton(
+            icon: const Icon(Icons.deselect),
+            tooltip: l10n.filterDeselectAll,
+            onPressed: widget.onClearSelection,
+          ),
 
         // 批量操作按钮
         IconButton(

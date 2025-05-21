@@ -152,83 +152,86 @@ class M3CharacterListView extends ConsumerWidget {
                     builder: (context, snapshot) {
                       final thumbnailPath = snapshot.data ?? '';
 
-                      return ListTile(
-                        selected: isSelected,
-                        selectedTileColor: theme.colorScheme.primaryContainer
-                            .withAlpha(77), // 0.3 opacity = 77 alpha
-                        leading:
-                            _buildThumbnail(character, thumbnailPath, theme),
-                        title: Row(
-                          children: [
-                            Text(
-                              character.character,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            // const SizedBox(width: AppSizes.spacingSmall),
-                            // if (character.isFavorite)
-                            //   Icon(
-                            //     Icons.favorite,
-                            //     color: theme.colorScheme.error,
-                            //     size: 16,
-                            //   ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${l10n.workFormTitle}: ${character.title}'),
-                            if (character.author != null)
+                      return Container(
+                        key: ValueKey('character_${character.id}'),
+                        child: ListTile(
+                          selected: isSelected,
+                          selectedTileColor: theme.colorScheme.primaryContainer
+                              .withAlpha(77), // 0.3 opacity = 77 alpha
+                          leading:
+                              _buildThumbnail(character, thumbnailPath, theme),
+                          title: Row(
+                            children: [
                               Text(
-                                  '${l10n.workFormAuthor}: ${character.author}'),
-                            Text(
-                                '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
-                          ],
-                        ),
-                        trailing: isBatchMode
-                            ? Checkbox(
-                                value: isSelected,
-                                onChanged: (value) {
-                                  onCharacterSelect(character.id);
-                                },
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      character.isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: character.isFavorite
-                                          ? theme.colorScheme.error
-                                          : null,
-                                    ),
-                                    onPressed: () =>
-                                        onToggleFavorite(character.id),
-                                    tooltip: character.isFavorite
-                                        ? l10n.workBrowseRemoveFavorite
-                                        : l10n.workBrowseAddFavorite,
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () => onEdit(character.id),
-                                    tooltip: l10n.edit,
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () => onDelete(character.id),
-                                    tooltip: l10n.delete,
-                                  ),
-                                ],
+                                character.character,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                        onTap: () {
-                          // Only proceed if the widget is still mounted in the tree
-                          if (context.mounted) {
-                            onCharacterSelect(character.id);
-                          }
-                        },
+                              // const SizedBox(width: AppSizes.spacingSmall),
+                              // if (character.isFavorite)
+                              //   Icon(
+                              //     Icons.favorite,
+                              //     color: theme.colorScheme.error,
+                              //     size: 16,
+                              //   ),
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${l10n.workFormTitle}: ${character.title}'),
+                              if (character.author != null)
+                                Text(
+                                    '${l10n.workFormAuthor}: ${character.author}'),
+                              Text(
+                                  '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
+                            ],
+                          ),
+                          trailing: isBatchMode
+                              ? Checkbox(
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    onCharacterSelect(character.id);
+                                  },
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(
+                                        character.isFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: character.isFavorite
+                                            ? theme.colorScheme.error
+                                            : null,
+                                      ),
+                                      onPressed: () =>
+                                          onToggleFavorite(character.id),
+                                      tooltip: character.isFavorite
+                                          ? l10n.workBrowseRemoveFavorite
+                                          : l10n.workBrowseAddFavorite,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () => onEdit(character.id),
+                                      tooltip: l10n.edit,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () => onDelete(character.id),
+                                      tooltip: l10n.delete,
+                                    ),
+                                  ],
+                                ),
+                          onTap: () {
+                            // Only proceed if the widget is still mounted in the tree
+                            if (context.mounted) {
+                              onCharacterSelect(character.id);
+                            }
+                          },
+                        ),
                       );
                     },
                   );
@@ -254,80 +257,84 @@ class M3CharacterListView extends ConsumerWidget {
                 builder: (context, snapshot) {
                   final thumbnailPath = snapshot.data ?? '';
 
-                  return ListTile(
-                    selected: isSelected,
-                    selectedTileColor: theme.colorScheme.primaryContainer
-                        .withAlpha(77), // 0.3 opacity = 77 alpha
-                    leading: _buildThumbnail(character, thumbnailPath, theme),
-                    title: Row(
-                      children: [
-                        Text(
-                          character.character,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                  return Container(
+                    key: ValueKey('character_${character.id}'),
+                    child: ListTile(
+                      selected: isSelected,
+                      selectedTileColor: theme.colorScheme.primaryContainer
+                          .withAlpha(77), // 0.3 opacity = 77 alpha
+                      leading: _buildThumbnail(character, thumbnailPath, theme),
+                      title: Row(
+                        children: [
+                          Text(
+                            character.character,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: AppSizes.spacingSmall),
-                        if (character.isFavorite)
-                          Icon(
-                            Icons.favorite,
-                            color: theme.colorScheme.error,
-                            size: 16,
-                          ),
-                      ],
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${l10n.workFormTitle}: ${character.title}'),
-                        if (character.author != null)
-                          Text('${l10n.workFormAuthor}: ${character.author}'),
-                        Text(
-                            '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
-                      ],
-                    ),
-                    trailing: isBatchMode
-                        ? Checkbox(
-                            value: isSelected,
-                            onChanged: (value) {
-                              onCharacterSelect(character.id);
-                            },
-                          )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  character.isFavorite
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: character.isFavorite
-                                      ? theme.colorScheme.error
-                                      : null,
+                          const SizedBox(width: AppSizes.spacingSmall),
+                          if (character.isFavorite)
+                            Icon(
+                              Icons.favorite,
+                              color: theme.colorScheme.error,
+                              size: 16,
+                            ),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${l10n.workFormTitle}: ${character.title}'),
+                          if (character.author != null)
+                            Text('${l10n.workFormAuthor}: ${character.author}'),
+                          Text(
+                              '${l10n.characterDetailCollectionTime}: ${_formatDateTime(character.collectionTime)}'),
+                        ],
+                      ),
+                      trailing: isBatchMode
+                          ? Checkbox(
+                              value: isSelected,
+                              onChanged: (value) {
+                                onCharacterSelect(character.id);
+                              },
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    character.isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: character.isFavorite
+                                        ? theme.colorScheme.error
+                                        : null,
+                                  ),
+                                  onPressed: () =>
+                                      onToggleFavorite(character.id),
+                                  tooltip: character.isFavorite
+                                      ? l10n.workBrowseRemoveFavorite
+                                      : l10n.workBrowseAddFavorite,
                                 ),
-                                onPressed: () => onToggleFavorite(character.id),
-                                tooltip: character.isFavorite
-                                    ? l10n.workBrowseRemoveFavorite
-                                    : l10n.workBrowseAddFavorite,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () => onEdit(character.id),
-                                tooltip: l10n.edit,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete),
-                                onPressed: () => onDelete(character.id),
-                                tooltip: l10n.delete,
-                              ),
-                            ],
-                          ),
-                    onTap: () {
-                      // Only proceed if the widget is still mounted in the tree
-                      if (context.mounted) {
-                        onCharacterSelect(character.id);
-                      }
-                    },
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () => onEdit(character.id),
+                                  tooltip: l10n.edit,
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete),
+                                  onPressed: () => onDelete(character.id),
+                                  tooltip: l10n.delete,
+                                ),
+                              ],
+                            ),
+                      onTap: () {
+                        // Only proceed if the widget is still mounted in the tree
+                        if (context.mounted) {
+                          onCharacterSelect(character.id);
+                        }
+                      },
+                    ),
                   );
                 },
               );

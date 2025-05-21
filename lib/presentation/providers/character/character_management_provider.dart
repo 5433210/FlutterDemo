@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/repository_providers.dart';
@@ -46,9 +49,54 @@ class CharacterManagementNotifier
     state = state.copyWith(selectedCharacters: {});
   }
 
+  /// Clear all selected characters
+  void clearSelection() {
+    if (!state.isBatchMode) return;
+
+    state = state.copyWith(selectedCharacters: {});
+  }
+
   /// Close detail panel
   void closeDetailPanel() {
     state = state.copyWith(isDetailOpen: false);
+  }
+
+  /// 复制选中的字符ID到剪贴板
+  /// 如果是批量模式下选择了多个字符，则复制所有选中的字符ID
+  /// 如果不是批量模式，则复制当前选中的字符ID
+  Future<void> copySelectedCharactersToClipboard() async {
+    try {
+      List<String> characterIds = [];
+
+      // 批量模式下，复制所有选中的字符ID
+      if (state.isBatchMode && state.selectedCharacters.isNotEmpty) {
+        characterIds = state.selectedCharacters.toList();
+      }
+      // 非批量模式下，复制当前选中的字符ID（如果有）
+      else if (state.selectedCharacterId != null) {
+        characterIds = [state.selectedCharacterId!];
+      }
+
+      // 如果没有选中的字符，直接返回
+      if (characterIds.isEmpty) return;
+
+      // 将字符ID列表转换为JSON格式并写入剪贴板
+      final Map<String, dynamic> clipboardData = {
+        'type': 'characters',
+        'count': characterIds.length,
+        'characterIds': characterIds,
+      };
+
+      final String jsonData = jsonEncode(clipboardData);
+      await Clipboard.setData(ClipboardData(text: jsonData));
+
+      // 提示用户复制成功（这里不改变状态，由UI层处理提示）
+      AppLogger.info('Copied ${characterIds.length} character(s) to clipboard');
+    } catch (e) {
+      AppLogger.error('Failed to copy characters to clipboard: $e');
+      state = state.copyWith(
+          errorMessage: 'Failed to copy characters to clipboard');
+    }
   }
 
   /// Delete a single character

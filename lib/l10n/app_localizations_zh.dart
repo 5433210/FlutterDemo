@@ -647,6 +647,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get clearImageCache => '清除图像缓存';
 
   @override
+  String get clearSelection => '取消选择';
+
+  @override
   String get collection => '集字';
 
   @override

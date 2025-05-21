@@ -1331,6 +1331,12 @@ abstract class AppLocalizations {
   /// **'清除图像缓存'**
   String get clearImageCache;
 
+  /// No description provided for @clearSelection.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消选择'**
+  String get clearSelection;
+
   /// No description provided for @collection.
   ///
   /// In zh, this message translates to:

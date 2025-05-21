@@ -40,8 +40,18 @@ class _M3CharacterManagementPageState
         onDeleteSelected: state.selectedCharacters.isNotEmpty
             ? _handleDeleteSelectedCharacters
             : null,
+        onCopySelected: state.selectedCharacters.isNotEmpty ||
+                state.selectedCharacterId != null
+            ? _handleCopySelectedCharacters
+            : null,
+        onSelectAll: state.isBatchMode ? _handleSelectAll : null,
+        onClearSelection:
+            state.isBatchMode && state.selectedCharacters.isNotEmpty
+                ? _handleClearSelection
+                : null,
         isGridView: state.viewMode == ViewMode.grid,
-        onToggleViewMode: _toggleViewMode,        onSearch: _handleSearch,
+        onToggleViewMode: _toggleViewMode,
+        onSearch: _handleSearch,
         searchController: _searchController,
         onBackPressed: () {
           CrossNavigationHelper.handleBackNavigation(context, ref);
@@ -122,6 +132,31 @@ class _M3CharacterManagementPageState
           .read(characterManagementProvider.notifier)
           .selectCharacter(characterId);
     }
+  }
+
+  /// Handle clear selection action
+  void _handleClearSelection() {
+    ref.read(characterManagementProvider.notifier).clearSelection();
+  }
+
+  void _handleCopySelectedCharacters() async {
+    // 调用复制功能
+    await ref
+        .read(characterManagementProvider.notifier)
+        .copySelectedCharactersToClipboard();
+
+    // 显示成功提示
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            '${l10n.selectedCount(ref.read(characterManagementProvider).selectedCharacters.length)} ${l10n.practiceEditCopy.split(' ').first}'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _handleDeleteCharacter(String characterId) {
@@ -215,6 +250,11 @@ class _M3CharacterManagementPageState
     // Apply the updated filter to the management provider
     final filter = ref.read(characterFilterProvider);
     ref.read(characterManagementProvider.notifier).updateFilter(filter);
+  }
+
+  /// Handle select all action
+  void _handleSelectAll() {
+    ref.read(characterManagementProvider.notifier).selectAllOnPage();
   }
 
   Future<void> _handleToggleFavorite(String characterId) async {

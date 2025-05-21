@@ -206,6 +206,7 @@
   "clearCacheConfirmMessage": "Are you sure you want to clear all cached data? This will free up disk space but may slow down the application temporarily.",
   "clearCacheConfirmTitle": "Clear Cache",
   "clearImageCache": "Clear Image Cache",
+  "clearSelection": "Clear Selection",
   "collection": "Collection",
   "collectionPropertyPanel": "Collection Properties",
   "collectionPropertyPanelAutoLineBreak": "Auto Line Break",

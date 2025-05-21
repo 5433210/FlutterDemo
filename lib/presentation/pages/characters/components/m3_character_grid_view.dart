@@ -365,14 +365,17 @@ class M3CharacterGridView extends ConsumerWidget {
                           .getCharacterImagePath(
                               character.id, CharacterImageType.thumbnail),
                       builder: (context, snapshot) {
-                        return M3CharacterCard(
-                          character: character,
-                          thumbnailPath: snapshot.data,
-                          isSelected: isSelected,
-                          isBatchMode: isBatchMode,
-                          onTap: () => onCharacterTap(character.id),
-                          onToggleFavorite: () =>
-                              onToggleFavorite(character.id),
+                        return Container(
+                          key: ValueKey('character_${character.id}'),
+                          child: M3CharacterCard(
+                            character: character,
+                            thumbnailPath: snapshot.data,
+                            isSelected: isSelected,
+                            isBatchMode: isBatchMode,
+                            onTap: () => onCharacterTap(character.id),
+                            onToggleFavorite: () =>
+                                onToggleFavorite(character.id),
+                          ),
                         );
                       },
                     );
@@ -434,13 +437,16 @@ class M3CharacterGridView extends ConsumerWidget {
                     .getCharacterImagePath(
                         character.id, CharacterImageType.thumbnail),
                 builder: (context, snapshot) {
-                  return M3CharacterCard(
-                    character: character,
-                    thumbnailPath: snapshot.data,
-                    isSelected: isSelected,
-                    isBatchMode: isBatchMode,
-                    onTap: () => onCharacterTap(character.id),
-                    onToggleFavorite: () => onToggleFavorite(character.id),
+                  return Container(
+                    key: ValueKey('character_${character.id}'),
+                    child: M3CharacterCard(
+                      character: character,
+                      thumbnailPath: snapshot.data,
+                      isSelected: isSelected,
+                      isBatchMode: isBatchMode,
+                      onTap: () => onCharacterTap(character.id),
+                      onToggleFavorite: () => onToggleFavorite(character.id),
+                    ),
                   );
                 },
               );

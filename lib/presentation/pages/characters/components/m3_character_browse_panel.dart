@@ -7,6 +7,7 @@ import '../../../viewmodels/states/character_management_state.dart';
 import '../../../widgets/common/resizable_panel.dart';
 import '../../../widgets/common/sidebar_toggle.dart';
 import '../../../widgets/pagination/m3_pagination_controls.dart';
+import '../../library/components/box_selection_painter.dart';
 import 'm3_character_filter_panel.dart';
 import 'm3_character_grid_view.dart';
 import 'm3_character_list_view.dart';
@@ -84,6 +85,12 @@ class _M3CharacterBrowsePanelState
   late bool _isFilterPanelExpanded;
   late TextEditingController _searchController;
 
+  // 框选相关变量
+  final GlobalKey _contentKey = GlobalKey();
+  bool _isBoxSelecting = false;
+  Offset? _boxSelectionStart;
+  Offset? _boxSelectionCurrent;
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(characterManagementProvider);
@@ -116,27 +123,7 @@ class _M3CharacterBrowsePanelState
 
               // 主内容（字符网格或列表）
               Expanded(
-                child: state.viewMode == ViewMode.grid
-                    ? M3CharacterGridView(
-                        characters: state.characters,
-                        isBatchMode: state.isBatchMode,
-                        selectedCharacters: state.selectedCharacters,
-                        onCharacterTap: _handleCharacterTap,
-                        onToggleFavorite: _handleToggleFavorite,
-                        isLoading: state.isLoading,
-                        errorMessage: state.errorMessage,
-                      )
-                    : M3CharacterListView(
-                        characters: state.characters,
-                        isBatchMode: state.isBatchMode,
-                        selectedCharacters: state.selectedCharacters,
-                        onCharacterSelect: _handleCharacterTap,
-                        onToggleFavorite: _handleToggleFavorite,
-                        onDelete: _handleDeleteCharacter,
-                        onEdit: _handleEditCharacter,
-                        isLoading: state.isLoading,
-                        errorMessage: state.errorMessage,
-                      ),
+                child: _buildContentArea(state),
               ),
             ],
           ),
@@ -182,6 +169,218 @@ class _M3CharacterBrowsePanelState
     Future.microtask(() {
       ref.read(characterManagementProvider.notifier).loadInitialData();
     });
+  }
+
+  Widget _buildContentArea(CharacterManagementState state) {
+    // 创建基础内容
+    Widget content = state.viewMode == ViewMode.grid
+        ? M3CharacterGridView(
+            characters: state.characters,
+            isBatchMode: state.isBatchMode,
+            selectedCharacters: state.selectedCharacters,
+            onCharacterTap: _handleCharacterTap,
+            onToggleFavorite: _handleToggleFavorite,
+            isLoading: state.isLoading,
+            errorMessage: state.errorMessage,
+          )
+        : M3CharacterListView(
+            characters: state.characters,
+            isBatchMode: state.isBatchMode,
+            selectedCharacters: state.selectedCharacters,
+            onCharacterSelect: _handleCharacterTap,
+            onToggleFavorite: _handleToggleFavorite,
+            onDelete: _handleDeleteCharacter,
+            onEdit: _handleEditCharacter,
+            isLoading: state.isLoading,
+            errorMessage: state.errorMessage,
+          );
+
+    // 只有在批量模式下才启用框选功能
+    if (!state.isBatchMode) {
+      return content;
+    }
+
+    // 包装内容区域以支持框选
+    return Stack(
+      children: [
+        // 内容区域，带有key以便我们可以获取其大小
+        GestureDetector(
+          key: _contentKey,
+          behavior: HitTestBehavior.translucent,
+          onPanStart: (details) {
+            if (!state.isBatchMode) return;
+
+            // 获取点击位置
+            RenderBox? box =
+                _contentKey.currentContext?.findRenderObject() as RenderBox?;
+            if (box == null) return;
+
+            Offset localPosition = box.globalToLocal(details.globalPosition);
+
+            setState(() {
+              _isBoxSelecting = true;
+              _boxSelectionStart = localPosition;
+              _boxSelectionCurrent = localPosition;
+            });
+          },
+          onPanUpdate: (details) {
+            if (!_isBoxSelecting) return;
+
+            RenderBox? box =
+                _contentKey.currentContext?.findRenderObject() as RenderBox?;
+            if (box == null) return;
+
+            Offset localPosition = box.globalToLocal(details.globalPosition);
+
+            setState(() {
+              _boxSelectionCurrent = localPosition;
+            });
+          },
+          onPanEnd: (details) {
+            if (!_isBoxSelecting) return;
+
+            _handleBoxSelection();
+
+            setState(() {
+              _isBoxSelecting = false;
+              _boxSelectionStart = null;
+              _boxSelectionCurrent = null;
+            });
+          },
+          child: content,
+        ),
+
+        // 绘制选择框
+        if (_isBoxSelecting &&
+            _boxSelectionStart != null &&
+            _boxSelectionCurrent != null)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: BoxSelectionPainter(
+                start: _boxSelectionStart!,
+                end: _boxSelectionCurrent!,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // 找到字符卡片的真实位置
+  Map<String, Rect> _findRealCharacterPositions(RenderBox containerBox) {
+    final result = <String, Rect>{};
+
+    // 遍历所有元素并查找字符项
+    void visitor(Element element) {
+      String? characterId;
+
+      // 检查元素的键是否包含字符ID，不再局限于特定widget类型
+      final key = element.widget.key;
+      if (key is ValueKey && key.value.toString().startsWith('character_')) {
+        // 从键字符串中提取字符ID
+        characterId = key.value.toString().substring(10);
+
+        // 获取位置信息
+        final renderObj = element.renderObject;
+        if (renderObj is RenderBox && renderObj.hasSize) {
+          try {
+            // 计算相对于容器的位置
+            final pos =
+                renderObj.localToGlobal(Offset.zero, ancestor: containerBox);
+            final rect = Rect.fromLTWH(
+                pos.dx, pos.dy, renderObj.size.width, renderObj.size.height);
+            result[characterId] = rect;
+            debugPrint('Found character position for $characterId: $rect');
+          } catch (e) {
+            // 处理可能的异常，例如元素已经不在视图树中
+            debugPrint('Error getting position for character $characterId: $e');
+          }
+        }
+      }
+
+      // 继续遍历子元素
+      element.visitChildren(visitor);
+    }
+
+    // 开始遍历
+    if (_contentKey.currentContext != null) {
+      _contentKey.currentContext!.visitChildElements(visitor);
+      debugPrint(
+          'Element tree traversal complete, found ${result.length} characters');
+    } else {
+      debugPrint('Content key context is null, cannot traverse element tree');
+    }
+
+    return result;
+  }
+
+  // 这些方法已经在重构中移到了内联实现
+  // 可以安全删除
+
+  // 处理框选完成
+  void _handleBoxSelection() {
+    if (_boxSelectionStart == null || _boxSelectionCurrent == null) return;
+
+    final state = ref.read(characterManagementProvider);
+    if (!state.isBatchMode) return;
+
+    // 将选择框规范化为左上角到右下角的形式
+    final selectionRect =
+        Rect.fromPoints(_boxSelectionStart!, _boxSelectionCurrent!);
+
+    // 获取内容区域的RenderBox对象
+    RenderBox? contentBox =
+        _contentKey.currentContext?.findRenderObject() as RenderBox?;
+    if (contentBox == null) {
+      debugPrint('Content box is null, cannot find character positions');
+      return;
+    }
+
+    // 输出当前视图模式用于调试
+    debugPrint(
+        'Current view mode: ${state.viewMode == ViewMode.grid ? "Grid" : "List"}');
+
+    // 使用元素遍历来找到实际的字符项位置
+    final characterItems = _findRealCharacterPositions(contentBox);
+    if (characterItems.isEmpty) {
+      debugPrint('No character items found in the view');
+      return;
+    }
+
+    final notifier = ref.read(characterManagementProvider.notifier);
+
+    // 记录框选内的所有字符ID
+    Set<String> boxSelectedIds = {};
+
+    // 调试信息
+    debugPrint('Selection rect: $selectionRect');
+    debugPrint('Found ${characterItems.length} character items');
+
+    // 选中在选择框内的所有字符
+    for (var entry in characterItems.entries) {
+      if (selectionRect.overlaps(entry.value)) {
+        boxSelectedIds.add(entry.key);
+        debugPrint('Selected character: ${entry.key}, rect: ${entry.value}');
+      }
+    }
+
+    if (boxSelectedIds.isEmpty) {
+      debugPrint('No characters found in selection rectangle: $selectionRect');
+      return;
+    }
+
+    debugPrint('Box selected ${boxSelectedIds.length} characters');
+
+    // 更直接的方法：强制将框中所有的字符都设为选中状态
+    for (final id in boxSelectedIds) {
+      if (!state.selectedCharacters.contains(id)) {
+        // 只有未选中的字符才需要切换状态
+        notifier.toggleCharacterSelection(id);
+        debugPrint('Toggling selection for character: $id');
+      } else {
+        debugPrint('Character already selected: $id');
+      }
+    }
   }
 
   void _handleCharacterTap(String characterId) {
@@ -270,6 +469,7 @@ class _M3CharacterBrowsePanelState
         .read(characterManagementProvider.notifier)
         .toggleFavorite(characterId);
   }
+
   // ===== 事件处理方法 =====
 
   void _toggleFilterPanel() {
