@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import '../../pages/library/components/m3_library_list_view.dart';
 import '../../pages/library/components/resizable_image_preview_panel.dart';
 import '../../pages/library/desktop_drop_wrapper.dart';
 import '../../providers/library/library_management_provider.dart';
+import '../../providers/settings/grid_size_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
 import '../common/resizable_panel.dart';
 import '../common/sidebar_toggle.dart';
@@ -391,74 +393,93 @@ class _M3LibraryBrowsingPanelState
         _contentKey.currentContext?.findRenderObject() as RenderBox?;
     if (contentBox == null) return;
 
-    // 获取所有项目的位置并检查它们是否在选择框内
     final notifier = ref.read(libraryManagementProvider.notifier);
     Set<String> selectedIds = Set.from(state.selectedItems);
-
-    // 这里我们需要获取所有渲染在屏幕上的项目元素
-    // 由于我们没有直接的方法来获取每个项目的位置，
-    // 我们可以通过以下简化的方法来实现（实际应用中可能需要更复杂的实现）：
-
-    // 如果是网格视图
+    
     if (state.viewMode == ViewMode.grid) {
-      // 获取视窗大小
+      // 从provider直接获取实际的grid size设置
+      final gridSizeOption = ref.read(gridSizeProvider);
+      final minItemWidth = gridSizeOption.minItemWidth;
+      
+      // 使用与M3LibraryGridView完全相同的计算逻辑
+      const spacing = 16.0;
       final viewportSize = contentBox.size;
-
-      // 假设项目是等宽等高排列的，计算每个项目可能的位置
-      const spacing = 16.0; // 来自M3LibraryGridView的spacing常量
-      const crossAxisCount = 4; // 来自M3LibraryGridView的crossAxisCount常量
-
-      final itemWidth = (viewportSize.width - spacing * (crossAxisCount + 1)) /
-          crossAxisCount;
-      final itemHeight = itemWidth; // 假设宽高比为1
-
-      // 遍历所有项目
+      
+      // 动态计算列数，与M3LibraryGridView保持一致
+      int crossAxisCount = math.max(2, math.min(8, 
+          (viewportSize.width - spacing) ~/ (minItemWidth + spacing)));
+      
+      final itemWidth = (viewportSize.width - spacing * (crossAxisCount + 1)) / crossAxisCount;
+      final itemHeight = itemWidth;
+      
+      // 查找滚动偏移量
+      double scrollOffset = 0;
+      try {
+        final scrollable = Scrollable.of(_contentKey.currentContext!);
+        if (scrollable.position != null) {
+          scrollOffset = scrollable.position.pixels;
+        }
+      } catch (e) {
+        // 忽略错误，使用默认值0
+      }
+      
+      // 遍历项目并计算位置
       for (int i = 0; i < state.items.length; i++) {
-        // 计算项目的行和列位置
         final column = i % crossAxisCount;
         final row = i ~/ crossAxisCount;
-
-        // 计算项目的左上角坐标
+        
         final left = spacing + column * (itemWidth + spacing);
-        final top = spacing + row * (itemHeight + spacing);
-
-        // 创建项目的矩形
+        final top = spacing + row * (itemHeight + spacing) - scrollOffset;
+        
         final itemRect = Rect.fromLTWH(left, top, itemWidth, itemHeight);
-
-        // 检查项目是否与选择框相交
+        
         if (itemRect.overlaps(selectionRect)) {
           selectedIds.add(state.items[i].id);
         }
       }
     } else {
-      // 列表视图的处理与网格视图类似，但位置计算不同
-      const spacing = 16.0; // 来自M3LibraryListView的spacing常量
-      const itemHeight = 80.0; // 假设每个列表项的高度为80
-
-      // 遍历所有项目
+      // 列表视图的简化处理
+      const itemHeight = 72.0; // 使用实际的列表项高度
+      const spacing = 8.0;
+      
+      // 查找滚动偏移量
+      double scrollOffset = 0;
+      try {
+        final scrollable = Scrollable.of(_contentKey.currentContext!);
+        if (scrollable.position != null) {
+          scrollOffset = scrollable.position.pixels;
+        }
+      } catch (e) {
+        // 忽略错误
+      }
+      
       for (int i = 0; i < state.items.length; i++) {
-        // 计算项目的顶部位置
-        final top = spacing + i * (itemHeight + spacing);
-
-        // 创建项目的矩形
+        final top = spacing + i * (itemHeight + spacing) - scrollOffset;
         final itemRect = Rect.fromLTWH(
-            spacing, top, contentBox.size.width - 2 * spacing, itemHeight);
-
-        // 检查项目是否与选择框相交
+          spacing, 
+          top, 
+          contentBox.size.width - 2 * spacing, 
+          itemHeight
+        );
+        
         if (itemRect.overlaps(selectionRect)) {
           selectedIds.add(state.items[i].id);
         }
       }
     }
-
-    // 如果还不在批量模式，进入批量模式
+    
+    // 更新选中状态
     if (!state.isBatchMode && selectedIds.isNotEmpty) {
       notifier.toggleBatchMode();
     }
-
-    // 更新选中项目
-    for (final id in state.items.map((e) => e.id)) {
-      if (selectedIds.contains(id) && !state.selectedItems.contains(id)) {
+    
+    // 更新所有项目的选中状态
+    for (final item in state.items) {
+      final id = item.id;
+      final isCurrentlySelected = state.selectedItems.contains(id);
+      final shouldBeSelected = selectedIds.contains(id);
+      
+      if (isCurrentlySelected != shouldBeSelected) {
         notifier.toggleItemSelection(id);
       }
     }
