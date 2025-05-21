@@ -55,9 +55,6 @@ class PracticeEditController extends ChangeNotifier {
 
     // 初始化默认数据
     _initDefaultData();
-
-    // 初始化默认数据
-    _initDefaultData();
   }
 
   /// 获取画布 GlobalKey

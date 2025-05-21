@@ -206,12 +206,24 @@ class PageOperations {
 
   /// 删除页面
   static void deletePage(List<Map<String, dynamic>> pages, int index) {
-    pages.removeWhere((page) => page['index'] == index);
+    // 确保索引有效
+    if (index < 0 || index >= pages.length) {
+      debugPrint('Warning: Attempting to delete page at invalid index $index');
+      return;
+    }
+
+    // 获取要删除的页面的内部索引值
+    final pageIndex = pages[index]['index'] as int? ?? index;
+    
+    // 移除指定位置的页面（按数组位置删除，而不是按页面的index属性）
+    pages.removeAt(index);
 
     // 重新编号剩余页面
     for (int i = 0; i < pages.length; i++) {
-      if (pages[i]['index'] > index) {
-        pages[i]['index'] = pages[i]['index'] - 1;
+      final currentIndex = pages[i]['index'] as int? ?? i;
+      if (currentIndex > pageIndex) {
+        // 调整此页面的索引
+        pages[i]['index'] = currentIndex - 1;
         pages[i]['name'] = '页面 ${pages[i]['index'] + 1}';
       }
     }

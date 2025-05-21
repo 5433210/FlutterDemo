@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../utils/cross_navigation_helper.dart';
+
 import '../../../theme/app_sizes.dart';
 import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
@@ -25,9 +27,8 @@ class M3SettingsPage extends ConsumerWidget {
         },
         hasChanges: hasChanges,
         onBackPressed: () {
-          // 设置页面直接在主导航中，使用合适的方式返回
-          // 使用路由替换回到主页，避免透明窗体问题
-          Navigator.of(context, rootNavigator: true).pushReplacementNamed('/');
+          // 使用CrossNavigationHelper来处理返回导航，显示“返回到之前的页面”对话框
+          CrossNavigationHelper.handleBackNavigation(context, ref);
         },
       ),
       body: SafeArea(
