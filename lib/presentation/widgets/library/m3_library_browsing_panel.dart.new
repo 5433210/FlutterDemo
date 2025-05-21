@@ -1,5 +1,6 @@
 // 图库浏览面板修复版本
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import '../../pages/library/components/m3_library_list_view.dart';
 import '../../pages/library/components/resizable_image_preview_panel.dart';
 import '../../pages/library/desktop_drop_wrapper.dart';
 import '../../providers/library/library_management_provider.dart';
+import '../../providers/settings/grid_size_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
 import '../common/resizable_panel.dart';
 import '../common/sidebar_toggle.dart';
@@ -288,7 +290,7 @@ class _M3LibraryBrowsingPanelState
             RenderBox? box =
                 _contentKey.currentContext?.findRenderObject() as RenderBox?;
             if (box == null) return;
-
+            
             Offset localPosition = box.globalToLocal(details.globalPosition);
 
             setState(() {
@@ -303,11 +305,11 @@ class _M3LibraryBrowsingPanelState
             RenderBox? box =
                 _contentKey.currentContext?.findRenderObject() as RenderBox?;
             if (box == null) return;
-
+                
             Offset localPosition = box.globalToLocal(details.globalPosition);
 
             // 只有当位置确实发生明显变化时才更新
-            if (_boxSelectionCurrent == null ||
+            if (_boxSelectionCurrent == null || 
                 (_boxSelectionCurrent! - localPosition).distance > 2.0) {
               setState(() {
                 _boxSelectionCurrent = localPosition;
@@ -404,24 +406,26 @@ class _M3LibraryBrowsingPanelState
   // 查找所有图库项目的真实位置
   Map<String, Rect> _findRealLibraryItemPositions(RenderBox containerBox) {
     final result = <String, Rect>{};
-
+    
     void visitor(Element element) {
       // 检查元素的键是否包含图库项目ID
       final key = element.widget.key;
       if (key is ValueKey && key.value.toString().startsWith('library_item_')) {
         // 从键字符串中提取图库项目ID
-        final itemId =
-            key.value.toString().substring(13); // 'library_item_'.length
-
+        final itemId = key.value.toString().substring(13); // 'library_item_'.length
+        
         // 获取位置信息
         final renderObj = element.renderObject;
         if (renderObj is RenderBox && renderObj.hasSize) {
           try {
             // 计算相对于容器的位置
-            final pos =
-                renderObj.localToGlobal(Offset.zero, ancestor: containerBox);
+            final pos = renderObj.localToGlobal(Offset.zero, ancestor: containerBox);
             final rect = Rect.fromLTWH(
-                pos.dx, pos.dy, renderObj.size.width, renderObj.size.height);
+              pos.dx, 
+              pos.dy, 
+              renderObj.size.width, 
+              renderObj.size.height
+            );
             result[itemId] = rect;
             print('【框选】找到图库项目位置 $itemId: $rect');
           } catch (e) {
@@ -430,11 +434,11 @@ class _M3LibraryBrowsingPanelState
           }
         }
       }
-
+      
       // 继续遍历子元素
       element.visitChildren(visitor);
     }
-
+    
     // 开始遍历
     if (_contentKey.currentContext != null) {
       _contentKey.currentContext!.visitChildElements(visitor);
@@ -442,7 +446,7 @@ class _M3LibraryBrowsingPanelState
     } else {
       print('【框选】内容区域context为空，无法遍历元素树');
     }
-
+    
     return result;
   }
 
@@ -502,14 +506,17 @@ class _M3LibraryBrowsingPanelState
     // 更新批量模式状态
     if (!state.isBatchMode && boxSelectedIds.isNotEmpty) {
       notifier.toggleBatchMode();
-    } // 只添加新选择的项目，保留已有选择
-    for (final id in boxSelectedIds) {
-      if (!state.selectedItems.contains(id)) {
-        // 只有未选中的项目才需要切换状态
+    }
+    
+    // 更新所有图库项目的选中状态
+    for (final item in state.items) {
+      final id = item.id;
+      final isCurrentlySelected = state.selectedItems.contains(id);
+      final shouldBeSelected = boxSelectedIds.contains(id);
+      
+      if (isCurrentlySelected != shouldBeSelected) {
         notifier.toggleItemSelection(id);
-        print('【框选】添加选中图库项目: $id');
-      } else {
-        print('【框选】图库项目已被选中: $id');
+        print('【框选】切换图库项目 $id 的选中状态');
       }
     }
   }

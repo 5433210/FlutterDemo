@@ -15,7 +15,6 @@ class DraggableLibraryItemWrapper extends StatelessWidget {
   final List<LibraryItem> items;
   final bool isListView;
   final Function()? onToggleFavorite;
-
   const DraggableLibraryItemWrapper({
     Key? key,
     required this.item,
@@ -26,11 +25,12 @@ class DraggableLibraryItemWrapper extends StatelessWidget {
     this.isListView = false,
     this.onToggleFavorite,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     // 创建可拖动的库项目
+    final itemKey = ValueKey('library_item_${item.id}');
     return Draggable<LibraryItemDragData>(
+      key: itemKey,
       data: LibraryItemDragData(
         itemId: item.id,
         preview: Image.memory(
