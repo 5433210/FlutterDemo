@@ -314,18 +314,21 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
             // Central edit area
             Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Toolbar
-                  if (!_isPreviewMode) _buildEditToolbar(),
-
-                  // Edit canvas - 使用ProviderScope包装，确保可以访问ref
+                  if (!_isPreviewMode) _buildEditToolbar(),                  // Edit canvas - 使用ProviderScope包装，确保可以访问ref
                   Expanded(
-                    child: ProviderScope(
-                      child: M3PracticeEditCanvas(
-                        controller: _controller,
-                        isPreviewMode: _isPreviewMode,
-                        canvasKey: canvasKey,
-                        transformationController: _transformationController,
+                    // Use a SizedBox with fixed height instead of unconstrained SingleChildScrollView
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height - 150, // Fixed height
+                      child: ProviderScope(
+                        child: M3PracticeEditCanvas(
+                          controller: _controller,
+                          isPreviewMode: _isPreviewMode,
+                          canvasKey: canvasKey,
+                          transformationController: _transformationController,
+                        ),
                       ),
                     ),
                   ),

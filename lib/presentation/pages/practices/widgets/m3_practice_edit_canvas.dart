@@ -249,6 +249,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             Container(
               color: colorScheme.inverseSurface.withOpacity(
                   0.1), // Canvas outer background - improved contrast in light theme
+
               child: InteractiveViewer(
                 boundaryMargin: const EdgeInsets.all(double.infinity),
                 panEnabled: true, // 完全禁用内置平移，由我们自己的代码处理所有平移
@@ -334,8 +335,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                 color: colorScheme.surface.withOpacity(0.85),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4.0,
+                  runSpacing: 4.0,
                   children: [
                     // Reset position button
                     Tooltip(
@@ -349,23 +352,30 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 4, vertical: 2),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.center_focus_strong,
-                                  size: 14,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  AppLocalizations.of(context).canvasResetView,
-                                  style: TextStyle(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 120),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.center_focus_strong,
+                                    size: 14,
                                     color: colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      AppLocalizations.of(context)
+                                          .canvasResetView,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: colorScheme.onSurfaceVariant,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -373,24 +383,30 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     ),
                     const SizedBox(width: 12),
                     // Zoom indicator
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.zoom_in,
-                          size: 16,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$zoomPercentage%',
-                          style: TextStyle(
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 80),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.zoom_in,
+                            size: 16,
                             color: colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '$zoomPercentage%',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

@@ -54,7 +54,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(48);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +66,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         hasSelection && !isMultiSelected && _isSelectedElementGroup();
 
     return Container(
-      height: 48,
+      // 移除固定高度限制，使用自适应高度
+      constraints: const BoxConstraints(minHeight: 48),
       padding: const EdgeInsets.symmetric(
           vertical: AppSizes.xs, horizontal: AppSizes.s),
       decoration: BoxDecoration(
@@ -274,27 +275,34 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           borderRadius: BorderRadius.circular(8.0),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: isSelected 
-                      ? colorScheme.onPrimaryContainer 
-                      : colorScheme.onSurface,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  tooltip,
-                  style: TextStyle(
-                    fontSize: 12,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 36), // 确保有足够的最小宽度
+              child: Flex(
+                direction: Axis.horizontal,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    icon,
+                    size: 18,
                     color: isSelected 
                         ? colorScheme.onPrimaryContainer 
                         : colorScheme.onSurface,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      tooltip,
+                      style: TextStyle(
+                        fontSize: 12,
+                        overflow: TextOverflow.ellipsis,
+                        color: isSelected 
+                            ? colorScheme.onPrimaryContainer 
+                            : colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -370,8 +378,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required String title,
     required List<Widget> children,
   }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 4, // 设置按钮之间的水平间距
+      crossAxisAlignment: WrapCrossAlignment.center, // 垂直居中对齐
       children: [
         // Group title
         Text(
