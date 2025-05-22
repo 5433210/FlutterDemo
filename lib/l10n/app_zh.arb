@@ -979,5 +979,7 @@
   "workToolBrush": "毛笔",
   "workToolHardPen": "硬笔",
   "workToolOther": "其他",
+  "hideImagePreview": "隐藏图片预览",
+  "showImagePreview": "显示图片预览",
   "yes": "是"
 }

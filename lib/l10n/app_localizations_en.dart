@@ -3044,5 +3044,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workToolOther => 'Other';
 
   @override
+  String get hideImagePreview => 'Hide Image Preview';
+
+  @override
+  String get showImagePreview => 'Show Image Preview';
+
+  @override
   String get yes => 'Yes';
 }

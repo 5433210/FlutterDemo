@@ -59,24 +59,24 @@ class _M3CharacterManagementNavigationBarState
                 l10n.selectedCount(widget.selectedCount),
                 style: theme.textTheme.bodyMedium,
               ),
-              if (widget.selectedCount > 0) ...[
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.s),
-                  child: FilledButton.tonalIcon(
-                    icon: const Icon(Icons.delete),
-                    label: Text(l10n.characterManagementDeleteSelected),
-                    onPressed: widget.onDeleteSelected,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppSizes.s),
-                  child: FilledButton.tonalIcon(
-                    icon: const Icon(Icons.copy),
-                    label: Text(l10n.practiceEditCopy),
-                    onPressed: widget.onCopySelected,
-                  ),
-                ),
-              ],
+              // if (widget.selectedCount > 0) ...[
+              //   Padding(
+              //     padding: const EdgeInsets.only(left: AppSizes.s),
+              //     child: FilledButton.tonalIcon(
+              //       icon: const Icon(Icons.delete),
+              //       label: Text(l10n.characterManagementDeleteSelected),
+              //       onPressed: widget.onDeleteSelected,
+              //     ),
+              //   ),
+              //   Padding(
+              //     padding: const EdgeInsets.only(left: AppSizes.s),
+              //     child: FilledButton.tonalIcon(
+              //       icon: const Icon(Icons.copy),
+              //       label: Text(l10n.practiceEditCopy),
+              //       onPressed: widget.onCopySelected,
+              //     ),
+              //   ),
+              // ],
             ]
           : null,
       actions: [

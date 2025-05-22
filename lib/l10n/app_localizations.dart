@@ -5969,6 +5969,18 @@ abstract class AppLocalizations {
   /// **'其他'**
   String get workToolOther;
 
+  /// No description provided for @hideImagePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏图片预览'**
+  String get hideImagePreview;
+
+  /// No description provided for @showImagePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示图片预览'**
+  String get showImagePreview;
+
   /// No description provided for @yes.
   ///
   /// In zh, this message translates to:

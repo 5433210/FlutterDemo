@@ -9,6 +9,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final PracticeEditController controller;
   final bool gridVisible;
   final bool snapEnabled;
+  final bool canPaste;
   final VoidCallback onToggleGrid;
   final VoidCallback onToggleSnap;
   final VoidCallback onCopy;
@@ -20,12 +21,15 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onMoveUp;
   final VoidCallback onMoveDown;
   final VoidCallback onDelete;
+  final VoidCallback? onCopyFormatting;
+  final VoidCallback? onApplyFormatBrush;
 
   const M3EditToolbar({
     super.key,
     required this.controller,
     required this.gridVisible,
     required this.snapEnabled,
+    this.canPaste = false,
     required this.onToggleGrid,
     required this.onToggleSnap,
     required this.onCopy,
@@ -37,6 +41,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required this.onMoveUp,
     required this.onMoveDown,
     required this.onDelete,
+    this.onCopyFormatting,
+    this.onApplyFormatBrush,
   });
 
   @override
@@ -83,7 +89,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   context: context,
                   icon: Icons.paste,
                   tooltip: l10n.practiceEditPaste,
-                  onPressed: onPaste,
+                  onPressed: canPaste ? onPaste : null,
                 ),
                 _buildToolbarButton(
                   context: context,
@@ -167,6 +173,20 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: onToggleSnap,
                   isActive: snapEnabled,
                 ),
+                if (onCopyFormatting != null)
+                  _buildToolbarButton(
+                    context: context,
+                    icon: Icons.format_paint,
+                    tooltip: '复制格式',
+                    onPressed: hasSelection ? onCopyFormatting : null,
+                  ),
+                if (onApplyFormatBrush != null)
+                  _buildToolbarButton(
+                    context: context,
+                    icon: Icons.format_color_fill,
+                    tooltip: '应用格式刷',
+                    onPressed: hasSelection ? onApplyFormatBrush : null,
+                  ),
               ],
             ),
           ],

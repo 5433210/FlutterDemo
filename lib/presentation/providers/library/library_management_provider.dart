@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
@@ -193,6 +196,93 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
       isDetailOpen: false,
       selectedItem: null,
     );
+  }
+
+  /// 复制选中的项目到剪贴板
+  /// 如果是批量模式下选择了多个项目，则复制所有选中的项目ID
+  /// 如果不是批量模式，则复制当前选中的项目ID
+  Future<void> copySelectedItemsToClipboard() async {
+    try {
+      List<String> itemIds = [];
+
+      // 批量模式下，复制所有选中的项目ID
+      if (state.isBatchMode && state.selectedItems.isNotEmpty) {
+        itemIds = state.selectedItems.toList();
+      }
+      // 非批量模式下，复制当前选中的项目ID（如果有）
+      else if (state.selectedItem != null) {
+        itemIds = [state.selectedItem!.id];
+      }
+
+      // 如果没有选中的项目，直接返回
+      if (itemIds.isEmpty) return;
+
+      // 查找对应的 LibraryItem 对象
+      final selectedItems =
+          state.items.where((item) => itemIds.contains(item.id)).toList();
+
+      if (selectedItems.isEmpty) return;
+
+      // 将项目列表转换为 JSON 格式并写入剪贴板
+      final Map<String, dynamic> clipboardData = {
+        'type': 'library_items',
+        'operation': 'copy',
+        'count': selectedItems.length,
+        'itemIds': itemIds,
+      };
+
+      final String jsonData = jsonEncode(clipboardData);
+      await Clipboard.setData(ClipboardData(text: jsonData));
+
+      AppLogger.info('Copied ${itemIds.length} library item(s) to clipboard');
+    } catch (e) {
+      AppLogger.error('Failed to copy library items to clipboard: $e');
+      state = state.copyWith(
+          errorMessage: 'Failed to copy library items to clipboard');
+    }
+  }
+
+  /// 剪切选中的项目到剪贴板
+  /// 与复制功能类似，但标记为剪切操作
+  Future<void> cutSelectedItemsToClipboard() async {
+    try {
+      List<String> itemIds = [];
+
+      // 批量模式下，复制所有选中的项目ID
+      if (state.isBatchMode && state.selectedItems.isNotEmpty) {
+        itemIds = state.selectedItems.toList();
+      }
+      // 非批量模式下，复制当前选中的项目ID（如果有）
+      else if (state.selectedItem != null) {
+        itemIds = [state.selectedItem!.id];
+      }
+
+      // 如果没有选中的项目，直接返回
+      if (itemIds.isEmpty) return;
+
+      // 查找对应的 LibraryItem 对象
+      final selectedItems =
+          state.items.where((item) => itemIds.contains(item.id)).toList();
+
+      if (selectedItems.isEmpty) return;
+
+      // 将项目列表转换为 JSON 格式并写入剪贴板
+      final Map<String, dynamic> clipboardData = {
+        'type': 'library_items',
+        'operation': 'cut',
+        'count': selectedItems.length,
+        'itemIds': itemIds,
+      };
+
+      final String jsonData = jsonEncode(clipboardData);
+      await Clipboard.setData(ClipboardData(text: jsonData));
+
+      AppLogger.info('Cut ${itemIds.length} library item(s) to clipboard');
+    } catch (e) {
+      AppLogger.error('Failed to cut library items to clipboard: $e');
+      state = state.copyWith(
+          errorMessage: 'Failed to cut library items to clipboard');
+    }
   }
 
   /// 删除当前筛选条件下的所有项目

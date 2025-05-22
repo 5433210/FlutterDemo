@@ -34,6 +34,12 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
   /// 取消选择回调
   final VoidCallback? onCancelSelection;
 
+  /// 复制选中项目回调
+  final VoidCallback? onCopySelected;
+
+  /// 剪切选中项目回调
+  final VoidCallback? onCutSelected;
+
   /// 是否为网格视图
   final bool isGridView;
 
@@ -67,6 +73,8 @@ class M3LibraryManagementNavigationBar extends StatefulWidget
     this.onRemoveFromCategory,
     this.onSelectAll,
     this.onCancelSelection,
+    this.onCopySelected,
+    this.onCutSelected,
     required this.isGridView,
     required this.onToggleViewMode,
     required this.isImagePreviewOpen,
@@ -100,15 +108,15 @@ class _M3LibraryManagementNavigationBarState
                 l10n.selectedCount(widget.selectedCount),
                 style: theme.textTheme.bodyMedium,
               ),
-              if (widget.selectedCount > 0)
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: FilledButton.tonalIcon(
-                    icon: const Icon(Icons.delete),
-                    label: Text(l10n.libraryManagementDeleteSelected),
-                    onPressed: widget.onDeleteSelected,
-                  ),
-                ),
+              // if (widget.selectedCount > 0)
+              //   Padding(
+              //     padding: const EdgeInsets.only(left: 4),
+              //     child: FilledButton.tonalIcon(
+              //       icon: const Icon(Icons.delete),
+              //       label: Text(l10n.libraryManagementDeleteSelected),
+              //       onPressed: widget.onDeleteSelected,
+              //     ),
+              //   ),
             ]
           : null,
       actions: [
@@ -182,6 +190,22 @@ class _M3LibraryManagementNavigationBarState
               onPressed: widget.onAssignCategoryBatch,
             ),
 
+          // 复制按钮
+          if (widget.selectedCount > 0 && widget.onCopySelected != null)
+            IconButton(
+              icon: const Icon(Icons.copy),
+              tooltip: '复制选中项目',
+              onPressed: widget.onCopySelected,
+            ),
+
+          // 剪切按钮
+          if (widget.selectedCount > 0 && widget.onCutSelected != null)
+            IconButton(
+              icon: const Icon(Icons.cut),
+              tooltip: '剪切选中项目',
+              onPressed: widget.onCutSelected,
+            ),
+
           // 批量删除按钮
           if (widget.selectedCount > 0)
             IconButton(
@@ -220,7 +244,9 @@ class _M3LibraryManagementNavigationBarState
           icon: Icon(widget.isImagePreviewOpen
               ? Icons.image_not_supported
               : Icons.image),
-          tooltip: widget.isImagePreviewOpen ? '隐藏图片预览' : '显示图片预览',
+          tooltip: widget.isImagePreviewOpen
+              ? l10n.hideImagePreview
+              : l10n.showImagePreview,
           onPressed: widget.onToggleImagePreview,
         ),
       ],

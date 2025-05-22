@@ -1,8 +1,12 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/service_providers.dart';
+import '../../../application/services/character/character_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/common/resizable_panel.dart';
 import '../../widgets/common/sidebar_toggle.dart';
@@ -47,6 +51,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Clipboard
   Map<String, dynamic>? _clipboardElement;
+  bool _clipboardHasContent = false; // Track if clipboard has valid content
 
   // Preview mode
   bool _isPreviewMode = false;
@@ -69,6 +74,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Keyboard handler
   late KeyboardHandler _keyboardHandler;
+
+  // 格式刷相关变量
+  Map<String, dynamic>? _formatBrushStyles;
+  bool _isFormatBrushActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +145,23 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     _transformationController.dispose();
 
     _controller.dispose();
+
+    // We don't need to explicitly cancel the clipboard monitoring
+    // because setState will check if the widget is mounted
+
     super.dispose();
+  }
+
+  /// 生成随机字符串
+  String getRandomString(int length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final random = DateTime.now().millisecondsSinceEpoch.toString();
+    return String.fromCharCodes(
+      Iterable.generate(
+        length,
+        (_) => chars.codeUnitAt((random.hashCode + _) % chars.length),
+      ),
+    );
   }
 
   @override
@@ -165,58 +190,97 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         '【平移】PracticeEditPageRefactored.initState: 初始化 transformationController=$_transformationController, 值=${_transformationController.value}');
 
     // Initialize keyboard handler
-    _keyboardHandler = KeyboardHandler(
-      controller: _controller,
-      onTogglePreviewMode: () {
-        setState(() {
-          _isPreviewMode = !_isPreviewMode;
-          _controller.togglePreviewMode(_isPreviewMode);
-        });
-      },
-      onToggleThumbnails: () {
-        setState(() {
-          _showThumbnails = !_showThumbnails;
-        });
-      },
-      editTitle: _editTitle,
-      savePractice: _savePractice,
-      saveAsNewPractice: _saveAsNewPractice,
-      selectAllElements: _selectAllElements,
-      copySelectedElement: _copySelectedElement,
-      pasteElement: _pasteElement,
-      deleteSelectedElements: _deleteSelectedElements,
-      groupSelectedElements: _groupSelectedElements,
-      ungroupElements: _ungroupElements,
-      bringToFront: _bringElementToFront,
-      sendToBack: _sendElementToBack,
-      moveElementUp: _moveElementUp,
-      moveElementDown: _moveElementDown,
-      toggleGrid: _toggleGrid,
-      toggleSnap: _toggleSnap,
-      toggleSelectedElementsVisibility: _toggleSelectedElementsVisibility,
-      toggleSelectedElementsLock: _toggleSelectedElementsLock,
-      showExportDialog: _showExportDialog,
-      toggleLeftPanel: () {
-        setState(() {
-          _isLeftPanelOpen = !_isLeftPanelOpen;
-        });
-      },
-      toggleRightPanel: () {
-        setState(() {
-          _isRightPanelOpen = !_isRightPanelOpen;
-        });
-      },
-      moveSelectedElements: _moveSelectedElements,
-    );
+    _initKeyboardHandler();
 
-    // Add keyboard listener
-    HardwareKeyboard.instance.addHandler(_keyboardHandler.handleKeyEvent);
+    // Start clipboard monitoring
+    _checkClipboardContent().then((hasContent) {
+      setState(() {
+        _clipboardHasContent = hasContent;
+      });
+      _startClipboardMonitoring();
+    });
   }
 
   /// Add a new page
   void _addNewPage() {
     setState(() {
       PracticeEditUtils.addNewPage(_controller);
+    });
+  }
+
+  /// 应用格式刷样式到选中元素
+  void _applyFormatBrush() {
+    if (!_isFormatBrushActive || _formatBrushStyles == null) return;
+
+    final selectedElements = _controller.state.getSelectedElements();
+    if (selectedElements.isEmpty) return;
+
+    setState(() {
+      // 对每个选中的元素应用样式
+      for (final element in selectedElements) {
+        final elementType = element['type'];
+
+        // 应用通用样式
+        if (_formatBrushStyles!.containsKey('rotation')) {
+          element['rotation'] = _formatBrushStyles!['rotation'];
+        }
+        if (_formatBrushStyles!.containsKey('opacity')) {
+          element['opacity'] = _formatBrushStyles!['opacity'];
+        }
+
+        // 应用特定类型的样式
+        if (elementType == 'text' &&
+            (_formatBrushStyles!.containsKey('fontSize') ||
+                _formatBrushStyles!.containsKey('fontWeight') ||
+                _formatBrushStyles!.containsKey('fontStyle') ||
+                _formatBrushStyles!.containsKey('textColor') ||
+                _formatBrushStyles!.containsKey('textAlign'))) {
+          // 应用文本特定样式
+          if (_formatBrushStyles!.containsKey('fontSize')) {
+            element['fontSize'] = _formatBrushStyles!['fontSize'];
+          }
+          if (_formatBrushStyles!.containsKey('fontWeight')) {
+            element['fontWeight'] = _formatBrushStyles!['fontWeight'];
+          }
+          if (_formatBrushStyles!.containsKey('fontStyle')) {
+            element['fontStyle'] = _formatBrushStyles!['fontStyle'];
+          }
+          if (_formatBrushStyles!.containsKey('textColor')) {
+            element['textColor'] = _formatBrushStyles!['textColor'];
+          }
+          if (_formatBrushStyles!.containsKey('textAlign')) {
+            element['textAlign'] = _formatBrushStyles!['textAlign'];
+          }
+        } else if ((elementType == 'image' || elementType == 'collection') &&
+            (_formatBrushStyles!.containsKey('width') ||
+                _formatBrushStyles!.containsKey('height'))) {
+          // 维持宽高比例
+          double originalWidth = element['width'];
+          double originalHeight = element['height'];
+          double aspectRatio = originalWidth / originalHeight;
+
+          if (_formatBrushStyles!.containsKey('width') &&
+              _formatBrushStyles!.containsKey('height')) {
+            // 如果有宽高，直接应用
+            element['width'] = _formatBrushStyles!['width'];
+            element['height'] = _formatBrushStyles!['height'];
+          } else if (_formatBrushStyles!.containsKey('width')) {
+            // 只有宽度，保持原来的宽高比
+            element['width'] = _formatBrushStyles!['width'];
+            element['height'] = _formatBrushStyles!['width'] / aspectRatio;
+          } else if (_formatBrushStyles!.containsKey('height')) {
+            // 只有高度，保持原来的宽高比
+            element['height'] = _formatBrushStyles!['height'];
+            element['width'] = _formatBrushStyles!['height'] * aspectRatio;
+          }
+        }
+      }
+
+      // 重置格式刷状态
+      _isFormatBrushActive = false;
+
+      // 通知编辑器状态已更改
+      _controller.notifyListeners();
     });
   }
 
@@ -229,8 +293,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   /// Build the body of the page
   Widget _buildBody(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -295,30 +357,51 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   /// Build the edit toolbar
   Widget _buildEditToolbar() {
-    final l10n = AppLocalizations.of(context);
-
-    return M3EditToolbar(
-      controller: _controller,
-      gridVisible: _controller.state.gridVisible,
-      snapEnabled: _controller.state.snapEnabled,
-      onToggleGrid: _toggleGrid,
-      onToggleSnap: _toggleSnap,
-      onCopy: _copySelectedElement,
-      onPaste: _pasteElement,
-      onGroupElements: _groupSelectedElements,
-      onUngroupElements: _ungroupElements,
-      onBringToFront: _bringElementToFront,
-      onSendToBack: _sendElementToBack,
-      onMoveUp: _moveElementUp,
-      onMoveDown: _moveElementDown,
-      onDelete: _deleteSelectedElements,
+    return Column(
+      children: [
+        M3EditToolbar(
+          controller: _controller,
+          gridVisible: _controller.state.gridVisible,
+          snapEnabled: _controller.state.snapEnabled,
+          onToggleGrid: _toggleGrid,
+          onToggleSnap: _toggleSnap,
+          onCopy: _copySelectedElement,
+          onPaste: _pasteElement,
+          canPaste: _clipboardHasContent,
+          onGroupElements: _groupSelectedElements,
+          onUngroupElements: _ungroupElements,
+          onBringToFront: _bringElementToFront,
+          onSendToBack: _sendElementToBack,
+          onMoveUp: _moveElementUp,
+          onMoveDown: _moveElementDown,
+          onDelete: _deleteSelectedElements,
+          onCopyFormatting: _copyElementFormatting,
+          onApplyFormatBrush: _applyFormatBrush,
+        ),
+        // Debug button
+        if (kDebugMode) // Only show in debug mode
+          ElevatedButton(
+            onPressed: () async {
+              // 手动检查剪贴板状态
+              await _inspectClipboard();
+              // 强制刷新剪贴板状态
+              final hasContent = await _checkClipboardContent();
+              setState(() {
+                _clipboardHasContent = hasContent;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text('剪贴板状态: ${hasContent ? '有内容' : '无内容'}')),
+                );
+              });
+            },
+            child: const Text('调试：检查剪贴板'),
+          ),
+      ],
     );
   }
 
   /// Build the left panel
   Widget _buildLeftPanel() {
-    final l10n = AppLocalizations.of(context);
-
     return ResizablePanel(
       initialWidth: 250,
       minWidth: 250,
@@ -519,10 +602,200 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     );
   }
 
+  /// Check if clipboard has valid content for pasting
+  /// Returns true if clipboard has content that can be pasted
+  Future<bool> _checkClipboardContent() async {
+    // Check internal clipboard first (handled by app)
+    if (_clipboardElement != null) {
+      final type = _clipboardElement?['type'];
+      debugPrint('检查剪贴板: 内部剪贴板有内容 - 类型: $type');
+
+      // Additional validation for specific types if needed
+      if (type == 'characters' || type == 'character') {
+        final hasIds = _clipboardElement!.containsKey('characterIds') ||
+            (_clipboardElement!.containsKey('data') &&
+                _clipboardElement!['data'] is Map &&
+                _clipboardElement!['data'].containsKey('characterId'));
+        debugPrint('检查剪贴板: 字符内容有效性: $hasIds');
+        return hasIds;
+      } else if (type == 'library_items' || type == 'image') {
+        final hasIds = _clipboardElement!.containsKey('itemIds') ||
+            (_clipboardElement!.containsKey('imageUrl') &&
+                _clipboardElement!['imageUrl'] != null);
+        debugPrint('检查剪贴板: 图库内容有效性: $hasIds');
+        return hasIds;
+      }
+
+      // For other types, just check if it exists
+      return true;
+    }
+
+    // Then check system clipboard
+    try {
+      // Check for text data
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      final hasText = clipboardData != null &&
+          clipboardData.text != null &&
+          clipboardData.text!.isNotEmpty;
+
+      debugPrint('检查剪贴板: 系统剪贴板${hasText ? '有' : '没有'}文本内容');
+
+      if (hasText) {
+        // Try to identify if it's a JSON and what type
+        try {
+          final text = clipboardData.text!;
+          final json = jsonDecode(text);
+
+          if (json is Map<String, dynamic> && json.containsKey('type')) {
+            final type = json['type'];
+            debugPrint('检查剪贴板: 识别到JSON内容, 类型: $type');
+
+            // 特定类型的检查
+            if (type == 'characters') {
+              final characterIds = json['characterIds'];
+              final hasIds = characterIds != null &&
+                  characterIds is List &&
+                  characterIds.isNotEmpty;
+              debugPrint('检查剪贴板: 字符IDs: $characterIds, 有效: $hasIds');
+              return hasIds;
+            } else if (type == 'library_items') {
+              final itemIds = json['itemIds'];
+              final hasIds =
+                  itemIds != null && itemIds is List && itemIds.isNotEmpty;
+              debugPrint('检查剪贴板: 图库项目IDs: $itemIds, 有效: $hasIds');
+              return hasIds;
+            } else if (json.containsKey('id') &&
+                (type == 'text' || type == 'image' || type == 'collection')) {
+              // This appears to be a direct element that can be pasted
+              debugPrint('检查剪贴板: 识别到可粘贴的元素类型: $type');
+              return true;
+            }
+          }
+        } catch (e) {
+          // Not valid JSON, that's fine for plain text
+          debugPrint('检查剪贴板: 不是有效的JSON, 按纯文本处理: $e');
+        }
+
+        // Plain text can always be pasted
+        return true;
+      }
+
+      // Check for image data in clipboard (different formats)
+      try {
+        // Check for common image formats
+        for (final format in ['image/png', 'image/jpeg', 'image/gif']) {
+          final imageClipboardData = await Clipboard.getData(format);
+          if (imageClipboardData != null) {
+            debugPrint('检查剪贴板: 系统剪贴板有 $format 图片数据');
+            return true;
+          }
+        }
+      } catch (e) {
+        debugPrint('检查系统剪贴板图片数据错误: $e');
+      }
+
+      return hasText;
+    } catch (e) {
+      debugPrint('检查剪贴板错误: $e');
+      return false;
+    }
+  }
+
+  /// 复制选中元素的样式（格式刷功能）
+  void _copyElementFormatting() {
+    final selectedElements = _controller.state.getSelectedElements();
+    if (selectedElements.isEmpty) return;
+
+    // 从第一个选中元素获取样式
+    final element = selectedElements.first;
+    _formatBrushStyles = {};
+
+    // 根据元素类型获取不同的样式属性
+    if (element['type'] == 'text') {
+      // 文本元素样式
+      _formatBrushStyles!['fontSize'] = element['fontSize'];
+      _formatBrushStyles!['fontWeight'] = element['fontWeight'];
+      _formatBrushStyles!['fontStyle'] = element['fontStyle'];
+      _formatBrushStyles!['textColor'] = element['textColor'];
+      _formatBrushStyles!['textAlign'] = element['textAlign'];
+    } else if (element['type'] == 'image' || element['type'] == 'collection') {
+      // 图片或集字元素样式
+      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['width'] = element['width'];
+      _formatBrushStyles!['height'] = element['height'];
+    }
+
+    // 包含所有类型元素的通用样式
+    _formatBrushStyles!['rotation'] = element['rotation'];
+    _formatBrushStyles!['opacity'] = element['opacity'];
+
+    // 激活格式刷
+    setState(() {
+      _isFormatBrushActive = true;
+      // 显示提示信息
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('格式刷已激活，点击目标元素应用样式')),
+      );
+    });
+  }
+
   /// Copy selected elements
   void _copySelectedElement() {
+    debugPrint('开始复制选中元素...');
     _clipboardElement =
         PracticeEditUtils.copySelectedElements(_controller, context);
+    debugPrint('复制结果: ${_clipboardElement != null ? '成功' : '失败'}');
+    if (_clipboardElement != null) {
+      debugPrint('复制的元素类型: ${_clipboardElement!['type']}');
+    }
+
+    // Update clipboard state and paste button activation
+    setState(() {
+      _clipboardHasContent = _clipboardElement != null;
+      debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
+    });
+
+    // Show a snackbar notification if copy was successful
+    if (_clipboardElement != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+    }
+  }
+
+  /// 创建文本元素
+  void _createTextElement(String text) {
+    if (text.isEmpty) return;
+
+    // 创建新元素ID
+    final newId =
+        'text_${DateTime.now().millisecondsSinceEpoch}_${getRandomString(4)}';
+
+    // 创建文本元素
+    final newElement = {
+      'id': newId,
+      'type': 'text',
+      'x': 100.0,
+      'y': 100.0,
+      'width': 200.0,
+      'height': 100.0,
+      'rotation': 0.0,
+      'opacity': 1.0,
+      'visible': true,
+      'locked': false,
+      'text': text,
+      'fontSize': 24.0,
+      'fontWeight': 'normal',
+      'fontStyle': 'normal',
+      'textColor': '#000000',
+      'textAlign': 'left',
+      // 其他必要的文本元素属性
+    };
+
+    // 添加到当前页面
+    setState(() {
+      _controller.state.currentPageElements.add(newElement);
+      _controller.selectElement(newId);
+    });
   }
 
   /// Delete a page
@@ -595,6 +868,352 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     if (_controller.state.selectedElementIds.length > 1) {
       _controller.groupSelectedElements();
     }
+  }
+
+  /// 处理从字符管理页面复制的字符
+  Future<void> _handleCharacterClipboardData(Map<String, dynamic> json) async {
+    debugPrint('处理字符剪贴板数据: $json');
+    final characterIds = List<String>.from(json['characterIds']);
+    debugPrint('字符IDs: $characterIds, 数量: ${characterIds.length}');
+
+    if (characterIds.isEmpty) {
+      debugPrint('没有字符ID，无法创建集字元素');
+      return;
+    }
+
+    // 获取字符服务和图像服务
+    final characterService = ref.read(characterServiceProvider);
+    final characterImageService = ref.read(characterImageServiceProvider);
+    debugPrint('已获取字符服务和图像服务');
+
+    // 对于每个字符ID，创建一个集字元素
+    for (int i = 0; i < characterIds.length; i++) {
+      final characterId = characterIds[i];
+      debugPrint('处理字符ID: $characterId');
+
+      try {
+        // 获取字符数据
+        debugPrint('获取字符详情...');
+        final character =
+            await characterService.getCharacterDetails(characterId);
+        if (character == null) {
+          debugPrint('无法获取字符详情，跳过');
+          continue;
+        }
+        debugPrint('成功获取字符详情: $character');
+
+        // 获取字符图像 - 使用default类型和png格式
+        debugPrint('获取字符图像...');
+        final imageBytes = await characterImageService.getCharacterImage(
+            characterId, 'default', 'png');
+        if (imageBytes == null) {
+          debugPrint('无法获取字符图像，跳过');
+          continue;
+        }
+        debugPrint('成功获取字符图像，大小: ${imageBytes.length} 字节');
+
+        // 创建新元素ID
+        final newId =
+            'collection_${DateTime.now().millisecondsSinceEpoch}_${i}_${getRandomString(4)}';
+        debugPrint('创建新元素ID: $newId');
+
+        // 计算放置位置（按顺序排列）
+        final x = 100.0 + (i * 20);
+        final y = 100.0 + (i * 20); // 创建集字元素
+        final newElement = {
+          'id': newId,
+          'type': 'collection',
+          'x': x,
+          'y': y,
+          'width': 200.0, // 更大的尺寸以便于查看
+          'height': 200.0,
+          'rotation': 0.0,
+          'layerId': _controller.state.selectedLayerId ??
+              _controller.state.layers.first['id'],
+          'opacity': 1.0,
+          'isLocked': false,
+          'isHidden': false,
+          'name': '集字元素',
+          'characterId': characterId,
+          // 添加必要的content属性结构
+          'content': {
+            // 使用字符名称作为默认显示内容
+            'characters': character.character as String? ?? '集',
+            'fontSize': 36.0, // 更大的字体以便于查看
+            'fontColor': '#000000',
+            'backgroundColor': '#FFFFFF',
+            'writingMode': 'horizontal-l',
+            'letterSpacing': 5.0,
+            'lineSpacing': 10.0,
+            'padding': 10.0, 'textAlign': 'center',
+            'verticalAlign': 'middle',
+            'enableSoftLineBreak': false,
+            // 添加与字符相关的图像数据
+            'characterImages': {
+              'characterId': characterId,
+              // 其他可能需要的图像相关属性
+            },
+          },
+        };
+
+        debugPrint('创建新的集字元素: $newElement'); // 添加到当前页面
+
+        setState(() {
+          // 从element中提取文本内容用于创建集字元素
+          final characters =
+              (newElement['content'] as Map)['characters'] as String? ?? '集';
+          final x = newElement['x'] as double;
+          final y = newElement['y'] as double;
+
+          // 使用控制器的公共方法addCollectionElementAt添加元素
+          // 这个方法会正确地更新底层的数据结构，确保集字元素被保存
+          _controller.addCollectionElementAt(x, y, characters);
+
+          // 选择新添加的元素
+          // 注意：我们不知道新添加元素的ID，因为它是在controller内部生成的
+          // 所以我们不能直接选择它
+          debugPrint('已通过控制器方法添加集字元素到当前页面位置: ($x, $y), 内容: $characters');
+        });
+      } catch (e) {
+        debugPrint('处理字符 $characterId 时出错: $e');
+      }
+    }
+    debugPrint('字符处理完成');
+  }
+
+  /// 处理图库项目剪贴板数据
+  Future<void> _handleLibraryItemClipboardData(
+      Map<String, dynamic> json) async {
+    debugPrint('处理图库项目剪贴板数据: $json');
+    final itemIds = List<String>.from(json['itemIds']);
+    debugPrint('图库项目IDs: $itemIds, 数量: ${itemIds.length}');
+
+    if (itemIds.isEmpty) {
+      debugPrint('没有图库项目ID，无法创建图片元素');
+      return;
+    }
+
+    // 获取图库服务
+    final libraryService = ref.read(libraryServiceProvider);
+    debugPrint('已获取图库服务');
+
+    // 对于每个图库项目ID，创建一个图片元素
+    for (int i = 0; i < itemIds.length; i++) {
+      final itemId = itemIds[i];
+      debugPrint('处理图库项目ID: $itemId');
+
+      try {
+        // 获取图库项目数据
+        debugPrint('获取图库项目数据...');
+        final item = await libraryService.getItem(itemId);
+        if (item == null) {
+          debugPrint('无法获取图库项目数据，跳过');
+          continue;
+        }
+        debugPrint('成功获取图库项目数据, 路径: ${item.path}');
+
+        // 创建新元素ID
+        final newId =
+            'image_${DateTime.now().millisecondsSinceEpoch}_${i}_${getRandomString(4)}';
+        debugPrint('创建新元素ID: $newId');
+
+        // 计算放置位置（按顺序排列）
+        final x = 100.0 + (i * 20);
+        final y = 100.0 + (i * 20);
+
+        // 图片默认尺寸
+        const defaultWidth = 200.0;
+        const defaultHeight = 200.0;
+
+        // 创建图片元素
+        final newElement = {
+          'id': newId,
+          'type': 'image',
+          'x': x,
+          'y': y,
+          'width': defaultWidth,
+          'height': defaultHeight,
+          'rotation': 0.0,
+          'opacity': 1.0,
+          'visible': true,
+          'locked': false,
+          'imagePath': item.path,
+          'libraryItemId': itemId,
+          // 其他必要的图片元素属性
+        };
+        debugPrint('创建新的图片元素: $newElement'); // 添加到当前页面
+
+        setState(() {
+          // 使用控制器的公共方法添加图片元素
+          // 将文件路径转换为正确的文件URI格式
+          final imageUrl = 'file://${item.path.replaceAll("\\", "/")}';
+          _controller.addImageElementAt(x, y, imageUrl);
+          debugPrint('已通过控制器方法添加图片元素到当前页面位置: ($x, $y), URI: $imageUrl');
+        });
+      } catch (e) {
+        debugPrint('处理图库项目 $itemId 时出错: $e');
+      }
+    }
+    debugPrint('图库项目处理完成');
+  }
+
+  void _initKeyboardHandler() {
+    _keyboardHandler = KeyboardHandler(
+      controller: _controller,
+      onTogglePreviewMode: () {
+        setState(() {
+          _isPreviewMode = !_isPreviewMode;
+          _controller.togglePreviewMode(_isPreviewMode);
+        });
+      },
+      onToggleThumbnails: () {
+        setState(() {
+          _showThumbnails = !_showThumbnails;
+        });
+      },
+      editTitle: _editTitle,
+      savePractice: _savePractice,
+      saveAsNewPractice: _saveAsNewPractice,
+      selectAllElements: _selectAllElements,
+      copySelectedElement: _copySelectedElement,
+      pasteElement: _pasteElement,
+      deleteSelectedElements: _deleteSelectedElements,
+      groupSelectedElements: _groupSelectedElements,
+      ungroupElements: _ungroupElements,
+      bringToFront: _bringElementToFront,
+      sendToBack: _sendElementToBack,
+      moveElementUp: _moveElementUp,
+      moveElementDown: _moveElementDown,
+      toggleGrid: _toggleGrid,
+      toggleSnap: _toggleSnap,
+      toggleSelectedElementsVisibility: _toggleSelectedElementsVisibility,
+      toggleSelectedElementsLock: _toggleSelectedElementsLock,
+      showExportDialog: _showExportDialog,
+      toggleLeftPanel: () {
+        setState(() {
+          _isLeftPanelOpen = !_isLeftPanelOpen;
+        });
+      },
+      toggleRightPanel: () {
+        setState(() {
+          _isRightPanelOpen = !_isRightPanelOpen;
+        });
+      },
+      moveSelectedElements: _moveSelectedElements,
+      copyElementFormatting: _copyElementFormatting,
+      applyFormatBrush: _applyFormatBrush,
+    );
+
+    // 添加键盘事件处理器
+    HardwareKeyboard.instance.addHandler(_keyboardHandler.handleKeyEvent);
+  }
+
+  /// 在剪贴板变化时检查并输出详细日志  /// Detailed inspection of clipboard contents for debugging
+  Future<void> _inspectClipboard() async {
+    debugPrint('======= 剪贴板详细检查 =======');
+
+    // 检查内部剪贴板
+    if (_clipboardElement != null) {
+      debugPrint('内部剪贴板内容类型: ${_clipboardElement?['type']}');
+
+      // 根据类型显示不同的信息
+      final type = _clipboardElement?['type'];
+      if (type == 'characters' || type == 'character') {
+        if (_clipboardElement!.containsKey('characterIds')) {
+          debugPrint('字符IDs: ${_clipboardElement!['characterIds']}');
+        } else if (_clipboardElement!.containsKey('data') &&
+            _clipboardElement!['data'] is Map &&
+            _clipboardElement!['data'].containsKey('characterId')) {
+          debugPrint('字符ID: ${_clipboardElement!['data']['characterId']}');
+        }
+      } else if (type == 'library_items' || type == 'image') {
+        if (_clipboardElement!.containsKey('itemIds')) {
+          debugPrint('图库项目IDs: ${_clipboardElement!['itemIds']}');
+        } else if (_clipboardElement!.containsKey('imageUrl')) {
+          debugPrint('图片URL: ${_clipboardElement!['imageUrl']}');
+        }
+      }
+
+      // 完整内容（可能很长，只在调试时打印）
+      if (kDebugMode) {
+        debugPrint('内部剪贴板完整内容: $_clipboardElement');
+      }
+    } else {
+      debugPrint('内部剪贴板为空');
+    }
+
+    // 检查系统剪贴板文本
+    try {
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+      if (clipboardData != null &&
+          clipboardData.text != null &&
+          clipboardData.text!.isNotEmpty) {
+        debugPrint('系统剪贴板有文本内容，长度: ${clipboardData.text!.length}');
+
+        // 根据长度决定显示内容
+        if (clipboardData.text!.length < 300) {
+          debugPrint('系统剪贴板文本内容: ${clipboardData.text}');
+        } else {
+          debugPrint(
+              '系统剪贴板内容太长，仅显示前100个字符: ${clipboardData.text!.substring(0, 100)}...');
+        }
+
+        // 尝试解析为JSON
+        try {
+          final json = jsonDecode(clipboardData.text!);
+          debugPrint('成功解析为JSON');
+
+          if (json is Map && json.containsKey('type')) {
+            final type = json['type'];
+            debugPrint('JSON类型: $type');
+
+            // 特定类型的检查
+            if (type == 'characters') {
+              final characterIds = json['characterIds'];
+              debugPrint('字符IDs: $characterIds');
+              debugPrint(
+                  '字符数量: ${characterIds is List ? characterIds.length : 0}');
+            } else if (type == 'library_items') {
+              final itemIds = json['itemIds'];
+              debugPrint('图库项目IDs: $itemIds');
+              debugPrint('图库项目数量: ${itemIds is List ? itemIds.length : 0}');
+            } else if (json.containsKey('id')) {
+              debugPrint('元素ID: ${json['id']}');
+              // 其他属性检查
+              final props = ['width', 'height', 'x', 'y', 'text', 'imageUrl'];
+              for (final prop in props) {
+                if (json.containsKey(prop)) {
+                  debugPrint('元素属性 $prop: ${json[prop]}');
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('系统剪贴板内容不是有效的JSON: $e');
+        }
+      } else {
+        debugPrint('系统剪贴板为空');
+      }
+    } catch (e) {
+      debugPrint('检查系统剪贴板时出错: $e');
+    }
+
+    // 检查系统剪贴板图片
+    try {
+      // 检查常见的图片格式
+      for (final format in ['image/png', 'image/jpeg', 'image/gif']) {
+        final imageData = await Clipboard.getData(format);
+        if (imageData != null) {
+          debugPrint('系统剪贴板有 $format 格式的图片数据');
+          break; // 找到一种格式即可
+        }
+      }
+    } catch (e) {
+      debugPrint('检查系统剪贴板图片错误: $e');
+    }
+
+    debugPrint('当前粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
+    debugPrint('======= 剪贴板检查结束 =======');
   }
 
   /// Load practice
@@ -756,10 +1375,76 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   }
 
   /// Paste element(s)
-  void _pasteElement() {
-    setState(() {
-      PracticeEditUtils.pasteElement(_controller, _clipboardElement);
-    });
+  void _pasteElement() async {
+    debugPrint('开始粘贴操作...');
+
+    // 首先尝试从内部剪贴板粘贴
+    if (_clipboardElement != null) {
+      debugPrint('使用内部剪贴板内容粘贴, 类型: ${_clipboardElement!['type']}');
+      setState(() {
+        PracticeEditUtils.pasteElement(_controller, _clipboardElement);
+        // Do not clear _clipboardElement to allow multiple pastes
+      });
+      return;
+    }
+
+    // 如果内部剪贴板为空，则尝试从系统剪贴板读取
+    try {
+      debugPrint('内部剪贴板为空，尝试读取系统剪贴板...');
+      final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+
+      if (clipboardData == null || clipboardData.text == null) {
+        // 剪贴板为空，无法粘贴
+        debugPrint('系统剪贴板为空或没有文本内容');
+        return;
+      }
+
+      final text = clipboardData.text!;
+      debugPrint('系统剪贴板有文本内容，长度: ${text.length}');
+
+      // 检查是否是JSON格式
+      try {
+        debugPrint('尝试解析为JSON...');
+        final json = jsonDecode(text);
+        debugPrint('成功解析为JSON');
+
+        // 判断是哪种类型的数据
+        final type = json['type'];
+        debugPrint('JSON类型: $type');
+
+        if (type == 'characters') {
+          // 处理从字符管理页面复制的字符
+          debugPrint('处理字符类型数据...');
+          await _handleCharacterClipboardData(json);
+          debugPrint('字符数据处理完成');
+        } else if (type == 'library_items') {
+          // 处理从图库管理页面复制的图片
+          debugPrint('处理图库项目类型数据...');
+          await _handleLibraryItemClipboardData(json);
+          debugPrint('图库项目数据处理完成');
+        } else {
+          // 尝试作为通用 JSON 元素处理
+          debugPrint('处理通用JSON元素...');
+          setState(() {
+            PracticeEditUtils.pasteElement(_controller, json);
+          });
+        }
+      } catch (e) {
+        // 不是有效的 JSON，作为纯文本处理
+        debugPrint('不是有效的JSON，作为纯文本处理: $e');
+        _createTextElement(text);
+      }
+
+      // Refresh clipboard state after pasting
+      _checkClipboardContent().then((hasContent) {
+        setState(() {
+          _clipboardHasContent = hasContent;
+          debugPrint('粘贴后更新剪贴板状态: ${_clipboardHasContent ? '有内容' : '无内容'}');
+        });
+      });
+    } catch (e) {
+      debugPrint('粘贴操作出错: $e');
+    }
   }
 
   /// Preload all collection element images
@@ -1023,6 +1708,42 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   /// Select local image
   Future<void> _showImageUrlDialog(BuildContext context) async {
     await PracticeEditUtils.showImageUrlDialog(context, _controller);
+  }
+
+  /// Update clipboard state periodically  /// Start monitoring clipboard contents periodically
+  void _startClipboardMonitoring() {
+    // Check clipboard every 2 seconds
+    Future.delayed(const Duration(seconds: 2), () async {
+      if (!mounted) return;
+
+      try {
+        // Periodically check clipboard content
+        final hasContent = await _checkClipboardContent();
+
+        if (hasContent != _clipboardHasContent) {
+          debugPrint(
+              '剪贴板状态变化: ${_clipboardHasContent ? "有内容" : "无内容"} -> ${hasContent ? "有内容" : "无内容"}');
+
+          // If debugging, do a full inspection when state changes
+          if (kDebugMode && hasContent) {
+            await _inspectClipboard();
+          }
+
+          // Update state to reflect current clipboard content
+          setState(() {
+            _clipboardHasContent = hasContent;
+          });
+        }
+      } catch (e) {
+        debugPrint('剪贴板监控错误: $e');
+      } finally {
+        // Always schedule next check, even if there was an error
+        // This ensures the monitoring is robust
+        if (mounted) {
+          _startClipboardMonitoring();
+        }
+      }
+    });
   }
 
   /// Toggle grid visibility

@@ -11,6 +11,8 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 /// - Ctrl+Shift+A: Select all elements on current page
 /// - Ctrl+Shift+C: Copy selection
 /// - Ctrl+Shift+V: Paste copy
+/// - Ctrl+Shift+F: Copy element formatting (format brush)
+/// - Ctrl+F: Apply format brush
 /// - Ctrl+D: Delete selection
 /// - Ctrl+Z: Undo
 /// - Ctrl+Y: Redo
@@ -63,6 +65,8 @@ class KeyboardHandler {
   final Function() showExportDialog;
   final Function() toggleLeftPanel;
   final Function() toggleRightPanel;
+  final Function() copyElementFormatting;
+  final Function() applyFormatBrush;
   final Function(double dx, double dy) moveSelectedElements;
 
   KeyboardHandler({
@@ -90,6 +94,8 @@ class KeyboardHandler {
     required this.toggleLeftPanel,
     required this.toggleRightPanel,
     required this.moveSelectedElements,
+    required this.copyElementFormatting,
+    required this.applyFormatBrush,
   });
 
   /// Handle keyboard events
@@ -204,6 +210,17 @@ class KeyboardHandler {
             }
             return false;
 
+          // Ctrl+F: Apply format brush (or Ctrl+Shift+F: Copy element formatting)
+          case LogicalKeyboardKey.keyF:
+            if (_isShiftPressed) {
+              // Ctrl+Shift+F: Copy element formatting (format brush)
+              copyElementFormatting();
+            } else {
+              // Ctrl+F: Apply format brush
+              applyFormatBrush();
+            }
+            return true;
+
           // Ctrl+D: Delete selection
           case LogicalKeyboardKey.keyD:
             deleteSelectedElements();
@@ -296,12 +313,12 @@ class KeyboardHandler {
           case LogicalKeyboardKey.keyO:
             onToggleThumbnails();
             return true;
-            
+
           // Ctrl+[: Toggle left panel
           case LogicalKeyboardKey.bracketLeft:
             toggleLeftPanel();
             return true;
-            
+
           // Ctrl+]: Toggle right panel
           case LogicalKeyboardKey.bracketRight:
             toggleRightPanel();

@@ -178,7 +178,11 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
                                 if (index == selectedIndex) {
                                   // 添加到已初始化集合
                                   _initializedSections.add(index);
-                                  return _buildNavigator(index);
+                                  // 使用KeyedSubtree为每个导航器提供唯一key，避免依赖问题
+                                  return KeyedSubtree(
+                                    key: ValueKey('navigator_$index'),
+                                    child: _buildNavigator(index),
+                                  );
                                 } else if (_initializedSections
                                     .contains(index)) {
                                   // 已初始化但非当前选中的功能区隐藏显示

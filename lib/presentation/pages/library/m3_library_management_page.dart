@@ -57,6 +57,14 @@ class _M3LibraryManagementPageState
         onSelectAll: _handleSelectAll,
         onCancelSelection:
             state.selectedItems.isNotEmpty ? _handleCancelSelection : null,
+        onCopySelected:
+            state.selectedItems.isNotEmpty || state.selectedItem != null
+                ? _handleCopySelectedItems
+                : null,
+        onCutSelected:
+            state.selectedItems.isNotEmpty || state.selectedItem != null
+                ? _handleCutSelectedItems
+                : null,
         isGridView: state.viewMode == ViewMode.grid,
         onToggleViewMode: _toggleViewMode,
         isImagePreviewOpen: state.isImagePreviewOpen,
@@ -121,6 +129,48 @@ class _M3LibraryManagementPageState
   void _handleCancelSelection() {
     if (!mounted) return;
     ref.read(libraryManagementProvider.notifier).clearSelection();
+  }
+
+  /// 处理复制选中项目
+  void _handleCopySelectedItems() async {
+    // 调用复制功能
+    await ref
+        .read(libraryManagementProvider.notifier)
+        .copySelectedItemsToClipboard();
+
+    // 显示成功提示
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            '${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)} 已复制到剪贴板'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 处理剪切选中项目
+  void _handleCutSelectedItems() async {
+    // 调用剪切功能
+    await ref
+        .read(libraryManagementProvider.notifier)
+        .cutSelectedItemsToClipboard();
+
+    // 显示成功提示
+    if (!mounted) return;
+
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+            '${l10n.selectedCount(ref.read(libraryManagementProvider).selectedItems.length)} 已剪切到剪贴板'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   /// 处理删除所有项目

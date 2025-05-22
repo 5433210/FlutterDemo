@@ -1814,8 +1814,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
           // 更新图层属性
           final content = Map<String, dynamic>.from(
               element['content'] as Map<String, dynamic>);
-
-          content['imageUrl'] = 'file://${selectedItem.path}';
+          content['imageUrl'] =
+              'file://${selectedItem.path.replaceAll("\\", "/")}';
           content['sourceId'] = selectedItem.id;
           content['sourceType'] = 'library';
           content['libraryItem'] = selectedItem; // 保存图库项的完整引用
@@ -2047,8 +2047,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
 
       final content =
           Map<String, dynamic>.from(element['content'] as Map<String, dynamic>);
-
-      content['imageUrl'] = 'file://${importedItem.path}';
+      content['imageUrl'] = 'file://${importedItem.path.replaceAll("\\", "/")}';
       content['sourceId'] = importedItem.id;
       content['sourceType'] = 'library';
       content['libraryItem'] = importedItem; // 重置变换属性

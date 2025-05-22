@@ -3044,5 +3044,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workToolOther => '其他';
 
   @override
+  String get hideImagePreview => '隐藏图片预览';
+
+  @override
+  String get showImagePreview => '显示图片预览';
+
+  @override
   String get yes => '是';
 }

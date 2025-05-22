@@ -423,10 +423,8 @@ class PracticeEditUtils {
           );
         }
         return;
-      }
-
-      // Convert file path to usable URL format
-      final fileUrl = 'file://$filePath';
+      } // Convert file path to usable URL format - replacing backslashes with forward slashes for Windows paths
+      final fileUrl = 'file://${filePath.replaceAll("\\", "/")}';
 
       // Update or add image element
       if (controller.state.selectedElementIds.isNotEmpty) {

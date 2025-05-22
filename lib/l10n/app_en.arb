@@ -979,5 +979,7 @@
   "workToolBrush": "Brush",
   "workToolHardPen": "Hard Pen",
   "workToolOther": "Other",
+  "hideImagePreview": "Hide Image Preview",
+  "showImagePreview": "Show Image Preview",
   "yes": "Yes"
 }
