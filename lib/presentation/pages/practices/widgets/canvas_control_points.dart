@@ -218,8 +218,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
             _rotatePoint(point.dx, point.dy, centerX, centerY, angle))
         .toList();
 
-    // 使用当前缩放比例计算旋转点距离
-    final rotationDistance = 60.0 * _getScaleFactor(scale);
+    // 使用当前缩放比例计算旋转点距离（减小距离使其更接近元素）
+    final rotationDistance = 40.0 * _getScaleFactor(scale);
     final rotationPoint = _rotatePoint(
       centerX,
       widget.y - rotationDistance, // 上方距离根据缩放调整
@@ -335,7 +335,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
 
     // 根据缩放比例计算控制点大小
     const baseControlPointSize = 16.0;
-    const baseHitAreaSize = 60.0;
+    // 让感应区域与可视区域大小一致
+    const baseHitAreaSize = baseControlPointSize;
 
     // 获取适当的缩放系数 - 当缩放比例小于1时需要反向放大控制点
     final scaleFactor = _getScaleFactor(currentScale);

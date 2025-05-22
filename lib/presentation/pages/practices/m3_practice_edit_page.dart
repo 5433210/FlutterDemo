@@ -26,7 +26,7 @@ import '../../widgets/practice/practice_edit_controller.dart';
 import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
-import 'widgets/m3_content_tools_panel.dart';
+// import 'widgets/m3_content_tools_panel.dart' - Removed as elements were moved to toolbar;
 import 'widgets/m3_practice_edit_canvas.dart';
 // import 'widgets/content_tools_panel.dart';
 // import 'widgets/practice_edit_canvas.dart';
@@ -69,7 +69,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   bool _showThumbnails = false;
 
   // Control panel visibility
-  bool _isLeftPanelOpen = true;
+  bool _isLeftPanelOpen = false; // Default to closed as requested
   bool _isRightPanelOpen = true;
 
   // Keyboard handler
@@ -377,28 +377,40 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           onDelete: _deleteSelectedElements,
           onCopyFormatting: _copyElementFormatting,
           onApplyFormatBrush: _applyFormatBrush,
+          // 添加元素工具按钮相关参数
+          currentTool: _currentTool,
+          onSelectTool: (tool) {
+            setState(() {
+              _currentTool = tool;
+            });
+          },
+          onDragElementStart: (context, elementType) {
+            // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
+          },
         ),
-        // Debug button
-        if (kDebugMode) // Only show in debug mode
-          ElevatedButton(
-            onPressed: () async {
-              // 手动检查剪贴板状态
-              await _inspectClipboard();
-              // 强制刷新剪贴板状态
-              final hasContent = await _checkClipboardContent();
-              setState(() {
-                _clipboardHasContent = hasContent;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('剪贴板状态: ${hasContent ? '有内容' : '无内容'}')),
-                );
-              });
-            },
-            child: const Text('调试：检查剪贴板'),
-          ),
+        // // Debug button
+        // if (kDebugMode) // Only show in debug mode
+        //   ElevatedButton(
+        //     onPressed: () async {
+        //       // 手动检查剪贴板状态
+        //       await _inspectClipboard();
+        //       // 强制刷新剪贴板状态
+        //       final hasContent = await _checkClipboardContent();
+        //       setState(() {
+        //         _clipboardHasContent = hasContent;
+        //         ScaffoldMessenger.of(context).showSnackBar(
+        //           SnackBar(
+        //               content: Text('剪贴板状态: ${hasContent ? '有内容' : '无内容'}')),
+        //         );
+        //       });
+        //     },
+        //     child: const Text('调试：检查剪贴板'),
+        //   ),
       ],
     );
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// Build the left panel
   Widget _buildLeftPanel() {
@@ -409,20 +421,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       isLeftPanel: true,
       child: Column(
         children: [
-          // Content tools area
-          M3ContentToolsPanel(
-            controller: _controller,
-            currentTool: _currentTool,
-            onToolSelected: (tool) {
-              setState(() {
-                _currentTool = tool;
-              });
-            },
-          ),
+          // Removed content tools area as requested - it's now in the toolbar
 
-          const Divider(),
-
-          // Layer management area
+          // Layer management area - now takes full height
           Expanded(
             child: M3PracticeLayerPanel(
               controller: _controller,

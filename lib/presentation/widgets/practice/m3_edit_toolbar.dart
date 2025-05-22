@@ -23,6 +23,11 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onDelete;
   final VoidCallback? onCopyFormatting;
   final VoidCallback? onApplyFormatBrush;
+  
+  // 元素工具相关参数
+  final String? currentTool;
+  final Function(String)? onSelectTool;
+  final Function(BuildContext, String)? onDragElementStart;
 
   const M3EditToolbar({
     super.key,
@@ -43,6 +48,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     required this.onDelete,
     this.onCopyFormatting,
     this.onApplyFormatBrush,
+    this.currentTool,
+    this.onSelectTool,
+    this.onDragElementStart,
   });
 
   @override
@@ -70,129 +78,260 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Edit operations group
+      child: Wrap(
+        spacing: AppSizes.s,
+        runSpacing: AppSizes.s,
+        alignment: WrapAlignment.start,
+        children: [
+          // 元素工具按钮（如果提供了相关参数）
+          if (onSelectTool != null) ...[          
+            // 元素工具组
             _buildToolbarGroup(
-              title: l10n.practiceEditEditOperations,
+              title: l10n.practiceEditElements,
               children: [
-                _buildToolbarButton(
+                _buildElementButton(
                   context: context,
-                  icon: Icons.copy,
-                  tooltip: l10n.practiceEditCopy,
-                  onPressed: hasSelection ? onCopy : null,
+                  icon: Icons.text_fields,
+                  tooltip: l10n.practiceEditText,
+                  toolName: 'text',
+                  isSelected: currentTool == 'text',
+                  onPressed: () => onSelectTool!('text'),
+                  onDragStart: onDragElementStart != null ? 
+                    () => onDragElementStart!(context, 'text') : null,
+                ),
+                _buildElementButton(
+                  context: context,
+                  icon: Icons.image,
+                  tooltip: l10n.practiceEditImage,
+                  toolName: 'image',
+                  isSelected: currentTool == 'image',
+                  onPressed: () => onSelectTool!('image'),
+                  onDragStart: onDragElementStart != null ? 
+                    () => onDragElementStart!(context, 'image') : null,
+                ),
+                _buildElementButton(
+                  context: context,
+                  icon: Icons.grid_on,
+                  tooltip: l10n.practiceEditCollection,
+                  toolName: 'collection',
+                  isSelected: currentTool == 'collection',
+                  onPressed: () => onSelectTool!('collection'),
+                  onDragStart: onDragElementStart != null ? 
+                    () => onDragElementStart!(context, 'collection') : null,
                 ),
                 _buildToolbarButton(
                   context: context,
-                  icon: Icons.paste,
-                  tooltip: l10n.practiceEditPaste,
-                  onPressed: canPaste ? onPaste : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.delete,
-                  tooltip: l10n.practiceEditDelete,
-                  onPressed: hasSelection ? onDelete : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.group,
-                  tooltip: l10n.practiceEditGroup,
-                  onPressed: isMultiSelected ? onGroupElements : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.format_shapes,
-                  tooltip: l10n.practiceEditUngroup,
-                  onPressed: hasSelectedGroup ? onUngroupElements : null,
+                  icon: Icons.select_all,
+                  tooltip: l10n.practiceEditSelect,
+                  onPressed: () => onSelectTool!('select'),
+                  isActive: currentTool == 'select',
                 ),
               ],
             ),
-
+            
             const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
             const SizedBox(width: AppSizes.s),
-
-            // Layer operations group
-            _buildToolbarGroup(
-              title: l10n.practiceEditLayerOperations,
-              children: [
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.vertical_align_top,
-                  tooltip: l10n.practiceEditBringToFront,
-                  onPressed: hasSelection ? onBringToFront : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.vertical_align_bottom,
-                  tooltip: l10n.practiceEditSendToBack,
-                  onPressed: hasSelection ? onSendToBack : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.arrow_upward,
-                  tooltip: l10n.practiceEditMoveUp,
-                  onPressed: hasSelection ? onMoveUp : null,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.arrow_downward,
-                  tooltip: l10n.practiceEditMoveDown,
-                  onPressed: hasSelection ? onMoveDown : null,
-                ),
-              ],
-            ),
-
-            const SizedBox(width: AppSizes.s),
-            const VerticalDivider(),
-            const SizedBox(width: AppSizes.s),
-
-            // Helper functions group
-            _buildToolbarGroup(
-              title: l10n.practiceEditHelperFunctions,
-              children: [
-                _buildToolbarButton(
-                  context: context,
-                  icon: gridVisible ? Icons.grid_on : Icons.grid_off,
-                  tooltip: gridVisible
-                      ? l10n.practiceEditHideGrid
-                      : l10n.practiceEditShowGrid,
-                  onPressed: onToggleGrid,
-                  isActive: gridVisible,
-                ),
-                _buildToolbarButton(
-                  context: context,
-                  icon: Icons.format_line_spacing,
-                  tooltip: snapEnabled
-                      ? l10n.practiceEditDisableSnap
-                      : l10n.practiceEditEnableSnap,
-                  onPressed: onToggleSnap,
-                  isActive: snapEnabled,
-                ),
-                if (onCopyFormatting != null)
-                  _buildToolbarButton(
-                    context: context,
-                    icon: Icons.format_paint,
-                    tooltip: '复制格式',
-                    onPressed: hasSelection ? onCopyFormatting : null,
-                  ),
-                if (onApplyFormatBrush != null)
-                  _buildToolbarButton(
-                    context: context,
-                    icon: Icons.format_color_fill,
-                    tooltip: '应用格式刷',
-                    onPressed: hasSelection ? onApplyFormatBrush : null,
-                  ),
-              ],
-            ),
           ],
+          // Edit operations group
+          _buildToolbarGroup(
+            title: l10n.practiceEditEditOperations,
+            children: [
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.copy,
+                tooltip: l10n.practiceEditCopy,
+                onPressed: hasSelection ? onCopy : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.paste,
+                tooltip: l10n.practiceEditPaste,
+                onPressed: canPaste ? onPaste : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.delete,
+                tooltip: l10n.practiceEditDelete,
+                onPressed: hasSelection ? onDelete : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.group,
+                tooltip: l10n.practiceEditGroup,
+                onPressed: isMultiSelected ? onGroupElements : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.format_shapes,
+                tooltip: l10n.practiceEditUngroup,
+                onPressed: hasSelectedGroup ? onUngroupElements : null,
+              ),
+            ],
+          ),
+
+          const SizedBox(width: AppSizes.s),
+          const VerticalDivider(),
+          const SizedBox(width: AppSizes.s),
+
+          // Layer operations group
+          _buildToolbarGroup(
+            title: l10n.practiceEditLayerOperations,
+            children: [
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.vertical_align_top,
+                tooltip: l10n.practiceEditBringToFront,
+                onPressed: hasSelection ? onBringToFront : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.vertical_align_bottom,
+                tooltip: l10n.practiceEditSendToBack,
+                onPressed: hasSelection ? onSendToBack : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.arrow_upward,
+                tooltip: l10n.practiceEditMoveUp,
+                onPressed: hasSelection ? onMoveUp : null,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.arrow_downward,
+                tooltip: l10n.practiceEditMoveDown,
+                onPressed: hasSelection ? onMoveDown : null,
+              ),
+            ],
+          ),
+
+          const SizedBox(width: AppSizes.s),
+          const VerticalDivider(),
+          const SizedBox(width: AppSizes.s),
+
+          // Helper functions group
+          _buildToolbarGroup(
+            title: l10n.practiceEditHelperFunctions,
+            children: [
+              _buildToolbarButton(
+                context: context,
+                icon: gridVisible ? Icons.grid_on : Icons.grid_off,
+                tooltip: gridVisible
+                    ? l10n.practiceEditHideGrid
+                    : l10n.practiceEditShowGrid,
+                onPressed: onToggleGrid,
+                isActive: gridVisible,
+              ),
+              _buildToolbarButton(
+                context: context,
+                icon: Icons.format_line_spacing,
+                tooltip: snapEnabled
+                    ? l10n.practiceEditDisableSnap
+                    : l10n.practiceEditEnableSnap,
+                onPressed: onToggleSnap,
+                isActive: snapEnabled,
+              ),
+              if (onCopyFormatting != null)
+                _buildToolbarButton(
+                  context: context,
+                  icon: Icons.format_paint,
+                  tooltip: '复制格式',
+                  onPressed: hasSelection ? onCopyFormatting : null,
+                ),
+              if (onApplyFormatBrush != null)
+                _buildToolbarButton(
+                  context: context,
+                  icon: Icons.format_color_fill,
+                  tooltip: '应用格式刷',
+                  onPressed: hasSelection ? onApplyFormatBrush : null,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build element button with optional drag functionality
+  Widget _buildElementButton({
+    required BuildContext context,
+    required IconData icon,
+    required String tooltip,
+    required String toolName,
+    required bool isSelected,
+    required VoidCallback onPressed,
+    VoidCallback? onDragStart,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    Widget button = Tooltip(
+      message: tooltip,
+      child: Material(
+        color: isSelected ? colorScheme.primaryContainer : colorScheme.surface,
+        borderRadius: BorderRadius.circular(8.0),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: isSelected 
+                      ? colorScheme.onPrimaryContainer 
+                      : colorScheme.onSurface,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  tooltip,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected 
+                        ? colorScheme.onPrimaryContainer 
+                        : colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
+    
+    // 如果有拖拽功能，包装为Draggable
+    if (onDragStart != null) {
+      return Draggable<String>(
+        data: toolName,
+        feedback: Material(
+          elevation: 4.0,
+          borderRadius: BorderRadius.circular(8.0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: colorScheme.onPrimaryContainer),
+                const SizedBox(width: 4),
+                Text(tooltip, 
+                  style: TextStyle(fontSize: 12, color: colorScheme.onPrimaryContainer),
+                ),
+              ],
+            ),
+          ),
+        ),
+        onDragStarted: onDragStart,
+        child: button,
+      );
+    }
+    
+    return button;
   }
 
   /// Build toolbar button
