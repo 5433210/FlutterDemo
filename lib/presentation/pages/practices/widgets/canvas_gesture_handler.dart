@@ -5,6 +5,12 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 
 /// Handles gestures on the canvas like tapping, panning and zooming
+///
+/// Supports the following gestures:
+/// - Tapping: Select elements
+/// - Panning: Move selected elements or pan the canvas
+/// - Selection Box: Create selection box in select mode on empty canvas areas
+/// - Element Dragging: Drag selected elements (even when in select mode)
 class CanvasGestureHandler {
   final PracticeEditController controller;
   final Function(bool, Offset, Offset, Map<String, Offset>) onDragStart;
@@ -50,22 +56,6 @@ class CanvasGestureHandler {
     _selectionBoxEnd = null;
     onDragUpdate();
   }
-  
-  /// Handle right-click (secondary button) tap down event
-  /// Used to exit select mode
-  void handleSecondaryTapDown(TapDownDetails details) {
-    // If in select mode, exit it
-    if (controller.state.currentTool == 'select') {
-      debugPrint('Right-click detected, exiting select mode');
-      // Exit select mode
-      controller.exitSelectMode();
-      // Cancel selection box if active
-      if (_isSelectionBoxActive) {
-        cancelSelectionBox();
-      }
-      onDragUpdate();
-    }
-  }
 
   /// Handle pan end on canvas
   void handlePanEnd(DragEndDetails details) {
@@ -74,6 +64,10 @@ class CanvasGestureHandler {
       _finalizeSelectionBox();
       return;
     }
+
+    // Note: No need to check controller.state.currentTool == 'select' here
+    // If _isDragging is true, that means we started dragging elements
+    // (even in select mode) and should continue processing the drag end
 
     // 添加日志跟踪
     debugPrint(
@@ -146,18 +140,98 @@ class CanvasGestureHandler {
   void handlePanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) {
     // Debug information
-    debugPrint('handlePanStart - currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
-    
-    // Check if we're in select mode before starting a selection box
+    debugPrint(
+        'handlePanStart - currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
+
+    // Check if we're in select mode
     if (controller.state.currentTool == 'select' &&
         !controller.state.isPreviewMode) {
-      debugPrint('Starting selection box at ${details.localPosition}');
-      // Start drawing selection box
-      _isSelectionBoxActive = true;
-      _selectionBoxStart = details.localPosition;
-      _selectionBoxEnd = details.localPosition;
-      onDragUpdate();
-      return;
+      // Check if we're clicking on any selected element first before creating a selection box
+      bool hitSelectedElement = false;
+
+      // From top-most element (visually on top, which is last in the array)
+      for (int i = elements.length - 1; i >= 0; i--) {
+        final element = elements[i];
+        final id = element['id'] as String;
+        final x = (element['x'] as num).toDouble();
+        final y = (element['y'] as num).toDouble();
+        final width = (element['width'] as num).toDouble();
+        final height = (element['height'] as num).toDouble();
+
+        // Check if element is hidden
+        final isHidden = element['hidden'] == true;
+        if (isHidden) continue;
+
+        // Check if layer is hidden
+        final layerId = element['layerId'] as String?;
+        bool isLayerHidden = false;
+        if (layerId != null) {
+          final layer = controller.state.getLayerById(layerId);
+          if (layer != null) {
+            isLayerHidden = layer['isVisible'] == false;
+          }
+        }
+        if (isLayerHidden) continue;
+
+        // Check if click is inside the element
+        final bool isInside = details.localPosition.dx >= x &&
+            details.localPosition.dx <= x + width &&
+            details.localPosition.dy >= y &&
+            details.localPosition.dy <= y + height;
+
+        // If clicking on a selected element
+        if (isInside && controller.state.selectedElementIds.contains(id)) {
+          hitSelectedElement = true;
+
+          // Check if element or layer is locked
+          final isLocked = element['locked'] == true;
+          bool isLayerLocked = false;
+          if (layerId != null) {
+            final layer = controller.state.getLayerById(layerId);
+            if (layer != null) {
+              isLayerLocked = layer['isLocked'] == true;
+            }
+          }
+
+          // If element and layer are not locked, set up for dragging
+          if (!isLocked && !isLayerLocked) {
+            // Set up dragging for selected elements instead of creating selection box
+            _isDragging = true;
+            _dragStart = details.localPosition;
+            _elementStartPositions.clear();
+
+            // Record starting positions of all selected elements
+            for (final selectedId in controller.state.selectedElementIds) {
+              final selectedElement = ElementUtils.findElementById(
+                  elements.cast<Map<String, dynamic>>(), selectedId);
+              if (selectedElement != null) {
+                _elementStartPositions[selectedId] = Offset(
+                  (selectedElement['x'] as num).toDouble(),
+                  (selectedElement['y'] as num).toDouble(),
+                );
+              }
+            }
+            // Notify drag started
+            onDragStart(
+                _isDragging, _dragStart, Offset(x, y), _elementStartPositions);
+            debugPrint(
+                '【拖拽】Starting drag on selected element in select mode - elementId: $id');
+            return; // Exit early since we're now dragging elements
+          }
+          break; // Found a selected but locked element, don't need to check more
+        }
+      }
+
+      // If didn't hit any selected element, start selection box
+      if (!hitSelectedElement) {
+        debugPrint('Starting selection box at ${details.localPosition}');
+        // Start drawing selection box
+        _isSelectionBoxActive = true;
+        _selectionBoxStart = details.localPosition;
+        _selectionBoxEnd = details.localPosition;
+        onDragUpdate();
+        return;
+      }
     }
 
     // 记录拖拽起始位置，无论是否在预览模式
@@ -281,6 +355,10 @@ class CanvasGestureHandler {
       return;
     }
 
+    // Note: We don't need to check controller.state.currentTool == 'select' here
+    // because if we're dragging elements (_isDragging = true), that means
+    // we've already set up dragging in handlePanStart, even in select mode
+
     // 获取当前位置
     final currentPosition = details.localPosition;
 
@@ -312,9 +390,8 @@ class CanvasGestureHandler {
       // 确保水平和垂直方向使用相同的缩放计算方式
       final dx = (currentPosition.dx - _dragStart.dx);
       final dy = (currentPosition.dy - _dragStart.dy);
-
       debugPrint(
-          '拖拽选中元素: 原始偏移=(${currentPosition.dx - _dragStart.dx}, ${currentPosition.dy - _dragStart.dy}), '
+          '【拖拽】拖拽选中元素: 当前工具=${controller.state.currentTool}, 原始偏移=(${currentPosition.dx - _dragStart.dx}, ${currentPosition.dy - _dragStart.dy}), '
           '缩放因子=$scaleFactor, 反向缩放=$inverseScale, 调整后偏移=($dx, $dy)');
 
       // 更新所有选中元素的位置
@@ -391,6 +468,22 @@ class CanvasGestureHandler {
 
       // 检查回调后的状态
       debugPrint('【平移】handlePanUpdate: 回调后，偏移量=$_elementStartPosition');
+    }
+  }
+
+  /// Handle right-click (secondary button) tap down event
+  /// Used to exit select mode
+  void handleSecondaryTapDown(TapDownDetails details) {
+    // If in select mode, exit it
+    if (controller.state.currentTool == 'select') {
+      debugPrint('Right-click detected, exiting select mode');
+      // Exit select mode
+      controller.exitSelectMode();
+      // Cancel selection box if active
+      if (_isSelectionBoxActive) {
+        cancelSelectionBox();
+      }
+      onDragUpdate();
     }
   }
 

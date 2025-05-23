@@ -81,15 +81,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   Map<String, dynamic>? _formatBrushStyles;
   bool _isFormatBrushActive = false;
 
-  /// Synchronize local _currentTool with controller's state.currentTool
-  void _syncToolState() {
-    final controllerTool = _controller.state.currentTool;
-    if (_currentTool != controllerTool) {
-      setState(() {
-        _currentTool = controllerTool;
-      });
-    }
-  }
   @override
   Widget build(BuildContext context) {
     // Remove unused l10n variable
@@ -206,7 +197,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     // Initialize keyboard handler
     _initKeyboardHandler();
-    
+
     // Make sure controller state matches our initial empty tool state
     _controller.state.currentTool = _currentTool;
 
@@ -587,8 +578,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     );
   }
 
-  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
-
   /// Build the right properties panel
   Widget _buildRightPanel() {
     return AnimatedBuilder(
@@ -726,6 +715,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       },
     );
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// Check if clipboard has valid content for pasting
   /// Returns true if clipboard has content that can be pasted
@@ -1611,12 +1602,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
               FilledButton(
                 child: Text(l10n.practiceEditSaveAndExit),
                 onPressed: () async {
-                  // Save changes
-                  final saveResult = await _savePractice();
-                  if (context.mounted) {
-                    // Return true to confirm leaving, ensuring we exit regardless of save success
-                    Navigator.of(context).pop(true);
-                  }
+                  // Dismiss the confirmation dialog immediately with 'true' to indicate we want to exit
+                  Navigator.of(context).pop(true);
+
+                  // Start save operation (don't await, we want to exit regardless)
+                  // This will show any necessary dialogs but won't block exit
+                  _savePractice();
+
+                  // The PopScope's onPopInvoked handler will take care of the actual navigation
+                  // since we returned 'true' from the dialog
                 },
               ),
             ],
@@ -1834,35 +1828,35 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   }
 
   /// Save practice
-  Future<void> _savePractice() async {
+  /// Returns true if save was successful, false otherwise
+  Future<bool> _savePractice() async {
     final l10n = AppLocalizations.of(context);
 
     if (_controller.state.pages.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(l10n.practiceEditCannotSaveNoPages)),
       );
-      return;
+      return false;
     }
 
     // Save ScaffoldMessenger reference to avoid using context after async operation
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    // If never saved before, show dialog to enter title
+    final scaffoldMessenger = ScaffoldMessenger.of(
+        context); // If never saved before, show dialog to enter title
     if (!_controller.isSaved) {
       await _saveAsNewPractice();
-      return;
+      return true; // Consider save attempt successful even if canceled
     }
 
     // Save practice
     final result = await _controller.savePractice();
 
-    if (!mounted) return;
-
+    if (!mounted) return false;
     if (result == true) {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
       );
+      return true;
     } else if (result == 'title_exists') {
       // Title already exists, ask whether to overwrite
       final shouldOverwrite = await showDialog<bool>(
@@ -1886,27 +1880,30 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         },
       );
 
-      if (!mounted) return;
-
+      if (!mounted) return false;
       if (shouldOverwrite == true) {
         final saveResult = await _controller.savePractice(forceOverwrite: true);
 
-        if (!mounted) return;
+        if (!mounted) return false;
 
         if (saveResult == true) {
           scaffoldMessenger.showSnackBar(
             SnackBar(content: Text(l10n.practiceEditSaveSuccess)),
           );
+          return true;
         } else {
           scaffoldMessenger.showSnackBar(
             SnackBar(content: Text(l10n.practiceEditSaveFailed)),
           );
+          return false;
         }
       }
+      return false;
     } else {
       scaffoldMessenger.showSnackBar(
         SnackBar(content: Text(l10n.practiceEditSaveFailed)),
       );
+      return false;
     }
   }
 
@@ -2008,6 +2005,16 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         }
       }
     });
+  }
+
+  /// Synchronize local _currentTool with controller's state.currentTool
+  void _syncToolState() {
+    final controllerTool = _controller.state.currentTool;
+    if (_currentTool != controllerTool) {
+      setState(() {
+        _currentTool = controllerTool;
+      });
+    }
   }
 
   /// Toggle grid visibility

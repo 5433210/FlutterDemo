@@ -299,7 +299,15 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       return;
                     }
 
-                    // If not dragging elements and not in preview mode, handle panning directly
+                    // Handle element dragging in select mode or any other mode
+                    // _isDragging will be true even in select mode if we started dragging on a selected element
+                    if (_isDragging) {
+                      _gestureHandler.handlePanUpdate(details);
+                      setState(() {}); // Force redraw for element movement
+                      return;
+                    }
+
+                    // If not dragging elements and not in select mode, handle panning directly
                     if (!_isDragging &&
                         widget.controller.state.currentTool != 'select') {
                       // Create new transformation matrix
@@ -335,7 +343,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                           '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
                     }
 
-                    // Call original handlePanUpdate for element dragging
+                    // Always call handlePanUpdate for any cases not handled above
                     _gestureHandler.handlePanUpdate(details);
                   },
                   onPanEnd: (details) => _gestureHandler.handlePanEnd(details),
@@ -1634,14 +1642,14 @@ class _SelectionCornerPainter extends CustomPainter {
     final brightness = ThemeData.estimateBrightnessForColor(color);
     contrastColor = brightness == Brightness.dark ? Colors.white : Colors.black;
   }
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     // Create two paints for the dual-color effect
     final primaryPaint = Paint()
       ..color = color
       ..strokeWidth = 2.0;
-      
+
     final contrastPaint = Paint()
       ..color = contrastColor
       ..strokeWidth = 1.0;
@@ -1651,25 +1659,34 @@ class _SelectionCornerPainter extends CustomPainter {
     const cornerLength = 10.0; // Slightly longer for better visibility
 
     // Draw corners with dual-color effect (outer stroke first, then inner stroke)
-    _drawCornerWithDualColors(canvas, const Offset(0, 0), 'top-left', size, primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(size.width, 0), 'top-right', size, primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(0, size.height), 'bottom-left', size, primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(size.width, size.height), 'bottom-right', size, primaryPaint, contrastPaint, cornerLength);
+    _drawCornerWithDualColors(canvas, const Offset(0, 0), 'top-left', size,
+        primaryPaint, contrastPaint, cornerLength);
+    _drawCornerWithDualColors(canvas, Offset(size.width, 0), 'top-right', size,
+        primaryPaint, contrastPaint, cornerLength);
+    _drawCornerWithDualColors(canvas, Offset(0, size.height), 'bottom-left',
+        size, primaryPaint, contrastPaint, cornerLength);
+    _drawCornerWithDualColors(canvas, Offset(size.width, size.height),
+        'bottom-right', size, primaryPaint, contrastPaint, cornerLength);
   }
-  
+
+  @override
+  bool shouldRepaint(_SelectionCornerPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.contrastColor != contrastColor;
+  }
+
   /// Helper method to draw a corner with dual colors
   void _drawCornerWithDualColors(
-    Canvas canvas, 
-    Offset point, 
-    String cornerPosition, 
-    Size size,
-    Paint primaryPaint, 
-    Paint contrastPaint,
-    double cornerLength
-  ) {
+      Canvas canvas,
+      Offset point,
+      String cornerPosition,
+      Size size,
+      Paint primaryPaint,
+      Paint contrastPaint,
+      double cornerLength) {
     // Calculate the two lines for this corner
     Offset horizontalEnd, verticalEnd;
-    
+
     switch (cornerPosition) {
       case 'top-left':
         horizontalEnd = Offset(point.dx + cornerLength, point.dy);
@@ -1690,31 +1707,22 @@ class _SelectionCornerPainter extends CustomPainter {
       default:
         return;
     }
-    
+
     // Draw the outer (contrast) stroke
     canvas.drawLine(point, horizontalEnd, primaryPaint);
     canvas.drawLine(point, verticalEnd, primaryPaint);
-    
+
     // Draw the inner (primary) stroke with slight offset for a dual-color effect
     const offsetAmount = 1.0;
-    final offsetX = cornerPosition.contains('right') ? -offsetAmount : offsetAmount;
-    final offsetY = cornerPosition.contains('bottom') ? -offsetAmount : offsetAmount;
-    
-    canvas.drawLine(
-      point.translate(offsetX, offsetY), 
-      horizontalEnd.translate(0, offsetY),
-      contrastPaint
-    );
-    
-    canvas.drawLine(
-      point.translate(offsetX, offsetY), 
-      verticalEnd.translate(offsetX, 0),
-      contrastPaint
-    );
-  }
+    final offsetX =
+        cornerPosition.contains('right') ? -offsetAmount : offsetAmount;
+    final offsetY =
+        cornerPosition.contains('bottom') ? -offsetAmount : offsetAmount;
 
-  @override
-  bool shouldRepaint(_SelectionCornerPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.contrastColor != contrastColor;
+    canvas.drawLine(point.translate(offsetX, offsetY),
+        horizontalEnd.translate(0, offsetY), contrastPaint);
+
+    canvas.drawLine(point.translate(offsetX, offsetY),
+        verticalEnd.translate(offsetX, 0), contrastPaint);
   }
 }
