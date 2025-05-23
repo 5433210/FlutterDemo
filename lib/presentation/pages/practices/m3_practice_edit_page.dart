@@ -80,6 +80,16 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   // 格式刷相关变量
   Map<String, dynamic>? _formatBrushStyles;
   bool _isFormatBrushActive = false;
+
+  /// Synchronize local _currentTool with controller's state.currentTool
+  void _syncToolState() {
+    final controllerTool = _controller.state.currentTool;
+    if (_currentTool != controllerTool) {
+      setState(() {
+        _currentTool = controllerTool;
+      });
+    }
+  }
   @override
   Widget build(BuildContext context) {
     // Remove unused l10n variable
@@ -141,6 +151,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     HardwareKeyboard.instance.removeHandler(_keyboardHandler.handleKeyEvent);
     _focusNode.dispose();
 
+    // Remove controller listener
+    _controller.removeListener(_syncToolState);
+
     // Release zoom controller
     _transformationController.dispose();
 
@@ -179,6 +192,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         _isPreviewMode = isPreview;
       });
     });
+
+    // Add listener to synchronize local _currentTool with controller's state.currentTool
+    _controller.addListener(_syncToolState);
 
     // Initialize keyboard focus node
     _focusNode = FocusNode();
