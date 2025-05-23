@@ -630,7 +630,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           height: pageSize.height,
           color: backgroundColor,
           child: RepaintBoundary(
-            // Use widget's own key as the canvas content key
+            // Use the widget's key for the RepaintBoundary
+            key: widget.key,
             child: AbsorbPointer(
               absorbing: false, // Ensure control points can receive events
               child: Stack(

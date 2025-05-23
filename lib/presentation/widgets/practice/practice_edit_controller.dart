@@ -680,13 +680,21 @@ class PracticeEditController extends ChangeNotifier {
   /// 从 RepaintBoundary 捕获图像
   Future<Uint8List?> captureFromRepaintBoundary(GlobalKey key) async {
     try {
-      // 获取 RenderRepaintBoundary
-      final boundary =
-          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) {
-        debugPrint('无法获取 RenderRepaintBoundary');
+      // 获取 RenderObject 并安全地检查类型
+      final renderObject = key.currentContext?.findRenderObject();
+      
+      // 如果渲染对象为空或不是 RenderRepaintBoundary 类型，返回空
+      if (renderObject == null) {
+        debugPrint('无法获取渲染对象');
         return null;
       }
+      
+      if (renderObject is! RenderRepaintBoundary) {
+        debugPrint('找到的渲染对象不是 RenderRepaintBoundary 类型: ${renderObject.runtimeType}');
+        return null;
+      }
+      
+      final boundary = renderObject;
 
       // 捕获图像
       final image = await boundary.toImage(pixelRatio: 2.0);
@@ -727,6 +735,47 @@ class PracticeEditController extends ChangeNotifier {
   void clearSelection() {
     state.selectedElementIds.clear();
     state.selectedElement = null;
+    notifyListeners();
+  }
+  
+  /// 选择当前页面上的所有元素
+  void selectAll() {
+    // 获取当前页面上的所有元素
+    if (_state.currentPageIndex >= 0 && _state.currentPageIndex < _state.pages.length) {
+      final page = _state.pages[_state.currentPageIndex];
+      final elements = page['elements'] as List<dynamic>;
+      
+      // 清除当前选择
+      state.selectedElementIds.clear();
+      
+      // 选择所有非隐藏元素
+      for (final element in elements) {
+        // 检查元素是否隐藏
+        final isHidden = element['hidden'] == true || element['isHidden'] == true;
+        if (!isHidden) {
+          // 检查元素所在图层是否隐藏
+          final layerId = element['layerId'] as String?;
+          bool isLayerHidden = false;
+          if (layerId != null) {
+            final layer = _state.getLayerById(layerId);
+            if (layer != null) {
+              isLayerHidden = layer['isVisible'] == false;
+            }
+          }
+          
+          // 如果元素和其所在图层都可见，就选择它
+          if (!isLayerHidden) {
+            final id = element['id'] as String;
+            state.selectedElementIds.add(id);
+          }
+        }
+      }
+      
+      // 如果选中了多个元素，设置为空，否则使用第一个元素
+      state.selectedElement = state.selectedElementIds.length == 1 ?
+        elements.firstWhere((e) => e['id'] == state.selectedElementIds.first) : null;
+    }
+    
     notifyListeners();
   }
 

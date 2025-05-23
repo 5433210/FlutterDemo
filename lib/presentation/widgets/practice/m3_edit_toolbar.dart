@@ -28,6 +28,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final String? currentTool;
   final Function(String)? onSelectTool;
   final Function(BuildContext, String)? onDragElementStart;
+  
+  // 选择相关的操作
+  final VoidCallback? onSelectAll;
+  final VoidCallback? onDeselectAll;
 
   const M3EditToolbar({
     super.key,
@@ -51,6 +55,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     this.currentTool,
     this.onSelectTool,
     this.onDragElementStart,
+    this.onSelectAll,
+    this.onDeselectAll,
   });
 
   @override
@@ -127,6 +133,20 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => onSelectTool!('select'),
                   isActive: currentTool == 'select',
                 ),
+                if (onSelectAll != null) 
+                  _buildToolbarButton(
+                    context: context,
+                    icon: Icons.done_all,
+                    tooltip: '全选',
+                    onPressed: onSelectAll,
+                  ),
+                if (onDeselectAll != null)
+                  _buildToolbarButton(
+                    context: context,
+                    icon: Icons.deselect,
+                    tooltip: '取消选择',
+                    onPressed: onDeselectAll,
+                  ),
               ],
             ),
             

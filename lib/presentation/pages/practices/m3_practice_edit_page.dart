@@ -355,7 +355,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
               'textureApplicationRange',
               'textureFillMode',
               'textureOpacity',
-              'enableSoftLineBreak',  // 添加自动换行属性
+              'enableSoftLineBreak', // 添加自动换行属性
             ];
 
             // 应用所有指定的样式属性
@@ -483,6 +483,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           onDelete: _deleteSelectedElements,
           onCopyFormatting: _copyElementFormatting,
           onApplyFormatBrush: _applyFormatBrush,
+          // 选择操作相关回调
+          onSelectAll: _selectAllElements,
+          onDeselectAll: _deselectAllElements,
           // 添加元素工具按钮相关参数
           currentTool: _currentTool,
           onSelectTool: (tool) {
@@ -936,7 +939,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           'textureApplicationRange',
           'textureFillMode',
           'textureOpacity',
-          'enableSoftLineBreak',  // 添加自动换行属性
+          'enableSoftLineBreak', // 添加自动换行属性
         ];
 
         // 复制所有指定的样式属性
@@ -2003,6 +2006,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         _currentTool = controllerTool;
       });
     }
+  }
+
+  /// Deselect all elements on the current page
+  void _deselectAllElements() {
+    _controller.clearSelection();
   }
 
   /// Toggle grid visibility
