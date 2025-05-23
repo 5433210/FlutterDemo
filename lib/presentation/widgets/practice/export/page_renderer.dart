@@ -172,53 +172,70 @@ class PageRenderer {
       // 获取当前页面的 GlobalKey
       final GlobalKey? canvasKey = controller.canvasKey;
 
+      debugPrint(
+          'PageRenderer._captureCurrentPage: Starting capture with pixelRatio $pixelRatio');
+      debugPrint(
+          'PageRenderer._captureCurrentPage: Controller canvasKey: $canvasKey');
+
       if (canvasKey == null) {
-        debugPrint('错误: canvasKey 为 null');
+        debugPrint(
+            'PageRenderer._captureCurrentPage: ERROR - canvasKey 为 null');
         return null;
       }
 
       // 检查 key 是否有效
+      debugPrint(
+          'PageRenderer._captureCurrentPage: Checking canvasKey.currentContext...');
       if (canvasKey.currentContext == null) {
-        debugPrint('无法获取 currentContext，key 可能无效');
+        debugPrint(
+            'PageRenderer._captureCurrentPage: ERROR - 无法获取 currentContext，key 可能无效');
         return null;
       }
 
+      debugPrint('PageRenderer._captureCurrentPage: Getting RenderObject...');
       final RenderObject? renderObject =
           canvasKey.currentContext!.findRenderObject();
 
       if (renderObject == null) {
-        debugPrint('无法找到 RenderObject');
+        debugPrint(
+            'PageRenderer._captureCurrentPage: ERROR - 无法找到 RenderObject');
         return null;
       }
 
+      debugPrint(
+          'PageRenderer._captureCurrentPage: RenderObject type: ${renderObject.runtimeType}');
+
       if (renderObject is! RenderRepaintBoundary) {
         debugPrint(
-            'RenderObject 不是 RenderRepaintBoundary: ${renderObject.runtimeType}');
+            'PageRenderer._captureCurrentPage: ERROR - RenderObject 不是 RenderRepaintBoundary: ${renderObject.runtimeType}');
         return null;
       }
 
       final RenderRepaintBoundary boundary = renderObject;
 
       // 捕获为图片
-      debugPrint('开始捕获图片，像素比例: $pixelRatio...');
+      debugPrint(
+          'PageRenderer._captureCurrentPage: 开始捕获图片，像素比例: $pixelRatio...');
       final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
-      debugPrint('图片捕获成功: ${image.width}x${image.height}');
+      debugPrint(
+          'PageRenderer._captureCurrentPage: 图片捕获成功: ${image.width}x${image.height}');
 
       final ByteData? byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
 
       if (byteData == null) {
-        debugPrint('无法获取图片数据');
+        debugPrint('PageRenderer._captureCurrentPage: ERROR - 无法获取图片数据');
         return null;
       }
 
       final Uint8List bytes = byteData.buffer.asUint8List();
-      debugPrint('图片数据获取成功: ${bytes.length} 字节');
+      debugPrint(
+          'PageRenderer._captureCurrentPage: SUCCESS - 图片数据获取成功: ${bytes.length} 字节');
 
       return bytes;
     } catch (e, stack) {
-      debugPrint('捕获当前页面失败: $e');
-      debugPrint('堆栈跟踪: $stack');
+      debugPrint('PageRenderer._captureCurrentPage: EXCEPTION - 捕获当前页面失败: $e');
+      debugPrint('PageRenderer._captureCurrentPage: 堆栈跟踪: $stack');
       return null;
     }
   }

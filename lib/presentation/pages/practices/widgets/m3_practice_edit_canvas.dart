@@ -77,6 +77,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   // Canvas gesture handler
   late CanvasGestureHandler _gestureHandler;
 
+  // Dedicated GlobalKey for RepaintBoundary (for screenshot functionality)
+  // Use the widget's key if provided, otherwise create a new one
+  late final GlobalKey _repaintBoundaryKey;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -114,6 +118,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   void initState() {
     super.initState();
 
+    // Initialize RepaintBoundary key - use widget's key if available for screenshot functionality
+    _repaintBoundaryKey = widget.key as GlobalKey? ?? GlobalKey();
+
     // Initialize zoom listener
     widget.transformationController.addListener(_handleTransformationChange);
 
@@ -146,10 +153,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         // The scale is the same for x and y in this case (uniform scaling)
         return matrix.getMaxScaleOnAxis();
       },
-    );
-
-    // Register this canvas with the controller for reset view functionality
+    ); // Register this canvas with the controller for reset view functionality
     widget.controller.setEditCanvas(this);
+
+    // Set the RepaintBoundary key in the controller for screenshot functionality
+    widget.controller.setCanvasKey(_repaintBoundaryKey);
   }
 
   /// Public method to reset canvas position
@@ -522,15 +530,14 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 child: Container(
                   color: Colors.transparent,
                 ),
-              ),
-
-              // Actual control points
+              ), // Actual control points
               Positioned(
                 left: 0,
                 top: 0,
                 right: 0,
                 bottom: 0,
                 child: RepaintBoundary(
+                  key: ValueKey('control_points_repaint_boundary_$elementId'),
                   child: Builder(builder: (context) {
                     // 获取当前缩放值
                     final scale = widget.transformationController.value
@@ -630,8 +637,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           height: pageSize.height,
           color: backgroundColor,
           child: RepaintBoundary(
-            // Use the widget's key for the RepaintBoundary
-            key: widget.key,
+            key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
             child: AbsorbPointer(
               absorbing: false, // Ensure control points can receive events
               child: Stack(
@@ -1656,7 +1662,6 @@ class _SelectionCornerPainter extends CustomPainter {
       ..strokeWidth = 1.0;
 
     // Draw corner indicators with a dual-color effect
-    const cornerSize = 4.0;
     const cornerLength = 10.0; // Slightly longer for better visibility
 
     // Draw corners with dual-color effect (outer stroke first, then inner stroke)
