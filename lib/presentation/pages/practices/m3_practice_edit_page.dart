@@ -190,6 +190,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     // Initialize keyboard handler
     _initKeyboardHandler();
+    
+    // Make sure controller state matches our initial empty tool state
+    _controller.state.currentTool = _currentTool;
 
     // Schedule a callback to connect the canvas after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
