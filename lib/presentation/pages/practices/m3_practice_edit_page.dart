@@ -386,7 +386,17 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           currentTool: _currentTool,
           onSelectTool: (tool) {
             setState(() {
-              _currentTool = tool;
+              // 如果当前已经是select模式，再次点击select按钮则退出select模式
+              if (_currentTool == 'select' && tool == 'select') {
+                _currentTool = '';
+                _controller.exitSelectMode();
+              } else {
+                _currentTool = tool;
+                // 同步到controller的状态
+                _controller.state.currentTool = tool;
+                _controller.notifyListeners(); // 通知监听器更新
+                debugPrint('工具切换为: $tool');
+              }
             });
           },
           onDragElementStart: (context, elementType) {

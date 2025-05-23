@@ -244,15 +244,19 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         final scale = widget.transformationController.value.getMaxScaleOnAxis();
         final zoomPercentage = (scale * 100).toInt();
 
-        return Stack(
-          children: [
+        return SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: [
             Container(
               color: colorScheme.inverseSurface.withOpacity(
                   0.1), // Canvas outer background - improved contrast in light theme
 
               child: InteractiveViewer(
                 boundaryMargin: const EdgeInsets.all(double.infinity),
-                panEnabled: true, // 完全禁用内置平移，由我们自己的代码处理所有平移
+                // 当处于select模式时禁用平移，允许我们的选择框功能工作
+                panEnabled: widget.controller.state.currentTool != 'select',
                 scaleEnabled: true,
                 minScale: 0.1,
                 maxScale: 15.0,
@@ -275,14 +279,23 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       .translucent, // Ensure gesture events are properly passed
                   onTapUp: (details) => _gestureHandler.handleTapUp(
                       details, elements.cast<Map<String, dynamic>>()),
+                  // 处理右键点击事件，用于退出select模式
+                  onSecondaryTapDown: (details) => _gestureHandler.handleSecondaryTapDown(details),
                   onSecondaryTapUp: (details) =>
                       _gestureHandler.handleSecondaryTapUp(
                           details, elements.cast<Map<String, dynamic>>()),
                   onPanStart: (details) => _gestureHandler.handlePanStart(
                       details, elements.cast<Map<String, dynamic>>()),
                   onPanUpdate: (details) {
+                    // 先处理选择框更新，这优先级最高
+                    if (widget.controller.state.currentTool == 'select' && _gestureHandler.isSelectionBoxActive) {
+                      _gestureHandler.handlePanUpdate(details);
+                      setState(() {}); // 确保选择框重绘
+                      return;
+                    }
+                    
                     // If not dragging elements and not in preview mode, handle panning directly
-                    if (!_isDragging) {
+                    if (!_isDragging && widget.controller.state.currentTool != 'select') {
                       // Create new transformation matrix
                       final Matrix4 newMatrix = Matrix4.identity();
 
@@ -316,7 +329,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                           '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
                     }
 
-                    // Call original handlePanUpdate
+                    // Call original handlePanUpdate for element dragging
                     _gestureHandler.handlePanUpdate(details);
                   },
                   onPanEnd: (details) => _gestureHandler.handlePanEnd(details),
@@ -340,6 +353,49 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   spacing: 4.0,
                   runSpacing: 4.0,
                   children: [
+                    // Debug indicator showing current tool
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colorScheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '当前工具: ${widget.controller.state.currentTool}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onTertiaryContainer,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Selection mode indicator
+                    if (widget.controller.state.currentTool == 'select' && !widget.isPreviewMode)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.select_all,
+                              size: 16,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '选择模式', // Direct text since the localization key might not exist
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     // Reset position button
                     Tooltip(
                       message:
@@ -413,7 +469,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
               ),
             ),
           ],
-        );
+        ),
+      );
       },
     );
   }
@@ -436,55 +493,59 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         //   // Clear selection when tapping on empty area
         //   // widget.controller.clearSelection();
         // },
-        child: Stack(
-          children: [
-            // Transparent overlay to ensure control points receive events
-            Positioned.fill(
-              child: Container(
-                color: Colors.transparent,
-              ),
-            ),
-
-            // Actual control points
-            Positioned(
-              left: 0,
-              top: 0,
-              right: 0,
-              bottom: 0,
-              child: RepaintBoundary(
-                child: Builder(builder: (context) {
-                  // 获取当前缩放值
-                  final scale =
-                      widget.transformationController.value.getMaxScaleOnAxis();
-                  return CanvasControlPoints(
-                    key: ValueKey(
-                        'control_points_${elementId}_${scale.toStringAsFixed(2)}'),
-                    elementId: elementId,
-                    x: x,
-                    y: y,
-                    width: width,
-                    height: height,
-                    rotation: rotation,
-                    initialScale:
-                        scale, // Pass the current scale to ensure proper control point sizing
-                    onControlPointUpdate: _handleControlPointUpdate,
-                    onControlPointDragEnd: _handleControlPointDragEnd,
-                  );
-                }),
-              ),
-            ),
-
-            // Add a transparent overlay to ensure control points can immediately respond to events
-            Positioned.fill(
-              child: IgnorePointer(
-                ignoring:
-                    true, // Ignore pointer events, let control points receive events
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
+          child: Stack(
+            children: [
+              // Transparent overlay to ensure control points receive events
+              Positioned.fill(
                 child: Container(
                   color: Colors.transparent,
                 ),
               ),
-            ),
-          ],
+
+              // Actual control points
+              Positioned(
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                child: RepaintBoundary(
+                  child: Builder(builder: (context) {
+                    // 获取当前缩放值
+                    final scale =
+                        widget.transformationController.value.getMaxScaleOnAxis();
+                    return CanvasControlPoints(
+                      key: ValueKey(
+                          'control_points_${elementId}_${scale.toStringAsFixed(2)}'),
+                      elementId: elementId,
+                      x: x,
+                      y: y,
+                      width: width,
+                      height: height,
+                      rotation: rotation,
+                      initialScale:
+                          scale, // Pass the current scale to ensure proper control point sizing
+                      onControlPointUpdate: _handleControlPointUpdate,
+                      onControlPointDragEnd: _handleControlPointDragEnd,
+                    );
+                  }),
+                ),
+              ),
+
+              // Add a transparent overlay to ensure control points can immediately respond to events
+              Positioned.fill(
+                child: IgnorePointer(
+                  ignoring:
+                      true, // Ignore pointer events, let control points receive events
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -589,34 +650,31 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     final elementHeight = (element['height'] as num).toDouble();
                     final elementRotation =
                         (element['rotation'] as num?)?.toDouble() ?? 0.0;
-                    final elementOpacity =
-                        (element['opacity'] as num?)?.toDouble() ?? 1.0;
-                    final isLocked = element['locked'] as bool? ?? false;
-                    debugPrint('元素锁定状态: id=${element['id']}, locked=$isLocked');
+                    final isLocked = element['locked'] == true;
+
+                    // Check if element is on a locked layer
+                    final layerId = element['layerId'] as String?;
+                    bool isLayerLocked = false;
+                    bool isLayerHidden = false;
+                    if (layerId != null) {
+                      final layer =
+                          widget.controller.state.getLayerById(layerId);
+                      if (layer != null) {
+                        isLayerLocked = layer['isLocked'] == true;
+                        isLayerHidden = layer['isVisible'] == false;
+                      }
+                    }
+
+                    // Skip hidden layer elements
+                    if (isLayerHidden) {
+                      debugPrint(
+                          '跳过隐藏图层上的元素: id=${element['id']}, layerId=$layerId');
+                      return const SizedBox.shrink();
+                    }
+
+                    // Check if this element is selected
                     final isSelected =
                         widget.controller.state.selectedElementIds.contains(id);
-
-                    // Get layer visibility and lock status
-                    final layerId = element['layerId'] as String?;
-                    final isLayerVisible = layerId == null ||
-                        widget.controller.state.isLayerVisible(layerId);
-                    final isLayerLocked = layerId != null &&
-                        widget.controller.state.isLayerLocked(layerId);
-
-                    // 添加调试信息
-                    if (isLayerLocked) {
-                      debugPrint(
-                          '图层锁定: 元素id=${element['id']}, 图层id=$layerId, 图层锁定=$isLayerLocked');
-                    }
-
-                    // Skip elements on hidden layers
-                    if (!isLayerVisible) return const SizedBox.shrink();
-
-                    // Log element properties for debugging
-                    if (element['type'] == 'image') {
-                      debugPrint(
-                          'Rendering image element: id=$id, opacity=$elementOpacity, hidden=${element['hidden']}');
-                    }
 
                     // Render element
                     return Positioned(
@@ -624,101 +682,111 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       top: elementY,
                       child: Transform.rotate(
                         angle: elementRotation *
-                            (3.14159265359 / 180), // Convert degrees to radians
-                        child: Opacity(
-                          opacity: elementOpacity, // Apply element opacity
-                          child: Container(
-                            width: elementWidth,
-                            height: elementHeight,
-                            decoration: !widget.isPreviewMode && isSelected
-                                ? BoxDecoration(
-                                    border: Border.all(
+                            math.pi /
+                            180, // Convert to radians
+                        child: Container(
+                          width: elementWidth,
+                          height: elementHeight,
+                          decoration: !widget.isPreviewMode && isSelected
+                              ? BoxDecoration(
+                                  border: Border.all(
+                                    color: isLocked || isLayerLocked
+                                        ? colorScheme.tertiary
+                                        : colorScheme.primary,
+                                    width: 0.5, // 将边框宽度从2.0减小到0.5像素
+                                    style: BorderStyle.solid,
+                                  ),
+                                  // 使用完全透明的遮盖层，不再使用半透明背景色
+                                  color: Colors.transparent,
+                                )
+                              : null,
+                          child: Stack(
+                            children: [
+                              // Element content
+                              _renderElement(
+                                  element), // 为选中元素添加角落指示器，增强选中状态的可见性
+                              if (!widget.isPreviewMode && isSelected)
+                                Positioned.fill(
+                                  child: CustomPaint(
+                                    painter: _SelectionCornerPainter(
                                       color: isLocked
                                           ? colorScheme.tertiary
                                           : colorScheme.primary,
-                                      width: 0.5, // 将边框宽度从2.0减小到0.5像素
-                                      style: BorderStyle.solid,
-                                    ),
-                                    // 使用完全透明的遮盖层，不再使用半透明背景色
-                                    color: Colors.transparent,
-                                  )
-                                : null,
-                            child: Stack(
-                              children: [
-                                // Element content
-                                _renderElement(
-                                    element), // 为选中元素添加角落指示器，增强选中状态的可见性
-                                if (!widget.isPreviewMode && isSelected)
-                                  Positioned.fill(
-                                    child: CustomPaint(
-                                      painter: _SelectionCornerPainter(
-                                        color: isLocked
-                                            ? colorScheme.tertiary
-                                            : colorScheme.primary,
-                                      ),
                                     ),
                                   ),
+                                ),
 
-                                // Lock icon (if element or its layer is locked)
-                                if ((isLocked || isLayerLocked) &&
-                                    !widget.isPreviewMode)
-                                  Positioned(
-                                    right: 2,
-                                    top: 2,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white
-                                            .withAlpha(204), // 0.8 opacity
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: isLayerLocked
-                                              ? Colors.grey.shade400
-                                              : colorScheme.tertiary,
-                                          width: 1.0,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            isLayerLocked
-                                                ? Icons.layers
-                                                : Icons.lock,
-                                            size: 18,
-                                            color: isLayerLocked
-                                                ? Colors.grey.shade700
-                                                : colorScheme.tertiary,
-                                          ),
-                                          if (isLayerLocked)
-                                            Icon(
-                                              Icons.lock,
-                                              size: 14,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                        ],
+                              // Lock icon (if element or its layer is locked)
+                              if ((isLocked || isLayerLocked) &&
+                                  !widget.isPreviewMode)
+                                Positioned(
+                                  right: 2,
+                                  top: 2,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white
+                                          .withAlpha(204), // 0.8 opacity
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: isLayerLocked
+                                            ? Colors.grey.shade400
+                                            : colorScheme.tertiary,
+                                        width: 1.0,
                                       ),
                                     ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isLayerLocked
+                                              ? Icons.layers
+                                              : Icons.lock,
+                                          size: 18,
+                                          color: isLayerLocked
+                                              ? Colors.grey.shade700
+                                              : colorScheme.tertiary,
+                                        ),
+                                        if (isLayerLocked)
+                                          Icon(
+                                            Icons.lock,
+                                            size: 14,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                              ],
-                            ),
+                                ),
+                            ],
                           ),
                         ),
                       ),
                     );
                   }).toList(),
+
+                  // Selection box - draw when in select mode and dragging
+                  if (!widget.isPreviewMode &&
+                      widget.controller.state.currentTool == 'select' &&
+                      _gestureHandler.isSelectionBoxActive &&
+                      _gestureHandler.selectionBoxStart != null &&
+                      _gestureHandler.selectionBoxEnd != null)
+                    CustomPaint(
+                      painter: _SelectionBoxPainter(
+                        startPoint: _gestureHandler.selectionBoxStart!,
+                        endPoint: _gestureHandler.selectionBoxEnd!,
+                        color: colorScheme.primary,
+                      ),
+                      size: Size(pageSize.width, pageSize.height),
+                    ),
                 ],
               ),
             ),
           ),
         ),
 
-        // Control points for selected element (only in edit mode and when one element is selected)
-        if (!widget.isPreviewMode && selectedElementId != null)
-          Positioned.fill(
-            child: _buildControlPoints(
-                selectedElementId, x, y, width, height, rotation),
-          ),
+        // Control points for selected element (if single selection)
+        if (selectedElementId != null && !widget.isPreviewMode)
+          _buildControlPoints(selectedElementId, x, y, width, height, rotation),
       ],
     );
   }
@@ -1400,6 +1468,78 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   }
 }
 
+/// Custom painter for selection box
+class _SelectionBoxPainter extends CustomPainter {
+  final Offset startPoint;
+  final Offset endPoint;
+  final Color color;
+
+  _SelectionBoxPainter({
+    required this.startPoint,
+    required this.endPoint,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 创建选择框的矩形
+    final rect = Rect.fromPoints(startPoint, endPoint);
+
+    // 绘制半透明填充
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.15)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(rect, fillPaint);
+
+    // 绘制边框
+    final strokePaint = Paint()
+      ..color = color.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawRect(rect, strokePaint);
+
+    // 绘制角落标记，增强视觉反馈
+    final cornerPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+
+    // 边角尺寸
+    const cornerSize = 6.0;
+
+    // 左上角
+    canvas.drawLine(
+        rect.topLeft, rect.topLeft.translate(cornerSize, 0), cornerPaint);
+    canvas.drawLine(
+        rect.topLeft, rect.topLeft.translate(0, cornerSize), cornerPaint);
+
+    // 右上角
+    canvas.drawLine(
+        rect.topRight, rect.topRight.translate(-cornerSize, 0), cornerPaint);
+    canvas.drawLine(
+        rect.topRight, rect.topRight.translate(0, cornerSize), cornerPaint);
+
+    // 左下角
+    canvas.drawLine(
+        rect.bottomLeft, rect.bottomLeft.translate(cornerSize, 0), cornerPaint);
+    canvas.drawLine(rect.bottomLeft, rect.bottomLeft.translate(0, -cornerSize),
+        cornerPaint);
+
+    // 右下角
+    canvas.drawLine(rect.bottomRight,
+        rect.bottomRight.translate(-cornerSize, 0), cornerPaint);
+    canvas.drawLine(rect.bottomRight,
+        rect.bottomRight.translate(0, -cornerSize), cornerPaint);
+  }
+
+  @override
+  bool shouldRepaint(_SelectionBoxPainter oldDelegate) {
+    return startPoint != oldDelegate.startPoint ||
+        endPoint != oldDelegate.endPoint ||
+        color != oldDelegate.color;
+  }
+}
+
 /// Custom painter for selection corner indicators
 class _SelectionCornerPainter extends CustomPainter {
   final Color color;
@@ -1409,37 +1549,63 @@ class _SelectionCornerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 0.5 // 更细的线条，与边框宽度一致
-      ..style = PaintingStyle.stroke; // 确保只绘制描边而不填充
+      ..strokeWidth = 1.0;
 
-    const double cornerLength = 10.0;
+    // Draw corner indicators
+    const cornerSize = 4.0;
+    const cornerLength = 8.0;
 
-    // Draw corners
-    // Top-left
-    canvas.drawLine(const Offset(0, 0), const Offset(cornerLength, 0), paint);
-    canvas.drawLine(const Offset(0, 0), const Offset(0, cornerLength), paint);
-
-    // Top-right
+    // Top-left corner
     canvas.drawLine(
-        Offset(size.width, 0), Offset(size.width - cornerLength, 0), paint);
+      const Offset(0, 0),
+      const Offset(cornerLength, 0),
+      paint,
+    );
     canvas.drawLine(
-        Offset(size.width, 0), Offset(size.width, cornerLength), paint);
+      const Offset(0, 0),
+      const Offset(0, cornerLength),
+      paint,
+    );
 
-    // Bottom-left
+    // Top-right corner
     canvas.drawLine(
-        Offset(0, size.height), Offset(cornerLength, size.height), paint);
+      Offset(size.width, 0),
+      Offset(size.width - cornerLength, 0),
+      paint,
+    );
     canvas.drawLine(
-        Offset(0, size.height), Offset(0, size.height - cornerLength), paint);
+      Offset(size.width, 0),
+      Offset(size.width, cornerLength),
+      paint,
+    );
 
-    // Bottom-right
-    canvas.drawLine(Offset(size.width, size.height),
-        Offset(size.width - cornerLength, size.height), paint);
-    canvas.drawLine(Offset(size.width, size.height),
-        Offset(size.width, size.height - cornerLength), paint);
+    // Bottom-left corner
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(cornerLength, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(0, size.height - cornerLength),
+      paint,
+    );
+
+    // Bottom-right corner
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width - cornerLength, size.height),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(size.width, size.height),
+      Offset(size.width, size.height - cornerLength),
+      paint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+  bool shouldRepaint(_SelectionCornerPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }

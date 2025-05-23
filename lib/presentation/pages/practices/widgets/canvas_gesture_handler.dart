@@ -18,6 +18,11 @@ class CanvasGestureHandler {
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
 
+  // Selection box variables
+  bool _isSelectionBoxActive = false;
+  Offset? _selectionBoxStart;
+  Offset? _selectionBoxEnd;
+
   // 记录平移开始时的选中元素，确保平移不会改变选中状态
   List<String> _panStartSelectedElementIds = [];
 
@@ -29,8 +34,47 @@ class CanvasGestureHandler {
     required this.getScaleFactor,
   });
 
+  /// Get if selection box is active
+  bool get isSelectionBoxActive => _isSelectionBoxActive;
+
+  /// Get selection box end position
+  Offset? get selectionBoxEnd => _selectionBoxEnd;
+
+  /// Get selection box start position
+  Offset? get selectionBoxStart => _selectionBoxStart;
+
+  /// Cancel selection box
+  void cancelSelectionBox() {
+    _isSelectionBoxActive = false;
+    _selectionBoxStart = null;
+    _selectionBoxEnd = null;
+    onDragUpdate();
+  }
+  
+  /// Handle right-click (secondary button) tap down event
+  /// Used to exit select mode
+  void handleSecondaryTapDown(TapDownDetails details) {
+    // If in select mode, exit it
+    if (controller.state.currentTool == 'select') {
+      debugPrint('Right-click detected, exiting select mode');
+      // Exit select mode
+      controller.exitSelectMode();
+      // Cancel selection box if active
+      if (_isSelectionBoxActive) {
+        cancelSelectionBox();
+      }
+      onDragUpdate();
+    }
+  }
+
   /// Handle pan end on canvas
   void handlePanEnd(DragEndDetails details) {
+    // Check if we're in select mode and using selection box
+    if (controller.state.currentTool == 'select' && _isSelectionBoxActive) {
+      _finalizeSelectionBox();
+      return;
+    }
+
     // 添加日志跟踪
     debugPrint(
         '【平移】handlePanEnd: 拖拽结束，速度=${details.velocity.pixelsPerSecond}, 是否正在拖拽元素=$_isDragging');
@@ -101,6 +145,21 @@ class CanvasGestureHandler {
   /// Handle pan start on canvas
   void handlePanStart(
       DragStartDetails details, List<Map<String, dynamic>> elements) {
+    // Debug information
+    debugPrint('handlePanStart - currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
+    
+    // Check if we're in select mode before starting a selection box
+    if (controller.state.currentTool == 'select' &&
+        !controller.state.isPreviewMode) {
+      debugPrint('Starting selection box at ${details.localPosition}');
+      // Start drawing selection box
+      _isSelectionBoxActive = true;
+      _selectionBoxStart = details.localPosition;
+      _selectionBoxEnd = details.localPosition;
+      onDragUpdate();
+      return;
+    }
+
     // 记录拖拽起始位置，无论是否在预览模式
     _dragStart = details.localPosition;
 
@@ -215,6 +274,13 @@ class CanvasGestureHandler {
 
   /// Handle pan update on canvas
   void handlePanUpdate(DragUpdateDetails details) {
+    // Update selection box if active
+    if (_isSelectionBoxActive) {
+      _selectionBoxEnd = details.localPosition;
+      onDragUpdate();
+      return;
+    }
+
     // 获取当前位置
     final currentPosition = details.localPosition;
 
@@ -331,6 +397,22 @@ class CanvasGestureHandler {
   /// Handle right click on canvas
   void handleSecondaryTapUp(
       TapUpDetails details, List<Map<String, dynamic>> elements) {
+    // If in select mode, cancel selection box
+    if (controller.state.currentTool == 'select') {
+      // Cancel selection box if active
+      if (_isSelectionBoxActive) {
+        _isSelectionBoxActive = false;
+        _selectionBoxStart = null;
+        _selectionBoxEnd = null;
+        onDragUpdate();
+      }
+
+      // Exit select mode
+      controller.state.currentTool = '';
+      onDragUpdate();
+      return;
+    }
+
     // If in preview mode, don't handle secondary tap
     if (controller.state.isPreviewMode) return;
 
@@ -476,6 +558,74 @@ class CanvasGestureHandler {
       // _isDragging = false;
       // onDragStart(false, Offset.zero, Offset.zero, {});
     }
+  }
+
+  /// Finalize selection box
+  void _finalizeSelectionBox() {
+    // Do nothing if no selection box
+    if (_selectionBoxStart == null || _selectionBoxEnd == null) {
+      _isSelectionBoxActive = false;
+      onDragUpdate();
+      return;
+    }
+
+    // Create a rect from the selection box points
+    final selectionRect =
+        Rect.fromPoints(_selectionBoxStart!, _selectionBoxEnd!);
+
+    // If selection box is too small, treat as a click and cancel selection
+    if (selectionRect.width < 5 && selectionRect.height < 5) {
+      _isSelectionBoxActive = false;
+      _selectionBoxStart = null;
+      _selectionBoxEnd = null;
+      onDragUpdate();
+      return;
+    }
+
+    // Select all elements inside the selection box
+    final isMultiSelect = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isShiftPressed;
+
+    if (!isMultiSelect) {
+      controller.clearSelection();
+    }
+
+    // Check each element to see if it's inside the selection box
+    for (final element in controller.state.currentPageElements) {
+      // Skip hidden elements
+      final isHidden = element['hidden'] == true;
+      if (isHidden) continue;
+
+      // Skip hidden layers
+      final layerId = element['layerId'] as String?;
+      bool isLayerHidden = false;
+      if (layerId != null) {
+        final layer = controller.state.getLayerById(layerId);
+        if (layer != null) {
+          isLayerHidden = layer['isVisible'] == false;
+        }
+      }
+      if (isLayerHidden) continue;
+
+      // Get element bounds
+      final x = (element['x'] as num).toDouble();
+      final y = (element['y'] as num).toDouble();
+      final width = (element['width'] as num).toDouble();
+      final height = (element['height'] as num).toDouble();
+      final elementRect = Rect.fromLTWH(x, y, width, height);
+
+      // Check if element intersects with selection box
+      if (selectionRect.overlaps(elementRect)) {
+        final id = element['id'] as String;
+        controller.selectElement(id, isMultiSelect: true);
+      }
+    }
+
+    // Reset selection box
+    _isSelectionBoxActive = false;
+    _selectionBoxStart = null;
+    _selectionBoxEnd = null;
+    onDragUpdate();
   }
 
   /// Show context menu for an element

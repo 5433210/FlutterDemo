@@ -10,6 +10,9 @@ class PracticeEditState {
 
   int currentPageIndex = -1;
 
+  // 当前工具
+  String currentTool = '';
+
   bool isPageThumbnailsVisible = false; // 将默认值设为false，隐藏页面缩略图
   // 图层相关
   String? selectedLayerId;

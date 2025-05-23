@@ -77,6 +77,12 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 获取撤销/重做管理器
   UndoRedoManager get undoRedoManager => _undoRedoManager;
+  
+  /// 退出选择模式
+  void exitSelectMode() {
+    _state.currentTool = '';
+    notifyListeners();
+  }
 
   /// 添加集字元素
   void addCollectionElement(String characters) {
