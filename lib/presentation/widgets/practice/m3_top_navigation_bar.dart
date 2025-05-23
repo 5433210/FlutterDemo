@@ -47,7 +47,7 @@ class M3TopNavigationBar extends StatelessWidget
         if (controller.practiceTitle != null)
           IconButton(
             icon: const Icon(Icons.edit),
-            tooltip: l10n.practiceEditEditTitle,
+            tooltip: '${l10n.practiceEditEditTitle} (Ctrl+M, T)',
             onPressed: () => _editTitle(context, l10n),
           ),
       ],
@@ -60,7 +60,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Undo button
             IconButton(
               icon: const Icon(Icons.undo),
-              tooltip: l10n.practiceEditTopNavUndo,
+              tooltip: '${l10n.practiceEditTopNavUndo} (Ctrl+Z)',
               onPressed: controller.state.canUndo ? controller.undo : null,
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canUndo
@@ -73,7 +73,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Redo button
             IconButton(
               icon: const Icon(Icons.redo),
-              tooltip: l10n.practiceEditTopNavRedo,
+              tooltip: '${l10n.practiceEditTopNavRedo} (Ctrl+Y)',
               onPressed: controller.state.canRedo ? controller.redo : null,
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canRedo
@@ -95,8 +95,8 @@ class M3TopNavigationBar extends StatelessWidget
               icon:
                   Icon(isPreviewMode ? Icons.visibility_off : Icons.visibility),
               tooltip: isPreviewMode
-                  ? l10n.practiceEditTopNavExitPreview
-                  : l10n.practiceEditTopNavPreviewMode,
+                  ? '${l10n.practiceEditTopNavExitPreview} (Ctrl+P)'
+                  : '${l10n.practiceEditTopNavPreviewMode} (Ctrl+P)',
               onPressed: onTogglePreviewMode,
               style: IconButton.styleFrom(
                 foregroundColor:
@@ -108,7 +108,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Save button - using FilledButton.icon for consistency with other pages
             FilledButton.icon(
               icon: const Icon(Icons.save),
-              label: Text(l10n.practiceEditTopNavSave),
+              label: Text('${l10n.practiceEditTopNavSave} (Ctrl+S)'),
               onPressed: () => _savePractice(context, l10n),
             ),
           ],
@@ -123,7 +123,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Save As button
             IconButton(
               icon: const Icon(Icons.save_as),
-              tooltip: l10n.practiceEditTopNavSaveAs,
+              tooltip: '${l10n.practiceEditTopNavSaveAs} (Ctrl+Shift+S)',
               onPressed: () => _saveAs(context, l10n),
             ),
             const SizedBox(width: AppSizes.s),
@@ -131,7 +131,7 @@ class M3TopNavigationBar extends StatelessWidget
             // Export button
             IconButton(
               icon: const Icon(Icons.file_download),
-              tooltip: l10n.practiceEditTopNavExport,
+              tooltip: '${l10n.practiceEditTopNavExport} (Ctrl+E)',
               onPressed: () => _exportPractice(context, l10n),
             ),
           ],
@@ -151,8 +151,8 @@ class M3TopNavigationBar extends StatelessWidget
                     : Icons.view_carousel_outlined,
               ),
               tooltip: showThumbnails
-                  ? l10n.practiceEditTopNavHideThumbnails
-                  : l10n.practiceEditTopNavShowThumbnails,
+                  ? '${l10n.practiceEditTopNavHideThumbnails} (Ctrl+O)'
+                  : '${l10n.practiceEditTopNavShowThumbnails} (Ctrl+O)',
               onPressed: () => onThumbnailToggle(!showThumbnails),
               style: IconButton.styleFrom(
                 foregroundColor:

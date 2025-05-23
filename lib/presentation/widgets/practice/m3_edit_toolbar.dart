@@ -93,7 +93,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildElementButton(
                   context: context,
                   icon: Icons.text_fields,
-                  tooltip: l10n.practiceEditText,
+                  tooltip: '${l10n.practiceEditText} (Alt+T)',
                   toolName: 'text',
                   isSelected: currentTool == 'text',
                   onPressed: () => onSelectTool!('text'),
@@ -103,7 +103,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildElementButton(
                   context: context,
                   icon: Icons.image,
-                  tooltip: l10n.practiceEditImage,
+                  tooltip: '${l10n.practiceEditImage} (Alt+I)',
                   toolName: 'image',
                   isSelected: currentTool == 'image',
                   onPressed: () => onSelectTool!('image'),
@@ -113,7 +113,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildElementButton(
                   context: context,
                   icon: Icons.grid_on,
-                  tooltip: l10n.practiceEditCollection,
+                  tooltip: '${l10n.practiceEditCollection} (Alt+C)',
                   toolName: 'collection',
                   isSelected: currentTool == 'collection',
                   onPressed: () => onSelectTool!('collection'),
@@ -123,7 +123,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.select_all,
-                  tooltip: l10n.practiceEditSelect,
+                  tooltip: '${l10n.practiceEditSelect} (Alt+S)',
                   onPressed: () => onSelectTool!('select'),
                   isActive: currentTool == 'select',
                 ),
@@ -236,14 +236,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_paint,
-                  tooltip: '复制格式',
+                  tooltip: '复制格式 (Alt+Q)',
                   onPressed: hasSelection ? onCopyFormatting : null,
                 ),
               if (onApplyFormatBrush != null)
                 _buildToolbarButton(
                   context: context,
                   icon: Icons.format_color_fill,
-                  tooltip: '应用格式刷',
+                  tooltip: '应用格式刷 (Alt+W)',
                   onPressed: hasSelection ? onApplyFormatBrush : null,
                 ),
             ],

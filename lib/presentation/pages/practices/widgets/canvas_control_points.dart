@@ -462,13 +462,13 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
               _currentDraggingPoint = null;
             },
             child: Container(
-              decoration: BoxDecoration(
-                // 添加一个半透明的背景，帮助调试时可视化点击区域
-                color: Colors.transparent,
-                border: isRotation
-                    ? Border.all(color: Colors.blue.withAlpha(25), width: 1.0)
-                    : null,
-              ),
+              // decoration: BoxDecoration(
+              //   // 添加一个半透明的背景，帮助调试时可视化点击区域
+              //   color: Colors.transparent,
+              //   border: isRotation
+              //       ? Border.all(color: Colors.blue.withAlpha(25), width: 1.0)
+              //       : null,
+              // ),
               child: Center(
                 child: Container(
                   width: controlPointSize,
@@ -479,7 +479,7 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                     border: Border.all(
                       color:
                           isRotation ? Colors.white : const Color(0xFF2196F3),
-                      width: 1.5,
+                      width: 0.5,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -491,16 +491,16 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                     ],
                   ),
                   // 为旋转控制点添加图标，使其更明显
-                  child: isRotation
-                      ? Transform.scale(
-                          scale: scaleFactor,
-                          child: const Icon(
-                            Icons.rotate_right,
-                            color: Colors.white,
-                            size: 12.0,
-                          ),
-                        )
-                      : null,
+                  // child: isRotation
+                  //     ? Transform.scale(
+                  //         scale: scaleFactor,
+                  //         child: const Icon(
+                  //           Icons.rotate_right,
+                  //           color: Colors.white,
+                  //           size: 12.0,
+                  //         ),
+                  //       )
+                  //     : null,
                 ),
               ),
             ),
@@ -516,7 +516,7 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
     // 当缩放比例大于等于1时（即放大或不变时），控制点保持原始大小
     final factor = scale < 1.0 ? 1.0 / scale : 1.0;
     debugPrint('计算缩放系数: 当前比例=$scale, 使用系数=$factor');
-    return factor;
+    return factor * 0.5;
   }
 
   /// 旋转一个点

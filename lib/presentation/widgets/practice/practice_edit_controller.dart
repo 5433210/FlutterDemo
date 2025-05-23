@@ -77,7 +77,7 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 获取撤销/重做管理器
   UndoRedoManager get undoRedoManager => _undoRedoManager;
-  
+
   /// 退出选择模式
   void exitSelectMode() {
     _state.currentTool = '';
@@ -92,7 +92,7 @@ class PracticeEditController extends ChangeNotifier {
       'type': 'collection',
       'x': 100.0,
       'y': 100.0,
-      'width': 400.0,
+      'width': 200.0,
       'height': 200.0,
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],
@@ -123,7 +123,7 @@ class PracticeEditController extends ChangeNotifier {
       'type': 'collection',
       'x': x,
       'y': y,
-      'width': 400.0,
+      'width': 200.0,
       'height': 200.0,
       'rotation': 0.0,
       'layerId': _state.selectedLayerId ?? _state.layers.first['id'],

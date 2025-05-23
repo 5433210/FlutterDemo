@@ -20,7 +20,7 @@ class M3TextFormatPanel extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 36.0;
+    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 100.0;
     final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 10.0;
     final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 5.0;
     final textAlign = content['textAlign'] as String? ?? 'left';
@@ -44,10 +44,10 @@ class M3TextFormatPanel extends StatelessWidget {
             Expanded(
               flex: 3,
               child: Slider(
-                value: fontSize,
-                min: 1,
-                max: 100,
-                divisions: 99,
+                value: fontSize.clamp(10, 500), // Clamp for slider range
+                min: 10,
+                max: 500, // Slider max 500 for usability, but input field allows up to 2000
+                divisions: 490,
                 label: '${fontSize.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -63,8 +63,8 @@ class M3TextFormatPanel extends StatelessWidget {
                 label: l10n.textPropertyPanelFontSize,
                 value: fontSize,
                 suffix: 'px',
-                min: 1,
-                max: 200,
+                min: 10,
+                max: 2000,
                 onChanged: (value) {
                   onContentPropertyChanged('fontSize', value);
                 },

@@ -251,7 +251,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           if (_formatBrushStyles!.containsKey('textAlign')) {
             element['textAlign'] = _formatBrushStyles!['textAlign'];
           }
-        } else if ((elementType == 'image' || elementType == 'collection') &&
+        } else if (elementType == 'image' &&
             (_formatBrushStyles!.containsKey('width') ||
                 _formatBrushStyles!.containsKey('height'))) {
           // 维持宽高比例
@@ -272,6 +272,84 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
             // 只有高度，保持原来的宽高比
             element['height'] = _formatBrushStyles!['height'];
             element['width'] = _formatBrushStyles!['height'] * aspectRatio;
+          }
+        } else if (elementType == 'collection') {
+          // 集字元素特有样式处理
+
+          // 维持宽高比例
+          if (_formatBrushStyles!.containsKey('width') ||
+              _formatBrushStyles!.containsKey('height')) {
+            double originalWidth = element['width'];
+            double originalHeight = element['height'];
+            double aspectRatio = originalWidth / originalHeight;
+
+            if (_formatBrushStyles!.containsKey('width') &&
+                _formatBrushStyles!.containsKey('height')) {
+              // 如果有宽高，直接应用
+              element['width'] = _formatBrushStyles!['width'];
+              element['height'] = _formatBrushStyles!['height'];
+            } else if (_formatBrushStyles!.containsKey('width')) {
+              // 只有宽度，保持原来的宽高比
+              element['width'] = _formatBrushStyles!['width'];
+              element['height'] = _formatBrushStyles!['width'] / aspectRatio;
+            } else if (_formatBrushStyles!.containsKey('height')) {
+              // 只有高度，保持原来的宽高比
+              element['height'] = _formatBrushStyles!['height'];
+              element['width'] = _formatBrushStyles!['height'] * aspectRatio;
+            }
+          }
+
+          // 应用content中的所有样式属性（除了characters）
+          if (element.containsKey('content') && element['content'] is Map) {
+            Map<String, dynamic> content =
+                Map<String, dynamic>.from(element['content'] as Map);
+
+            // 应用字体大小
+            if (_formatBrushStyles!.containsKey('content_fontSize')) {
+              content['fontSize'] = _formatBrushStyles!['content_fontSize'];
+            }
+
+            // 应用字体颜色
+            if (_formatBrushStyles!.containsKey('content_fontColor')) {
+              content['fontColor'] = _formatBrushStyles!['content_fontColor'];
+            }
+
+            // 应用背景颜色
+            if (_formatBrushStyles!.containsKey('content_backgroundColor')) {
+              content['backgroundColor'] =
+                  _formatBrushStyles!['content_backgroundColor'];
+            }
+
+            // 应用方向
+            if (_formatBrushStyles!.containsKey('content_direction')) {
+              content['direction'] = _formatBrushStyles!['content_direction'];
+            }
+
+            // 应用字符间距
+            if (_formatBrushStyles!.containsKey('content_charSpacing')) {
+              content['charSpacing'] =
+                  _formatBrushStyles!['content_charSpacing'];
+            }
+
+            // 应用行间距
+            if (_formatBrushStyles!.containsKey('content_lineSpacing')) {
+              content['lineSpacing'] =
+                  _formatBrushStyles!['content_lineSpacing'];
+            }
+
+            // 应用网格线设置
+            if (_formatBrushStyles!.containsKey('content_gridLines')) {
+              content['gridLines'] = _formatBrushStyles!['content_gridLines'];
+            }
+
+            // 应用显示背景设置
+            if (_formatBrushStyles!.containsKey('content_showBackground')) {
+              content['showBackground'] =
+                  _formatBrushStyles!['content_showBackground'];
+            }
+
+            // 更新元素的content属性，但保留原有的characters
+            element['content'] = content;
           }
         }
       }
@@ -734,11 +812,51 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       _formatBrushStyles!['fontStyle'] = element['fontStyle'];
       _formatBrushStyles!['textColor'] = element['textColor'];
       _formatBrushStyles!['textAlign'] = element['textAlign'];
-    } else if (element['type'] == 'image' || element['type'] == 'collection') {
-      // 图片或集字元素样式
+    } else if (element['type'] == 'image') {
+      // 图片元素样式
       _formatBrushStyles!['opacity'] = element['opacity'];
       _formatBrushStyles!['width'] = element['width'];
       _formatBrushStyles!['height'] = element['height'];
+    } else if (element['type'] == 'collection') {
+      // 集字元素样式 - 包含除了Character和Position以外的所有属性
+      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['width'] = element['width'];
+      _formatBrushStyles!['height'] = element['height'];
+
+      // 复制content中的所有样式属性
+      if (element.containsKey('content') &&
+          element['content'] is Map<String, dynamic>) {
+        final content = element['content'] as Map<String, dynamic>;
+
+        // 复制字体样式
+        if (content.containsKey('fontSize')) {
+          _formatBrushStyles!['content_fontSize'] = content['fontSize'];
+        }
+        if (content.containsKey('fontColor')) {
+          _formatBrushStyles!['content_fontColor'] = content['fontColor'];
+        }
+        if (content.containsKey('backgroundColor')) {
+          _formatBrushStyles!['content_backgroundColor'] =
+              content['backgroundColor'];
+        }
+        if (content.containsKey('direction')) {
+          _formatBrushStyles!['content_direction'] = content['direction'];
+        }
+        if (content.containsKey('charSpacing')) {
+          _formatBrushStyles!['content_charSpacing'] = content['charSpacing'];
+        }
+        if (content.containsKey('lineSpacing')) {
+          _formatBrushStyles!['content_lineSpacing'] = content['lineSpacing'];
+        }
+        if (content.containsKey('gridLines')) {
+          _formatBrushStyles!['content_gridLines'] = content['gridLines'];
+        }
+        if (content.containsKey('showBackground')) {
+          _formatBrushStyles!['content_showBackground'] =
+              content['showBackground'];
+        }
+        // 不复制characters属性，因为这是内容而非样式
+      }
     }
 
     // 包含所有类型元素的通用样式
@@ -1118,6 +1236,26 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       moveSelectedElements: _moveSelectedElements,
       copyElementFormatting: _copyElementFormatting,
       applyFormatBrush: _applyFormatBrush,
+      // Add tool selection callback to connect keyboard shortcuts with toolbar
+      onSelectTool: (tool) {
+        setState(() {
+          // 如果当前已经是select模式，再次点击select按钮则退出select模式
+          if (_currentTool == 'select' && tool == 'select') {
+            _currentTool = '';
+            _controller.exitSelectMode();
+          } else if (_currentTool == tool) {
+            // If the same tool is selected again, deselect it
+            _currentTool = '';
+            _controller.exitSelectMode();
+          } else {
+            _currentTool = tool;
+            // 同步到controller的状态
+            _controller.state.currentTool = tool;
+            _controller.notifyListeners(); // 通知监听器更新
+            debugPrint('工具切换为: $tool');
+          }
+        });
+      },
     );
 
     // 添加键盘事件处理器

@@ -6,32 +6,60 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 /// Handles keyboard events for the practice edit page
 ///
 /// Keyboard shortcuts:
+/// 
+/// File Operations:
 /// - Ctrl+S: Save
 /// - Ctrl+Shift+S: Save As
+/// - Ctrl+E: Export
+/// - Ctrl+M, T: Edit title
+///
+/// View Controls:
+/// - Ctrl+P: Preview mode toggle
+/// - Ctrl+O: Page thumbnails toggle
+/// - Ctrl+G: Grid toggle
+/// - Ctrl+R: Snap toggle
+/// - Ctrl+[: Toggle left panel
+/// - Ctrl+]: Toggle right panel
+///
+/// Element Tools:
+/// - Alt+T: Text tool
+/// - Alt+I: Image tool
+/// - Alt+C: Collection tool
+/// - Alt+S: Select tool
+/// - Escape: Exit current tool
+///
+/// Selection Operations:
 /// - Ctrl+Shift+A: Select all elements on current page
 /// - Ctrl+Shift+C: Copy selection
 /// - Ctrl+Shift+V: Paste copy
-/// - Ctrl+Shift+F: Copy element formatting (format brush)
-/// - Ctrl+F: Apply format brush
 /// - Ctrl+D: Delete selection
-/// - Ctrl+Z: Undo
-/// - Ctrl+Y: Redo
+/// - Ctrl+H: Hide selected objects
+/// - Ctrl+L: Lock selected objects
+///
+/// Element Arrangement:
 /// - Ctrl+J: Group
 /// - Ctrl+U: Ungroup
-/// - Ctrl+G: Grid toggle
-/// - Ctrl+R: Snap toggle
 /// - Ctrl+T: Bring to front
 /// - Ctrl+Shift+T: Move up
 /// - Ctrl+B: Send to back
 /// - Ctrl+Shift+B: Move down
-/// - Ctrl+E: Export
-/// - Ctrl+H: Hide selected objects
-/// - Ctrl+L: Lock selected objects
-/// - Ctrl+P: Preview mode toggle
-/// - Ctrl+O: Page thumbnails toggle
+///
+/// Formatting:
+/// - Ctrl+Shift+F: Copy element formatting (format brush)
+/// - Ctrl+F: Apply format brush
+/// - Alt+Q: Copy format
+/// - Alt+W: Apply format
+///
+/// History Operations:
+/// - Ctrl+Z: Undo
+/// - Ctrl+Y: Redo
+///
+/// Element Creation:
 /// - Ctrl+N, T: Add text element
 /// - Ctrl+N, P: Add image element
 /// - Ctrl+N, C: Add collection element
+///
+/// Movement:
 /// - Arrow keys: Move selected items
 /// - Ctrl+Arrow keys: Move selected items by larger distance
 class KeyboardHandler {
@@ -40,7 +68,26 @@ class KeyboardHandler {
   // Keyboard state
   bool _isCtrlPressed = false;
   bool _isShiftPressed = false;
+  bool _isAltPressed = false;
   String _lastKeyPressed = ''; // Track combination key state
+  
+  // Tool selection callback
+  final Function(String)? onSelectTool;
+  
+  // Function to select a tool (to be called by shortcuts)
+  void _selectTool(String toolName) {
+    if (onSelectTool != null) {
+      // Use the callback if provided
+      onSelectTool!(toolName);
+    } else if (controller.state.currentTool == toolName) {
+      // If the tool is already selected, deselect it
+      controller.exitSelectMode();
+    } else {
+      // Otherwise select the tool
+      controller.state.currentTool = toolName;
+      controller.notifyListeners();
+    }
+  }
 
   // Callback functions
   final Function() onTogglePreviewMode;
@@ -96,18 +143,23 @@ class KeyboardHandler {
     required this.moveSelectedElements,
     required this.copyElementFormatting,
     required this.applyFormatBrush,
+    this.onSelectTool,
   });
 
   /// Handle keyboard events
   bool handleKeyEvent(KeyEvent event) {
-    // Update modifier key state
+    // Process keyboard event
     if (event is KeyDownEvent) {
+      // Handle key state
       if (event.logicalKey == LogicalKeyboardKey.controlLeft ||
           event.logicalKey == LogicalKeyboardKey.controlRight) {
         _isCtrlPressed = true;
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
           event.logicalKey == LogicalKeyboardKey.shiftRight) {
         _isShiftPressed = true;
+      } else if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+          event.logicalKey == LogicalKeyboardKey.altRight) {
+        _isAltPressed = true;
       }
 
       // Handle key combinations
@@ -151,11 +203,23 @@ class KeyboardHandler {
       } else if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
           event.logicalKey == LogicalKeyboardKey.shiftRight) {
         _isShiftPressed = false;
+      } else if (event.logicalKey == LogicalKeyboardKey.altLeft ||
+          event.logicalKey == LogicalKeyboardKey.altRight) {
+        _isAltPressed = false;
       }
     }
 
     // If key down event, handle shortcuts
     if (event is KeyDownEvent) {
+      // Handle Escape key to exit current tool
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        if (controller.state.currentTool.isNotEmpty) {
+          debugPrint('KeyboardHandler: Exiting tool mode via Escape key');
+          controller.exitSelectMode();
+          return true;
+        }
+      }
+      
       // If in preview mode, only handle preview mode toggle shortcut
       if (controller.state.isPreviewMode) {
         if (_isCtrlPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
@@ -163,6 +227,47 @@ class KeyboardHandler {
           return true;
         }
         return false;
+      }
+      
+      // Handle Alt combinations for tool selection and formatting
+      if (_isAltPressed) {
+        switch (event.logicalKey) {
+          // Alt+T: Text tool
+          case LogicalKeyboardKey.keyT:
+            debugPrint('KeyboardHandler: Selecting text tool via Alt+T');
+            _selectTool('text');
+            return true;
+            
+          // Alt+I: Image tool
+          case LogicalKeyboardKey.keyI:
+            debugPrint('KeyboardHandler: Selecting image tool via Alt+I');
+            _selectTool('image');
+            return true;
+            
+          // Alt+C: Collection tool
+          case LogicalKeyboardKey.keyC:
+            debugPrint('KeyboardHandler: Selecting collection tool via Alt+C');
+            _selectTool('collection');
+            return true;
+            
+          // Alt+S: Select tool
+          case LogicalKeyboardKey.keyS:
+            debugPrint('KeyboardHandler: Selecting select tool via Alt+S');
+            _selectTool('select');
+            return true;
+            
+          // Alt+Q: Copy format
+          case LogicalKeyboardKey.keyQ:
+            debugPrint('KeyboardHandler: Copy format via Alt+Q');
+            copyElementFormatting();
+            return true;
+            
+          // Alt+W: Apply format
+          case LogicalKeyboardKey.keyW:
+            debugPrint('KeyboardHandler: Apply format via Alt+W');
+            applyFormatBrush();
+            return true;
+        }
       }
 
       // Handle Ctrl combinations
