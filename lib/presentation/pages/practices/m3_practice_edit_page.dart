@@ -355,6 +355,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
               'textureApplicationRange',
               'textureFillMode',
               'textureOpacity',
+              'wordWrap',  // 添加自动换行属性
             ];
 
             // 应用所有指定的样式属性
@@ -935,6 +936,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           'textureApplicationRange',
           'textureFillMode',
           'textureOpacity',
+          'wordWrap',  // 添加自动换行属性
         ];
 
         // 复制所有指定的样式属性
@@ -1597,20 +1599,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 child: Text(l10n.practiceEditExit),
                 onPressed: () {
                   Navigator.of(context).pop(true);
-                },
-              ),
-              FilledButton(
-                child: Text(l10n.practiceEditSaveAndExit),
-                onPressed: () async {
-                  // Dismiss the confirmation dialog immediately with 'true' to indicate we want to exit
-                  Navigator.of(context).pop(true);
-
-                  // Start save operation (don't await, we want to exit regardless)
-                  // This will show any necessary dialogs but won't block exit
-                  _savePractice();
-
-                  // The PopScope's onPopInvoked handler will take care of the actual navigation
-                  // since we returned 'true' from the dialog
                 },
               ),
             ],
