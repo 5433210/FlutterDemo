@@ -230,6 +230,7 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
 
     return Stack(
       clipBehavior: Clip.none, // 允许子元素超出边界
+      fit: StackFit.loose, // 使用loose以允许子元素溢出
       children: [
         // 绘制元素边框
         CustomPaint(
@@ -335,8 +336,8 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
 
     // 根据缩放比例计算控制点大小
     const baseControlPointSize = 16.0;
-    // 让感应区域与可视区域大小一致
-    const baseHitAreaSize = baseControlPointSize;
+    // 增大点击感应区域以提高可用性，特别是在元素处于边界外时
+    const baseHitAreaSize = baseControlPointSize * 1.5;
 
     // 获取适当的缩放系数 - 当缩放比例小于1时需要反向放大控制点
     final scaleFactor = _getScaleFactor(currentScale);

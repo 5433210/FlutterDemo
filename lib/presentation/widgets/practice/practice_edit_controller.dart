@@ -42,6 +42,9 @@ class PracticeEditController extends ChangeNotifier {
   // 预览模式回调函数
   Function(bool)? _previewModeCallback;
 
+  // Reference to the edit canvas
+  dynamic _editCanvas;
+
   /// 构造函数
   PracticeEditController(this._practiceService) {
     _undoRedoManager = UndoRedoManager(
@@ -78,12 +81,6 @@ class PracticeEditController extends ChangeNotifier {
   /// 获取撤销/重做管理器
   UndoRedoManager get undoRedoManager => _undoRedoManager;
 
-  /// 退出选择模式
-  void exitSelectMode() {
-    _state.currentTool = '';
-    notifyListeners();
-  }
-
   /// 添加集字元素
   void addCollectionElement(String characters) {
     _checkDisposed();
@@ -117,7 +114,8 @@ class PracticeEditController extends ChangeNotifier {
   }
 
   /// 添加集字元素在指定位置
-  void addCollectionElementAt(double x, double y, String characters) {
+  void addCollectionElementAt(double x, double y, String characters,
+      {bool isFromCharacterManagement = false}) {
     final element = {
       'id': 'collection_${_uuid.v4()}',
       'type': 'collection',
@@ -131,9 +129,11 @@ class PracticeEditController extends ChangeNotifier {
       'isLocked': false, // 锁定标志
       'isHidden': false, // 隐藏标志
       'name': '集字元素', // 默认名称
+      'isFromCharacterManagement': isFromCharacterManagement, // 标记是否来自字符管理页面
       'content': {
         'characters': characters,
-        'fontSize': 24.0,
+        'fontSize':
+            isFromCharacterManagement ? 200.0 : 24.0, // 如果来自字符管理页面，字体大小设为200px
         'fontColor': '#000000',
         'backgroundColor': '#FFFFFF',
         'direction': 'horizontal',
@@ -1264,6 +1264,12 @@ class PracticeEditController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 退出选择模式
+  void exitSelectMode() {
+    _state.currentTool = '';
+    notifyListeners();
+  }
+
   /// 获取页面的 GlobalKey 列表
   /// 为每个页面返回不同的 GlobalKey
   List<GlobalKey> getPageKeys() {
@@ -1637,6 +1643,17 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.addOperation(operation);
   }
 
+  /// Reset the canvas view position to the default state
+  void resetViewPosition() {
+    if (_editCanvas != null && _editCanvas.resetCanvasPosition != null) {
+      try {
+        _editCanvas.resetCanvasPosition();
+      } catch (e) {
+        debugPrint('Error resetting canvas position: $e');
+      }
+    }
+  }
+
   /// 重置画布缩放
   void resetZoom() {
     _state.canvasScale = 1.0;
@@ -1912,6 +1929,11 @@ class PracticeEditController extends ChangeNotifier {
 
       notifyListeners();
     }
+  }
+
+  /// Set the edit canvas reference
+  void setEditCanvas(dynamic canvas) {
+    _editCanvas = canvas;
   }
 
   /// 设置图层锁定状态

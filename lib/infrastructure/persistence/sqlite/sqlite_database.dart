@@ -184,7 +184,7 @@ class SQLiteDatabase implements DatabaseInterface {
   @override
   Future<void> save(String table, String id, Map<String, dynamic> data) async {
     debugPrint('SQLiteDatabase.save: 开始保存数据到 $table, id=$id');
-    
+
     try {
       // 首先尝试查询该ID是否存在
       final exists = await _db.query(
@@ -193,7 +193,7 @@ class SQLiteDatabase implements DatabaseInterface {
         whereArgs: [id],
         limit: 1,
       );
-      
+
       if (exists.isNotEmpty) {
         // 如果记录存在，更新它
         debugPrint('SQLiteDatabase.save: 记录已存在，执行更新');
@@ -214,7 +214,7 @@ class SQLiteDatabase implements DatabaseInterface {
         );
         debugPrint('SQLiteDatabase.save: 插入完成');
       }
-      
+
       // 验证数据是否已保存
       final saved = await _db.query(
         table,
@@ -222,7 +222,7 @@ class SQLiteDatabase implements DatabaseInterface {
         whereArgs: [id],
         limit: 1,
       );
-      
+
       if (saved.isEmpty) {
         throw Exception('SQLiteDatabase.save: 保存后无法验证数据，记录不存在: $id');
       }
@@ -397,7 +397,9 @@ class SQLiteDatabase implements DatabaseInterface {
     // 在 Windows 平台上初始化 sqflite_ffi
     if (defaultTargetPlatform == TargetPlatform.windows) {
       AppLogger.debug('初始化 SQLite FFI', tag: 'App');
+      // 正确初始化sqflite_ffi - 使用全局函数而非类方法
       sqfliteFfiInit();
+      // 使用全局变量
       databaseFactory = databaseFactoryFfi;
     }
 

@@ -19,14 +19,12 @@ import 'canvas_gesture_handler.dart';
 class M3PracticeEditCanvas extends ConsumerStatefulWidget {
   final PracticeEditController controller;
   final bool isPreviewMode;
-  final GlobalKey canvasKey;
   final TransformationController transformationController;
 
   const M3PracticeEditCanvas({
     super.key,
     required this.controller,
     required this.isPreviewMode,
-    required this.canvasKey,
     required this.transformationController,
   });
 
@@ -149,6 +147,14 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         return matrix.getMaxScaleOnAxis();
       },
     );
+
+    // Register this canvas with the controller for reset view functionality
+    widget.controller.setEditCanvas(this);
+  }
+
+  /// Public method to reset canvas position
+  void resetCanvasPosition() {
+    _resetCanvasPosition();
   }
 
   /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
@@ -244,11 +250,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         final scale = widget.transformationController.value.getMaxScaleOnAxis();
         final zoomPercentage = (scale * 100).toInt();
 
-        return SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: Stack(
-            children: [
+        return Stack(
+          children: [
             Container(
               color: colorScheme.inverseSurface.withOpacity(
                   0.1), // Canvas outer background - improved contrast in light theme
@@ -280,7 +283,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   onTapUp: (details) => _gestureHandler.handleTapUp(
                       details, elements.cast<Map<String, dynamic>>()),
                   // 处理右键点击事件，用于退出select模式
-                  onSecondaryTapDown: (details) => _gestureHandler.handleSecondaryTapDown(details),
+                  onSecondaryTapDown: (details) =>
+                      _gestureHandler.handleSecondaryTapDown(details),
                   onSecondaryTapUp: (details) =>
                       _gestureHandler.handleSecondaryTapUp(
                           details, elements.cast<Map<String, dynamic>>()),
@@ -288,14 +292,16 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       details, elements.cast<Map<String, dynamic>>()),
                   onPanUpdate: (details) {
                     // 先处理选择框更新，这优先级最高
-                    if (widget.controller.state.currentTool == 'select' && _gestureHandler.isSelectionBoxActive) {
+                    if (widget.controller.state.currentTool == 'select' &&
+                        _gestureHandler.isSelectionBoxActive) {
                       _gestureHandler.handlePanUpdate(details);
                       setState(() {}); // 确保选择框重绘
                       return;
                     }
-                    
+
                     // If not dragging elements and not in preview mode, handle panning directly
-                    if (!_isDragging && widget.controller.state.currentTool != 'select') {
+                    if (!_isDragging &&
+                        widget.controller.state.currentTool != 'select') {
                       // Create new transformation matrix
                       final Matrix4 newMatrix = Matrix4.identity();
 
@@ -355,7 +361,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   children: [
                     // Debug indicator showing current tool
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: colorScheme.tertiaryContainer,
                         borderRadius: BorderRadius.circular(4),
@@ -370,9 +377,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     ),
                     const SizedBox(width: 8),
                     // Selection mode indicator
-                    if (widget.controller.state.currentTool == 'select' && !widget.isPreviewMode)
+                    if (widget.controller.state.currentTool == 'select' &&
+                        !widget.isPreviewMode)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
@@ -469,8 +478,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
               ),
             ),
           ],
-        ),
-      );
+        );
       },
     );
   }
@@ -484,6 +492,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     double height,
     double rotation,
   ) {
+    // 添加日志，跟踪控制点构建
+    debugPrint(
+        '⚙️ 构建控制点 - 元素ID: $elementId, 类型: ${widget.controller.state.selectedElement?['type'] ?? '未知'}, 坐标: ($x, $y), 尺寸: ${width}x$height, 旋转: $rotation');
     // Use absolute positioning for control points to ensure they're always visible
     return AbsorbPointer(
       absorbing: false, // Ensure control points can receive events
@@ -514,8 +525,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 child: RepaintBoundary(
                   child: Builder(builder: (context) {
                     // 获取当前缩放值
-                    final scale =
-                        widget.transformationController.value.getMaxScaleOnAxis();
+                    final scale = widget.transformationController.value
+                        .getMaxScaleOnAxis();
                     return CanvasControlPoints(
                       key: ValueKey(
                           'control_points_${elementId}_${scale.toStringAsFixed(2)}'),
@@ -577,12 +588,18 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     String? selectedElementId;
     double x = 0, y = 0, width = 0, height = 0, rotation = 0;
 
+    debugPrint(
+        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+
     if (widget.controller.state.selectedElementIds.length == 1) {
       selectedElementId = widget.controller.state.selectedElementIds.first;
       final selectedElement = elements.firstWhere(
         (e) => e['id'] == selectedElementId,
         orElse: () => <String, dynamic>{},
       );
+
+      debugPrint(
+          '🔍 选中元素信息 - ID: $selectedElementId, 类型: ${selectedElement['type'] ?? '未知'}, 找到元素: ${selectedElement.isNotEmpty}');
 
       if (selectedElement.isNotEmpty) {
         // Get element properties for control points
@@ -605,7 +622,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           height: pageSize.height,
           color: backgroundColor,
           child: RepaintBoundary(
-            key: widget.canvasKey,
+            // Use widget's own key as the canvas content key
             child: AbsorbPointer(
               absorbing: false, // Ensure control points can receive events
               child: Stack(
@@ -786,7 +803,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
         // Control points for selected element (if single selection)
         if (selectedElementId != null && !widget.isPreviewMode)
-          _buildControlPoints(selectedElementId, x, y, width, height, rotation),
+          Positioned.fill(
+            child: _buildControlPoints(
+                selectedElementId, x, y, width, height, rotation),
+          ),
       ],
     );
   }
@@ -1097,6 +1117,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
   /// Render collection element
   Widget _renderCollectionElement(Map<String, dynamic> element) {
+    debugPrint(
+        '🔍 渲染集字元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final characters = content['characters'] as String? ?? '';
     final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
@@ -1322,6 +1344,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
   /// Render image element
   Widget _renderImageElement(Map<String, dynamic> element) {
+    debugPrint(
+        '🔍 渲染图片元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final imageUrl = content['imageUrl'] as String? ?? '';
     final transformedImageUrl = content['transformedImageUrl'] as String?;
@@ -1360,95 +1384,154 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       }
     }
 
+    // 使用Stack包装，确保事件可以穿透到控制点层
+    Widget imageContent;
+
     // If we have transformed image data, use it
     if (transformedImageData != null) {
       debugPrint(
           'Using transformedImageData for rendering (${transformedImageData.length} bytes)');
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: bgColor,
-        child: Image.memory(
-          transformedImageData,
-          fit: fit,
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('Error loading transformed image data: $error');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.broken_image,
-                      size: 48, color: Colors.red.shade300),
-                  const SizedBox(height: 8),
-                  Text('Error: $error',
-                      style: TextStyle(color: Colors.red.shade300)),
-                ],
+      imageContent = Stack(
+        children: [
+          Positioned.fill(
+            child: Container(color: bgColor),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              // 确保图片不拦截控制点事件
+              child: Image.memory(
+                transformedImageData,
+                fit: fit,
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('Error loading transformed image data: $error');
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image,
+                            size: 48, color: Colors.red.shade300),
+                        const SizedBox(height: 8),
+                        Text('Error: $error',
+                            style: TextStyle(color: Colors.red.shade300)),
+                      ],
+                    ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-      );
-    }
-
-    // If we have a transformed image URL, use it
-    final effectiveImageUrl = transformedImageUrl ?? imageUrl;
-
-    // If no image URL is available, show placeholder
-    if (effectiveImageUrl.isEmpty) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: bgColor,
-        child: const Center(
-          child: Icon(Icons.image, size: 48, color: Colors.grey),
-        ),
-      );
-    }
-
-    // Check if it's a local file path
-    if (effectiveImageUrl.startsWith('file://')) {
-      final filePath = effectiveImageUrl.substring(7);
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: bgColor,
-        child: CachedImage(
-          path: filePath,
-          fit: fit,
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('Error loading file image: $error');
-            return Center(
-              child: Icon(Icons.broken_image,
-                  size: 48, color: Colors.red.shade300),
-            );
-          },
-        ),
+            ),
+          ),
+        ],
       );
     } else {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: bgColor,
-        child: Image.network(
-          effectiveImageUrl,
-          fit: fit,
-          errorBuilder: (context, error, stackTrace) {
-            debugPrint('Error loading network image: $error');
-            return Center(
-              child: Icon(Icons.broken_image,
-                  size: 48, color: Colors.red.shade300),
-            );
-          },
-        ),
-      );
+      // If we have a transformed image URL, use it
+      final effectiveImageUrl = transformedImageUrl ?? imageUrl;
+
+      // If no image URL is available, show placeholder
+      if (effectiveImageUrl.isEmpty) {
+        imageContent = Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: bgColor),
+            ),
+            const Positioned.fill(
+              child: Center(
+                child: Icon(Icons.image, size: 48, color: Colors.grey),
+              ),
+            ),
+          ],
+        );
+      } else if (effectiveImageUrl.startsWith('file://')) {
+        // Check if it's a local file path
+        final filePath = effectiveImageUrl.substring(7);
+        imageContent = Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: bgColor),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                // 确保图片不拦截控制点事件
+                child: CachedImage(
+                  path: filePath,
+                  fit: fit,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint('Error loading file image: $error');
+                    return Center(
+                      child: Icon(Icons.broken_image,
+                          size: 48, color: Colors.red.shade300),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      } else {
+        imageContent = Stack(
+          children: [
+            Positioned.fill(
+              child: Container(color: bgColor),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                // 确保图片不拦截控制点事件
+                child: Image.network(
+                  effectiveImageUrl,
+                  fit: fit,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint('Error loading network image: $error');
+                    return Center(
+                      child: Icon(Icons.broken_image,
+                          size: 48, color: Colors.red.shade300),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      }
     }
+
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      // 使用Material包装以确保正确的点击行为
+      child: Material(
+        type: MaterialType.transparency,
+        child: imageContent,
+      ),
+    );
   }
 
   /// Render text element
   Widget _renderTextElement(Map<String, dynamic> element) {
-    // Use the ElementRenderers.buildTextElement method to ensure all text formatting properties are applied
-    return ElementRenderers.buildTextElement(element,
-        isPreviewMode: widget.isPreviewMode);
+    debugPrint(
+        '🔍 渲染文本元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
+    // 添加IgnorePointer包装，确保文本元素不拦截控制点事件
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          // 这里添加一个透明层来接收基本事件，但不会拦截控制点事件
+          Positioned.fill(
+            child: Container(color: Colors.transparent),
+          ),
+          // 包装原始文本元素，使其忽略指针事件，以便控制点可以接收事件
+          Positioned.fill(
+            child: IgnorePointer(
+              // 允许文本内容显示，但不拦截控制点事件
+              ignoring: widget.controller.state.selectedElementIds
+                  .contains(element['id']),
+              child: ElementRenderers.buildTextElement(
+                element,
+                isPreviewMode: widget.isPreviewMode,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Reset canvas position to the initial state

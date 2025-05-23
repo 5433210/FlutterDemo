@@ -55,9 +55,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Preview mode
   bool _isPreviewMode = false;
-
   // Add a GlobalKey for screenshots
-  final GlobalKey canvasKey = GlobalKey();
+  // final GlobalKey canvasKey = GlobalKey();
+
+  // Add a GlobalKey for canvas reference (without type parameter)
+  final GlobalKey _canvasKey = GlobalKey();
 
   // Keyboard focus node
   late FocusNode _focusNode;
@@ -78,11 +80,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   // 格式刷相关变量
   Map<String, dynamic>? _formatBrushStyles;
   bool _isFormatBrushActive = false;
-
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
+    // Remove unused l10n variable
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) async {
@@ -169,10 +169,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     super.initState();
     // Create or get the PracticeService instance
     final practiceService = ref.read(practiceServiceProvider);
-    _controller = PracticeEditController(practiceService);
-
-    // Pass canvasKey to controller
-    _controller.setCanvasKey(canvasKey);
+    _controller =
+        PracticeEditController(practiceService); // Pass canvasKey to controller
+    _controller.setCanvasKey(_canvasKey);
 
     // Set preview mode callback
     _controller.setPreviewModeCallback((isPreview) {
@@ -191,6 +190,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     // Initialize keyboard handler
     _initKeyboardHandler();
+
+    // Schedule a callback to connect the canvas after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Connect canvas to controller for reset view functionality
+      _setupCanvasReference();
+    });
 
     // Start clipboard monitoring
     _checkClipboardContent().then((hasContent) {
@@ -220,22 +225,23 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       for (final element in selectedElements) {
         final elementType = element['type'];
 
-        // 应用通用样式
+        // 应用通用样式 - 外层属性
         if (_formatBrushStyles!.containsKey('rotation')) {
           element['rotation'] = _formatBrushStyles!['rotation'];
         }
         if (_formatBrushStyles!.containsKey('opacity')) {
           element['opacity'] = _formatBrushStyles!['opacity'];
         }
+        if (_formatBrushStyles!.containsKey('width')) {
+          element['width'] = _formatBrushStyles!['width'];
+        }
+        if (_formatBrushStyles!.containsKey('height')) {
+          element['height'] = _formatBrushStyles!['height'];
+        }
 
         // 应用特定类型的样式
-        if (elementType == 'text' &&
-            (_formatBrushStyles!.containsKey('fontSize') ||
-                _formatBrushStyles!.containsKey('fontWeight') ||
-                _formatBrushStyles!.containsKey('fontStyle') ||
-                _formatBrushStyles!.containsKey('textColor') ||
-                _formatBrushStyles!.containsKey('textAlign'))) {
-          // 应用文本特定样式
+        if (elementType == 'text') {
+          // 兼容旧版本的文本元素结构
           if (_formatBrushStyles!.containsKey('fontSize')) {
             element['fontSize'] = _formatBrushStyles!['fontSize'];
           }
@@ -251,101 +257,107 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           if (_formatBrushStyles!.containsKey('textAlign')) {
             element['textAlign'] = _formatBrushStyles!['textAlign'];
           }
-        } else if (elementType == 'image' &&
-            (_formatBrushStyles!.containsKey('width') ||
-                _formatBrushStyles!.containsKey('height'))) {
-          // 维持宽高比例
-          double originalWidth = element['width'];
-          double originalHeight = element['height'];
-          double aspectRatio = originalWidth / originalHeight;
 
-          if (_formatBrushStyles!.containsKey('width') &&
-              _formatBrushStyles!.containsKey('height')) {
-            // 如果有宽高，直接应用
-            element['width'] = _formatBrushStyles!['width'];
-            element['height'] = _formatBrushStyles!['height'];
-          } else if (_formatBrushStyles!.containsKey('width')) {
-            // 只有宽度，保持原来的宽高比
-            element['width'] = _formatBrushStyles!['width'];
-            element['height'] = _formatBrushStyles!['width'] / aspectRatio;
-          } else if (_formatBrushStyles!.containsKey('height')) {
-            // 只有高度，保持原来的宽高比
-            element['height'] = _formatBrushStyles!['height'];
-            element['width'] = _formatBrushStyles!['height'] * aspectRatio;
+          // 新版本文本元素结构处理 - content属性
+          if (element.containsKey('content') && element['content'] is Map) {
+            Map<String, dynamic> content =
+                Map<String, dynamic>.from(element['content'] as Map);
+
+            // 应用文本元素的content属性
+            final propertiesToApply = [
+              'backgroundColor',
+              'fontColor',
+              'fontFamily',
+              'fontSize',
+              'fontStyle',
+              'fontWeight',
+              'letterSpacing',
+              'lineHeight',
+              'padding',
+              'textAlign',
+              'verticalAlign',
+              'writingMode'
+            ];
+
+            // 应用所有指定的样式属性
+            for (final property in propertiesToApply) {
+              final brushKey = 'content_$property';
+              if (_formatBrushStyles!.containsKey(brushKey)) {
+                content[property] = _formatBrushStyles![brushKey];
+              }
+            }
+
+            // 更新元素的content属性
+            element['content'] = content;
+          }
+        } else if (elementType == 'image') {
+          // 图像元素的content属性处理
+          if (element.containsKey('content') && element['content'] is Map) {
+            Map<String, dynamic> content =
+                Map<String, dynamic>.from(element['content'] as Map);
+
+            // 应用图像元素的content属性
+            final propertiesToApply = [
+              'backgroundColor',
+              'fit',
+              'isFlippedHorizontally',
+              'isFlippedVertically',
+              'rotation'
+            ];
+
+            // 应用所有指定的样式属性
+            for (final property in propertiesToApply) {
+              final brushKey = 'content_$property';
+              if (_formatBrushStyles!.containsKey(brushKey)) {
+                content[property] = _formatBrushStyles![brushKey];
+              }
+            }
+
+            // 更新元素的content属性
+            element['content'] = content;
           }
         } else if (elementType == 'collection') {
           // 集字元素特有样式处理
-
-          // 维持宽高比例
-          if (_formatBrushStyles!.containsKey('width') ||
-              _formatBrushStyles!.containsKey('height')) {
-            double originalWidth = element['width'];
-            double originalHeight = element['height'];
-            double aspectRatio = originalWidth / originalHeight;
-
-            if (_formatBrushStyles!.containsKey('width') &&
-                _formatBrushStyles!.containsKey('height')) {
-              // 如果有宽高，直接应用
-              element['width'] = _formatBrushStyles!['width'];
-              element['height'] = _formatBrushStyles!['height'];
-            } else if (_formatBrushStyles!.containsKey('width')) {
-              // 只有宽度，保持原来的宽高比
-              element['width'] = _formatBrushStyles!['width'];
-              element['height'] = _formatBrushStyles!['width'] / aspectRatio;
-            } else if (_formatBrushStyles!.containsKey('height')) {
-              // 只有高度，保持原来的宽高比
-              element['height'] = _formatBrushStyles!['height'];
-              element['width'] = _formatBrushStyles!['height'] * aspectRatio;
-            }
-          }
 
           // 应用content中的所有样式属性（除了characters）
           if (element.containsKey('content') && element['content'] is Map) {
             Map<String, dynamic> content =
                 Map<String, dynamic>.from(element['content'] as Map);
 
-            // 应用字体大小
-            if (_formatBrushStyles!.containsKey('content_fontSize')) {
-              content['fontSize'] = _formatBrushStyles!['content_fontSize'];
+            // 保存原有的characters
+            final originalCharacters = content.containsKey('characters')
+                ? content['characters']
+                : null;
+
+            // 根据需求中的属性列表应用所有需要支持的属性
+            final propertiesToApply = [
+              'fontSize',
+              'fontColor',
+              'backgroundColor',
+              'backgroundTexture',
+              'charSpacing',
+              'direction',
+              'gridLines',
+              'letterSpacing',
+              'lineSpacing',
+              'padding',
+              'showBackground',
+              'textureApplicationRange',
+              'textureFillMode',
+              'textureOpacity',
+            ];
+
+            // 应用所有指定的样式属性
+            for (final property in propertiesToApply) {
+              final brushKey = 'content_$property';
+              if (_formatBrushStyles!.containsKey(brushKey)) {
+                content[property] = _formatBrushStyles![brushKey];
+              }
             }
 
-            // 应用字体颜色
-            if (_formatBrushStyles!.containsKey('content_fontColor')) {
-              content['fontColor'] = _formatBrushStyles!['content_fontColor'];
-            }
-
-            // 应用背景颜色
-            if (_formatBrushStyles!.containsKey('content_backgroundColor')) {
-              content['backgroundColor'] =
-                  _formatBrushStyles!['content_backgroundColor'];
-            }
-
-            // 应用方向
-            if (_formatBrushStyles!.containsKey('content_direction')) {
-              content['direction'] = _formatBrushStyles!['content_direction'];
-            }
-
-            // 应用字符间距
-            if (_formatBrushStyles!.containsKey('content_charSpacing')) {
-              content['charSpacing'] =
-                  _formatBrushStyles!['content_charSpacing'];
-            }
-
-            // 应用行间距
-            if (_formatBrushStyles!.containsKey('content_lineSpacing')) {
-              content['lineSpacing'] =
-                  _formatBrushStyles!['content_lineSpacing'];
-            }
-
-            // 应用网格线设置
-            if (_formatBrushStyles!.containsKey('content_gridLines')) {
-              content['gridLines'] = _formatBrushStyles!['content_gridLines'];
-            }
-
-            // 应用显示背景设置
-            if (_formatBrushStyles!.containsKey('content_showBackground')) {
-              content['showBackground'] =
-                  _formatBrushStyles!['content_showBackground'];
+            // 如果存在characters，恢复原来的值
+            if (originalCharacters != null) {
+              content['characters'] = originalCharacters;
             }
 
             // 更新元素的content属性，但保留原有的characters
@@ -404,9 +416,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                           150, // Fixed height
                       child: ProviderScope(
                         child: M3PracticeEditCanvas(
+                          key: _canvasKey,
                           controller: _controller,
                           isPreviewMode: _isPreviewMode,
-                          canvasKey: canvasKey,
                           transformationController: _transformationController,
                         ),
                       ),
@@ -503,8 +515,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     );
   }
 
-  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
-
   /// Build the left panel
   Widget _buildLeftPanel() {
     return ResizablePanel(
@@ -557,6 +567,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       onReorderPages: _reorderPages,
     );
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// Build the right properties panel
   Widget _buildRightPanel() {
@@ -767,7 +779,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           }
         } catch (e) {
           // Not valid JSON, that's fine for plain text
-          debugPrint('检查剪贴板: 不是有效的JSON, 按纯文本处理: $e');
+          debugPrint('检查剪贴板: 不是有效的JSON，按纯文本处理: $e');
         }
 
         // Plain text can always be pasted
@@ -806,20 +818,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     // 根据元素类型获取不同的样式属性
     if (element['type'] == 'text') {
-      // 文本元素样式
-      _formatBrushStyles!['fontSize'] = element['fontSize'];
-      _formatBrushStyles!['fontWeight'] = element['fontWeight'];
-      _formatBrushStyles!['fontStyle'] = element['fontStyle'];
-      _formatBrushStyles!['textColor'] = element['textColor'];
-      _formatBrushStyles!['textAlign'] = element['textAlign'];
-    } else if (element['type'] == 'image') {
-      // 图片元素样式
+      // 文本元素样式 - 外层属性
       _formatBrushStyles!['opacity'] = element['opacity'];
-      _formatBrushStyles!['width'] = element['width'];
-      _formatBrushStyles!['height'] = element['height'];
-    } else if (element['type'] == 'collection') {
-      // 集字元素样式 - 包含除了Character和Position以外的所有属性
-      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['rotation'] = element['rotation'];
       _formatBrushStyles!['width'] = element['width'];
       _formatBrushStyles!['height'] = element['height'];
 
@@ -828,40 +829,121 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           element['content'] is Map<String, dynamic>) {
         final content = element['content'] as Map<String, dynamic>;
 
-        // 复制字体样式
-        if (content.containsKey('fontSize')) {
-          _formatBrushStyles!['content_fontSize'] = content['fontSize'];
+        // 文本元素的content属性
+        final propertiesToCopy = [
+          'backgroundColor',
+          'fontColor',
+          'fontFamily',
+          'fontSize',
+          'fontStyle',
+          'fontWeight',
+          'letterSpacing',
+          'lineHeight',
+          'padding',
+          'textAlign',
+          'verticalAlign',
+          'writingMode'
+        ];
+
+        // 复制所有指定的样式属性
+        for (final property in propertiesToCopy) {
+          if (content.containsKey(property)) {
+            _formatBrushStyles!['content_$property'] = content[property];
+          }
         }
-        if (content.containsKey('fontColor')) {
-          _formatBrushStyles!['content_fontColor'] = content['fontColor'];
+      } else {
+        // 兼容旧版本文本元素结构
+        if (element.containsKey('fontSize')) {
+          _formatBrushStyles!['fontSize'] = element['fontSize'];
         }
-        if (content.containsKey('backgroundColor')) {
-          _formatBrushStyles!['content_backgroundColor'] =
-              content['backgroundColor'];
+        if (element.containsKey('fontWeight')) {
+          _formatBrushStyles!['fontWeight'] = element['fontWeight'];
         }
-        if (content.containsKey('direction')) {
-          _formatBrushStyles!['content_direction'] = content['direction'];
+        if (element.containsKey('fontStyle')) {
+          _formatBrushStyles!['fontStyle'] = element['fontStyle'];
         }
-        if (content.containsKey('charSpacing')) {
-          _formatBrushStyles!['content_charSpacing'] = content['charSpacing'];
+        if (element.containsKey('textColor')) {
+          _formatBrushStyles!['textColor'] = element['textColor'];
         }
-        if (content.containsKey('lineSpacing')) {
-          _formatBrushStyles!['content_lineSpacing'] = content['lineSpacing'];
+        if (element.containsKey('textAlign')) {
+          _formatBrushStyles!['textAlign'] = element['textAlign'];
         }
-        if (content.containsKey('gridLines')) {
-          _formatBrushStyles!['content_gridLines'] = content['gridLines'];
+      }
+    } else if (element['type'] == 'image') {
+      // 图片元素样式 - 外层属性
+      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['rotation'] = element['rotation'];
+      _formatBrushStyles!['width'] = element['width'];
+      _formatBrushStyles!['height'] = element['height'];
+
+      // 复制content中的所有样式属性
+      if (element.containsKey('content') &&
+          element['content'] is Map<String, dynamic>) {
+        final content = element['content'] as Map<String, dynamic>;
+
+        // 图像元素的content属性
+        final propertiesToCopy = [
+          'backgroundColor',
+          'fit',
+          'isFlippedHorizontally',
+          'isFlippedVertically',
+          'rotation'
+        ];
+
+        // 复制所有指定的样式属性
+        for (final property in propertiesToCopy) {
+          if (content.containsKey(property)) {
+            _formatBrushStyles!['content_$property'] = content[property];
+          }
         }
-        if (content.containsKey('showBackground')) {
-          _formatBrushStyles!['content_showBackground'] =
-              content['showBackground'];
+      }
+    } else if (element['type'] == 'collection') {
+      // 集字元素样式 - 包含除了Character和Position以外的所有属性
+      _formatBrushStyles!['opacity'] = element['opacity'];
+      _formatBrushStyles!['width'] = element['width'];
+      _formatBrushStyles!['height'] = element['height'];
+      _formatBrushStyles!['rotation'] = element['rotation'];
+
+      // 复制content中的所有样式属性
+      if (element.containsKey('content') &&
+          element['content'] is Map<String, dynamic>) {
+        final content = element['content'] as Map<String, dynamic>;
+
+        // 根据需求中的属性列表添加所有需要支持的属性
+        final propertiesToCopy = [
+          'fontSize',
+          'fontColor',
+          'backgroundColor',
+          'backgroundTexture',
+          'charSpacing',
+          'direction',
+          'gridLines',
+          'letterSpacing',
+          'lineSpacing',
+          'padding',
+          'showBackground',
+          'textureApplicationRange',
+          'textureFillMode',
+          'textureOpacity',
+        ];
+
+        // 复制所有指定的样式属性
+        for (final property in propertiesToCopy) {
+          if (content.containsKey(property)) {
+            _formatBrushStyles!['content_$property'] = content[property];
+          }
         }
+
         // 不复制characters属性，因为这是内容而非样式
       }
     }
 
-    // 包含所有类型元素的通用样式
-    _formatBrushStyles!['rotation'] = element['rotation'];
-    _formatBrushStyles!['opacity'] = element['opacity'];
+    // 如果是从字符管理页面复制的字符元素，设置字体大小为200px
+    if (element['type'] == 'collection' &&
+        element.containsKey('isFromCharacterManagement') &&
+        element['isFromCharacterManagement'] == true) {
+      _formatBrushStyles!['content_fontSize'] = 200.0;
+    }
 
     // 激活格式刷
     setState(() {
@@ -1097,11 +1179,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           final characters =
               (newElement['content'] as Map)['characters'] as String? ?? '集';
           final x = newElement['x'] as double;
-          final y = newElement['y'] as double;
-
-          // 使用控制器的公共方法addCollectionElementAt添加元素
+          final y =
+              newElement['y'] as double; // 使用控制器的公共方法addCollectionElementAt添加元素
           // 这个方法会正确地更新底层的数据结构，确保集字元素被保存
-          _controller.addCollectionElementAt(x, y, characters);
+          // 标记该元素来自字符管理页面，字体大小将自动设置为200px
+          _controller.addCollectionElementAt(x, y, characters,
+              isFromCharacterManagement: true);
 
           // 选择新添加的元素
           // 注意：我们不知道新添加元素的ID，因为它是在controller内部生成的
@@ -1236,6 +1319,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       moveSelectedElements: _moveSelectedElements,
       copyElementFormatting: _copyElementFormatting,
       applyFormatBrush: _applyFormatBrush,
+      resetViewPosition: () => _controller.resetViewPosition(),
       // Add tool selection callback to connect keyboard shortcuts with toolbar
       onSelectTool: (tool) {
         setState(() {
@@ -1343,7 +1427,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
             }
           }
         } catch (e) {
-          debugPrint('系统剪贴板内容不是有效的JSON: $e');
+          // 不是有效的 JSON，作为纯文本处理
+          debugPrint('不是有效的JSON，作为纯文本处理: $e');
         }
       } else {
         debugPrint('系统剪贴板为空');
@@ -1841,6 +1926,12 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     setState(() {
       PracticeEditUtils.sendElementToBack(_controller);
     });
+  }
+
+  /// Set up the reference to the canvas in the controller
+  void _setupCanvasReference() {
+    // Canvas will register itself with the controller in its initState
+    debugPrint('Canvas reference will be set up by the canvas widget itself');
   }
 
   /// Show export dialog

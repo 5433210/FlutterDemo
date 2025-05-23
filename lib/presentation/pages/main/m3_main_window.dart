@@ -366,34 +366,44 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
 
   void _cleanupUnusedSections() {
     final currentIndex = ref.read(globalNavigationProvider).currentSectionIndex;
-
-    // 找出可以被清理的功能区（除了当前选中的）
-    final sectionsToRemove = <int>{};
-    for (final index in _initializedSections) {
-      // 保留当前选中的功能区
-      if (index == currentIndex) continue;
-
-      // 随机选择一些不是当前选中的功能区进行清理
-      // 为了避免过于激进的清理导致用户体验下降，
-      // 我们使用一定概率来决定是否清理
-      if (_shouldCleanupSection(index)) {
-        sectionsToRemove.add(index);
+    final lastIndex = _lastSelectedIndex;
+    
+    // 延迟执行，确保当前帧渲染完成
+    Future.microtask(() {
+      if (!mounted) return;
+      
+      // 找出可以被清理的功能区（除了当前选中的和最后访问的）
+      final sectionsToRemove = <int>{};
+      for (final index in _initializedSections) {
+        // 始终保留当前选中的功能区和最后访问的功能区（提升导航返回体验）
+        if (index == currentIndex || index == lastIndex) continue;
+        
+        // 使用更可靠的清理策略
+        if (_shouldCleanupSection(index)) {
+          sectionsToRemove.add(index);
+        }
       }
-    }
-
-    // 从已初始化集合中移除，触发界面重建
-    if (sectionsToRemove.isNotEmpty) {
-      setState(() {
-        _initializedSections.removeAll(sectionsToRemove);
-      });
-    }
+      
+      // 只有当组件仍然挂载在树上时才进行状态更新
+      if (mounted && sectionsToRemove.isNotEmpty) {
+        setState(() {
+          _initializedSections.removeAll(sectionsToRemove);
+        });
+      }
+    });
   }
 
   bool _shouldCleanupSection(int index) {
-    // 这里可以根据实际需求调整清理策略
-    // 例如可以考虑功能区最后访问时间、内存压力等因素
-
-    // 简单实现：25%的概率清理每个非当前功能区
-    return (index % 4 == 0);
+    // 更可靠的清理策略：
+    // 1. 不清理低索引值的主要功能区（0和1始终保留）
+    // 2. 只清理索引值大于1的功能区
+    // 3. 避免随机清理，使用更确定性的方法
+    
+    // 保留主要功能区
+    if (index <= 1) return false;
+    
+    // 其他功能区根据应用的内存状况和使用模式决定是否清理
+    // 这里可以基于具体业务逻辑进一步完善
+    return true;
   }
 }

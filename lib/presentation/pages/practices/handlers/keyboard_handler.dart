@@ -6,7 +6,7 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 /// Handles keyboard events for the practice edit page
 ///
 /// Keyboard shortcuts:
-/// 
+///
 /// File Operations:
 /// - Ctrl+S: Save
 /// - Ctrl+Shift+S: Save As
@@ -20,6 +20,7 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 /// - Ctrl+R: Snap toggle
 /// - Ctrl+[: Toggle left panel
 /// - Ctrl+]: Toggle right panel
+/// - Ctrl+0: Reset view position (return to original zoom and position)
 ///
 /// Element Tools:
 /// - Alt+T: Text tool
@@ -70,27 +71,13 @@ class KeyboardHandler {
   bool _isShiftPressed = false;
   bool _isAltPressed = false;
   String _lastKeyPressed = ''; // Track combination key state
-  
+
   // Tool selection callback
   final Function(String)? onSelectTool;
-  
-  // Function to select a tool (to be called by shortcuts)
-  void _selectTool(String toolName) {
-    if (onSelectTool != null) {
-      // Use the callback if provided
-      onSelectTool!(toolName);
-    } else if (controller.state.currentTool == toolName) {
-      // If the tool is already selected, deselect it
-      controller.exitSelectMode();
-    } else {
-      // Otherwise select the tool
-      controller.state.currentTool = toolName;
-      controller.notifyListeners();
-    }
-  }
 
   // Callback functions
   final Function() onTogglePreviewMode;
+
   final Function() onToggleThumbnails;
   final Function() editTitle;
   final Function() savePractice;
@@ -115,7 +102,7 @@ class KeyboardHandler {
   final Function() copyElementFormatting;
   final Function() applyFormatBrush;
   final Function(double dx, double dy) moveSelectedElements;
-
+  final Function() resetViewPosition; // Added callback for reset view position
   KeyboardHandler({
     required this.controller,
     required this.onTogglePreviewMode,
@@ -143,6 +130,7 @@ class KeyboardHandler {
     required this.moveSelectedElements,
     required this.copyElementFormatting,
     required this.applyFormatBrush,
+    required this.resetViewPosition, // Added parameter for reset view position
     this.onSelectTool,
   });
 
@@ -219,7 +207,7 @@ class KeyboardHandler {
           return true;
         }
       }
-      
+
       // If in preview mode, only handle preview mode toggle shortcut
       if (controller.state.isPreviewMode) {
         if (_isCtrlPressed && event.logicalKey == LogicalKeyboardKey.keyP) {
@@ -228,7 +216,7 @@ class KeyboardHandler {
         }
         return false;
       }
-      
+
       // Handle Alt combinations for tool selection and formatting
       if (_isAltPressed) {
         switch (event.logicalKey) {
@@ -237,31 +225,31 @@ class KeyboardHandler {
             debugPrint('KeyboardHandler: Selecting text tool via Alt+T');
             _selectTool('text');
             return true;
-            
+
           // Alt+I: Image tool
           case LogicalKeyboardKey.keyI:
             debugPrint('KeyboardHandler: Selecting image tool via Alt+I');
             _selectTool('image');
             return true;
-            
+
           // Alt+C: Collection tool
           case LogicalKeyboardKey.keyC:
             debugPrint('KeyboardHandler: Selecting collection tool via Alt+C');
             _selectTool('collection');
             return true;
-            
+
           // Alt+S: Select tool
           case LogicalKeyboardKey.keyS:
             debugPrint('KeyboardHandler: Selecting select tool via Alt+S');
             _selectTool('select');
             return true;
-            
+
           // Alt+Q: Copy format
           case LogicalKeyboardKey.keyQ:
             debugPrint('KeyboardHandler: Copy format via Alt+Q');
             copyElementFormatting();
             return true;
-            
+
           // Alt+W: Apply format
           case LogicalKeyboardKey.keyW:
             debugPrint('KeyboardHandler: Apply format via Alt+W');
@@ -282,6 +270,13 @@ class KeyboardHandler {
               // Ctrl+S: Save
               savePractice();
             }
+            return true;
+
+          // Ctrl+0: Reset view position
+          case LogicalKeyboardKey.digit0:
+          case LogicalKeyboardKey.numpad0:
+            debugPrint('KeyboardHandler: Resetting view position via Ctrl+0');
+            resetViewPosition();
             return true;
 
           // Ctrl+Shift+A: Select all elements on current page
@@ -459,5 +454,20 @@ class KeyboardHandler {
 
     // If not handled, return false to pass event
     return false;
+  }
+
+  // Function to select a tool (to be called by shortcuts)
+  void _selectTool(String toolName) {
+    if (onSelectTool != null) {
+      // Use the callback if provided
+      onSelectTool!(toolName);
+    } else if (controller.state.currentTool == toolName) {
+      // If the tool is already selected, deselect it
+      controller.exitSelectMode();
+    } else {
+      // Otherwise select the tool
+      controller.state.currentTool = toolName;
+      controller.notifyListeners();
+    }
   }
 }
