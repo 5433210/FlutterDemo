@@ -47,7 +47,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   late final PracticeEditController _controller;
 
   // Current tool
-  String _currentTool = 'select';
+  String _currentTool = '';
 
   // Clipboard
   Map<String, dynamic>? _clipboardElement;
@@ -1593,9 +1593,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 child: Text(l10n.practiceEditSaveAndExit),
                 onPressed: () async {
                   // Save changes
-                  await _savePractice();
+                  final saveResult = await _savePractice();
                   if (context.mounted) {
-                    // Return true to confirm leaving
+                    // Return true to confirm leaving, ensuring we exit regardless of save success
                     Navigator.of(context).pop(true);
                   }
                 },
