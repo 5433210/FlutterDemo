@@ -113,13 +113,13 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     widget.transformationController.removeListener(_handleTransformationChange);
     super.dispose();
   }
-
   @override
   void initState() {
     super.initState();
 
-    // Initialize RepaintBoundary key - use widget's key if available for screenshot functionality
-    _repaintBoundaryKey = widget.key as GlobalKey? ?? GlobalKey();
+    // Initialize RepaintBoundary key - always create a new key for screenshot functionality
+    // Don't reuse widget.key as it may cause conflicts with other widgets
+    _repaintBoundaryKey = GlobalKey();
 
     // Initialize zoom listener
     widget.transformationController.addListener(_handleTransformationChange);
