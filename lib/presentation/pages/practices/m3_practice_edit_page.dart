@@ -355,7 +355,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
               'textureApplicationRange',
               'textureFillMode',
               'textureOpacity',
-              'wordWrap',  // 添加自动换行属性
+              'enableSoftLineBreak',  // 添加自动换行属性
             ];
 
             // 应用所有指定的样式属性
@@ -936,7 +936,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           'textureApplicationRange',
           'textureFillMode',
           'textureOpacity',
-          'wordWrap',  // 添加自动换行属性
+          'enableSoftLineBreak',  // 添加自动换行属性
         ];
 
         // 复制所有指定的样式属性
