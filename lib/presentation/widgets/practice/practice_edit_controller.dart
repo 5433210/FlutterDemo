@@ -844,18 +844,59 @@ class PracticeEditController extends ChangeNotifier {
         _state.currentPageIndex < _state.pages.length) {
       final page = _state.pages[_state.currentPageIndex];
       final elements = page['elements'] as List<dynamic>;
-      elements.removeWhere((e) => e['id'] == id);
 
-      // 如果删除的是当前选中的元素，清除选择
-      if (_state.selectedElementIds.contains(id)) {
-        _state.selectedElementIds.remove(id);
-        if (_state.selectedElementIds.isEmpty) {
-          _state.selectedElement = null;
-        }
-      }
+      // 查找要删除的元素
+      final elementIndex = elements.indexWhere((e) => e['id'] == id);
+      if (elementIndex < 0) return; // 元素不存在
 
-      _state.hasUnsavedChanges = true;
-      notifyListeners();
+      final element = Map<String, dynamic>.from(elements[elementIndex]);
+
+      debugPrint('【Undo/Redo】删除元素: $id, 类型: ${element['type']}');
+
+      // 创建删除操作
+      final operation = DeleteElementOperation(
+        element: element,
+        addElement: (e) {
+          debugPrint('【Undo/Redo】撤销删除 - 恢复元素: ${e['id']}');
+          if (_state.currentPageIndex >= 0 &&
+              _state.currentPageIndex < _state.pages.length) {
+            final page = _state.pages[_state.currentPageIndex];
+            final elements = page['elements'] as List<dynamic>;
+
+            // 在原来的位置插入元素
+            if (elementIndex < elements.length) {
+              elements.insert(elementIndex, e);
+            } else {
+              elements.add(e);
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
+        },
+        removeElement: (elementId) {
+          debugPrint('【Undo/Redo】执行删除元素: $elementId');
+          if (_state.currentPageIndex >= 0 &&
+              _state.currentPageIndex < _state.pages.length) {
+            final page = _state.pages[_state.currentPageIndex];
+            final elements = page['elements'] as List<dynamic>;
+            elements.removeWhere((e) => e['id'] == elementId);
+
+            // 如果删除的是当前选中的元素，清除选择
+            if (_state.selectedElementIds.contains(elementId)) {
+              _state.selectedElementIds.remove(elementId);
+              if (_state.selectedElementIds.isEmpty) {
+                _state.selectedElement = null;
+              }
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+          }
+        },
+      );
+
+      _undoRedoManager.addOperation(operation);
     }
   }
 

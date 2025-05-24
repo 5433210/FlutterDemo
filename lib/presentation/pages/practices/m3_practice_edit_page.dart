@@ -24,6 +24,7 @@ import '../../widgets/practice/practice_edit_controller.dart';
 // import '../../widgets/practice/practice_property_panel.dart';
 // import '../../widgets/practice/top_navigation_bar.dart';
 import '../../widgets/practice/property_panels/m3_practice_property_panels.dart';
+import '../../widgets/practice/undo_redo_manager.dart';
 import 'handlers/keyboard_handler.dart';
 import 'utils/practice_edit_utils.dart';
 // import 'widgets/m3_content_tools_panel.dart' - Removed as elements were moved to toolbar;
@@ -230,158 +231,209 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     final selectedElements = _controller.state.getSelectedElements();
     if (selectedElements.isEmpty) return;
 
-    setState(() {
-      // 对每个选中的元素应用样式
-      for (final element in selectedElements) {
-        final elementType = element['type'];
+    // 准备格式刷操作所需的数据
+    final List<String> targetElementIds = [];
+    final List<Map<String, dynamic>> oldPropertiesList = [];
+    final List<Map<String, dynamic>> newPropertiesList = []; // 对每个选中的元素计算新旧属性
+    for (final element in selectedElements) {
+      final elementId = element['id'] as String;
+      final elementType = element['type'];
 
-        // 应用通用样式 - 外层属性
-        if (_formatBrushStyles!.containsKey('rotation')) {
-          element['rotation'] = _formatBrushStyles!['rotation'];
+      // 深拷贝原始元素作为旧属性
+      final oldProperties = _deepCopyElement(element);
+
+      // 深拷贝原始元素并应用格式刷样式作为新属性
+      final newProperties = _deepCopyElement(element);
+
+      // 应用通用样式 - 外层属性
+      if (_formatBrushStyles!.containsKey('rotation')) {
+        newProperties['rotation'] = _formatBrushStyles!['rotation'];
+      }
+      if (_formatBrushStyles!.containsKey('opacity')) {
+        newProperties['opacity'] = _formatBrushStyles!['opacity'];
+      }
+      if (_formatBrushStyles!.containsKey('width')) {
+        newProperties['width'] = _formatBrushStyles!['width'];
+      }
+      if (_formatBrushStyles!.containsKey('height')) {
+        newProperties['height'] = _formatBrushStyles!['height'];
+      }
+
+      // 应用特定类型的样式
+      if (elementType == 'text') {
+        // 兼容旧版本的文本元素结构
+        if (_formatBrushStyles!.containsKey('fontSize')) {
+          newProperties['fontSize'] = _formatBrushStyles!['fontSize'];
         }
-        if (_formatBrushStyles!.containsKey('opacity')) {
-          element['opacity'] = _formatBrushStyles!['opacity'];
+        if (_formatBrushStyles!.containsKey('fontWeight')) {
+          newProperties['fontWeight'] = _formatBrushStyles!['fontWeight'];
         }
-        if (_formatBrushStyles!.containsKey('width')) {
-          element['width'] = _formatBrushStyles!['width'];
+        if (_formatBrushStyles!.containsKey('fontStyle')) {
+          newProperties['fontStyle'] = _formatBrushStyles!['fontStyle'];
         }
-        if (_formatBrushStyles!.containsKey('height')) {
-          element['height'] = _formatBrushStyles!['height'];
+        if (_formatBrushStyles!.containsKey('textColor')) {
+          newProperties['textColor'] = _formatBrushStyles!['textColor'];
+        }
+        if (_formatBrushStyles!.containsKey('textAlign')) {
+          newProperties['textAlign'] = _formatBrushStyles!['textAlign'];
         }
 
-        // 应用特定类型的样式
-        if (elementType == 'text') {
-          // 兼容旧版本的文本元素结构
-          if (_formatBrushStyles!.containsKey('fontSize')) {
-            element['fontSize'] = _formatBrushStyles!['fontSize'];
-          }
-          if (_formatBrushStyles!.containsKey('fontWeight')) {
-            element['fontWeight'] = _formatBrushStyles!['fontWeight'];
-          }
-          if (_formatBrushStyles!.containsKey('fontStyle')) {
-            element['fontStyle'] = _formatBrushStyles!['fontStyle'];
-          }
-          if (_formatBrushStyles!.containsKey('textColor')) {
-            element['textColor'] = _formatBrushStyles!['textColor'];
-          }
-          if (_formatBrushStyles!.containsKey('textAlign')) {
-            element['textAlign'] = _formatBrushStyles!['textAlign'];
-          }
+        // 新版本文本元素结构处理 - content属性
+        if (newProperties.containsKey('content') &&
+            newProperties['content'] is Map) {
+          Map<String, dynamic> content =
+              Map<String, dynamic>.from(newProperties['content'] as Map);
 
-          // 新版本文本元素结构处理 - content属性
-          if (element.containsKey('content') && element['content'] is Map) {
-            Map<String, dynamic> content =
-                Map<String, dynamic>.from(element['content'] as Map);
+          // 应用文本元素的content属性
+          final propertiesToApply = [
+            'backgroundColor',
+            'fontColor',
+            'fontFamily',
+            'fontSize',
+            'fontStyle',
+            'fontWeight',
+            'letterSpacing',
+            'lineHeight',
+            'padding',
+            'textAlign',
+            'verticalAlign',
+            'writingMode'
+          ];
 
-            // 应用文本元素的content属性
-            final propertiesToApply = [
-              'backgroundColor',
-              'fontColor',
-              'fontFamily',
-              'fontSize',
-              'fontStyle',
-              'fontWeight',
-              'letterSpacing',
-              'lineHeight',
-              'padding',
-              'textAlign',
-              'verticalAlign',
-              'writingMode'
-            ];
-
-            // 应用所有指定的样式属性
-            for (final property in propertiesToApply) {
-              final brushKey = 'content_$property';
-              if (_formatBrushStyles!.containsKey(brushKey)) {
-                content[property] = _formatBrushStyles![brushKey];
-              }
+          // 应用所有指定的样式属性
+          for (final property in propertiesToApply) {
+            final brushKey = 'content_$property';
+            if (_formatBrushStyles!.containsKey(brushKey)) {
+              content[property] = _formatBrushStyles![brushKey];
             }
-
-            // 更新元素的content属性
-            element['content'] = content;
           }
-        } else if (elementType == 'image') {
-          // 图像元素的content属性处理
-          if (element.containsKey('content') && element['content'] is Map) {
-            Map<String, dynamic> content =
-                Map<String, dynamic>.from(element['content'] as Map);
 
-            // 应用图像元素的content属性
-            final propertiesToApply = [
-              'backgroundColor',
-              'fit',
-              'isFlippedHorizontally',
-              'isFlippedVertically',
-              'rotation'
-            ];
+          // 更新元素的content属性
+          newProperties['content'] = content;
+        }
+      } else if (elementType == 'image') {
+        // 图像元素的content属性处理
+        if (newProperties.containsKey('content') &&
+            newProperties['content'] is Map) {
+          Map<String, dynamic> content =
+              Map<String, dynamic>.from(newProperties['content'] as Map);
 
-            // 应用所有指定的样式属性
-            for (final property in propertiesToApply) {
-              final brushKey = 'content_$property';
-              if (_formatBrushStyles!.containsKey(brushKey)) {
-                content[property] = _formatBrushStyles![brushKey];
-              }
+          // 应用图像元素的content属性
+          final propertiesToApply = [
+            'backgroundColor',
+            'fit',
+            'isFlippedHorizontally',
+            'isFlippedVertically',
+            'rotation'
+          ];
+
+          // 应用所有指定的样式属性
+          for (final property in propertiesToApply) {
+            final brushKey = 'content_$property';
+            if (_formatBrushStyles!.containsKey(brushKey)) {
+              content[property] = _formatBrushStyles![brushKey];
             }
-
-            // 更新元素的content属性
-            element['content'] = content;
           }
-        } else if (elementType == 'collection') {
-          // 集字元素特有样式处理
 
-          // 应用content中的所有样式属性（除了characters）
-          if (element.containsKey('content') && element['content'] is Map) {
-            Map<String, dynamic> content =
-                Map<String, dynamic>.from(element['content'] as Map);
+          // 更新元素的content属性
+          newProperties['content'] = content;
+        }
+      } else if (elementType == 'collection') {
+        // 集字元素特有样式处理
 
-            // 保存原有的characters
-            final originalCharacters = content.containsKey('characters')
-                ? content['characters']
-                : null;
+        // 应用content中的所有样式属性（除了characters）
+        if (newProperties.containsKey('content') &&
+            newProperties['content'] is Map) {
+          Map<String, dynamic> content =
+              Map<String, dynamic>.from(newProperties['content'] as Map);
 
-            // 根据需求中的属性列表应用所有需要支持的属性
-            final propertiesToApply = [
-              'fontSize',
-              'fontColor',
-              'backgroundColor',
-              'backgroundTexture',
-              'charSpacing',
-              'direction',
-              'gridLines',
-              'letterSpacing',
-              'lineSpacing',
-              'padding',
-              'showBackground',
-              'textureApplicationRange',
-              'textureFillMode',
-              'textureOpacity',
-              'enableSoftLineBreak', // 添加自动换行属性
-            ];
+          // 保存原有的characters
+          final originalCharacters =
+              content.containsKey('characters') ? content['characters'] : null;
 
-            // 应用所有指定的样式属性
-            for (final property in propertiesToApply) {
-              final brushKey = 'content_$property';
-              if (_formatBrushStyles!.containsKey(brushKey)) {
-                content[property] = _formatBrushStyles![brushKey];
-              }
+          // 根据需求中的属性列表应用所有需要支持的属性
+          final propertiesToApply = [
+            'fontSize',
+            'fontColor',
+            'backgroundColor',
+            'backgroundTexture',
+            'charSpacing',
+            'direction',
+            'gridLines',
+            'letterSpacing',
+            'lineSpacing',
+            'padding',
+            'showBackground',
+            'textureApplicationRange',
+            'textureFillMode',
+            'textureOpacity',
+            'enableSoftLineBreak', // 添加自动换行属性
+          ];
+
+          // 应用所有指定的样式属性
+          for (final property in propertiesToApply) {
+            final brushKey = 'content_$property';
+            if (_formatBrushStyles!.containsKey(brushKey)) {
+              content[property] = _formatBrushStyles![brushKey];
             }
-
-            // 如果存在characters，恢复原来的值
-            if (originalCharacters != null) {
-              content['characters'] = originalCharacters;
-            }
-
-            // 更新元素的content属性，但保留原有的characters
-            element['content'] = content;
           }
+
+          // 如果存在characters，恢复原来的值
+          if (originalCharacters != null) {
+            content['characters'] = originalCharacters;
+          }
+
+          // 更新元素的content属性，但保留原有的characters
+          newProperties['content'] = content;
         }
       }
 
-      // 重置格式刷状态
-      _isFormatBrushActive = false;
+      // 添加到操作列表
+      targetElementIds.add(elementId);
+      oldPropertiesList.add(oldProperties);
+      newPropertiesList.add(newProperties);
+    }
 
-      // 通知编辑器状态已更改
-      _controller.notifyListeners();
+    // 使用FormatPainterOperation与撤销/重做系统集成
+    final formatPainterOperation = FormatPainterOperation(
+      targetElementIds: targetElementIds,
+      oldPropertiesList: oldPropertiesList,
+      newPropertiesList: newPropertiesList,
+      updateElement: (elementId, properties) {
+        // 更新指定元素的属性
+        if (_controller.state.currentPageIndex >= 0 &&
+            _controller.state.currentPageIndex <
+                _controller.state.pages.length) {
+          final page =
+              _controller.state.pages[_controller.state.currentPageIndex];
+          final elements = page['elements'] as List<dynamic>;
+          final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+
+          if (elementIndex >= 0) {
+            // 更新元素属性
+            elements[elementIndex] = properties;
+
+            // 如果是当前选中的元素，同时更新selectedElement
+            if (_controller.state.selectedElementIds.contains(elementId)) {
+              _controller.state.selectedElement = properties;
+            }
+
+            // 标记有未保存的更改
+            _controller.state.hasUnsavedChanges = true;
+
+            // 通知监听器
+            _controller.notifyListeners();
+          }
+        }
+      },
+    );
+
+    // 添加到撤销/重做管理器
+    _controller.undoRedoManager.addOperation(formatPainterOperation);
+
+    // 重置格式刷状态
+    setState(() {
+      _isFormatBrushActive = false;
     });
   }
 
@@ -720,8 +772,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     );
   }
 
-  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
-
   /// Check if clipboard has valid content for pasting
   /// Returns true if clipboard has content that can be pasted
   Future<bool> _checkClipboardContent() async {
@@ -820,6 +870,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       return false;
     }
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// 复制选中元素的样式（格式刷功能）
   void _copyElementFormatting() {
@@ -1027,6 +1079,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       _controller.state.currentPageElements.add(newElement);
       _controller.selectElement(newId);
     });
+  }
+
+  /// 深拷贝元素，确保嵌套的Map也被正确拷贝
+  Map<String, dynamic> _deepCopyElement(Map<String, dynamic> element) {
+    final copy = Map<String, dynamic>.from(element);
+
+    // 特别处理content属性，确保它也被深拷贝
+    if (copy.containsKey('content') && copy['content'] is Map) {
+      copy['content'] = Map<String, dynamic>.from(copy['content'] as Map);
+    }
+
+    return copy;
   }
 
   /// Delete a page
