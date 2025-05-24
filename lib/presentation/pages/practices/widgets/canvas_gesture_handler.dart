@@ -57,6 +57,23 @@ class CanvasGestureHandler {
     onDragUpdate();
   }
 
+  /// Get the selection box rectangle
+  Rect? getSelectionBoxRect() {
+    if (_selectionBoxStart != null && _selectionBoxEnd != null) {
+      return Rect.fromPoints(_selectionBoxStart!, _selectionBoxEnd!);
+    }
+    return null;
+  }
+
+  /// Get the selection box state
+  SelectionBoxState getSelectionBoxState() {
+    return SelectionBoxState(
+      isActive: _isSelectionBoxActive,
+      startPoint: _selectionBoxStart,
+      endPoint: _selectionBoxEnd,
+    );
+  }
+
   /// Handle pan end on canvas
   void handlePanEnd(DragEndDetails details) {
     // Check if we're in select mode and using selection box
@@ -726,4 +743,17 @@ class CanvasGestureHandler {
     // This method would show a context menu at the given position
     // Implementation would depend on your context menu system
   }
+}
+
+/// Represents the state of the selection box
+class SelectionBoxState {
+  final bool isActive;
+  final Offset? startPoint;
+  final Offset? endPoint;
+
+  SelectionBoxState({
+    required this.isActive,
+    required this.startPoint,
+    required this.endPoint,
+  });
 }

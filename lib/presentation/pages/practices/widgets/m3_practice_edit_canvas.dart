@@ -32,6 +32,31 @@ class M3PracticeEditCanvas extends ConsumerStatefulWidget {
       _M3PracticeEditCanvasState();
 }
 
+/// 选择框状态类 - 用于保存和管理选择框的当前状态
+class SelectionBoxState {
+  final bool isActive;
+  final Offset? startPoint;
+  final Offset? endPoint;
+
+  SelectionBoxState({
+    this.isActive = false,
+    this.startPoint,
+    this.endPoint,
+  });
+
+  SelectionBoxState copyWith({
+    bool? isActive,
+    Offset? startPoint,
+    Offset? endPoint,
+  }) {
+    return SelectionBoxState(
+      isActive: isActive ?? this.isActive,
+      startPoint: startPoint ?? this.startPoint,
+      endPoint: endPoint ?? this.endPoint,
+    );
+  }
+}
+
 /// Grid painter
 class _GridPainter extends CustomPainter {
   final double gridSize;
@@ -69,12 +94,18 @@ class _GridPainter extends CustomPainter {
 class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   // Drag state variables
   bool _isDragging = false;
+  // ignore: unused_field
   Offset _dragStart = Offset.zero;
+  // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
 
   // Canvas gesture handler
   late CanvasGestureHandler _gestureHandler;
+
+  // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
+  final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
+      ValueNotifier(SelectionBoxState());
 
   // Dedicated GlobalKey for RepaintBoundary (for screenshot functionality)
   // Use the widget's key if provided, otherwise create a new one
@@ -109,6 +140,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
   @override
   void dispose() {
+    _selectionBoxNotifier.dispose();
     widget.transformationController.removeListener(_handleTransformationChange);
     super.dispose();
   }
@@ -122,9 +154,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     _repaintBoundaryKey = GlobalKey();
 
     // Initialize zoom listener
-    widget.transformationController.addListener(_handleTransformationChange);
-
-    // Initialize gesture handler
+    widget.transformationController
+        .addListener(_handleTransformationChange); // Initialize gesture handler
+    // 1. 首先修复calculateCanvasPosition的实现方式
+// 在CanvasGestureHandler的初始化中修改为：
     _gestureHandler = CanvasGestureHandler(
       controller: widget.controller,
       onDragStart: (isDragging, dragStart, elementPosition, elementPositions) {
@@ -137,7 +170,18 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         });
       },
       onDragUpdate: () {
-        setState(() {});
+        // 如果是选择框更新，使用ValueNotifier而不是setState
+        if (_gestureHandler.isSelectionBoxActive) {
+          // 创建本地的SelectionBoxState，而不是使用_gestureHandler.getSelectionBoxState()
+          _selectionBoxNotifier.value = SelectionBoxState(
+            isActive: _gestureHandler.isSelectionBoxActive,
+            startPoint: _gestureHandler.selectionBoxStart,
+            endPoint: _gestureHandler.selectionBoxEnd,
+          );
+        } else {
+          // 对于元素拖拽，仍然使用setState
+          setState(() {});
+        }
       },
       onDragEnd: () {
         setState(() {
@@ -310,12 +354,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     if (widget.controller.state.currentTool == 'select' &&
                         _gestureHandler.isSelectionBoxActive) {
                       _gestureHandler.handlePanUpdate(details);
-                      setState(() {}); // 确保选择框重绘
+                      // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
+                      _selectionBoxNotifier.value = SelectionBoxState(
+                        isActive: true,
+                        startPoint: _gestureHandler.selectionBoxStart,
+                        endPoint: _gestureHandler.selectionBoxEnd,
+                      );
                       return;
                     }
 
-                    // Handle element dragging in select mode or any other mode
-                    // _isDragging will be true even in select mode if we started dragging on a selected element
+                    // Handle element dragging in any mode (select or non-select)
+                    // _isDragging will be true if we started dragging on an element
                     if (_isDragging) {
                       _gestureHandler.handlePanUpdate(details);
                       setState(() {}); // Force redraw for element movement
@@ -347,21 +396,27 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                         translation.y + details.delta.dy * scale,
                         0.0,
                       ));
-
                       widget.transformationController.value =
                           newMatrix; // Force refresh
-                      setState(() {});
-
-                      // Add debug logging
+                      setState(() {}); // Add debug logging
                       debugPrint(
                           '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
                           '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
+                      return; // Exit early to avoid calling handlePanUpdate
                     }
 
-                    // Always call handlePanUpdate for any cases not handled above
+                    // Only call handlePanUpdate if not already handled
                     _gestureHandler.handlePanUpdate(details);
                   },
-                  onPanEnd: (details) => _gestureHandler.handlePanEnd(details),
+                  onPanEnd: (details) {
+                    // 重置选择框状态
+                    if (widget.controller.state.currentTool == 'select' &&
+                        _gestureHandler.isSelectionBoxActive) {
+                      // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
+                      _selectionBoxNotifier.value = SelectionBoxState();
+                    }
+                    _gestureHandler.handlePanEnd(details);
+                  },
                   child: _buildPageContent(currentPage,
                       elements.cast<Map<String, dynamic>>(), colorScheme),
                 ),
@@ -709,119 +764,134 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       debugPrint(
                           '跳过隐藏图层上的元素: id=${element['id']}, layerId=$layerId');
                       return const SizedBox.shrink();
-                    }
-
-                    // Check if this element is selected
+                    } // Check if this element is selected
                     final isSelected =
                         widget.controller.state.selectedElementIds.contains(id);
 
-                    // Render element
+                    // Render element with proper positioning - RepaintBoundary must be inside Positioned
                     return Positioned(
                       left: elementX,
                       top: elementY,
-                      child: Transform.rotate(
-                        angle: elementRotation *
-                            math.pi /
-                            180, // Convert to radians
-                        child: Container(
-                          width: elementWidth,
-                          height: elementHeight,
-                          decoration: !widget.isPreviewMode && isSelected
-                              ? BoxDecoration(
-                                  border: Border.all(
-                                    color: isLocked || isLayerLocked
-                                        ? colorScheme.tertiary
-                                        : colorScheme.primary,
-                                    width: 0.5, // 将边框宽度从2.0减小到0.5像素
-                                    style: BorderStyle.solid,
-                                  ),
-                                  // 使用完全透明的遮盖层，不再使用半透明背景色
-                                  color: Colors.transparent,
-                                )
-                              : null,
-                          child: Stack(
-                            children: [
-                              // Element content
-                              _renderElement(
-                                  element), // 为选中元素添加角落指示器，增强选中状态的可见性
-                              if (!widget.isPreviewMode && isSelected)
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: _SelectionCornerPainter(
+                      child: RepaintBoundary(
+                        child: Transform.rotate(
+                          angle: elementRotation *
+                              math.pi /
+                              180, // Convert to radians
+                          child: Container(
+                            width: elementWidth,
+                            height: elementHeight,
+                            decoration: !widget.isPreviewMode && isSelected
+                                ? BoxDecoration(
+                                    border: Border.all(
                                       color: isLocked
                                           ? colorScheme.tertiary
                                           : colorScheme.primary,
+                                      width: 1.5,
                                     ),
-                                  ),
+                                  )
+                                : null,
+                            child: Stack(
+                              children: [
+                                // The actual element content
+                                Positioned.fill(
+                                  child: _renderElement(element),
                                 ),
 
-                              // Lock icon (if element or its layer is locked)
-                              if ((isLocked || isLayerLocked) &&
-                                  !widget.isPreviewMode)
-                                Positioned(
-                                  right: 2,
-                                  top: 2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white
-                                          .withAlpha(204), // 0.8 opacity
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                        color: isLayerLocked
-                                            ? Colors.grey.shade400
-                                            : colorScheme.tertiary,
-                                        width: 1.0,
+                                // Selection corners (if selected and not in preview mode)
+                                if (!widget.isPreviewMode && isSelected)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: _SelectionCornerPainter(
+                                        color: isLocked
+                                            ? colorScheme.tertiary
+                                            : colorScheme.primary,
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isLayerLocked
-                                              ? Icons.layers
-                                              : Icons.lock,
-                                          size: 18,
+                                  ),
+
+                                // Lock icon (if element or its layer is locked)
+                                if ((isLocked || isLayerLocked) &&
+                                    !widget.isPreviewMode)
+                                  Positioned(
+                                    right: 2,
+                                    top: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withAlpha(204), // 0.8 opacity
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
                                           color: isLayerLocked
-                                              ? Colors.grey.shade700
+                                              ? Colors.grey.shade400
                                               : colorScheme.tertiary,
+                                          width: 1.0,
                                         ),
-                                        if (isLayerLocked)
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
                                           Icon(
-                                            Icons.lock,
-                                            size: 14,
-                                            color: Colors.grey.shade700,
+                                            isLayerLocked
+                                                ? Icons.layers
+                                                : Icons.lock,
+                                            size: 18,
+                                            color: isLayerLocked
+                                                ? Colors.grey.shade700
+                                                : colorScheme.tertiary,
                                           ),
-                                      ],
+                                          if (isLayerLocked)
+                                            Icon(
+                                              Icons.lock,
+                                              size: 14,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     );
                   }).toList(),
 
-                  // Selection box - draw when in select mode and dragging
-                  if (!widget.isPreviewMode &&
-                      widget.controller.state.currentTool == 'select' &&
-                      _gestureHandler.isSelectionBoxActive &&
-                      _gestureHandler.selectionBoxStart != null &&
-                      _gestureHandler.selectionBoxEnd != null)
-                    CustomPaint(
-                      painter: _SelectionBoxPainter(
-                        startPoint: _gestureHandler.selectionBoxStart!,
-                        endPoint: _gestureHandler.selectionBoxEnd!,
-                        color: colorScheme.primary,
-                      ),
-                      size: Size(pageSize.width, pageSize.height),
-                    ),
+                  // 移除原有选择框实现，由单独的层来处理
                 ],
               ),
             ),
           ),
         ),
+
+        // 选择框层 - 分离到独立图层，使用ValueListenableBuilder避免整个画布重建
+        if (!widget.isPreviewMode)
+          Positioned.fill(
+            child: IgnorePointer(
+              // 确保选择框层不拦截下方元素的交互
+              child: ValueListenableBuilder<SelectionBoxState>(
+                valueListenable: _selectionBoxNotifier,
+                builder: (context, selectionBoxState, child) {
+                  if (widget.controller.state.currentTool == 'select' &&
+                      selectionBoxState.isActive &&
+                      selectionBoxState.startPoint != null &&
+                      selectionBoxState.endPoint != null) {
+                    // 不使用Transform，直接在画布视图坐标系中绘制选择框
+                    return CustomPaint(
+                      size: Size.infinite, // 覆盖整个区域
+                      painter: _SelectionBoxPainter(
+                        startPoint: selectionBoxState.startPoint!,
+                        endPoint: selectionBoxState.endPoint!,
+                        color: colorScheme.primary,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
 
         // Control points for selected element (if single selection)
         if (selectedElementId != null && !widget.isPreviewMode)
@@ -1233,7 +1303,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final bgColor = _parseColor(backgroundColor);
 
     if (characters.isEmpty) {
-      print('🧩 TEXTURE: 渲染集字元素：字符为空，显示占位符');
+      // Removed debug logging for performance
       return Container(
         width: double.infinity,
         height: double.infinity,
@@ -1248,8 +1318,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       );
     }
 
-    print('🧩 TEXTURE: 创建集字渲染器，字符数: ${characters.length}');
-    print('🧩 TEXTURE: 传递的内边距: $padding');
+    // Debug logging removed for performance
 
     return Container(
       width: double.infinity,
@@ -1257,7 +1326,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       color: bgColor,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          print('🧩 TEXTURE: 布局构建器获得约束: $constraints');
+          // Debug logging removed for performance
           return CollectionElementRenderer.buildCollectionLayout(
             characters: characters,
             writingMode: writingMode,
@@ -1604,57 +1673,26 @@ class _SelectionBoxPainter extends CustomPainter {
     required this.endPoint,
     required this.color,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     // 创建选择框的矩形
     final rect = Rect.fromPoints(startPoint, endPoint);
 
-    // 绘制半透明填充
-    final fillPaint = Paint()
-      ..color = color.withOpacity(0.15)
-      ..style = PaintingStyle.fill;
-    canvas.drawRect(rect, fillPaint);
-
-    // 绘制边框
-    final strokePaint = Paint()
-      ..color = color.withOpacity(0.8)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawRect(rect, strokePaint);
-
-    // 绘制角落标记，增强视觉反馈
-    final cornerPaint = Paint()
+    // 创建虚线效果的画笔
+    final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+      ..strokeWidth = 1.5;
 
-    // 边角尺寸
-    const cornerSize = 6.0;
+    // 绘制选择框
+    canvas.drawRect(rect, paint);
 
-    // 左上角
-    canvas.drawLine(
-        rect.topLeft, rect.topLeft.translate(cornerSize, 0), cornerPaint);
-    canvas.drawLine(
-        rect.topLeft, rect.topLeft.translate(0, cornerSize), cornerPaint);
+    // 添加半透明填充
+    final fillPaint = Paint()
+      ..color = color.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
 
-    // 右上角
-    canvas.drawLine(
-        rect.topRight, rect.topRight.translate(-cornerSize, 0), cornerPaint);
-    canvas.drawLine(
-        rect.topRight, rect.topRight.translate(0, cornerSize), cornerPaint);
-
-    // 左下角
-    canvas.drawLine(
-        rect.bottomLeft, rect.bottomLeft.translate(cornerSize, 0), cornerPaint);
-    canvas.drawLine(rect.bottomLeft, rect.bottomLeft.translate(0, -cornerSize),
-        cornerPaint);
-
-    // 右下角
-    canvas.drawLine(rect.bottomRight,
-        rect.bottomRight.translate(-cornerSize, 0), cornerPaint);
-    canvas.drawLine(rect.bottomRight,
-        rect.bottomRight.translate(0, -cornerSize), cornerPaint);
+    canvas.drawRect(rect, fillPaint);
   }
 
   @override
