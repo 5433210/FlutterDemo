@@ -45,15 +45,17 @@ class PracticeEditUtils {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index >= 0 && index < elements.length - 1) {
-      // Remove element
-      final element = elements.removeAt(index);
-      // Add to end (top layer)
-      elements.add(element);
+      final newIndex = elements.length - 1; // Move to end (top layer)
 
-      // Update current page elements
-      controller.state.pages[controller.state.currentPageIndex]['elements'] =
-          elements;
-      controller.state.hasUnsavedChanges = true;
+      // Create undo/redo operation
+      final operation = BringElementToFrontOperation(
+        elementId: id,
+        oldIndex: index,
+        newIndex: newIndex,
+        reorderElement: controller.reorderElement,
+      );
+
+      controller.undoRedoManager.addOperation(operation);
     }
   }
 
@@ -213,15 +215,17 @@ class PracticeEditUtils {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index > 0) {
-      // Swap current element with element below
-      final temp = elements[index];
-      elements[index] = elements[index - 1];
-      elements[index - 1] = temp;
+      final newIndex = index - 1; // Move down one layer
 
-      // Update current page elements
-      controller.state.pages[controller.state.currentPageIndex]['elements'] =
-          elements;
-      controller.state.hasUnsavedChanges = true;
+      // Create undo/redo operation
+      final operation = MoveElementDownOperation(
+        elementId: id,
+        oldIndex: index,
+        newIndex: newIndex,
+        reorderElement: controller.reorderElement,
+      );
+
+      controller.undoRedoManager.addOperation(operation);
     }
   }
 
@@ -234,15 +238,17 @@ class PracticeEditUtils {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index >= 0 && index < elements.length - 1) {
-      // Swap current element with element above
-      final temp = elements[index];
-      elements[index] = elements[index + 1];
-      elements[index + 1] = temp;
+      final newIndex = index + 1; // Move up one layer
 
-      // Update current page elements
-      controller.state.pages[controller.state.currentPageIndex]['elements'] =
-          elements;
-      controller.state.hasUnsavedChanges = true;
+      // Create undo/redo operation
+      final operation = MoveElementUpOperation(
+        elementId: id,
+        oldIndex: index,
+        newIndex: newIndex,
+        reorderElement: controller.reorderElement,
+      );
+
+      controller.undoRedoManager.addOperation(operation);
     }
   }
 
@@ -604,15 +610,17 @@ class PracticeEditUtils {
     final index = elements.indexWhere((e) => e['id'] == id);
 
     if (index > 0) {
-      // Remove element
-      final element = elements.removeAt(index);
-      // Add to beginning (bottom layer)
-      elements.insert(0, element);
+      const newIndex = 0; // Move to beginning (bottom layer)
 
-      // Update current page elements
-      controller.state.pages[controller.state.currentPageIndex]['elements'] =
-          elements;
-      controller.state.hasUnsavedChanges = true;
+      // Create undo/redo operation
+      final operation = SendElementToBackOperation(
+        elementId: id,
+        oldIndex: index,
+        newIndex: newIndex,
+        reorderElement: controller.reorderElement,
+      );
+
+      controller.undoRedoManager.addOperation(operation);
     }
   }
 

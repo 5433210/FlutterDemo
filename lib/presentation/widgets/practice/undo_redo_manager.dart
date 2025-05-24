@@ -107,6 +107,24 @@ class BatchOperation implements UndoableOperation {
   }
 }
 
+/// 元素置于顶层操作
+class BringElementToFrontOperation extends ElementLayerOperation {
+  BringElementToFrontOperation({
+    required String elementId,
+    required int oldIndex,
+    required int newIndex,
+    required Function(String, int, int) reorderElement,
+  }) : super(
+          elementId: elementId,
+          oldIndex: oldIndex,
+          newIndex: newIndex,
+          reorderElement: reorderElement,
+        );
+
+  @override
+  String get description => '置于顶层';
+}
+
 /// 删除元素操作
 class DeleteElementOperation implements UndoableOperation {
   final Map<String, dynamic> element;
@@ -197,6 +215,31 @@ class DeletePageOperation implements UndoableOperation {
   }
 }
 
+/// 元素层次操作基类
+abstract class ElementLayerOperation implements UndoableOperation {
+  final String elementId;
+  final int oldIndex;
+  final int newIndex;
+  final Function(String, int, int) reorderElement;
+
+  ElementLayerOperation({
+    required this.elementId,
+    required this.oldIndex,
+    required this.newIndex,
+    required this.reorderElement,
+  });
+
+  @override
+  void execute() {
+    reorderElement(elementId, oldIndex, newIndex);
+  }
+
+  @override
+  void undo() {
+    reorderElement(elementId, newIndex, oldIndex);
+  }
+}
+
 /// 元素属性修改操作
 class ElementPropertyOperation implements UndoableOperation {
   final String elementId;
@@ -216,21 +259,8 @@ class ElementPropertyOperation implements UndoableOperation {
 
   @override
   void execute() {
-    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 开始执行');
-    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 元素ID=$elementId');
-
-    // // 打印要更新的属性
-    // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 要更新的属性:');
-    // newProperties.forEach((key, value) {
-    //   if (key != 'content') {
-    //     // 不打印content，太长了
-    //     debugPrint('【撤销/重做】  $key: $value');
-    //   }
-    // });
-
     try {
       updateElement(elementId, newProperties);
-      // debugPrint('【撤销/重做】ElementPropertyOperation.execute: 执行成功');
     } catch (e) {
       debugPrint('【撤销/重做】ElementPropertyOperation.execute: 执行失败: $e');
     }
@@ -238,23 +268,106 @@ class ElementPropertyOperation implements UndoableOperation {
 
   @override
   void undo() {
-    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 开始撤销');
-    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 元素ID=$elementId');
-
-    // // 打印要恢复的属性
-    // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 要恢复的属性:');
-    // oldProperties.forEach((key, value) {
-    //   if (key != 'content') {
-    //     // 不打印content，太长了
-    //     debugPrint('【撤销/重做】  $key: $value');
-    //   }
-    // });
-
     try {
       updateElement(elementId, oldProperties);
-      // debugPrint('【撤销/重做】ElementPropertyOperation.undo: 撤销成功');
     } catch (e) {
       debugPrint('【撤销/重做】ElementPropertyOperation.undo: 撤销失败: $e');
+    }
+  }
+}
+
+/// 元素旋转操作
+class ElementRotationOperation implements UndoableOperation {
+  final List<String> elementIds;
+  final List<double> oldRotations;
+  final List<double> newRotations;
+  final Function(String, Map<String, dynamic>) updateElement;
+
+  ElementRotationOperation({
+    required this.elementIds,
+    required this.oldRotations,
+    required this.newRotations,
+    required this.updateElement,
+  });
+
+  @override
+  String get description => '旋转${elementIds.length}个元素';
+
+  @override
+  void execute() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], {'rotation': newRotations[i]});
+    }
+  }
+
+  @override
+  void undo() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], {'rotation': oldRotations[i]});
+    }
+  }
+}
+
+/// 元素移动操作
+class ElementTranslationOperation implements UndoableOperation {
+  final List<String> elementIds;
+  final List<Map<String, dynamic>> oldPositions; // 存储原始的x,y位置
+  final List<Map<String, dynamic>> newPositions; // 存储新的x,y位置
+  final Function(String, Map<String, dynamic>) updateElement;
+
+  ElementTranslationOperation({
+    required this.elementIds,
+    required this.oldPositions,
+    required this.newPositions,
+    required this.updateElement,
+  });
+
+  @override
+  String get description => '移动${elementIds.length}个元素';
+
+  @override
+  void execute() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], newPositions[i]);
+    }
+  }
+
+  @override
+  void undo() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], oldPositions[i]);
+    }
+  }
+}
+
+/// 应用格式刷操作
+class FormatPainterOperation implements UndoableOperation {
+  final List<String> targetElementIds;
+  final List<Map<String, dynamic>> oldPropertiesList;
+  final List<Map<String, dynamic>> newPropertiesList;
+  final Function(String, Map<String, dynamic>) updateElement;
+
+  FormatPainterOperation({
+    required this.targetElementIds,
+    required this.oldPropertiesList,
+    required this.newPropertiesList,
+    required this.updateElement,
+  });
+
+  @override
+  String get description => '应用格式刷到${targetElementIds.length}个元素';
+
+  @override
+  void execute() {
+    for (int i = 0; i < targetElementIds.length; i++) {
+      updateElement(targetElementIds[i], newPropertiesList[i]);
+    }
+  }
+
+  @override
+  void undo() {
+    for (int i = 0; i < targetElementIds.length; i++) {
+      updateElement(targetElementIds[i], oldPropertiesList[i]);
     }
   }
 }
@@ -298,6 +411,42 @@ class GroupElementsOperation implements UndoableOperation {
       addElement(element);
     }
   }
+}
+
+/// 元素下移一层操作
+class MoveElementDownOperation extends ElementLayerOperation {
+  MoveElementDownOperation({
+    required String elementId,
+    required int oldIndex,
+    required int newIndex,
+    required Function(String, int, int) reorderElement,
+  }) : super(
+          elementId: elementId,
+          oldIndex: oldIndex,
+          newIndex: newIndex,
+          reorderElement: reorderElement,
+        );
+
+  @override
+  String get description => '下移一层';
+}
+
+/// 元素上移一层操作
+class MoveElementUpOperation extends ElementLayerOperation {
+  MoveElementUpOperation({
+    required String elementId,
+    required int oldIndex,
+    required int newIndex,
+    required Function(String, int, int) reorderElement,
+  }) : super(
+          elementId: elementId,
+          oldIndex: oldIndex,
+          newIndex: newIndex,
+          reorderElement: reorderElement,
+        );
+
+  @override
+  String get description => '上移一层';
 }
 
 /// 粘贴元素操作
@@ -382,6 +531,112 @@ class ReorderPageOperation implements UndoableOperation {
   }
 }
 
+/// 元素调整大小操作
+class ResizeElementOperation implements UndoableOperation {
+  final List<String> elementIds;
+  final List<Map<String, dynamic>> oldSizes; // 存储原始的宽度、高度
+  final List<Map<String, dynamic>> newSizes; // 存储新的宽度、高度
+  final Function(String, Map<String, dynamic>) updateElement;
+
+  ResizeElementOperation({
+    required this.elementIds,
+    required this.oldSizes,
+    required this.newSizes,
+    required this.updateElement,
+  });
+
+  @override
+  String get description => '调整${elementIds.length}个元素大小';
+
+  @override
+  void execute() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], newSizes[i]);
+    }
+  }
+
+  @override
+  void undo() {
+    for (int i = 0; i < elementIds.length; i++) {
+      updateElement(elementIds[i], oldSizes[i]);
+    }
+  }
+}
+
+/// 元素置于底层操作
+class SendElementToBackOperation extends ElementLayerOperation {
+  SendElementToBackOperation({
+    required String elementId,
+    required int oldIndex,
+    required int newIndex,
+    required Function(String, int, int) reorderElement,
+  }) : super(
+          elementId: elementId,
+          oldIndex: oldIndex,
+          newIndex: newIndex,
+          reorderElement: reorderElement,
+        );
+
+  @override
+  String get description => '置于底层';
+}
+
+/// 图层锁定/解锁操作
+class ToggleLayerLockOperation implements UndoableOperation {
+  final String layerId;
+  final bool oldLockState;
+  final bool newLockState;
+  final Function(String, Map<String, dynamic>) updateLayer;
+
+  ToggleLayerLockOperation({
+    required this.layerId,
+    required this.oldLockState,
+    required this.newLockState,
+    required this.updateLayer,
+  });
+
+  @override
+  String get description => newLockState ? '锁定图层' : '解锁图层';
+
+  @override
+  void execute() {
+    updateLayer(layerId, {'isLocked': newLockState});
+  }
+
+  @override
+  void undo() {
+    updateLayer(layerId, {'isLocked': oldLockState});
+  }
+}
+
+/// 图层显示/隐藏操作
+class ToggleLayerVisibilityOperation implements UndoableOperation {
+  final String layerId;
+  final bool oldVisibility;
+  final bool newVisibility;
+  final Function(String, Map<String, dynamic>) updateLayer;
+
+  ToggleLayerVisibilityOperation({
+    required this.layerId,
+    required this.oldVisibility,
+    required this.newVisibility,
+    required this.updateLayer,
+  });
+
+  @override
+  String get description => newVisibility ? '显示图层' : '隐藏图层';
+
+  @override
+  void execute() {
+    updateLayer(layerId, {'isVisible': newVisibility});
+  }
+
+  @override
+  void undo() {
+    updateLayer(layerId, {'isVisible': oldVisibility});
+  }
+}
+
 /// 可撤销操作接口
 abstract class UndoableOperation {
   /// 操作描述
@@ -428,18 +683,13 @@ class UndoRedoManager {
 
     try {
       // 执行操作
-      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 执行操作');
       operation.execute();
-      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作执行成功');
 
       // 添加到撤销栈
       _undoStack.add(operation);
-      // debugPrint(
-      //     '【撤销/重做】UndoRedoManager.addOperation: 已添加到撤销栈，当前栈大小=${_undoStack.length}');
 
       // 清空重做栈
       _redoStack.clear();
-      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 已清空重做栈');
 
       // 如果超过最大栈大小，移除最早的操作
       if (_undoStack.length > _maxStackSize) {
@@ -449,12 +699,8 @@ class UndoRedoManager {
 
       // 通知状态变化
       if (onStateChanged != null) {
-        // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 调用状态变化回调');
         onStateChanged!();
-        // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 状态变化回调执行完成');
       }
-
-      // debugPrint('【撤销/重做】UndoRedoManager.addOperation: 操作添加成功');
     } catch (e) {
       debugPrint('【撤销/重做】UndoRedoManager.addOperation: 添加操作失败: $e');
     }

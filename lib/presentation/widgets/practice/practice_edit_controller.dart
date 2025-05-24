@@ -1535,6 +1535,28 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.addOperation(operation);
   }
 
+  /// 重新排序元素（用于层次操作）
+  void reorderElement(String elementId, int oldIndex, int newIndex) {
+    if (_state.currentPageIndex >= 0 &&
+        _state.currentPageIndex < _state.pages.length) {
+      final page = _state.pages[_state.currentPageIndex];
+      final elements = page['elements'] as List<dynamic>;
+
+      // 验证索引有效性
+      if (oldIndex >= 0 &&
+          oldIndex < elements.length &&
+          newIndex >= 0 &&
+          newIndex < elements.length) {
+        // 移动元素
+        final element = elements.removeAt(oldIndex);
+        elements.insert(newIndex, element);
+
+        _state.hasUnsavedChanges = true;
+        notifyListeners();
+      }
+    }
+  }
+
   /// 重新排序图层
   void reorderLayer(int oldIndex, int newIndex) {
     if (_state.currentPage == null ||
