@@ -31,7 +31,7 @@ class M3LayerInfoPanel extends StatelessWidget {
       initiallyExpanded: true,
       children: [
         // 图层名称
-        M3PanelStyles.buildSectionTitle(context, l10n.layerName),
+        M3PanelStyles.buildSectionTitle(context, l10n.layerName(layerName)),
         Container(
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(

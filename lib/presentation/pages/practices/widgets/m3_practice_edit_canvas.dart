@@ -113,6 +113,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     widget.transformationController.removeListener(_handleTransformationChange);
     super.dispose();
   }
+
   @override
   void initState() {
     super.initState();
@@ -158,6 +159,13 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // Set the RepaintBoundary key in the controller for screenshot functionality
     widget.controller.setCanvasKey(_repaintBoundaryKey);
+
+    // Schedule automatic fit-to-screen on initial load to ensure optimal canvas display
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fitPageToScreen();
+      }
+    });
   }
 
   /// Public method to reset canvas position
@@ -824,6 +832,59 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           ),
       ],
     );
+  }
+
+  /// Fit the page content to screen with proper scale and centering
+  void _fitPageToScreen() {
+    // Ensure we have a current page
+    final currentPage = widget.controller.state.currentPage;
+    if (currentPage == null) return;
+
+    // Get the viewport size
+    if (!mounted) return;
+    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return;
+    final Size viewportSize = renderBox.size;
+
+    // Get the page size (canvas content bounds)
+    final Size pageSize = ElementUtils.calculatePixelSize(
+        currentPage); // Add some padding around the page (5% on each side for better content visibility)
+    const double paddingFactor =
+        0.95; // Use 95% of viewport for content, 5% for padding - maximizes content display
+    final double availableWidth = viewportSize.width * paddingFactor;
+    final double availableHeight = viewportSize.height * paddingFactor;
+
+    // Calculate scale to fit page within available viewport area
+    final double scaleX = availableWidth / pageSize.width;
+    final double scaleY = availableHeight / pageSize.height;
+    final double scale =
+        scaleX < scaleY ? scaleX : scaleY; // Use smaller scale to fit entirely
+
+    // Calculate translation to center the scaled page in the viewport
+    final double scaledPageWidth = pageSize.width * scale;
+    final double scaledPageHeight = pageSize.height * scale;
+    final double dx = (viewportSize.width - scaledPageWidth) / 2;
+    final double dy = (viewportSize.height - scaledPageHeight) / 2;
+
+    // Create the transformation matrix
+    final Matrix4 matrix = Matrix4.identity()
+      ..translate(dx, dy)
+      ..scale(scale, scale);
+
+    // Apply the transformation
+    widget.transformationController.value = matrix;
+
+    // Notify the controller that zoom has changed
+    widget.controller.zoomTo(scale);
+
+    // Update UI
+    setState(() {});
+
+    debugPrint('Canvas fitted to screen: '
+        'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
+        'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
+        'scale=${scale.toStringAsFixed(3)}, '
+        'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
   }
 
   BoxFit _getFitMode(String fitMode) {
@@ -1549,20 +1610,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     );
   }
 
-  /// Reset canvas position to the initial state
+  /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
-    // Create an identity matrix (1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1)
-    final Matrix4 identityMatrix = Matrix4.identity();
-
-    // Animate to the identity matrix (default position and scale)
-    widget.transformationController.value = identityMatrix;
-
-    // Notify the controller that zoom has changed
-    final scale = widget.transformationController.value.getMaxScaleOnAxis();
-    widget.controller.zoomTo(scale);
-
-    // Update UI
-    setState(() {});
+    _fitPageToScreen();
   }
 }
 
