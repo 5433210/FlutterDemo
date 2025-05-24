@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -49,6 +50,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Current tool
   String _currentTool = '';
+
+  // Clipboard monitoring timer
+  Timer? _clipboardMonitoringTimer;
 
   // Clipboard
   Map<String, dynamic>? _clipboardElement;
@@ -151,8 +155,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
     _controller.dispose();
 
-    // We don't need to explicitly cancel the clipboard monitoring
-    // because setState will check if the widget is mounted
+    // Cancel clipboard monitoring timer
+    _clipboardMonitoringTimer?.cancel();
 
     super.dispose();
   }
@@ -808,7 +812,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           clipboardData.text != null &&
           clipboardData.text!.isNotEmpty;
 
-      debugPrint('检查剪贴板: 系统剪贴板${hasText ? '有' : '没有'}文本内容');
+      // debugPrint('检查剪贴板: 系统剪贴板${hasText ? '有' : '没有'}文本内容');
 
       if (hasText) {
         // Try to identify if it's a JSON and what type
@@ -843,7 +847,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           }
         } catch (e) {
           // Not valid JSON, that's fine for plain text
-          debugPrint('检查剪贴板: 不是有效的JSON，按纯文本处理: $e');
+          // debugPrint('检查剪贴板: 不是有效的JSON，按纯文本处理: $e');
         }
 
         // Plain text can always be pasted
@@ -2031,11 +2035,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     await PracticeEditUtils.showImageUrlDialog(context, _controller);
   }
 
-  /// Update clipboard state periodically  /// Start monitoring clipboard contents periodically
+  /// Start monitoring clipboard contents periodically
   void _startClipboardMonitoring() {
-    // Check clipboard every 2 seconds
-    Future.delayed(const Duration(seconds: 2), () async {
-      if (!mounted) return;
+    // Cancel any existing timer
+    _clipboardMonitoringTimer?.cancel();
+
+    // Create a periodic timer that checks clipboard every 2 seconds
+    _clipboardMonitoringTimer =
+        Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
 
       try {
         // Periodically check clipboard content
@@ -2057,12 +2068,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         }
       } catch (e) {
         debugPrint('剪贴板监控错误: $e');
-      } finally {
-        // Always schedule next check, even if there was an error
-        // This ensures the monitoring is robust
-        if (mounted) {
-          _startClipboardMonitoring();
-        }
       }
     });
   }

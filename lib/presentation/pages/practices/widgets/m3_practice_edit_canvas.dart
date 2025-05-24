@@ -1,7 +1,6 @@
-import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' hide Colors;
@@ -1224,34 +1223,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final textureApplicationRange =
         content['textureApplicationRange'] as String? ?? 'character';
     final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
-    final textureOpacity =
-        (content['textureOpacity'] as num?)?.toDouble() ?? 1.0;
-
-    // Enhanced texture debugging
-    print('🧩 TEXTURE: 渲染集字元素开始：元素ID=${element['id']}');
-    print('🧩 TEXTURE: 纹理数据详情:');
-    print('🧩 TEXTURE:   - 是否启用纹理: $hasBackgroundTexture');
-    print('🧩 TEXTURE:   - 纹理数据: $backgroundTexture');
-    print('🧩 TEXTURE:   - 应用范围: $textureApplicationRange');
-    print('🧩 TEXTURE:   - 填充模式: $textureFillMode');
-    print('🧩 TEXTURE:   - 不透明度: $textureOpacity');
-
-    if (backgroundTexture != null) {
-      print('🧩 TEXTURE:   - 纹理路径: ${backgroundTexture['path']}');
-      if (backgroundTexture.containsKey('path')) {
-        // Check if the texture path exists
-        final texturePath = backgroundTexture['path'];
-        if (texturePath != null) {
-          try {
-            final file = File(texturePath.toString());
-            print('🧩 TEXTURE:   - 纹理文件检查: ${file.path}');
-            print('🧩 TEXTURE:   - 文件是否存在: ${file.existsSync()}');
-          } catch (e) {
-            print('🧩 TEXTURE:   - 纹理文件检查失败: $e');
-          }
-        }
-      }
-    }
+    final textureOpacity = (content['textureOpacity'] as num?)?.toDouble() ??
+        1.0; // Texture debugging (reduced logging for performance)
 
     // Get character images
     final characterImages = content;
