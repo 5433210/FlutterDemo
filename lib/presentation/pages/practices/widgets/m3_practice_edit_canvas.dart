@@ -879,12 +879,16 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // Update UI
     setState(() {});
-
     debugPrint('Canvas fitted to screen: '
         'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
         'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
+        'paddingFactor=$paddingFactor, '
+        'availableSize=${availableWidth.toStringAsFixed(1)}x${availableHeight.toStringAsFixed(1)}, '
         'scale=${scale.toStringAsFixed(3)}, '
         'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
+
+    debugPrint(
+        'Reset view: Maximized canvas content display with ${((1 - paddingFactor) * 100).toStringAsFixed(1)}% padding');
   }
 
   BoxFit _getFitMode(String fitMode) {

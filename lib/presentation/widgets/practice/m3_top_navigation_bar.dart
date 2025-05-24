@@ -216,15 +216,6 @@ class M3TopNavigationBar extends StatelessWidget
                 child: Text(l10n.practiceEditLeave),
                 onPressed: () => Navigator.of(context).pop(true),
               ),
-              FilledButton(
-                child: Text(l10n.practiceEditSaveAndLeave),
-                onPressed: () async {
-                  await _savePractice(context, l10n);
-                  if (context.mounted) {
-                    Navigator.of(context).pop(true);
-                  }
-                },
-              ),
             ],
           );
         },
