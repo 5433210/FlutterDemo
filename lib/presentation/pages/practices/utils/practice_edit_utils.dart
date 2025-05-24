@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../widgets/practice/page_operations.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
+import '../../../widgets/practice/undo_redo_manager.dart';
 
 /// Utility methods for practice editing
 class PracticeEditUtils {
@@ -121,6 +122,57 @@ class PracticeEditUtils {
     return clipboardElement;
   }
 
+  /// Creates a complete deep copy of an element and all its nested structures
+  static Map<String, dynamic> deepCopyElement(Map<String, dynamic> element) {
+    final result = <String, dynamic>{};
+
+    // Copy all top-level properties
+    element.forEach((key, value) {
+      if (value is Map<String, dynamic>) {
+        // Deep copy for nested maps
+        result[key] = deepCopyMap(value);
+      } else if (value is List) {
+        // Deep copy for lists
+        result[key] = deepCopyList(value);
+      } else {
+        // Direct copy for primitive values
+        result[key] = value;
+      }
+    });
+
+    return result;
+  }
+
+  /// Helper method to deep copy a list
+  static List<dynamic> deepCopyList(List<dynamic> list) {
+    return list.map((item) {
+      if (item is Map<String, dynamic>) {
+        return deepCopyMap(item);
+      } else if (item is List) {
+        return deepCopyList(item);
+      } else {
+        return item;
+      }
+    }).toList();
+  }
+
+  /// Helper method to deep copy a map
+  static Map<String, dynamic> deepCopyMap(Map<String, dynamic> map) {
+    final result = <String, dynamic>{};
+
+    map.forEach((key, value) {
+      if (value is Map<String, dynamic>) {
+        result[key] = deepCopyMap(value);
+      } else if (value is List) {
+        result[key] = deepCopyList(value);
+      } else {
+        result[key] = value;
+      }
+    });
+
+    return result;
+  }
+
   /// Delete a page
   static void deletePage(
       PracticeEditController controller, int index, BuildContext context) {
@@ -199,77 +251,127 @@ class PracticeEditUtils {
       Map<String, dynamic>? clipboardElement) {
     if (clipboardElement == null) return;
 
-    final elements = controller.state.currentPageElements;
     final newElementIds = <String>[];
+    final newElements = <Map<String, dynamic>>[];
 
     // 检查是否是多元素集合
     if (clipboardElement['type'] == 'multi_elements') {
       // 处理多元素粘贴
       final clipboardElements = clipboardElement['elements'] as List<dynamic>;
-      final newElements = <Map<String, dynamic>>[];
 
       // 获取当前时间戳作为基础
       final baseTimestamp = DateTime.now().millisecondsSinceEpoch;
 
-      // 为每个元素添加索引，确保ID唯一
+      // 为每个元素添加索引，确保ID唯一性
       int index = 0;
       for (final element in clipboardElements) {
         // 创建新元素ID，添加索引和随机数确保唯一性
         final newId =
             '${element['type']}_${baseTimestamp}_${index}_${getRandomString(4)}';
-        index++;
+        index++; // Create a true deep copy of the element with all nested structures
+        final elementCopy = deepCopyElement(element as Map<String, dynamic>);
 
         // 复制元素并修改位置（稍微偏移一点）
         final newElement = {
-          ...Map<String, dynamic>.from(element as Map<String, dynamic>),
+          ...elementCopy,
           'id': newId,
           'x': (element['x'] as num).toDouble() + 20,
           'y': (element['y'] as num).toDouble() + 20,
         };
 
+        // 特殊处理组元素，需要递归更新所有子元素的ID
+        if (newElement['type'] == 'group' &&
+            newElement['content'] is Map<String, dynamic> &&
+            newElement['content']['children'] is List) {
+          // 获取子元素列表
+          final children = newElement['content']['children'] as List;
+          // 为每个子元素生成新ID
+          final updatedChildren = updateChildrenIds(children);
+          // 更新组元素的子元素
+          newElement['content']['children'] = updatedChildren;
+        }
+
         // 添加到新元素列表
         newElements.add(newElement);
         newElementIds.add(newId);
       }
-
-      // 添加所有新元素到当前页面
-      elements.addAll(newElements);
     } else {
-      // 处理单个元素粘贴（原有逻辑）
-      // 创建新元素ID，添加随机字符串确保唯一性
+      // 处理单个元素粘贴（原有逻辑）      // 创建新元素ID，添加随机字符串确保唯一性
       final newId =
-          '${clipboardElement['type']}_${DateTime.now().millisecondsSinceEpoch}_${getRandomString(4)}';
+          '${clipboardElement['type']}_${DateTime.now().millisecondsSinceEpoch}_${getRandomString(4)}'; // Create a true deep copy of the element with all nested structures
+      final elementCopy = deepCopyElement(clipboardElement);
 
       // 复制元素并修改位置（稍微偏移一点）
       final newElement = {
-        ...clipboardElement,
+        ...elementCopy,
         'id': newId,
         'x': (clipboardElement['x'] as num).toDouble() + 20,
         'y': (clipboardElement['y'] as num).toDouble() + 20,
       };
 
-      // 添加到当前页面
-      elements.add(newElement);
+      // 特殊处理组元素，需要递归更新所有子元素的ID
+      if (newElement['type'] == 'group' &&
+          newElement['content'] is Map<String, dynamic> &&
+          newElement['content']['children'] is List) {
+        // 获取子元素列表
+        final children = newElement['content']['children'] as List;
+        // 为每个子元素生成新ID
+        final updatedChildren = updateChildrenIds(children);
+        // 更新组元素的子元素
+        newElement['content']['children'] = updatedChildren;
+      }
+
+      // 添加到新元素列表
+      newElements.add(newElement);
       newElementIds.add(newId);
     }
 
-    // 更新当前页面的元素
-    controller.state.pages[controller.state.currentPageIndex]['elements'] =
-        elements;
+    // 使用撤销/重做管理器记录粘贴操作
+    controller.undoRedoManager.addOperation(
+      PasteElementOperation(
+        newElements: newElements,
+        addElements: (elements) {
+          if (controller.state.currentPageIndex >= 0 &&
+              controller.state.currentPageIndex <
+                  controller.state.pages.length) {
+            final page =
+                controller.state.pages[controller.state.currentPageIndex];
+            final pageElements = page['elements'] as List<dynamic>;
+            pageElements.addAll(elements);
 
-    // 选中新粘贴的元素 - 如果是多个元素，只选中第一个
-    if (newElementIds.length == 1) {
-      controller.state.selectedElementIds = newElementIds;
-      controller.state.selectedElement =
-          elements.firstWhere((e) => e['id'] == newElementIds.first);
-    } else if (newElementIds.isNotEmpty) {
-      // 对于多个元素，只选中第一个，这样点击时不会全部被选中
-      final firstId = newElementIds.first;
-      controller.state.selectedElementIds = [firstId];
-      controller.state.selectedElement =
-          elements.firstWhere((e) => e['id'] == firstId);
-    }
-    controller.state.hasUnsavedChanges = true;
+            // 选中所有粘贴的元素，而不仅仅是第一个
+            controller.state.selectedElementIds =
+                List<String>.from(elements.map((e) => e['id'] as String));
+
+            // 如果只有一个元素，设置selectedElement属性
+            if (elements.length == 1) {
+              controller.state.selectedElement = elements.first;
+            } else {
+              controller.state.selectedElement = null; // 多选时不显示单个元素的属性
+            }
+
+            controller.state.hasUnsavedChanges = true;
+            controller.notifyListeners();
+          }
+        },
+        removeElements: (ids) {
+          if (controller.state.currentPageIndex >= 0 &&
+              controller.state.currentPageIndex <
+                  controller.state.pages.length) {
+            final page =
+                controller.state.pages[controller.state.currentPageIndex];
+            final elements = page['elements'] as List<dynamic>;
+            elements.removeWhere((e) => ids.contains(e['id']));
+
+            controller.state.selectedElementIds.clear();
+            controller.state.selectedElement = null;
+
+            controller.state.hasUnsavedChanges = true;
+            controller.notifyListeners();
+          }
+        },
+      ),
+    );
   }
 
   /// Preload all collection element images
@@ -371,6 +473,126 @@ class PracticeEditUtils {
 
     // 标记有未保存的更改
     controller.state.hasUnsavedChanges = true;
+  }
+
+  /// Ungroup the selected group element safely, ensuring all IDs are unique
+  static void safeUngroupSelectedElement(PracticeEditController controller) {
+    if (controller.state.selectedElementIds.length != 1) {
+      return;
+    }
+
+    // Check if the selected element is a group
+    if (controller.state.selectedElement == null ||
+        controller.state.selectedElement!['type'] != 'group') {
+      return;
+    }
+
+    final groupElement =
+        Map<String, dynamic>.from(controller.state.selectedElement!);
+    final content = groupElement['content'] as Map<String, dynamic>;
+    final children = content['children'] as List<dynamic>;
+
+    if (children.isEmpty) return;
+
+    // Generate unique IDs for all children to prevent conflicts
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+    // 转换子元素的坐标为全局坐标
+    final groupX = (groupElement['x'] as num).toDouble();
+    final groupY = (groupElement['y'] as num).toDouble();
+
+    final childElements = <Map<String, dynamic>>[];
+    int index = 0;
+    for (final child in children) {
+      // Create a full deep copy of the child element
+      final childMap = deepCopyElement(child as Map<String, dynamic>);
+      final x = (childMap['x'] as num).toDouble() + groupX;
+      final y = (childMap['y'] as num).toDouble() + groupY;
+
+      // Generate a completely new ID with timestamp and index
+      final type = (childMap['type'] as String).split('_').first;
+      final newId = '${type}_${timestamp}_${index}_${getRandomString(4)}';
+      index++;
+
+      final newElement = {
+        ...childMap,
+        'id': newId,
+        'x': x,
+        'y': y,
+      };
+
+      // Recursively update IDs for nested groups
+      if (newElement['type'] == 'group' &&
+          newElement['content'] is Map<String, dynamic> &&
+          newElement['content']['children'] is List) {
+        final grandchildren = newElement['content']['children'] as List;
+        newElement['content']['children'] = updateChildrenIds(grandchildren);
+      }
+
+      childElements.add(newElement);
+    }
+
+    // Create operation for undo/redo support
+    controller.undoRedoManager.addOperation(
+      UngroupElementOperation(
+        groupElement: groupElement,
+        childElements: childElements,
+        addElement: (e) {
+          if (controller.state.currentPageIndex >= 0 &&
+              controller.state.currentPageIndex <
+                  controller.state.pages.length) {
+            final page =
+                controller.state.pages[controller.state.currentPageIndex];
+            final elements = page['elements'] as List<dynamic>;
+            elements.add(e);
+
+            // 选中组合元素
+            controller.state.selectedElementIds = [e['id'] as String];
+            controller.state.selectedElement = e;
+
+            controller.state.hasUnsavedChanges = true;
+            controller.notifyListeners();
+          }
+        },
+        removeElement: (id) {
+          if (controller.state.currentPageIndex >= 0 &&
+              controller.state.currentPageIndex <
+                  controller.state.pages.length) {
+            final page =
+                controller.state.pages[controller.state.currentPageIndex];
+            final elements = page['elements'] as List<dynamic>;
+            elements.removeWhere((e) => e['id'] == id);
+
+            // 如果是当前选中的元素，清除选择
+            if (controller.state.selectedElementIds.contains(id)) {
+              controller.state.selectedElementIds.clear();
+              controller.state.selectedElement = null;
+            }
+
+            controller.state.hasUnsavedChanges = true;
+            controller.notifyListeners();
+          }
+        },
+        addElements: (elements) {
+          if (controller.state.currentPageIndex >= 0 &&
+              controller.state.currentPageIndex <
+                  controller.state.pages.length) {
+            final page =
+                controller.state.pages[controller.state.currentPageIndex];
+            final pageElements = page['elements'] as List<dynamic>;
+            pageElements.addAll(elements);
+
+            // 选中所有子元素
+            controller.state.selectedElementIds =
+                elements.map((e) => e['id'] as String).toList();
+            controller.state.selectedElement = null; // 多选时不显示单个元素的属性
+
+            controller.state.hasUnsavedChanges = true;
+            controller.notifyListeners();
+          }
+        },
+      ),
+    );
   }
 
   /// Send element to back
@@ -509,5 +731,45 @@ class PracticeEditUtils {
       final isHidden = element['hidden'] ?? false;
       controller.updateElementProperty(id, 'hidden', !isHidden);
     }
+  }
+
+  /// 递归更新子元素ID
+
+  /// 递归更新子元素ID
+  /// Creates completely new child elements with unique IDs
+  static List<Map<String, dynamic>> updateChildrenIds(List<dynamic> children) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final updatedChildren = <Map<String, dynamic>>[];
+
+    for (int i = 0; i < children.length; i++) {
+      if (children[i] is! Map<String, dynamic>) {
+        continue; // Skip non-map items
+      }
+
+      // Make a proper deep copy of the child element
+      final originalChild = children[i] as Map<String, dynamic>;
+      final child = deepCopyElement(originalChild);
+
+      // 生成新ID
+      final originalId = child['id'] as String? ?? '';
+      final type = originalId.isEmpty ? 'element' : originalId.split('_').first;
+      final newId = '${type}_${timestamp}_${i}_${getRandomString(4)}';
+      child['id'] = newId;
+
+      // 如果是组元素，递归更新子元素
+      if (child['type'] == 'group') {
+        final content = child['content'];
+        if (content is Map<String, dynamic>) {
+          final children = content['children'];
+          if (children is List) {
+            child['content']['children'] = updateChildrenIds(children);
+          }
+        }
+      }
+
+      updatedChildren.add(child);
+    }
+
+    return updatedChildren;
   }
 }

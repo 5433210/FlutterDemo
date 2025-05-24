@@ -300,6 +300,35 @@ class GroupElementsOperation implements UndoableOperation {
   }
 }
 
+/// 粘贴元素操作
+class PasteElementOperation implements UndoableOperation {
+  final List<Map<String, dynamic>> newElements;
+  final Function(List<Map<String, dynamic>>) addElements;
+  final Function(List<String>) removeElements;
+
+  PasteElementOperation({
+    required this.newElements,
+    required this.addElements,
+    required this.removeElements,
+  });
+
+  @override
+  String get description => '粘贴${newElements.length}个元素';
+
+  @override
+  void execute() {
+    // 添加新元素
+    addElements(newElements);
+  }
+
+  @override
+  void undo() {
+    // 移除粘贴的元素
+    final elementIds = newElements.map((e) => e['id'] as String).toList();
+    removeElements(elementIds);
+  }
+}
+
 /// 重新排序图层操作
 class ReorderLayerOperation implements UndoableOperation {
   final int oldIndex;

@@ -1071,6 +1071,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     });
   }
 
+  /// Deselect all elements on the current page
+  void _deselectAllElements() {
+    _controller.clearSelection();
+  }
+
   /// Edit title
   Future<void> _editTitle() async {
     if (!mounted) return;
@@ -2008,11 +2013,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     }
   }
 
-  /// Deselect all elements on the current page
-  void _deselectAllElements() {
-    _controller.clearSelection();
-  }
-
   /// Toggle grid visibility
   void _toggleGrid() {
     setState(() {
@@ -2051,7 +2051,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       );
 
       if (element.isNotEmpty && element['type'] == 'group') {
-        _controller.ungroupElements(id);
+        // Use the safe ungroup method to prevent ID conflicts
+        PracticeEditUtils.safeUngroupSelectedElement(_controller);
       }
     }
   }

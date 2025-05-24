@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
+import '../../pages/practices/utils/practice_edit_utils.dart';
 import 'canvas_capture.dart';
 import 'practice_edit_state.dart';
 import 'thumbnail_generator.dart';
@@ -682,18 +683,19 @@ class PracticeEditController extends ChangeNotifier {
     try {
       // 获取 RenderObject 并安全地检查类型
       final renderObject = key.currentContext?.findRenderObject();
-      
+
       // 如果渲染对象为空或不是 RenderRepaintBoundary 类型，返回空
       if (renderObject == null) {
         debugPrint('无法获取渲染对象');
         return null;
       }
-      
+
       if (renderObject is! RenderRepaintBoundary) {
-        debugPrint('找到的渲染对象不是 RenderRepaintBoundary 类型: ${renderObject.runtimeType}');
+        debugPrint(
+            '找到的渲染对象不是 RenderRepaintBoundary 类型: ${renderObject.runtimeType}');
         return null;
       }
-      
+
       final boundary = renderObject;
 
       // 捕获图像
@@ -735,47 +737,6 @@ class PracticeEditController extends ChangeNotifier {
   void clearSelection() {
     state.selectedElementIds.clear();
     state.selectedElement = null;
-    notifyListeners();
-  }
-  
-  /// 选择当前页面上的所有元素
-  void selectAll() {
-    // 获取当前页面上的所有元素
-    if (_state.currentPageIndex >= 0 && _state.currentPageIndex < _state.pages.length) {
-      final page = _state.pages[_state.currentPageIndex];
-      final elements = page['elements'] as List<dynamic>;
-      
-      // 清除当前选择
-      state.selectedElementIds.clear();
-      
-      // 选择所有非隐藏元素
-      for (final element in elements) {
-        // 检查元素是否隐藏
-        final isHidden = element['hidden'] == true || element['isHidden'] == true;
-        if (!isHidden) {
-          // 检查元素所在图层是否隐藏
-          final layerId = element['layerId'] as String?;
-          bool isLayerHidden = false;
-          if (layerId != null) {
-            final layer = _state.getLayerById(layerId);
-            if (layer != null) {
-              isLayerHidden = layer['isVisible'] == false;
-            }
-          }
-          
-          // 如果元素和其所在图层都可见，就选择它
-          if (!isLayerHidden) {
-            final id = element['id'] as String;
-            state.selectedElementIds.add(id);
-          }
-        }
-      }
-      
-      // 如果选中了多个元素，设置为空，否则使用第一个元素
-      state.selectedElement = state.selectedElementIds.length == 1 ?
-        elements.firstWhere((e) => e['id'] == state.selectedElementIds.first) : null;
-    }
-    
     notifyListeners();
   }
 
@@ -1875,6 +1836,51 @@ class PracticeEditController extends ChangeNotifier {
     }
   }
 
+  /// 选择当前页面上的所有元素
+  void selectAll() {
+    // 获取当前页面上的所有元素
+    if (_state.currentPageIndex >= 0 &&
+        _state.currentPageIndex < _state.pages.length) {
+      final page = _state.pages[_state.currentPageIndex];
+      final elements = page['elements'] as List<dynamic>;
+
+      // 清除当前选择
+      state.selectedElementIds.clear();
+
+      // 选择所有非隐藏元素
+      for (final element in elements) {
+        // 检查元素是否隐藏
+        final isHidden =
+            element['hidden'] == true || element['isHidden'] == true;
+        if (!isHidden) {
+          // 检查元素所在图层是否隐藏
+          final layerId = element['layerId'] as String?;
+          bool isLayerHidden = false;
+          if (layerId != null) {
+            final layer = _state.getLayerById(layerId);
+            if (layer != null) {
+              isLayerHidden = layer['isVisible'] == false;
+            }
+          }
+
+          // 如果元素和其所在图层都可见，就选择它
+          if (!isLayerHidden) {
+            final id = element['id'] as String;
+            state.selectedElementIds.add(id);
+          }
+        }
+      }
+
+      // 如果选中了多个元素，设置为空，否则使用第一个元素
+      state.selectedElement = state.selectedElementIds.length == 1
+          ? elements
+              .firstWhere((e) => e['id'] == state.selectedElementIds.first)
+          : null;
+    }
+
+    notifyListeners();
+  }
+
   /// 选择元素
   void selectElement(String id, {bool isMultiSelect = false}) {
     if (_state.currentPageIndex < 0 ||
@@ -2223,8 +2229,9 @@ class PracticeEditController extends ChangeNotifier {
         // 添加组中的所有元素（调整为全局坐标）
         final newElementIds = <String>[];
         for (final childElement in groupChildren) {
-          final child =
-              Map<String, dynamic>.from(childElement as Map<String, dynamic>);
+          // Use PracticeEditUtils for deep copying to maintain consistency
+          final child = PracticeEditUtils.deepCopyElement(
+              childElement as Map<String, dynamic>);
 
           // 计算全局坐标
           final childX = (child['x'] as num).toDouble() + groupX;
