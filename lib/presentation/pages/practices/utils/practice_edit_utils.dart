@@ -11,7 +11,8 @@ import '../../../widgets/practice/undo_redo_manager.dart';
 /// Utility methods for practice editing
 class PracticeEditUtils {
   /// Add a new page
-  static void addNewPage(PracticeEditController controller) {
+  static void addNewPage(
+      PracticeEditController controller, BuildContext context) {
     // 使用 PageOperations 创建新页面
     final newPage = PageOperations.addPage(controller.state.pages, null);
 
@@ -20,7 +21,7 @@ class PracticeEditUtils {
       newPage['layers'] = [
         {
           'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
-          'name': '默认图层',
+          'name': AppLocalizations.of(context).practiceEditDefaultLayer,
           'isVisible': true,
           'isLocked': false,
         }
@@ -84,9 +85,9 @@ class PracticeEditUtils {
 
         // Show notification
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Element copied to clipboard'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).elementCopied),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
@@ -114,8 +115,8 @@ class PracticeEditUtils {
         // 显示通知
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('${selectedElements.length} elements copied to clipboard'),
+            content: Text(AppLocalizations.of(context)
+                .elementsCopied(selectedElements.length)),
             duration: const Duration(seconds: 2),
           ),
         );
@@ -182,7 +183,8 @@ class PracticeEditUtils {
     // 确保至少保留一个页面
     if (controller.state.pages.length <= 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot delete the only page')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).cannotDeleteOnlyPage)),
       );
       return;
     }
@@ -633,7 +635,7 @@ class PracticeEditUtils {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: false,
-        dialogTitle: 'Select Image',
+        dialogTitle: AppLocalizations.of(context).selectImage,
         lockParentWindow: true,
       );
 
@@ -650,7 +652,9 @@ class PracticeEditUtils {
         // Show error message
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not get file path')),
+            SnackBar(
+                content:
+                    Text(AppLocalizations.of(context).couldNotGetFilePath)),
           );
         }
         return;
@@ -678,7 +682,8 @@ class PracticeEditUtils {
           // Show success message
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Image updated')),
+              SnackBar(
+                  content: Text(AppLocalizations.of(context).imageUpdated)),
             );
           }
         } else {
@@ -693,7 +698,9 @@ class PracticeEditUtils {
       // Show error message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error selecting image: $e')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)
+                  .errorSelectingImage(e.toString()))),
         );
       }
     }

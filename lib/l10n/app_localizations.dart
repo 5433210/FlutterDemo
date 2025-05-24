@@ -125,6 +125,24 @@ abstract class AppLocalizations {
   /// **'已添加到分类'**
   String get addedToCategory;
 
+  /// No description provided for @addElementName.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加{type}元素'**
+  String addElementName(Object type);
+
+  /// No description provided for @addLayer.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加图层'**
+  String get addLayer;
+
+  /// No description provided for @addPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加页面'**
+  String get addPage;
+
   /// No description provided for @adjustGridSize.
   ///
   /// In zh, this message translates to:
@@ -358,6 +376,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'取消'**
   String get cancel;
+
+  /// No description provided for @cannotDeleteOnlyPage.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法删除唯一的页面'**
+  String get cannotDeleteOnlyPage;
 
   /// No description provided for @canvasPixelSize.
   ///
@@ -1343,6 +1367,12 @@ abstract class AppLocalizations {
   /// **'集字'**
   String get collection;
 
+  /// No description provided for @collectionElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'集字元素'**
+  String get collectionElement;
+
   /// No description provided for @collectionPropertyPanel.
   ///
   /// In zh, this message translates to:
@@ -1721,6 +1751,18 @@ abstract class AppLocalizations {
   /// **'内容设置'**
   String get contentSettings;
 
+  /// No description provided for @copyLayerName.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name} (复制)'**
+  String copyLayerName(Object name);
+
+  /// No description provided for @couldNotGetFilePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法获取文件路径'**
+  String get couldNotGetFilePath;
+
   /// No description provided for @create.
   ///
   /// In zh, this message translates to:
@@ -1816,6 +1858,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'警告'**
   String get deleteCategoryWithFilesWarning;
+
+  /// No description provided for @deleteElementName.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除{type}元素'**
+  String deleteElementName(Object type);
 
   /// No description provided for @deleteFailure.
   ///
@@ -1919,6 +1967,12 @@ abstract class AppLocalizations {
   /// **'分布操作需要至少3个元素'**
   String get distributionRequiresThreeElements;
 
+  /// No description provided for @doubleClickToEdit.
+  ///
+  /// In zh, this message translates to:
+  /// **'双击编辑文本'**
+  String get doubleClickToEdit;
+
   /// No description provided for @edit.
   ///
   /// In zh, this message translates to:
@@ -1943,6 +1997,12 @@ abstract class AppLocalizations {
   /// **'编辑已选组的内容'**
   String get editGroupContentsDescription;
 
+  /// No description provided for @elementCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'元素已复制到剪贴板'**
+  String get elementCopied;
+
   /// No description provided for @elementDistribution.
   ///
   /// In zh, this message translates to:
@@ -1960,6 +2020,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'元素'**
   String get elements;
+
+  /// No description provided for @elementsCopied.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count}个元素已复制到剪贴板'**
+  String elementsCopied(Object count);
 
   /// No description provided for @elementType.
   ///
@@ -1984,6 +2050,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'进入组编辑模式'**
   String get enterGroupEditMode;
+
+  /// No description provided for @errorSelectingImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图片时出错：{error}'**
+  String errorSelectingImage(Object error);
 
   /// No description provided for @exitBatchMode.
   ///
@@ -2825,6 +2897,12 @@ abstract class AppLocalizations {
   /// **'组合'**
   String get group;
 
+  /// No description provided for @groupElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'组合元素'**
+  String get groupElement;
+
   /// No description provided for @groupElements.
   ///
   /// In zh, this message translates to:
@@ -2854,6 +2932,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'隐藏元素'**
   String get hideElement;
+
+  /// No description provided for @hideImagePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏图片预览'**
+  String get hideImagePreview;
 
   /// No description provided for @horizontalAlignment.
   ///
@@ -2896,6 +2980,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'清除图像缓存失败'**
   String get imageCacheClearFailed;
+
+  /// No description provided for @imageElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片元素'**
+  String get imageElement;
 
   /// No description provided for @imagePropertyPanel.
   ///
@@ -3323,6 +3413,12 @@ abstract class AppLocalizations {
   /// **'视觉设置'**
   String get imagePropertyPanelVisual;
 
+  /// No description provided for @imageUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'图片已更新'**
+  String get imageUpdated;
+
   /// No description provided for @import.
   ///
   /// In zh, this message translates to:
@@ -3446,8 +3542,8 @@ abstract class AppLocalizations {
   /// No description provided for @layerName.
   ///
   /// In zh, this message translates to:
-  /// **'图层名称'**
-  String get layerName;
+  /// **'图层{index}'**
+  String layerName(Object index);
 
   /// No description provided for @layerOperations.
   ///
@@ -3923,6 +4019,12 @@ abstract class AppLocalizations {
   /// **'不透明度'**
   String get opacity;
 
+  /// No description provided for @pageName.
+  ///
+  /// In zh, this message translates to:
+  /// **'页面{index}'**
+  String pageName(Object index);
+
   /// No description provided for @pageOrientation.
   ///
   /// In zh, this message translates to:
@@ -4042,6 +4144,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'危险区域'**
   String get practiceEditDangerZone;
+
+  /// No description provided for @practiceEditDefaultLayer.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认图层'**
+  String get practiceEditDefaultLayer;
 
   /// No description provided for @practiceEditDelete.
   ///
@@ -4817,6 +4925,12 @@ abstract class AppLocalizations {
   /// **'选择导出位置'**
   String get selectExportLocation;
 
+  /// No description provided for @selectImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'选择图片'**
+  String get selectImage;
+
   /// No description provided for @selectImportFile.
   ///
   /// In zh, this message translates to:
@@ -4870,6 +4984,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'显示/隐藏所有元素'**
   String get showHideAllElements;
+
+  /// No description provided for @showImagePreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示图片预览'**
+  String get showImagePreview;
 
   /// No description provided for @sortAndFilter.
   ///
@@ -4954,6 +5074,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'文本'**
   String get text;
+
+  /// No description provided for @textElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'文本元素'**
+  String get textElement;
 
   /// No description provided for @textPropertyPanel.
   ///
@@ -5968,18 +6094,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'其他'**
   String get workToolOther;
-
-  /// No description provided for @hideImagePreview.
-  ///
-  /// In zh, this message translates to:
-  /// **'隐藏图片预览'**
-  String get hideImagePreview;
-
-  /// No description provided for @showImagePreview.
-  ///
-  /// In zh, this message translates to:
-  /// **'显示图片预览'**
-  String get showImagePreview;
 
   /// No description provided for @yes.
   ///

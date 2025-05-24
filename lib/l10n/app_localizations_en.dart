@@ -24,6 +24,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addedToCategory => 'Added to category';
 
   @override
+  String addElementName(Object type) {
+    return 'Add $type element';
+  }
+
+  @override
+  String get addLayer => 'Add Layer';
+
+  @override
+  String get addPage => 'Add Page';
+
+  @override
   String get adjustGridSize => 'Adjust Grid Size';
 
   @override
@@ -139,6 +150,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cancel => 'Cancel';
+
+  @override
+  String get cannotDeleteOnlyPage => 'Cannot delete only page';
 
   @override
   String get canvasPixelSize => 'Canvas Pixel Size';
@@ -653,6 +667,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get collection => 'Collection';
 
   @override
+  String get collectionElement => 'Collection Element';
+
+  @override
   String get collectionPropertyPanel => 'Collection Properties';
 
   @override
@@ -842,6 +859,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get contentSettings => 'Content Settings';
 
   @override
+  String copyLayerName(Object name) {
+    return '$name (Copy)';
+  }
+
+  @override
+  String get couldNotGetFilePath => 'Could not get file path';
+
+  @override
   String get create => 'Create';
 
   @override
@@ -900,6 +925,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteCategoryWithFilesWarning => 'Warning';
 
   @override
+  String deleteElementName(Object type) {
+    return 'Delete $type element';
+  }
+
+  @override
   String get deleteFailure => 'Failed to delete backup';
 
   @override
@@ -951,6 +981,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get distributionRequiresThreeElements => 'Distribution requires at least 3 elements';
 
   @override
+  String get doubleClickToEdit => 'Double-click to edit text';
+
+  @override
   String get edit => 'Edit';
 
   @override
@@ -963,6 +996,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editGroupContentsDescription => 'Edit the contents of the selected group';
 
   @override
+  String get elementCopied => 'element(s) copied to clipboard';
+
+  @override
   String get elementDistribution => 'Element Distribution';
 
   @override
@@ -970,6 +1006,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get elements => 'Elements';
+
+  @override
+  String elementsCopied(Object count) {
+    return '$count element(s) copied to clipboard';
+  }
 
   @override
   String get elementType => 'Element Type';
@@ -982,6 +1023,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enterGroupEditMode => 'Enter Group Edit Mode';
+
+  @override
+  String errorSelectingImage(Object error) {
+    return 'Error selecting image: $error';
+  }
 
   @override
   String get exitBatchMode => 'Exit Batch Mode';
@@ -1416,6 +1462,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get group => 'Group';
 
   @override
+  String get groupElement => 'Group Element';
+
+  @override
   String get groupElements => 'Group Elements';
 
   @override
@@ -1429,6 +1478,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hideElement => 'Hide Element';
+
+  @override
+  String get hideImagePreview => 'Hide Image Preview';
 
   @override
   String get horizontalAlignment => 'Horizontal Alignment';
@@ -1458,6 +1510,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imageCacheClearFailed => 'Failed to clear image cache';
+
+  @override
+  String get imageElement => 'Image Element';
 
   @override
   String get imagePropertyPanel => 'Image Properties';
@@ -1689,6 +1744,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imagePropertyPanelVisual => 'Visual Settings';
 
   @override
+  String get imageUpdated => 'Image updated';
+
+  @override
   String get import => 'Import';
 
   @override
@@ -1751,7 +1809,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get layerInfo => 'Layer Information';
 
   @override
-  String get layerName => 'Layer Name';
+  String layerName(Object index) {
+    return 'Layer Name';
+  }
 
   @override
   String get layerOperations => 'Layer Operations';
@@ -1993,6 +2053,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get opacity => 'Opacity';
 
   @override
+  String pageName(Object index) {
+    return 'Page $index';
+  }
+
+  @override
   String get pageOrientation => 'Page Orientation';
 
   @override
@@ -2051,6 +2116,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get practiceEditDangerZone => 'Danger Zone';
+
+  @override
+  String get practiceEditDefaultLayer => 'Edit Default Layer';
 
   @override
   String get practiceEditDelete => 'Delete (Ctrl+D)';
@@ -2454,6 +2522,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectExportLocation => 'Select Export Location';
 
   @override
+  String get selectImage => 'Select Image';
+
+  @override
   String get selectImportFile => 'Select Backup File';
 
   @override
@@ -2479,6 +2550,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showHideAllElements => 'Show/Hide All Elements';
+
+  @override
+  String get showImagePreview => 'Show Image Preview';
 
   @override
   String get sortAndFilter => 'Sort & Filter';
@@ -2521,6 +2595,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get text => 'Text';
+
+  @override
+  String get textElement => 'Text Element';
 
   @override
   String get textPropertyPanel => 'Text Properties';
@@ -3042,12 +3119,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workToolOther => 'Other';
-
-  @override
-  String get hideImagePreview => 'Hide Image Preview';
-
-  @override
-  String get showImagePreview => 'Show Image Preview';
 
   @override
   String get yes => 'Yes';

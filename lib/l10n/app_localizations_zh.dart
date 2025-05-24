@@ -24,6 +24,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addedToCategory => '已添加到分类';
 
   @override
+  String addElementName(Object type) {
+    return '添加$type元素';
+  }
+
+  @override
+  String get addLayer => '添加图层';
+
+  @override
+  String get addPage => '添加页面';
+
+  @override
   String get adjustGridSize => '调整网格大小';
 
   @override
@@ -139,6 +150,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cancel => '取消';
+
+  @override
+  String get cannotDeleteOnlyPage => '无法删除唯一的页面';
 
   @override
   String get canvasPixelSize => '画布像素大小';
@@ -653,6 +667,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get collection => '集字';
 
   @override
+  String get collectionElement => '集字元素';
+
+  @override
   String get collectionPropertyPanel => '采集属性';
 
   @override
@@ -842,6 +859,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get contentSettings => '内容设置';
 
   @override
+  String copyLayerName(Object name) {
+    return '$name (复制)';
+  }
+
+  @override
+  String get couldNotGetFilePath => '无法获取文件路径';
+
+  @override
   String get create => '创建';
 
   @override
@@ -900,6 +925,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteCategoryWithFilesWarning => '警告';
 
   @override
+  String deleteElementName(Object type) {
+    return '删除$type元素';
+  }
+
+  @override
   String get deleteFailure => '备份删除失败';
 
   @override
@@ -951,6 +981,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get distributionRequiresThreeElements => '分布操作需要至少3个元素';
 
   @override
+  String get doubleClickToEdit => '双击编辑文本';
+
+  @override
   String get edit => '编辑';
 
   @override
@@ -963,6 +996,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editGroupContentsDescription => '编辑已选组的内容';
 
   @override
+  String get elementCopied => '元素已复制到剪贴板';
+
+  @override
   String get elementDistribution => '元素分布';
 
   @override
@@ -970,6 +1006,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get elements => '元素';
+
+  @override
+  String elementsCopied(Object count) {
+    return '$count个元素已复制到剪贴板';
+  }
 
   @override
   String get elementType => '元素类型';
@@ -982,6 +1023,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get enterGroupEditMode => '进入组编辑模式';
+
+  @override
+  String errorSelectingImage(Object error) {
+    return '选择图片时出错：$error';
+  }
 
   @override
   String get exitBatchMode => '退出批量模式';
@@ -1416,6 +1462,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get group => '组合';
 
   @override
+  String get groupElement => '组合元素';
+
+  @override
   String get groupElements => '组合元素';
 
   @override
@@ -1429,6 +1478,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hideElement => '隐藏元素';
+
+  @override
+  String get hideImagePreview => '隐藏图片预览';
 
   @override
   String get horizontalAlignment => '水平对齐';
@@ -1458,6 +1510,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get imageCacheClearFailed => '清除图像缓存失败';
+
+  @override
+  String get imageElement => '图片元素';
 
   @override
   String get imagePropertyPanel => '图像属性';
@@ -1689,6 +1744,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get imagePropertyPanelVisual => '视觉设置';
 
   @override
+  String get imageUpdated => '图片已更新';
+
+  @override
   String get import => '导入';
 
   @override
@@ -1751,7 +1809,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get layerInfo => '图层信息';
 
   @override
-  String get layerName => '图层名称';
+  String layerName(Object index) {
+    return '图层$index';
+  }
 
   @override
   String get layerOperations => '图层操作';
@@ -1993,6 +2053,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get opacity => '不透明度';
 
   @override
+  String pageName(Object index) {
+    return '页面$index';
+  }
+
+  @override
   String get pageOrientation => '页面方向';
 
   @override
@@ -2051,6 +2116,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get practiceEditDangerZone => '危险区域';
+
+  @override
+  String get practiceEditDefaultLayer => '默认图层';
 
   @override
   String get practiceEditDelete => '删除 (Ctrl+D)';
@@ -2454,6 +2522,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectExportLocation => '选择导出位置';
 
   @override
+  String get selectImage => '选择图片';
+
+  @override
   String get selectImportFile => '选择备份文件';
 
   @override
@@ -2479,6 +2550,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get showHideAllElements => '显示/隐藏所有元素';
+
+  @override
+  String get showImagePreview => '显示图片预览';
 
   @override
   String get sortAndFilter => '排序和筛选';
@@ -2521,6 +2595,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get text => '文本';
+
+  @override
+  String get textElement => '文本元素';
 
   @override
   String get textPropertyPanel => '文本属性';
@@ -3042,12 +3119,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get workToolOther => '其他';
-
-  @override
-  String get hideImagePreview => '隐藏图片预览';
-
-  @override
-  String get showImagePreview => '显示图片预览';
 
   @override
   String get yes => '是';

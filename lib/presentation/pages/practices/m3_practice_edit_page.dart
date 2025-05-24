@@ -220,7 +220,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   /// Add a new page
   void _addNewPage() {
     setState(() {
-      PracticeEditUtils.addNewPage(_controller);
+      PracticeEditUtils.addNewPage(_controller, context);
     });
   }
 
