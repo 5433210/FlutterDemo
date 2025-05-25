@@ -122,6 +122,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    debugPrint('Canvas rebuild');
 
     if (widget.controller.state.pages.isEmpty) {
       return Center(
@@ -337,11 +338,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 onInteractionUpdate: (ScaleUpdateDetails details) {},
                 onInteractionEnd: (ScaleEndDetails details) {
                   // Update final zoom value
-                  final scale =
-                      widget.transformationController.value.getMaxScaleOnAxis();
-                  widget.controller.zoomTo(scale);
-                  setState(
-                      () {}); // Update to reflect the new zoom level in the status bar
+                  // final scale =
+                  //     widget.transformationController.value.getMaxScaleOnAxis();
+                  // widget.controller.zoomTo(scale);
+                  // setState(
+                  //     () {}); // Update to reflect the new zoom level in the status bar
                 },
                 constrained: false, // Allow content to be unconstrained
                 child: GestureDetector(
@@ -375,7 +376,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     // _isDragging will be true if we started dragging on an element
                     if (_isDragging) {
                       _gestureHandler.handlePanUpdate(details);
-                      setState(() {}); // Force redraw for element movement
+                      // setState(() {}); // Force redraw for element movement
                       return;
                     }
 
@@ -406,7 +407,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       ));
                       widget.transformationController.value =
                           newMatrix; // Force refresh
-                      setState(() {}); // Add debug logging
+                      // setState(() {}); // Add debug logging
                       debugPrint(
                           '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
                           '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
@@ -956,17 +957,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     widget.controller.zoomTo(scale);
 
     // Update UI
-    setState(() {});
-    debugPrint('Canvas fitted to screen: '
-        'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
-        'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
-        'paddingFactor=$paddingFactor, '
-        'availableSize=${availableWidth.toStringAsFixed(1)}x${availableHeight.toStringAsFixed(1)}, '
-        'scale=${scale.toStringAsFixed(3)}, '
-        'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
+    // setState(() {});
+    // debugPrint('Canvas fitted to screen: '
+    //     'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
+    //     'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
+    //     'paddingFactor=$paddingFactor, '
+    //     'availableSize=${availableWidth.toStringAsFixed(1)}x${availableHeight.toStringAsFixed(1)}, '
+    //     'scale=${scale.toStringAsFixed(3)}, '
+    //     'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
 
-    debugPrint(
-        'Reset view: Maximized canvas content display with ${((1 - paddingFactor) * 100).toStringAsFixed(1)}% padding');
+    // debugPrint(
+    // 'Reset view: Maximized canvas content display with ${((1 - paddingFactor) * 100).toStringAsFixed(1)}% padding');
   }
 
   BoxFit _getFitMode(String fitMode) {

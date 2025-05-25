@@ -3070,8 +3070,8 @@ class PracticeEditController extends ChangeNotifier {
   /// 切换吸附功能
   /// 设置画布缩放值
   void zoomTo(double scale) {
-    _state.canvasScale = scale.clamp(0.1, 10.0); // 限制缩放范围
-    notifyListeners();
+    // _state.canvasScale = scale.clamp(0.1, 10.0); // 限制缩放范围
+    // notifyListeners();
   }
 
   /// 添加元素的通用方法
