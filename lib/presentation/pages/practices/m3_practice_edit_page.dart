@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
@@ -1051,11 +1052,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   /// 创建文本元素
   void _createTextElement(String text) {
-    if (text.isEmpty) return;
-
-    // 创建新元素ID
-    final newId =
-        'text_${DateTime.now().millisecondsSinceEpoch}_${getRandomString(4)}';
+    if (text.isEmpty) return; // 创建新元素ID
+    final newId = const Uuid().v4();
 
     // 创建文本元素
     final newElement = {
@@ -1214,11 +1212,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           debugPrint('无法获取字符图像，跳过');
           continue;
         }
-        debugPrint('成功获取字符图像，大小: ${imageBytes.length} 字节');
-
-        // 创建新元素ID
-        final newId =
-            'collection_${DateTime.now().millisecondsSinceEpoch}_${i}_${getRandomString(4)}';
+        debugPrint('成功获取字符图像，大小: ${imageBytes.length} 字节'); // 创建新元素ID
+        final newId = const Uuid().v4();
         debugPrint('创建新元素ID: $newId');
 
         // 计算放置位置（按顺序排列）
@@ -1318,8 +1313,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         debugPrint('成功获取图库项目数据, 路径: ${item.path}');
 
         // 创建新元素ID
-        final newId =
-            'image_${DateTime.now().millisecondsSinceEpoch}_${i}_${getRandomString(4)}';
+        final newId = const Uuid().v4();
         debugPrint('创建新元素ID: $newId');
 
         // 计算放置位置（按顺序排列）

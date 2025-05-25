@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../infrastructure/json/offset_converter.dart';
 import '../../../infrastructure/json/rect_converter.dart';
@@ -44,7 +45,7 @@ class CharacterRegion with _$CharacterRegion {
   }) {
     final now = DateTime.now();
     return CharacterRegion(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       pageId: pageId,
       rect: rect,
       character: character,

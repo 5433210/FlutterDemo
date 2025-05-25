@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:uuid/uuid.dart';
 
 part 'practice_entity.freezed.dart';
 part 'practice_entity.g.dart';
@@ -67,7 +68,7 @@ class PracticeEntity with _$PracticeEntity {
   }) {
     final now = DateTime.now();
     return PracticeEntity(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       title: title,
       tags: tags,
       status: status,

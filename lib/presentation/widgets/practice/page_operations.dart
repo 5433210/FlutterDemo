@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/practice/practice_page.dart';
 
@@ -37,7 +38,7 @@ class PageOperations {
       {String? name}) {
     final layers =
         List<Map<String, dynamic>>.from(page['layers'] as List<dynamic>);
-    final newLayerId = 'layer_${DateTime.now().millisecondsSinceEpoch}';
+    final newLayerId = const Uuid().v4();
 
     layers.add({
       'id': newLayerId,
@@ -61,7 +62,7 @@ class PageOperations {
         : createDefaultPage(index);
 
     // 更新ID和索引
-    newPage['id'] = 'page_${DateTime.now().millisecondsSinceEpoch}';
+    newPage['id'] = const Uuid().v4();
     newPage['index'] = index;
     newPage['name'] = '页面 ${index + 1}';
 
@@ -74,7 +75,7 @@ class PageOperations {
   /// 创建默认页面
   static Map<String, dynamic> createDefaultPage(int index) {
     return {
-      'id': 'page_${DateTime.now().millisecondsSinceEpoch}',
+      'id': const Uuid().v4(),
       'name': '页面 ${index + 1}',
       'index': index,
       'width': 595.0, // A4 宽度 (72dpi)
@@ -109,7 +110,7 @@ class PageOperations {
     String? backgroundValue,
   }) {
     return {
-      'id': id ?? 'page_${DateTime.now().millisecondsSinceEpoch}',
+      'id': id ?? const Uuid().v4(),
       'width': pageSize.width,
       'height': pageSize.height,
       'layers': [
@@ -214,7 +215,7 @@ class PageOperations {
 
     // 获取要删除的页面的内部索引值
     final pageIndex = pages[index]['index'] as int? ?? index;
-    
+
     // 移除指定位置的页面（按数组位置删除，而不是按页面的index属性）
     pages.removeAt(index);
 
@@ -599,7 +600,7 @@ class PageOperations {
   /// 创建默认图层
   static Map<String, dynamic> _createDefaultLayer() {
     return {
-      'id': 'layer_${DateTime.now().millisecondsSinceEpoch}',
+      'id': const Uuid().v4(),
       'name': '默认图层',
       'isVisible': true,
       'isLocked': false,

@@ -339,7 +339,7 @@ class PracticeEditController extends ChangeNotifier {
 
       // Create a new page with default properties
       final newPage = {
-        'id': 'page_${DateTime.now().millisecondsSinceEpoch}',
+        'id': const Uuid().v4(),
         'name': '页面${_state.pages.length + 1}',
         'width': 210.0, // A4纸宽度（毫米）
         'height': 297.0, // A4纸高度（毫米）

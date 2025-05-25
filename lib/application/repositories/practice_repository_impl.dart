@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
@@ -51,7 +50,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
 
     final now = DateTime.now();
     final copy = practice.copyWith(
-      id: newId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: newId ?? const Uuid().v4(),
       title: '${practice.title} (副本)',
       createTime: now,
       updateTime: now,
@@ -343,16 +342,17 @@ class PracticeRepositoryImpl implements PracticeRepository {
       // 转换practice对象为JSON
       final json = practice.toJson();
       debugPrint('转换为JSON成功, JSON包含 ${json.length} 个字段');
-      debugPrint('标题: ${json['title']}, 页面数: ${json['pages'] is List ? (json['pages'] as List).length : '非列表格式'}');
+      debugPrint(
+          '标题: ${json['title']}, 页面数: ${json['pages'] is List ? (json['pages'] as List).length : '非列表格式'}');
 
       // 准备保存数据：处理复杂数据类型和类型转换
       final preparedData = _prepareForSave(json);
       debugPrint('数据准备完成，字段: ${preparedData.keys.join(', ')}');
 
-      debugPrint('开始调用 _db.save(${_table}, ${practice.id}, ...)');
+      debugPrint('开始调用 _db.save($_table, ${practice.id}, ...)');
       await _db.save(_table, practice.id, preparedData);
       debugPrint('调用 _db.save 成功');
-      
+
       // 验证保存是否成功
       final savedData = await _db.get(_table, practice.id);
       if (savedData == null) {
@@ -361,7 +361,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
         throw Exception(error);
       }
       debugPrint('验证成功，数据已保存到数据库: ${savedData['title']}');
-      
+
       debugPrint('=== PracticeRepositoryImpl.save 完成 === [ID=${practice.id}]');
       return practice;
     } catch (e) {
@@ -390,15 +390,6 @@ class PracticeRepositoryImpl implements PracticeRepository {
       debugPrint('saveMany失败: $e');
       rethrow;
     }
-  }
-
-
-
-  /// 从文件系统加载缩略图
-  /// 此方法已弃用，缩略图加载现在由 PracticeStorageService 处理
-  Future<Uint8List?> _loadThumbnailFromFile(String practiceId) async {
-    debugPrint('警告: _loadThumbnailFromFile 已弃用，缩略图处理现在由 PracticeStorageService 处理');
-    return null; // 返回null以需要时触发回退到旧版本缓存
   }
 
   @override
@@ -436,7 +427,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
         if (existingPractice == null) {
           debugPrint('警告: 无法获取现有字帖数据 [ID=$id]');
         }
-        
+
         if (existingPractice != null &&
             existingPractice['createTime'] != null) {
           data['createTime'] = existingPractice['createTime'];
@@ -461,7 +452,7 @@ class PracticeRepositoryImpl implements PracticeRepository {
         rethrow;
       }
       debugPrint('savePracticeRaw: 已保存数据到数据库，ID=$practiceId');
-      
+
       // 验证数据是否已保存
       debugPrint('开始验证数据是否已保存...');
       final savedData = await _db.get(_table, practiceId);
@@ -614,6 +605,14 @@ class PracticeRepositoryImpl implements PracticeRepository {
     // 根据数据库迁移脚本，practices 表中的字段名是 createTime 和 updateTime
     // 不需要转换为下划线命名
     return fieldName;
+  }
+
+  /// 从文件系统加载缩略图
+  /// 此方法已弃用，缩略图加载现在由 PracticeStorageService 处理
+  Future<Uint8List?> _loadThumbnailFromFile(String practiceId) async {
+    debugPrint(
+        '警告: _loadThumbnailFromFile 已弃用，缩略图处理现在由 PracticeStorageService 处理');
+    return null; // 返回null以需要时触发回退到旧版本缓存
   }
 
   Map<String, dynamic> _prepareForSave(Map<String, dynamic> json) {

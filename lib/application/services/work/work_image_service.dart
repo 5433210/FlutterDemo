@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
+import 'package:uuid/uuid.dart';
 
 import '../../../domain/models/work/work_image.dart';
 import '../../../domain/repositories/work_image_repository.dart';
@@ -242,7 +243,7 @@ class WorkImageService with WorkServiceErrorHandler {
     return handleOperation(
       'importImage',
       () async {
-        final imageId = DateTime.now().millisecondsSinceEpoch.toString();
+        final imageId = const Uuid().v4();
 
         AppLogger.debug('准备导入新图片', tag: 'WorkImageService', data: {
           'workId': workId,
