@@ -32,6 +32,9 @@ class CanvasGestureHandler {
   // 记录平移开始时的选中元素，确保平移不会改变选中状态
   List<String> _panStartSelectedElementIds = [];
 
+  // 追踪是否在画布空白处进行拖拽操作
+  bool _isPanningEmptyArea = false;
+
   CanvasGestureHandler({
     required this.controller,
     required this.onDragStart,
@@ -72,6 +75,20 @@ class CanvasGestureHandler {
       startPoint: _selectionBoxStart,
       endPoint: _selectionBoxEnd,
     );
+  }
+
+  /// Handle pan cancel
+  void handlePanCancel() {
+    debugPrint('【平移】handlePanCancel: 平移操作被取消');
+
+    // 重置所有跟踪变量
+    _isPanningEmptyArea = false;
+    _panStartSelectedElementIds = [];
+    _selectionBoxEnd = null;
+    _isSelectionBoxActive = false;
+
+    // 通知父组件更新
+    onDragEnd();
   }
 
   /// Handle pan end on canvas
@@ -158,22 +175,28 @@ class CanvasGestureHandler {
       // 添加日志跟踪 - 平移结束
       debugPrint('【平移】handlePanEnd: 平移画布结束');
 
-      // 如果平移开始时有选中的元素，恢复选中状态
-      if (_panStartSelectedElementIds.isNotEmpty) {
-        debugPrint(
-            '【平移】handlePanEnd: 恢复平移前的选中状态: $_panStartSelectedElementIds');
+      // 计算拖拽距离，判断是否为点击还是拖拽
+      final endPoint = _selectionBoxEnd ?? _dragStart;
+      final dragDistance = (_dragStart - endPoint).distance;
+      final isClick = dragDistance < 3.0; // 小于3个像素视为点击而非拖拽
 
-        // 清除当前选中状态
+      // 如果是在空白区域的点击（而非拖拽），且不按Ctrl/Shift键，则清除选择
+      if (_isPanningEmptyArea &&
+          isClick &&
+          !controller.state.isCtrlOrShiftPressed) {
+        debugPrint('【平移】handlePanEnd: 检测到空白区域的点击操作，清除选择');
         controller.clearSelection();
-
-        // 恢复平移前的选中状态
-        for (final elementId in _panStartSelectedElementIds) {
-          controller.selectElement(elementId, isMultiSelect: true);
-        }
-
-        // 清空记录
-        _panStartSelectedElementIds = [];
       }
+      // 如果是拖拽结束且平移开始时有选中的元素，保持选中状态
+      else if (_panStartSelectedElementIds.isNotEmpty) {
+        debugPrint(
+            '【平移】handlePanEnd: 拖拽结束，保持原有选中状态: $_panStartSelectedElementIds');
+      }
+
+      // 重置平移标记
+      _isPanningEmptyArea = false;
+      // 清空记录
+      _panStartSelectedElementIds = [];
 
       onDragEnd();
     }
@@ -362,9 +385,7 @@ class CanvasGestureHandler {
           }
         }
       }
-    }
-
-    // 如果没有点击在任何可拖拽的选中元素上，则准备平移画布
+    } // 如果没有点击在任何可拖拽的选中元素上，则准备平移画布
     _isDragging = false;
 
     // 直接使用起始位置
@@ -374,6 +395,9 @@ class CanvasGestureHandler {
     _panStartSelectedElementIds =
         List.from(controller.state.selectedElementIds);
 
+    // 标记正在开始在空白区域平移
+    _isPanningEmptyArea = !hitAnyElement;
+
     // 添加日志跟踪
     debugPrint(
         '【平移】handlePanStart: 准备平移画布，起始位置=$_dragStart, 预览模式=${controller.state.isPreviewMode}, 是否拖拽元素=$_isDragging');
@@ -382,11 +406,8 @@ class CanvasGestureHandler {
 
     onDragStart(false, _dragStart, _elementStartPosition, {});
 
-    // 如果点击在空白区域且不按住Ctrl/Shift键，则清除选择
-    // 注意：我们仍然清除选择，但会在平移结束时恢复
-    if (!hitAnyElement && !controller.state.isCtrlOrShiftPressed) {
-      controller.clearSelection();
-    }
+    // 在平移开始时不清除选择，而是记录下来，之后再决定是否需要清除
+    // 如果是真正的点击而不是拖拽，在handlePanEnd中处理
   }
 
   /// Handle pan update on canvas
@@ -500,6 +521,9 @@ class CanvasGestureHandler {
 
       // 记录拖拽信息，让父组件处理平移
       _elementStartPosition = Offset(dx, dy);
+
+      // 更新当前拖拽终点位置，用于计算拖拽距离
+      _selectionBoxEnd = currentPosition;
 
       // 添加日志跟踪
       debugPrint(

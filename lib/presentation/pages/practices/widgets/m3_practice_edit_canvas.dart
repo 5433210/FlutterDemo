@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:vector_math/vector_math_64.dart' hide Colors;
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/image/cached_image.dart';
@@ -118,11 +119,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   bool _isResizing = false;
 
   bool _isRotating = false;
-
+  // 添加防抖计时器，用于减少transformationController的更新频率
+  Timer? _transformationDebouncer;
+  final bool _isTransforming = false;
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    debugPrint('Canvas rebuild');
+
+    // 当正在进行变换操作时，禁止输出重建日志，减少控制台噪音
+    if (!_isTransforming) {
+      debugPrint('Canvas rebuild');
+    }
 
     if (widget.controller.state.pages.isEmpty) {
       return Center(
@@ -150,7 +157,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   @override
   void dispose() {
     _selectionBoxNotifier.dispose();
-    widget.transformationController.removeListener(_handleTransformationChange);
+    // widget.transformationController
+    //     .removeListener(_debouncedTransformationChange);
+    // _transformationDebouncer?.cancel();
     super.dispose();
   }
 
@@ -162,9 +171,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     // Don't reuse widget.key as it may cause conflicts with other widgets
     _repaintBoundaryKey = GlobalKey();
 
-    // Initialize zoom listener
-    widget.transformationController
-        .addListener(_handleTransformationChange); // Initialize gesture handler
+    // 使用防抖的方式添加变换监听器，避免频繁更新导致画布重建
+    // widget.transformationController.addListener(_debouncedTransformationChange);
+
     // 1. 首先修复calculateCanvasPosition的实现方式
 // 在CanvasGestureHandler的初始化中修改为：
     _gestureHandler = CanvasGestureHandler(
@@ -218,6 +227,38 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         _fitPageToScreen();
       }
     });
+  }
+
+  void on(String elementId, Offset delta) {
+    final element = widget.controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) {
+      return;
+    }
+
+    // Get current rotation
+    final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
+
+    // We'll use a simpler rotation approach that doesn't require center point calculation
+
+    // Improved rotation calculation
+    // Use a sensitivity factor to make rotation more controllable
+    const rotationSensitivity = 0.5;
+
+    // Calculate rotation based on delta movement
+    // Horizontal movement (dx) has more effect on rotation than vertical movement (dy)
+    final rotationDelta = (delta.dx * rotationSensitivity);
+
+    // Apply the rotation delta
+    final newRotation = rotation + rotationDelta;
+
+    debugPrint(
+        'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation'); // Update rotation
+    widget.controller
+        .updateElementProperties(elementId, {'rotation': newRotation});
   }
 
   /// Public method to reset canvas position
@@ -317,123 +358,132 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         // Get current zoom level
         final scale = widget.transformationController.value.getMaxScaleOnAxis();
         final zoomPercentage = (scale * 100).toInt();
-
         return Stack(
           children: [
             Container(
               color: colorScheme.inverseSurface.withOpacity(
                   0.1), // Canvas outer background - improved contrast in light theme
 
-              child: InteractiveViewer(
-                boundaryMargin: const EdgeInsets.all(double.infinity),
-                // 当处于select模式时禁用平移，允许我们的选择框功能工作
-                panEnabled: widget.controller.state.currentTool != 'select',
-                scaleEnabled: true,
-                minScale: 0.1,
-                maxScale: 15.0,
-                scaleFactor:
-                    600.0, // Increased scale factor to make zooming more gradual
-                transformationController: widget.transformationController,
-                onInteractionStart: (ScaleStartDetails details) {},
-                onInteractionUpdate: (ScaleUpdateDetails details) {},
-                onInteractionEnd: (ScaleEndDetails details) {
-                  // Update final zoom value
-                  // final scale =
-                  //     widget.transformationController.value.getMaxScaleOnAxis();
-                  // widget.controller.zoomTo(scale);
-                  // setState(
-                  //     () {}); // Update to reflect the new zoom level in the status bar
-                },
-                constrained: false, // Allow content to be unconstrained
-                child: GestureDetector(
-                  behavior: HitTestBehavior
-                      .translucent, // Ensure gesture events are properly passed
-                  onTapUp: (details) => _gestureHandler.handleTapUp(
-                      details, elements.cast<Map<String, dynamic>>()),
-                  // 处理右键点击事件，用于退出select模式
-                  onSecondaryTapDown: (details) =>
-                      _gestureHandler.handleSecondaryTapDown(details),
-                  onSecondaryTapUp: (details) =>
-                      _gestureHandler.handleSecondaryTapUp(
-                          details, elements.cast<Map<String, dynamic>>()),
-                  onPanStart: (details) => _gestureHandler.handlePanStart(
-                      details, elements.cast<Map<String, dynamic>>()),
-                  onPanUpdate: (details) {
-                    // 先处理选择框更新，这优先级最高
-                    if (widget.controller.state.currentTool == 'select' &&
-                        _gestureHandler.isSelectionBoxActive) {
-                      _gestureHandler.handlePanUpdate(details);
-                      // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
-                      _selectionBoxNotifier.value = SelectionBoxState(
-                        isActive: true,
-                        startPoint: _gestureHandler.selectionBoxStart,
-                        endPoint: _gestureHandler.selectionBoxEnd,
-                      );
-                      return;
-                    }
-
-                    // Handle element dragging in any mode (select or non-select)
-                    // _isDragging will be true if we started dragging on an element
-                    if (_isDragging) {
-                      _gestureHandler.handlePanUpdate(details);
-                      // setState(() {}); // Force redraw for element movement
-                      return;
-                    }
-
-                    // If not dragging elements and not in select mode, handle panning directly
-                    if (!_isDragging &&
-                        widget.controller.state.currentTool != 'select') {
-                      // Create new transformation matrix
-                      final Matrix4 newMatrix = Matrix4.identity();
-
-                      // Set same scale factor as current
-                      final scale = widget.transformationController.value
-                          .getMaxScaleOnAxis();
-                      newMatrix.setEntry(0, 0, scale);
-                      newMatrix.setEntry(1, 1, scale);
-                      newMatrix.setEntry(2, 2, scale);
-
-                      // Get current translation
-                      final Vector3 translation = widget
-                          .transformationController.value
-                          .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
-                      // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
-                      // Use the same approach as in canvas_gesture_handler.dart
-
-                      newMatrix.setTranslation(Vector3(
-                        translation.x + details.delta.dx * scale,
-                        translation.y + details.delta.dy * scale,
-                        0.0,
-                      ));
-                      widget.transformationController.value =
-                          newMatrix; // Force refresh
-                      // setState(() {}); // Add debug logging
-                      debugPrint(
-                          '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
-                          '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
-                      return; // Exit early to avoid calling handlePanUpdate
-                    }
-
-                    // Only call handlePanUpdate if not already handled
-                    _gestureHandler.handlePanUpdate(details);
+              // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
+              child: RepaintBoundary(
+                child: InteractiveViewer(
+                  boundaryMargin: const EdgeInsets.all(double.infinity),
+                  // 当处于select模式时禁用平移，允许我们的选择框功能工作
+                  panEnabled: widget.controller.state.currentTool != 'select',
+                  scaleEnabled: true,
+                  minScale: 0.1,
+                  maxScale: 15.0,
+                  scaleFactor:
+                      600.0, // Increased scale factor to make zooming more gradual
+                  transformationController: widget.transformationController,
+                  onInteractionStart: (ScaleStartDetails details) {},
+                  onInteractionUpdate: (ScaleUpdateDetails details) {},
+                  onInteractionEnd: (ScaleEndDetails details) {
+                    // Update final zoom value
+                    // final scale =
+                    //     widget.transformationController.value.getMaxScaleOnAxis();
+                    // widget.controller.zoomTo(scale);
+                    // setState(
+                    //     () {}); // Update to reflect the new zoom level in the status bar
                   },
-                  onPanEnd: (details) {
-                    // 重置选择框状态
-                    if (widget.controller.state.currentTool == 'select' &&
-                        _gestureHandler.isSelectionBoxActive) {
-                      // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
-                      _selectionBoxNotifier.value = SelectionBoxState();
-                    }
-                    _gestureHandler.handlePanEnd(details);
-                  },
-                  child: _buildPageContent(currentPage,
-                      elements.cast<Map<String, dynamic>>(), colorScheme),
+                  constrained: false, // Allow content to be unconstrained
+                  child: GestureDetector(
+                    behavior: HitTestBehavior
+                        .translucent, // Ensure gesture events are properly passed
+                    onTapUp: (details) => _gestureHandler.handleTapUp(
+                        details, elements.cast<Map<String, dynamic>>()),
+                    // 处理右键点击事件，用于退出select模式
+                    onSecondaryTapDown: (details) =>
+                        _gestureHandler.handleSecondaryTapDown(details),
+                    onSecondaryTapUp: (details) =>
+                        _gestureHandler.handleSecondaryTapUp(
+                            details, elements.cast<Map<String, dynamic>>()),
+                    onPanStart: (details) => _gestureHandler.handlePanStart(
+                        details, elements.cast<Map<String, dynamic>>()),
+                    onPanUpdate: (details) {
+                      // 先处理选择框更新，这优先级最高
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        _gestureHandler.handlePanUpdate(details);
+                        // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
+                        _selectionBoxNotifier.value = SelectionBoxState(
+                          isActive: true,
+                          startPoint: _gestureHandler.selectionBoxStart,
+                          endPoint: _gestureHandler.selectionBoxEnd,
+                        );
+                        return;
+                      }
+
+                      // Handle element dragging in any mode (select or non-select)
+                      // _isDragging will be true if we started dragging on an element
+                      if (_isDragging) {
+                        _gestureHandler.handlePanUpdate(details);
+                        // setState(() {}); // Force redraw for element movement
+                        return;
+                      } // If not dragging elements and not in select mode,
+                      // let InteractiveViewer handle the panning instead of manually manipulating the matrix
+                      if (!_isDragging &&
+                          widget.controller.state.currentTool != 'select') {
+                        // Create new transformation matrix
+                        final Matrix4 newMatrix = Matrix4.identity();
+
+                        // Set same scale factor as current
+                        final scale = widget.transformationController.value
+                            .getMaxScaleOnAxis();
+                        newMatrix.setEntry(0, 0, scale);
+                        newMatrix.setEntry(1, 1, scale);
+                        newMatrix.setEntry(2, 2, scale);
+
+                        // Get current translation
+                        final Vector3 translation = widget
+                            .transformationController.value
+                            .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
+                        // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
+                        // Use the same approach as in canvas_gesture_handler.dart
+
+                        newMatrix.setTranslation(Vector3(
+                          translation.x + details.delta.dx * scale,
+                          translation.y + details.delta.dy * scale,
+                          0.0,
+                        ));
+                        widget.transformationController.value =
+                            newMatrix; // Force refresh
+                        // setState(() {}); // Add debug logging
+                        debugPrint(
+                            '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
+                            '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
+                        return; // Exit early to avoid calling handlePanUpdate
+                      }
+
+                      // Only call handlePanUpdate if not already handled
+                      _gestureHandler.handlePanUpdate(details);
+                    },
+                    onPanEnd: (details) {
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                      _gestureHandler.handlePanEnd(details);
+                    },
+                    onPanCancel: () {
+                      // 处理平移取消
+                      _gestureHandler.handlePanCancel();
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                    },
+                    child: _buildPageContent(currentPage,
+                        elements.cast<Map<String, dynamic>>(), colorScheme),
+                  ),
                 ),
               ),
+
+              // Status bar showing zoom level (only visible in edit mode)
             ),
-
-            // Status bar showing zoom level (only visible in edit mode)
-
             Positioned(
               left: 0,
               right: 0,
@@ -1341,16 +1391,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
-
-  /// Handle transformation changes
-  void _handleTransformationChange() {
-    // Update controller with new scale
-    final scale = widget.transformationController.value.getMaxScaleOnAxis();
-    widget.controller.zoomTo(scale);
-
-    // No setState() needed - zoom updates will be handled by ValueNotifier pattern
-    // The status bar will update automatically through its own listener
-  }
+  // Removed unused _handleTransformationChange method
 
   /// Parse color from string
   Color _parseColor(String colorString) {
