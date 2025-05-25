@@ -745,6 +745,98 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.clearHistory();
   }
 
+  /// Creates a batch element resize operation for undo/redo
+  void createElementResizeOperation({
+    required List<String> elementIds,
+    required List<Map<String, dynamic>> oldSizes,
+    required List<Map<String, dynamic>> newSizes,
+  }) {
+    if (elementIds.isEmpty || oldSizes.isEmpty || newSizes.isEmpty) {
+      debugPrint('【控制器】createElementResizeOperation: 没有要更新的元素，跳过');
+      return;
+    }
+
+    debugPrint('【控制器】createElementResizeOperation: 创建元素调整大小操作');
+    final operation = ResizeElementOperation(
+      elementIds: elementIds,
+      oldSizes: oldSizes,
+      newSizes: newSizes,
+      updateElement: (elementId, sizeProps) {
+        debugPrint('【控制器】ResizeElementOperation.updateElement: 开始更新元素大小');
+        if (_state.currentPageIndex >= 0 &&
+            _state.currentPageIndex < _state.pages.length) {
+          final page = _state.pages[_state.currentPageIndex];
+          final elements = page['elements'] as List<dynamic>;
+          final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+
+          if (elementIndex >= 0) {
+            final element = elements[elementIndex] as Map<String, dynamic>;
+            sizeProps.forEach((key, value) {
+              element[key] = value;
+            });
+
+            // 如果是当前选中的元素，更新selectedElement
+            if (_state.selectedElementIds.contains(elementId)) {
+              _state.selectedElement = element;
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+            debugPrint('【控制器】ResizeElementOperation.updateElement: 尺寸更新完成');
+          }
+        }
+      },
+    );
+
+    _undoRedoManager.addOperation(operation);
+  }
+
+  /// Creates a batch element rotation operation for undo/redo
+  void createElementRotationOperation({
+    required List<String> elementIds,
+    required List<double> oldRotations,
+    required List<double> newRotations,
+  }) {
+    if (elementIds.isEmpty || oldRotations.isEmpty || newRotations.isEmpty) {
+      debugPrint('【控制器】createElementRotationOperation: 没有要更新的元素，跳过');
+      return;
+    }
+
+    debugPrint('【控制器】createElementRotationOperation: 创建元素旋转操作');
+    final operation = ElementRotationOperation(
+      elementIds: elementIds,
+      oldRotations: oldRotations,
+      newRotations: newRotations,
+      updateElement: (elementId, rotationProps) {
+        debugPrint('【控制器】ElementRotationOperation.updateElement: 开始更新元素旋转');
+        if (_state.currentPageIndex >= 0 &&
+            _state.currentPageIndex < _state.pages.length) {
+          final page = _state.pages[_state.currentPageIndex];
+          final elements = page['elements'] as List<dynamic>;
+          final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+
+          if (elementIndex >= 0) {
+            final element = elements[elementIndex] as Map<String, dynamic>;
+            rotationProps.forEach((key, value) {
+              element[key] = value;
+            });
+
+            // 如果是当前选中的元素，更新selectedElement
+            if (_state.selectedElementIds.contains(elementId)) {
+              _state.selectedElement = element;
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+            debugPrint('【控制器】ElementRotationOperation.updateElement: 旋转更新完成');
+          }
+        }
+      },
+    );
+
+    _undoRedoManager.addOperation(operation);
+  }
+
   /// Creates a batch element translation operation for undo/redo
   void createElementTranslationOperation({
     required List<String> elementIds,

@@ -111,6 +111,14 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   // Use the widget's key if provided, otherwise create a new one
   late final GlobalKey _repaintBoundaryKey;
 
+  /// 处理控制点拖拽结束事件
+  // 存储原始元素属性，用于撤销/重做
+  Map<String, dynamic>? _originalElementProperties;
+
+  bool _isResizing = false;
+
+  bool _isRotating = false;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -617,6 +625,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                           scale, // Pass the current scale to ensure proper control point sizing
                       onControlPointUpdate: _handleControlPointUpdate,
                       onControlPointDragEnd: _handleControlPointDragEnd,
+                      onControlPointDragStart: _handleControlPointDragStart,
                     );
                   }),
                 ),
@@ -981,12 +990,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   }
 
   /// 处理控制点拖拽结束事件
-
-  /// 处理控制点拖拽结束事件
   void _handleControlPointDragEnd(int controlPointIndex) {
     debugPrint('控制点 $controlPointIndex 拖拽结束');
 
-    if (widget.controller.state.selectedElementIds.isEmpty) {
+    if (widget.controller.state.selectedElementIds.isEmpty ||
+        _originalElementProperties == null) {
       return;
     }
 
@@ -1002,45 +1010,130 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       return;
     }
 
-    // 如果是旋转控制点（索引8），不做处理
-    if (controlPointIndex == 8) {
+    // 处理旋转控制点
+    if (_isRotating) {
       debugPrint('旋转控制点拖拽结束');
+
+      // 获取原始旋转值和当前旋转值
+      final oldRotation =
+          (_originalElementProperties!['rotation'] as num?)?.toDouble() ?? 0.0;
+      final newRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
+
+      // 如果旋转值有变化，创建旋转操作
+      if (oldRotation != newRotation) {
+        widget.controller.createElementRotationOperation(
+          elementIds: [elementId],
+          oldRotations: [oldRotation],
+          newRotations: [newRotation],
+        );
+      }
+
+      _isRotating = false;
+      _originalElementProperties = null;
       return;
     }
 
-    // 只有在启用了网格吸附的情况下才进行网格吸附
-    if (widget.controller.state.snapEnabled) {
-      // 获取元素的当前位置和尺寸
-      final x = (element['x'] as num).toDouble();
-      final y = (element['y'] as num).toDouble();
-      final width = (element['width'] as num).toDouble();
-      final height = (element['height'] as num).toDouble();
-      final gridSize = widget.controller.state.gridSize;
-
-      // 计算吸附后的位置和尺寸（向最近的网格线吸附）
-      final snappedX = (x / gridSize).round() * gridSize;
-      final snappedY = (y / gridSize).round() * gridSize;
-      final snappedWidth = (width / gridSize).round() * gridSize;
-      final snappedHeight = (height / gridSize).round() * gridSize;
-
-      // 确保尺寸不小于最小值
-      final finalWidth = math.max(snappedWidth, 10.0);
-      final finalHeight = math.max(snappedHeight, 10.0);
-
-      // 更新元素属性
-      final updates = {
-        'x': snappedX,
-        'y': snappedY,
-        'width': finalWidth,
-        'height': finalHeight,
+    // 处理调整大小控制点
+    if (_isResizing) {
+      // 创建旧尺寸对象
+      final oldSize = {
+        'x': (_originalElementProperties!['x'] as num).toDouble(),
+        'y': (_originalElementProperties!['y'] as num).toDouble(),
+        'width': (_originalElementProperties!['width'] as num).toDouble(),
+        'height': (_originalElementProperties!['height'] as num).toDouble(),
       };
 
-      debugPrint('网格吸附: 元素 $elementId 位置从 ($x, $y) 吸附到 ($snappedX, $snappedY)');
-      debugPrint(
-          '网格吸附: 元素 $elementId 尺寸从 ($width, $height) 吸附到 ($finalWidth, $finalHeight)');
+      // 创建新尺寸对象
+      final newSize = {
+        'x': (element['x'] as num).toDouble(),
+        'y': (element['y'] as num).toDouble(),
+        'width': (element['width'] as num).toDouble(),
+        'height': (element['height'] as num).toDouble(),
+      };
 
-      widget.controller.updateElementProperties(elementId, updates);
+      // 只有在尺寸或位置有变化时才创建操作
+      if (oldSize['x'] != newSize['x'] ||
+          oldSize['y'] != newSize['y'] ||
+          oldSize['width'] != newSize['width'] ||
+          oldSize['height'] != newSize['height']) {
+        // 只有在启用了网格吸附的情况下才进行网格吸附
+        if (widget.controller.state.snapEnabled) {
+          final gridSize = widget.controller.state.gridSize;
+
+          // 计算吸附后的位置和尺寸（向最近的网格线吸附）
+          final snappedX = (newSize['x']! / gridSize).round() * gridSize;
+          final snappedY = (newSize['y']! / gridSize).round() * gridSize;
+          final snappedWidth =
+              (newSize['width']! / gridSize).round() * gridSize;
+          final snappedHeight =
+              (newSize['height']! / gridSize).round() * gridSize;
+
+          // 确保尺寸不小于最小值
+          final finalWidth = math.max(snappedWidth, 10.0);
+          final finalHeight = math.max(snappedHeight, 10.0);
+
+          // 更新为吸附后的值
+          newSize['x'] = snappedX;
+          newSize['y'] = snappedY;
+          newSize['width'] = finalWidth;
+          newSize['height'] = finalHeight;
+
+          // 直接应用网格吸附更新
+          element['x'] = snappedX;
+          element['y'] = snappedY;
+          element['width'] = finalWidth;
+          element['height'] = finalHeight;
+
+          debugPrint(
+              '网格吸附: 元素 $elementId 位置从 (${oldSize['x']}, ${oldSize['y']}) 吸附到 ($snappedX, $snappedY)');
+          debugPrint(
+              '网格吸附: 元素 $elementId 尺寸从 (${oldSize['width']}, ${oldSize['height']}) 吸附到 ($finalWidth, $finalHeight)');
+        }
+
+        // 创建调整大小操作
+        widget.controller.createElementResizeOperation(
+          elementIds: [elementId],
+          oldSizes: [oldSize],
+          newSizes: [newSize],
+        );
+
+        // 确保UI更新
+        widget.controller.notifyListeners();
+      }
+
+      _isResizing = false;
+      _originalElementProperties = null;
     }
+  }
+
+  /// 处理控制点拖拽开始事件
+  void _handleControlPointDragStart(int controlPointIndex) {
+    debugPrint('控制点 $controlPointIndex 拖拽开始');
+
+    if (widget.controller.state.selectedElementIds.isEmpty) {
+      return;
+    }
+
+    final elementId = widget.controller.state.selectedElementIds.first;
+
+    // 获取当前元素属性并保存，用于稍后创建撤销操作
+    final element = widget.controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (element.isEmpty) {
+      return;
+    }
+
+    // 保存元素的原始属性
+    _originalElementProperties = Map<String, dynamic>.from(element);
+
+    // 记录当前是调整大小还是旋转
+    _isRotating = (controlPointIndex == 8);
+    _isResizing = !_isRotating;
+
+    debugPrint('保存元素 $elementId 的原始属性: $_originalElementProperties');
   }
 
   /// Handle control point updates

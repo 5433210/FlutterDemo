@@ -15,6 +15,7 @@ class CanvasControlPoints extends StatefulWidget {
   final double initialScale;
   final Function(int, Offset) onControlPointUpdate;
   final Function(int)? onControlPointDragEnd;
+  final Function(int)? onControlPointDragStart;
 
   const CanvasControlPoints({
     Key? key,
@@ -26,6 +27,7 @@ class CanvasControlPoints extends StatefulWidget {
     required this.rotation,
     required this.onControlPointUpdate,
     this.onControlPointDragEnd,
+    this.onControlPointDragStart,
     this.initialScale = 1.0,
   }) : super(key: key);
 
@@ -145,7 +147,7 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
   bool _isRotating = false;
   // 添加变量跟踪累积偏移量和当前拖拽的控制点索引
   // final Map<int, Offset> _accumulatedDeltas = {};
-  int? _currentDraggingPoint;
+  // int? _currentDraggingPoint;
 
   // 获取当前缩放比例
   double get _currentScale {
@@ -410,9 +412,10 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
                   _isRotating = true;
                 });
               }
-              // 初始化累积偏移量和当前拖拽的控制点索引
-              // _accumulatedDeltas[index] = Offset.zero;
-              // _currentDraggingPoint = index;
+
+              // 调用拖拽开始回调
+              widget.onControlPointDragStart?.call(index);
+
               // 立即触发一次更新，确保控制点能够立即响应
               widget.onControlPointUpdate(index, Offset.zero);
             },
@@ -460,7 +463,7 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
 
               // 清除累积偏移量
               // _accumulatedDeltas.remove(index);
-              _currentDraggingPoint = null;
+              // _currentDraggingPoint = null;
             },
             child: Container(
               // decoration: BoxDecoration(
