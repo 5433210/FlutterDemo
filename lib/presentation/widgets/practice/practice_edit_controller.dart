@@ -771,9 +771,53 @@ class PracticeEditController extends ChangeNotifier {
 
           if (elementIndex >= 0) {
             final element = elements[elementIndex] as Map<String, dynamic>;
+
+            // 保存原始尺寸，用于计算缩放比例
+            final oldWidth = (element['width'] as num).toDouble();
+            final oldHeight = (element['height'] as num).toDouble();
+
+            // 更新元素属性
             sizeProps.forEach((key, value) {
               element[key] = value;
             });
+
+            // 处理组合控件的子元素调整
+            if (element['type'] == 'group' &&
+                (sizeProps.containsKey('width') ||
+                    sizeProps.containsKey('height'))) {
+              // 获取新的尺寸
+              final newWidth = (element['width'] as num).toDouble();
+              final newHeight = (element['height'] as num).toDouble();
+
+              // 计算缩放比例
+              final scaleX = oldWidth > 0 ? newWidth / oldWidth : 1.0;
+              final scaleY = oldHeight > 0 ? newHeight / oldHeight : 1.0;
+
+              // 获取子元素列表
+              final content = element['content'] as Map<String, dynamic>;
+              final children = content['children'] as List<dynamic>;
+
+              // 更新每个子元素的位置和大小
+              for (int i = 0; i < children.length; i++) {
+                final child = children[i] as Map<String, dynamic>;
+
+                // 获取子元素的当前位置和大小
+                final childX = (child['x'] as num).toDouble();
+                final childY = (child['y'] as num).toDouble();
+                final childWidth = (child['width'] as num).toDouble();
+                final childHeight = (child['height'] as num).toDouble();
+
+                // 根据组合控件的变形调整子元素
+                if (sizeProps.containsKey('width') ||
+                    sizeProps.containsKey('height')) {
+                  // 当组合控件缩放时，子元素按比例缩放
+                  child['x'] = childX * scaleX;
+                  child['y'] = childY * scaleY;
+                  child['width'] = childWidth * scaleX;
+                  child['height'] = childHeight * scaleY;
+                }
+              }
+            }
 
             // 如果是当前选中的元素，更新selectedElement
             if (_state.selectedElementIds.contains(elementId)) {
