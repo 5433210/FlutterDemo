@@ -1254,8 +1254,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final scale = widget.transformationController.value.getMaxScaleOnAxis();
     widget.controller.zoomTo(scale);
 
-    // Force a rebuild to update the zoom percentage in the status bar
-    setState(() {});
+    // No setState() needed - zoom updates will be handled by ValueNotifier pattern
+    // The status bar will update automatically through its own listener
   }
 
   /// Parse color from string

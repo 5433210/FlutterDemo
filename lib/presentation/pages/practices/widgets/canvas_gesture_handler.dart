@@ -96,7 +96,12 @@ class CanvasGestureHandler {
     if (_isDragging) {
       _isDragging = false;
 
-      // Finalize positions of all dragged elements
+      // Lists to hold element IDs, old positions, and new positions for batch update
+      final List<String> elementIds = [];
+      final List<Map<String, dynamic>> oldPositions = [];
+      final List<Map<String, dynamic>> newPositions = [];
+
+      // Collect data for all dragged elements
       for (final elementId in controller.state.selectedElementIds) {
         final element = controller.state.currentPageElements.firstWhere(
           (e) => e['id'] == elementId,
@@ -120,11 +125,32 @@ class CanvasGestureHandler {
         final x = (element['x'] as num).toDouble();
         final y = (element['y'] as num).toDouble();
 
-        // Finalize element position
-        controller.updateElementProperties(elementId, {
-          'x': x,
-          'y': y,
-        });
+        // Get original position from the start positions map
+        final startPosition = _elementStartPositions[elementId];
+        if (startPosition == null) continue;
+
+        // Only include elements that actually moved
+        if (startPosition.dx != x || startPosition.dy != y) {
+          elementIds.add(elementId);
+          oldPositions.add({
+            'x': startPosition.dx,
+            'y': startPosition.dy,
+          });
+          newPositions.add({
+            'x': x,
+            'y': y,
+          });
+        }
+      }
+
+      // Create a batch translation operation if any elements moved
+      if (elementIds.isNotEmpty) {
+        debugPrint('【平移】handlePanEnd: 创建批量平移操作 - ${elementIds.length}个元素');
+        controller.createElementTranslationOperation(
+          elementIds: elementIds,
+          oldPositions: oldPositions,
+          newPositions: newPositions,
+        );
       }
 
       onDragEnd();

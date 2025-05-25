@@ -745,6 +745,53 @@ class PracticeEditController extends ChangeNotifier {
     _undoRedoManager.clearHistory();
   }
 
+  /// Creates a batch element translation operation for undo/redo
+  void createElementTranslationOperation({
+    required List<String> elementIds,
+    required List<Map<String, dynamic>> oldPositions,
+    required List<Map<String, dynamic>> newPositions,
+  }) {
+    if (elementIds.isEmpty || oldPositions.isEmpty || newPositions.isEmpty) {
+      debugPrint('【控制器】createElementTranslationOperation: 没有要更新的元素，跳过');
+      return;
+    }
+
+    debugPrint('【控制器】createElementTranslationOperation: 创建元素平移操作');
+    final operation = ElementTranslationOperation(
+      elementIds: elementIds,
+      oldPositions: oldPositions,
+      newPositions: newPositions,
+      updateElement: (elementId, positionProps) {
+        debugPrint('【控制器】ElementTranslationOperation.updateElement: 开始更新元素位置');
+        if (_state.currentPageIndex >= 0 &&
+            _state.currentPageIndex < _state.pages.length) {
+          final page = _state.pages[_state.currentPageIndex];
+          final elements = page['elements'] as List<dynamic>;
+          final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+
+          if (elementIndex >= 0) {
+            final element = elements[elementIndex] as Map<String, dynamic>;
+            positionProps.forEach((key, value) {
+              element[key] = value;
+            });
+
+            // 如果是当前选中的元素，更新selectedElement
+            if (_state.selectedElementIds.contains(elementId)) {
+              _state.selectedElement = element;
+            }
+
+            _state.hasUnsavedChanges = true;
+            notifyListeners();
+            debugPrint(
+                '【控制器】ElementTranslationOperation.updateElement: 位置更新完成');
+          }
+        }
+      },
+    );
+
+    _undoRedoManager.addOperation(operation);
+  }
+
   /// 删除所有图层
   void deleteAllLayers() {
     if (_state.currentPage == null ||
@@ -2567,46 +2614,103 @@ class PracticeEditController extends ChangeNotifier {
           // 不打印content，太长了
           debugPrint('【控制器】  $key: $value');
         }
-      });
+      }); // Check if this is only a translation operation (x and/or y changes)
+      final isTranslationOnly =
+          properties.keys.every((key) => key == 'x' || key == 'y');
 
-      final operation = ElementPropertyOperation(
-        elementId: id,
-        oldProperties: oldProperties,
-        newProperties: newProperties,
-        updateElement: (id, props) {
-          debugPrint('【控制器】ElementPropertyOperation.updateElement: 开始更新元素');
-          if (_state.currentPageIndex >= 0 &&
-              _state.currentPageIndex < _state.pages.length) {
-            final page = _state.pages[_state.currentPageIndex];
-            final elements = page['elements'] as List<dynamic>;
-            final elementIndex = elements.indexWhere((e) => e['id'] == id);
+      UndoableOperation operation;
 
-            if (elementIndex >= 0) {
-              debugPrint(
-                  '【控制器】ElementPropertyOperation.updateElement: 找到元素，索引=$elementIndex');
-              elements[elementIndex] = props;
+      if (isTranslationOnly) {
+        // Create specific ElementTranslationOperation for position changes
+        debugPrint(
+            '【控制器】updateElementProperties: 创建ElementTranslationOperation操作');
+        operation = ElementTranslationOperation(
+          elementIds: [id],
+          oldPositions: [
+            {
+              'x': oldProperties['x'],
+              'y': oldProperties['y'],
+            }
+          ],
+          newPositions: [
+            {
+              'x': newProperties['x'],
+              'y': newProperties['y'],
+            }
+          ],
+          updateElement: (elementId, positionProps) {
+            debugPrint(
+                '【控制器】ElementTranslationOperation.updateElement: 开始更新元素位置');
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+              final elementIndex =
+                  elements.indexWhere((e) => e['id'] == elementId);
 
-              // 如果是当前选中的元素，更新selectedElement
-              if (_state.selectedElementIds.contains(id)) {
+              if (elementIndex >= 0) {
+                final element = elements[elementIndex] as Map<String, dynamic>;
+                positionProps.forEach((key, value) {
+                  element[key] = value;
+                });
+
+                // 如果是当前选中的元素，更新selectedElement
+                if (_state.selectedElementIds.contains(elementId)) {
+                  _state.selectedElement = element;
+                }
+
+                _state.hasUnsavedChanges = true;
+                notifyListeners();
                 debugPrint(
-                    '【控制器】ElementPropertyOperation.updateElement: 更新selectedElement');
-                _state.selectedElement = props;
+                    '【控制器】ElementTranslationOperation.updateElement: 位置更新完成');
               }
+            }
+          },
+        );
+      } else {
+        // Use generic ElementPropertyOperation for other property changes
+        debugPrint(
+            '【控制器】updateElementProperties: 创建ElementPropertyOperation操作');
+        operation = ElementPropertyOperation(
+          elementId: id,
+          oldProperties: oldProperties,
+          newProperties: newProperties,
+          updateElement: (id, props) {
+            debugPrint('【控制器】ElementPropertyOperation.updateElement: 开始更新元素');
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+              final elementIndex = elements.indexWhere((e) => e['id'] == id);
 
-              _state.hasUnsavedChanges = true;
-              debugPrint(
-                  '【控制器】ElementPropertyOperation.updateElement: 调用notifyListeners()');
-              notifyListeners();
-              debugPrint('【控制器】ElementPropertyOperation.updateElement: 更新完成');
+              if (elementIndex >= 0) {
+                debugPrint(
+                    '【控制器】ElementPropertyOperation.updateElement: 找到元素，索引=$elementIndex');
+                elements[elementIndex] = props;
+
+                // 如果是当前选中的元素，更新selectedElement
+                if (_state.selectedElementIds.contains(id)) {
+                  debugPrint(
+                      '【控制器】ElementPropertyOperation.updateElement: 更新selectedElement');
+                  _state.selectedElement = props;
+                }
+
+                _state.hasUnsavedChanges = true;
+                debugPrint(
+                    '【控制器】ElementPropertyOperation.updateElement: 调用notifyListeners()');
+                notifyListeners();
+                debugPrint('【控制器】ElementPropertyOperation.updateElement: 更新完成');
+              } else {
+                debugPrint(
+                    '【控制器】ElementPropertyOperation.updateElement: 找不到元素，ID=$id');
+              }
             } else {
               debugPrint(
-                  '【控制器】ElementPropertyOperation.updateElement: 找不到元素，ID=$id');
+                  '【控制器】ElementPropertyOperation.updateElement: 当前页面索引无效');
             }
-          } else {
-            debugPrint('【控制器】ElementPropertyOperation.updateElement: 当前页面索引无效');
-          }
-        },
-      );
+          },
+        );
+      }
 
       debugPrint('【控制器】updateElementProperties: 添加操作到撤销/重做管理器');
       _undoRedoManager.addOperation(operation);
