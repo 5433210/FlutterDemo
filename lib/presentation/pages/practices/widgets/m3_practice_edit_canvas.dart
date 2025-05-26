@@ -1433,6 +1433,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // Get character images
     final characterImages = content;
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
 
     // Parse color
     final bgColor = _parseColor(backgroundColor);
@@ -1455,39 +1456,41 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // Debug logging removed for performance
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: bgColor,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Debug logging removed for performance
-          return CollectionElementRenderer.buildCollectionLayout(
-            characters: characters,
-            writingMode: writingMode,
-            fontSize: fontSize,
-            letterSpacing: letterSpacing,
-            lineSpacing: lineSpacing,
-            textAlign: textAlign,
-            verticalAlign: verticalAlign,
-            characterImages: characterImages,
-            constraints: constraints,
-            padding: padding,
-            fontColor: fontColor,
-            backgroundColor: backgroundColor,
-            enableSoftLineBreak: enableSoftLineBreak,
-            // Pass texture-related properties
-            hasCharacterTexture: hasBackgroundTexture,
-            characterTextureData: backgroundTexture,
-            textureFillMode: textureFillMode,
-            textureOpacity: textureOpacity,
-            textureApplicationRange:
-                textureApplicationRange, // Pass the application mode explicitly
-            ref: ref,
-          );
-        },
-      ),
-    );
+    return Opacity(
+        opacity: opacity,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: bgColor,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Debug logging removed for performance
+              return CollectionElementRenderer.buildCollectionLayout(
+                characters: characters,
+                writingMode: writingMode,
+                fontSize: fontSize,
+                letterSpacing: letterSpacing,
+                lineSpacing: lineSpacing,
+                textAlign: textAlign,
+                verticalAlign: verticalAlign,
+                characterImages: characterImages,
+                constraints: constraints,
+                padding: padding,
+                fontColor: fontColor,
+                backgroundColor: backgroundColor,
+                enableSoftLineBreak: enableSoftLineBreak,
+                // Pass texture-related properties
+                hasCharacterTexture: hasBackgroundTexture,
+                characterTextureData: backgroundTexture,
+                textureFillMode: textureFillMode,
+                textureOpacity: textureOpacity,
+                textureApplicationRange:
+                    textureApplicationRange, // Pass the application mode explicitly
+                ref: ref,
+              );
+            },
+          ),
+        ));
   }
 
   /// Render element based on its type
@@ -1608,7 +1611,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final transformedImageUrl = content['transformedImageUrl'] as String?;
     final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
     final fitMode = content['fitMode'] as String? ?? 'contain';
-
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
+    // final bool isHidden = element['hidden'] as bool??? false;
     // Get BoxFit from fitMode
     final BoxFit fit = _getFitMode(fitMode);
 
@@ -1648,37 +1652,40 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     if (transformedImageData != null) {
       debugPrint(
           'Using transformedImageData for rendering (${transformedImageData.length} bytes)');
-      imageContent = Stack(
-        children: [
-          Positioned.fill(
-            child: Container(color: bgColor),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              // 确保图片不拦截控制点事件
-              child: Image.memory(
-                transformedImageData,
-                fit: fit,
-                errorBuilder: (context, error, stackTrace) {
-                  debugPrint('Error loading transformed image data: $error');
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image,
-                            size: 48, color: Colors.red.shade300),
-                        const SizedBox(height: 8),
-                        Text('Error: $error',
-                            style: TextStyle(color: Colors.red.shade300)),
-                      ],
-                    ),
-                  );
-                },
+      imageContent = Opacity(
+          opacity: opacity,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Container(color: bgColor),
               ),
-            ),
-          ),
-        ],
-      );
+              Positioned.fill(
+                child: IgnorePointer(
+                  // 确保图片不拦截控制点事件
+                  child: Image.memory(
+                    transformedImageData,
+                    fit: fit,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint(
+                          'Error loading transformed image data: $error');
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.broken_image,
+                                size: 48, color: Colors.red.shade300),
+                            const SizedBox(height: 8),
+                            Text('Error: $error',
+                                style: TextStyle(color: Colors.red.shade300)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ));
     } else {
       // If we have a transformed image URL, use it
       final effectiveImageUrl = transformedImageUrl ?? imageUrl;
@@ -1700,53 +1707,57 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       } else if (effectiveImageUrl.startsWith('file://')) {
         // Check if it's a local file path
         final filePath = effectiveImageUrl.substring(7);
-        imageContent = Stack(
-          children: [
-            Positioned.fill(
-              child: Container(color: bgColor),
-            ),
-            Positioned.fill(
-              child: IgnorePointer(
-                // 确保图片不拦截控制点事件
-                child: CachedImage(
-                  path: filePath,
-                  fit: fit,
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint('Error loading file image: $error');
-                    return Center(
-                      child: Icon(Icons.broken_image,
-                          size: 48, color: Colors.red.shade300),
-                    );
-                  },
+        imageContent = Opacity(
+            opacity: opacity,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Container(color: bgColor),
                 ),
-              ),
-            ),
-          ],
-        );
+                Positioned.fill(
+                  child: IgnorePointer(
+                    // 确保图片不拦截控制点事件
+                    child: CachedImage(
+                      path: filePath,
+                      fit: fit,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('Error loading file image: $error');
+                        return Center(
+                          child: Icon(Icons.broken_image,
+                              size: 48, color: Colors.red.shade300),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ));
       } else {
-        imageContent = Stack(
-          children: [
-            Positioned.fill(
-              child: Container(color: bgColor),
-            ),
-            Positioned.fill(
-              child: IgnorePointer(
-                // 确保图片不拦截控制点事件
-                child: Image.network(
-                  effectiveImageUrl,
-                  fit: fit,
-                  errorBuilder: (context, error, stackTrace) {
-                    debugPrint('Error loading network image: $error');
-                    return Center(
-                      child: Icon(Icons.broken_image,
-                          size: 48, color: Colors.red.shade300),
-                    );
-                  },
+        imageContent = Opacity(
+            opacity: opacity,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Container(color: bgColor),
                 ),
-              ),
-            ),
-          ],
-        );
+                Positioned.fill(
+                  child: IgnorePointer(
+                    // 确保图片不拦截控制点事件
+                    child: Image.network(
+                      effectiveImageUrl,
+                      fit: fit,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('Error loading network image: $error');
+                        return Center(
+                          child: Icon(Icons.broken_image,
+                              size: 48, color: Colors.red.shade300),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ));
       }
     }
 

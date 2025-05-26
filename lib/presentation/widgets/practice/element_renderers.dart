@@ -13,6 +13,7 @@ class ElementRenderers {
   /// 构建集字元素
   static Widget buildCollectionElement(Map<String, dynamic> element,
       {WidgetRef? ref, bool isPreviewMode = false}) {
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
     final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
@@ -58,53 +59,55 @@ class ElementRenderers {
           'ElementRenderers.buildCollectionElement: textureFillMode=$textureFillMode');
     }
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      // 移除背景图片装饰，改为完全由CollectionElementRenderer处理纹理
-      decoration: BoxDecoration(color: backgroundColor),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // 添加调试信息
-          debugPrint('buildCollectionElement纹理参数: \n'
-              '  hasTexture: $hasBackgroundTexture\n'
-              '  textureData: $backgroundTexture\n'
-              '  fillMode: $textureFillMode\n'
-              '  opacity: $textureOpacity\n'
-              '  range: $textureApplicationRange');
+    return Opacity(
+        opacity: opacity,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          // 移除背景图片装饰，改为完全由CollectionElementRenderer处理纹理
+          decoration: BoxDecoration(color: backgroundColor),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // 添加调试信息
+              debugPrint('buildCollectionElement纹理参数: \n'
+                  '  hasTexture: $hasBackgroundTexture\n'
+                  '  textureData: $backgroundTexture\n'
+                  '  fillMode: $textureFillMode\n'
+                  '  opacity: $textureOpacity\n'
+                  '  range: $textureApplicationRange');
 
-          debugPrint('ElementRenderers: 准备构建集字布局');
-          debugPrint('- 纹理数据: $backgroundTexture');
-          debugPrint('- 纹理填充模式: $textureFillMode');
-          debugPrint('- 纹理不透明度: $textureOpacity');
-          debugPrint('- 纹理应用范围: $textureApplicationRange');
+              debugPrint('ElementRenderers: 准备构建集字布局');
+              debugPrint('- 纹理数据: $backgroundTexture');
+              debugPrint('- 纹理填充模式: $textureFillMode');
+              debugPrint('- 纹理不透明度: $textureOpacity');
+              debugPrint('- 纹理应用范围: $textureApplicationRange');
 
-          return CollectionElementRenderer.buildCollectionLayout(
-            characters: characters,
-            writingMode: writingMode,
-            fontSize: fontSize,
-            letterSpacing: letterSpacing,
-            lineSpacing: lineSpacing,
-            textAlign: textAlign,
-            verticalAlign: verticalAlign,
-            characterImages: content, // 传递完整的 content 以包含所有纹理相关设置
-            constraints: constraints,
-            padding: padding,
-            fontColor: fontColorStr,
-            backgroundColor: backgroundColorStr,
-            enableSoftLineBreak: enableSoftLineBreak,
-            // 传递纹理设置
-            hasCharacterTexture: hasBackgroundTexture,
-            characterTextureData: backgroundTexture,
-            textureFillMode: textureFillMode,
-            textureOpacity: textureOpacity,
-            textureApplicationRange:
-                textureApplicationRange, // Pass the application mode explicitly
-            ref: ref,
-          );
-        },
-      ),
-    );
+              return CollectionElementRenderer.buildCollectionLayout(
+                characters: characters,
+                writingMode: writingMode,
+                fontSize: fontSize,
+                letterSpacing: letterSpacing,
+                lineSpacing: lineSpacing,
+                textAlign: textAlign,
+                verticalAlign: verticalAlign,
+                characterImages: content, // 传递完整的 content 以包含所有纹理相关设置
+                constraints: constraints,
+                padding: padding,
+                fontColor: fontColorStr,
+                backgroundColor: backgroundColorStr,
+                enableSoftLineBreak: enableSoftLineBreak,
+                // 传递纹理设置
+                hasCharacterTexture: hasBackgroundTexture,
+                characterTextureData: backgroundTexture,
+                textureFillMode: textureFillMode,
+                textureOpacity: textureOpacity,
+                textureApplicationRange:
+                    textureApplicationRange, // Pass the application mode explicitly
+                ref: ref,
+              );
+            },
+          ),
+        ));
   }
 
   /// 构建组合元素
@@ -225,6 +228,7 @@ class ElementRenderers {
   /// 构建图片元素
   static Widget buildImageElement(Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>;
     final imageUrl = content['imageUrl'] as String? ?? '';
     final transformedImageUrl = content['transformedImageUrl'] as String?;
@@ -279,22 +283,25 @@ class ElementRenderers {
 
     // 优先级：转换后的图像数据 > 转换后的图像URL > 原始图像数据（base64或raw）> 原始图像URL
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: bgColor, // 应用背景颜色
-      child: _buildImageWidget(
-        imageUrl: transformedImageUrl ?? imageUrl,
-        fitMode: fitMode,
-        transformedImageData: transformedImageData,
-        base64ImageData: base64ImageData,
-        rawImageData: rawImageData,
-      ),
-    );
+        width: double.infinity,
+        height: double.infinity,
+        color: bgColor, // 应用背景颜色
+        child: Opacity(
+          opacity: opacity,
+          child: _buildImageWidget(
+            imageUrl: transformedImageUrl ?? imageUrl,
+            fitMode: fitMode,
+            transformedImageData: transformedImageData,
+            base64ImageData: base64ImageData,
+            rawImageData: rawImageData,
+          ),
+        ));
   }
 
   /// 构建文本元素
   static Widget buildTextElement(Map<String, dynamic> element,
       {bool isPreviewMode = false}) {
+    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final text = content['text'] as String? ?? '';
     final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 16.0;
@@ -339,46 +346,48 @@ class ElementRenderers {
       builder: (context, constraints) {
         // 使用与文本属性面板预览区完全相同的容器结构
         return SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxHeight,
-          child: Container(
-            // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              // 移除非选中状态下的灰色边框
-              border: null, // 不再显示边框
-              // 移除圆角
-            ),
-            child: Padding(
-              padding: EdgeInsets.all(padding),
-              child: writingMode.startsWith('vertical')
-                  ? TextRenderer.renderVerticalText(
-                      text: text,
-                      style: textStyle,
-                      textAlign: textAlignStr,
-                      verticalAlign: verticalAlign,
-                      writingMode: writingMode,
-                      constraints: BoxConstraints(
-                        maxWidth: constraints.maxWidth - padding * 2,
-                        maxHeight: constraints.maxHeight - padding * 2,
-                      ),
-                      backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
-                    )
-                  : TextRenderer.renderHorizontalText(
-                      text: text,
-                      style: textStyle,
-                      textAlign: textAlignStr,
-                      verticalAlign: verticalAlign,
-                      writingMode: writingMode,
-                      constraints: BoxConstraints(
-                        maxWidth: constraints.maxWidth - padding * 2,
-                        maxHeight: constraints.maxHeight - padding * 2,
-                      ),
-                      backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
-                    ),
-            ),
-          ),
-        );
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            child: Opacity(
+              opacity: opacity,
+              child: Container(
+                // 移除固定的对齐方式，让内部的TextRenderer决定对齐方式
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  // 移除非选中状态下的灰色边框
+                  border: null, // 不再显示边框
+                  // 移除圆角
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(padding),
+                  child: writingMode.startsWith('vertical')
+                      ? TextRenderer.renderVerticalText(
+                          text: text,
+                          style: textStyle,
+                          textAlign: textAlignStr,
+                          verticalAlign: verticalAlign,
+                          writingMode: writingMode,
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth - padding * 2,
+                            maxHeight: constraints.maxHeight - padding * 2,
+                          ),
+                          backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
+                        )
+                      : TextRenderer.renderHorizontalText(
+                          text: text,
+                          style: textStyle,
+                          textAlign: textAlignStr,
+                          verticalAlign: verticalAlign,
+                          writingMode: writingMode,
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth - padding * 2,
+                            maxHeight: constraints.maxHeight - padding * 2,
+                          ),
+                          backgroundColor: Colors.transparent, // 已经在外层容器中设置了背景色
+                        ),
+                ),
+              ),
+            ));
       },
     );
   }
