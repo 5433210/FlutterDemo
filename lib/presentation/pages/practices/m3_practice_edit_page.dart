@@ -10,8 +10,8 @@ import 'package:uuid/uuid.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/common/persistent_resizable_panel.dart';
+import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 // import '../../widgets/practice/edit_toolbar.dart';
 // import '../../widgets/practice/file_operations.dart';
@@ -457,14 +457,14 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         return Row(
           children: [
             // Left panel
-            if (!_isPreviewMode && _isLeftPanelOpen) _buildLeftPanel(),
-
-            // Left panel toggle
+            if (!_isPreviewMode && _isLeftPanelOpen)
+              _buildLeftPanel(), // Left panel toggle
             if (!_isPreviewMode)
-              SidebarToggle(
-                isOpen: _isLeftPanelOpen,
-                onToggle: () => setState(() {
-                  _isLeftPanelOpen = !_isLeftPanelOpen;
+              PersistentSidebarToggle(
+                sidebarId: 'practice_edit_left_panel',
+                defaultIsOpen: _isLeftPanelOpen,
+                onToggle: (isOpen) => setState(() {
+                  _isLeftPanelOpen = isOpen;
                 }),
                 alignRight: false,
               ),
@@ -498,14 +498,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                     _buildPageThumbnails(),
                 ],
               ),
-            ),
-
-            // Right panel toggle
+            ), // Right panel toggle
             if (!_isPreviewMode)
-              SidebarToggle(
-                isOpen: _isRightPanelOpen,
-                onToggle: () => setState(() {
-                  _isRightPanelOpen = !_isRightPanelOpen;
+              PersistentSidebarToggle(
+                sidebarId: 'practice_edit_right_panel',
+                defaultIsOpen: _isRightPanelOpen,
+                onToggle: (isOpen) => setState(() {
+                  _isRightPanelOpen = isOpen;
                 }),
                 alignRight: true,
               ),
@@ -588,7 +587,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   /// Build the left panel
   Widget _buildLeftPanel() {
-    return ResizablePanel(
+    return PersistentResizablePanel(
+      panelId: 'practice_edit_left_panel',
       initialWidth: 250,
       minWidth: 250,
       maxWidth: 400,
@@ -659,10 +659,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                 // Update layer properties
                 _controller.updateLayerProperties(layerId, properties);
               },
-            );
-
-            // Return resizable panel
-            return ResizablePanel(
+            ); // Return resizable panel
+            return PersistentResizablePanel(
+              panelId: 'practice_edit_right_panel_character',
               initialWidth: 400,
               minWidth: 300,
               maxWidth: 800,
@@ -765,8 +764,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
             },
           );
         }
-
-        return ResizablePanel(
+        return PersistentResizablePanel(
+          panelId: 'practice_edit_right_panel_properties',
           initialWidth: 400,
           minWidth: 300,
           maxWidth: 800,

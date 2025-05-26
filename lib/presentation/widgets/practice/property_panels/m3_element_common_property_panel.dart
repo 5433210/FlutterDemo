@@ -53,10 +53,11 @@ class M3ElementCommonPropertyPanel extends StatelessWidget {
         typeDisplayName = l10n.elements;
     }
 
-    return M3PanelStyles.buildPanelCard(
+    return M3PanelStyles.buildPersistentPanelCard(
       context: context,
+      panelId: 'element_common_properties',
       title: typeDisplayName,
-      initiallyExpanded: true,
+      defaultExpanded: true,
       children: [
         // 元素状态控制
         Row(

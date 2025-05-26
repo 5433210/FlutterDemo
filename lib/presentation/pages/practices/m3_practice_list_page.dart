@@ -6,8 +6,8 @@ import '../../../routes/app_routes.dart';
 import '../../providers/practice_list_provider.dart';
 import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/practice_list_state.dart';
-import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/common/persistent_resizable_panel.dart';
+import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/m3_practice_filter_panel.dart';
@@ -58,7 +58,8 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
         sortOrder: state.filter.sortOrder,
         onSearch: (_) {},
         onSortFieldChanged: (_) {},
-        onSortOrderChanged: () {},        onBackPressed: () {
+        onSortOrderChanged: () {},
+        onBackPressed: () {
           CrossNavigationHelper.handleBackNavigation(context, ref);
         },
       ),
@@ -69,7 +70,8 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
               children: [
                 // 左侧过滤面板
                 if (state.isFilterPanelExpanded)
-                  ResizablePanel(
+                  PersistentResizablePanel(
+                    panelId: 'practice_list_filter_panel',
                     initialWidth: 300,
                     minWidth: 280,
                     maxWidth: 400,
@@ -82,12 +84,11 @@ class _M3PracticeListPageState extends ConsumerState<M3PracticeListPage> {
                       initialSearchValue: state.searchQuery,
                       searchController: state.searchController,
                     ),
-                  ),
-
-                // 过滤面板切换按钮
-                SidebarToggle(
-                  isOpen: state.isFilterPanelExpanded,
-                  onToggle: () => viewModel.toggleFilterPanel(),
+                  ), // 过滤面板切换按钮
+                PersistentSidebarToggle(
+                  sidebarId: 'practice_list_filter_sidebar',
+                  defaultIsOpen: state.isFilterPanelExpanded,
+                  onToggle: (isOpen) => viewModel.toggleFilterPanel(),
                   alignRight: false,
                 ),
 

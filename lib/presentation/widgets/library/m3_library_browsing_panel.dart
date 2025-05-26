@@ -16,8 +16,8 @@ import '../../pages/library/components/resizable_image_preview_panel.dart';
 import '../../pages/library/desktop_drop_wrapper.dart';
 import '../../providers/library/library_management_provider.dart';
 import '../../viewmodels/states/library_management_state.dart';
-import '../common/resizable_panel.dart';
-import '../common/sidebar_toggle.dart';
+import '../common/persistent_resizable_panel.dart';
+import '../common/persistent_sidebar_toggle.dart';
 import '../pagination/m3_pagination_controls.dart';
 
 /// 图库检索面板 - 独立可复用的组件
@@ -89,7 +89,8 @@ class _M3LibraryBrowsingPanelState
             children: [
               // Left filter panel (resizable)
               if (_isFilterPanelExpanded)
-                ResizablePanel(
+                PersistentResizablePanel(
+                  panelId: 'library_browsing_filter_panel',
                   initialWidth: 300,
                   minWidth: 280,
                   maxWidth: 400,
@@ -108,9 +109,10 @@ class _M3LibraryBrowsingPanelState
                 ),
 
               // Filter panel toggle
-              SidebarToggle(
-                isOpen: _isFilterPanelExpanded,
-                onToggle: _toggleFilterPanel,
+              PersistentSidebarToggle(
+                sidebarId: 'library_browsing_filter_sidebar',
+                defaultIsOpen: _isFilterPanelExpanded,
+                onToggle: (isOpen) => _toggleFilterPanel(),
                 alignRight: false,
               ),
 

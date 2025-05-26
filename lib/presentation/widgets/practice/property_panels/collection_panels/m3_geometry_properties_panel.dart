@@ -24,11 +24,11 @@ class M3GeometryPropertiesPanel extends StatelessWidget {
     final width = (element['width'] as num).toDouble();
     final height = (element['height'] as num).toDouble();
     final rotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
-
-    return M3PanelStyles.buildPanelCard(
+    return M3PanelStyles.buildPersistentPanelCard(
       context: context,
+      panelId: 'collection_geometry_properties_panel',
       title: l10n.geometryProperties,
-      initiallyExpanded: true,
+      defaultExpanded: true,
       children: [
         // Position (X and Y)
         M3PanelStyles.buildSectionTitle(context, l10n.position),

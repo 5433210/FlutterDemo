@@ -11,8 +11,8 @@ import '../../providers/work_image_editor_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../widgets/common/error_display.dart';
 import '../../widgets/common/loading_indicator.dart';
-import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/common/persistent_resizable_panel.dart';
+import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import './m3_character_collection_page.dart';
 import 'components/m3_unified_work_detail_panel.dart';
@@ -133,11 +133,12 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
         ),
 
         // Add panel toggle button
-        SidebarToggle(
-          isOpen: _isPanelOpen,
-          onToggle: () {
+        PersistentSidebarToggle(
+          sidebarId: 'work_detail_panel',
+          defaultIsOpen: _isPanelOpen,
+          onToggle: (isOpen) {
             setState(() {
-              _isPanelOpen = !_isPanelOpen;
+              _isPanelOpen = isOpen;
             });
           },
           alignRight: true,
@@ -145,7 +146,8 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
         // Right side panel - conditionally shown
         if (_isPanelOpen)
-          ResizablePanel(
+          PersistentResizablePanel(
+            panelId: 'work_detail_right_panel',
             initialWidth: _panelWidth,
             minWidth: 280,
             maxWidth: 500,
@@ -189,17 +191,19 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
                 ref.read(workDetailProvider.notifier).selectImage(index),
           ),
         ),
-        SidebarToggle(
-          isOpen: _isPanelOpen,
-          onToggle: () {
+        PersistentSidebarToggle(
+          sidebarId: 'work_detail_panel_management',
+          defaultIsOpen: _isPanelOpen,
+          onToggle: (isOpen) {
             setState(() {
-              _isPanelOpen = !_isPanelOpen;
+              _isPanelOpen = isOpen;
             });
           },
           alignRight: true,
         ),
         if (_isPanelOpen)
-          ResizablePanel(
+          PersistentResizablePanel(
+            panelId: 'work_detail_management_panel',
             initialWidth: _panelWidth,
             minWidth: 280,
             maxWidth: 500,

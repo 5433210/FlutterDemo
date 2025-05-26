@@ -25,10 +25,11 @@ class M3LayerInfoPanel extends StatelessWidget {
     final isVisible = layer!['isVisible'] as bool? ?? true;
     final isLocked = layer!['isLocked'] as bool? ?? false;
 
-    return M3PanelStyles.buildPanelCard(
+    return M3PanelStyles.buildPersistentPanelCard(
       context: context,
+      panelId: 'layer_info_panel',
       title: l10n.layerInfo,
-      initiallyExpanded: true,
+      defaultExpanded: true,
       children: [
         // 图层名称
         M3PanelStyles.buildSectionTitle(context, l10n.layerName(layerName)),

@@ -1,71 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../common/persistent_expansion_tile.dart';
+
 /// Material 3 共享面板样式工具类
 /// 用于确保所有属性面板具有一致的视觉风格
 class M3PanelStyles {
-  /// 构建标准的面板卡片
-  static Widget buildPanelCard({
-    required BuildContext context,
-    required String title,
-    required List<Widget> children,
-    bool initiallyExpanded = true,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // 移除分割线
-        ),
-        child: ExpansionTile(
-          initiallyExpanded: initiallyExpanded,
-          title: Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          collapsedIconColor: colorScheme.onSurfaceVariant,
-          iconColor: colorScheme.primary,
-          childrenPadding: EdgeInsets.zero, // 移除默认内边距
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: children,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  /// 构建标题文本
-  static Widget buildSectionTitle(BuildContext context, String title) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: textTheme.titleSmall?.copyWith(
-          color: colorScheme.onSurface,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
   /// 构建信息提示框
   static Widget buildInfoBox({
     required BuildContext context,
@@ -104,6 +43,69 @@ class M3PanelStyles {
     );
   }
 
+  /// 构建标准的面板卡片
+  static Widget buildPanelCard({
+    required BuildContext context,
+    required String title,
+    required List<Widget> children,
+    bool initiallyExpanded = true,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // 移除分割线
+        ),
+        child: ExpansionTile(
+          initiallyExpanded: initiallyExpanded,
+          title: Text(
+            title,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          collapsedIconColor: colorScheme.onSurfaceVariant,
+          iconColor: colorScheme.primary,
+          childrenPadding: EdgeInsets.zero, // 移除默认内边距
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建带有状态持久化功能的面板卡片
+  static Widget buildPersistentPanelCard({
+    required BuildContext context,
+    required String panelId,
+    required String title,
+    required List<Widget> children,
+    bool defaultExpanded = true,
+  }) {
+    return PersistentPanelCard(
+      panelId: panelId,
+      title: title,
+      defaultExpanded: defaultExpanded,
+      children: children,
+    );
+  }
+
   /// 构建预览容器
   static Widget buildPreviewContainer({
     required BuildContext context,
@@ -121,6 +123,23 @@ class M3PanelStyles {
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: child,
+    );
+  }
+
+  /// 构建标题文本
+  static Widget buildSectionTitle(BuildContext context, String title) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        title,
+        style: textTheme.titleSmall?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 

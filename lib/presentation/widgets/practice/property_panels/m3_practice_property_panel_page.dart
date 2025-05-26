@@ -4,6 +4,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../../common/editable_number_field.dart';
 import '../../common/m3_color_picker.dart';
 import '../practice_edit_controller.dart';
+import 'm3_panel_styles.dart';
 
 /// Material 3 页面属性面板
 class M3PagePropertyPanel extends StatefulWidget {
@@ -73,9 +74,11 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
         ),
 
         // 页面尺寸设置
-        materialExpansionTile(
-          title: Text(l10n.pageSize),
-          initiallyExpanded: true,
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'page_size_settings',
+          title: l10n.pageSize,
+          defaultExpanded: true,
           children: [
             Padding(
               padding:
@@ -304,9 +307,11 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
         ),
 
         // 背景颜色设置
-        materialExpansionTile(
-          title: Text(l10n.backgroundColor),
-          initiallyExpanded: true,
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'page_background_color',
+          title: l10n.backgroundColor,
+          defaultExpanded: true,
           children: [
             Padding(
               padding:
@@ -353,9 +358,11 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
         ),
 
         // 网格设置
-        materialExpansionTile(
-          title: Text(l10n.gridSettings),
-          initiallyExpanded: true,
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'page_grid_settings',
+          title: l10n.gridSettings,
+          defaultExpanded: true,
           children: [
             Padding(
               padding:
@@ -533,22 +540,6 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
 
     // 监听控制器状态变化，用于同步网格状态
     widget.controller.addListener(_handleControllerChange);
-  }
-
-  /// 构建Material 3风格的ExpansionTile
-  Widget materialExpansionTile({
-    required Widget title,
-    List<Widget> children = const <Widget>[],
-    bool initiallyExpanded = false,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: ExpansionTile(
-        title: title,
-        initiallyExpanded: initiallyExpanded,
-        children: children,
-      ),
-    );
   }
 
   /// 计算像素尺寸

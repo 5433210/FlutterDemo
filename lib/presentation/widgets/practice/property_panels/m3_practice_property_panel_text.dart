@@ -57,29 +57,30 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
         ),
 
         // 图层信息
-        M3LayerInfoPanel(layer: layer),
-
-        // 几何属性部分
-        M3PanelStyles.buildPanelCard(
+        M3LayerInfoPanel(layer: layer), // 几何属性部分
+        M3PanelStyles.buildPersistentPanelCard(
           context: context,
+          panelId: 'text_geometry_properties',
           title: l10n.geometryProperties,
-          initiallyExpanded: true,
+          defaultExpanded: true,
           children: _buildGeometryPropertiesPanelList(context),
         ),
 
         // 视觉属性部分
-        M3PanelStyles.buildPanelCard(
+        M3PanelStyles.buildPersistentPanelCard(
           context: context,
+          panelId: 'text_visual_settings',
           title: l10n.visualSettings,
-          initiallyExpanded: true,
+          defaultExpanded: true,
           children: _buildVisualPropertiesPanelList(context),
         ),
 
         // 文本设置部分
-        M3PanelStyles.buildPanelCard(
+        M3PanelStyles.buildPersistentPanelCard(
           context: context,
+          panelId: 'text_settings',
           title: l10n.textPropertyPanelTextSettings,
-          initiallyExpanded: true,
+          defaultExpanded: true,
           children: _buildTextSettingsPanelList(context),
         ),
       ],

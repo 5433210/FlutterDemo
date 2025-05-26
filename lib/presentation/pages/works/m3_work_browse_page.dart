@@ -11,8 +11,8 @@ import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/work_browse_state.dart';
-import '../../widgets/common/resizable_panel.dart';
-import '../../widgets/common/sidebar_toggle.dart';
+import '../../widgets/common/persistent_resizable_panel.dart';
+import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
 import '../../widgets/pagination/m3_pagination_controls.dart';
 import 'components/content/m3_work_grid_view.dart';
@@ -106,7 +106,8 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
               children: [
                 // Filter Panel
                 if (state.isSidebarOpen)
-                  ResizablePanel(
+                  PersistentResizablePanel(
+                    panelId: 'work_browse_filter_panel',
                     initialWidth: 300,
                     minWidth: 280,
                     maxWidth: 400,
@@ -119,9 +120,10 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       initialSearchValue: state.searchQuery,
                     ),
                   ),
-                SidebarToggle(
-                  isOpen: state.isSidebarOpen,
-                  onToggle: () => viewModel.toggleSidebar(),
+                PersistentSidebarToggle(
+                  sidebarId: 'work_browse_filter_sidebar',
+                  defaultIsOpen: state.isSidebarOpen,
+                  onToggle: (isOpen) => viewModel.toggleSidebar(),
                   alignRight: false,
                 ),
                 // 移除了可能导致深色阴影的分隔线

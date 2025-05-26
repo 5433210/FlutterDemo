@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
+import 'm3_panel_styles.dart';
 import 'm3_practice_property_panel_base.dart';
 
 /// Material 3 多选属性面板
@@ -80,506 +81,399 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
           ),
         ),
 
-        // 多选操作卡片 - 基本属性
-        Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        // 多选操作面板 - 基本属性
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'multi_selection_basic_properties',
+          title: l10n.commonProperties,
+          defaultExpanded: true,
+          children: [
+            // ...existing code... (锁定和可见性控制等)
+            // 锁定和可见性控制
+            Row(
               children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 20,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.commonProperties,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 锁定和可见性控制
-                Row(
-                  children: [
-                    // 锁定控制
-                    Expanded(
-                      child: Card(
-                        elevation: 0,
-                        color: colorScheme.surfaceContainerHighest,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: SwitchListTile(
-                          title: Text(
-                            l10n.locked,
-                            style: TextStyle(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          value: commonLocked ?? false,
-                          activeColor: colorScheme.primary,
-                          onChanged: commonLocked != null
-                              ? (value) {
-                                  _updateAllElements('locked', value);
-                                }
-                              : null,
-                          secondary: Icon(
-                            commonLocked == true ? Icons.lock : Icons.lock_open,
-                            color: commonLocked == true
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                          dense: true,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // 可见性控制
-                    Expanded(
-                      child: Card(
-                        elevation: 0,
-                        color: colorScheme.surfaceContainerHighest,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        child: SwitchListTile(
-                          title: Text(
-                            l10n.visible,
-                            style: TextStyle(
-                              color: colorScheme.onSurface,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          value: !(commonHidden ?? false),
-                          activeColor: colorScheme.primary,
-                          onChanged: commonHidden != null
-                              ? (value) {
-                                  _updateAllElements('hidden', !value);
-                                }
-                              : null,
-                          secondary: Icon(
-                            commonHidden == true
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: commonHidden == true
-                                ? colorScheme.onSurfaceVariant
-                                : colorScheme.primary,
-                          ),
-                          dense: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                // 透明度控制
-                if (commonOpacity != null) ...[
-                  Text(
-                    '${l10n.opacity}:',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
+                // 锁定控制
+                Expanded(
+                  child: Card(
                     elevation: 0,
                     color: colorScheme.surfaceContainerHighest,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Slider(
-                              value: commonOpacity,
-                              min: 0.0,
-                              max: 1.0,
-                              divisions: 100,
-                              label: '${(commonOpacity * 100).round()}%',
-                              activeColor: colorScheme.primary,
-                              thumbColor: colorScheme.primary,
-                              inactiveColor:
-                                  colorScheme.surfaceContainerHighest,
-                              onChanged: (value) {
-                                _updateAllElements('opacity', value);
-                              },
-                            ),
-                          ),
-                          SizedBox(
-                            width: 50,
-                            child: Text(
-                              '${(commonOpacity * 100).round()}%',
-                              style: TextStyle(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 16),
-
-                // 图层信息
-                if (layer != null) ...[
-                  Text(
-                    '${l10n.layer}:',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    elevation: 0,
-                    color: colorScheme.surfaceContainerHighest,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: ListTile(
-                      leading: Icon(
-                        Icons.layers,
-                        color: colorScheme.primary,
-                      ),
+                    child: SwitchListTile(
                       title: Text(
-                        layer['name'] as String? ?? l10n.unnamedLayer,
+                        l10n.locked,
                         style: TextStyle(
                           color: colorScheme.onSurface,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            (layer['isVisible'] as bool? ?? true)
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            size: 16,
-                            color: (layer['isVisible'] as bool? ?? true)
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
+                      value: commonLocked ?? false,
+                      activeColor: colorScheme.primary,
+                      onChanged: commonLocked != null
+                          ? (value) {
+                              _updateAllElements('locked', value);
+                            }
+                          : null,
+                      secondary: Icon(
+                        commonLocked == true ? Icons.lock : Icons.lock_open,
+                        color: commonLocked == true
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                      dense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 可见性控制
+                Expanded(
+                  child: Card(
+                    elevation: 0,
+                    color: colorScheme.surfaceContainerHighest,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: SwitchListTile(
+                      title: Text(
+                        l10n.visible,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      value: !(commonHidden ?? false),
+                      activeColor: colorScheme.primary,
+                      onChanged: commonHidden != null
+                          ? (value) {
+                              _updateAllElements('hidden', !value);
+                            }
+                          : null,
+                      secondary: Icon(
+                        commonHidden == true
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: commonHidden == true
+                            ? colorScheme.onSurfaceVariant
+                            : colorScheme.primary,
+                      ),
+                      dense: true,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // 透明度控制
+            if (commonOpacity != null) ...[
+              Text(
+                '${l10n.opacity}:',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                elevation: 0,
+                color: colorScheme.surfaceContainerHighest,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Slider(
+                          value: commonOpacity,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 100,
+                          label: '${(commonOpacity * 100).round()}%',
+                          activeColor: colorScheme.primary,
+                          thumbColor: colorScheme.primary,
+                          inactiveColor: colorScheme.surfaceContainerHighest,
+                          onChanged: (value) {
+                            _updateAllElements('opacity', value);
+                          },
+                        ),
+                      ),
+                      SizedBox(
+                        width: 50,
+                        child: Text(
+                          '${(commonOpacity * 100).round()}%',
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            (layer['isLocked'] as bool? ?? false)
-                                ? Icons.lock
-                                : Icons.lock_open,
-                            size: 16,
-                            color: (layer['isLocked'] as bool? ?? false)
-                                ? colorScheme.primary
-                                : colorScheme.onSurfaceVariant,
-                          ),
-                        ],
+                          textAlign: TextAlign.center,
+                        ),
                       ),
-                      onTap: () {
-                        // 选中图层
-                        controller.selectLayer(layer['id'] as String);
-                      },
+                    ],
+                  ),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 16),
+
+            // 图层信息
+            if (layer != null) ...[
+              Text(
+                '${l10n.layer}:',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                elevation: 0,
+                color: colorScheme.surfaceContainerHighest,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: ListTile(
+                  leading: Icon(
+                    Icons.layers,
+                    color: colorScheme.primary,
+                  ),
+                  title: Text(
+                    layer['name'] as String? ?? l10n.unnamedLayer,
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
-        ),
-
-        // 多选操作卡片 - 对齐工具
-        Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.format_align_center,
-                      size: 20,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.alignmentOperations,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        (layer['isVisible'] as bool? ?? true)
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        size: 16,
+                        color: (layer['isVisible'] as bool? ?? true)
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 水平对齐按钮
-                Text(
-                  '${l10n.horizontalAlignment}:',
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_horizontal_left,
-                          tooltip: l10n.alignLeft,
-                          onPressed: () => _alignElements('left'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_horizontal_center,
-                          tooltip: l10n.alignHorizontalCenter,
-                          onPressed: () => _alignElements('centerH'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_horizontal_right,
-                          tooltip: l10n.alignRight,
-                          onPressed: () => _alignElements('right'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.horizontal_distribute,
-                          tooltip: l10n.distributeHorizontally,
-                          onPressed: selectedIds.length > 2
-                              ? () => _distributeElements('horizontal')
-                              : null,
-                          colorScheme: colorScheme,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 垂直对齐按钮
-                Text(
-                  '${l10n.verticalAlignment}:',
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_vertical_top,
-                          tooltip: l10n.alignTop,
-                          onPressed: () => _alignElements('top'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_vertical_center,
-                          tooltip: l10n.alignVerticalCenter,
-                          onPressed: () => _alignElements('centerV'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.align_vertical_bottom,
-                          tooltip: l10n.alignBottom,
-                          onPressed: () => _alignElements('bottom'),
-                          colorScheme: colorScheme,
-                        ),
-                        _buildAlignmentButton(
-                          context: context,
-                          icon: Icons.vertical_distribute,
-                          tooltip: l10n.distributeVertically,
-                          onPressed: selectedIds.length > 2
-                              ? () => _distributeElements('vertical')
-                              : null,
-                          colorScheme: colorScheme,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 多选操作卡片 - 组合工具
-        Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.group_work,
-                      size: 20,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.groupOperations,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+                      const SizedBox(width: 8),
+                      Icon(
+                        (layer['isLocked'] as bool? ?? false)
+                            ? Icons.lock
+                            : Icons.lock_open,
+                        size: 16,
+                        color: (layer['isLocked'] as bool? ?? false)
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 组合按钮
-                Card(
-                  elevation: 0,
-                  color: colorScheme.surfaceContainerHighest,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+                    ],
                   ),
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.group,
-                      color: colorScheme.primary,
-                    ),
-                    title: Text(
-                      l10n.group,
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      l10n.groupElements,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    onTap: () {
-                      controller.groupSelectedElements();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 多选操作卡片 - 删除工具
-        Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.delete_outline,
-                      size: 20,
-                      color: colorScheme.error,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.practiceEditDangerZone,
-                      style: textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.error,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 删除按钮
-                ElevatedButton.icon(
-                  onPressed: () {
-                    controller.deleteSelectedElements();
+                  onTap: () {
+                    // 选中图层
+                    controller.selectLayer(layer['id'] as String);
                   },
-                  icon: Icon(
-                    Icons.delete,
-                    color: colorScheme.error,
-                    size: 18,
-                  ),
-                  label: Text(
-                    '${l10n.delete} (${selectedIds.length})',
-                    style: textTheme.labelLarge?.copyWith(
-                      color: colorScheme.error,
+                ),
+              ),
+            ],
+          ],
+        ),
+
+        // 多选操作面板 - 对齐工具
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'multi_selection_alignment_tools',
+          title: l10n.alignmentOperations,
+          defaultExpanded: false,
+          children: [
+            // ...existing code... (对齐按钮等)
+            // 水平对齐按钮
+            Text(
+              '${l10n.horizontalAlignment}:',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              elevation: 0,
+              color: colorScheme.surfaceContainerHighest,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_horizontal_left,
+                      tooltip: l10n.alignLeft,
+                      onPressed: () => _alignElements('left'),
+                      colorScheme: colorScheme,
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.errorContainer,
-                    foregroundColor: colorScheme.error,
-                    minimumSize: const Size.fromHeight(48),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_horizontal_center,
+                      tooltip: l10n.alignHorizontalCenter,
+                      onPressed: () => _alignElements('centerH'),
+                      colorScheme: colorScheme,
+                    ),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_horizontal_right,
+                      tooltip: l10n.alignRight,
+                      onPressed: () => _alignElements('right'),
+                      colorScheme: colorScheme,
+                    ),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.horizontal_distribute,
+                      tooltip: l10n.distributeHorizontally,
+                      onPressed: selectedIds.length > 2
+                          ? () => _distributeElements('horizontal')
+                          : null,
+                      colorScheme: colorScheme,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 垂直对齐按钮
+            Text(
+              '${l10n.verticalAlignment}:',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              elevation: 0,
+              color: colorScheme.surfaceContainerHighest,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_vertical_top,
+                      tooltip: l10n.alignTop,
+                      onPressed: () => _alignElements('top'),
+                      colorScheme: colorScheme,
+                    ),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_vertical_center,
+                      tooltip: l10n.alignVerticalCenter,
+                      onPressed: () => _alignElements('centerV'),
+                      colorScheme: colorScheme,
+                    ),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.align_vertical_bottom,
+                      tooltip: l10n.alignBottom,
+                      onPressed: () => _alignElements('bottom'),
+                      colorScheme: colorScheme,
+                    ),
+                    _buildAlignmentButton(
+                      context: context,
+                      icon: Icons.vertical_distribute,
+                      tooltip: l10n.distributeVertically,
+                      onPressed: selectedIds.length > 2
+                          ? () => _distributeElements('vertical')
+                          : null,
+                      colorScheme: colorScheme,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // 多选操作面板 - 组合工具
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'multi_selection_group_tools',
+          title: l10n.groupOperations,
+          defaultExpanded: false,
+          children: [
+            // 组合按钮
+            Card(
+              elevation: 0,
+              color: colorScheme.surfaceContainerHighest,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: ListTile(
+                leading: Icon(
+                  Icons.group,
+                  color: colorScheme.primary,
+                ),
+                title: Text(
+                  l10n.group,
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+                subtitle: Text(
+                  l10n.groupElements,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                onTap: () {
+                  controller.groupSelectedElements();
+                },
+              ),
             ),
-          ),
+          ],
+        ),
+
+        // 多选操作面板 - 删除工具
+        M3PanelStyles.buildPersistentPanelCard(
+          context: context,
+          panelId: 'multi_selection_delete_tools',
+          title: l10n.practiceEditDangerZone,
+          defaultExpanded: false,
+          children: [
+            // 删除按钮
+            ElevatedButton.icon(
+              onPressed: () {
+                controller.deleteSelectedElements();
+              },
+              icon: Icon(
+                Icons.delete,
+                color: colorScheme.error,
+                size: 18,
+              ),
+              label: Text(
+                '${l10n.delete} (${selectedIds.length})',
+                style: textTheme.labelLarge?.copyWith(
+                  color: colorScheme.error,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.errorContainer,
+                foregroundColor: colorScheme.error,
+                minimumSize: const Size.fromHeight(48),
+              ),
+            ),
+          ],
         ),
       ],
     );

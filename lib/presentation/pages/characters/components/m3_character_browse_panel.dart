@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../providers/character/character_management_provider.dart';
 import '../../../viewmodels/states/character_management_state.dart';
-import '../../../widgets/common/resizable_panel.dart';
-import '../../../widgets/common/sidebar_toggle.dart';
+import '../../../widgets/common/persistent_resizable_panel.dart';
+import '../../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../../widgets/pagination/m3_pagination_controls.dart';
 import '../../library/components/box_selection_painter.dart';
 import 'm3_character_filter_panel.dart';
@@ -103,7 +103,8 @@ class _M3CharacterBrowsePanelState
             children: [
               // 筛选面板（可折叠和调整大小）
               if (widget.showFilterPanel && _isFilterPanelExpanded)
-                ResizablePanel(
+                PersistentResizablePanel(
+                  panelId: 'character_browse_filter_panel',
                   initialWidth: 300,
                   minWidth: 280,
                   maxWidth: 400,
@@ -115,9 +116,10 @@ class _M3CharacterBrowsePanelState
 
               // 筛选面板切换按钮
               if (widget.showFilterPanel)
-                SidebarToggle(
-                  isOpen: _isFilterPanelExpanded,
-                  onToggle: _toggleFilterPanel,
+                PersistentSidebarToggle(
+                  sidebarId: 'character_browse_filter_sidebar',
+                  defaultIsOpen: _isFilterPanelExpanded,
+                  onToggle: (isOpen) => _toggleFilterPanel(),
                   alignRight: false,
                 ),
 

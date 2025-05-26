@@ -8,7 +8,7 @@ import '../../providers/character/character_filter_provider.dart';
 import '../../providers/character/character_management_provider.dart';
 import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/character_management_state.dart';
-import '../../widgets/common/resizable_panel.dart';
+import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/page_layout.dart';
 import 'components/m3_character_browse_panel.dart';
 import 'components/m3_character_detail_panel.dart';
@@ -79,7 +79,8 @@ class _M3CharacterManagementPageState
 
             // 详情面板（可折叠和调整大小）
             if (state.selectedCharacterId != null && state.isDetailOpen)
-              ResizablePanel(
+              PersistentResizablePanel(
+                panelId: 'character_management_detail_panel',
                 initialWidth: 350,
                 minWidth: 250,
                 maxWidth: 500,

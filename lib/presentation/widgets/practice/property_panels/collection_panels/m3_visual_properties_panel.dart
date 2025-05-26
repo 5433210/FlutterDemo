@@ -52,11 +52,11 @@ class _M3VisualPropertiesPanelState
     final textureApplicationRange =
         content['textureApplicationRange'] as String? ?? 'characterBackground';
     final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
-
-    return M3PanelStyles.buildPanelCard(
+    return M3PanelStyles.buildPersistentPanelCard(
       context: context,
+      panelId: 'collection_visual_properties',
       title: l10n.visualSettings,
-      initiallyExpanded: true,
+      defaultExpanded: true,
       children: [
         // Color settings
         M3PanelStyles.buildSectionTitle(

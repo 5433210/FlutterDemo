@@ -44,11 +44,11 @@ class M3ContentSettingsPanel extends ConsumerWidget {
 
     final content = element['content'] as Map<String, dynamic>;
     final characters = content['characters'] as String? ?? '';
-
-    return M3PanelStyles.buildPanelCard(
+    return M3PanelStyles.buildPersistentPanelCard(
       context: context,
+      panelId: 'collection_content_settings',
       title: l10n.contentSettings,
-      initiallyExpanded: true,
+      defaultExpanded: true,
       children: [
         // Character content
         M3PanelStyles.buildSectionTitle(
