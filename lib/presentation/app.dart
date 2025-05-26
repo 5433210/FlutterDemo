@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
@@ -105,10 +106,15 @@ class MyApp extends ConsumerWidget {
           debugShowCheckedModeBanner: false,
           home: Builder(
             builder: (context) {
-              // 在MaterialApp初始化后更新窗口标题
+              // 在MaterialApp初始化后更新窗口标题 - 仅在桌面平台
               final l10n = AppLocalizations.of(context);
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                windowManager.setTitle(l10n.appTitle);
+                if (!kIsWeb &&
+                    (Platform.isWindows ||
+                        Platform.isMacOS ||
+                        Platform.isLinux)) {
+                  windowManager.setTitle(l10n.appTitle);
+                }
               });
 
               return const M3MainWindow();

@@ -106,19 +106,32 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
               children: [
                 // Filter Panel
                 if (state.isSidebarOpen)
-                  PersistentResizablePanel(
-                    panelId: 'work_browse_filter_panel',
-                    initialWidth: 300,
-                    minWidth: 280,
-                    maxWidth: 400,
-                    isLeftPanel: true,
-                    child: M3WorkFilterPanel(
-                      filter: state.filter,
-                      onFilterChanged: viewModel.updateFilter,
-                      onToggleExpand: () => viewModel.toggleSidebar(),
-                      searchController: state.searchController,
-                      initialSearchValue: state.searchQuery,
-                    ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate responsive panel width
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final maxPanelWidth =
+                          (screenWidth * 0.4).clamp(250.0, 400.0);
+                      final minPanelWidth =
+                          (screenWidth * 0.25).clamp(200.0, 280.0);
+                      final initialPanelWidth =
+                          (screenWidth * 0.3).clamp(250.0, 300.0);
+
+                      return PersistentResizablePanel(
+                        panelId: 'work_browse_filter_panel',
+                        initialWidth: initialPanelWidth,
+                        minWidth: minPanelWidth,
+                        maxWidth: maxPanelWidth,
+                        isLeftPanel: true,
+                        child: M3WorkFilterPanel(
+                          filter: state.filter,
+                          onFilterChanged: viewModel.updateFilter,
+                          onToggleExpand: () => viewModel.toggleSidebar(),
+                          searchController: state.searchController,
+                          initialSearchValue: state.searchQuery,
+                        ),
+                      );
+                    },
                   ),
                 PersistentSidebarToggle(
                   sidebarId: 'work_browse_filter_sidebar',
