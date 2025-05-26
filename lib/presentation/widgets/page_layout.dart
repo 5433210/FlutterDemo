@@ -36,22 +36,21 @@ class PageLayout extends StatelessWidget {
 
     return Scaffold(
       // No AppBar, using our own toolbar
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Toolbar with consistent styling
-            if (toolbar != null)
-              Material(
-                elevation: 0,
-                color: theme.colorScheme.surface,
-                child: toolbar!,
-              ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Toolbar with consistent styling
+          if (toolbar != null)
+            Material(
+              elevation: 0,
+              color: theme.colorScheme.surface,
+              // 确保toolbar可以从屏幕顶部开始，不添加安全区域边距
+              child: toolbar!,
+            ),
 
-            // Main content
-            Expanded(child: body),
-          ],
-        ),
+          // Main content
+          Expanded(child: body),
+        ],
       ),
       floatingActionButton: floatingActionButton,
     );

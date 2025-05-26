@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,30 +25,32 @@ void main() async {
   // 初始化键盘工具
   KeyboardUtils.initialize();
 
-  // 初始化窗口管理器
-  await windowManager.ensureInitialized();
+  // Only initialize window manager on desktop platforms
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    // 初始化窗口管理器
+    await windowManager.ensureInitialized();
 
-  // 设置初始窗口标题，后续会在应用中根据语言更新
-  const appTitle = '字字珠玑'; // 默认使用中文标题
+    // 设置初始窗口标题，后续会在应用中根据语言更新
+    const appTitle = '字字珠玑'; // 默认使用中文标题
 
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1280, 800),
-    minimumSize: Size(800, 600),
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-    title: appTitle,
-  );
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 800),
+      minimumSize: Size(800, 600),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+      title: appTitle,
+    );
 
-  // 设置窗口
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    // 设置窗口图标，确保与任务栏图标一致
-    // 注意：路径是相对于可执行文件的，不是相对于Flutter项目
-    await windowManager.setIcon('resources/app_trans_bg.ico');
-    await windowManager.show();
-    await windowManager.focus();
-  });
+    // 设置窗口
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      // 设置窗口图标，确保与任务栏图标一致
+      await windowManager.setIcon('resources/app_trans_bg.ico');
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   // 初始化日志系统，启用控制台输出和调试级别
   await AppLogger.init(enableConsole: true, minLevel: LogLevel.debug);

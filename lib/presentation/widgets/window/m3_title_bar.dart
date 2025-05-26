@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:charasgem/presentation/widgets/window/app_icon.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -6,6 +9,12 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 
 class M3TitleBar extends StatefulWidget {
+  /// Check if the current platform supports window management
+  static bool get isDesktopPlatform {
+    if (kIsWeb) return false;
+    return Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+  }
+
   final String? title;
 
   const M3TitleBar({super.key, this.title});
@@ -26,6 +35,11 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
 
   @override
   Widget build(BuildContext context) {
+    // Only show title bar on desktop platforms
+    if (!M3TitleBar.isDesktopPlatform) {
+      return const SizedBox.shrink();
+    }
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);

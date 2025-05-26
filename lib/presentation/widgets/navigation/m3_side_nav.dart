@@ -25,7 +25,41 @@ class M3NavigationSidebar extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
 
-    // 创建快捷键绑定
+    // 定义导航项
+    final navItems = [
+      _NavItem(
+        index: 0,
+        icon: Icons.image_outlined,
+        selectedIcon: Icons.image,
+        label: l10n.works,
+      ),
+      _NavItem(
+        index: 1,
+        icon: Icons.font_download_outlined,
+        selectedIcon: Icons.font_download,
+        label: l10n.characters,
+      ),
+      _NavItem(
+        index: 2,
+        icon: Icons.article_outlined,
+        selectedIcon: Icons.article,
+        label: l10n.practices,
+      ),
+      _NavItem(
+        index: 3,
+        icon: Icons.photo_library_outlined,
+        selectedIcon: Icons.photo_library,
+        label: l10n.libraryManagement,
+      ),
+      _NavItem(
+        index: 4,
+        icon: Icons.settings_outlined,
+        selectedIcon: Icons.settings,
+        label: l10n.settings,
+      ),
+    ];
+
+    // 创快捷键绑定
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
         LogicalKeySet(LogicalKeyboardKey.alt, LogicalKeyboardKey.digit1):
@@ -56,69 +90,121 @@ class M3NavigationSidebar extends StatelessWidget {
             },
           ),
         },
-        child: NavigationRail(
-          selectedIndex: selectedIndex,
-          onDestinationSelected: onDestinationSelected,
-          extended: extended,
-          backgroundColor: colorScheme.surface,
-          useIndicator: true,
-          minWidth: 72, // 设置最小宽度以确保点击区域足够大
-          minExtendedWidth: 200, // 设置展开时的最小宽度
-          indicatorColor: colorScheme.secondaryContainer,
-          selectedIconTheme: IconThemeData(
-            color: colorScheme.onSecondaryContainer,
+        // 使用自定义的可滚动导航栏实现
+        child: Container(
+          width: extended ? 130 : 72,
+          color: colorScheme.surface,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 展开/折叠按钮
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Tooltip(
+                  message: extended
+                      ? l10n.navCollapseSidebar
+                      : l10n.navExpandSidebar,
+                  child: IconButton(
+                    icon: Icon(
+                      extended ? Icons.chevron_left : Icons.chevron_right,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onPressed: onToggleExtended,
+                    focusNode: FocusNode(skipTraversal: false), // 允许键盘焦点
+                  ),
+                ),
+              ),
+              // 导航项列表（可滚动）
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: navItems.map((item) {
+                      final isSelected = item.index == selectedIndex;
+                      return _buildNavItem(
+                        context: context,
+                        item: item,
+                        isSelected: isSelected,
+                        extended: extended,
+                        onTap: () => onDestinationSelected(item.index),
+                        colorScheme: colorScheme,
+                        theme: theme,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
           ),
-          unselectedIconTheme: IconThemeData(
-            color: colorScheme.onSurfaceVariant,
-          ),
-          selectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurface,
-          ),
-          unselectedLabelTextStyle: theme.textTheme.labelMedium?.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-          leading: Tooltip(
-            message: extended ? l10n.navCollapseSidebar : l10n.navExpandSidebar,
-            child: IconButton(
-              icon: Icon(extended ? Icons.chevron_left : Icons.chevron_right),
-              onPressed: onToggleExtended,
-              focusNode: FocusNode(skipTraversal: false), // 允许键盘焦点
+        ),
+      ),
+    );
+  }
+
+  // 构建导航项UI
+  Widget _buildNavItem({
+    required BuildContext context,
+    required _NavItem item,
+    required bool isSelected,
+    required bool extended,
+    required VoidCallback onTap,
+    required ColorScheme colorScheme,
+    required ThemeData theme,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: extended ? 150 : 72,
+        height: 40,
+        decoration: BoxDecoration(
+          color:
+              isSelected ? colorScheme.secondaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisAlignment:
+              extended ? MainAxisAlignment.start : MainAxisAlignment.center,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Icon(
+                isSelected ? item.selectedIcon : item.icon,
+                color: isSelected
+                    ? colorScheme.onSecondaryContainer
+                    : colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-          destinations: [
-            NavigationRailDestination(
-              icon: const Icon(Icons.image_outlined),
-              selectedIcon: const Icon(Icons.image),
-              label: Text(l10n.works),
-              padding: const EdgeInsets.all(8), // 增加点击区域
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.font_download_outlined),
-              selectedIcon: const Icon(Icons.font_download),
-              label: Text(l10n.characters),
-              padding: const EdgeInsets.all(8),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.article_outlined),
-              selectedIcon: const Icon(Icons.article),
-              label: Text(l10n.practices),
-              padding: const EdgeInsets.all(8),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.photo_library_outlined),
-              selectedIcon: const Icon(Icons.photo_library),
-              label: Text(l10n.libraryManagement),
-              padding: const EdgeInsets.all(8),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: const Icon(Icons.settings),
-              label: Text(l10n.settings),
-              padding: const EdgeInsets.all(8),
-            ),
+            if (extended)
+              Flexible(
+                child: Text(
+                  item.label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: isSelected
+                        ? colorScheme.onSecondaryContainer
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
           ],
         ),
       ),
     );
   }
+}
+
+// 导航项数据类
+class _NavItem {
+  final int index;
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+
+  _NavItem({
+    required this.index,
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+  });
 }
