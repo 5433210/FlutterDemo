@@ -92,39 +92,51 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
+    if (M3TitleBar.isDesktopPlatform) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    windowManager.addListener(this);
-    _init();
+    if (M3TitleBar.isDesktopPlatform) {
+      windowManager.addListener(this);
+      _init();
+    }
   }
 
   @override
   void onWindowMaximize() {
-    setState(() {
-      _isMaximized = true;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = true;
+      });
+    }
   }
 
   @override
   void onWindowRestore() {
-    setState(() {
-      _isMaximized = false;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = false;
+      });
+    }
   }
 
   @override
   void onWindowUnmaximize() {
-    setState(() {
-      _isMaximized = false;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = false;
+      });
+    }
   }
 
   Future<void> _handleDoubleClick() async {
+    if (!M3TitleBar.isDesktopPlatform) return;
+
     if (_isMaximized) {
       await windowManager.unmaximize();
     } else {
@@ -133,6 +145,8 @@ class _M3TitleBarState extends State<M3TitleBar> with WindowListener {
   }
 
   void _init() async {
+    if (!M3TitleBar.isDesktopPlatform) return;
+
     _isMaximized = await windowManager.isMaximized();
     if (mounted) setState(() {});
   }
@@ -196,7 +210,9 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
           icon: Icons.remove,
           tooltip: l10n.windowButtonMinimize,
           onPressed: () async {
-            await windowManager.minimize();
+            if (M3TitleBar.isDesktopPlatform) {
+              await windowManager.minimize();
+            }
           },
         ),
         _M3WindowButton(
@@ -205,10 +221,12 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
               ? l10n.windowButtonRestore
               : l10n.windowButtonMaximize,
           onPressed: () async {
-            if (_isMaximized) {
-              await windowManager.unmaximize();
-            } else {
-              await windowManager.maximize();
+            if (M3TitleBar.isDesktopPlatform) {
+              if (_isMaximized) {
+                await windowManager.unmaximize();
+              } else {
+                await windowManager.maximize();
+              }
             }
           },
         ),
@@ -217,7 +235,9 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
           tooltip: l10n.windowButtonClose,
           isClose: true,
           onPressed: () async {
-            await windowManager.close();
+            if (M3TitleBar.isDesktopPlatform) {
+              await windowManager.close();
+            }
           },
         ),
       ],
@@ -226,39 +246,51 @@ class _M3WindowButtonsState extends State<M3WindowButtons> with WindowListener {
 
   @override
   void dispose() {
-    windowManager.removeListener(this);
+    if (M3TitleBar.isDesktopPlatform) {
+      windowManager.removeListener(this);
+    }
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    windowManager.addListener(this);
-    _init();
+    if (M3TitleBar.isDesktopPlatform) {
+      windowManager.addListener(this);
+      _init();
+    }
   }
 
   @override
   void onWindowMaximize() {
-    setState(() {
-      _isMaximized = true;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = true;
+      });
+    }
   }
 
   @override
   void onWindowRestore() {
-    setState(() {
-      _isMaximized = false;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = false;
+      });
+    }
   }
 
   @override
   void onWindowUnmaximize() {
-    setState(() {
-      _isMaximized = false;
-    });
+    if (M3TitleBar.isDesktopPlatform) {
+      setState(() {
+        _isMaximized = false;
+      });
+    }
   }
 
   void _init() async {
+    if (!M3TitleBar.isDesktopPlatform) return;
+
     _isMaximized = await windowManager.isMaximized();
     if (mounted) setState(() {});
   }
