@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 
@@ -29,7 +30,6 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
   late final TextEditingController _titleController;
   String? _errorText;
   bool _isChecking = false;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -37,52 +37,60 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
         ? l10n.practiceEditTopNavSaveAs
         : l10n.practiceEditSavePractice;
 
-    return AlertDialog(
-      title: Text(title),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: l10n.practiceEditPracticeTitle,
-              hintText: l10n.practiceEditEnterTitle,
-              errorText: _errorText,
-              border: const OutlineInputBorder(),
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            _handleSave();
+          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: InputDecoration(
+                labelText: l10n.practiceEditPracticeTitle,
+                hintText: l10n.practiceEditEnterTitle,
+                errorText: _errorText,
+                border: const OutlineInputBorder(),
+              ),
+              autofocus: true,
+              onChanged: (_) {
+                // 清除错误提示
+                if (_errorText != null) {
+                  setState(() {
+                    _errorText = null;
+                  });
+                }
+              },
+              onSubmitted: (_) => _handleSave(),
             ),
-            autofocus: true,
-            onChanged: (_) {
-              // 清除错误提示
-              if (_errorText != null) {
-                setState(() {
-                  _errorText = null;
-                });
-              }
-            },
+            if (_isChecking)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: LinearProgressIndicator(),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
           ),
-          if (_isChecking)
-            const Padding(
-              padding: EdgeInsets.only(top: 8.0),
-              child: LinearProgressIndicator(),
-            ),
+          TextButton(
+            onPressed: _handleSave,
+            child: Text(l10n.save),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        TextButton(
-          onPressed: () async {
-            if (await _validateTitle()) {
-              if (mounted) {
-                Navigator.of(context).pop(_titleController.text.trim());
-              }
-            }
-          },
-          child: Text(l10n.save),
-        ),
-      ],
     );
   }
 
@@ -96,6 +104,15 @@ class _PracticeSaveDialogState extends State<PracticeSaveDialog> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle ?? '');
+  }
+
+  /// 处理保存操作
+  Future<void> _handleSave() async {
+    if (await _validateTitle()) {
+      if (mounted) {
+        Navigator.of(context).pop(_titleController.text.trim());
+      }
+    }
   }
 
   /// 验证标题

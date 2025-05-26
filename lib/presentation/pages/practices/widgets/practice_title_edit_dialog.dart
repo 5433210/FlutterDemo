@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Dialog for editing practice title
 class PracticeTitleEditDialog extends StatefulWidget {
@@ -20,38 +21,50 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   late TextEditingController _controller;
   String? _errorText;
   bool _isChecking = false;
-
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Edit Practice Title'),
-      content: TextField(
-        controller: _controller,
-        decoration: InputDecoration(
-          labelText: 'Title',
-          errorText: _errorText,
-          enabled: !_isChecking,
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            _validateAndSubmit(_controller.text);
+          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: AlertDialog(
+        title: const Text('Edit Practice Title'),
+        content: TextField(
+          controller: _controller,
+          decoration: InputDecoration(
+            labelText: 'Title',
+            errorText: _errorText,
+            enabled: !_isChecking,
+          ),
+          autofocus: true,
+          onSubmitted: _validateAndSubmit,
         ),
-        autofocus: true,
-        onSubmitted: _validateAndSubmit,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed:
+                _isChecking ? null : () => _validateAndSubmit(_controller.text),
+            child: _isChecking
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text('Save'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        TextButton(
-          onPressed:
-              _isChecking ? null : () => _validateAndSubmit(_controller.text),
-          child: _isChecking
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Save'),
-        ),
-      ],
     );
   }
 

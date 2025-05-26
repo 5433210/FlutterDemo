@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// 字帖标题编辑对话框
 class PracticeTitleEditDialog extends StatefulWidget {
@@ -27,61 +28,61 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('编辑标题'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _titleController,
-            focusNode: _focusNode,
-            decoration: InputDecoration(
-              labelText: '字帖标题',
-              hintText: '请输入字帖标题',
-              errorText: _errorText,
-              border: const OutlineInputBorder(),
-            ),
-            autofocus: true,
-            onChanged: (_) {
-              // 清除错误提示
-              if (_errorText != null) {
-                setState(() {
-                  _errorText = null;
-                });
-              }
-            },
-            onSubmitted: (_) async {
-              // 按下回车键时保存
-              if (await _validateTitle()) {
-                if (context.mounted) {
-                  Navigator.of(context).pop(_titleController.text.trim());
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
+            _handleSave();
+          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: AlertDialog(
+        title: const Text('编辑标题'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              focusNode: _focusNode,
+              decoration: InputDecoration(
+                labelText: '字帖标题',
+                hintText: '请输入字帖标题',
+                errorText: _errorText,
+                border: const OutlineInputBorder(),
+              ),
+              autofocus: true,
+              onChanged: (_) {
+                // 清除错误提示
+                if (_errorText != null) {
+                  setState(() {
+                    _errorText = null;
+                  });
                 }
-              }
-            },
-          ),
-          if (_isChecking)
-            const Padding(
-              padding: EdgeInsets.only(top: 8.0),
-              child: LinearProgressIndicator(),
+              },
+              onSubmitted: (_) => _handleSave(),
             ),
+            if (_isChecking)
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: LinearProgressIndicator(),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: _handleSave,
+            child: const Text('保存'),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('取消'),
-        ),
-        TextButton(
-          onPressed: () async {
-            if (await _validateTitle()) {
-              if (context.mounted) {
-                Navigator.of(context).pop(_titleController.text.trim());
-              }
-            }
-          },
-          child: const Text('保存'),
-        ),
-      ],
     );
   }
 
@@ -104,6 +105,15 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
         _focusNode.requestFocus();
       }
     });
+  }
+
+  /// 处理保存操作
+  Future<void> _handleSave() async {
+    if (await _validateTitle()) {
+      if (context.mounted) {
+        Navigator.of(context).pop(_titleController.text.trim());
+      }
+    }
   }
 
   /// 验证标题

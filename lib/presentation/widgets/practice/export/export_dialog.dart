@@ -111,86 +111,99 @@ class _ExportDialogState extends State<ExportDialog> {
 
   /// 所有页面的预览图
   final Map<int, Uint8List> _pagePreviewCache = {};
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return AlertDialog(
-      title: Text(l10n.export),
-      content: SizedBox(
-        width: 800,
-        height: 600,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 左侧设置区域
-            Expanded(
-              flex: 5,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildExportTypeSelector(),
-                    const SizedBox(height: 16),
-                    _buildFileNameInput(),
-                    const SizedBox(height: 16),
-                    _buildPixelRatioSelector(),
-                    const SizedBox(height: 16),
-                    _buildOutputPathSelector(),
-                    const SizedBox(height: 16),
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter && !_isExporting) {
+            _exportFile();
+          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop();
+          }
+        }
+      },
+      child: AlertDialog(
+        title: Text(l10n.export),
+        content: SizedBox(
+          width: 800,
+          height: 600,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 左侧设置区域
+              Expanded(
+                flex: 5,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildExportTypeSelector(),
+                      const SizedBox(height: 16),
+                      _buildFileNameInput(),
+                      const SizedBox(height: 16),
+                      _buildPixelRatioSelector(),
+                      const SizedBox(height: 16),
+                      _buildOutputPathSelector(),
+                      const SizedBox(height: 16),
 
-                    // PDF特有的设置
-                    if (_exportType == ExportType.pdf) ...[
-                      _buildPageRangeSelector(),
-                      const SizedBox(height: 16),
-                      _buildPageSizeSelector(),
-                      const SizedBox(height: 16),
-                      _buildOrientationSelector(),
-                      const SizedBox(height: 16),
-                      _buildFitPolicySelector(),
-                      const SizedBox(height: 16),
-                      _buildMarginsInput(),
-                    ],
+                      // PDF特有的设置
+                      if (_exportType == ExportType.pdf) ...[
+                        _buildPageRangeSelector(),
+                        const SizedBox(height: 16),
+                        _buildPageSizeSelector(),
+                        const SizedBox(height: 16),
+                        _buildOrientationSelector(),
+                        const SizedBox(height: 16),
+                        _buildFitPolicySelector(),
+                        const SizedBox(height: 16),
+                        _buildMarginsInput(),
+                      ],
 
-                    if (widget.pageCount > 1 && _exportType != ExportType.pdf)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16),
-                        child: Text(
-                          l10n.exportDialogMultipleFilesNote(widget.pageCount),
-                          style: const TextStyle(color: Colors.blue),
+                      if (widget.pageCount > 1 && _exportType != ExportType.pdf)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Text(
+                            l10n.exportDialogMultipleFilesNote(
+                                widget.pageCount),
+                            style: const TextStyle(color: Colors.blue),
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // 右侧预览区域
-            Expanded(
-              flex: 5,
-              child: _buildPreviewArea(),
-            ),
-          ],
+              // 右侧预览区域
+              Expanded(
+                flex: 5,
+                child: _buildPreviewArea(),
+              ),
+            ],
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: _isExporting ? null : _exportFile,
+            child: _isExporting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(l10n.export),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text(l10n.cancel),
-        ),
-        ElevatedButton(
-          onPressed: _isExporting ? null : _exportFile,
-          child: _isExporting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Text(l10n.export),
-        ),
-      ],
     );
   }
 

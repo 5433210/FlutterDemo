@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ConfirmationDialog extends StatelessWidget {
   final String title;
@@ -17,47 +18,60 @@ class ConfirmationDialog extends StatelessWidget {
     this.isDestructive = false,
     this.onConfirm,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(
-            isDestructive ? Icons.warning_amber_rounded : Icons.help_outline,
-            color: isDestructive
-                ? theme.colorScheme.error
-                : theme.colorScheme.primary,
-            size: 24,
-          ),
-          const SizedBox(width: 12),
-          Text(title),
-        ],
-      ),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: Text(cancelText),
-        ),
-        FilledButton(
-          onPressed: () {
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: (KeyEvent event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.enter) {
             if (onConfirm != null) onConfirm!();
             Navigator.of(context).pop(true);
-          },
-          style: FilledButton.styleFrom(
-            backgroundColor: isDestructive
-                ? theme.colorScheme.error
-                : theme.colorScheme.primary,
-            foregroundColor: isDestructive
-                ? theme.colorScheme.onError
-                : theme.colorScheme.onPrimary,
-          ),
-          child: Text(confirmText),
+          } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+            Navigator.of(context).pop(false);
+          }
+        }
+      },
+      child: AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              isDestructive ? Icons.warning_amber_rounded : Icons.help_outline,
+              color: isDestructive
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Text(title),
+          ],
         ),
-      ],
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(cancelText),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (onConfirm != null) onConfirm!();
+              Navigator.of(context).pop(true);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: isDestructive
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.primary,
+              foregroundColor: isDestructive
+                  ? theme.colorScheme.onError
+                  : theme.colorScheme.onPrimary,
+            ),
+            child: Text(confirmText),
+          ),
+        ],
+      ),
     );
   }
 }
