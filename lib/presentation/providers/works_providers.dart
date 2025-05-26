@@ -14,8 +14,12 @@ final worksProvider = FutureProvider.autoDispose<List<WorkEntity>>((ref) async {
   // 设置缓存策略，使列表能够在返回时保留
   ref.keepAlive();
 
-  final workService = ref.watch(workServiceProvider);
-  return await workService.getAllWorks();
+  final workServiceValue = ref.watch(workServiceProvider);
+  return await workServiceValue.when(
+    data: (service) => service.getAllWorks(),
+    loading: () => throw Exception('Work service is loading'),
+    error: (error, stack) => throw Exception('Work service error: $error'),
+  );
 });
 
 // 增强刷新标志，添加刷新原因和优先级信息

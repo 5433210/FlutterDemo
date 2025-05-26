@@ -13,9 +13,15 @@ import '../../viewmodels/states/library_management_state.dart';
 /// 图库管理状态提供者
 final libraryManagementProvider =
     StateNotifierProvider<LibraryManagementNotifier, LibraryManagementState>(
-  (ref) => LibraryManagementNotifier(
-    service: ref.watch(libraryServiceProvider),
-  ),
+  (ref) {
+    final serviceAsync = ref.watch(libraryServiceProvider);
+    return serviceAsync.when(
+      data: (service) => LibraryManagementNotifier(service: service),
+      loading: () => LibraryManagementNotifier(
+          service: ref.read(libraryServiceProvider).value!),
+      error: (error, stack) => throw error,
+    );
+  },
 );
 
 /// 图库管理状态通知器

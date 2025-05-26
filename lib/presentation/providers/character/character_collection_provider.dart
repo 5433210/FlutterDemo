@@ -23,11 +23,15 @@ final characterCollectionProvider = StateNotifierProvider<
   final toolModeNotifier = ref.watch(toolModeProvider.notifier);
   final selectedRegionNotifier = ref.watch(selectedRegionProvider.notifier);
 
-  return CharacterCollectionNotifier(
-    characterService: characterService,
-    toolModeNotifier: toolModeNotifier,
-    selectedRegionNotifier: selectedRegionNotifier,
-    ref: ref, // Pass ref to access the refresh notifier
+  return characterService.when(
+    data: (service) => CharacterCollectionNotifier(
+      characterService: service,
+      toolModeNotifier: toolModeNotifier,
+      selectedRegionNotifier: selectedRegionNotifier,
+      ref: ref, // Pass ref to access the refresh notifier
+    ),
+    loading: () => throw Exception('Character service is loading'),
+    error: (error, stack) => throw Exception('Character service error: $error'),
   );
 });
 

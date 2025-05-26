@@ -10,16 +10,16 @@ import '../../../infrastructure/logging/logger.dart';
 
 final workImageProvider =
     StateNotifierProvider<WorkImageNotifier, WorkImageState>((ref) {
-  final workImageService = ref.watch(workImageServiceProvider);
-  AppLogger.debug('初始化WorkImageProvider');
-  return WorkImageNotifier(workImageService);
+  return WorkImageNotifier(ref);
 });
 
 class WorkImageNotifier extends StateNotifier<WorkImageState> {
-  final WorkImageService _workImageService;
+  WorkImageService? _workImageService;
+  final Ref _ref;
   final Map<String, String?> _thumbnailCache = {};
+  bool _isInitialized = false;
 
-  WorkImageNotifier(this._workImageService) : super(WorkImageState.initial());
+  WorkImageNotifier(this._ref) : super(WorkImageState.initial());
 
   // 切换页面
   Future<void> changePage(String pageId) async {
@@ -31,9 +31,11 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
     );
 
     try {
+      await _ensureInitialized();
+
       // 获取页面图像
       final imageData =
-          await _workImageService.getWorkPageImage(state.workId, pageId);
+          await _workImageService!.getWorkPageImage(state.workId, pageId);
       if (imageData == null) {
         throw Exception('Image not found');
       }
@@ -72,13 +74,15 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
   // 获取页面缩略图路径
   Future<String?> getThumbnailPath(String pageId) async {
     try {
+      await _ensureInitialized();
+
       // 检查缓存
       if (_thumbnailCache.containsKey(pageId)) {
         return _thumbnailCache[pageId];
       }
 
       // 从服务获取缩略图路径
-      final path = await _workImageService.getPageThumbnailPath(pageId);
+      final path = await _workImageService!.getPageThumbnailPath(pageId);
 
       // 更新缓存
       _thumbnailCache[pageId] = path;
@@ -98,9 +102,11 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
     );
 
     try {
+      await _ensureInitialized();
+
       // 获取作品图像
       final imageData =
-          await _workImageService.getWorkPageImage(workId, pageId);
+          await _workImageService!.getWorkPageImage(workId, pageId);
       if (imageData == null) {
         throw Exception('Image not found');
       }
@@ -114,7 +120,7 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
       });
 
       // 获取所有页面ID
-      final pageIds = await _workImageService.getWorkPageIds(workId);
+      final pageIds = await _workImageService!.getWorkPageIds(workId);
 
       // 更新状态
       state = state.copyWith(
@@ -160,6 +166,15 @@ class WorkImageNotifier extends StateNotifier<WorkImageState> {
   // 重新加载当前页面
   Future<void> reload() async {
     await loadWorkImage(state.workId, state.currentPageId);
+  }
+
+  /// Initialize the service asynchronously
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    _workImageService = await _ref.read(workImageServiceProvider.future);
+    _isInitialized = true;
+    AppLogger.debug('WorkImageProvider 初始化完成');
   }
 
   // 解析图像尺寸

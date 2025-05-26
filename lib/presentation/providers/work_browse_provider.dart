@@ -6,7 +6,16 @@ import '../viewmodels/work_browse_view_model.dart';
 
 final workBrowseProvider =
     StateNotifierProvider<WorkBrowseViewModel, WorkBrowseState>((ref) {
-  final workService = ref.watch(workServiceProvider);
+  final asyncViewModel = ref.watch(workBrowseViewModelProvider);
+  return asyncViewModel.when(
+    data: (viewModel) => viewModel,
+    loading: () => throw const AsyncLoading<WorkBrowseViewModel>(),
+    error: (error, stackTrace) => throw AsyncError(error, stackTrace),
+  );
+});
 
+final workBrowseViewModelProvider =
+    FutureProvider<WorkBrowseViewModel>((ref) async {
+  final workService = await ref.watch(workServiceProvider.future);
   return WorkBrowseViewModel(workService);
 });

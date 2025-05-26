@@ -11,7 +11,12 @@ final characterGridProvider = StateNotifierProvider.family<
   final repository = ref.watch(characterRepositoryProvider);
   final storageService = ref.watch(characterStorageServiceProvider);
 
-  return CharacterGridNotifier(repository, workId, storageService);
+  return repository.when(
+    data: (repo) => CharacterGridNotifier(repo, workId, storageService),
+    loading: () => throw Exception('Character repository is loading'),
+    error: (error, stack) =>
+        throw Exception('Character repository error: $error'),
+  );
 });
 
 class CharacterGridNotifier extends StateNotifier<CharacterGridState> {

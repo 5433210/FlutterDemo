@@ -466,8 +466,15 @@ class _M3CharacterCollectionPageState
       final imageService = ref.read(workImageServiceProvider);
 
       // First try to get image data
-      final imageBytes = await imageService.getWorkPageImage(
-          widget.workId, widget.initialPageId);
+      final imageBytes = await imageService.when(
+        data: (service) => service.getWorkPageImage(
+          widget.workId,
+          widget.initialPageId,
+        ),
+        loading: () => throw Exception('Work image service is loading'),
+        error: (error, stack) =>
+            throw Exception('Work image service error: $error'),
+      );
 
       if (imageBytes == null || imageBytes.isEmpty) {
         setState(() {

@@ -18,8 +18,9 @@ final characterDetailProvider =
         (ref, characterId) async {
   if (characterId == null) return null;
 
-  final characterViewRepository = ref.watch(characterViewRepositoryProvider);
-  final characterService = ref.watch(characterServiceProvider);
+  final characterViewRepository =
+      await ref.watch(characterViewRepositoryProvider.future);
+  final characterService = await ref.watch(characterServiceProvider.future);
 
   try {
     // Fetch character details
@@ -196,7 +197,6 @@ class CharacterFormatInfo with _$CharacterFormatInfo {
     required CharacterImageType format,
     required String name,
     required String description,
-    @JsonKey(includeFromJson: false, includeToJson: false)
     Future<String> Function(String)? pathResolver,
   }) = _CharacterFormatInfo;
 

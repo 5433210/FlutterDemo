@@ -145,10 +145,9 @@ class M3CharacterListView extends ConsumerWidget {
                   final isSelected = selectedCharacters.contains(character.id);
 
                   return FutureBuilder<String>(
-                    future: stateRef
-                        .read(characterServiceProvider)
-                        .getCharacterImagePath(
-                            character.id, CharacterImageType.thumbnail),
+                    future: stateRef.read(characterServiceProvider.future).then(
+                        (service) => service.getCharacterImagePath(
+                            character.id, CharacterImageType.thumbnail)),
                     builder: (context, snapshot) {
                       final thumbnailPath = snapshot.data ?? '';
 
@@ -248,12 +247,10 @@ class M3CharacterListView extends ConsumerWidget {
             itemBuilder: (context, index) {
               final character = characters[index];
               final isSelected = selectedCharacters.contains(character.id);
-
               return FutureBuilder<String>(
-                future: stateRef
-                    .read(characterServiceProvider)
-                    .getCharacterImagePath(
-                        character.id, CharacterImageType.thumbnail),
+                future: stateRef.read(characterServiceProvider.future).then(
+                    (service) => service.getCharacterImagePath(
+                        character.id, CharacterImageType.thumbnail)),
                 builder: (context, snapshot) {
                   final thumbnailPath = snapshot.data ?? '';
 

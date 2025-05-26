@@ -229,8 +229,13 @@ class _M3RightPanelState extends ConsumerState<M3RightPanel>
       final currentWorkId = widget.workId;
 
       // 2. Get character service to query character details
-      final characterService = ref.read(characterServiceProvider);
-      final character = await characterService.getCharacterDetails(characterId);
+      final characterServiceValue = ref.read(characterServiceProvider);
+      final character = await characterServiceValue.when(
+        data: (service) => service.getCharacterDetails(characterId),
+        loading: () => throw Exception('Character service is loading'),
+        error: (error, stack) =>
+            throw Exception('Character service error: $error'),
+      );
 
       if (character == null) {
         throw Exception('Character information not found');

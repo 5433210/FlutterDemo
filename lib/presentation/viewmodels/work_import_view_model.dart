@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../application/providers/service_providers.dart';
 import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
@@ -16,11 +17,12 @@ import 'states/work_import_state.dart';
 
 /// 作品导入视图模型
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
-  final WorkService _workService;
-  final ImageProcessor _imageProcessor;
+  WorkService? _workService;
+  ImageProcessor? _imageProcessor;
+  final Ref _ref;
+  bool _isInitialized = false;
 
-  WorkImportViewModel(this._workService, this._imageProcessor)
-      : super(WorkImportState.initial());
+  WorkImportViewModel(this._ref) : super(WorkImportState.initial());
 
   /// 判断是否可以保存
   bool get canSubmit {
@@ -147,6 +149,9 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     if (!canSubmit) return false;
 
     try {
+      await _ensureInitialized();
+      if (_workService == null) return false;
+
       state = state.copyWith(isProcessing: true, error: null);
 
       // 创建新的作品实体
@@ -160,10 +165,8 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         remark: state.remark?.trim(),
         createTime: DateTime.now(),
         updateTime: DateTime.now(),
-      );
-
-      // 执行导入操作
-      await _workService.importWork(state.images, work);
+      ); // 执行导入操作
+      await _workService!.importWork(state.images, work);
 
       // 导入成功后重置状态
       reset();
@@ -336,5 +339,14 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
       return selectedIndex - 1;
     }
     return selectedIndex;
+  }
+
+  /// Initialize the services asynchronously
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    _workService = await _ref.read(workServiceProvider.future);
+    _imageProcessor = _ref.read(imageProcessorProvider);
+    _isInitialized = true;
   }
 }

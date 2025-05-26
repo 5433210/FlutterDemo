@@ -3,16 +3,19 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../application/providers/service_providers.dart';
 import '../../application/services/practice/practice_service.dart';
 import '../../domain/models/practice/practice_filter.dart';
 import '../../infrastructure/logging/logger.dart';
 import 'states/practice_list_state.dart';
 
 class PracticeListViewModel extends StateNotifier<PracticeListState> {
-  final PracticeService _practiceService;
+  PracticeService? _practiceService;
+  final Ref _ref;
   Timer? _searchDebounce;
+  bool _isInitialized = false;
 
-  PracticeListViewModel(this._practiceService)
+  PracticeListViewModel(this._ref)
       : super(PracticeListState(
           isLoading: false,
           filter: const PracticeFilter(),
@@ -34,7 +37,10 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      await _practiceService.deletePractices(state.selectedPractices.toList());
+      await _ensureInitialized();
+      if (_practiceService == null) return;
+
+      await _practiceService!.deletePractices(state.selectedPractices.toList());
 
       state = state.copyWith(
         isLoading: false,
@@ -61,16 +67,17 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
   // 处理标签编辑
   Future<void> handleTagEdited(String id, List<String> newTags) async {
     try {
+      await _ensureInitialized();
+      if (_practiceService == null) return;
+
       // 获取当前练习实体
-      final practice = await _practiceService.getPractice(id);
+      final practice = await _practiceService!.getPractice(id);
       if (practice == null) {
         AppLogger.debug('Practice not found: $id');
         return;
-      }
-
-      // 更新练习标签
+      } // 更新练习标签
       final updatedPractice = practice.copyWith(tags: newTags);
-      final result = await _practiceService.updatePractice(updatedPractice);
+      final result = await _practiceService!.updatePractice(updatedPractice);
 
       if (result.id == id) {
         AppLogger.debug('Updated tags successfully for practice: $id');
@@ -97,7 +104,10 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
   Future<void> handleToggleFavorite(String id) async {
     AppLogger.debug('Toggle favorite status: ID=$id');
     try {
-      final updatedPractice = await _practiceService.toggleFavorite(id);
+      await _ensureInitialized();
+      if (_practiceService == null) return;
+
+      final updatedPractice = await _practiceService!.toggleFavorite(id);
 
       if (updatedPractice != null) {
         AppLogger.debug('New favorite status: ${updatedPractice.isFavorite}');
@@ -137,8 +147,10 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
       isLoading: true,
       error: null,
     );
-
     try {
+      await _ensureInitialized();
+      if (_practiceService == null) return;
+
       // 更新过滤器的分页信息
       final filter = state.filter.copyWith(
         limit: state.pageSize,
@@ -149,7 +161,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
           'PracticeListViewModel: 查询过滤条件: limit=${filter.limit}, offset=${filter.offset}, isFavorite=${filter.isFavorite}'); // 查询练习
       debugPrint('PracticeListViewModel: 调用 _practiceService.queryPractices');
       debugPrint('PracticeListViewModel: 详细过滤条件: ${filter.toJson()}');
-      final practicesResult = await _practiceService.queryPractices(filter);
+      final practicesResult = await _practiceService!.queryPractices(filter);
       debugPrint('PracticeListViewModel: 查询结果数量: ${practicesResult.length}');
       if (practicesResult.isEmpty) {
         debugPrint('PracticeListViewModel: ⚠️ 没有找到匹配的练习数据，检查过滤条件或数据库');
@@ -157,7 +169,7 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
 
       // 获取总数
       debugPrint('PracticeListViewModel: 调用 _practiceService.count');
-      final totalCount = await _practiceService.count(filter);
+      final totalCount = await _practiceService!.count(filter);
       debugPrint('PracticeListViewModel: 总记录数: $totalCount');
 
       // 将 PracticeEntity 列表转换为 Map<String, dynamic> 列表
@@ -342,6 +354,14 @@ class PracticeListViewModel extends StateNotifier<PracticeListState> {
 
     // 保存过滤器状态
     state.persist();
+  }
+
+  /// Initialize the service asynchronously
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    _practiceService = await _ref.read(practiceServiceProvider.future);
+    _isInitialized = true;
   }
 
   // 初始化数据

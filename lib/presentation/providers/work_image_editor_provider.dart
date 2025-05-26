@@ -395,12 +395,17 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
         'firstImageId': state.images.isNotEmpty ? state.images[0].id : null,
       });
 
-      final workImageService = _ref.read(workImageServiceProvider);
+      final workImageServiceValue = _ref.read(workImageServiceProvider);
 
       // 先删除标记为删除的图片
       for (final imageId in state.deletedImageIds) {
         try {
-          await workImageService.deleteImage(workId, imageId);
+          await workImageServiceValue.when(
+            data: (service) => service.deleteImage(workId, imageId),
+            loading: () => throw Exception('Work image service is loading'),
+            error: (error, stack) =>
+                throw Exception('Work image service error: $error'),
+          );
         } catch (e) {
           AppLogger.warning('删除图片文件失败',
               tag: 'WorkImageEditor',
@@ -413,15 +418,20 @@ class WorkImageEditorNotifier extends StateNotifier<WorkImageEditorState> {
       }
 
       // 保存所有图片
-      final savedImages = await workImageService.saveChanges(
-        workId,
-        state.images,
-        onProgress: (progress, message) {
-          AppLogger.debug('保存进度', tag: 'WorkImageEditor', data: {
-            'progress': progress,
-            'message': message,
-          });
-        },
+      final savedImages = await workImageServiceValue.when(
+        data: (service) => service.saveChanges(
+          workId,
+          state.images,
+          onProgress: (progress, message) {
+            AppLogger.debug('保存进度', tag: 'WorkImageEditor', data: {
+              'progress': progress,
+              'message': message,
+            });
+          },
+        ),
+        loading: () => throw Exception('Work image service is loading'),
+        error: (error, stack) =>
+            throw Exception('Work image service error: $error'),
       );
 
       state = state.copyWith(

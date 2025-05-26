@@ -20,8 +20,8 @@ import '../../providers/service_providers.dart';
 import '../image/character_image_processor.dart';
 import '../storage/character_storage_service.dart';
 
-final characterServiceProvider = Provider<CharacterService>((ref) {
-  final repository = ref.watch(characterRepositoryProvider);
+final characterServiceProvider = FutureProvider<CharacterService>((ref) async {
+  final repository = await ref.watch(characterRepositoryProvider.future);
   final imageProcessor = ref.watch(characterImageProcessorProvider);
   final binaryCache = ref.watch(tieredImageCacheProvider);
   final storageService = ref.watch(characterStorageServiceProvider);

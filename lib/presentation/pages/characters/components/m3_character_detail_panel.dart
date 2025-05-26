@@ -266,11 +266,10 @@ class _M3CharacterDetailPanelState
   // Add a tag to the character
   Future<void> _addTag(CharacterView character, String tag) async {
     try {
-      final characterService = ref.read(characterServiceProvider);
-      await characterService.addTag(character.id, tag);
-
-      // Refresh character detail
-      await ref.refresh(characterDetailProvider(widget.characterId).future);
+      final characterService = await ref.read(characterServiceProvider.future);
+      await characterService.addTag(
+          character.id, tag); // Refresh character detail
+      ref.refresh(characterDetailProvider(widget.characterId));
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context);
@@ -767,11 +766,11 @@ class _M3CharacterDetailPanelState
   // Remove a tag from the character
   Future<void> _removeTag(CharacterView character, String tag) async {
     try {
-      final characterService = ref.read(characterServiceProvider);
+      final characterService = await ref.read(characterServiceProvider.future);
       await characterService.removeTag(character.id, tag);
 
       // Refresh character detail
-      await ref.refresh(characterDetailProvider(widget.characterId).future);
+      ref.refresh(characterDetailProvider(widget.characterId));
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context);

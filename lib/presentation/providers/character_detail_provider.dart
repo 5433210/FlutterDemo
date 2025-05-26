@@ -6,7 +6,7 @@ import '../../domain/models/character/character_entity.dart';
 /// 角色详情提供者
 final characterDetailProvider =
     FutureProvider.family<CharacterEntity?, String>((ref, id) async {
-  final repository = ref.watch(characterRepositoryProvider);
+  final repository = await ref.watch(characterRepositoryProvider.future);
   return repository.get(id);
 });
 

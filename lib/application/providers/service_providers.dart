@@ -58,9 +58,10 @@ final libraryImportServiceProvider = Provider<LibraryImportService>((ref) {
 });
 
 /// 图库服务提供者
-final libraryServiceProvider = Provider<LibraryService>((ref) {
+final libraryServiceProvider = FutureProvider<LibraryService>((ref) async {
+  final repository = await ref.watch(libraryRepositoryProvider.future);
   return LibraryService(
-    repository: ref.watch(libraryRepositoryProvider),
+    repository: repository,
     imageCache: ref.watch(cache.imageCacheServiceProvider),
     storage: ref.watch(libraryStorageServiceProvider),
   );
@@ -79,6 +80,19 @@ final libraryStorageServiceProvider = Provider<LibraryStorageService>((ref) {
   return LibraryStorageService(storage: storage, imageCache: imageCache);
 });
 
+final practiceServiceProvider = FutureProvider<PracticeService>((ref) async {
+  final repository = await ref.watch(practiceRepositoryProvider.future);
+  final storageService = ref.watch(practiceStorageServiceProvider);
+
+  // 确保 storageService 已正确初始化
+  debugPrint('正在创建 PracticeService 实例');
+
+  return PracticeService(
+    repository: repository,
+    storageService: storageService,
+  );
+});
+
 /// Practice Storage Service Provider
 final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
   final storage = ref.watch(initializedStorageProvider);
@@ -88,40 +102,35 @@ final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
   return service;
 });
 
-final practiceServiceProvider = Provider<PracticeService>((ref) {
-  final repository = ref.watch(practiceRepositoryProvider);
-  final storageService = ref.watch(practiceStorageServiceProvider);
-  
-  // 确保 storageService 已正确初始化
-  debugPrint('正在创建 PracticeService 实例');
-  
-  return PracticeService(
-    repository: repository,
-    storageService: storageService,
-  );
-});
-
 final stateRestorationServiceProvider = Provider<StateRestorationService>(
   (ref) => StateRestorationService(ref.watch(sharedPreferencesProvider)),
 );
 
 /// Work Image Service Provider
-final workImageServiceProvider = Provider<WorkImageService>((ref) {
+final workImageServiceProvider = FutureProvider<WorkImageService>((ref) async {
+  final repository = await ref.watch(workImageRepositoryProvider.future);
   return WorkImageService(
     storage: ref.watch(workStorageProvider),
     processor: ref.watch(imageProcessorProvider),
-    repository: ref.watch(workImageRepositoryProvider),
+    repository: repository,
   );
 });
 
 /// Work Service Provider
-final workServiceProvider = Provider<WorkService>((ref) {
+final workServiceProvider = FutureProvider<WorkService>((ref) async {
+  final repository = await ref.watch(workRepositoryProvider.future);
+  final imageService = await ref.watch(workImageServiceProvider.future);
+  final workImageRepository =
+      await ref.watch(workImageRepositoryProvider.future);
+  final characterRepository =
+      await ref.watch(characterRepositoryProvider.future);
+
   return WorkService(
-    repository: ref.watch(workRepositoryProvider),
-    imageService: ref.watch(workImageServiceProvider),
+    repository: repository,
+    imageService: imageService,
     storage: ref.watch(initializedStorageProvider),
-    workImageRepository: ref.watch(workImageRepositoryProvider),
-    characterRepository: ref.watch(characterRepositoryProvider),
+    workImageRepository: workImageRepository,
+    characterRepository: characterRepository,
   );
 });
 

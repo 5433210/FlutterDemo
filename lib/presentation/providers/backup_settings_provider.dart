@@ -19,15 +19,21 @@ final backupServiceProvider = Provider<BackupService>((ref) {
   final storage = ref.watch(initializedStorageProvider);
   final database = ref.watch(initializedDatabaseProvider);
 
-  final service = BackupService(
-    storage: storage,
-    database: database,
+  return database.when(
+    data: (db) {
+      final service = BackupService(
+        storage: storage,
+        database: db,
+      );
+
+      // 初始化备份服务
+      service.initialize();
+
+      return service;
+    },
+    loading: () => throw Exception('Database is loading'),
+    error: (error, stack) => throw Exception('Database error: $error'),
   );
-
-  // 初始化备份服务
-  service.initialize();
-
-  return service;
 });
 
 /// 备份设置提供者

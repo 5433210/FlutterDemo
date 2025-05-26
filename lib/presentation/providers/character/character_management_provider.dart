@@ -13,24 +13,22 @@ import '../../viewmodels/states/character_management_state.dart';
 /// Provider for character management state
 final characterManagementProvider = StateNotifierProvider<
     CharacterManagementNotifier, CharacterManagementState>(
-  (ref) => CharacterManagementNotifier(
-    characterService: ref.watch(characterServiceProvider),
-    characterViewRepository: ref.watch(characterViewRepositoryProvider),
-  ),
+  (ref) {
+    // Return a notifier that will initialize asynchronously
+    return CharacterManagementNotifier(ref);
+  },
 );
 
 /// Character management state notifier
 class CharacterManagementNotifier
     extends StateNotifier<CharacterManagementState> {
-  final CharacterService _characterService;
-  final CharacterViewRepository _characterViewRepository;
+  CharacterService? _characterService;
+  CharacterViewRepository? _characterViewRepository;
+  final Ref _ref;
+  bool _isInitialized = false;
 
-  CharacterManagementNotifier({
-    required CharacterService characterService,
-    required CharacterViewRepository characterViewRepository,
-  })  : _characterService = characterService,
-        _characterViewRepository = characterViewRepository,
-        super(CharacterManagementState.initial());
+  CharacterManagementNotifier(this._ref)
+      : super(CharacterManagementState.initial());
 
   /// Change current page
   Future<void> changePage(int newPage) async {
@@ -102,10 +100,13 @@ class CharacterManagementNotifier
   /// Delete a single character
   Future<void> deleteCharacter(String characterId) async {
     try {
+      await _ensureInitialized();
+      if (_characterService == null) return;
+
       state = state.copyWith(isLoading: true);
 
       // Use character service to delete the character
-      await _characterService.deleteCharacter(characterId);
+      await _characterService!.deleteCharacter(characterId);
 
       // If the deleted character was selected for detail view, clear selection
       if (state.selectedCharacterId == characterId) {
@@ -131,10 +132,13 @@ class CharacterManagementNotifier
     if (state.selectedCharacters.isEmpty) return;
 
     try {
+      await _ensureInitialized();
+      if (_characterService == null) return;
+
       state = state.copyWith(isLoading: true);
 
       // Use character service to delete characters
-      await _characterService
+      await _characterService!
           .deleteBatchCharacters(state.selectedCharacters.toList());
 
       // Clear selection and reload
@@ -156,7 +160,10 @@ class CharacterManagementNotifier
   /// Load all available tags
   Future<void> loadAllTags() async {
     try {
-      final tags = await _characterViewRepository.getAllTags();
+      await _ensureInitialized();
+      if (_characterViewRepository == null) return;
+
+      final tags = await _characterViewRepository!.getAllTags();
       state = state.copyWith(allTags: tags);
     } catch (e) {
       AppLogger.error('Failed to load tags', error: e);
@@ -166,9 +173,12 @@ class CharacterManagementNotifier
   /// Reload character data
   Future<void> loadCharacters() async {
     try {
+      await _ensureInitialized();
+      if (_characterViewRepository == null) return;
+
       state = state.copyWith(isLoading: true, errorMessage: null);
 
-      final result = await _characterViewRepository.getCharacters(
+      final result = await _characterViewRepository!.getCharacters(
         filter: state.filter,
         page: state.currentPage,
         pageSize: state.pageSize,
@@ -253,8 +263,11 @@ class CharacterManagementNotifier
   /// Toggle favorite status for a character
   Future<void> toggleFavorite(String characterId) async {
     try {
+      await _ensureInitialized();
+      if (_characterService == null) return;
+
       // Call character service to toggle favorite status
-      final success = await _characterService.toggleFavorite(characterId);
+      final success = await _characterService!.toggleFavorite(characterId);
       if (success) {
         // Update the character in the list
         final updatedCharacters = state.characters.map((character) {
@@ -290,5 +303,15 @@ class CharacterManagementNotifier
 
     state = state.copyWith(pageSize: newSize, currentPage: 1);
     await loadCharacters();
+  }
+
+  /// Initialize the services asynchronously
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    _characterService = await _ref.read(characterServiceProvider.future);
+    _characterViewRepository =
+        await _ref.read(characterViewRepositoryProvider.future);
+    _isInitialized = true;
   }
 }

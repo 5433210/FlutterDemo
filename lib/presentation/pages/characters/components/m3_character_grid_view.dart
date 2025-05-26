@@ -360,10 +360,9 @@ class M3CharacterGridView extends ConsumerWidget {
 
                     // Use FutureBuilder to handle the async operation
                     return FutureBuilder<String>(
-                      future: ref
-                          .read(characterServiceProvider)
-                          .getCharacterImagePath(
-                              character.id, CharacterImageType.thumbnail),
+                      future: ref.read(characterServiceProvider.future).then(
+                          (service) => service.getCharacterImagePath(
+                              character.id, CharacterImageType.thumbnail)),
                       builder: (context, snapshot) {
                         return Container(
                           key: ValueKey('character_${character.id}'),
@@ -432,10 +431,9 @@ class M3CharacterGridView extends ConsumerWidget {
 
               // Use FutureBuilder to handle the async operation
               return FutureBuilder<String>(
-                future: ref
-                    .read(characterServiceProvider)
-                    .getCharacterImagePath(
-                        character.id, CharacterImageType.thumbnail),
+                future: ref.read(characterServiceProvider.future).then(
+                    (service) => service.getCharacterImagePath(
+                        character.id, CharacterImageType.thumbnail)),
                 builder: (context, snapshot) {
                   return Container(
                     key: ValueKey('character_${character.id}'),

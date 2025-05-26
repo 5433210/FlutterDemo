@@ -496,7 +496,7 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
 
       // Only process cover when there are images
       if (savedImages.isNotEmpty && editingWork != null) {
-        final imageService = ref.read(workImageServiceProvider);
+        final imageServiceAsync = ref.read(workImageServiceProvider);
         final storageService = ref.read(workStorageProvider);
 
         // Check if cover matches current first image
@@ -510,7 +510,13 @@ class _M3WorkDetailPageState extends ConsumerState<M3WorkDetailPage>
               tag: 'M3WorkDetailPage',
               data: {'firstImageId': savedImages[0].id});
 
-          await imageService.updateCover(editingWork.id, savedImages[0].id);
+          await imageServiceAsync.when(
+            data: (imageService) =>
+                imageService.updateCover(editingWork.id, savedImages[0].id),
+            loading: () => throw Exception('Image service is loading'),
+            error: (error, stack) =>
+                throw Exception('Image service error: $error'),
+          );
         } else {
           AppLogger.debug('Cover exists after save', tag: 'M3WorkDetailPage');
         }

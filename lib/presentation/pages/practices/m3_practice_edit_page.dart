@@ -178,10 +178,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   void initState() {
     super.initState();
     // Create or get the PracticeService instance
-    final practiceService = ref.read(practiceServiceProvider);
-    _controller =
-        PracticeEditController(practiceService); // Pass canvasKey to controller
-    _controller.setCanvasKey(_canvasKey);
+    // Initialize controller asynchronously
+    _initializeController();
 
     // Set preview mode callback
     _controller.setPreviewModeCallback((isPreview) {
@@ -1180,10 +1178,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     if (characterIds.isEmpty) {
       debugPrint('没有字符ID，无法创建集字元素');
       return;
-    }
-
-    // 获取字符服务和图像服务
-    final characterService = ref.read(characterServiceProvider);
+    } // 获取字符服务和图像服务
+    final characterService = await ref.read(characterServiceProvider.future);
     final characterImageService = ref.read(characterImageServiceProvider);
     debugPrint('已获取字符服务和图像服务');
 
@@ -1290,10 +1286,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     if (itemIds.isEmpty) {
       debugPrint('没有图库项目ID，无法创建图片元素');
       return;
-    }
-
-    // 获取图库服务
-    final libraryService = ref.read(libraryServiceProvider);
+    } // 获取图库服务
+    final libraryService = await ref.read(libraryServiceProvider.future);
     debugPrint('已获取图库服务');
 
     // 对于每个图库项目ID，创建一个图片元素
@@ -1353,6 +1347,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       }
     }
     debugPrint('图库项目处理完成');
+  }
+
+  // Initialize controller asynchronously
+  Future<void> _initializeController() async {
+    final practiceService = await ref.read(practiceServiceProvider.future);
+    _controller = PracticeEditController(practiceService);
+    _controller.setCanvasKey(_canvasKey);
   }
 
   void _initKeyboardHandler() {

@@ -654,12 +654,12 @@ class _M3LibraryBrowsingPanelState
       final pathToUse = fileExists ? normalizedPath : filePath;
 
       // Import the file
-      final item = await importService.importFile(pathToUse);
-
-      // If import successful and categories are specified, update the item
+      final item = await importService.importFile(
+          pathToUse); // If import successful and categories are specified, update the item
       if (item != null && categories.isNotEmpty) {
+        final repository = await ref.read(libraryRepositoryProvider.future);
         final updatedItem = item.copyWith(categories: categories);
-        await ref.read(libraryRepositoryProvider).update(updatedItem);
+        await repository.update(updatedItem);
       }
 
       // Close the dialog before refreshing data

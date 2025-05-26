@@ -12,15 +12,16 @@ import '../../infrastructure/logging/logger.dart';
 /// 作品详情提供器
 final workDetailProvider =
     StateNotifierProvider<WorkDetailNotifier, WorkDetailState>((ref) {
-  final workService = ref.watch(workServiceProvider);
-  return WorkDetailNotifier(workService);
+  return WorkDetailNotifier(ref);
 });
 
 /// 作品详情通知器
 class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
-  final WorkService _workService;
+  WorkService? _workService;
+  final Ref _ref;
+  bool _isInitialized = false;
 
-  WorkDetailNotifier(this._workService) : super(const WorkDetailState());
+  WorkDetailNotifier(this._ref) : super(const WorkDetailState());
 
   /// 将字符添加到作品关联字符列表
   /// 添加单个字符到作品关联字符列表
@@ -38,10 +39,10 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       var updatedWork = state.work!;
       for (final char in chars) {
         updatedWork = updatedWork.addCollectedChar(char);
-      }
-
-      // 保存更新后的作品
-      final savedWork = await _workService.updateWorkEntity(updatedWork);
+      } // 保存更新后的作品
+      await _ensureInitialized();
+      if (_workService == null) return;
+      final savedWork = await _workService!.updateWorkEntity(updatedWork);
 
       // 更新状态
       state = state.copyWith(
@@ -94,11 +95,13 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   /// 删除作品
   Future<bool> deleteWork(String workId) async {
     if (state.isSaving) return false;
-
     try {
+      await _ensureInitialized();
+      if (_workService == null) return false;
+
       state = state.copyWith(isSaving: true, error: null);
 
-      await _workService.deleteWork(workId);
+      await _workService!.deleteWork(workId);
 
       state = state.copyWith(isSaving: false);
       return true;
@@ -124,7 +127,10 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
     try {
       state = state.copyWith(isLoading: true, error: null);
 
-      final work = await _workService.getWork(workId);
+      await _ensureInitialized();
+      if (_workService == null) return;
+
+      final work = await _workService!.getWork(workId);
       state = state.copyWith(
         work: work,
         editingWork: work,
@@ -163,8 +169,11 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
             'tagCount': state.editingWork!.tags.length,
           });
 
+      await _ensureInitialized();
+      if (_workService == null) return false;
+
       final updatedWork =
-          await _workService.updateWorkEntity(state.editingWork!);
+          await _workService!.updateWorkEntity(state.editingWork!);
 
       AppLogger.debug('Work state after saving',
           tag: 'WorkDetailProvider',
@@ -227,14 +236,16 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
   /// 切换收藏状态
   Future<void> toggleFavorite() async {
     if (state.work == null) return;
-
     try {
+      await _ensureInitialized();
+      if (_workService == null) return;
+
       state = state.copyWith(isLoading: true, error: null);
 
       final workId = state.work!.id;
 
       // 调用服务切换收藏状态
-      final updatedWork = await _workService.toggleFavorite(workId);
+      final updatedWork = await _workService!.toggleFavorite(workId);
 
       // 更新状态
       state = state.copyWith(
@@ -349,6 +360,14 @@ class WorkDetailNotifier extends StateNotifier<WorkDetailState> {
       editingWork: updatedWork,
       hasChanges: true,
     );
+  }
+
+  /// Initialize the service asynchronously
+  Future<void> _ensureInitialized() async {
+    if (_isInitialized) return;
+
+    _workService = await _ref.read(workServiceProvider.future);
+    _isInitialized = true;
   }
 }
 

@@ -120,8 +120,7 @@ class SQLiteDatabase implements DatabaseInterface {
     //   data: {
     //     'table': table,
     //     'filter': filter,
-    //   },
-    // );
+    //   },    // );
 
     final query = DatabaseQuery.fromJson(filter);
     final queryResult = _buildQuerySql(table, query);
@@ -136,6 +135,16 @@ class SQLiteDatabase implements DatabaseInterface {
     // );
 
     try {
+      // Add critical logging to track database instance and table existence
+      AppLogger.info('Executing query on database',
+          tag: 'SQLiteDatabase',
+          data: {
+            'databaseInstanceId': hashCode,
+            'databasePath': _db.path,
+            'sql': queryResult.sql,
+            'args': queryResult.args,
+          });
+
       final results = await _db.rawQuery(queryResult.sql, queryResult.args);
 
       // AppLogger.debug(
@@ -537,7 +546,7 @@ class SQLiteDatabase implements DatabaseInterface {
             '数据库降级: 当前版本 v$oldVersion, 目标版本 v$newVersion',
             tag: 'Database',
           ),
-          throw Exception('数据库降级不支持'),
+          // throw Exception('数据库降级不支持'),
         },
       );
 

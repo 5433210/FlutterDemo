@@ -9,9 +9,9 @@ import '../../infrastructure/providers/storage_providers.dart';
 /// 存储信息提供者
 final storageInfoProvider = FutureProvider<StorageInfo>((ref) async {
   final storage = ref.watch(initializedStorageProvider);
-  final workService = ref.watch(workServiceProvider);
-  final characterService = ref.watch(characterServiceProvider);
-  final libraryService = ref.watch(libraryServiceProvider);
+  final workService = await ref.watch(workServiceProvider.future);
+  final characterService = await ref.watch(characterServiceProvider.future);
+  final libraryService = await ref.watch(libraryServiceProvider.future);
 
   // 获取应用数据目录
   final basePath = storage.getAppDataPath();

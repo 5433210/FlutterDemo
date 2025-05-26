@@ -11,6 +11,7 @@ import '../../providers/work_browse_provider.dart';
 import '../../providers/works_providers.dart';
 import '../../utils/cross_navigation_helper.dart';
 import '../../viewmodels/states/work_browse_state.dart';
+import '../../viewmodels/work_browse_view_model.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
@@ -32,12 +33,211 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
     with WidgetsBindingObserver {
   // Store provider reference during initialization to avoid accessing it during lifecycle changes
   StateController<RefreshInfo?>? _refreshNotifier;
-
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(workBrowseProvider);
-    final viewModel = ref.read(workBrowseProvider.notifier);
     final l10n = AppLocalizations.of(context);
+
+    return ref.watch(workBrowseViewModelProvider).when(
+          data: (viewModel) =>
+              _buildWorkBrowseContent(context, viewModel, l10n),
+          loading: () => _buildLoadingState(context, l10n),
+          error: (error, stackTrace) => _buildErrorState(context, error, l10n),
+        );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Only proceed if the widget is still mounted
+    if (!mounted) return;
+
+    if (state == AppLifecycleState.resumed) {
+      try {
+        // Use the stored notifier or get it safely if we don't have it yet
+        if (_refreshNotifier == null) {
+          // Only try to access the provider if the widget is still mounted
+          if (!mounted) return;
+          _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
+        }
+
+        // Now use the stored notifier reference
+        if (_refreshNotifier != null) {
+          _refreshNotifier!.state = RefreshInfo.appResume();
+        }
+      } catch (e) {
+        AppLogger.error('Failed to set refresh flag',
+            tag: 'WorkBrowsePage', error: e);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Initialize the refresh notifier reference
+    if (mounted) {
+      _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
+    } // Add a delay to ensure database is fully initialized
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+
+      // Use the stored notifier if available
+      if (_refreshNotifier != null) {
+        _refreshNotifier!.state = const RefreshInfo(
+          reason: 'App initialization',
+          force: true,
+          priority: 10,
+        );
+      }
+    });
+  }
+
+  Widget _buildErrorState(
+      BuildContext context, Object error, AppLocalizations l10n) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.workBrowseTitle),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: ${error.toString()}'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Trigger a refresh by invalidating the provider
+                ref.invalidate(workBrowseViewModelProvider);
+              },
+              child: Text(l10n.workBrowseReload),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState(BuildContext context, AppLocalizations l10n) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.workBrowseTitle),
+      ),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading work browse...'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    final state = ref.watch(workBrowseProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    if (state.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+            const SizedBox(height: 16),
+            Text(l10n.workBrowseError(state.error!),
+                style: TextStyle(color: colorScheme.error)),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () => _loadWorks(force: true),
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.workBrowseReload),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return state.isLoading
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.workBrowseLoading,
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          )
+        : state.works.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.inbox,
+                        size: 64,
+                        color: colorScheme.onSurfaceVariant.withAlpha(128)),
+                    const SizedBox(height: 16),
+                    Text(l10n.workBrowseNoWorks,
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text(l10n.workBrowseNoWorksHint,
+                        style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: () => _showImportDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.workBrowseImport),
+                    ),
+                  ],
+                ),
+              )
+            : state.viewMode == ViewMode.grid
+                ? M3WorkGridView(
+                    works: state.works,
+                    batchMode: state.batchMode,
+                    selectedWorks: state.selectedWorks,
+                    onSelectionChanged: (workId, selected) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleSelection(workId),
+                    onItemTap: (workId) => _handleWorkSelected(context, workId),
+                    onToggleFavorite: (workId) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleFavorite(workId),
+                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                  )
+                : M3WorkListView(
+                    works: state.works,
+                    batchMode: state.batchMode,
+                    selectedWorks: state.selectedWorks,
+                    onSelectionChanged: (workId, selected) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleSelection(workId),
+                    onItemTap: (workId) => _handleWorkSelected(context, workId),
+                    onToggleFavorite: (workId) => ref
+                        .read(workBrowseProvider.notifier)
+                        .toggleFavorite(workId),
+                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
+                  );
+  }
+
+  Widget _buildWorkBrowseContent(BuildContext context,
+      WorkBrowseViewModel viewModel, AppLocalizations l10n) {
+    final state = ref.watch(workBrowseProvider);
 
     // Use a local variable to store whether a refresh is in progress
     bool isRefreshing = false;
@@ -133,15 +333,22 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
                       );
                     },
                   ),
-                PersistentSidebarToggle(
-                  sidebarId: 'work_browse_filter_sidebar',
-                  defaultIsOpen: state.isSidebarOpen,
-                  onToggle: (isOpen) => viewModel.toggleSidebar(),
-                  alignRight: false,
+                // Sidebar toggle with minimum width constraint
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 40),
+                  child: PersistentSidebarToggle(
+                    sidebarId: 'work_browse_filter_sidebar',
+                    defaultIsOpen: state.isSidebarOpen,
+                    onToggle: (isOpen) => viewModel.toggleSidebar(),
+                    alignRight: false,
+                  ),
                 ),
-                // 移除了可能导致深色阴影的分隔线
+                // Main content with minimum width constraint
                 Expanded(
-                  child: _buildMainContent(),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 300),
+                    child: _buildMainContent(),
+                  ),
                 ),
               ],
             ),
@@ -171,152 +378,6 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
             )
           : null,
     );
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only proceed if the widget is still mounted
-    if (!mounted) return;
-
-    if (state == AppLifecycleState.resumed) {
-      try {
-        // Use the stored notifier or get it safely if we don't have it yet
-        if (_refreshNotifier == null) {
-          // Only try to access the provider if the widget is still mounted
-          if (!mounted) return;
-          _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
-        }
-
-        // Now use the stored notifier reference
-        if (_refreshNotifier != null) {
-          _refreshNotifier!.state = RefreshInfo.appResume();
-        }
-      } catch (e) {
-        AppLogger.error('Failed to set refresh flag',
-            tag: 'WorkBrowsePage', error: e);
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    // Initialize the refresh notifier reference
-    if (mounted) {
-      _refreshNotifier = ref.read(worksNeedsRefreshProvider.notifier);
-    }
-
-    Future.microtask(() {
-      if (!mounted) return;
-
-      // Use the stored notifier if available
-      if (_refreshNotifier != null) {
-        _refreshNotifier!.state = const RefreshInfo(
-          reason: 'App initialization',
-          force: true,
-          priority: 10,
-        );
-      }
-    });
-  }
-
-  Widget _buildMainContent() {
-    final state = ref.watch(workBrowseProvider);
-    final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
-
-    if (state.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-            const SizedBox(height: 16),
-            Text(l10n.workBrowseError(state.error!),
-                style: TextStyle(color: colorScheme.error)),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () => _loadWorks(force: true),
-              icon: const Icon(Icons.refresh),
-              label: Text(l10n.workBrowseReload),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return state.isLoading
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.workBrowseLoading,
-                  style: TextStyle(color: colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-          )
-        : state.works.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.inbox,
-                        size: 64,
-                        color: colorScheme.onSurfaceVariant.withAlpha(128)),
-                    const SizedBox(height: 16),
-                    Text(l10n.workBrowseNoWorks,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    Text(l10n.workBrowseNoWorksHint,
-                        style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: () => _showImportDialog(context),
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.workBrowseImport),
-                    ),
-                  ],
-                ),
-              )
-            : state.viewMode == ViewMode.grid
-                ? M3WorkGridView(
-                    works: state.works,
-                    batchMode: state.batchMode,
-                    selectedWorks: state.selectedWorks,
-                    onSelectionChanged: (workId, selected) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleSelection(workId),
-                    onItemTap: (workId) => _handleWorkSelected(context, workId),
-                    onToggleFavorite: (workId) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleFavorite(workId),
-                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
-                  )
-                : M3WorkListView(
-                    works: state.works,
-                    batchMode: state.batchMode,
-                    selectedWorks: state.selectedWorks,
-                    onSelectionChanged: (workId, selected) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleSelection(workId),
-                    onItemTap: (workId) => _handleWorkSelected(context, workId),
-                    onToggleFavorite: (workId) => ref
-                        .read(workBrowseProvider.notifier)
-                        .toggleFavorite(workId),
-                    onTagsEdited: (workId) => _handleTagEdited(context, workId),
-                  );
   }
 
   /// Safely handle deletion of selected works

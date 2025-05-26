@@ -252,7 +252,12 @@ class _M3UnifiedWorkDetailPanelState
           'charCount': charIds.length,
         });
 
-        final characters = await repo.getCharactersByIds(charIds);
+        final characters = await repo.when(
+          data: (repository) => repository.getCharactersByIds(charIds),
+          loading: () => throw Exception('Character repository is loading'),
+          error: (error, stack) =>
+              throw Exception('Character repository error: $error'),
+        );
 
         AppLogger.debug('Character loading complete', tag: 'WorkDetail', data: {
           'workId': widget.work.id,
@@ -321,9 +326,14 @@ class _M3UnifiedWorkDetailPanelState
                   );
                 },
                 onToggleFavorite: (characterId) async {
-                  await ref
-                      .read(characterViewRepositoryProvider)
-                      .toggleFavorite(characterId);
+                  await ref.read(characterViewRepositoryProvider).when(
+                        data: (repository) =>
+                            repository.toggleFavorite(characterId),
+                        loading: () =>
+                            throw Exception('Character repository is loading'),
+                        error: (error, stack) => throw Exception(
+                            'Character repository error: $error'),
+                      );
                   setState(() {}); // 刷新字符列表
                 },
               ),
