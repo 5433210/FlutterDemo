@@ -301,7 +301,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
               child: Slider(
                 value: fontSize,
                 min: 1,
-                max: 100,
+                max: 500,
                 divisions: 99,
                 label: '${fontSize.round()}px',
                 activeColor: colorScheme.primary,
@@ -320,7 +320,7 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                 value: fontSize,
                 suffix: 'px',
                 min: 1,
-                max: 200,
+                max: 500,
                 onChanged: (value) {
                   _updateContentProperty('fontSize', value);
                 },
