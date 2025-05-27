@@ -35,23 +35,45 @@ class _M3VisualPropertiesPanelState
   // 使用内存缓存避免重复加载
   static final Map<String, List<int>> _textureCache = {};
 
+  // 本地状态来跟踪纹理应用范围和填充模式
+  String? _localTextureApplicationRange;
+  String? _localTextureFillMode;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-
     final opacity = (widget.element['opacity'] as num?)?.toDouble() ?? 1.0;
     final content = widget.element['content'] as Map<String, dynamic>;
     final fontColor = content['fontColor'] as String? ?? '#000000';
     final backgroundColor =
         content['backgroundColor'] as String? ?? 'transparent';
-    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
-    final enableSoftLineBreak =
-        content['enableSoftLineBreak'] as bool? ?? false;
-    final textureApplicationRange =
-        content['textureApplicationRange'] as String? ?? 'characterBackground';
-    final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
+    final padding = (content['padding'] as num?)?.toDouble() ??
+        0.0; // 动态获取纹理相关属性，确保能反映最新的用户更改
+    final textureApplicationRange = _localTextureApplicationRange ??
+        content['textureApplicationRange'] as String? ??
+        'characterBackground';
+
+    debugPrint('🔍 UI构建: textureApplicationRange=$textureApplicationRange');
+
+    // 根据纹理应用范围设置条件默认填充模式
+    String getDefaultFillMode(String applicationRange) {
+      switch (applicationRange) {
+        case 'characterBackground':
+          return 'contain';
+        case 'background':
+          return 'repeat';
+        default:
+          return 'contain';
+      }
+    }
+
+    final textureFillMode = _localTextureFillMode ??
+        content['textureFillMode'] as String? ??
+        getDefaultFillMode(textureApplicationRange);
+
+    debugPrint('🔍 UI构建: textureFillMode=$textureFillMode');
     return M3PanelStyles.buildPersistentPanelCard(
       context: context,
       panelId: 'collection_visual_properties',
@@ -170,70 +192,94 @@ class _M3VisualPropertiesPanelState
         ),
         const SizedBox(height: 16.0),
 
-        // Background Texture Settings
-        if (content.containsKey('backgroundTexture')) ...[
-          M3PanelStyles.buildSectionTitle(
-              context, l10n.textureApplicationRange),
-          SegmentedButton<String>(
-            segments: [
-              const ButtonSegment<String>(
-                value: 'characterBackground',
-                label: Text('字符背景'),
-                icon: Icon(Icons.text_fields),
-              ),
-              ButtonSegment<String>(
-                value: 'background',
-                label: Text(l10n.textureRangeBackground),
-                icon: const Icon(Icons.crop_free),
-              ),
-            ],
-            selected: {textureApplicationRange},
-            onSelectionChanged: (selection) {
-              widget.onContentPropertyChanged(
-                  'textureApplicationRange', selection.first);
-            },
-          ),
-          const SizedBox(height: 16.0),
-          M3PanelStyles.buildSectionTitle(context, l10n.textureFillMode),
-          DropdownButton<String>(
-            value: textureFillMode,
-            isExpanded: true,
-            items: [
-              DropdownMenuItem(
-                value: 'repeat',
-                child: Text(l10n.textureFillModeRepeat),
-              ),
-              DropdownMenuItem(
-                value: 'repeatX',
-                child: Text(l10n.textureFillModeRepeatX),
-              ),
-              DropdownMenuItem(
-                value: 'repeatY',
-                child: Text(l10n.textureFillModeRepeatY),
-              ),
-              DropdownMenuItem(
-                value: 'noRepeat',
-                child: Text(l10n.textureFillModeNoRepeat),
-              ),
-              DropdownMenuItem(
-                value: 'cover',
-                child: Text(l10n.textureFillModeCover),
-              ),
-              DropdownMenuItem(
-                value: 'contain',
-                child: Text(l10n.textureFillModeContain),
-              ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                widget.onContentPropertyChanged('textureFillMode', value);
-              }
-            },
-          ),
-        ],
+        // Texture Application Range Settings (always visible)
+        M3PanelStyles.buildSectionTitle(context, l10n.textureApplicationRange),
+        SegmentedButton<String>(
+          segments: [
+            const ButtonSegment<String>(
+              value: 'characterBackground',
+              label: Text('字符背景'),
+              icon: Icon(Icons.text_fields),
+            ),
+            ButtonSegment<String>(
+              value: 'background',
+              label: Text(l10n.textureRangeBackground),
+              icon: const Icon(Icons.crop_free),
+            ),
+          ],
+          selected: {textureApplicationRange},
+          onSelectionChanged: (selection) {
+            final newRange = selection.first;
+            debugPrint('🔄 纹理应用范围切换: $textureApplicationRange -> $newRange');
 
-        // Texture preview and select button
+            // Update local state first
+            _localTextureApplicationRange = newRange;
+
+            // Update parent state
+            widget.onContentPropertyChanged(
+                'textureApplicationRange', newRange);
+
+            // Automatically update fill mode to appropriate default
+            final newDefaultFillMode = getDefaultFillMode(newRange);
+            debugPrint('🔄 自动更新填充模式: $textureFillMode -> $newDefaultFillMode');
+
+            // Update local fill mode state
+            _localTextureFillMode = newDefaultFillMode;
+
+            widget.onContentPropertyChanged(
+                'textureFillMode', newDefaultFillMode);
+
+            // Force UI refresh
+            setState(() {});
+          },
+        ),
         const SizedBox(height: 16.0),
+
+        // Texture Fill Mode Settings (always visible)
+        M3PanelStyles.buildSectionTitle(context, l10n.textureFillMode),
+        DropdownButton<String>(
+          value: textureFillMode,
+          isExpanded: true,
+          items: [
+            DropdownMenuItem(
+              value: 'repeat',
+              child: Text(l10n.textureFillModeRepeat),
+            ),
+            DropdownMenuItem(
+              value: 'repeatX',
+              child: Text(l10n.textureFillModeRepeatX),
+            ),
+            DropdownMenuItem(
+              value: 'repeatY',
+              child: Text(l10n.textureFillModeRepeatY),
+            ),
+            DropdownMenuItem(
+              value: 'noRepeat',
+              child: Text(l10n.textureFillModeNoRepeat),
+            ),
+            DropdownMenuItem(
+              value: 'cover',
+              child: Text(l10n.textureFillModeCover),
+            ),
+            DropdownMenuItem(
+              value: 'contain',
+              child: Text(l10n.textureFillModeContain),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              debugPrint('🔄 纹理填充模式切换: $textureFillMode -> $value');
+
+              // Update local state first
+              _localTextureFillMode = value;
+
+              widget.onContentPropertyChanged('textureFillMode', value);
+              // Force UI refresh
+              setState(() {});
+            }
+          },
+        ),
+        const SizedBox(height: 16.0), // Texture preview and select button
         Row(
           children: [
             Container(
@@ -284,8 +330,8 @@ class _M3VisualPropertiesPanelState
               child: Slider(
                 value: padding,
                 min: 0,
-                max: 50,
-                divisions: 50,
+                max: 100,
+                divisions: 100,
                 label: '${padding.round()}px',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -313,40 +359,6 @@ class _M3VisualPropertiesPanelState
         ),
 
         const SizedBox(height: 16.0),
-
-        // Auto line break
-        M3PanelStyles.buildSectionTitle(
-            context, l10n.collectionPropertyPanelAutoLineBreak),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Switch(
-              value: enableSoftLineBreak,
-              activeColor: colorScheme.primary,
-              onChanged: (value) {
-                widget.onContentPropertyChanged('enableSoftLineBreak', value);
-              },
-            ),
-            const SizedBox(width: 8.0),
-            Text(
-              enableSoftLineBreak
-                  ? l10n.collectionPropertyPanelAutoLineBreakEnabled
-                  : l10n.collectionPropertyPanelAutoLineBreakDisabled,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const Spacer(),
-            Tooltip(
-              message: l10n.collectionPropertyPanelAutoLineBreakTooltip,
-              child: Icon(
-                Icons.info_outline,
-                size: 16.0,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -389,14 +401,12 @@ class _M3VisualPropertiesPanelState
           ],
         ),
       );
-    }
-
-    // 获取纹理填充模式和应用范围
+    } // 获取纹理填充模式和应用范围
     final fillMode =
         _getLatestTextureProperty('textureFillMode', content) ?? 'repeat';
     final applicationRange =
         _getLatestTextureProperty('textureApplicationRange', content) ??
-            'character';
+            'characterBackground';
 
     // 确定纹理预览的 BoxFit 模式
     BoxFit previewFit;

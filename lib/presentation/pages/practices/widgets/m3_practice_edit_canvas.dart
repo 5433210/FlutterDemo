@@ -1427,7 +1427,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         : null;
     final textureApplicationRange =
         content['textureApplicationRange'] as String? ?? 'character';
-    final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
+    final textureFillMode = content['textureFillMode'] as String? ?? 'cover';
     final textureOpacity = (content['textureOpacity'] as num?)?.toDouble() ??
         1.0; // Texture debugging (reduced logging for performance)
 

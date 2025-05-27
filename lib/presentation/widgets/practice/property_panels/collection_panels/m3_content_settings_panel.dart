@@ -85,14 +85,48 @@ class M3ContentSettingsPanel extends ConsumerWidget {
           onCharacterInvertToggled: onCharacterInvertToggled,
         ),
 
-        const SizedBox(height: 16.0),
-
-        // Text format settings
+        const SizedBox(height: 16.0), // Text format settings
         M3PanelStyles.buildSectionTitle(
             context, l10n.collectionPropertyPanelTextSettings),
         M3TextFormatPanel(
           content: content,
           onContentPropertyChanged: onContentPropertyChanged,
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Auto line break setting
+        M3PanelStyles.buildSectionTitle(
+            context, l10n.collectionPropertyPanelAutoLineBreak),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Switch(
+              value: content['enableSoftLineBreak'] as bool? ?? false,
+              activeColor: Theme.of(context).colorScheme.primary,
+              onChanged: (value) {
+                onContentPropertyChanged('enableSoftLineBreak', value);
+              },
+            ),
+            const SizedBox(width: 8.0),
+            Text(
+              (content['enableSoftLineBreak'] as bool? ?? false)
+                  ? l10n.collectionPropertyPanelAutoLineBreakEnabled
+                  : l10n.collectionPropertyPanelAutoLineBreakDisabled,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const Spacer(),
+            Tooltip(
+              message: l10n.collectionPropertyPanelAutoLineBreakTooltip,
+              child: Icon(
+                Icons.info_outline,
+                size: 16.0,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ],
     );

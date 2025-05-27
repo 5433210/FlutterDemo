@@ -190,7 +190,18 @@ class CollectionPainter extends CustomPainter {
   /// 绘制普通背景
   void _drawFallbackBackground(
       Canvas canvas, Rect rect, CharacterPosition position) {
+    // 当纹理应用范围是background时，不在字符区域绘制背景色
+    // 这样可以让背景纹理透过来，避免被遮挡
+    if (textureConfig.enabled &&
+        textureConfig.data != null &&
+        textureConfig.textureApplicationRange == 'background') {
+      // 背景纹理模式下，跳过字符区域的背景绘制
+      debugPrint('🎨 CollectionPainter: 跳过字符区域背景绘制，让背景纹理透过');
+      return;
+    }
+
     if (position.backgroundColor != Colors.transparent) {
+      debugPrint('🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}');
       final bgPaint = Paint()
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
@@ -237,9 +248,20 @@ class CollectionPainter extends CustomPainter {
 
   /// 使用图像绘制纹理
   void _drawTextureWithImage(Canvas canvas, Rect rect, ui.Image image) {
+    // Choose blend mode based on texture application range
+    BlendMode blendMode;
+    if (textureConfig.textureApplicationRange == 'background') {
+      // For background textures, use srcOver to avoid multiplication with background colors
+      blendMode = BlendMode.srcOver;
+    } else {
+      // For character textures, use multiply to preserve character shapes
+      blendMode = BlendMode.multiply;
+    }
+
     final paint = Paint()
       ..filterQuality = FilterQuality.medium
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withOpacity(textureConfig.opacity)
+      ..blendMode = blendMode;
 
     if (textureConfig.fillMode == 'repeat') {
       // 平铺模式

@@ -342,7 +342,19 @@ class AdvancedCollectionPainter extends CustomPainter {
   /// 绘制普通背景
   void _drawFallbackBackground(
       Canvas canvas, Rect rect, CharacterPosition position) {
+    // 当纹理应用范围是background时，不在字符区域绘制背景色
+    // 这样可以让背景纹理透过来，避免被遮挡
+    if (textureConfig.enabled &&
+        textureConfig.data != null &&
+        textureConfig.textureApplicationRange == 'background') {
+      // 背景纹理模式下，跳过字符区域的背景绘制
+      debugPrint('🎨 AdvancedCollectionPainter: 跳过字符区域背景绘制，让背景纹理透过');
+      return;
+    }
+
     if (position.backgroundColor != Colors.transparent) {
+      debugPrint(
+          '🎨 AdvancedCollectionPainter: 绘制字符背景色 ${position.backgroundColor}');
       final bgPaint = Paint()
         ..color = position.backgroundColor
         ..style = PaintingStyle.fill;
@@ -383,11 +395,22 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   /// 绘制纹理图像
   void _drawTextureImage(Canvas canvas, Rect rect, ui.Image image) {
-    // 创建绘制配置
+    // Choose blend mode based on texture application range
+    BlendMode blendMode;
+    if (textureConfig.textureApplicationRange == 'background') {
+      // For background textures, use srcOver to avoid multiplication with background colors
+      blendMode = BlendMode.srcOver;
+    } else {
+      // For character textures, use multiply to preserve character shapes
+      blendMode = BlendMode.multiply;
+    }
+
+    // 创建绘制配置，使用条件混合模式让纹理与背景色正确混合
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withOpacity(textureConfig.opacity)
+      ..blendMode = blendMode;
 
     // 根据填充模式绘制纹理
     switch (textureConfig.fillMode) {
