@@ -61,9 +61,10 @@ class PracticeEditUtils {
     }
   }
 
-  /// Copy selected elements
+  /// Copy selected elements with image preloading optimization
   static Map<String, dynamic>? copySelectedElements(
-      PracticeEditController controller, BuildContext context) {
+      PracticeEditController controller, BuildContext context,
+      {dynamic characterImageService}) {
     // 检查是否有选中的元素
     if (controller.state.selectedElementIds.isEmpty) {
       return null;
@@ -82,6 +83,11 @@ class PracticeEditUtils {
       if (element.isNotEmpty) {
         // Deep copy element
         clipboardElement = Map<String, dynamic>.from(element);
+
+        // Preload images for the copied element
+        if (characterImageService != null) {
+          _preloadElementImages([element], characterImageService);
+        }
 
         // Show notification
         ScaffoldMessenger.of(context).showSnackBar(
@@ -112,6 +118,11 @@ class PracticeEditUtils {
           'elements': selectedElements,
         };
 
+        // Preload images for all copied elements
+        if (characterImageService != null) {
+          _preloadElementImages(selectedElements, characterImageService);
+        }
+
         // 显示通知
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -122,6 +133,23 @@ class PracticeEditUtils {
         );
       }
     }
+
+    return clipboardElement;
+  }
+
+  /// Enhanced copy selected elements with comprehensive image preloading
+  static Future<Map<String, dynamic>?> copySelectedElementsWithPreloading(
+      PracticeEditController controller, BuildContext context,
+      {dynamic characterImageService, dynamic imageCacheService}) async {
+    // Use the regular copy method first
+    final clipboardElement = copySelectedElements(controller, context,
+        characterImageService: characterImageService);
+
+    if (clipboardElement == null) return null;
+
+    // Perform comprehensive image preloading
+    await _performComprehensiveImagePreloading(
+        clipboardElement, characterImageService, imageCacheService);
 
     return clipboardElement;
   }
@@ -381,6 +409,31 @@ class PracticeEditUtils {
         },
       ),
     );
+  }
+
+  /// Enhanced paste with cache warming
+  /// This method performs cache warming before pasting to improve rendering performance
+  static Future<void> pasteElementWithCacheWarming(
+      PracticeEditController controller, Map<String, dynamic>? clipboardElement,
+      {dynamic characterImageService, dynamic imageCacheService}) async {
+    if (clipboardElement == null) return;
+
+    try {
+      debugPrint('Starting paste operation with cache warming');
+
+      // First, warm up caches by preloading images for elements that will be pasted
+      await _warmCacheForPasteOperation(
+          clipboardElement, characterImageService, imageCacheService);
+
+      // Then proceed with the normal paste operation
+      pasteElement(controller, clipboardElement);
+
+      debugPrint('Paste operation with cache warming completed');
+    } catch (e) {
+      debugPrint('Error in paste with cache warming: $e');
+      // Fallback to regular paste if cache warming fails
+      pasteElement(controller, clipboardElement);
+    }
   }
 
   /// Preload all collection element images
@@ -787,5 +840,424 @@ class PracticeEditUtils {
     }
 
     return updatedChildren;
+  }
+
+  /// Asynchronously preload a character image
+  static void _asyncPreloadCharacterImage(dynamic characterImageService,
+      String characterId, String type, String format) {
+    Future.microtask(() async {
+      try {
+        debugPrint('Preloading character image: $characterId ($type, $format)');
+        await characterImageService.getCharacterImage(
+            characterId, type, format);
+        debugPrint('Successfully preloaded character image: $characterId');
+      } catch (e) {
+        debugPrint('Failed to preload character image $characterId: $e');
+      }
+    });
+  }
+
+  /// Asynchronously preload a local image
+  static void _asyncPreloadLocalImage(
+      dynamic characterImageService, String imagePath) {
+    Future.microtask(() async {
+      try {
+        debugPrint('Preloading local image: $imagePath');
+        // Use image cache service if available
+        if (characterImageService != null &&
+            characterImageService.toString().contains('ImageCacheService')) {
+          final cacheKey = 'file:$imagePath';
+          await characterImageService.getBinaryImage(cacheKey);
+        }
+        debugPrint('Successfully preloaded local image: $imagePath');
+      } catch (e) {
+        debugPrint('Failed to preload local image $imagePath: $e');
+      }
+    });
+  }
+
+  /// Asynchronously preload a network image
+  static void _asyncPreloadNetworkImage(
+      dynamic characterImageService, String imageUrl) {
+    Future.microtask(() async {
+      try {
+        debugPrint('Preloading network image: $imageUrl');
+        // For network images, we might need different handling
+        // This is a placeholder for future network image caching
+        debugPrint('Network image preloading not yet implemented: $imageUrl');
+      } catch (e) {
+        debugPrint('Failed to preload network image $imageUrl: $e');
+      }
+    });
+  }
+
+  /// Perform comprehensive image preloading for copied elements
+  static Future<void> _performComprehensiveImagePreloading(
+      Map<String, dynamic> clipboardElement,
+      dynamic characterImageService,
+      dynamic imageCacheService) async {
+    try {
+      debugPrint(
+          'Starting comprehensive image preloading for clipboard content');
+
+      final type = clipboardElement['type'] as String?;
+
+      if (type == 'multi_elements') {
+        final elements = clipboardElement['elements'] as List<dynamic>?;
+        if (elements != null) {
+          for (final element in elements) {
+            if (element is Map<String, dynamic>) {
+              await _preloadElementImagesAsync(
+                  element, characterImageService, imageCacheService);
+            }
+          }
+        }
+      } else {
+        // Single element
+        await _preloadElementImagesAsync(
+            clipboardElement, characterImageService, imageCacheService);
+      }
+
+      debugPrint('Comprehensive image preloading completed');
+    } catch (e) {
+      debugPrint('Error in comprehensive image preloading: $e');
+    }
+  }
+
+  /// Preload character image with both character and UI cache
+  static Future<void> _preloadCharacterImageWithCache(
+      dynamic characterImageService,
+      dynamic imageCacheService,
+      String characterId,
+      String type,
+      String format,
+      double fontSize) async {
+    try {
+      // First, preload the binary image data
+      final binaryImage = await characterImageService.getCharacterImage(
+          characterId, type, format);
+
+      if (binaryImage != null && imageCacheService != null) {
+        // Generate cache key for UI image
+        final cacheKey = 'char_$characterId';
+
+        // Try to decode and cache as UI image
+        final uiImage =
+            await imageCacheService.decodeImageFromBytes(binaryImage);
+        if (uiImage != null) {
+          await imageCacheService.cacheUiImage(cacheKey, uiImage);
+          debugPrint(
+              'Cached UI image for character $characterId with key $cacheKey');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error preloading character image $characterId: $e');
+    }
+  }
+
+  /// Preload images for collection elements
+  static void _preloadCollectionElementImages(
+      Map<String, dynamic> element, dynamic characterImageService) {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final characterImages =
+          content['characterImages'] as Map<String, dynamic>?;
+      if (characterImages == null) return;
+
+      final characters = content['characters'] as String?;
+      if (characters == null || characters.isEmpty) return;
+
+      debugPrint(
+          'Preloading images for collection element with ${characters.length} characters');
+
+      // Preload each character's image
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+        Map<String, dynamic>? charImage;
+
+        // Try multiple lookup strategies
+        if (characterImages.containsKey(char)) {
+          charImage = characterImages[char] as Map<String, dynamic>?;
+        } else if (characterImages.containsKey('$i')) {
+          charImage = characterImages['$i'] as Map<String, dynamic>?;
+        } else {
+          // Search by character match
+          for (final key in characterImages.keys) {
+            final value = characterImages[key];
+            if (value is Map<String, dynamic> &&
+                value.containsKey('characterId') &&
+                value.containsKey('character') &&
+                value['character'] == char) {
+              charImage = value;
+              break;
+            }
+          }
+        }
+
+        if (charImage != null && charImage.containsKey('characterId')) {
+          final characterId = charImage['characterId'].toString();
+          final type = charImage['type'] as String? ?? 'square-binary';
+          final format = charImage['format'] as String? ?? 'png-binary';
+
+          // Asynchronously preload the image
+          _asyncPreloadCharacterImage(
+              characterImageService, characterId, type, format);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error preloading collection element images: $e');
+    }
+  }
+
+  /// Asynchronously preload collection element images with comprehensive caching
+  static Future<void> _preloadCollectionElementImagesAsync(
+      Map<String, dynamic> element,
+      dynamic characterImageService,
+      dynamic imageCacheService) async {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final characterImages =
+          content['characterImages'] as Map<String, dynamic>?;
+      if (characterImages == null) return;
+
+      final characters = content['characters'] as String?;
+      if (characters == null || characters.isEmpty) return;
+
+      final fontSize = content['fontSize'] as double? ?? 24.0;
+
+      debugPrint(
+          'Async preloading images for collection element with ${characters.length} characters');
+
+      final preloadTasks = <Future<void>>[];
+
+      for (int i = 0; i < characters.length; i++) {
+        final char = characters[i];
+        Map<String, dynamic>? charImage;
+
+        // Try multiple lookup strategies
+        if (characterImages.containsKey(char)) {
+          charImage = characterImages[char] as Map<String, dynamic>?;
+        } else if (characterImages.containsKey('$i')) {
+          charImage = characterImages['$i'] as Map<String, dynamic>?;
+        } else {
+          for (final key in characterImages.keys) {
+            final value = characterImages[key];
+            if (value is Map<String, dynamic> &&
+                value.containsKey('characterId') &&
+                value.containsKey('character') &&
+                value['character'] == char) {
+              charImage = value;
+              break;
+            }
+          }
+        }
+
+        if (charImage != null && charImage.containsKey('characterId')) {
+          final characterId = charImage['characterId'].toString();
+          final type = charImage['type'] as String? ?? 'square-binary';
+          final format = charImage['format'] as String? ?? 'png-binary';
+
+          // Create preload task
+          preloadTasks.add(_preloadCharacterImageWithCache(
+              characterImageService,
+              imageCacheService,
+              characterId,
+              type,
+              format,
+              fontSize));
+        }
+      }
+
+      // Wait for all preload tasks to complete
+      await Future.wait(preloadTasks);
+      debugPrint('All collection element images preloaded successfully');
+    } catch (e) {
+      debugPrint('Error in async collection element preloading: $e');
+    }
+  }
+
+  /// Preload images for a list of elements
+  static void _preloadElementImages(
+      List<Map<String, dynamic>> elements, dynamic characterImageService) {
+    for (final element in elements) {
+      _preloadSingleElementImages(element, characterImageService);
+    }
+  }
+
+  /// Asynchronously preload images for a single element with comprehensive caching
+  static Future<void> _preloadElementImagesAsync(Map<String, dynamic> element,
+      dynamic characterImageService, dynamic imageCacheService) async {
+    final elementType = element['type'] as String?;
+
+    switch (elementType) {
+      case 'collection':
+        await _preloadCollectionElementImagesAsync(
+            element, characterImageService, imageCacheService);
+        break;
+      case 'image':
+        await _preloadImageElementImagesAsync(
+            element, characterImageService, imageCacheService);
+        break;
+      case 'group':
+        await _preloadGroupElementImagesAsync(
+            element, characterImageService, imageCacheService);
+        break;
+      default:
+        // For other element types, no specific image preloading needed
+        break;
+    }
+  }
+
+  /// Preload images for group elements (recursively process children)
+  static void _preloadGroupElementImages(
+      Map<String, dynamic> element, dynamic characterImageService) {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final children = content['children'] as List<dynamic>?;
+      if (children == null) return;
+
+      for (final child in children) {
+        if (child is Map<String, dynamic>) {
+          _preloadSingleElementImages(child, characterImageService);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error preloading group element images: $e');
+    }
+  }
+
+  /// Asynchronously preload group element images
+  static Future<void> _preloadGroupElementImagesAsync(
+      Map<String, dynamic> element,
+      dynamic characterImageService,
+      dynamic imageCacheService) async {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final children = content['children'] as List<dynamic>?;
+      if (children == null) return;
+
+      final preloadTasks = <Future<void>>[];
+
+      for (final child in children) {
+        if (child is Map<String, dynamic>) {
+          preloadTasks.add(_preloadElementImagesAsync(
+              child, characterImageService, imageCacheService));
+        }
+      }
+      await Future.wait(preloadTasks);
+      debugPrint('All group element children images preloaded successfully');
+    } catch (e) {
+      debugPrint('Error preloading group element images: $e');
+    }
+  }
+
+  /// Preload images for image elements
+  static void _preloadImageElementImages(
+      Map<String, dynamic> element, dynamic characterImageService) {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final imagePath = content['imagePath'] as String?;
+      final imageUrl = content['imageUrl'] as String?;
+
+      if (imagePath != null) {
+        // Preload local image file
+        _asyncPreloadLocalImage(characterImageService, imagePath);
+      } else if (imageUrl != null) {
+        // Preload network image
+        _asyncPreloadNetworkImage(characterImageService, imageUrl);
+      }
+    } catch (e) {
+      debugPrint('Error preloading image element: $e');
+    }
+  }
+
+  /// Asynchronously preload image element images
+  static Future<void> _preloadImageElementImagesAsync(
+      Map<String, dynamic> element,
+      dynamic characterImageService,
+      dynamic imageCacheService) async {
+    try {
+      final content = element['content'] as Map<String, dynamic>?;
+      if (content == null) return;
+
+      final imagePath = content['imagePath'] as String?;
+      final imageUrl = content['imageUrl'] as String?;
+
+      if (imagePath != null && imageCacheService != null) {
+        final cacheKey = 'file:$imagePath';
+        await imageCacheService.getBinaryImage(cacheKey);
+        debugPrint('Preloaded local image: $imagePath');
+      } else if (imageUrl != null) {
+        debugPrint('Network image preloading not yet implemented: $imageUrl');
+      }
+    } catch (e) {
+      debugPrint('Error preloading image element: $e');
+    }
+  }
+
+  /// Preload images for a single element
+  static void _preloadSingleElementImages(
+      Map<String, dynamic> element, dynamic characterImageService) {
+    final elementType = element['type'] as String?;
+
+    switch (elementType) {
+      case 'collection':
+        _preloadCollectionElementImages(element, characterImageService);
+        break;
+      case 'image':
+        _preloadImageElementImages(element, characterImageService);
+        break;
+      case 'group':
+        _preloadGroupElementImages(element, characterImageService);
+        break;
+      default:
+        // For other element types, no specific image preloading needed
+        break;
+    }
+  }
+
+  /// Warm up caches for paste operation
+  static Future<void> _warmCacheForPasteOperation(
+      Map<String, dynamic> clipboardElement,
+      dynamic characterImageService,
+      dynamic imageCacheService) async {
+    try {
+      debugPrint('Warming caches for paste operation');
+
+      final type = clipboardElement['type'] as String?;
+
+      if (type == 'multi_elements') {
+        // Handle multiple elements
+        final elements = clipboardElement['elements'] as List<dynamic>?;
+        if (elements != null) {
+          final preloadTasks = <Future<void>>[];
+          for (final element in elements) {
+            if (element is Map<String, dynamic>) {
+              preloadTasks.add(_preloadElementImagesAsync(
+                  element, characterImageService, imageCacheService));
+            }
+          }
+          await Future.wait(preloadTasks);
+        }
+      } else {
+        // Handle single element
+        await _preloadElementImagesAsync(
+            clipboardElement, characterImageService, imageCacheService);
+      }
+
+      debugPrint('Cache warming for paste operation completed');
+    } catch (e) {
+      debugPrint('Error warming cache for paste operation: $e');
+    }
   }
 }

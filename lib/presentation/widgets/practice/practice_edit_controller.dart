@@ -116,7 +116,14 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加集字元素在指定位置
   void addCollectionElementAt(double x, double y, String characters,
-      {bool isFromCharacterManagement = false}) {
+      {bool isFromCharacterManagement = false,
+      Map<String, dynamic>? elementFromCharacterManagement}) {
+    if (isFromCharacterManagement) {
+      elementFromCharacterManagement!['x'] = x;
+      elementFromCharacterManagement['y'] = y;
+      _addElement(elementFromCharacterManagement);
+      return;
+    }
     final element = {
       'id': 'collection_${_uuid.v4()}',
       'type': 'collection',

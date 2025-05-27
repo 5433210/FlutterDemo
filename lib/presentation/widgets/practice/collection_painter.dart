@@ -557,7 +557,7 @@ class CollectionPainter extends CustomPainter {
       if (imageData.containsKey('characterId')) {
         final characterId = imageData['characterId'];
         if (characterId is String) {
-          final cacheKey = 'char_${characterId}_$fontSize';
+          final cacheKey = 'char_$characterId';
 
           // 尝试从缓存获取图像
           ui.Image? cachedImage =

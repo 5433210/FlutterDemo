@@ -471,7 +471,7 @@ class AdvancedCollectionPainter extends CustomPainter {
 
               if (characterId != null) {
                 // 使用characterId作为缓存键
-                final cacheKey = 'char_${characterId}_$fontSize';
+                final cacheKey = 'char_$characterId';
 
                 // 尝试从缓存获取
                 ui.Image? cachedImage =
@@ -527,7 +527,7 @@ class AdvancedCollectionPainter extends CustomPainter {
                 if (subImageData is Map &&
                     subImageData.containsKey('characterId')) {
                   final characterId = subImageData['characterId'];
-                  final cacheKey = 'char_${characterId}_$fontSize';
+                  final cacheKey = 'char_$characterId';
 
                   // 尝试从缓存获取
                   ui.Image? cachedImage =

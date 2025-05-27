@@ -1,13 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../application/providers/repository_providers.dart';
+import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
 import '../../../domain/models/character/character_filter.dart';
 import '../../../domain/repositories/character/character_view_repository.dart';
+import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/cache_providers.dart' as cache;
+import '../../../infrastructure/services/character_image_service.dart';
 import '../../viewmodels/states/character_management_state.dart';
 
 /// Provider for character management state
@@ -16,6 +22,8 @@ final characterManagementProvider = StateNotifierProvider<
   (ref) => CharacterManagementNotifier(
     characterService: ref.watch(characterServiceProvider),
     characterViewRepository: ref.watch(characterViewRepositoryProvider),
+    characterImageService: ref.watch(characterImageServiceProvider),
+    imageCacheService: ref.watch(cache.imageCacheServiceProvider),
   ),
 );
 
@@ -24,12 +32,18 @@ class CharacterManagementNotifier
     extends StateNotifier<CharacterManagementState> {
   final CharacterService _characterService;
   final CharacterViewRepository _characterViewRepository;
+  final CharacterImageService _characterImageService;
+  final ImageCacheService _imageCacheService;
 
   CharacterManagementNotifier({
     required CharacterService characterService,
     required CharacterViewRepository characterViewRepository,
+    required CharacterImageService characterImageService,
+    required ImageCacheService imageCacheService,
   })  : _characterService = characterService,
         _characterViewRepository = characterViewRepository,
+        _characterImageService = characterImageService,
+        _imageCacheService = imageCacheService,
         super(CharacterManagementState.initial());
 
   /// Change current page
@@ -79,6 +93,9 @@ class CharacterManagementNotifier
 
       // 如果没有选中的字符，直接返回
       if (characterIds.isEmpty) return;
+
+      // 异步预加载字符图像到缓存，不阻塞复制操作
+      _preloadCharacterImages(characterIds);
 
       // 将字符ID列表转换为JSON格式并写入剪贴板
       final Map<String, dynamic> clipboardData = {
@@ -290,5 +307,67 @@ class CharacterManagementNotifier
 
     state = state.copyWith(pageSize: newSize, currentPage: 1);
     await loadCharacters();
+  }
+
+  /// 预加载字符图像到缓存
+  void _preloadCharacterImages(List<String> characterIds) {
+    Future.microtask(() async {
+      try {
+        AppLogger.info(
+            'Starting preload of ${characterIds.length} character images');
+
+        final preloadTasks = <Future<void>>[];
+
+        for (final characterId in characterIds) {
+          // 为每个字符预加载多种常用格式的图像
+          preloadTasks.addAll([
+            _preloadSingleCharacterImage(
+                characterId, 'square-binary', 'png-binary'),
+            _preloadSingleCharacterImage(
+                characterId, 'thumbnail', 'png-binary'),
+            _preloadSingleCharacterImage(characterId, 'binary', 'png-binary'),
+          ]);
+        }
+
+        // 并行执行所有预加载任务
+        await Future.wait(preloadTasks);
+
+        AppLogger.info('Completed preloading character images');
+      } catch (e) {
+        AppLogger.error('Error preloading character images: $e');
+      }
+    });
+  }
+
+  /// 预加载单个字符图像
+  Future<void> _preloadSingleCharacterImage(
+      String characterId, String type, String format) async {
+    try {
+      // 获取二进制图像数据并缓存
+      final imageData = await _characterImageService.getCharacterImage(
+          characterId, type, format);
+
+      if (imageData != null) {
+        // 生成UI图像缓存键
+        final cacheKey = 'char_$characterId'; // 使用默认字体大小
+
+        // 将二进制数据解码为UI图像并缓存
+        try {
+          final completer = Completer<ui.Image>();
+          ui.decodeImageFromList(imageData, completer.complete);
+          final uiImage = await completer.future;
+
+          await _imageCacheService.cacheUiImage(cacheKey, uiImage);
+          AppLogger.debug(
+              'Cached UI image for character $characterId with key $cacheKey');
+        } catch (decodeError) {
+          AppLogger.debug(
+              'Failed to decode UI image for character $characterId: $decodeError');
+        }
+      }
+    } catch (e) {
+      AppLogger.debug(
+          'Failed to preload image for character $characterId ($type): $e');
+    }
   }
 }

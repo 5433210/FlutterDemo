@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +9,10 @@ import '../../../application/providers/service_providers.dart';
 import '../../../application/services/library_service.dart';
 import '../../../domain/entities/library_category.dart';
 import '../../../domain/entities/library_item.dart';
+import '../../../infrastructure/cache/services/image_cache_service.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../../../infrastructure/providers/cache_providers.dart' as cache;
+import '../../../infrastructure/services/character_image_service.dart';
 import '../../viewmodels/states/library_management_state.dart';
 
 /// 图库管理状态提供者
@@ -15,19 +20,27 @@ final libraryManagementProvider =
     StateNotifierProvider<LibraryManagementNotifier, LibraryManagementState>(
   (ref) => LibraryManagementNotifier(
     service: ref.watch(libraryServiceProvider),
+    characterImageService: ref.watch(characterImageServiceProvider),
+    imageCacheService: ref.watch(cache.imageCacheServiceProvider),
   ),
 );
 
 /// 图库管理状态通知器
 class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
   final LibraryService _service;
+  final CharacterImageService _characterImageService;
+  final ImageCacheService _imageCacheService;
 
   // 添加一个分类计数的本地变量
   Map<String, int> _categoryItemCounts = {};
 
   LibraryManagementNotifier({
     required LibraryService service,
+    required CharacterImageService characterImageService,
+    required ImageCacheService imageCacheService,
   })  : _service = service,
+        _characterImageService = characterImageService,
+        _imageCacheService = imageCacheService,
         super(const LibraryManagementState()) {
     // 初始化时加载分类数据
     _initializeData();
@@ -223,6 +236,9 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
 
       if (selectedItems.isEmpty) return;
 
+      // 异步预加载相关的字符图像到缓存，不阻塞复制操作
+      _preloadLibraryItemImages(selectedItems);
+
       // 将项目列表转换为 JSON 格式并写入剪贴板
       final Map<String, dynamic> clipboardData = {
         'type': 'library_items',
@@ -265,6 +281,9 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
           state.items.where((item) => itemIds.contains(item.id)).toList();
 
       if (selectedItems.isEmpty) return;
+
+      // 异步预加载相关的字符图像到缓存，不阻塞剪切操作
+      _preloadLibraryItemImages(selectedItems);
 
       // 将项目列表转换为 JSON 格式并写入剪贴板
       final Map<String, dynamic> clipboardData = {
@@ -1151,6 +1170,121 @@ class LibraryManagementNotifier extends StateNotifier<LibraryManagementState> {
     await _reloadCategories();
     await loadCategoryItemCounts();
     loadData();
+  }
+
+  /// 预加载图像文件
+  Future<void> _preloadImageFile(String imagePath) async {
+    try {
+      final cacheKey = 'file:$imagePath';
+
+      // 尝试通过图像缓存服务预加载文件
+      await _imageCacheService.getBinaryImage(cacheKey);
+      AppLogger.debug('Preloaded image file: $imagePath');
+    } catch (e) {
+      AppLogger.debug('Failed to preload image file $imagePath: $e');
+    }
+  }
+
+  /// 预加载图库项目相关的图像到缓存
+  void _preloadLibraryItemImages(List<LibraryItem> items) {
+    Future.microtask(() async {
+      try {
+        AppLogger.info(
+            'Starting preload of images for ${items.length} library items');
+
+        final preloadTasks = <Future<void>>[];
+
+        for (final item in items) {
+          // 根据不同类型的图库项目预加载相应的图像
+          if (item.type == 'character') {
+            // 对于字符类型的项目，尝试从metadata中获取字符ID
+            final characterId = item.metadata['characterId'] as String?;
+            if (characterId != null && characterId.isNotEmpty) {
+              preloadTasks.addAll([
+                _preloadSingleCharacterImage(
+                    characterId, 'square-binary', 'png-binary'),
+                _preloadSingleCharacterImage(
+                    characterId, 'thumbnail', 'png-binary'),
+                _preloadSingleCharacterImage(
+                    characterId, 'binary', 'png-binary'),
+              ]);
+            }
+          } else if (item.type == 'image' && item.path.isNotEmpty) {
+            // 为图像类型的项目预加载图像文件
+            preloadTasks.add(_preloadImageFile(item.path));
+          }
+
+          // 预加载缩略图（如果存在）
+          if (item.thumbnail != null) {
+            preloadTasks.add(_preloadThumbnail(item.id, item.thumbnail!));
+          }
+        }
+
+        // 并行执行所有预加载任务
+        await Future.wait(preloadTasks);
+
+        AppLogger.info('Completed preloading images for library items');
+      } catch (e) {
+        AppLogger.error('Error preloading library item images: $e');
+      }
+    });
+  }
+
+  /// 预加载单个字符图像
+  Future<void> _preloadSingleCharacterImage(
+      String characterId, String type, String format) async {
+    try {
+      // 获取二进制图像数据并缓存
+      final imageData = await _characterImageService.getCharacterImage(
+          characterId, type, format);
+
+      if (imageData != null) {
+        // 生成UI图像缓存键
+        final cacheKey = 'char_$characterId'; // 使用默认字体大小
+
+        // 将二进制数据解码为UI图像并缓存
+        try {
+          final completer = Completer<ui.Image>();
+          ui.decodeImageFromList(imageData, completer.complete);
+          final uiImage = await completer.future;
+
+          await _imageCacheService.cacheUiImage(cacheKey, uiImage);
+          AppLogger.debug(
+              'Cached UI image for character $characterId with key $cacheKey');
+        } catch (decodeError) {
+          AppLogger.debug(
+              'Failed to decode UI image for character $characterId: $decodeError');
+        }
+      }
+    } catch (e) {
+      AppLogger.debug(
+          'Failed to preload image for character $characterId ($type): $e');
+    }
+  }
+
+  /// 预加载缩略图
+  Future<void> _preloadThumbnail(String itemId, Uint8List thumbnailData) async {
+    try {
+      final cacheKey = 'thumbnail_$itemId';
+
+      // 缓存缩略图的二进制数据
+      await _imageCacheService.cacheBinaryImage(cacheKey, thumbnailData);
+
+      // 尝试解码并缓存UI图像
+      try {
+        final completer = Completer<ui.Image>();
+        ui.decodeImageFromList(thumbnailData, completer.complete);
+        final uiImage = await completer.future;
+
+        await _imageCacheService.cacheUiImage(cacheKey, uiImage);
+        AppLogger.debug('Cached thumbnail UI image for item $itemId');
+      } catch (decodeError) {
+        AppLogger.debug(
+            'Failed to decode thumbnail for item $itemId: $decodeError');
+      }
+    } catch (e) {
+      AppLogger.debug('Failed to preload thumbnail for item $itemId: $e');
+    }
   }
 
   /// 重新加载分类数据

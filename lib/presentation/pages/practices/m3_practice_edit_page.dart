@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
@@ -1026,26 +1027,53 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     });
   }
 
-  /// Copy selected elements
-  void _copySelectedElement() {
-    debugPrint('开始复制选中元素...');
-    _clipboardElement =
-        PracticeEditUtils.copySelectedElements(_controller, context);
-    debugPrint('复制结果: ${_clipboardElement != null ? '成功' : '失败'}');
-    if (_clipboardElement != null) {
-      debugPrint('复制的元素类型: ${_clipboardElement!['type']}');
-    }
+  /// Copy selected elements with enhanced image preloading optimization
+  void _copySelectedElement() async {
+    debugPrint('开始复制选中元素（增强图像预加载）...');
+    try {
+      // Get services for image preloading
+      final characterImageService = ref.read(characterImageServiceProvider);
+      final imageCacheService = ref.read(imageCacheServiceProvider);
 
-    // Update clipboard state and paste button activation
-    setState(() {
-      _clipboardHasContent = _clipboardElement != null;
-      debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
-    });
+      // Use enhanced copy method with comprehensive image preloading
+      _clipboardElement =
+          await PracticeEditUtils.copySelectedElementsWithPreloading(
+        _controller,
+        context,
+        characterImageService: characterImageService,
+        imageCacheService: imageCacheService,
+      );
 
-    // Show a snackbar notification if copy was successful
-    if (_clipboardElement != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+      debugPrint('复制结果: ${_clipboardElement != null ? '成功' : '失败'}');
+      if (_clipboardElement != null) {
+        debugPrint('复制的元素类型: ${_clipboardElement!['type']}');
+      }
+
+      // Update clipboard state and paste button activation
+      setState(() {
+        _clipboardHasContent = _clipboardElement != null;
+        debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
+      });
+
+      // Show a snackbar notification if copy was successful
+      if (_clipboardElement != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板（已预加载图像）')));
+      }
+    } catch (e) {
+      debugPrint('复制元素时发生错误: $e');
+      // Fallback to regular copy if enhanced copy fails
+      _clipboardElement =
+          PracticeEditUtils.copySelectedElements(_controller, context);
+
+      setState(() {
+        _clipboardHasContent = _clipboardElement != null;
+      });
+
+      if (_clipboardElement != null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+      }
     }
   }
 
@@ -1201,7 +1229,9 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           debugPrint('无法获取字符详情，跳过');
           continue;
         }
-        debugPrint('成功获取字符详情: $character');
+
+        debugPrint('成功获取字符详情');
+        // debugPrint('成功获取字符详情: $character');
 
         // 获取字符图像 - 使用default类型和png格式
         debugPrint('获取字符图像...');
@@ -1237,19 +1267,31 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           'content': {
             // 使用字符名称作为默认显示内容
             'characters': character.character as String? ?? '集',
-            'fontSize': 36.0, // 更大的字体以便于查看
+            'fontSize': 200.0, // 更大的字体以便于查看
             'fontColor': '#000000',
             'backgroundColor': '#FFFFFF',
             'writingMode': 'horizontal-l',
             'letterSpacing': 5.0,
-            'lineSpacing': 10.0,
-            'padding': 10.0, 'textAlign': 'center',
+            'lineSpacing': 10.0, 'padding': 10.0,
+            'textAlign': 'center',
             'verticalAlign': 'middle',
             'enableSoftLineBreak': false,
-            // 添加与字符相关的图像数据
+            // 添加与字符相关的图像数据 - 使用位置索引格式
             'characterImages': {
-              'characterId': characterId,
-              // 其他可能需要的图像相关属性
+              '0': {
+                'characterId': characterId,
+                'type': 'square-binary',
+                'format': 'png-binary',
+                'drawingType': 'square-binary',
+                'drawingFormat': 'png-binary',
+                'transform': {
+                  'scale': 1.0,
+                  'rotation': 0.0,
+                  'color': '#000000',
+                  'opacity': 1.0,
+                  'invert': false,
+                },
+              },
             },
           },
         };
@@ -1266,7 +1308,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           // 这个方法会正确地更新底层的数据结构，确保集字元素被保存
           // 标记该元素来自字符管理页面，字体大小将自动设置为200px
           _controller.addCollectionElementAt(x, y, characters,
-              isFromCharacterManagement: true);
+              isFromCharacterManagement: true,
+              elementFromCharacterManagement: newElement);
 
           // 选择新添加的元素
           // 注意：我们不知道新添加元素的ID，因为它是在controller内部生成的
@@ -1690,10 +1733,30 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     // 首先尝试从内部剪贴板粘贴
     if (_clipboardElement != null) {
       debugPrint('使用内部剪贴板内容粘贴, 类型: ${_clipboardElement!['type']}');
-      setState(() {
-        PracticeEditUtils.pasteElement(_controller, _clipboardElement);
-        // Do not clear _clipboardElement to allow multiple pastes
-      });
+
+      try {
+        // Get services for cache warming
+        final characterImageService = ref.read(characterImageServiceProvider);
+        final imageCacheService = ref.read(imageCacheServiceProvider);
+
+        // Use enhanced paste with cache warming
+        await PracticeEditUtils.pasteElementWithCacheWarming(
+          _controller,
+          _clipboardElement,
+          characterImageService: characterImageService,
+          imageCacheService: imageCacheService,
+        );
+
+        setState(() {
+          // UI state will be updated by the paste operation
+        });
+      } catch (e) {
+        debugPrint('Enhanced paste failed, falling back to regular paste: $e');
+        // Fallback to regular paste
+        setState(() {
+          PracticeEditUtils.pasteElement(_controller, _clipboardElement);
+        });
+      }
       return;
     }
 
@@ -1734,9 +1797,31 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         } else {
           // 尝试作为通用 JSON 元素处理
           debugPrint('处理通用JSON元素...');
-          setState(() {
-            PracticeEditUtils.pasteElement(_controller, json);
-          });
+          try {
+            // Get services for cache warming
+            final characterImageService =
+                ref.read(characterImageServiceProvider);
+            final imageCacheService = ref.read(imageCacheServiceProvider);
+
+            // Use enhanced paste with cache warming
+            await PracticeEditUtils.pasteElementWithCacheWarming(
+              _controller,
+              json,
+              characterImageService: characterImageService,
+              imageCacheService: imageCacheService,
+            );
+
+            setState(() {
+              // UI state will be updated by the paste operation
+            });
+          } catch (e) {
+            debugPrint(
+                'Enhanced JSON paste failed, falling back to regular paste: $e');
+            // Fallback to regular paste
+            setState(() {
+              PracticeEditUtils.pasteElement(_controller, json);
+            });
+          }
         }
       } catch (e) {
         // 不是有效的 JSON，作为纯文本处理
