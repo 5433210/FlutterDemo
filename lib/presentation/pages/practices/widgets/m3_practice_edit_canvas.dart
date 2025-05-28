@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -115,21 +114,14 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   /// 处理控制点拖拽结束事件
   // 存储原始元素属性，用于撤销/重做
   Map<String, dynamic>? _originalElementProperties;
-
   bool _isResizing = false;
 
   bool _isRotating = false;
-  // 添加防抖计时器，用于减少transformationController的更新频率
-  Timer? _transformationDebouncer;
-  final bool _isTransforming = false;
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // 当正在进行变换操作时，禁止输出重建日志，减少控制台噪音
-    if (!_isTransforming) {
-      debugPrint('Canvas rebuild');
-    }
+    debugPrint('Canvas rebuild');
 
     if (widget.controller.state.pages.isEmpty) {
       return Center(
@@ -377,14 +369,17 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       600.0, // Increased scale factor to make zooming more gradual
                   transformationController: widget.transformationController,
                   onInteractionStart: (ScaleStartDetails details) {},
-                  onInteractionUpdate: (ScaleUpdateDetails details) {},
+                  onInteractionUpdate: (ScaleUpdateDetails details) {
+                    // Update zoom value during scaling to refresh the display
+                    setState(() {});
+                  },
                   onInteractionEnd: (ScaleEndDetails details) {
-                    // Update final zoom value
-                    // final scale =
-                    //     widget.transformationController.value.getMaxScaleOnAxis();
-                    // widget.controller.zoomTo(scale);
-                    // setState(
-                    //     () {}); // Update to reflect the new zoom level in the status bar
+                    // Update final zoom value and ensure the UI is refreshed
+                    final scale = widget.transformationController.value
+                        .getMaxScaleOnAxis();
+                    widget.controller.zoomTo(scale);
+                    setState(
+                        () {}); // Update to reflect the new zoom level in the status bar
                   },
                   constrained: false, // Allow content to be unconstrained
                   child: GestureDetector(
@@ -1425,8 +1420,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     final backgroundTexture = hasBackgroundTexture
         ? content['backgroundTexture'] as Map<String, dynamic>
         : null;
-    final textureApplicationRange =
-        content['textureApplicationRange'] as String? ?? 'character';
     final textureFillMode = content['textureFillMode'] as String? ?? 'cover';
     final textureOpacity = (content['textureOpacity'] as num?)?.toDouble() ??
         1.0; // Texture debugging (reduced logging for performance)

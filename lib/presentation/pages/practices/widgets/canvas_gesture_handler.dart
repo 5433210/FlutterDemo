@@ -601,10 +601,16 @@ class CanvasGestureHandler {
         break;
       }
     }
-
     if (!hitSelectedElement) {
       // Right click on blank area or non-selected element
-      controller.clearSelection();
+      // 只有在select模式下右键点击空白区域时才退出select模式，但不清除选中状态
+      if (controller.state.currentTool == 'select') {
+        debugPrint('【右键】handleSecondaryTapUp: 右键退出select模式，但保持选中状态');
+        // 这里可以添加退出select模式的逻辑，但不清除选中的元素
+        // controller.state.currentTool = ''; // 如果需要退出select模式
+      }
+      // 注释掉原来的清除选择逻辑
+      // controller.clearSelection();
       _isDragging = false;
       onDragStart(false, Offset.zero, Offset.zero, {});
     }
@@ -657,7 +663,6 @@ class CanvasGestureHandler {
           details.localPosition.dx <= x + width &&
           details.localPosition.dy >= y &&
           details.localPosition.dy <= y + height;
-
       if (isInside) {
         hitElement = true;
 
@@ -674,6 +679,13 @@ class CanvasGestureHandler {
         } else {
           // 清除图层选择
           controller.state.selectedLayerId = null;
+
+          // 如果点击的是已选中的元素且不是多选模式，则取消选中
+          if (isCurrentlySelected && !isMultiSelect) {
+            debugPrint('【选择】handleTapUp: 点击已选中元素，取消选中: $id');
+            controller.clearSelection();
+            break;
+          }
 
           // 选择元素
           controller.selectElement(id, isMultiSelect: isMultiSelect);
