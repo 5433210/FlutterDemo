@@ -8,6 +8,7 @@ import '../../../../application/services/services.dart';
 import '../../../../domain/models/character/character_entity.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../practice_edit_controller.dart';
+import 'collection_panels/m3_background_texture_panel.dart';
 import 'collection_panels/m3_content_settings_panel.dart';
 import 'collection_panels/m3_geometry_properties_panel.dart';
 import 'collection_panels/m3_visual_properties_panel.dart';
@@ -47,20 +48,14 @@ class _M3CollectionPropertyPanelState
 
   // Text controller
   final TextEditingController _textController = TextEditingController();
-
   // Debounce timer
   Timer? _debounceTimer;
 
-  // Last input text
-  String _lastInputText = '';
-
   // Controls candidate character color inversion
   bool _invertCandidateDisplay = false;
-
   @override
   Widget build(BuildContext context) {
     final layerId = widget.element['layerId'] as String?;
-    final l10n = AppLocalizations.of(context);
 
     // Get layer information
     Map<String, dynamic>? layer;
@@ -85,10 +80,15 @@ class _M3CollectionPropertyPanelState
         M3GeometryPropertiesPanel(
           element: widget.element,
           onPropertyChanged: _updateProperty,
+        ), // Visual properties section
+        M3VisualPropertiesPanel(
+          element: widget.element,
+          onPropertyChanged: _updateProperty,
+          onContentPropertyChanged: _updateContentProperty,
         ),
 
-        // Visual properties section
-        M3VisualPropertiesPanel(
+        // Background texture section
+        M3BackgroundTexturePanel(
           element: widget.element,
           onPropertyChanged: _updateProperty,
           onContentPropertyChanged: _updateContentProperty,
@@ -112,56 +112,6 @@ class _M3CollectionPropertyPanelState
     );
   }
 
-  // 递归处理嵌套的 content 结构，提取所有属性到根级别
-  Map<String, dynamic> _deepFlattenContent(Map<String, dynamic> content) {
-    final result = <String, dynamic>{};
-    
-    // 递归提取所有属性
-    void extractProperties(Map<String, dynamic> source) {
-      for (final entry in source.entries) {
-        if (entry.key == 'content' && entry.value is Map<String, dynamic>) {
-          // 如果是嵌套的 content，递归提取其属性
-          extractProperties(entry.value as Map<String, dynamic>);
-        } else {
-          // 对于其他属性，仅当尚未存在时才复制
-          if (!result.containsKey(entry.key)) {
-            result[entry.key] = entry.value;
-          }
-        }
-      }
-    }
-    
-    // 开始提取
-    extractProperties(content);
-    
-    return result;
-  }
-
-  // 清理元素中的嵌套内容结构
-  void _cleanupNestedContent() {
-    try {
-      if (widget.element.containsKey('content') && 
-          widget.element['content'] is Map<String, dynamic>) {
-        final content = widget.element['content'] as Map<String, dynamic>;
-        
-        // 检查是否有嵌套结构
-        if (content.containsKey('content')) {
-          debugPrint('✨ 发现嵌套的 content 结构，开始清理...');
-          
-          // 扁平化嵌套结构
-          final flattenedContent = _deepFlattenContent(content);
-          
-          // 更新元素内容
-          widget.onElementPropertiesChanged({'content': flattenedContent});
-          
-          debugPrint('✅ 嵌套 content 结构清理完成');
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ 清理嵌套 content 结构时出错: $e');
-    }
-  }
-
   @override
   void didUpdateWidget(M3CollectionPropertyPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -171,7 +121,7 @@ class _M3CollectionPropertyPanelState
       Future.microtask(() {
         _cleanupNestedContent();
       });
-      
+
       // Update text controller
       final content = widget.element['content'] as Map<String, dynamic>;
       final characters = content['characters'] as String? ?? '';
@@ -187,11 +137,8 @@ class _M3CollectionPropertyPanelState
       // 注意：此变量目前未使用，但保留以便将来可能的扩展
       // final shouldPreserveImages = oldContent.containsKey('characterImages') &&
       //     content.containsKey('characterImages') &&
-      //     oldCharacters == characters;
-
-      // Update candidate characters
+      //     oldCharacters == characters;      // Update candidate characters
       if (oldCharacters != characters) {
-        _lastInputText = characters;
         Future.microtask(() {
           _cleanupCharacterImages(characters);
           _loadCandidateCharacters();
@@ -228,7 +175,7 @@ class _M3CollectionPropertyPanelState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // 首先清理嵌套的 content 结构
       _cleanupNestedContent();
-      
+
       // Load candidate characters
       _loadCandidateCharacters();
 
@@ -469,6 +416,31 @@ class _M3CollectionPropertyPanelState
     }
   }
 
+  // 清理元素中的嵌套内容结构
+  void _cleanupNestedContent() {
+    try {
+      if (widget.element.containsKey('content') &&
+          widget.element['content'] is Map<String, dynamic>) {
+        final content = widget.element['content'] as Map<String, dynamic>;
+
+        // 检查是否有嵌套结构
+        if (content.containsKey('content')) {
+          debugPrint('✨ 发现嵌套的 content 结构，开始清理...');
+
+          // 扁平化嵌套结构
+          final flattenedContent = _deepFlattenContent(content);
+
+          // 更新元素内容
+          widget.onElementPropertiesChanged({'content': flattenedContent});
+
+          debugPrint('✅ 嵌套 content 结构清理完成');
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ 清理嵌套 content 结构时出错: $e');
+    }
+  }
+
   // Convert index-based characterImages to character-based format
   Map<String, dynamic> _convertToCharacterBasedImages(
       String characters, Map<String, dynamic> indexBasedImages) {
@@ -570,6 +542,31 @@ class _M3CollectionPropertyPanelState
     }
 
     return indexBasedImages;
+  }
+
+  // 递归处理嵌套的 content 结构，提取所有属性到根级别
+  Map<String, dynamic> _deepFlattenContent(Map<String, dynamic> content) {
+    final result = <String, dynamic>{};
+
+    // 递归提取所有属性
+    void extractProperties(Map<String, dynamic> source) {
+      for (final entry in source.entries) {
+        if (entry.key == 'content' && entry.value is Map<String, dynamic>) {
+          // 如果是嵌套的 content，递归提取其属性
+          extractProperties(entry.value as Map<String, dynamic>);
+        } else {
+          // 对于其他属性，仅当尚未存在时才复制
+          if (!result.containsKey(entry.key)) {
+            result[entry.key] = entry.value;
+          }
+        }
+      }
+    }
+
+    // 开始提取
+    extractProperties(content);
+
+    return result;
   }
 
   // Get character display label
@@ -942,49 +939,50 @@ class _M3CollectionPropertyPanelState
   void _updateContentProperty(String key, dynamic value) {
     try {
       // 获取当前元素的内容
-      final Map<String, dynamic> originalContent = 
-          Map<String, dynamic>.from(widget.element['content'] as Map<String, dynamic>? ?? {});
-      
+      final Map<String, dynamic> originalContent = Map<String, dynamic>.from(
+          widget.element['content'] as Map<String, dynamic>? ?? {});
+
       // 创建一个全新的内容对象，而不是修改现有的
       final Map<String, dynamic> newContent = <String, dynamic>{};
-      
+
       // 首先将原始内容扁平化，确保没有嵌套
       final flattenedOriginal = _deepFlattenContent(originalContent);
-      
+
       // 复制所有原始属性（除了要更新的键和任何嵌套的 content）
       for (final entry in flattenedOriginal.entries) {
         if (entry.key != 'content' && entry.key != key) {
           newContent[entry.key] = entry.value;
         }
       }
-      
+
       // 特殊处理：如果更新的是 content 属性本身
       if (key == 'content' && value is Map<String, dynamic>) {
         // 扁平化要设置的 content 值
         final flattenedValue = _deepFlattenContent(value);
-        
+
         // 将扁平化后的属性合并到新内容中
         for (final entry in flattenedValue.entries) {
-          if (entry.key != 'content') { // 确保不会再次引入 content 嵌套
+          if (entry.key != 'content') {
+            // 确保不会再次引入 content 嵌套
             newContent[entry.key] = entry.value;
           }
         }
-        
+
         debugPrint('✅ 处理 content 更新：已扁平化并合并属性');
       } else {
         // 常规属性更新
         newContent[key] = value;
       }
-      
+
       // 最后检查确保没有 content 属性
       if (newContent.containsKey('content')) {
         newContent.remove('content');
         debugPrint('⚠️ 警告: 在最终处理中移除了嵌套 content');
       }
-      
+
       // 更新元素属性
       _updateProperty('content', newContent);
-      
+
       debugPrint('✅ 更新内容属性 "$key"，属性数量: ${newContent.length}');
     } catch (e) {
       debugPrint('❌ 更新内容属性时出错: $e');
