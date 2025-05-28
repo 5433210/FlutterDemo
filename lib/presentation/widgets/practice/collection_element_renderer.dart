@@ -62,9 +62,8 @@ class CollectionElementRenderer {
     bool hasCharacterTexture = false,
     Map<String, dynamic>? characterTextureData,
     String textureFillMode = 'repeat',
+    String textureFitMode = 'scaleToFill', // 新增适应模式参数
     double textureOpacity = 1.0,
-    String textureApplicationRange =
-        'background', // 'background' or 'characterBackground'
     WidgetRef? ref,
   }) {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
@@ -197,15 +196,14 @@ class CollectionElementRenderer {
     // 使用StatefulBuilder来支持重绘
     return StatefulBuilder(
       builder: (context, setState) {
-        // 解析纹理应用范围
-        String effectiveApplicationMode = textureApplicationRange;
+        // 移除textureApplicationRange，现在只支持background模式
+        String effectiveApplicationMode = 'background';
         Map<String, dynamic>? effectiveTextureData;
         bool hasEffectiveTexture = hasCharacterTexture;
 
         // 输出调试信息
         debugPrint('集字字符内容：${isEmpty ? "空" : characters}');
-        debugPrint(
-            '初始纹理状态 - 应用模式：$textureApplicationRange，是否有纹理：$hasCharacterTexture');
+        debugPrint('初始纹理状态 - 固定模式：background，是否有纹理：$hasCharacterTexture');
 
         // 递归查找最深层的有效纹理数据
         Map<String, dynamic>? findDeepestTextureData(
@@ -224,38 +222,17 @@ class CollectionElementRenderer {
             return findDeepestTextureData(
                 data['content'] as Map<String, dynamic>);
           }
-
-          // 如果没有找到任何纹理数据，返回null
           return null;
-        }
 
-        // 从嵌套结构中提取应用范围
-        String extractApplicationRange(Map<String, dynamic> data) {
-          // 首先检查当前层是否有应用范围设置
-          if (data.containsKey('textureApplicationRange')) {
-            return data['textureApplicationRange'] as String? ?? 'background';
-          }
-
-          // 如果当前层没有应用范围设置，但有嵌套内容，则递归查找
-          if (data.containsKey('content') &&
-              data['content'] != null &&
-              data['content'] is Map<String, dynamic>) {
-            return extractApplicationRange(
-                data['content'] as Map<String, dynamic>);
-          }
-
-          // 如果没有找到任何应用范围设置，返回默认值
-          return 'background';
+          // 如果没有找到任何纹理数据，返回null          return null;
         }
 
         if (characterImages is Map<String, dynamic>) {
           // 查找最深层的有效纹理数据
           final deepestTextureData = findDeepestTextureData(characterImages);
-
           if (deepestTextureData != null) {
-            // 提取应用范围
-            effectiveApplicationMode = extractApplicationRange(characterImages);
-            debugPrint('使用提取的纹理应用范围：$effectiveApplicationMode');
+            // 移除应用范围提取，直接使用background模式
+            debugPrint('使用固定的纹理应用模式：background');
 
             // 提取纹理数据
             if (deepestTextureData.containsKey('backgroundTexture') &&
@@ -265,16 +242,30 @@ class CollectionElementRenderer {
               debugPrint('发现有效的纹理数据：$effectiveTextureData');
             }
           }
-        }
+        } // Get texture size and fit mode from character images
+        final textureWidth = (characterImages is Map<String, dynamic>
+                ? (characterImages['textureWidth'] as num?)?.toDouble()
+                : null) ??
+            100.0;
+        final textureHeight = (characterImages is Map<String, dynamic>
+                ? (characterImages['textureHeight'] as num?)?.toDouble()
+                : null) ??
+            100.0;
+        final textureFitMode = (characterImages is Map<String, dynamic>
+                ? characterImages['textureFitMode'] as String?
+                : null) ??
+            'scaleToFill';
 
-        // 创建纹理配置，优先使用显式传入的应用模式参数
+        // 创建纹理配置，使用新的配置结构（移除应用范围，只使用背景模式）
         final textureConfig = tc.TextureConfig(
           enabled: hasEffectiveTexture &&
               (characterTextureData != null || effectiveTextureData != null),
           data: characterTextureData ?? effectiveTextureData,
           fillMode: textureFillMode,
+          fitMode: textureFitMode,
           opacity: textureOpacity,
-          textureApplicationRange: effectiveApplicationMode,
+          textureWidth: textureWidth,
+          textureHeight: textureHeight,
         );
         if (kDebugMode && false) {
           debugPrint('''纹理配置详情：

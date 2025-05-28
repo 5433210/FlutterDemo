@@ -34,10 +34,9 @@ class _M3VisualPropertiesPanelState
   // 加载纹理图片 - 优化版
   // 使用内存缓存避免重复加载
   static final Map<String, List<int>> _textureCache = {};
-
-  // 本地状态来跟踪纹理应用范围和填充模式
-  String? _localTextureApplicationRange;
+  // 本地状态来跟踪填充模式和适应模式
   String? _localTextureFillMode;
+  String? _localTextureFitMode;
 
   @override
   Widget build(BuildContext context) {
@@ -49,31 +48,19 @@ class _M3VisualPropertiesPanelState
     final fontColor = content['fontColor'] as String? ?? '#000000';
     final backgroundColor =
         content['backgroundColor'] as String? ?? 'transparent';
-    final padding = (content['padding'] as num?)?.toDouble() ??
-        0.0; // 动态获取纹理相关属性，确保能反映最新的用户更改
-    final textureApplicationRange = _localTextureApplicationRange ??
-        content['textureApplicationRange'] as String? ??
-        'characterBackground';
+    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
 
-    debugPrint('🔍 UI构建: textureApplicationRange=$textureApplicationRange');
-
-    // 根据纹理应用范围设置条件默认填充模式
-    String getDefaultFillMode(String applicationRange) {
-      switch (applicationRange) {
-        case 'characterBackground':
-          return 'contain';
-        case 'background':
-          return 'repeat';
-        default:
-          return 'contain';
-      }
-    }
-
+    // 动态获取纹理相关属性，确保能反映最新的用户更改
     final textureFillMode = _localTextureFillMode ??
         content['textureFillMode'] as String? ??
-        getDefaultFillMode(textureApplicationRange);
+        'repeat'; // 默认填充模式
 
-    debugPrint('🔍 UI构建: textureFillMode=$textureFillMode');
+    final textureFitMode = _localTextureFitMode ??
+        content['textureFitMode'] as String? ??
+        'scaleToFill'; // 默认适应模式
+
+    debugPrint(
+        '🔍 UI构建: textureFillMode=$textureFillMode, textureFitMode=$textureFitMode');
     return M3PanelStyles.buildPersistentPanelCard(
       context: context,
       panelId: 'collection_visual_properties',
@@ -192,132 +179,9 @@ class _M3VisualPropertiesPanelState
         ),
         const SizedBox(height: 16.0),
 
-        // Texture Application Range Settings (always visible)
-        M3PanelStyles.buildSectionTitle(context, l10n.textureApplicationRange),
-        SegmentedButton<String>(
-          segments: [
-            const ButtonSegment<String>(
-              value: 'characterBackground',
-              label: Text('字符背景'),
-              icon: Icon(Icons.text_fields),
-            ),
-            ButtonSegment<String>(
-              value: 'background',
-              label: Text(l10n.textureRangeBackground),
-              icon: const Icon(Icons.crop_free),
-            ),
-          ],
-          selected: {textureApplicationRange},
-          onSelectionChanged: (selection) {
-            final newRange = selection.first;
-            debugPrint('🔄 纹理应用范围切换: $textureApplicationRange -> $newRange');
-
-            // Update local state first
-            _localTextureApplicationRange = newRange;
-
-            // Update parent state
-            widget.onContentPropertyChanged(
-                'textureApplicationRange', newRange);
-
-            // Automatically update fill mode to appropriate default
-            final newDefaultFillMode = getDefaultFillMode(newRange);
-            debugPrint('🔄 自动更新填充模式: $textureFillMode -> $newDefaultFillMode');
-
-            // Update local fill mode state
-            _localTextureFillMode = newDefaultFillMode;
-
-            widget.onContentPropertyChanged(
-                'textureFillMode', newDefaultFillMode);
-
-            // Force UI refresh
-            setState(() {});
-          },
-        ),
-        const SizedBox(height: 16.0),
-
-        // Texture Fill Mode Settings (always visible)
-        M3PanelStyles.buildSectionTitle(context, l10n.textureFillMode),
-        DropdownButton<String>(
-          value: textureFillMode,
-          isExpanded: true,
-          items: [
-            DropdownMenuItem(
-              value: 'repeat',
-              child: Text(l10n.textureFillModeRepeat),
-            ),
-            DropdownMenuItem(
-              value: 'repeatX',
-              child: Text(l10n.textureFillModeRepeatX),
-            ),
-            DropdownMenuItem(
-              value: 'repeatY',
-              child: Text(l10n.textureFillModeRepeatY),
-            ),
-            DropdownMenuItem(
-              value: 'noRepeat',
-              child: Text(l10n.textureFillModeNoRepeat),
-            ),
-            DropdownMenuItem(
-              value: 'cover',
-              child: Text(l10n.textureFillModeCover),
-            ),
-            DropdownMenuItem(
-              value: 'contain',
-              child: Text(l10n.textureFillModeContain),
-            ),
-          ],
-          onChanged: (value) {
-            if (value != null) {
-              debugPrint('🔄 纹理填充模式切换: $textureFillMode -> $value');
-
-              // Update local state first
-              _localTextureFillMode = value;
-
-              widget.onContentPropertyChanged('textureFillMode', value);
-              // Force UI refresh
-              setState(() {});
-            }
-          },
-        ),
-        const SizedBox(height: 16.0), // Texture preview and select button
-        Row(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                border: Border.all(color: colorScheme.outline),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: _buildTexturePreview(content),
-            ),
-            const SizedBox(width: 16.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FilledButton.icon(
-                  icon: const Icon(Icons.image),
-                  label: Text(l10n.textureSelectFromLibrary),
-                  onPressed: () => _selectTexture(
-                      context, content, widget.onContentPropertyChanged),
-                ),
-                if (content.containsKey('backgroundTexture'))
-                  const SizedBox(height: 8.0),
-                if (content.containsKey('backgroundTexture'))
-                  TextButton.icon(
-                    icon: const Icon(Icons.delete_outline),
-                    label: Text(l10n.textureRemove),
-                    onPressed: () {
-                      debugPrint('✨ 尝试移除背景纹理');
-                      widget.onContentPropertyChanged(
-                          'backgroundTexture', null);
-                      setState(() {});
-                    },
-                  ),
-              ],
-            ),
-          ],
-        ),
+        // Background Texture Sub-panel
+        _buildBackgroundTextureSubPanel(
+            context, content, colorScheme, l10n, textTheme),
 
         const SizedBox(height: 16.0),
 
@@ -363,6 +227,247 @@ class _M3VisualPropertiesPanelState
     );
   }
 
+  // Build background texture sub-panel with organized controls
+  Widget _buildBackgroundTextureSubPanel(
+    BuildContext context,
+    Map<String, dynamic> content,
+    ColorScheme colorScheme,
+    AppLocalizations l10n,
+    TextTheme textTheme,
+  ) {
+    // Get texture properties - only background mode is used now
+    final textureFillMode = _localTextureFillMode ??
+        content['textureFillMode'] as String? ??
+        'repeat'; // Default to repeat as specified
+
+    final textureFitMode = content['textureFitMode'] as String? ??
+        'scaleToFill'; // Default to scaleToFill as specified
+    final textureOpacity = _getLatestTextureOpacity(content);
+
+    // Get texture size properties (actual pixel values)
+    final texture = _findTextureData(content);
+    final defaultWidth = texture?['width']?.toDouble() ?? 100.0;
+    final defaultHeight = texture?['height']?.toDouble() ?? 100.0;
+    final textureWidth =
+        (content['textureWidth'] as num?)?.toDouble() ?? defaultWidth;
+    final textureHeight =
+        (content['textureHeight'] as num?)?.toDouble() ?? defaultHeight;
+
+    return M3PanelStyles.buildPersistentPanelCard(
+      context: context,
+      panelId: 'background_texture_subpanel',
+      title:
+          '背景纹理', // Using static text since backgroundTexture might not be defined
+      defaultExpanded: false,
+      children: [
+        // Texture Fill Mode Settings (only repeat, cover, stretch, contain)
+        M3PanelStyles.buildSectionTitle(context, l10n.textureFillMode),
+        DropdownButton<String>(
+          value: textureFillMode,
+          isExpanded: true,
+          items: [
+            DropdownMenuItem(
+              value: 'repeat',
+              child: Text(l10n.textureFillModeRepeat),
+            ),
+            DropdownMenuItem(
+              value: 'cover',
+              child: Text(l10n.textureFillModeCover),
+            ),
+            const DropdownMenuItem(
+              value: 'stretch',
+              child: Text('拉伸'), // Stretch mode
+            ),
+            DropdownMenuItem(
+              value: 'contain',
+              child: Text(l10n.textureFillModeContain),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              debugPrint('🔄 纹理填充模式切换: $textureFillMode -> $value');
+
+              // Update local state first
+              _localTextureFillMode = value;
+
+              widget.onContentPropertyChanged('textureFillMode', value);
+              // Force UI refresh
+              setState(() {});
+            }
+          },
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Texture Fit Mode Settings (scaleToFit, scaleToFill, scaleToCover)
+        M3PanelStyles.buildSectionTitle(context, '纹理适应模式'),
+        DropdownButton<String>(
+          value: textureFitMode,
+          isExpanded: true,
+          items: const [
+            DropdownMenuItem(
+              value: 'scaleToFit',
+              child: Text('缩放适应'),
+            ),
+            DropdownMenuItem(
+              value: 'scaleToFill',
+              child: Text('缩放填充'),
+            ),
+            DropdownMenuItem(
+              value: 'scaleToCover',
+              child: Text('缩放覆盖'),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              debugPrint('🔄 纹理适应模式切换: $textureFitMode -> $value');
+              widget.onContentPropertyChanged('textureFitMode', value);
+              setState(() {});
+            }
+          },
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Texture Size Settings with restore default button
+        M3PanelStyles.buildSectionTitle(context, '纹理尺寸'),
+        Row(
+          children: [
+            Expanded(
+              child: EditableNumberField(
+                label: '宽度',
+                value: textureWidth,
+                suffix: 'px',
+                min: 1,
+                max: 9999,
+                decimalPlaces: 0,
+                onChanged: (value) {
+                  widget.onContentPropertyChanged('textureWidth', value);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              child: EditableNumberField(
+                label: '高度',
+                value: textureHeight,
+                suffix: 'px',
+                min: 1,
+                max: 9999,
+                decimalPlaces: 0,
+                onChanged: (value) {
+                  widget.onContentPropertyChanged('textureHeight', value);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            IconButton(
+              icon: const Icon(Icons.restore),
+              tooltip: '恢复默认尺寸',
+              onPressed: () {
+                widget.onContentPropertyChanged('textureWidth', defaultWidth);
+                widget.onContentPropertyChanged('textureHeight', defaultHeight);
+                setState(() {});
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16.0),
+
+        // Texture Transparency Settings
+        M3PanelStyles.buildSectionTitle(context, '纹理透明度'),
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Slider(
+                value: textureOpacity,
+                min: 0.0,
+                max: 1.0,
+                divisions: 100,
+                label: '${(textureOpacity * 100).round()}%',
+                activeColor: colorScheme.primary,
+                inactiveColor: colorScheme.surfaceContainerHighest,
+                onChanged: (value) {
+                  widget.onContentPropertyChanged('textureOpacity', value);
+                  setState(() {});
+                },
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            Expanded(
+              flex: 2,
+              child: EditableNumberField(
+                label: '透明度',
+                value: textureOpacity * 100,
+                suffix: '%',
+                min: 0,
+                max: 100,
+                decimalPlaces: 0,
+                onChanged: (value) {
+                  widget.onContentPropertyChanged(
+                      'textureOpacity', value / 100);
+                  setState(() {});
+                },
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16.0),
+
+        // Texture preview and management
+        M3PanelStyles.buildSectionTitle(context, '纹理预览'),
+        Row(
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                border: Border.all(color: colorScheme.outline),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: _buildTexturePreview(content),
+            ),
+            const SizedBox(width: 16.0),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FilledButton.icon(
+                    icon: const Icon(Icons.image),
+                    label: Text(l10n.textureSelectFromLibrary),
+                    onPressed: () => _selectTexture(
+                        context, content, widget.onContentPropertyChanged),
+                  ),
+                  if (content.containsKey('backgroundTexture'))
+                    const SizedBox(height: 8.0),
+                  if (content.containsKey('backgroundTexture'))
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.delete_outline),
+                        label: Text(l10n.textureRemove),
+                        onPressed: () {
+                          debugPrint('✨ 尝试移除背景纹理');
+                          widget.onContentPropertyChanged(
+                              'backgroundTexture', null);
+                          setState(() {});
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   // 增强版的纹理预览
   Widget _buildTexturePreview(Map<String, dynamic> content) {
     // 递归查找纹理数据
@@ -402,11 +507,9 @@ class _M3VisualPropertiesPanelState
         ),
       );
     } // 获取纹理填充模式和应用范围
-    final fillMode =
-        _getLatestTextureProperty('textureFillMode', content) ?? 'repeat';
-    final applicationRange =
-        _getLatestTextureProperty('textureApplicationRange', content) ??
-            'characterBackground';
+    final fillMode = _getLatestTextureProperty('textureFillMode', content) ??
+        'repeat'; // 由于移除了textureApplicationRange，直接使用background模式
+    const applicationRange = 'background';
 
     // 确定纹理预览的 BoxFit 模式
     BoxFit previewFit;
@@ -524,7 +627,7 @@ class _M3VisualPropertiesPanelState
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     applicationRange == 'character'
                         ? Icons.text_fields
                         : Icons.crop_free,
@@ -744,18 +847,22 @@ class _M3VisualPropertiesPanelState
       if (elementContent == null) {
         debugPrint('❌ 元素内容为空，无法应用纹理');
         return;
-      }
-
-      // 复制现有内容，添加纹理数据
+      } // 复制现有内容，添加纹理数据
       final newContent = Map<String, dynamic>.from(elementContent);
       newContent['backgroundTexture'] = textureData;
 
-      // 设置纹理相关属性（如果不存在）
-      newContent['textureApplicationRange'] =
-          elementContent['textureApplicationRange'] ?? 'characterBackground';
+      // 设置纹理相关属性 - 只支持background模式，移除textureApplicationRange
       newContent['textureFillMode'] =
-          elementContent['textureFillMode'] ?? 'repeat';
+          elementContent['textureFillMode'] ?? 'repeat'; // Default to repeat
+      newContent['textureFitMode'] = elementContent['textureFitMode'] ??
+          'scaleToFill'; // Default to scaleToFill
       newContent['textureOpacity'] = elementContent['textureOpacity'] ?? 1.0;
+
+      // Set default texture size to actual image pixel values
+      newContent['textureWidth'] =
+          elementContent['textureWidth'] ?? selectedTexture.width.toDouble();
+      newContent['textureHeight'] =
+          elementContent['textureHeight'] ?? selectedTexture.height.toDouble();
 
       // 更新内容
       widget.onContentPropertyChanged('content', newContent);

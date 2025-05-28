@@ -101,8 +101,6 @@ class ElementRenderers {
                 characterTextureData: backgroundTexture,
                 textureFillMode: textureFillMode,
                 textureOpacity: textureOpacity,
-                textureApplicationRange:
-                    textureApplicationRange, // Pass the application mode explicitly
                 ref: ref,
               );
             },

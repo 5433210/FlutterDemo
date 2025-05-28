@@ -49,26 +49,6 @@ class BackgroundTexturePainter extends CustomPainter {
     }
   }
 
-  // 生成缓存键，使用简化的路径作为缓存键
-  String _getCacheKey(
-      String path, String fillMode, double opacity, dynamic timestamp) {
-    // 提取文件ID作为缓存的一部分
-    String fileId;
-
-    // 处理Windows路径
-    if (path.contains('\\')) {
-      final parts = path.split('\\');
-      final fileName = parts.last;
-      fileId = fileName.split('.').first;
-    } else {
-      final fileName = path.split('/').last;
-      fileId = fileName.split('.').first;
-    }
-
-    // 简化的缓存键
-    return fileId;
-  }
-
   // 设置重绘回调
   set repaintCallback(VoidCallback callback) {
     _repaintCallback = callback;
@@ -298,26 +278,18 @@ class BackgroundTexturePainter extends CustomPainter {
     final Paint paint = Paint()
       ..color = Colors.white.withOpacity(opacity)
       ..filterQuality = FilterQuality.high;
-    // 不在这里设置混合模式，而是由调用者控制
+    // 不在这里设置混合模式，而是由调用者控制    debugPrint('🔧 TEXTURE: 配置绘制画笔: 不透明度=$opacity');
 
-    debugPrint('🔧 TEXTURE: 配置绘制画笔: 不透明度=$opacity');
-
-    // 确定重复模式，根据填充模式选择
+    // 根据新的填充模式选择绘制方式 (只支持 repeat, cover, stretch, contain)
     if (fillMode == 'repeat') {
       debugPrint('🔄 TEXTURE: 使用repeat填充模式');
       _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeat);
-    } else if (fillMode == 'repeatX') {
-      debugPrint('↔️ TEXTURE: 使用repeatX填充模式');
-      _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeatX);
-    } else if (fillMode == 'repeatY') {
-      debugPrint('↕️ TEXTURE: 使用repeatY填充模式');
-      _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeatY);
-    } else if (fillMode == 'noRepeat') {
-      debugPrint('1️⃣ TEXTURE: 使用noRepeat填充模式');
-      _drawSingleTexture(canvas, rect, paint, BoxFit.none);
     } else if (fillMode == 'cover') {
       debugPrint('🔳 TEXTURE: 使用cover填充模式');
       _drawSingleTexture(canvas, rect, paint, BoxFit.cover);
+    } else if (fillMode == 'stretch') {
+      debugPrint('🔲 TEXTURE: 使用stretch填充模式');
+      _drawSingleTexture(canvas, rect, paint, BoxFit.fill);
     } else if (fillMode == 'contain') {
       debugPrint('📦 TEXTURE: 使用contain填充模式');
       _drawSingleTexture(canvas, rect, paint, BoxFit.contain);
@@ -441,7 +413,7 @@ class BackgroundTexturePainter extends CustomPainter {
     if (textureData != null && textureData!['path'] != null) {
       final texturePath = textureData!['path'] as String;
       // 使用延迟加载，避免死循环
-      Future.delayed(Duration(milliseconds: 100), () {
+      Future.delayed(const Duration(milliseconds: 100), () {
         loadTextureImage(texturePath);
       });
     }
@@ -530,6 +502,26 @@ class BackgroundTexturePainter extends CustomPainter {
 
     canvas.drawImageRect(_textureImage!, srcRect, destRect, paint);
     canvas.restore();
+  }
+
+  // 生成缓存键，使用简化的路径作为缓存键
+  String _getCacheKey(
+      String path, String fillMode, double opacity, dynamic timestamp) {
+    // 提取文件ID作为缓存的一部分
+    String fileId;
+
+    // 处理Windows路径
+    if (path.contains('\\')) {
+      final parts = path.split('\\');
+      final fileName = parts.last;
+      fileId = fileName.split('.').first;
+    } else {
+      final fileName = path.split('/').last;
+      fileId = fileName.split('.').first;
+    }
+
+    // 简化的缓存键
+    return fileId;
   }
 }
 
@@ -694,18 +686,13 @@ class CharacterTexturePainter extends CustomPainter {
     final paint = Paint()
       ..color = Colors.white.withOpacity(opacity)
       ..filterQuality = FilterQuality.high;
-    // 不在这里设置混合模式，而是由调用者控制
-
+    // 不在这里设置混合模式，而是由调用者控制    // 根据新的填充模式选择绘制方式 (只支持 repeat, cover, stretch, contain)
     if (fillMode == 'repeat') {
       _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeat);
-    } else if (fillMode == 'repeatX') {
-      _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeatX);
-    } else if (fillMode == 'repeatY') {
-      _drawRepeatedTexture(canvas, rect, paint, ImageRepeat.repeatY);
-    } else if (fillMode == 'noRepeat') {
-      _drawSingleTexture(canvas, rect, paint, BoxFit.none);
     } else if (fillMode == 'cover') {
       _drawSingleTexture(canvas, rect, paint, BoxFit.cover);
+    } else if (fillMode == 'stretch') {
+      _drawSingleTexture(canvas, rect, paint, BoxFit.fill);
     } else if (fillMode == 'contain') {
       _drawSingleTexture(canvas, rect, paint, BoxFit.contain);
     } else {

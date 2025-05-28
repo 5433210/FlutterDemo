@@ -57,41 +57,42 @@ class TextureConfig {
   /// 填充模式
   final String fillMode;
 
+  /// 适应模式
+  final String fitMode;
+
   /// 不透明度
   final double opacity;
 
-  /// 应用范围
-  final String textureApplicationRange;
+  /// 纹理尺寸
+  final double textureWidth;
+  final double textureHeight;
 
   /// 构造函数
   /// * enabled - 是否启用纹理
   /// * data - 纹理数据，包含path等信息
-  /// * fillMode - 填充模式：'repeat', 'cover', 'contain', 'stretch'
+  /// * fillMode - 填充模式：'repeat', 'cover', 'stretch', 'contain'
+  /// * fitMode - 适应模式：'scaleToFit', 'scaleToFill', 'scaleToCover'
   /// * opacity - 不透明度：0.0 ~ 1.0
-  /// * textureApplicationRange - 应用范围：
-  ///   - 'background'：纹理应用到整个集字元素背景
-  ///   - 'characterBackground'：纹理只应用到每个字符的矩形背景区域
+  /// * textureWidth/textureHeight - 纹理尺寸（像素值）
   const TextureConfig({
     this.enabled = false,
     this.data,
-    this.fillMode = 'cover',
+    this.fillMode = 'repeat',
+    this.fitMode = 'scaleToFill',
     this.opacity = 1.0,
-    this.textureApplicationRange = 'background',
+    this.textureWidth = 100.0,
+    this.textureHeight = 100.0,
   });
-
-  /// 兼容性getter，允许旧代码访问applicationMode
-  String get applicationMode => textureApplicationRange;
-
   @override
   int get hashCode {
-    // 安全生成哈希码，处理可能的空值
-    final range = textureApplicationRange;
     return Object.hash(
       enabled,
       data,
       fillMode,
+      fitMode,
       opacity,
-      range,
+      textureWidth,
+      textureHeight,
     );
   }
 
@@ -103,8 +104,10 @@ class TextureConfig {
     return enabled == other.enabled &&
         mapsEqual(data, other.data) &&
         fillMode == other.fillMode &&
+        fitMode == other.fitMode &&
         opacity == other.opacity &&
-        textureApplicationRange == other.textureApplicationRange;
+        textureWidth == other.textureWidth &&
+        textureHeight == other.textureHeight;
   }
 
   /// 创建一个新实例，可选择性覆盖部分属性
@@ -112,16 +115,19 @@ class TextureConfig {
     bool? enabled,
     Map<String, dynamic>? data,
     String? fillMode,
+    String? fitMode,
     double? opacity,
-    String? textureApplicationRange,
+    double? textureWidth,
+    double? textureHeight,
   }) {
     return TextureConfig(
       enabled: enabled ?? this.enabled,
       data: data ?? this.data,
       fillMode: fillMode ?? this.fillMode,
+      fitMode: fitMode ?? this.fitMode,
       opacity: opacity ?? this.opacity,
-      textureApplicationRange:
-          textureApplicationRange ?? this.textureApplicationRange,
+      textureWidth: textureWidth ?? this.textureWidth,
+      textureHeight: textureHeight ?? this.textureHeight,
     );
   }
 }

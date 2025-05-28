@@ -69,12 +69,10 @@ class CollectionPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     try {
-      // 1. 首先绘制整体背景（如果需要）
-      if (textureConfig.enabled &&
-          textureConfig.data != null &&
-          textureConfig.textureApplicationRange == 'background') {
+      // 1. 首先绘制整体背景纹理（如果启用）
+      if (textureConfig.enabled && textureConfig.data != null) {
         final rect = Offset.zero & size;
-        _paintTexture(canvas, rect, mode: 'background');
+        _paintTexture(canvas, rect);
       }
 
       // 2. 遍历所有字符位置，绘制字符
@@ -92,15 +90,8 @@ class CollectionPainter extends CustomPainter {
           position.size,
         );
 
-        // 3. 绘制字符背景
-        // 根据纹理配置，决定绘制普通背景还是纹理背景
-        if (textureConfig.enabled &&
-            textureConfig.data != null &&
-            textureConfig.textureApplicationRange == 'characterBackground') {
-          _paintTexture(canvas, rect, mode: 'characterBackground');
-        } else {
-          _drawFallbackBackground(canvas, rect, position);
-        }
+        // 3. 绘制字符背景（普通背景色，纹理在整体背景中处理）
+        _drawFallbackBackground(canvas, rect, position);
 
         // 4. 获取字符图片并绘制
         final charImage = _findCharacterImage(position.char, position.index);
@@ -190,16 +181,7 @@ class CollectionPainter extends CustomPainter {
   /// 绘制普通背景
   void _drawFallbackBackground(
       Canvas canvas, Rect rect, CharacterPosition position) {
-    // 当纹理应用范围是background时，不在字符区域绘制背景色
-    // 这样可以让背景纹理透过来，避免被遮挡
-    if (textureConfig.enabled &&
-        textureConfig.data != null &&
-        textureConfig.textureApplicationRange == 'background') {
-      // 背景纹理模式下，跳过字符区域的背景绘制
-      debugPrint('🎨 CollectionPainter: 跳过字符区域背景绘制，让背景纹理透过');
-      return;
-    }
-
+    // 现在只有背景纹理模式，字符区域总是绘制普通背景色
     if (position.backgroundColor != Colors.transparent) {
       debugPrint('🎨 CollectionPainter: 绘制字符背景色 ${position.backgroundColor}');
       final bgPaint = Paint()
@@ -246,23 +228,83 @@ class CollectionPainter extends CustomPainter {
     canvas.drawRect(rect, paint);
   }
 
-  /// 使用图像绘制纹理
-  void _drawTextureWithImage(Canvas canvas, Rect rect, ui.Image image) {
-    // Choose blend mode based on texture application range
-    BlendMode blendMode;
-    if (textureConfig.textureApplicationRange == 'background') {
-      // For background textures, use srcOver to avoid multiplication with background colors
-      blendMode = BlendMode.srcOver;
+  /// 根据填充模式和适应模式绘制图像
+  void _drawImageWithFitMode(
+      Canvas canvas, Rect rect, ui.Image image, Paint paint, String fillMode) {
+    final imageRatio = image.width / image.height;
+    final targetRatio = rect.width / rect.height;
+
+    double scaledWidth, scaledHeight;
+
+    if (fillMode == 'cover') {
+      // Cover mode: scale to fill entire area (may crop)
+      if (imageRatio > targetRatio) {
+        scaledHeight = rect.height;
+        scaledWidth = scaledHeight * imageRatio;
+      } else {
+        scaledWidth = rect.width;
+        scaledHeight = scaledWidth / imageRatio;
+      }
+    } else if (fillMode == 'contain') {
+      // Contain mode: scale to fit entirely (may have empty space)
+      if (imageRatio > targetRatio) {
+        scaledWidth = rect.width;
+        scaledHeight = scaledWidth / imageRatio;
+      } else {
+        scaledHeight = rect.height;
+        scaledWidth = scaledHeight * imageRatio;
+      }
+    } else if (fillMode == 'stretch') {
+      // Stretch mode: stretch to exact size
+      scaledWidth = rect.width;
+      scaledHeight = rect.height;
     } else {
-      // For character textures, use multiply to preserve character shapes
-      blendMode = BlendMode.multiply;
+      // Default to contain
+      if (imageRatio > targetRatio) {
+        scaledWidth = rect.width;
+        scaledHeight = scaledWidth / imageRatio;
+      } else {
+        scaledHeight = rect.height;
+        scaledWidth = scaledHeight * imageRatio;
+      }
     }
 
+    // Apply fitMode for positioning and additional scaling
+    double finalWidth = scaledWidth;
+    double finalHeight = scaledHeight;
+
+    if (textureConfig.fitMode == 'scaleToFit') {
+      // Scale to fit within bounds while maintaining aspect ratio
+      final scale = (rect.width / scaledWidth).clamp(0.0, 1.0);
+      finalWidth = scaledWidth * scale;
+      finalHeight = scaledHeight * scale;
+    } else if (textureConfig.fitMode == 'scaleToCover') {
+      // Scale to cover entire area while maintaining aspect ratio
+      final scale = (rect.width / scaledWidth).clamp(1.0, double.infinity);
+      finalWidth = scaledWidth * scale;
+      finalHeight = scaledHeight * scale;
+    }
+    // scaleToFill uses the calculated size as-is
+
+    final srcRect =
+        Rect.fromLTRB(0, 0, image.width.toDouble(), image.height.toDouble());
+    final destRect = Rect.fromCenter(
+      center: rect.center,
+      width: finalWidth,
+      height: finalHeight,
+    );
+
+    canvas.drawImageRect(image, srcRect, destRect, paint);
+  }
+
+  /// 使用图像绘制纹理
+  void _drawTextureWithImage(Canvas canvas, Rect rect, ui.Image image) {
+    // 只使用背景纹理模式，使用 srcOver 混合模式
     final paint = Paint()
       ..filterQuality = FilterQuality.medium
       ..color = Colors.white.withOpacity(textureConfig.opacity)
-      ..blendMode = blendMode;
-
+      ..blendMode = BlendMode
+          .srcOver; // 根据新的填充模式绘制纹理 (只支持 repeat, cover, stretch, contain)
     if (textureConfig.fillMode == 'repeat') {
       // 平铺模式
       final shader = ImageShader(
@@ -275,60 +317,13 @@ class CollectionPainter extends CustomPainter {
       canvas.drawRect(rect, paint);
     } else if (textureConfig.fillMode == 'cover') {
       // 覆盖模式 - 调整图像大小以覆盖整个区域，可能会被裁剪
-      final imageRatio = image.width / image.height;
-      final targetRatio = rect.width / rect.height;
-
-      double scaledWidth, scaledHeight;
-      if (imageRatio > targetRatio) {
-        // 图像相对更宽，以高度为基准
-        scaledHeight = rect.height;
-        scaledWidth = scaledHeight * imageRatio;
-      } else {
-        // 图像相对更高，以宽度为基准
-        scaledWidth = rect.width;
-        scaledHeight = scaledWidth / imageRatio;
-      }
-
-      final srcRect =
-          Rect.fromLTRB(0, 0, image.width.toDouble(), image.height.toDouble());
-      final destRect = Rect.fromCenter(
-        center: rect.center,
-        width: scaledWidth,
-        height: scaledHeight,
-      );
-
-      canvas.drawImageRect(image, srcRect, destRect, paint);
+      _drawImageWithFitMode(canvas, rect, image, paint, 'cover');
     } else if (textureConfig.fillMode == 'contain') {
       // 包含模式 - 调整图像大小以完全显示，可能会有空白
-      final imageRatio = image.width / image.height;
-      final targetRatio = rect.width / rect.height;
-
-      double scaledWidth, scaledHeight;
-      if (imageRatio > targetRatio) {
-        // 图像相对更宽，以宽度为基准
-        scaledWidth = rect.width;
-        scaledHeight = scaledWidth / imageRatio;
-      } else {
-        // 图像相对更高，以高度为基准
-        scaledHeight = rect.height;
-        scaledWidth = scaledHeight * imageRatio;
-      }
-
-      final srcRect =
-          Rect.fromLTRB(0, 0, image.width.toDouble(), image.height.toDouble());
-      final destRect = Rect.fromCenter(
-        center: rect.center,
-        width: scaledWidth,
-        height: scaledHeight,
-      );
-
-      canvas.drawImageRect(image, srcRect, destRect, paint);
+      _drawImageWithFitMode(canvas, rect, image, paint, 'contain');
     } else if (textureConfig.fillMode == 'stretch') {
       // 拉伸模式 - 图像被拉伸以适应目标大小
-      final srcRect =
-          Rect.fromLTRB(0, 0, image.width.toDouble(), image.height.toDouble());
-      final destRect = rect;
-      canvas.drawImageRect(image, srcRect, destRect, paint);
+      _drawImageWithFitMode(canvas, rect, image, paint, 'stretch');
     }
   }
 
@@ -489,15 +484,12 @@ class CollectionPainter extends CustomPainter {
   }
 
   /// 绘制背景纹理
-  void _paintTexture(Canvas canvas, Rect rect, {required String mode}) {
+  void _paintTexture(Canvas canvas, Rect rect) {
     if (!textureConfig.enabled || textureConfig.data == null) return;
 
     final data = textureConfig.data!;
     final texturePath = data['path'] as String?;
     if (texturePath == null || texturePath.isEmpty) return;
-
-    // 处理纹理模式，只有在当前模式匹配时才绘制
-    if (mode != textureConfig.textureApplicationRange) return;
 
     try {
       // 检查是否正在加载中
