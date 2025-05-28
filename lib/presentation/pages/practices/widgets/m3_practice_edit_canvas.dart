@@ -396,10 +396,12 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                     onPanStart: (details) => _gestureHandler.handlePanStart(
                         details, elements.cast<Map<String, dynamic>>()),
                     onPanUpdate: (details) {
+                      // Always call gesture handler first to ensure proper state tracking
+                      _gestureHandler.handlePanUpdate(details);
+
                       // 先处理选择框更新，这优先级最高
                       if (widget.controller.state.currentTool == 'select' &&
                           _gestureHandler.isSelectionBoxActive) {
-                        _gestureHandler.handlePanUpdate(details);
                         // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
                         _selectionBoxNotifier.value = SelectionBoxState(
                           isActive: true,
@@ -412,7 +414,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       // Handle element dragging in any mode (select or non-select)
                       // _isDragging will be true if we started dragging on an element
                       if (_isDragging) {
-                        _gestureHandler.handlePanUpdate(details);
                         // setState(() {}); // Force redraw for element movement
                         return;
                       } // If not dragging elements and not in select mode,
@@ -447,11 +448,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                         debugPrint(
                             '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
                             '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
-                        return; // Exit early to avoid calling handlePanUpdate
+                        return;
                       }
 
-                      // Only call handlePanUpdate if not already handled
-                      _gestureHandler.handlePanUpdate(details);
+                      debugPrint('【画布平移更新】手势处理器已处理所有情况');
                     },
                     onPanEnd: (details) {
                       // 重置选择框状态

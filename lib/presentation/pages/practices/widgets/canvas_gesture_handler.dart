@@ -28,12 +28,14 @@ class CanvasGestureHandler {
   bool _isSelectionBoxActive = false;
   Offset? _selectionBoxStart;
   Offset? _selectionBoxEnd;
-
   // 记录平移开始时的选中元素，确保平移不会改变选中状态
   List<String> _panStartSelectedElementIds = [];
 
   // 追踪是否在画布空白处进行拖拽操作
   bool _isPanningEmptyArea = false;
+
+  // 追踪画布平移的结束位置，用于区分点击和拖拽
+  Offset? _panEndPosition;
 
   CanvasGestureHandler({
     required this.controller,
@@ -84,6 +86,7 @@ class CanvasGestureHandler {
     // 重置所有跟踪变量
     _isPanningEmptyArea = false;
     _panStartSelectedElementIds = [];
+    _panEndPosition = null;
     _selectionBoxEnd = null;
     _isSelectionBoxActive = false;
 
@@ -173,12 +176,22 @@ class CanvasGestureHandler {
       onDragEnd();
     } else {
       // 添加日志跟踪 - 平移结束
-      debugPrint('【平移】handlePanEnd: 平移画布结束');
-
-      // 计算拖拽距离，判断是否为点击还是拖拽
-      final endPoint = _selectionBoxEnd ?? _dragStart;
+      debugPrint('【平移】handlePanEnd: 平移画布结束'); // 计算拖拽距离，判断是否为点击还是拖拽
+      // 使用专门的平移结束位置，如果没有则说明没有发生平移更新，使用起始位置
+      final endPoint = _panEndPosition ?? _dragStart;
       final dragDistance = (_dragStart - endPoint).distance;
       final isClick = dragDistance < 3.0; // 小于3个像素视为点击而非拖拽
+
+      // 添加详细的调试日志
+      debugPrint('【平移】handlePanEnd: 平移画布结束 - 详细信息：');
+      debugPrint('  起始位置: $_dragStart');
+      debugPrint('  结束位置: $endPoint');
+      debugPrint('  _panEndPosition: $_panEndPosition');
+      debugPrint('  拖拽距离: $dragDistance');
+      debugPrint('  是否为点击: $isClick');
+      debugPrint('  是否在空白区域: $_isPanningEmptyArea');
+      debugPrint('  是否按下Ctrl/Shift: ${controller.state.isCtrlOrShiftPressed}');
+      debugPrint('  平移开始时的选中元素: $_panStartSelectedElementIds');
 
       // 如果是在空白区域的点击（而非拖拽），且不按Ctrl/Shift键，则清除选择
       if (_isPanningEmptyArea &&
@@ -197,6 +210,8 @@ class CanvasGestureHandler {
       _isPanningEmptyArea = false;
       // 清空记录
       _panStartSelectedElementIds = [];
+      // 清空平移结束位置
+      _panEndPosition = null;
 
       onDragEnd();
     }
@@ -442,6 +457,10 @@ class CanvasGestureHandler {
 
       // 记录拖拽信息，让父组件处理平移
       _elementStartPosition = Offset(dx, dy);
+
+      // 更新当前画布平移的终点位置，用于计算拖拽距离
+      _panEndPosition = currentPosition;
+
       // 添加日志跟踪
       debugPrint(
           '【预览平移】handlePanUpdate: 平移画布，原始偏移=($rawDx, $rawDy), 调整后偏移=($dx, $dy), 缩放因子=$scaleFactor, 反向缩放=$inverseScale');
@@ -517,13 +536,11 @@ class CanvasGestureHandler {
       if (dx.isNaN || dy.isNaN) {
         debugPrint('【平移】handlePanUpdate: 警告 - 偏移量包含NaN值！');
         return;
-      }
-
-      // 记录拖拽信息，让父组件处理平移
+      } // 记录拖拽信息，让父组件处理平移
       _elementStartPosition = Offset(dx, dy);
 
-      // 更新当前拖拽终点位置，用于计算拖拽距离
-      _selectionBoxEnd = currentPosition;
+      // 更新当前画布平移的终点位置，用于计算拖拽距离
+      _panEndPosition = currentPosition;
 
       // 添加日志跟踪
       debugPrint(
