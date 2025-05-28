@@ -189,79 +189,9 @@ class AdvancedCollectionPainter extends CustomPainter {
     return Size(width, height);
   }
 
-  /// 计算适应模式的变换矩阵
-  Matrix4 _calculateFitModeTransform(
-      ui.Image image, Size targetSize, Rect destRect) {
-    final srcSize = Size(image.width.toDouble(), image.height.toDouble());
 
-    switch (textureConfig.fitMode) {
-      case 'scaleToFit':
-        return _calculateScaleToFitTransform(srcSize, targetSize, destRect);
-      case 'scaleToCover':
-        return _calculateScaleToCoverTransform(srcSize, targetSize, destRect);
-      case 'scaleToFill':
-      default:
-        return _calculateScaleToFillTransform(srcSize, targetSize, destRect);
-    }
-  }
 
-  /// 计算ScaleToCover变换（修复版）
-  Matrix4 _calculateScaleToCoverTransform(
-      Size srcSize, Size targetSize, Rect destRect) {
-    // 使用max确保图像能完全覆盖目标区域
-    final scale = math.max(
-        targetSize.width / srcSize.width, targetSize.height / srcSize.height);
-    final scaledWidth = srcSize.width * scale;
-    final scaledHeight = srcSize.height * scale;
 
-    // 居中放置 - 计算偏移量让图像居中（基于targetSize，不是destRect）
-    final translateX = destRect.left + (targetSize.width - scaledWidth) / 2;
-    final translateY = destRect.top + (targetSize.height - scaledHeight) / 2;
-
-    debugPrint('ScaleToCover计算详情（修复版）:');
-    debugPrint('  源尺寸: $srcSize');
-    debugPrint('  目标尺寸: $targetSize');
-    debugPrint('  目标区域: $destRect');
-    debugPrint('  缩放比例: $scale');
-    debugPrint('  缩放后尺寸: ${scaledWidth}x$scaledHeight');
-    debugPrint('  偏移量: ($translateX, $translateY)');
-    debugPrint(
-        '  超出范围: 宽度${scaledWidth > targetSize.width ? '是' : '否'}, 高度${scaledHeight > targetSize.height ? '是' : '否'}');
-    debugPrint(
-        '  实际裁剪区域应为: ${Rect.fromLTWH(destRect.left, destRect.top, targetSize.width, targetSize.height)}');
-
-    return Matrix4.identity()
-      ..translate(translateX, translateY)
-      ..scale(scale, scale);
-  }
-
-  /// 计算ScaleToFill变换
-  Matrix4 _calculateScaleToFillTransform(
-      Size srcSize, Size targetSize, Rect destRect) {
-    final scaleX = targetSize.width / srcSize.width;
-    final scaleY = targetSize.height / srcSize.height;
-
-    return Matrix4.identity()
-      ..translate(destRect.left, destRect.top)
-      ..scale(scaleX, scaleY);
-  }
-
-  /// 计算ScaleToFit变换
-  Matrix4 _calculateScaleToFitTransform(
-      Size srcSize, Size targetSize, Rect destRect) {
-    final scale = math.min(
-        targetSize.width / srcSize.width, targetSize.height / srcSize.height);
-    final scaledWidth = srcSize.width * scale;
-    final scaledHeight = srcSize.height * scale;
-
-    // 居中放置 - 修复居中计算
-    final translateX = destRect.left + (targetSize.width - scaledWidth) / 2;
-    final translateY = destRect.top + (targetSize.height - scaledHeight) / 2;
-
-    return Matrix4.identity()
-      ..translate(translateX, translateY)
-      ..scale(scale, scale);
-  }
 
   /// 创建占位图像并缓存
   Future<bool> _createPlaceholderImage(String cacheKey) async {
@@ -478,64 +408,183 @@ class AdvancedCollectionPainter extends CustomPainter {
     // 使用高性能的Matrix变换方案
     _drawTextureWithMatrixTransform(canvas, rect, image);
   }
-
-  /// 使用Matrix变换的纹理处理（修复裁剪问题）
+  /// 使用Matrix变换的纹理处理（修复FillMode实现）
   void _drawTextureWithMatrixTransform(
       Canvas canvas, Rect rect, ui.Image image) {
     final actualTextureSize = _calculateActualTextureSize(image);
+    
+    debugPrint('开始纹理渲染:');
+    debugPrint('  背景区域: $rect');
+    debugPrint('  纹理尺寸: $actualTextureSize');
+    debugPrint('  填充模式: ${textureConfig.fillMode}');
+    debugPrint('  适应模式: ${textureConfig.fitMode}');
 
     // 根据填充模式决定渲染策略
     switch (textureConfig.fillMode) {
       case 'repeat':
-        // repeat模式不需要Matrix变换，直接使用shader
         _renderRepeatModeWithTransform(canvas, rect, image, actualTextureSize);
         break;
-      default:
-        // 其他模式使用Matrix变换
-        canvas.save();
-
-        // 关键修复：使用实际的纹理尺寸作为裁剪区域，而不是整个画布
-        final textureRect = Rect.fromLTWH(rect.left, rect.top,
-            actualTextureSize.width, actualTextureSize.height);
-
-        debugPrint('纹理裁剪区域修正:');
-        debugPrint('  原始rect: $rect');
-        debugPrint('  实际纹理尺寸: $actualTextureSize');
-        debugPrint('  修正后的裁剪区域: $textureRect');
-
-        canvas.clipRect(textureRect);
-
-        // 计算变换矩阵 - 使用修正后的纹理区域
-        final transform =
-            _calculateFitModeTransform(image, actualTextureSize, textureRect);
-
-        // 应用变换矩阵
-        canvas.transform(transform.storage);
-
-        // 绘制图像
-        final paint = Paint()
-          ..isAntiAlias = true
-          ..filterQuality = FilterQuality.high
-          ..color = Colors.white.withOpacity(textureConfig.opacity)
-          ..blendMode = BlendMode.srcOver;
-
-        final srcRect = Rect.fromLTWH(
-            0, 0, image.width.toDouble(), image.height.toDouble());
-
-        // 对于scaleToCover模式，确保使用正确的绘制区域
-        if (textureConfig.fitMode == 'scaleToCover') {
-          // 直接绘制原始尺寸的图像，Matrix变换会处理缩放和定位
-          // clipRect会确保超出textureRect的部分被裁剪
-          canvas.drawImageRect(image, srcRect, srcRect, paint);
-
-          debugPrint('ScaleToCover绘制完成 - 裁剪区域: $textureRect');
-        } else {
-          // 其他模式正常绘制
-          canvas.drawImageRect(image, srcRect, srcRect, paint);
-        }
-
-        canvas.restore();
+      case 'cover':
+        _renderCoverMode(canvas, rect, image, actualTextureSize);
         break;
+      case 'stretch':
+        _renderStretchMode(canvas, rect, image, actualTextureSize);
+        break;
+      case 'contain':
+        _renderContainMode(canvas, rect, image, actualTextureSize);
+        break;
+      default:
+        // 默认使用repeat模式
+        _renderRepeatModeWithTransform(canvas, rect, image, actualTextureSize);
+        break;
+    }
+  }
+
+  /// 渲染Cover模式：缩放纹理以覆盖整个背景（保持宽高比，可能裁剪）
+  void _renderCoverMode(Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
+    canvas.save();
+    
+    // 裁剪到背景区域
+    canvas.clipRect(rect);
+    
+    debugPrint('Cover模式渲染:');
+    debugPrint('  背景区域: $rect');
+    debugPrint('  纹理尺寸: $textureSize');
+
+    // 第一步：根据FitMode处理原始图像到纹理尺寸
+    final processedTextureSize = _applyFitModeToTexture(image, textureSize);
+    
+    // 第二步：计算如何缩放处理后的纹理以覆盖整个背景
+    final backgroundSize = rect.size;
+    final textureRatio = processedTextureSize.width / processedTextureSize.height;
+    final backgroundRatio = backgroundSize.width / backgroundSize.height;
+    
+    late Size finalSize;
+    
+    if (textureRatio > backgroundRatio) {
+      // 纹理更宽，以高度为准缩放
+      finalSize = Size(
+        backgroundSize.height * textureRatio,
+        backgroundSize.height,
+      );
+    } else {
+      // 纹理更高，以宽度为准缩放
+      finalSize = Size(
+        backgroundSize.width,
+        backgroundSize.width / textureRatio,
+      );
+    }
+    
+    // 居中定位
+    final destRect = Rect.fromCenter(
+      center: rect.center,
+      width: finalSize.width,
+      height: finalSize.height,
+    );
+    
+    debugPrint('  处理后纹理尺寸: $processedTextureSize');
+    debugPrint('  最终绘制区域: $destRect');
+    
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..filterQuality = FilterQuality.high
+      ..color = Colors.white.withOpacity(textureConfig.opacity);
+
+    final srcRect = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+    
+    canvas.drawImageRect(image, srcRect, destRect, paint);
+    canvas.restore();
+  }
+
+  /// 渲染Stretch模式：拉伸纹理以完全填充背景（可能变形）
+  void _renderStretchMode(Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
+    canvas.save();
+    canvas.clipRect(rect);
+    
+    debugPrint('Stretch模式渲染:');
+    debugPrint('  背景区域: $rect');
+    debugPrint('  将直接拉伸到背景尺寸');
+
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..filterQuality = FilterQuality.high
+      ..color = Colors.white.withOpacity(textureConfig.opacity);
+
+    final srcRect = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+    
+    // 直接拉伸到整个背景区域
+    canvas.drawImageRect(image, srcRect, rect, paint);
+    canvas.restore();
+  }
+
+  /// 渲染Contain模式：缩放纹理以完全包含在背景内（保持宽高比，可能有空白）
+  void _renderContainMode(Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
+    canvas.save();
+    canvas.clipRect(rect);
+    
+    debugPrint('Contain模式渲染:');
+    debugPrint('  背景区域: $rect');
+    debugPrint('  纹理尺寸: $textureSize');
+
+    // 第一步：根据FitMode处理原始图像到纹理尺寸
+    final processedTextureSize = _applyFitModeToTexture(image, textureSize);
+    
+    // 第二步：计算如何缩放处理后的纹理以包含在背景内
+    final backgroundSize = rect.size;
+    final scaleX = backgroundSize.width / processedTextureSize.width;
+    final scaleY = backgroundSize.height / processedTextureSize.height;
+    final scale = math.min(scaleX, scaleY); // 使用较小的缩放比例确保完全包含
+    
+    final finalSize = Size(
+      processedTextureSize.width * scale,
+      processedTextureSize.height * scale,
+    );
+    
+    // 居中定位
+    final destRect = Rect.fromCenter(
+      center: rect.center,
+      width: finalSize.width,
+      height: finalSize.height,
+    );
+    
+    debugPrint('  处理后纹理尺寸: $processedTextureSize');
+    debugPrint('  缩放比例: $scale');
+    debugPrint('  最终绘制区域: $destRect');
+    
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..filterQuality = FilterQuality.high
+      ..color = Colors.white.withOpacity(textureConfig.opacity);
+
+    final srcRect = Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
+    
+    canvas.drawImageRect(image, srcRect, destRect, paint);
+    canvas.restore();
+  }
+
+  /// 根据FitMode计算处理后的纹理尺寸
+  Size _applyFitModeToTexture(ui.Image image, Size targetTextureSize) {
+    final srcSize = Size(image.width.toDouble(), image.height.toDouble());
+    
+    switch (textureConfig.fitMode) {
+      case 'scaleToFit':
+        // 缩放适应：保持宽高比，完全包含在目标尺寸内
+        final scaleX = targetTextureSize.width / srcSize.width;
+        final scaleY = targetTextureSize.height / srcSize.height;
+        final scale = math.min(scaleX, scaleY);
+        return Size(srcSize.width * scale, srcSize.height * scale);
+        
+      case 'scaleToCover':
+        // 缩放覆盖：保持宽高比，完全覆盖目标尺寸
+        final scaleX = targetTextureSize.width / srcSize.width;
+        final scaleY = targetTextureSize.height / srcSize.height;
+        final scale = math.max(scaleX, scaleY);
+        return Size(srcSize.width * scale, srcSize.height * scale);
+        
+      case 'scaleToFill':
+      default:
+        // 缩放填充：直接使用目标尺寸
+        return targetTextureSize;
     }
   }
 
@@ -990,46 +1039,50 @@ class AdvancedCollectionPainter extends CustomPainter {
   //   paint.shader = shader;
   //   canvas.drawRect(rect, paint);
   // }
-
   /// 渲染重复模式（带变换支持）
   void _renderRepeatModeWithTransform(
       Canvas canvas, Rect rect, ui.Image image, Size textureSize) {
+    debugPrint('Repeat模式渲染:');
+    debugPrint('  背景区域: $rect');
+    debugPrint('  纹理尺寸: $textureSize');
+    debugPrint('  适应模式: ${textureConfig.fitMode}');
+    
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity)
-      ..blendMode = BlendMode.srcOver;
+      ..color = Colors.white.withOpacity(textureConfig.opacity);
 
-    // 对于repeat模式，我们需要根据适应模式调整shader的变换
-    Matrix4 shaderTransform = Matrix4.identity();
-
-    // 根据适应模式计算shader的变换
+    // 第一步：根据FitMode处理纹理尺寸
+    final processedTextureSize = _applyFitModeToTexture(image, textureSize);
+    
+    debugPrint('  处理后纹理尺寸: $processedTextureSize');
+    
+    // 第二步：创建ImageShader进行重复填充
+    // 计算变换矩阵以正确应用纹理尺寸
     final srcSize = Size(image.width.toDouble(), image.height.toDouble());
-    switch (textureConfig.fitMode) {
-      case 'scaleToFit':
-        final scale = math.min(textureSize.width / srcSize.width,
-            textureSize.height / srcSize.height);
-        shaderTransform.scale(1.0 / scale);
-        break;
-      case 'scaleToCover':
-        final scale = math.max(textureSize.width / srcSize.width,
-            textureSize.height / srcSize.height);
-        shaderTransform.scale(1.0 / scale);
-        break;
-      case 'scaleToFill':
-        shaderTransform.scale(srcSize.width / textureSize.width,
-            srcSize.height / textureSize.height);
-        break;
-    }
-
+    Matrix4 shaderTransform = Matrix4.identity();
+    
+    // 计算缩放比例：从原始图像尺寸到处理后的纹理尺寸
+    final scaleX = processedTextureSize.width / srcSize.width;
+    final scaleY = processedTextureSize.height / srcSize.height;
+    
+    // 应用缩放变换
+    shaderTransform.scale(scaleX, scaleY);
+    
+    // 创建shader
     final shader = ImageShader(
       image,
       TileMode.repeated,
       TileMode.repeated,
       shaderTransform.storage,
     );
+    
     paint.shader = shader;
+    
+    // 绘制到整个背景区域
     canvas.drawRect(rect, paint);
+    
+    debugPrint('  Shader变换: 缩放($scaleX, $scaleY)');
   }
 
   /// 渲染拉伸模式
@@ -1123,55 +1176,10 @@ class AdvancedCollectionPainter extends CustomPainter {
   //   }
   // }
 
-  /// 计算缩放覆盖模式的矩形
-  Rect _scaleToCoverRect(Size srcSize, Size destSize, Rect destRect) {
-    final srcRatio = srcSize.width / srcSize.height;
-    final destRatio = destSize.width / destSize.height;
-
-    double width, height;
-    if (srcRatio > destRatio) {
-      // 源图像更宽，以高度为基准
-      height = destSize.height;
-      width = height * srcRatio;
-    } else {
-      // 源图像更高，以宽度为基准
-      width = destSize.width;
-      height = width / srcRatio;
-    }
-
-    // 居中放置
-    final left = destRect.left + (destSize.width - width) / 2;
-    final top = destRect.top + (destSize.height - height) / 2;
-
-    return Rect.fromLTWH(left, top, width, height);
-  }
 
   // /// 计算缩放填充模式的矩形
   // Rect _scaleToFillRect(Size srcSize, Size destSize, Rect destRect) {
   //   // 直接填充整个目标区域，会拉伸图像
   //   return destRect;
   // }
-
-  /// 计算缩放适配模式的矩形
-  Rect _scaleToFitRect(Size srcSize, Size destSize, Rect destRect) {
-    final srcRatio = srcSize.width / srcSize.height;
-    final destRatio = destSize.width / destSize.height;
-
-    double width, height;
-    if (srcRatio < destRatio) {
-      // 源图像更高，以高度为基准
-      height = destSize.height;
-      width = height * srcRatio;
-    } else {
-      // 源图像更宽，以宽度为基准
-      width = destSize.width;
-      height = width / srcRatio;
-    }
-
-    // 居中放置
-    final left = destRect.left + (destSize.width - width) / 2;
-    final top = destRect.top + (destSize.height - height) / 2;
-
-    return Rect.fromLTWH(left, top, width, height);
-  }
 }
