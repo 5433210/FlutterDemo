@@ -281,10 +281,10 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     ServicesBinding.instance.keyboard.addHandler(
         _handleKeyboardEvent); // Clear erase state on init and load user preferences
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(erase.eraseStateProvider.notifier).clear();
-
-      // Load user preferences and initialize with default values
-      _loadUserPreferencesAndInitialize();
+      ref
+          .read(erase.eraseStateProvider.notifier)
+          .clear(); // Load processing options and initialize with appropriate values
+      _initializeProcessingOptions();
 
       // Set dynamic brush size based on image size
       _setDynamicBrushSize();
@@ -1627,6 +1627,77 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     }
   }
 
+  /// Initialize erase state with processing options from region or user preferences
+  Future<void> _initializeProcessingOptions() async {
+    try {
+      ProcessingOptions optionsToUse;
+      String sourceDescription;
+
+      // Check if the selected region has existing processing options
+      // (for existing regions) or use user preferences (for new regions)
+      if (widget.selectedRegion.characterId != null) {
+        // Existing region - use its own processing options
+        optionsToUse = widget.selectedRegion.options;
+        sourceDescription = '现有区域的处理选项';
+
+        AppLogger.debug('使用现有区域的处理选项', data: {
+          'regionId': widget.selectedRegion.id,
+          'characterId': widget.selectedRegion.characterId,
+          'threshold': optionsToUse.threshold,
+          'noiseReduction': optionsToUse.noiseReduction,
+          'brushSize': optionsToUse.brushSize,
+          'inverted': optionsToUse.inverted,
+          'showContour': optionsToUse.showContour,
+          'contrast': optionsToUse.contrast,
+          'brightness': optionsToUse.brightness,
+        });
+      } else {
+        // New region - use user preferences
+        final userPreferencesService = ref.read(userPreferencesServiceProvider);
+        optionsToUse =
+            await userPreferencesService.getDefaultProcessingOptions();
+        sourceDescription = '用户偏好设置';
+
+        AppLogger.debug('使用用户偏好设置（新区域）', data: {
+          'regionId': widget.selectedRegion.id,
+          'threshold': optionsToUse.threshold,
+          'noiseReduction': optionsToUse.noiseReduction,
+          'brushSize': optionsToUse.brushSize,
+          'showContour': optionsToUse.showContour,
+        });
+      }
+
+      // Apply options to erase state
+      final eraseNotifier = ref.read(erase.eraseStateProvider.notifier);
+      eraseNotifier.setThreshold(optionsToUse.threshold, updateImage: false);
+      eraseNotifier.setNoiseReduction(optionsToUse.noiseReduction,
+          updateImage: false);
+      eraseNotifier.setBrushSize(optionsToUse.brushSize);
+
+      if (optionsToUse.showContour) {
+        eraseNotifier.toggleContour();
+      }
+
+      AppLogger.debug('处理选项已应用到擦除状态', data: {
+        'source': sourceDescription,
+        'appliedThreshold': optionsToUse.threshold,
+        'appliedNoiseReduction': optionsToUse.noiseReduction,
+        'appliedBrushSize': optionsToUse.brushSize,
+        'appliedShowContour': optionsToUse.showContour,
+      });
+    } catch (e) {
+      AppLogger.error('初始化处理选项失败，使用默认值', error: e);
+
+      // Fallback to default processing options
+      const fallbackOptions = ProcessingOptions();
+      final eraseNotifier = ref.read(erase.eraseStateProvider.notifier);
+      eraseNotifier.setThreshold(fallbackOptions.threshold, updateImage: false);
+      eraseNotifier.setNoiseReduction(fallbackOptions.noiseReduction,
+          updateImage: false);
+      eraseNotifier.setBrushSize(fallbackOptions.brushSize);
+    }
+  }
+
   void _initiateImageLoading() {
     if (widget.imageData != null) {
       setState(() {
@@ -1642,37 +1713,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         _imageLoadingFuture = Future.value(null); // Set future to null result
         _loadedImage = null;
       });
-    }
-  }
-
-  /// Load user preferences and initialize erase state with default values
-  Future<void> _loadUserPreferencesAndInitialize() async {
-    try {
-      final userPreferencesService = ref.read(userPreferencesServiceProvider);
-      final defaultProcessingOptions =
-          await userPreferencesService.getDefaultProcessingOptions();
-
-      // Apply default values to erase state
-      final eraseNotifier = ref.read(erase.eraseStateProvider.notifier);
-      eraseNotifier.setThreshold(defaultProcessingOptions.threshold,
-          updateImage: false);
-      eraseNotifier.setNoiseReduction(defaultProcessingOptions.noiseReduction,
-          updateImage: false);
-      eraseNotifier.setBrushSize(defaultProcessingOptions.brushSize);
-
-      if (defaultProcessingOptions.showContour) {
-        eraseNotifier.toggleContour();
-      }
-
-      AppLogger.debug('用户偏好设置已加载并应用', data: {
-        'defaultThreshold': defaultProcessingOptions.threshold,
-        'defaultNoiseReduction': defaultProcessingOptions.noiseReduction,
-        'defaultBrushSize': defaultProcessingOptions.brushSize,
-        'defaultShowContour': defaultProcessingOptions.showContour,
-      });
-    } catch (e) {
-      AppLogger.error('加载用户偏好设置失败，使用默认值', error: e);
-      // If loading fails, the erase state will keep its default values
     }
   }
 
@@ -1764,7 +1804,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(l10n.characterEditDefaultsSaved ?? '当前设置已保存为默认值'),
+            content: Text(l10n.characterEditDefaultsSaved),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             width: 200,
