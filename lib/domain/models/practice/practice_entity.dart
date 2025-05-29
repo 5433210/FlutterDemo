@@ -1,34 +1,8 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
 part 'practice_entity.freezed.dart';
 part 'practice_entity.g.dart';
-
-// Note: Base64 conversion utilities kept for backward compatibility
-/// 将 Base64 字符串转换为 Uint8List
-Uint8List? _uint8ListFromJson(String? base64String) {
-  if (base64String == null) return null;
-  try {
-    return base64Decode(base64String);
-  } catch (e) {
-    debugPrint('Error decoding base64 string: $e');
-    return null;
-  }
-}
-
-/// 将 Uint8List 转换为 Base64 字符串
-String? _uint8ListToJson(Uint8List? data) {
-  if (data == null) return null;
-  try {
-    return base64Encode(data);
-  } catch (e) {
-    debugPrint('Error encoding Uint8List to base64: $e');
-    return null;
-  }
-}
 
 /// 字帖练习实体
 @freezed

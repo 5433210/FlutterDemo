@@ -22,15 +22,13 @@ class WorkImportForm extends StatefulWidget {
 
 class _WorkImportFormState extends State<WorkImportForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _hasInteracted = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isProcessing = widget.state.isProcessing;
 
     return Focus(
-      onKey: (_, event) {
+      onKeyEvent: (_, event) {
         _handleKeyPress(event);
         return KeyEventResult.ignored;
       },
@@ -50,7 +48,7 @@ class _WorkImportFormState extends State<WorkImportForm> {
         onToolChanged: widget.viewModel.setTool,
         onCreationDateChanged: _handleDateChange,
         onRemarkChanged: widget.viewModel.setRemark,
-        requiredFields: {WorkFormField.title},
+        requiredFields: const {WorkFormField.title},
         visibleFields: WorkFormPresets.importFields,
         showHelp: true,
         showKeyboardShortcuts: true,
@@ -74,9 +72,9 @@ class _WorkImportFormState extends State<WorkImportForm> {
     }
   }
 
-  void _handleKeyPress(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return;
-    if (!event.isControlPressed) return;
+  void _handleKeyPress(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+    if (!HardwareKeyboard.instance.isControlPressed) return;
 
     if (event.logicalKey == LogicalKeyboardKey.enter) {
       _handleSubmit();
@@ -84,8 +82,6 @@ class _WorkImportFormState extends State<WorkImportForm> {
   }
 
   Future<void> _handleSubmit() async {
-    setState(() => _hasInteracted = true);
-
     if (_formKey.currentState?.validate() ?? false) {
       try {
         Navigator.of(context).pop(true);

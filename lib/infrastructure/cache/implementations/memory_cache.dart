@@ -67,6 +67,12 @@ class MemoryCache<K, V> implements ICache<K, V> {
     return _cache.containsKey(key);
   }
   
+  @override
+  Future<void> remove(K key) async {
+    _cache.remove(key);
+    _keys.remove(key);
+  }
+  
   /// 获取所有缓存键
   Set<K> get keys => _cache.keys.toSet();
   

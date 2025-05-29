@@ -91,10 +91,10 @@ final practiceStorageServiceProvider = Provider<PracticeStorageService>((ref) {
 final practiceServiceProvider = Provider<PracticeService>((ref) {
   final repository = ref.watch(practiceRepositoryProvider);
   final storageService = ref.watch(practiceStorageServiceProvider);
-  
+
   // 确保 storageService 已正确初始化
   debugPrint('正在创建 PracticeService 实例');
-  
+
   return PracticeService(
     repository: repository,
     storageService: storageService,
@@ -119,7 +119,6 @@ final workServiceProvider = Provider<WorkService>((ref) {
   return WorkService(
     repository: ref.watch(workRepositoryProvider),
     imageService: ref.watch(workImageServiceProvider),
-    storage: ref.watch(initializedStorageProvider),
     workImageRepository: ref.watch(workImageRepositoryProvider),
     characterRepository: ref.watch(characterRepositoryProvider),
   );

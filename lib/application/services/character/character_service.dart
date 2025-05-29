@@ -322,8 +322,8 @@ class CharacterService {
           pageId: entity.pageId,
           character: entity.character,
           thumbnailPath: thumbnailPath,
-          createdAt: entity.createTime ?? DateTime.now(),
-          updatedAt: entity.updateTime ?? DateTime.now(),
+          createdAt: entity.createTime,
+          updatedAt: entity.updateTime,
           isFavorite: false,
         );
       }).toList();
@@ -381,8 +381,8 @@ class CharacterService {
           pageId: entity.pageId,
           character: entity.character,
           thumbnailPath: thumbnailPath,
-          createdAt: entity.createTime ?? DateTime.now(),
-          updatedAt: entity.updateTime ?? DateTime.now(),
+          createdAt: entity.createTime,
+          updatedAt: entity.updateTime,
           isFavorite: false,
         );
       }).toList();

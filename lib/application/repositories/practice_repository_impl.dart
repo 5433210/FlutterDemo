@@ -607,14 +607,6 @@ class PracticeRepositoryImpl implements PracticeRepository {
     return fieldName;
   }
 
-  /// 从文件系统加载缩略图
-  /// 此方法已弃用，缩略图加载现在由 PracticeStorageService 处理
-  Future<Uint8List?> _loadThumbnailFromFile(String practiceId) async {
-    debugPrint(
-        '警告: _loadThumbnailFromFile 已弃用，缩略图处理现在由 PracticeStorageService 处理');
-    return null; // 返回null以需要时触发回退到旧版本缓存
-  }
-
   Map<String, dynamic> _prepareForSave(Map<String, dynamic> json) {
     debugPrint('_prepareForSave: 开始处理JSON数据，共 ${json.length} 个字段');
     // 创建一个新的Map来避免修改原始数据

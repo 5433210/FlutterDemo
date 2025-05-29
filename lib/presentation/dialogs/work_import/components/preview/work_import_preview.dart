@@ -60,8 +60,6 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
       builder: (context, constraints) {
         // Use constraints to adapt layout
         final isSmallWidth = constraints.maxWidth < 500;
-        final buttonHeight = 60.0; // Approximate height for buttons
-        final previewHeight = constraints.maxHeight - buttonHeight;
 
         return Column(
           children: [
@@ -72,7 +70,8 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                    color:
+                        theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                     width: 1,
                   ),
                 ),
@@ -105,8 +104,10 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
                           side: BorderSide(
-                            color: theme.colorScheme.error.withOpacity(
-                              images.isEmpty || state.isProcessing ? 0.38 : 1.0,
+                            color: theme.colorScheme.error.withValues(
+                              alpha: images.isEmpty || state.isProcessing
+                                  ? 0.38
+                                  : 1.0,
                             ),
                           ),
                         ),
@@ -124,21 +125,25 @@ class _WorkImportPreviewState extends ConsumerState<WorkImportPreview> {
             if (widget.showBottomButtons) const SizedBox(height: 16),
             if (widget.showBottomButtons)
               DialogButtonGroup(
-                // 如果正在处理，返回一个空函数，否则返回实际的取消处理函数
-                onCancel: state.isProcessing
-                    ? () {}
-                    : () => Navigator.of(context).pop(),
-                // 如果禁用或处理中，返回一个空函数，否则返回实际的确认处理函数
-                onConfirm: (images.isEmpty || state.isProcessing)
-                    ? () {}
-                    : () async {
-                        final success = await _handleConfirm();
-                        if (success && mounted) {
-                          Navigator.of(context).pop(true);
-                        }
-                      },
-                confirmText: '导入',
+                // 如果正在处理，禁用取消按钮
+                onCancel: () => Navigator.of(context).pop(),
                 isProcessing: state.isProcessing,
+                // 如果没有图片或正在处理，禁用确认按钮
+                isConfirmEnabled: !(images.isEmpty || state.isProcessing),
+                // 确认按钮点击处理
+                onConfirm: () async {
+                  final success = await _handleConfirm();
+                  
+                  // Check if widget is still in the tree before using context
+                  if (!mounted) return;
+                  
+                  if (success) {
+                    if (context.mounted) {
+                      Navigator.of(context).pop(true);
+                    }
+                  }
+                },
+                confirmText: '导入',
               ),
           ],
         );

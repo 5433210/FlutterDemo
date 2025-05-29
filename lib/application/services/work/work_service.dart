@@ -7,7 +7,6 @@ import '../../../domain/repositories/character_repository.dart';
 import '../../../domain/repositories/work_image_repository.dart';
 import '../../../domain/repositories/work_repository.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../infrastructure/storage/storage_interface.dart';
 import './service_errors.dart';
 import './work_image_service.dart';
 
@@ -15,19 +14,17 @@ import './work_image_service.dart';
 class WorkService with WorkServiceErrorHandler {
   final WorkRepository _repository;
   final WorkImageService _imageService;
-  final IStorage _storage;
+
   final WorkImageRepository _workImageRepository;
   final CharacterRepository _characterRepository;
 
   WorkService({
     required WorkRepository repository,
     required WorkImageService imageService,
-    required IStorage storage,
     required WorkImageRepository workImageRepository,
     required CharacterRepository characterRepository,
   })  : _repository = repository,
         _imageService = imageService,
-        _storage = storage,
         _workImageRepository = workImageRepository,
         _characterRepository = characterRepository;
 

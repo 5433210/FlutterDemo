@@ -696,68 +696,6 @@ class BackupService {
     }
   }
 
-  /// 验证备份文件是否有效（使用存储服务）
-  Future<bool> _isValidBackupFile(String filePath) async {
-    try {
-      // 检查文件扩展名
-      if (!filePath.toLowerCase().endsWith('.zip')) {
-        return false;
-      }
-
-      // 读取ZIP文件
-      final zipBytes = await _storage.readFile(filePath);
-
-      // 尝试解码ZIP数据
-      try {
-        final archive = ZipDecoder().decodeBytes(zipBytes);
-
-        // 检查是否包含必要的目录和文件
-        bool hasDatabase = false;
-        bool hasData = false;
-
-        // 记录备份文件内容
-        final fileList = <String>[];
-
-        for (final file in archive) {
-          final fileName = file.name;
-          fileList.add(fileName);
-
-          if (fileName.startsWith('database/')) {
-            hasDatabase = true;
-          } else if (fileName.startsWith('data/')) {
-            hasData = true;
-          }
-
-          // 如果找到了必要的目录，提前返回
-          if (hasDatabase && hasData) {
-            // 记录备份文件内容
-            AppLogger.debug('备份文件内容',
-                tag: 'BackupService', data: {'files': fileList});
-            return true;
-          }
-        }
-
-        // 记录备份文件内容
-        AppLogger.warning('备份文件内容不完整', tag: 'BackupService', data: {
-          'files': fileList,
-          'hasDatabase': hasDatabase,
-          'hasData': hasData
-        });
-
-        // 如果没有找到必要的目录，返回false
-        return false;
-      } catch (e) {
-        // 如果解码失败，说明不是有效的ZIP文件
-        AppLogger.error('解码备份文件失败', tag: 'BackupService', error: e);
-        return false;
-      }
-    } catch (e) {
-      // 任何异常都表示文件无效
-      AppLogger.error('验证备份文件失败', tag: 'BackupService', error: e);
-      return false;
-    }
-  }
-
   /// 验证外部备份文件是否有效（直接使用File API）
   Future<bool> _isValidBackupFileExternal(String filePath) async {
     try {

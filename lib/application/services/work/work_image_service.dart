@@ -742,33 +742,6 @@ class WorkImageService with WorkServiceErrorHandler {
     );
   }
 
-  /// 确保封面文件存在
-  Future<bool> _ensureCoverFilesExist(String workId) async {
-    final coverPath = _storage.getWorkCoverImportedPath(workId);
-    final thumbnailPath = _storage.getWorkCoverThumbnailPath(workId);
-
-    // 尝试多次检查文件是否存在，允许文件系统操作完成
-    for (int i = 0; i < 3; i++) {
-      final coverExists = await File(coverPath).exists();
-      final thumbnailExists = await File(thumbnailPath).exists();
-
-      if (coverExists && thumbnailExists) {
-        return true;
-      }
-
-      AppLogger.debug('等待封面文件写入完成', tag: 'WorkImageService', data: {
-        'attempt': i + 1,
-        'coverExists': coverExists,
-        'thumbnailExists': thumbnailExists
-      });
-
-      // 等待文件系统操作完成
-      await Future.delayed(Duration(milliseconds: 100 * (i + 1)));
-    }
-
-    return false;
-  }
-
   /// 确保文件写入完成
   Future<void> _ensureFileWritten(String filePath) async {
     try {

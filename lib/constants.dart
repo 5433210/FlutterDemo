@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 // 项目常量集合
 // 本文件收集了项目中使用的常量，按文件和类型分组
@@ -197,15 +196,10 @@ class PathCacheConstants {
 /// 特性模块常量
 
 // 来自 lib/widgets/character_edit/character_edit_canvas.dart
-class CharacterEditCanvasConstants {
-  static const _altToggleDebounce = Duration(milliseconds: 100); // 行: 58
-}
+class CharacterEditCanvasConstants {}
 
 // 来自 lib/widgets/character_edit/character_edit_panel.dart
-class CharacterEditPanelConstants {
-  static const updateInterval =
-      Duration(milliseconds: 24); // 更高频率的更新  // 行: 1304
-}
+class CharacterEditPanelConstants {}
 
 // 来自 lib/widgets/character_edit/keyboard/shortcut_handler.dart
 class ShortcutHandlerConstants {
@@ -237,35 +231,6 @@ class PracticePropertyPanelImageConstants {
   static const previewFitMode = 'contain'; // 行: 1286
   static const distance = 4.0; // 每段虚线的长度      // 行: 1876
   static const cornerSize = 8.0; // 行: 2071
-}
-
-/// 状态恢复服务常量
-
-// 来自 lib/application/services/restoration/state_restoration_service.dart
-class StateRestorationConstants {
-  static const _workEditStatePrefix = 'work_edit_state_'; // 行: 14
-  static const _workEditTimestampPrefix = 'work_edit_timestamp_'; // 行: 15
-  static const _stateValidityPeriod = 24 * 60 * 60 * 1000; // 行: 22
-}
-
-/// 测试相关常量
-
-// 来自 test/integration/test_config.dart
-class TestConfig {
-  static const ciTimeoutDuration = Duration(seconds: 30); // 行: 6
-  static const localTimeoutDuration = Duration(seconds: 5); // 行: 9
-}
-
-// 来自 test/utils/pre_test_check.dart
-class PreTestCheckConstants {
-  static const requiredDiskSpaceMB = 2048; // 2GB     // 行: 38
-  static const backupIntervalHours = 24; // 行: 41
-}
-
-// 来自 test/utils/system_resources.dart
-class SystemResourcesConstants {
-  static const minMemoryMB = 512; // 行: 53
-  static const minDiskSpaceMB = 1024; // 行: 56
 }
 
 /// 常用UI常量（从代码中收集的字面量）

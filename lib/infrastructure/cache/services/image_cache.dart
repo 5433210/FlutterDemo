@@ -132,4 +132,10 @@ class ImageCache implements ICache<String, Uint8List> {
     final file = File(path.join(_cacheDir.path, key));
     return await file.exists();
   }
+
+  @override
+  Future<void> remove(String key) async {
+    // 实现与invalidate相同的功能，以满足接口要求
+    await invalidate(key);
+  }
 }

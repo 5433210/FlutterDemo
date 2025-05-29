@@ -279,13 +279,11 @@ class WorkRepositoryImpl implements WorkRepository {
         ));
       }
     }
-
     final query = DatabaseQuery(
       conditions: conditions,
       groups: groups.isEmpty ? null : groups,
-      orderBy: filter.sortOption.field != null
-          ? '${filter.sortOption.field.name} ${filter.sortOption.descending ? 'DESC' : 'ASC'}'
-          : null,
+      orderBy:
+          '${filter.sortOption.field.name} ${filter.sortOption.descending ? 'DESC' : 'ASC'}',
       limit: filter.limit,
       offset: filter.offset,
     );

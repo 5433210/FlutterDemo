@@ -23,12 +23,11 @@ class M3WorkImportForm extends StatefulWidget {
 
 class _M3WorkImportFormState extends State<M3WorkImportForm> {
   final _formKey = GlobalKey<FormState>();
-  bool _hasInteracted = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
+    AppLocalizations.of(context);
     final isProcessing = widget.state.isProcessing;
 
     return Focus(
@@ -41,7 +40,7 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -100,7 +99,6 @@ class _M3WorkImportFormState extends State<M3WorkImportForm> {
 
   Future<void> _handleSubmit() async {
     final l10n = AppLocalizations.of(context);
-    setState(() => _hasInteracted = true);
 
     if (_formKey.currentState?.validate() ?? false) {
       try {
