@@ -69,9 +69,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     final hasSelection = controller.state.selectedElementIds.isNotEmpty;
     final isMultiSelected = controller.state.selectedElementIds.length > 1;
     final hasSelectedGroup =
-        hasSelection && !isMultiSelected && _isSelectedElementGroup();
-
-    return Container(
+        hasSelection && !isMultiSelected && _isSelectedElementGroup();    return Container(
+      width: double.infinity, // 扩展到整个画布宽度
       // 移除固定高度限制，使用自适应高度
       constraints: const BoxConstraints(minHeight: 48),
       padding: const EdgeInsets.symmetric(
