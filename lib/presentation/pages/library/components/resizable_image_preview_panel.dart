@@ -3,10 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../domain/entities/library_item.dart';
 import '../../../providers/library/library_management_provider.dart';
+import '../../../providers/persistent_panel_provider.dart';
 import '../../../widgets/common/advanced_image_preview.dart';
 
-// State provider for the resizable image preview panel's height
-final imagePreviewPanelHeightProvider = StateProvider<double>((ref) => 300);
+// Height notifier for updating the image preview panel height
+final imagePreviewPanelHeightNotifierProvider =
+    Provider<void Function(double)>((ref) {
+  return (double height) {
+    ref.read(persistentPanelProvider.notifier).setPanelWidth(
+          'library_image_preview_panel_height',
+          height,
+        );
+  };
+});
+
+// Persistent height provider for the resizable image preview panel
+final imagePreviewPanelHeightProvider = Provider<double>((ref) {
+  return ref.watch(panelWidthProvider((
+    panelId: 'library_image_preview_panel_height',
+    defaultWidth: 300.0,
+  )));
+});
 
 /// A resizable image preview panel for the library management page
 class ResizableImagePreviewPanel extends ConsumerStatefulWidget {
@@ -82,10 +99,8 @@ class _ResizableImagePreviewPanelState
 
   @override
   void deactivate() {
-    // Save current height when deactivated (but before dispose)
-    // This is a safer place to use ref than in dispose()
-    final height = ref.read(imagePreviewPanelHeightProvider);
-    ref.read(imagePreviewPanelHeightProvider.notifier).state = height;
+    // The height is automatically persisted when changed through the notifier
+    // No need to manually save here since we're using persistent providers
     super.deactivate();
   }
 
@@ -270,10 +285,10 @@ class _ResizableImagePreviewPanelState
     final delta = details.globalPosition.dy - _lastDragPosition!.dy;
     _lastDragPosition = details.globalPosition;
 
-    // Update the height using Riverpod
+    // Update the height using the persistent panel system
     final currentHeight = ref.read(imagePreviewPanelHeightProvider);
-    ref.read(imagePreviewPanelHeightProvider.notifier).state =
-        currentHeight + delta;
+    final heightNotifier = ref.read(imagePreviewPanelHeightNotifierProvider);
+    heightNotifier(currentHeight + delta);
   }
 
   /// Opens the image in full screen mode
