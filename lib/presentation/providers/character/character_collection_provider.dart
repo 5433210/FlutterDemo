@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
+import '../../../application/services/work/work_image_service.dart';
 import '../../../domain/models/character/character_image_type.dart';
 import '../../../domain/models/character/character_region.dart';
 import '../../../domain/models/character/character_region_state.dart';
@@ -23,10 +25,12 @@ final characterCollectionProvider = StateNotifierProvider<
   final characterService = ref.watch(characterServiceProvider);
   final toolModeNotifier = ref.watch(toolModeProvider.notifier);
   final selectedRegionNotifier = ref.watch(selectedRegionProvider.notifier);
+  final workImageService = ref.read(workImageServiceProvider);
 
   return CharacterCollectionNotifier(
     characterService: characterService,
     toolModeNotifier: toolModeNotifier,
+    workImageService: workImageService,
     selectedRegionNotifier: selectedRegionNotifier,
     ref: ref, // Pass ref to access the refresh notifier
   );
@@ -37,119 +41,23 @@ class CharacterCollectionNotifier
   final CharacterService _characterService;
   final ToolModeNotifier _toolModeNotifier;
   final SelectedRegionNotifier _selectedRegionNotifier;
+  final WorkImageService _workImageService;
   final Ref _ref; // Store ref for refresh notifications
 
   Uint8List? _currentPageImage;
   String? _currentWorkId;
   String? _currentPageId;
 
-  /// 处理区域点击逻辑
-  /// 根据当前工具模式转换区域状态
-  void handleRegionClick(String id) {
-    final currentTool = _toolModeNotifier.currentMode;
-    // Find the region first to ensure it exists before proceeding
-    final region = state.regions.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw Exception('Region not found'),
-    );
-
-    AppLogger.debug('处理区域点击', data: {
-      'regionId': id,
-      'currentTool': currentTool.toString(),
-      'isAdjusting': state.isAdjusting,
-      'isSelected': region.isSelected,
-    });
-
-    // 如果当前正在调整，先完成调整
-    if (state.isAdjusting) {
-      finishCurrentAdjustment();
-    }
-
-    // 根据工具模式处理点击
-    switch (currentTool) {
-      case Tool.pan:
-        _handlePanModeClick(id);
-        break;
-      case Tool.select:
-        _handleSelectModeClick(id);
-        break;
-    }
-  }
-
-  /// 处理Pan模式下的点击
-  void _handlePanModeClick(String id) {
-    AppLogger.debug('Handling Pan Mode Click', data: {'regionId': id});
-
-    final region = state.regions.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw Exception('Region not found'),
-    );
-
-    // 如果当前区域已被选中，则取消选择
-    if (region.isSelected) {
-      unselectRegion(id);
-      AppLogger.debug('Pan Mode Click: Deselected region',
-          data: {'regionId': id});
-    } else {
-      // 如果未选中，则选中该区域
-      selectRegion(id);
-      AppLogger.debug('Pan Mode Click: Selected region',
-          data: {'regionId': id});
-    }
-  }
-
-  /// 处理Select模式下的点击
-  /// Select模式下点击直接进入调整模式
-  void _handleSelectModeClick(String id) {
-    AppLogger.debug('Handling Select Mode Click', data: {
-      'regionId': id,
-      'currentStateIsAdjusting': state.isAdjusting,
-      'currentStateCurrentId': state.currentId
-    });
-
-    // 1. 如果当前正在调整其他选区，先保存状态
-    if (state.isAdjusting && state.currentId != id) {
-      finishCurrentAdjustment(); // 保存当前调整中的选区
-    }
-
-    // 2. 查找目标选区
-    final region = state.regions.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw Exception('Region not found'),
-    );
-
-    _selectedRegionNotifier.setRegion(region);
-
-    // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
-    bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
-
-    // Update all regions, only the target region is selected
-    final updatedRegions =
-        state.regions.map((r) => r.copyWith(isSelected: r.id == id)).toList();
-
-    // 重要：选择区域，但不添加到modifiedIds中
-    state = state.copyWith(
-      regions: updatedRegions,
-      currentId: id,
-      isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
-      error: null,
-    );
-
-    AppLogger.debug('Select Mode Click - State Update Complete', data: {
-      'newStateRegionId': state.currentId,
-      'newStateIsAdjusting': state.isAdjusting,
-      'wasAlreadyAdjusting': !shouldEnterAdjusting,
-    });
-  }
-
   CharacterCollectionNotifier({
     required CharacterService characterService,
     required ToolModeNotifier toolModeNotifier,
     required SelectedRegionNotifier selectedRegionNotifier,
+    required WorkImageService workImageService,
     required Ref ref,
   })  : _characterService = characterService,
         _toolModeNotifier = toolModeNotifier,
         _selectedRegionNotifier = selectedRegionNotifier,
+        _workImageService = workImageService,
         _ref = ref,
         super(CharacterCollectionState.initial());
 
@@ -453,6 +361,39 @@ class CharacterCollectionNotifier
     }
   }
 
+  /// 处理区域点击逻辑
+  /// 根据当前工具模式转换区域状态
+  void handleRegionClick(String id) {
+    final currentTool = _toolModeNotifier.currentMode;
+    // Find the region first to ensure it exists before proceeding
+    final region = state.regions.firstWhere(
+      (r) => r.id == id,
+      orElse: () => throw Exception('Region not found'),
+    );
+
+    AppLogger.debug('处理区域点击', data: {
+      'regionId': id,
+      'currentTool': currentTool.toString(),
+      'isAdjusting': state.isAdjusting,
+      'isSelected': region.isSelected,
+    });
+
+    // 如果当前正在调整，先完成调整
+    if (state.isAdjusting) {
+      finishCurrentAdjustment();
+    }
+
+    // 根据工具模式处理点击
+    switch (currentTool) {
+      case Tool.pan:
+        _handlePanModeClick(id);
+        break;
+      case Tool.select:
+        _handleSelectModeClick(id);
+        break;
+    }
+  }
+
   bool isCharacterModified(String id) {
     try {
       final region = state.regions.firstWhere((r) => r.id == id);
@@ -735,6 +676,13 @@ class CharacterCollectionNotifier
       List<Map<String, dynamic>>? eraseData =
           region.eraseData; // Store erase data before save
 
+      final imageData = await _workImageService.getWorkPageImage(
+          _currentWorkId!, region.pageId);
+      if (imageData == null) {
+        throw Exception('Image not found');
+      }
+
+      setCurrentPageImage(imageData);
       if (exists) {
         // 更新现有区域
         AppLogger.debug('保存现有区域', data: {'regionId': region.id});
@@ -1133,6 +1081,72 @@ class CharacterCollectionNotifier
       // 更新选中区域
       _selectedRegionNotifier.setRegion(updatedRegion);
     }
+  }
+
+  /// 处理Pan模式下的点击
+  void _handlePanModeClick(String id) {
+    AppLogger.debug('Handling Pan Mode Click', data: {'regionId': id});
+
+    final region = state.regions.firstWhere(
+      (r) => r.id == id,
+      orElse: () => throw Exception('Region not found'),
+    );
+
+    // 如果当前区域已被选中，则取消选择
+    if (region.isSelected) {
+      unselectRegion(id);
+      AppLogger.debug('Pan Mode Click: Deselected region',
+          data: {'regionId': id});
+    } else {
+      // 如果未选中，则选中该区域
+      selectRegion(id);
+      AppLogger.debug('Pan Mode Click: Selected region',
+          data: {'regionId': id});
+    }
+  }
+
+  /// 处理Select模式下的点击
+  /// Select模式下点击直接进入调整模式
+  void _handleSelectModeClick(String id) {
+    AppLogger.debug('Handling Select Mode Click', data: {
+      'regionId': id,
+      'currentStateIsAdjusting': state.isAdjusting,
+      'currentStateCurrentId': state.currentId
+    });
+
+    // 1. 如果当前正在调整其他选区，先保存状态
+    if (state.isAdjusting && state.currentId != id) {
+      finishCurrentAdjustment(); // 保存当前调整中的选区
+    }
+
+    // 2. 查找目标选区
+    final region = state.regions.firstWhere(
+      (r) => r.id == id,
+      orElse: () => throw Exception('Region not found'),
+    );
+
+    _selectedRegionNotifier.setRegion(region);
+
+    // 3. 更新状态 - 如果已经在调整该选区，则不重新进入调整状态
+    bool shouldEnterAdjusting = !state.isAdjusting || state.currentId != id;
+
+    // Update all regions, only the target region is selected
+    final updatedRegions =
+        state.regions.map((r) => r.copyWith(isSelected: r.id == id)).toList();
+
+    // 重要：选择区域，但不添加到modifiedIds中
+    state = state.copyWith(
+      regions: updatedRegions,
+      currentId: id,
+      isAdjusting: shouldEnterAdjusting, // 只有在需要时才进入调整状态
+      error: null,
+    );
+
+    AppLogger.debug('Select Mode Click - State Update Complete', data: {
+      'newStateRegionId': state.currentId,
+      'newStateIsAdjusting': state.isAdjusting,
+      'wasAlreadyAdjusting': !shouldEnterAdjusting,
+    });
   }
 
   // 检查擦除路径数据是否有变化 - Update to handle eraseData instead of erasePoints
