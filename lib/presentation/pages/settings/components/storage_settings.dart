@@ -15,7 +15,6 @@ class StorageSettings extends ConsumerWidget {
     final storageInfo = ref.watch(storageInfoProvider);
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return SettingsSection(
       title: l10n.storageSettings,
@@ -32,58 +31,6 @@ class StorageSettings extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCategorySection(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required int count,
-    required int size,
-  }) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(AppSizes.p12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 24, color: colorScheme.primary),
-          const SizedBox(width: AppSizes.p16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: textTheme.titleSmall),
-                const SizedBox(height: AppSizes.p8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('数量', style: textTheme.bodyMedium),
-                    Text('$count', style: textTheme.bodyLarge),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.p4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('存储空间', style: textTheme.bodyMedium),
-                    Text(
-                      FileSizeFormatter.format(size),
-                      style: textTheme.bodyLarge,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -206,61 +153,6 @@ class StorageSettings extends ConsumerWidget {
 
   Widget _buildSummaryGrid(BuildContext context, StorageInfo info) {
     final l10n = AppLocalizations.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoItem(
-                context,
-                label: l10n.workCount,
-                value: info.workCount.toString(),
-                icon: Icons.image_outlined,
-              ),
-            ),
-            const SizedBox(width: AppSizes.p16),
-            Expanded(
-              child: _buildInfoItem(
-                context,
-                label: l10n.characterCount,
-                value: info.characterCount.toString(),
-                icon: Icons.font_download_outlined,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSizes.p16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoItem(
-                context,
-                label: l10n.libraryCount,
-                value: info.libraryCount.toString(),
-                icon: Icons.photo_library_outlined,
-              ),
-            ),
-            const SizedBox(width: AppSizes.p16),
-            Expanded(
-              child: _buildInfoItem(
-                context,
-                label: l10n.files,
-                value: info.fileCount.toString(),
-                icon: Icons.insert_drive_file_outlined,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSummarySection(BuildContext context, StorageInfo info) {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../../domain/enums/sort_field.dart';
 import '../../../../domain/enums/work_style.dart';
@@ -173,9 +174,6 @@ class _M3CharacterFilterPanelImplState
     // 获取可用的书写工具
     final tools = WorkTool.values.toList();
 
-    // 常用标签
-    final List<String> commonTags = [];
-
     return [
       // 搜索框部分
       _buildSectionCard(
@@ -193,8 +191,9 @@ class _M3CharacterFilterPanelImplState
                 final newFilter =
                     widget.filter.copyWith(searchText: _searchController.text);
                 widget.onFilterChanged(newFilter);
-                // Keep focus and cursor at the end of text
-                Future.microtask(() {
+                // Schedule focus and cursor update for the next frame
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!mounted) return;
                   FocusScope.of(context).requestFocus(_searchFocusNode);
                   _searchController.selection = TextSelection.fromPosition(
                     TextPosition(offset: _searchController.text.length),
@@ -217,8 +216,10 @@ class _M3CharacterFilterPanelImplState
             final newFilter = widget.filter.copyWith(searchText: value);
             widget.onFilterChanged(newFilter);
             // Keep focus and cursor at the end of text
+            final currentContext = context;
             Future.microtask(() {
-              FocusScope.of(context).requestFocus(_searchFocusNode);
+              if (!mounted) return;
+              FocusScope.of(currentContext).requestFocus(_searchFocusNode);
               _searchController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _searchController.text.length),
               );

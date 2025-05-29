@@ -75,8 +75,8 @@ class CharacterGridNotifier extends StateNotifier<CharacterGridState> {
                   pageId: char.pageId,
                   character: char.character,
                   thumbnailPath: '', // 需通过仓库获取缩略图路径
-                  createdAt: char.createTime ?? DateTime.now(),
-                  updatedAt: char.updateTime ?? DateTime.now(),
+                  createdAt: char.createTime,
+                  updatedAt: char.updateTime,
                   isFavorite: char.isFavorite,
                 ))
             .toList();

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -240,7 +239,7 @@ class M3PracticeListItem extends ConsumerWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer.withOpacity(0.7),
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Row(
@@ -259,22 +258,6 @@ class M3PracticeListItem extends ConsumerWidget {
     );
   }
 
-  /// Build placeholder widget
-  Widget _buildPlaceholder(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Icon(
-          Icons.note_alt_outlined,
-          size: 48,
-          color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
-        ),
-      ),
-    );
-  }
-
   /// 构建标签项
   Widget _buildTagChip(BuildContext context, dynamic tag) {
     final theme = Theme.of(context);
@@ -286,7 +269,7 @@ class M3PracticeListItem extends ConsumerWidget {
         vertical: AppSizes.tagChipVerticalPadding,
       ),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
       ),
       child: Text(
@@ -302,7 +285,6 @@ class M3PracticeListItem extends ConsumerWidget {
   /// 构建标签列表
   Widget _buildTagsList(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     final tags = (practice['tags'] as List<dynamic>?) ?? [];
 
     if (tags.isEmpty) {

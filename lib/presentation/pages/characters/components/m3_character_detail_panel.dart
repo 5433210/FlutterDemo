@@ -787,8 +787,6 @@ class _M3CharacterDetailPanelState
 
   // Show dialog to add a new tag
   void _showAddTagDialog(CharacterView character, AppLocalizations l10n) {
-    final theme = Theme.of(context);
-
     showDialog(
       context: context,
       builder: (context) {

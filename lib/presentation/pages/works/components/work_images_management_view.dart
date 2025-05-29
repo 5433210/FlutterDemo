@@ -127,8 +127,6 @@ class WorkImagesManagementView extends ConsumerWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final theme = Theme.of(context);
-
         return Stack(
           children: [
             // Enhanced Work Preview
@@ -196,7 +194,7 @@ class WorkImagesManagementView extends ConsumerWidget {
             if (isProcessing)
               Positioned.fill(
                 child: Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: const Center(
                     child: CircularProgressIndicator(),
                   ),

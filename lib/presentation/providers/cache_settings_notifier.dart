@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../infrastructure/cache/config/cache_config.dart';
-import '../../infrastructure/cache/services/cache_manager.dart';
 import '../../infrastructure/providers/cache_providers.dart';
 import '../../infrastructure/providers/shared_preferences_provider.dart';
 
@@ -51,11 +49,12 @@ class CacheSettingsNotifier extends StateNotifier<CacheConfig> {
   Future<void> setAutoCleanupEnabled(bool enabled) async {
     final newConfig = state.copyWith(autoCleanupEnabled: enabled);
     await _saveConfig(newConfig);
-    
+
     // Start or stop monitoring based on new setting
     final cacheManager = ref.read(cacheManagerProvider);
     if (enabled) {
-      cacheManager.startMemoryMonitoring(interval: newConfig.autoCleanupInterval);
+      cacheManager.startMemoryMonitoring(
+          interval: newConfig.autoCleanupInterval);
     } else {
       cacheManager.stopMemoryMonitoring();
     }
@@ -65,7 +64,7 @@ class CacheSettingsNotifier extends StateNotifier<CacheConfig> {
   Future<void> setAutoCleanupInterval(Duration interval) async {
     final newConfig = state.copyWith(autoCleanupInterval: interval);
     await _saveConfig(newConfig);
-    
+
     // Restart monitoring with new interval if enabled
     if (newConfig.autoCleanupEnabled) {
       final cacheManager = ref.read(cacheManagerProvider);
@@ -77,7 +76,7 @@ class CacheSettingsNotifier extends StateNotifier<CacheConfig> {
   /// Reset to default settings
   Future<void> resetToDefaults() async {
     await _saveConfig(const CacheConfig());
-    
+
     // Update monitoring with default settings
     final cacheManager = ref.read(cacheManagerProvider);
     if (const CacheConfig().autoCleanupEnabled) {

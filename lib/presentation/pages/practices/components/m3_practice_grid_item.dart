@@ -87,7 +87,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                           color: isSelected
                               ? colorScheme.primaryContainer
                               : colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                         child: Padding(
@@ -112,7 +112,7 @@ class M3PracticeGridItem extends ConsumerWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: colorScheme.surfaceContainerHighest
-                              .withOpacity(0.7),
+                              .withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -204,35 +204,6 @@ class M3PracticeGridItem extends ConsumerWidget {
     );
   }
 
-  /// Build error placeholder
-  Widget _buildErrorPlaceholder(BuildContext context, AppLocalizations l10n) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      color: colorScheme.surfaceContainerHighest,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.image_not_supported,
-              size: 32,
-              color: colorScheme.onSurfaceVariant.withAlpha(128), // 0.5 opacity
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.practiceListThumbnailError,
-              style: TextStyle(
-                color:
-                    colorScheme.onSurfaceVariant.withAlpha(178), // 0.7 opacity
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Build placeholder widget
   Widget _buildPlaceholder(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -276,7 +247,7 @@ class M3PracticeGridItem extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
+                  color: colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -294,7 +265,6 @@ class M3PracticeGridItem extends ConsumerWidget {
 
   /// Build thumbnail widget
   Widget _buildThumbnail(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
     final practiceId = practice['id'] as String?;
 
     if (practiceId == null) {
