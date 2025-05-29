@@ -11,6 +11,7 @@ import '../../../application/providers/service_providers.dart';
 import '../../../application/services/character/character_service.dart';
 import '../../../infrastructure/providers/cache_providers.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../providers/persistent_panel_provider.dart';
 import '../../widgets/common/persistent_resizable_panel.dart';
 import '../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../widgets/page_layout.dart';
@@ -76,8 +77,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
   // Control page thumbnails display state
   bool _showThumbnails = false;
-
-  // Control panel visibility
+  // Control panel visibility - will be initialized from persistent state
   bool _isLeftPanelOpen = false; // Default to closed as requested
   bool _isRightPanelOpen = true;
 
@@ -203,10 +203,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
         '【平移】PracticeEditPageRefactored.initState: 初始化 transformationController=$_transformationController, 值=${_transformationController.value}');
 
     // Initialize keyboard handler
-    _initKeyboardHandler();
-
-    // Make sure controller state matches our initial empty tool state
+    _initKeyboardHandler(); // Make sure controller state matches our initial empty tool state
     _controller.state.currentTool = _currentTool;
+
+    // Initialize panel states from persistent storage
+    _initializePanelStates();
 
     // Schedule a callback to connect the canvas after build
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -459,16 +460,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
           children: [
             // Left panel
             if (!_isPreviewMode && _isLeftPanelOpen)
-              _buildLeftPanel(), // Left panel toggle
-            if (!_isPreviewMode)
-              PersistentSidebarToggle(
-                sidebarId: 'practice_edit_left_panel',
-                defaultIsOpen: _isLeftPanelOpen,
-                onToggle: (isOpen) => setState(() {
-                  _isLeftPanelOpen = isOpen;
-                }),
-                alignRight: false,
-              ),
+              _buildLeftPanel(), // Left panel toggle            if (!_isPreviewMode)
+            PersistentSidebarToggle(
+              sidebarId: 'practice_edit_left_panel',
+              defaultIsOpen: false, // Default to closed as requested
+              onToggle: (isOpen) => setState(() {
+                _isLeftPanelOpen = isOpen;
+              }),
+              alignRight: false,
+            ),
 
             // Central edit area
             Expanded(
@@ -499,16 +499,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
                     _buildPageThumbnails(),
                 ],
               ),
-            ), // Right panel toggle
-            if (!_isPreviewMode)
-              PersistentSidebarToggle(
-                sidebarId: 'practice_edit_right_panel',
-                defaultIsOpen: _isRightPanelOpen,
-                onToggle: (isOpen) => setState(() {
-                  _isRightPanelOpen = isOpen;
-                }),
-                alignRight: true,
-              ),
+            ), // Right panel toggle            if (!_isPreviewMode)
+            PersistentSidebarToggle(
+              sidebarId: 'practice_edit_right_panel',
+              defaultIsOpen: true, // Default to open
+              onToggle: (isOpen) => setState(() {
+                _isRightPanelOpen = isOpen;
+              }),
+              alignRight: true,
+            ),
 
             // Right properties panel
             if (!_isPreviewMode && _isRightPanelOpen) _buildRightPanel(),
@@ -876,8 +875,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     }
   }
 
-  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
-
   /// 复制选中元素的样式（格式刷功能）
   void _copyElementFormatting() {
     final selectedElements = _controller.state.getSelectedElements();
@@ -1026,6 +1023,8 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       );
     });
   }
+
+  // _buildElementButton 方法已移除，相关功能移至 M3EditToolbar
 
   /// Copy selected elements with enhanced image preloading optimization
   void _copySelectedElement() async {
@@ -1396,6 +1395,26 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       }
     }
     debugPrint('图库项目处理完成');
+  }
+
+  /// Initialize panel states from persistent storage
+  void _initializePanelStates() {
+    // Get persistent states for both panels
+    final leftPanelState = ref.read(sidebarStateProvider((
+      sidebarId: 'practice_edit_left_panel',
+      defaultState: false, // Default to closed as requested
+    )));
+
+    final rightPanelState = ref.read(sidebarStateProvider((
+      sidebarId: 'practice_edit_right_panel',
+      defaultState: true, // Default to open
+    )));
+
+    // Update local state to match persistent state
+    setState(() {
+      _isLeftPanelOpen = leftPanelState;
+      _isRightPanelOpen = rightPanelState;
+    });
   }
 
   void _initKeyboardHandler() {

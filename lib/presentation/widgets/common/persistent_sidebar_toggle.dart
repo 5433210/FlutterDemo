@@ -66,11 +66,11 @@ class PersistentSidebarToggle extends ConsumerWidget {
                 // Fix icon direction logic
                 alignRight
                     // Right panel (details page)
-                    ? (currentIsOpen ? Icons.chevron_right : Icons.chevron_left)
+                    ? (currentIsOpen ? Icons.chevron_left : Icons.chevron_right)
                     // Left panel (browse page)
                     : (currentIsOpen
-                        ? Icons.chevron_left
-                        : Icons.chevron_right),
+                        ? Icons.chevron_right
+                        : Icons.chevron_left),
                 size: 10,
                 color: theme.colorScheme.onSurfaceVariant,
               ),

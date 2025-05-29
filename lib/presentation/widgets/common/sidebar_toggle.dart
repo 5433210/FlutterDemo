@@ -29,12 +29,12 @@ class SidebarToggle extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
               child: Icon(
-                // 修复图标方向逻辑
+                // 修复图标方向逻辑 - 箭头指向面板表示打开，背离面板表示关闭
                 alignRight
                     // 右侧面板（详情页）
-                    ? (isOpen ? Icons.chevron_right : Icons.chevron_left)
-                    // 右侧面板（浏览页）
-                    : (isOpen ? Icons.chevron_left : Icons.chevron_right),
+                    ? (isOpen ? Icons.chevron_left : Icons.chevron_right)
+                    // 左侧面板（浏览页）
+                    : (isOpen ? Icons.chevron_right : Icons.chevron_left),
                 size: 10,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
