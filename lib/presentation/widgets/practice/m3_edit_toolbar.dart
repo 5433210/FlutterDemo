@@ -23,12 +23,12 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onDelete;
   final VoidCallback? onCopyFormatting;
   final VoidCallback? onApplyFormatBrush;
-  
+
   // 元素工具相关参数
   final String? currentTool;
   final Function(String)? onSelectTool;
   final Function(BuildContext, String)? onDragElementStart;
-  
+
   // 选择相关的操作
   final VoidCallback? onSelectAll;
   final VoidCallback? onDeselectAll;
@@ -69,7 +69,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     final hasSelection = controller.state.selectedElementIds.isNotEmpty;
     final isMultiSelected = controller.state.selectedElementIds.length > 1;
     final hasSelectedGroup =
-        hasSelection && !isMultiSelected && _isSelectedElementGroup();    return Container(
+        hasSelection && !isMultiSelected && _isSelectedElementGroup();
+    return Container(
       width: double.infinity, // 扩展到整个画布宽度
       // 移除固定高度限制，使用自适应高度
       constraints: const BoxConstraints(minHeight: 48),
@@ -90,7 +91,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         alignment: WrapAlignment.start,
         children: [
           // 元素工具按钮（如果提供了相关参数）
-          if (onSelectTool != null) ...[          
+          if (onSelectTool != null) ...[
             // 元素工具组
             _buildToolbarGroup(
               title: l10n.practiceEditElements,
@@ -102,8 +103,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   toolName: 'text',
                   isSelected: currentTool == 'text',
                   onPressed: () => onSelectTool!('text'),
-                  onDragStart: onDragElementStart != null ? 
-                    () => onDragElementStart!(context, 'text') : null,
+                  onDragStart: onDragElementStart != null
+                      ? () => onDragElementStart!(context, 'text')
+                      : null,
                 ),
                 _buildElementButton(
                   context: context,
@@ -112,8 +114,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   toolName: 'image',
                   isSelected: currentTool == 'image',
                   onPressed: () => onSelectTool!('image'),
-                  onDragStart: onDragElementStart != null ? 
-                    () => onDragElementStart!(context, 'image') : null,
+                  onDragStart: onDragElementStart != null
+                      ? () => onDragElementStart!(context, 'image')
+                      : null,
                 ),
                 _buildElementButton(
                   context: context,
@@ -122,8 +125,9 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   toolName: 'collection',
                   isSelected: currentTool == 'collection',
                   onPressed: () => onSelectTool!('collection'),
-                  onDragStart: onDragElementStart != null ? 
-                    () => onDragElementStart!(context, 'collection') : null,
+                  onDragStart: onDragElementStart != null
+                      ? () => onDragElementStart!(context, 'collection')
+                      : null,
                 ),
                 _buildToolbarButton(
                   context: context,
@@ -132,7 +136,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   onPressed: () => onSelectTool!('select'),
                   isActive: currentTool == 'select',
                 ),
-                if (onSelectAll != null) 
+                if (onSelectAll != null)
                   _buildToolbarButton(
                     context: context,
                     icon: Icons.done_all,
@@ -148,7 +152,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   ),
               ],
             ),
-            
+
             const SizedBox(width: AppSizes.s),
             const VerticalDivider(),
             const SizedBox(width: AppSizes.s),
@@ -283,7 +287,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
     VoidCallback? onDragStart,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     Widget button = Tooltip(
       message: tooltip,
       child: Material(
@@ -303,8 +307,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                   Icon(
                     icon,
                     size: 18,
-                    color: isSelected 
-                        ? colorScheme.onPrimaryContainer 
+                    color: isSelected
+                        ? colorScheme.onPrimaryContainer
                         : colorScheme.onSurface,
                   ),
                   const SizedBox(width: 4),
@@ -314,8 +318,8 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                       style: TextStyle(
                         fontSize: 12,
                         overflow: TextOverflow.ellipsis,
-                        color: isSelected 
-                            ? colorScheme.onPrimaryContainer 
+                        color: isSelected
+                            ? colorScheme.onPrimaryContainer
                             : colorScheme.onSurface,
                       ),
                     ),
@@ -327,7 +331,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
-    
+
     // 如果有拖拽功能，包装为Draggable
     if (onDragStart != null) {
       return Draggable<String>(
@@ -346,8 +350,10 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Icon(icon, size: 18, color: colorScheme.onPrimaryContainer),
                 const SizedBox(width: 4),
-                Text(tooltip, 
-                  style: TextStyle(fontSize: 12, color: colorScheme.onPrimaryContainer),
+                Text(
+                  tooltip,
+                  style: TextStyle(
+                      fontSize: 12, color: colorScheme.onPrimaryContainer),
                 ),
               ],
             ),
@@ -357,7 +363,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
         child: button,
       );
     }
-    
+
     return button;
   }
 
