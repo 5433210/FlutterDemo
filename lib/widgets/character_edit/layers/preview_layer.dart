@@ -11,12 +11,14 @@ class PreviewLayer extends BaseLayer {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
   final Rect? dirtyRect;
+  final Size? imageSize;
 
   const PreviewLayer({
     Key? key,
     this.paths = const [],
     this.currentPath,
     this.dirtyRect,
+    this.imageSize,
   }) : super(key: key);
 
   @override
@@ -24,12 +26,12 @@ class PreviewLayer extends BaseLayer {
 
   @override
   bool get willChangePainting => true;
-
   @override
   CustomPainter createPainter() => _PreviewPainter(
         paths: paths,
         currentPath: currentPath,
         dirtyRect: dirtyRect,
+        imageSize: imageSize,
       );
 }
 
@@ -37,18 +39,26 @@ class _PreviewPainter extends CustomPainter {
   final List<PathInfo> paths;
   final PathInfo? currentPath;
   final Rect? dirtyRect;
+  final Size? imageSize;
 
   // Remove the unused path cache since it's not working correctly
   _PreviewPainter({
     required this.paths,
     this.currentPath,
     this.dirtyRect,
+    this.imageSize,
   });
-
   @override
   void paint(Canvas canvas, Size size) {
     if (kDebugMode && DebugFlags.enableEraseDebug) {
       print('绘制预览层 - 路径数量: ${paths.length}, 当前路径: ${currentPath != null}');
+    } // Apply clipping to image bounds to prevent brush strokes from extending beyond the image
+    // Use the full image bounds as clipping area to allow erasing to the edges
+    if (imageSize != null) {
+      final imageRect =
+          Rect.fromLTWH(0, 0, imageSize!.width, imageSize!.height);
+      canvas.save();
+      canvas.clipRect(imageRect);
     }
 
     // Apply global color blend mode - ensure erased areas display correctly
@@ -64,7 +74,12 @@ class _PreviewPainter extends CustomPainter {
         _drawCurrentPath(canvas);
       }
     } finally {
-      canvas.restore(); // Ensure canvas state is restored
+      canvas.restore(); // Restore the blend mode layer
+
+      // Restore the clipping if it was applied
+      if (imageSize != null) {
+        canvas.restore();
+      }
     }
 
     // 在调试模式下绘制边界框
@@ -83,7 +98,8 @@ class _PreviewPainter extends CustomPainter {
   bool shouldRepaint(_PreviewPainter oldDelegate) {
     final shouldRepaint = paths != oldDelegate.paths ||
         currentPath?.path != oldDelegate.currentPath?.path ||
-        dirtyRect != oldDelegate.dirtyRect;
+        dirtyRect != oldDelegate.dirtyRect ||
+        imageSize != oldDelegate.imageSize;
 
     if (shouldRepaint && kDebugMode) {
       print('重绘预览层');

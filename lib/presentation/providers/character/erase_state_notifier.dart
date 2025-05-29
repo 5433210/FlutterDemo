@@ -5,20 +5,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/path_info.dart';
 import '../../../infrastructure/logging/logger.dart';
+import '../user_preferences_provider.dart';
 import 'erase_providers.dart';
 import 'erase_state.dart';
 import 'path_manager.dart';
 
 /// 擦除状态管理器
 class EraseStateNotifier extends StateNotifier<EraseState> {
+  static const Duration _autoSaveDelay =
+      Duration(milliseconds: 1000); // 1 second delay for auto-save
   final PathManager _pathManager;
   final Ref _ref;
+
   // Default color used for erasing when no color is specified
   final Color _defaultEraseColor = Colors.white;
-
-  // Debouncing state
+  // Debouncing state for image updates
   bool _isDelayedUpdatePending = false;
+
   Timer? _delayedUpdateTimer;
+  // Debouncing state for auto-save functionality
+  Timer? _autoSaveTimer;
 
   EraseStateNotifier(this._pathManager, this._ref)
       : super(EraseState.initial());
@@ -64,6 +70,7 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
   @override
   void dispose() {
     _delayedUpdateTimer?.cancel();
+    _autoSaveTimer?.cancel();
     super.dispose();
   }
 
@@ -195,6 +202,9 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     // 触发延迟图像更新（防抖处理）
     triggerDelayedImageUpdate();
+
+    // Auto-save the new value to user preferences with debouncing
+    _scheduleAutoSave();
   }
 
   /// 更新阈值
@@ -242,6 +252,9 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
 
     // 触发延迟图像更新（防抖处理）
     triggerDelayedImageUpdate();
+
+    // Auto-save the new value to user preferences with debouncing
+    _scheduleAutoSave();
   }
 
   /// 开始一个新的路径
@@ -440,6 +453,36 @@ class EraseStateNotifier extends StateNotifier<EraseState> {
       AppLogger.error('创建路径失败', error: e);
       return path;
     }
+  }
+
+  /// Auto-save current processing options to user preferences with debouncing
+  void _scheduleAutoSave() {
+    // Cancel existing timer if any
+    _autoSaveTimer?.cancel();
+
+    // Start a new timer with debounce delay
+    _autoSaveTimer = Timer(_autoSaveDelay, () async {
+      try {
+        final userPreferencesNotifier =
+            _ref.read(userPreferencesNotifierProvider.notifier);
+
+        // Save threshold
+        await userPreferencesNotifier
+            .updateDefaultThreshold(state.processingOptions.threshold);
+
+        // Save noise reduction
+        await userPreferencesNotifier.updateDefaultNoiseReduction(
+            state.processingOptions.noiseReduction);
+
+        AppLogger.debug('Auto-saved processing options to user preferences',
+            data: {
+              'threshold': state.processingOptions.threshold,
+              'noiseReduction': state.processingOptions.noiseReduction,
+            });
+      } catch (e) {
+        AppLogger.error('Failed to auto-save processing options', error: e);
+      }
+    });
   }
 
   void _updateState() {

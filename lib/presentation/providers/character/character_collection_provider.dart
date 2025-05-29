@@ -12,6 +12,7 @@ import '../../../domain/models/character/processing_options.dart';
 import '../../../domain/models/character/undo_action.dart';
 import '../../../infrastructure/logging/logger.dart';
 import '../../viewmodels/states/character_collection_state.dart';
+import '../user_preferences_provider.dart';
 import 'character_refresh_notifier.dart';
 import 'erase_providers.dart';
 import 'selected_region_provider.dart';
@@ -148,11 +149,16 @@ class CharacterCollectionNotifier
         'pageId': _currentPageId,
       });
 
+      // 获取默认处理选项
+      final defaultProcessingOptions =
+          _ref.read(defaultProcessingOptionsProvider).valueOrNull ??
+              const ProcessingOptions();
+
       // 2. 创建新区域, set isSelected and isModified properties
       final region = CharacterRegion.create(
         pageId: _currentPageId!,
         rect: rect,
-        options: const ProcessingOptions(),
+        options: defaultProcessingOptions,
         isSelected: true, // New region is selected by default
         isModified: true, // New region is modified by default
       );
@@ -889,8 +895,21 @@ class CharacterCollectionNotifier
     final updatedRegions =
         state.regions.map((r) => r.copyWith(isSelected: r.id == id)).toList();
 
-    // 更新选中状态
+    // 更新选中状态 - 设置选区的处理选项
     _selectedRegionNotifier.setRegion(region);
+
+    // 当选中已有区域时，使用该区域的ProcessingOptions
+    AppLogger.debug('使用区域的处理选项', data: {
+      'regionId': id,
+      'threshold': region.options.threshold,
+      'noiseReduction': region.options.noiseReduction,
+      'brushSize': region.options.brushSize,
+      'inverted': region.options.inverted,
+      'showContour': region.options.showContour,
+      'contrast': region.options.contrast,
+      'brightness': region.options.brightness,
+    });
+
     state = state.copyWith(
       currentId: id,
       regions: updatedRegions,

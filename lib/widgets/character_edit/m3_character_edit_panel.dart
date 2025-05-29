@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -20,6 +19,7 @@ import '../../presentation/providers/character/character_refresh_notifier.dart';
 import '../../presentation/providers/character/character_save_notifier.dart';
 import '../../presentation/providers/character/erase_providers.dart' as erase;
 import '../../presentation/providers/character/selected_region_provider.dart';
+import '../../presentation/providers/user_preferences_provider.dart';
 import '../../presentation/widgets/image/cached_image.dart';
 import 'character_edit_canvas.dart';
 import 'dialogs/m3_save_confirmation_dialog.dart';
@@ -278,11 +278,13 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     _initiateImageLoading();
 
     // Set up keyboard listener for save shortcut
-    ServicesBinding.instance.keyboard.addHandler(_handleKeyboardEvent);
-
-    // Clear erase state on init
+    ServicesBinding.instance.keyboard.addHandler(
+        _handleKeyboardEvent); // Clear erase state on init and load user preferences
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(erase.eraseStateProvider.notifier).clear();
+
+      // Load user preferences and initialize with default values
+      _loadUserPreferencesAndInitialize();
 
       // Set dynamic brush size based on image size
       _setDynamicBrushSize();
@@ -1195,7 +1197,24 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     );
   }
 
-  // Extract points from Path and convert to serializable format
+  // Calculate optimal step length for path sampling based on path length
+  double _calculateOptimalStepLength(double pathLength) {
+    if (pathLength <= 10) {
+      // Short paths: high precision sampling (every 0.5 units)
+      return 0.5;
+    } else if (pathLength <= 50) {
+      // Medium paths: moderate sampling (every 1 unit)
+      return 1.0;
+    } else if (pathLength <= 200) {
+      // Long paths: reduce sampling density (every 2 units)
+      return 2.0;
+    } else {
+      // Very long paths: coarse sampling for performance (every 4 units)
+      return 4.0;
+    }
+  }
+
+  // Extract points from Path and convert to serializable format with optimized sampling
   List<Map<String, double>> _extractPointsFromPath(Path path) {
     List<Map<String, double>> serializablePoints = [];
     try {
@@ -1207,10 +1226,19 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           continue;
         }
 
-        // Sample points on the path
-        final stepLength = math.max(1.0, metric.length / 100);
-        for (double distance = 0;
-            distance <= metric.length;
+        // Optimized adaptive path sampling based on path length
+        final stepLength = _calculateOptimalStepLength(metric.length);
+
+        // Always include the start point
+        final startTangent = metric.getTangentForOffset(0);
+        if (startTangent != null) {
+          serializablePoints.add(
+              {'dx': startTangent.position.dx, 'dy': startTangent.position.dy});
+        }
+
+        // Sample intermediate points with adaptive step length
+        for (double distance = stepLength;
+            distance < metric.length;
             distance += stepLength) {
           final tangent = metric.getTangentForOffset(distance);
           if (tangent != null) {
@@ -1219,12 +1247,19 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
           }
         }
 
-        // Ensure the last point is included
+        // Always include the last point if path has length
         if (metric.length > 0) {
           final lastTangent = metric.getTangentForOffset(metric.length);
           if (lastTangent != null) {
-            serializablePoints.add(
-                {'dx': lastTangent.position.dx, 'dy': lastTangent.position.dy});
+            // Only add if it's different from the last added point
+            if (serializablePoints.isEmpty ||
+                serializablePoints.last['dx'] != lastTangent.position.dx ||
+                serializablePoints.last['dy'] != lastTangent.position.dy) {
+              serializablePoints.add({
+                'dx': lastTangent.position.dx,
+                'dy': lastTangent.position.dy
+              });
+            }
           }
         }
       }
@@ -1610,6 +1645,37 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
     }
   }
 
+  /// Load user preferences and initialize erase state with default values
+  Future<void> _loadUserPreferencesAndInitialize() async {
+    try {
+      final userPreferencesService = ref.read(userPreferencesServiceProvider);
+      final defaultProcessingOptions =
+          await userPreferencesService.getDefaultProcessingOptions();
+
+      // Apply default values to erase state
+      final eraseNotifier = ref.read(erase.eraseStateProvider.notifier);
+      eraseNotifier.setThreshold(defaultProcessingOptions.threshold,
+          updateImage: false);
+      eraseNotifier.setNoiseReduction(defaultProcessingOptions.noiseReduction,
+          updateImage: false);
+      eraseNotifier.setBrushSize(defaultProcessingOptions.brushSize);
+
+      if (defaultProcessingOptions.showContour) {
+        eraseNotifier.toggleContour();
+      }
+
+      AppLogger.debug('用户偏好设置已加载并应用', data: {
+        'defaultThreshold': defaultProcessingOptions.threshold,
+        'defaultNoiseReduction': defaultProcessingOptions.noiseReduction,
+        'defaultBrushSize': defaultProcessingOptions.brushSize,
+        'defaultShowContour': defaultProcessingOptions.showContour,
+      });
+    } catch (e) {
+      AppLogger.error('加载用户偏好设置失败，使用默认值', error: e);
+      // If loading fails, the erase state will keep its default values
+    }
+  }
+
   // Ensure main panel focus is triggered after closing or submitting input
   void _restoreMainPanelFocus() {
     // Save the current input value before closing
@@ -1672,6 +1738,59 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         });
       }
     });
+  }
+
+  /// Save current processing options as user defaults
+  Future<void> _saveCurrentAsDefaults() async {
+    try {
+      final eraseState = ref.read(erase.eraseStateProvider);
+      final userPreferencesNotifier =
+          ref.read(userPreferencesNotifierProvider.notifier);
+
+      final currentOptions = ProcessingOptions(
+        threshold: eraseState.processingOptions.threshold,
+        noiseReduction: eraseState.processingOptions.noiseReduction,
+        brushSize: eraseState.brushSize,
+        showContour: eraseState.showContour,
+        inverted: eraseState.imageInvertMode,
+        contrast: eraseState.processingOptions.contrast,
+        brightness: eraseState.processingOptions.brightness,
+      );
+
+      await userPreferencesNotifier.saveCurrentAsDefaults(currentOptions);
+
+      final l10n = AppLocalizations.of(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.characterEditDefaultsSaved ?? '当前设置已保存为默认值'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            width: 200,
+          ),
+        );
+      }
+
+      AppLogger.debug('当前设置已保存为默认值', data: {
+        'threshold': currentOptions.threshold,
+        'noiseReduction': currentOptions.noiseReduction,
+        'brushSize': currentOptions.brushSize,
+        'showContour': currentOptions.showContour,
+      });
+    } catch (e) {
+      AppLogger.error('保存默认设置失败', error: e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('保存默认设置失败: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   // Set dynamic brush size based on selected region size

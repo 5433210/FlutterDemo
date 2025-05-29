@@ -50,15 +50,10 @@ class OptimizedEraseLayerStackState
     );
     final imageInvertMode = ref.watch(
       eraseStateProvider.select((s) => s.imageInvertMode),
-    );
-    // Not using isPanMode from provider anymore
+    ); // Not using isPanMode from provider anymore
     final brushSize = ref.watch(
       eraseStateProvider.select((s) => s.brushSize),
     );
-    final isReversed = ref.watch(
-      eraseStateProvider.select((s) => s.isReversed),
-    );
-    final brushColor = isReversed ? Colors.black : Colors.white;
 
     final renderData = ref.watch(pathRenderDataProvider);
 
@@ -69,14 +64,16 @@ class OptimizedEraseLayerStackState
         BackgroundLayer(
           image: widget.image,
           invertMode: imageInvertMode,
-        ),
-
-        // 使用RepaintBoundary隔离预览层重绘
+        ), // 使用RepaintBoundary隔离预览层重绘
         RepaintBoundary(
           child: PreviewLayer(
             paths: renderData.completedPaths,
             currentPath: renderData.currentPath,
             dirtyRect: renderData.dirtyBounds,
+            imageSize: Size(
+              widget.image.width.toDouble(),
+              widget.image.height.toDouble(),
+            ),
           ),
         ), // UI层处理交互事件
         UILayer(
@@ -102,10 +99,16 @@ class OptimizedEraseLayerStackState
   /// 将当前状态渲染到画布上
   Future<void> renderToCanvas(Canvas canvas, Size size) async {
     // 绘制背景层
-    canvas.drawImage(widget.image, Offset.zero, Paint());
-
-    // 使用状态提供者获取路径数据
+    canvas.drawImage(widget.image, Offset.zero,
+        Paint()); // Apply clipping to image bounds to prevent brush strokes from extending beyond the image
+    // Use full image bounds to allow erasing to the edges
     final renderData = ref.read(pathRenderDataProvider);
+    final imageWidth = widget.image.width.toDouble();
+    final imageHeight = widget.image.height.toDouble();
+    final imageRect = Rect.fromLTWH(0, 0, imageWidth, imageHeight);
+
+    canvas.save();
+    canvas.clipRect(imageRect);
 
     // 绘制路径 - 使用平滑抗锯齿效果
     final paint = Paint()
@@ -129,6 +132,9 @@ class OptimizedEraseLayerStackState
       paint.strokeWidth = renderData.currentPath!.brushSize;
       canvas.drawPath(renderData.currentPath!.path, paint);
     }
+
+    // Restore clipping
+    canvas.restore();
   }
 
   /// 设置轮廓数据

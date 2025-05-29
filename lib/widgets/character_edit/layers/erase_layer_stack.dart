@@ -98,6 +98,10 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
             paths: displayPaths,
             currentPath: displayCurrentPath,
             dirtyRect: displayDirtyRect,
+            imageSize: Size(
+              widget.image.width.toDouble(),
+              widget.image.height.toDouble(),
+            ),
           ),
           UILayer(
             onPointerDown: _handlePointerDown,
@@ -133,6 +137,30 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
   Future<void> renderToCanvas(Canvas canvas, Size size) async {
     // 绘制背景层
     canvas.drawImage(_processedImage!, Offset.zero, Paint());
+
+    // Calculate maximum brush size for enhanced clipping
+    final pathData = ref.read(pathRenderDataProvider);
+    final allPaths = pathData.completedPaths;
+    double maxBrushSize = 1.0;
+
+    // Find maximum brush size from all paths
+    for (final pathInfo in allPaths) {
+      if (pathInfo.brushSize > maxBrushSize) {
+        maxBrushSize = pathInfo.brushSize;
+      }
+    }
+
+    // Check current path for maximum brush size
+    if (pathData.currentPath != null &&
+        pathData.currentPath!.brushSize > maxBrushSize) {
+      maxBrushSize = pathData.currentPath!.brushSize;
+    } // Apply clipping to image bounds to prevent brush strokes from extending beyond the image
+    // Use full image bounds to allow erasing to the edges
+    final imageRect = Rect.fromLTWH(
+        0, 0, widget.image.width.toDouble(), widget.image.height.toDouble());
+
+    canvas.save();
+    canvas.clipRect(imageRect);
 
     // 绘制预览层 - Use anti-aliasing instead of blur
     final renderData = ref.read(pathRenderDataProvider);
@@ -177,8 +205,11 @@ class EraseLayerStackState extends ConsumerState<EraseLayerStack> {
         canvas.drawPath(renderData.currentPath!.path, strokePaint);
       }
     } finally {
-      canvas.restore();
+      canvas.restore(); // Restore the blend mode layer
     }
+
+    // Restore clipping
+    canvas.restore();
   }
 
   void setOutline(DetectedOutline? outline) {

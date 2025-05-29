@@ -143,6 +143,7 @@
   "characterEditBrushSize": "Brush Size",
   "characterEditCharacterUpdated": "Character updated successfully",
   "characterEditCompletingSave": "Completing save...",
+  "characterEditDefaultsSaved": "Defaults saved successfully",
   "characterEditImageInvert": "Image Inversion",
   "characterEditImageLoadError": "Image Load Error",
   "characterEditImageLoadFailed": "Failed to load or process character image",

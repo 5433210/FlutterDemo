@@ -454,6 +454,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get characterEditCompletingSave => '完成保存...';
 
   @override
+  String get characterEditDefaultsSaved => '默认设置已保存';
+
+  @override
   String get characterEditImageInvert => '图像反转';
 
   @override

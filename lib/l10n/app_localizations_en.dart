@@ -454,6 +454,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get characterEditCompletingSave => 'Completing save...';
 
   @override
+  String get characterEditDefaultsSaved => 'Defaults saved successfully';
+
+  @override
   String get characterEditImageInvert => 'Image Inversion';
 
   @override

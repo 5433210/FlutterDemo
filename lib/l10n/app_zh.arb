@@ -143,6 +143,7 @@
   "characterEditBrushSize": "笔刷尺寸",
   "characterEditCharacterUpdated": "「字符已更新",
   "characterEditCompletingSave": "完成保存...",
+  "characterEditDefaultsSaved": "默认设置已保存",
   "characterEditImageInvert": "图像反转",
   "characterEditImageLoadError": "图像加载错误",
   "characterEditImageLoadFailed": "加载或处理字符图像失败",

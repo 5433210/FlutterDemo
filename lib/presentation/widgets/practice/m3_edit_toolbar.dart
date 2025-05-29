@@ -300,8 +300,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minWidth: 36), // 确保有足够的最小宽度
-              child: Flex(
-                direction: Axis.horizontal,
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
@@ -312,16 +311,14 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
                         : colorScheme.onSurface,
                   ),
                   const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      tooltip,
-                      style: TextStyle(
-                        fontSize: 12,
-                        overflow: TextOverflow.ellipsis,
-                        color: isSelected
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurface,
-                      ),
+                  Text(
+                    tooltip,
+                    style: TextStyle(
+                      fontSize: 12,
+                      overflow: TextOverflow.ellipsis,
+                      color: isSelected
+                          ? colorScheme.onPrimaryContainer
+                          : colorScheme.onSurface,
                     ),
                   ),
                 ],

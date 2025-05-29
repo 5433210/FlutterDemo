@@ -953,6 +953,12 @@ abstract class AppLocalizations {
   /// **'完成保存...'**
   String get characterEditCompletingSave;
 
+  /// No description provided for @characterEditDefaultsSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认设置已保存'**
+  String get characterEditDefaultsSaved;
+
   /// No description provided for @characterEditImageInvert.
   ///
   /// In zh, this message translates to:

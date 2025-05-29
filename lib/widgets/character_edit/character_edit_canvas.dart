@@ -345,9 +345,13 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   @override
   void reassemble() {
     super.reassemble();
-    // 热重载时更新transformer
-    if (mounted && context.size != null) {
-      _updateTransformer(context.size!);
+    // 热重载时更新transformer - 延迟到下一帧以确保布局完成
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && context.size != null) {
+          _updateTransformer(context.size!);
+        }
+      });
     }
   }
 
@@ -446,8 +450,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
   }
 
   void _handleEraseStart(Offset position) {
-    // Only initiate erasing if the position is within image bounds
-    if (!_isAltKeyPressed && _isPointWithinImageBounds(position)) {
+    // Only initiate erasing if the position is within image bounds (with brush radius consideration)
+    if (!_isAltKeyPressed && _isPointWithinImageBoundsWithBrush(position)) {
       widget.onEraseStart?.call(position);
       ref.read(eraseStateProvider.notifier).startPath(position);
     }
@@ -455,8 +459,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   void _handleEraseUpdate(Offset position, Offset delta) {
     if (!_isAltKeyPressed) {
-      // Check if the position is within image bounds
-      if (_isPointWithinImageBounds(position)) {
+      // Check if the position is within image bounds (with brush radius consideration)
+      if (_isPointWithinImageBoundsWithBrush(position)) {
         widget.onEraseUpdate?.call(position, delta);
         ref.read(eraseStateProvider.notifier).updatePath(position);
       }
@@ -543,8 +547,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       return;
     }
 
-    // Only handle taps within image bounds
-    if (_isPointWithinImageBounds(position)) {
+    // Only handle taps within image bounds (with brush radius consideration)
+    if (_isPointWithinImageBoundsWithBrush(position)) {
       // 使用专门的点击擦除方法，避免重复创建路径
       ref.read(eraseStateProvider.notifier).clickErase(position);
 
@@ -553,8 +557,8 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  // New helper method to check if a point is within the image boundaries
-  bool _isPointWithinImageBounds(Offset point) {
+  // Simplified boundary checking - allow erasing to the edges
+  bool _isPointWithinImageBoundsWithBrush(Offset point) {
     return point.dx >= 0 &&
         point.dx < widget.image.width.toDouble() &&
         point.dy >= 0 &&
