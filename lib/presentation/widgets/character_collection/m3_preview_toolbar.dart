@@ -28,69 +28,76 @@ class M3PreviewToolbar extends ConsumerWidget {
       shadowColor: colorScheme.shadow,
       child: Container(
         height: AppSizes.appBarHeight,
+        width: double.infinity,
+        alignment: Alignment.center,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          children: [
-            // Tool buttons group
-            _ToolButton(
-              icon: Icons.pan_tool,
-              tooltip: l10n.characterCollectionToolPan,
-              isSelected: toolMode == Tool.pan,
-              onPressed: () =>
-                  ref.read(toolModeProvider.notifier).setMode(Tool.pan),
-            ),
-            const SizedBox(width: 4),
-            _ToolButton(
-              icon: Icons.crop_square,
-              tooltip: l10n.characterCollectionToolSelect,
-              isSelected: toolMode == Tool.select,
-              onPressed: () =>
-                  ref.read(toolModeProvider.notifier).setMode(Tool.select),
-            ),
-            const SizedBox(width: 16),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Tool buttons group
+              _ToolButton(
+                icon: Icons.pan_tool,
+                tooltip: l10n.characterCollectionToolPan,
+                isSelected: toolMode == Tool.pan,
+                onPressed: () =>
+                    ref.read(toolModeProvider.notifier).setMode(Tool.pan),
+              ),
+              const SizedBox(width: 4),
+              _ToolButton(
+                icon: Icons.crop_square,
+                tooltip: l10n.characterCollectionToolSelect,
+                isSelected: toolMode == Tool.select,
+                onPressed: () =>
+                    ref.read(toolModeProvider.notifier).setMode(Tool.select),
+              ),
+              const SizedBox(width: 16),
 
-            // Divider
-            const VerticalDivider(
-              thickness: 1,
-            ),
-            const SizedBox(width: 8),
+              // Divider
+              const VerticalDivider(
+                thickness: 1,
+              ),
+              const SizedBox(width: 8),
 
-            // Delete button
-            _ToolButton(
-              icon: Icons.delete,
-              tooltip: l10n.characterCollectionToolDelete,
-              isEnabled: hasSelection,
-              onPressed: hasSelection
-                  ? () async {
-                      final selectedIds = ref
-                          .read(characterCollectionProvider)
-                          .regions
-                          .where((e) => e.isSelected)
-                          .map((e) => e.id)
-                          .toList();
+              // Delete button
+              _ToolButton(
+                icon: Icons.delete,
+                tooltip: l10n.characterCollectionToolDelete,
+                isEnabled: hasSelection,
+                onPressed: hasSelection
+                    ? () async {
+                        final selectedIds = ref
+                            .read(characterCollectionProvider)
+                            .regions
+                            .where((e) => e.isSelected)
+                            .map((e) => e.id)
+                            .toList();
 
-                      // Check if there are selected regions
-                      if (selectedIds.isEmpty) {
-                        return;
+                        // Check if there are selected regions
+                        if (selectedIds.isEmpty) {
+                          return;
+                        }
+
+                        // Use M3DeleteConfirmationDialog to show confirmation dialog
+                        bool shouldDelete =
+                            await M3DeleteConfirmationDialog.show(
+                          context,
+                          count: selectedIds.length,
+                          isBatch: selectedIds.length > 1,
+                        );
+
+                        if (shouldDelete) {
+                          // Delete operation also removes image files from the file system
+                          ref
+                              .read(characterCollectionProvider.notifier)
+                              .deleteBatchRegions(selectedIds);
+                        }
                       }
-
-                      // Use M3DeleteConfirmationDialog to show confirmation dialog
-                      bool shouldDelete = await M3DeleteConfirmationDialog.show(
-                        context,
-                        count: selectedIds.length,
-                        isBatch: selectedIds.length > 1,
-                      );
-
-                      if (shouldDelete) {
-                        // Delete operation also removes image files from the file system
-                        ref
-                            .read(characterCollectionProvider.notifier)
-                            .deleteBatchRegions(selectedIds);
-                      }
-                    }
-                  : null,
-            ),
-          ],
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
