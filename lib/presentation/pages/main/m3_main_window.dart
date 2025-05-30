@@ -86,11 +86,15 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        return WillPopScope(
+        return PopScope(
           // 处理返回按钮事件，先尝试在当前功能区内返回，否则尝试跨功能区返回
-          onWillPop: () async {
+          canPop: false, // 禁止默认的返回行为，我们将自己处理
+          onPopInvokedWithResult: (bool didPop, dynamic result) async {
+            // 如果系统已处理了弹出操作，不需要进一步处理
+            if (didPop) return;
+            
             // 如果正在导航过渡中，不处理返回
-            if (navState.isNavigating) return false;
+            if (navState.isNavigating) return;
 
             // 先尝试在当前功能区内的Navigator返回
             final currentNavigator =
@@ -100,12 +104,11 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
 
             if (canPopInCurrentSection) {
               currentNavigator.pop();
-              return false; // 已在功能区内处理返回，不需要退出应用
+              return; // 已在功能区内处理返回，不需要退出应用
             }
 
             // 如果当前功能区内无法返回，尝试回到上一个功能区
             await CrossNavigationHelper.handleBackNavigation(context, ref);
-            return false; // 已处理，不需要退出应用
           },
           child: Shortcuts(
             shortcuts: <LogicalKeySet, Intent>{

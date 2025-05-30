@@ -56,10 +56,12 @@ class _FullScreenImagePreviewState extends State<FullScreenImagePreview> {
     if (_isFullScreen) {
       return Material(
         color: Colors.transparent,
-        child: WillPopScope(
-          onWillPop: () async {
-            _exitFullScreen();
-            return false;
+        child: PopScope(
+          canPop: false,
+          onPopInvoked: (didPop) {
+            if (!didPop) {
+              _exitFullScreen();
+            }
           },
           child: Focus(
             focusNode: _focusNode,

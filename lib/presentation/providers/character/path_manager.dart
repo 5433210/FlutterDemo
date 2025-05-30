@@ -254,8 +254,10 @@ class PathManager {
     final lastPath = _undoStack.removeLast();
     _redoPaths.addAll(lastPath);
 
-    // Remove the corresponding path from completed paths
-    _completedPaths.removeWhere((path) => path == lastPath);
+    // Remove the corresponding paths from completed paths
+    for (var path in lastPath) {
+      _completedPaths.remove(path);
+    }
     return true;
   }
 

@@ -55,9 +55,9 @@ class ImageProcessorImpl implements ImageProcessor {
               // 反转颜色
               if (brightness < 128) {
                 // 原来是深色（如黑色），变为浅色（使用指定颜色）
-                newR = color.red;
-                newG = color.green;
-                newB = color.blue;
+                newR = color.r.toInt();
+                newG = color.g.toInt();
+                newB = color.b.toInt();
                 newA = (a * opacity).round();
               } else {
                 // 原来是浅色（如白色），变为透明
@@ -68,9 +68,9 @@ class ImageProcessorImpl implements ImageProcessor {
               // 不反转，但应用颜色
               if (brightness < 128) {
                 // 深色部分应用指定颜色
-                newR = color.red;
-                newG = color.green;
-                newB = color.blue;
+                newR = color.r.toInt();
+                newG = color.g.toInt();
+                newB = color.b.toInt();
                 newA = (a * opacity).round();
               } else {
                 // 浅色部分保持原样或变透明（取决于图像类型）
@@ -879,7 +879,8 @@ class ImageProcessorImpl implements ImageProcessor {
     element.removeAttribute('stroke');
 
     // 颜色字符串
-    final colorStr = '#${color.value.toRadixString(16).substring(2)}';
+    final colorStr =
+        '#${(color.a.toInt() << 24 | color.r.toInt() << 16 | color.g.toInt() << 8 | color.b.toInt()).toRadixString(16).substring(2)}';
 
     // 添加新的颜色
     if (invert) {

@@ -7,8 +7,8 @@ import '../../domain/repositories/practice_repository.dart';
 import '../../domain/repositories/work_image_repository.dart';
 import '../../domain/repositories/work_repository.dart';
 import '../../infrastructure/persistence/database_interface.dart';
-import '../../infrastructure/providers/database_providers.dart';
 import '../../infrastructure/providers/cache_providers.dart' as cache;
+import '../../infrastructure/providers/database_providers.dart';
 import '../repositories/character/character_view_repository_impl.dart';
 import '../repositories/character_repository_impl.dart';
 import '../repositories/library_repository_impl.dart';
@@ -29,6 +29,14 @@ final characterViewRepositoryProvider =
       _getInitializedDatabase(ref), characterRepository);
 });
 
+/// 图库仓库提供者
+final libraryRepositoryProvider = Provider<ILibraryRepository>((ref) {
+  return LibraryRepositoryImpl(
+    _getInitializedDatabase(ref),
+    ref.watch(cache.imageCacheServiceProvider),
+  );
+});
+
 /// Practice Repository Provider
 final practiceRepositoryProvider = Provider<PracticeRepository>((ref) {
   return PracticeRepositoryImpl(_getInitializedDatabase(ref));
@@ -42,14 +50,6 @@ final workImageRepositoryProvider = Provider<WorkImageRepository>((ref) {
 /// Work Repository Provider
 final workRepositoryProvider = Provider<WorkRepository>((ref) {
   return WorkRepositoryImpl(_getInitializedDatabase(ref));
-});
-
-/// 图库仓库提供者
-final libraryRepositoryProvider = Provider<ILibraryRepository>((ref) {
-  return LibraryRepositoryImpl(
-    _getInitializedDatabase(ref),
-    ref.watch(cache.imageCacheServiceProvider),
-  );
 });
 
 /// 提供初始化完成的数据库实例

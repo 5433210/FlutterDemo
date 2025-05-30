@@ -67,7 +67,7 @@ class M3PageNavigationBar extends StatelessWidget
         builder: (BuildContext context, BoxConstraints constraints) {
           // Calculate available width for the title area
           final availableWidth = constraints.maxWidth;
-          
+
           return DefaultTextStyle(
             style: theme.textTheme.titleLarge?.copyWith(
                   color: theme.colorScheme.onSurface,
@@ -85,7 +85,7 @@ class M3PageNavigationBar extends StatelessWidget
                       textAlign: TextAlign.start,
                     ),
                   ),
-                  if (titleActions != null) ...[              
+                  if (titleActions != null) ...[
                     const SizedBox(width: AppSizes.s),
                     // Simply add the title actions without wrapping in Flexible
                     ...titleActions!,

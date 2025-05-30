@@ -427,9 +427,9 @@ class _M3LibraryManagementPageState
       barrierDismissible: false,
       builder: (builderContext) {
         dialogBuilderContext = builderContext;
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: const AlertDialog(
+        return const PopScope(
+          canPop: false,
+          child: AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

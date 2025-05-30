@@ -101,7 +101,7 @@ extension CharacterRegionExt on CharacterRegion {
 
       // Ensure brushColor exists
       if (!sanitized.containsKey('brushColor')) {
-        sanitized['brushColor'] = Colors.white.value;
+        sanitized['brushColor'] = Colors.white.toARGB32();
       }
 
       // Ensure points are sanitized for serialization
@@ -147,7 +147,7 @@ extension CharacterRegionExt on CharacterRegion {
 
           // Ensure brushColor is an int
           if (!pathData.containsKey('brushColor')) {
-            pathData['brushColor'] = Colors.white.value;
+            pathData['brushColor'] = Colors.white.toARGB32();
           }
 
           return pathData;

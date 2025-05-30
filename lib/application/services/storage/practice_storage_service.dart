@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
@@ -20,6 +19,22 @@ class PracticeStorageService {
   PracticeStorageService({
     required IStorage storage,
   }) : _storage = storage;
+
+  /// 检查字帖封面缩略图是否存在
+  Future<bool> coverThumbnailExists(String practiceId) async {
+    try {
+      final thumbnailPath = getPracticeCoverThumbnailPath(practiceId);
+      return await _storage.fileExists(thumbnailPath);
+    } catch (e, stack) {
+      _handleError(
+        '检查字帖封面缩略图是否存在失败',
+        e,
+        stack,
+        data: {'practiceId': practiceId},
+      );
+      return false;
+    }
+  }
 
   /// 创建字帖目录结构
   Future<void> createPracticeDirectories(String practiceId) async {
@@ -66,9 +81,16 @@ class PracticeStorageService {
     }
   }
 
-  /// 获取字帖目录路径
-  String getPracticePath(String practiceId) =>
-      path.join(_storage.getAppDataPath(), 'practices', practiceId);
+  /// 获取应用文档目录路径
+  Future<Directory> getAppDocumentsDirectory() async {
+    try {
+      return await getApplicationDocumentsDirectory();
+    } catch (e, stack) {
+      _handleError('获取应用文档目录路径失败', e, stack);
+      // 如果无法获取应用文档目录，则返回一个临时目录
+      return Directory(path.join(_storage.getAppTempPath(), 'documents'));
+    }
+  }
 
   /// 获取字帖封面目录路径
   String getPracticeCoverPath(String practiceId) =>
@@ -78,39 +100,9 @@ class PracticeStorageService {
   String getPracticeCoverThumbnailPath(String practiceId) =>
       path.join(getPracticeCoverPath(practiceId), 'thumbnail.jpg');
 
-  /// 保存字帖封面缩略图 (从 File)
-  Future<void> saveCoverThumbnailFromFile(String practiceId, File file) async {
-    try {
-      await ensurePracticeDirectoryExists(practiceId);
-      final targetPath = getPracticeCoverThumbnailPath(practiceId);
-      await _storage.copyFile(file.path, targetPath);
-    } catch (e, stack) {
-      _handleError(
-        '保存字帖封面缩略图失败',
-        e,
-        stack,
-        data: {'practiceId': practiceId, 'filePath': file.path},
-      );
-    }
-  }
-
-  /// 保存字帖封面缩略图 (从 Uint8List)
-  Future<void> saveCoverThumbnail(String practiceId, Uint8List bytes) async {
-    try {
-      await ensurePracticeDirectoryExists(practiceId);
-      final targetPath = getPracticeCoverThumbnailPath(practiceId);
-      // 使用File API写入二进制数据
-      final file = File(targetPath);
-      await file.writeAsBytes(bytes);
-    } catch (e, stack) {
-      _handleError(
-        '保存字帖封面缩略图失败',
-        e,
-        stack,
-        data: {'practiceId': practiceId, 'bytesLength': bytes.length},
-      );
-    }
-  }
+  /// 获取字帖目录路径
+  String getPracticePath(String practiceId) =>
+      path.join(_storage.getAppDataPath(), 'practices', practiceId);
 
   /// 读取字帖封面缩略图
   Future<Uint8List?> loadCoverThumbnail(String practiceId) async {
@@ -133,30 +125,37 @@ class PracticeStorageService {
     }
   }
 
-  /// 检查字帖封面缩略图是否存在
-  Future<bool> coverThumbnailExists(String practiceId) async {
+  /// 保存字帖封面缩略图 (从 Uint8List)
+  Future<void> saveCoverThumbnail(String practiceId, Uint8List bytes) async {
     try {
-      final thumbnailPath = getPracticeCoverThumbnailPath(practiceId);
-      return await _storage.fileExists(thumbnailPath);
+      await ensurePracticeDirectoryExists(practiceId);
+      final targetPath = getPracticeCoverThumbnailPath(practiceId);
+      // 使用File API写入二进制数据
+      final file = File(targetPath);
+      await file.writeAsBytes(bytes);
     } catch (e, stack) {
       _handleError(
-        '检查字帖封面缩略图是否存在失败',
+        '保存字帖封面缩略图失败',
         e,
         stack,
-        data: {'practiceId': practiceId},
+        data: {'practiceId': practiceId, 'bytesLength': bytes.length},
       );
-      return false;
     }
   }
 
-  /// 获取应用文档目录路径
-  Future<Directory> getAppDocumentsDirectory() async {
+  /// 保存字帖封面缩略图 (从 File)
+  Future<void> saveCoverThumbnailFromFile(String practiceId, File file) async {
     try {
-      return await getApplicationDocumentsDirectory();
+      await ensurePracticeDirectoryExists(practiceId);
+      final targetPath = getPracticeCoverThumbnailPath(practiceId);
+      await _storage.copyFile(file.path, targetPath);
     } catch (e, stack) {
-      _handleError('获取应用文档目录路径失败', e, stack);
-      // 如果无法获取应用文档目录，则返回一个临时目录
-      return Directory(path.join(_storage.getAppTempPath(), 'documents'));
+      _handleError(
+        '保存字帖封面缩略图失败',
+        e,
+        stack,
+        data: {'practiceId': practiceId, 'filePath': file.path},
+      );
     }
   }
 
