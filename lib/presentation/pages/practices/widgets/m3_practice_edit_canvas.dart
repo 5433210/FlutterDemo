@@ -350,270 +350,265 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         // Get current zoom level
         final scale = widget.transformationController.value.getMaxScaleOnAxis();
         final zoomPercentage = (scale * 100).toInt();
-
         return Stack(
           children: [
-            // Main canvas container
             Container(
-              color: colorScheme.inverseSurface.withValues(alpha: 0.1),
-              child: Stack(
-                children: [
-                  // InteractiveViewer with page content
-                  RepaintBoundary(
-                    child: InteractiveViewer(
-                      boundaryMargin: const EdgeInsets.all(double.infinity),
-                      panEnabled:
-                          widget.controller.state.currentTool != 'select',
-                      scaleEnabled: true,
-                      minScale: 0.1,
-                      maxScale: 15.0,
-                      scaleFactor: 600.0,
-                      transformationController: widget.transformationController,
-                      onInteractionStart: (ScaleStartDetails details) {},
-                      onInteractionUpdate: (ScaleUpdateDetails details) {
-                        setState(() {});
-                      },
-                      onInteractionEnd: (ScaleEndDetails details) {
+              color: colorScheme.inverseSurface.withOpacity(
+                  0.1), // Canvas outer background - improved contrast in light theme
+
+              // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
+              child: RepaintBoundary(
+                child: InteractiveViewer(
+                  boundaryMargin: const EdgeInsets.all(double.infinity),
+                  // 当处于select模式时禁用平移，允许我们的选择框功能工作
+                  panEnabled: widget.controller.state.currentTool != 'select',
+                  scaleEnabled: true,
+                  minScale: 0.1,
+                  maxScale: 15.0,
+                  scaleFactor:
+                      600.0, // Increased scale factor to make zooming more gradual
+                  transformationController: widget.transformationController,
+                  onInteractionStart: (ScaleStartDetails details) {},
+                  onInteractionUpdate: (ScaleUpdateDetails details) {
+                    // Update zoom value during scaling to refresh the display
+                    setState(() {});
+                  },
+                  onInteractionEnd: (ScaleEndDetails details) {
+                    // Update final zoom value and ensure the UI is refreshed
+                    final scale = widget.transformationController.value
+                        .getMaxScaleOnAxis();
+                    widget.controller.zoomTo(scale);
+                    setState(
+                        () {}); // Update to reflect the new zoom level in the status bar
+                  },
+                  constrained: false, // Allow content to be unconstrained
+                  child: GestureDetector(
+                    behavior: HitTestBehavior
+                        .translucent, // Ensure gesture events are properly passed
+                    onTapUp: (details) => _gestureHandler.handleTapUp(
+                        details, elements.cast<Map<String, dynamic>>()),
+                    // 处理右键点击事件，用于退出select模式
+                    onSecondaryTapDown: (details) =>
+                        _gestureHandler.handleSecondaryTapDown(details),
+                    onSecondaryTapUp: (details) =>
+                        _gestureHandler.handleSecondaryTapUp(
+                            details, elements.cast<Map<String, dynamic>>()),
+                    onPanStart: (details) => _gestureHandler.handlePanStart(
+                        details, elements.cast<Map<String, dynamic>>()),
+                    onPanUpdate: (details) {
+                      // Always call gesture handler first to ensure proper state tracking
+                      _gestureHandler.handlePanUpdate(details);
+
+                      // 先处理选择框更新，这优先级最高
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
+                        _selectionBoxNotifier.value = SelectionBoxState(
+                          isActive: true,
+                          startPoint: _gestureHandler.selectionBoxStart,
+                          endPoint: _gestureHandler.selectionBoxEnd,
+                        );
+                        return;
+                      }
+
+                      // Handle element dragging in any mode (select or non-select)
+                      // _isDragging will be true if we started dragging on an element
+                      if (_isDragging) {
+                        // setState(() {}); // Force redraw for element movement
+                        return;
+                      } // If not dragging elements and not in select mode,
+                      // let InteractiveViewer handle the panning instead of manually manipulating the matrix
+                      if (!_isDragging &&
+                          widget.controller.state.currentTool != 'select') {
+                        // Create new transformation matrix
+                        final Matrix4 newMatrix = Matrix4.identity();
+
+                        // Set same scale factor as current
                         final scale = widget.transformationController.value
                             .getMaxScaleOnAxis();
-                        widget.controller.zoomTo(scale);
-                        setState(() {});
-                      },
-                      constrained: false,
-                      child: _buildPageContent(currentPage,
-                          elements.cast<Map<String, dynamic>>(), colorScheme),
-                    ),
+                        newMatrix.setEntry(0, 0, scale);
+                        newMatrix.setEntry(1, 1, scale);
+                        newMatrix.setEntry(2, 2, scale);
+
+                        // Get current translation
+                        final Vector3 translation = widget
+                            .transformationController.value
+                            .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
+                        // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
+                        // Use the same approach as in canvas_gesture_handler.dart
+
+                        newMatrix.setTranslation(Vector3(
+                          translation.x + details.delta.dx * scale,
+                          translation.y + details.delta.dy * scale,
+                          0.0,
+                        ));
+                        widget.transformationController.value =
+                            newMatrix; // Force refresh
+                        // setState(() {}); // Add debug logging
+                        debugPrint(
+                            '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
+                            '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
+                        return;
+                      }
+
+                      debugPrint('【画布平移更新】手势处理器已处理所有情况');
+                    },
+                    onPanEnd: (details) {
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                      _gestureHandler.handlePanEnd(details);
+                    },
+                    onPanCancel: () {
+                      // 处理平移取消
+                      _gestureHandler.handlePanCancel();
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                    },
+                    child: _buildPageContent(currentPage,
+                        elements.cast<Map<String, dynamic>>(), colorScheme),
                   ),
+                ),
+              ),
 
-                  // Full viewport gesture detection layer
-                  if (!widget.isPreviewMode)
-                    Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTapUp: (details) {
-                          final localDetails =
-                              _convertGlobalToLocalTapDetails(details);
-                          _gestureHandler.handleTapUp(localDetails,
-                              elements.cast<Map<String, dynamic>>());
-                        },
-                        onSecondaryTapDown: (details) {
-                          final localDetails =
-                              _convertGlobalToLocalSecondaryTapDetails(details);
-                          _gestureHandler.handleSecondaryTapDown(localDetails);
-                        },
-                        onSecondaryTapUp: (details) {
-                          final localDetails =
-                              _convertGlobalToLocalSecondaryTapUpDetails(
-                                  details);
-                          _gestureHandler.handleSecondaryTapUp(localDetails,
-                              elements.cast<Map<String, dynamic>>());
-                        },
-                        onPanStart: (details) {
-                          final localDetails =
-                              _convertGlobalToLocalDragStartDetails(details);
-                          _gestureHandler.handlePanStart(localDetails,
-                              elements.cast<Map<String, dynamic>>());
-                        },
-                        onPanUpdate: (details) {
-                          final localDetails =
-                              _convertGlobalToLocalDragUpdateDetails(details);
-                          _gestureHandler.handlePanUpdate(localDetails);
-
-                          // Handle selection box updates
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState(
-                              isActive: true,
-                              startPoint: _gestureHandler.selectionBoxStart,
-                              endPoint: _gestureHandler.selectionBoxEnd,
-                            );
-                            return;
-                          }
-
-                          // Handle element dragging
-                          if (_isDragging) {
-                            setState(() {});
-                            return;
-                          }
-
-                          // Handle canvas panning when not in select mode
-                          if (!_isDragging &&
-                              widget.controller.state.currentTool != 'select') {
-                            final Matrix4 newMatrix = Matrix4.identity();
-                            final scale = widget.transformationController.value
-                                .getMaxScaleOnAxis();
-                            newMatrix.setEntry(0, 0, scale);
-                            newMatrix.setEntry(1, 1, scale);
-                            newMatrix.setEntry(2, 2, scale);
-
-                            final Vector3 translation = widget
-                                .transformationController.value
-                                .getTranslation();
-
-                            newMatrix.setTranslation(Vector3(
-                              translation.x + details.delta.dx * scale,
-                              translation.y + details.delta.dy * scale,
-                              0.0,
-                            ));
-                            widget.transformationController.value = newMatrix;
-                          }
-                        },
-                        onPanEnd: (details) {
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                          _gestureHandler.handlePanEnd(details);
-                        },
-                        onPanCancel: () {
-                          _gestureHandler.handlePanCancel();
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                        },
-                        child:
-                            Container(), // Transparent container for gesture detection
+              // Status bar showing zoom level (only visible in edit mode)
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                color: colorScheme.surface.withOpacity(0.85),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 4.0,
+                  runSpacing: 4.0,
+                  children: [
+                    // Debug indicator showing current tool
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colorScheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '当前工具: ${widget.controller.state.currentTool}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onTertiaryContainer,
+                        ),
                       ),
                     ),
-                ],
-              ),
-            ),
-
-            // Status bar showing zoom level
-            if (!widget.isPreviewMode)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  color: colorScheme.surface.withValues(alpha: 0.85),
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: 4.0,
-                    runSpacing: 4.0,
-                    children: [
-                      // Debug indicator showing current tool
+                    const SizedBox(width: 8),
+                    // Selection mode indicator
+                    if (widget.controller.state.currentTool == 'select' &&
+                        !widget.isPreviewMode)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: colorScheme.tertiaryContainer,
+                          color: colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: Text(
-                          '当前工具: ${widget.controller.state.currentTool}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onTertiaryContainer,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Selection mode indicator
-                      if (widget.controller.state.currentTool == 'select' &&
-                          !widget.isPreviewMode)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.select_all,
-                                size: 16,
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '选择模式', // Direct text since the localization key might not exist
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.onPrimaryContainer,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      // Reset position button
-                      Tooltip(
-                        message:
-                            AppLocalizations.of(context).canvasResetViewTooltip,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: _resetCanvasPosition,
-                            borderRadius: BorderRadius.circular(4),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 2),
-                              child: ConstrainedBox(
-                                constraints:
-                                    const BoxConstraints(maxWidth: 120),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.center_focus_strong,
-                                      size: 14,
-                                      color: colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Flexible(
-                                      child: Text(
-                                        AppLocalizations.of(context)
-                                            .canvasResetView,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: colorScheme.onSurfaceVariant,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Zoom indicator
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 80),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              Icons.zoom_in,
+                              Icons.select_all,
                               size: 16,
-                              color: colorScheme.onSurfaceVariant,
+                              color: colorScheme.onPrimaryContainer,
                             ),
                             const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                '$zoomPercentage%',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Text(
+                              '选择模式', // Direct text since the localization key might not exist
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onPrimaryContainer,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    // Reset position button
+                    Tooltip(
+                      message:
+                          AppLocalizations.of(context).canvasResetViewTooltip,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _resetCanvasPosition,
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 2),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 120),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.center_focus_strong,
+                                    size: 14,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      AppLocalizations.of(context)
+                                          .canvasResetView,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: colorScheme.onSurfaceVariant,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Zoom indicator
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 80),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.zoom_in,
+                            size: 16,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '$zoomPercentage%',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ),
           ],
         );
       },
@@ -760,160 +755,167 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           color: backgroundColor,
           child: RepaintBoundary(
             key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-            child: Stack(
-              fit: StackFit.expand, // Ensure stack fills its parent
-              children: [
-                // Background layer - ensure background color is correctly applied
-                Container(
-                  width: pageSize.width,
-                  height: pageSize.height,
-                  color: backgroundColor,
-                ),
-
-                // Grid (if visible and not in preview mode)
-                if (widget.controller.state.gridVisible &&
-                    !widget.isPreviewMode)
-                  CustomPaint(
-                    size: Size(pageSize.width, pageSize.height),
-                    painter: _GridPainter(
-                      gridSize: widget.controller.state.gridSize,
-                      gridColor: colorScheme.outlineVariant
-                          .withAlpha(77), // 0.3 opacity (77/255)
-                    ),
+            child: AbsorbPointer(
+              absorbing: false, // Ensure control points can receive events
+              child: Stack(
+                fit: StackFit.expand, // Ensure stack fills its parent
+                clipBehavior: Clip
+                    .hardEdge, // Use hardEdge to prevent mouse tracking issues
+                children: [
+                  // Background layer - ensure background color is correctly applied
+                  Container(
+                    width: pageSize.width,
+                    height: pageSize.height,
+                    color: backgroundColor,
                   ),
 
-                // Render elements
-                ...elements.map((element) {
-                  // Skip hidden elements
-                  final isHidden = element['hidden'] == true;
-                  if (isHidden) {
-                    debugPrint('跳过隐藏元素: id=${element['id']}, hidden=$isHidden');
-                    return const SizedBox.shrink();
-                  }
+                  // Grid (if visible and not in preview mode)
+                  if (widget.controller.state.gridVisible &&
+                      !widget.isPreviewMode)
+                    CustomPaint(
+                      size: Size(pageSize.width, pageSize.height),
+                      painter: _GridPainter(
+                        gridSize: widget.controller.state.gridSize,
+                        gridColor: colorScheme.outlineVariant
+                            .withAlpha(77), // 0.3 opacity (77/255)
+                      ),
+                    ),
 
-                  // Get element properties
-                  final id = element['id'] as String;
-                  final elementX = (element['x'] as num).toDouble();
-                  final elementY = (element['y'] as num).toDouble();
-                  final elementWidth = (element['width'] as num).toDouble();
-                  final elementHeight = (element['height'] as num).toDouble();
-                  final elementRotation =
-                      (element['rotation'] as num?)?.toDouble() ?? 0.0;
-                  final isLocked = element['locked'] == true;
-
-                  // Check if element is on a locked layer
-                  final layerId = element['layerId'] as String?;
-                  bool isLayerLocked = false;
-                  bool isLayerHidden = false;
-                  if (layerId != null) {
-                    final layer = widget.controller.state.getLayerById(layerId);
-                    if (layer != null) {
-                      isLayerLocked = layer['isLocked'] == true;
-                      isLayerHidden = layer['isVisible'] == false;
+                  // Render elements
+                  ...elements.map((element) {
+                    // Skip hidden elements
+                    final isHidden = element['hidden'] == true;
+                    if (isHidden) {
+                      debugPrint(
+                          '跳过隐藏元素: id=${element['id']}, hidden=$isHidden');
+                      return const SizedBox.shrink();
                     }
-                  }
 
-                  // Skip hidden layer elements
-                  if (isLayerHidden) {
-                    debugPrint(
-                        '跳过隐藏图层上的元素: id=${element['id']}, layerId=$layerId');
-                    return const SizedBox.shrink();
-                  } // Check if this element is selected
-                  final isSelected =
-                      widget.controller.state.selectedElementIds.contains(id);
+                    // Get element properties
+                    final id = element['id'] as String;
+                    final elementX = (element['x'] as num).toDouble();
+                    final elementY = (element['y'] as num).toDouble();
+                    final elementWidth = (element['width'] as num).toDouble();
+                    final elementHeight = (element['height'] as num).toDouble();
+                    final elementRotation =
+                        (element['rotation'] as num?)?.toDouble() ?? 0.0;
+                    final isLocked = element['locked'] == true;
 
-                  // Render element with proper positioning - RepaintBoundary must be inside Positioned
-                  return Positioned(
-                    left: elementX,
-                    top: elementY,
-                    child: RepaintBoundary(
-                      child: Transform.rotate(
-                        angle: elementRotation *
-                            math.pi /
-                            180, // Convert to radians
-                        child: Container(
-                          width: elementWidth,
-                          height: elementHeight,
-                          decoration: !widget.isPreviewMode && isSelected
-                              ? BoxDecoration(
-                                  border: Border.all(
-                                    color: isLocked
-                                        ? colorScheme.tertiary
-                                        : colorScheme.primary,
-                                    width: 1.5,
-                                  ),
-                                )
-                              : null,
-                          child: Stack(
-                            children: [
-                              // The actual element content
-                              Positioned.fill(
-                                child: _renderElement(element),
-                              ),
+                    // Check if element is on a locked layer
+                    final layerId = element['layerId'] as String?;
+                    bool isLayerLocked = false;
+                    bool isLayerHidden = false;
+                    if (layerId != null) {
+                      final layer =
+                          widget.controller.state.getLayerById(layerId);
+                      if (layer != null) {
+                        isLayerLocked = layer['isLocked'] == true;
+                        isLayerHidden = layer['isVisible'] == false;
+                      }
+                    }
 
-                              // Selection corners (if selected and not in preview mode)
-                              if (!widget.isPreviewMode && isSelected)
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: _SelectionCornerPainter(
+                    // Skip hidden layer elements
+                    if (isLayerHidden) {
+                      debugPrint(
+                          '跳过隐藏图层上的元素: id=${element['id']}, layerId=$layerId');
+                      return const SizedBox.shrink();
+                    } // Check if this element is selected
+                    final isSelected =
+                        widget.controller.state.selectedElementIds.contains(id);
+
+                    // Render element with proper positioning - RepaintBoundary must be inside Positioned
+                    return Positioned(
+                      left: elementX,
+                      top: elementY,
+                      child: RepaintBoundary(
+                        child: Transform.rotate(
+                          angle: elementRotation *
+                              math.pi /
+                              180, // Convert to radians
+                          child: Container(
+                            width: elementWidth,
+                            height: elementHeight,
+                            decoration: !widget.isPreviewMode && isSelected
+                                ? BoxDecoration(
+                                    border: Border.all(
                                       color: isLocked
                                           ? colorScheme.tertiary
                                           : colorScheme.primary,
+                                      width: 1.5,
                                     ),
-                                  ),
+                                  )
+                                : null,
+                            child: Stack(
+                              children: [
+                                // The actual element content
+                                Positioned.fill(
+                                  child: _renderElement(element),
                                 ),
 
-                              // Lock icon (if element or its layer is locked)
-                              if ((isLocked || isLayerLocked) &&
-                                  !widget.isPreviewMode)
-                                Positioned(
-                                  right: 2,
-                                  top: 2,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white
-                                          .withAlpha(204), // 0.8 opacity
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                        color: isLayerLocked
-                                            ? Colors.grey.shade400
-                                            : colorScheme.tertiary,
-                                        width: 1.0,
+                                // Selection corners (if selected and not in preview mode)
+                                if (!widget.isPreviewMode && isSelected)
+                                  Positioned.fill(
+                                    child: CustomPaint(
+                                      painter: _SelectionCornerPainter(
+                                        color: isLocked
+                                            ? colorScheme.tertiary
+                                            : colorScheme.primary,
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isLayerLocked
-                                              ? Icons.layers
-                                              : Icons.lock,
-                                          size: 18,
+                                  ),
+
+                                // Lock icon (if element or its layer is locked)
+                                if ((isLocked || isLayerLocked) &&
+                                    !widget.isPreviewMode)
+                                  Positioned(
+                                    right: 2,
+                                    top: 2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withAlpha(204), // 0.8 opacity
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
                                           color: isLayerLocked
-                                              ? Colors.grey.shade700
+                                              ? Colors.grey.shade400
                                               : colorScheme.tertiary,
+                                          width: 1.0,
                                         ),
-                                        if (isLayerLocked)
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
                                           Icon(
-                                            Icons.lock,
-                                            size: 14,
-                                            color: Colors.grey.shade700,
+                                            isLayerLocked
+                                                ? Icons.layers
+                                                : Icons.lock,
+                                            size: 18,
+                                            color: isLayerLocked
+                                                ? Colors.grey.shade700
+                                                : colorScheme.tertiary,
                                           ),
-                                      ],
+                                          if (isLayerLocked)
+                                            Icon(
+                                              Icons.lock,
+                                              size: 14,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
 
-                // 移除原有选择框实现，由单独的层来处理
-              ],
+                  // 移除原有选择框实现，由单独的层来处理
+                ],
+              ),
             ),
           ),
         ),
@@ -953,146 +955,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 selectedElementId, x, y, width, height, rotation),
           ),
       ],
-    );
-  }
-
-  /// Convert global drag start details to local canvas coordinates
-  DragStartDetails _convertGlobalToLocalDragStartDetails(
-      DragStartDetails globalDetails) {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return globalDetails;
-
-    // Convert global position to local canvas position
-    final localPosition = renderBox.globalToLocal(globalDetails.globalPosition);
-
-    // Apply transformation matrix to get canvas coordinates
-    final matrix = widget.transformationController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-    final translation = matrix.getTranslation();
-
-    final canvasPosition = Offset(
-      (localPosition.dx - translation.x) / scale,
-      (localPosition.dy - translation.y) / scale,
-    );
-
-    return DragStartDetails(
-      globalPosition: globalDetails.globalPosition,
-      localPosition: canvasPosition,
-      kind: globalDetails.kind,
-      sourceTimeStamp: globalDetails.sourceTimeStamp,
-    );
-  }
-
-  /// Convert global drag update details to local canvas coordinates
-  DragUpdateDetails _convertGlobalToLocalDragUpdateDetails(
-      DragUpdateDetails globalDetails) {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return globalDetails;
-
-    // Convert global position to local canvas position
-    final localPosition = renderBox.globalToLocal(globalDetails.globalPosition);
-
-    // Apply transformation matrix to get canvas coordinates
-    final matrix = widget.transformationController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-    final translation = matrix.getTranslation();
-
-    final canvasPosition = Offset(
-      (localPosition.dx - translation.x) / scale,
-      (localPosition.dy - translation.y) / scale,
-    );
-
-    // Convert delta to canvas coordinates
-    final canvasDelta = Offset(
-      globalDetails.delta.dx / scale,
-      globalDetails.delta.dy / scale,
-    );
-
-    return DragUpdateDetails(
-      globalPosition: globalDetails.globalPosition,
-      localPosition: canvasPosition,
-      delta: canvasDelta,
-      primaryDelta: globalDetails.primaryDelta != null
-          ? globalDetails.primaryDelta! / scale
-          : null,
-      sourceTimeStamp: globalDetails.sourceTimeStamp,
-    );
-  }
-
-  /// Convert global secondary tap down details to local canvas coordinates
-  TapDownDetails _convertGlobalToLocalSecondaryTapDetails(
-      TapDownDetails globalDetails) {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return globalDetails;
-
-    // Convert global position to local canvas position
-    final localPosition = renderBox.globalToLocal(globalDetails.globalPosition);
-
-    // Apply transformation matrix to get canvas coordinates
-    final matrix = widget.transformationController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-    final translation = matrix.getTranslation();
-
-    final canvasPosition = Offset(
-      (localPosition.dx - translation.x) / scale,
-      (localPosition.dy - translation.y) / scale,
-    );
-
-    return TapDownDetails(
-      globalPosition: globalDetails.globalPosition,
-      localPosition: canvasPosition,
-      kind: globalDetails.kind,
-    );
-  }
-
-  /// Convert global secondary tap up details to local canvas coordinates
-  TapUpDetails _convertGlobalToLocalSecondaryTapUpDetails(
-      TapUpDetails globalDetails) {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return globalDetails;
-
-    // Convert global position to local canvas position
-    final localPosition = renderBox.globalToLocal(globalDetails.globalPosition);
-
-    // Apply transformation matrix to get canvas coordinates
-    final matrix = widget.transformationController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-    final translation = matrix.getTranslation();
-
-    final canvasPosition = Offset(
-      (localPosition.dx - translation.x) / scale,
-      (localPosition.dy - translation.y) / scale,
-    );
-
-    return TapUpDetails(
-      globalPosition: globalDetails.globalPosition,
-      localPosition: canvasPosition,
-      kind: globalDetails.kind,
-    );
-  }
-
-  /// Convert global tap details to local canvas coordinates
-  TapUpDetails _convertGlobalToLocalTapDetails(TapUpDetails globalDetails) {
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return globalDetails;
-
-    // Convert global position to local canvas position
-    final localPosition = renderBox.globalToLocal(globalDetails.globalPosition);
-
-    // Apply transformation matrix to get canvas coordinates
-    final matrix = widget.transformationController.value;
-    final scale = matrix.getMaxScaleOnAxis();
-    final translation = matrix.getTranslation();
-
-    final canvasPosition = Offset(
-      (localPosition.dx - translation.x) / scale,
-      (localPosition.dy - translation.y) / scale,
-    );
-
-    return TapUpDetails(
-      globalPosition: globalDetails.globalPosition,
-      localPosition: canvasPosition,
-      kind: globalDetails.kind,
     );
   }
 
@@ -1172,7 +1034,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         return BoxFit.contain;
     }
   }
-  // Removed unused _handleTransformationChange method
 
   /// 处理控制点拖拽结束事件
   void _handleControlPointDragEnd(int controlPointIndex) {
@@ -1525,6 +1386,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
+  // Removed unused _handleTransformationChange method
 
   /// Parse color from string
   Color _parseColor(String colorString) {
@@ -1964,7 +1826,7 @@ class _SelectionBoxPainter extends CustomPainter {
 
     // 添加半透明填充
     final fillPaint = Paint()
-      ..color = color.withValues(alpha: 0.1)
+      ..color = color.withOpacity(0.1)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(rect, fillPaint);
