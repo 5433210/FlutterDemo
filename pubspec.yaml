@@ -40,6 +40,7 @@ dependencies:
   pdf: ^3.10.7
   # printing: ^5.14.2 # Temporarily disabled due to PDFium build issues
   photo_view: ^0.14.0
+  mime: ^2.0.0
   
 
 dev_dependencies:
