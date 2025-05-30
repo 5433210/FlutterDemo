@@ -9,7 +9,6 @@ import '../../application/services/work/work_service.dart';
 import '../../domain/enums/work_style.dart';
 import '../../domain/enums/work_tool.dart';
 import '../../domain/models/work/work_entity.dart';
-import '../../infrastructure/image/image_processor.dart';
 import '../../infrastructure/logging/logger.dart';
 import '../widgets/library/m3_library_picker_dialog.dart';
 import 'states/work_import_state.dart';
@@ -17,10 +16,8 @@ import 'states/work_import_state.dart';
 /// 作品导入视图模型
 class WorkImportViewModel extends StateNotifier<WorkImportState> {
   final WorkService _workService;
-  final ImageProcessor _imageProcessor;
 
-  WorkImportViewModel(this._workService, this._imageProcessor)
-      : super(WorkImportState.initial());
+  WorkImportViewModel(this._workService) : super(WorkImportState.initial());
 
   /// 判断是否可以保存
   bool get canSubmit {
@@ -74,24 +71,17 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
   Future<void> addImagesFromGallery(BuildContext context) async {
     try {
       state = state.copyWith(error: null);
-      print('【WorkImportViewModel】准备从图库添加图片，传入context: $context');
 
-      // 使用图库选择对话框选择图片，确保使用rootNavigator=false，避免关闭父对话框
-      // 注意这里的context是WorkImportDialog的context
-      print(
-          '【WorkImportViewModel】将显示图库选择对话框，当前状态: ${state.isProcessing ? "处理中" : "空闲"}');
       final selectedItems = await M3LibraryPickerDialog.showMulti(
         context,
       );
 
-      print(
-          '【WorkImportViewModel】图库选择对话框关闭，选择结果: ${selectedItems?.length ?? 0}项');
       AppLogger.debug('选择图库项', data: {'count': selectedItems?.length ?? 0});
 
       // 如果没有选择任何项目，则直接返回
       if (selectedItems == null || selectedItems.isEmpty) {
         AppLogger.debug('没有选择图库项，返回');
-        print('【WorkImportViewModel】没有选择图库项，操作取消');
+
         return;
       }
 
@@ -99,24 +89,21 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
         isProcessing: true,
         error: null,
       );
-      print('【WorkImportViewModel】已设置isProcessing=true');
 
       // 将选择的图库项目转换为文件
-      print('【WorkImportViewModel】处理选中的图库项...');
+
       final selectedFiles = selectedItems
           .map((item) => File(item.path))
           .where((file) => file.existsSync())
           .toList();
 
       if (selectedFiles.isEmpty) {
-        print('【WorkImportViewModel】没有找到有效的图片文件');
         throw Exception('没有找到有效的图片文件');
       }
 
       // 添加文件并确保强制更新状态
       final updatedImages = [...state.images, ...selectedFiles];
 
-      print('【WorkImportViewModel】准备更新状态: ${selectedFiles.length}个新图片');
       AppLogger.debug('从图库添加图片', data: {
         'selectedCount': selectedFiles.length,
         'totalCount': updatedImages.length
@@ -224,7 +211,9 @@ class WorkImportViewModel extends StateNotifier<WorkImportState> {
     if (oldIndex < 0 ||
         oldIndex >= state.images.length ||
         newIndex < 0 ||
-        newIndex > state.images.length) return;
+        newIndex > state.images.length) {
+      return;
+    }
 
     final images = List<File>.from(state.images);
     final item = images.removeAt(oldIndex);

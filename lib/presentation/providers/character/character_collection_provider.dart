@@ -474,30 +474,32 @@ class CharacterCollectionNotifier
 
       // 如果有默认选中的选区ID，并且该选区存在于加载的区域中，则选中它
       if (defaultSelectedRegionId != null) {
-        final targetRegion = regions.firstWhere(
-          (r) => r.id == defaultSelectedRegionId,
-          orElse: () => null as CharacterRegion,
-        );
+        final targetRegion = regions.cast<CharacterRegion?>().firstWhere(
+              (r) => r?.id == defaultSelectedRegionId,
+              orElse: () => null,
+            );
 
-        // Update the region's isSelected property
-        final newRegions = regions
-            .map((r) => r.id == defaultSelectedRegionId
-                ? r.copyWith(isSelected: true)
-                : r)
-            .toList();
+        if (targetRegion != null) {
+          // Update the region's isSelected property
+          final newRegions = regions
+              .map((r) => r.id == defaultSelectedRegionId
+                  ? r.copyWith(isSelected: true)
+                  : r)
+              .toList();
 
-        // Update the state
-        state = state.copyWith(
-          currentId: defaultSelectedRegionId,
-          regions: newRegions,
-        );
+          // Update the state
+          state = state.copyWith(
+            currentId: defaultSelectedRegionId,
+            regions: newRegions,
+          );
 
-        _selectedRegionNotifier
-            .setRegion(targetRegion.copyWith(isSelected: true));
+          _selectedRegionNotifier
+              .setRegion(targetRegion.copyWith(isSelected: true));
 
-        AppLogger.debug('已选中默认选区', data: {
-          'regionId': defaultSelectedRegionId,
-        });
+          AppLogger.debug('已选中默认选区', data: {
+            'regionId': defaultSelectedRegionId,
+          });
+        }
       }
 
       // If we're selecting a specific region, load its erase data
@@ -860,7 +862,7 @@ class CharacterCollectionNotifier
     // 查找目标区域
     final region = state.regions.firstWhere(
       (r) => r.id == id,
-      orElse: () => null as CharacterRegion,
+      orElse: () => throw Exception('Region with id $id not found'),
     );
 
     // Update all regions, only the target region is selected
@@ -953,12 +955,15 @@ class CharacterCollectionNotifier
   void syncSelectedRegionWithState() {
     // If there's a currentId, ensure selectedRegionProvider has the corresponding region
     if (state.currentId != null) {
-      final region = state.regions.firstWhere(
-        (r) => r.id == state.currentId,
-        orElse: () => null as CharacterRegion,
-      );
-
-      _selectedRegionNotifier.setRegion(region);
+      try {
+        final region = state.regions.firstWhere(
+          (r) => r.id == state.currentId,
+        );
+        _selectedRegionNotifier.setRegion(region);
+      } catch (e) {
+        // Region not found, clear the selection
+        _selectedRegionNotifier.clearRegion();
+      }
     } else {
       // If no currentId, clear selectedRegion
       _selectedRegionNotifier.clearRegion();

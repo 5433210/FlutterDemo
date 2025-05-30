@@ -270,7 +270,7 @@ class _M3CharacterDetailPanelState
       await characterService.addTag(character.id, tag);
 
       // Refresh character detail
-      await ref.refresh(characterDetailProvider(widget.characterId).future);
+      ref.invalidate(characterDetailProvider(widget.characterId));
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context);
@@ -771,7 +771,7 @@ class _M3CharacterDetailPanelState
       await characterService.removeTag(character.id, tag);
 
       // Refresh character detail
-      await ref.refresh(characterDetailProvider(widget.characterId).future);
+      ref.invalidate(characterDetailProvider(widget.characterId));
     } catch (e) {
       if (mounted) {
         final l10n = AppLocalizations.of(context);

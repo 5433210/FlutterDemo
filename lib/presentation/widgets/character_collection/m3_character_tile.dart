@@ -115,9 +115,6 @@ class M3CharacterTile extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
-
     // Try to load the thumbnail
     try {
       return CachedImage(

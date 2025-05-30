@@ -83,17 +83,11 @@ class PathManager {
       // 确保即使 _currentColor 为 null 也能使用默认的颜色
       final color = _currentColor ?? Colors.white;
 
-      // isReversed now represents the visual intention (black vs white brush)
-      // rather than the technical color value
-      final isReversed = color == Colors.black;
-
       _completedPaths.add(PathInfo(
         path: _currentPath!,
         brushSize: _currentBrushSize,
         brushColor: color,
       ));
-
-      print('完成路径，颜色: $color, 反转状态: $isReversed');
 
       _currentPath = null;
       _currentColor = null;
@@ -188,8 +182,8 @@ class PathManager {
   /// 重做上一个撤销的路径
   void redoPath() {
     if (_redoPaths.isNotEmpty) {
-      final PathInfo = _redoPaths.removeLast();
-      _completedPaths.add(PathInfo);
+      final pathInfo = _redoPaths.removeLast();
+      _completedPaths.add(pathInfo);
     }
   }
 
@@ -346,17 +340,6 @@ class PathManager {
     _currentPoints.add(position);
     _updateCurrentPath();
     _updateDirtyBounds(position);
-  }
-
-  // Helper method to determine color based on brush reversed state and image inverted state
-  Color _getColorForInversionState(bool brushReversed, bool imageInverted) {
-    // If both inversions are active or both are inactive, visual effect is the same
-    // If only one is active, we need to invert the color
-    if (brushReversed == imageInverted) {
-      return Colors.white;
-    } else {
-      return Colors.black;
-    }
   }
 
   /// 反转颜色 (黑变白，白变黑)
