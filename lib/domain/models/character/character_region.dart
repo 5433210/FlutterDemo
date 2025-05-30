@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../infrastructure/json/offset_converter.dart';
 import '../../../infrastructure/json/rect_converter.dart';
 import 'processing_options.dart';
 

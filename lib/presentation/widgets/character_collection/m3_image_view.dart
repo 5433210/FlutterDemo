@@ -48,7 +48,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
   bool _isInSelectionMode = false;
 
   bool _isPanning = false;
-  bool _isZoomed = false;
+
   // Alt键状态跟踪
   bool _isAltKeyPressed = false;
   // 为Alt键状态添加一个ValueNotifier，保证状态变化能够可靠地传递到UI
@@ -177,7 +177,6 @@ class _ImageViewState extends ConsumerState<M3ImageView>
 
               setState(() {
                 _isFirstLoad = false;
-                _isZoomed = false;
               });
 
               AppLogger.debug('首次加载完成，已设置初始缩放', data: {
@@ -1341,7 +1340,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       if (_mounted) {
         setState(() {
           _isFirstLoad = false;
-          _isZoomed = false;
+
           _isPanning = false;
         });
       }
@@ -1357,7 +1356,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
         notifier.clearState();
         setState(() {
           _isFirstLoad = true;
-          _isZoomed = false;
+
           _isPanning = false;
         });
       }
@@ -1370,11 +1369,6 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     setState(() {
       _isPanning = false;
       _lastPanPosition = null;
-    });
-
-    final scale = _transformer?.currentScale ?? 1.0;
-    setState(() {
-      _isZoomed = scale > 1.05;
     });
   }
 
@@ -1403,16 +1397,6 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       _transformationController.value = matrix;
       _lastPanPosition = details.localFocalPoint;
     }
-
-    // 添加防抖以避免频繁更新状态
-    _transformationDebouncer?.cancel();
-    _transformationDebouncer = Timer(const Duration(milliseconds: 16), () {
-      if (!_mounted) return;
-      final scale = _transformer?.currentScale ?? 1.0;
-      setState(() {
-        _isZoomed = scale > 1.05;
-      });
-    });
   }
 
   // 全局键盘事件处理器
@@ -1759,7 +1743,6 @@ class _ImageViewState extends ConsumerState<M3ImageView>
       // 重置所有状态
       setState(() {
         _isFirstLoad = true;
-        _isZoomed = false;
         _isPanning = false;
         _lastImageId = null;
 

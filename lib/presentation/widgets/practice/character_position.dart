@@ -120,7 +120,6 @@ class LayoutCalculator {
           isNewLineList.length == processedChars.length) {
         int currentRow = 0;
         int charCountInCurrentRow = 0; // 当前行已有字符数
-        int charIndex = 0; // 实际字符的索引（不包括换行符）
 
         for (int i = 0; i < processedChars.length; i++) {
           if (processedChars[i] == '\n') {
@@ -142,7 +141,6 @@ class LayoutCalculator {
 
             lineIndices.add(currentRow);
             charCountInCurrentRow++;
-            charIndex++; // 实际字符索引递增
           }
         }
       } else {

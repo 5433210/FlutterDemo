@@ -83,8 +83,6 @@ class _LibraryPickerDialogView extends ConsumerStatefulWidget {
 
 class _LibraryPickerDialogViewState
     extends ConsumerState<_LibraryPickerDialogView> {
-  List<LibraryItem> _selectedItems = [];
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -131,9 +129,6 @@ class _LibraryPickerDialogViewState
                   enableMultiSelect: widget.enableMultiSelect,
                   showConfirmButtons: true,
                   onItemSelected: (item) {
-                    setState(() {
-                      _selectedItems = [item];
-                    });
                     if (!widget.enableMultiSelect) {
                       // 使用 rootNavigator: false 来确保只关闭当前的图库选择对话框
                       // 使用 Navigator.pop(context) 而不是 Navigator.of(context).pop()
@@ -149,9 +144,6 @@ class _LibraryPickerDialogViewState
                     }
                   },
                   onItemsSelected: (items) {
-                    setState(() {
-                      _selectedItems = items;
-                    });
                     if (items.isNotEmpty && mounted) {
                       // 使用 rootNavigator: false 来确保只关闭当前的图库选择对话框
                       // 使用 Navigator.pop(context) 而不是 Navigator.of(context).pop()
