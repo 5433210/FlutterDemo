@@ -31,7 +31,7 @@ class AppRestart {
       _restartDesktop();
     } else {
       // 其他平台使用通用方法
-      _restartGeneric(context);
+      _restartGeneric(null);
     }
   }
 

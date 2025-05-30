@@ -61,7 +61,7 @@ class CompletedSelectionPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (viewportSize != size) return; // 防止视口大小不匹配
 
-    try {
+    {
       // 从图像坐标转换到视口坐标
       final viewportRect = transformer.imageRectToViewportRect(rect);
 
@@ -102,7 +102,7 @@ class CompletedSelectionPainter extends CustomPainter {
           handlePaint,
         );
       }
-    } catch (e) {}
+    }
   }
 
   @override

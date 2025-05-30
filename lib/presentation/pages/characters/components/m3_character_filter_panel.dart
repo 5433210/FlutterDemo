@@ -215,10 +215,9 @@ class _M3CharacterFilterPanelImplState
             final newFilter = widget.filter.copyWith(searchText: value);
             widget.onFilterChanged(newFilter);
             // Keep focus and cursor at the end of text
-            final currentContext = context;
             Future.microtask(() {
               if (!mounted) return;
-              FocusScope.of(currentContext).requestFocus(_searchFocusNode);
+              _searchFocusNode.requestFocus();
               _searchController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _searchController.text.length),
               );

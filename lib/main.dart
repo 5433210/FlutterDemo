@@ -69,9 +69,8 @@ void main() async {
 
     // 启动应用
     runApp(
-      ProviderScope(
-        parent: container,
-        observers: [SilentObserver()],
+      UncontrolledProviderScope(
+        container: container,
         child: KeyboardMonitor.wrapApp(const MyApp()),
       ),
     );

@@ -109,7 +109,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
       _isChecking = false;
     });
 
-    if (context.mounted) {
+    if (mounted) {
       Navigator.of(context).pop(value);
     }
   }

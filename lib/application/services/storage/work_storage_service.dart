@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as path;
 
@@ -126,10 +127,12 @@ class WorkStorageService {
       throw FileSystemException('文件不存在', path);
     }
 
+    final dimensions = await _getImageDimensions(file);
+
     return {
       'size': await file.length(),
-      'width': 0, // TODO: 实现图片尺寸获取
-      'height': 0,
+      'width': dimensions['width'] ?? 0,
+      'height': dimensions['height'] ?? 0,
     };
   }
 
@@ -399,6 +402,22 @@ class WorkStorageService {
     return 'png';
   }
 
+  /// 获取图片尺寸
+  Future<Map<String, int>> _getImageDimensions(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      return _parseImageDimensions(bytes);
+    } catch (e) {
+      AppLogger.warning(
+        '获取图片尺寸失败',
+        tag: 'WorkStorageService',
+        error: e,
+        data: {'filePath': file.path},
+      );
+      return {'width': 0, 'height': 0};
+    }
+  }
+
   /// 统一错误处理
   void _handleError(
     String message,
@@ -414,5 +433,106 @@ class WorkStorageService {
       data: data,
     );
     throw error;
+  }
+
+  /// 解析GIF图片尺寸
+  Map<String, int> _parseGifDimensions(Uint8List bytes) {
+    if (bytes.length < 10) return {'width': 0, 'height': 0};
+
+    final width = bytes[6] | (bytes[7] << 8);
+    final height = bytes[8] | (bytes[9] << 8);
+
+    return {'width': width, 'height': height};
+  }
+
+  /// 解析图片尺寸（支持PNG、JPEG、GIF、WebP）
+  Map<String, int> _parseImageDimensions(Uint8List bytes) {
+    if (bytes.length < 8) return {'width': 0, 'height': 0};
+
+    // PNG格式检测
+    if (bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return _parsePngDimensions(bytes);
+    }
+
+    // JPEG格式检测
+    if (bytes[0] == 0xFF && bytes[1] == 0xD8) {
+      return _parseJpegDimensions(bytes);
+    }
+
+    // GIF格式检测
+    if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
+      return _parseGifDimensions(bytes);
+    }
+
+    // WebP格式检测
+    if (bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46) {
+      return _parseWebpDimensions(bytes);
+    }
+
+    return {'width': 0, 'height': 0};
+  }
+
+  /// 解析JPEG图片尺寸
+  Map<String, int> _parseJpegDimensions(Uint8List bytes) {
+    int i = 2;
+    while (i < bytes.length - 8) {
+      if (bytes[i] == 0xFF) {
+        final marker = bytes[i + 1];
+        if (marker == 0xC0 || marker == 0xC1 || marker == 0xC2) {
+          final height = (bytes[i + 5] << 8) | bytes[i + 6];
+          final width = (bytes[i + 7] << 8) | bytes[i + 8];
+          return {'width': width, 'height': height};
+        }
+        final length = (bytes[i + 2] << 8) | bytes[i + 3];
+        i += length + 2;
+      } else {
+        i++;
+      }
+    }
+    return {'width': 0, 'height': 0};
+  }
+
+  /// 解析PNG图片尺寸
+  Map<String, int> _parsePngDimensions(Uint8List bytes) {
+    if (bytes.length < 24) return {'width': 0, 'height': 0};
+
+    final width =
+        (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+    final height =
+        (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+
+    return {'width': width, 'height': height};
+  }
+
+  /// 解析WebP图片尺寸
+  Map<String, int> _parseWebpDimensions(Uint8List bytes) {
+    if (bytes.length < 30) return {'width': 0, 'height': 0};
+
+    // 检查是否为WebP格式
+    if (bytes[8] != 0x57 ||
+        bytes[9] != 0x45 ||
+        bytes[10] != 0x42 ||
+        bytes[11] != 0x50) {
+      return {'width': 0, 'height': 0};
+    }
+
+    // VP8格式
+    if (bytes[12] == 0x56 &&
+        bytes[13] == 0x50 &&
+        bytes[14] == 0x38 &&
+        bytes[15] == 0x20) {
+      if (bytes.length < 30) return {'width': 0, 'height': 0};
+      final width = ((bytes[26] | (bytes[27] << 8)) & 0x3FFF);
+      final height = ((bytes[28] | (bytes[29] << 8)) & 0x3FFF);
+      return {'width': width, 'height': height};
+    }
+
+    return {'width': 0, 'height': 0};
   }
 }

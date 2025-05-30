@@ -26,10 +26,7 @@ class CharacterRegion with _$CharacterRegion {
     DateTime? createTime,
     DateTime? updateTime,
     @Default(0.0) double rotation,
-    // For backward compatibility - will be removed in future versions
-    @Deprecated('Use eraseData instead')
-    @OffsetListListConverter()
-    List<List<Offset>>? erasePoints,
+
     // New format with brush properties
     List<Map<String, dynamic>>? eraseData,
   }) = _CharacterRegion;

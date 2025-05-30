@@ -387,7 +387,7 @@ class _M3WorkBrowsePageState extends ConsumerState<M3WorkBrowsePage>
       }
     } catch (e) {
       AppLogger.error('编辑标签失败', tag: 'WorkBrowsePage', error: e);
-      if (mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.workBrowseError(e.toString())),

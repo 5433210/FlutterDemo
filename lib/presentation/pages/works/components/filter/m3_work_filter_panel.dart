@@ -170,10 +170,12 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
                 widget.onFilterChanged(newFilter);
                 // Keep focus and cursor at the end of text
                 Future.microtask(() {
-                  FocusScope.of(context).requestFocus(_searchFocusNode);
-                  _searchController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _searchController.text.length),
-                  );
+                  if (mounted) {
+                    _searchFocusNode.requestFocus();
+                    _searchController.selection = TextSelection.fromPosition(
+                      TextPosition(offset: _searchController.text.length),
+                    );
+                  }
                 });
               },
             ),
@@ -194,10 +196,12 @@ class _M3WorkFilterPanelImplState extends State<_M3WorkFilterPanelImpl> {
             widget.onFilterChanged(newFilter);
             // Keep focus and cursor at the end of text
             Future.microtask(() {
-              FocusScope.of(context).requestFocus(_searchFocusNode);
-              _searchController.selection = TextSelection.fromPosition(
-                TextPosition(offset: _searchController.text.length),
-              );
+              if (mounted) {
+                _searchFocusNode.requestFocus();
+                _searchController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _searchController.text.length),
+                );
+              }
             });
           },
           textInputAction: TextInputAction.search,

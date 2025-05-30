@@ -32,10 +32,6 @@ mixin _$CharacterRegion {
   DateTime? get createTime => throw _privateConstructorUsedError;
   DateTime? get updateTime => throw _privateConstructorUsedError;
   double get rotation =>
-      throw _privateConstructorUsedError; // For backward compatibility - will be removed in future versions
-  @Deprecated('Use eraseData instead')
-  @OffsetListListConverter()
-  List<List<Offset>>? get erasePoints =>
       throw _privateConstructorUsedError; // New format with brush properties
   List<Map<String, dynamic>>? get eraseData =>
       throw _privateConstructorUsedError;
@@ -68,9 +64,6 @@ abstract class $CharacterRegionCopyWith<$Res> {
       DateTime? createTime,
       DateTime? updateTime,
       double rotation,
-      @Deprecated('Use eraseData instead')
-      @OffsetListListConverter()
-      List<List<Offset>>? erasePoints,
       List<Map<String, dynamic>>? eraseData});
 
   $ProcessingOptionsCopyWith<$Res> get options;
@@ -102,7 +95,6 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
     Object? createTime = freezed,
     Object? updateTime = freezed,
     Object? rotation = null,
-    Object? erasePoints = freezed,
     Object? eraseData = freezed,
   }) {
     return _then(_value.copyWith(
@@ -150,10 +142,6 @@ class _$CharacterRegionCopyWithImpl<$Res, $Val extends CharacterRegion>
           ? _value.rotation
           : rotation // ignore: cast_nullable_to_non_nullable
               as double,
-      erasePoints: freezed == erasePoints
-          ? _value.erasePoints
-          : erasePoints // ignore: cast_nullable_to_non_nullable
-              as List<List<Offset>>?,
       eraseData: freezed == eraseData
           ? _value.eraseData
           : eraseData // ignore: cast_nullable_to_non_nullable
@@ -192,9 +180,6 @@ abstract class _$$CharacterRegionImplCopyWith<$Res>
       DateTime? createTime,
       DateTime? updateTime,
       double rotation,
-      @Deprecated('Use eraseData instead')
-      @OffsetListListConverter()
-      List<List<Offset>>? erasePoints,
       List<Map<String, dynamic>>? eraseData});
 
   @override
@@ -225,7 +210,6 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
     Object? createTime = freezed,
     Object? updateTime = freezed,
     Object? rotation = null,
-    Object? erasePoints = freezed,
     Object? eraseData = freezed,
   }) {
     return _then(_$CharacterRegionImpl(
@@ -273,10 +257,6 @@ class __$$CharacterRegionImplCopyWithImpl<$Res>
           ? _value.rotation
           : rotation // ignore: cast_nullable_to_non_nullable
               as double,
-      erasePoints: freezed == erasePoints
-          ? _value._erasePoints
-          : erasePoints // ignore: cast_nullable_to_non_nullable
-              as List<List<Offset>>?,
       eraseData: freezed == eraseData
           ? _value._eraseData
           : eraseData // ignore: cast_nullable_to_non_nullable
@@ -300,12 +280,8 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       this.createTime,
       this.updateTime,
       this.rotation = 0.0,
-      @Deprecated('Use eraseData instead')
-      @OffsetListListConverter()
-      final List<List<Offset>>? erasePoints,
       final List<Map<String, dynamic>>? eraseData})
-      : _erasePoints = erasePoints,
-        _eraseData = eraseData;
+      : _eraseData = eraseData;
 
   factory _$CharacterRegionImpl.fromJson(Map<String, dynamic> json) =>
       _$$CharacterRegionImplFromJson(json);
@@ -338,20 +314,6 @@ class _$CharacterRegionImpl implements _CharacterRegion {
   @override
   @JsonKey()
   final double rotation;
-// For backward compatibility - will be removed in future versions
-  final List<List<Offset>>? _erasePoints;
-// For backward compatibility - will be removed in future versions
-  @override
-  @Deprecated('Use eraseData instead')
-  @OffsetListListConverter()
-  List<List<Offset>>? get erasePoints {
-    final value = _erasePoints;
-    if (value == null) return null;
-    if (_erasePoints is EqualUnmodifiableListView) return _erasePoints;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
 // New format with brush properties
   final List<Map<String, dynamic>>? _eraseData;
 // New format with brush properties
@@ -366,7 +328,7 @@ class _$CharacterRegionImpl implements _CharacterRegion {
 
   @override
   String toString() {
-    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, character: $character, characterId: $characterId, options: $options, isModified: $isModified, isSelected: $isSelected, createTime: $createTime, updateTime: $updateTime, rotation: $rotation, erasePoints: $erasePoints, eraseData: $eraseData)';
+    return 'CharacterRegion(id: $id, pageId: $pageId, rect: $rect, character: $character, characterId: $characterId, options: $options, isModified: $isModified, isSelected: $isSelected, createTime: $createTime, updateTime: $updateTime, rotation: $rotation, eraseData: $eraseData)';
   }
 
   @override
@@ -393,8 +355,6 @@ class _$CharacterRegionImpl implements _CharacterRegion {
             (identical(other.rotation, rotation) ||
                 other.rotation == rotation) &&
             const DeepCollectionEquality()
-                .equals(other._erasePoints, _erasePoints) &&
-            const DeepCollectionEquality()
                 .equals(other._eraseData, _eraseData));
   }
 
@@ -413,7 +373,6 @@ class _$CharacterRegionImpl implements _CharacterRegion {
       createTime,
       updateTime,
       rotation,
-      const DeepCollectionEquality().hash(_erasePoints),
       const DeepCollectionEquality().hash(_eraseData));
 
   /// Create a copy of CharacterRegion
@@ -446,9 +405,6 @@ abstract class _CharacterRegion implements CharacterRegion {
       final DateTime? createTime,
       final DateTime? updateTime,
       final double rotation,
-      @Deprecated('Use eraseData instead')
-      @OffsetListListConverter()
-      final List<List<Offset>>? erasePoints,
       final List<Map<String, dynamic>>? eraseData}) = _$CharacterRegionImpl;
 
   factory _CharacterRegion.fromJson(Map<String, dynamic> json) =
@@ -476,12 +432,7 @@ abstract class _CharacterRegion implements CharacterRegion {
   @override
   DateTime? get updateTime;
   @override
-  double
-      get rotation; // For backward compatibility - will be removed in future versions
-  @override
-  @Deprecated('Use eraseData instead')
-  @OffsetListListConverter()
-  List<List<Offset>>? get erasePoints; // New format with brush properties
+  double get rotation; // New format with brush properties
   @override
   List<Map<String, dynamic>>? get eraseData;
 

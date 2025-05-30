@@ -315,12 +315,14 @@ class WorkImagesManagementView extends ConsumerWidget {
 
       if (shouldDelete == true) {
         // Immediately update UI to show processing state
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('正在删除图片...'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('正在删除图片...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+        }
 
         await notifier.deleteImage(selectedImage.id);
 

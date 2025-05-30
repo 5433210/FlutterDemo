@@ -273,6 +273,8 @@ class _M3LibraryManagementPageState
       );
 
       if (result != null && result.files.isNotEmpty) {
+        if (!mounted) return;
+
         // 显示导入进度对话框
         await _showImportProgressDialog(context, () async {
           for (final file in result.files) {
@@ -320,6 +322,8 @@ class _M3LibraryManagementPageState
       final result = await FilePicker.platform.getDirectoryPath();
 
       if (result != null) {
+        if (!mounted) return;
+
         // 显示导入进度对话框
         await _showImportProgressDialog(context, () async {
           await importService.importDirectory(

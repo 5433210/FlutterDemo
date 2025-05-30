@@ -41,18 +41,6 @@ class ImageUtils {
     }
   }
 
-  /// 计算图像的实际边界（去除透明部分）
-  static ui.Rect getImageBounds(ui.Image image) {
-    // TODO: 实现此方法以计算图像的实际边界
-    // 暂时返回整个图像的边界
-    return ui.Rect.fromLTWH(
-      0,
-      0,
-      image.width.toDouble(),
-      image.height.toDouble(),
-    );
-  }
-
   /// 将Flutter的Image对象转换为字节数组
   static Future<Uint8List?> imageToBytes(ui.Image image) async {
     try {

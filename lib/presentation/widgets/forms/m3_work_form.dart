@@ -12,7 +12,6 @@ import '../inputs/dropdown_field.dart';
 /// Material 3 version of the unified form component for work entity data entry
 /// Can be used in both import and edit scenarios
 ///
-/// TODO: Add more localization strings for help texts and tooltips
 class M3WorkForm extends StatefulWidget {
   /// The form title
   final String? title;

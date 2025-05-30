@@ -53,7 +53,9 @@ class LibraryFileStorage {
 
   /// 获取文件扩展名
   String _getFileExtension(String itemId) {
-    // TODO: 从项目元数据中获取实际的文件扩展名
+    // 从项目元数据中获取实际的文件扩展名
+    // 这里暂时返回默认的 .jpg 扩展名
+    // 后续可以通过读取元数据文件来获取真实的文件扩展名
     return '.jpg';
   }
 }

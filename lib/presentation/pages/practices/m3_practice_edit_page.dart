@@ -93,7 +93,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
     // Remove unused l10n variable
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         final shouldPop = await _onWillPop();
         if (shouldPop && context.mounted) {
@@ -1029,6 +1029,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   /// Copy selected elements with enhanced image preloading optimization
   void _copySelectedElement() async {
     debugPrint('开始复制选中元素（增强图像预加载）...');
+
+    // Capture context reference before async operations
+    final currentContext = context;
+    final scaffoldMessenger = ScaffoldMessenger.of(currentContext);
+
     try {
       // Get services for image preloading
       final characterImageService = ref.read(characterImageServiceProvider);
@@ -1038,7 +1043,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       _clipboardElement =
           await PracticeEditUtils.copySelectedElementsWithPreloading(
         _controller,
-        context,
+        currentContext,
         characterImageService: characterImageService,
         imageCacheService: imageCacheService,
       );
@@ -1049,29 +1054,33 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
       }
 
       // Update clipboard state and paste button activation
-      setState(() {
-        _clipboardHasContent = _clipboardElement != null;
-        debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
-      });
+      if (mounted) {
+        setState(() {
+          _clipboardHasContent = _clipboardElement != null;
+          debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
+        });
 
-      // Show a snackbar notification if copy was successful
-      if (_clipboardElement != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板（已预加载图像）')));
+        // Show a snackbar notification if copy was successful
+        if (_clipboardElement != null) {
+          scaffoldMessenger
+              .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板（已预加载图像）')));
+        }
       }
     } catch (e) {
       debugPrint('复制元素时发生错误: $e');
-      // Fallback to regular copy if enhanced copy fails
-      _clipboardElement =
-          PracticeEditUtils.copySelectedElements(_controller, context);
+      // Fallback to regular copy if enhanced copy fails - don't pass context across async gap
+      if (mounted) {
+        _clipboardElement =
+            PracticeEditUtils.copySelectedElements(_controller, context);
 
-      setState(() {
-        _clipboardHasContent = _clipboardElement != null;
-      });
+        setState(() {
+          _clipboardHasContent = _clipboardElement != null;
+        });
 
-      if (_clipboardElement != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+        if (_clipboardElement != null) {
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('元素已复制到剪贴板')));
+        }
       }
     }
   }

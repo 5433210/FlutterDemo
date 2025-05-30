@@ -284,7 +284,8 @@ class ColorPropertyRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text('#${color.value.toRadixString(16).substring(2).toUpperCase()}'),
+        Text(
+            '#${color.toARGB32().toRadixString(16).substring(2).toUpperCase()}'),
         const Spacer(),
         PopupMenuButton<Color>(
           tooltip: '选择颜色',

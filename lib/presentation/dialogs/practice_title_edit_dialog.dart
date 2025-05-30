@@ -110,7 +110,7 @@ class _PracticeTitleEditDialogState extends State<PracticeTitleEditDialog> {
   /// 处理保存操作
   Future<void> _handleSave() async {
     if (await _validateTitle()) {
-      if (context.mounted) {
+      if (mounted) {
         Navigator.of(context).pop(_titleController.text.trim());
       }
     }

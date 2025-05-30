@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -108,17 +109,30 @@ class CanvasCapture {
       // 创建一个 BuildContext
       final context = await _createContext(repaintBoundary);
 
+      // 检查 context 是否有效
+      if (!context.mounted) {
+        debugPrint('Context is no longer mounted');
+        return null;
+      }
+
+      // 获取 RenderRepaintBoundary before any async gaps
+      final renderObject = context.findRenderObject() as RenderRepaintBoundary;
+
       // 等待组件渲染完成
       if (wait > 0) {
         await Future.delayed(Duration(milliseconds: wait));
       }
 
-      // 获取 RenderRepaintBoundary
-      final renderObject = context.findRenderObject() as RenderRepaintBoundary;
+      // 检查 context 是否仍然有效
+      if (!context.mounted) {
+        debugPrint('Context is no longer mounted');
+        return null;
+      }
 
       // 捕获图像
       final image = await renderObject.toImage(
-        pixelRatio: pixelRatio ?? ui.window.devicePixelRatio,
+        pixelRatio: pixelRatio ??
+            PlatformDispatcher.instance.views.first.devicePixelRatio,
       );
 
       // 转换为 PNG 格式

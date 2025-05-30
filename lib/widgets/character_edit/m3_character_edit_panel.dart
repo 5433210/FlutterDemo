@@ -1547,7 +1547,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         options: processingOptions,
         isModified: false,
         eraseData: eraseData.isNotEmpty ? eraseData : null,
-        erasePoints: null, // Clear old format data
       );
 
       // Start save process directly

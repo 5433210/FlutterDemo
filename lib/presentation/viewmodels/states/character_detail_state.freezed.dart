@@ -31,7 +31,7 @@ mixin _$CharacterDetailState {
   int get selectedFormat => throw _privateConstructorUsedError;
 
   /// Available image formats
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   List<CharacterFormatInfo> get availableFormats =>
       throw _privateConstructorUsedError;
 
@@ -82,7 +82,8 @@ abstract class $CharacterDetailStateCopyWith<$Res> {
       {CharacterView? character,
       List<CharacterView> relatedCharacters,
       int selectedFormat,
-      @JsonKey(ignore: true) List<CharacterFormatInfo> availableFormats,
+      @JsonKey(includeFromJson: false, includeToJson: false)
+      List<CharacterFormatInfo> availableFormats,
       String? originalPath,
       String? binaryPath,
       String? transparentPath,
@@ -209,7 +210,8 @@ abstract class _$$CharacterDetailStateImplCopyWith<$Res>
       {CharacterView? character,
       List<CharacterView> relatedCharacters,
       int selectedFormat,
-      @JsonKey(ignore: true) List<CharacterFormatInfo> availableFormats,
+      @JsonKey(includeFromJson: false, includeToJson: false)
+      List<CharacterFormatInfo> availableFormats,
       String? originalPath,
       String? binaryPath,
       String? transparentPath,
@@ -315,7 +317,7 @@ class _$CharacterDetailStateImpl extends _CharacterDetailState {
       {this.character,
       final List<CharacterView> relatedCharacters = const [],
       this.selectedFormat = 0,
-      @JsonKey(ignore: true)
+      @JsonKey(includeFromJson: false, includeToJson: false)
       final List<CharacterFormatInfo> availableFormats = const [],
       this.originalPath,
       this.binaryPath,
@@ -360,7 +362,7 @@ class _$CharacterDetailStateImpl extends _CharacterDetailState {
 
   /// Available image formats
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   List<CharacterFormatInfo> get availableFormats {
     if (_availableFormats is EqualUnmodifiableListView)
       return _availableFormats;
@@ -483,7 +485,8 @@ abstract class _CharacterDetailState extends CharacterDetailState {
       {final CharacterView? character,
       final List<CharacterView> relatedCharacters,
       final int selectedFormat,
-      @JsonKey(ignore: true) final List<CharacterFormatInfo> availableFormats,
+      @JsonKey(includeFromJson: false, includeToJson: false)
+      final List<CharacterFormatInfo> availableFormats,
       final String? originalPath,
       final String? binaryPath,
       final String? transparentPath,
@@ -512,7 +515,7 @@ abstract class _CharacterDetailState extends CharacterDetailState {
 
   /// Available image formats
   @override
-  @JsonKey(ignore: true)
+  @JsonKey(includeFromJson: false, includeToJson: false)
   List<CharacterFormatInfo> get availableFormats;
 
   /// Path to original image

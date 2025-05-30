@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 /// 字帖编辑状态类
 class PracticeEditState {
   // 画布相关
-  double _canvasScale = 1.0;
+  double canvasScale = 1.0;
 
   // 页面相关
   List<Map<String, dynamic>> pages = [];
@@ -35,13 +35,7 @@ class PracticeEditState {
   bool canUndo = false;
   bool canRedo = false;
 
-  /// 获取画布缩放值
-  double get canvasScale => _canvasScale;
-
-  /// 设置画布缩放值
-  set canvasScale(double value) {
-    _canvasScale = value;
-  }
+  // Canvas scale is directly exposed as a field
 
   /// 获取当前页面
   Map<String, dynamic>? get currentPage {

@@ -1,4 +1,4 @@
-import 'dart:math' as Math;
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -238,7 +238,6 @@ class _M3CharacterCollectionPageState
       // Clear previous selection data
       ref.read(characterCollectionProvider.notifier).clearSelectedRegions();
       ref.read(selectedRegionProvider.notifier).clearRegion();
-      ref.read(selectedRegionProvider.notifier).clearErasePoints();
 
       _loadInitialData();
     });
@@ -603,7 +602,7 @@ class _M3CharacterCollectionPageState
 
     try {
       // Check if image header matches common image formats
-      final header = imageData.sublist(0, Math.min(12, imageData.length));
+      final header = imageData.sublist(0, math.min(12, imageData.length));
 
       // Check PNG header
       if (header.length >= 8 &&

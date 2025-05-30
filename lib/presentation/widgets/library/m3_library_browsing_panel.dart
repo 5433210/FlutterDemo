@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../application/providers/repository_providers.dart';
 import '../../../application/providers/service_providers.dart';
 import '../../../domain/entities/library_item.dart';
+import '../../../infrastructure/logging/logger.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../pages/library/components/box_selection_painter.dart';
 import '../../pages/library/components/m3_library_filter_panel.dart';
@@ -573,9 +574,9 @@ class _M3LibraryBrowsingPanelState
       barrierDismissible: false,
       builder: (builderContext) {
         dialogBuilderContext = builderContext;
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: const AlertDialog(
+        return const PopScope(
+          canPop: false,
+          child: AlertDialog(
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -596,7 +597,9 @@ class _M3LibraryBrowsingPanelState
           Navigator.of(dialogBuilderContext!).pop();
           dialogBuilderContext = null;
         }
-      } catch (e) {}
+      } catch (e) {
+        AppLogger.error('Error closing dialog: $e');
+      }
     }
 
     try {

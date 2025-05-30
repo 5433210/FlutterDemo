@@ -27,8 +27,6 @@ _$CharacterRegionImpl _$$CharacterRegionImplFromJson(
           ? null
           : DateTime.parse(json['updateTime'] as String),
       rotation: (json['rotation'] as num?)?.toDouble() ?? 0.0,
-      erasePoints: _$JsonConverterFromJson<List<dynamic>, List<List<Offset>>>(
-          json['erasePoints'], const OffsetListListConverter().fromJson),
       eraseData: (json['eraseData'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
@@ -48,19 +46,5 @@ Map<String, dynamic> _$$CharacterRegionImplToJson(
       'createTime': instance.createTime?.toIso8601String(),
       'updateTime': instance.updateTime?.toIso8601String(),
       'rotation': instance.rotation,
-      'erasePoints': _$JsonConverterToJson<List<dynamic>, List<List<Offset>>>(
-          instance.erasePoints, const OffsetListListConverter().toJson),
       'eraseData': instance.eraseData,
     };
-
-Value? _$JsonConverterFromJson<Json, Value>(
-  Object? json,
-  Value? Function(Json json) fromJson,
-) =>
-    json == null ? null : fromJson(json as Json);
-
-Json? _$JsonConverterToJson<Json, Value>(
-  Value? value,
-  Json? Function(Value value) toJson,
-) =>
-    value == null ? null : toJson(value);

@@ -174,7 +174,8 @@ class _M3PracticeFilterPanelImplState
                 widget.onSearch(_searchController.text);
                 // Keep focus and cursor at the end of text
                 Future.microtask(() {
-                  FocusScope.of(context).requestFocus(_searchFocusNode);
+                  if (!mounted) return;
+                  _searchFocusNode.requestFocus();
                   _searchController.selection = TextSelection.fromPosition(
                     TextPosition(offset: _searchController.text.length),
                   );
@@ -198,7 +199,8 @@ class _M3PracticeFilterPanelImplState
             widget.onSearch(value);
             // Keep focus and cursor at the end of text
             Future.microtask(() {
-              FocusScope.of(context).requestFocus(_searchFocusNode);
+              if (!mounted) return;
+              _searchFocusNode.requestFocus();
               _searchController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _searchController.text.length),
               );

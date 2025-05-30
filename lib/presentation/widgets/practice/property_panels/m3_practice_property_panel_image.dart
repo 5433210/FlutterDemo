@@ -384,8 +384,10 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
                                 updateContentProperty(
                                     'backgroundColor', 'transparent');
                               } else {
+                                // Use toARGB32() for an explicit conversion
+                                final argb = color.toARGB32();
                                 final hexColor =
-                                    '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+                                    '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
                                 updateContentProperty(
                                     'backgroundColor', hexColor);
                               }
@@ -1120,10 +1122,10 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
 
           final cropRect = Rect.fromLTRB(left, top, right, bottom);
 
-          Uint8List? imageData = await _loadImageFromUrl(context, imageUrl);
+          Uint8List? imageData = await _loadImageFromUrl(imageUrl);
 
           if (imageData == null) {
-            if (context.mounted) {
+            if (mounted && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(l10n.imagePropertyPanelLoadError('{error}')),
@@ -1136,7 +1138,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
 
           final image = img.decodeImage(imageData);
           if (image == null) {
-            if (context.mounted) {
+            if (mounted && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(l10n.imagePropertyPanelLoadError('{error}')),
@@ -1165,15 +1167,14 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
           if (noCropping) {
             message += l10n.imagePropertyPanelNoCropping;
           } else {
-            message += AppLocalizations.of(context)
-                .imagePropertyPanelCroppingApplied(
-                    originalCropLeft.toInt().toString(),
-                    originalCropTop.toInt().toString(),
-                    originalCropRight.toInt().toString(),
-                    originalCropBottom.toInt().toString());
+            message += l10n.imagePropertyPanelCroppingApplied(
+                originalCropLeft.toInt().toString(),
+                originalCropTop.toInt().toString(),
+                originalCropRight.toInt().toString(),
+                originalCropBottom.toInt().toString());
           }
 
-          if (context.mounted) {
+          if (mounted && context.mounted) {
             updateProperty('content', content);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1184,7 +1185,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
           }
         } catch (e) {
           debugPrint('Error applying transform: $e');
-          if (context.mounted) {
+          if (mounted && context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content:
@@ -1671,9 +1672,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
   }
 
   // Load image from URL
-  Future<Uint8List?> _loadImageFromUrl(
-      BuildContext context, String imageUrl) async {
-    final l10n = AppLocalizations.of(context);
+  Future<Uint8List?> _loadImageFromUrl(String imageUrl) async {
     try {
       if (imageUrl.startsWith('file://')) {
         String filePath = imageUrl.substring(7);
@@ -1682,8 +1681,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
         if (await file.exists()) {
           return await file.readAsBytes();
         } else {
-          debugPrint(
-              l10n.imagePropertyPanelLoadError('File not found: $filePath'));
+          debugPrint('Image loading error: File not found: $filePath');
           return null;
         }
       } else {
@@ -1691,14 +1689,13 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
         if (response.statusCode == 200) {
           return response.bodyBytes;
         } else {
-          debugPrint(l10n.imagePropertyPanelLoadError(
-              'HTTP request failed: ${response.statusCode}'));
+          debugPrint(
+              'Image loading error: HTTP request failed: ${response.statusCode}');
           return null;
         }
       }
     } catch (e) {
-      debugPrint(AppLocalizations.of(context)
-          .imagePropertyPanelLoadError(e.toString()));
+      debugPrint('Image loading error: $e');
       return null;
     }
   }
