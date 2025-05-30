@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../infrastructure/providers/cache_providers.dart'
+    as cache_providers;
 import '../../../../../infrastructure/providers/storage_providers.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../common/editable_number_field.dart';
@@ -42,6 +44,17 @@ class _M3BackgroundTexturePanelState
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final content = widget.element['content'] as Map<String, dynamic>;
+
+    // 调试输出元素结构，以便识别任何可能的嵌套问题
+    debugPrint('🔍 构建背景纹理面板 - 元素结构检查:');
+    debugPrint('  - 元素类型: ${widget.element['type']}');
+    debugPrint('  - 内容键: ${content.keys.toList()}');
+    if (content.containsKey('backgroundTexture')) {
+      final textureData = content['backgroundTexture'];
+      debugPrint('  - 背景纹理数据: $textureData');
+    } else {
+      debugPrint('  - 无背景纹理数据');
+    }
 
     return _buildBackgroundTextureSubPanel(
         context, content, colorScheme, l10n, textTheme);
@@ -106,9 +119,9 @@ class _M3BackgroundTexturePanelState
                     onPressed: () => _selectTexture(
                         context, content, widget.onContentPropertyChanged),
                   ),
-                  if (content.containsKey('backgroundTexture'))
+                  if (_findTextureData(content) != null)
                     const SizedBox(height: 8.0),
-                  if (content.containsKey('backgroundTexture'))
+                  if (_findTextureData(content) != null)
                     SizedBox(
                       width: double.infinity,
                       child: TextButton.icon(
@@ -145,8 +158,7 @@ class _M3BackgroundTexturePanelState
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
                 onChanged: (value) {
-                  widget.onContentPropertyChanged('textureOpacity', value);
-                  setState(() {});
+                  _updateTextureProperty('textureOpacity', value);
                 },
               ),
             ),
@@ -161,9 +173,7 @@ class _M3BackgroundTexturePanelState
                 max: 100,
                 decimalPlaces: 0,
                 onChanged: (value) {
-                  widget.onContentPropertyChanged(
-                      'textureOpacity', value / 100);
-                  setState(() {});
+                  _updateTextureProperty('textureOpacity', value / 100);
                 },
               ),
             ),
@@ -202,9 +212,7 @@ class _M3BackgroundTexturePanelState
               // Update local state first
               _localTextureFillMode = value;
 
-              widget.onContentPropertyChanged('textureFillMode', value);
-              // Force UI refresh
-              setState(() {});
+              _updateTextureProperty('textureFillMode', value);
             }
           },
         ),
@@ -225,8 +233,7 @@ class _M3BackgroundTexturePanelState
                 max: 9999,
                 decimalPlaces: 0,
                 onChanged: (value) {
-                  widget.onContentPropertyChanged('textureWidth', value);
-                  setState(() {});
+                  _updateTextureProperty('textureWidth', value);
                 },
               ),
             ),
@@ -240,8 +247,7 @@ class _M3BackgroundTexturePanelState
                 max: 9999,
                 decimalPlaces: 0,
                 onChanged: (value) {
-                  widget.onContentPropertyChanged('textureHeight', value);
-                  setState(() {});
+                  _updateTextureProperty('textureHeight', value);
                 },
               ),
             ),
@@ -251,9 +257,8 @@ class _M3BackgroundTexturePanelState
               tooltip:
                   'Restore Default Size', // Use English fallback for restore default size
               onPressed: () {
-                widget.onContentPropertyChanged('textureWidth', defaultWidth);
-                widget.onContentPropertyChanged('textureHeight', defaultHeight);
-                setState(() {});
+                _updateTextureProperty('textureWidth', defaultWidth);
+                _updateTextureProperty('textureHeight', defaultHeight);
               },
             ),
           ],
@@ -286,8 +291,8 @@ class _M3BackgroundTexturePanelState
           onChanged: (value) {
             if (value != null) {
               debugPrint('🔄 纹理适应模式切换: $textureFitMode -> $value');
-              widget.onContentPropertyChanged('textureFitMode', value);
-              setState(() {});
+              _localTextureFitMode = value;
+              _updateTextureProperty('textureFitMode', value);
             }
           },
         ),
@@ -494,20 +499,49 @@ class _M3BackgroundTexturePanelState
 
   // 递归查找纹理数据
   Map<String, dynamic>? _findTextureData(Map<String, dynamic> content) {
-    // 首先检查当前层是否有背景纹理
+    // 检查参数是否有效
     if (content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
-        content['backgroundTexture'] is Map<String, dynamic>) {
-      return content['backgroundTexture'] as Map<String, dynamic>;
+        content['backgroundTexture'] is Map<String, dynamic> &&
+        (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty) {
+      final texData = content['backgroundTexture'] as Map<String, dynamic>;
+
+      // 确保纹理数据包含必要的字段
+      if (texData.containsKey('path') && texData.containsKey('id')) {
+        debugPrint('✅ 找到有效的纹理数据: ${texData['id']}');
+        return texData;
+      } else {
+        debugPrint('⚠️ 纹理数据不完整: $texData');
+      }
+    }
+
+    // 检查characterImages中是否包含纹理数据
+    if (content.containsKey('characterImages') &&
+        content['characterImages'] != null &&
+        content['characterImages'] is Map<String, dynamic>) {
+      final charImages = content['characterImages'] as Map<String, dynamic>;
+
+      if (charImages.containsKey('backgroundTexture') &&
+          charImages['backgroundTexture'] != null &&
+          charImages['backgroundTexture'] is Map<String, dynamic>) {
+        final texData = charImages['backgroundTexture'] as Map<String, dynamic>;
+
+        if (texData.containsKey('path') && texData.containsKey('id')) {
+          debugPrint('✅ 在characterImages中找到有效的纹理数据: ${texData['id']}');
+          return texData;
+        }
+      }
     }
 
     // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
     if (content.containsKey('content') &&
         content['content'] != null &&
         content['content'] is Map<String, dynamic>) {
+      debugPrint('🔍 搜索嵌套内容中的纹理数据...');
       return _findTextureData(content['content'] as Map<String, dynamic>);
     }
 
+    debugPrint('⚠️ 未找到任何纹理数据');
     return null;
   }
 
@@ -592,7 +626,7 @@ class _M3BackgroundTexturePanelState
     Function(String, dynamic) onContentPropertyChanged,
   ) async {
     final l10n = AppLocalizations.of(context);
-    debugPrint('✨ 打开纹理选择对话框');
+    debugPrint('✨ 打开纹理选择对话框 - 增强版');
 
     // 打开选择对话框
     final selectedTexture = await M3LibraryPickerDialog.show(
@@ -626,37 +660,70 @@ class _M3BackgroundTexturePanelState
       if (elementContent == null) {
         debugPrint('❌ 元素内容为空，无法应用纹理');
         return;
-      } // 复制现有内容，添加纹理数据
-      final newContent = Map<String, dynamic>.from(elementContent);
-      newContent['backgroundTexture'] = textureData;
+      }
 
-      // 设置纹理相关属性 - 只支持background模式，移除textureApplicationRange
+      // 创建全新的内容对象而不是修改现有对象，以避免任何引用问题
+      final newContent = <String, dynamic>{};
+
+      // 复制所有属性
+      for (final key in elementContent.keys) {
+        newContent[key] = elementContent[key];
+      }
+
+      // 添加纹理数据和相关属性
+      newContent['backgroundTexture'] = textureData;
       newContent['textureFillMode'] =
-          elementContent['textureFillMode'] ?? 'repeat'; // Default to repeat
+          elementContent['textureFillMode'] ?? 'repeat';
       newContent['textureFitMode'] =
-          elementContent['textureFitMode'] ?? 'scaleToFill'; // Default fit mode
-      newContent['textureOpacity'] =
-          elementContent['textureOpacity'] ?? 1.0; // Default to full opacity
+          elementContent['textureFitMode'] ?? 'scaleToFill';
+      newContent['textureOpacity'] = elementContent['textureOpacity'] ?? 1.0;
       newContent['textureWidth'] = selectedTexture.width;
       newContent['textureHeight'] = selectedTexture.height;
 
-      debugPrint('🔧 应用纹理数据到元素内容...');
+      // 处理characterImages中可能需要的纹理相关属性
+      if (newContent.containsKey('characterImages') &&
+          newContent['characterImages'] is Map<String, dynamic>) {
+        final charImages = Map<String, dynamic>.from(
+            newContent['characterImages'] as Map<String, dynamic>);
 
-      // 立即更新内容属性（通过回调的方式逐一设置）
-      onContentPropertyChanged('backgroundTexture', textureData);
-      onContentPropertyChanged(
-          'textureFillMode', newContent['textureFillMode']); // 确保设置了填充模式
-      onContentPropertyChanged(
-          'textureFitMode', newContent['textureFitMode']); // 确保设置了适应模式
-      onContentPropertyChanged(
-          'textureOpacity', newContent['textureOpacity']); // 确保设置了不透明度
-      onContentPropertyChanged('textureWidth', newContent['textureWidth']);
-      onContentPropertyChanged('textureHeight', newContent['textureHeight']);
+        // 将纹理信息也添加到characterImages中，确保渲染器能正确获取
+        charImages['backgroundTexture'] = textureData;
+        charImages['textureFillMode'] = newContent['textureFillMode'];
+        charImages['textureFitMode'] = newContent['textureFitMode'];
+        charImages['textureOpacity'] = newContent['textureOpacity'];
+        charImages['textureWidth'] = newContent['textureWidth'];
+        charImages['textureHeight'] = newContent['textureHeight'];
+
+        newContent['characterImages'] = charImages;
+        debugPrint('📝 同步更新了characterImages中的纹理属性');
+      }
+
+      debugPrint('🔧 应用纹理数据到元素内容...');
+      debugPrint('📊 完整的新内容: $newContent');
+
+      // 尝试多种更新方式以确保更新生效
+      debugPrint('📝 尝试使用onPropertyChanged更新内容...');
+      widget.onPropertyChanged('content', newContent);
+
+      // 等待一下，确保第一次更新已处理
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      debugPrint('📝 尝试使用onContentPropertyChanged作为备选方案...');
+      onContentPropertyChanged('content', newContent);
 
       // 清空缓存，强制重新加载纹理
-      final cacheKey = selectedTexture.path;
-      _textureCache.remove(cacheKey);
-      debugPrint('🧹 清空纹理缓存: $cacheKey');
+      _textureCache.clear();
+      debugPrint('🧹 清空本地纹理缓存');
+
+      // 清除全局图像缓存
+      try {
+        final imageCacheService =
+            ref.read(cache_providers.imageCacheServiceProvider);
+        await imageCacheService.clearAll();
+        debugPrint('🔄 已清除全局图像缓存');
+      } catch (e) {
+        debugPrint('⚠️ 清除全局缓存失败: $e');
+      }
 
       debugPrint('✅ 纹理应用完成，触发界面更新');
 
@@ -664,6 +731,77 @@ class _M3BackgroundTexturePanelState
       setState(() {});
     } catch (e) {
       debugPrint('❌ 应用纹理时发生错误: $e');
+    }
+  }
+
+  /// 更新纹理属性并确保更新整个内容对象
+  void _updateTextureProperty(String propertyName, dynamic value) async {
+    try {
+      debugPrint('⚙️ 更新纹理属性: $propertyName = $value');
+
+      // 获取当前内容
+      final originalContent = widget.element['content'] as Map<String, dynamic>;
+
+      // 输出原始内容的属性信息
+      debugPrint('🔍 更新前的内容属性:');
+      debugPrint('  - $propertyName: ${originalContent[propertyName]}');
+
+      // 创建全新的内容对象而不是修改现有对象，以避免任何引用问题
+      final content = <String, dynamic>{};
+
+      // 复制所有属性
+      for (final key in originalContent.keys) {
+        content[key] = originalContent[key];
+      }
+
+      // 更新指定属性
+      content[propertyName] = value;
+
+      // 同步更新characterImages中的相应属性，确保一致性
+      if (content.containsKey('characterImages') &&
+          content['characterImages'] is Map<String, dynamic>) {
+        final charImages = Map<String, dynamic>.from(
+            content['characterImages'] as Map<String, dynamic>);
+
+        // 将纹理属性同步到characterImages中
+        charImages[propertyName] = value;
+
+        content['characterImages'] = charImages;
+        debugPrint('📝 同步更新了characterImages中的 $propertyName 属性');
+      } // 应用更新 - 正确调用onPropertyChanged更新整个content
+      debugPrint('📝 使用onPropertyChanged更新整个content对象...');
+      widget.onPropertyChanged('content', content);
+
+      // 等待一下，确保更新已处理
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      // 输出更新后的内容信息
+      debugPrint('✅ 属性更新完成:');
+      debugPrint('  - 更新的属性: $propertyName = $value');
+
+      // 确认更新是否生效 - 获取更新后的内容进行检查
+      Future.delayed(Duration.zero, () {
+        final updatedContent =
+            widget.element['content'] as Map<String, dynamic>?;
+        if (updatedContent != null) {
+          debugPrint(
+              '  - 更新后检查: $propertyName = ${updatedContent[propertyName]}');
+          debugPrint(
+              '  - 更新${updatedContent[propertyName] == value ? "成功" : "失败"}');
+        }
+      });
+
+      // 更新本地状态（如果需要）
+      if (propertyName == 'textureFillMode') {
+        _localTextureFillMode = value as String?;
+      } else if (propertyName == 'textureFitMode') {
+        _localTextureFitMode = value as String?;
+      }
+
+      // 刷新UI
+      setState(() {});
+    } catch (e) {
+      debugPrint('❌ 更新纹理属性时发生错误: $e');
     }
   }
 }
