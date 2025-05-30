@@ -65,11 +65,8 @@ class PracticeEditState {
 
   /// 检查是否按下了 Ctrl 或 Shift 键
   bool get isCtrlOrShiftPressed {
-    final keys = RawKeyboard.instance.keysPressed;
-    return keys.contains(LogicalKeyboardKey.controlLeft) ||
-        keys.contains(LogicalKeyboardKey.controlRight) ||
-        keys.contains(LogicalKeyboardKey.shiftLeft) ||
-        keys.contains(LogicalKeyboardKey.shiftRight);
+    final instance = HardwareKeyboard.instance;
+    return instance.isControlPressed || instance.isShiftPressed;
   }
 
   /// 获取当前页面的图层列表

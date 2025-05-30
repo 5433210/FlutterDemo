@@ -28,7 +28,7 @@ class DateInputField extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final effectiveTextStyle = textStyle ?? theme.textTheme.bodyLarge;
-    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
     final dateFormat = DateFormat('yyyy-MM-dd');
     final displayText = value != null ? dateFormat.format(value!) : '';
 

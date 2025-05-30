@@ -233,7 +233,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.2),
+                color: theme.colorScheme.primary.withValues(alpha: 0.2),
                 blurRadius: 4,
                 spreadRadius: 1,
               ),
@@ -339,7 +339,7 @@ class _ThumbnailStripState<T> extends State<ThumbnailStrip<T>> {
                     padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerHighest
-                          .withOpacity(0.8),
+                          .withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(2),
                     ),
                     child: Icon(

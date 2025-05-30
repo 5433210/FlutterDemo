@@ -144,11 +144,11 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                         color: color,
                         border: Border.all(
                           color: color == Colors.white ? Colors.grey : color,
-                          width: _selectedColor.value == color.value ? 2 : 1,
+                          width: _selectedColor.toARGB32() == color.toARGB32() ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: _selectedColor.value == color.value
+                      child: _selectedColor.toARGB32() == color.toARGB32()
                           ? Icon(
                               Icons.check,
                               color: _getContrastingColor(color),

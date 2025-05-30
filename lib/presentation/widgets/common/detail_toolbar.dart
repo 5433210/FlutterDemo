@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_sizes.dart';
 import 'base_navigation_bar.dart';
 
@@ -40,7 +39,6 @@ class DetailToolbar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context);
 
     return BaseNavigationBar(
       leading: BaseNavigationBar.createBackButton(context,

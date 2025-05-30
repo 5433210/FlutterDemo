@@ -1,3 +1,4 @@
+import 'package:charasgem/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_sizes.dart';
@@ -21,16 +22,6 @@ class AppIconWidget extends StatefulWidget {
 class _AppIconWidgetState extends State<AppIconWidget> {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = widget.color ?? theme.colorScheme.primary;
-
-    // 使用与应用图标相同的图标
-    // return Icon(
-    //   Icons.brush_outlined, // 您可以替换为自定义图标
-    //   color: color,
-    //   size: widget.size,
-    // );
-
     // Try to load from a specific file path
     try {
       return CachedImage(
@@ -43,7 +34,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
         // Consider using a ColorFiltered widget if needed
       );
     } catch (e) {
-      print('Error loading icon: $e');
+      AppLogger.error('Error loading icon: $e');
       return _fallbackIcon();
     }
   }

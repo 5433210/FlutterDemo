@@ -7,6 +7,5 @@ import '../viewmodels/work_import_view_model.dart';
 final workImportProvider =
     StateNotifierProvider<WorkImportViewModel, WorkImportState>((ref) {
   final workService = ref.watch(workServiceProvider);
-  final imageProcessor = ref.watch(imageProcessorProvider);
-  return WorkImportViewModel(workService, imageProcessor);
+  return WorkImportViewModel(workService);
 });

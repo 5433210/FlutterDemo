@@ -1,3 +1,4 @@
+import 'package:charasgem/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,16 +36,16 @@ class M3LibraryPickerDialog {
   static Future<List<LibraryItem>?> showMulti(BuildContext context,
       {String? title}) async {
     // 使用 showDialog 而不是 showRootDialog 确保在当前对话框上下文中打开
-    print('【M3LibraryPickerDialog】准备显示多选对话框: $title');
+    AppLogger.debug('【M3LibraryPickerDialog】准备显示多选对话框: $title');
 
     final result = await showDialog<_PickerResult>(
       context: context,
       useRootNavigator: false, // 重要：使用false确保只使用当前对话框的Navigator，不会关闭父对话框
       barrierDismissible: true, // 允许点击背景关闭对话框
       barrierColor:
-          Theme.of(context).colorScheme.scrim.withOpacity(0.5), // 使用半透明背景
+          Theme.of(context).colorScheme.scrim.withAlpha(128), // 使用半透明背景
       builder: (dialogContext) {
-        print(
+        AppLogger.debug(
             '【M3LibraryPickerDialog】构建多选对话框 - 是否相同上下文: ${identical(context, dialogContext)}');
         return _LibraryPickerDialogView(
           enableMultiSelect: true,
@@ -53,7 +54,7 @@ class M3LibraryPickerDialog {
       },
     );
 
-    print(
+    AppLogger.debug(
         '【M3LibraryPickerDialog】多选对话框关闭: ${result?.confirmed}, 选择项: ${result?.items.length ?? 0}');
 
     if (result == null || !result.confirmed || result.items.isEmpty) {
@@ -114,7 +115,7 @@ class _LibraryPickerDialogViewState
                       icon: const Icon(Icons.close),
                       onPressed: () {
                         // 直接使用 Navigator.pop 而不是 Navigator.of
-                        print('【M3LibraryPickerDialog】关闭按钮被点击');
+                        AppLogger.debug('【M3LibraryPickerDialog】关闭按钮被点击');
                         Navigator.pop(context, _PickerResult(items: []));
                       },
                       tooltip: l10n.windowButtonClose,
@@ -184,7 +185,7 @@ class _LibraryPickerDialogViewState
         notifier.clearSelection();
         // 重置搜索条件
         notifier.updateSearchQuery('');
-        print(
+        AppLogger.debug(
             '【M3LibraryPickerDialogView】initState.microtask - 已重置所有选择状态和搜索条件');
       }
     });

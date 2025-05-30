@@ -20,7 +20,7 @@ class CharacterDetailState with _$CharacterDetailState {
     @Default(0) int selectedFormat,
 
     /// Available image formats
-    @JsonKey(ignore: true)
+    @JsonKey(includeFromJson: false, includeToJson: false)
     @Default([])
     List<CharacterFormatInfo> availableFormats,
 

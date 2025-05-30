@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../infrastructure/providers/storage_providers.dart';
@@ -92,7 +92,7 @@ class TextureFix {
     canvas.clipRect(rect);
 
     final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity)
+      ..color = Colors.white.withValues(alpha: opacity)
       ..filterQuality = FilterQuality.high;
 
     final srcRect =
@@ -122,13 +122,13 @@ class TextureFix {
 
     // 绘制背景
     final bgPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.1)
+      ..color = Colors.grey.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Offset.zero & size, bgPaint);
 
     // 绘制点阵
     final dotPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
+      ..color = Colors.grey.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     const spacing = 10.0;
@@ -152,7 +152,7 @@ class TextureFix {
       text: '纹理加载中...',
       style: TextStyle(
         fontSize: 10,
-        color: Colors.grey.withOpacity(0.7),
+        color: Colors.grey.withValues(alpha: 0.7),
         fontWeight: FontWeight.bold,
       ),
     );
@@ -171,7 +171,7 @@ class TextureFix {
     );
     canvas.drawRect(
       textBgRect,
-      Paint()..color = Colors.white.withOpacity(0.7),
+      Paint()..color = Colors.white.withValues(alpha: 0.7),
     );
 
     // 绘制文本

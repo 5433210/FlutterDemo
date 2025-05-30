@@ -373,7 +373,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: colorScheme.error.withOpacity(0.1),
+                color: colorScheme.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -453,7 +453,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1124,7 +1124,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                               color: noiseReductionText != '0.0'
                                   ? colorScheme.onSurfaceVariant
                                   : colorScheme.onSurfaceVariant
-                                      .withOpacity(0.5),
+                                      .withValues(alpha: 0.5),
                             ),
                           );
                         },
@@ -1170,7 +1170,7 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
                           ? colorScheme.primary
                           : button.onPressed == null
                               ? colorScheme.onSurfaceVariant
-                                  .withAlpha(97) // ~38% opacity
+                                  .withValues(alpha: 97) // ~38% opacity
                               : colorScheme.onSurfaceVariant,
                     ),
                     onPressed: button.onPressed,
@@ -1778,59 +1778,6 @@ class _M3CharacterEditPanelState extends ConsumerState<M3CharacterEditPanel> {
         });
       }
     });
-  }
-
-  /// Save current processing options as user defaults
-  Future<void> _saveCurrentAsDefaults() async {
-    try {
-      final eraseState = ref.read(erase.eraseStateProvider);
-      final userPreferencesNotifier =
-          ref.read(userPreferencesNotifierProvider.notifier);
-
-      final currentOptions = ProcessingOptions(
-        threshold: eraseState.processingOptions.threshold,
-        noiseReduction: eraseState.processingOptions.noiseReduction,
-        brushSize: eraseState.brushSize,
-        showContour: eraseState.showContour,
-        inverted: eraseState.imageInvertMode,
-        contrast: eraseState.processingOptions.contrast,
-        brightness: eraseState.processingOptions.brightness,
-      );
-
-      await userPreferencesNotifier.saveCurrentAsDefaults(currentOptions);
-
-      final l10n = AppLocalizations.of(context);
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.characterEditDefaultsSaved),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            width: 200,
-          ),
-        );
-      }
-
-      AppLogger.debug('当前设置已保存为默认值', data: {
-        'threshold': currentOptions.threshold,
-        'noiseReduction': currentOptions.noiseReduction,
-        'brushSize': currentOptions.brushSize,
-        'showContour': currentOptions.showContour,
-      });
-    } catch (e) {
-      AppLogger.error('保存默认设置失败', error: e);
-      if (mounted) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('保存默认设置失败: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 
   // Set dynamic brush size based on selected region size

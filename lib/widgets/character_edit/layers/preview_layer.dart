@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/character/path_info.dart';
 import '../../../infrastructure/logging/logger.dart';
-import '../../../utils/debug/debug_flags.dart';
 import 'base_layer.dart';
 
 /// 预览图层，显示擦除预览效果
@@ -50,9 +48,6 @@ class _PreviewPainter extends CustomPainter {
   });
   @override
   void paint(Canvas canvas, Size size) {
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      print('绘制预览层 - 路径数量: ${paths.length}, 当前路径: ${currentPath != null}');
-    } // Apply clipping to image bounds to prevent brush strokes from extending beyond the image
     // Use the full image bounds as clipping area to allow erasing to the edges
     if (imageSize != null) {
       final imageRect =
@@ -81,17 +76,6 @@ class _PreviewPainter extends CustomPainter {
         canvas.restore();
       }
     }
-
-    // 在调试模式下绘制边界框
-    if (kDebugMode && DebugFlags.enableEraseDebug && dirtyRect != null) {
-      canvas.drawRect(
-        dirtyRect!,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..color = Colors.red
-          ..strokeWidth = 1,
-      );
-    }
   }
 
   @override
@@ -100,10 +84,6 @@ class _PreviewPainter extends CustomPainter {
         currentPath?.path != oldDelegate.currentPath?.path ||
         dirtyRect != oldDelegate.dirtyRect ||
         imageSize != oldDelegate.imageSize;
-
-    if (shouldRepaint && kDebugMode) {
-      print('重绘预览层');
-    }
 
     return shouldRepaint;
   }
@@ -135,7 +115,7 @@ class _PreviewPainter extends CustomPainter {
       try {
         _drawPath(canvas, currentPath!);
       } catch (e) {
-        debugPrint('绘制当前路径失败: ${e.toString()}');
+        AppLogger.error('绘制当前路径失败', error: e);
       }
     }
   }
@@ -162,32 +142,5 @@ class _PreviewPainter extends CustomPainter {
 
     // Draw the path with anti-aliasing
     canvas.drawPath(path, strokePaint);
-
-    // For debugging - draw a dot at each endpoint
-    if (kDebugMode && DebugFlags.enableEraseDebug) {
-      final pointPaint = Paint()
-        ..color = Colors.red
-        ..style = PaintingStyle.fill;
-
-      final metrics = path.computeMetrics();
-      if (metrics.isNotEmpty) {
-        for (final metric in metrics) {
-          if (metric.length > 0) {
-            final start = metric.getTangentForOffset(0)?.position;
-            final end = metric.getTangentForOffset(metric.length)?.position;
-
-            if (start != null) {
-              canvas.drawCircle(start, 3, pointPaint);
-            }
-            if (end != null) {
-              canvas.drawCircle(end, 3, pointPaint);
-            }
-          }
-        }
-      } else {
-        // For paths too small to have metrics
-        canvas.drawCircle(bounds.center, 3, pointPaint);
-      }
-    }
   }
 }

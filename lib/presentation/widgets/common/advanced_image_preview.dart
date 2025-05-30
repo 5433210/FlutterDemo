@@ -94,7 +94,6 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
 
     // Handle image path changes
     if (widget.imagePaths != oldWidget.imagePaths) {
-      print('【AdvancedImagePreview】Image paths changed, updating');
       _checkImageFiles();
 
       // Update current index if needed
@@ -136,7 +135,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
 
   Widget _buildImageContent() {
     if (_currentIndex >= widget.imagePaths.length) {
-      print(
+      AppLogger.debug(
           '【AdvancedImagePreview】Current index out of bounds: $_currentIndex');
       return const Center(
         child: Text('图片索引错误', style: TextStyle(color: Colors.red)),
@@ -144,10 +143,13 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
     }
 
     final currentPath = widget.imagePaths[_currentIndex];
-    print('【AdvancedImagePreview】Building image content for: $currentPath');
+    AppLogger.debug(
+        '【AdvancedImagePreview】Building image content for: $currentPath');
     final fileExists = _fileExistsCache[currentPath] ?? false;
 
     if (!fileExists) {
+      AppLogger.debug(
+          '【AdvancedImagePreview】Image file does not exist: $currentPath');
       return const Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -185,16 +187,15 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   Widget _buildImageViewer(BuildContext context) {
-    // Add debug logging to understand UI state
-    print('【AdvancedImagePreview】Building image viewer:');
-    print(
+    AppLogger.debug('【AdvancedImagePreview】Building image viewer:');
+    AppLogger.debug(
         '【AdvancedImagePreview】Image paths count: ${widget.imagePaths.length}');
-    print('【AdvancedImagePreview】Current index: $_currentIndex');
-    print(
+    AppLogger.debug('【AdvancedImagePreview】Current index: $_currentIndex');
+    AppLogger.debug(
         '【AdvancedImagePreview】Should show previous button: ${_currentIndex > 0}');
-    print(
+    AppLogger.debug(
         '【AdvancedImagePreview】Should show next button: ${_currentIndex < widget.imagePaths.length - 1}');
-    print('【AdvancedImagePreview】Image paths: ${widget.imagePaths}');
+    AppLogger.debug('【AdvancedImagePreview】Image paths: ${widget.imagePaths}');
 
     return Stack(
       fit: StackFit.expand,
@@ -263,12 +264,12 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -278,7 +279,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
                   icon: const Icon(Icons.arrow_back_ios),
                   color: Colors.white,
                   onPressed: () {
-                    print(
+                    AppLogger.debug(
                         '【AdvancedImagePreview】Previous button pressed, moving from $_currentIndex to ${_currentIndex - 1}');
                     _updateIndex(_currentIndex - 1);
                   },
@@ -296,12 +297,12 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withValues(alpha: 0.7),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 8,
                       spreadRadius: 2,
                     ),
@@ -311,7 +312,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
                   icon: const Icon(Icons.arrow_forward_ios),
                   color: Colors.white,
                   onPressed: () {
-                    print(
+                    AppLogger.debug(
                         '【AdvancedImagePreview】Next button pressed, moving from $_currentIndex to ${_currentIndex + 1}');
                     _updateIndex(_currentIndex + 1);
                   },
@@ -369,7 +370,7 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
                   if (isSelected)
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.3),
+                        color: Colors.blue.withValues(alpha: 0.3),
                       ),
                     ),
                 ],
@@ -382,26 +383,13 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   Future<void> _checkImageFiles() async {
-    // Debug logging for image file checking
-    print('【AdvancedImagePreview】Checking image files:');
-    print(
-        '【AdvancedImagePreview】Total paths to check: ${widget.imagePaths.length}');
-
     for (int i = 0; i < widget.imagePaths.length; i++) {
       final path = widget.imagePaths[i];
       try {
         final file = File(path);
         final exists = await file.exists();
         _fileExistsCache[path] = exists;
-
-        print('【AdvancedImagePreview】Image $i - Path: $path, Exists: $exists');
-
-        if (!exists) {
-          print(
-              '【AdvancedImagePreview】WARNING: Image file does not exist: $path');
-        }
       } catch (e) {
-        print('【AdvancedImagePreview】ERROR checking file $path: $e');
         _fileExistsCache[path] = false;
         AppLogger.error('检查图片文件失败', error: e, data: {'path': path});
       }
@@ -452,8 +440,6 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   void _resetZoom() {
-    print(
-        '【AdvancedImagePreview】Resetting zoom for image: ${widget.imagePaths[_currentIndex]}');
     setState(() {
       _transformationController.value = Matrix4.identity();
       _isZoomed = false;
@@ -479,13 +465,6 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
   }
 
   void _updateIndex(int newIndex) {
-    print(
-        '【AdvancedImagePreview】_updateIndex called with new index: $newIndex');
-    print('【AdvancedImagePreview】Current index: $_currentIndex');
-    print('【AdvancedImagePreview】Available paths: ${widget.imagePaths.length}');
-    print(
-        '【AdvancedImagePreview】First few paths: ${widget.imagePaths.take(3).toList()}');
-
     if (newIndex != _currentIndex &&
         newIndex >= 0 &&
         newIndex < widget.imagePaths.length) {
@@ -496,10 +475,6 @@ class _AdvancedImagePreviewState extends State<AdvancedImagePreview> {
         _isZoomed = false;
       });
       widget.onIndexChanged?.call(_currentIndex);
-      print('【AdvancedImagePreview】Updated to index: $_currentIndex');
-    } else {
-      print(
-          '【AdvancedImagePreview】Invalid index update request. Valid range: 0-${widget.imagePaths.length - 1}');
     }
   }
 }

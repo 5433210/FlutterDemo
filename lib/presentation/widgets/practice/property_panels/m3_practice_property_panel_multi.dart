@@ -500,14 +500,14 @@ class M3MultiSelectionPropertyPanel extends M3PracticePropertyPanel {
         icon: Icon(
           icon,
           color: isDisabled
-              ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
               : colorScheme.primary,
         ),
         onPressed: onPressed,
         style: IconButton.styleFrom(
           backgroundColor: isDisabled
-              ? colorScheme.surfaceContainerHighest.withOpacity(0.3)
-              : colorScheme.primaryContainer.withOpacity(0.3),
+              ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.3)
+              : colorScheme.primaryContainer.withValues(alpha: 0.3),
           minimumSize: const Size(40, 40),
         ),
       ),

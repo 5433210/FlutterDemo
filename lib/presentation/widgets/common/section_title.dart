@@ -78,7 +78,7 @@ class SectionTitleWithDivider extends StatelessWidget {
         Divider(
           height: 1,
           thickness: 1,
-          color: dividerColor ?? theme.dividerColor.withOpacity(0.5),
+          color: dividerColor ?? theme.dividerColor.withValues(alpha: 0.5),
         ),
       ],
     );

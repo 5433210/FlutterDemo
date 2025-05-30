@@ -20,7 +20,7 @@ class M3ContentToolsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Padding(
       padding: const EdgeInsets.all(12.0),
       child: Column(
@@ -31,8 +31,8 @@ class M3ContentToolsPanel extends StatelessWidget {
             child: Text(
               l10n.practiceEditElements,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ),
           Wrap(
@@ -183,9 +183,12 @@ class M3ContentToolsPanel extends StatelessWidget {
           width: 80,
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primaryContainer.withOpacity(0.7) : colorScheme.surfaceContainerLow,
+            color: isSelected
+                ? colorScheme.primaryContainer.withValues(alpha: 0.7)
+                : colorScheme.surfaceContainerLow,
             border: Border.all(
-              color: isSelected ? colorScheme.primary : colorScheme.outlineVariant,
+              color:
+                  isSelected ? colorScheme.primary : colorScheme.outlineVariant,
               width: 1.0,
             ),
             borderRadius: BorderRadius.circular(8.0),
@@ -195,14 +198,18 @@ class M3ContentToolsPanel extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
                 size: 24.0,
               ),
               const SizedBox(height: 8.0),
               Text(
                 label,
                 style: textTheme.labelMedium?.copyWith(
-                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
                 ),
               ),
             ],

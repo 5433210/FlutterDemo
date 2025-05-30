@@ -24,7 +24,7 @@ class ActiveSelectionPainter extends CustomPainter {
     canvas.drawRect(
       rect,
       Paint()
-        ..color = Colors.blue.withOpacity(0.3)
+        ..color = Colors.blue.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill,
     );
 
@@ -69,7 +69,7 @@ class CompletedSelectionPainter extends CustomPainter {
       canvas.drawRect(
         viewportRect,
         Paint()
-          ..color = Colors.blue.withOpacity(1.0)
+          ..color = Colors.blue.withValues(alpha: 1.0)
           ..style = PaintingStyle.fill,
       );
 

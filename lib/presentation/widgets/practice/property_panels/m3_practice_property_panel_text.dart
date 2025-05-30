@@ -361,11 +361,12 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                           _updateContentProperty('fontColor', 'transparent');
                         } else {
                           // Convert color to hex string
-                          final r = color.red.toRadixString(16).padLeft(2, '0');
+                          final r =
+                              color.r.toInt().toRadixString(16).padLeft(2, '0');
                           final g =
-                              color.green.toRadixString(16).padLeft(2, '0');
+                              color.g.toInt().toRadixString(16).padLeft(2, '0');
                           final b =
-                              color.blue.toRadixString(16).padLeft(2, '0');
+                              color.b.toInt().toRadixString(16).padLeft(2, '0');
                           final hexColor = '#$r$g$b';
                           _updateContentProperty('fontColor', hexColor);
                         }
@@ -417,11 +418,12 @@ class M3TextPropertyPanel extends M3PracticePropertyPanel {
                               'backgroundColor', 'transparent');
                         } else {
                           // Convert color to hex string
-                          final r = color.red.toRadixString(16).padLeft(2, '0');
+                          final r =
+                              color.r.toInt().toRadixString(16).padLeft(2, '0');
                           final g =
-                              color.green.toRadixString(16).padLeft(2, '0');
+                              color.g.toInt().toRadixString(16).padLeft(2, '0');
                           final b =
-                              color.blue.toRadixString(16).padLeft(2, '0');
+                              color.b.toInt().toRadixString(16).padLeft(2, '0');
                           final hexColor = '#$r$g$b';
                           _updateContentProperty('backgroundColor', hexColor);
                         }

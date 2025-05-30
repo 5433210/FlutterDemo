@@ -69,7 +69,7 @@ class M3WorkGridItem extends ConsumerWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: colorScheme.surfaceContainerHighest
-                              .withOpacity(0.7),
+                              .withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
@@ -101,7 +101,7 @@ class M3WorkGridItem extends ConsumerWidget {
                           color: isSelected
                               ? colorScheme.primaryContainer
                               : colorScheme.surfaceContainerHighest
-                                  .withOpacity(0.7),
+                                  .withValues(alpha: 0.7),
                           shape: BoxShape.circle,
                         ),
                         child: Padding(
@@ -198,7 +198,7 @@ class M3WorkGridItem extends ConsumerWidget {
         child: Icon(
           Icons.image_outlined,
           size: 48,
-          color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -214,7 +214,7 @@ class M3WorkGridItem extends ConsumerWidget {
           horizontal: AppSizes.tagChipHorizontalPadding,
           vertical: AppSizes.tagChipVerticalPadding),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer.withOpacity(0.7),
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
       ),
       child: Text(

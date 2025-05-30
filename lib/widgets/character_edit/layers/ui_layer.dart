@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
+import 'package:charasgem/infrastructure/logging/logger.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/models/character/detected_outline.dart';
 import '../../../presentation/providers/character/erase_providers.dart';
-import '../../../utils/debug/debug_flags.dart';
 
 class BrushCursorPainter extends CustomPainter {
   final Offset position;
@@ -26,7 +26,7 @@ class BrushCursorPainter extends CustomPainter {
 
     // Clean anti-aliased edge instead of radial gradient
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.3) // Light fill
+      ..color = color.withValues(alpha: 0.3) // Light fill
       ..style = PaintingStyle.fill
       ..isAntiAlias = true;
 
@@ -44,7 +44,7 @@ class BrushCursorPainter extends CustomPainter {
 
     // Draw crosshair for precise positioning
     final crosshairPaint = Paint()
-      ..color = Colors.red.withOpacity(0.7)
+      ..color = Colors.red.withValues(alpha: 0.7)
       ..style = PaintingStyle.stroke
       ..strokeWidth = size / 20
       ..isAntiAlias = true;
@@ -76,7 +76,7 @@ class BrushCursorPainter extends CustomPainter {
               Shadow(
                 offset: const Offset(1, 1),
                 blurRadius: 2,
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withValues(alpha: 0.8),
               ),
             ],
           ),
@@ -134,7 +134,7 @@ class UILayer extends ConsumerStatefulWidget {
 
 class _UILayerState extends ConsumerState<UILayer> {
   Offset? _mousePosition;
-  int _updateCounter = 0;
+
   bool _isDragging = false;
 
   @override
@@ -173,11 +173,6 @@ class _UILayerState extends ConsumerState<UILayer> {
               if (_isWithinImageBounds(details.localPosition)) {
                 _updateMousePosition(details.localPosition);
 
-                if (kDebugMode && DebugFlags.enableEraseDebug) {
-                  print(
-                      '手势开始: ${details.localPosition}, Alt键: ${widget.altKeyPressed}');
-                }
-
                 // 当Alt键没有按下时，调用擦除开始回调
                 if (!widget.altKeyPressed && widget.onPointerDown != null) {
                   widget.onPointerDown!(details.localPosition);
@@ -188,13 +183,6 @@ class _UILayerState extends ConsumerState<UILayer> {
               // Update cursor position during dragging if within bounds
               if (_isWithinImageBounds(details.localPosition)) {
                 _updateMousePosition(details.localPosition);
-
-                if (kDebugMode &&
-                    DebugFlags.enableEraseDebug &&
-                    _updateCounter++ % 15 == 0) {
-                  print(
-                      '手势更新: ${details.localPosition}, 增量: ${details.delta}, Alt键: ${widget.altKeyPressed}');
-                }
 
                 // 当Alt键按下时，使用onPan回调进行平移操作
                 if (widget.altKeyPressed) {
@@ -209,10 +197,6 @@ class _UILayerState extends ConsumerState<UILayer> {
             },
             onPanEnd: (_) {
               _isDragging = false;
-
-              if (kDebugMode && DebugFlags.enableEraseDebug) {
-                print('手势结束, Alt键: ${widget.altKeyPressed}');
-              }
 
               // 当Alt键没有按下时，才调用擦除结束回调
               if (!widget.altKeyPressed && widget.onPointerUp != null) {
@@ -252,8 +236,9 @@ class _UILayerState extends ConsumerState<UILayer> {
 
   // Helper to check if position is within image bounds
   bool _isWithinImageBounds(Offset position) {
-    if (widget.imageSize == null)
+    if (widget.imageSize == null) {
       return true; // If no image size is set, allow all positions
+    }
 
     return position.dx >= 0 &&
         position.dx < widget.imageSize!.width &&
@@ -311,15 +296,13 @@ class _UIPainter extends CustomPainter {
 
   void _drawOutline(Canvas canvas, Size size) {
     if (outline == null || imageSize == null) {
-      if (kDebugMode && DebugFlags.enableEraseDebug) {
-        print('_drawOutline: 无轮廓数据或图像尺寸');
-      }
+      AppLogger.debug('_drawOutline: 无轮廓数据或图像尺寸');
       return;
     }
 
     // 检查轮廓数据是否有效
     if (outline!.contourPoints.isEmpty) {
-      print('_drawOutline: 轮廓点集为空');
+      AppLogger.debug('_drawOutline: 轮廓点集为空');
       return;
     }
 
@@ -338,19 +321,11 @@ class _UIPainter extends CustomPainter {
 
     // 增强轮廓线条清晰度和可见性
     final mainStrokePaint = Paint()
-      ..color = Colors.blue.withOpacity(0.9) // 提高不透明度
+      ..color = Colors.blue.withValues(alpha: 0.9) // 提高不透明度
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5 / scale // 加粗轮廓线
       // ..strokeCap = StrokeCap.round
       // ..strokeJoin = StrokeJoin.round
-      ..isAntiAlias = true; // 确保抗锯齿
-
-    final outerStrokePaint = Paint()
-      ..color = Colors.white.withOpacity(0.9) // 提高不透明度
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1 / scale // 加粗外边框
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
       ..isAntiAlias = true; // 确保抗锯齿
 
     canvas.save();
@@ -358,22 +333,17 @@ class _UIPainter extends CustomPainter {
     canvas.translate(offsetX, offsetY);
     canvas.scale(scale);
 
-    int contourCount = 0;
-    int pointCount = 0;
-
     for (final contour in outline!.contourPoints) {
       if (contour.length < 2) {
         continue;
       }
-
-      pointCount += contour.length;
 
       // 使用path来绘制复杂轮廓可获得更好的性能和质量
       final path = Path();
 
       // 确保起点是有效的
       if (!contour[0].dx.isFinite || !contour[0].dy.isFinite) {
-        print('轮廓点无效，跳过该轮廓');
+        AppLogger.debug('轮廓点无效，跳过该轮廓');
         continue;
       }
 
@@ -382,7 +352,7 @@ class _UIPainter extends CustomPainter {
       for (int i = 1; i < contour.length; i++) {
         // 验证点的有效性
         if (!contour[i].dx.isFinite || !contour[i].dy.isFinite) {
-          print('发现无效轮廓点，继续使用前一个有效点');
+          AppLogger.debug('发现无效轮廓点，继续使用前一个有效点');
           continue;
         }
         path.lineTo(contour[i].dx, contour[i].dy);
@@ -392,11 +362,7 @@ class _UIPainter extends CustomPainter {
       // 先绘制外描边再绘制内描边，确保可见性
       // canvas.drawPath(path, outerStrokePaint);
       canvas.drawPath(path, mainStrokePaint);
-
-      contourCount++;
     }
-
-    // print('成功绘制了 $contourCount 个轮廓，共 $pointCount 个轮廓点');
 
     canvas.restore();
   }

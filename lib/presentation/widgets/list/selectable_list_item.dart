@@ -35,7 +35,7 @@ class SelectableListItem extends StatelessWidget {
           onTap: onSelected != null ? () => onSelected!(!selected) : onTap,
           child: Container(
             padding: const EdgeInsets.all(AppSizes.spacingMedium),
-            color: selected ? theme.colorScheme.primary.withOpacity(0.1) : null,
+            color: selected ? theme.colorScheme.primary.withAlpha(25) : null,
             child: Row(
               children: [
                 if (onSelected != null)

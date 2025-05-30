@@ -20,11 +20,6 @@ class M3WorkImportDialog extends ConsumerWidget {
     final theme = Theme.of(context);
     return Dialog.fullscreen(
       child: LayoutBuilder(builder: (context, constraints) {
-        // 打印对话框导航器信息，帮助调试
-        print('【WorkImportDialog】构建全屏对话框，context: $context');
-        print(
-            '【WorkImportDialog】Navigator状态: ${Navigator.of(context).canPop() ? "可关闭" : "不可关闭"}');
-
         // Calculate responsive sizes based on available space
         final availableWidth = constraints.maxWidth;
         final availableHeight = constraints.maxHeight;
@@ -42,22 +37,18 @@ class M3WorkImportDialog extends ConsumerWidget {
         return Scaffold(
           appBar: M3WorkImportNavigationBar(
             onClose: () {
-              print('【WorkImportDialog】点击关闭按钮');
               viewModel.reset();
               Navigator.of(context).pop(false);
             },
             onStart: (state.canSubmit && !state.isProcessing)
                 ? () async {
-                    print('【WorkImportDialog】点击导入按钮，开始导入作品');
                     final success = await viewModel.importWork();
-                    print('【WorkImportDialog】导入结果: ${success ? "成功" : "失败"}');
+
                     if (success && context.mounted) {
                       Navigator.of(context).pop(true);
                     }
                   }
-                : () {
-                    print('【WorkImportDialog】导入按钮禁用状态被点击');
-                  },
+                : () {},
             isProcessing: state.isProcessing,
             totalPages: state.images.length,
             currentPage: state.selectedImageIndex + 1,

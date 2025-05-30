@@ -1,7 +1,8 @@
+import 'package:charasgem/infrastructure/logging/logger.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../debug/debug_flags.dart';
 import '../focus/focus_persistence.dart';
 import 'keyboard_utils.dart';
 
@@ -18,7 +19,7 @@ class KeyboardMonitor {
   // 输出当前Alt键状态
   void debugLogAltKeyState() {
     final isAltPressed = KeyboardUtils.isAltKeyPressed();
-    print('⌨️ 当前Alt键状态: $isAltPressed');
+    AppLogger.debug('⌨️ 当前Alt键状态: $isAltPressed');
   }
 
   // 处理键盘状态变化
@@ -27,8 +28,7 @@ class KeyboardMonitor {
     if (key == LogicalKeyboardKey.alt ||
         key == LogicalKeyboardKey.altLeft ||
         key == LogicalKeyboardKey.altRight) {
-      DebugFlags.trackAltKeyState('KeyboardMonitor', isDown);
-      print('⌨️ Alt键状态更新: ${key.keyLabel} = $isDown');
+      AppLogger.debug('⌨️ Alt键状态更新: ${key.keyLabel} = $isDown');
     }
   }
 
@@ -73,10 +73,7 @@ class _KeyboardMonitorWidgetState extends State<KeyboardMonitorWidget> {
         focusNode: _rootFocusNode,
         onKeyEvent: (node, event) {
           // 记录所有键盘事件
-          if (DebugFlags.enableEventTracing) {
-            print(
-                '🔑 键盘事件: ${event.runtimeType} - ${event.logicalKey.keyLabel}');
-          }
+
           return KeyEventResult.ignored;
         },
         child: widget.child,

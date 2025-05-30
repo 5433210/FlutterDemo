@@ -252,7 +252,7 @@ class M3WorkListItem extends ConsumerWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer.withOpacity(0.7),
+        color: colorScheme.secondaryContainer.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(AppSizes.radiusSmall),
       ),
       child: Row(
@@ -359,7 +359,7 @@ class M3WorkListItem extends ConsumerWidget {
           horizontal: AppSizes.tagChipHorizontalPadding,
           vertical: AppSizes.tagChipVerticalPadding),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.1),
+        color: colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppSizes.tagChipBorderRadius),
       ),
       child: Text(

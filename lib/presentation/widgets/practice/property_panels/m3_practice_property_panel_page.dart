@@ -282,7 +282,8 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
                   Container(
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                      color:
+                          colorScheme.tertiaryContainer.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                     child: Row(
@@ -664,7 +665,7 @@ class _M3PagePropertyPanelState extends State<M3PagePropertyPanel> {
   /// 更新背景颜色
   void _updateBackgroundColor(Color color) {
     final colorHex =
-        '#${color.value.toRadixString(16).padLeft(8, '0').substring(2)}';
+        '#${color.r.toInt().toRadixString(16).padLeft(2, '0')}${color.g.toInt().toRadixString(16).padLeft(2, '0')}${color.b.toInt().toRadixString(16).padLeft(2, '0')}${color.a.toInt().toRadixString(16).padLeft(2, '0')}';
 
     // 使用新格式
     final background = {

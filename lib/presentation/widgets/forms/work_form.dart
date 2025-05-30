@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../domain/enums/work_style.dart';
 import '../../../domain/enums/work_tool.dart';
@@ -175,7 +176,7 @@ class _ErrorAnimationState extends State<_ErrorAnimation>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     // Use a softer color for error text
-    final errorColor = theme.colorScheme.tertiary.withOpacity(0.8);
+    final errorColor = theme.colorScheme.tertiary.withValues(alpha: 0.8);
 
     return FadeTransition(
       opacity: _animation,
@@ -297,8 +298,8 @@ class _WorkFormState extends State<WorkForm> {
     final errorColor = theme.colorScheme.tertiary;
 
     return Focus(
-      onKey: (_, event) {
-        _handleKeyPress(event);
+      onKeyEvent: (_, keyEvent) {
+        _handleKeyPress(keyEvent);
         return KeyEventResult.ignored;
       },
       child: Form(
@@ -432,7 +433,7 @@ class _WorkFormState extends State<WorkForm> {
 
   Widget _buildAuthorField() {
     final theme = Theme.of(context);
-    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+A',
@@ -529,7 +530,7 @@ class _WorkFormState extends State<WorkForm> {
 
   Widget _buildRemarkField() {
     final theme = Theme.of(context);
-    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+R',
@@ -594,7 +595,7 @@ class _WorkFormState extends State<WorkForm> {
 
   Widget _buildTitleField() {
     final theme = Theme.of(context);
-    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
 
     return _buildFieldWithTooltip(
       shortcut: 'Ctrl+T',
@@ -679,9 +680,9 @@ class _WorkFormState extends State<WorkForm> {
     setState(() {});
   }
 
-  void _handleKeyPress(RawKeyEvent event) {
-    if (event is! RawKeyDownEvent) return;
-    if (!event.isControlPressed) return;
+  void _handleKeyPress(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+    if (!HardwareKeyboard.instance.isControlPressed) return;
 
     switch (event.logicalKey) {
       case LogicalKeyboardKey.keyT:

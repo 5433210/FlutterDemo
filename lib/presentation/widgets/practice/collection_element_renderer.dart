@@ -3,7 +3,6 @@
 
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 
@@ -85,12 +84,6 @@ class CollectionElementRenderer {
     final layoutHeight = constraints.maxHeight;
     final contentWidth = layoutWidth - padding * 2;
     final contentHeight = layoutHeight - padding * 2; // 添加调试信息 (条件化以提升性能)
-    if (kDebugMode && false) {
-      debugPrint('''集字布局初始化：
-  原始尺寸：${layoutWidth}x$layoutHeight
-  内边距：$padding
-  可用尺寸：${contentWidth}x$contentHeight''');
-    }
 
     // 创建字符列表及换行标记列表
     List<String> charList = [];
@@ -197,7 +190,7 @@ class CollectionElementRenderer {
     return StatefulBuilder(
       builder: (context, setState) {
         // 移除textureApplicationRange，现在只支持background模式
-        String effectiveApplicationMode = 'background';
+
         Map<String, dynamic>? effectiveTextureData;
         bool hasEffectiveTexture = hasCharacterTexture;
 
@@ -267,14 +260,6 @@ class CollectionElementRenderer {
           textureWidth: textureWidth,
           textureHeight: textureHeight,
         );
-        if (kDebugMode && false) {
-          debugPrint('''纹理配置详情：
-  启用状态：${hasEffectiveTexture ? "✅" : "❌"}
-  纹理数据：${(characterTextureData != null || effectiveTextureData != null) ? "✅" : "❌"}
-  应用模式：$effectiveApplicationMode
-  填充模式：$textureFillMode
-  不透明度：$textureOpacity''');
-        }
 
         // 根据情况决定使用基础绘制器还是增强版绘制器
         if (ref == null) {

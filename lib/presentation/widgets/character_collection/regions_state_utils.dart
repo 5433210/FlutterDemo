@@ -78,7 +78,7 @@ class RegionStateUtils {
       opacity = opacity * 1.5;
     }
 
-    return baseColor.withOpacity(opacity);
+    return baseColor.withValues(alpha: opacity);
   }
 
   /// 获取区域的状态

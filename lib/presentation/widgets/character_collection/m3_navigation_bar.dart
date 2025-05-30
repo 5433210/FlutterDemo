@@ -48,8 +48,8 @@ class M3NavigationBar extends ConsumerWidget implements PreferredSizeWidget {
                     horizontal: AppSizes.s, vertical: AppSizes.xs),
                 decoration: BoxDecoration(
                   color: collectionState.error != null
-                      ? colorScheme.error.withOpacity(0.1)
-                      : colorScheme.primary.withOpacity(0.1),
+                      ? colorScheme.error.withValues(alpha: 0.1)
+                      : colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizes.m),
                 ),
                 child: Text(

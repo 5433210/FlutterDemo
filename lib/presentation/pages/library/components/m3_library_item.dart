@@ -176,7 +176,7 @@ class M3LibraryItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(AppSizes.spacing8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withOpacity(0.8),
+                    color: theme.colorScheme.surface.withValues(alpha: 0.8),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

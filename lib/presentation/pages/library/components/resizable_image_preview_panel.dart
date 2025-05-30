@@ -112,10 +112,6 @@ class _ResizableImagePreviewPanelState
     if (widget.selectedItem?.id != oldWidget.selectedItem?.id) {
       // New image selected, reset zoom if needed
       _resetZoom();
-
-      // Print debug info to confirm we detected the change
-      print(
-          '【ResizableImagePreviewPanel】Image changed: ${oldWidget.selectedItem?.fileName} -> ${widget.selectedItem?.fileName}');
     }
 
     // If visibility changes, animate properly
@@ -143,8 +139,6 @@ class _ResizableImagePreviewPanelState
     final imagePath = widget.selectedItem!.path;
     final itemId = widget.selectedItem!.id;
 
-    print(
-        '【ResizableImagePreviewPanel】Building preview for: ${widget.selectedItem!.fileName} (ID: $itemId)');
     return Container(
       color: _isDarkBackground ? Colors.black : Colors.white,
       child: AdvancedImagePreview(
@@ -192,7 +186,7 @@ class _ResizableImagePreviewPanelState
               decoration: BoxDecoration(
                 color: _isDragging
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -308,14 +302,6 @@ class _ResizableImagePreviewPanelState
       currentIndex = allImagePaths.indexOf(widget.selectedItem!.path);
     }
 
-    // Debug logging
-    print('【ResizableImagePreviewPanel】Opening fullscreen preview:');
-    print(
-        '【ResizableImagePreviewPanel】Selected item path: ${widget.selectedItem!.path}');
-    print(
-        '【ResizableImagePreviewPanel】Total available images: ${allImagePaths.length}');
-    print('【ResizableImagePreviewPanel】Current image index: $currentIndex');
-
     // Show the image in fullscreen with all available images
     showDialog(
       context: context,
@@ -353,7 +339,6 @@ class _ResizableImagePreviewPanelState
   void _resetZoom() {
     // The AdvancedImagePreview has internal zoom management
     // We can use a rebuild to reset it to default state
-    print('【ResizableImagePreviewPanel】Resetting zoom state');
     setState(() {
       // Force a complete rebuild of the preview component
     });

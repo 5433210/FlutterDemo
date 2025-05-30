@@ -101,7 +101,7 @@ class RotationLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // 使用更明显的颜色和更粗的线条
     final paint = Paint()
-      ..color = const Color(0xFF2196F3).withOpacity(0.7) // 使用半透明的蓝色
+      ..color = const Color(0xFF2196F3).withValues(alpha: 0.7) // 使用半透明的蓝色
       ..strokeWidth = 2.0 // 使用更细的线条
       ..style = PaintingStyle.stroke;
 
@@ -115,7 +115,7 @@ class RotationLinePainter extends CustomPainter {
     // 在中心点绘制一个小圆点，使其更明显
     // 绘制中心点十字线
     final centerPaint = Paint()
-      ..color = const Color(0xFF2196F3).withOpacity(0.7)
+      ..color = const Color(0xFF2196F3).withValues(alpha: 0.7)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 

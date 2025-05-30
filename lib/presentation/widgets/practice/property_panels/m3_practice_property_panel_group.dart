@@ -601,7 +601,6 @@ class _M3GroupPropertyPanelContentState
                     itemCount: children.length,
                     itemBuilder: (context, index) {
                       final element = children[index];
-                      final id = element['id'] as String;
                       final elementName =
                           element['name'] as String? ?? l10n.unnamedElement;
                       final type = element['type'] as String;

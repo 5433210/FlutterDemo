@@ -276,7 +276,7 @@ class BackgroundTexturePainter extends CustomPainter {
     canvas.save();
 
     final Paint paint = Paint()
-      ..color = Colors.white.withOpacity(opacity)
+      ..color = Colors.white.withValues(alpha: opacity)
       ..filterQuality = FilterQuality.high;
     // 不在这里设置混合模式，而是由调用者控制    debugPrint('🔧 TEXTURE: 配置绘制画笔: 不透明度=$opacity');
 
@@ -337,8 +337,8 @@ class BackgroundTexturePainter extends CustomPainter {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Colors.grey.withOpacity(0.2),
-        Colors.grey.withOpacity(0.1),
+        Colors.grey.withValues(alpha: 0.2),
+        Colors.grey.withValues(alpha: 0.1),
       ],
     );
 
@@ -350,7 +350,7 @@ class BackgroundTexturePainter extends CustomPainter {
 
     // 添加点阵图案
     final patternPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
+      ..color = Colors.grey.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     const spacing = 10.0;
@@ -379,7 +379,7 @@ class BackgroundTexturePainter extends CustomPainter {
         text: '纹理加载中...',
         style: TextStyle(
           fontSize: 10,
-          color: Colors.grey.withOpacity(0.7),
+          color: Colors.grey.withValues(alpha: 0.7),
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -395,7 +395,7 @@ class BackgroundTexturePainter extends CustomPainter {
     );
     canvas.drawRect(
       textBgRect,
-      Paint()..color = Colors.white.withOpacity(0.7),
+      Paint()..color = Colors.white.withValues(alpha: 0.7),
     );
 
     textPainter.paint(
@@ -684,7 +684,7 @@ class CharacterTexturePainter extends CustomPainter {
     canvas.save();
 
     final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity)
+      ..color = Colors.white.withValues(alpha: opacity)
       ..filterQuality = FilterQuality.high;
     // 不在这里设置混合模式，而是由调用者控制    // 根据新的填充模式选择绘制方式 (只支持 repeat, cover, stretch, contain)
     if (fillMode == 'repeat') {
@@ -737,8 +737,8 @@ class CharacterTexturePainter extends CustomPainter {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Colors.grey.withOpacity(0.2),
-        Colors.grey.withOpacity(0.1),
+        Colors.grey.withValues(alpha: 0.2),
+        Colors.grey.withValues(alpha: 0.1),
       ],
     );
 
@@ -750,7 +750,7 @@ class CharacterTexturePainter extends CustomPainter {
 
     // 添加点阵图案
     final patternPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.3)
+      ..color = Colors.grey.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     const spacing = 10.0;
@@ -779,7 +779,7 @@ class CharacterTexturePainter extends CustomPainter {
         text: '字符纹理加载中...',
         style: TextStyle(
           fontSize: 10,
-          color: Colors.grey.withOpacity(0.7),
+          color: Colors.grey.withValues(alpha: 0.7),
         ),
       ),
       textDirection: TextDirection.ltr,

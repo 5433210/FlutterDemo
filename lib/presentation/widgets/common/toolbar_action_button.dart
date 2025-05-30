@@ -38,8 +38,9 @@ class ToolbarActionButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4.0),
         decoration: BoxDecoration(
           color: enabled
-              ? theme.colorScheme.primaryContainer.withOpacity(0.1)
-              : theme.colorScheme.surfaceContainerHighest.withOpacity(0.2),
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
+              : theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Material(
@@ -61,7 +62,8 @@ class ToolbarActionButton extends StatelessWidget {
                       data: IconThemeData(
                         color: enabled
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withOpacity(0.38),
+                            : theme.colorScheme.onSurface
+                                .withValues(alpha: 0.38),
                         size: 20,
                       ),
                       child: child,

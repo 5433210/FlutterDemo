@@ -101,8 +101,9 @@ class CharacterCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
-                                color:
-                                    theme.colorScheme.surface.withOpacity(0.7),
+                                color: theme.colorScheme.surface.withValues(
+                                  alpha: 0.7,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -156,8 +157,9 @@ class CharacterCard extends StatelessWidget {
                       Text(
                         character.author!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withOpacity(0.8),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.8,
+                          ),
                           fontSize: 10, // Even smaller font for author
                         ),
                         maxLines: 1,
@@ -181,7 +183,7 @@ class CharacterCard extends StatelessWidget {
           child: Text(
             character.character,
             style: theme.textTheme.displayMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ),
@@ -219,7 +221,7 @@ class CharacterCard extends StatelessWidget {
           Text(
             character.character,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 4),

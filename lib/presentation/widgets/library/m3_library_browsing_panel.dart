@@ -161,8 +161,6 @@ class _M3LibraryBrowsingPanelState
         // 重置所有筛选条件，确保每次打开面板时都是干净的状态
         notifier.resetAllFilters();
 
-        print('【M3LibraryBrowsingPanel】initState - 已重置所有选择状态和搜索条件');
-
         // 加载数据
         notifier.loadData();
       }
@@ -190,7 +188,6 @@ class _M3LibraryBrowsingPanelState
         children: [
           TextButton(
             onPressed: () {
-              print('【LibraryBrowsingPanel】点击取消按钮');
               // 使用普通的Navigator.pop，而不是指定rootNavigator
               Navigator.pop(context);
             },
@@ -201,7 +198,6 @@ class _M3LibraryBrowsingPanelState
             onPressed: state.selectedItems.isEmpty
                 ? null
                 : () {
-                    print('【LibraryBrowsingPanel】点击确认按钮');
                     final selectedItems = state.items
                         .where((item) => state.selectedItems.contains(item.id))
                         .toList();
@@ -210,23 +206,17 @@ class _M3LibraryBrowsingPanelState
                       return;
                     }
 
-                    print(
-                        '【LibraryBrowsingPanel】已选择${selectedItems.length}个项目');
-
                     // 先调用回调，然后再关闭对话框
                     if (widget.enableMultiSelect &&
                         widget.onItemsSelected != null) {
-                      print('【LibraryBrowsingPanel】调用onItemsSelected回调');
                       // 调用回调前不关闭对话框，让回调处理关闭
                       widget.onItemsSelected!(selectedItems);
                     } else if (!widget.enableMultiSelect &&
                         widget.onItemSelected != null) {
-                      print('【LibraryBrowsingPanel】调用onItemSelected回调');
                       // 调用回调前不关闭对话框，让回调处理关闭
                       widget.onItemSelected!(selectedItems.first);
                     } else {
                       // 如果没有回调，才由这里关闭对话框
-                      print('【LibraryBrowsingPanel】没有回调函数，直接关闭对话框');
                       Navigator.pop(context);
                     }
                   },
@@ -425,10 +415,8 @@ class _M3LibraryBrowsingPanelState
             final rect = Rect.fromLTWH(
                 pos.dx, pos.dy, renderObj.size.width, renderObj.size.height);
             result[itemId] = rect;
-            print('【框选】找到图库项目位置 $itemId: $rect');
           } catch (e) {
             // 处理可能的异常，例如元素已经不在视图树中
-            print('【框选】获取图库项目 $itemId 位置时出错: $e');
           }
         }
       }
@@ -440,9 +428,6 @@ class _M3LibraryBrowsingPanelState
     // 开始遍历
     if (_contentKey.currentContext != null) {
       _contentKey.currentContext!.visitChildElements(visitor);
-      print('【框选】元素树遍历完成，找到 ${result.length} 个图库项目');
-    } else {
-      print('【框选】内容区域context为空，无法遍历元素树');
     }
 
     return result;
@@ -463,17 +448,12 @@ class _M3LibraryBrowsingPanelState
     RenderBox? contentBox =
         _contentKey.currentContext?.findRenderObject() as RenderBox?;
     if (contentBox == null) {
-      print('【框选】无法获取内容区域的RenderBox对象');
       return;
     }
-
-    // 输出当前视图模式用于调试
-    print('【框选】当前视图模式: ${state.viewMode == ViewMode.grid ? "网格" : "列表"}');
 
     // 使用元素遍历来找到实际的图库项目位置
     final libraryItems = _findRealLibraryItemPositions(contentBox);
     if (libraryItems.isEmpty) {
-      print('【框选】视图中未找到图库项目');
       return;
     }
 
@@ -482,36 +462,25 @@ class _M3LibraryBrowsingPanelState
     // 记录框选内的所有图库项目ID
     Set<String> boxSelectedIds = {};
 
-    // 调试信息
-    print('【框选】选择框: $selectionRect');
-    print('【框选】找到 ${libraryItems.length} 个图库项目');
-
     // 选中在选择框内的所有图库项目
     for (var entry in libraryItems.entries) {
       if (selectionRect.overlaps(entry.value)) {
         boxSelectedIds.add(entry.key);
-        print('【框选】选中图库项目: ${entry.key}, 位置: ${entry.value}');
       }
-    }
 
-    if (boxSelectedIds.isEmpty) {
-      print('【框选】在选择框中未找到图库项目: $selectionRect');
-      return;
-    }
+      if (boxSelectedIds.isEmpty) {
+        return;
+      }
 
-    print('【框选】框选了 ${boxSelectedIds.length} 个图库项目');
-
-    // 更新批量模式状态
-    if (!state.isBatchMode && boxSelectedIds.isNotEmpty) {
-      notifier.toggleBatchMode();
-    } // 只添加新选择的项目，保留已有选择
-    for (final id in boxSelectedIds) {
-      if (!state.selectedItems.contains(id)) {
-        // 只有未选中的项目才需要切换状态
-        notifier.toggleItemSelection(id);
-        print('【框选】添加选中图库项目: $id');
-      } else {
-        print('【框选】图库项目已被选中: $id');
+      // 更新批量模式状态
+      if (!state.isBatchMode && boxSelectedIds.isNotEmpty) {
+        notifier.toggleBatchMode();
+      } // 只添加新选择的项目，保留已有选择
+      for (final id in boxSelectedIds) {
+        if (!state.selectedItems.contains(id)) {
+          // 只有未选中的项目才需要切换状态
+          notifier.toggleItemSelection(id);
+        }
       }
     }
   }
@@ -547,17 +516,14 @@ class _M3LibraryBrowsingPanelState
         notifier.clearSelection();
         notifier.selectItem(itemId);
         if (widget.onItemSelected != null) {
-          print('【LibraryBrowsingPanel】单击项目，调用onItemSelected回调');
           widget.onItemSelected!(selectedItem);
         }
       }
     } else if (state.isBatchMode || widget.enableMultiSelect) {
       // 批量选择模式 - 切换选择状态
-      print('【LibraryBrowsingPanel】批量选择模式 - 切换选择状态');
       notifier.toggleItemSelection(itemId);
     } else if (widget.onItemSelected != null) {
       // 有选择回调的单选模式
-      print('【LibraryBrowsingPanel】有选择回调的单选模式');
       notifier.selectItem(itemId);
       notifier.setDetailItem(selectedItem); // Also update the detail item
       widget.onItemSelected!(selectedItem);
@@ -595,7 +561,6 @@ class _M3LibraryBrowsingPanelState
 
     // Ensure we have a valid BuildContext for the dialog
     if (!mounted) {
-      print('Component not mounted, cannot show dialog');
       return;
     }
 
@@ -631,9 +596,7 @@ class _M3LibraryBrowsingPanelState
           Navigator.of(dialogBuilderContext!).pop();
           dialogBuilderContext = null;
         }
-      } catch (e) {
-        print('Error closing dialog: $e');
-      }
+      } catch (e) {}
     }
 
     try {

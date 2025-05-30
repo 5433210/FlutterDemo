@@ -12,8 +12,6 @@ class EraseDataMigration {
       'regionId': region.id,
       'hasEraseData': region.eraseData != null,
       'eraseDataCount': region.eraseData?.length ?? 0,
-      'hasErasePoints': region.erasePoints != null,
-      'erasePointsCount': region.erasePoints?.length ?? 0,
     });
 
     // Already has new format
@@ -40,24 +38,6 @@ class EraseDataMigration {
       return region.eraseData;
     }
 
-    // Migrate from old format
-    if (region.erasePoints != null && region.erasePoints!.isNotEmpty) {
-      AppLogger.debug('从erasePoints迁移到eraseData格式');
-
-      final brushSize = region.options.brushSize;
-      final brushColor = Colors.white.value; // Default for old format
-
-      return region.erasePoints!.map((points) {
-        final serializedPoints =
-            points.map((p) => {'dx': p.dx, 'dy': p.dy}).toList();
-        return {
-          'points': serializedPoints,
-          'brushSize': brushSize,
-          'brushColor': brushColor,
-        };
-      }).toList();
-    }
-
     AppLogger.debug('没有擦除数据需要迁移');
     return null;
   }
@@ -71,7 +51,6 @@ class EraseDataMigration {
     final migratedData = migrateEraseData(region);
     return region.copyWith(
       eraseData: migratedData,
-      // Don't clear erasePoints yet for backward compatibility
     );
   }
 
@@ -101,7 +80,7 @@ class EraseDataMigration {
       if (pathData.containsKey('brushColor')) {
         newPathData['brushColor'] = pathData['brushColor'];
       } else {
-        newPathData['brushColor'] = Colors.white.value; // Default color
+        newPathData['brushColor'] = Colors.white.toARGB32(); // Default color
       }
 
       result.add(newPathData);

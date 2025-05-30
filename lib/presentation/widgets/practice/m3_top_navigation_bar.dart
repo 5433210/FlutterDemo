@@ -65,7 +65,7 @@ class M3TopNavigationBar extends StatelessWidget
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canUndo
                     ? colorScheme.primary
-                    : colorScheme.onSurface.withOpacity(0.38),
+                    : colorScheme.onSurface.withValues(alpha: 0.38),
               ),
             ),
             const SizedBox(width: AppSizes.s),
@@ -78,7 +78,7 @@ class M3TopNavigationBar extends StatelessWidget
               style: IconButton.styleFrom(
                 foregroundColor: controller.state.canRedo
                     ? colorScheme.primary
-                    : colorScheme.onSurface.withOpacity(0.38),
+                    : colorScheme.onSurface.withValues(alpha: 0.38),
               ),
             ),
           ],

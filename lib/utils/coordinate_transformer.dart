@@ -118,8 +118,6 @@ class CoordinateTransformer {
 
   /// 从PreviewCanvas中迁移的计算图像在视口中显示区域的方法
   Rect calculateImageRectInViewport() {
-    // 计算图像在视口中的显示区域
-    final matrix = transformationController.value;
     final topLeft = imageToViewportCoordinate(Offset.zero);
     final bottomRight = imageToViewportCoordinate(
       Offset(imageSize.width, imageSize.height),

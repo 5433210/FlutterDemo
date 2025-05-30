@@ -580,7 +580,7 @@ class _M3LayerPropertyPanelContentState
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           foregroundColor: isDisabled
-              ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+              ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
               : colorScheme.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -593,7 +593,7 @@ class _M3LayerPropertyPanelContentState
               icon,
               size: 20,
               color: isDisabled
-                  ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+                  ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
                   : colorScheme.primary,
             ),
             const SizedBox(height: 4),
@@ -601,7 +601,7 @@ class _M3LayerPropertyPanelContentState
               label,
               style: textTheme.bodySmall?.copyWith(
                 color: isDisabled
-                    ? colorScheme.onSurfaceVariant.withOpacity(0.5)
+                    ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
                     : colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
@@ -626,7 +626,7 @@ class _M3LayerPropertyPanelContentState
           child: Text(
             l10n.noElementsInLayer,
             style: textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -671,7 +671,7 @@ class _M3LayerPropertyPanelContentState
           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
           elevation: 0,
           color: isSelected
-              ? colorScheme.primaryContainer.withOpacity(0.3)
+              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
               : colorScheme.surfaceContainerHighest,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
@@ -681,7 +681,7 @@ class _M3LayerPropertyPanelContentState
               iconData,
               color: isSelected
                   ? colorScheme.primary
-                  : colorScheme.onSurfaceVariant,
+                  : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             title: isEditing
                 ? TextField(
@@ -718,7 +718,8 @@ class _M3LayerPropertyPanelContentState
                     icon: Icon(
                       Icons.edit,
                       size: 18,
-                      color: colorScheme.onSurfaceVariant,
+                      color:
+                          colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                     tooltip: l10n.rename,
                     onPressed: () => _startEditingElementName(id, elementName),
@@ -733,7 +734,7 @@ class _M3LayerPropertyPanelContentState
                     isHidden ? Icons.visibility_off : Icons.visibility,
                     size: 18,
                     color: isHidden
-                        ? colorScheme.onSurfaceVariant
+                        ? colorScheme.onSurfaceVariant.withValues(alpha: 0.5)
                         : colorScheme.primary,
                   ),
                   tooltip: isHidden ? l10n.showElement : l10n.hideElement,
@@ -750,7 +751,7 @@ class _M3LayerPropertyPanelContentState
                     size: 18,
                     color: isLocked
                         ? colorScheme.primary
-                        : colorScheme.onSurfaceVariant,
+                        : colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                   tooltip: isLocked ? l10n.unlockElement : l10n.lockElement,
                   onPressed: () => _toggleElementLock(id, isLocked),

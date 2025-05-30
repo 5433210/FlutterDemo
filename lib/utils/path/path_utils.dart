@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:charasgem/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 
 /// 路径处理工具类
@@ -116,7 +117,7 @@ class PathUtils {
     try {
       return path.getBounds();
     } catch (e) {
-      print('获取路径边界出错: $e');
+      AppLogger.error('获取路径边界出错', error: e);
       return null;
     }
   }

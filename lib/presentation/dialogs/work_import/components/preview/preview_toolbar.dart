@@ -101,7 +101,7 @@ class _ToolbarIconButton extends StatelessWidget {
             ? (isDestructive
                 ? theme.colorScheme.error
                 : theme.colorScheme.onSurfaceVariant)
-            : theme.colorScheme.onSurfaceVariant.withOpacity(0.38),
+            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
       ),
       tooltip: tooltip,
       visualDensity: VisualDensity.compact,
@@ -113,10 +113,10 @@ class _ToolbarIconButton extends StatelessWidget {
         hoverColor: (isDestructive
                 ? theme.colorScheme.error
                 : theme.colorScheme.onSurfaceVariant)
-            .withOpacity(0.08),
+            .withValues(alpha: 0.08),
         disabledBackgroundColor: Colors.transparent,
         disabledForegroundColor:
-            theme.colorScheme.onSurfaceVariant.withOpacity(0.38),
+            theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
       ),
     );
   }

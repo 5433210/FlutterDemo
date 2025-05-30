@@ -55,7 +55,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
       _textController.text = displayText;
     }
 
-    final readOnlyFillColor = theme.disabledColor.withOpacity(0.05);
+    final readOnlyFillColor = theme.disabledColor.withValues(alpha: 0.05);
 
     // 只读模式
     if (widget.readOnly) {
@@ -127,7 +127,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: theme.colorScheme.outline.withOpacity(0.5),
+                  color: theme.colorScheme.outline.withValues(alpha: 0.5),
                 ),
               ),
               suffixIcon: Icon(
@@ -137,7 +137,7 @@ class _DropdownFieldState<T> extends State<DropdownField<T>> {
               ),
               filled: _hasFocus && isEnabled,
               fillColor: _hasFocus && isEnabled
-                  ? theme.colorScheme.primaryContainer.withOpacity(0.1)
+                  ? theme.colorScheme.primaryContainer.withValues(alpha: 0.1)
                   : null,
               enabled: isEnabled,
             ),

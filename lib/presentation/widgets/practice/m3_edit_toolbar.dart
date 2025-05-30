@@ -382,7 +382,7 @@ class M3EditToolbar extends StatelessWidget implements PreferredSizeWidget {
           color: isActive
               ? colorScheme.primary
               : onPressed == null
-                  ? colorScheme.onSurface.withOpacity(0.38)
+                  ? colorScheme.onSurface.withValues(alpha: 26)
                   : null,
           size: 20,
         ),

@@ -223,7 +223,7 @@ class CollectionPainter extends CustomPainter {
   void _drawFallbackTexture(Canvas canvas, Rect rect) {
     // 绘制简单的灰色占位符
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.1)
+      ..color = Colors.grey.withValues(alpha: 26)
       ..style = PaintingStyle.fill;
     canvas.drawRect(rect, paint);
   }
@@ -302,7 +302,7 @@ class CollectionPainter extends CustomPainter {
     // 只使用背景纹理模式，使用 srcOver 混合模式
     final paint = Paint()
       ..filterQuality = FilterQuality.medium
-      ..color = Colors.white.withOpacity(textureConfig.opacity)
+      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255)
       ..blendMode = BlendMode
           .srcOver; // 根据新的填充模式绘制纹理 (只支持 repeat, cover, stretch, contain)
     if (textureConfig.fillMode == 'repeat') {

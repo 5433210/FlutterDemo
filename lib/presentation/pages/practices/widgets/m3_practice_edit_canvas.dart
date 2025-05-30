@@ -355,7 +355,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           children: [
             // Main canvas container
             Container(
-              color: colorScheme.inverseSurface.withOpacity(0.1),
+              color: colorScheme.inverseSurface.withValues(alpha: 0.1),
               child: Stack(
                 children: [
                   // InteractiveViewer with page content
@@ -489,7 +489,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                  color: colorScheme.surface.withOpacity(0.85),
+                  color: colorScheme.surface.withValues(alpha: 0.85),
                   child: Wrap(
                     alignment: WrapAlignment.end,
                     spacing: 4.0,
@@ -1964,7 +1964,7 @@ class _SelectionBoxPainter extends CustomPainter {
 
     // 添加半透明填充
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.1)
+      ..color = color.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(rect, fillPaint);

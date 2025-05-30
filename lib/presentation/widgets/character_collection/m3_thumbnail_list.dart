@@ -169,7 +169,6 @@ class _M3ThumbnailItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final imageState = ref.watch(workImageProvider);
-    final l10n = AppLocalizations.of(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -209,8 +208,8 @@ class _M3ThumbnailItem extends ConsumerWidget {
                 }
                 return Center(
                   child: Icon(
-                    Icons.image_outlined, 
-                    size: 24, 
+                    Icons.image_outlined,
+                    size: 24,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 );
@@ -225,9 +224,10 @@ class _M3ThumbnailItem extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 decoration: BoxDecoration(
-                  color: isSelected 
-                      ? theme.colorScheme.primary 
-                      : theme.colorScheme.surfaceVariant.withOpacity(0.7),
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.7),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(7),
                     bottomRight: Radius.circular(7),
@@ -237,8 +237,8 @@ class _M3ThumbnailItem extends ConsumerWidget {
                   '$index',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isSelected 
-                        ? theme.colorScheme.onPrimary 
+                    color: isSelected
+                        ? theme.colorScheme.onPrimary
                         : theme.colorScheme.onSurfaceVariant,
                     fontSize: 10,
                   ),
@@ -251,7 +251,7 @@ class _M3ThumbnailItem extends ConsumerWidget {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.scrim.withOpacity(0.3),
+                    color: theme.colorScheme.scrim.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(7),
                   ),
                   child: Center(

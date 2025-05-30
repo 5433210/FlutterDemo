@@ -19,7 +19,8 @@ class GridPlaceholder extends StatelessWidget {
           Expanded(
             flex: 3,
             child: Container(
-              color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              color: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.5),
             ),
           ),
 
@@ -34,7 +35,7 @@ class GridPlaceholder extends StatelessWidget {
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surfaceContainerHighest
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -47,7 +48,7 @@ class GridPlaceholder extends StatelessWidget {
                         height: 12,
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surfaceContainerHighest
-                              .withOpacity(0.5),
+                              .withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -58,8 +59,8 @@ class GridPlaceholder extends StatelessWidget {
                       height: 12,
                       width: 40,
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.primaryContainer.withOpacity(0.5),
+                        color: theme.colorScheme.primaryContainer
+                            .withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),

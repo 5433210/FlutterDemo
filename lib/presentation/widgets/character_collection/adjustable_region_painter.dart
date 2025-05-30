@@ -33,7 +33,7 @@ class AdjustableRegionPainter extends CustomPainter {
 
     // 绘制选区填充
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.1)
+      ..color = Colors.blue.withValues(alpha: 0.1)
       ..style = PaintingStyle.fill;
 
     // 保存画布状态用于旋转
@@ -87,7 +87,7 @@ class AdjustableRegionPainter extends CustomPainter {
     if (guideLines == null || guideLines!.length < 2) return;
 
     final guidePaint = Paint()
-      ..color = Colors.red.withOpacity(0.5)
+      ..color = Colors.red.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 

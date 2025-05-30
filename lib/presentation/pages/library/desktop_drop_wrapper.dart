@@ -1,6 +1,8 @@
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
 
+import '../../../infrastructure/logging/logger.dart';
+
 /// A wrapper widget that enables system file drop capabilities for desktop platforms
 class DesktopDropWrapper extends StatefulWidget {
   final Widget child;
@@ -33,22 +35,13 @@ class _DesktopDropWrapperState extends State<DesktopDropWrapper> {
                 // Extract file paths from the drag operation
                 final fileNames =
                     detail.files.map((file) => file.path).toList();
-                print(
-                    'DesktopDropWrapper onDragDone received ${fileNames.length} files');
-
-                // Log paths for debugging
-                for (var i = 0; i < fileNames.length; i++) {
-                  print('File $i: ${fileNames[i]}');
-                }
 
                 // Only process if we have valid files
                 if (fileNames.isNotEmpty) {
-                  print(
-                      'DesktopDropWrapper passing ${fileNames.length} files to handler');
                   widget.onFilesDropped(fileNames);
                 }
               } catch (e) {
-                print('DesktopDropWrapper error in onDragDone: $e');
+                AppLogger.error('DesktopDropWrapper error in onDragDone: $e');
               } finally {
                 // Ensure dragging state is reset
                 setState(() {
@@ -57,20 +50,18 @@ class _DesktopDropWrapperState extends State<DesktopDropWrapper> {
               }
             },
             onDragEntered: (_) {
-              print('DesktopDropWrapper onDragEntered');
               setState(() {
                 _isDragging = true;
               });
             },
             onDragExited: (_) {
-              print('DesktopDropWrapper onDragExited');
               setState(() {
                 _isDragging = false;
               });
             },
             child: _isDragging && widget.showDropIndicator
                 ? Container(
-                    color: Colors.blue.withOpacity(0.2),
+                    color: Colors.blue.withValues(alpha: 0.2),
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

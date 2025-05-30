@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:charasgem/infrastructure/logging/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
@@ -152,7 +153,7 @@ extension CharacterRegionExt on CharacterRegion {
           return pathData;
         }).toList();
       } catch (e) {
-        print('Error decoding eraseData: $e');
+        AppLogger.error('Error decoding eraseData: $e');
         eraseData = null;
       }
     }

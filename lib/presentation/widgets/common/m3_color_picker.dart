@@ -208,21 +208,21 @@ class _M3ColorPickerState extends State<M3ColorPicker>
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildColorSlider('Red', widget.color.red.toDouble(), Colors.red,
-            (value) {
+        _buildColorSlider('Red', widget.color.r.toDouble(),
+            const Color.fromARGB(255, 255, 0, 0), (value) {
           _notifyColorChanged(widget.color.withRed(value.round()));
         }),
-        _buildColorSlider('Green', widget.color.green.toDouble(), Colors.green,
-            (value) {
+        _buildColorSlider('Green', widget.color.g.toDouble(),
+            const Color.fromARGB(255, 0, 255, 0), (value) {
           _notifyColorChanged(widget.color.withGreen(value.round()));
         }),
-        _buildColorSlider('Blue', widget.color.blue.toDouble(), Colors.blue,
-            (value) {
+        _buildColorSlider('Blue', widget.color.b.toDouble(),
+            const Color.fromARGB(255, 0, 0, 255), (value) {
           _notifyColorChanged(widget.color.withBlue(value.round()));
         }),
         if (widget.enableAlpha) ...[
           const Divider(),
-          _buildColorSlider('Alpha', widget.color.alpha.toDouble(), Colors.grey,
+          _buildColorSlider('Alpha', widget.color.a.toDouble(), Colors.grey,
               (value) {
             _notifyColorChanged(widget.color.withAlpha(value.round()));
           }),
@@ -254,11 +254,10 @@ class _M3ColorPickerState extends State<M3ColorPicker>
             onChanged: _handleHexInputChange,
           ),
           const SizedBox(height: 16),
-          Text(
-              'RGB: ${widget.color.red}, ${widget.color.green}, ${widget.color.blue}'),
-          if (widget.enableAlpha) Text('Alpha: ${widget.color.alpha}'),
+          Text('RGB: ${widget.color.r}, ${widget.color.g}, ${widget.color.b}'),
+          if (widget.enableAlpha) Text('Alpha: ${widget.color.a}'),
           const SizedBox(height: 8),
-          Text('Opacity: ${(widget.color.opacity * 100).round()}%'),
+          Text('Opacity: ${(widget.color.a / 255 * 100).round()}%'),
         ],
       ),
     );
@@ -325,7 +324,7 @@ class _M3ColorPickerState extends State<M3ColorPicker>
       itemCount: _presetColors.length,
       itemBuilder: (context, index) {
         final color = _presetColors[index];
-        final isSelected = widget.color.value == color.value;
+        final isSelected = widget.color.toARGB32() == color.toARGB32();
 
         return Material(
           color: Colors.transparent,
@@ -362,7 +361,7 @@ class _M3ColorPickerState extends State<M3ColorPicker>
 
   // 颜色转十六进制字符串（不含#前缀）
   String _colorToHex(Color color) {
-    return color.value.toRadixString(16).padLeft(8, '0').substring(2);
+    return color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2);
   }
 
   // 处理颜色代码输入变化
@@ -385,7 +384,7 @@ class _M3ColorPickerState extends State<M3ColorPicker>
       throw const FormatException('Invalid hex color code');
     }
     final value = int.parse(cleanHex, radix: 16);
-    return Color(value).withAlpha(widget.color.alpha);
+    return Color(value).withAlpha(widget.color.a.toInt());
   }
 
   void _notifyColorChanged(Color color) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:charasgem/infrastructure/logging/logger.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -211,7 +212,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
                       padding: const EdgeInsets.all(12.0),
                       margin: const EdgeInsets.only(bottom: 16.0),
                       decoration: BoxDecoration(
-                        color: colorScheme.primaryContainer.withOpacity(0.3),
+                        color: colorScheme.primaryContainer
+                            .withAlpha((0.3 * 255).toInt()),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Row(
@@ -554,7 +556,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
                       padding: const EdgeInsets.all(12.0),
                       margin: const EdgeInsets.only(bottom: 12.0),
                       decoration: BoxDecoration(
-                        color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                        color: colorScheme.tertiaryContainer
+                            .withAlpha((0.3 * 255).toInt()),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Text(
@@ -607,7 +610,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
                       padding: const EdgeInsets.all(12.0),
                       margin: const EdgeInsets.only(bottom: 16.0),
                       decoration: BoxDecoration(
-                        color: colorScheme.tertiaryContainer.withOpacity(0.3),
+                        color: colorScheme.tertiaryContainer
+                            .withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       child: Row(
@@ -1285,7 +1289,8 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
       decoration: BoxDecoration(
         border: Border.all(color: colorScheme.outline),
         borderRadius: BorderRadius.circular(12.0),
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color:
+            colorScheme.surfaceContainerHighest.withAlpha((0.5 * 255).toInt()),
       ),
       child: imageUrl.isNotEmpty
           ? LayoutBuilder(
@@ -1625,73 +1630,6 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
     }
   }
 
-  Future<bool> _checkImageExists(String imageUrl) async {
-    if (imageUrl.isEmpty) return false;
-
-    // Handle different URL types
-    if (imageUrl.startsWith('http')) {
-      try {
-        final response = await http.head(Uri.parse(imageUrl));
-        return response.statusCode == 200;
-      } catch (e) {
-        return false;
-      }
-    } else {
-      // Local file path
-      try {
-        String filePath = imageUrl;
-        if (imageUrl.startsWith('file://')) {
-          filePath = imageUrl.substring(7);
-        }
-        final file = File(filePath);
-        return await file.exists();
-      } catch (e) {
-        return false;
-      }
-    }
-  }
-
-  // Generate thumbnail for library item
-  Future<Uint8List?> _generateThumbnail(Uint8List imageBytes) async {
-    try {
-      final image = img.decodeImage(imageBytes);
-      if (image == null) return null;
-
-      // 计算缩略图尺寸，保持宽高比
-      const maxSize = 256.0;
-      final ratio = image.width / image.height;
-      int thumbnailWidth;
-      int thumbnailHeight;
-
-      if (ratio > 1) {
-        thumbnailWidth = maxSize.toInt();
-        thumbnailHeight = (maxSize / ratio).toInt();
-      } else {
-        thumbnailHeight = maxSize.toInt();
-        thumbnailWidth = (maxSize * ratio).toInt();
-      }
-
-      // 生成缩略图
-      final thumbnail = img.copyResize(
-        image,
-        width: thumbnailWidth,
-        height: thumbnailHeight,
-        interpolation: img.Interpolation.linear,
-      );
-
-      // 优化图片质量和大小
-      final compressedBytes = img.encodeJpg(
-        thumbnail,
-        quality: 85, // 适中的压缩质量
-      );
-
-      return Uint8List.fromList(compressedBytes);
-    } catch (e) {
-      debugPrint('生成缩略图失败: $e');
-      return null;
-    }
-  }
-
   // Get background color from element content
   Color _getBackgroundColor() {
     final content = element['content'] as Map<String, dynamic>;
@@ -1867,7 +1805,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
           // 通知上层图片已选择
           onSelectImage();
         } catch (e) {
-          print('Error importing image from library: $e');
+          AppLogger.error('Error importing image from library: $e');
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1885,7 +1823,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
         }
       }
     } catch (e) {
-      print('Error showing library picker: $e');
+      AppLogger.error('Error showing library picker: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1921,7 +1859,7 @@ class _M3ImagePropertyPanelState extends State<M3ImagePropertyPanel> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withOpacity(0.3),
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(

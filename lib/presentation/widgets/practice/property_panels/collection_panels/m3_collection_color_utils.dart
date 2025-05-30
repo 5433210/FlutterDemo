@@ -39,8 +39,9 @@ class CollectionColorUtils {
     if (color == Colors.blue) return '#0000ff';
     if (color == Colors.yellow) return '#ffff00';
     if (color == Colors.cyan) return '#00ffff';
-    if (color == Colors.purple.shade200)
+    if (color == Colors.purple.shade200) {
       return '#ff00ff'; // Approximation of magenta
+    }
     if (color == Colors.orange) return '#ffa500';
     if (color == Colors.purple) return '#800080';
     if (color == Colors.pink) return '#ffc0cb';
@@ -49,9 +50,9 @@ class CollectionColorUtils {
 
     try {
       // Get the RGB values of the color
-      final int r = color.red;
-      final int g = color.green;
-      final int b = color.blue;
+      final int r = color.r.toInt();
+      final int g = color.g.toInt();
+      final int b = color.b.toInt();
 
       // Convert to hex, ensuring each component has 2 digits
       final String hexR = r.toRadixString(16).padLeft(2, '0');

@@ -16,7 +16,8 @@ class TabBarThemeWrapper extends StatelessWidget {
       data: theme.copyWith(
         tabBarTheme: TabBarTheme(
           labelColor: theme.colorScheme.primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withOpacity(0.7),
+          unselectedLabelColor:
+              theme.colorScheme.onSurface.withValues(alpha: 0.7),
           // 将分割线颜色设置为透明，避免重复的分割线
           dividerColor: Colors.transparent,
           indicatorColor: theme.colorScheme.primary,

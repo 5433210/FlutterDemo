@@ -85,18 +85,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
   @override
   Widget build(BuildContext context) {
-    // if (kDebugMode && DebugFlags.enableEraseDebug) {
-    print(
-        '画布构建 - showOutline: ${widget.showOutline}, isProcessing: $_isProcessing');
-    // }
-
     // Pan mode is always enabled by default through Alt key
 
     // Improved outline toggling behavior
     ref.listen(eraseStateProvider.select((state) => state.showContour),
         (previous, current) {
       if (previous != current) {
-        print('轮廓状态变化，从 $previous 到 $current, 强制更新轮廓显示');
+        AppLogger.debug('轮廓状态变化', data: {
+          'from': previous,
+          'to': current,
+        });
         // Force update outline regardless of toggle direction to ensure proper state
         _updateOutline();
 
@@ -131,7 +129,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     ref.listen(eraseStateProvider.select((state) => state.imageInvertMode),
         (previous, current) {
       if (previous != current && ref.read(eraseStateProvider).showContour) {
-        print('图像反转状态变化，强制更新轮廓');
+        AppLogger.debug('图像反转状态变化，强制更新轮廓');
         Future.delayed(const Duration(milliseconds: 100), () {
           _updateOutline();
         });
@@ -156,19 +154,19 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       });
     });
 
-    return RawKeyboardListener(
+    return KeyboardListener(
       focusNode: focusNode,
       autofocus: true,
-      onKey: (RawKeyEvent event) {
-        // 直接拦截原始键盘事件，确保Alt键状态稳定
+      onKeyEvent: (KeyEvent event) {
+        // 直接拦截键盘事件，确保Alt键状态稳定
         final isAltKey = event.logicalKey == LogicalKeyboardKey.alt ||
             event.logicalKey == LogicalKeyboardKey.altLeft ||
             event.logicalKey == LogicalKeyboardKey.altRight;
 
         if (isAltKey) {
-          if (event is RawKeyDownEvent) {
+          if (event is KeyDownEvent) {
             _setAltKeyPressed(true);
-          } else if (event is RawKeyUpEvent) {
+          } else if (event is KeyUpEvent) {
             _setAltKeyPressed(false);
           }
         }
@@ -271,7 +269,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
       return processedImage;
     } catch (e) {
-      print('获取处理后图像失败: $e');
+      AppLogger.error('获取处理后图像失败', error: e);
       return null;
     }
   }
@@ -306,8 +304,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           'hasRegion': widget.region != null,
           'hasEraseData': widget.region?.eraseData != null,
           'eraseDataCount': widget.region?.eraseData?.length ?? 0,
-          'hasErasePoints': widget.region?.erasePoints != null,
-          'erasePointsCount': widget.region?.erasePoints?.length ?? 0,
           'migratedDataCount': eraseData?.length ?? 0,
         });
 
@@ -355,25 +351,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
     }
   }
 
-  Future<void> _exportContourDebugImage() async {
-    if (!kDebugMode) return;
-
-    setState(() => _isProcessing = true);
-
-    try {
-      final imageBytes = await ImageUtils.imageToBytes(widget.image);
-      if (imageBytes == null) {
-        throw Exception('无法将图像转换为字节数组');
-      }
-
-      // ...existing code...
-    } catch (e) {
-      print('导出轮廓调试图失败: $e');
-    } finally {
-      setState(() => _isProcessing = false);
-    }
-  }
-
   List<Offset> _extractPointsFromPath(Path path) {
     List<Offset> points = [];
     try {
@@ -403,17 +380,16 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
       }
 
       if (points.isEmpty) {
-        print('警告：从路径中未提取到点，尝试使用路径边界');
         final bounds = path.getBounds();
         points.add(bounds.center);
       }
     } catch (e) {
-      print('提取路径点出错: $e');
+      AppLogger.error('提取路径点出错', error: e);
       try {
         final bounds = path.getBounds();
         points.add(bounds.center);
       } catch (e2) {
-        print('无法获取路径边界: $e2');
+        AppLogger.error('无法获取路径边界', error: e2);
       }
     }
     return points;
@@ -499,14 +475,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
         });
       }
 
-      return KeyEventResult.handled;
-    }
-
-    if (kDebugMode &&
-        event is KeyDownEvent &&
-        event.logicalKey == LogicalKeyboardKey.keyD) {
-      print('按下D键，导出轮廓调试图');
-      _exportContourDebugImage();
       return KeyEventResult.handled;
     }
 
@@ -795,14 +763,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             final points = _extractPointsFromPath(p.path);
             return {
               'brushSize': p.brushSize,
-              'brushColor': p.brushColor.value,
+              'brushColor': p.brushColor.toString(),
               'points': points,
               'pathId': p.hashCode.toString(),
             };
           }).toList();
         }
-
-        print('开始处理轮廓，传递 ${erasePaths.length} 个路径...');
 
         // Use a timeout to prevent hanging if outline detection takes too long
         final result = await _timeoutFuture(
@@ -815,8 +781,6 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
             ),
             const Duration(seconds: 5));
 
-        print('轮廓处理完成');
-
         if (mounted) {
           setState(() {
             _outline = result.outline;
@@ -825,14 +789,12 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
 
           if (_layerStackKey.currentState != null) {
             final showContour = ref.read(eraseStateProvider).showContour;
-            print(
-                '传递轮廓数据到 EraseLayerStack, 显示=$showContour, 轮廓数据是否存在=${_outline != null}');
 
             // Only set outline if showing contours is enabled AND outline has valid data
             if (showContour &&
                 _outline != null &&
                 _outline!.contourPoints.isNotEmpty) {
-              print('轮廓包含 ${_outline!.contourPoints.length} 个轮廓路径');
+              AppLogger.debug('轮廓包含 ${_outline!.contourPoints.length} 个轮廓路径');
               _layerStackKey.currentState!.setOutline(_outline);
             } else {
               // Clear outline when toggled off or outline is invalid
@@ -849,11 +811,7 @@ class CharacterEditCanvasState extends ConsumerState<CharacterEditCanvas>
           }
         }
       } catch (e, stack) {
-        print('轮廓检测失败: $e');
         AppLogger.error('轮廓检测失败', error: e, stackTrace: stack);
-        if (kDebugMode) {
-          print('错误堆栈: $stack');
-        }
 
         // Make sure to reset state on error
         if (mounted) {

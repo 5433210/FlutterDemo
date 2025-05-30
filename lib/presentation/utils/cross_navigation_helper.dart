@@ -147,7 +147,8 @@ class CrossNavigationHelper {
                         ),
                       )
                     : null,
-                tileColor: colorScheme.surfaceContainerHighest.withOpacity(0.1),
+                tileColor:
+                    colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

@@ -30,9 +30,6 @@ class ElementRenderers {
     final enableSoftLineBreak =
         content['enableSoftLineBreak'] as bool? ?? false;
 
-    // 获取集字图片列表（实际应用中应该从数据库或其他存储中获取）
-    final characterImages = content['characterImages'];
-
     // 获取背景纹理设置
     final hasBackgroundTexture = content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
@@ -502,20 +499,6 @@ class ElementRenderers {
     }
   }
 
-  /// 根据填充模式获取BoxFit
-  static BoxFit _getBoxFit(String fillMode) {
-    switch (fillMode) {
-      case 'cover':
-        return BoxFit.cover;
-      case 'contain':
-        return BoxFit.contain;
-      case 'noRepeat':
-        return BoxFit.none;
-      default:
-        return BoxFit.none; // 对于repeat/repeatX/repeatY使用none，由ImageRepeat控制
-    }
-  }
-
   /// 获取图片适应模式
   static BoxFit _getFitMode(String fitMode) {
     switch (fitMode) {
@@ -529,20 +512,6 @@ class ElementRenderers {
         return BoxFit.none;
       default:
         return BoxFit.contain;
-    }
-  }
-
-  /// 根据填充模式获取ImageRepeat
-  static ImageRepeat _getImageRepeat(String fillMode) {
-    switch (fillMode) {
-      case 'repeat':
-        return ImageRepeat.repeat;
-      case 'repeatX':
-        return ImageRepeat.repeatX;
-      case 'repeatY':
-        return ImageRepeat.repeatY;
-      default:
-        return ImageRepeat.noRepeat;
     }
   }
 

@@ -33,7 +33,8 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          color: colorScheme.surfaceContainerHighest
+              .withAlpha((0.3 * 255).toInt()),
           borderRadius: BorderRadius.circular(12.0),
           border: Border.all(color: colorScheme.outline),
         ),
@@ -52,7 +53,8 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        color:
+            colorScheme.surfaceContainerHighest.withAlpha((0.3 * 255).toInt()),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(color: colorScheme.outline),
       ),
@@ -81,7 +83,7 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
     int? index,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+
     final idx = index ?? selectedCharIndex;
     final content = element['content'] as Map<String, dynamic>? ?? {};
     final characterImages =
@@ -128,7 +130,9 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
               child: Image.memory(
                 snapshot.data!,
                 fit: BoxFit.contain,
-                color: isSelected ? colorScheme.primary.withOpacity(0.2) : null,
+                color: isSelected
+                    ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
+                    : null,
                 colorBlendMode: isSelected ? BlendMode.srcATop : null,
                 errorBuilder: (context, error, stackTrace) {
                   return _buildDefaultCharacterText(
@@ -148,7 +152,7 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
   Widget _buildCharacterTile(
       BuildContext context, WidgetRef ref, int index, String character) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+
     final isSelected = selectedCharIndex == index;
 
     return InkWell(
@@ -169,7 +173,7 @@ class M3CharacterPreviewPanel extends ConsumerWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: colorScheme.shadow.withOpacity(0.3),
+                    color: colorScheme.shadow.withValues(alpha: 0.3),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   )

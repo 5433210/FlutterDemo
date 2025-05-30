@@ -132,24 +132,17 @@ class WorkImportDialog extends ConsumerWidget {
           // Preview section
           Expanded(
             flex: 3,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: availableHeight - 48, // Account for padding
-              ),
+            child: SizedBox(
+              height: availableHeight - 48, // Account for padding
               child: const WorkImportPreviewWithoutButtons(),
             ),
           ),
 
-          const SizedBox(width: 24),
-
-          // Form section
+          const SizedBox(width: 24), // Form section
           Expanded(
             flex: isLargeScreen ? 2 : 3,
             child: SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: availableHeight - 48, // Account for padding
-                ),
+              child: IntrinsicHeight(
                 child: WorkImportForm(
                   state: state,
                   viewModel: viewModel,

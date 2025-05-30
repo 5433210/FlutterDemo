@@ -45,7 +45,6 @@ class M3PageNavigationBar extends StatelessWidget
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final screenWidth = MediaQuery.of(context).size.width;
 
     return BaseNavigationBar(
       leading: showBackButton
@@ -88,28 +87,8 @@ class M3PageNavigationBar extends StatelessWidget
                   ),
                   if (titleActions != null) ...[              
                     const SizedBox(width: AppSizes.s),
-                    // Wrap in Flexible with tight constraints
-                    Flexible(
-                      fit: FlexFit.loose,
-                      child: ConstrainedBox(
-                        // Limit width to prevent overflow
-                        constraints: BoxConstraints(maxWidth: screenWidth * 0.25),
-                        child: Wrap(
-                          // Use Wrap instead of Row for better overflow handling
-                          spacing: AppSizes.xs,
-                          runSpacing: AppSizes.xs,
-                          children: titleActions!.map((widget) {
-                            // Apply constraints to each child
-                            return widget is SizedBox
-                                ? widget
-                                : Container(
-                                    constraints: BoxConstraints(maxWidth: screenWidth * 0.2),
-                                    child: widget,
-                                  );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
+                    // Simply add the title actions without wrapping in Flexible
+                    ...titleActions!,
                   ],
                 ],
               ),

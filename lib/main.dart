@@ -20,7 +20,6 @@ void main() async {
   LoggingConfig.verboseStorageLogging = false;
   LoggingConfig.verboseThumbnailLogging = false;
   LoggingConfig.verboseDatabaseLogging = false;
-  LoggingConfig.enableDebugPrints = false; // Turn off noisy prints
 
   // 初始化键盘工具
   KeyboardUtils.initialize();

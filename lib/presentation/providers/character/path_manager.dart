@@ -233,7 +233,6 @@ class PathManager {
 
     if (brushColor != null) {
       _currentColor = brushColor;
-      print('开始路径，设置颜色: $brushColor');
     }
 
     _updateCurrentPath();
@@ -243,8 +242,8 @@ class PathManager {
   /// 撤销上一个路径
   void undo() {
     if (_completedPaths.isNotEmpty) {
-      final PathInfo = _completedPaths.removeLast();
-      _redoPaths.add(PathInfo); // 保存到重做列表
+      final pathInfo = _completedPaths.removeLast();
+      _redoPaths.add(pathInfo); // 保存到重做列表
     }
   }
 
@@ -268,24 +267,16 @@ class PathManager {
     // 图像反转不应影响笔刷颜色的确定
     final targetColor = brushReversed ? Colors.black : Colors.white;
 
-    print(
-        '更新当前笔刷颜色: 笔刷反转=$brushReversed, 目标颜色=${targetColor == Colors.black ? "黑色" : "白色"}');
-
     // 不要修改已完成的路径颜色，只更新当前路径的颜色
     if (_currentPath != null && _currentColor != null) {
       _currentColor = targetColor;
     }
-
-    print('只更新当前路径颜色，保持已完成路径颜色不变');
   }
 
   /// 更新所有路径以适应图像反转状态变化
   void updateAllPathsForImageInversion(bool imageInverted) {
     if (_completedPaths.isEmpty) return;
 
-    print('图像反转状态更改为: $imageInverted, 更新所有已存在的路径');
-
-    // 复制路径但反转颜色，以适应新的图像反转状态
     final updatedPaths = <PathInfo>[];
 
     for (final entry in _completedPaths) {
@@ -302,15 +293,12 @@ class PathManager {
     // 替换路径列表
     _completedPaths.clear();
     _completedPaths.addAll(updatedPaths);
-
-    print('已更新 ${updatedPaths.length} 条路径的颜色以适应图像反转');
   }
 
   /// 更新当前路径的颜色
   void updateCurrentColor(Color color) {
     if (_currentPath != null) {
       _currentColor = color;
-      print('更新当前路径颜色: $color');
     }
   }
 

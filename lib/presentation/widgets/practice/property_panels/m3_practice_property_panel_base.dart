@@ -47,8 +47,6 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
     required Function(double) onRotationChanged,
   }) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return m3ExpansionTile(
       context: context,
@@ -127,7 +125,7 @@ abstract class M3PracticePropertyPanel extends StatelessWidget {
     required Function(double) onOpacityChanged,
   }) {
     final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
+
     final textTheme = Theme.of(context).textTheme;
 
     // 使用静态变量保存当前值，以便在拖动结束时记录操作

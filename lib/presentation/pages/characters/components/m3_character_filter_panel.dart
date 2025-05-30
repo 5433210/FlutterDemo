@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../../../domain/enums/sort_field.dart';
 import '../../../../domain/enums/work_style.dart';

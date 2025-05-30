@@ -99,8 +99,9 @@ class _M3PracticeLayerPanelState extends State<M3PracticeLayerPanel> {
       key: ValueKey(id),
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color:
-            isSelected ? colorScheme.primaryContainer.withOpacity(0.7) : null,
+        color: isSelected
+            ? colorScheme.primaryContainer.withValues(alpha: 0.7)
+            : null,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Material(

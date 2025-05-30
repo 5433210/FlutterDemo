@@ -227,7 +227,7 @@ class AdvancedCollectionPainter extends CustomPainter {
 
       // 绘制一个带有边框的矩形
       final paint = Paint()
-        ..color = Colors.grey.withOpacity(0.5)
+        ..color = Colors.grey.withAlpha(128)
         ..style = PaintingStyle.fill;
       canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
 
@@ -869,7 +869,7 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
@@ -922,13 +922,10 @@ class AdvancedCollectionPainter extends CustomPainter {
       height: finalSize.height,
     );
 
-    debugPrint('  处理后纹理尺寸: $processedTextureSize');
-    debugPrint('  最终绘制区域: $destRect');
-
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
@@ -1031,7 +1028,7 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
 
     // 第一步：根据FitMode处理纹理尺寸
     final processedTextureSize = _applyFitModeToTexture(image, textureSize);
@@ -1079,7 +1076,7 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withOpacity(textureConfig.opacity);
+      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());

@@ -45,10 +45,8 @@ class _EnhancedWorkPreviewState extends State<EnhancedWorkPreview> {
     final theme = Theme.of(context);
 
     return LayoutBuilder(builder: (context, constraints) {
-      final availableHeight = constraints.maxHeight;
       final toolbarHeight = widget.showToolbar ? 40.0 : 0.0;
       final thumbnailHeight = widget.images.isNotEmpty ? 100.0 : 0.0;
-      final imageHeight = availableHeight - toolbarHeight - thumbnailHeight;
 
       return Stack(children: [
         Column(

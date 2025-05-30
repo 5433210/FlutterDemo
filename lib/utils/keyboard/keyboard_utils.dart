@@ -8,8 +8,8 @@ class KeyboardUtils {
   // 跟踪按键状态
   static final Map<LogicalKeyboardKey, bool> _keyStates = {};
 
-  // 跟踪RawKeyboard状态 - 用于更可靠地处理Windows上的Alt键
-  static final Set<LogicalKeyboardKey> _rawKeyStates = {};
+  // 跟踪键盘状态 - 用于更可靠地处理Windows上的Alt键
+  static final Set<LogicalKeyboardKey> _trackedKeyStates = {};
 
   // 键盘状态监听器
   static final _keyStateListeners =
@@ -36,9 +36,9 @@ class KeyboardUtils {
     // 使用两个级别的事件处理来确保捕获所有键盘事件
     ServicesBinding.instance.keyboard.addHandler(_handleKeyEvent);
 
-    // 对于Windows平台，添加原始键盘事件处理器来可靠地跟踪Alt键
+    // 对于Windows平台，添加硬件键盘事件处理器来可靠地跟踪Alt键
     if (_isWindows) {
-      RawKeyboard.instance.addListener(_handleRawKeyEvent);
+      HardwareKeyboard.instance.addHandler(_handleHardwareKeyEvent);
     }
 
     // 添加定时检查Alt键状态的机制
@@ -108,22 +108,25 @@ class KeyboardUtils {
     return false;
   }
 
-  /// RawKeyboard事件处理 - 专门用于处理Windows上的Alt键问题
-  static void _handleRawKeyEvent(RawKeyEvent event) {
+  /// HardwareKeyboard事件处理 - 专门用于处理Windows上的Alt键问题
+  static bool _handleHardwareKeyEvent(KeyEvent event) {
     // 只关注Alt键
     bool isAltKey = event.logicalKey == LogicalKeyboardKey.alt ||
         event.logicalKey == LogicalKeyboardKey.altLeft ||
         event.logicalKey == LogicalKeyboardKey.altRight;
 
-    if (!isAltKey) return;
+    if (!isAltKey) return false;
 
-    if (event is RawKeyDownEvent) {
-      _rawKeyStates.add(event.logicalKey);
+    if (event is KeyDownEvent) {
+      _trackedKeyStates.add(event.logicalKey);
       _updateKeyState(event.logicalKey, true);
-    } else if (event is RawKeyUpEvent) {
-      _rawKeyStates.remove(event.logicalKey);
+    } else if (event is KeyUpEvent) {
+      _trackedKeyStates.remove(event.logicalKey);
       _updateKeyState(event.logicalKey, false);
     }
+
+    // 返回false让事件继续传递
+    return false;
   }
 
   /// 检查一个键是否是修饰键

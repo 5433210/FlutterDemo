@@ -16,20 +16,20 @@ class BoxSelectionPainter extends CustomPainter {
 
     // 绘制半透明填充
     final fillPaint = Paint()
-      ..color = Colors.blue.withOpacity(0.15)
+      ..color = Colors.blue.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
     canvas.drawRect(rect, fillPaint);
 
     // 绘制边框
     final strokePaint = Paint()
-      ..color = Colors.blue.withOpacity(0.8)
+      ..color = Colors.blue.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
     canvas.drawRect(rect, strokePaint);
 
     // 绘制角落标记，增强视觉反馈
     final cornerPaint = Paint()
-      ..color = Colors.blue
+      ..color = Colors.blue.withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
 

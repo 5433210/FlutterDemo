@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../theme/app_sizes.dart';
 import '../../utils/cross_navigation_helper.dart';
 
-import '../../../theme/app_sizes.dart';
 import 'components/appearance_settings.dart';
 import 'components/backup_settings.dart';
 import 'components/cache_settings.dart';

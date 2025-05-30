@@ -50,7 +50,7 @@ class CollectionElementWidget extends PracticeElementWidget {
           color: Color(
                   int.parse(element.backgroundColor.substring(1), radix: 16) +
                       0xFF000000)
-              .withOpacity(element.opacity),
+              .withAlpha((element.opacity * 255).toInt()),
         ),
         padding: element.padding,
         child: Stack(
@@ -87,16 +87,6 @@ class CollectionElementWidget extends PracticeElementWidget {
         element.direction == CollectionDirection.horizontalReversed ||
             element.direction == CollectionDirection.verticalReversed;
 
-    // 行内排列方向
-    final flowIsHorizontal =
-        element.flowDirection == CollectionDirection.horizontal ||
-            element.flowDirection == CollectionDirection.horizontalReversed;
-
-    // 行间排列方向
-    final flowIsReversed =
-        element.flowDirection == CollectionDirection.horizontalReversed ||
-            element.flowDirection == CollectionDirection.verticalReversed;
-
     // 处理排列方向
     if (isReversed) {
       characters.reversed.toList();
@@ -121,7 +111,7 @@ class CollectionElementWidget extends PracticeElementWidget {
           height: charSize,
           decoration: BoxDecoration(
             border: Border.all(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withAlpha((0.3 * 255).toInt()),
             ),
           ),
           child: charImage != null
@@ -297,7 +287,7 @@ class ImageElementWidget extends PracticeElementWidget {
                 child: element.imageUrl.isNotEmpty
                     ? _buildImage()
                     : Container(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: Colors.grey.withAlpha((0.2 * 255).toInt()),
                         child: const Center(child: Icon(Icons.image)),
                       ),
               ),
@@ -665,7 +655,7 @@ class TextElementWidget extends PracticeElementWidget {
           color: Color(
                   int.parse(element.backgroundColor.substring(1), radix: 16) +
                       0xFF000000)
-              .withOpacity(element.opacity),
+              .withValues(alpha: element.opacity),
         ),
         padding: element.padding,
         child: Stack(
