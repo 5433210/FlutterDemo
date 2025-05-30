@@ -390,20 +390,19 @@ class ImageProcessorImpl implements ImageProcessor {
           height, (y) => List.generate(width, (x) => false, growable: false),
           growable: false);
 
-      final allContours = <List<Offset>>[];
+      final allContourSegments = <_ContourSegment>[];
 
       // Find and trace the outer contour
       var startPoint = _findFirstContourPoint(paddedImage, isInverted);
       if (startPoint != null) {
-        final outerContour =
-            _traceContour(paddedImage, visited, startPoint, isInverted);
-        if (outerContour.length >= 4) {
-          allContours.add(outerContour);
+        final outerSegment =
+            _traceContourSegment(paddedImage, visited, startPoint, isInverted);
+        if (outerSegment.points.length >= 4) {
+          allContourSegments.add(outerSegment);
         }
       }
 
       // Limit inner contour detection to safely inside the image boundaries
-      // Note: Changed from y < height - 1 to x < width - 1 in the inner loop condition
       for (int y = 1; y < height - 1; y++) {
         for (int x = 1; x < width - 1; x++) {
           // Skip already visited pixels or foreground pixels
@@ -416,15 +415,16 @@ class ImageProcessorImpl implements ImageProcessor {
 
           if (_isInnerContourPoint(paddedImage, x, y, isInverted)) {
             final innerStart = Offset(x.toDouble(), y.toDouble());
-            final innerContour =
-                _traceContour(paddedImage, visited, innerStart, isInverted);
+            final innerSegment = _traceContourSegment(
+                paddedImage, visited, innerStart, isInverted);
 
-            if (innerContour.length >= 4) {
-              allContours.add(innerContour);
+            if (innerSegment.points.length >= 4) {
+              allContourSegments.add(innerSegment);
             }
           }
         }
-      }
+      } // 处理轮廓线段（包括闭合和开放线段）
+      final allContours = _connectOpenContours(allContourSegments);
 
       const borderWidth = 1;
       final adjustedContours = allContours.map((contour) {
@@ -447,6 +447,38 @@ class ImageProcessorImpl implements ImageProcessor {
         contourPoints: [],
       );
     }
+  }
+
+  bool isInnerContourPoint(img.Image image, int x, int y, bool isInverted) {
+    if (_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+      return false;
+    }
+
+    final neighbors = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ];
+
+    for (final dir in neighbors) {
+      final nx = x + dir[0];
+      final ny = y + dir[1];
+
+      if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+        continue;
+      }
+
+      if (_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   @override
@@ -1109,8 +1141,183 @@ class ImageProcessorImpl implements ImageProcessor {
             x + borderWidth, y + borderWidth, source.getPixel(x, y));
       }
     }
-
     return result;
+  }
+
+  /// 计算两点之间的距离
+  static double _calculateDistance(Offset point1, Offset point2) {
+    return math.sqrt(math.pow(point1.dx - point2.dx, 2) +
+        math.pow(point1.dy - point2.dy, 2));
+  }
+
+  /// 处理轮廓线段（允许端点多次参与连接）
+  static List<List<Offset>> _connectOpenContours(
+      List<_ContourSegment> segments) {
+    final allContours = <List<Offset>>[];
+
+    // 直接添加已闭合的线段
+    final openSegments = <_ContourSegment>[];
+    for (final segment in segments) {
+      if (segment.isClosed && segment.points.length >= 2) {
+        allContours.add(segment.points);
+      } else if (!segment.isClosed && segment.points.length >= 2) {
+        openSegments.add(segment);
+      }
+    }
+
+    if (openSegments.isEmpty) {
+      return allContours;
+    }
+
+    // 创建工作副本，允许动态修改
+    final workingSegments = <_ContourSegment>[];
+    for (final segment in openSegments) {
+      workingSegments.add(_ContourSegment(
+        points: List<Offset>.from(segment.points),
+        isClosed: segment.isClosed,
+      ));
+    }
+
+    // 迭代连接过程
+    bool hasConnections = true;
+    while (hasConnections && workingSegments.isNotEmpty) {
+      hasConnections = false;
+
+      // 收集所有可能的连接
+      final connections = <_ConnectionInfo>[];
+
+      for (int i = 0; i < workingSegments.length; i++) {
+        final segment1 = workingSegments[i];
+        if (segment1.isClosed) continue;
+
+        final start1 = segment1.startPoint;
+        final end1 = segment1.endPoint;
+
+        // 自身闭合连接
+        final selfDistance = _calculateDistance(start1, end1);
+        connections.add(_ConnectionInfo(
+          segmentIndex1: i,
+          isStart1: true,
+          segmentIndex2: i,
+          isStart2: false,
+          distance: selfDistance,
+        ));
+
+        // 与其他线段的连接
+        for (int j = i + 1; j < workingSegments.length; j++) {
+          final segment2 = workingSegments[j];
+          if (segment2.isClosed) continue;
+
+          final start2 = segment2.startPoint;
+          final end2 = segment2.endPoint;
+
+          // 四种连接方式
+          connections.add(_ConnectionInfo(
+            segmentIndex1: i,
+            isStart1: true,
+            segmentIndex2: j,
+            isStart2: true,
+            distance: _calculateDistance(start1, start2),
+          ));
+
+          connections.add(_ConnectionInfo(
+            segmentIndex1: i,
+            isStart1: true,
+            segmentIndex2: j,
+            isStart2: false,
+            distance: _calculateDistance(start1, end2),
+          ));
+
+          connections.add(_ConnectionInfo(
+            segmentIndex1: i,
+            isStart1: false,
+            segmentIndex2: j,
+            isStart2: true,
+            distance: _calculateDistance(end1, start2),
+          ));
+
+          connections.add(_ConnectionInfo(
+            segmentIndex1: i,
+            isStart1: false,
+            segmentIndex2: j,
+            isStart2: false,
+            distance: _calculateDistance(end1, end2),
+          ));
+        }
+      }
+
+      if (connections.isEmpty) break;
+
+      // 按距离排序，选择最近的连接
+      connections.sort((a, b) => a.distance.compareTo(b.distance));
+      final bestConnection = connections.first;
+
+      final segment1 = workingSegments[bestConnection.segmentIndex1];
+
+      if (bestConnection.segmentIndex1 == bestConnection.segmentIndex2) {
+        // 自身闭合
+        final closedPoints = List<Offset>.from(segment1.points);
+        if (bestConnection.distance > 0) {
+          closedPoints.add(segment1.startPoint);
+        }
+        allContours.add(closedPoints);
+        workingSegments.removeAt(bestConnection.segmentIndex1);
+        hasConnections = true;
+      } else {
+        // 连接两个不同线段
+        final segment2 = workingSegments[bestConnection.segmentIndex2];
+        final connectedPoints = <Offset>[];
+
+        // 根据连接方式组合点
+        if (bestConnection.isStart1 && bestConnection.isStart2) {
+          // 起点连起点：反转segment1 + segment2
+          connectedPoints.addAll(segment1.points.reversed);
+          connectedPoints.addAll(segment2.points);
+        } else if (bestConnection.isStart1 && !bestConnection.isStart2) {
+          // 起点连终点：反转segment1 + 反转segment2
+          connectedPoints.addAll(segment1.points.reversed);
+          connectedPoints.addAll(segment2.points.reversed);
+        } else if (!bestConnection.isStart1 && bestConnection.isStart2) {
+          // 终点连起点：segment1 + segment2
+          connectedPoints.addAll(segment1.points);
+          connectedPoints.addAll(segment2.points);
+        } else {
+          // 终点连终点：segment1 + 反转segment2
+          connectedPoints.addAll(segment1.points);
+          connectedPoints.addAll(segment2.points.reversed);
+        }
+
+        // 创建新的合并线段
+        final mergedSegment = _ContourSegment(
+          points: connectedPoints,
+          isClosed: false,
+        );
+
+        // 移除原线段并添加合并后的线段
+        final removeIndex1 = bestConnection.segmentIndex1;
+        final removeIndex2 = bestConnection.segmentIndex2;
+
+        if (removeIndex1 > removeIndex2) {
+          workingSegments.removeAt(removeIndex1);
+          workingSegments.removeAt(removeIndex2);
+        } else {
+          workingSegments.removeAt(removeIndex2);
+          workingSegments.removeAt(removeIndex1);
+        }
+
+        workingSegments.add(mergedSegment);
+        hasConnections = true;
+      }
+    }
+
+    // 添加剩余的未连接线段
+    for (final segment in workingSegments) {
+      if (segment.points.length >= 2) {
+        allContours.add(segment.points);
+      }
+    }
+
+    return allContours;
   }
 
   static Offset? _findFirstContourPoint(img.Image image, bool isInverted) {
@@ -1177,39 +1384,49 @@ class ImageProcessorImpl implements ImageProcessor {
 
   static bool _isInnerContourPoint(
       img.Image image, int x, int y, bool isInverted) {
-    if (_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+    try {
+      // Ensure coordinates are within image bounds
+      if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
+        return false;
+      }
+
+      // Point must be background
+      if (_isForegroundPixel(image.getPixel(x, y), isInverted)) {
+        return false;
+      }
+
+      // Check if any neighbor is foreground (inner contour detection)
+      final neighbors = [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1]
+      ];
+
+      for (final dir in neighbors) {
+        final nx = x + dir[0];
+        final ny = y + dir[1];
+
+        // Skip invalid neighbors
+        if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
+          continue;
+        }
+
+        // If any neighbor is foreground, this is an inner contour point
+        if (_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
+          return true;
+        }
+      }
+
       return false;
+    } catch (e) {
+      return false; // Safety fallback
     }
-
-    final neighbors = [
-      [-1, 0],
-      [1, 0],
-      [0, -1],
-      [0, 1],
-      [-1, -1],
-      [-1, 1],
-      [1, -1],
-      [1, 1],
-    ];
-
-    for (final dir in neighbors) {
-      final nx = x + dir[0];
-      final ny = y + dir[1];
-
-      if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) {
-        continue;
-      }
-
-      if (_isForegroundPixel(image.getPixel(nx, ny), isInverted)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
-  static List<Offset> _traceContour(img.Image image, List<List<bool>> visited,
-      Offset start, bool isInverted) {
+  /// 跟踪轮廓线段（不强制闭合）
+  static _ContourSegment _traceContourSegment(img.Image image,
+      List<List<bool>> visited, Offset start, bool isInverted) {
     try {
       final contour = <Offset>[];
       var x = start.dx.toInt();
@@ -1219,7 +1436,7 @@ class ImageProcessorImpl implements ImageProcessor {
 
       // Safety check - ensure starting point is valid
       if (x < 0 || x >= image.width || y < 0 || y >= image.height) {
-        return contour; // Return empty contour for invalid starting point
+        return _ContourSegment(points: [], isClosed: false);
       }
 
       const directions = [
@@ -1236,7 +1453,6 @@ class ImageProcessorImpl implements ImageProcessor {
       // Limit iterations to prevent infinite loops
       int maxIterations = image.width * image.height;
       int iterations = 0;
-      // print('开始跟踪轮廓: 起点 ($x,$y), 最大迭代次数: $maxIterations');
 
       do {
         contour.add(Offset(x.toDouble(), y.toDouble()));
@@ -1261,20 +1477,17 @@ class ImageProcessorImpl implements ImageProcessor {
               ny >= visited.length ||
               nx < 0 ||
               nx >= visited[ny].length) {
-            continue; // Skip invalid coordinates
+            continue;
           }
 
           // Check if this is the starting point and we've completed a loop
+          if (nx == startX && ny == startY && contour.length > 3) {
+            contour.add(start); // Close the loop
+            return _ContourSegment(points: contour, isClosed: true);
+          }
+
+          // Skip already visited pixels
           if (visited[ny][nx]) {
-            if (nx == startX && ny == startY && contour.length > 3) {
-              contour.add(start); // Close the loop
-              return contour;
-            }
-            // Skip already visited pixels, but log for debugging
-            if (iterations % 100 == 0) {
-              // Only log occasionally to avoid spam
-              // print('轮廓跟踪中: 点 ($nx,$ny) 已被访问过，尝试其他方向');
-            }
             continue;
           }
 
@@ -1289,29 +1502,49 @@ class ImageProcessorImpl implements ImageProcessor {
 
         iterations++;
 
-        // Log diagnostic information if no next point is found
-        if (!found) {
-          if (contour.length > 4) break;
-        }
-
-        // Check for exceeding iteration limit or contour size limit
-        if (iterations > maxIterations) {
-          break;
-        }
-
-        if (contour.length > 100000) {
+        // Break if no next point found or limits exceeded
+        if (!found || iterations > maxIterations || contour.length > 100000) {
           break;
         }
       } while (true);
 
-      // If we exited the loop without returning, log the final contour state
-      if (contour.isNotEmpty) {
-        if (contour.length > 4) {}
-      } else {}
-
-      return contour;
+      // Return the segment as non-closed if we didn't complete the loop
+      return _ContourSegment(points: contour, isClosed: false);
     } catch (e) {
-      return []; // Return empty contour on error
+      return _ContourSegment(points: [], isClosed: false);
     }
   }
+
+  /// 计算两点之间的距离
+
+  // ...existing helper methods...
+}
+
+/// 连接信息
+class _ConnectionInfo {
+  final int segmentIndex1;
+  final bool isStart1; // true表示起点，false表示终点
+  final int segmentIndex2;
+  final bool isStart2;
+  final double distance;
+
+  _ConnectionInfo({
+    required this.segmentIndex1,
+    required this.isStart1,
+    required this.segmentIndex2,
+    required this.isStart2,
+    required this.distance,
+  });
+}
+
+/// 轮廓线段，用于区分闭合和非闭合线段
+class _ContourSegment {
+  final List<Offset> points;
+  final bool isClosed;
+
+  _ContourSegment({required this.points, required this.isClosed});
+
+  Offset get endPoint => points.last;
+  double get length => points.length.toDouble();
+  Offset get startPoint => points.first;
 }
