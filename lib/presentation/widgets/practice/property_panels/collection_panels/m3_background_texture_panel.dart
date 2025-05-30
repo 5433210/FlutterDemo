@@ -141,19 +141,17 @@ class _M3BackgroundTexturePanelState
           ],
         ),
 
-        const SizedBox(height: 16.0),
-
-        // 2. Texture Transparency Settings
+        const SizedBox(height: 16.0), // 2. Texture Transparency Settings
         M3PanelStyles.buildSectionTitle(context, l10n.textureOpacity),
         Row(
           children: [
             Expanded(
               flex: 3,
               child: Slider(
-                value: textureOpacity,
+                value: textureOpacity.clamp(0.0, 0.99),
                 min: 0.0,
-                max: 1.0,
-                divisions: 100,
+                max: 0.99,
+                divisions: 99,
                 label: '${(textureOpacity * 100).round()}%',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -167,10 +165,10 @@ class _M3BackgroundTexturePanelState
               flex: 2,
               child: EditableNumberField(
                 label: l10n.opacity,
-                value: textureOpacity * 100,
+                value: (textureOpacity.clamp(0.0, 0.99) * 100),
                 suffix: '%',
                 min: 0,
-                max: 100,
+                max: 99,
                 decimalPlaces: 0,
                 onChanged: (value) {
                   _updateTextureProperty('textureOpacity', value / 100);
@@ -497,9 +495,9 @@ class _M3BackgroundTexturePanelState
     );
   }
 
-  // 递归查找纹理数据
+  // 查找纹理数据 - 只从content层级查找，不从characterImages查找
   Map<String, dynamic>? _findTextureData(Map<String, dynamic> content) {
-    // 检查参数是否有效
+    // 检查参数是否有效 - 只在content级别查找backgroundTexture
     if (content.containsKey('backgroundTexture') &&
         content['backgroundTexture'] != null &&
         content['backgroundTexture'] is Map<String, dynamic> &&
@@ -515,23 +513,8 @@ class _M3BackgroundTexturePanelState
       }
     }
 
-    // 检查characterImages中是否包含纹理数据
-    if (content.containsKey('characterImages') &&
-        content['characterImages'] != null &&
-        content['characterImages'] is Map<String, dynamic>) {
-      final charImages = content['characterImages'] as Map<String, dynamic>;
-
-      if (charImages.containsKey('backgroundTexture') &&
-          charImages['backgroundTexture'] != null &&
-          charImages['backgroundTexture'] is Map<String, dynamic>) {
-        final texData = charImages['backgroundTexture'] as Map<String, dynamic>;
-
-        if (texData.containsKey('path') && texData.containsKey('id')) {
-          debugPrint('✅ 在characterImages中找到有效的纹理数据: ${texData['id']}');
-          return texData;
-        }
-      }
-    }
+    // 注意：不再从characterImages中查找背景纹理数据
+    // characterImages应该只包含角色相关的图像，不包含背景纹理
 
     // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
     if (content.containsKey('content') &&
@@ -559,7 +542,9 @@ class _M3BackgroundTexturePanelState
       return null;
     }
 
-    return findOpacity(content) ?? 1.0; // 默认为完全不透明
+    final opacity = findOpacity(content) ?? 0.99; // 默认为99%不透明度
+    // 确保不透明度不超过99%，将任何100%值自动调整为99%
+    return opacity.clamp(0.0, 0.99);
   }
 
   // 获取最新的纹理属性（支持本地状态覆盖）
@@ -668,9 +653,7 @@ class _M3BackgroundTexturePanelState
       // 复制所有属性
       for (final key in elementContent.keys) {
         newContent[key] = elementContent[key];
-      }
-
-      // 添加纹理数据和相关属性
+      } // 添加纹理数据和相关属性
       newContent['backgroundTexture'] = textureData;
       newContent['textureFillMode'] =
           elementContent['textureFillMode'] ?? 'repeat';
@@ -680,23 +663,8 @@ class _M3BackgroundTexturePanelState
       newContent['textureWidth'] = selectedTexture.width;
       newContent['textureHeight'] = selectedTexture.height;
 
-      // 处理characterImages中可能需要的纹理相关属性
-      if (newContent.containsKey('characterImages') &&
-          newContent['characterImages'] is Map<String, dynamic>) {
-        final charImages = Map<String, dynamic>.from(
-            newContent['characterImages'] as Map<String, dynamic>);
-
-        // 将纹理信息也添加到characterImages中，确保渲染器能正确获取
-        charImages['backgroundTexture'] = textureData;
-        charImages['textureFillMode'] = newContent['textureFillMode'];
-        charImages['textureFitMode'] = newContent['textureFitMode'];
-        charImages['textureOpacity'] = newContent['textureOpacity'];
-        charImages['textureWidth'] = newContent['textureWidth'];
-        charImages['textureHeight'] = newContent['textureHeight'];
-
-        newContent['characterImages'] = charImages;
-        debugPrint('📝 同步更新了characterImages中的纹理属性');
-      }
+      // 注意：不再在characterImages中存储背景纹理数据
+      // characterImages应该只包含角色相关的图像，不包含背景纹理信息
 
       debugPrint('🔧 应用纹理数据到元素内容...');
       debugPrint('📊 完整的新内容: $newContent');
@@ -752,23 +720,13 @@ class _M3BackgroundTexturePanelState
       // 复制所有属性
       for (final key in originalContent.keys) {
         content[key] = originalContent[key];
-      }
-
-      // 更新指定属性
+      } // 更新指定属性
       content[propertyName] = value;
 
-      // 同步更新characterImages中的相应属性，确保一致性
-      if (content.containsKey('characterImages') &&
-          content['characterImages'] is Map<String, dynamic>) {
-        final charImages = Map<String, dynamic>.from(
-            content['characterImages'] as Map<String, dynamic>);
+      // 注意：不再同步更新characterImages中的纹理属性
+      // characterImages应该只包含角色相关的图像，不包含背景纹理信息
 
-        // 将纹理属性同步到characterImages中
-        charImages[propertyName] = value;
-
-        content['characterImages'] = charImages;
-        debugPrint('📝 同步更新了characterImages中的 $propertyName 属性');
-      } // 应用更新 - 正确调用onPropertyChanged更新整个content
+      // 应用更新 - 正确调用onPropertyChanged更新整个content
       debugPrint('📝 使用onPropertyChanged更新整个content对象...');
       widget.onPropertyChanged('content', content);
 
