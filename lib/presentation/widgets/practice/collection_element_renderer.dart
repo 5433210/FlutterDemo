@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart' show WidgetRef;
 
 import 'advanced_collection_painter.dart';
 import 'character_position.dart';
-import 'collection_painter.dart';
 // 引入所有已拆分的模块
 import 'texture_config.dart' as tc;
 import 'texture_manager.dart';
@@ -272,58 +271,58 @@ class CollectionElementRenderer {
 
         CustomPainter painter;
         // 使用增强版绘制器，支持原有的字符图像加载功能
-        try {
-          painter = AdvancedCollectionPainter(
-            characters: charList,
-            positions: adjustedPositions,
-            fontSize: adjustedFontSize,
-            characterImages: characterImages,
-            textureConfig: textureConfig,
-            ref: ref,
-            // 增加布局参数，这些参数将被传递给绘制器以便正确绘制
-            writingMode: writingMode,
-            textAlign: textAlign,
-            verticalAlign: verticalAlign,
-            enableSoftLineBreak: enableSoftLineBreak,
-            padding: padding,
-            letterSpacing: letterSpacing,
-            lineSpacing: lineSpacing,
-          );
+        // try {
+        painter = AdvancedCollectionPainter(
+          characters: charList,
+          positions: adjustedPositions,
+          fontSize: adjustedFontSize,
+          characterImages: characterImages,
+          textureConfig: textureConfig,
+          ref: ref,
+          // 增加布局参数，这些参数将被传递给绘制器以便正确绘制
+          writingMode: writingMode,
+          textAlign: textAlign,
+          verticalAlign: verticalAlign,
+          enableSoftLineBreak: enableSoftLineBreak,
+          padding: padding,
+          letterSpacing: letterSpacing,
+          lineSpacing: lineSpacing,
+        );
 
-          // 设置重绘回调 - 高级版本
-          // 注意：如果 AdvancedCollectionPainter 没有实现 setRepaintCallback方法，这里会抛出异常
-          // 在生产环境中应该添加适当的类型检查
-          try {
-            dynamic dynamicPainter = painter;
-            if (dynamicPainter.setRepaintCallback != null) {
-              dynamicPainter.setRepaintCallback(() {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  WidgetsBinding.instance.scheduleForcedFrame();
-                });
+        // 设置重绘回调 - 高级版本
+        // 注意：如果 AdvancedCollectionPainter 没有实现 setRepaintCallback方法，这里会抛出异常
+        // 在生产环境中应该添加适当的类型检查
+        try {
+          dynamic dynamicPainter = painter;
+          if (dynamicPainter.setRepaintCallback != null) {
+            dynamicPainter.setRepaintCallback(() {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                WidgetsBinding.instance.scheduleForcedFrame();
               });
-            }
-          } catch (e) {
-            debugPrint('设置重绘回调失败: $e');
+            });
           }
         } catch (e) {
-          // 如果创建AdvancedCollectionPainter失败，尝试使用基础绘制器
-          debugPrint('创建AdvancedCollectionPainter失败，使用CollectionPainter: $e');
-          painter = CollectionPainter(
-            characters: charList,
-            positions: adjustedPositions,
-            fontSize: adjustedFontSize,
-            characterImages: characterImages,
-            textureConfig: textureConfig,
-            ref: ref,
-          );
-
-          // 设置重绘回调 - 基础版本
-          (painter as CollectionPainter).setRepaintCallback(() {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              WidgetsBinding.instance.scheduleForcedFrame();
-            });
-          });
+          debugPrint('设置重绘回调失败: $e');
         }
+        // } catch (e) {
+        // // 如果创建AdvancedCollectionPainter失败，尝试使用基础绘制器
+        // debugPrint('创建AdvancedCollectionPainter失败，使用CollectionPainter: $e');
+        // painter = CollectionPainter(
+        //   characters: charList,
+        //   positions: adjustedPositions,
+        //   fontSize: adjustedFontSize,
+        //   characterImages: characterImages,
+        //   textureConfig: textureConfig,
+        //   ref: ref,
+        // );
+
+        // // 设置重绘回调 - 基础版本
+        // (painter as CollectionPainter).setRepaintCallback(() {
+        //   WidgetsBinding.instance.addPostFrameCallback((_) {
+        //     WidgetsBinding.instance.scheduleForcedFrame();
+        //   });
+        // });
+        // }
 
         // 汇报实际生效的参数值
         debugPrint('📍 实际使用的集字渲染参数：');

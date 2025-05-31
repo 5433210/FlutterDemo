@@ -148,10 +148,10 @@ class _M3BackgroundTexturePanelState
             Expanded(
               flex: 3,
               child: Slider(
-                value: textureOpacity.clamp(0.0, 0.99),
+                value: textureOpacity.clamp(0.0, 1.0),
                 min: 0.0,
-                max: 0.99,
-                divisions: 99,
+                max: 1.0,
+                divisions: 100,
                 label: '${(textureOpacity * 100).round()}%',
                 activeColor: colorScheme.primary,
                 inactiveColor: colorScheme.surfaceContainerHighest,
@@ -165,10 +165,10 @@ class _M3BackgroundTexturePanelState
               flex: 2,
               child: EditableNumberField(
                 label: l10n.opacity,
-                value: (textureOpacity.clamp(0.0, 0.99) * 100),
+                value: (textureOpacity.clamp(0.0, 1.0) * 100),
                 suffix: '%',
                 min: 0,
-                max: 99,
+                max: 100,
                 decimalPlaces: 0,
                 onChanged: (value) {
                   _updateTextureProperty('textureOpacity', value / 100);
@@ -416,11 +416,10 @@ class _M3BackgroundTexturePanelState
                   ),
                 );
               }
-
               debugPrint(
                   '纹理加载成功, 图片数据长度: ${snapshot.data!.length}, 不透明度: $textureOpacity');
               return Opacity(
-                opacity: textureOpacity,
+                opacity: textureOpacity.clamp(0.0, 1.0),
                 child: Image.memory(
                   Uint8List.fromList(snapshot.data!),
                   fit: previewFit,
@@ -542,9 +541,9 @@ class _M3BackgroundTexturePanelState
       return null;
     }
 
-    final opacity = findOpacity(content) ?? 0.99; // 默认为99%不透明度
-    // 确保不透明度不超过99%，将任何100%值自动调整为99%
-    return opacity.clamp(0.0, 0.99);
+    final opacity = findOpacity(content) ?? 1.0; // 默认为100%不透明度
+    // 允许完全不透明度，范围从0到1
+    return opacity.clamp(0.0, 1.0);
   }
 
   // 获取最新的纹理属性（支持本地状态覆盖）

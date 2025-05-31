@@ -869,7 +869,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
+      ..color = Colors.white.withValues(
+          alpha: (textureConfig.opacity.clamp(0.0, 1.0)).toDouble());
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
@@ -925,7 +926,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
+      ..color = Colors.white.withValues(
+          alpha: (textureConfig.opacity.clamp(0.0, 1.0)).toDouble());
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());
@@ -1028,7 +1030,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
+      ..color = Colors.white
+          .withValues(alpha: (textureConfig.opacity.clamp(0.0, 1.0)));
 
     // 第一步：根据FitMode处理纹理尺寸
     final processedTextureSize = _applyFitModeToTexture(image, textureSize);
@@ -1076,7 +1079,8 @@ class AdvancedCollectionPainter extends CustomPainter {
     final paint = Paint()
       ..isAntiAlias = true
       ..filterQuality = FilterQuality.high
-      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255);
+      ..color = Colors.white.withValues(
+          alpha: (textureConfig.opacity.clamp(0.0, 1.0)).toDouble());
 
     final srcRect =
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble());

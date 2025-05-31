@@ -302,7 +302,8 @@ class CollectionPainter extends CustomPainter {
     // 只使用背景纹理模式，使用 srcOver 混合模式
     final paint = Paint()
       ..filterQuality = FilterQuality.medium
-      ..color = Colors.white.withValues(alpha: textureConfig.opacity * 255)
+      ..color = Colors.white.withValues(
+          alpha: (textureConfig.opacity.clamp(0.0, 1.0) * 255).toDouble())
       ..blendMode = BlendMode
           .srcOver; // 根据新的填充模式绘制纹理 (只支持 repeat, cover, stretch, contain)
     if (textureConfig.fillMode == 'repeat') {
