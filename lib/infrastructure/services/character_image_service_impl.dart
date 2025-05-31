@@ -37,47 +37,55 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<Map<String, String>?> getAvailableFormat(String id,
       {bool preferThumbnail = false}) async {
     try {
-      debugPrint('获取字符图片可用格式: $id, 优先使用缩略图: $preferThumbnail');
+      debugPrint(
+          '🔍 [CharacterImageService] 获取可用格式: $id (preferThumbnail: $preferThumbnail)');
 
       // 如果优先使用预览图，则先检查非方形格式
       if (preferThumbnail) {
         // 优先检查binary格式（非方形二值化图像）
+        debugPrint('🔍 [CharacterImageService] 检查binary格式...');
         if (await hasCharacterImage(id, 'binary', 'png')) {
-          debugPrint('找到binary格式: $id');
+          debugPrint('✅ [CharacterImageService] 找到binary格式: $id');
           return {'type': 'binary', 'format': 'png'};
         }
         // 其次检查transparent格式（非方形透明图像）
+        debugPrint('🔍 [CharacterImageService] 检查transparent格式...');
         if (await hasCharacterImage(id, 'transparent', 'png')) {
-          debugPrint('找到transparent格式: $id');
+          debugPrint('✅ [CharacterImageService] 找到transparent格式: $id');
           return {'type': 'transparent', 'format': 'png'};
         }
         // 最后检查thumbnail格式
+        debugPrint('🔍 [CharacterImageService] 检查thumbnail格式...');
         if (await hasCharacterImage(id, 'thumbnail', 'jpg')) {
-          debugPrint('找到thumbnail格式: $id');
+          debugPrint('✅ [CharacterImageService] 找到thumbnail格式: $id');
           return {'type': 'thumbnail', 'format': 'jpg'};
         }
       }
 
       // 优先检查square-binary格式
+      debugPrint('🔍 [CharacterImageService] 检查square-binary格式...');
       if (await hasCharacterImage(id, 'square-binary', 'png-binary')) {
-        debugPrint('找到square-binary格式: $id');
+        debugPrint('✅ [CharacterImageService] 找到square-binary格式: $id');
         return {'type': 'square-binary', 'format': 'png-binary'};
       }
 
       // 其次检查square-transparent格式
-      if (await hasCharacterImage(id, 'square-transparent', 'png-transparent')) {
-        debugPrint('找到square-transparent格式: $id');
+      debugPrint('🔍 [CharacterImageService] 检查square-transparent格式...');
+      if (await hasCharacterImage(
+          id, 'square-transparent', 'png-transparent')) {
+        debugPrint('✅ [CharacterImageService] 找到square-transparent格式: $id');
         return {'type': 'square-transparent', 'format': 'png-transparent'};
       }
 
       // 最后检查square-outline格式
+      debugPrint('🔍 [CharacterImageService] 检查square-outline格式...');
       if (await hasCharacterImage(id, 'square-outline', 'svg-outline')) {
-        debugPrint('找到square-outline格式: $id');
+        debugPrint('✅ [CharacterImageService] 找到square-outline格式: $id');
         return {'type': 'square-outline', 'format': 'svg-outline'};
       }
 
       // 如果没有找到任何格式，返回默认格式
-      debugPrint('未找到任何格式，返回默认格式: $id');
+      debugPrint('❌ [CharacterImageService] 未找到任何格式，返回默认格式: $id');
       return {'type': 'square-binary', 'format': 'png-binary'};
     } catch (e) {
       debugPrint('获取字符图片可用格式失败: $e');
@@ -92,31 +100,45 @@ class CharacterImageServiceImpl implements CharacterImageService {
       String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
+      debugPrint('🔍 [CharacterImageService] 尝试获取图像: $imagePath');
       final cacheKey = 'file:$imagePath';
-      
+
       // 尝试从缓存获取
       final cachedData = await _imageCacheService.getBinaryImage(cacheKey);
       if (cachedData != null) {
+        debugPrint(
+            '✅ [CharacterImageService] 从缓存获取图像: ${cachedData.length} bytes');
         return cachedData;
       }
 
       // 使用IStorage检查文件是否存在
-      if (await _storage.fileExists(imagePath)) {
+      debugPrint('🔍 [CharacterImageService] 检查文件是否存在: $imagePath');
+      final fileExists = await _storage.fileExists(imagePath);
+      debugPrint('🔍 [CharacterImageService] 文件存在: $fileExists');
+
+      if (fileExists) {
         // 使用IStorage读取文件内容
+        debugPrint('📖 [CharacterImageService] 读取文件内容...');
         final bytes = await _storage.readFile(imagePath);
+        debugPrint('📖 [CharacterImageService] 读取到 ${bytes.length} 字节');
         final data = bytes.isNotEmpty ? Uint8List.fromList(bytes) : null;
-        
+
         // 缓存数据
         if (data != null) {
           await _imageCacheService.cacheBinaryImage(cacheKey, data);
+          debugPrint('✅ [CharacterImageService] 缓存图像数据: ${data.length} bytes');
+        } else {
+          debugPrint('❌ [CharacterImageService] 文件内容为空');
         }
-        
+
         return data;
+      } else {
+        debugPrint('❌ [CharacterImageService] 文件不存在: $imagePath');
       }
 
       return null;
     } catch (e) {
-      debugPrint('获取字符图片失败: $e');
+      debugPrint('❌ [CharacterImageService] 获取字符图片失败: $e');
       return null;
     }
   }
@@ -127,9 +149,9 @@ class CharacterImageServiceImpl implements CharacterImageService {
       String format, Map<String, dynamic> transform) async {
     try {
       // 生成缓存键
-      final cacheKey = _imageCacheService.generateCacheKey(
-          characterId, type, transform);
-      
+      final cacheKey =
+          _imageCacheService.generateCacheKey(characterId, type, transform);
+
       // 使用getProcessedImage方法处理图像
       return await _imageCacheService.getProcessedImage(
         cacheKey,
@@ -148,10 +170,13 @@ class CharacterImageServiceImpl implements CharacterImageService {
   Future<bool> hasCharacterImage(String id, String type, String format) async {
     try {
       final imagePath = _getImagePath(id, type, format);
+      debugPrint('🔍 [CharacterImageService] 检查图像文件: $imagePath');
       // 使用IStorage检查文件是否存在
-      return await _storage.fileExists(imagePath);
+      final exists = await _storage.fileExists(imagePath);
+      debugPrint('🔍 [CharacterImageService] 文件存在结果: $exists');
+      return exists;
     } catch (e) {
-      debugPrint('检查字符图片是否存在失败: $e');
+      debugPrint('❌ [CharacterImageService] 检查字符图片是否存在失败: $e');
       return false;
     }
   }

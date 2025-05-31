@@ -16,8 +16,11 @@ class CharacterPosition {
   /// 字符大小
   final double size;
 
-  /// 字符索引
+  /// 字符索引 (在布局后的字符序列中的位置)
   final int index;
+
+  /// 原始字符索引 (在包含换行符的原始字符串中的位置，用于查找字符图像)
+  final int originalIndex;
 
   /// 字体颜色
   final Color fontColor;
@@ -35,6 +38,7 @@ class CharacterPosition {
     required this.y,
     required this.size,
     required this.index,
+    required this.originalIndex,
     this.fontColor = Colors.black,
     this.backgroundColor = Colors.transparent,
     this.isAfterNewLine = false,
@@ -101,9 +105,10 @@ class LayoutCalculator {
 
     final bool isHorizontal = !isVertical;
 
-    // 创建一个新的字符列表，去除换行符
+    // 创建一个新的字符列表，去除换行符，同时保存原始索引映射
     List<String> actualChars = [];
     List<int> lineIndices = []; // 每个字符所在的行号或列号
+    List<int> originalIndices = []; // 每个字符在原始字符串中的索引
 
     if (isHorizontal) {
       // 水平布局的字符处理
@@ -130,6 +135,7 @@ class LayoutCalculator {
           } else {
             // 普通字符
             actualChars.add(processedChars[i]);
+            originalIndices.add(i); // 保存原始索引
 
             // 如果启用软回车且当前行字符数已达到最大值，则自动换行
             if (enableSoftLineBreak &&
@@ -146,6 +152,9 @@ class LayoutCalculator {
       } else {
         // 没有换行标记，按照原来的逻辑处理
         actualChars = List.from(processedChars);
+        // 原始索引就是字符在processedChars中的索引
+        originalIndices = List.generate(processedChars.length, (i) => i);
+
         if (enableSoftLineBreak && charsPerRow > 0) {
           // 启用软回车时，按照每行最大字符数自动分配行号
           for (int i = 0; i < actualChars.length; i++) {
@@ -254,7 +263,8 @@ class LayoutCalculator {
           x: x,
           y: y,
           size: charSize,
-          index: i + rowIndex,
+          index: i,
+          originalIndex: originalIndices[i],
           fontColor: fontColor,
           backgroundColor: backgroundColor,
           isAfterNewLine: isNewLineList.isNotEmpty && i < isNewLineList.length
@@ -286,6 +296,7 @@ class LayoutCalculator {
           } else {
             // 普通字符
             actualChars.add(processedChars[i]);
+            originalIndices.add(i); // 保存原始索引
 
             // 如果启用软回车且当前列字符数已达到最大值，则自动换列
             if (enableSoftLineBreak &&
@@ -302,6 +313,9 @@ class LayoutCalculator {
       } else {
         // 没有换行标记，按照原来的逻辑处理
         actualChars = List.from(processedChars);
+        // 原始索引就是字符在processedChars中的索引
+        originalIndices = List.generate(processedChars.length, (i) => i);
+
         if (enableSoftLineBreak && charsPerCol > 0) {
           // 启用软回车时，按照每列最大字符数自动分配列号
           for (int i = 0; i < actualChars.length; i++) {
@@ -410,7 +424,8 @@ class LayoutCalculator {
           x: x,
           y: y,
           size: charSize,
-          index: i + colIndex,
+          index: i,
+          originalIndex: originalIndices[i],
           fontColor: fontColor,
           backgroundColor: backgroundColor,
           isAfterNewLine: isNewLineList.isNotEmpty && i < isNewLineList.length

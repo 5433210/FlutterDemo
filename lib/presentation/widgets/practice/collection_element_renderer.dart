@@ -10,7 +10,6 @@ import 'advanced_collection_painter.dart';
 import 'character_position.dart';
 // 引入所有已拆分的模块
 import 'texture_config.dart' as tc;
-import 'texture_manager.dart';
 
 // 所有工具类和函数已移动到各自的模块文件中
 
@@ -69,7 +68,7 @@ class CollectionElementRenderer {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
     if (ref != null) {
       // 强制清除纹理缓存
-      EnhancedTextureManager.instance.invalidateTextureCache(ref);
+      // EnhancedTextureManager.instance.invalidateTextureCache(ref);
       debugPrint('🧹 CollectionElementRenderer: 强制清除纹理缓存以确保立即更新');
     } // 兼容原有支持 - 无内容且无背景纹理时显示提示
     if (characters.isEmpty && !hasCharacterTexture) {
@@ -184,6 +183,7 @@ class CollectionElementRenderer {
         fontColor: pos.fontColor,
         backgroundColor: pos.backgroundColor,
         isAfterNewLine: pos.isAfterNewLine,
+        originalIndex: pos.originalIndex,
       );
     }).toList(); // 使用StatefulBuilder来支持重绘
     return StatefulBuilder(

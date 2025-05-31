@@ -126,8 +126,9 @@ class AdvancedCollectionPainter extends CustomPainter {
         _drawFallbackBackground(canvas, rect, position);
 
         // 4. 获取字符图片并绘制
-        // 注意：我们使用position.index而不是i来查找图像，因为position.index是原始的字符索引
-        final charImage = _findCharacterImage(position.char, position.index);
+        // 注意：我们使用position.originalIndex而不是position.index来查找图像，因为position.originalIndex是原始的字符索引
+        final charImage =
+            _findCharacterImage(position.char, position.originalIndex);
         if (charImage != null) {
           // 如果有图片，绘制图片
           _drawCharacterImage(canvas, rect, position, charImage);
@@ -537,9 +538,19 @@ class AdvancedCollectionPainter extends CustomPainter {
         final String indexKey = index.toString();
         debugPrint('尝试查找索引键: $indexKey');
 
+        // 首先检查是否有嵌套的characterImages结构
+        Map<dynamic, dynamic> targetMap = characterImages;
+        if (characterImages.containsKey('characterImages')) {
+          final subMap = characterImages['characterImages'];
+          if (subMap is Map) {
+            debugPrint('使用嵌套的characterImages映射');
+            targetMap = subMap;
+          }
+        }
+
         // 检查是否有对应索引的图像数据
-        if (characterImages.containsKey(indexKey)) {
-          final imageData = characterImages[indexKey];
+        if (targetMap.containsKey(indexKey)) {
+          final imageData = targetMap[indexKey];
           debugPrint('找到索引 $indexKey 的图像数据: $imageData');
 
           // 如果是字符串，直接使用
@@ -595,65 +606,10 @@ class AdvancedCollectionPainter extends CustomPainter {
             }
           }
         }
-        // 如果没有找到索引键，检查其他可能的结构
-        else {
-          // 检查是否有characterImages子键
-          if (characterImages.containsKey('characterImages')) {
-            final charImages = characterImages['characterImages'];
-            // debugPrint('找到characterImages子键: $charImages');
-
-            if (charImages is Map) {
-              // 再次尝试索引键
-              if (charImages.containsKey(indexKey)) {
-                final subImageData = charImages[indexKey];
-                // debugPrint('在子键中找到索引 $indexKey 的数据: $subImageData');
-
-                if (subImageData is Map &&
-                    subImageData.containsKey('characterId')) {
-                  final characterId = subImageData['characterId'];
-                  final cacheKey = 'char_$characterId';
-
-                  // 尝试从缓存获取
-                  ui.Image? cachedImage =
-                      _imageCacheService.tryGetUiImageSync(cacheKey);
-                  if (cachedImage != null) {
-                    return cachedImage;
-                  }
-
-                  // 使用CharacterImageService加载图像
-                  _loadCharacterImageViaService(characterId, cacheKey)
-                      .then((success) {
-                    if (success) {
-                      _needsRepaint = true;
-                      if (_repaintCallback != null) {
-                        SchedulerBinding.instance.addPostFrameCallback((_) {
-                          _repaintCallback!();
-                        });
-                      }
-                    } else {
-                      // 如果无法使用服务加载，创建占位图像
-                      _createPlaceholderImage(cacheKey)
-                          .then((placeholderSuccess) {
-                        if (placeholderSuccess) {
-                          _needsRepaint = true;
-                          if (_repaintCallback != null) {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              _repaintCallback!();
-                            });
-                          }
-                        }
-                      });
-                    }
-                  });
-                }
-              }
-            }
-          }
-        }
       }
 
       // 如果没有找到匹配的图像
-      // debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
+      debugPrint('没有找到字符 "$char" (索引: $index) 的图像');
       return null;
     } catch (e) {
       debugPrint('获取字符图像时出错: $e');
@@ -724,41 +680,67 @@ class AdvancedCollectionPainter extends CustomPainter {
   Future<bool> _loadCharacterImageViaService(
       String characterId, String cacheKey) async {
     try {
-      debugPrint('通过CharacterImageService加载字符图像: $characterId');
+      debugPrint('🔍 通过CharacterImageService加载字符图像: $characterId');
 
       // 获取可用的图像格式
+      debugPrint('🔍 正在调用getAvailableFormat...');
       final format =
           await _characterImageService.getAvailableFormat(characterId);
       if (format == null) {
-        debugPrint('找不到字符图像的格式: $characterId');
+        debugPrint('❌ getAvailableFormat返回null: $characterId');
         return false;
       }
 
-      debugPrint('字符图像格式: $format');
+      debugPrint('✅ getAvailableFormat返回: $format');
       final type = format['type']!;
       final formatType = format['format']!;
 
+      // 检查图像是否存在
+      debugPrint(
+          '🔍 检查图像是否存在: characterId=$characterId, type=$type, format=$formatType');
+      final hasImage = await _characterImageService.hasCharacterImage(
+          characterId, type, formatType);
+      debugPrint('🔍 hasCharacterImage返回: $hasImage');
+
+      if (!hasImage) {
+        debugPrint('❌ 图像文件不存在: $characterId ($type, $formatType)');
+        return false;
+      }
+
       // 获取字符图像数据
+      debugPrint(
+          '📥 正在获取字符图像数据: characterId=$characterId, type=$type, format=$formatType');
       final imageData = await _characterImageService.getCharacterImage(
           characterId, type, formatType);
 
       if (imageData == null) {
-        debugPrint('无法获取字符图像数据: $characterId');
+        debugPrint('❌ getCharacterImage返回null: $characterId');
         return false;
       }
 
+      if (imageData.isEmpty) {
+        debugPrint('❌ getCharacterImage返回空数据: $characterId');
+        return false;
+      }
+
+      debugPrint('✅ 获取到字符图像数据，大小: ${imageData.length} bytes');
+
       // 解码图像
+      debugPrint('🎨 正在解码图像...');
       final codec = await ui.instantiateImageCodec(imageData);
       final frame = await codec.getNextFrame();
       final image = frame.image;
 
+      debugPrint('✅ 图像解码成功，尺寸: ${image.width}x${image.height}');
+
       // 缓存UI图像
       await _imageCacheService.cacheUiImage(cacheKey, image);
 
-      debugPrint('字符图像加载成功: $characterId');
+      debugPrint('✅ 字符图像加载成功: $characterId, 缓存键: $cacheKey');
       return true;
-    } catch (e) {
-      debugPrint('通过服务加载字符图像失败: $characterId, 错误: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ 通过服务加载字符图像失败: $characterId, 错误: $e');
+      debugPrint('堆栈跟踪: $stackTrace');
       return false;
     }
   }

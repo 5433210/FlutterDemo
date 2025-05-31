@@ -743,11 +743,10 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         rotation = (selectedElement['rotation'] as num?)?.toDouble() ?? 0.0;
       }
     }
-
     return Stack(
       fit: StackFit.loose, // Use loose fit for outer stack
       clipBehavior:
-          Clip.hardEdge, // Use hardEdge to prevent mouse tracking issues
+          Clip.none, // Allow control points to extend beyond page boundaries
       children: [
         // Page background
         Container(
@@ -760,8 +759,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
               absorbing: false, // Ensure control points can receive events
               child: Stack(
                 fit: StackFit.expand, // Ensure stack fills its parent
-                clipBehavior: Clip
-                    .hardEdge, // Use hardEdge to prevent mouse tracking issues
+                clipBehavior:
+                    Clip.hardEdge, // Keep hardEdge for page content itself
                 children: [
                   // Background layer - ensure background color is correctly applied
                   Container(
