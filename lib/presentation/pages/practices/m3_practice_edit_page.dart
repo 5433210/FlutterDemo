@@ -47,7 +47,8 @@ class M3PracticeEditPage extends ConsumerStatefulWidget {
   ConsumerState<M3PracticeEditPage> createState() => _M3PracticeEditPageState();
 }
 
-class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
+class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
+    with WidgetsBindingObserver {
   // Controller
   late final PracticeEditController _controller;
 
@@ -141,7 +142,24 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   }
 
   @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    // When window size changes (maximize/restore), automatically reset view position
+    // Use a small delay to ensure the UI has finished updating
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _controller.resetViewPosition();
+        debugPrint('Auto reset view position after window size change');
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    // Remove window observer
+    WidgetsBinding.instance.removeObserver(this);
+
     // Clear undo/redo stack
     _controller.clearUndoRedoHistory();
 
@@ -178,6 +196,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
   @override
   void initState() {
     super.initState();
+
+    // Add window observer to monitor window changes
+    WidgetsBinding.instance.addObserver(this);
+
     // Create or get the PracticeService instance
     final practiceService = ref.read(practiceServiceProvider);
     _controller =
@@ -1625,7 +1647,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
       // Call controller's loadPractice method
       final success = await _controller.loadPractice(id);
-
       if (success) {
         // Load success, update UI
         if (mounted) {
@@ -1643,6 +1664,10 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage> {
 
           debugPrint(
               'Practice loaded successfully: ${_controller.practiceTitle}');
+
+          // Automatically reset view position to default state
+          _controller.resetViewPosition();
+          debugPrint('Auto reset view position after practice load');
 
           // Preload all collection element images
           _preloadAllCollectionImages();
