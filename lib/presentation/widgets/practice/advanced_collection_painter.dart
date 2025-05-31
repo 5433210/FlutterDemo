@@ -797,11 +797,11 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   /// 异步加载纹理图像
   void _loadTextureImageAsync(String texturePath, String cacheKey) {
-    if (_loadingTextures.contains(cacheKey)) return;
+    // if (_loadingTextures.contains(cacheKey)) return;
 
-    _loadingTextures.add(cacheKey);
+    // _loadingTextures.add(cacheKey);
     _loadTextureImage(texturePath).then((image) {
-      _loadingTextures.remove(cacheKey);
+      // _loadingTextures.remove(cacheKey);
       if (image != null) {
         _imageCacheService.cacheUiImage(cacheKey, image);
         _needsRepaint = true;
@@ -857,6 +857,13 @@ class AdvancedCollectionPainter extends CustomPainter {
     } else {
       // 如果缓存中没有UI图像，异步加载
       _loadTextureImageAsync(texturePath, _cacheKey!);
+      // 绘制占位符背景，表明纹理正在加载
+      final placeholderPaint = Paint()
+        ..color = Colors.grey.withValues(alpha: 0.2) // 0.2 不透明度
+        ..style = PaintingStyle.fill;
+      canvas.drawRect(rect, placeholderPaint);
+
+      debugPrint('纹理正在异步加载中: $_cacheKey');
     }
   }
 

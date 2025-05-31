@@ -587,19 +587,22 @@ class _M3BackgroundTexturePanelState
       final storageService = ref.read(initializedStorageProvider);
       final imageCacheService = ref.read(imageCacheServiceProvider);
 
-      final imageBytes = await imageCacheService.getBinaryImage(cacheKey);
-      if (imageBytes != null) {
-        debugPrint('从缓存加载纹理图片: $path');
-        return imageBytes;
-      }
+      // final imageBytes = await imageCacheService.getBinaryImage(cacheKey);
+      // if (imageBytes != null) {
+      //   debugPrint('从缓存加载纹理图片: $path');
+      //   return imageBytes;
+      // }
 
       debugPrint('从存储加载纹理图片: $path');
       final imageBytesFromStorage = await storageService.readFile(path);
 
       if (imageBytesFromStorage.isNotEmpty) {
         // 缓存到内存
-        imageCacheService.cacheBinaryImage(
-            cacheKey, Uint8List.fromList(imageBytesFromStorage));
+        final decodedImage = await imageCacheService
+            .decodeImageFromBytes(Uint8List.fromList(imageBytesFromStorage));
+        if (decodedImage != null) {
+          imageCacheService.cacheUiImage(cacheKey, decodedImage);
+        }
         debugPrint('纹理图片加载并缓存成功: ${imageBytesFromStorage.length} bytes');
         return imageBytesFromStorage;
       } else {

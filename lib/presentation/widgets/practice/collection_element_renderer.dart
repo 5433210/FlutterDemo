@@ -258,6 +258,9 @@ class CollectionElementRenderer {
             dynamicPainter.setRepaintCallback(() {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 WidgetsBinding.instance.scheduleForcedFrame();
+                setState(() {
+                  // 触发 Widget 重建，进而触发 CustomPaint 重绘
+                });
               });
             });
           }
