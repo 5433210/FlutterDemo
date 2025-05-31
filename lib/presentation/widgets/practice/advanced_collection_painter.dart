@@ -151,19 +151,63 @@ class AdvancedCollectionPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant AdvancedCollectionPainter oldDelegate) {
-    // 如果纹理配置变化，需要重绘
-    if (oldDelegate.textureConfig != textureConfig) {
+    // 优先检查纹理配置变化 - 这是最关键的
+    bool textureChanged = false;
+
+    // 详细检查纹理配置的每个属性
+    if (oldDelegate.textureConfig.enabled != textureConfig.enabled) {
+      debugPrint('🔄 shouldRepaint: 纹理启用状态变化');
+      textureChanged = true;
+    }
+
+    if (oldDelegate.textureConfig.fillMode != textureConfig.fillMode) {
+      debugPrint(
+          '🔄 shouldRepaint: 纹理填充模式变化 ${oldDelegate.textureConfig.fillMode} -> ${textureConfig.fillMode}');
+      textureChanged = true;
+    }
+
+    if (oldDelegate.textureConfig.fitMode != textureConfig.fitMode) {
+      debugPrint(
+          '🔄 shouldRepaint: 纹理适应模式变化 ${oldDelegate.textureConfig.fitMode} -> ${textureConfig.fitMode}');
+      textureChanged = true;
+    }
+
+    if (oldDelegate.textureConfig.opacity != textureConfig.opacity) {
+      debugPrint(
+          '🔄 shouldRepaint: 纹理不透明度变化 ${oldDelegate.textureConfig.opacity} -> ${textureConfig.opacity}');
+      textureChanged = true;
+    }
+
+    if (oldDelegate.textureConfig.textureWidth != textureConfig.textureWidth ||
+        oldDelegate.textureConfig.textureHeight !=
+            textureConfig.textureHeight) {
+      debugPrint('🔄 shouldRepaint: 纹理尺寸变化');
+      textureChanged = true;
+    }
+
+    // 检查纹理数据变化（路径等）
+    if (!_mapsEqual(oldDelegate.textureConfig.data, textureConfig.data)) {
+      debugPrint('🔄 shouldRepaint: 纹理数据变化');
+      textureChanged = true;
+    }
+
+    if (textureChanged) {
+      // 纹理配置变化时，清除相关缓存
+      debugPrint('🔄 shouldRepaint: 检测到纹理变化，清除缓存并强制重绘');
+      _loadingTextures.clear();
+      _cacheKey = null;
       return true;
     }
 
     // 如果有明确标记需要重绘，返回true
     if (_needsRepaint) {
       _needsRepaint = false; // 重置标志
+      debugPrint('🔄 shouldRepaint: 内部标记需要重绘');
       return true;
     }
 
-    // 其他情况下，使用默认比较逻辑
-    return oldDelegate.characters != characters ||
+    // 检查其他基本属性变化
+    bool basicChanged = oldDelegate.characters != characters ||
         oldDelegate.positions != positions ||
         oldDelegate.fontSize != fontSize ||
         oldDelegate.characterImages != characterImages ||
@@ -174,6 +218,12 @@ class AdvancedCollectionPainter extends CustomPainter {
         oldDelegate.padding != padding ||
         oldDelegate.letterSpacing != letterSpacing ||
         oldDelegate.lineSpacing != lineSpacing;
+
+    if (basicChanged) {
+      debugPrint('🔄 shouldRepaint: 基本属性变化');
+    }
+
+    return basicChanged;
   }
 
   /// 根据FitMode计算处理后的纹理尺寸
@@ -745,6 +795,47 @@ class AdvancedCollectionPainter extends CustomPainter {
     }
   }
 
+  /// 异步加载纹理图像
+  void _loadTextureImageAsync(String texturePath, String cacheKey) {
+    if (_loadingTextures.contains(cacheKey)) return;
+
+    _loadingTextures.add(cacheKey);
+    _loadTextureImage(texturePath).then((image) {
+      _loadingTextures.remove(cacheKey);
+      if (image != null) {
+        _imageCacheService.cacheUiImage(cacheKey, image);
+        _needsRepaint = true;
+        if (_repaintCallback != null) {
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            _repaintCallback!();
+          });
+        }
+      }
+    });
+  }
+
+  /// 深度比较两个Map是否相等
+  bool _mapsEqual(Map<String, dynamic>? map1, Map<String, dynamic>? map2) {
+    if (map1 == null && map2 == null) return true;
+    if (map1 == null || map2 == null) return false;
+    if (map1.length != map2.length) return false;
+
+    for (final key in map1.keys) {
+      if (!map2.containsKey(key)) return false;
+      // 递归比较嵌套的Map
+      if (map1[key] is Map && map2[key] is Map) {
+        if (!_mapsEqual(map1[key] as Map<String, dynamic>?,
+            map2[key] as Map<String, dynamic>?)) {
+          return false;
+        }
+      } else if (map1[key] != map2[key]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /// 绘制纹理
   void _paintTexture(Canvas canvas, Rect rect) {
     if (!textureConfig.enabled || textureConfig.data == null) return;
@@ -757,55 +848,16 @@ class AdvancedCollectionPainter extends CustomPainter {
     if (texturePath == null) return;
 
     // 生成缓存键 - 加入纹理尺寸信息以支持高性能缓存
-    _cacheKey =
-        'texture_${texturePath}_${textureConfig.textureWidth.toInt()}_${textureConfig.textureHeight.toInt()}_${textureConfig.fillMode}_${textureConfig.fitMode}';
+    _cacheKey = texturePath;
 
-    // 尝试从缓存获取纹理图像
+    // 尝试从UI图像缓存获取纹理图像
     final cachedImage = _imageCacheService.tryGetUiImageSync(_cacheKey!);
     if (cachedImage != null) {
       _drawTextureImage(canvas, rect, cachedImage);
-      return;
+    } else {
+      // 如果缓存中没有UI图像，异步加载
+      _loadTextureImageAsync(texturePath, _cacheKey!);
     }
-
-    // 如果同步方法没有获取到，尝试异步获取
-    _imageCacheService.getUiImage(_cacheKey!).then((image) {
-      if (image != null) {
-        _needsRepaint = true;
-        if (_repaintCallback != null) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _repaintCallback!();
-          });
-        }
-      }
-    });
-
-    // 如果纹理正在加载中，跳过
-    if (_loadingTextures.contains(_cacheKey)) return;
-
-    // 标记纹理为加载中
-    _loadingTextures.add(_cacheKey!);
-
-    // 加载纹理图像
-    _loadTextureImage(texturePath).then((image) {
-      if (image != null) {
-        // 缓存纹理图像
-        _imageCacheService.cacheUiImage(_cacheKey!, image);
-
-        // 标记需要重绘
-        _needsRepaint = true;
-        _loadingTextures.remove(_cacheKey);
-
-        // 触发重绘
-        if (_repaintCallback != null) {
-          SchedulerBinding.instance.addPostFrameCallback((_) {
-            _repaintCallback!();
-          });
-        }
-      }
-    }).catchError((e) {
-      debugPrint('纹理加载错误: $e');
-      _loadingTextures.remove(_cacheKey);
-    });
   }
 
   /// 处理图像路径并返回缓存的图像

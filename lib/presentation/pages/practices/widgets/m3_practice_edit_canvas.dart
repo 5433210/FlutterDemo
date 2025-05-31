@@ -1428,6 +1428,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     // Get character images
     final characterImages = content;
     final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
+    final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;
+    final textureHeight = (content['textureHeight'] as num?)?.toDouble() ?? 0.0;
 
     // Parse color
     final bgColor = _parseColor(backgroundColor);
@@ -1477,6 +1479,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                 characterTextureData: backgroundTexture,
                 textureFillMode: textureFillMode,
                 textureOpacity: textureOpacity,
+                textureWidth: textureWidth,
+                textureHeight: textureHeight,
                 ref: ref,
               );
             },

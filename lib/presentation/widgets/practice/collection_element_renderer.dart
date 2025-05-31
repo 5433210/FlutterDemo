@@ -62,11 +62,15 @@ class CollectionElementRenderer {
     String textureFillMode = 'repeat',
     String textureFitMode = 'scaleToFill', // 新增适应模式参数
     double textureOpacity = 1.0,
+    double textureWidth = 0, // 纹理宽度
+    double textureHeight = 0, // 纹理高度
     WidgetRef? ref,
   }) {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
     if (ref != null) {
+      // 强制清除纹理缓存
       EnhancedTextureManager.instance.invalidateTextureCache(ref);
+      debugPrint('🧹 CollectionElementRenderer: 强制清除纹理缓存以确保立即更新');
     } // 兼容原有支持 - 无内容且无背景纹理时显示提示
     if (characters.isEmpty && !hasCharacterTexture) {
       return const Center(
@@ -181,75 +185,33 @@ class CollectionElementRenderer {
         backgroundColor: pos.backgroundColor,
         isAfterNewLine: pos.isAfterNewLine,
       );
-    }).toList();
-
-    // 使用StatefulBuilder来支持重绘
+    }).toList(); // 使用StatefulBuilder来支持重绘
     return StatefulBuilder(
       builder: (context, setState) {
         // 移除textureApplicationRange，现在只支持background模式
 
         Map<String, dynamic>? effectiveTextureData;
         bool hasEffectiveTexture = hasCharacterTexture;
+        String textureId = '';
 
         // 输出调试信息
         debugPrint('集字字符内容：${isEmpty ? "空" : characters}');
         debugPrint('初始纹理状态 - 固定模式：background，是否有纹理：$hasCharacterTexture');
 
-        // 递归查找最深层的有效纹理数据
-        Map<String, dynamic>? findDeepestTextureData(
-            Map<String, dynamic> data) {
-          // 首先检查当前层是否有背景纹理
-          if (data.containsKey('backgroundTexture') &&
-              data['backgroundTexture'] != null &&
-              data['backgroundTexture'] is Map<String, dynamic>) {
-            return data;
-          }
-
-          // 如果当前层没有背景纹理，但有嵌套内容，则递归查找
-          if (data.containsKey('content') &&
-              data['content'] != null &&
-              data['content'] is Map<String, dynamic>) {
-            return findDeepestTextureData(
-                data['content'] as Map<String, dynamic>);
-          }
-          return null;
-
-          // 如果没有找到任何纹理数据，返回null          return null;
+        // 处理纹理数据
+        if (hasCharacterTexture && characterTextureData != null) {
+          textureId = characterTextureData['id'] as String;
         }
 
-        if (characterImages is Map<String, dynamic>) {
-          // 查找最深层的有效纹理数据
-          final deepestTextureData = findDeepestTextureData(characterImages);
-          if (deepestTextureData != null) {
-            // 移除应用范围提取，直接使用background模式
-            debugPrint('使用固定的纹理应用模式：background');
+        // 创建纹理变化键，用于强制widget重建
+        final textureChangeKey = ValueKey(
+            'texture_${hasEffectiveTexture}_${textureId}_${textureWidth}_${textureHeight}_${textureFillMode}_${textureFitMode}_${textureOpacity}_${DateTime.now().millisecondsSinceEpoch}');
 
-            // 提取纹理数据
-            if (deepestTextureData.containsKey('backgroundTexture') &&
-                deepestTextureData['backgroundTexture'] != null) {
-              effectiveTextureData = deepestTextureData['backgroundTexture'];
-              hasEffectiveTexture = true;
-              debugPrint('发现有效的纹理数据：$effectiveTextureData');
-            }
-          }
-        } // Get texture size and fit mode from character images
-        final textureWidth = (characterImages is Map<String, dynamic>
-                ? (characterImages['textureWidth'] as num?)?.toDouble()
-                : null) ??
-            100.0;
-        final textureHeight = (characterImages is Map<String, dynamic>
-                ? (characterImages['textureHeight'] as num?)?.toDouble()
-                : null) ??
-            100.0;
-        final textureFitMode = (characterImages is Map<String, dynamic>
-                ? characterImages['textureFitMode'] as String?
-                : null) ??
-            'scaleToFill';
+        debugPrint('🔑 创建纹理变化键: ${textureChangeKey.value}');
 
         // 创建纹理配置，使用新的配置结构（移除应用范围，只使用背景模式）
         final textureConfig = tc.TextureConfig(
-          enabled: hasEffectiveTexture &&
-              (characterTextureData != null || effectiveTextureData != null),
+          enabled: hasEffectiveTexture && (characterTextureData != null),
           data: characterTextureData ?? effectiveTextureData,
           fillMode: textureFillMode,
           fitMode: textureFitMode,
@@ -330,10 +292,10 @@ class CollectionElementRenderer {
         debugPrint('  垂直对齐: $verticalAlign');
         debugPrint('  字间距: $letterSpacing');
         debugPrint('  行间距: $lineSpacing');
-        debugPrint('  自动换行: ${enableSoftLineBreak ? '√' : '✗'}');
-
-        // 创建容器并应用尺寸约束
+        debugPrint(
+            '  自动换行: ${enableSoftLineBreak ? '√' : '✗'}'); // 创建容器并应用尺寸约束，使用纹理变化键强制重建
         return SizedBox(
+          key: textureChangeKey, // 使用纹理变化键确保纹理变化时widget重建
           width: constraints.maxWidth,
           height: constraints.maxHeight,
           child: ClipRect(

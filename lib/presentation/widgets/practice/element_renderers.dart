@@ -43,6 +43,8 @@ class ElementRenderers {
     final textureFillMode = content['textureFillMode'] as String? ?? 'repeat';
     final textureOpacity =
         (content['textureOpacity'] as num?)?.toDouble() ?? 1.0;
+    final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;
+    final textureHeight = (content['textureHeight'] as num?)?.toDouble() ?? 0.0;
 
     // 添加调试信息
     debugPrint(
@@ -98,6 +100,8 @@ class ElementRenderers {
                 characterTextureData: backgroundTexture,
                 textureFillMode: textureFillMode,
                 textureOpacity: textureOpacity,
+                textureWidth: textureWidth,
+                textureHeight: textureHeight,
                 ref: ref,
               );
             },

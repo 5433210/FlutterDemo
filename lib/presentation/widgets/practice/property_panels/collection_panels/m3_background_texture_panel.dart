@@ -33,7 +33,7 @@ class _M3BackgroundTexturePanelState
     extends ConsumerState<M3BackgroundTexturePanel> {
   // 加载纹理图片 - 优化版
   // 使用内存缓存避免重复加载
-  static final Map<String, List<int>> _textureCache = {};
+  // static final Map<String, List<int>> _textureCache = {};
   // 本地状态来跟踪填充模式和适应模式
   String? _localTextureFillMode;
   String? _localTextureFitMode;
@@ -578,22 +578,30 @@ class _M3BackgroundTexturePanelState
     final cacheKey = path;
 
     // 首先检查内存缓存
-    if (_textureCache.containsKey(cacheKey)) {
-      debugPrint('从内存缓存加载纹理: $cacheKey');
-      return _textureCache[cacheKey]!;
-    }
+    // if (_textureCache.containsKey(cacheKey)) {
+    //   debugPrint('从内存缓存加载纹理: $cacheKey');
+    //   return _textureCache[cacheKey]!;
+    // }
 
     try {
       final storageService = ref.read(initializedStorageProvider);
+      final imageCacheService = ref.read(imageCacheServiceProvider);
+
+      final imageBytes = await imageCacheService.getBinaryImage(cacheKey);
+      if (imageBytes != null) {
+        debugPrint('从缓存加载纹理图片: $path');
+        return imageBytes;
+      }
 
       debugPrint('从存储加载纹理图片: $path');
-      final imageBytes = await storageService.readFile(path);
+      final imageBytesFromStorage = await storageService.readFile(path);
 
-      if (imageBytes.isNotEmpty) {
+      if (imageBytesFromStorage.isNotEmpty) {
         // 缓存到内存
-        _textureCache[cacheKey] = imageBytes;
-        debugPrint('纹理图片加载并缓存成功: ${imageBytes.length} bytes');
-        return imageBytes;
+        imageCacheService.cacheBinaryImage(
+            cacheKey, Uint8List.fromList(imageBytesFromStorage));
+        debugPrint('纹理图片加载并缓存成功: ${imageBytesFromStorage.length} bytes');
+        return imageBytesFromStorage;
       } else {
         throw Exception('图片文件为空');
       }
@@ -678,9 +686,9 @@ class _M3BackgroundTexturePanelState
       debugPrint('📝 尝试使用onContentPropertyChanged作为备选方案...');
       onContentPropertyChanged('content', newContent);
 
-      // 清空缓存，强制重新加载纹理
-      _textureCache.clear();
-      debugPrint('🧹 清空本地纹理缓存');
+      // // 清空缓存，强制重新加载纹理
+      // _textureCache.clear();
+      // debugPrint('🧹 清空本地纹理缓存');
 
       // 清除全局图像缓存
       try {
