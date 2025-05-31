@@ -1431,8 +1431,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // Parse color
     final bgColor = _parseColor(backgroundColor);
-
-    if (characters.isEmpty) {
+    if (characters.isEmpty && !hasBackgroundTexture) {
       // Removed debug logging for performance
       return Container(
         width: double.infinity,

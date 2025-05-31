@@ -67,10 +67,8 @@ class CollectionElementRenderer {
     // 使用增强版纹理管理器清除缓存，确保纹理变更可立即生效
     if (ref != null) {
       EnhancedTextureManager.instance.invalidateTextureCache(ref);
-    }
-
-    // 兼容原有支持 - 无内容时显示提示
-    if (characters.isEmpty) {
+    } // 兼容原有支持 - 无内容且无背景纹理时显示提示
+    if (characters.isEmpty && !hasCharacterTexture) {
       return const Center(
           child: Text('请输入汉字内容', style: TextStyle(color: Colors.grey)));
     }
