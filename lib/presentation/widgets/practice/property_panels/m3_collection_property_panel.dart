@@ -638,9 +638,7 @@ class _M3CollectionPropertyPanelState
       setState(() {
         _candidateCharacters = entities;
         _isLoadingCharacters = false;
-      });
-
-      // Auto-select first candidate as default
+      }); // Auto-select first candidate as default only if no candidate is currently bound
       if (entities.isNotEmpty) {
         // Find candidates matching the selected character
         final matchingEntities = entities
@@ -648,17 +646,18 @@ class _M3CollectionPropertyPanelState
             .toList();
 
         if (matchingEntities.isNotEmpty) {
-          // Check if this candidate is already selected
+          // Check if any candidate is already bound for this character
           final characterImages =
               content['characterImages'] as Map<String, dynamic>? ?? {};
           final imageInfo =
               characterImages['$_selectedCharIndex'] as Map<String, dynamic>?;
 
-          if (imageInfo == null ||
-              imageInfo['characterId'] != matchingEntities.first.id) {
-            // If not already selected, select it
+          // Only auto-select if no candidate is currently bound
+          if (imageInfo == null) {
+            // No candidate is bound, auto-select the first matching one
             _selectCandidateCharacter(matchingEntities.first);
           }
+          // If a candidate is already bound, don't auto-replace it
         }
       }
     } catch (e) {
