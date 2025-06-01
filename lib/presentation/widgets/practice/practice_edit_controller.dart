@@ -2439,6 +2439,9 @@ class PracticeEditController extends ChangeNotifier {
   void togglePreviewMode(bool isPreviewMode) {
     _state.isPreviewMode = isPreviewMode;
 
+    // 自动重置视图位置
+    resetViewPosition();
+
     // 调用预览模式回调函数
     if (_previewModeCallback != null) {
       _previewModeCallback!(isPreviewMode);
