@@ -363,7 +363,7 @@ class PropertyPanelController extends ChangeNotifier {
     if (selectedIds.length > 1) {
       final elements = selectedIds
           .map((id) => _stateManager.elementState.getElementById(id))
-          .where((element) => element != null)
+          .where((ElementData? element) => element != null)
           .cast<ElementData>()
           .toList();
 

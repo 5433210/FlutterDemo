@@ -41,7 +41,7 @@ class CanvasStateManager extends ChangeNotifier {
 
   /// 获取可选择的元素 (可见且未锁定)
   List<ElementData> get selectableElements {
-    return _elementState.sortedElements.where((element) {
+    return _elementState.sortedElements.where((ElementData element) {
       // 检查元素本身是否可见且未锁定
       if (!element.visible || element.locked) return false;
 
@@ -55,7 +55,7 @@ class CanvasStateManager extends ChangeNotifier {
   List<ElementData> get selectedElements {
     return _selectionState.selectedIds
         .map((id) => _elementState.getElementById(id))
-        .where((element) => element != null)
+        .where((ElementData? element) => element != null)
         .cast<ElementData>()
         .toList();
   }
@@ -68,7 +68,7 @@ class CanvasStateManager extends ChangeNotifier {
 
   /// 获取可见的元素
   List<ElementData> get visibleElements {
-    return _elementState.sortedElements.where((element) {
+    return _elementState.sortedElements.where((ElementData element) {
       // 检查元素本身是否可见
       if (!element.visible) return false;
 
@@ -174,7 +174,7 @@ class CanvasStateManager extends ChangeNotifier {
   /// 获取指定图层ID的所有元素
   List<ElementData> getElementsByLayerId(String layerId) {
     return _elementState.sortedElements
-        .where((element) => element.layerId == layerId)
+        .where((ElementData element) => element.layerId == layerId)
         .toList();
   }
 

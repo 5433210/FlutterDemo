@@ -47,7 +47,7 @@ class RenderingEngine {
     final allElements = stateManager.elementState.sortedElements;
 
     // 筛选可见元素（考虑图层可见性）
-    final visibleElements = allElements.where((element) {
+    bool isElementVisible(ElementData element) {
       // 元素本身必须可见
       if (!element.visible) return false;
 
@@ -61,7 +61,9 @@ class RenderingEngine {
         return stateManager.isElementVisible(element.id);
       }
       return true;
-    }).toList();
+    }
+    
+    final visibleElements = allElements.where((ElementData element) => isElementVisible(element)).toList();
 
     // 清空画布
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));

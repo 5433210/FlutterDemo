@@ -236,7 +236,7 @@ class BatchEditManager extends ChangeNotifier {
   List<ElementData> _getElementsFromIds(List<String> ids) {
     return ids
         .map((id) => _stateManager.elementState.getElementById(id))
-        .where((element) => element != null)
+        .where((ElementData? element) => element != null)
         .cast<ElementData>()
         .toList();
   }

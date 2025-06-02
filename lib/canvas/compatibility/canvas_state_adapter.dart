@@ -34,7 +34,7 @@ class CanvasStateManagerAdapter extends ChangeNotifier {
   /// 获取所有可选择的元素
   List<ElementData> get selectableElements {
     // 直接使用状态管理器的方法
-    return _stateManager.elementState.sortedElements.where((element) {
+    return _stateManager.elementState.sortedElements.where((ElementData element) {
       // 检查元素本身是否可见且未锁定
       if (!element.visible || element.locked) return false;
 
@@ -54,7 +54,7 @@ class CanvasStateManagerAdapter extends ChangeNotifier {
   /// 获取所有可见的元素
   List<ElementData> get visibleElements {
     // 直接使用状态管理器的方法
-    return _stateManager.elementState.sortedElements.where((element) {
+    return _stateManager.elementState.sortedElements.where((ElementData element) {
       // 检查元素本身是否可见
       if (!element.visible) return false;
 

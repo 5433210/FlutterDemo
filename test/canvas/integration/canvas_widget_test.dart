@@ -1,30 +1,16 @@
 // Canvas Widget Integration Test
 // 测试新Canvas架构的完整集成功能
 
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-
 import 'package:charasgem/canvas/compatibility/canvas_controller_adapter.dart';
 import 'package:charasgem/canvas/ui/canvas_widget.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CanvasWidget Integration Tests', () {
     testWidgets('Canvas应该正确渲染和交互', (WidgetTester tester) async {
       // 创建控制器
       final controller = CanvasControllerAdapter();
-
-      // 添加一个测试元素（使用旧API格式）
-      final testElement = {
-        'id': 'test-element-1',
-        'type': 'image',
-        'x': 50.0,
-        'y': 50.0,
-        'width': 100.0,
-        'height': 100.0,
-        'test': 'value',
-      };
-
-      controller.addElement(testElement);
 
       // 创建Canvas组件
       const configuration = CanvasConfiguration(
@@ -40,14 +26,35 @@ void main() {
         controller: controller,
       );
 
-      // 构建Widget
+      // 构建Widget (这会触发CanvasWidget内部的状态管理器初始化和controller attach)
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: canvasWidget,
           ),
         ),
-      ); // 验证Widget正确构建
+      );
+
+      // 等待Widget完全初始化
+      await tester.pump();
+
+      // 添加一个测试元素（使用旧API格式）
+      final testElement = {
+        'id': 'test-element-1',
+        'type': 'image',
+        'x': 50.0,
+        'y': 50.0,
+        'width': 100.0,
+        'height': 100.0,
+        'test': 'value',
+      };
+
+      controller.addElement(testElement);
+
+      // 等待状态更新
+      await tester.pump();
+
+      // 验证Widget正确构建
       expect(find.byType(CanvasWidget), findsOneWidget);
       expect(find.byType(CustomPaint), findsAtLeastNWidgets(1));
 
@@ -71,7 +78,33 @@ void main() {
       // 创建控制器
       final controller = CanvasControllerAdapter();
 
-      // 添加多个测试元素（使用旧API格式）
+      // 创建Canvas组件
+      const config = CanvasConfiguration(
+        size: Size(400, 300),
+        backgroundColor: Colors.white,
+        showGrid: false,
+        enableGestures: true,
+        enablePerformanceMonitoring: false,
+      );
+
+      final canvasWidget = CanvasWidget(
+        configuration: config,
+        controller: controller,
+      );
+
+      // 构建Widget (这会触发CanvasWidget内部的状态管理器初始化和controller attach)
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: canvasWidget,
+          ),
+        ),
+      );
+
+      // 等待Widget完全初始化
+      await tester.pump();
+
+      // 添加多个测试元素
       final elements = [
         {
           'id': 'element-1',
@@ -102,28 +135,11 @@ void main() {
         },
       ];
 
+      // 添加元素
       for (final element in elements) {
         controller.addElement(element);
+        await tester.pump(); // 等待每个元素的状态更新
       }
-
-      // 创建Canvas组件
-      const configuration = CanvasConfiguration(
-        size: Size(300, 200),
-        backgroundColor: Colors.grey,
-        showGrid: false,
-        enableGestures: true,
-      );
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CanvasWidget(
-              configuration: configuration,
-              controller: controller,
-            ),
-          ),
-        ),
-      );
 
       // 验证所有元素都添加成功
       expect(controller.elements.length, equals(3));
@@ -156,6 +172,9 @@ void main() {
           ),
         ),
       );
+
+      // 等待Widget完全初始化
+      await tester.pump();
 
       // 触发一些重绘
       await tester.pump();

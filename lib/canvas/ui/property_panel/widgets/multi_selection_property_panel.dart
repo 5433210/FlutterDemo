@@ -586,7 +586,7 @@ class _MultiSelectionPropertyPanelState
   void _updateSelectedElements() {
     _selectedElements = widget.selectedElementIds
         .map((id) => widget.stateManager.elementState.getElementById(id))
-        .where((element) => element != null)
+        .where((ElementData? element) => element != null)
         .cast<ElementData>()
         .toList();
   }

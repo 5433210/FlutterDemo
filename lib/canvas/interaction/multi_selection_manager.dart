@@ -40,7 +40,7 @@ class DeleteMultipleElementsCommand implements Command {
       _deletedElements = [];
       for (final id in elementIds) {
         final element = stateManager.selectableElements
-            .where((e) => e.id == id)
+            .where((ElementData e) => e.id == id)
             .firstOrNull;
         if (element != null) {
           _deletedElements!.add(element);
@@ -97,7 +97,7 @@ class MoveMultipleElementsCommand implements Command {
     try {
       for (final id in elementIds) {
         final element = stateManager.selectableElements
-            .where((e) => e.id == id)
+            .where((ElementData e) => e.id == id)
             .firstOrNull;
         if (element != null) {
           // 这里需要根据实际的ElementData结构来实现位置更新
@@ -120,7 +120,7 @@ class MoveMultipleElementsCommand implements Command {
       // 反向移动
       for (final id in elementIds) {
         final element = stateManager.selectableElements
-            .where((e) => e.id == id)
+            .where((ElementData e) => e.id == id)
             .firstOrNull;
         if (element != null) {
           // 这里需要根据实际的ElementData结构来实现位置更新
@@ -160,7 +160,7 @@ class MultiSelectionManager extends ChangeNotifier {
   List<ElementData> get selectedElements {
     final selectedIds = _stateManager.selectionState.selectedIds;
     return _stateManager.selectableElements
-        .where((element) => selectedIds.contains(element.id))
+        .where((ElementData element) => selectedIds.contains(element.id))
         .toList();
   }
 
@@ -274,8 +274,8 @@ class MultiSelectionManager extends ChangeNotifier {
 
     // 获取矩形内的元素
     final elementsInRect = _stateManager.selectableElements
-        .where((element) => _isElementInRect(element, rect))
-        .map((element) => element.id)
+        .where((ElementData element) => _isElementInRect(element, rect))
+        .map((ElementData element) => element.id)
         .toList();
 
     return selectMultiple(elementsInRect);
@@ -401,7 +401,7 @@ class UpdateMultipleElementsCommand implements Command {
       _originalStates = {};
       for (final entry in updates.entries) {
         final original = stateManager.selectableElements
-            .where((e) => e.id == entry.key)
+            .where((ElementData e) => e.id == entry.key)
             .firstOrNull;
         if (original != null) {
           _originalStates![entry.key] = original;

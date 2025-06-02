@@ -215,10 +215,6 @@ class _CanvasWidgetState extends State<CanvasWidget>
     _initializeComponents();
     _setupEventListeners();
     _attachController();
-
-    // 使用提供的控制器或创建新的控制器
-    _transformationController =
-        widget.transformationController ?? TransformationController();
   }
 
   /// 附加控制器
@@ -373,7 +369,6 @@ class _CanvasWidgetState extends State<CanvasWidget>
     // 手势状态变化监听
     _gestureHandler.addListener(_handleGestureStateChanged);
 
-    // 初始化焦点节点
-    _focusNode = FocusNode();
+    // 注意：焦点节点已在_initializeComponents()中初始化
   }
 }

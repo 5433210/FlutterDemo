@@ -57,7 +57,7 @@ class ElementState {
   /// 获取指定图层ID上的所有元素
   List<ElementData> getElementsByLayerId(String layerId) {
     return _elements.values
-        .where((element) => element.layerId == layerId)
+        .where((ElementData element) => element.layerId == layerId)
         .toList();
   }
 

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 
 import '../core/canvas_state_manager.dart';
+import '../core/interfaces/element_data.dart';
 
 /// Visual guide for alignment
 class AlignmentGuide {
@@ -125,8 +126,9 @@ class MagneticAlignmentManager {
       case AlignmentMode.independent:
         // Align each element independently
         for (final entry in elementPositions.entries) {
-          final excludeIds =
-              elementPositions.keys.where((id) => id != entry.key).toList();
+          final excludeIds = elementPositions.keys
+              .where((String id) => id != entry.key)
+              .toList();
 
           final result = alignPosition(entry.value, excludeIds);
           results[entry.key] = result;
@@ -151,7 +153,7 @@ class MagneticAlignmentManager {
         for (final entry in sortedEntries) {
           final excludeIds = [
             ...processedPositions.keys,
-            ...elementPositions.keys.where((id) => id != entry.key),
+            ...elementPositions.keys.where((String id) => id != entry.key),
           ];
 
           final result = alignPosition(entry.value, excludeIds);
@@ -306,7 +308,7 @@ class MagneticAlignmentManager {
   /// Snaps position to nearby elements
   SnapResult _snapToElements(Offset position, List<String> excludeElementIds) {
     final elements = _stateManager.selectableElements
-        .where((element) => !excludeElementIds.contains(element.id))
+        .where((ElementData element) => !excludeElementIds.contains(element.id))
         .toList();
 
     double minDistance = double.infinity;
