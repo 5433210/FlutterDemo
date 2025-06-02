@@ -1,6 +1,5 @@
 import 'package:charasgem/canvas/core/canvas_state_manager.dart';
 import 'package:charasgem/canvas/core/interfaces/element_data.dart';
-import 'package:charasgem/canvas/core/models/element_data.dart';
 import 'package:charasgem/canvas/state/element_state.dart';
 import 'package:charasgem/canvas/ui/property_panel/batch_edit_manager.dart';
 import 'package:charasgem/canvas/ui/property_panel/property_panel_controller.dart';
@@ -15,25 +14,28 @@ void main() {
 
     // 测试辅助方法：创建三个水平排列的矩形元素
     void setupTestElements() {
-      const element1 = CanvasElementData(
+      const element1 = ElementData(
         id: 'rect1',
         type: 'shape',
         bounds: Rect.fromLTWH(0, 0, 100, 50),
         properties: {'name': 'Rectangle 1'},
+        layerId: 'default',
       );
 
-      const element2 = CanvasElementData(
+      const element2 = ElementData(
         id: 'rect2',
         type: 'shape',
         bounds: Rect.fromLTWH(150, 0, 100, 50),
         properties: {'name': 'Rectangle 2'},
+        layerId: 'default',
       );
 
-      const element3 = CanvasElementData(
+      const element3 = ElementData(
         id: 'rect3',
         type: 'shape',
         bounds: Rect.fromLTWH(300, 0, 100, 50),
         properties: {'name': 'Rectangle 3'},
+        layerId: 'default',
       );
 
       final newElementState = const ElementState()

@@ -1,14 +1,39 @@
 // filepath: test/canvas/canvas_controller_adapter_test.dart
 
 import 'package:charasgem/canvas/compatibility/canvas_controller_adapter.dart';
+import 'package:charasgem/canvas/compatibility/canvas_state_adapter.dart';
+import 'package:charasgem/canvas/core/canvas_state_manager.dart';
+import 'package:charasgem/canvas/core/interfaces/layer_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('CanvasControllerAdapter', () {
     late CanvasControllerAdapter adapter;
+    late CanvasStateManager coreStateManager;
+    late CanvasStateManagerAdapter stateAdapter;
 
     setUp(() {
+      // 创建核心状态管理器
+      coreStateManager = CanvasStateManager();
+
+      // 创建兼容适配器
+      stateAdapter = CanvasStateManagerAdapter(coreStateManager);
+
+      // 创建默认图层
+      const defaultLayer = LayerData(
+        id: 'default',
+        name: 'Default Layer',
+        visible: true,
+        locked: false,
+        opacity: 1.0,
+        blendMode: 'normal',
+      );
+      coreStateManager.createLayer(defaultLayer);
+      coreStateManager.selectLayer('default');
+
+      // 创建控制器适配器并附加
       adapter = CanvasControllerAdapter();
+      adapter.attach(stateAdapter);
     });
 
     test('should initialize with empty state', () {

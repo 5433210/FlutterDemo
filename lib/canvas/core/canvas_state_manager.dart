@@ -78,6 +78,12 @@ class CanvasStateManager extends ChangeNotifier {
     }).toList();
   }
 
+  /// 添加元素
+  void addElement(ElementData element) {
+    _elementState = _elementState.addElement(element);
+    notifyListeners();
+  }
+
   /// 添加多个元素到选择 - 需检查图层约束
   void addElementsToSelection(Iterable<String> elementIds) {
     // 过滤出可选择的元素
@@ -120,6 +126,12 @@ class CanvasStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 清除选择
+  void clearSelection() {
+    _selectionState = _selectionState.clearSelection();
+    notifyListeners();
+  }
+
   /// 在指定图层上创建新元素
   void createElementOnLayer(ElementData element, String? layerId) {
     // 如果未指定图层ID，使用当前选中的图层
@@ -150,6 +162,12 @@ class CanvasStateManager extends ChangeNotifier {
       _selectedLayerId = null;
     }
     _layerState = _layerState.removeLayer(layerId);
+    notifyListeners();
+  }
+
+  /// 取消选择指定元素
+  void deselectElement(String elementId) {
+    _selectionState = _selectionState.removeFromSelection(elementId);
     notifyListeners();
   }
 
@@ -192,6 +210,14 @@ class CanvasStateManager extends ChangeNotifier {
 
   /// 重做操作
   bool redo() => _commandManager.redo();
+
+  /// 删除元素
+  void removeElement(String elementId) {
+    _elementState = _elementState.removeElement(elementId);
+    // 同时从选择中移除
+    _selectionState = _selectionState.removeFromSelection(elementId);
+    notifyListeners();
+  }
 
   /// 重新排序图层
   void reorderLayers(int oldIndex, int newIndex) {
@@ -334,6 +360,12 @@ class CanvasStateManager extends ChangeNotifier {
 
   /// 撤销操作
   bool undo() => _commandManager.undo();
+
+  /// 更新元素
+  void updateElement(String elementId, ElementData element) {
+    _elementState = _elementState.updateElement(elementId, element);
+    notifyListeners();
+  }
 
   /// 更新元素状态
   void updateElementState(ElementState newState) {

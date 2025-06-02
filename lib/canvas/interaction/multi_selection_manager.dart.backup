@@ -1,0 +1,471 @@
+// filepath: lib/canvas/interaction/multi_selection_manager.dart
+/// 多选操作管理器 - Phase 2.4 多选操作优化
+/// 
+/// 职责：
+/// 1. 高效的多选状态管理
+/// 2. 批量操作优化
+/// 3. 多选可视化反馈
+/// 4. 多选操作的性能优化
+library;
+
+import 'package:flutter/foundation.dart';
+
+import '../core/canvas_state_manager.dart';
+import '../core/commands/element_commands.dart';
+import '../core/interfaces/element_data.dart';
+
+/// 多选操作结果
+class MultiSelectionResult {
+  final List<String> selectedIds;
+  final List<ElementData> selectedElements;
+  final bool hasChanges;
+
+  const MultiSelectionResult({
+    required this.selectedIds,
+    required this.selectedElements,
+    required this.hasChanges,
+  });
+}
+
+/// 多选操作管理器
+class MultiSelectionManager extends ChangeNotifier {
+  final CanvasStateManager _stateManager;
+  
+  // 多选操作缓存
+  final Map<String, ElementData> _selectionCache = {};
+  
+  // 批量操作队列
+  final List<ElementCommand> _batchCommands = [];
+  
+  // 性能统计
+  int _operationCount = 0;
+  DateTime? _lastOperationTime;
+
+  MultiSelectionManager(this._stateManager) {
+    _stateManager.addListener(_onStateChanged);
+  }
+
+  /// 获取当前选中的元素数量
+  int get selectedCount => _stateManager.selectionState.selectedIds.length;
+
+  /// 是否为多选状态
+  bool get isMultiSelection => selectedCount > 1;
+
+  /// 获取选中的元素列表（使用缓存优化）
+  List<ElementData> get selectedElements {
+    final selectedIds = _stateManager.selectionState.selectedIds;
+    final result = <ElementData>[];
+    
+    for (final id in selectedIds) {
+      // 优先从缓存获取
+      var element = _selectionCache[id];
+      if (element == null) {
+        element = _stateManager.elementState.getElementById(id);
+        if (element != null) {
+          _selectionCache[id] = element;
+        }
+      }
+      if (element != null) {
+        result.add(element);
+      }
+    }
+    
+    return result;
+  }
+
+  /// 批量选择元素（优化版本）
+  MultiSelectionResult selectElements(List<String> elementIds, {bool append = false}) {
+    final startTime = DateTime.now();
+    
+    // 过滤可选择的元素
+    final selectableIds = elementIds.where((id) {
+      return _stateManager.isElementSelectable(id);
+    }).toList();
+
+    // 更新选择状态
+    final currentSelection = _stateManager.selectionState.selectedIds;
+    Set<String> newSelection;
+
+    if (append) {
+      newSelection = {...currentSelection, ...selectableIds};
+    } else {
+      newSelection = selectableIds.toSet();
+    }
+
+    // 执行选择操作
+    final command = SelectMultipleElementsCommand(
+      stateManager: _stateManager,
+      elementIds: newSelection.toList(),
+    );
+    
+    _stateManager.commandManager.execute(command);
+
+    // 更新缓存
+    _updateSelectionCache(newSelection.toList());
+
+    // 记录性能数据
+    _recordOperation(startTime);
+
+    final result = MultiSelectionResult(
+      selectedIds: newSelection.toList(),
+      selectedElements: selectedElements,
+      hasChanges: !setEquals(currentSelection, newSelection),
+    );
+
+    notifyListeners();
+    return result;
+  }
+
+  /// 优化的拖拽多选（框选）
+  MultiSelectionResult selectElementsInRect(Rect selectionRect, {bool append = false}) {
+    final startTime = DateTime.now();
+    
+    // 获取在选择矩形内的元素
+    final elementsInRect = _stateManager.elementState.sortedElements.where((element) {
+      return _isElementInRect(element, selectionRect) && _stateManager.isElementSelectable(element.id);
+    }).map((e) => e.id).toList();
+
+    final result = selectElements(elementsInRect, append: append);
+    
+    // 记录性能数据
+    _recordOperation(startTime);
+    
+    return result;
+  }
+
+  /// 批量删除选中元素
+  void deleteSelectedElements() {
+    if (selectedCount == 0) return;
+
+    final selectedIds = _stateManager.selectionState.selectedIds.toList();
+    
+    // 创建批量删除命令
+    final command = DeleteMultipleElementsCommand(
+      stateManager: _stateManager,
+      elementIds: selectedIds,
+    );
+    
+    _stateManager.commandManager.execute(command);
+    
+    // 清除缓存
+    _clearSelectionCache();
+    
+    notifyListeners();
+  }
+
+  /// 批量更新元素属性
+  void updateSelectedElements(Map<String, dynamic> properties) {
+    if (selectedCount == 0) return;
+
+    final selectedIds = _stateManager.selectionState.selectedIds.toList();
+    
+    // 创建批量更新命令
+    final command = UpdateMultipleElementsCommand(
+      stateManager: _stateManager,
+      elementIds: selectedIds,
+      properties: properties,
+    );
+    
+    _stateManager.commandManager.execute(command);
+    
+    // 清除缓存，因为元素已被修改
+    _clearSelectionCache();
+    
+    notifyListeners();
+  }
+
+  /// 批量移动元素
+  void moveSelectedElements(Offset offset) {
+    if (selectedCount == 0) return;
+
+    final selectedIds = _stateManager.selectionState.selectedIds.toList();
+    
+    // 创建批量移动命令
+    final command = MoveMultipleElementsCommand(
+      stateManager: _stateManager,
+      elementIds: selectedIds,
+      offset: offset,
+    );
+    
+    _stateManager.commandManager.execute(command);
+    
+    // 更新缓存中的位置信息
+    _updateElementPositionsInCache(offset);
+    
+    notifyListeners();
+  }
+
+  /// 清除当前选择
+  void clearSelection() {
+    if (selectedCount == 0) return;
+    
+    _stateManager.updateSelectionState(
+      _stateManager.selectionState.clearSelection()
+    );
+    
+    _clearSelectionCache();
+    notifyListeners();
+  }
+
+  /// 获取性能统计信息
+  Map<String, dynamic> getPerformanceStats() {
+    return {
+      'operationCount': _operationCount,
+      'lastOperationTime': _lastOperationTime?.toIso8601String(),
+      'cacheSize': _selectionCache.length,
+      'selectedCount': selectedCount,
+    };
+  }
+
+  /// 状态变化回调
+  void _onStateChanged() {
+    // 检查选择状态是否发生变化
+    final currentSelection = _stateManager.selectionState.selectedIds;
+    
+    // 清理不再选中的元素缓存
+    final keysToRemove = _selectionCache.keys
+        .where((id) => !currentSelection.contains(id))
+        .toList();
+    
+    for (final key in keysToRemove) {
+      _selectionCache.remove(key);
+    }
+  }
+
+  /// 更新选择缓存
+  void _updateSelectionCache(List<String> elementIds) {
+    for (final id in elementIds) {
+      if (!_selectionCache.containsKey(id)) {
+        final element = _stateManager.elementState.getElementById(id);
+        if (element != null) {
+          _selectionCache[id] = element;
+        }
+      }
+    }
+  }
+
+  /// 清除选择缓存
+  void _clearSelectionCache() {
+    _selectionCache.clear();
+  }
+
+  /// 更新缓存中元素的位置信息
+  void _updateElementPositionsInCache(Offset offset) {
+    final updatedCache = <String, ElementData>{};
+    
+    for (final entry in _selectionCache.entries) {
+      final element = entry.value;
+      final newBounds = element.bounds.translate(offset.dx, offset.dy);
+      final updatedElement = element.copyWith(bounds: newBounds);
+      updatedCache[entry.key] = updatedElement;
+    }
+    
+    _selectionCache.clear();
+    _selectionCache.addAll(updatedCache);
+  }
+
+  /// 检查元素是否在矩形内
+  bool _isElementInRect(ElementData element, Rect rect) {
+    return rect.overlaps(element.bounds);
+  }
+
+  /// 记录操作性能数据
+  void _recordOperation(DateTime startTime) {
+    _operationCount++;
+    _lastOperationTime = DateTime.now();
+    
+    final duration = _lastOperationTime!.difference(startTime);
+    if (duration.inMilliseconds > 50) {
+      debugPrint('MultiSelectionManager: Slow operation detected: ${duration.inMilliseconds}ms');
+    }
+  }
+
+  @override
+  void dispose() {
+    _stateManager.removeListener(_onStateChanged);
+    _clearSelectionCache();
+    super.dispose();
+  }
+}
+
+/// 多选元素命令
+class SelectMultipleElementsCommand extends ElementCommand {
+  final List<String> elementIds;
+  final List<String> _previousSelection;
+
+  SelectMultipleElementsCommand({
+    required super.stateManager,
+    required this.elementIds,
+  }) : _previousSelection = stateManager.selectionState.selectedIds.toList();
+
+  @override
+  void execute() {
+    stateManager.updateSelectionState(
+      stateManager.selectionState.copyWith(selectedIds: elementIds.toSet())
+    );
+  }
+
+  @override
+  void undo() {
+    stateManager.updateSelectionState(
+      stateManager.selectionState.copyWith(selectedIds: _previousSelection.toSet())
+    );
+  }
+
+  @override
+  String get description => 'Select ${elementIds.length} elements';
+}
+
+/// 删除多个元素命令
+class DeleteMultipleElementsCommand extends ElementCommand {
+  final List<String> elementIds;
+  final Map<String, ElementData> _deletedElements = {};
+
+  DeleteMultipleElementsCommand({
+    required super.stateManager,
+    required this.elementIds,
+  });
+
+  @override
+  void execute() {
+    // 保存要删除的元素数据
+    for (final id in elementIds) {
+      final element = stateManager.elementState.getElementById(id);
+      if (element != null) {
+        _deletedElements[id] = element;
+      }
+    }
+
+    // 删除元素
+    var newElementState = stateManager.elementState;
+    for (final id in elementIds) {
+      newElementState = newElementState.removeElement(id);
+    }
+    
+    stateManager.updateElementState(newElementState);
+    
+    // 清除选择状态
+    stateManager.updateSelectionState(
+      stateManager.selectionState.clearSelection()
+    );
+  }
+
+  @override
+  void undo() {
+    // 恢复删除的元素
+    var newElementState = stateManager.elementState;
+    for (final element in _deletedElements.values) {
+      newElementState = newElementState.addElement(element);
+    }
+    
+    stateManager.updateElementState(newElementState);
+    
+    // 恢复选择状态
+    stateManager.updateSelectionState(
+      stateManager.selectionState.copyWith(selectedIds: elementIds.toSet())
+    );
+  }
+
+  @override
+  String get description => 'Delete ${elementIds.length} elements';
+}
+
+/// 更新多个元素命令
+class UpdateMultipleElementsCommand extends ElementCommand {
+  final List<String> elementIds;
+  final Map<String, dynamic> properties;
+  final Map<String, ElementData> _originalElements = {};
+
+  UpdateMultipleElementsCommand({
+    required super.stateManager,
+    required this.elementIds,
+    required this.properties,
+  });
+
+  @override
+  void execute() {
+    // 保存原始元素数据
+    for (final id in elementIds) {
+      final element = stateManager.elementState.getElementById(id);
+      if (element != null) {
+        _originalElements[id] = element;
+      }
+    }
+
+    // 更新元素
+    var newElementState = stateManager.elementState;
+    for (final id in elementIds) {
+      final element = newElementState.getElementById(id);
+      if (element != null) {
+        final updatedElement = element.copyWith(properties: {
+          ...element.properties,
+          ...properties,
+        });
+        newElementState = newElementState.updateElement(updatedElement);
+      }
+    }
+    
+    stateManager.updateElementState(newElementState);
+  }
+
+  @override
+  void undo() {
+    // 恢复原始元素数据
+    var newElementState = stateManager.elementState;
+    for (final element in _originalElements.values) {
+      newElementState = newElementState.updateElement(element);
+    }
+    
+    stateManager.updateElementState(newElementState);
+  }
+
+  @override
+  String get description => 'Update ${elementIds.length} elements';
+}
+
+/// 移动多个元素命令
+class MoveMultipleElementsCommand extends ElementCommand {
+  final List<String> elementIds;
+  final Offset offset;
+
+  MoveMultipleElementsCommand({
+    required super.stateManager,
+    required this.elementIds,
+    required this.offset,
+  });
+
+  @override
+  void execute() {
+    var newElementState = stateManager.elementState;
+    
+    for (final id in elementIds) {
+      final element = newElementState.getElementById(id);
+      if (element != null) {
+        final newBounds = element.bounds.translate(offset.dx, offset.dy);
+        final updatedElement = element.copyWith(bounds: newBounds);
+        newElementState = newElementState.updateElement(updatedElement);
+      }
+    }
+    
+    stateManager.updateElementState(newElementState);
+  }
+
+  @override
+  void undo() {
+    var newElementState = stateManager.elementState;
+    
+    for (final id in elementIds) {
+      final element = newElementState.getElementById(id);
+      if (element != null) {
+        final newBounds = element.bounds.translate(-offset.dx, -offset.dy);
+        final updatedElement = element.copyWith(bounds: newBounds);
+        newElementState = newElementState.updateElement(updatedElement);
+      }
+    }
+    
+    stateManager.updateElementState(newElementState);
+  }
+
+  @override
+  String get description => 'Move ${elementIds.length} elements by (${offset.dx}, ${offset.dy})';
+}

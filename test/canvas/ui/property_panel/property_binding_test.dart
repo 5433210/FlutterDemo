@@ -1,5 +1,5 @@
 import 'package:charasgem/canvas/core/canvas_state_manager.dart';
-import 'package:charasgem/canvas/core/models/element_data.dart';
+import 'package:charasgem/canvas/core/interfaces/element_data.dart';
 import 'package:charasgem/canvas/ui/property_panel/property_binding.dart';
 import 'package:charasgem/canvas/ui/property_panel/property_panel_controller.dart';
 import 'package:flutter/material.dart';
@@ -17,11 +17,12 @@ void main() {
       bindingManager = PropertyBindingManager(controller);
 
       // 创建测试元素
-      const element = CanvasElementData(
+      const element = ElementData(
         id: 'test1',
         type: 'text',
         bounds: Rect.fromLTWH(0, 0, 100, 50),
         properties: {'name': 'Test Element', 'fontSize': 16},
+        layerId: 'default',
       ); // 添加元素到状态管理器
       final newElementState = stateManager.elementState.addElement(element);
       stateManager.updateElementState(newElementState);
@@ -73,11 +74,12 @@ void main() {
 
     test('批量绑定多个元素', () async {
       // 添加另一个测试元素
-      const element2 = CanvasElementData(
+      const element2 = ElementData(
         id: 'test2',
         type: 'text',
         bounds: Rect.fromLTWH(200, 0, 100, 50),
         properties: {'name': 'Test Element 2', 'fontSize': 16},
+        layerId: 'default',
       );
 
       final newElementState = stateManager.elementState.addElement(element2);

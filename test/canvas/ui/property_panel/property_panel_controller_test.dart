@@ -1,5 +1,5 @@
 import 'package:charasgem/canvas/core/canvas_state_manager.dart';
-import 'package:charasgem/canvas/core/models/element_data.dart';
+import 'package:charasgem/canvas/core/interfaces/element_data.dart';
 import 'package:charasgem/canvas/state/element_state.dart';
 import 'package:charasgem/canvas/state/selection_state.dart';
 import 'package:charasgem/canvas/ui/property_panel/property_panel_controller.dart';
@@ -36,7 +36,7 @@ void main() {
     });
     test('更新元素属性并验证变更', () async {
       // 创建测试元素
-      const element = CanvasElementData(
+      const element = ElementData(
         id: 'test1',
         type: 'text',
         bounds: Rect.fromLTWH(0, 0, 100, 50),
@@ -44,6 +44,7 @@ void main() {
           'name': 'Test Element',
           'content': 'Hello',
         },
+        layerId: 'default',
       );
 
       // 添加元素到状态管理器
@@ -73,28 +74,31 @@ void main() {
 
     test('获取共同属性', () {
       // 创建测试元素
-      const element1 = CanvasElementData(
+      const element1 = ElementData(
         id: 'test1',
         type: 'text',
         bounds: Rect.fromLTWH(0, 0, 100, 50),
         properties: {'name': 'Element 1', 'fontSize': 16},
         opacity: 0.8,
+        layerId: 'default',
       );
 
-      const element2 = CanvasElementData(
+      const element2 = ElementData(
         id: 'test2',
         type: 'text',
         bounds: Rect.fromLTWH(100, 0, 100, 50),
         properties: {'name': 'Element 2', 'fontSize': 16},
         opacity: 0.8,
+        layerId: 'default',
       );
 
-      const element3 = CanvasElementData(
+      const element3 = ElementData(
         id: 'test3',
         type: 'text',
         bounds: Rect.fromLTWH(200, 0, 100, 50),
         properties: {'name': 'Element 3', 'fontSize': 20},
         opacity: 0.8,
+        layerId: 'default',
       );
 
       // 添加元素到状态管理器
@@ -112,13 +116,14 @@ void main() {
       expect(commonProps.containsKey('fontSize'), equals(false)); // 不同的值
     });
 
-    test('历史记录功能', () async {
+    test('属性历史记录功能', () async {
       // 创建测试元素
-      const element = CanvasElementData(
+      const element = ElementData(
         id: 'test1',
         type: 'text',
         bounds: Rect.fromLTWH(0, 0, 100, 50),
         properties: {'name': 'Test Element'},
+        layerId: 'default',
       );
 
       // 添加元素到状态管理器
