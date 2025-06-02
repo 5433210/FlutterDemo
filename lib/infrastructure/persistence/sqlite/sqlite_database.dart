@@ -394,13 +394,34 @@ class SQLiteDatabase implements DatabaseInterface {
     required String directory,
     List<String> migrations = const [],
   }) async {
-    // 在 Windows 平台上初始化 sqflite_ffi
-    if (defaultTargetPlatform == TargetPlatform.windows) {
-      AppLogger.debug('初始化 SQLite FFI', tag: 'App');
-      // 正确初始化sqflite_ffi - 使用全局函数而非类方法
-      sqfliteFfiInit();
-      // 使用全局变量
-      databaseFactory = databaseFactoryFfi;
+    final dbFullPath = path.join(directory, name);
+    AppLogger.info(
+      '数据库配置信息:\n'
+      '  - 数据库类型: SQLite3\n'
+      '  - 数据库名称: $name\n'
+      '  - 数据库目录: $directory\n'
+      '  - 完整路径: $dbFullPath\n'
+      '  - 数据库版本: ${migrations.length}\n'
+      '  - 迁移脚本数量: ${migrations.length}',
+      tag: 'Database',
+    );
+    
+    // 在Windows、MacOS、Linux平台初始化sqflite_ffi
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      try {
+        AppLogger.info('初始化sqflite_ffi...', tag: 'Database');
+        sqfliteFfiInit();
+        
+        
+          AppLogger.info('在${Platform.operatingSystem}平台上使用标准数据库工厂', tag: 'Database');
+          databaseFactory = databaseFactoryFfi;
+        
+        
+        AppLogger.info('SQLite FFI初始化成功', tag: 'Database');
+      } catch (e) {
+        AppLogger.error('SQLite FFI初始化失败', tag: 'Database', error: e);
+        rethrow;
+      }
     }
 
     // 检查是否有待恢复的数据库
@@ -454,8 +475,7 @@ class SQLiteDatabase implements DatabaseInterface {
       AppLogger.error('检查待恢复数据库失败',
           error: e, stackTrace: stack, tag: 'Database');
     }
-
-    final dbFullPath = path.join(directory, name);
+    // 重用之前定义的dbFullPath变量
     AppLogger.info(
       '数据库配置信息:\n'
       '  - 数据库类型: SQLite3\n'

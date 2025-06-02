@@ -25,6 +25,17 @@ bool _isFavoriteFromJson(dynamic value) {
 
 int _isFavoriteToJson(bool value) => value ? 1 : 0;
 
+/// 处理可能为null的日期字符串
+DateTime _dateTimeFromJson(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.parse(value);
+  return DateTime.now();
+}
+
+/// 将DateTime转换为ISO8601字符串
+String? _dateTimeToJson(DateTime? value) => value?.toIso8601String();
+
 /// 作品实体
 @freezed
 class WorkEntity with _$WorkEntity {
@@ -50,15 +61,15 @@ class WorkEntity with _$WorkEntity {
     required WorkTool tool,
 
     /// 创作日期
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime creationDate,
 
     /// 创建时间
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime createTime,
 
     /// 修改时间
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime updateTime,
 
     /// 是否收藏
@@ -66,7 +77,7 @@ class WorkEntity with _$WorkEntity {
     @Default(false) bool isFavorite,
 
     /// 图片最后更新时间
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson, includeIfNull: false)
     DateTime? lastImageUpdateTime,
 
     /// 状态

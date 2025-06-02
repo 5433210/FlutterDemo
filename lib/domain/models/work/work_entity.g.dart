@@ -14,15 +14,13 @@ _$WorkEntityImpl _$$WorkEntityImplFromJson(Map<String, dynamic> json) =>
       remark: json['remark'] as String?,
       style: _workStyleFromJson(json['style']),
       tool: _workToolFromJson(json['tool']),
-      creationDate: DateTime.parse(json['creationDate'] as String),
-      createTime: DateTime.parse(json['createTime'] as String),
-      updateTime: DateTime.parse(json['updateTime'] as String),
+      creationDate: _dateTimeFromJson(json['creationDate']),
+      createTime: _dateTimeFromJson(json['createTime']),
+      updateTime: _dateTimeFromJson(json['updateTime']),
       isFavorite: json['isFavorite'] == null
           ? false
           : _isFavoriteFromJson(json['isFavorite']),
-      lastImageUpdateTime: json['lastImageUpdateTime'] == null
-          ? null
-          : DateTime.parse(json['lastImageUpdateTime'] as String),
+      lastImageUpdateTime: _dateTimeFromJson(json['lastImageUpdateTime']),
       status: $enumDecodeNullable(_$WorkStatusEnumMap, json['status']) ??
           WorkStatus.draft,
       firstImageId: json['firstImageId'] as String?,
@@ -48,11 +46,12 @@ Map<String, dynamic> _$$WorkEntityImplToJson(_$WorkEntityImpl instance) =>
       'remark': instance.remark,
       'style': _workStyleToJson(instance.style),
       'tool': _workToolToJson(instance.tool),
-      'creationDate': instance.creationDate.toIso8601String(),
-      'createTime': instance.createTime.toIso8601String(),
-      'updateTime': instance.updateTime.toIso8601String(),
+      'creationDate': _dateTimeToJson(instance.creationDate),
+      'createTime': _dateTimeToJson(instance.createTime),
+      'updateTime': _dateTimeToJson(instance.updateTime),
       'isFavorite': _isFavoriteToJson(instance.isFavorite),
-      'lastImageUpdateTime': instance.lastImageUpdateTime?.toIso8601String(),
+      if (_dateTimeToJson(instance.lastImageUpdateTime) case final value?)
+        'lastImageUpdateTime': value,
       'status': _$WorkStatusEnumMap[instance.status]!,
       'firstImageId': instance.firstImageId,
       'images': instance.images,

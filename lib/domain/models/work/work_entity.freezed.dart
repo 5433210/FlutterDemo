@@ -41,12 +41,15 @@ mixin _$WorkEntity {
   WorkTool get tool => throw _privateConstructorUsedError;
 
   /// 创作日期
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get creationDate => throw _privateConstructorUsedError;
 
   /// 创建时间
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get createTime => throw _privateConstructorUsedError;
 
   /// 修改时间
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get updateTime => throw _privateConstructorUsedError;
 
   /// 是否收藏
@@ -54,6 +57,10 @@ mixin _$WorkEntity {
   bool get isFavorite => throw _privateConstructorUsedError;
 
   /// 图片最后更新时间
+  @JsonKey(
+      fromJson: _dateTimeFromJson,
+      toJson: _dateTimeToJson,
+      includeIfNull: false)
   DateTime? get lastImageUpdateTime => throw _privateConstructorUsedError;
 
   /// 状态
@@ -100,11 +107,18 @@ abstract class $WorkEntityCopyWith<$Res> {
       WorkStyle style,
       @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
       WorkTool tool,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime creationDate,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime createTime,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime updateTime,
       @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       bool isFavorite,
+      @JsonKey(
+          fromJson: _dateTimeFromJson,
+          toJson: _dateTimeToJson,
+          includeIfNull: false)
       DateTime? lastImageUpdateTime,
       WorkStatus status,
       String? firstImageId,
@@ -237,11 +251,18 @@ abstract class _$$WorkEntityImplCopyWith<$Res>
       WorkStyle style,
       @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
       WorkTool tool,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime creationDate,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime createTime,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       DateTime updateTime,
       @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       bool isFavorite,
+      @JsonKey(
+          fromJson: _dateTimeFromJson,
+          toJson: _dateTimeToJson,
+          includeIfNull: false)
       DateTime? lastImageUpdateTime,
       WorkStatus status,
       String? firstImageId,
@@ -367,11 +388,18 @@ class _$WorkEntityImpl extends _WorkEntity {
       required this.style,
       @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
       required this.tool,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required this.creationDate,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required this.createTime,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required this.updateTime,
       @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       this.isFavorite = false,
+      @JsonKey(
+          fromJson: _dateTimeFromJson,
+          toJson: _dateTimeToJson,
+          includeIfNull: false)
       this.lastImageUpdateTime,
       this.status = WorkStatus.draft,
       this.firstImageId,
@@ -415,14 +443,17 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   /// 创作日期
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   final DateTime creationDate;
 
   /// 创建时间
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   final DateTime createTime;
 
   /// 修改时间
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   final DateTime updateTime;
 
   /// 是否收藏
@@ -432,6 +463,10 @@ class _$WorkEntityImpl extends _WorkEntity {
 
   /// 图片最后更新时间
   @override
+  @JsonKey(
+      fromJson: _dateTimeFromJson,
+      toJson: _dateTimeToJson,
+      includeIfNull: false)
   final DateTime? lastImageUpdateTime;
 
   /// 状态
@@ -568,11 +603,18 @@ abstract class _WorkEntity extends WorkEntity {
       required final WorkStyle style,
       @JsonKey(fromJson: _workToolFromJson, toJson: _workToolToJson)
       required final WorkTool tool,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required final DateTime creationDate,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required final DateTime createTime,
+      @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
       required final DateTime updateTime,
       @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
       final bool isFavorite,
+      @JsonKey(
+          fromJson: _dateTimeFromJson,
+          toJson: _dateTimeToJson,
+          includeIfNull: false)
       final DateTime? lastImageUpdateTime,
       final WorkStatus status,
       final String? firstImageId,
@@ -613,14 +655,17 @@ abstract class _WorkEntity extends WorkEntity {
 
   /// 创作日期
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get creationDate;
 
   /// 创建时间
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get createTime;
 
   /// 修改时间
   @override
+  @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
   DateTime get updateTime;
 
   /// 是否收藏
@@ -630,6 +675,10 @@ abstract class _WorkEntity extends WorkEntity {
 
   /// 图片最后更新时间
   @override
+  @JsonKey(
+      fromJson: _dateTimeFromJson,
+      toJson: _dateTimeToJson,
+      includeIfNull: false)
   DateTime? get lastImageUpdateTime;
 
   /// 状态
