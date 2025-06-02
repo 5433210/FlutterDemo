@@ -8,13 +8,17 @@ class CanvasPerformanceMonitor {
   final Map<String, int> _frameDrops = {};
 
   int _totalFrames = 0;
+  bool _isMonitoring = false;
+  DateTime? _frameStartTime;
+
   factory CanvasPerformanceMonitor() => _instance;
   CanvasPerformanceMonitor._internal();
 
   /// 检查性能是否满足基准要求
   bool checkPerformanceBenchmark() {
     // 基准：平均渲染时间不超过16.67ms（60fps）
-    const maxRenderTime = Duration(microseconds: 16670);    for (final operation in _renderTimes.keys) {
+    const maxRenderTime = Duration(microseconds: 16670);
+    for (final operation in _renderTimes.keys) {
       final avgTime = getAverageRenderTime(operation);
       if (avgTime != null && avgTime > maxRenderTime) {
         // TODO: 实际项目中应该使用日志框架记录性能警告
@@ -25,6 +29,22 @@ class CanvasPerformanceMonitor {
     }
 
     return true;
+  }
+
+  /// 停止监控
+  void dispose() {
+    _isMonitoring = false;
+    _frameStartTime = null;
+  }
+
+  /// 结束帧渲染
+  void endFrame() {
+    if (!_isMonitoring || _frameStartTime == null) return;
+
+    final duration = DateTime.now().difference(_frameStartTime!);
+    recordRenderTime('frame', duration);
+    incrementFrameCount();
+    _frameStartTime = null;
   }
 
   /// 获取平均渲染时间
@@ -84,5 +104,16 @@ class CanvasPerformanceMonitor {
     _renderTimes.clear();
     _frameDrops.clear();
     _totalFrames = 0;
+  }
+
+  /// 开始帧渲染
+  void startFrame() {
+    if (!_isMonitoring) return;
+    _frameStartTime = DateTime.now();
+  }
+
+  /// 开始监控
+  void startMonitoring() {
+    _isMonitoring = true;
   }
 }

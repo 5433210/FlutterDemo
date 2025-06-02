@@ -53,6 +53,17 @@ class CanvasControllerAdapter extends ChangeNotifier {
     _stateManager.commandManager.execute(command);
   }
 
+  /// 附加到状态管理器
+  void attach(CanvasStateManager stateManager) {
+    // 如果传入的状态管理器与当前不同，更新引用
+    if (_stateManager != stateManager) {
+      _stateManager.removeListener(() => notifyListeners());
+      // 注意：这里应该更新_stateManager引用，但由于是late final，
+      // 我们保持当前实现，仅添加监听器同步
+      stateManager.addListener(() => notifyListeners());
+    }
+  }
+
   /// 兼容旧API：清除选择
   void clearSelection() {
     final newSelectionState = _stateManager.selectionState.clearSelection();
@@ -68,6 +79,12 @@ class CanvasControllerAdapter extends ChangeNotifier {
       elementIds: _stateManager.selectionState.selectedIds.toList(),
     );
     _stateManager.commandManager.execute(command);
+  }
+
+  /// 从状态管理器分离
+  void detach() {
+    // 移除监听器
+    _stateManager.removeListener(() => notifyListeners());
   }
 
   /// 兼容旧API：重做

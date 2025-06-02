@@ -7,14 +7,14 @@ import '../core/interfaces/element_data.dart';
 import 'element_renderer_factory.dart';
 
 /// 渲染引擎 - 负责高效渲染画布元素
-class RenderingEngine extends CustomPainter {
+class RenderingEngine {
   final CanvasStateManager stateManager;
   final ElementRendererFactory _rendererFactory = ElementRendererFactory();
 
   RenderingEngine({required this.stateManager});
 
-  @override
-  void paint(Canvas canvas, Size size) {
+  /// 渲染所有元素到指定的画布
+  void renderElements(Canvas canvas, Size size) {
     // 获取需要渲染的元素
     final elements = stateManager.elementState.sortedElements;
 
@@ -26,19 +26,8 @@ class RenderingEngine extends CustomPainter {
       if (element.isHidden) continue;
 
       _renderElement(canvas, size, element);
-    }
-
-    // 渲染选择框
+    } // 渲染选择框
     _renderSelectionBoxes(canvas, size);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    if (oldDelegate is! RenderingEngine) return true;
-
-    // 检查状态是否有变化
-    return stateManager.elementState.dirtyElementIds.isNotEmpty ||
-        oldDelegate.stateManager != stateManager;
   }
 
   void _applyElementTransform(Canvas canvas, ElementData element) {
