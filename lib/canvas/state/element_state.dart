@@ -54,6 +54,13 @@ class ElementState {
   /// 获取指定ID的元素
   ElementData? getElementById(String id) => _elements[id];
 
+  /// 获取指定图层ID上的所有元素
+  List<ElementData> getElementsByLayerId(String layerId) {
+    return _elements.values
+        .where((element) => element.layerId == layerId)
+        .toList();
+  }
+
   /// 标记元素为脏（需要重绘）
   ElementState markElementDirty(String id) {
     if (!_elements.containsKey(id)) return this;
@@ -106,5 +113,22 @@ class ElementState {
       elements: newElements,
       dirtyElementIds: newDirtyIds,
     );
+  }
+
+  /// 更新指定图层上所有元素的属性
+  ElementState updateElementsOnLayer(
+      String layerId, Map<String, dynamic> properties) {
+    final elementsOnLayer = getElementsByLayerId(layerId);
+    ElementState newState = this;
+
+    for (final element in elementsOnLayer) {
+      final updatedElement = element.copyWith(
+        visible: properties['visible'] ?? element.visible,
+        locked: properties['locked'] ?? element.locked,
+      );
+      newState = newState.updateElement(element.id, updatedElement);
+    }
+
+    return newState;
   }
 }

@@ -2,27 +2,72 @@
 
 import 'package:flutter/material.dart';
 
+import '../compatibility/canvas_state_adapter.dart';
 import '../core/canvas_state_manager.dart';
 import '../core/interfaces/element_data.dart';
 import 'element_renderer_factory.dart';
 
+/// 渲染上下文
+///
+/// 包含渲染元素所需的上下文信息，例如选择状态、主题色等
+class RenderingContext {
+  /// 选择高亮颜色
+  final Color selectionColor;
+
+  /// 当前选中的元素ID集合
+  final Set<String> selectedElements;
+
+  /// 构造函数
+  const RenderingContext({
+    required this.selectionColor,
+    required this.selectedElements,
+  });
+
+  /// 检查元素是否被选中
+  bool isSelected(String elementId) {
+    return selectedElements.contains(elementId);
+  }
+}
+
 /// 渲染引擎 - 负责高效渲染画布元素
 class RenderingEngine {
-  final CanvasStateManager stateManager;
+  final dynamic stateManager;
   final ElementRendererFactory _rendererFactory = ElementRendererFactory();
 
-  RenderingEngine({required this.stateManager});
+  RenderingEngine({required this.stateManager}) {
+    assert(
+        stateManager is CanvasStateManager ||
+            stateManager is CanvasStateManagerAdapter,
+        'stateManager must be either CanvasStateManager or CanvasStateManagerAdapter');
+  }
 
   /// 渲染所有元素到指定的画布
   void renderElements(Canvas canvas, Size size) {
     // 获取需要渲染的元素
-    final elements = stateManager.elementState.sortedElements;
+    final allElements = stateManager.elementState.sortedElements;
+
+    // 筛选可见元素（考虑图层可见性）
+    final visibleElements = allElements.where((element) {
+      // 元素本身必须可见
+      if (!element.visible) return false;
+
+      // 元素所在图层必须可见
+      final layerId = element.layerId;
+      if (stateManager is CanvasStateManager) {
+        final layer = stateManager.layerState.getLayerById(layerId);
+        return layer != null && layer.visible;
+      } else if (stateManager is CanvasStateManagerAdapter) {
+        // 适配器可能有不同的处理方式
+        return stateManager.isElementVisible(element.id);
+      }
+      return true;
+    }).toList();
 
     // 清空画布
     canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // 渲染每个元素
-    for (final element in elements) {
+    // 渲染每个可见元素
+    for (final element in visibleElements) {
       if (element.isHidden) continue;
 
       _renderElement(canvas, size, element);
@@ -124,10 +169,14 @@ class RenderingEngine {
   }
 
   void _renderSelectionBoxes(Canvas canvas, Size size) {
-    final selectedElements = stateManager.selectedElements;
+    final selectedElementIds = stateManager.selectedElements;
 
-    for (final element in selectedElements) {
-      _renderSelectionBox(canvas, element);
+    for (final elementId in selectedElementIds) {
+      // Find the element data by its ID from the elements map
+      final element = stateManager.elements[elementId];
+      if (element != null) {
+        _renderSelectionBox(canvas, element);
+      }
     }
   }
 }

@@ -3,19 +3,27 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../compatibility/canvas_state_adapter.dart';
 import '../core/canvas_state_manager.dart';
 import '../core/commands/element_commands.dart';
 import '../core/interfaces/element_data.dart';
+import '../ui/toolbar/tool_state_manager.dart';
 
 /// 画布手势处理器
 class CanvasGestureHandler extends ChangeNotifier {
-  final CanvasStateManager _stateManager;
+  final dynamic _stateManager;
+  final ToolStateManager _toolStateManager;
 
   GestureState _gestureState = const GestureState();
   bool _isDraggingElements = false;
   MoveElementsCommand? _currentMoveCommand;
 
-  CanvasGestureHandler(this._stateManager);
+  CanvasGestureHandler(this._stateManager, this._toolStateManager) {
+    assert(
+        _stateManager is CanvasStateManager ||
+            _stateManager is CanvasStateManagerAdapter,
+        'stateManager must be either CanvasStateManager or CanvasStateManagerAdapter');
+  }
 
   /// 当前手势状态
   GestureState get gestureState => _gestureState;
@@ -52,13 +60,31 @@ class CanvasGestureHandler extends ChangeNotifier {
   void handlePointerDown(InputEvent event) {
     debugPrint('Canvas手势处理：指针按下 - 位置: ${event.position}');
 
-    // 执行命中测试
-    final hitElements = _performHitTest(event.position);
+    // 根据当前工具决定处理逻辑
+    final currentTool = _toolStateManager.currentTool;
 
-    if (hitElements.isNotEmpty) {
-      _handleElementHit(event, hitElements.first);
-    } else {
-      _handleEmptyAreaHit(event);
+    switch (currentTool) {
+      case ToolType.select:
+        _handleSelectToolDown(event);
+        break;
+      case ToolType.text:
+        _handleTextToolDown(event);
+        break;
+      case ToolType.image:
+        _handleImageToolDown(event);
+        break;
+      case ToolType.collection:
+        _handleCollectionToolDown(event);
+        break;
+      case ToolType.pan:
+        _handlePanToolDown(event);
+        break;
+      case ToolType.zoom:
+        _handleZoomToolDown(event);
+        break;
+      default:
+        _handleDefaultToolDown(event);
+        break;
     }
 
     _updateGestureState(
@@ -144,6 +170,46 @@ class CanvasGestureHandler extends ChangeNotifier {
     debugPrint('Canvas手势处理：选择框选择了 ${selectedIds.length} 个元素');
   }
 
+  void _handleCollectionToolDown(InputEvent event) {
+    // 创建集字元素的逻辑
+    debugPrint('Canvas手势处理：集字工具点击 - 位置: ${event.position}');
+    final collectionElement = ElementData(
+      id: 'collection_${DateTime.now().millisecondsSinceEpoch}',
+      type: 'collection',
+      layerId: 'default',
+      bounds: Rect.fromLTWH(
+          event.position.dx - 50, event.position.dy - 50, 100, 100),
+      properties: {
+        'characters': '请输入汉字',
+        'fontSize': 24.0,
+        'fontColor': '#000000',
+        'writingMode': 'horizontal-l',
+        'letterSpacing': 0.0,
+        'lineSpacing': 0.0,
+        'textAlign': 'left',
+        'verticalAlign': 'top',
+      },
+    );
+
+    final command = AddElementCommand(
+      stateManager: _stateManager,
+      element: collectionElement,
+    );
+
+    _stateManager.commandManager.execute(command);
+
+    // 选择新创建的元素
+    _stateManager.updateSelectionState(
+        _stateManager.selectionState.selectSingle(collectionElement.id));
+  }
+
+  /// 处理平移工具的指针按下
+  /// 处理默认工具的指针按下
+  void _handleDefaultToolDown(InputEvent event) {
+    // 默认处理逻辑（通常是选择模式）
+    _handleSelectToolDown(event);
+  }
+
   /// 处理元素拖拽
   void _handleElementDrag(InputEvent event, Offset delta) {
     final selectedIds = _stateManager.selectionState.selectedIds.toList();
@@ -209,6 +275,47 @@ class CanvasGestureHandler extends ChangeNotifier {
     _startSelectionBox(event.position);
   }
 
+  /// 处理图像工具的指针按下
+  void _handleImageToolDown(InputEvent event) {
+    // 创建图像元素的逻辑
+    debugPrint('Canvas手势处理：图像工具点击 - 位置: ${event.position}');
+    final imageElement = ElementData(
+      id: 'image_${DateTime.now().millisecondsSinceEpoch}',
+      type: 'image',
+      layerId: 'default',
+      bounds: Rect.fromLTWH(
+          event.position.dx - 75, event.position.dy - 75, 150, 150),
+      properties: {
+        'imageUrl': '', // 这里可以弹出文件选择器
+        'fit': 'contain',
+        'alignment': 'center',
+      },
+    );
+
+    final command = AddElementCommand(
+      stateManager: _stateManager,
+      element: imageElement,
+    );
+
+    _stateManager.commandManager.execute(command);
+
+    // 选择新创建的元素
+    _stateManager.updateSelectionState(
+        _stateManager.selectionState.selectSingle(imageElement.id));
+  }
+
+  /// 处理平移工具的指针按下
+  void _handlePanToolDown(InputEvent event) {
+    // 开始画布平移
+    debugPrint('Canvas手势处理：平移工具激活 - 位置: ${event.position}');
+
+    // 平移工具不需要创建元素，而是改变画布视图状态
+    // 这里暂时使用现有的手势状态，后续可以扩展
+    _updateGestureState(
+      startPosition: event.position,
+    );
+  }
+
   /// 更新选择框
   void _handleSelectionBoxUpdate(InputEvent event) {
     final startPos = _gestureState.startPosition;
@@ -216,6 +323,64 @@ class CanvasGestureHandler extends ChangeNotifier {
 
     final selectionRect = Rect.fromPoints(startPos, event.position);
     _updateGestureState(selectionBoxRect: selectionRect);
+  }
+
+  /// 处理选择工具的指针按下
+  void _handleSelectToolDown(InputEvent event) {
+    // 执行命中测试
+    final hitElements = _performHitTest(event.position);
+
+    if (hitElements.isNotEmpty) {
+      _handleElementHit(event, hitElements.first);
+    } else {
+      _handleEmptyAreaHit(event);
+    }
+  }
+
+  /// 处理文本工具的指针按下
+  void _handleTextToolDown(InputEvent event) {
+    // 创建文本元素的逻辑
+    debugPrint('Canvas手势处理：文本工具点击 - 位置: ${event.position}');
+    final textElement = ElementData(
+      id: 'text_${DateTime.now().millisecondsSinceEpoch}',
+      type: 'text',
+      layerId: 'default',
+      bounds: Rect.fromLTWH(
+          event.position.dx - 100, event.position.dy - 25, 200, 50),
+      properties: {
+        'text': '输入文本',
+        'fontSize': 16.0,
+        'fontColor': '#000000',
+        'fontFamily': 'sans-serif',
+        'fontWeight': 'normal',
+        'fontStyle': 'normal',
+        'textAlign': 'left',
+        'backgroundColor': 'transparent',
+      },
+    );
+
+    final command = AddElementCommand(
+      stateManager: _stateManager,
+      element: textElement,
+    );
+
+    _stateManager.commandManager.execute(command);
+
+    // 选择新创建的元素
+    _stateManager.updateSelectionState(
+        _stateManager.selectionState.selectSingle(textElement.id));
+  }
+
+  /// 处理缩放工具的指针按下
+  void _handleZoomToolDown(InputEvent event) {
+    // 处理画布缩放
+    debugPrint('Canvas手势处理：缩放工具激活 - 位置: ${event.position}');
+
+    // 缩放工具可以在点击位置进行缩放
+    // 这里暂时记录缩放起始位置，具体缩放逻辑由Canvas组件处理
+    _updateGestureState(
+      startPosition: event.position,
+    );
   }
 
   /// 执行命中测试

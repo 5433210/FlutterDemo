@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../compatibility/canvas_controller_adapter.dart';
+import '../compatibility/canvas_state_adapter.dart';
 import '../core/canvas_state_manager.dart';
 import '../interaction/gesture_handler.dart';
 import '../monitoring/performance_monitor.dart';
 import '../rendering/rendering_engine.dart';
+import 'toolbar/tool_state_manager.dart';
 
 /// Canvas组件配置
 class CanvasConfiguration {
@@ -141,11 +143,12 @@ class _CanvasPainter extends CustomPainter {
 
 class _CanvasWidgetState extends State<CanvasWidget>
     with TickerProviderStateMixin {
-  // 核心组件
-  late final CanvasStateManager _stateManager;
-  late final RenderingEngine _renderingEngine;
-  late final CanvasGestureHandler _gestureHandler;
-  late final CanvasPerformanceMonitor _performanceMonitor;
+  late CanvasStateManager _stateManager;
+  late CanvasStateManagerAdapter _stateAdapter;
+  late ToolStateManager _toolStateManager;
+  late RenderingEngine _renderingEngine;
+  late CanvasGestureHandler _gestureHandler;
+  late CanvasPerformanceMonitor _performanceMonitor;
 
   // 变换控制器
   late final TransformationController _transformationController;
@@ -201,6 +204,7 @@ class _CanvasWidgetState extends State<CanvasWidget>
     _gestureHandler.dispose();
     _performanceMonitor.dispose();
     _focusNode.dispose();
+    _stateAdapter.dispose();
     super.dispose();
   }
 
@@ -211,12 +215,16 @@ class _CanvasWidgetState extends State<CanvasWidget>
     _initializeComponents();
     _setupEventListeners();
     _attachController();
+
+    // 使用提供的控制器或创建新的控制器
+    _transformationController =
+        widget.transformationController ?? TransformationController();
   }
 
   /// 附加控制器
   void _attachController() {
     if (widget.controller != null) {
-      widget.controller!.attach(_stateManager);
+      widget.controller!.attach(_stateAdapter);
     }
   }
 
@@ -328,11 +336,19 @@ class _CanvasWidgetState extends State<CanvasWidget>
   void _initializeComponents() {
     // 状态管理器
     _stateManager = CanvasStateManager();
-    // 渲染引擎
+
+    // 创建适配器解决类型兼容问题
+    _stateAdapter = CanvasStateManagerAdapter(_stateManager);
+
+    // 工具状态管理器
+    _toolStateManager = ToolStateManager();
+
+    // 渲染引擎 - 使用原生的状态管理器，因为渲染引擎已经修改为支持两种类型
     _renderingEngine = RenderingEngine(stateManager: _stateManager);
 
-    // 手势处理器
-    _gestureHandler = CanvasGestureHandler(_stateManager);
+    // 手势处理器 - 使用适配器解决类型兼容问题
+    _gestureHandler = CanvasGestureHandler(_stateAdapter, _toolStateManager);
+
     // 性能监控器
     if (widget.configuration.enablePerformanceMonitoring) {
       _performanceMonitor = CanvasPerformanceMonitor();
@@ -349,10 +365,15 @@ class _CanvasWidgetState extends State<CanvasWidget>
     _focusNode = FocusNode();
   }
 
-  /// 设置事件监听器
+  /// 添加必要的事件监听器
   void _setupEventListeners() {
-    // 监听状态变化以触发重绘
-    _stateManager.addListener(_handleStateChanged);
+    // 状态变化监听 - 使用适配器而不是原始管理器
+    _stateAdapter.addListener(_handleStateChanged);
+
+    // 手势状态变化监听
     _gestureHandler.addListener(_handleGestureStateChanged);
+
+    // 初始化焦点节点
+    _focusNode = FocusNode();
   }
 }

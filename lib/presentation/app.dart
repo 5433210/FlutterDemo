@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../application/providers/feature_flag_provider.dart';
 import '../application/providers/initialization_providers.dart';
+import '../canvas/ui/canvas_page.dart';
 import '../domain/enums/app_language.dart';
 import '../infrastructure/logging/logger.dart';
 import '../l10n/app_localizations.dart';
@@ -200,6 +201,11 @@ class MyApp extends ConsumerWidget {
       case AppRoutes.fontWeightTester:
         return MaterialPageRoute(
           builder: (context) => const FontWeightTester(),
+        );
+
+      case AppRoutes.canvasTest:
+        return MaterialPageRoute(
+          builder: (context) => const CanvasPage(),
         );
     }
 

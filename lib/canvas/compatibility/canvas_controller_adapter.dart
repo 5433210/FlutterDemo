@@ -4,19 +4,17 @@ import 'dart:ui' show Rect;
 
 import 'package:flutter/foundation.dart';
 
-import '../core/canvas_state_manager.dart';
 import '../core/commands/command_manager.dart';
 import '../core/commands/element_commands.dart';
 import '../core/interfaces/element_data.dart';
-import '../core/models/element_data.dart';
+import 'canvas_state_adapter.dart';
 
 /// 兼容层适配器 - 将旧的API适配到新的架构
 class CanvasControllerAdapter extends ChangeNotifier {
-  late final CanvasStateManager _stateManager;
+  dynamic _stateManager;
 
   CanvasControllerAdapter() {
-    _stateManager = CanvasStateManager();
-    _stateManager.addListener(() => notifyListeners());
+    // 初始化时不创建状态管理器，等待attach方法被调用
   }
 
   /// 兼容旧API：是否可以重做
@@ -32,6 +30,7 @@ class CanvasControllerAdapter extends ChangeNotifier {
   List<Map<String, dynamic>> get elements {
     return _stateManager.elementState.sortedElements
         .map((element) => _elementToLegacyMap(element))
+        .cast<Map<String, dynamic>>()
         .toList();
   }
 
@@ -40,28 +39,112 @@ class CanvasControllerAdapter extends ChangeNotifier {
     return _stateManager.selectionState.selectedIds.toList();
   }
 
-  /// 暴露状态管理器给新组件使用
-  CanvasStateManager get stateManager => _stateManager;
+  /// 兼容旧API：获取状态管理器（为toolbar_adapter提供）
+  dynamic get state => _stateManager;
 
-  /// 兼容旧API：添加元素
+  /// 暴露状态管理器给新组件使用
+  dynamic get stateManager => _stateManager;
+
   void addElement(Map<String, dynamic> elementData) {
     final element = _legacyMapToElement(elementData);
     final command = AddElementCommand(
-      stateManager: _stateManager,
+      stateManager: _stateManager.underlying,
       element: element,
     );
-    _stateManager.commandManager.execute(command);
+    _stateManager.underlying.commandManager.execute(command);
   }
 
-  /// 附加到状态管理器
-  void attach(CanvasStateManager stateManager) {
-    // 如果传入的状态管理器与当前不同，更新引用
-    if (_stateManager != stateManager) {
-      _stateManager.removeListener(() => notifyListeners());
-      // 注意：这里应该更新_stateManager引用，但由于是late final，
-      // 我们保持当前实现，仅添加监听器同步
-      stateManager.addListener(() => notifyListeners());
-    }
+  /// 兼容旧API：添加空集字元素在指定位置
+  void addEmptyCollectionElementAt(double x, double y) {
+    final element = {
+      'id': 'collection_${DateTime.now().millisecondsSinceEpoch}',
+      'type': 'collection',
+      'x': x,
+      'y': y,
+      'width': 400.0,
+      'height': 200.0,
+      'rotation': 0.0,
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'content': {
+        'characters': '',
+        'fontSize': 24.0,
+        'fontColor': '#000000',
+        'backgroundColor': '#FFFFFF',
+        'direction': 'horizontal',
+        'charSpacing': 10.0,
+        'lineSpacing': 10.0,
+        'gridLines': false,
+        'showBackground': true,
+      },
+    };
+
+    addElement(element);
+  }
+
+  /// 兼容旧API：添加空图片元素在指定位置
+  void addEmptyImageElementAt(double x, double y) {
+    final element = {
+      'id': 'image_${DateTime.now().millisecondsSinceEpoch}',
+      'type': 'image',
+      'x': x,
+      'y': y,
+      'width': 200.0,
+      'height': 200.0,
+      'rotation': 0.0,
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'content': {
+        'imageUrl': '',
+        'fit': 'contain',
+        'aspectRatio': 1.0,
+      },
+    };
+
+    addElement(element);
+  }
+
+  /// 兼容旧API：添加文本元素
+  void addTextElement() {
+    final element = {
+      'id': 'text_${DateTime.now().millisecondsSinceEpoch}',
+      'type': 'text',
+      'x': 100.0,
+      'y': 100.0,
+      'width': 200.0,
+      'height': 100.0,
+      'rotation': 0.0,
+      'opacity': 1.0,
+      'isLocked': false,
+      'isHidden': false,
+      'content': {
+        'text': '属性页\n输入文本',
+        'fontFamily': 'sans-serif',
+        'fontSize': 24.0,
+        'fontColor': '#000000',
+        'backgroundColor': '#FFFFFF',
+        'textAlign': 'left',
+        'verticalAlign': 'top',
+        'writingMode': 'horizontal-l',
+        'lineHeight': 1.2,
+        'letterSpacing': 0.0,
+        'padding': 8.0,
+        'fontWeight': 'normal',
+        'fontStyle': 'normal',
+      },
+    };
+
+    addElement(element);
+  }
+
+  /// 附加到画布
+  void attach(dynamic stateManager) {
+    assert(stateManager is CanvasStateManagerAdapter,
+        'CanvasControllerAdapter requires a CanvasStateManagerAdapter');
+    _stateManager = stateManager;
+    _stateManager.addListener(() => notifyListeners());
   }
 
   /// 兼容旧API：清除选择
@@ -75,16 +158,24 @@ class CanvasControllerAdapter extends ChangeNotifier {
     if (_stateManager.selectionState.selectedIds.isEmpty) return;
 
     final command = DeleteElementsCommand(
-      stateManager: _stateManager,
+      stateManager: _stateManager.underlying,
       elementIds: _stateManager.selectionState.selectedIds.toList(),
     );
-    _stateManager.commandManager.execute(command);
+    _stateManager.underlying.commandManager.execute(command);
   }
 
-  /// 从状态管理器分离
+  /// 从画布分离
   void detach() {
-    // 移除监听器
-    _stateManager.removeListener(() => notifyListeners());
+    if (_stateManager != null) {
+      _stateManager.removeListener(() => notifyListeners());
+      _stateManager = null;
+    }
+  }
+
+  /// 兼容旧API：退出选择模式
+  void exitSelectMode() {
+    // 清除选择
+    clearSelection();
   }
 
   /// 兼容旧API：重做
@@ -92,10 +183,12 @@ class CanvasControllerAdapter extends ChangeNotifier {
 
   /// 兼容旧API：选择元素
   void selectElement(String id, {bool addToSelection = false}) {
-    final newSelectionState = addToSelection
-        ? _stateManager.selectionState.addToSelection(id)
-        : _stateManager.selectionState.selectSingle(id);
-    _stateManager.updateSelectionState(newSelectionState);
+    if (addToSelection) {
+      _stateManager.addElementToSelection(id);
+    } else {
+      _stateManager.clearSelection();
+      _stateManager.addElementToSelection(id);
+    }
   }
 
   /// 兼容旧API：撤销
@@ -111,11 +204,11 @@ class CanvasControllerAdapter extends ChangeNotifier {
     final updatedElement = _legacyMapToElement(elementMap);
 
     final command = UpdateElementCommand(
-      stateManager: _stateManager,
+      stateManager: _stateManager.underlying,
       elementId: id,
       newElementData: updatedElement,
     );
-    _stateManager.commandManager.execute(command);
+    _stateManager.underlying.commandManager.execute(command);
   }
 
   /// 将新的ElementData转换为旧的Map格式
@@ -138,7 +231,7 @@ class CanvasControllerAdapter extends ChangeNotifier {
   }
 
   /// 将旧的Map格式转换为新的ElementData
-  CanvasElementData _legacyMapToElement(Map<String, dynamic> data) {
+  ElementData _legacyMapToElement(Map<String, dynamic> data) {
     final properties = Map<String, dynamic>.from(data);
 
     // 移除基础属性，剩余的作为自定义属性
@@ -161,9 +254,10 @@ class CanvasControllerAdapter extends ChangeNotifier {
       properties.remove(key);
     }
 
-    return CanvasElementData(
+    return ElementData(
       id: data['id'] as String,
       type: data['type'] as String,
+      layerId: data['layerId'] as String? ?? 'default',
       bounds: Rect.fromLTWH(
         (data['x'] as num?)?.toDouble() ?? 0.0,
         (data['y'] as num?)?.toDouble() ?? 0.0,
@@ -173,9 +267,8 @@ class CanvasControllerAdapter extends ChangeNotifier {
       rotation: (data['rotation'] as num?)?.toDouble() ?? 0.0,
       opacity: (data['opacity'] as num?)?.toDouble() ?? 1.0,
       zIndex: (data['zIndex'] as num?)?.toInt() ?? 0,
-      isSelected: data['isSelected'] as bool? ?? false,
-      isLocked: data['isLocked'] as bool? ?? false,
-      isHidden: data['isHidden'] as bool? ?? false,
+      visible: !(data['isHidden'] as bool? ?? false),
+      locked: data['isLocked'] as bool? ?? false,
       properties: properties,
     );
   }

@@ -29,4 +29,5 @@ class AppRoutes {
   static const String fontTester = '/font_tester';
   static const String fontWeightTester = '/font_weight_tester';
   static const String libraryManagement = '/library_management';
+  static const String canvasTest = '/canvas_test'; // 添加Canvas测试页面路由
 }
