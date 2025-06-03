@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
 import '../../core/interfaces/element_data.dart';
-import '../element_renderer.dart';
+import '../canvas_rendering_engine.dart';
 
 /// 字符位置类
 class CharPosition {
@@ -42,31 +41,13 @@ class CharPosition {
 }
 
 /// 集字元素渲染器
-class CollectionElementRenderer extends ElementRenderer<ElementData> {
+class CollectionElementRenderer extends ElementRenderer {
   final Map<String, List<CharPosition>> _positionsCache = {};
   final Map<String, ui.Image> _imageCache = {};
   final Map<String, ui.Image> _textureCache = {};
-  bool _initialized = false;
   final Stopwatch _renderStopwatch = Stopwatch();
 
-  @override
-  String get elementType => 'collection';
-
-  @override
-  bool get isInitialized => _initialized;
-
-  @override
-  bool get supportsCaching => true;
-
-  @override
-  bool get supportsGpuAcceleration => true;
-
-  @override
-  bool canRender(ElementData element) {
-    return element.type == 'collection';
-  }
-
-  @override
+  /// 清除缓存
   void clearCache([String? elementId]) {
     if (elementId != null) {
       _positionsCache.remove(elementId);
@@ -81,34 +62,6 @@ class CollectionElementRenderer extends ElementRenderer<ElementData> {
   @override
   void dispose() {
     clearCache();
-    _initialized = false;
-  }
-
-  @override
-  int estimateRenderTime(ElementData element, RenderQuality quality) {
-    final text = element.properties['text'] as String? ?? '';
-    final hasTexture = element.properties['hasTexture'] as bool? ?? false;
-
-    int baseTime = 5;
-    baseTime += text.length * 0.5 ~/ 1;
-
-    if (hasTexture) {
-      baseTime += 10;
-    }
-
-    switch (quality) {
-      case RenderQuality.low:
-        return baseTime;
-      case RenderQuality.normal:
-        return (baseTime * 1.5).toInt();
-      case RenderQuality.high:
-        return baseTime * 2;
-    }
-  }
-
-  @override
-  Rect getBounds(ElementData element, [Matrix4? transform]) {
-    return element.bounds;
   }
 
   List<CharPosition> getCharPositions(
@@ -220,19 +173,6 @@ class CollectionElementRenderer extends ElementRenderer<ElementData> {
     return positions;
   }
 
-  @override
-  Path getHitTestPath(ElementData element, [Matrix4? transform]) {
-    final path = Path();
-    path.addRect(element.bounds);
-    return path;
-  }
-
-  @override
-  Future<void> initialize() async {
-    if (_initialized) return;
-    _initialized = true;
-  }
-
   Color parseColor(String colorStr) {
     if (colorStr == 'transparent') {
       return Colors.transparent;
@@ -254,88 +194,42 @@ class CollectionElementRenderer extends ElementRenderer<ElementData> {
   }
 
   @override
-  Future<ui.Image?> prerender(
-      ElementData element, RenderContext context) async {
-    return null;
-  }
-
-  @override
-  void render(ElementData element, RenderContext context) {
+  void render(Canvas canvas, ElementData element) {
     _renderStopwatch.start();
 
-    final canvas = context.canvas;
-    final text = element.properties['text'] as String? ?? '';
+    try {
+      // 提取集字元素的属性
+      final characters = element.properties['text'] as String? ?? '';
+      final fontSize = element.properties['fontSize'] as double? ?? 24.0;
 
-    if (text.isEmpty) {
-      _renderStopwatch.stop();
-      _renderStopwatch.reset();
-      return;
-    }
-
-    final writingMode =
-        element.properties['writingMode'] as String? ?? 'horizontal-tb';
-    final fontSize = element.properties['fontSize'] as double? ?? 16.0;
-    final letterSpacing = element.properties['letterSpacing'] as double? ?? 0.0;
-    final lineSpacing = element.properties['lineSpacing'] as double? ?? 0.0;
-    final textAlign = element.properties['textAlign'] as String? ?? 'left';
-    final verticalAlign =
-        element.properties['verticalAlign'] as String? ?? 'top';
-    final fontColor = element.properties['fontColor'] as String? ?? '#000000';
-    final enableSoftLineBreak =
-        element.properties['enableSoftLineBreak'] as bool? ?? false;
-
-    final positions = getCharPositions(
-      element.id,
-      text,
-      element.bounds.size,
-      fontSize,
-      letterSpacing,
-      lineSpacing,
-      writingMode,
-      textAlign,
-      verticalAlign,
-      enableSoftLineBreak,
-    );
-
-    for (final pos in positions) {
-      if (pos.char != '\n') {
-        if (pos.backgroundColor != Colors.transparent) {
-          final bgPaint = Paint()..color = pos.backgroundColor;
-          canvas.drawRect(pos.rect, bgPaint);
-        }
-
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: pos.char,
-            style: TextStyle(
-              fontSize: pos.size,
-              color: parseColor(fontColor),
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        );
-        textPainter.layout();
-        textPainter.paint(canvas, pos.position);
+      if (characters.isEmpty) {
+        _renderStopwatch.stop();
+        return;
       }
+
+      // 获取字符位置
+      final positions = getCharPositions(
+        element.id,
+        characters,
+        element.bounds.size,
+        fontSize,
+        0.0, // letterSpacing
+        0.0, // lineSpacing
+        'horizontal-l', // writingMode
+        'left', // textAlign
+        'top', // verticalAlign
+        false, // enableSoftLineBreak
+      );
+
+      // 渲染每个字符
+      for (final position in positions) {
+        _renderCharacter(canvas, position, element);
+      }
+    } catch (e) {
+      debugPrint('CollectionElementRenderer 渲染错误: $e');
+    } finally {
+      _renderStopwatch.stop();
     }
-
-    _renderStopwatch.stop();
-    _renderStopwatch.reset();
-  }
-
-  @override
-  void renderSelection(ElementData element, RenderContext context) {
-    final canvas = context.canvas;
-    final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawRect(element.bounds, paint);
-  }
-
-  @override
-  void updateCache(ElementData element) {
-    clearCache(element.id);
   }
 
   List<CharPosition> _calculateVerticalPositions(
@@ -388,6 +282,31 @@ class CollectionElementRenderer extends ElementRenderer<ElementData> {
     }
 
     return positions;
+  }
+
+  /// 渲染单个字符
+  void _renderCharacter(
+      Canvas canvas, CharPosition position, ElementData element) {
+    // 绘制字符背景
+    if (position.backgroundColor != Colors.transparent) {
+      final bgPaint = Paint()..color = position.backgroundColor;
+      canvas.drawRect(position.rect, bgPaint);
+    }
+
+    // 绘制字符文本 (简化实现)
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: position.char,
+        style: TextStyle(
+          fontSize: position.size,
+          color: position.fontColor,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    textPainter.layout();
+    textPainter.paint(canvas, position.position);
   }
 
   List<String> _wrapTextToLines(

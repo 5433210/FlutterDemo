@@ -8,6 +8,7 @@ import 'gpu_acceleration_utils.dart';
 import 'render_cache.dart';
 import 'render_performance_monitor.dart';
 import 'render_quality_optimizer.dart';
+import 'specialized_renderers/collection_element_renderer.dart';
 import 'specialized_renderers/image_element_renderer.dart';
 import 'specialized_renderers/path_element_renderer.dart';
 import 'specialized_renderers/shape_element_renderer.dart';
@@ -315,6 +316,7 @@ class CanvasRenderingEngine {
     _renderers['image'] = ImageElementRenderer();
     _renderers['shape'] = ShapeElementRenderer();
     _renderers['path'] = PathElementRenderer();
+    _renderers['collection'] = CollectionElementRenderer();
   }
 
   /// 检查元素是否在视口内
