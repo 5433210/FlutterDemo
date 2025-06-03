@@ -186,6 +186,11 @@ class CanvasRenderingEngine {
     _performanceMonitor.endFrame();
   }
 
+  /// 渲染元素 - render方法的公共接口别名
+  void renderElements(Canvas canvas, Size size) {
+    render(canvas, size);
+  }
+
   /// 设置是否自动调整渲染质量
   void setAutoQualityAdjustment(bool enabled) {
     _qualityOptimizer.autoAdjust = enabled;

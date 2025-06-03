@@ -340,7 +340,7 @@ class _CanvasWidgetState extends State<CanvasWidget>
     _toolStateManager = ToolStateManager();
 
     // 渲染引擎 - 使用原生的状态管理器，因为渲染引擎已经修改为支持两种类型
-    _renderingEngine = RenderingEngine(stateManager: _stateManager);
+    _renderingEngine = RenderingEngine(_stateManager);
 
     // 手势处理器 - 使用适配器解决类型兼容问题
     _gestureHandler = CanvasGestureHandler(_stateAdapter, _toolStateManager);
