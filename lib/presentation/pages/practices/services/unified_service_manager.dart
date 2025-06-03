@@ -122,12 +122,12 @@ class UnifiedServiceManager extends ChangeNotifier {
     return successfulApplications.isNotEmpty;
   }
 
-  // 格式刷相关操作
-
   /// 清除格式刷
   void clearFormatBrush() {
     _formatPainter.clearFormat();
   }
+
+  // 格式刷相关操作
 
   /// 复制元素到剪贴板
   bool copyElements(List<Map<String, dynamic>> elements) {
