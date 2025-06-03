@@ -8,6 +8,7 @@ import '../../../widgets/practice/m3_practice_layer_panel.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../state/practice_edit_state_manager.dart';
 import 'm3_practice_edit_canvas.dart';
+import 'unified_property_panel.dart';
 
 /// 字帖编辑页面布局组件
 /// 负责管理页面的布局结构，分离关注点
@@ -131,42 +132,20 @@ class PracticeEditLayout extends StatelessWidget {
 
   /// 构建属性面板
   Widget _buildPropertyPanels() {
-    // 使用selectedElementIds而不是selectedElements
+    // 获取选中的元素
     final selectedElementIds = controller.state.selectedElementIds;
+    final selectedElements = selectedElementIds
+        .map((id) => controller.state.getElementById(id))
+        .where((element) => element != null)
+        .toList();
 
-    if (selectedElementIds.isEmpty) {
-      // 显示页面属性面板
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: const Center(
-          child: Text('Page Properties'),
-        ),
-      );
-    } else if (selectedElementIds.length == 1) {
-      // 显示单个元素属性面板
-      final element = controller.state.getElementById(selectedElementIds.first);
-      if (element == null) {
-        return const Center(child: Text('Element not found'));
-      }
-
-      final elementType = element['type'] as String?;
-
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: Text('${elementType ?? 'Unknown'} Element Properties'),
-        ),
-      );
-    } else {
-      // 显示多选属性面板
-      return Container(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child:
-              Text('Multiple Elements Selected (${selectedElementIds.length})'),
-        ),
-      );
-    }
+    return UnifiedPropertyPanel(
+      selectedElements: selectedElements,
+      onPropertyChanged: (elementId, property, value) {
+        // 处理属性变更
+        _handlePropertyChange(elementId, property, value);
+      },
+    );
   }
 
   /// 构建右侧面板
@@ -258,5 +237,42 @@ class PracticeEditLayout extends StatelessWidget {
         controller.notifyListeners();
       },
     );
+  }
+
+  /// 处理属性变更
+  void _handlePropertyChange(String elementId, String property, dynamic value) {
+    // 更新元素属性
+    final element = controller.state.getElementById(elementId);
+    if (element != null) {
+      // 根据属性类型更新元素
+      switch (property) {
+        case 'text':
+          element['text'] = value;
+          break;
+        case 'fontSize':
+          element['fontSize'] = value;
+          break;
+        case 'fontColor':
+          element['fontColor'] = value;
+          break;
+        case 'x':
+          element['x'] = value;
+          break;
+        case 'y':
+          element['y'] = value;
+          break;
+        case 'width':
+          element['width'] = value;
+          break;
+        case 'height':
+          element['height'] = value;
+          break;
+        default:
+          element[property] = value;
+      }
+
+      // 通知控制器更新
+      controller.notifyListeners();
+    }
   }
 }
