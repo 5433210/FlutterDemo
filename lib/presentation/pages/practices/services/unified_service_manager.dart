@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../canvas/compatibility/canvas_controller_adapter.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/undo_redo_manager.dart';
+import '../adapters/collection_property_adapter.dart';
 import '../adapters/group_property_adapter.dart';
 import '../adapters/image_property_adapter.dart';
+import '../adapters/layer_panel_adapter.dart';
+import '../adapters/multi_selection_property_adapter.dart';
+import '../adapters/page_property_adapter.dart';
 import '../adapters/property_panel_adapter.dart';
+import '../adapters/shape_property_adapter.dart';
 import '../adapters/text_property_adapter.dart';
 import 'enhanced_clipboard_manager.dart';
 import 'enhanced_shortcut_handler.dart';
@@ -35,8 +42,17 @@ class UnifiedServiceManager extends ChangeNotifier {
   /// 属性面板适配器注册表
   final Map<String, PropertyPanelAdapter> _adapters = {};
 
+  /// 服务依赖注册表
+  final Map<Type, dynamic> _services = {};
+
   /// 当前控制器引用
   PracticeEditController? _currentController;
+
+  /// Canvas控制器适配器
+  CanvasControllerAdapter? _canvasController;
+
+  /// WidgetRef引用（用于Riverpod）
+  WidgetRef? _widgetRef;
 
   /// 是否已初始化
   bool _isInitialized = false;
@@ -61,6 +77,12 @@ class UnifiedServiceManager extends ChangeNotifier {
 
   /// 是否有可用的格式
   bool get hasFormat => _formatPainter.hasFormat;
+
+  /// 获取已注册的适配器类型列表
+  List<String> get registeredAdapterTypes => _adapters.keys.toList();
+
+  /// 获取已注册的服务列表
+  List<Type> get registeredServiceTypes => _services.keys.toList();
 
   /// 获取所有适配器类型
   List<String> get supportedElementTypes => _adapters.keys.toList();
@@ -158,13 +180,16 @@ class UnifiedServiceManager extends ChangeNotifier {
   }
 
   // 剪贴板相关操作
-
   /// 获取调试信息
   Map<String, dynamic> getDebugInfo() {
     return {
       'isInitialized': _isInitialized,
       'hasController': _currentController != null,
+      'hasCanvasController': _canvasController != null,
+      'hasWidgetRef': _widgetRef != null,
       'registeredAdapters': _adapters.keys.toList(),
+      'adapterTypes': _adapters
+          .map((key, value) => MapEntry(key, value.runtimeType.toString())),
       'formatPainter': {
         'hasFormat': _formatPainter.hasFormat,
         'sourceType': _formatPainter.sourceElementType,
@@ -198,6 +223,25 @@ class UnifiedServiceManager extends ChangeNotifier {
 
     _isInitialized = true;
     debugPrint('统一服务管理器: 初始化完成');
+  }
+
+  /// 使用所有依赖初始化服务管理器
+  void initializeWithDependencies({
+    CanvasControllerAdapter? canvasController,
+    WidgetRef? widgetRef,
+  }) {
+    if (canvasController != null) {
+      setCanvasController(canvasController);
+    }
+    if (widgetRef != null) {
+      setWidgetRef(widgetRef);
+    }
+
+    if (!_isInitialized) {
+      initialize();
+    }
+
+    debugPrint('统一服务管理器: 使用依赖初始化完成');
   }
 
   /// 从剪贴板粘贴元素
@@ -267,11 +311,26 @@ class UnifiedServiceManager extends ChangeNotifier {
   }
 
   // 状态属性
+  /// 设置Canvas控制器适配器
+  void setCanvasController(CanvasControllerAdapter canvasController) {
+    _canvasController = canvasController;
+    // 重新注册需要canvas控制器的适配器
+    _reregisterCanvasDependentAdapters();
+    debugPrint('统一服务管理器: 设置Canvas控制器适配器');
+  }
 
   /// 设置当前控制器
   void setController(PracticeEditController controller) {
     _currentController = controller;
     debugPrint('统一服务管理器: 设置控制器');
+  }
+
+  /// 设置WidgetRef
+  void setWidgetRef(WidgetRef widgetRef) {
+    _widgetRef = widgetRef;
+    // 重新注册需要WidgetRef的适配器
+    _reregisterWidgetRefDependentAdapters();
+    debugPrint('统一服务管理器: 设置WidgetRef');
   }
 
   /// 执行撤销
@@ -305,12 +364,100 @@ class UnifiedServiceManager extends ChangeNotifier {
     return formatData['_sourceType'] == element['type'];
   }
 
+  /// 获取默认页面属性
+  Map<String, dynamic> _getDefaultPageProperties() {
+    return {
+      'width': 800.0,
+      'height': 600.0,
+      'backgroundColor': '#FFFFFF',
+      'orientation': 'portrait',
+      'dpi': 72,
+      'showGrid': false,
+      'gridSize': 10.0,
+      'margins': {
+        'top': 20.0,
+        'bottom': 20.0,
+        'left': 20.0,
+        'right': 20.0,
+      },
+    };
+  }
+
   /// 注册默认适配器
   void _registerDefaultAdapters() {
+    // 注册无依赖的适配器
     registerAdapter('text', TextPropertyPanelAdapter());
     registerAdapter('image', ImagePropertyAdapter());
     registerAdapter('group', GroupPropertyAdapter());
+    registerAdapter('shape', ShapePropertyAdapter());
+
+    // 注册需要依赖的适配器（如果依赖可用）
+    if (_canvasController != null) {
+      registerAdapter(
+          'multi_selection',
+          MultiSelectionPropertyAdapter(
+            canvasController: _canvasController!,
+          ));
+
+      registerAdapter(
+          'layer',
+          LayerPanelAdapter(
+            canvasController: _canvasController!,
+          ));
+
+      // 页面适配器需要初始页面属性
+      final defaultPageProperties = _getDefaultPageProperties();
+      registerAdapter(
+          'page',
+          PagePropertyAdapter(
+            canvasController: _canvasController!,
+            initialPageProperties: defaultPageProperties,
+          ));
+    }
+
+    // 注册需要WidgetRef的适配器（如果可用）
+    if (_widgetRef != null) {
+      registerAdapter('collection', CollectionPropertyAdapter(_widgetRef!));
+    }
+
     debugPrint('统一服务管理器: 默认适配器注册完成');
+  }
+
+  /// 重新注册需要Canvas控制器的适配器
+  void _reregisterCanvasDependentAdapters() {
+    if (_canvasController == null) return;
+
+    registerAdapter(
+        'multi_selection',
+        MultiSelectionPropertyAdapter(
+          canvasController: _canvasController!,
+        ));
+
+    registerAdapter(
+        'layer',
+        LayerPanelAdapter(
+          canvasController: _canvasController!,
+        ));
+
+    // 页面适配器需要初始页面属性
+    final defaultPageProperties = _getDefaultPageProperties();
+    registerAdapter(
+        'page',
+        PagePropertyAdapter(
+          canvasController: _canvasController!,
+          initialPageProperties: defaultPageProperties,
+        ));
+
+    debugPrint('统一服务管理器: 重新注册Canvas依赖适配器');
+  }
+
+  /// 重新注册需要WidgetRef的适配器
+  void _reregisterWidgetRefDependentAdapters() {
+    if (_widgetRef == null) return;
+
+    registerAdapter('collection', CollectionPropertyAdapter(_widgetRef!));
+
+    debugPrint('统一服务管理器: 重新注册WidgetRef依赖适配器');
   }
 
   /// 设置服务间的交互
