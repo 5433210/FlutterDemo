@@ -694,7 +694,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
               bottom: 0,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                color: colorScheme.surface.withValues(alpha: .85),
+                color: colorScheme.surface
+                    .withAlpha(217), // 217 is approximately 85% of 255
                 child: Wrap(
                   alignment: WrapAlignment.end,
                   spacing: 4.0,

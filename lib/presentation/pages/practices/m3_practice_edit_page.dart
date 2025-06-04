@@ -52,15 +52,18 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   // Controller
   late final PracticeEditController _controller;
 
+  // Drag optimization flag to prevent unnecessary rebuilds
+
   // Current tool
   String _currentTool = '';
 
   // Clipboard monitoring timer
   Timer? _clipboardMonitoringTimer;
-
   // Clipboard
   Map<String, dynamic>? _clipboardElement;
   bool _clipboardHasContent = false; // Track if clipboard has valid content
+  // ValueNotifier for clipboard state to avoid setState during drag operations
+  final ValueNotifier<bool> _clipboardNotifier = ValueNotifier<bool>(false);
 
   // Preview mode
   bool _isPreviewMode = false;
@@ -173,10 +176,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     // Release zoom controller
     _transformationController.dispose();
 
-    _controller.dispose();
-
-    // Cancel clipboard monitoring timer
+    _controller.dispose(); // Cancel clipboard monitoring timer
     _clipboardMonitoringTimer?.cancel();
+
+    // Dispose of the clipboard ValueNotifier
+    _clipboardNotifier.dispose();
 
     super.dispose();
   }
@@ -235,22 +239,30 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Connect canvas to controller for reset view functionality
       _setupCanvasReference();
-    });
-
-    // Start clipboard monitoring
+    }); // Start clipboard monitoring
     _checkClipboardContent().then((hasContent) {
-      setState(() {
-        _clipboardHasContent = hasContent;
-      });
+      // Initialize both the boolean and the ValueNotifier
+      _clipboardHasContent = hasContent;
+      _clipboardNotifier.value = hasContent;
+
+      // Only call setState after initialization is complete
+      if (mounted) {
+        setState(() {});
+      }
+
       _startClipboardMonitoring();
     });
   }
 
   /// Add a new page
   void _addNewPage() {
-    setState(() {
-      PracticeEditUtils.addNewPage(_controller, context);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.addNewPage(_controller, context);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// 应用格式刷样式到选中元素
@@ -468,9 +480,13 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Bring element to front
   void _bringElementToFront() {
-    setState(() {
-      PracticeEditUtils.bringElementToFront(_controller);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.bringElementToFront(_controller);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Build the body of the page
@@ -557,46 +573,51 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
   Widget _buildEditToolbar() {
     return Column(
       children: [
-        M3EditToolbar(
-          controller: _controller,
-          gridVisible: _controller.state.gridVisible,
-          snapEnabled: _controller.state.snapEnabled,
-          onToggleGrid: _toggleGrid,
-          onToggleSnap: _toggleSnap,
-          onCopy: _copySelectedElement,
-          onPaste: _pasteElement,
-          canPaste: _clipboardHasContent,
-          onGroupElements: _groupSelectedElements,
-          onUngroupElements: _ungroupElements,
-          onBringToFront: _bringElementToFront,
-          onSendToBack: _sendElementToBack,
-          onMoveUp: _moveElementUp,
-          onMoveDown: _moveElementDown,
-          onDelete: _deleteSelectedElements,
-          onCopyFormatting: _copyElementFormatting,
-          onApplyFormatBrush: _applyFormatBrush,
-          // 选择操作相关回调
-          onSelectAll: _selectAllElements,
-          onDeselectAll: _deselectAllElements,
-          // 添加元素工具按钮相关参数
-          currentTool: _currentTool,
-          onSelectTool: (tool) {
-            setState(() {
-              // 如果当前已经是select模式，再次点击select按钮则退出select模式
-              if (_currentTool == 'select' && tool == 'select') {
-                _currentTool = '';
-                _controller.exitSelectMode();
-              } else {
-                _currentTool = tool;
-                // 同步到controller的状态
-                _controller.state.currentTool = tool;
-                _controller.notifyListeners(); // 通知监听器更新
-                debugPrint('工具切换为: $tool');
-              }
-            });
-          },
-          onDragElementStart: (context, elementType) {
-            // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
+        ValueListenableBuilder<bool>(
+          valueListenable: _clipboardNotifier,
+          builder: (context, canPaste, _) {
+            return M3EditToolbar(
+              controller: _controller,
+              gridVisible: _controller.state.gridVisible,
+              snapEnabled: _controller.state.snapEnabled,
+              onToggleGrid: _toggleGrid,
+              onToggleSnap: _toggleSnap,
+              onCopy: _copySelectedElement,
+              onPaste: _pasteElement,
+              canPaste: canPaste,
+              onGroupElements: _groupSelectedElements,
+              onUngroupElements: _ungroupElements,
+              onBringToFront: _bringElementToFront,
+              onSendToBack: _sendElementToBack,
+              onMoveUp: _moveElementUp,
+              onMoveDown: _moveElementDown,
+              onDelete: _deleteSelectedElements,
+              onCopyFormatting: _copyElementFormatting,
+              onApplyFormatBrush: _applyFormatBrush,
+              // 选择操作相关回调
+              onSelectAll: _selectAllElements,
+              onDeselectAll: _deselectAllElements,
+              // 添加元素工具按钮相关参数
+              currentTool: _currentTool,
+              onSelectTool: (tool) {
+                setState(() {
+                  // 如果当前已经是select模式，再次点击select按钮则退出select模式
+                  if (_currentTool == 'select' && tool == 'select') {
+                    _currentTool = '';
+                    _controller.exitSelectMode();
+                  } else {
+                    _currentTool = tool;
+                    // 同步到controller的状态
+                    _controller.state.currentTool = tool;
+                    _controller.notifyListeners(); // 通知监听器更新
+                    debugPrint('工具切换为: $tool');
+                  }
+                });
+              },
+              onDragElementStart: (context, elementType) {
+                // 拖拽开始时的处理逻辑可以为空，因为Draggable内部已经处理了拖拽功能
+              },
+            );
           },
         ),
         // // Debug button
@@ -1087,14 +1108,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       debugPrint('复制结果: ${_clipboardElement != null ? '成功' : '失败'}');
       if (_clipboardElement != null) {
         debugPrint('复制的元素类型: ${_clipboardElement!['type']}');
-      }
-
-      // Update clipboard state and paste button activation
+      } // Update clipboard state and paste button activation
       if (mounted) {
-        setState(() {
-          _clipboardHasContent = _clipboardElement != null;
-          debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
-        });
+        // Update both local variable and ValueNotifier
+        _clipboardHasContent = _clipboardElement != null;
+        _clipboardNotifier.value = _clipboardElement != null;
+
+        // Use setState only to update UI elements other than the toolbar
+        setState(() {});
+        debugPrint('设置粘贴按钮状态: ${_clipboardHasContent ? '激活' : '禁用'}');
 
         // Show a snackbar notification if copy was successful
         if (_clipboardElement != null) {
@@ -1166,11 +1188,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
     return copy;
   }
 
-  /// Delete a page
+  /// Delete a page  /// Delete a page
   void _deletePage(int index) {
-    setState(() {
-      PracticeEditUtils.deletePage(_controller, index, context);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.deletePage(_controller, index, context);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Delete selected elements
@@ -1711,16 +1737,24 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Move element down one layer
   void _moveElementDown() {
-    setState(() {
-      PracticeEditUtils.moveElementDown(_controller);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.moveElementDown(_controller);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Move element up one layer
   void _moveElementUp() {
-    setState(() {
-      PracticeEditUtils.moveElementUp(_controller);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.moveElementUp(_controller);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Move selected elements
@@ -1877,10 +1911,15 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
               characterImageService: characterImageService,
               imageCacheService: imageCacheService,
             );
-
             setState(() {
               // UI state will be updated by the paste operation
             });
+
+            // After paste operation, check and update clipboard state
+            final hasContent = await _checkClipboardContent();
+            _clipboardHasContent = hasContent;
+            _clipboardNotifier.value = hasContent;
+            debugPrint('粘贴后更新剪贴板状态: ${_clipboardHasContent ? '有内容' : '无内容'}');
           } catch (e) {
             debugPrint(
                 'Enhanced JSON paste failed, falling back to regular paste: $e');
@@ -1888,6 +1927,11 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             setState(() {
               PracticeEditUtils.pasteElement(_controller, json);
             });
+
+            // After paste operation, check and update clipboard state
+            final hasContent = await _checkClipboardContent();
+            _clipboardHasContent = hasContent;
+            _clipboardNotifier.value = hasContent;
           }
         }
       } catch (e) {
@@ -2136,21 +2180,27 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       if (layerId == null || !_controller.state.isLayerLocked(layerId)) {
         ids.add(id);
       }
-    }
-
-    // Update selection state
+    } // Update selection state
     _controller.state.selectedElementIds = ids;
     _controller.state.selectedElement =
         null; // Don't set single selected element in multi-selection
 
-    setState(() {});
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Send element to back
   void _sendElementToBack() {
-    setState(() {
-      PracticeEditUtils.sendElementToBack(_controller);
-    });
+    // Use controller directly without setState since it will notify listeners
+    PracticeEditUtils.sendElementToBack(_controller);
+    // Only trigger a rebuild if we're not in a drag operation
+    if (_canvasKey.currentState == null ||
+        !_canvasKey.currentState!.context.mounted) {
+      setState(() {});
+    }
   }
 
   /// Set up the reference to the canvas in the controller
@@ -2196,7 +2246,6 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
       try {
         // Periodically check clipboard content
         final hasContent = await _checkClipboardContent();
-
         if (hasContent != _clipboardHasContent) {
           debugPrint(
               '剪贴板状态变化: ${_clipboardHasContent ? "有内容" : "无内容"} -> ${hasContent ? "有内容" : "无内容"}');
@@ -2204,12 +2253,22 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
           // If debugging, do a full inspection when state changes
           if (kDebugMode && hasContent) {
             await _inspectClipboard();
-          }
+          } // Check if drag operation is active to avoid setState during dragging
+          final isDragging = _canvasKey.currentState != null &&
+              _canvasKey.currentState!.context.mounted;
 
-          // Update state to reflect current clipboard content
-          setState(() {
-            _clipboardHasContent = hasContent;
-          });
+          // Always update the ValueNotifier (doesn't trigger rebuild)
+          _clipboardNotifier.value = hasContent;
+
+          // Update local variable too for backward compatibility
+          _clipboardHasContent = hasContent;
+
+          // Only use setState if we're not in a drag operation
+          if (!isDragging && mounted) {
+            setState(() {
+              // Empty setState to trigger rebuild - local variable already updated
+            });
+          }
         }
       } catch (e) {
         debugPrint('剪贴板监控错误: $e');
@@ -2219,6 +2278,28 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Synchronize local _currentTool with controller's state.currentTool
   void _syncToolState() {
+    // Avoid setState during dragging operations to prevent canvas rebuilds
+    if (_controller.state.selectedElementIds.isNotEmpty) {
+      // Check if there's an active drag operation
+      final isDragging = _canvasKey.currentState != null;
+      if (isDragging) {
+        // Just update the local variable without setState during dragging
+        final controllerTool = _controller.state.currentTool;
+        if (_currentTool != controllerTool) {
+          _currentTool = controllerTool;
+          // Schedule a frame to update UI after dragging is complete
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                // This setState will only run after the frame is complete
+              });
+            }
+          });
+        }
+        return;
+      }
+    }
+
     final controllerTool = _controller.state.currentTool;
     if (_currentTool != controllerTool) {
       setState(() {
