@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../widgets/practice/drag_state_manager.dart';
+import '../../../widgets/practice/element_snapshot.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import 'state_change_dispatcher.dart';
 
@@ -36,6 +37,9 @@ class DragOperationManager {
   /// 预拖拽配置
   final PreDragConfig _preDragConfig = PreDragConfig();
 
+  /// 元素快照管理器
+  final ElementSnapshotManager _snapshotManager = ElementSnapshotManager();
+
   /// 是否已释放
   bool _isDisposed = false;
 
@@ -63,7 +67,6 @@ class DragOperationManager {
     }
 
     debugPrint('🎯 DragOperationManager: 取消拖拽操作');
-
     try {
       // 恢复元素到原始位置
       if (_currentSession != null) {
@@ -71,6 +74,7 @@ class DragOperationManager {
           final originalPosition =
               _currentSession!.originalPositions[elementId];
           if (originalPosition != null) {
+            // 使用批量更新优化性能
             _controller.updateElementProperties(elementId, {
               'x': originalPosition.dx,
               'y': originalPosition.dy,
@@ -78,6 +82,9 @@ class DragOperationManager {
           }
         }
       }
+
+      // 清理快照（无需等待_resetToIdle）
+      _snapshotManager.clearSnapshots();
 
       // 分发取消事件
       _stateDispatcher.dispatch(StateChangeEvent(
@@ -98,7 +105,6 @@ class DragOperationManager {
   /// 释放资源
   void dispose() {
     if (_isDisposed) return;
-
     _isDisposed = true;
 
     // 如果正在拖拽，先取消
@@ -107,6 +113,7 @@ class DragOperationManager {
     }
 
     _performanceMonitor.dispose();
+    _snapshotManager.dispose();
     debugPrint('🎯 DragOperationManager: 已释放资源');
   }
 
@@ -129,6 +136,16 @@ class DragOperationManager {
       _resetToIdle();
       _performanceMonitor.endOperation();
     }
+  }
+
+  /// 获取所有元素快照
+  Map<String, ElementSnapshot> getAllSnapshots() {
+    return _snapshotManager.getAllSnapshots();
+  }
+
+  /// 获取元素的快照
+  ElementSnapshot? getSnapshotForElement(String elementId) {
+    return _snapshotManager.getSnapshot(elementId);
   }
 
   /// 开始拖拽操作
@@ -175,6 +192,13 @@ class DragOperationManager {
       _currentSession!.updatePosition(updateInfo.currentPosition);
       _currentSession!.updateDelta(updateInfo.delta);
 
+      // 更新快照位置 - 使用ElementSnapshot系统优化性能
+      for (final elementId in _currentSession!.elementIds) {
+        final newPosition = _currentSession!.originalPositions[elementId]! +
+            _currentSession!.totalDelta;
+        _snapshotManager.updateSnapshotPosition(elementId, newPosition);
+      }
+
       // 分发拖拽更新事件
       _stateDispatcher.dispatch(StateChangeEvent(
         type: StateChangeType.dragUpdate,
@@ -183,8 +207,10 @@ class DragOperationManager {
           'currentPosition': updateInfo.currentPosition,
           'delta': updateInfo.delta,
           'session': _currentSession,
+          'hasSnapshots': true, // 指示使用了快照系统
         },
       ));
+
       // 更新拖拽状态管理器
       _dragStateManager.updateDragOffset(updateInfo.delta);
     } catch (e) {
@@ -194,8 +220,44 @@ class DragOperationManager {
 
   /// 应用最终位置
   Future<void> _applyFinalPositions(DragEndInfo endInfo) async {
-    // 位置更新已经在拖拽过程中完成，这里可以做额外的验证
     debugPrint('🎯 DragOperationManager: 应用最终位置');
+    if (_currentSession == null) return;
+
+    // 创建批量更新操作以提高性能
+    final batchUpdates = <String, Map<String, dynamic>>{};
+
+    // 从快照中获取最终位置，而不是从拖拽会话
+    for (final elementId in _currentSession!.elementIds) {
+      // 从快照获取最终位置
+      final snapshot = _snapshotManager.getSnapshot(elementId);
+      if (snapshot != null) {
+        // 使用快照中的最新位置
+        batchUpdates[elementId] = {
+          'x': snapshot.properties['x'],
+          'y': snapshot.properties['y'],
+        };
+      } else {
+        // 快照不存在时退回到使用会话中的计算位置
+        final originalPosition = _currentSession!.originalPositions[elementId];
+        if (originalPosition != null) {
+          final finalPosition = originalPosition + endInfo.totalDelta;
+          batchUpdates[elementId] = {
+            'x': finalPosition.dx,
+            'y': finalPosition.dy,
+          };
+        }
+      }
+    }
+
+    // 批量应用所有更新
+    for (final entry in batchUpdates.entries) {
+      _controller.updateElementProperties(entry.key, entry.value);
+    }
+
+    // 记录性能统计
+    final snapshotStats = _snapshotManager.getMemoryStats();
+    debugPrint(
+        '📊 快照性能: ${snapshotStats['snapshotCount']} 个快照, ${snapshotStats['memoryEstimateKB']} KB');
   }
 
   /// 应用网格吸附
@@ -243,12 +305,18 @@ class DragOperationManager {
     _currentSession = session;
 
     debugPrint('🎯 DragOperationManager: 执行Dragging阶段');
+
     // 初始化拖拽状态
     _dragStateManager.startDrag(
       elementIds: session.elementIds.toSet(),
       startPosition: session.startPosition,
       elementStartPositions: session.originalPositions,
     );
+
+    // 记录快照统计信息
+    final stats = _snapshotManager.getMemoryStats();
+    debugPrint(
+        '📊 快照统计: ${stats['snapshotCount']}个快照, ${stats['widgetCacheCount']}个缓存组件');
   }
 
   /// 执行PostDrag阶段
@@ -342,6 +410,7 @@ class DragOperationManager {
   /// 准备拖拽数据
   Future<DragSessionData> _prepareDragData(DragStartInfo startInfo) async {
     final originalPositions = <String, Offset>{};
+    final elementsList = <Map<String, dynamic>>[];
 
     for (final elementId in startInfo.elementIds) {
       final element = _controller.state.currentPageElements.firstWhere(
@@ -353,8 +422,13 @@ class DragOperationManager {
         final x = (element['x'] as num?)?.toDouble() ?? 0.0;
         final y = (element['y'] as num?)?.toDouble() ?? 0.0;
         originalPositions[elementId] = Offset(x, y);
+        elementsList.add(element);
       }
     }
+
+    // 创建元素快照
+    await _snapshotManager.createSnapshots(elementsList);
+    debugPrint('🎯 DragOperationManager: 已创建 ${elementsList.length} 个元素快照');
 
     return DragSessionData(
       originalPositions: originalPositions,
@@ -365,6 +439,9 @@ class DragOperationManager {
   void _resetToIdle() {
     _currentPhase = DragPhase.idle;
     _currentSession = null;
+
+    // 清理不再需要的快照
+    _snapshotManager.clearSnapshots();
   }
 
   /// 验证拖拽条件

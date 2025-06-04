@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../widgets/practice/drag_state_manager.dart';
+import '../../../widgets/practice/element_snapshot.dart';
+import 'drag_operation_manager.dart';
 
 /// 拖拽预览图层组件
 ///
@@ -9,6 +11,9 @@ import '../../../widgets/practice/drag_state_manager.dart';
 class DragPreviewLayer extends StatefulWidget {
   /// 拖拽状态管理器
   final DragStateManager dragStateManager;
+
+  /// 拖拽操作管理器（可选，提供快照支持）
+  final DragOperationManager? dragOperationManager;
 
   /// 元素数据列表，用于构建预览
   final List<Map<String, dynamic>> elements;
@@ -19,11 +24,16 @@ class DragPreviewLayer extends StatefulWidget {
           String elementId, Offset position, Map<String, dynamic> element)?
       elementBuilder;
 
+  /// 是否优先使用ElementSnapshot系统
+  final bool useSnapshotSystem;
+
   const DragPreviewLayer({
     super.key,
     required this.dragStateManager,
     required this.elements,
+    this.dragOperationManager,
     this.elementBuilder,
+    this.useSnapshotSystem = true,
   });
 
   @override
@@ -52,6 +62,16 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                 for (final elementId in draggingElementIds)
                   Builder(
                     builder: (context) {
+                      // 尝试使用ElementSnapshot系统获取预览（如果可用）
+                      if (widget.useSnapshotSystem &&
+                          widget.dragOperationManager != null) {
+                        final snapshot = widget.dragOperationManager!
+                            .getSnapshotForElement(elementId);
+                        if (snapshot != null) {
+                          return _buildSnapshotPreview(elementId, snapshot);
+                        }
+                      }
+
                       // 获取元素的预览位置
                       final previewPosition = widget.dragStateManager
                           .getElementPreviewPosition(elementId);
@@ -81,7 +101,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
                       return _buildDefaultPreview(
                           elementId, previewPosition, element);
                     },
-                  ),
+                  )
               ],
             ),
           ),
@@ -100,6 +120,7 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
   @override
   void initState() {
     super.initState();
+    _logSnapshotAvailability();
     // 监听拖拽状态变化
     widget.dragStateManager.addListener(_handleDragStateChange);
   }
@@ -185,11 +206,100 @@ class _DragPreviewLayerState extends State<DragPreviewLayer> {
     );
   }
 
+  /// 使用ElementSnapshot构建高性能预览
+  Widget _buildSnapshotPreview(String elementId, ElementSnapshot snapshot) {
+    // 从快照获取位置
+    final x = (snapshot.properties['x'] as num).toDouble();
+    final y = (snapshot.properties['y'] as num).toDouble();
+    final position = Offset(x, y);
+
+    // 如果快照有缓存的Widget，优先使用它
+    if (snapshot.cachedWidget != null) {
+      return Positioned(
+        left: position.dx,
+        top: position.dy,
+        child: snapshot.cachedWidget!,
+      );
+    }
+
+    // 根据元素类型构建不同的预览
+    final elementType = snapshot.elementType;
+    final width = snapshot.size.width;
+    final height = snapshot.size.height;
+
+    Widget child;
+    switch (elementType) {
+      case 'text':
+        final text = snapshot.properties['text'] as String? ?? '';
+        final fontSize =
+            (snapshot.properties['fontSize'] as num?)?.toDouble() ?? 14.0;
+        child = Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.blue.withOpacity(0.7)),
+            color: Colors.white.withOpacity(0.9),
+          ),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(4),
+          child: Text(
+            text,
+            style: TextStyle(fontSize: fontSize),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 3,
+          ),
+        );
+        break;
+      case 'image':
+        child = Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.green.withOpacity(0.7)),
+            color: Colors.white.withOpacity(0.9),
+          ),
+          child: const Icon(Icons.image, color: Colors.green),
+        );
+        break;
+      default:
+        child = Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.purple.withOpacity(0.7)),
+            color: Colors.white.withOpacity(0.9),
+          ),
+          child: Center(
+            child: Text(
+              elementType,
+              style: const TextStyle(color: Colors.purple),
+            ),
+          ),
+        );
+    }
+
+    return Positioned(
+      left: position.dx,
+      top: position.dy,
+      child: child,
+    );
+  }
+
   /// 处理拖拽状态变化
   void _handleDragStateChange() {
     // 只有在拖拽预览活动时才重建组件
     if (widget.dragStateManager.isDragPreviewActive) {
       setState(() {});
+    }
+  }
+
+  /// 记录快照系统的可用性
+  void _logSnapshotAvailability() {
+    if (widget.useSnapshotSystem && widget.dragOperationManager != null) {
+      final snapshots = widget.dragOperationManager!.getAllSnapshots();
+      debugPrint('📊 DragPreviewLayer: 快照系统已启用，共有 ${snapshots.length} 个快照');
+    } else {
+      debugPrint('📊 DragPreviewLayer: 快照系统未启用，使用传统预览渲染');
     }
   }
 }

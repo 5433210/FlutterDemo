@@ -102,7 +102,7 @@
   文件: lib/presentation/widgets/practice/element_snapshot.dart
   功能: 拖拽开始时创建元素快照，用于预览层渲染
   优化: 避免拖拽过程中的重复元素查询
-  状态: 实现完成，支持多种元素类型的快照和内存优化
+  状态: 已完成并集成到DragOperationManager和DragPreviewLayer中
   ```
 
 #### 🎨 Week 2: 智能缓存和性能优化器升级
