@@ -10,11 +10,14 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
 import 'canvas_gesture_handler.dart';
+import 'canvas_structure_listener.dart';
 import 'content_render_controller.dart';
 import 'content_render_layer.dart';
+import 'drag_operation_manager.dart';
 import 'drag_preview_layer.dart';
 import 'layers/layer_render_manager.dart';
 import 'layers/layer_types.dart';
+import 'state_change_dispatcher.dart';
 
 /// Material 3 canvas widget for practice editing
 class M3PracticeEditCanvas extends StatefulWidget {
@@ -100,6 +103,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
+
   // Canvas gesture handler
   late CanvasGestureHandler _gestureHandler;
 
@@ -110,6 +114,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   // Layer render manager for coordinated layer rendering
   late LayerRenderManager _layerRenderManager;
+  // 新增: 分层+元素级混合优化策略核心组件
+  // Canvas structure listener for smart layer-specific routing
+  late CanvasStructureListener _structureListener;
+  // State change dispatcher for unified state management
+  late StateChangeDispatcher _stateDispatcher;
+  // Drag operation manager for 3-phase drag system
+  late DragOperationManager _dragOperationManager;
 
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
@@ -193,37 +204,69 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     _contentRenderController.dispose();
     _dragStateManager.dispose();
     _layerRenderManager.dispose();
-    // widget.transformationController
-    //     .removeListener(_debouncedTransformationChange);
-    // _transformationDebouncer?.cancel();
+
+    // 释放新的混合优化策略组件
+    _structureListener.dispose();
+    _stateDispatcher.dispose();
+    _dragOperationManager.dispose();
+
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    print(
-        '🏗️ Canvas: initState called'); // Initialize content render controller for dual-layer architecture
+    print('🏗️ Canvas: initState called');
+
+    // 阶段1: 初始化核心组件
+    // Initialize content render controller for dual-layer architecture
     _contentRenderController = ContentRenderController();
-    print(
-        '🏗️ Canvas: ContentRenderController initialized'); // Initialize drag state manager for optimized drag handling
+    print('🏗️ Canvas: ContentRenderController initialized');
+
+    // Initialize drag state manager for optimized drag handling
     _dragStateManager = DragStateManager();
-    print(
-        '🏗️ Canvas: DragStateManager initialized'); // Initialize layer render manager for coordinated layer rendering
+    print('🏗️ Canvas: DragStateManager initialized');
+
+    // Initialize layer render manager for coordinated layer rendering
     _layerRenderManager = LayerRenderManager();
     print('🏗️ Canvas: LayerRenderManager initialized');
 
+    // 阶段2: 初始化混合优化策略组件    // Initialize canvas structure listener for smart layer-specific routing
+    _structureListener = CanvasStructureListener(widget.controller);
+    print('🏗️ Canvas: CanvasStructureListener initialized');
+
+    // Initialize state change dispatcher for unified state management
+    _stateDispatcher =
+        StateChangeDispatcher(widget.controller, _structureListener);
+    print('🏗️ Canvas: StateChangeDispatcher initialized');
+
+    // Initialize drag operation manager for 3-phase drag system
+    _dragOperationManager = DragOperationManager(
+      widget.controller,
+      _dragStateManager,
+      _stateDispatcher,
+    );
+    print('🏗️ Canvas: DragOperationManager initialized');
+
     // Register layers with the layer render manager
     _initializeLayers();
-    print(
-        '🏗️ Canvas: Layers registered with LayerRenderManager'); // 将拖拽状态管理器与性能监控系统关联
+    print('🏗️ Canvas: Layers registered with LayerRenderManager');
+
+    // 阶段3: 建立组件间连接
+    // 将拖拽状态管理器与性能监控系统关联
     _performanceMonitor.setDragStateManager(_dragStateManager);
     print('🏗️ Canvas: Connected DragStateManager with PerformanceMonitor');
 
     // 将拖拽状态管理器与内容渲染控制器关联
     _contentRenderController.setDragStateManager(_dragStateManager);
     print(
-        '🏗️ Canvas: Connected DragStateManager with ContentRenderController'); // Set up drag state manager callbacks
+        '🏗️ Canvas: Connected DragStateManager with ContentRenderController');
+
+    // 设置结构监听器的层级处理器
+    _setupStructureListenerHandlers();
+    print('🏗️ Canvas: Structure listener handlers configured');
+
+    // Set up drag state manager callbacks
     _dragStateManager.setUpdateCallbacks(
       onBatchUpdate: (batchUpdates) {
         widget.controller.batchUpdateElementProperties(batchUpdates);
@@ -231,128 +274,26 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
 
     // Initialize RepaintBoundary key - always create a new key for screenshot functionality
-    // Don't reuse widget.key as it may cause conflicts with other widgets
     _repaintBoundaryKey = GlobalKey();
 
-    // 使用防抖的方式添加变换监听器，避免频繁更新导致画布重建
-    // widget.transformationController.addListener(_debouncedTransformationChange);
+    // 阶段4: 初始化手势处理器 (需要在所有其他组件初始化后)
+    _initializeGestureHandler();
+    print('🏗️ Canvas: GestureHandler initialized');
 
-    // 1. 首先修复calculateCanvasPosition的实现方式
-    // 在CanvasGestureHandler的初始化中修改为：
-    _gestureHandler = CanvasGestureHandler(
-      controller: widget.controller,
-      dragStateManager: _dragStateManager,
-      onDragStart: (isDragging, dragStart, elementPosition, elementPositions) {
-        setState(() {
-          _isDragging = isDragging;
-          _dragStart = dragStart;
-          _elementStartPosition = elementPosition;
-          _elementStartPositions.clear();
-          _elementStartPositions.addAll(elementPositions);
-        });
-
-        // Notify content render controller about potential changes
-        if (isDragging &&
-            widget.controller.state.selectedElementIds.isNotEmpty) {
-          for (final elementId in widget.controller.state.selectedElementIds) {
-            final element =
-                widget.controller.state.currentPageElements.firstWhere(
-              (e) => e['id'] == elementId,
-              orElse: () => <String, dynamic>{},
-            );
-            if (element.isNotEmpty) {
-              _contentRenderController.initializeElement(
-                elementId: elementId,
-                properties: element,
-              );
-            }
-          }
-        }
-      },
-      onDragUpdate: () {
-        // 如果是选择框更新，使用ValueNotifier而不是setState
-        if (_gestureHandler.isSelectionBoxActive) {
-          // 创建本地的SelectionBoxState，而不是使用_gestureHandler.getSelectionBoxState()
-          _selectionBoxNotifier.value = SelectionBoxState(
-            isActive: _gestureHandler.isSelectionBoxActive,
-            startPoint: _gestureHandler.selectionBoxStart,
-            endPoint: _gestureHandler.selectionBoxEnd,
-          );
-        } else {
-          // 对于元素拖拽，使用ContentRenderController通知而不是setState
-          if (widget.controller.state.selectedElementIds.isNotEmpty) {
-            for (final elementId
-                in widget.controller.state.selectedElementIds) {
-              final element =
-                  widget.controller.state.currentPageElements.firstWhere(
-                (e) => e['id'] == elementId,
-                orElse: () => <String, dynamic>{},
-              );
-              if (element.isNotEmpty) {
-                _contentRenderController.notifyElementChanged(
-                  elementId: elementId,
-                  newProperties: element,
-                );
-              }
-            }
-          }
-        }
-      },
-      onDragEnd: () {
-        _isDragging = false;
-
-        // 处理元素平移后的网格吸附
-        _applyGridSnapToSelectedElements();
-
-        // Notify content render controller about element changes after drag
-        if (widget.controller.state.selectedElementIds.isNotEmpty) {
-          for (final elementId in widget.controller.state.selectedElementIds) {
-            final element =
-                widget.controller.state.currentPageElements.firstWhere(
-              (e) => e['id'] == elementId,
-              orElse: () => <String, dynamic>{},
-            );
-            if (element.isNotEmpty) {
-              _contentRenderController.notifyElementChanged(
-                elementId: elementId,
-                newProperties: element,
-              );
-            }
-          }
-        }
-        if (widget.controller.state.selectedElementIds.isNotEmpty) {
-          for (final elementId in widget.controller.state.selectedElementIds) {
-            final element =
-                widget.controller.state.currentPageElements.firstWhere(
-              (e) => e['id'] == elementId,
-              orElse: () => <String, dynamic>{},
-            );
-            if (element.isNotEmpty) {
-              _contentRenderController.notifyElementChanged(
-                elementId: elementId,
-                newProperties: element,
-              );
-            }
-          }
-        }
-      },
-      getScaleFactor: () {
-        // Extract the scale from the transformation matrix
-        final Matrix4 matrix = widget.transformationController.value;
-        // The scale is the same for x and y in this case (uniform scaling)
-        return matrix.getMaxScaleOnAxis();
-      },
-    ); // Register this canvas with the controller for reset view functionality
+    // Register this canvas with the controller for reset view functionality
     widget.controller.setEditCanvas(this);
 
     // Set the RepaintBoundary key in the controller for screenshot functionality
-    widget.controller.setCanvasKey(
-        _repaintBoundaryKey); // Schedule automatic fit-to-screen on initial load to ensure optimal canvas display
+    widget.controller.setCanvasKey(_repaintBoundaryKey);
+
+    // Schedule automatic fit-to-screen on initial load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fitPageToScreen();
       }
     });
+
+    print('🏗️ Canvas: 分层+元素级混合优化策略组件初始化完成');
   }
 
   void on(String elementId, Offset delta) {
@@ -1495,6 +1436,109 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         .updateElementProperties(elementId, {'rotation': newRotation});
   } // Removed unused _handleTransformationChange method
 
+  /// 初始化手势处理器
+  void _initializeGestureHandler() {
+    _gestureHandler = CanvasGestureHandler(
+      controller: widget.controller,
+      dragStateManager: _dragStateManager,
+      onDragStart:
+          (isDragging, dragStart, elementPosition, elementPositions) async {
+        setState(() {
+          _isDragging = isDragging;
+          _dragStart = dragStart;
+          _elementStartPosition = elementPosition;
+        });
+
+        // 使用新的DragOperationManager处理拖拽开始
+        if (isDragging &&
+            widget.controller.state.selectedElementIds.isNotEmpty) {
+          final success = await _dragOperationManager.startDragOperation(
+            DragStartInfo(
+              elementIds: widget.controller.state.selectedElementIds.toList(),
+              startPosition: dragStart,
+            ),
+          );
+
+          if (success) {
+            debugPrint('🎯 拖拽操作成功启动');
+          } else {
+            debugPrint('🎯 拖拽操作启动失败');
+          }
+
+          // Notify content render controller about potential changes
+          for (final elementId in widget.controller.state.selectedElementIds) {
+            final element =
+                widget.controller.state.currentPageElements.firstWhere(
+              (e) => e['id'] == elementId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (element.isNotEmpty) {
+              _contentRenderController.initializeElement(
+                elementId: elementId,
+                properties: element,
+              );
+            }
+          }
+        }
+      },
+      onDragUpdate: () {
+        // 如果是选择框更新，使用ValueNotifier而不是setState
+        if (_gestureHandler.isSelectionBoxActive) {
+          _selectionBoxNotifier.value = SelectionBoxState(
+            isActive: _gestureHandler.isSelectionBoxActive,
+            startPoint: _gestureHandler.selectionBoxStart,
+            endPoint: _gestureHandler.selectionBoxEnd,
+          );
+        } else {
+          // 对于元素拖拽，使用ContentRenderController通知而不是setState
+          if (widget.controller.state.selectedElementIds.isNotEmpty) {
+            for (final elementId
+                in widget.controller.state.selectedElementIds) {
+              final element =
+                  widget.controller.state.currentPageElements.firstWhere(
+                (e) => e['id'] == elementId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (element.isNotEmpty) {
+                _contentRenderController.notifyElementChanged(
+                  elementId: elementId,
+                  newProperties: element,
+                );
+              }
+            }
+          }
+        }
+      },
+      onDragEnd: () async {
+        _isDragging = false;
+
+        // 处理元素平移后的网格吸附
+        _applyGridSnapToSelectedElements();
+
+        // Notify content render controller about element changes after drag
+        if (widget.controller.state.selectedElementIds.isNotEmpty) {
+          for (final elementId in widget.controller.state.selectedElementIds) {
+            final element =
+                widget.controller.state.currentPageElements.firstWhere(
+              (e) => e['id'] == elementId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (element.isNotEmpty) {
+              _contentRenderController.notifyElementChanged(
+                elementId: elementId,
+                newProperties: element,
+              );
+            }
+          }
+        }
+      },
+      getScaleFactor: () {
+        final Matrix4 matrix = widget.transformationController.value;
+        return matrix.getMaxScaleOnAxis();
+      },
+    );
+  }
+
   /// Initialize and register layers with the LayerRenderManager
   void _initializeLayers() {
     // Register static background layer
@@ -1562,10 +1606,61 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   }
 
   /// Build widget for specific layer type
-
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
     _fitPageToScreen();
+  }
+
+  /// 设置结构监听器的层级处理器
+  void _setupStructureListenerHandlers() {
+    // 配置StaticBackground层级处理器
+    _structureListener.registerLayerHandler(RenderLayerType.staticBackground,
+        (event) {
+      if (event is PageBackgroundChangeEvent) {
+        // 通知LayerRenderManager重新渲染StaticBackground层
+        _layerRenderManager.markLayerDirty(RenderLayerType.staticBackground,
+            reason: 'Page background changed');
+      } else if (event is GridSettingsChangeEvent) {
+        // 处理网格设置变化
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    });
+
+    // 配置Content层级处理器
+    _structureListener.registerLayerHandler(RenderLayerType.content, (event) {
+      if (event is ElementsChangeEvent) {
+        // 更新ContentRenderController
+        _contentRenderController.initializeElements(event.elements);
+        // 通知LayerRenderManager重新渲染Content层
+        _layerRenderManager.markLayerDirty(RenderLayerType.content,
+            reason: 'Elements changed');
+      }
+    });
+
+    // 配置DragPreview层级处理器
+    _structureListener.registerLayerHandler(RenderLayerType.dragPreview,
+        (event) {
+      if (event is DragStateChangeEvent) {
+        // DragPreviewLayer会自动监听DragStateManager的变化
+        _layerRenderManager.markLayerDirty(RenderLayerType.dragPreview,
+            reason: 'Drag state changed');
+      }
+    });
+
+    // 配置Interaction层级处理器
+    _structureListener.registerLayerHandler(RenderLayerType.interaction,
+        (event) {
+      if (event is SelectionChangeEvent || event is ToolChangeEvent) {
+        // 选择或工具变化，重新渲染交互层
+        _layerRenderManager.markLayerDirty(RenderLayerType.interaction,
+            reason: 'Selection or tool changed');
+        if (mounted) {
+          setState(() {});
+        }
+      }
+    });
   }
 }
 
