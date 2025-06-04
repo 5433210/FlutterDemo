@@ -12,6 +12,7 @@ import '../domain/enums/app_language.dart';
 import '../infrastructure/logging/logger.dart';
 import '../l10n/app_localizations.dart';
 import '../presentation/pages/main/m3_main_window.dart';
+import '../presentation/pages/practices/m3_practice_edit_page.dart';
 import '../presentation/pages/works/m3_work_browse_page.dart';
 import '../presentation/pages/works/m3_work_detail_page.dart';
 import '../presentation/providers/settings_provider.dart';
@@ -21,7 +22,6 @@ import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import 'pages/characters/m3_character_management_page.dart';
 import 'pages/initialization/initialization_screen.dart';
-import 'pages/practices/m3_practice_edit_page.dart';
 import 'pages/practices/m3_practice_list_page.dart';
 import 'pages/settings/m3_settings_page.dart';
 import 'pages/works/m3_character_collection_page.dart';
@@ -183,7 +183,7 @@ class MyApp extends ConsumerWidget {
 
       case AppRoutes.practiceEdit:
         return MaterialPageRoute(
-          builder: (context) => M3PracticeEditPage(
+          builder: (context) => M3PracticeEditPageRefactored(
             practiceId: args as String?,
           ),
         );

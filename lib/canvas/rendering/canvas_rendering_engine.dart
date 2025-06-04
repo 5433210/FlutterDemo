@@ -162,29 +162,46 @@ class CanvasRenderingEngine {
 
   /// 主渲染方法
   void render(Canvas canvas, Size size) {
+    debugPrint('🎨 CanvasRenderingEngine.render 开始渲染');
+    debugPrint('   - 画布尺寸: $size');
+    debugPrint('   - 渲染计数: $_renderCount');
+
     _performanceMonitor.startFrame();
     _renderCount++;
     _lastRenderTime = DateTime.now();
 
     // 获取可见元素（按Z-index排序）
     final visibleElements = _getVisibleElements(size);
+    debugPrint('📊 可见元素: ${visibleElements.length}个');
+
+    // 输出可见元素的详细信息
+    if (visibleElements.isNotEmpty) {
+      debugPrint('📋 可见元素列表:');
+      for (final element in visibleElements) {
+        debugPrint('   - [${element.type}] ${element.id} (${element.bounds})');
+      }
+    }
 
     if (_gpuAccelerationEnabled &&
         _renderStrategy != RenderStrategy.softwareOnly) {
       // GPU加速渲染路径
+      debugPrint('🚀 使用GPU加速渲染路径');
       _renderWithGpuAcceleration(canvas, size, visibleElements);
     } else {
       // 标准渲染路径
+      debugPrint('🖌️ 使用标准渲染路径');
       _renderWithoutGpuAcceleration(canvas, size, visibleElements);
     }
 
     // 渲染选择框
     _renderSelectionBoxes(canvas);
+    debugPrint('🔲 渲染选择框');
 
     // 清除脏标记
     _dirtyElements.clear();
 
     _performanceMonitor.endFrame();
+    debugPrint('✅ CanvasRenderingEngine.render 渲染完成');
   }
 
   /// 渲染元素 - render方法的公共接口别名
@@ -209,6 +226,14 @@ class CanvasRenderingEngine {
 
   /// 应用元素变换
   void _applyElementTransform(Canvas canvas, ElementData element) {
+    if (element.type == 'text') {
+      debugPrint('🔄 应用元素变换: ${element.id}');
+      debugPrint('   - 位置: (${element.bounds.left}, ${element.bounds.top})');
+      debugPrint('   - 尺寸: ${element.bounds.width} x ${element.bounds.height}');
+      debugPrint('   - 旋转: ${element.rotation}');
+      debugPrint('   - 透明度: ${element.opacity}');
+    }
+
     // 移动到元素位置
     canvas.translate(element.bounds.left, element.bounds.top);
 
@@ -219,6 +244,10 @@ class CanvasRenderingEngine {
       canvas.translate(center.dx, center.dy);
       canvas.rotate(element.rotation);
       canvas.translate(-center.dx, -center.dy);
+
+      if (element.type == 'text') {
+        debugPrint('   - 已应用旋转变换: ${element.rotation} rad');
+      }
     }
 
     // 应用透明度
@@ -227,6 +256,14 @@ class CanvasRenderingEngine {
         Rect.fromLTWH(0, 0, element.bounds.width, element.bounds.height),
         Paint()..color = Color.fromRGBO(255, 255, 255, element.opacity),
       );
+
+      if (element.type == 'text') {
+        debugPrint('   - 已应用透明度图层: ${element.opacity}');
+      }
+    }
+
+    if (element.type == 'text') {
+      debugPrint('✅ 元素变换应用完成');
     }
   }
 
@@ -291,11 +328,18 @@ class CanvasRenderingEngine {
 
   /// 获取可见元素
   List<ElementData> _getVisibleElements(Size canvasSize) {
-    return _stateManager.elementState.elements.values
-        .where((element) =>
-            element.visible && _isElementInViewport(element, canvasSize))
-        .toList()
+    final allElements = _stateManager.elementState.elements.values.toList();
+    debugPrint('📊 _getVisibleElements - 所有元素数量: ${allElements.length}');
+
+    final result = allElements.where((element) {
+      final visible = element.visible;
+      final inViewport = _isElementInViewport(element, canvasSize);
+      return visible && inViewport;
+    }).toList()
       ..sort((a, b) => a.zIndex.compareTo(b.zIndex));
+
+    debugPrint('📊 _getVisibleElements - 可见元素数量: ${result.length}');
+    return result;
   }
 
   /// 初始化GPU能力检测
@@ -322,7 +366,17 @@ class CanvasRenderingEngine {
   /// 检查元素是否在视口内
   bool _isElementInViewport(ElementData element, Size canvasSize) {
     final viewport = Rect.fromLTWH(0, 0, canvasSize.width, canvasSize.height);
-    return element.bounds.overlaps(viewport);
+    final result = element.bounds.overlaps(viewport);
+
+    if (element.type == 'text') {
+      debugPrint('🔍 检查文本元素是否在视口内:');
+      debugPrint('   - 元素: ${element.id}');
+      debugPrint('   - 元素边界: ${element.bounds}');
+      debugPrint('   - 视口: $viewport');
+      debugPrint('   - 结果: ${result ? "在视口内" : "不在视口内"}');
+    }
+
+    return result;
   }
 
   /// 标记脏元素
@@ -379,6 +433,15 @@ class CanvasRenderingEngine {
   void _renderElement(Canvas canvas, ElementData element) {
     final renderer = _renderers[element.type];
     if (renderer != null) {
+      // 添加调试日志，特别是针对文本元素
+      if (element.type == 'text') {
+        debugPrint('🎨 开始渲染文本元素: ${element.id}');
+        final text = element.properties['text'] as String? ?? '未找到文本';
+        debugPrint('📝 文本内容: "$text"');
+        debugPrint('📐 文本边界: ${element.bounds}');
+        debugPrint('📊 文本属性: ${element.properties.keys.join(', ')}');
+      }
+
       // 检查缓存
       final cachedElement =
           _renderCache.getRenderedElement(element.id, element.version);
@@ -386,6 +449,9 @@ class CanvasRenderingEngine {
         // 使用缓存
         _performanceMonitor.recordCacheHit();
         canvas.drawPicture(cachedElement);
+        if (element.type == 'text') {
+          debugPrint('🖼️ 使用缓存渲染文本元素: ${element.id}');
+        }
         return;
       }
 
@@ -397,10 +463,20 @@ class CanvasRenderingEngine {
 
         // 准备渲染用的画笔
         final paint = Paint();
-        _qualityOptimizer.applyToPaint(paint);
-
-        // 渲染元素
-        renderer.render(canvas, element);
+        _qualityOptimizer.applyToPaint(paint); // 渲染元素
+        try {
+          if (element.type == 'text') {
+            debugPrint('🖌️ 调用文本渲染器渲染元素: ${element.id}');
+          }
+          renderer.render(canvas, element);
+          if (element.type == 'text') {
+            debugPrint('✅ 文本渲染器完成渲染: ${element.id}');
+          }
+        } catch (e, stackTrace) {
+          debugPrint('❌ 渲染元素时出错: $e');
+          debugPrint('📍 元素类型: ${element.type}, ID: ${element.id}');
+          debugPrint('📍 Stack trace: $stackTrace');
+        }
 
         // 记录渲染
         _performanceMonitor.recordElementRender();
@@ -481,25 +557,45 @@ class CanvasRenderingEngine {
   /// 标准渲染路径（无GPU加速）
   void _renderWithoutGpuAcceleration(
       Canvas canvas, Size size, List<ElementData> elements) {
+    debugPrint('🖌️ 开始标准渲染路径');
+    debugPrint('   - 待渲染元素数量: ${elements.length}');
+
     // 渲染元素
     for (final element in elements) {
+      debugPrint('   - 渲染元素: ${element.id} (${element.type})');
       _performanceMonitor.recordElementRender();
       _renderElement(canvas, element);
     }
+
+    debugPrint('✅ 标准渲染路径完成');
   }
 
   /// 判断是否应该跳过缓存
   bool _shouldSkipCaching(ElementData element) {
+    // 对于文本元素，记录调试信息
+    if (element.type == 'text') {
+      debugPrint('📋 检查是否应该缓存文本元素: ${element.id}');
+      debugPrint(
+          '   - 元素尺寸: ${element.bounds.width} x ${element.bounds.height}');
+      debugPrint('   - 面积: ${element.bounds.width * element.bounds.height}');
+    }
+
     // 跳过较小的元素缓存（面积小于100平方像素）
     if (element.bounds.width * element.bounds.height < 100) {
+      if (element.type == 'text') {
+        debugPrint('   - 决定: 不缓存 (元素太小)');
+      }
       return true;
     }
 
     // 根据元素类型判断
     switch (element.type) {
       case 'text':
-        // 文本元素较小，不缓存
-        return element.bounds.width < 200;
+        // 文本元素小于200宽度时不缓存
+        final skip = element.bounds.width < 200;
+        debugPrint(
+            '   - 决定: ${skip ? "不缓存" : "缓存"} (宽度${skip ? "<" : ">="}200)');
+        return skip;
       case 'image':
         // 图像元素通常较大，缓存
         return false;

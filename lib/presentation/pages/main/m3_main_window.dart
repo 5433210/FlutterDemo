@@ -92,7 +92,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
           onPopInvokedWithResult: (bool didPop, dynamic result) async {
             // 如果系统已处理了弹出操作，不需要进一步处理
             if (didPop) return;
-            
+
             // 如果正在导航过渡中，不处理返回
             if (navState.isNavigating) return;
 
@@ -338,7 +338,7 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
               }
 
               return MaterialPageRoute<bool>(
-                builder: (context) => M3PracticeEditPage(
+                builder: (context) => M3PracticeEditPageRefactored(
                   practiceId: practiceId.isNotEmpty ? practiceId : null,
                 ),
               );
@@ -370,23 +370,23 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
   void _cleanupUnusedSections() {
     final currentIndex = ref.read(globalNavigationProvider).currentSectionIndex;
     final lastIndex = _lastSelectedIndex;
-    
+
     // 延迟执行，确保当前帧渲染完成
     Future.microtask(() {
       if (!mounted) return;
-      
+
       // 找出可以被清理的功能区（除了当前选中的和最后访问的）
       final sectionsToRemove = <int>{};
       for (final index in _initializedSections) {
         // 始终保留当前选中的功能区和最后访问的功能区（提升导航返回体验）
         if (index == currentIndex || index == lastIndex) continue;
-        
+
         // 使用更可靠的清理策略
         if (_shouldCleanupSection(index)) {
           sectionsToRemove.add(index);
         }
       }
-      
+
       // 只有当组件仍然挂载在树上时才进行状态更新
       if (mounted && sectionsToRemove.isNotEmpty) {
         setState(() {
@@ -401,10 +401,10 @@ class _M3MainWindowState extends ConsumerState<M3MainWindow>
     // 1. 不清理低索引值的主要功能区（0和1始终保留）
     // 2. 只清理索引值大于1的功能区
     // 3. 避免随机清理，使用更确定性的方法
-    
+
     // 保留主要功能区
     if (index <= 1) return false;
-    
+
     // 其他功能区根据应用的内存状况和使用模式决定是否清理
     // 这里可以基于具体业务逻辑进一步完善
     return true;

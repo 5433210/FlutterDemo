@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../canvas/integration/practice_edit_canvas_adapter.dart';
 import '../../../widgets/common/persistent_resizable_panel.dart';
 import '../../../widgets/common/persistent_sidebar_toggle.dart';
 import '../../../widgets/practice/m3_practice_layer_panel.dart';
@@ -8,7 +9,6 @@ import '../../../widgets/practice/practice_edit_controller.dart';
 import '../services/unified_service_manager.dart';
 import '../state/practice_edit_state_manager.dart';
 import 'enhanced_thumbnail_strip.dart';
-import 'm3_practice_edit_canvas.dart';
 import 'unified_property_panel.dart';
 
 /// 字帖编辑页面布局组件 - 完全修复版
@@ -154,9 +154,88 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
     _serviceManager.addListener(_onServiceManagerChanged);
   }
 
+  /// 添加集字元素
+  void _addCollectionElement() {
+    widget.controller.addCollectionElementAt(100, 100, '练习');
+  }
+
+  /// 添加图片元素
+  void _addImageElement() {
+    widget.controller.addImageElementAt(100, 100, '');
+  }
+
   /// 添加页面
   void _addPage() {
     widget.controller.addNewPage();
+  }
+
+  /// 添加文本元素
+  void _addTextElement() {
+    widget.controller.addTextElementAt(100, 100);
+  }
+
+  /// 底部对齐
+  void _alignBottom() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'bottom');
+    }
+  }
+
+  /// 水平居中对齐
+  void _alignCenterHorizontal() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'center-horizontal');
+    }
+  }
+
+  /// 垂直居中对齐
+  void _alignCenterVertical() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'center-vertical');
+    }
+  }
+
+  /// 左对齐
+  void _alignLeft() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'left');
+    }
+  }
+
+  /// 右对齐
+  void _alignRight() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'right');
+    }
+  }
+
+  /// 顶部对齐
+  void _alignTop() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 1) {
+      widget.controller.alignElements(selectedIds, 'top');
+    }
+  }
+
+  /// 上移一层
+  void _bringForward() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      widget.stateManager.moveElementUp(widget.controller);
+    }
+  }
+
+  /// 置于顶层
+  void _bringToFront() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      widget.stateManager.bringElementToFront(widget.controller);
+    }
   }
 
   /// 构建操作按钮
@@ -185,7 +264,7 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
 
   /// 构建画布区域
   Widget _buildCanvasArea() {
-    return M3PracticeEditCanvas(
+    return PracticeEditCanvasAdapter(
       controller: widget.controller,
       isPreviewMode: widget.stateManager.isPreviewMode,
       transformationController: widget.stateManager.transformationController,
@@ -301,7 +380,7 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
     );
   }
 
-  /// 构建简化的工具栏
+  /// 构建增强的工具栏
   Widget _buildSimpleToolbar() {
     return Container(
       height: 60,
@@ -314,67 +393,257 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
           ),
         ),
       ),
-      child: Row(
-        children: [
-          // 基础编辑操作
-          _buildActionButton(
-            icon: Icons.undo,
-            tooltip: '撤销 (Ctrl+Z)',
-            enabled: _serviceManager.canUndo,
-            onPressed: _undo,
-          ),
-          _buildActionButton(
-            icon: Icons.redo,
-            tooltip: '重做 (Ctrl+Y)',
-            enabled: _serviceManager.canRedo,
-            onPressed: _redo,
-          ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            // 基础编辑操作
+            _buildActionButton(
+              icon: Icons.undo,
+              tooltip: '撤销 (Ctrl+Z)',
+              enabled: _serviceManager.canUndo,
+              onPressed: _undo,
+            ),
+            _buildActionButton(
+              icon: Icons.redo,
+              tooltip: '重做 (Ctrl+Y)',
+              enabled: _serviceManager.canRedo,
+              onPressed: _redo,
+            ),
 
-          const VerticalDivider(),
+            const VerticalDivider(),
 
-          // 剪贴板操作
-          _buildActionButton(
-            icon: Icons.copy,
-            tooltip: '复制 (Ctrl+C)',
-            onPressed: _copyElements,
-          ),
-          _buildActionButton(
-            icon: Icons.paste,
-            tooltip: '粘贴 (Ctrl+V)',
-            enabled: _serviceManager.hasClipboardContent,
-            onPressed: _pasteElements,
-          ),
+            // 元素添加操作
+            _buildActionButton(
+              icon: Icons.text_fields,
+              tooltip: '添加文本',
+              onPressed: _addTextElement,
+            ),
+            _buildActionButton(
+              icon: Icons.image,
+              tooltip: '添加图片',
+              onPressed: _addImageElement,
+            ),
+            _buildActionButton(
+              icon: Icons.auto_awesome,
+              tooltip: '添加集字',
+              onPressed: _addCollectionElement,
+            ),
+            _buildActionButton(
+              icon: Icons.group_work,
+              tooltip: '创建组合',
+              onPressed: _createGroup,
+            ),
 
-          const VerticalDivider(),
+            const VerticalDivider(),
 
-          // 格式操作
-          _buildActionButton(
-            icon: Icons.format_paint,
-            tooltip: '复制格式',
-            isActive: _serviceManager.hasFormat,
-            onPressed: _copyFormatting,
-          ),
-          _buildActionButton(
-            icon: Icons.format_color_fill,
-            tooltip: '粘贴格式',
-            enabled: _serviceManager.hasFormat,
-            onPressed: _pasteFormatting,
-          ),
+            // 剪贴板操作
+            _buildActionButton(
+              icon: Icons.copy,
+              tooltip: '复制 (Ctrl+C)',
+              onPressed: _copyElements,
+            ),
+            _buildActionButton(
+              icon: Icons.paste,
+              tooltip: '粘贴 (Ctrl+V)',
+              enabled: _serviceManager.hasClipboardContent,
+              onPressed: _pasteElements,
+            ),
+            _buildActionButton(
+              icon: Icons.content_cut,
+              tooltip: '剪切 (Ctrl+X)',
+              onPressed: _cutElements,
+            ),
 
-          const VerticalDivider(),
+            const VerticalDivider(),
 
-          // 删除操作
-          _buildActionButton(
-            icon: Icons.delete,
-            tooltip: '删除 (Delete)',
-            onPressed: _deleteSelectedElements,
-          ),
+            // 选择操作
+            _buildActionButton(
+              icon: Icons.select_all,
+              tooltip: '全选 (Ctrl+A)',
+              onPressed: _selectAllElements,
+            ),
+            _buildActionButton(
+              icon: Icons.deselect,
+              tooltip: '取消选择 (Esc)',
+              onPressed: _deselectAllElements,
+            ),
 
-          const Spacer(),
+            const VerticalDivider(),
 
-          // 服务状态指示器
-          _buildServiceStatusChips(),
-        ],
+            // 排列操作
+            _buildActionButton(
+              icon: Icons.flip_to_front,
+              tooltip: '置于顶层',
+              onPressed: _bringToFront,
+            ),
+            _buildActionButton(
+              icon: Icons.flip_to_back,
+              tooltip: '置于底层',
+              onPressed: _sendToBack,
+            ),
+            _buildActionButton(
+              icon: Icons.keyboard_arrow_up,
+              tooltip: '上移一层',
+              onPressed: _bringForward,
+            ),
+            _buildActionButton(
+              icon: Icons.keyboard_arrow_down,
+              tooltip: '下移一层',
+              onPressed: _sendBackward,
+            ),
+
+            const VerticalDivider(),
+
+            // 对齐操作
+            _buildActionButton(
+              icon: Icons.align_horizontal_left,
+              tooltip: '左对齐',
+              onPressed: _alignLeft,
+            ),
+            _buildActionButton(
+              icon: Icons.align_horizontal_center,
+              tooltip: '水平居中',
+              onPressed: _alignCenterHorizontal,
+            ),
+            _buildActionButton(
+              icon: Icons.align_horizontal_right,
+              tooltip: '右对齐',
+              onPressed: _alignRight,
+            ),
+            _buildActionButton(
+              icon: Icons.align_vertical_top,
+              tooltip: '顶部对齐',
+              onPressed: _alignTop,
+            ),
+            _buildActionButton(
+              icon: Icons.align_vertical_center,
+              tooltip: '垂直居中',
+              onPressed: _alignCenterVertical,
+            ),
+            _buildActionButton(
+              icon: Icons.align_vertical_bottom,
+              tooltip: '底部对齐',
+              onPressed: _alignBottom,
+            ),
+
+            const VerticalDivider(),
+
+            // 分布操作
+            _buildActionButton(
+              icon: Icons.format_line_spacing, // Changed from Icons.distribute which doesn't exist
+              tooltip: '水平分布',
+              onPressed: _distributeHorizontally,
+            ),
+            _buildActionButton(
+              icon: Icons.vertical_distribute,
+              tooltip: '垂直分布',
+              onPressed: _distributeVertically,
+            ),
+
+            const VerticalDivider(),
+
+            // 锁定和可见性
+            _buildActionButton(
+              icon: widget.controller.state.selectedElementIds.any((id) {
+                final element =
+                    widget.controller.state.currentPageElements.firstWhere(
+                  (e) => e['id'] == id,
+                  orElse: () => <String, dynamic>{},
+                );
+                return element['locked'] == true;
+              })
+                  ? Icons.lock
+                  : Icons.lock_open,
+              tooltip: '锁定/解锁元素',
+              onPressed: _toggleLockSelected,
+            ),
+            _buildActionButton(
+              icon: widget.controller.state.selectedElementIds.any((id) {
+                final element =
+                    widget.controller.state.currentPageElements.firstWhere(
+                  (e) => e['id'] == id,
+                  orElse: () => <String, dynamic>{},
+                );
+                return element['hidden'] == true;
+              })
+                  ? Icons.visibility_off
+                  : Icons.visibility,
+              tooltip: '显示/隐藏元素',
+              onPressed: _toggleVisibilitySelected,
+            ),
+
+            const VerticalDivider(),
+
+            // 格式操作
+            _buildActionButton(
+              icon: Icons.format_paint,
+              tooltip: '复制格式',
+              isActive: _serviceManager.hasFormat,
+              onPressed: _copyFormatting,
+            ),
+            _buildActionButton(
+              icon: Icons.format_color_fill,
+              tooltip: '粘贴格式',
+              enabled: _serviceManager.hasFormat,
+              onPressed: _pasteFormatting,
+            ),
+
+            const VerticalDivider(),
+
+            // 网格和吸附
+            _buildActionButton(
+              icon: Icons.grid_on,
+              tooltip: '显示/隐藏网格',
+              isActive: widget.controller.state.showGrid,
+              onPressed: _toggleGrid,
+            ),
+            _buildActionButton(
+              icon: Icons.radio_button_checked,
+              tooltip: '网格吸附',
+              isActive: widget.controller.state.snapEnabled,
+              onPressed: _toggleSnap,
+            ),
+
+            const VerticalDivider(),
+
+            // 视图操作
+            _buildActionButton(
+              icon: Icons.zoom_in,
+              tooltip: '放大',
+              onPressed: _zoomIn,
+            ),
+            _buildActionButton(
+              icon: Icons.zoom_out,
+              tooltip: '缩小',
+              onPressed: _zoomOut,
+            ),
+            _buildActionButton(
+              icon: Icons.fit_screen,
+              tooltip: '适合屏幕',
+              onPressed: _fitToScreen,
+            ),
+            _buildActionButton(
+              icon: Icons.zoom_out_map,
+              tooltip: '100%缩放',
+              onPressed: _resetZoom,
+            ),
+
+            const VerticalDivider(),
+
+            // 删除操作
+            _buildActionButton(
+              icon: Icons.delete,
+              tooltip: '删除 (Delete)',
+              onPressed: _deleteSelectedElements,
+            ),
+
+            const SizedBox(width: 16),
+
+            // 服务状态指示器
+            _buildServiceStatusChips(),
+          ],
+        ),
       ),
     );
   }
@@ -397,6 +666,25 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
     }
   }
 
+  /// 创建组合
+  void _createGroup() {
+    final selectedElements = widget.controller.state.getSelectedElements();
+    if (selectedElements.length > 1) {
+      widget.controller.groupElements(
+        widget.controller.state.selectedElementIds.toList(),
+      );
+    }
+  }
+
+  /// 剪切元素
+  void _cutElements() {
+    final selectedElements = widget.controller.state.getSelectedElements();
+    if (selectedElements.isNotEmpty) {
+      _serviceManager.copyElements(selectedElements);
+      widget.controller.deleteSelectedElements();
+    }
+  }
+
   /// 删除页面
   void _deletePage(int pageIndex) {
     if (widget.controller.state.pages.length > 1) {
@@ -414,15 +702,39 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
     widget.controller.clearSelection();
   }
 
+  /// 水平分布
+  void _distributeHorizontally() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 2) {
+      widget.controller.distributeElements(selectedIds, 'horizontal');
+    }
+  }
+
+  /// 垂直分布
+  void _distributeVertically() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    if (selectedIds.length > 2) {
+      widget.controller.distributeElements(selectedIds, 'vertical');
+    }
+  }
+
+  /// 适合屏幕
+  void _fitToScreen() {
+    // 调用Canvas的适合屏幕功能
+    // 暂时使用重置变换的方式
+    widget.stateManager.transformationController.value = Matrix4.identity();
+  }
+
   /// 处理键盘事件
   void _handleKeyEvent(KeyEvent event) {
     if (event is KeyDownEvent) {
-      final key = event.logicalKey;
-      final isCtrlPressed = HardwareKeyboard.instance.isControlPressed;
+      final isCtrlPressed =
+          event.logicalKey == LogicalKeyboardKey.controlLeft ||
+              event.logicalKey == LogicalKeyboardKey.controlRight ||
+              HardwareKeyboard.instance.isControlPressed;
 
-      // 基础快捷键处理
       if (isCtrlPressed) {
-        switch (key) {
+        switch (event.logicalKey) {
           case LogicalKeyboardKey.keyZ:
             _undo();
             break;
@@ -435,12 +747,15 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
           case LogicalKeyboardKey.keyV:
             _pasteElements();
             break;
+          case LogicalKeyboardKey.keyX:
+            _cutElements();
+            break;
           case LogicalKeyboardKey.keyA:
             _selectAllElements();
             break;
         }
       } else {
-        switch (key) {
+        switch (event.logicalKey) {
           case LogicalKeyboardKey.delete:
             _deleteSelectedElements();
             break;
@@ -522,13 +837,91 @@ class _PracticeEditLayoutState extends State<PracticeEditLayout>
     widget.controller.reorderPages(oldIndex, newIndex);
   }
 
+  /// 重置缩放到100%
+  void _resetZoom() {
+    widget.controller.zoomTo(1.0);
+  }
+
   /// 选择所有元素
   void _selectAllElements() {
     widget.controller.selectAll();
   }
 
+  /// 下移一层
+  void _sendBackward() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      widget.controller.sendElementBackward(id);
+    }
+  }
+
+  /// 置于底层
+  void _sendToBack() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      widget.controller.sendElementToBack(id);
+    }
+  }
+
+  /// 切换网格显示
+  void _toggleGrid() {
+    // 暂时禁用，需要在state中添加showGrid属性
+    // widget.controller.toggleGrid();
+  }
+
+  /// 切换选中元素的锁定状态
+  void _toggleLockSelected() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      final element = widget.controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (element.isNotEmpty) {
+        final isLocked = element['locked'] as bool? ?? false;
+        widget.controller.updateElementProperties(id, {'locked': !isLocked});
+      }
+    }
+  }
+
+  /// 切换网格吸附
+  void _toggleSnap() {
+    widget.controller.toggleSnap();
+  }
+
+  /// 切换选中元素的可见性
+  void _toggleVisibilitySelected() {
+    final selectedIds = widget.controller.state.selectedElementIds.toList();
+    for (final id in selectedIds) {
+      final element = widget.controller.state.currentPageElements.firstWhere(
+        (e) => e['id'] == id,
+        orElse: () => <String, dynamic>{},
+      );
+      if (element.isNotEmpty) {
+        final isHidden = element['hidden'] as bool? ?? false;
+        widget.controller.updateElementProperties(id, {'hidden': !isHidden});
+      }
+    }
+  }
+
   /// 撤销操作
   void _undo() {
     _serviceManager.undo();
+  }
+
+  /// 放大
+  void _zoomIn() {
+    final currentScale =
+        widget.stateManager.transformationController.value.getMaxScaleOnAxis();
+    final newScale = (currentScale * 1.2).clamp(0.1, 5.0);
+    widget.controller.zoomTo(newScale);
+  }
+
+  /// 缩小
+  void _zoomOut() {
+    final currentScale =
+        widget.stateManager.transformationController.value.getMaxScaleOnAxis();
+    final newScale = (currentScale / 1.2).clamp(0.1, 5.0);
+    widget.controller.zoomTo(newScale);
   }
 }

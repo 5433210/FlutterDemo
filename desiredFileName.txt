@@ -1,1 +1,34 @@
-{}
+{
+  "en": [
+    "practiceEditCut",
+    "practiceEditAlignLeft",
+    "practiceEditAlignCenter",
+    "practiceEditAlignRight",
+    "practiceEditAlignTop",
+    "practiceEditAlignBottom",
+    "practiceEditAlignMiddle",
+    "practiceEditDistributeHorizontal",
+    "practiceEditDistributeVertical",
+    "practiceEditAlignment",
+    "practiceEditLock",
+    "practiceEditUnlock",
+    "practiceEditHideElement",
+    "practiceEditShowElement",
+    "practiceEditElementState",
+    "practiceEditFlipHorizontal",
+    "practiceEditFlipVertical",
+    "practiceEditDuplicate",
+    "practiceEditClone",
+    "practiceEditTransform",
+    "practiceEditZoomIn",
+    "practiceEditZoomOut",
+    "practiceEditZoomFit",
+    "practiceEditZoomActual",
+    "practiceEditZoomControls",
+    "practiceEditFindReplace",
+    "practiceEditFind",
+    "practiceEditToggleLayerPanel",
+    "practiceEditTogglePropertyPanel",
+    "practiceEditPanels"
+  ]
+}

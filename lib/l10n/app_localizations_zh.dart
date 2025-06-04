@@ -2330,6 +2330,96 @@ class AppLocalizationsZh extends AppLocalizations {
   String get practiceEditVisualProperties => '视觉属性';
 
   @override
+  String get practiceEditCut => '剪切 (Ctrl+X)';
+
+  @override
+  String get practiceEditAlignLeft => '左对齐 (Ctrl+Shift+L)';
+
+  @override
+  String get practiceEditAlignCenter => '居中对齐 (Ctrl+Shift+C)';
+
+  @override
+  String get practiceEditAlignRight => '右对齐 (Ctrl+Shift+R)';
+
+  @override
+  String get practiceEditAlignTop => '顶部对齐 (Ctrl+Shift+T)';
+
+  @override
+  String get practiceEditAlignBottom => '底部对齐 (Ctrl+Shift+B)';
+
+  @override
+  String get practiceEditAlignMiddle => '垂直居中';
+
+  @override
+  String get practiceEditDistributeHorizontal => '水平分布';
+
+  @override
+  String get practiceEditDistributeVertical => '垂直分布';
+
+  @override
+  String get practiceEditAlignment => '对齐';
+
+  @override
+  String get practiceEditLock => '锁定元素 (Ctrl+L)';
+
+  @override
+  String get practiceEditUnlock => '解锁元素 (Ctrl+Shift+L)';
+
+  @override
+  String get practiceEditHideElement => '隐藏元素 (Ctrl+H)';
+
+  @override
+  String get practiceEditShowElement => '显示元素 (Ctrl+Shift+H)';
+
+  @override
+  String get practiceEditElementState => '元素状态';
+
+  @override
+  String get practiceEditFlipHorizontal => '水平翻转';
+
+  @override
+  String get practiceEditFlipVertical => '垂直翻转';
+
+  @override
+  String get practiceEditDuplicate => '重复 (Ctrl+Shift+D)';
+
+  @override
+  String get practiceEditClone => '克隆';
+
+  @override
+  String get practiceEditTransform => '变换';
+
+  @override
+  String get practiceEditZoomIn => '放大 (Ctrl+=)';
+
+  @override
+  String get practiceEditZoomOut => '缩小 (Ctrl+-)';
+
+  @override
+  String get practiceEditZoomFit => '适应画布 (Ctrl+0)';
+
+  @override
+  String get practiceEditZoomActual => '实际大小 (Ctrl+1)';
+
+  @override
+  String get practiceEditZoomControls => '缩放控制';
+
+  @override
+  String get practiceEditFindReplace => '查找替换 (Ctrl+F)';
+
+  @override
+  String get practiceEditFind => '查找';
+
+  @override
+  String get practiceEditToggleLayerPanel => '切换图层面板 (F9)';
+
+  @override
+  String get practiceEditTogglePropertyPanel => '切换属性面板 (F4)';
+
+  @override
+  String get practiceEditPanels => '面板';
+
+  @override
   String get practiceListBatchDone => '完成';
 
   @override

@@ -4553,6 +4553,186 @@ abstract class AppLocalizations {
   /// **'视觉属性'**
   String get practiceEditVisualProperties;
 
+  /// No description provided for @practiceEditCut.
+  ///
+  /// In zh, this message translates to:
+  /// **'剪切 (Ctrl+X)'**
+  String get practiceEditCut;
+
+  /// No description provided for @practiceEditAlignLeft.
+  ///
+  /// In zh, this message translates to:
+  /// **'左对齐 (Ctrl+Shift+L)'**
+  String get practiceEditAlignLeft;
+
+  /// No description provided for @practiceEditAlignCenter.
+  ///
+  /// In zh, this message translates to:
+  /// **'居中对齐 (Ctrl+Shift+C)'**
+  String get practiceEditAlignCenter;
+
+  /// No description provided for @practiceEditAlignRight.
+  ///
+  /// In zh, this message translates to:
+  /// **'右对齐 (Ctrl+Shift+R)'**
+  String get practiceEditAlignRight;
+
+  /// No description provided for @practiceEditAlignTop.
+  ///
+  /// In zh, this message translates to:
+  /// **'顶部对齐 (Ctrl+Shift+T)'**
+  String get practiceEditAlignTop;
+
+  /// No description provided for @practiceEditAlignBottom.
+  ///
+  /// In zh, this message translates to:
+  /// **'底部对齐 (Ctrl+Shift+B)'**
+  String get practiceEditAlignBottom;
+
+  /// No description provided for @practiceEditAlignMiddle.
+  ///
+  /// In zh, this message translates to:
+  /// **'垂直居中'**
+  String get practiceEditAlignMiddle;
+
+  /// No description provided for @practiceEditDistributeHorizontal.
+  ///
+  /// In zh, this message translates to:
+  /// **'水平分布'**
+  String get practiceEditDistributeHorizontal;
+
+  /// No description provided for @practiceEditDistributeVertical.
+  ///
+  /// In zh, this message translates to:
+  /// **'垂直分布'**
+  String get practiceEditDistributeVertical;
+
+  /// No description provided for @practiceEditAlignment.
+  ///
+  /// In zh, this message translates to:
+  /// **'对齐'**
+  String get practiceEditAlignment;
+
+  /// No description provided for @practiceEditLock.
+  ///
+  /// In zh, this message translates to:
+  /// **'锁定元素 (Ctrl+L)'**
+  String get practiceEditLock;
+
+  /// No description provided for @practiceEditUnlock.
+  ///
+  /// In zh, this message translates to:
+  /// **'解锁元素 (Ctrl+Shift+L)'**
+  String get practiceEditUnlock;
+
+  /// No description provided for @practiceEditHideElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏元素 (Ctrl+H)'**
+  String get practiceEditHideElement;
+
+  /// No description provided for @practiceEditShowElement.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示元素 (Ctrl+Shift+H)'**
+  String get practiceEditShowElement;
+
+  /// No description provided for @practiceEditElementState.
+  ///
+  /// In zh, this message translates to:
+  /// **'元素状态'**
+  String get practiceEditElementState;
+
+  /// No description provided for @practiceEditFlipHorizontal.
+  ///
+  /// In zh, this message translates to:
+  /// **'水平翻转'**
+  String get practiceEditFlipHorizontal;
+
+  /// No description provided for @practiceEditFlipVertical.
+  ///
+  /// In zh, this message translates to:
+  /// **'垂直翻转'**
+  String get practiceEditFlipVertical;
+
+  /// No description provided for @practiceEditDuplicate.
+  ///
+  /// In zh, this message translates to:
+  /// **'重复 (Ctrl+Shift+D)'**
+  String get practiceEditDuplicate;
+
+  /// No description provided for @practiceEditClone.
+  ///
+  /// In zh, this message translates to:
+  /// **'克隆'**
+  String get practiceEditClone;
+
+  /// No description provided for @practiceEditTransform.
+  ///
+  /// In zh, this message translates to:
+  /// **'变换'**
+  String get practiceEditTransform;
+
+  /// No description provided for @practiceEditZoomIn.
+  ///
+  /// In zh, this message translates to:
+  /// **'放大 (Ctrl+=)'**
+  String get practiceEditZoomIn;
+
+  /// No description provided for @practiceEditZoomOut.
+  ///
+  /// In zh, this message translates to:
+  /// **'缩小 (Ctrl+-)'**
+  String get practiceEditZoomOut;
+
+  /// No description provided for @practiceEditZoomFit.
+  ///
+  /// In zh, this message translates to:
+  /// **'适应画布 (Ctrl+0)'**
+  String get practiceEditZoomFit;
+
+  /// No description provided for @practiceEditZoomActual.
+  ///
+  /// In zh, this message translates to:
+  /// **'实际大小 (Ctrl+1)'**
+  String get practiceEditZoomActual;
+
+  /// No description provided for @practiceEditZoomControls.
+  ///
+  /// In zh, this message translates to:
+  /// **'缩放控制'**
+  String get practiceEditZoomControls;
+
+  /// No description provided for @practiceEditFindReplace.
+  ///
+  /// In zh, this message translates to:
+  /// **'查找替换 (Ctrl+F)'**
+  String get practiceEditFindReplace;
+
+  /// No description provided for @practiceEditFind.
+  ///
+  /// In zh, this message translates to:
+  /// **'查找'**
+  String get practiceEditFind;
+
+  /// No description provided for @practiceEditToggleLayerPanel.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换图层面板 (F9)'**
+  String get practiceEditToggleLayerPanel;
+
+  /// No description provided for @practiceEditTogglePropertyPanel.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换属性面板 (F4)'**
+  String get practiceEditTogglePropertyPanel;
+
+  /// No description provided for @practiceEditPanels.
+  ///
+  /// In zh, this message translates to:
+  /// **'面板'**
+  String get practiceEditPanels;
+
   /// No description provided for @practiceListBatchDone.
   ///
   /// In zh, this message translates to:

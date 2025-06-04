@@ -451,6 +451,7 @@ class TextPropertyPanelAdapter extends BasePropertyPanelAdapter {
                       border: OutlineInputBorder(),
                     ),
                     items: [
+                      'sans-serif',
                       'SourceHanSans',
                       'SourceHanSerif',
                       'SimSun',

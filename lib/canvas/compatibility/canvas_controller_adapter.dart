@@ -112,6 +112,16 @@ class CanvasControllerAdapter extends ChangeNotifier {
       final element = _legacyMapToElement(elementData);
       debugPrint('✅ Element converted: ${element.id}, type: ${element.type}');
 
+      // 对于文本元素，检查并记录重要属性
+      if (element.type == 'text') {
+        final hasText = element.properties.containsKey('text');
+        final textValue = element.properties['text'] as String? ?? '未找到文本';
+        debugPrint('📝 转换后的文本元素属性检查:');
+        debugPrint('   - 直接text属性: ${hasText ? '存在' : '不存在'}');
+        debugPrint('   - 文本内容: "$textValue"');
+        debugPrint('   - 所有属性: ${element.properties.keys.join(', ')}');
+      }
+
       // 检查_stateManager是否正确初始化并且可以访问underlying属性
       if (_stateManager is CanvasStateManagerAdapter) {
         debugPrint('🎯 Creating AddElementCommand...');
@@ -696,6 +706,74 @@ class CanvasControllerAdapter extends ChangeNotifier {
 
   /// 将legacy格式的Map转换为ElementData
   ElementData _legacyMapToElement(Map<String, dynamic> elementMap) {
+    // 创建一个包含所有非标准属性的properties map
+    final properties = Map<String, dynamic>.from(elementMap)
+      ..removeWhere((key, value) => [
+            'id',
+            'type',
+            'x',
+            'y',
+            'width',
+            'height',
+            'rotation',
+            'opacity',
+            'layerId',
+            'isLocked',
+            'isVisible',
+            'isHidden',
+            'content'  // Remove content but handle it separately
+          ].contains(key));
+
+    // 如果存在content对象，将其属性扁平化到根级别
+    if (elementMap.containsKey('content') &&
+        elementMap['content'] is Map<String, dynamic>) {
+      final content = elementMap['content'] as Map<String, dynamic>;
+      
+      // 特别记录文本元素的内容
+      if (elementMap['type'] == 'text' && content.containsKey('text')) {
+        debugPrint('📝 Text element content found: "${content['text']}"');
+        
+        // 确保文本内容被正确地复制到properties中
+        properties['text'] = content['text'];
+        debugPrint('📝 Copied text content to properties: "${properties['text']}"');
+      }
+
+      // 处理特殊属性的映射，确保渲染器可以找到正确的属性
+      if (content.containsKey('fontColor')) {
+        properties['color'] = content['fontColor'];
+        properties['fontColor'] = content['fontColor']; // 保留原属性以备兼容
+        debugPrint('🎨 Mapping fontColor to color: ${content['fontColor']}');
+      }
+
+      // 将content中的所有属性添加到properties的根级别
+      properties.addAll(content);
+
+      // 记录日志以便调试
+      debugPrint('🔄 扁平化元素content属性: ${content.keys.join(', ')}');
+    }
+
+    // 解析isHidden，确保visible设置正确
+    final isHidden = elementMap['isHidden'] as bool? ?? false;
+    final visible = !isHidden;
+    debugPrint(
+        '👁️ 元素可见性: ${elementMap['id']} - visible=$visible (isHidden=$isHidden)');
+
+    // 确保文本元素的text属性存在于properties中
+    if (elementMap['type'] == 'text') {
+      if (!properties.containsKey('text') && properties.containsKey('content')) {
+        // 这种情况不应该发生，因为我们已经扁平化了content
+        // 但作为防御性编程，保留这个检查
+        debugPrint('⚠️ 警告: 文本元素缺少text属性，尝试从content中提取');
+      }
+      
+      // 最终检查和日志
+      debugPrint('📝 最终文本元素属性:');
+      debugPrint('   - text: ${properties['text']}');
+      debugPrint('   - color/fontColor: ${properties['color'] ?? properties['fontColor']}');
+      debugPrint('   - fontSize: ${properties['fontSize']}');
+      debugPrint('   - 可见性: $visible');
+    }
+
     return ElementData(
       id: elementMap['id'] as String,
       type: elementMap['type'] as String,
@@ -709,22 +787,9 @@ class CanvasControllerAdapter extends ChangeNotifier {
       opacity: (elementMap['opacity'] as num?)?.toDouble() ?? 1.0,
       layerId: elementMap['layerId'] as String? ?? '',
       locked: elementMap['isLocked'] as bool? ?? false,
-      visible: elementMap['isVisible'] as bool? ?? true,
-      properties: Map<String, dynamic>.from(elementMap)
-        ..removeWhere((key, value) => [
-              'id',
-              'type',
-              'x',
-              'y',
-              'width',
-              'height',
-              'rotation',
-              'opacity',
-              'layerId',
-              'isLocked',
-              'isVisible'
-            ].contains(key)),
-    );
+      visible: visible,
+      properties: properties,
+    };
   }
 
   /// 通知Canvas配置变化

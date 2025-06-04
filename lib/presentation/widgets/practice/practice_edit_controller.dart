@@ -1564,32 +1564,25 @@ class PracticeEditController extends ChangeNotifier {
     return keys;
   }
 
-  /// 组合选中的元素
-  void groupSelectedElements() {
-    if (_state.selectedElementIds.length <= 1) return;
+  /// 将多个元素组合成一个组
+  void groupElements(List<String> elementIds) {
+    if (elementIds.length < 2) return;
 
-    final page = _state.pages[_state.currentPageIndex];
-    final elements = page['elements'] as List<dynamic>;
+    final selectedElements = elementIds
+        .map((id) => _state.currentPageElements.firstWhere(
+              (e) => e['id'] == id,
+              orElse: () => <String, dynamic>{},
+            ))
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-    // 收集要组合的元素
-    final selectedElements = <Map<String, dynamic>>[];
-    for (final id in _state.selectedElementIds) {
-      final element = elements.firstWhere(
-        (e) => e['id'] == id,
-        orElse: () => <String, dynamic>{},
-      );
-      if (element.isNotEmpty) {
-        selectedElements.add(Map<String, dynamic>.from(element));
-      }
-    }
+    if (selectedElements.length < 2) return;
 
-    if (selectedElements.isEmpty) return;
-
-    // 计算组合元素的边界
+    // 计算边界
     double minX = double.infinity;
     double minY = double.infinity;
-    double maxX = double.negativeInfinity;
-    double maxY = double.negativeInfinity;
+    double maxX = -double.infinity;
+    double maxY = -double.infinity;
 
     for (final element in selectedElements) {
       final x = (element['x'] as num).toDouble();
@@ -1626,9 +1619,9 @@ class PracticeEditController extends ChangeNotifier {
       'rotation': 0.0,
       'layerId': selectedElements.first['layerId'],
       'opacity': 1.0,
-      'isLocked': false, // 锁定标志
-      'isHidden': false, // 隐藏标志
-      'name': '组合元素', // 默认名称
+      'isLocked': false,
+      'isHidden': false,
+      'name': '组合元素',
       'content': {
         'children': groupChildren,
       },
@@ -1677,6 +1670,14 @@ class PracticeEditController extends ChangeNotifier {
     );
 
     _undoRedoManager.addOperation(operation);
+  }
+
+  /// 组合选中的元素
+  void groupSelectedElements() {
+    if (_state.selectedElementIds.length <= 1) return;
+
+    // 直接调用我们已实现的 groupElements 方法
+    groupElements(_state.selectedElementIds.toList());
   }
 
   /// 加载字帖
@@ -2399,8 +2400,66 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 切换网格显示
   void toggleGrid() {
+    _checkDisposed();
+
+    // 切换网格显示状态
+    _state.showGrid = !_state.showGrid;
+    _state.gridVisible = !_state.gridVisible;
+
+    notifyListeners();
+  }
+
+  /// 切换网格显示状态
+  void toggleGridVisible() {
     _state.gridVisible = !_state.gridVisible;
     notifyListeners();
+  }
+
+  /// 将元素向后移动一层
+  void sendElementBackward(String elementId) {
+    _checkDisposed();
+
+    final elements =
+        List<Map<String, dynamic>>.from(_state.currentPageElements);
+    final index = elements.indexWhere((e) => e['id'] == elementId);
+
+    // 如果元素已经在最底层或没找到元素，则不需要操作
+    if (index <= 0) return;
+
+    // 向后移动一层（交换位置）
+    final element = elements[index];
+    elements[index] = elements[index - 1];
+    elements[index - 1] = element;
+
+    // 更新页面元素
+    if (_state.currentPage != null) {
+      _state.currentPage!['elements'] = elements;
+      _state.markUnsaved();
+      notifyListeners();
+    }
+  }
+
+  /// 将元素移到最底层
+  void sendElementToBack(String elementId) {
+    _checkDisposed();
+
+    final elements =
+        List<Map<String, dynamic>>.from(_state.currentPageElements);
+    final index = elements.indexWhere((e) => e['id'] == elementId);
+
+    // 如果元素已经在最底层或没找到元素，则不需要操作
+    if (index <= 0) return;
+
+    // 移除元素并添加到列表开头（最底层）
+    final element = elements.removeAt(index);
+    elements.insert(0, element);
+
+    // 更新页面元素
+    if (_state.currentPage != null) {
+      _state.currentPage!['elements'] = elements;
+      _state.markUnsaved();
+      notifyListeners();
+    }
   }
 
   /// 切换图层锁定状态

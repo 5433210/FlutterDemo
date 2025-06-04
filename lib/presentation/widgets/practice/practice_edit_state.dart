@@ -24,6 +24,7 @@ class PracticeEditState {
   // 辅助功能相关
   bool gridVisible = false;
   bool snapEnabled = false;
+  bool showGrid = false; // 添加网格显示属性
 
   double gridSize = 20.0;
   // 状态标志
