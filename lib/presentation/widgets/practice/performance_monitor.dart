@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import 'drag_state_manager.dart';
+import 'performance_dashboard.dart';
 
 /// Performance monitoring utility for M3Canvas optimization tracking
 class PerformanceMonitor extends ChangeNotifier {
@@ -407,7 +408,6 @@ mixin PerformanceTrackingMixin<T extends StatefulWidget> on State<T> {
 
 class _PerformanceOverlayState extends State<PerformanceOverlay> {
   final PerformanceMonitor _monitor = PerformanceMonitor();
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -507,84 +507,17 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
             TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
       ),
     );
-  }
+  } // Build the performance display using the PerformanceDashboard widget
 
   Widget _buildPerformanceDisplay() {
-    final children = <Widget>[
-      const Text(
-        '性能监控',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-      const SizedBox(height: 4),
-      Text(
-        'FPS: ${_monitor.currentFPS.toStringAsFixed(1)}',
-        style: TextStyle(
-          color: _getFPSColor(_monitor.currentFPS),
-          fontSize: 10,
-        ),
-      ),
-      Text(
-        '平均帧时间: ${_monitor.averageFrameTime.inMilliseconds}ms',
-        style: const TextStyle(color: Colors.white70, fontSize: 10),
-      ),
-      Text(
-        '重建次数: ${_monitor.totalRebuilds}',
-        style: const TextStyle(color: Colors.white70, fontSize: 10),
-      ),
-    ];
-
-    // 添加拖拽性能数据
-    if (_monitor.hasDragPerformanceData) {
-      children.addAll([
-        const Divider(color: Colors.white24, height: 8),
-        const Text(
-          '拖拽性能',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 4),
-        _buildDragPerformanceInfo(),
-      ]);
-    }
-
-    return Material(
-      color: Colors.black.withValues(alpha: 0.7),
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Performance Monitor',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            const SizedBox(height: 4),
-            _buildFPSIndicator(),
-            const SizedBox(height: 2),
-            Text(
-              'Rebuilds: ${_monitor.totalRebuilds}',
-              style: const TextStyle(color: Colors.white, fontSize: 10),
-            ),
-            Text(
-              'Avg Frame: ${_monitor.averageFrameTime.inMilliseconds}ms',
-              style: const TextStyle(color: Colors.white, fontSize: 10),
-            ),
-          ],
-        ),
-      ),
+    // Use the PerformanceDashboard widget which provides a complete
+    // performance visualization UI
+    return const PerformanceDashboard(
+      // Use compact mode for the overlay to save screen space
+      expanded: false,
+      // Adjust the size to fit in the overlay
+      width: 300,
+      height: 200,
     );
   } // 根据帧率获取颜色
 
