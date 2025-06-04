@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:charasgem/presentation/pages/practices/widgets/content_render_controller.dart';
 import 'package:charasgem/presentation/pages/practices/widgets/element_change_types.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -122,15 +124,17 @@ void main() {
 
       controller.dispose();
     });
-
-    testWidgets('ContentRenderController stream should emit changes',
-        (WidgetTester tester) async {
+    test('ContentRenderController stream should emit changes', () async {
       final controller = ContentRenderController();
       final List<ElementChangeInfo> receivedChanges = [];
+      final Completer<void> completer = Completer<void>();
 
       // Listen to change stream
       final subscription = controller.changeStream.listen((change) {
         receivedChanges.add(change);
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
       });
 
       // Initialize and change element
@@ -154,8 +158,12 @@ void main() {
         },
       );
 
-      // Wait for stream events
-      await tester.pump();
+      // Wait for stream event with timeout
+      await completer.future.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => throw TimeoutException(
+            'Stream event not received', const Duration(seconds: 2)),
+      );
 
       expect(receivedChanges.length, equals(1));
       expect(receivedChanges.first.elementId, equals('stream_test'));

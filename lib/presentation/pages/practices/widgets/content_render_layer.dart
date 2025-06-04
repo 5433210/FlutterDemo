@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../widgets/practice/element_cache_manager.dart';
 import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/performance_monitor.dart';
 import 'content_render_controller.dart';
@@ -31,28 +32,13 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
   ConsumerState<ContentRenderLayer> createState() => _ContentRenderLayerState();
 }
 
-/// Widget cache entry for performance optimization
-class ElementWidgetCacheEntry {
-  final Widget widget;
-  final DateTime lastAccess;
-  final Map<String, dynamic> properties;
-
-  ElementWidgetCacheEntry({
-    required this.widget,
-    required this.lastAccess,
-    required this.properties,
-  });
-}
-
 class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
-  /// Cache for element widgets to avoid rebuilding unchanged elements
-  final Map<String, ElementWidgetCacheEntry> _elementWidgetCache = {};
-
-  /// Track which elements need to be re-rendered
-  final Set<String> _elementsNeedingUpdate = {};
+  /// Advanced element cache manager
+  late ElementCacheManager _cacheManager;
 
   /// Performance monitor for tracking render performance
   final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
+
   @override
   Widget build(BuildContext context) {
     // Track performance for ContentRenderLayer rebuilds
@@ -63,24 +49,14 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         '🎨 ContentRenderLayer: Elements to render: ${widget.elements.length}');
     print(
         '🎨 ContentRenderLayer: Selected elements: ${widget.selectedElementIds.length}');
-
-    // Log element details
-    for (final element in widget.elements) {
-      final id = element['id'] as String?;
-      final type = element['type'] as String?;
-      final x = element['x'];
-      final y = element['y'];
-      final width = element['width'];
-      final height = element['height'];
-      print(
-          '🎨 ContentRenderLayer: - Element $id ($type) at ($x, $y) size ${width}x$height');
-    }
-
-    // Clean up old cache entries periodically
-    _cleanupCache();
+    print(
+        '🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
 
     // Sort elements by layer order
     final sortedElements = _sortElementsByLayer(widget.elements, widget.layers);
+
+    // Trigger cache cleanup for efficient memory management
+    _cacheManager.cleanupCache();
 
     return RepaintBoundary(
       child: Container(
@@ -112,11 +88,18 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 (element['rotation'] as num?)?.toDouble() ?? 0.0;
             final elementOpacity =
                 (element['opacity'] as num?)?.toDouble() ?? 1.0;
+            final elementId = element['id'] as String;
+
+            // Skip rendering elements that are being drawn by the drag preview layer
+            if (widget.renderController.shouldSkipElementRendering(elementId)) {
+              return const SizedBox.shrink();
+            }
+
             return Positioned(
               left: elementX,
               top: elementY,
               child: RepaintBoundary(
-                key: ValueKey('element_repaint_${element['id']}'),
+                key: ValueKey('element_repaint_$elementId'),
                 child: Transform.rotate(
                   angle: elementRotation * 3.14159265359 / 180,
                   child: Opacity(
@@ -148,7 +131,8 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   @override
   void dispose() {
-    // No need to removeListener since we're not using addListener anymore
+    // Perform cleanup
+    _cacheManager.dispose();
     super.dispose();
   }
 
@@ -156,56 +140,133 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   void initState() {
     super.initState();
 
+    // Initialize advanced cache manager with appropriate strategy
+    _cacheManager = ElementCacheManager(
+      strategy: CacheStrategy.priorityBased,
+      // For higher performance, increase cache size but monitor memory usage
+      maxSize: 500,
+      // 50MB memory threshold - adjust based on target devices
+      memoryThreshold: 50 * 1024 * 1024,
+    );
+
+    // Initialize selective rebuilding system
+    widget.renderController.initializeSelectiveRebuilding(_cacheManager);
+
     // Initialize controller with current elements
     widget.renderController.initializeElements(widget.elements);
 
     // Listen to changes via stream only (more efficient than broad listener)
     widget.renderController.changeStream.listen(_handleElementChange);
+
+    // Warm up the cache with visible elements
+    _warmupCache(widget.elements);
   }
 
-  /// Clean up old cache entries
-  void _cleanupCache() {
-    final now = DateTime.now();
-    final cutoff = now.subtract(const Duration(minutes: 5));
+  /// Estimate memory size of an element in bytes
+  int _estimateElementSize(Map<String, dynamic> element) {
+    final elementType = element['type'] as String;
+    final width = (element['width'] as num).toDouble();
+    final height = (element['height'] as num).toDouble();
 
-    _elementWidgetCache.removeWhere((key, entry) {
-      return entry.lastAccess.isBefore(cutoff);
-    });
+    // Base size for element metadata (properties, etc.)
+    int baseSize = 1024; // ~1KB for element properties
+
+    switch (elementType) {
+      case 'text':
+        // Text elements are relatively small
+        final text = element['text'] as String?;
+        final textLength = text?.length ?? 0;
+        // Estimate: base + text length + some overhead for text styling
+        return baseSize + textLength * 2 + 512;
+
+      case 'image':
+        // Images are much larger in memory
+        // Conservative estimate based on dimensions
+        // Assuming 4 bytes per pixel (RGBA)
+        final pixelCount = width * height;
+        return baseSize + (pixelCount * 4).toInt();
+
+      case 'collection':
+        // Collections can be complex and have nested elements
+        // This is a rough estimate
+        return baseSize + (width * height * 0.5).toInt();
+
+      case 'group':
+        // Groups contain other elements, but we're not counting children here
+        // Just accounting for the group container overhead
+        return baseSize + 2048;
+
+      default:
+        return baseSize;
+    }
   }
 
-  /// Get or create cached widget for an element
+  /// Get or create cached widget for an element using the advanced cache manager
   Widget _getOrCreateElementWidget(Map<String, dynamic> element) {
     final elementId = element['id'] as String;
+    final elementType = element['type'] as String;
 
-    // Check if we have a valid cached widget
-    if (!_elementsNeedingUpdate.contains(elementId) &&
-        _elementWidgetCache.containsKey(elementId)) {
-      final cached = _elementWidgetCache[elementId]!;
+    // Check if element should be rebuilt using selective rebuilding
+    final shouldRebuild =
+        widget.renderController.shouldRebuildElement(elementId);
 
-      // Update access time
-      _elementWidgetCache[elementId] = ElementWidgetCacheEntry(
-        widget: cached.widget,
-        lastAccess: DateTime.now(),
-        properties: cached.properties,
-      );
-
-      return cached.widget;
+    // Try to get the element from cache first (if rebuild not needed)
+    if (!shouldRebuild) {
+      final cachedWidget =
+          _cacheManager.getElementWidget(elementId, elementType);
+      if (cachedWidget != null) {
+        // Mark rebuild manager that we skipped rebuild
+        widget.renderController.rebuildManager
+            ?.skipElementRebuild(elementId, 'Cache hit and not dirty');
+        return cachedWidget;
+      }
     }
 
-    // Create new widget
-    final widget = _renderElement(element);
+    // Mark that we're starting rebuild
+    widget.renderController.rebuildManager?.startElementRebuild(elementId);
 
-    // Cache the widget
-    _elementWidgetCache[elementId] = ElementWidgetCacheEntry(
-      widget: widget,
-      lastAccess: DateTime.now(),
-      properties: Map.from(element),
+    // Create a new widget
+    final renderStartTime = DateTime.now();
+    final newWidget = _renderElement(element);
+    final renderDuration = DateTime.now().difference(renderStartTime);
+
+    // Calculate element size for memory tracking
+    final estimatedSize = _estimateElementSize(element);
+
+    // Cache priority based on element type and visibility
+    CachePriority priority = CachePriority.medium;
+
+    // Prioritize elements by type and visibility
+    if (widget.selectedElementIds.contains(elementId)) {
+      // Selected elements get higher priority
+      priority = CachePriority.high;
+    } else if (elementType == 'image') {
+      // Images are expensive to render, keep them cached
+      priority = CachePriority.high;
+    }
+
+    // Store in cache with size information and priority
+    _cacheManager.storeElementWidget(
+      elementId,
+      newWidget,
+      Map<String, dynamic>.from(element),
+      estimatedSize: estimatedSize,
+      priority: priority,
+      elementType: elementType,
     );
 
-    // Remove from update list
-    _elementsNeedingUpdate.remove(elementId);
+    // Complete rebuild tracking
+    widget.renderController.rebuildManager
+        ?.completeElementRebuild(elementId, newWidget);
 
-    return widget;
+    // Log performance data for complex elements
+    if (renderDuration.inMilliseconds > 8) {
+      // Half a frame at 60fps
+      print(
+          '⚠️ ContentRenderLayer: Slow element render - $elementId ($elementType) took ${renderDuration.inMilliseconds}ms');
+    }
+
+    return newWidget;
   }
 
   /// Handle specific element changes
@@ -217,7 +278,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       case ElementChangeType.contentOnly:
       case ElementChangeType.opacity:
         // Only update the specific element widget
-        _markElementForUpdate(changeInfo.elementId);
+        _cacheManager.markElementForUpdate(changeInfo.elementId);
         break;
 
       case ElementChangeType.sizeOnly:
@@ -225,29 +286,24 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       case ElementChangeType.sizeAndPosition:
       case ElementChangeType.rotation:
         // Update element and potentially affect layout
-        _markElementForUpdate(changeInfo.elementId);
-        _invalidateLayoutCaches();
+        _cacheManager.markElementForUpdate(changeInfo.elementId);
         break;
 
       case ElementChangeType.visibility:
       case ElementChangeType.created:
       case ElementChangeType.deleted:
         // Full update needed
-        _markAllElementsForUpdate();
+        _cacheManager.markAllElementsForUpdate(widget.elements);
         break;
 
       case ElementChangeType.multiple:
         // Conservative approach - update everything
-        _markAllElementsForUpdate();
+        _cacheManager.markAllElementsForUpdate(widget.elements);
         break;
     }
-  }
 
-  /// Invalidate layout-related caches
-  void _invalidateLayoutCaches() {
-    // For now, we'll clear all caches when layout changes
-    // In the future, this could be more selective
-    _elementWidgetCache.clear();
+    // Request rebuild to reflect changes
+    setState(() {});
   }
 
   /// Check if a layer is hidden
@@ -282,40 +338,23 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     return true;
   }
 
-  /// Mark all elements for update
-  void _markAllElementsForUpdate() {
-    _elementsNeedingUpdate
-        .addAll(widget.elements.map((e) => e['id'] as String));
-    _elementWidgetCache.clear();
-  }
-
-  /// Mark an element for update in the next render
-  void _markElementForUpdate(String elementId) {
-    _elementsNeedingUpdate.add(elementId);
-    _elementWidgetCache.remove(elementId);
-  }
-
   /// Render a single element
   Widget _renderElement(Map<String, dynamic> element) {
     final type = element['type'] as String;
     final elementId = element['id'] as String?;
 
-    // 创建元素的副本，以便在拖拽时不修改原始数据
-    final elementCopy =
-        Map<String, dynamic>.from(element); // 检查元素是否正在被拖拽，如果是且未启用拖拽预览，使用预览位置
-    // 如果启用了DragPreviewLayer，我们可以跳过对拖拽中元素的渲染，提高性能
+    // Create a copy of the element to avoid modifying the original data
+    final elementCopy = Map<String, dynamic>.from(element);
+
+    // Handle preview position for elements being dragged
     if (elementId != null &&
         widget.renderController.isElementDragging(elementId)) {
-      if (widget.renderController.shouldSkipElementRendering(elementId)) {
-        // 如果使用独立的拖拽预览层，返回一个空白占位符以提高性能
-        // 在拖拽预览层会显示元素的预览，所以这里不需要渲染
-        return const SizedBox.shrink();
-      } else {
-        // 如果未使用独立的拖拽预览层，则在这里渲染拖拽预览
+      if (!widget.renderController.shouldSkipElementRendering(elementId)) {
+        // Only render preview if not using the dedicated preview layer
         final previewPosition =
             widget.renderController.getElementPreviewPosition(elementId);
         if (previewPosition != null) {
-          // 使用预览位置而不是实际位置
+          // Use preview position instead of actual position
           elementCopy['x'] = previewPosition.dx;
           elementCopy['y'] = previewPosition.dy;
           print(
@@ -324,45 +363,48 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       }
     }
 
-    final x = elementCopy['x'];
-    final y = elementCopy['y'];
-    final width = elementCopy['width'];
-    final height = elementCopy['height'];
+    print('🎨 ContentRenderLayer: Rendering element $elementId ($type)');
 
-    print(
-        '🎨 ContentRenderLayer: Rendering element $elementId ($type) at ($x, $y) size ${width}x$height');
+    // Performance tracking for complex rendering operations
+    final renderStart = DateTime.now();
 
+    Widget result;
     switch (type) {
       case 'text':
-        final result = ElementRenderers.buildTextElement(elementCopy,
+        result = ElementRenderers.buildTextElement(elementCopy,
             isPreviewMode: widget.isPreviewMode);
-        print('🎨 ContentRenderLayer: Text element $elementId rendered');
-        return result;
+        break;
       case 'image':
-        final result = ElementRenderers.buildImageElement(elementCopy,
+        result = ElementRenderers.buildImageElement(elementCopy,
             isPreviewMode: widget.isPreviewMode);
-        print('🎨 ContentRenderLayer: Image element $elementId rendered');
-        return result;
+        break;
       case 'collection':
-        final result = ElementRenderers.buildCollectionElement(element,
+        result = ElementRenderers.buildCollectionElement(elementCopy,
             ref: ref, isPreviewMode: widget.isPreviewMode);
-        print('🎨 ContentRenderLayer: Collection element $elementId rendered');
-        return result;
+        break;
       case 'group':
-        final result = ElementRenderers.buildGroupElement(element,
-            isSelected: widget.selectedElementIds.contains(element['id']),
+        result = ElementRenderers.buildGroupElement(elementCopy,
+            isSelected: widget.selectedElementIds.contains(elementId),
             ref: ref,
             isPreviewMode: widget.isPreviewMode);
-        print('🎨 ContentRenderLayer: Group element $elementId rendered');
-        return result;
+        break;
       default:
         print(
             '🎨 ContentRenderLayer: Unknown element type: $type for element $elementId');
-        return Container(
+        result = Container(
           color: Colors.grey.withAlpha(51),
           child: Center(child: Text('Unknown element type: $type')),
         );
     }
+
+    final renderTime = DateTime.now().difference(renderStart).inMilliseconds;
+    if (renderTime > 8) {
+      // Log slow rendering operations (> half frame at 60fps)
+      print(
+          '⚠️ ContentRenderLayer: Slow render for $elementId ($type): ${renderTime}ms');
+    }
+
+    return result;
   }
 
   /// Sort elements by layer order
@@ -405,7 +447,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // Handle removed elements
     for (final elementId in removedElements) {
-      _elementWidgetCache.remove(elementId);
       widget.renderController.notifyElementDeleted(elementId: elementId);
     }
 
@@ -416,7 +457,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         elementId: elementId,
         properties: element,
       );
-      _markElementForUpdate(elementId);
+      _cacheManager.markElementForUpdate(elementId);
     }
 
     // Check for modified elements
@@ -431,9 +472,52 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
             elementId: elementId,
             newProperties: element,
           );
-          _markElementForUpdate(elementId);
+          _cacheManager.markElementForUpdate(elementId);
         }
       }
+    }
+  }
+
+  /// Prepare cache with frequently used elements
+  void _warmupCache(List<Map<String, dynamic>> elements) {
+    // Determine which elements are likely to be needed soon
+    // Start with visible elements in the current viewport
+
+    // We can further optimize by prioritizing elements that are:
+    // 1. Currently visible
+    // 2. Recently interacted with
+    // 3. Expensive to render (like images)
+
+    final highPriorityElements = <Map<String, dynamic>>[];
+
+    // Process elements to identify high priority ones
+    for (final element in elements) {
+      final elementType = element['type'] as String;
+
+      // Prioritize images and complex elements
+      if (elementType == 'image' || elementType == 'collection') {
+        highPriorityElements.add(element);
+      }
+    }
+
+    // Limit the number of elements to pre-cache to avoid startup delay
+    final elementsToPrecache = highPriorityElements.take(10).toList();
+
+    // Pre-render high priority elements
+    if (elementsToPrecache.isNotEmpty) {
+      print(
+          '🔄 ContentRenderLayer: Pre-caching ${elementsToPrecache.length} high-priority elements');
+
+      // Use a microtask to avoid blocking the UI thread during initialization
+      Future.microtask(() {
+        for (final element in elementsToPrecache) {
+          final elementId = element['id'] as String;
+          if (!_cacheManager.doesElementNeedUpdate(elementId)) {
+            _getOrCreateElementWidget(element);
+          }
+        }
+        print('✅ ContentRenderLayer: Pre-caching complete');
+      });
     }
   }
 }

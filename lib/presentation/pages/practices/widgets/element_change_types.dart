@@ -75,9 +75,7 @@ class ElementChangeInfo {
 
     if (changedKeys.isEmpty) {
       return ElementChangeType.contentOnly; // Default fallback
-    }
-
-    // Categorize changes
+    } // Categorize changes
     final positionKeys = {'x', 'y'};
     final sizeKeys = {'width', 'height'};
     final transformKeys = {'rotation'};
@@ -90,37 +88,48 @@ class ElementChangeInfo {
     final hasVisibilityChange = changedKeys.any(visibilityKeys.contains);
     final hasOpacityChange = changedKeys.any(opacityKeys.contains);
 
+    // Check for content changes (any key that's not position, size, transform, visibility, or opacity)
+    final allKnownKeys = <String>{
+      ...positionKeys,
+      ...sizeKeys,
+      ...transformKeys,
+      ...visibilityKeys,
+      ...opacityKeys,
+      'id', 'type', // These are metadata, not visual changes
+    };
+    final hasContentChange =
+        changedKeys.any((key) => !allKnownKeys.contains(key));
+
+    // Count the number of different change categories
+    int changeCategories = 0;
+    if (hasPositionChange) changeCategories++;
+    if (hasSizeChange) changeCategories++;
+    if (hasTransformChange) changeCategories++;
+    if (hasVisibilityChange) changeCategories++;
+    if (hasOpacityChange) changeCategories++;
+    if (hasContentChange) changeCategories++;
+
     // Determine change type based on what changed
     if (hasVisibilityChange) {
       return ElementChangeType.visibility;
     }
 
-    if (hasOpacityChange && changedKeys.length == 1) {
-      return ElementChangeType.opacity;
+    // Single category changes
+    if (changeCategories == 1) {
+      if (hasOpacityChange) return ElementChangeType.opacity;
+      if (hasTransformChange) return ElementChangeType.rotation;
+      if (hasPositionChange) return ElementChangeType.positionOnly;
+      if (hasSizeChange) return ElementChangeType.sizeOnly;
+      if (hasContentChange) return ElementChangeType.contentOnly;
     }
 
-    if (hasTransformChange && changedKeys.length == 1) {
-      return ElementChangeType.rotation;
-    }
-
-    if (hasPositionChange && hasSizeChange) {
+    // Two category changes
+    if (changeCategories == 2 && hasPositionChange && hasSizeChange) {
       return ElementChangeType.sizeAndPosition;
     }
 
-    if (hasPositionChange && changedKeys.length <= 2) {
-      return ElementChangeType.positionOnly;
-    }
-
-    if (hasSizeChange && changedKeys.length <= 2) {
-      return ElementChangeType.sizeOnly;
-    }
-
-    if (changedKeys.length > 2 ||
-        (hasPositionChange || hasSizeChange || hasTransformChange)) {
-      return ElementChangeType.multiple;
-    }
-
-    return ElementChangeType.contentOnly;
+    // Multiple categories or complex changes
+    return ElementChangeType.multiple;
   }
 }
 

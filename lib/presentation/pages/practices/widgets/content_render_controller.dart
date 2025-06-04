@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../widgets/practice/dirty_tracker.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
+import '../../../widgets/practice/element_cache_manager.dart';
+import '../../../widgets/practice/selective_rebuild_manager.dart';
 import 'element_change_types.dart';
 
 /// Controller for managing content rendering layer updates and notifications
@@ -15,6 +18,22 @@ class ContentRenderController extends ChangeNotifier {
   // 拖拽状态管理器引用
   DragStateManager? _dragStateManager;
 
+  // Smart rebuilding system components
+  late final DirtyTracker _dirtyTracker;
+  SelectiveRebuildManager? _rebuildManager;
+
+  /// Initialize the controller with optional selective rebuilding
+  ContentRenderController({
+    bool enableSelectiveRebuilding = true,
+  }) {
+    _dirtyTracker = DirtyTracker();
+
+    if (enableSelectiveRebuilding) {
+      // Note: rebuildManager will be initialized when cacheManager is available
+      // This is done in ContentRenderLayer when it creates the cache manager
+    }
+  }
+
   /// Get the change history
   List<ElementChangeInfo> get changeHistory =>
       List.unmodifiable(_changeHistory);
@@ -22,8 +41,14 @@ class ContentRenderController extends ChangeNotifier {
   /// Stream of element changes for reactive updates
   Stream<ElementChangeInfo> get changeStream => _changeStreamController.stream;
 
+  /// Get the dirty tracker for selective rebuilding
+  DirtyTracker get dirtyTracker => _dirtyTracker;
+
   // 是否正在拖拽中
   bool get isDragging => _dragStateManager?.isDragging ?? false;
+
+  /// Get selective rebuild manager (may be null if not enabled)
+  SelectiveRebuildManager? get rebuildManager => _rebuildManager;
 
   /// Clear change history
   void clearHistory() {
@@ -33,6 +58,8 @@ class ContentRenderController extends ChangeNotifier {
   @override
   void dispose() {
     _changeStreamController.close();
+    _dirtyTracker.dispose();
+    _rebuildManager?.dispose();
     super.dispose();
   }
 
@@ -54,6 +81,13 @@ class ContentRenderController extends ChangeNotifier {
   /// Get last known properties for an element
   Map<String, dynamic>? getLastKnownProperties(String elementId) {
     return _lastKnownProperties[elementId];
+  }
+
+  /// Get rebuild strategy for an element
+  RebuildStrategy getRebuildStrategy(
+      String elementId, ElementChangeType changeType) {
+    return _rebuildManager?.getRebuildStrategy(elementId, changeType) ??
+        RebuildStrategy.fullRebuild;
   }
 
   /// Get recent changes within a time window
@@ -88,6 +122,14 @@ class ContentRenderController extends ChangeNotifier {
     }
   }
 
+  /// Initialize selective rebuild manager with cache manager
+  void initializeSelectiveRebuilding(ElementCacheManager cacheManager) {
+    _rebuildManager = SelectiveRebuildManager(
+      dirtyTracker: _dirtyTracker,
+      cacheManager: cacheManager,
+    );
+  }
+
   /// 检查元素是否正在被拖拽
   bool isElementDragging(String elementId) {
     if (_dragStateManager == null) return false;
@@ -97,6 +139,21 @@ class ContentRenderController extends ChangeNotifier {
   /// Check if element is being tracked
   bool isElementTracked(String elementId) {
     return _lastKnownProperties.containsKey(elementId);
+  }
+
+  /// Mark element as clean after rebuilding
+  void markElementClean(String elementId) {
+    _dirtyTracker.markElementClean(elementId);
+  }
+
+  /// Mark an element as dirty for rebuilding
+  void markElementDirty(String elementId, ElementChangeType changeType) {
+    _dirtyTracker.markElementDirty(elementId, changeType);
+  }
+
+  /// Mark multiple elements as dirty
+  void markElementsDirty(Map<String, ElementChangeType> elements) {
+    _dirtyTracker.markElementsDirty(elements);
   }
 
   /// Notify about element property changes
@@ -127,7 +184,12 @@ class ContentRenderController extends ChangeNotifier {
     // Limit history size
     if (_changeHistory.length > 100) {
       _changeHistory.removeAt(0);
-    } // Notify through stream only (avoid triggering broad notifyListeners)
+    }
+
+    // Mark element as dirty for selective rebuilding
+    _dirtyTracker.markElementDirty(elementId, changeInfo.changeType);
+
+    // Notify through stream only (avoid triggering broad notifyListeners)
     _changeStreamController.add(changeInfo);
 
     print('🔔 ContentRenderController: Change type: ${changeInfo.changeType}');
@@ -153,6 +215,9 @@ class ContentRenderController extends ChangeNotifier {
     if (_changeHistory.length > 100) {
       _changeHistory.removeAt(0);
     }
+
+    // Mark new element as dirty
+    _dirtyTracker.markElementDirty(elementId, ElementChangeType.created);
 
     _changeStreamController.add(changeInfo);
 
@@ -180,6 +245,10 @@ class ContentRenderController extends ChangeNotifier {
       _changeHistory.removeAt(0);
     }
 
+    // Remove element from dirty tracking
+    _dirtyTracker.removeElement(elementId);
+    _rebuildManager?.removeElement(elementId);
+
     _changeStreamController.add(changeInfo);
 
     debugPrint('ContentRenderController: Element $elementId deleted');
@@ -196,6 +265,11 @@ class ContentRenderController extends ChangeNotifier {
   void setDragStateManager(DragStateManager dragStateManager) {
     _dragStateManager = dragStateManager;
     print('🎯 ContentRenderController: DragStateManager connected');
+  }
+
+  /// Check if an element should be rebuilt
+  bool shouldRebuildElement(String elementId) {
+    return _rebuildManager?.shouldRebuildElement(elementId) ?? true;
   }
 
   /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
