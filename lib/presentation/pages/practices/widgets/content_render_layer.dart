@@ -6,6 +6,7 @@ import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/performance_monitor.dart';
 import 'content_render_controller.dart';
 import 'element_change_types.dart';
+import 'layers/viewport_culling_manager.dart';
 
 /// Content rendering layer widget for isolated content rendering
 class ContentRenderLayer extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
   final Size pageSize;
   final Color backgroundColor;
   final Set<String> selectedElementIds;
+  final ViewportCullingManager? viewportCullingManager;
 
   const ContentRenderLayer({
     super.key,
@@ -26,6 +28,7 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
     required this.pageSize,
     required this.backgroundColor,
     required this.selectedElementIds,
+    this.viewportCullingManager,
   });
 
   @override
@@ -38,7 +41,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   /// Performance monitor for tracking render performance
   final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
-
   @override
   Widget build(BuildContext context) {
     // Track performance for ContentRenderLayer rebuilds
@@ -55,9 +57,19 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Sort elements by layer order
     final sortedElements = _sortElementsByLayer(widget.elements, widget.layers);
 
+    // Apply viewport culling if available
+    final visibleElements = widget.viewportCullingManager != null
+        ? widget.viewportCullingManager!.cullElements(sortedElements)
+        : sortedElements;
+
+    // Log culling metrics
+    if (widget.viewportCullingManager != null) {
+      final cullingMetrics = widget.viewportCullingManager!.getMetrics();
+      print('🎯 Viewport Culling: $cullingMetrics');
+    }
+
     // Trigger cache cleanup for efficient memory management
     _cacheManager.cleanupCache();
-
     return RepaintBoundary(
       child: Container(
         width: widget.pageSize.width,
@@ -66,7 +78,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         child: Stack(
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
-          children: sortedElements.map((element) {
+          children: visibleElements.map((element) {
             // Skip hidden elements in preview mode
             final isHidden = element['hidden'] == true;
             if (isHidden && widget.isPreviewMode) {

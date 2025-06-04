@@ -13,6 +13,8 @@ import 'canvas_gesture_handler.dart';
 import 'content_render_controller.dart';
 import 'content_render_layer.dart';
 import 'drag_preview_layer.dart';
+import 'layers/layer_render_manager.dart';
+import 'layers/layer_types.dart';
 
 /// Material 3 canvas widget for practice editing
 class M3PracticeEditCanvas extends StatefulWidget {
@@ -103,9 +105,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   // Content render controller for dual-layer architecture
   late ContentRenderController _contentRenderController;
-
   // Drag state manager for optimized drag handling
   late DragStateManager _dragStateManager;
+
+  // Layer render manager for coordinated layer rendering
+  late LayerRenderManager _layerRenderManager;
 
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
@@ -187,6 +191,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   void dispose() {
     _selectionBoxNotifier.dispose();
     _contentRenderController.dispose();
+    _dragStateManager.dispose();
+    _layerRenderManager.dispose();
     // widget.transformationController
     //     .removeListener(_debouncedTransformationChange);
     // _transformationDebouncer?.cancel();
@@ -202,7 +208,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     print(
         '🏗️ Canvas: ContentRenderController initialized'); // Initialize drag state manager for optimized drag handling
     _dragStateManager = DragStateManager();
-    print('🏗️ Canvas: DragStateManager initialized'); // 将拖拽状态管理器与性能监控系统关联
+    print(
+        '🏗️ Canvas: DragStateManager initialized'); // Initialize layer render manager for coordinated layer rendering
+    _layerRenderManager = LayerRenderManager();
+    print('🏗️ Canvas: LayerRenderManager initialized');
+
+    // Register layers with the layer render manager
+    _initializeLayers();
+    print(
+        '🏗️ Canvas: Layers registered with LayerRenderManager'); // 将拖拽状态管理器与性能监控系统关联
     _performanceMonitor.setDragStateManager(_dragStateManager);
     print('🏗️ Canvas: Connected DragStateManager with PerformanceMonitor');
 
@@ -337,9 +351,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     widget.controller.setEditCanvas(this);
 
     // Set the RepaintBoundary key in the controller for screenshot functionality
-    widget.controller.setCanvasKey(_repaintBoundaryKey);
-
-    // Schedule automatic fit-to-screen on initial load to ensure optimal canvas display
+    widget.controller.setCanvasKey(
+        _repaintBoundaryKey); // Schedule automatic fit-to-screen on initial load to ensure optimal canvas display
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _fitPageToScreen();
@@ -379,7 +392,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         .updateElementProperties(elementId, {'rotation': newRotation});
   }
 
-  /// Public method to reset canvas position
   void resetCanvasPosition() {
     _resetCanvasPosition();
   }
@@ -439,6 +451,47 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         });
       }
     }
+  }
+
+  /// Build background layer (grid, page background)
+  Widget _buildBackgroundLayer(LayerConfig config) {
+    final currentPage = widget.controller.state.currentPage;
+    if (currentPage == null || !config.shouldRender) {
+      return const SizedBox.shrink();
+    }
+
+    final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    Color backgroundColor = Colors.white;
+
+    try {
+      final background = currentPage['background'] as Map<String, dynamic>?;
+      if (background != null && background['type'] == 'color') {
+        final colorStr = background['value'] as String? ?? '#FFFFFF';
+        backgroundColor = ElementUtils.parseColor(colorStr);
+      }
+    } catch (e) {
+      debugPrint('Error parsing background color: $e');
+    }
+
+    return RepaintBoundary(
+      child: Container(
+        width: pageSize.width,
+        height: pageSize.height,
+        color: backgroundColor,
+        child: widget.controller.state.gridVisible && !widget.isPreviewMode
+            ? CustomPaint(
+                size: pageSize,
+                painter: _GridPainter(
+                  gridSize: widget.controller.state.gridSize,
+                  gridColor: Theme.of(context)
+                      .colorScheme
+                      .outlineVariant
+                      .withAlpha(77),
+                ),
+              )
+            : null,
+      ),
+    );
   }
 
   /// Build the main canvas
@@ -772,6 +825,43 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
   }
 
+  /// Build content layer (elements)
+  Widget _buildContentLayer(LayerConfig config) {
+    if (!config.shouldRender) {
+      return const SizedBox.shrink();
+    }
+
+    final currentPage = widget.controller.state.currentPage;
+    final elements = widget.controller.state.currentPageElements;
+
+    if (currentPage == null) {
+      return const SizedBox.shrink();
+    }
+
+    final pageSize = ElementUtils.calculatePixelSize(currentPage);
+    Color backgroundColor = Colors.white;
+
+    try {
+      final background = currentPage['background'] as Map<String, dynamic>?;
+      if (background != null && background['type'] == 'color') {
+        final colorStr = background['value'] as String? ?? '#FFFFFF';
+        backgroundColor = ElementUtils.parseColor(colorStr);
+      }
+    } catch (e) {
+      debugPrint('Error parsing background color: $e');
+    }
+    return ContentRenderLayer(
+      elements: elements,
+      layers: widget.controller.state.layers,
+      renderController: _contentRenderController,
+      isPreviewMode: widget.isPreviewMode,
+      pageSize: pageSize,
+      backgroundColor: backgroundColor,
+      selectedElementIds: widget.controller.state.selectedElementIds.toSet(),
+      viewportCullingManager: _layerRenderManager.viewportCullingManager,
+    );
+  }
+
   /// Build control points for selected element
   Widget _buildControlPoints(
     String elementId,
@@ -852,41 +942,30 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
   }
 
-  /// Build page content using dual-layer architecture
-  Widget _buildPageContent(
-    Map<String, dynamic> page,
-    List<Map<String, dynamic>> elements,
-    ColorScheme colorScheme,
-  ) {
-    // Get page dimensions (applying DPI conversion)
-    final pageSize = ElementUtils.calculatePixelSize(page);
-
-    // Get page background color
-    Color backgroundColor = Colors.white;
-    try {
-      final background = page['background'] as Map<String, dynamic>?;
-      if (background != null && background['type'] == 'color') {
-        final colorStr = background['value'] as String? ?? '#FFFFFF';
-        backgroundColor = ElementUtils.parseColor(colorStr);
-        debugPrint('Background color parsed: $colorStr -> $backgroundColor');
-      }
-    } catch (e) {
-      debugPrint('Error parsing background color: $e');
+  /// Build drag preview layer
+  Widget _buildDragPreviewLayer(LayerConfig config) {
+    if (!config.shouldRender ||
+        !DragConfig.enableDragPreview ||
+        widget.isPreviewMode) {
+      return const SizedBox.shrink();
     }
 
-    print(
-        '📋 Canvas: Updating ContentRenderController with ${elements.length} elements');
-    // Update content render controller with current elements
-    _contentRenderController.initializeElements(elements);
+    return DragPreviewLayer(
+      dragStateManager: _dragStateManager,
+      elements: widget.controller.state.currentPageElements,
+    );
+  }
+
+  /// Build interaction layer (selection box, control points)
+  Widget _buildInteractionLayer(LayerConfig config) {
+    if (!config.shouldRender || widget.isPreviewMode) {
+      return const SizedBox.shrink();
+    }
 
     // Get selected element for control points
     String? selectedElementId;
     double x = 0, y = 0, width = 0, height = 0, rotation = 0;
-
-    print(
-        '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
-    debugPrint(
-        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+    final elements = widget.controller.state.currentPageElements;
 
     if (widget.controller.state.selectedElementIds.length == 1) {
       selectedElementId = widget.controller.state.selectedElementIds.first;
@@ -895,11 +974,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         orElse: () => <String, dynamic>{},
       );
 
-      debugPrint(
-          '🔍 选中元素信息 - ID: $selectedElementId, 类型: ${selectedElement['type'] ?? '未知'}, 找到元素: ${selectedElement.isNotEmpty}');
-
       if (selectedElement.isNotEmpty) {
-        // Get element properties for control points
         x = (selectedElement['x'] as num?)?.toDouble() ?? 0.0;
         y = (selectedElement['y'] as num?)?.toDouble() ?? 0.0;
         width = (selectedElement['width'] as num?)?.toDouble() ?? 0.0;
@@ -907,91 +982,103 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         rotation = (selectedElement['rotation'] as num?)?.toDouble() ?? 0.0;
       }
     }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Selection box
+        Positioned.fill(
+          child: IgnorePointer(
+            child: RepaintBoundary(
+              key: const ValueKey('selection_box_repaint_boundary'),
+              child: ValueListenableBuilder<SelectionBoxState>(
+                valueListenable: _selectionBoxNotifier,
+                builder: (context, selectionBoxState, child) {
+                  if (widget.controller.state.currentTool == 'select' &&
+                      selectionBoxState.isActive &&
+                      selectionBoxState.startPoint != null &&
+                      selectionBoxState.endPoint != null) {
+                    return CustomPaint(
+                      size: Size.infinite,
+                      painter: _SelectionBoxPainter(
+                        startPoint: selectionBoxState.startPoint!,
+                        endPoint: selectionBoxState.endPoint!,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+          ),
+        ),
+        // Control points
+        if (selectedElementId != null)
+          Positioned.fill(
+            child: _buildControlPoints(
+                selectedElementId, x, y, width, height, rotation),
+          ),
+      ],
+    );
+  }
+
+  /// Build widget for specific layer type
+  Widget _buildLayerWidget(RenderLayerType layerType, LayerConfig config) {
+    switch (layerType) {
+      case RenderLayerType.staticBackground:
+        return _buildBackgroundLayer(config);
+      case RenderLayerType.content:
+        return _buildContentLayer(config);
+      case RenderLayerType.dragPreview:
+        return _buildDragPreviewLayer(config);
+      case RenderLayerType.interaction:
+        return _buildInteractionLayer(config);
+      case RenderLayerType.uiOverlay:
+        return _buildUIOverlayLayer(config);
+    }
+  }
+
+  /// Build page content using LayerRenderManager architecture
+  Widget _buildPageContent(
+    Map<String, dynamic> page,
+    List<Map<String, dynamic>> elements,
+    ColorScheme colorScheme,
+  ) {
+    print(
+        '📋 Canvas: Updating ContentRenderController with ${elements.length} elements');
+    // Update content render controller with current elements
+    _contentRenderController.initializeElements(elements);
+
+    print(
+        '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
+    debugPrint(
+        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+
     return Stack(
       fit: StackFit.loose, // Use loose fit for outer stack
       clipBehavior:
           Clip.none, // Allow control points to extend beyond page boundaries
       children: [
-        // Content Render Layer - handles element rendering with intelligent caching
+        // Use LayerRenderManager to build coordinated layer stack
         RepaintBoundary(
           key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-          child: Stack(
-            children: [
-              // Grid layer (if enabled)
-              if (widget.controller.state.gridVisible && !widget.isPreviewMode)
-                RepaintBoundary(
-                  key: ValueKey(
-                      'grid_repaint_${widget.controller.state.gridSize}'),
-                  child: CustomPaint(
-                    size: pageSize,
-                    painter: _GridPainter(
-                      gridSize: widget.controller.state.gridSize,
-                      gridColor: colorScheme.outlineVariant.withAlpha(77),
-                    ),
-                  ),
-                ),
-              // Content rendering layer
-              ContentRenderLayer(
-                elements: elements,
-                layers: widget.controller.state.layers,
-                renderController: _contentRenderController,
-                isPreviewMode: widget.isPreviewMode,
-                pageSize: pageSize,
-                backgroundColor: backgroundColor,
-                selectedElementIds:
-                    widget.controller.state.selectedElementIds.toSet(),
-              ),
-              // Drag Preview Layer - shows lightweight element previews during drag
-              if (DragConfig.enableDragPreview && !widget.isPreviewMode)
-                DragPreviewLayer(
-                  dragStateManager: _dragStateManager,
-                  elements: elements,
-                ),
+          child: _layerRenderManager.buildLayerStack(
+            layerOrder: [
+              RenderLayerType.staticBackground,
+              RenderLayerType.content,
+              RenderLayerType.dragPreview,
+              RenderLayerType.interaction,
             ],
           ),
         ),
-
-        // UI Interaction Layer - handles selection box and control points
-        if (!widget.isPreviewMode) ...[
-          // Selection box layer - independent of content rendering
-          Positioned.fill(
-            child: IgnorePointer(
-              // Ensure selection box layer doesn't intercept element interactions
-              child: RepaintBoundary(
-                key: const ValueKey('selection_box_repaint_boundary'),
-                child: ValueListenableBuilder<SelectionBoxState>(
-                  valueListenable: _selectionBoxNotifier,
-                  builder: (context, selectionBoxState, child) {
-                    if (widget.controller.state.currentTool == 'select' &&
-                        selectionBoxState.isActive &&
-                        selectionBoxState.startPoint != null &&
-                        selectionBoxState.endPoint != null) {
-                      // Draw selection box directly in canvas view coordinates
-                      return CustomPaint(
-                        size: Size.infinite, // Cover entire area
-                        painter: _SelectionBoxPainter(
-                          startPoint: selectionBoxState.startPoint!,
-                          endPoint: selectionBoxState.endPoint!,
-                          color: colorScheme.primary,
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-            ),
-          ),
-
-          // Control points for selected element (if single selection)
-          if (selectedElementId != null)
-            Positioned.fill(
-              child: _buildControlPoints(
-                  selectedElementId, x, y, width, height, rotation),
-            ),
-        ],
       ],
     );
+  }
+
+  /// Build UI overlay layer (for future use)
+  Widget _buildUIOverlayLayer(LayerConfig config) {
+    return const SizedBox.shrink();
   }
 
   /// Fit the page content to screen with proper scale and centering
@@ -1403,39 +1490,73 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         .updateElementProperties(elementId, {'rotation': newRotation});
   } // Removed unused _handleTransformationChange method
 
-  /// 测量拖拽性能
-  void _measureDragPerformance() {
-    // 创建50个测试元素用于性能测试
-    const testElementCount = 50;
-    final random = math.Random();
+  /// Initialize and register layers with the LayerRenderManager
+  void _initializeLayers() {
+    // Register static background layer
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.staticBackground,
+      config: const LayerConfig(
+        type: RenderLayerType.staticBackground,
+        priority: LayerPriority.low,
+        enableCaching: true,
+        useRepaintBoundary: true,
+      ),
+      builder: (config) =>
+          _buildLayerWidget(RenderLayerType.staticBackground, config),
+    );
 
-    // 生成随机位置的测试元素
-    for (int i = 0; i < testElementCount; i++) {
-      final x = random.nextDouble() * 800;
-      final y = random.nextDouble() * 600;
+    // Register content layer
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.content,
+      config: const LayerConfig(
+        type: RenderLayerType.content,
+        priority: LayerPriority.high,
+        enableCaching: true,
+        useRepaintBoundary: true,
+      ),
+      builder: (config) => _buildLayerWidget(RenderLayerType.content, config),
+    );
 
-      // 随机选择元素类型
-      final elementType = random.nextInt(3);
-      switch (elementType) {
-        case 0:
-          widget.controller.addTextElementAt(x, y);
-          break;
-        case 1:
-          widget.controller.addEmptyImageElementAt(x, y);
-          break;
-        case 2:
-          widget.controller.addEmptyCollectionElementAt(x, y);
-          break;
-      }
-    }
+    // Register drag preview layer
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.dragPreview,
+      config: const LayerConfig(
+        type: RenderLayerType.dragPreview,
+        priority: LayerPriority.critical,
+        enableCaching: false, // Dynamic content, caching less useful
+        useRepaintBoundary: true,
+      ),
+      builder: (config) =>
+          _buildLayerWidget(RenderLayerType.dragPreview, config),
+    );
 
-    // 开启性能监控
-    DragConfig.showPerformanceOverlay = true;
-    DragConfig.trackDragFPS = true;
+    // Register interaction layer (selection, control points)
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.interaction,
+      config: const LayerConfig(
+        type: RenderLayerType.interaction,
+        priority: LayerPriority.critical,
+        enableCaching: false, // Highly dynamic
+        useRepaintBoundary: true,
+      ),
+      builder: (config) =>
+          _buildLayerWidget(RenderLayerType.interaction, config),
+    );
 
-    // 通知用户
-    debugPrint('已创建 $testElementCount 个元素用于性能测试，性能监控已开启');
+    // Register UI overlay layer
+    _layerRenderManager.registerLayer(
+      type: RenderLayerType.uiOverlay,
+      config: const LayerConfig(
+        type: RenderLayerType.uiOverlay,
+        priority: LayerPriority.medium,
+        enableCaching: true,
+        useRepaintBoundary: true,
+      ),
+      builder: (config) => _buildLayerWidget(RenderLayerType.uiOverlay, config),
+    );
   }
+
+  /// Build widget for specific layer type
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
