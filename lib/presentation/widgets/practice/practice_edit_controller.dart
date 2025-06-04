@@ -36,7 +36,6 @@ class PracticeEditController extends ChangeNotifier {
 
   // 预览模式下的画布 GlobalKey
   GlobalKey? _canvasKey;
-
   // 每个页面的 GlobalKey 映射表
   final Map<String, GlobalKey> _pageKeys = {};
 
@@ -448,6 +447,8 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加文本元素在指定位置
   void addTextElementAt(double x, double y) {
+    print('📝 PracticeEditController: Creating text element at ($x, $y)');
+
     final element = {
       'id': 'text_${_uuid.v4()}',
       'type': 'text',
@@ -478,6 +479,8 @@ class PracticeEditController extends ChangeNotifier {
       },
     };
 
+    print(
+        '📝 PracticeEditController: Element created with ID: ${element['id']}');
     _addElement(element);
   }
 
@@ -1719,6 +1722,13 @@ class PracticeEditController extends ChangeNotifier {
       debugPrint('警告: 尝试在控制器销毁后调用 notifyListeners()');
       return;
     }
+
+    print('🔔 PracticeEditController: notifyListeners() called');
+    print(
+        '🔔 PracticeEditController: Current page elements: ${_state.currentPageElements.length}');
+    print(
+        '🔔 PracticeEditController: Selected elements: ${_state.selectedElementIds.length}');
+
     super.notifyListeners();
   }
 
@@ -3130,21 +3140,35 @@ class PracticeEditController extends ChangeNotifier {
 
   /// 添加元素的通用方法
   void _addElement(Map<String, dynamic> element) {
+    print('🚀 PracticeEditController: Adding element to page');
+    print('🚀 PracticeEditController: Element ID: ${element['id']}');
+    print('🚀 PracticeEditController: Element type: ${element['type']}');
+    print(
+        '🚀 PracticeEditController: Current page index: $_state.currentPageIndex');
+
     final operation = AddElementOperation(
         element: element,
         addElement: (e) {
+          print('🚀 PracticeEditController: Executing add element operation');
           if (_state.currentPageIndex >= 0 &&
               _state.currentPageIndex < _state.pages.length) {
             final page = _state.pages[_state.currentPageIndex];
             final elements = page['elements'] as List<dynamic>;
             elements.add(e);
 
+            print(
+                '🚀 PracticeEditController: Element added to page. Total elements now: ${elements.length}');
+
             // 选中新添加的元素
             _state.selectedElementIds = [e['id'] as String];
             _state.selectedElement = e;
             _state.hasUnsavedChanges = true;
 
+            print(
+                '🚀 PracticeEditController: Element selected and notifying listeners');
             notifyListeners();
+          } else {
+            print('🚀 PracticeEditController: ERROR - Invalid page index');
           }
         },
         removeElement: (id) {

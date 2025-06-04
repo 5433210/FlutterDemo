@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../../l10n/app_localizations.dart';
@@ -13,7 +12,7 @@ import 'content_render_controller.dart';
 import 'content_render_layer.dart';
 
 /// Material 3 canvas widget for practice editing
-class M3PracticeEditCanvas extends ConsumerStatefulWidget {
+class M3PracticeEditCanvas extends StatefulWidget {
   final PracticeEditController controller;
   final bool isPreviewMode;
   final TransformationController transformationController;
@@ -26,8 +25,7 @@ class M3PracticeEditCanvas extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<M3PracticeEditCanvas> createState() =>
-      _M3PracticeEditCanvasState();
+  State<M3PracticeEditCanvas> createState() => _M3PracticeEditCanvasState();
 }
 
 /// 选择框状态类 - 用于保存和管理选择框的当前状态
@@ -89,7 +87,7 @@ class _GridPainter extends CustomPainter {
   }
 }
 
-class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
+class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // Drag state variables
   bool _isDragging = false;
   // ignore: unused_field
@@ -120,31 +118,50 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   bool _isRotating = false;
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    return ListenableBuilder(
+      listenable: widget.controller,
+      builder: (context, child) {
+        final colorScheme = Theme.of(context).colorScheme;
 
-    debugPrint('Canvas rebuild');
+        print('🔄 Canvas: build() called');
+        print(
+            '🔄 Canvas: Current tool: ${widget.controller.state.currentTool}');
+        print(
+            '🔄 Canvas: Selected elements: ${widget.controller.state.selectedElementIds.length}');
+        print(
+            '🔄 Canvas: Total elements: ${widget.controller.state.currentPageElements.length}');
+        debugPrint('Canvas rebuild');
 
-    if (widget.controller.state.pages.isEmpty) {
-      return Center(
-        child: Text(
-          'No pages available',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      );
-    }
+        if (widget.controller.state.pages.isEmpty) {
+          return Center(
+            child: Text(
+              'No pages available',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          );
+        }
 
-    final currentPage = widget.controller.state.currentPage;
-    if (currentPage == null) {
-      return Center(
-        child: Text(
-          'Current page does not exist',
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-      );
-    }
-
-    final elements = widget.controller.state.currentPageElements;
-    return _buildCanvas(currentPage, elements, colorScheme);
+        final currentPage = widget.controller.state.currentPage;
+        if (currentPage == null) {
+          return Center(
+            child: Text(
+              'Current page does not exist',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          );
+        }
+        final elements = widget.controller.state.currentPageElements;
+        print(
+            '🔍 Canvas: ListenableBuilder - elements.length = ${elements.length}');
+        print(
+            '🔍 Canvas: ListenableBuilder - elements.runtimeType = ${elements.runtimeType}');
+        if (elements.isNotEmpty) {
+          print(
+              '🔍 Canvas: ListenableBuilder - first element: ${elements.first}');
+        }
+        return _buildCanvas(currentPage, elements, colorScheme);
+      },
+    );
   }
 
   @override
@@ -160,9 +177,11 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   @override
   void initState() {
     super.initState();
+    print('🏗️ Canvas: initState called');
 
     // Initialize content render controller for dual-layer architecture
     _contentRenderController = ContentRenderController();
+    print('🏗️ Canvas: ContentRenderController initialized');
 
     // Initialize RepaintBoundary key - always create a new key for screenshot functionality
     // Don't reuse widget.key as it may cause conflicts with other widgets
@@ -378,14 +397,27 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   /// Build the main canvas
   Widget _buildCanvas(
     Map<String, dynamic> currentPage,
-    List<dynamic> elements,
+    List<Map<String, dynamic>> elements,
     ColorScheme colorScheme,
   ) {
+    print('📋 Canvas: _buildCanvas called with ${elements.length} elements');
+    print(
+        '📋 Canvas: _buildCanvas - elements.runtimeType = ${elements.runtimeType}');
+    if (elements.isNotEmpty) {
+      print('📋 Canvas: _buildCanvas - first element: ${elements.first}');
+    }
+
     return DragTarget<String>(
       onAcceptWithDetails: (details) {
+        print('📋 Canvas: Drag target received drop event');
+        print('📋 Canvas: Element type: ${details.data}');
+        print('📋 Canvas: Drop position: ${details.offset}');
+
         // Handle dropping new elements onto the canvas
         final RenderBox renderBox = context.findRenderObject() as RenderBox;
         final localPosition = renderBox.globalToLocal(details.offset);
+
+        print('📋 Canvas: Local position: $localPosition');
 
         // Calculate page dimensions (applying DPI conversion)
         final pageSize = ElementUtils.calculatePixelSize(currentPage);
@@ -401,18 +433,27 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         x = (x - translation.x) / scale;
         y = (y - translation.y) / scale;
 
+        print('📋 Canvas: Final calculated position: ($x, $y)');
+        print('📋 Canvas: Page size: ${pageSize.width}x${pageSize.height}');
+        print('📋 Canvas: Current scale: $scale');
+
         // Add element based on type
         switch (details.data) {
           case 'text':
+            print('📋 Canvas: Creating text element at ($x, $y)');
             widget.controller.addTextElementAt(x, y);
             break;
           case 'image':
+            print('📋 Canvas: Creating image element at ($x, $y)');
             widget.controller.addEmptyImageElementAt(x, y);
             break;
           case 'collection':
+            print('📋 Canvas: Creating collection element at ($x, $y)');
             widget.controller.addEmptyCollectionElementAt(x, y);
             break;
         }
+
+        print('📋 Canvas: Drop handling completed');
       },
       builder: (context, candidateData, rejectedData) {
         // Get current zoom level
@@ -539,8 +580,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                         _selectionBoxNotifier.value = SelectionBoxState();
                       }
                     },
-                    child: _buildPageContent(currentPage,
-                        elements.cast<Map<String, dynamic>>(), colorScheme),
+                    child:
+                        _buildPageContent(currentPage, elements, colorScheme),
                   ),
                 ),
               ),
@@ -782,13 +823,19 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       }
     } catch (e) {
       debugPrint('Error parsing background color: $e');
-    } // Update content render controller with current elements
+    }
+
+    print(
+        '📋 Canvas: Updating ContentRenderController with ${elements.length} elements');
+    // Update content render controller with current elements
     _contentRenderController.initializeElements(elements);
 
     // Get selected element for control points
     String? selectedElementId;
     double x = 0, y = 0, width = 0, height = 0, rotation = 0;
 
+    print(
+        '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
     debugPrint(
         '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
 

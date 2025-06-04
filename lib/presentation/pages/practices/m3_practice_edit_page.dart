@@ -475,67 +475,81 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
 
   /// Build the body of the page
   Widget _buildBody(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Row(
-          children: [
-            // Left panel
-            if (!_isPreviewMode && _isLeftPanelOpen)
-              _buildLeftPanel(), // Left panel toggle            if (!_isPreviewMode)
-            PersistentSidebarToggle(
-              sidebarId: 'practice_edit_left_panel',
-              defaultIsOpen: false, // Default to closed as requested
-              onToggle: (isOpen) => setState(() {
-                _isLeftPanelOpen = isOpen;
-              }),
-              alignRight: false,
-            ),
+    return Row(
+      children: [
+        // Left panel - wrapped in AnimatedBuilder since it needs to react to controller changes
+        if (!_isPreviewMode && _isLeftPanelOpen)
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) => _buildLeftPanel(),
+          ),
 
-            // Central edit area
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Toolbar
-                  if (!_isPreviewMode)
-                    _buildEditToolbar(), // Edit canvas - 使用ProviderScope包装，确保可以访问ref
-                  Expanded(
-                    // Use a SizedBox with fixed height instead of unconstrained SingleChildScrollView
-                    child: SizedBox(
-                      height: MediaQuery.of(context).size.height -
-                          150, // Fixed height
-                      child: ProviderScope(
-                        child: M3PracticeEditCanvas(
-                          key: _canvasKey,
-                          controller: _controller,
-                          isPreviewMode: _isPreviewMode,
-                          transformationController: _transformationController,
-                        ),
-                      ),
+        // Left panel toggle
+        if (!_isPreviewMode)
+          PersistentSidebarToggle(
+            sidebarId: 'practice_edit_left_panel',
+            defaultIsOpen: false,
+            onToggle: (isOpen) => setState(() {
+              _isLeftPanelOpen = isOpen;
+            }),
+            alignRight: false,
+          ),
+
+        // Central edit area - isolated from controller notifications to prevent canvas rebuilds
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Toolbar - wrapped in AnimatedBuilder since it needs to react to controller changes
+              if (!_isPreviewMode)
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) => _buildEditToolbar(),
+                ),
+
+              // Edit canvas - NOT wrapped in AnimatedBuilder to prevent rebuilds
+              Expanded(
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height - 150,
+                  child: ProviderScope(
+                    child: M3PracticeEditCanvas(
+                      key: _canvasKey,
+                      controller: _controller,
+                      isPreviewMode: _isPreviewMode,
+                      transformationController: _transformationController,
                     ),
                   ),
-
-                  // Page thumbnails
-                  if (_showThumbnails && !_isPreviewMode)
-                    _buildPageThumbnails(),
-                ],
+                ),
               ),
-            ), // Right panel toggle            if (!_isPreviewMode)
-            PersistentSidebarToggle(
-              sidebarId: 'practice_edit_right_panel',
-              defaultIsOpen: true, // Default to open
-              onToggle: (isOpen) => setState(() {
-                _isRightPanelOpen = isOpen;
-              }),
-              alignRight: true,
-            ),
 
-            // Right properties panel
-            if (!_isPreviewMode && _isRightPanelOpen) _buildRightPanel(),
-          ],
-        );
-      },
+              // Page thumbnails - wrapped in AnimatedBuilder since it needs to react to page changes
+              if (_showThumbnails && !_isPreviewMode)
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) => _buildPageThumbnails(),
+                ),
+            ],
+          ),
+        ),
+
+        // Right panel toggle
+        if (!_isPreviewMode)
+          PersistentSidebarToggle(
+            sidebarId: 'practice_edit_right_panel',
+            defaultIsOpen: true,
+            onToggle: (isOpen) => setState(() {
+              _isRightPanelOpen = isOpen;
+            }),
+            alignRight: true,
+          ),
+
+        // Right properties panel - wrapped in AnimatedBuilder since it needs to react to selection changes
+        if (!_isPreviewMode && _isRightPanelOpen)
+          AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) => _buildRightPanel(),
+          ),
+      ],
     );
   }
 

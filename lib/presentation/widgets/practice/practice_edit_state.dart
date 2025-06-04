@@ -36,20 +36,37 @@ class PracticeEditState {
   bool canRedo = false;
 
   // Canvas scale is directly exposed as a field
-
   /// 获取当前页面
   Map<String, dynamic>? get currentPage {
+    print(
+        '🔍 PracticeEditState.currentPage: currentPageIndex=$currentPageIndex, pages.length=${pages.length}');
     if (currentPageIndex >= 0 && currentPageIndex < pages.length) {
-      return pages[currentPageIndex];
+      final page = pages[currentPageIndex];
+      print(
+          '🔍 PracticeEditState.currentPage: Found page with ${(page['elements'] as List<dynamic>?)?.length ?? 0} elements');
+      return page;
     }
+    print('🔍 PracticeEditState.currentPage: No valid current page');
     return null;
   }
 
   /// 获取当前页面的元素列表
   List<Map<String, dynamic>> get currentPageElements {
-    if (currentPage != null) {
-      final elements = currentPage!['elements'] as List<dynamic>;
-      return List<Map<String, dynamic>>.from(elements);
+    print('🔍 PracticeEditState.currentPageElements: Called');
+    final page = currentPage;
+    if (page != null) {
+      print('🔍 PracticeEditState.currentPageElements: Page found');
+      if (page.containsKey('elements')) {
+        final elements = page['elements'] as List<dynamic>;
+        print(
+            '🔍 PracticeEditState.currentPageElements: Returning ${elements.length} elements');
+        return List<Map<String, dynamic>>.from(elements);
+      } else {
+        print(
+            '🔍 PracticeEditState.currentPageElements: Page has no elements key');
+      }
+    } else {
+      print('🔍 PracticeEditState.currentPageElements: No current page');
     }
     return [];
   }

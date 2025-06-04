@@ -54,13 +54,21 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> properties,
   }) {
+    print('🎯 ContentRenderController: Initializing element $elementId');
+    print(
+        '🎯 ContentRenderController: Element properties: ${properties.keys.join(', ')}');
     _lastKnownProperties[elementId] = Map.from(properties);
   }
 
   /// Initialize multiple elements at once
   void initializeElements(List<Map<String, dynamic>> elements) {
+    print(
+        '🎯 ContentRenderController: Initializing ${elements.length} elements');
     for (final element in elements) {
       final elementId = element['id'] as String;
+      final elementType = element['type'] as String?;
+      print(
+          '🎯 ContentRenderController: - Element $elementId (type: $elementType)');
       _lastKnownProperties[elementId] = Map.from(element);
     }
   }
@@ -75,6 +83,10 @@ class ContentRenderController extends ChangeNotifier {
     required String elementId,
     required Map<String, dynamic> newProperties,
   }) {
+    print('🔔 ContentRenderController: Element $elementId changed');
+    print(
+        '🔔 ContentRenderController: New properties: ${newProperties.keys.join(', ')}');
+
     final oldProperties =
         _lastKnownProperties[elementId] ?? <String, dynamic>{};
 
@@ -94,12 +106,10 @@ class ContentRenderController extends ChangeNotifier {
     // Limit history size
     if (_changeHistory.length > 100) {
       _changeHistory.removeAt(0);
-    }
-
-    // Notify listeners
+    } // Notify through stream only (avoid triggering broad notifyListeners)
     _changeStreamController.add(changeInfo);
-    notifyListeners();
 
+    print('🔔 ContentRenderController: Change type: ${changeInfo.changeType}');
     debugPrint(
         'ContentRenderController: Element $elementId changed - ${changeInfo.changeType}');
   }
@@ -116,7 +126,6 @@ class ContentRenderController extends ChangeNotifier {
       newProperties: Map.from(properties),
       timestamp: DateTime.now(),
     );
-
     _lastKnownProperties[elementId] = Map.from(properties);
     _changeHistory.add(changeInfo);
 
@@ -125,7 +134,6 @@ class ContentRenderController extends ChangeNotifier {
     }
 
     _changeStreamController.add(changeInfo);
-    notifyListeners();
 
     debugPrint('ContentRenderController: Element $elementId created');
   }
@@ -144,7 +152,6 @@ class ContentRenderController extends ChangeNotifier {
       newProperties: <String, dynamic>{},
       timestamp: DateTime.now(),
     );
-
     _lastKnownProperties.remove(elementId);
     _changeHistory.add(changeInfo);
 
@@ -153,7 +160,6 @@ class ContentRenderController extends ChangeNotifier {
     }
 
     _changeStreamController.add(changeInfo);
-    notifyListeners();
 
     debugPrint('ContentRenderController: Element $elementId deleted');
   }

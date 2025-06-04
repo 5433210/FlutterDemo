@@ -49,9 +49,26 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   /// Track which elements need to be re-rendered
   final Set<String> _elementsNeedingUpdate = {};
-
   @override
   Widget build(BuildContext context) {
+    print('🎨 ContentRenderLayer: build() called');
+    print(
+        '🎨 ContentRenderLayer: Elements to render: ${widget.elements.length}');
+    print(
+        '🎨 ContentRenderLayer: Selected elements: ${widget.selectedElementIds.length}');
+
+    // Log element details
+    for (final element in widget.elements) {
+      final id = element['id'] as String?;
+      final type = element['type'] as String?;
+      final x = element['x'];
+      final y = element['y'];
+      final width = element['width'];
+      final height = element['height'];
+      print(
+          '🎨 ContentRenderLayer: - Element $id ($type) at ($x, $y) size ${width}x$height');
+    }
+
     // Clean up old cache entries periodically
     _cleanupCache();
 
@@ -124,7 +141,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   @override
   void dispose() {
-    widget.renderController.removeListener(_handleControllerChanges);
+    // No need to removeListener since we're not using addListener anymore
     super.dispose();
   }
 
@@ -135,8 +152,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Initialize controller with current elements
     widget.renderController.initializeElements(widget.elements);
 
-    // Listen to changes
-    widget.renderController.addListener(_handleControllerChanges);
+    // Listen to changes via stream only (more efficient than broad listener)
     widget.renderController.changeStream.listen(_handleElementChange);
   }
 
@@ -185,15 +201,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     return widget;
   }
 
-  /// Handle controller change notifications
-  void _handleControllerChanges() {
-    // Use more efficient update mechanism for content rendering layer
-    // Only trigger rebuild if there are elements that actually need updating
-    if (mounted && _hasElementsNeedingUpdate()) {
-      setState(() {});
-    }
-  }
-
   /// Handle specific element changes
   void _handleElementChange(ElementChangeInfo changeInfo) {
     debugPrint(
@@ -227,12 +234,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         _markAllElementsForUpdate();
         break;
     }
-  }
-
-  /// Check if there are elements that need visual updates
-  bool _hasElementsNeedingUpdate() {
-    // Listen to the change stream for more targeted updates
-    return widget.renderController.changeHistory.isNotEmpty;
   }
 
   /// Invalidate layout-related caches
@@ -290,23 +291,41 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   /// Render a single element
   Widget _renderElement(Map<String, dynamic> element) {
     final type = element['type'] as String;
+    final elementId = element['id'] as String?;
+    final x = element['x'];
+    final y = element['y'];
+    final width = element['width'];
+    final height = element['height'];
+
+    print(
+        '🎨 ContentRenderLayer: Rendering element $elementId ($type) at ($x, $y) size ${width}x$height');
 
     switch (type) {
       case 'text':
-        return ElementRenderers.buildTextElement(element,
+        final result = ElementRenderers.buildTextElement(element,
             isPreviewMode: widget.isPreviewMode);
+        print('🎨 ContentRenderLayer: Text element $elementId rendered');
+        return result;
       case 'image':
-        return ElementRenderers.buildImageElement(element,
+        final result = ElementRenderers.buildImageElement(element,
             isPreviewMode: widget.isPreviewMode);
+        print('🎨 ContentRenderLayer: Image element $elementId rendered');
+        return result;
       case 'collection':
-        return ElementRenderers.buildCollectionElement(element,
+        final result = ElementRenderers.buildCollectionElement(element,
             ref: ref, isPreviewMode: widget.isPreviewMode);
+        print('🎨 ContentRenderLayer: Collection element $elementId rendered');
+        return result;
       case 'group':
-        return ElementRenderers.buildGroupElement(element,
+        final result = ElementRenderers.buildGroupElement(element,
             isSelected: widget.selectedElementIds.contains(element['id']),
             ref: ref,
             isPreviewMode: widget.isPreviewMode);
+        print('🎨 ContentRenderLayer: Group element $elementId rendered');
+        return result;
       default:
+        print(
+            '🎨 ContentRenderLayer: Unknown element type: $type for element $elementId');
         return Container(
           color: Colors.grey.withAlpha(51),
           child: Center(child: Text('Unknown element type: $type')),
