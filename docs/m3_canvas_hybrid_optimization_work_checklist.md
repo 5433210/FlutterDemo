@@ -75,12 +75,13 @@
   状态: 已实现批处理和状态路由机制，通过测试验证
   ```
 
-- [ ] **重构 PracticeEditController** (4小时)
+- [x] **重构 PracticeEditController** (4小时) ✅ **已完成**
 
   ```text
   目标: 支持分层状态管理和批量更新
   新增: batchUpdateElementProperties 方法
   优化: 状态变更合并和延迟提交
+  状态: BatchUpdateOptions系统已实现，支持拖拽优化和延迟提交
   ```
 
 ##### T1.3 三阶段拖拽操作系统 (优先级: 🔴 高)
@@ -95,11 +96,13 @@
   状态: 基础实现完成，三阶段拖拽机制已验证
   ```
 
-- [ ] **创建 ElementSnapshot 快照系统** (4小时)
+- [x] **创建 ElementSnapshot 快照系统** (4小时) ✅ **已完成**
 
   ```text
+  文件: lib/presentation/widgets/practice/element_snapshot.dart
   功能: 拖拽开始时创建元素快照，用于预览层渲染
   优化: 避免拖拽过程中的重复元素查询
+  状态: 实现完成，支持多种元素类型的快照和内存优化
   ```
 
 #### 🎨 Week 2: 智能缓存和性能优化器升级
