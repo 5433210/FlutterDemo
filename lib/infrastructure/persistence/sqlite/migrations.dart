@@ -2,8 +2,6 @@
 const migrations = [
   // 版本 1: 创建基础表结构
   '''
-  BEGIN TRANSACTION;
-  
   -- 作品表
   CREATE TABLE IF NOT EXISTS works (
     id TEXT PRIMARY KEY,
@@ -60,11 +58,11 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_characters_workId ON characters(workId);
   CREATE INDEX IF NOT EXISTS idx_characters_char ON characters(character);
   
-  COMMIT;
+  
   ''',
   // 版本 2: 添加作品图片管理 - 表和索引
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE TABLE IF NOT EXISTS work_images (
     id TEXT PRIMARY KEY,
@@ -89,22 +87,22 @@ const migrations = [
   ON work_images(workId, original_path)
   WHERE original_path IS NOT NULL;
   
-  COMMIT;
+  
   ''',
 
   // 版本 3: 添加作品字段
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE works ADD COLUMN firstImageId TEXT REFERENCES work_images(id);
   ALTER TABLE works ADD COLUMN lastImageUpdateTime TEXT;
   
-  COMMIT;
+  
   ''',
 
   // 版本 4: 添加触发器
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE TRIGGER IF NOT EXISTS update_work_image_count_insert
   AFTER INSERT ON work_images
@@ -171,21 +169,21 @@ const migrations = [
     WHERE id = OLD.workId;
   END;
   
-  COMMIT;
+  
   ''',
   // 版本 5: 添加字符收藏功能
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE characters ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
   ALTER TABLE characters ADD COLUMN note TEXT;
   
-  COMMIT;
+  
   ''',
 
   // 版本 6: 添加临时工作项
   '''
-  BEGIN TRANSACTION;
+  
   
   INSERT OR IGNORE INTO works (
     id,
@@ -203,12 +201,12 @@ const migrations = [
     datetime('now')
   );
   
-  COMMIT;
+  
   ''',
 
   /// 版本 7: 添加CharacterView视图
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE VIEW IF NOT EXISTS CharacterView AS
   SELECT 
@@ -232,21 +230,21 @@ const migrations = [
   LEFT JOIN
     works w ON c.workId = w.id;
   
-  COMMIT;
+  
   ''',
 
   /// 版本 8: 为 practices 表添加缩略图字段
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE practices ADD COLUMN thumbnail BLOB;
   
-  COMMIT;
+  
   ''',
 
   /// 版本 9: 添加图库表结构 - 表
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE TABLE IF NOT EXISTS library_items (
     id TEXT PRIMARY KEY,
@@ -269,12 +267,12 @@ const migrations = [
     updateTime TEXT NOT NULL
   );
   
-  COMMIT;
+  
   ''',
 
   /// 版本 10: 添加图库分类表
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE TABLE IF NOT EXISTS library_categories (
     id TEXT PRIMARY KEY,
@@ -286,28 +284,26 @@ const migrations = [
     updateTime TEXT NOT NULL
   );
   
-  COMMIT;
+  
   ''',
 
   /// 版本 11: 添加图库索引
   '''
-  BEGIN TRANSACTION;
+  
   
   CREATE INDEX IF NOT EXISTS idx_library_items_name ON library_items(name);
   CREATE INDEX IF NOT EXISTS idx_library_items_type ON library_items(type);
   CREATE INDEX IF NOT EXISTS idx_library_categories_name ON library_categories(name);
   
-  COMMIT;
+  
   ''',
 
   /// 版本 12: 为library_items表添加新列
   '''
-  BEGIN TRANSACTION;
+  
   
   -- Check if columns exist before adding
-  ALTER TABLE library_items ADD COLUMN thumbnail BLOB;
-  ALTER TABLE library_items ADD COLUMN createdAt TEXT;
-  ALTER TABLE library_items ADD COLUMN updatedAt TEXT;
+ 
   
   -- 将已有的时间戳数据复制到新列
   UPDATE library_items SET
@@ -315,21 +311,21 @@ const migrations = [
     updatedAt = updateTime
   WHERE createdAt IS NULL;
   
-  COMMIT;
+  
   ''',
 
   /// 版本 13: 为library_items表添加remarks列
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE library_items ADD COLUMN remarks TEXT;
   
-  COMMIT;
+  
   ''',
 
   /// 版本 14: 重命名 library_items 表的字段
   '''
-  BEGIN TRANSACTION;
+  
   
   -- 添加新字段
   ALTER TABLE library_items ADD COLUMN fileName TEXT;
@@ -383,24 +379,24 @@ const migrations = [
   CREATE INDEX IF NOT EXISTS idx_library_items_fileName ON library_items(fileName);
   CREATE INDEX IF NOT EXISTS idx_library_items_type ON library_items(type);
   
-  COMMIT;
+  
   ''',
 
   /// 版本 15: 为works表添加收藏字段
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE works ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
   
-  COMMIT;
+  
   ''',
 
   /// 版本 16: 为practices表添加收藏字段
   '''
-  BEGIN TRANSACTION;
+  
   
   ALTER TABLE practices ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0;
   
-  COMMIT;
+  
   ''',
 ];

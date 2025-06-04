@@ -1,8 +1,10 @@
-import 'dart:io' show Platform;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'infrastructure/logging/log_level.dart';
@@ -15,6 +17,13 @@ import 'utils/keyboard/keyboard_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化SQLite FFI (对于桌面平台)
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    // Windows和macOS使用默认初始化
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   // Initialize logging config - default to minimal logging
   LoggingConfig.verboseStorageLogging = false;

@@ -9,13 +9,16 @@ import 'work_image.dart';
 part 'work_entity.freezed.dart';
 part 'work_entity.g.dart';
 
-WorkStyle _workStyleFromJson(dynamic value) => WorkStyle.fromValue(value);
+/// 处理可能为null的日期字符串
+DateTime _dateTimeFromJson(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is DateTime) return value;
+  if (value is String) return DateTime.parse(value);
+  return DateTime.now();
+}
 
-/// 枚举序列化辅助方法
-String _workStyleToJson(WorkStyle style) => style.value;
-WorkTool _workToolFromJson(dynamic value) => WorkTool.fromValue(value);
-String _workToolToJson(WorkTool tool) => tool.value;
-
+/// 将DateTime转换为ISO8601字符串
+String? _dateTimeToJson(DateTime? value) => value?.toIso8601String();
 bool _isFavoriteFromJson(dynamic value) {
   if (value == null) return false;
   if (value is bool) return value;
@@ -24,6 +27,15 @@ bool _isFavoriteFromJson(dynamic value) {
 }
 
 int _isFavoriteToJson(bool value) => value ? 1 : 0;
+
+WorkStyle _workStyleFromJson(dynamic value) => WorkStyle.fromValue(value);
+
+/// 枚举序列化辅助方法
+String _workStyleToJson(WorkStyle style) => style.value;
+
+WorkTool _workToolFromJson(dynamic value) => WorkTool.fromValue(value);
+
+String _workToolToJson(WorkTool tool) => tool.value;
 
 /// 作品实体
 @freezed
@@ -50,23 +62,27 @@ class WorkEntity with _$WorkEntity {
     required WorkTool tool,
 
     /// 创作日期
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime creationDate,
 
     /// 创建时间
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime createTime,
 
     /// 修改时间
-
+    @JsonKey(fromJson: _dateTimeFromJson, toJson: _dateTimeToJson)
     required DateTime updateTime,
 
     /// 是否收藏
     @JsonKey(fromJson: _isFavoriteFromJson, toJson: _isFavoriteToJson)
-    @Default(false) bool isFavorite,
+    @Default(false)
+    bool isFavorite,
 
     /// 图片最后更新时间
-
+    @JsonKey(
+        fromJson: _dateTimeFromJson,
+        toJson: _dateTimeToJson,
+        includeIfNull: false)
     DateTime? lastImageUpdateTime,
 
     /// 状态
