@@ -223,13 +223,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     // 将拖拽状态管理器与内容渲染控制器关联
     _contentRenderController.setDragStateManager(_dragStateManager);
     print(
-        '🏗️ Canvas: Connected DragStateManager with ContentRenderController');
-
-    // Set up drag state manager callbacks
+        '🏗️ Canvas: Connected DragStateManager with ContentRenderController'); // Set up drag state manager callbacks
     _dragStateManager.setUpdateCallbacks(
-      onElementUpdate: (elementId, properties) {
-        widget.controller.updateElementProperties(elementId, properties);
-      },
       onBatchUpdate: (batchUpdates) {
         widget.controller.batchUpdateElementProperties(batchUpdates);
       },
