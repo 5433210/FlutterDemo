@@ -557,9 +557,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         return Stack(
           children: [
             Container(
-              color: colorScheme.inverseSurface.withValues(
-                  alpha:
-                      0.1), // Canvas outer background - improved contrast in light theme
+              color: colorScheme.inverseSurface.withAlpha(
+                  26), // Canvas outer background - improved contrast in light theme
 
               // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
               child: RepaintBoundary(
@@ -587,102 +586,107 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                     // No setState needed - controller state changes trigger UI updates automatically
                   },
                   constrained: false, // Allow content to be unconstrained
-                  child: GestureDetector(
-                    behavior: HitTestBehavior
-                        .translucent, // Ensure gesture events are properly passed
-                    onTapUp: (details) => _gestureHandler.handleTapUp(
-                        details, elements.cast<Map<String, dynamic>>()),
-                    // 处理右键点击事件，用于退出select模式
-                    onSecondaryTapDown: (details) =>
-                        _gestureHandler.handleSecondaryTapDown(details),
-                    onSecondaryTapUp: (details) =>
-                        _gestureHandler.handleSecondaryTapUp(
-                            details, elements.cast<Map<String, dynamic>>()),
-                    onPanStart: (details) => _gestureHandler.handlePanStart(
-                        details, elements.cast<Map<String, dynamic>>()),
-                    onPanUpdate: (details) {
-                      // Always call gesture handler first to ensure proper state tracking
-                      _gestureHandler.handlePanUpdate(details);
-
-                      // 先处理选择框更新，这优先级最高
-                      if (widget.controller.state.currentTool == 'select' &&
-                          _gestureHandler.isSelectionBoxActive) {
-                        // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
-                        _selectionBoxNotifier.value = SelectionBoxState(
-                          isActive: true,
-                          startPoint: _gestureHandler.selectionBoxStart,
-                          endPoint: _gestureHandler.selectionBoxEnd,
-                        );
-                        return;
-                      }
-
-                      // Handle element dragging in any mode (select or non-select)
-                      // _isDragging will be true if we started dragging on an element
-                      if (_isDragging) {
-                        // setState(() {}); // Force redraw for element movement
-                        return;
-                      } // If not dragging elements and not in select mode,
-                      // let InteractiveViewer handle the panning instead of manually manipulating the matrix
-                      if (!_isDragging &&
-                          widget.controller.state.currentTool != 'select') {
-                        // Create new transformation matrix
-                        final Matrix4 newMatrix = Matrix4.identity();
-
-                        // Set same scale factor as current
-                        final scale = widget.transformationController.value
-                            .getMaxScaleOnAxis();
-                        newMatrix.setEntry(0, 0, scale);
-                        newMatrix.setEntry(1, 1, scale);
-                        newMatrix.setEntry(2, 2, scale);
-
-                        // Get current translation
-                        final Vector3 translation = widget
-                            .transformationController.value
-                            .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
-                        // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
-                        // Use the same approach as in canvas_gesture_handler.dart
-
-                        newMatrix.setTranslation(Vector3(
-                          translation.x + details.delta.dx * scale,
-                          translation.y + details.delta.dy * scale,
-                          0.0,
-                        ));
-                        widget.transformationController.value =
-                            newMatrix; // Force refresh
-                        // setState(() {}); // Add debug logging
-                        debugPrint(
-                            '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
-                            '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
-                        return;
-                      }
-
-                      debugPrint('【画布平移更新】手势处理器已处理所有情况');
+                  child: Listener(
+                    onPointerDown: (_) {
+                      // Add this empty listener to properly initialize mouse tracking
                     },
-                    onPanEnd: (details) {
-                      // 重置选择框状态
-                      if (widget.controller.state.currentTool == 'select' &&
-                          _gestureHandler.isSelectionBoxActive) {
-                        // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
-                        _selectionBoxNotifier.value = SelectionBoxState();
-                      }
-                      _gestureHandler.handlePanEnd(details);
-                    },
-                    onPanCancel: () {
-                      // 处理平移取消
-                      _gestureHandler.handlePanCancel();
-                      // 重置选择框状态
-                      if (widget.controller.state.currentTool == 'select' &&
-                          _gestureHandler.isSelectionBoxActive) {
-                        _selectionBoxNotifier.value = SelectionBoxState();
-                      }
-                    },
-                    child:
-                        _buildPageContent(currentPage, elements, colorScheme),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior
+                          .opaque, // Changed from translucent to opaque
+                      onTapUp: (details) => _gestureHandler.handleTapUp(
+                          details, elements.cast<Map<String, dynamic>>()),
+                      // 处理右键点击事件，用于退出select模式
+                      onSecondaryTapDown: (details) =>
+                          _gestureHandler.handleSecondaryTapDown(details),
+                      onSecondaryTapUp: (details) =>
+                          _gestureHandler.handleSecondaryTapUp(
+                              details, elements.cast<Map<String, dynamic>>()),
+                      onPanStart: (details) => _gestureHandler.handlePanStart(
+                          details, elements.cast<Map<String, dynamic>>()),
+                      onPanUpdate: (details) {
+                        // Always call gesture handler first to ensure proper state tracking
+                        _gestureHandler.handlePanUpdate(details);
+
+                        // 先处理选择框更新，这优先级最高
+                        if (widget.controller.state.currentTool == 'select' &&
+                            _gestureHandler.isSelectionBoxActive) {
+                          // 设置选择框状态为活动状态，确保ValueListenableBuilder更新
+                          _selectionBoxNotifier.value = SelectionBoxState(
+                            isActive: true,
+                            startPoint: _gestureHandler.selectionBoxStart,
+                            endPoint: _gestureHandler.selectionBoxEnd,
+                          );
+                          return;
+                        }
+
+                        // Handle element dragging in any mode (select or non-select)
+                        // _isDragging will be true if we started dragging on an element
+                        if (_isDragging) {
+                          // setState(() {}); // Force redraw for element movement
+                          return;
+                        } // If not dragging elements and not in select mode,
+                        // let InteractiveViewer handle the panning instead of manually manipulating the matrix
+                        if (!_isDragging &&
+                            widget.controller.state.currentTool != 'select') {
+                          // Create new transformation matrix
+                          final Matrix4 newMatrix = Matrix4.identity();
+
+                          // Set same scale factor as current
+                          final scale = widget.transformationController.value
+                              .getMaxScaleOnAxis();
+                          newMatrix.setEntry(0, 0, scale);
+                          newMatrix.setEntry(1, 1, scale);
+                          newMatrix.setEntry(2, 2, scale);
+
+                          // Get current translation
+                          final Vector3 translation = widget
+                              .transformationController.value
+                              .getTranslation(); // Apply delta with scale adjustment to ensure consistent movement at all zoom levels
+                          // For canvas panning: when zoomed in, cursor movement should translate to larger canvas movement
+                          // Use the same approach as in canvas_gesture_handler.dart
+
+                          newMatrix.setTranslation(Vector3(
+                            translation.x + details.delta.dx * scale,
+                            translation.y + details.delta.dy * scale,
+                            0.0,
+                          ));
+                          widget.transformationController.value =
+                              newMatrix; // Force refresh
+                          // setState(() {}); // Add debug logging
+                          debugPrint(
+                              '【直接平移】在缩放级别=$scale下应用dx=${details.delta.dx}, dy=${details.delta.dy}，'
+                              '倒数缩放因子=$scale, 调整后dx=${details.delta.dx * scale}, dy=${details.delta.dy * scale}');
+                          return;
+                        }
+
+                        debugPrint('【画布平移更新】手势处理器已处理所有情况');
+                      },
+                      onPanEnd: (details) {
+                        // 重置选择框状态
+                        if (widget.controller.state.currentTool == 'select' &&
+                            _gestureHandler.isSelectionBoxActive) {
+                          // 选择框结束后，如果需要可以保持选择框显示，这里选择隐藏
+                          _selectionBoxNotifier.value = SelectionBoxState();
+                        }
+                        _gestureHandler.handlePanEnd(details);
+                      },
+                      onPanCancel: () {
+                        // 处理平移取消
+                        _gestureHandler.handlePanCancel();
+                        // 重置选择框状态
+                        if (widget.controller.state.currentTool == 'select' &&
+                            _gestureHandler.isSelectionBoxActive) {
+                          _selectionBoxNotifier.value = SelectionBoxState();
+                        }
+                      },
+                      child:
+                          _buildPageContent(currentPage, elements, colorScheme),
+                    ),
                   ),
                 ),
-              ),
 
-              // Status bar showing zoom level (only visible in edit mode)
+                // Status bar showing zoom level (only visible in edit mode)
+              ),
             ),
             Positioned(
               left: 0,
@@ -1048,26 +1052,31 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     print(
         '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
     debugPrint(
-        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}'); // Calculate page dimensions
+    final pageSize = ElementUtils.calculatePixelSize(page);
 
-    return Stack(
-      fit: StackFit.loose, // Use loose fit for outer stack
-      clipBehavior:
-          Clip.none, // Allow control points to extend beyond page boundaries
-      children: [
-        // Use LayerRenderManager to build coordinated layer stack
-        RepaintBoundary(
-          key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-          child: _layerRenderManager.buildLayerStack(
-            layerOrder: [
-              RenderLayerType.staticBackground,
-              RenderLayerType.content,
-              RenderLayerType.dragPreview,
-              RenderLayerType.interaction,
-            ],
+    return SizedBox(
+      width: pageSize.width,
+      height: pageSize.height,
+      child: Stack(
+        fit: StackFit.expand, // Use expand to fill the container
+        clipBehavior:
+            Clip.none, // Allow control points to extend beyond page boundaries
+        children: [
+          // Use LayerRenderManager to build coordinated layer stack
+          RepaintBoundary(
+            key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
+            child: _layerRenderManager.buildLayerStack(
+              layerOrder: [
+                RenderLayerType.staticBackground,
+                RenderLayerType.content,
+                RenderLayerType.dragPreview,
+                RenderLayerType.interaction,
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
