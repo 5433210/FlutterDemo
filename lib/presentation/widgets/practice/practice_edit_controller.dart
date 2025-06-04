@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -8,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/services/practice/practice_service.dart';
 import '../../pages/practices/utils/practice_edit_utils.dart';
+import '../../pages/practices/widgets/state_change_dispatcher.dart';
 import 'canvas_capture.dart';
 import 'practice_edit_state.dart';
 import 'thumbnail_generator.dart';
@@ -15,11 +17,23 @@ import 'undo_redo_manager.dart';
 
 /// 字帖编辑控制器
 class PracticeEditController extends ChangeNotifier {
+  // 批量更新配置
+  static const int _commitDelayMs = 16; // ~60fps
+
+  static const int _maxBatchSize = 50;
+
   // 状态
   final PracticeEditState _state = PracticeEditState();
 
   // 撤销/重做管理器
   late final UndoRedoManager _undoRedoManager;
+  // 状态变更分发器
+  StateChangeDispatcher? _stateDispatcher;
+  // 批量更新相关字段
+  final Map<String, Map<String, dynamic>> _pendingUpdates = {};
+
+  Timer? _commitTimer;
+  final bool _isCommitting = false;
 
   // 吸附管理器 - 用于元素拖拽和调整大小时的吸附
   // late final SnapManager _snapManager;
@@ -1374,6 +1388,12 @@ class PracticeEditController extends ChangeNotifier {
   /// 释放资源
   @override
   void dispose() {
+    // 清理批量更新相关资源
+    _commitTimer?.cancel();
+    _commitTimer = null;
+    _pendingUpdates.clear();
+    _stateDispatcher = null;
+
     // 清除所有引用
     _canvasKey = null;
     _pageKeys.clear();
@@ -2806,25 +2826,19 @@ class PracticeEditController extends ChangeNotifier {
 
       // 处理组合控件的子元素调整
       if (element['type'] == 'group' &&
-          (properties.containsKey('x') ||
-              properties.containsKey('y') ||
-              properties.containsKey('width') ||
+          (properties.containsKey('width') ||
               properties.containsKey('height'))) {
-        // 获取组合控件的旧尺寸
-        final oldWidth = (oldProperties['width'] as num).toDouble();
-        final oldHeight = (oldProperties['height'] as num).toDouble();
-
         // 获取新的尺寸
-        final newWidth = properties.containsKey('width')
-            ? (properties['width'] as num).toDouble()
-            : oldWidth;
-        final newHeight = properties.containsKey('height')
-            ? (properties['height'] as num).toDouble()
-            : oldHeight;
+        final newWidth = (element['width'] as num).toDouble();
+        final newHeight = (element['height'] as num).toDouble();
 
         // 计算缩放比例
-        final scaleX = oldWidth > 0 ? newWidth / oldWidth : 1.0;
-        final scaleY = oldHeight > 0 ? newHeight / oldHeight : 1.0;
+        final scaleX = oldProperties['width'] > 0
+            ? newWidth / (oldProperties['width'] as num).toDouble()
+            : 1.0;
+        final scaleY = oldProperties['height'] > 0
+            ? newHeight / (oldProperties['height'] as num).toDouble()
+            : 1.0;
 
         // 获取子元素列表
         final content = newProperties['content'] as Map<String, dynamic>;
