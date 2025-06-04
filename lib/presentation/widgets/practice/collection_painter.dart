@@ -394,48 +394,6 @@ class CollectionPainter extends CustomPainter {
     }
   }
 
-  /// 加载并缓存纹理
-  Future<ui.Image?> _loadAndCacheTexture(String path) async {
-    // 检查是否已经缓存
-    final cachedImage = await _imageCacheService.getUiImage(path);
-    if (cachedImage != null) {
-      return cachedImage;
-    }
-
-    try {
-      if (path.startsWith('assets/') || path.startsWith('asset/')) {
-        // 从资源加载
-        final data = await rootBundle.load(path);
-        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-        final frame = await codec.getNextFrame();
-        await _imageCacheService.cacheUiImage(path, frame.image);
-        return frame.image;
-      } else if (path.startsWith('http://') || path.startsWith('https://')) {
-        // 从网络加载
-        final httpClient = HttpClient();
-        final request = await httpClient.getUrl(Uri.parse(path));
-        final response = await request.close();
-        final bytes = await consolidateHttpClientResponseBytes(response);
-        final codec = await ui.instantiateImageCodec(bytes);
-        final frame = await codec.getNextFrame();
-        await _imageCacheService.cacheUiImage(path, frame.image);
-        return frame.image;
-      } else if (path.startsWith('file://')) {
-        // 从文件加载
-        final file = File(path.substring(7));
-        final bytes = await file.readAsBytes();
-        final codec = await ui.instantiateImageCodec(bytes);
-        final frame = await codec.getNextFrame();
-        await _imageCacheService.cacheUiImage(path, frame.image);
-        return frame.image;
-      }
-    } catch (e) {
-      debugPrint('加载纹理失败: $e, 路径: $path');
-    }
-
-    return null;
-  }
-
   /// 加载并缓存纹理（增强版，使用完整缓存键）
   Future<ui.Image?> _loadAndCacheTextureWithKey(
       String path, String cacheKey) async {

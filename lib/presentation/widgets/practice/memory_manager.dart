@@ -140,16 +140,16 @@ class MemoryManager extends ChangeNotifier {
 
   /// Get current memory statistics
   MemoryStats get memoryStats => MemoryStats(
-        currentUsage: _currentMemoryUsage,
-        peakUsage: _peakMemoryUsage,
-        maxLimit: _maxMemoryBytes,
-        pressureRatio: _currentMemoryUsage / _maxMemoryBytes,
-        totalImagesLoaded: _totalImagesLoaded,
-        totalImagesDisposed: _totalImagesDisposed,
-        activeImageCount: _imageResources.length,
-        largeElementCount: _largeElements.length,
-        trackedElementCount: _elementMemoryInfo.length,
-      );
+    currentUsage: _currentMemoryUsage,
+    peakUsage: _peakMemoryUsage,
+    maxLimit: _maxMemoryBytes,
+    pressureRatio: _currentMemoryUsage / _maxMemoryBytes,
+    totalImagesLoaded: _totalImagesLoaded,
+    totalImagesDisposed: _totalImagesDisposed,
+    activeImageCount: _imageResources.length,
+    largeElementCount: _largeElements.length,
+    trackedElementCount: _elementMemoryInfo.length,
+  );
 
   /// Adjust memory limits based on system capabilities
   void adjustMemoryLimits({int? newMaxMemory}) {
@@ -157,7 +157,8 @@ class MemoryManager extends ChangeNotifier {
       _maxMemoryBytes = newMaxMemory;
       if (kDebugMode) {
         print(
-            '📏 MemoryManager: Memory limit adjusted to ${_formatBytes(_maxMemoryBytes)}');
+          '📏 MemoryManager: Memory limit adjusted to ${_formatBytes(_maxMemoryBytes)}',
+        );
       }
       _checkMemoryPressure();
     }
@@ -165,7 +166,8 @@ class MemoryManager extends ChangeNotifier {
 
   /// Get memory-efficient representation of an element
   MemoryEfficientElement createMemoryEfficientElement(
-      Map<String, dynamic> element) {
+    Map<String, dynamic> element,
+  ) {
     final elementType = element['type'] as String? ?? 'unknown';
     final estimatedSize = _estimateElementMemorySize(element);
 
@@ -218,7 +220,8 @@ class MemoryManager extends ChangeNotifier {
 
       if (kDebugMode) {
         print(
-            '🗑️ MemoryManager: Disposed image resource for $elementId (${_formatBytes(resource.estimatedSize)})');
+          '🗑️ MemoryManager: Disposed image resource for $elementId (${_formatBytes(resource.estimatedSize)})',
+        );
       }
 
       notifyListeners();
@@ -253,7 +256,8 @@ class MemoryManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '🧹 MemoryManager: Starting ${aggressive ? 'aggressive ' : ''}memory cleanup...');
+        '🧹 MemoryManager: Starting ${aggressive ? 'aggressive ' : ''}memory cleanup...',
+      );
     }
 
     // 1. Clean up old unused image resources
@@ -272,9 +276,11 @@ class MemoryManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '🧹 MemoryManager: Cleanup completed. Freed ${_formatBytes(actualFreed)}');
+        '🧹 MemoryManager: Cleanup completed. Freed ${_formatBytes(actualFreed)}',
+      );
       print(
-          '   Memory usage: ${_formatBytes(finalUsage)} / ${_formatBytes(_maxMemoryBytes)}');
+        '   Memory usage: ${_formatBytes(finalUsage)} / ${_formatBytes(_maxMemoryBytes)}',
+      );
     }
 
     notifyListeners();
@@ -310,7 +316,8 @@ class MemoryManager extends ChangeNotifier {
       _largeElements.add(elementId);
       if (kDebugMode) {
         print(
-            '🐘 MemoryManager: Large element detected - $elementId ($elementType, ${_formatBytes(estimatedSize)})');
+          '🐘 MemoryManager: Large element detected - $elementId ($elementType, ${_formatBytes(estimatedSize)})',
+        );
       }
     }
 
@@ -337,7 +344,8 @@ class MemoryManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '📷 MemoryManager: Registered image resource for $elementId (${_formatBytes(estimatedSize)})');
+        '📷 MemoryManager: Registered image resource for $elementId (${_formatBytes(estimatedSize)})',
+      );
     }
 
     _checkMemoryPressure();
@@ -353,7 +361,8 @@ class MemoryManager extends ChangeNotifier {
 
       if (kDebugMode) {
         print(
-            '🗑️ MemoryManager: Unregistered element memory for $elementId (${_formatBytes(memoryInfo.estimatedSize)})');
+          '🗑️ MemoryManager: Unregistered element memory for $elementId (${_formatBytes(memoryInfo.estimatedSize)})',
+        );
       }
 
       notifyListeners();
@@ -362,7 +371,7 @@ class MemoryManager extends ChangeNotifier {
     return false;
   }
 
-  /// Update memory limits
+  /// Update memory limits (for adaptive cache manager compatibility)
   void updateMemoryLimits({
     int? maxMemoryBytes,
     bool enableAggressiveCleanup = false,
@@ -371,7 +380,8 @@ class MemoryManager extends ChangeNotifier {
       _maxMemoryBytes = maxMemoryBytes;
       if (kDebugMode) {
         print(
-            '📏 MemoryManager: Memory limit updated to ${_formatBytes(_maxMemoryBytes)}');
+          '📏 MemoryManager: Memory limit updated to ${_formatBytes(_maxMemoryBytes)}',
+        );
       }
 
       // Trigger cleanup if we're now over the limit
@@ -529,7 +539,8 @@ class MemoryManager extends ChangeNotifier {
 
   /// Extract essential properties for memory-efficient storage
   Map<String, dynamic> _extractEssentialProperties(
-      Map<String, dynamic> element) {
+    Map<String, dynamic> element,
+  ) {
     return {
       'id': element['id'],
       'type': element['type'],

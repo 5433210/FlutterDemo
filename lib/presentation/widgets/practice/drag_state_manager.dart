@@ -54,9 +54,7 @@ class DragStateManager extends ChangeNotifier {
   Timer? _batchUpdateTimer;
   final Map<String, Map<String, dynamic>> _pendingUpdates =
       <String, Map<String, dynamic>>{};
-
   // 回调函数
-  Function(String elementId, Map<String, dynamic> properties)? _onElementUpdate;
   Function(Map<String, Map<String, dynamic>> batchUpdates)? _onBatchUpdate;
 
   // 性能监控相关
@@ -240,11 +238,8 @@ class DragStateManager extends ChangeNotifier {
 
   /// 设置更新回调
   void setUpdateCallbacks({
-    Function(String elementId, Map<String, dynamic> properties)?
-        onElementUpdate,
     Function(Map<String, Map<String, dynamic>> batchUpdates)? onBatchUpdate,
   }) {
-    _onElementUpdate = onElementUpdate;
     _onBatchUpdate = onBatchUpdate;
   }
 

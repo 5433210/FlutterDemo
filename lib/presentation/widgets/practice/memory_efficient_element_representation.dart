@@ -605,10 +605,13 @@ class MemoryEfficientElementRepresentation extends ChangeNotifier {
         .where((entry) => entry.value.mode == ElementRepresentationMode.full)
         .take(5) // Optimize up to 5 at a time
         .toList();
-
     for (final entry in representationsToOptimize) {
+      final elementId = entry.key;
+
       // Convert to preview mode asynchronously
       Future(() async {
+        // Remove current full representation to free memory
+        _representations.remove(elementId);
         // This would re-create the representation in preview mode
         // Implementation depends on how element data is stored
       });

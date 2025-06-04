@@ -31,19 +31,19 @@ class AdaptiveCacheManager extends ChangeNotifier {
   AdaptiveCacheManager({
     required MemoryManager memoryManager,
     required ElementCacheManager elementCacheManager,
-  })  : _memoryManager = memoryManager,
-        _elementCacheManager = elementCacheManager {
+  }) : _memoryManager = memoryManager,
+       _elementCacheManager = elementCacheManager {
     _initializeAdaptiveManagement();
   }
 
   /// Current memory configuration
   MemoryConfiguration get currentConfiguration => MemoryConfiguration(
-        elementCacheLimit: _elementCacheManager.maxCacheSize,
-        imageMemoryLimit: _memoryManager.maxMemoryBytes,
-        totalMemoryLimit: _currentMemoryLimit,
-        adaptationStrategy: _currentStrategy,
-        systemMemoryAvailable: _availableSystemMemory,
-      );
+    elementCacheLimit: _elementCacheManager.maxCacheSize,
+    imageMemoryLimit: _memoryManager.maxMemoryBytes,
+    totalMemoryLimit: _currentMemoryLimit,
+    adaptationStrategy: _currentStrategy,
+    systemMemoryAvailable: _availableSystemMemory,
+  );
 
   @override
   void dispose() {
@@ -63,28 +63,34 @@ class AdaptiveCacheManager extends ChangeNotifier {
     // Memory analysis
     if (memoryStats.pressureRatio > _criticalMemoryThreshold) {
       warnings.add(
-          'Critical memory usage: ${(memoryStats.pressureRatio * 100).toStringAsFixed(1)}%');
-      recommendations
-          .add('Consider reducing cache sizes or clearing unused elements');
+        'Critical memory usage: ${(memoryStats.pressureRatio * 100).toStringAsFixed(1)}%',
+      );
+      recommendations.add(
+        'Consider reducing cache sizes or clearing unused elements',
+      );
     } else if (memoryStats.pressureRatio > _memoryPressureThreshold) {
       warnings.add(
-          'High memory usage: ${(memoryStats.pressureRatio * 100).toStringAsFixed(1)}%');
+        'High memory usage: ${(memoryStats.pressureRatio * 100).toStringAsFixed(1)}%',
+      );
       recommendations.add('Monitor memory usage and consider cleanup');
     }
 
     // Cache performance analysis
     if (cacheMetrics.hitRate < 0.6) {
       warnings.add(
-          'Low cache hit rate: ${(cacheMetrics.hitRate * 100).toStringAsFixed(1)}%');
-      recommendations
-          .add('Consider increasing cache size or improving element reuse');
+        'Low cache hit rate: ${(cacheMetrics.hitRate * 100).toStringAsFixed(1)}%',
+      );
+      recommendations.add(
+        'Consider increasing cache size or improving element reuse',
+      );
     }
 
     // Large element analysis
     if (memoryStats.largeElementCount > 10) {
       warnings.add('Many large elements: ${memoryStats.largeElementCount}');
-      recommendations
-          .add('Consider lazy loading or memory-efficient representations');
+      recommendations.add(
+        'Consider lazy loading or memory-efficient representations',
+      );
     }
 
     return OptimizationRecommendations(
@@ -101,27 +107,34 @@ class AdaptiveCacheManager extends ChangeNotifier {
     // Use 10-25% of available system memory for our caches
     final recommendedLimit = (_availableSystemMemory * 0.15).toInt();
     _currentMemoryLimit = math.min(
-        math.max(recommendedLimit, _defaultBaseMemoryLimit), _maxMemoryLimit);
+      math.max(recommendedLimit, _defaultBaseMemoryLimit),
+      _maxMemoryLimit,
+    );
 
     if (kDebugMode) {
       print(
-          '🧠 AdaptiveCacheManager: Detected ${_formatBytes(_availableSystemMemory)} system memory, '
-          'setting cache limit to ${_formatBytes(_currentMemoryLimit)}');
+        '🧠 AdaptiveCacheManager: Detected ${_formatBytes(_availableSystemMemory)} system memory, '
+        'setting cache limit to ${_formatBytes(_currentMemoryLimit)}',
+      );
     }
   }
 
   /// Apply balanced optimization strategy
   Future<void> _applyBalancedStrategy() async {
     // Balanced approach between memory and performance
-    final newCacheSize =
-        math.max(50, math.min(150, _elementCacheManager.maxCacheSize));
+    final newCacheSize = math.max(
+      50,
+      math.min(150, _elementCacheManager.maxCacheSize),
+    );
 
-    _elementCacheManager.updateConfiguration(ElementCacheConfiguration(
-      maxCacheSize: newCacheSize,
-      maxMemoryUsage: (_currentMemoryLimit * 0.5).toInt(),
-      cleanupThreshold: 0.8,
-      enableAggressiveCleanup: false,
-    ));
+    _elementCacheManager.updateConfiguration(
+      ElementCacheConfiguration(
+        maxCacheSize: newCacheSize,
+        maxMemoryUsage: (_currentMemoryLimit * 0.5).toInt(),
+        cleanupThreshold: 0.8,
+        enableAggressiveCleanup: false,
+      ),
+    );
 
     _memoryManager.updateMemoryLimits(
       maxMemoryBytes: (_currentMemoryLimit * 0.6).toInt(),
@@ -130,21 +143,26 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '⚖️ AdaptiveCacheManager: Applied balanced strategy (cache: $newCacheSize elements)');
+        '⚖️ AdaptiveCacheManager: Applied balanced strategy (cache: $newCacheSize elements)',
+      );
     }
   }
 
   /// Apply memory-first optimization strategy
   Future<void> _applyMemoryFirstStrategy() async {
     // Reduce cache sizes aggressively
-    final newCacheSize =
-        math.max(20, (_elementCacheManager.maxCacheSize * 0.6).toInt());
-    _elementCacheManager.updateConfiguration(ElementCacheConfiguration(
-      maxCacheSize: newCacheSize,
-      maxMemoryUsage: (_currentMemoryLimit * 0.3).toInt(),
-      cleanupThreshold: 0.7,
-      enableAggressiveCleanup: true,
-    ));
+    final newCacheSize = math.max(
+      20,
+      (_elementCacheManager.maxCacheSize * 0.6).toInt(),
+    );
+    _elementCacheManager.updateConfiguration(
+      ElementCacheConfiguration(
+        maxCacheSize: newCacheSize,
+        maxMemoryUsage: (_currentMemoryLimit * 0.3).toInt(),
+        cleanupThreshold: 0.7,
+        enableAggressiveCleanup: true,
+      ),
+    );
 
     // Reduce memory manager limits
     _memoryManager.updateMemoryLimits(
@@ -154,7 +172,8 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '🛡️ AdaptiveCacheManager: Applied memory-first strategy (cache: $newCacheSize elements)');
+        '🛡️ AdaptiveCacheManager: Applied memory-first strategy (cache: $newCacheSize elements)',
+      );
     }
   }
 
@@ -162,15 +181,19 @@ class AdaptiveCacheManager extends ChangeNotifier {
   Future<void> _applyPerformanceFirstStrategy() async {
     // Increase cache sizes for better performance
     final systemMemoryRatio = _currentMemoryLimit / _availableSystemMemory;
-    final newCacheSize =
-        math.min(200, (_elementCacheManager.maxCacheSize * 1.5).toInt());
+    final newCacheSize = math.min(
+      200,
+      (_elementCacheManager.maxCacheSize * 1.5).toInt(),
+    );
 
-    _elementCacheManager.updateConfiguration(ElementCacheConfiguration(
-      maxCacheSize: newCacheSize,
-      maxMemoryUsage: (_currentMemoryLimit * 0.7).toInt(),
-      cleanupThreshold: 0.9,
-      enableAggressiveCleanup: false,
-    ));
+    _elementCacheManager.updateConfiguration(
+      ElementCacheConfiguration(
+        maxCacheSize: newCacheSize,
+        maxMemoryUsage: (_currentMemoryLimit * 0.7).toInt(),
+        cleanupThreshold: 0.9,
+        enableAggressiveCleanup: false,
+      ),
+    );
 
     // Increase memory manager limits if system allows
     if (systemMemoryRatio < 0.3) {
@@ -182,7 +205,8 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
     if (kDebugMode) {
       print(
-          '🚀 AdaptiveCacheManager: Applied performance-first strategy (cache: $newCacheSize elements)');
+        '🚀 AdaptiveCacheManager: Applied performance-first strategy (cache: $newCacheSize elements)',
+      );
     }
   }
 
@@ -203,14 +227,18 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
   /// Calculate overall memory efficiency score
   double _calculateMemoryEfficiency(
-      MemoryStats memoryStats, CacheMetrics cacheMetrics) {
+    MemoryStats memoryStats,
+    CacheMetrics cacheMetrics,
+  ) {
     final memoryScore = 1.0 - memoryStats.pressureRatio;
     final cacheScore = cacheMetrics.hitRate;
     final largeElementPenalty =
         math.min(1.0, memoryStats.largeElementCount / 20.0) * 0.1;
 
     return math.max(
-        0.0, (memoryScore + cacheScore) / 2.0 - largeElementPenalty);
+      0.0,
+      (memoryScore + cacheScore) / 2.0 - largeElementPenalty,
+    );
   }
 
   /// Detect available system memory
@@ -231,7 +259,9 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
   /// Determine optimal adaptation strategy
   CacheAdaptationStrategy _determineOptimalStrategy(
-      MemoryStats memoryStats, CacheMetrics cacheMetrics) {
+    MemoryStats memoryStats,
+    CacheMetrics cacheMetrics,
+  ) {
     final memoryPressure = memoryStats.pressureRatio;
     final hitRate = cacheMetrics.hitRate;
 
@@ -252,12 +282,14 @@ class AdaptiveCacheManager extends ChangeNotifier {
 
     // Analyze performance trends
     if (_performanceHistory.length >= 5) {
-      final recentPerformance = _performanceHistory
-          .sublist(math.max(0, _performanceHistory.length - 5));
+      final recentPerformance = _performanceHistory.sublist(
+        math.max(0, _performanceHistory.length - 5),
+      );
       final avgHitRate =
           recentPerformance.map((s) => s.cacheHitRate).reduce((a, b) => a + b) /
-              recentPerformance.length;
-      final avgMemoryPressure = recentPerformance
+          recentPerformance.length;
+      final avgMemoryPressure =
+          recentPerformance
               .map((s) => s.memoryPressure)
               .reduce((a, b) => a + b) /
           recentPerformance.length;
@@ -308,29 +340,28 @@ class AdaptiveCacheManager extends ChangeNotifier {
   /// Fine-tune cache sizes based on performance metrics
   void _optimizeCacheSizes(MemoryStats memoryStats, CacheMetrics cacheMetrics) {
     // Calculate optimal cache size based on hit rate and memory usage
-    final currentHitRate = cacheMetrics.hitRate;
-    final memoryEfficiency = memoryStats.currentUsage > 0
-        ? (cacheMetrics.currentSize /
-            (memoryStats.currentUsage / (1024 * 1024)))
-        : 0.0;
-
     // Adjust cache size if hit rate is consistently low or high
-    final recentHitRates = _performanceHistory
-        .sublist(math.max(0, _performanceHistory.length - 3))
-        .map((s) => s.cacheHitRate)
-        .toList();
+    final recentHitRates =
+        _performanceHistory
+            .sublist(math.max(0, _performanceHistory.length - 3))
+            .map((s) => s.cacheHitRate)
+            .toList();
     final avgHitRate =
         recentHitRates.reduce((a, b) => a + b) / recentHitRates.length;
 
     if (avgHitRate < 0.6 && memoryStats.pressureRatio < 0.7) {
       // Low hit rate with available memory - increase cache
-      final newSize =
-          math.min(200, (_elementCacheManager.maxCacheSize * 1.2).toInt());
+      final newSize = math.min(
+        200,
+        (_elementCacheManager.maxCacheSize * 1.2).toInt(),
+      );
       _elementCacheManager.updateMaxCacheSize(newSize);
     } else if (avgHitRate > 0.95 && memoryStats.pressureRatio > 0.6) {
       // Very high hit rate with memory pressure - reduce cache slightly
-      final newSize =
-          math.max(30, (_elementCacheManager.maxCacheSize * 0.9).toInt());
+      final newSize = math.max(
+        30,
+        (_elementCacheManager.maxCacheSize * 0.9).toInt(),
+      );
       _elementCacheManager.updateMaxCacheSize(newSize);
     }
   }
@@ -346,7 +377,8 @@ class AdaptiveCacheManager extends ChangeNotifier {
     if (newStrategy != _currentStrategy) {
       if (kDebugMode) {
         print(
-            '🔄 AdaptiveCacheManager: Switching strategy from $_currentStrategy to $newStrategy');
+          '🔄 AdaptiveCacheManager: Switching strategy from $_currentStrategy to $newStrategy',
+        );
       }
 
       _currentStrategy = newStrategy;

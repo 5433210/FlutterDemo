@@ -68,7 +68,6 @@ class LargeElementHandler extends ChangeNotifier {
   /// Handle memory pressure by unloading large elements
   Future<int> handleMemoryPressure({required bool aggressive}) async {
     int freedMemory = 0;
-    final now = DateTime.now();
 
     // Sort large elements by priority for unloading
     final sortedElements = _largeElements.entries.toList()
@@ -79,6 +78,11 @@ class LargeElementHandler extends ChangeNotifier {
         // Prioritize unloading: very large > old > less recently used
         if (aInfo.isVeryLarge && !bInfo.isVeryLarge) return -1;
         if (!aInfo.isVeryLarge && bInfo.isVeryLarge) return 1;
+
+        // Then prioritize by last access time
+        final accessComparison =
+            bInfo.lastAccessTime.compareTo(aInfo.lastAccessTime);
+        if (accessComparison != 0) return accessComparison;
 
         return aInfo.registrationTime.compareTo(bInfo.registrationTime);
       });
@@ -331,6 +335,7 @@ class LargeElementInfo {
   final int estimatedSize;
   final DateTime registrationTime;
   final bool isVeryLarge;
+  DateTime lastAccessTime;
 
   LargeElementInfo({
     required this.elementId,
@@ -338,7 +343,7 @@ class LargeElementInfo {
     required this.estimatedSize,
     required this.registrationTime,
     required this.isVeryLarge,
-  });
+  }) : lastAccessTime = DateTime.now();
 }
 
 /// Optimized widget for rendering large elements
