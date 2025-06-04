@@ -233,12 +233,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // 阶段2: 初始化混合优化策略组件    // Initialize canvas structure listener for smart layer-specific routing
     _structureListener = CanvasStructureListener(widget.controller);
-    print('🏗️ Canvas: CanvasStructureListener initialized');
-
-    // Initialize state change dispatcher for unified state management
+    print(
+        '🏗️ Canvas: CanvasStructureListener initialized'); // Initialize state change dispatcher for unified state management
     _stateDispatcher =
         StateChangeDispatcher(widget.controller, _structureListener);
-    print('🏗️ Canvas: StateChangeDispatcher initialized');
+
+    // Set the state dispatcher in the controller for layered state management
+    widget.controller.setStateDispatcher(_stateDispatcher);
+
+    print(
+        '🏗️ Canvas: StateChangeDispatcher initialized and connected to controller');
 
     // Initialize drag operation manager for 3-phase drag system
     _dragOperationManager = DragOperationManager(
@@ -264,12 +268,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // 设置结构监听器的层级处理器
     _setupStructureListenerHandlers();
-    print('🏗️ Canvas: Structure listener handlers configured');
-
-    // Set up drag state manager callbacks
+    print(
+        '🏗️ Canvas: Structure listener handlers configured'); // Set up drag state manager callbacks
     _dragStateManager.setUpdateCallbacks(
       onBatchUpdate: (batchUpdates) {
-        widget.controller.batchUpdateElementProperties(batchUpdates);
+        widget.controller.batchUpdateElementProperties(
+          batchUpdates,
+          options: BatchUpdateOptions.forDragOperation(),
+        );
       },
     );
 

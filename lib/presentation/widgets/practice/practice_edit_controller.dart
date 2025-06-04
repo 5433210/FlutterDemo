@@ -15,13 +15,62 @@ import 'practice_edit_state.dart';
 import 'thumbnail_generator.dart';
 import 'undo_redo_manager.dart';
 
+/// 批量更新选项配置类
+class BatchUpdateOptions {
+  /// 是否启用延迟提交
+  final bool enableDelayedCommit;
+
+  /// 延迟提交的时间间隔（毫秒）
+  final int commitDelayMs;
+
+  /// 是否记录撤销操作
+  final bool recordUndoOperation;
+
+  /// 是否通知监听器
+  final bool notifyListeners;
+
+  /// 最大批次大小
+  final int maxBatchSize;
+  const BatchUpdateOptions({
+    this.enableDelayedCommit = false,
+    this.commitDelayMs = 50, // 更新默认值为50
+    this.recordUndoOperation = true,
+    this.notifyListeners = true,
+    this.maxBatchSize = 50,
+  });
+
+  /// 创建用于拖拽操作的配置
+  factory BatchUpdateOptions.forDragOperation() {
+    return const BatchUpdateOptions(
+      enableDelayedCommit: true,
+      commitDelayMs: 16,
+      recordUndoOperation: false, // 拖拽过程中不记录撤销操作
+      notifyListeners: false, // 使用StateChangeDispatcher代替
+      maxBatchSize: 100,
+    );
+  }
+
+  /// 创建用于属性面板更新的配置
+  factory BatchUpdateOptions.forPropertyUpdate() {
+    return const BatchUpdateOptions(
+      enableDelayedCommit: false,
+      commitDelayMs: 16,
+      recordUndoOperation: true,
+      notifyListeners: true,
+      maxBatchSize: 20,
+    );
+  }
+
+  @override
+  String toString() {
+    return 'BatchUpdateOptions(enableDelayedCommit: $enableDelayedCommit, '
+        'commitDelayMs: $commitDelayMs, recordUndoOperation: $recordUndoOperation, '
+        'notifyListeners: $notifyListeners, maxBatchSize: $maxBatchSize)';
+  }
+}
+
 /// 字帖编辑控制器
 class PracticeEditController extends ChangeNotifier {
-  // 批量更新配置
-  static const int _commitDelayMs = 16; // ~60fps
-
-  static const int _maxBatchSize = 50;
-
   // 状态
   final PracticeEditState _state = PracticeEditState();
 
@@ -33,7 +82,6 @@ class PracticeEditController extends ChangeNotifier {
   final Map<String, Map<String, dynamic>> _pendingUpdates = {};
 
   Timer? _commitTimer;
-  final bool _isCommitting = false;
 
   // 吸附管理器 - 用于元素拖拽和调整大小时的吸附
   // late final SnapManager _snapManager;
@@ -702,12 +750,17 @@ class PracticeEditController extends ChangeNotifier {
     // so we don't need to call notifyListeners() here
   }
 
-  /// 批量更新多个元素的属性
+  /// 批量更新多个元素的属性 - 增强版本支持分层状态管理
   ///
   /// 用于DragStateManager的批量更新操作，提高拖拽性能
+  /// 支持状态变更合并、延迟提交和分层状态管理
+  ///
   /// [batchUpdates] - Map<elementId, properties>格式的批量更新数据
+  /// [options] - 批量更新选项配置
   void batchUpdateElementProperties(
-      Map<String, Map<String, dynamic>> batchUpdates) {
+    Map<String, Map<String, dynamic>> batchUpdates, {
+    BatchUpdateOptions? options,
+  }) {
     if (batchUpdates.isEmpty) return;
 
     if (_state.currentPageIndex >= _state.pages.length) {
@@ -715,99 +768,20 @@ class PracticeEditController extends ChangeNotifier {
       return;
     }
 
+    final batchOptions = options ?? const BatchUpdateOptions();
+
     debugPrint(
-        '【控制器】batchUpdateElementProperties: 开始批量更新 ${batchUpdates.length} 个元素');
+        '【控制器】batchUpdateElementProperties: 开始批量更新 ${batchUpdates.length} 个元素 (延迟提交: ${batchOptions.enableDelayedCommit})');
 
-    final page = _state.pages[_state.currentPageIndex];
-    final elements = page['elements'] as List<dynamic>;
-
-    // 记录旧的属性用于撤销操作
-    final Map<String, Map<String, dynamic>> oldProperties = {};
-    final Map<String, Map<String, dynamic>> newProperties = {};
-    final List<String> updatedElementIds = [];
-
-    // 批量处理更新
-    for (final entry in batchUpdates.entries) {
-      final elementId = entry.key;
-      final properties = entry.value;
-
-      final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
-      if (elementIndex >= 0) {
-        final element = elements[elementIndex] as Map<String, dynamic>;
-
-        // 记录旧属性
-        oldProperties[elementId] = Map<String, dynamic>.from(element);
-
-        // 更新属性
-        final newElement = {...element};
-        properties.forEach((key, value) {
-          if (key == 'content' && element.containsKey('content')) {
-            // 对于content对象，合并而不是替换
-            newElement['content'] = {
-              ...(element['content'] as Map<String, dynamic>),
-              ...(value as Map<String, dynamic>),
-            };
-          } else {
-            newElement[key] = value;
-          }
-        });
-
-        // 应用更新
-        elements[elementIndex] = newElement;
-        newProperties[elementId] = newElement;
-        updatedElementIds.add(elementId);
-
-        // 如果是当前选中的元素，更新selectedElement
-        if (_state.selectedElementIds.contains(elementId)) {
-          _state.selectedElement = newElement;
-        }
-      }
+    // 如果启用延迟提交，先合并到待处理队列
+    if (batchOptions.enableDelayedCommit) {
+      _mergePendingUpdates(batchUpdates);
+      _scheduleDelayedCommit(batchOptions);
+      return;
     }
-    if (updatedElementIds.isNotEmpty) {
-      // 创建批量属性更新操作列表
-      final operations = <UndoableOperation>[];
 
-      for (final elementId in updatedElementIds) {
-        final oldProps = oldProperties[elementId]!;
-        final newProps = newProperties[elementId]!;
-
-        operations.add(ElementPropertyOperation(
-          elementId: elementId,
-          oldProperties: oldProps,
-          newProperties: newProps,
-          updateElement: (id, props) {
-            if (_state.currentPageIndex >= 0 &&
-                _state.currentPageIndex < _state.pages.length) {
-              final page = _state.pages[_state.currentPageIndex];
-              final elements = page['elements'] as List<dynamic>;
-              final elementIndex = elements.indexWhere((e) => e['id'] == id);
-
-              if (elementIndex >= 0) {
-                elements[elementIndex] = props;
-
-                // 如果是当前选中的元素，更新selectedElement
-                if (_state.selectedElementIds.contains(id)) {
-                  _state.selectedElement = props;
-                }
-              }
-            }
-          },
-        ));
-      }
-
-      // 创建批量操作
-      final batchOperation = BatchOperation(
-        operations: operations,
-        operationDescription: '批量更新${updatedElementIds.length}个元素',
-      );
-
-      _undoRedoManager.addOperation(batchOperation);
-      _state.hasUnsavedChanges = true;
-      notifyListeners();
-
-      debugPrint(
-          '【控制器】batchUpdateElementProperties: 批量更新完成，影响元素: $updatedElementIds');
-    }
+    // 立即执行批量更新
+    _executeBatchUpdate(batchUpdates, batchOptions);
   }
 
   /// 从 RepaintBoundary 捕获图像
@@ -1642,6 +1616,17 @@ class PracticeEditController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 立即刷新所有待处理的更新
+  void flushBatchUpdates() {
+    _commitTimer?.cancel();
+    if (_pendingUpdates.isNotEmpty) {
+      _flushPendingUpdates(const BatchUpdateOptions(
+        recordUndoOperation: true,
+        notifyListeners: true,
+      ));
+    }
+  }
+
   /// 获取页面的 GlobalKey 列表
   /// 为每个页面返回不同的 GlobalKey
   List<GlobalKey> getPageKeys() {
@@ -2459,6 +2444,13 @@ class PracticeEditController extends ChangeNotifier {
   /// 设置预览模式回调函数
   void setPreviewModeCallback(Function(bool) callback) {
     _previewModeCallback = callback;
+  }
+
+  /// 设置状态变化分发器（用于分层状态管理）
+  void setStateDispatcher(StateChangeDispatcher? dispatcher) {
+    _stateDispatcher = dispatcher;
+    debugPrint(
+        '【控制器】setStateDispatcher: 设置状态分发器 ${dispatcher != null ? '成功' : '为空'}');
   }
 
   /// 显示所有图层
@@ -3338,6 +3330,136 @@ class PracticeEditController extends ChangeNotifier {
     );
   }
 
+  /// 执行批量更新的核心逻辑
+  void _executeBatchUpdate(
+    Map<String, Map<String, dynamic>> batchUpdates,
+    BatchUpdateOptions options,
+  ) {
+    final page = _state.pages[_state.currentPageIndex];
+    final elements = page['elements'] as List<dynamic>;
+
+    // 记录旧的属性用于撤销操作
+    final Map<String, Map<String, dynamic>> oldProperties = {};
+    final Map<String, Map<String, dynamic>> newProperties = {};
+    final List<String> updatedElementIds = [];
+
+    // 批量处理更新
+    for (final entry in batchUpdates.entries) {
+      final elementId = entry.key;
+      final properties = entry.value;
+
+      final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+      if (elementIndex >= 0) {
+        final element = elements[elementIndex] as Map<String, dynamic>;
+
+        // 记录旧属性
+        oldProperties[elementId] = Map<String, dynamic>.from(element);
+
+        // 更新属性
+        final newElement = {...element};
+        properties.forEach((key, value) {
+          if (key == 'content' && element.containsKey('content')) {
+            // 对于content对象，合并而不是替换
+            newElement['content'] = {
+              ...(element['content'] as Map<String, dynamic>),
+              ...(value as Map<String, dynamic>),
+            };
+          } else {
+            newElement[key] = value;
+          }
+        });
+
+        // 应用更新
+        elements[elementIndex] = newElement;
+        newProperties[elementId] = newElement;
+        updatedElementIds.add(elementId);
+
+        // 如果是当前选中的元素，更新selectedElement
+        if (_state.selectedElementIds.contains(elementId)) {
+          _state.selectedElement = newElement;
+        }
+      }
+    }
+
+    if (updatedElementIds.isNotEmpty) {
+      // 如果启用了撤销/重做记录，创建批量操作
+      if (options.recordUndoOperation) {
+        final operations = <UndoableOperation>[];
+
+        for (final elementId in updatedElementIds) {
+          final oldProps = oldProperties[elementId]!;
+          final newProps = newProperties[elementId]!;
+
+          operations.add(ElementPropertyOperation(
+            elementId: elementId,
+            oldProperties: oldProps,
+            newProperties: newProps,
+            updateElement: (id, props) {
+              if (_state.currentPageIndex >= 0 &&
+                  _state.currentPageIndex < _state.pages.length) {
+                final page = _state.pages[_state.currentPageIndex];
+                final elements = page['elements'] as List<dynamic>;
+                final elementIndex = elements.indexWhere((e) => e['id'] == id);
+
+                if (elementIndex >= 0) {
+                  elements[elementIndex] = props;
+
+                  // 如果是当前选中的元素，更新selectedElement
+                  if (_state.selectedElementIds.contains(id)) {
+                    _state.selectedElement = props;
+                  }
+                }
+              }
+            },
+          ));
+        }
+
+        // 创建批量操作
+        final batchOperation = BatchOperation(
+          operations: operations,
+          operationDescription: '批量更新${updatedElementIds.length}个元素',
+        );
+
+        _undoRedoManager.addOperation(batchOperation);
+      }
+
+      _state.hasUnsavedChanges = true;
+
+      // 分层状态管理 - 通过StateChangeDispatcher分发状态变化
+      if (_stateDispatcher != null) {
+        _stateDispatcher!.dispatch(StateChangeEvent(
+          type: StateChangeType.elementUpdate,
+          data: {
+            'elementIds': updatedElementIds,
+            'updateType': 'batch',
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          },
+        ));
+      }
+
+      // 如果没有StateChangeDispatcher，回退到直接通知
+      if (options.notifyListeners) {
+        notifyListeners();
+      }
+
+      debugPrint('【控制器】_executeBatchUpdate: 批量更新完成，影响元素: $updatedElementIds');
+    }
+  }
+
+  /// 刷新待处理的更新
+  void _flushPendingUpdates(BatchUpdateOptions options) {
+    if (_pendingUpdates.isEmpty) return;
+
+    final updatesToCommit =
+        Map<String, Map<String, dynamic>>.from(_pendingUpdates);
+    _pendingUpdates.clear();
+
+    debugPrint(
+        '【控制器】_flushPendingUpdates: 提交 ${updatesToCommit.length} 个待处理更新');
+
+    _executeBatchUpdate(updatesToCommit, options);
+  }
+
   /// 生成字帖缩略图
   Future<Uint8List?> _generateThumbnail() async {
     _checkDisposed();
@@ -3445,6 +3567,35 @@ class PracticeEditController extends ChangeNotifier {
 
     // 通知监听器
     notifyListeners();
+  }
+
+  /// 合并待处理的更新到队列中
+  void _mergePendingUpdates(Map<String, Map<String, dynamic>> newUpdates) {
+    for (final entry in newUpdates.entries) {
+      final elementId = entry.key;
+      final newProperties = entry.value;
+
+      if (_pendingUpdates.containsKey(elementId)) {
+        // 合并属性更新，新属性覆盖旧属性
+        _pendingUpdates[elementId]!.addAll(newProperties);
+      } else {
+        _pendingUpdates[elementId] = Map<String, dynamic>.from(newProperties);
+      }
+    }
+
+    debugPrint(
+        '【控制器】_mergePendingUpdates: 合并更新到队列，当前队列大小: ${_pendingUpdates.length}');
+  }
+
+  /// 安排延迟提交
+  void _scheduleDelayedCommit(BatchUpdateOptions options) {
+    // 取消之前的计时器
+    _commitTimer?.cancel();
+
+    // 设置新的延迟提交计时器
+    _commitTimer = Timer(Duration(milliseconds: options.commitDelayMs), () {
+      _flushPendingUpdates(options);
+    });
   }
 }
 
