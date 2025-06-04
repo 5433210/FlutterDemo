@@ -55,17 +55,32 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         '🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
 
     // Sort elements by layer order
-    final sortedElements = _sortElementsByLayer(widget.elements, widget.layers);
-
-    // Apply viewport culling if available
+    final sortedElements = _sortElementsByLayer(
+        widget.elements, widget.layers); // Apply viewport culling if available
     final visibleElements = widget.viewportCullingManager != null
-        ? widget.viewportCullingManager!.cullElements(sortedElements)
+        ? widget.viewportCullingManager!.cullElementsAdvanced(
+            sortedElements,
+            enableSpatialOptimization: sortedElements.length > 50,
+          )
         : sortedElements;
 
     // Log culling metrics
     if (widget.viewportCullingManager != null) {
       final cullingMetrics = widget.viewportCullingManager!.getMetrics();
       print('🎯 Viewport Culling: $cullingMetrics');
+
+      // Configure culling strategy based on element count and performance
+      if (sortedElements.length > 1000) {
+        widget.viewportCullingManager!.configureCulling(
+          strategy: CullingStrategy.aggressive,
+          enableFastCulling: true,
+        );
+      } else if (sortedElements.length > 500) {
+        widget.viewportCullingManager!.configureCulling(
+          strategy: CullingStrategy.adaptive,
+          enableFastCulling: true,
+        );
+      }
     }
 
     // Trigger cache cleanup for efficient memory management

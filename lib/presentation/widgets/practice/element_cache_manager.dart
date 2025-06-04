@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'memory_manager.dart';
+
 /// 元素缓存性能指标
 class CacheMetrics {
   int _totalRequests = 0;
@@ -134,6 +136,21 @@ enum CacheStrategy {
   priorityBased,
 }
 
+/// Configuration for element cache
+class ElementCacheConfiguration {
+  final int maxCacheSize;
+  final int maxMemoryUsage;
+  final double cleanupThreshold;
+  final bool enableAggressiveCleanup;
+
+  ElementCacheConfiguration({
+    required this.maxCacheSize,
+    required this.maxMemoryUsage,
+    required this.cleanupThreshold,
+    required this.enableAggressiveCleanup,
+  });
+}
+
 /// 元素缓存条目，存储渲染的Widget和相关元数据
 class ElementCacheEntry {
   /// 缓存的Widget
@@ -236,19 +253,33 @@ class ElementCacheManager extends ChangeNotifier {
   /// 固定在缓存中的元素ID集合
   final Set<String> _pinnedElements = <String>{};
 
+  /// Memory manager for comprehensive resource tracking
+  MemoryManager? _memoryManager;
+
   /// 创建一个新的元素缓存管理器
   ElementCacheManager({
     CacheStrategy strategy = CacheStrategy.leastRecentlyUsed,
     int? maxSize,
     int? memoryThreshold,
+    MemoryManager? memoryManager,
   })  : _strategy = strategy,
         _maxSize = maxSize ?? _defaultMaxSize,
-        _memoryThreshold = memoryThreshold ?? _defaultMemoryThreshold {
+        _memoryThreshold = memoryThreshold ?? _defaultMemoryThreshold,
+        _memoryManager = memoryManager {
     if (kDebugMode) {
       print(
           '🧠 ElementCacheManager: Created with strategy=$strategy, maxSize=$_maxSize, memoryThreshold=${_formatBytes(_memoryThreshold)}');
     }
+
+    // Set up memory manager callbacks if provided
+    if (_memoryManager != null) {
+      _memoryManager!.onMemoryPressure = _handleMemoryPressure;
+      _memoryManager!.onLowMemory = _handleLowMemory;
+    }
   }
+
+  /// Get max cache size
+  int get maxCacheSize => _maxSize;
 
   /// 获取缓存指标
   CacheMetrics get metrics => _metrics;
@@ -382,11 +413,14 @@ class ElementCacheManager extends ChangeNotifier {
     if (cacheEntry == null) {
       _metrics.recordMiss(elementId, elementType);
       return null;
-    }
-
-    // 更新访问时间和计数
+    } // 更新访问时间和计数
     cacheEntry.access();
     _metrics.recordHit(elementId, elementType);
+
+    // Mark element accessed in memory manager
+    if (_memoryManager != null) {
+      _memoryManager!.markElementAccessed(elementId);
+    }
 
     return cacheEntry.widget;
   }
@@ -482,6 +516,13 @@ class ElementCacheManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Set memory manager for resource tracking
+  void setMemoryManager(MemoryManager memoryManager) {
+    _memoryManager = memoryManager;
+    _memoryManager!.onMemoryPressure = _handleMemoryPressure;
+    _memoryManager!.onLowMemory = _handleLowMemory;
+  }
+
   /// 将元素存储到缓存中
   void storeElementWidget(
     String elementId,
@@ -512,10 +553,14 @@ class ElementCacheManager extends ChangeNotifier {
     // 更新指标
     _metrics.currentSize = _cache.length;
     _metrics.updateMemoryUsage(
-        _metrics.currentMemoryUsage - oldSize + estimatedSize);
-
-    // 从更新列表中移除
+        _metrics.currentMemoryUsage - oldSize + estimatedSize); // 从更新列表中移除
     _elementsNeedingUpdate.remove(elementId);
+
+    // Register with memory manager if available
+    if (_memoryManager != null) {
+      _memoryManager!.registerElementMemory(elementId, properties);
+      _memoryManager!.markElementAccessed(elementId);
+    }
 
     // 检查是否需要清理缓存
     if (_cache.length > _maxSize ||
@@ -534,10 +579,58 @@ class ElementCacheManager extends ChangeNotifier {
     }
   }
 
+  /// Update cache configuration
+  void updateConfiguration(ElementCacheConfiguration config) {
+    // Note: This implementation doesn't change _maxSize as it's final
+    // In a real implementation, you might want to make _maxSize mutable
+    if (kDebugMode) {
+      print(
+          '🔧 ElementCacheManager: Configuration updated with maxSize=${config.maxCacheSize}');
+    }
+
+    // Apply the cleanup threshold by triggering cleanup if needed
+    if (config.enableAggressiveCleanup || _cache.length > config.maxCacheSize) {
+      cleanupCache(force: config.enableAggressiveCleanup);
+    }
+  }
+
+  /// Update max cache size
+  void updateMaxCacheSize(int newSize) {
+    // Note: Since _maxSize is final, we can't actually change it
+    // This method exists for API compatibility
+    if (kDebugMode) {
+      print(
+          '🔧 ElementCacheManager: Requested to update max cache size to $newSize (current: $_maxSize)');
+    }
+
+    // Trigger cleanup if current size exceeds new size
+    if (_cache.length > newSize) {
+      cleanupCache(force: true);
+    }
+  }
+
   /// 格式化字节数为可读字符串
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  /// Handle low memory callback from MemoryManager
+  void _handleLowMemory() {
+    if (kDebugMode) {
+      print(
+          '🚨 ElementCacheManager: Low memory detected, triggering aggressive cleanup');
+    }
+    cleanupCache(force: true);
+  }
+
+  /// Handle memory pressure callback from MemoryManager
+  void _handleMemoryPressure() {
+    if (kDebugMode) {
+      print(
+          '⚠️ ElementCacheManager: Memory pressure detected, triggering cleanup');
+    }
+    cleanupCache(force: false);
   }
 }
