@@ -1,18 +1,16 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../widgets/image/cached_image.dart';
-import '../../../widgets/practice/collection_element_renderer.dart';
-import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
 import 'canvas_gesture_handler.dart';
+import 'content_render_controller.dart';
+import 'content_render_layer.dart';
 
 /// Material 3 canvas widget for practice editing
 class M3PracticeEditCanvas extends ConsumerStatefulWidget {
@@ -103,6 +101,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   // Canvas gesture handler
   late CanvasGestureHandler _gestureHandler;
 
+  // Content render controller for dual-layer architecture
+  late ContentRenderController _contentRenderController;
+
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
       ValueNotifier(SelectionBoxState());
@@ -149,6 +150,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   @override
   void dispose() {
     _selectionBoxNotifier.dispose();
+    _contentRenderController.dispose();
     // widget.transformationController
     //     .removeListener(_debouncedTransformationChange);
     // _transformationDebouncer?.cancel();
@@ -158,6 +160,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize content render controller for dual-layer architecture
+    _contentRenderController = ContentRenderController();
 
     // Initialize RepaintBoundary key - always create a new key for screenshot functionality
     // Don't reuse widget.key as it may cause conflicts with other widgets
@@ -178,6 +183,24 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
           _elementStartPositions.clear();
           _elementStartPositions.addAll(elementPositions);
         });
+
+        // Notify content render controller about potential changes
+        if (isDragging &&
+            widget.controller.state.selectedElementIds.isNotEmpty) {
+          for (final elementId in widget.controller.state.selectedElementIds) {
+            final element =
+                widget.controller.state.currentPageElements.firstWhere(
+              (e) => e['id'] == elementId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (element.isNotEmpty) {
+              _contentRenderController.initializeElement(
+                elementId: elementId,
+                properties: element,
+              );
+            }
+          }
+        }
       },
       onDragUpdate: () {
         // 如果是选择框更新，使用ValueNotifier而不是setState
@@ -189,17 +212,62 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             endPoint: _gestureHandler.selectionBoxEnd,
           );
         } else {
-          // 对于元素拖拽，仍然使用setState
-          setState(() {});
+          // 对于元素拖拽，使用ContentRenderController通知而不是setState
+          if (widget.controller.state.selectedElementIds.isNotEmpty) {
+            for (final elementId
+                in widget.controller.state.selectedElementIds) {
+              final element =
+                  widget.controller.state.currentPageElements.firstWhere(
+                (e) => e['id'] == elementId,
+                orElse: () => <String, dynamic>{},
+              );
+              if (element.isNotEmpty) {
+                _contentRenderController.notifyElementChanged(
+                  elementId: elementId,
+                  newProperties: element,
+                );
+              }
+            }
+          }
         }
       },
       onDragEnd: () {
-        setState(() {
-          _isDragging = false;
-        });
+        _isDragging = false;
 
         // 处理元素平移后的网格吸附
         _applyGridSnapToSelectedElements();
+
+        // Notify content render controller about element changes after drag
+        if (widget.controller.state.selectedElementIds.isNotEmpty) {
+          for (final elementId in widget.controller.state.selectedElementIds) {
+            final element =
+                widget.controller.state.currentPageElements.firstWhere(
+              (e) => e['id'] == elementId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (element.isNotEmpty) {
+              _contentRenderController.notifyElementChanged(
+                elementId: elementId,
+                newProperties: element,
+              );
+            }
+          }
+        }
+        if (widget.controller.state.selectedElementIds.isNotEmpty) {
+          for (final elementId in widget.controller.state.selectedElementIds) {
+            final element =
+                widget.controller.state.currentPageElements.firstWhere(
+              (e) => e['id'] == elementId,
+              orElse: () => <String, dynamic>{},
+            );
+            if (element.isNotEmpty) {
+              _contentRenderController.notifyElementChanged(
+                elementId: elementId,
+                newProperties: element,
+              );
+            }
+          }
+        }
       },
       getScaleFactor: () {
         // Extract the scale from the transformation matrix
@@ -371,16 +439,15 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                   transformationController: widget.transformationController,
                   onInteractionStart: (ScaleStartDetails details) {},
                   onInteractionUpdate: (ScaleUpdateDetails details) {
-                    // Update zoom value during scaling to refresh the display
-                    setState(() {});
+                    // No need for setState during scaling - zoom updates are handled via controller
+                    // The transformationController already triggers necessary repaints
                   },
                   onInteractionEnd: (ScaleEndDetails details) {
-                    // Update final zoom value and ensure the UI is refreshed
+                    // Update final zoom value through controller only
                     final scale = widget.transformationController.value
                         .getMaxScaleOnAxis();
                     widget.controller.zoomTo(scale);
-                    setState(
-                        () {}); // Update to reflect the new zoom level in the status bar
+                    // No setState needed - controller state changes trigger UI updates automatically
                   },
                   constrained: false, // Allow content to be unconstrained
                   child: GestureDetector(
@@ -695,7 +762,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
     );
   }
 
-  /// Build page content
+  /// Build page content using dual-layer architecture
   Widget _buildPageContent(
     Map<String, dynamic> page,
     List<Map<String, dynamic>> elements,
@@ -715,7 +782,8 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       }
     } catch (e) {
       debugPrint('Error parsing background color: $e');
-    }
+    } // Update content render controller with current elements
+    _contentRenderController.initializeElements(elements);
 
     // Get selected element for control points
     String? selectedElementId;
@@ -748,183 +816,41 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
       clipBehavior:
           Clip.none, // Allow control points to extend beyond page boundaries
       children: [
-        // Page background
-        Container(
-          width: pageSize.width,
-          height: pageSize.height,
-          color: backgroundColor,
-          child: RepaintBoundary(
-            key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-            child: AbsorbPointer(
-              absorbing: false, // Ensure control points can receive events
-              child: Stack(
-                fit: StackFit.expand, // Ensure stack fills its parent
-                clipBehavior:
-                    Clip.hardEdge, // Keep hardEdge for page content itself
-                children: [
-                  // Background layer - ensure background color is correctly applied
-                  Container(
-                    width: pageSize.width,
-                    height: pageSize.height,
-                    color: backgroundColor,
+        // Content Render Layer - handles element rendering with intelligent caching
+        RepaintBoundary(
+          key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
+          child: Stack(
+            children: [
+              // Grid layer (if enabled)
+              if (widget.controller.state.gridVisible && !widget.isPreviewMode)
+                CustomPaint(
+                  size: pageSize,
+                  painter: _GridPainter(
+                    gridSize: widget.controller.state.gridSize,
+                    gridColor: colorScheme.outlineVariant.withAlpha(77),
                   ),
-
-                  // Grid (if visible and not in preview mode)
-                  if (widget.controller.state.gridVisible &&
-                      !widget.isPreviewMode)
-                    CustomPaint(
-                      size: Size(pageSize.width, pageSize.height),
-                      painter: _GridPainter(
-                        gridSize: widget.controller.state.gridSize,
-                        gridColor: colorScheme.outlineVariant
-                            .withAlpha(77), // 0.3 opacity (77/255)
-                      ),
-                    ),
-
-                  // Render elements
-                  ...elements.map((element) {
-                    // Skip hidden elements
-                    final isHidden = element['hidden'] == true;
-                    if (isHidden) {
-                      debugPrint(
-                          '跳过隐藏元素: id=${element['id']}, hidden=$isHidden');
-                      return const SizedBox.shrink();
-                    }
-
-                    // Get element properties
-                    final id = element['id'] as String;
-                    final elementX = (element['x'] as num).toDouble();
-                    final elementY = (element['y'] as num).toDouble();
-                    final elementWidth = (element['width'] as num).toDouble();
-                    final elementHeight = (element['height'] as num).toDouble();
-                    final elementRotation =
-                        (element['rotation'] as num?)?.toDouble() ?? 0.0;
-                    final isLocked = element['locked'] == true;
-
-                    // Check if element is on a locked layer
-                    final layerId = element['layerId'] as String?;
-                    bool isLayerLocked = false;
-                    bool isLayerHidden = false;
-                    if (layerId != null) {
-                      final layer =
-                          widget.controller.state.getLayerById(layerId);
-                      if (layer != null) {
-                        isLayerLocked = layer['isLocked'] == true;
-                        isLayerHidden = layer['isVisible'] == false;
-                      }
-                    }
-
-                    // Skip hidden layer elements
-                    if (isLayerHidden) {
-                      debugPrint(
-                          '跳过隐藏图层上的元素: id=${element['id']}, layerId=$layerId');
-                      return const SizedBox.shrink();
-                    } // Check if this element is selected
-                    final isSelected =
-                        widget.controller.state.selectedElementIds.contains(id);
-
-                    // Render element with proper positioning - RepaintBoundary must be inside Positioned
-                    return Positioned(
-                      left: elementX,
-                      top: elementY,
-                      child: RepaintBoundary(
-                        child: Transform.rotate(
-                          angle: elementRotation *
-                              math.pi /
-                              180, // Convert to radians
-                          child: Container(
-                            width: elementWidth,
-                            height: elementHeight,
-                            decoration: !widget.isPreviewMode && isSelected
-                                ? BoxDecoration(
-                                    border: Border.all(
-                                      color: isLocked
-                                          ? colorScheme.tertiary
-                                          : colorScheme.primary,
-                                      width: 1.5,
-                                    ),
-                                  )
-                                : null,
-                            child: Stack(
-                              children: [
-                                // The actual element content
-                                Positioned.fill(
-                                  child: _renderElement(element),
-                                ),
-
-                                // Selection corners (if selected and not in preview mode)
-                                if (!widget.isPreviewMode && isSelected)
-                                  Positioned.fill(
-                                    child: CustomPaint(
-                                      painter: _SelectionCornerPainter(
-                                        color: isLocked
-                                            ? colorScheme.tertiary
-                                            : colorScheme.primary,
-                                      ),
-                                    ),
-                                  ),
-
-                                // Lock icon (if element or its layer is locked)
-                                if ((isLocked || isLayerLocked) &&
-                                    !widget.isPreviewMode)
-                                  Positioned(
-                                    right: 2,
-                                    top: 2,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white
-                                            .withAlpha(204), // 0.8 opacity
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: isLayerLocked
-                                              ? Colors.grey.shade400
-                                              : colorScheme.tertiary,
-                                          width: 1.0,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            isLayerLocked
-                                                ? Icons.layers
-                                                : Icons.lock,
-                                            size: 18,
-                                            color: isLayerLocked
-                                                ? Colors.grey.shade700
-                                                : colorScheme.tertiary,
-                                          ),
-                                          if (isLayerLocked)
-                                            Icon(
-                                              Icons.lock,
-                                              size: 14,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-
-                  // 移除原有选择框实现，由单独的层来处理
-                ],
+                ),
+              // Content rendering layer
+              ContentRenderLayer(
+                elements: elements,
+                layers: widget.controller.state.layers,
+                renderController: _contentRenderController,
+                isPreviewMode: widget.isPreviewMode,
+                pageSize: pageSize,
+                backgroundColor: backgroundColor,
+                selectedElementIds:
+                    widget.controller.state.selectedElementIds.toSet(),
               ),
-            ),
+            ],
           ),
         ),
 
-        // 选择框层 - 分离到独立图层，使用ValueListenableBuilder避免整个画布重建
-        if (!widget.isPreviewMode)
+        // UI Interaction Layer - handles selection box and control points
+        if (!widget.isPreviewMode) ...[
+          // Selection box layer - independent of content rendering
           Positioned.fill(
             child: IgnorePointer(
-              // 确保选择框层不拦截下方元素的交互
+              // Ensure selection box layer doesn't intercept element interactions
               child: ValueListenableBuilder<SelectionBoxState>(
                 valueListenable: _selectionBoxNotifier,
                 builder: (context, selectionBoxState, child) {
@@ -932,9 +858,9 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
                       selectionBoxState.isActive &&
                       selectionBoxState.startPoint != null &&
                       selectionBoxState.endPoint != null) {
-                    // 不使用Transform，直接在画布视图坐标系中绘制选择框
+                    // Draw selection box directly in canvas view coordinates
                     return CustomPaint(
-                      size: Size.infinite, // 覆盖整个区域
+                      size: Size.infinite, // Cover entire area
                       painter: _SelectionBoxPainter(
                         startPoint: selectionBoxState.startPoint!,
                         endPoint: selectionBoxState.endPoint!,
@@ -948,12 +874,13 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
             ),
           ),
 
-        // Control points for selected element (if single selection)
-        if (selectedElementId != null && !widget.isPreviewMode)
-          Positioned.fill(
-            child: _buildControlPoints(
-                selectedElementId, x, y, width, height, rotation),
-          ),
+          // Control points for selected element (if single selection)
+          if (selectedElementId != null)
+            Positioned.fill(
+              child: _buildControlPoints(
+                  selectedElementId, x, y, width, height, rotation),
+            ),
+        ],
       ],
     );
   }
@@ -1013,26 +940,6 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
 
     // debugPrint(
     // 'Reset view: Maximized canvas content display with ${((1 - paddingFactor) * 100).toStringAsFixed(1)}% padding');
-  }
-
-  BoxFit _getFitMode(String fitMode) {
-    switch (fitMode) {
-      case 'fill':
-        return BoxFit.fill;
-      case 'cover':
-        return BoxFit.cover;
-      case 'fitWidth':
-        return BoxFit.fitWidth;
-      case 'fitHeight':
-        return BoxFit.fitHeight;
-      case 'none':
-        return BoxFit.none;
-      case 'scaleDown':
-        return BoxFit.scaleDown;
-      case 'contain':
-      default:
-        return BoxFit.contain;
-    }
   }
 
   /// 处理控制点拖拽结束事件
@@ -1385,416 +1292,7 @@ class _M3PracticeEditCanvasState extends ConsumerState<M3PracticeEditCanvas> {
         'Rotating element $elementId: delta=$delta, rotationDelta=$rotationDelta, newRotation=$newRotation'); // Update rotation
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
-  }
-  // Removed unused _handleTransformationChange method
-
-  /// Parse color from string
-  Color _parseColor(String colorString) {
-    // Use the same implementation as ElementUtils.parseColor for consistency
-    return ElementUtils.parseColor(colorString);
-  }
-
-  /// Render collection element
-  Widget _renderCollectionElement(Map<String, dynamic> element) {
-    debugPrint(
-        '🔍 渲染集字元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
-    final content = element['content'] as Map<String, dynamic>? ?? {};
-    final characters = content['characters'] as String? ?? '';
-    final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
-
-    // Get collection properties with defaults
-    final writingMode = content['writingMode'] as String? ?? 'horizontal-l';
-    final fontSize = (content['fontSize'] as num?)?.toDouble() ?? 40.0;
-    final letterSpacing = (content['letterSpacing'] as num?)?.toDouble() ?? 0.0;
-    final lineSpacing = (content['lineSpacing'] as num?)?.toDouble() ?? 0.0;
-    final textAlign = content['textAlign'] as String? ?? 'left';
-    final verticalAlign = content['verticalAlign'] as String? ?? 'top';
-    final fontColor = content['fontColor'] as String? ?? '#000000';
-    final padding = (content['padding'] as num?)?.toDouble() ?? 0.0;
-    final enableSoftLineBreak = content['enableSoftLineBreak'] as bool? ??
-        false; // Get texture-related properties
-    final hasBackgroundTexture = content.containsKey('backgroundTexture') &&
-        content['backgroundTexture'] != null &&
-        content['backgroundTexture'] is Map<String, dynamic> &&
-        (content['backgroundTexture'] as Map<String, dynamic>).isNotEmpty;
-    final backgroundTexture = hasBackgroundTexture
-        ? content['backgroundTexture'] as Map<String, dynamic>
-        : null;
-    final textureFillMode = content['textureFillMode'] as String? ?? 'cover';
-    final textureOpacity = (content['textureOpacity'] as num?)?.toDouble() ??
-        1.0; // Texture debugging (reduced logging for performance)
-
-    // Get character images
-    final characterImages = content;
-    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
-    final textureWidth = (content['textureWidth'] as num?)?.toDouble() ?? 0.0;
-    final textureHeight = (content['textureHeight'] as num?)?.toDouble() ?? 0.0;
-
-    // Parse color
-    final bgColor = _parseColor(backgroundColor);
-    if (characters.isEmpty && !hasBackgroundTexture) {
-      // Removed debug logging for performance
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: bgColor,
-        child: const Center(
-          child: Text(
-            'Empty Collection',
-            style: TextStyle(fontSize: 14),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
-    }
-
-    // Debug logging removed for performance
-
-    return Opacity(
-        opacity: opacity,
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: bgColor,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Debug logging removed for performance
-              return CollectionElementRenderer.buildCollectionLayout(
-                characters: characters,
-                writingMode: writingMode,
-                fontSize: fontSize,
-                letterSpacing: letterSpacing,
-                lineSpacing: lineSpacing,
-                textAlign: textAlign,
-                verticalAlign: verticalAlign,
-                characterImages: characterImages,
-                constraints: constraints,
-                padding: padding,
-                fontColor: fontColor,
-                backgroundColor: backgroundColor,
-                enableSoftLineBreak: enableSoftLineBreak,
-                // Pass texture-related properties
-                hasCharacterTexture: hasBackgroundTexture,
-                characterTextureData: backgroundTexture,
-                textureFillMode: textureFillMode,
-                textureOpacity: textureOpacity,
-                textureWidth: textureWidth,
-                textureHeight: textureHeight,
-                ref: ref,
-              );
-            },
-          ),
-        ));
-  }
-
-  /// Render element based on its type
-  Widget _renderElement(Map<String, dynamic> element) {
-    final type = element['type'] as String;
-
-    // Simple placeholder rendering for each element type
-    switch (type) {
-      case 'text':
-        return _renderTextElement(element);
-      case 'image':
-        return _renderImageElement(element);
-      case 'collection':
-        return _renderCollectionElement(element);
-      case 'group':
-        return _renderGroupElement(element);
-      default:
-        return Container(
-          color: Colors.grey.withAlpha(51), // 0.2 opacity (51/255)
-          child: Center(child: Text('Unknown element type: $type')),
-        );
-    }
-  }
-
-  /// Render group element
-  Widget _renderGroupElement(Map<String, dynamic> element) {
-    final content = element['content'] as Map<String, dynamic>? ?? {};
-
-    // 检查是否使用 'children' 键（新版本）或 'elements' 键（旧版本）
-    List<dynamic> children = [];
-    if (content.containsKey('children')) {
-      children = content['children'] as List<dynamic>? ?? [];
-    } else if (content.containsKey('elements')) {
-      children = content['elements'] as List<dynamic>? ?? [];
-    }
-
-    if (children.isEmpty) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.grey.withAlpha(26), // 0.1 opacity (26/255)
-        child: const Center(
-          child: Text('空组合'),
-        ),
-      );
-    }
-
-    // 使用Stack来渲染所有子元素
-    return Stack(
-      clipBehavior: Clip.none,
-      children: children.map<Widget>((child) {
-        final String type = child['type'] as String;
-        final double x = (child['x'] as num).toDouble();
-        final double y = (child['y'] as num).toDouble();
-        final double width = (child['width'] as num).toDouble();
-        final double height = (child['height'] as num).toDouble();
-        final double rotation = (child['rotation'] as num? ?? 0.0).toDouble();
-        final double opacity = (child['opacity'] as num? ?? 1.0).toDouble();
-        final bool isHidden = child['hidden'] as bool? ?? false;
-
-        // 如果元素被隐藏，则不渲染（预览模式）或半透明显示（编辑模式）
-        if (isHidden && widget.isPreviewMode) {
-          return const SizedBox.shrink();
-        }
-
-        // 根据子元素类型渲染不同的内容
-        Widget childWidget;
-        switch (type) {
-          case 'text':
-            childWidget = _renderTextElement(child);
-            break;
-          case 'image':
-            childWidget = _renderImageElement(child);
-            break;
-          case 'collection':
-            childWidget = _renderCollectionElement(child);
-            break;
-          case 'group':
-            // 递归处理嵌套组合
-            childWidget = _renderGroupElement(child);
-            break;
-          default:
-            childWidget = Container(
-              color: Colors.grey.withAlpha(51), // 0.2 的不透明度
-              child: Center(child: Text('未知元素类型: $type')),
-            );
-        }
-
-        // 使用Positioned和Transform确保子元素在正确的位置和角度
-        return Positioned(
-          left: x,
-          top: y,
-          width: width,
-          height: height,
-          child: Transform.rotate(
-            angle: rotation * (3.14159265359 / 180),
-            alignment: Alignment.center,
-            child: Opacity(
-              opacity: isHidden && !widget.isPreviewMode ? 0.5 : opacity,
-              child: SizedBox(
-                width: width,
-                height: height,
-                child: childWidget,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// Render image element
-  Widget _renderImageElement(Map<String, dynamic> element) {
-    debugPrint(
-        '🔍 渲染图片元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
-    final content = element['content'] as Map<String, dynamic>? ?? {};
-    final imageUrl = content['imageUrl'] as String? ?? '';
-    final transformedImageUrl = content['transformedImageUrl'] as String?;
-    final backgroundColor = content['backgroundColor'] as String? ?? '#FFFFFF';
-    final fitMode = content['fitMode'] as String? ?? 'contain';
-    final double opacity = (element['opacity'] as num? ?? 1.0).toDouble();
-    // final bool isHidden = element['hidden'] as bool??? false;
-    // Get BoxFit from fitMode
-    final BoxFit fit = _getFitMode(fitMode);
-
-    // Parse color
-    final bgColor = _parseColor(backgroundColor);
-
-    // Process transformedImageData (could be Uint8List, List<int>, or List<dynamic>)
-    Uint8List? transformedImageData;
-    final dynamic rawTransformedData = content['transformedImageData'];
-
-    if (rawTransformedData != null) {
-      debugPrint(
-          'Found transformedImageData of type: ${rawTransformedData.runtimeType}');
-
-      if (rawTransformedData is Uint8List) {
-        transformedImageData = rawTransformedData;
-        debugPrint('Using transformedImageData as Uint8List directly');
-      } else if (rawTransformedData is List<int>) {
-        transformedImageData = Uint8List.fromList(rawTransformedData);
-        debugPrint('Converted List<int> to Uint8List');
-      } else if (rawTransformedData is List) {
-        // Handle case where JSON deserialization creates a List<dynamic>
-        try {
-          transformedImageData = Uint8List.fromList(
-              (rawTransformedData).map((dynamic item) => item as int).toList());
-          debugPrint('Converted List<dynamic> to Uint8List');
-        } catch (e) {
-          debugPrint('Error converting List<dynamic> to Uint8List: $e');
-        }
-      }
-    }
-
-    // 使用Stack包装，确保事件可以穿透到控制点层
-    Widget imageContent;
-
-    // If we have transformed image data, use it
-    if (transformedImageData != null) {
-      debugPrint(
-          'Using transformedImageData for rendering (${transformedImageData.length} bytes)');
-      imageContent = Opacity(
-          opacity: opacity,
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: Container(color: bgColor),
-              ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  // 确保图片不拦截控制点事件
-                  child: Image.memory(
-                    transformedImageData,
-                    fit: fit,
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint(
-                          'Error loading transformed image data: $error');
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.broken_image,
-                                size: 48, color: Colors.red.shade300),
-                            const SizedBox(height: 8),
-                            Text('Error: $error',
-                                style: TextStyle(color: Colors.red.shade300)),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ));
-    } else {
-      // If we have a transformed image URL, use it
-      final effectiveImageUrl = transformedImageUrl ?? imageUrl;
-
-      // If no image URL is available, show placeholder
-      if (effectiveImageUrl.isEmpty) {
-        imageContent = Stack(
-          children: [
-            Positioned.fill(
-              child: Container(color: bgColor),
-            ),
-            const Positioned.fill(
-              child: Center(
-                child: Icon(Icons.image, size: 48, color: Colors.grey),
-              ),
-            ),
-          ],
-        );
-      } else if (effectiveImageUrl.startsWith('file://')) {
-        // Check if it's a local file path
-        final filePath = effectiveImageUrl.substring(7);
-        imageContent = Opacity(
-            opacity: opacity,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(color: bgColor),
-                ),
-                Positioned.fill(
-                  child: IgnorePointer(
-                    // 确保图片不拦截控制点事件
-                    child: CachedImage(
-                      path: filePath,
-                      fit: fit,
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Error loading file image: $error');
-                        return Center(
-                          child: Icon(Icons.broken_image,
-                              size: 48, color: Colors.red.shade300),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ));
-      } else {
-        imageContent = Opacity(
-            opacity: opacity,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(color: bgColor),
-                ),
-                Positioned.fill(
-                  child: IgnorePointer(
-                    // 确保图片不拦截控制点事件
-                    child: Image.network(
-                      effectiveImageUrl,
-                      fit: fit,
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Error loading network image: $error');
-                        return Center(
-                          child: Icon(Icons.broken_image,
-                              size: 48, color: Colors.red.shade300),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ));
-      }
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      // 使用Material包装以确保正确的点击行为
-      child: Material(
-        type: MaterialType.transparency,
-        child: imageContent,
-      ),
-    );
-  }
-
-  /// Render text element
-  Widget _renderTextElement(Map<String, dynamic> element) {
-    debugPrint(
-        '🔍 渲染文本元素 - ID: ${element['id']}, 选中状态: ${widget.controller.state.selectedElementIds.contains(element['id'])}');
-    // 添加IgnorePointer包装，确保文本元素不拦截控制点事件
-    return Material(
-      type: MaterialType.transparency,
-      child: Stack(
-        children: [
-          // 这里添加一个透明层来接收基本事件，但不会拦截控制点事件
-          Positioned.fill(
-            child: Container(color: Colors.transparent),
-          ),
-          // 包装原始文本元素，使其忽略指针事件，以便控制点可以接收事件
-          Positioned.fill(
-            child: IgnorePointer(
-              // 允许文本内容显示，但不拦截控制点事件
-              ignoring: widget.controller.state.selectedElementIds
-                  .contains(element['id']),
-              child: ElementRenderers.buildTextElement(
-                element,
-                isPreviewMode: widget.isPreviewMode,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  } // Removed unused _handleTransformationChange method
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
@@ -1840,100 +1338,5 @@ class _SelectionBoxPainter extends CustomPainter {
     return startPoint != oldDelegate.startPoint ||
         endPoint != oldDelegate.endPoint ||
         color != oldDelegate.color;
-  }
-}
-
-/// Custom painter for selection corner indicators with high contrast dual colors
-class _SelectionCornerPainter extends CustomPainter {
-  final Color color;
-  late final Color contrastColor;
-
-  _SelectionCornerPainter({required this.color}) {
-    // Create a contrasting color - white for dark colors, black for light colors
-    // Determine if the primary color is light or dark
-    final brightness = ThemeData.estimateBrightnessForColor(color);
-    contrastColor = brightness == Brightness.dark ? Colors.white : Colors.black;
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // Create two paints for the dual-color effect
-    final primaryPaint = Paint()
-      ..color = color
-      ..strokeWidth = 2.0;
-
-    final contrastPaint = Paint()
-      ..color = contrastColor
-      ..strokeWidth = 1.0;
-
-    // Draw corner indicators with a dual-color effect
-    const cornerLength = 10.0; // Slightly longer for better visibility
-
-    // Draw corners with dual-color effect (outer stroke first, then inner stroke)
-    _drawCornerWithDualColors(canvas, const Offset(0, 0), 'top-left', size,
-        primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(size.width, 0), 'top-right', size,
-        primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(0, size.height), 'bottom-left',
-        size, primaryPaint, contrastPaint, cornerLength);
-    _drawCornerWithDualColors(canvas, Offset(size.width, size.height),
-        'bottom-right', size, primaryPaint, contrastPaint, cornerLength);
-  }
-
-  @override
-  bool shouldRepaint(_SelectionCornerPainter oldDelegate) {
-    return oldDelegate.color != color ||
-        oldDelegate.contrastColor != contrastColor;
-  }
-
-  /// Helper method to draw a corner with dual colors
-  void _drawCornerWithDualColors(
-      Canvas canvas,
-      Offset point,
-      String cornerPosition,
-      Size size,
-      Paint primaryPaint,
-      Paint contrastPaint,
-      double cornerLength) {
-    // Calculate the two lines for this corner
-    Offset horizontalEnd, verticalEnd;
-
-    switch (cornerPosition) {
-      case 'top-left':
-        horizontalEnd = Offset(point.dx + cornerLength, point.dy);
-        verticalEnd = Offset(point.dx, point.dy + cornerLength);
-        break;
-      case 'top-right':
-        horizontalEnd = Offset(point.dx - cornerLength, point.dy);
-        verticalEnd = Offset(point.dx, point.dy + cornerLength);
-        break;
-      case 'bottom-left':
-        horizontalEnd = Offset(point.dx + cornerLength, point.dy);
-        verticalEnd = Offset(point.dx, point.dy - cornerLength);
-        break;
-      case 'bottom-right':
-        horizontalEnd = Offset(point.dx - cornerLength, point.dy);
-        verticalEnd = Offset(point.dx, point.dy - cornerLength);
-        break;
-      default:
-        return;
-    }
-
-    // Draw the outer (contrast) stroke
-    canvas.drawLine(point, horizontalEnd, primaryPaint);
-    canvas.drawLine(point, verticalEnd, primaryPaint);
-
-    // Draw the inner (primary) stroke with slight offset for a dual-color effect
-    const offsetAmount = 1.0;
-    final offsetX =
-        cornerPosition.contains('right') ? -offsetAmount : offsetAmount;
-    final offsetY =
-        cornerPosition.contains('bottom') ? -offsetAmount : offsetAmount;
-
-    canvas.drawLine(point.translate(offsetX, offsetY),
-        horizontalEnd.translate(0, offsetY), contrastPaint);
-
-    canvas.drawLine(point.translate(offsetX, offsetY),
-        verticalEnd.translate(offsetX, 0), contrastPaint);
   }
 }
