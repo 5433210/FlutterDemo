@@ -21,6 +21,12 @@ class DragConfig {
 
   /// 调试模式
   static bool debugMode = false;
+
+  /// 是否显示性能覆盖层
+  static bool showPerformanceOverlay = false;
+
+  /// 是否追踪拖拽帧率
+  static bool trackDragFPS = true;
 }
 
 /// 拖拽状态管理器
@@ -53,16 +59,35 @@ class DragStateManager extends ChangeNotifier {
   Function(String elementId, Map<String, dynamic> properties)? _onElementUpdate;
   Function(Map<String, Map<String, dynamic>> batchUpdates)? _onBatchUpdate;
 
+  // 性能监控相关
+  DateTime? _dragStartTime;
+  DateTime? _lastUpdateTime;
+  int _updateCount = 0;
+  int _batchUpdateCount = 0;
+  double _avgUpdateTime = 0.0;
+  final List<double> _updateTimes = [];
+  final List<int> _frameRates = [];
+
+  double get averageUpdateTime => _avgUpdateTime;
+  int get batchUpdateCount => _batchUpdateCount;
   Offset get currentDragOffset => _currentDragOffset;
+  Duration? get dragDuration => _dragStartTime != null
+      ? DateTime.now().difference(_dragStartTime!)
+      : null;
   Set<String> get draggingElementIds => Set.unmodifiable(_draggingElementIds);
   Offset get dragStartPosition => _dragStartPosition;
   Map<String, Offset> get elementStartPositions =>
       Map.unmodifiable(_elementStartPositions);
+
+  List<int> get frameRates => List.unmodifiable(_frameRates);
   // Getters
   bool get isDragging => _isDragging;
   bool get isDragPreviewActive => _isDragPreviewActive;
   Map<String, Offset> get previewPositions =>
       Map.unmodifiable(_previewPositions);
+  // 性能监控相关的 getters
+  int get updateCount => _updateCount;
+  List<double> get updateTimes => List.unmodifiable(_updateTimes);
 
   /// 取消拖拽操作
   void cancelDrag() {
@@ -88,6 +113,31 @@ class DragStateManager extends ChangeNotifier {
     if (shouldCommitChanges) {
       // 最终提交所有更改
       _commitFinalPositions();
+    }
+
+    // 记录拖拽性能数据
+    if (DragConfig.trackDragFPS && _dragStartTime != null) {
+      final dragEndTime = DateTime.now();
+      final dragDuration = dragEndTime.difference(_dragStartTime!);
+
+      // 计算平均帧率
+      double avgFps = 0;
+      if (_frameRates.isNotEmpty) {
+        avgFps =
+            _frameRates.fold(0, (sum, fps) => sum + fps) / _frameRates.length;
+      }
+
+      debugPrint('📊 DragStateManager - 拖拽性能汇总:');
+      debugPrint('   拖拽持续时间: ${dragDuration.inMilliseconds}ms');
+      debugPrint('   总更新次数: $_updateCount');
+      debugPrint('   批量更新次数: $_batchUpdateCount');
+      debugPrint('   平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
+      debugPrint('   平均帧率: ${avgFps.toStringAsFixed(1)} FPS');
+
+      // 检查是否有性能问题
+      if (avgFps < 55) {
+        debugPrint('⚠️ 警告: 拖拽帧率低于理想值 (60 FPS)');
+      }
     }
 
     // 重置状态
@@ -122,6 +172,65 @@ class DragStateManager extends ChangeNotifier {
   /// 获取元素的起始位置
   Offset? getElementStartPosition(String elementId) {
     return _elementStartPositions[elementId];
+  }
+
+  /// 获取拖拽元素的轻量级预览数据
+  /// 用于优化拖拽预览层的渲染性能
+  Map<String, Map<String, dynamic>> getLightweightPreviewData() {
+    final result = <String, Map<String, dynamic>>{};
+
+    // 如果没有拖拽中的元素，返回空映射
+    if (!_isDragging || _draggingElementIds.isEmpty) {
+      return result;
+    }
+
+    // 为每个拖拽中的元素创建轻量级预览数据
+    for (final elementId in _draggingElementIds) {
+      final previewPosition = _previewPositions[elementId];
+      final startPosition = _elementStartPositions[elementId];
+
+      if (previewPosition != null) {
+        result[elementId] = {
+          'position': previewPosition,
+          'startPosition': startPosition,
+          'dragOffset': _currentDragOffset,
+        };
+      }
+    }
+
+    return result;
+  }
+
+  /// 获取性能优化配置
+  Map<String, dynamic> getPerformanceOptimizationConfig() {
+    return {
+      'enableBatchUpdate': DragConfig.enableBatchUpdate,
+      'batchUpdateDelay': DragConfig.batchUpdateDelay.inMilliseconds,
+      'enableDragPreview': DragConfig.enableDragPreview,
+      'dragPreviewOpacity': DragConfig.dragPreviewOpacity,
+      'trackDragFPS': DragConfig.trackDragFPS,
+    };
+  }
+
+  /// 获取性能报告数据
+  Map<String, dynamic> getPerformanceReport() {
+    final currentFps = _frameRates.isNotEmpty ? _frameRates.last : 0;
+    final avgFps = _frameRates.isNotEmpty
+        ? _frameRates.fold(0, (sum, fps) => sum + fps) / _frameRates.length
+        : 0;
+
+    return {
+      'updateCount': _updateCount,
+      'batchUpdateCount': _batchUpdateCount,
+      'avgUpdateTime': _avgUpdateTime,
+      'currentFps': currentFps,
+      'avgFps': avgFps,
+      'dragDuration': _dragStartTime != null
+          ? DateTime.now().difference(_dragStartTime!).inMilliseconds
+          : 0,
+      'elementCount': _draggingElementIds.length,
+      'isPerformanceCritical': currentFps < 45, // 帧率低于45时标记为性能关键
+    };
   }
 
   /// 检查元素是否正在被拖拽
@@ -168,12 +277,42 @@ class DragStateManager extends ChangeNotifier {
       }
     }
 
+    // 重置性能监控数据
+    _dragStartTime = DateTime.now();
+    _lastUpdateTime = _dragStartTime;
+    _updateCount = 0;
+    _batchUpdateCount = 0;
+    _avgUpdateTime = 0.0;
+    _updateTimes.clear();
+    _frameRates.clear();
+
     notifyListeners();
   }
 
   /// 更新拖拽偏移量
   void updateDragOffset(Offset newOffset) {
     if (!_isDragging) return;
+
+    final now = DateTime.now();
+
+    // 计算每次更新的时间间隔
+    if (_lastUpdateTime != null) {
+      final updateTime = now.difference(_lastUpdateTime!).inMilliseconds;
+      _updateTimes.add(updateTime.toDouble());
+
+      // 计算帧率 (FPS = 1000ms / 每帧时间)
+      if (updateTime > 0) {
+        final fps = (1000 / updateTime).round();
+        _frameRates.add(fps);
+      }
+
+      // 计算平均更新时间
+      _avgUpdateTime = _updateTimes.fold(0.0, (sum, time) => sum + time) /
+          _updateTimes.length;
+    }
+
+    _lastUpdateTime = now;
+    _updateCount++;
 
     _currentDragOffset = newOffset;
 
@@ -184,6 +323,16 @@ class DragStateManager extends ChangeNotifier {
     _scheduleBatchUpdate();
 
     notifyListeners();
+
+    // 调试信息
+    if (DragConfig.debugMode && _updateCount % 10 == 0) {
+      debugPrint('📊 DragStateManager - 性能数据:');
+      debugPrint('   更新次数: $_updateCount');
+      debugPrint('   批量更新次数: $_batchUpdateCount');
+      debugPrint('   平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
+      debugPrint(
+          '   当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
+    }
   }
 
   /// 提交最终位置
@@ -214,6 +363,9 @@ class DragStateManager extends ChangeNotifier {
 
       debugPrint('📦 DragStateManager.batchUpdate() - 批量更新元素位置');
       debugPrint('   更新元素数量: ${batchData.length}');
+
+      // 统计批量更新次数
+      _batchUpdateCount++;
 
       _onBatchUpdate!(batchData);
     }

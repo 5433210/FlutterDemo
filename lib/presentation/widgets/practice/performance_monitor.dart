@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
+import 'drag_state_manager.dart';
+
 /// Performance monitoring utility for M3Canvas optimization tracking
 class PerformanceMonitor extends ChangeNotifier {
   static final PerformanceMonitor _instance = PerformanceMonitor._internal();
@@ -24,20 +26,113 @@ class PerformanceMonitor extends ChangeNotifier {
   final Map<String, int> _widgetRebuildCounts = {};
   int _totalRebuilds = 0;
 
-  factory PerformanceMonitor() => _instance;
-  PerformanceMonitor._internal();
+  // Drag performance metrics
+  DragStateManager? _dragStateManager;
 
+  // Drag performance tracking
+  DateTime? _dragStartTime;
+  int _dragStartFrameCount = 0;
+  final List<double> _dragFrameTimes = [];
+  final List<double> _dragFpsValues = [];
+  factory PerformanceMonitor() => _instance;
+
+  PerformanceMonitor._internal();
   Duration get averageFrameTime => _averageFrameTime;
   // Getters for current metrics
   double get currentFPS => _currentFPS;
+
   List<double> get fpsHistory => List.unmodifiable(_fpsHistory);
+
+  /// 是否有拖拽性能数据可用
+  bool get hasDragPerformanceData =>
+      _dragStateManager != null && _dragStateManager!.isDragging;
+
   Duration get maxFrameTime => _maxFrameTime;
+
   int get slowFrameCount => _slowFrameCount;
+
   int get totalRebuilds => _totalRebuilds;
+
+  /// 结束拖拽性能跟踪并生成报告
+  Map<String, dynamic> endTrackingDragPerformance() {
+    if (_dragStateManager == null || _dragStartTime == null) {
+      return {};
+    }
+
+    final now = DateTime.now();
+    final duration = now.difference(_dragStartTime!);
+    final frameCount = _frameCount - _dragStartFrameCount;
+
+    // 计算平均帧率
+    double avgFps = 0;
+    if (_dragFpsValues.isNotEmpty) {
+      avgFps = _dragFpsValues.reduce((a, b) => a + b) / _dragFpsValues.length;
+    }
+
+    // 计算帧时间统计
+    final Map<String, dynamic> frameTimeStats = {};
+    if (_dragFrameTimes.isNotEmpty) {
+      final avgFrameTime =
+          _dragFrameTimes.reduce((a, b) => a + b) / _dragFrameTimes.length;
+      final maxFrameTime = _dragFrameTimes.reduce((a, b) => a > b ? a : b);
+      final minFrameTime = _dragFrameTimes.reduce((a, b) => a < b ? a : b);
+
+      frameTimeStats['avg'] = avgFrameTime;
+      frameTimeStats['max'] = maxFrameTime;
+      frameTimeStats['min'] = minFrameTime;
+
+      // 计算jank帧数量 (超过16.7ms的帧)
+      final jankFrames = _dragFrameTimes.where((t) => t > 16.7).length;
+      frameTimeStats['jankFrames'] = jankFrames;
+      frameTimeStats['jankPercentage'] =
+          jankFrames / _dragFrameTimes.length * 100;
+    }
+
+    // 生成性能报告
+    final report = {
+      'duration': duration.inMilliseconds,
+      'frameCount': frameCount,
+      'fps': {
+        'avg': avgFps,
+        'values': _dragFpsValues,
+      },
+      'frameTimes': frameTimeStats,
+      'dragElementCount': _dragStateManager?.draggingElementIds.length ?? 0,
+      'dragStateManagerReport': _dragStateManager?.getPerformanceReport() ?? {},
+      'optimizationConfig':
+          _dragStateManager?.getPerformanceOptimizationConfig() ?? {},
+    };
+
+    debugPrint('📊 PerformanceMonitor: 拖拽性能报告生成');
+    debugPrint('   持续时间: ${duration.inMilliseconds}ms');
+    debugPrint('   总帧数: $frameCount');
+    debugPrint('   平均帧率: ${avgFps.toStringAsFixed(1)} FPS');
+
+    if (frameTimeStats.isNotEmpty) {
+      debugPrint('   平均帧时间: ${frameTimeStats['avg'].toStringAsFixed(2)}ms');
+      debugPrint('   最大帧时间: ${frameTimeStats['max'].toStringAsFixed(2)}ms');
+      debugPrint(
+          '   jank帧比例: ${frameTimeStats['jankPercentage'].toStringAsFixed(1)}%');
+    }
+
+    // 重置状态
+    _dragStartTime = null;
+
+    return report;
+  }
+
+  /// 获取拖拽性能数据
+  Map<String, dynamic>? getDragPerformanceData() {
+    if (_dragStateManager == null || !_dragStateManager!.isDragging) {
+      return null;
+    }
+
+    return _dragStateManager!.getPerformanceReport();
+  }
 
   /// Get performance summary
   Map<String, dynamic> getPerformanceSummary() {
-    return {
+    final Map<String, dynamic> summary = {
       'currentFPS': _currentFPS,
       'averageFrameTime': '${_averageFrameTime.inMilliseconds}ms',
       'maxFrameTime': '${_maxFrameTime.inMilliseconds}ms',
@@ -45,6 +140,14 @@ class PerformanceMonitor extends ChangeNotifier {
       'totalRebuilds': _totalRebuilds,
       'topRebuildWidgets': _getTopRebuildWidgets(),
     };
+
+    // 添加拖拽性能数据（如果可用）
+    final dragData = getDragPerformanceData();
+    if (dragData != null) {
+      summary['dragPerformance'] = dragData;
+    }
+
+    return summary;
   }
 
   /// Print detailed performance report
@@ -89,9 +192,29 @@ class PerformanceMonitor extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 设置拖拽状态管理器以便监控拖拽性能
+  void setDragStateManager(DragStateManager dragStateManager) {
+    _dragStateManager = dragStateManager;
+  }
+
   /// Start monitoring mode with frame callbacks
   void startMonitoring() {
     SchedulerBinding.instance.addPostFrameCallback(_onFrameEnd);
+  }
+
+  /// 开始跟踪拖拽性能
+  void startTrackingDragPerformance() {
+    if (_dragStateManager == null || _dragStateManager!.isDragging) {
+      return;
+    }
+
+    // 重置拖拽性能数据
+    _dragStartFrameCount = _frameCount;
+    _dragStartTime = DateTime.now();
+    _dragFrameTimes.clear();
+    _dragFpsValues.clear();
+
+    debugPrint('🔍 PerformanceMonitor: 开始跟踪拖拽性能');
   }
 
   /// Stop monitoring
@@ -100,31 +223,65 @@ class PerformanceMonitor extends ChangeNotifier {
     // The callback will naturally stop when not rescheduled
   }
 
-  /// Track frame rendering
+  /// 跟踪帧渲染性能
   void trackFrame() {
-    _frameCount++;
     final now = DateTime.now();
-    final elapsed = now.difference(_lastFrameTime);
 
-    if (elapsed.inSeconds >= 1) {
-      _currentFPS = _frameCount / elapsed.inSeconds;
+    // 计算自上次帧以来的时间
+    final frameTime =
+        now.difference(_lastFrameTime).inMicroseconds / 1000.0; // 转换为毫秒
+    _frameTimeHistory.add(Duration(microseconds: frameTime.round() * 1000));
 
-      // Add to history
-      _fpsHistory.add(_currentFPS);
+    // 限制历史记录长度
+    if (_frameTimeHistory.length > 120) {
+      // 保留最近两分钟的数据（假设60FPS）
+      _frameTimeHistory.removeAt(0);
+    }
+
+    // 计算FPS
+    if (frameTime > 0) {
+      final fps = 1000.0 / frameTime;
+      _currentFPS = fps;
+      _fpsHistory.add(fps);
+
+      // 限制历史记录长度
       if (_fpsHistory.length > _maxHistoryLength) {
         _fpsHistory.removeAt(0);
       }
 
-      // Log performance issues
-      if (_currentFPS < 30) {
-        debugPrint(
-            '⚠️ Low FPS detected: ${_currentFPS.toStringAsFixed(1)} FPS');
+      // 检测慢帧
+      if (frameTime > 16.7) {
+        // 60FPS对应16.7ms每帧
+        _slowFrameCount++;
       }
+    }
 
-      debugPrint('📊 Canvas FPS: ${_currentFPS.toStringAsFixed(1)}');
+    // 计算平均帧时间
+    if (_frameTimeHistory.isNotEmpty) {
+      final totalMicros = _frameTimeHistory.fold<int>(
+          0, (sum, duration) => sum + duration.inMicroseconds);
+      _averageFrameTime =
+          Duration(microseconds: totalMicros ~/ _frameTimeHistory.length);
 
-      _frameCount = 0;
-      _lastFrameTime = now;
+      // 更新最大帧时间
+      final maxMicros = _frameTimeHistory.fold<int>(
+          0,
+          (max, duration) =>
+              duration.inMicroseconds > max ? duration.inMicroseconds : max);
+      _maxFrameTime = Duration(microseconds: maxMicros);
+    }
+
+    // 如果正在拖拽，记录拖拽帧数据
+    if (_dragStateManager != null && _dragStateManager!.isDragging) {
+      _dragFrameTimes.add(frameTime);
+      _dragFpsValues.add(_currentFPS);
+    }
+
+    _lastFrameTime = now;
+    _frameCount++;
+
+    // 每60帧（大约1秒）通知监听器一次，避免过于频繁的更新
+    if (_frameCount % 60 == 0) {
       notifyListeners();
     }
   }
@@ -278,16 +435,64 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
     _monitor.addListener(_onPerformanceUpdate);
   }
 
+  // 构建拖拽性能信息
+  Widget _buildDragPerformanceInfo() {
+    final dragData = _monitor.getDragPerformanceData();
+    if (dragData == null) {
+      return const SizedBox.shrink();
+    }
+
+    final currentFps = dragData['currentFps'] as int;
+    final avgFps = dragData['avgFps'] as double;
+    final updateCount = dragData['updateCount'] as int;
+    final batchUpdateCount = dragData['batchUpdateCount'] as int;
+    final avgUpdateTime = dragData['avgUpdateTime'] as double;
+    final elementCount = dragData['elementCount'] as int;
+    final isPerformanceCritical = dragData['isPerformanceCritical'] as bool;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '拖拽帧率: ${currentFps.toString()} FPS',
+          style: TextStyle(
+            color: _getFPSColor(currentFps.toDouble()),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          '平均帧率: ${avgFps.toStringAsFixed(1)} FPS',
+          style: TextStyle(
+            color: _getFPSColor(avgFps),
+            fontSize: 10,
+          ),
+        ),
+        Text(
+          '更新次数: $updateCount (批量: $batchUpdateCount)',
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+        Text(
+          '平均更新时间: ${avgUpdateTime.toStringAsFixed(2)}ms',
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+        Text(
+          '拖拽元素: $elementCount',
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+        if (isPerformanceCritical)
+          const Text(
+            '⚠️ 性能警告: 帧率过低',
+            style: TextStyle(
+                color: Colors.red, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+      ],
+    );
+  }
+
   Widget _buildFPSIndicator() {
     final fps = _monitor.currentFPS;
-    Color color;
-    if (fps >= 55) {
-      color = Colors.green;
-    } else if (fps >= 30) {
-      color = Colors.orange;
-    } else {
-      color = Colors.red;
-    }
+    final color = _getFPSColor(fps);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -305,6 +510,50 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
   }
 
   Widget _buildPerformanceDisplay() {
+    final children = <Widget>[
+      const Text(
+        '性能监控',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        'FPS: ${_monitor.currentFPS.toStringAsFixed(1)}',
+        style: TextStyle(
+          color: _getFPSColor(_monitor.currentFPS),
+          fontSize: 10,
+        ),
+      ),
+      Text(
+        '平均帧时间: ${_monitor.averageFrameTime.inMilliseconds}ms',
+        style: const TextStyle(color: Colors.white70, fontSize: 10),
+      ),
+      Text(
+        '重建次数: ${_monitor.totalRebuilds}',
+        style: const TextStyle(color: Colors.white70, fontSize: 10),
+      ),
+    ];
+
+    // 添加拖拽性能数据
+    if (_monitor.hasDragPerformanceData) {
+      children.addAll([
+        const Divider(color: Colors.white24, height: 8),
+        const Text(
+          '拖拽性能',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 4),
+        _buildDragPerformanceInfo(),
+      ]);
+    }
+
     return Material(
       color: Colors.black.withValues(alpha: 0.7),
       borderRadius: BorderRadius.circular(8),
@@ -337,6 +586,16 @@ class _PerformanceOverlayState extends State<PerformanceOverlay> {
         ),
       ),
     );
+  } // 根据帧率获取颜色
+
+  Color _getFPSColor(double fps) {
+    if (fps >= 55) {
+      return Colors.green;
+    } else if (fps >= 30) {
+      return Colors.orange;
+    } else {
+      return Colors.red;
+    }
   }
 
   void _onPerformanceUpdate() {

@@ -299,22 +299,47 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   Widget _renderElement(Map<String, dynamic> element) {
     final type = element['type'] as String;
     final elementId = element['id'] as String?;
-    final x = element['x'];
-    final y = element['y'];
-    final width = element['width'];
-    final height = element['height'];
+
+    // 创建元素的副本，以便在拖拽时不修改原始数据
+    final elementCopy =
+        Map<String, dynamic>.from(element); // 检查元素是否正在被拖拽，如果是且未启用拖拽预览，使用预览位置
+    // 如果启用了DragPreviewLayer，我们可以跳过对拖拽中元素的渲染，提高性能
+    if (elementId != null &&
+        widget.renderController.isElementDragging(elementId)) {
+      if (widget.renderController.shouldSkipElementRendering(elementId)) {
+        // 如果使用独立的拖拽预览层，返回一个空白占位符以提高性能
+        // 在拖拽预览层会显示元素的预览，所以这里不需要渲染
+        return const SizedBox.shrink();
+      } else {
+        // 如果未使用独立的拖拽预览层，则在这里渲染拖拽预览
+        final previewPosition =
+            widget.renderController.getElementPreviewPosition(elementId);
+        if (previewPosition != null) {
+          // 使用预览位置而不是实际位置
+          elementCopy['x'] = previewPosition.dx;
+          elementCopy['y'] = previewPosition.dy;
+          print(
+              '🎨 ContentRenderLayer: Using preview position for dragging element $elementId: $previewPosition');
+        }
+      }
+    }
+
+    final x = elementCopy['x'];
+    final y = elementCopy['y'];
+    final width = elementCopy['width'];
+    final height = elementCopy['height'];
 
     print(
         '🎨 ContentRenderLayer: Rendering element $elementId ($type) at ($x, $y) size ${width}x$height');
 
     switch (type) {
       case 'text':
-        final result = ElementRenderers.buildTextElement(element,
+        final result = ElementRenderers.buildTextElement(elementCopy,
             isPreviewMode: widget.isPreviewMode);
         print('🎨 ContentRenderLayer: Text element $elementId rendered');
         return result;
       case 'image':
-        final result = ElementRenderers.buildImageElement(element,
+        final result = ElementRenderers.buildImageElement(elementCopy,
             isPreviewMode: widget.isPreviewMode);
         print('🎨 ContentRenderLayer: Image element $elementId rendered');
         return result;

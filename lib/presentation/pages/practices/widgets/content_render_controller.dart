@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
+import '../../../widgets/practice/drag_state_manager.dart';
 import 'element_change_types.dart';
 
 /// Controller for managing content rendering layer updates and notifications
@@ -11,12 +12,18 @@ class ContentRenderController extends ChangeNotifier {
   final StreamController<ElementChangeInfo> _changeStreamController =
       StreamController<ElementChangeInfo>.broadcast();
 
+  // 拖拽状态管理器引用
+  DragStateManager? _dragStateManager;
+
   /// Get the change history
   List<ElementChangeInfo> get changeHistory =>
       List.unmodifiable(_changeHistory);
 
   /// Stream of element changes for reactive updates
   Stream<ElementChangeInfo> get changeStream => _changeStreamController.stream;
+
+  // 是否正在拖拽中
+  bool get isDragging => _dragStateManager?.isDragging ?? false;
 
   /// Clear change history
   void clearHistory() {
@@ -34,6 +41,14 @@ class ContentRenderController extends ChangeNotifier {
     return _changeHistory
         .where((change) => change.elementId == elementId)
         .toList();
+  }
+
+  /// 获取元素的预览位置（如果正在拖拽中）
+  Offset? getElementPreviewPosition(String elementId) {
+    if (_dragStateManager == null || !_dragStateManager!.isDragging) {
+      return null;
+    }
+    return _dragStateManager!.getElementPreviewPosition(elementId);
   }
 
   /// Get last known properties for an element
@@ -71,6 +86,12 @@ class ContentRenderController extends ChangeNotifier {
           '🎯 ContentRenderController: - Element $elementId (type: $elementType)');
       _lastKnownProperties[elementId] = Map.from(element);
     }
+  }
+
+  /// 检查元素是否正在被拖拽
+  bool isElementDragging(String elementId) {
+    if (_dragStateManager == null) return false;
+    return _dragStateManager!.isElementDragging(elementId);
   }
 
   /// Check if element is being tracked
@@ -169,5 +190,23 @@ class ContentRenderController extends ChangeNotifier {
     _changeHistory.clear();
     _lastKnownProperties.clear();
     notifyListeners();
+  }
+
+  /// 设置拖拽状态管理器
+  void setDragStateManager(DragStateManager dragStateManager) {
+    _dragStateManager = dragStateManager;
+    print('🎯 ContentRenderController: DragStateManager connected');
+  }
+
+  /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
+  bool shouldSkipElementRendering(String elementId) {
+    // 如果启用了拖拽预览层且元素正在被拖拽，可以跳过主渲染层中的渲染
+    if (_dragStateManager != null &&
+        _dragStateManager!.isDragging &&
+        _dragStateManager!.isElementDragging(elementId) &&
+        DragConfig.enableDragPreview) {
+      return true;
+    }
+    return false;
   }
 }

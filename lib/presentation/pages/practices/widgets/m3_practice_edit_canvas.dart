@@ -5,13 +5,14 @@ import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
-import '../../../widgets/practice/performance_monitor.dart';
+import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
 import 'canvas_gesture_handler.dart';
 import 'content_render_controller.dart';
 import 'content_render_layer.dart';
+import 'drag_preview_layer.dart';
 
 /// Material 3 canvas widget for practice editing
 class M3PracticeEditCanvas extends StatefulWidget {
@@ -120,9 +121,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   bool _isResizing = false;
 
   bool _isRotating = false;
-
   // Performance monitoring
-  final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
+  final perf.PerformanceMonitor _performanceMonitor = perf.PerformanceMonitor();
   @override
   Widget build(BuildContext context) {
     // Track performance for main canvas rebuilds
@@ -174,7 +174,11 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
           print(
               '🔍 Canvas: ListenableBuilder - first element: ${elements.first}');
         }
-        return _buildCanvas(currentPage, elements, colorScheme);
+        // 用性能覆盖层包装画布
+        return perf.PerformanceOverlay(
+          showOverlay: DragConfig.showPerformanceOverlay,
+          child: _buildCanvas(currentPage, elements, colorScheme),
+        );
       },
     );
   }
@@ -195,11 +199,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     print(
         '🏗️ Canvas: initState called'); // Initialize content render controller for dual-layer architecture
     _contentRenderController = ContentRenderController();
-    print('🏗️ Canvas: ContentRenderController initialized');
-
-    // Initialize drag state manager for optimized drag handling
+    print(
+        '🏗️ Canvas: ContentRenderController initialized'); // Initialize drag state manager for optimized drag handling
     _dragStateManager = DragStateManager();
-    print('🏗️ Canvas: DragStateManager initialized');
+    print('🏗️ Canvas: DragStateManager initialized'); // 将拖拽状态管理器与性能监控系统关联
+    _performanceMonitor.setDragStateManager(_dragStateManager);
+    print('🏗️ Canvas: Connected DragStateManager with PerformanceMonitor');
+
+    // 将拖拽状态管理器与内容渲染控制器关联
+    _contentRenderController.setDragStateManager(_dragStateManager);
+    print(
+        '🏗️ Canvas: Connected DragStateManager with ContentRenderController');
 
     // Set up drag state manager callbacks
     _dragStateManager.setUpdateCallbacks(
@@ -372,6 +382,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   /// Public method to reset canvas position
   void resetCanvasPosition() {
     _resetCanvasPosition();
+  }
+
+  /// 切换性能监控覆盖层显示
+  void togglePerformanceOverlay() {
+    setState(() {
+      DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
+      debugPrint('性能覆盖层显示: ${DragConfig.showPerformanceOverlay ? '开启' : '关闭'}');
+    });
   }
 
   /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
@@ -923,6 +941,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                 selectedElementIds:
                     widget.controller.state.selectedElementIds.toSet(),
               ),
+              // Drag Preview Layer - shows lightweight element previews during drag
+              if (DragConfig.enableDragPreview && !widget.isPreviewMode)
+                DragPreviewLayer(
+                  dragStateManager: _dragStateManager,
+                  elements: elements,
+                ),
             ],
           ),
         ),
@@ -1378,6 +1402,40 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     widget.controller
         .updateElementProperties(elementId, {'rotation': newRotation});
   } // Removed unused _handleTransformationChange method
+
+  /// 测量拖拽性能
+  void _measureDragPerformance() {
+    // 创建50个测试元素用于性能测试
+    const testElementCount = 50;
+    final random = math.Random();
+
+    // 生成随机位置的测试元素
+    for (int i = 0; i < testElementCount; i++) {
+      final x = random.nextDouble() * 800;
+      final y = random.nextDouble() * 600;
+
+      // 随机选择元素类型
+      final elementType = random.nextInt(3);
+      switch (elementType) {
+        case 0:
+          widget.controller.addTextElementAt(x, y);
+          break;
+        case 1:
+          widget.controller.addEmptyImageElementAt(x, y);
+          break;
+        case 2:
+          widget.controller.addEmptyCollectionElementAt(x, y);
+          break;
+      }
+    }
+
+    // 开启性能监控
+    DragConfig.showPerformanceOverlay = true;
+    DragConfig.trackDragFPS = true;
+
+    // 通知用户
+    debugPrint('已创建 $testElementCount 个元素用于性能测试，性能监控已开启');
+  }
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
