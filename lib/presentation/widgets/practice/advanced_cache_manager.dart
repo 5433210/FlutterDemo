@@ -740,10 +740,10 @@ enum MemoryPressureLevel {
 /// 弱引用元素缓存系统
 /// 用于存储不常用但可能需要的元素，使用弱引用避免内存泄漏
 class WeakElementCache {
-  /// 弱引用Map实现
-  final Expando<Widget> _weakCache = Expando<Widget>('WeakElementCache');
+  /// 弱引用Map实现 - 使用Map代替Expando以支持String键
+  final Map<String, Widget> _weakCache = <String, Widget>{};
 
-  /// 存储的键集合（因为Expando无法遍历）
+  /// 存储的键集合
   final Set<String> _keys = {};
 
   /// 访问记录
@@ -777,16 +777,14 @@ class WeakElementCache {
 
   /// 清除所有元素
   void clear() {
-    for (final key in _keys) {
-      _weakCache[key] = null;
-    }
+    _weakCache.clear();
     _keys.clear();
     _lastAccessTime.clear();
   }
 
   /// 检查是否包含某个键
   bool containsKey(String key) =>
-      _keys.contains(key) && _weakCache[key] != null;
+      _keys.contains(key) && _weakCache.containsKey(key);
 
   /// 获取缓存元素
   Widget? get(String key) {
@@ -806,7 +804,7 @@ class WeakElementCache {
 
   /// 清除指定元素
   void remove(String key) {
-    _weakCache[key] = null;
+    _weakCache.remove(key);
     _keys.remove(key);
     _lastAccessTime.remove(key);
   }
