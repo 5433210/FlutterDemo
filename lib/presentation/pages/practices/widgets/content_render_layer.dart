@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../widgets/practice/element_renderers.dart';
+import '../../../widgets/practice/performance_monitor.dart';
 import 'content_render_controller.dart';
 import 'element_change_types.dart';
 
@@ -49,8 +50,14 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
   /// Track which elements need to be re-rendered
   final Set<String> _elementsNeedingUpdate = {};
+
+  /// Performance monitor for tracking render performance
+  final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
   @override
   Widget build(BuildContext context) {
+    // Track performance for ContentRenderLayer rebuilds
+    _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
+
     print('🎨 ContentRenderLayer: build() called');
     print(
         '🎨 ContentRenderLayer: Elements to render: ${widget.elements.length}');
@@ -105,11 +112,11 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 (element['rotation'] as num?)?.toDouble() ?? 0.0;
             final elementOpacity =
                 (element['opacity'] as num?)?.toDouble() ?? 1.0;
-
             return Positioned(
               left: elementX,
               top: elementY,
               child: RepaintBoundary(
+                key: ValueKey('element_repaint_${element['id']}'),
                 child: Transform.rotate(
                   angle: elementRotation * 3.14159265359 / 180,
                   child: Opacity(

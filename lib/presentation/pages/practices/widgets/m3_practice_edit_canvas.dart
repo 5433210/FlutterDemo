@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../../../../l10n/app_localizations.dart';
+import '../../../widgets/practice/drag_state_manager.dart';
+import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
@@ -95,12 +97,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
-
   // Canvas gesture handler
   late CanvasGestureHandler _gestureHandler;
 
   // Content render controller for dual-layer architecture
   late ContentRenderController _contentRenderController;
+
+  // Drag state manager for optimized drag handling
+  late DragStateManager _dragStateManager;
 
   // 选择框状态管理 - 使用ValueNotifier<SelectionBoxState>替代原来的布尔值
   final ValueNotifier<SelectionBoxState> _selectionBoxNotifier =
@@ -116,8 +120,19 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   bool _isResizing = false;
 
   bool _isRotating = false;
+
+  // Performance monitoring
+  final PerformanceMonitor _performanceMonitor = PerformanceMonitor();
   @override
   Widget build(BuildContext context) {
+    // Track performance for main canvas rebuilds
+    _performanceMonitor.trackWidgetRebuild('M3PracticeEditCanvas');
+
+    // Track frame rendering performance
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _performanceMonitor.trackFrame();
+    });
+
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, child) {
@@ -177,11 +192,24 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   @override
   void initState() {
     super.initState();
-    print('🏗️ Canvas: initState called');
-
-    // Initialize content render controller for dual-layer architecture
+    print(
+        '🏗️ Canvas: initState called'); // Initialize content render controller for dual-layer architecture
     _contentRenderController = ContentRenderController();
     print('🏗️ Canvas: ContentRenderController initialized');
+
+    // Initialize drag state manager for optimized drag handling
+    _dragStateManager = DragStateManager();
+    print('🏗️ Canvas: DragStateManager initialized');
+
+    // Set up drag state manager callbacks
+    _dragStateManager.setUpdateCallbacks(
+      onElementUpdate: (elementId, properties) {
+        widget.controller.updateElementProperties(elementId, properties);
+      },
+      onBatchUpdate: (batchUpdates) {
+        widget.controller.batchUpdateElementProperties(batchUpdates);
+      },
+    );
 
     // Initialize RepaintBoundary key - always create a new key for screenshot functionality
     // Don't reuse widget.key as it may cause conflicts with other widgets
@@ -191,9 +219,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     // widget.transformationController.addListener(_debouncedTransformationChange);
 
     // 1. 首先修复calculateCanvasPosition的实现方式
-// 在CanvasGestureHandler的初始化中修改为：
+    // 在CanvasGestureHandler的初始化中修改为：
     _gestureHandler = CanvasGestureHandler(
       controller: widget.controller,
+      dragStateManager: _dragStateManager,
       onDragStart: (isDragging, dragStart, elementPosition, elementPositions) {
         setState(() {
           _isDragging = isDragging;
@@ -468,6 +497,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
               // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
               child: RepaintBoundary(
+                key: const ValueKey('interactive_viewer_repaint_boundary'),
                 child: InteractiveViewer(
                   boundaryMargin: const EdgeInsets.all(double.infinity),
                   // 当处于select模式时禁用平移，允许我们的选择框功能工作
@@ -762,7 +792,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                 right: 0,
                 bottom: 0,
                 child: RepaintBoundary(
-                  key: ValueKey('control_points_repaint_boundary_$elementId'),
+                  key: ValueKey(
+                      'control_points_repaint_${elementId}_${(x * 1000).toInt()}_${(y * 1000).toInt()}_${(width * 100).toInt()}_${(height * 100).toInt()}'),
                   child: Builder(builder: (context) {
                     // 获取当前缩放值
                     final scale = widget.transformationController.value
@@ -870,11 +901,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
             children: [
               // Grid layer (if enabled)
               if (widget.controller.state.gridVisible && !widget.isPreviewMode)
-                CustomPaint(
-                  size: pageSize,
-                  painter: _GridPainter(
-                    gridSize: widget.controller.state.gridSize,
-                    gridColor: colorScheme.outlineVariant.withAlpha(77),
+                RepaintBoundary(
+                  key: ValueKey(
+                      'grid_repaint_${widget.controller.state.gridSize}'),
+                  child: CustomPaint(
+                    size: pageSize,
+                    painter: _GridPainter(
+                      gridSize: widget.controller.state.gridSize,
+                      gridColor: colorScheme.outlineVariant.withAlpha(77),
+                    ),
                   ),
                 ),
               // Content rendering layer
@@ -898,25 +933,28 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
           Positioned.fill(
             child: IgnorePointer(
               // Ensure selection box layer doesn't intercept element interactions
-              child: ValueListenableBuilder<SelectionBoxState>(
-                valueListenable: _selectionBoxNotifier,
-                builder: (context, selectionBoxState, child) {
-                  if (widget.controller.state.currentTool == 'select' &&
-                      selectionBoxState.isActive &&
-                      selectionBoxState.startPoint != null &&
-                      selectionBoxState.endPoint != null) {
-                    // Draw selection box directly in canvas view coordinates
-                    return CustomPaint(
-                      size: Size.infinite, // Cover entire area
-                      painter: _SelectionBoxPainter(
-                        startPoint: selectionBoxState.startPoint!,
-                        endPoint: selectionBoxState.endPoint!,
-                        color: colorScheme.primary,
-                      ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+              child: RepaintBoundary(
+                key: const ValueKey('selection_box_repaint_boundary'),
+                child: ValueListenableBuilder<SelectionBoxState>(
+                  valueListenable: _selectionBoxNotifier,
+                  builder: (context, selectionBoxState, child) {
+                    if (widget.controller.state.currentTool == 'select' &&
+                        selectionBoxState.isActive &&
+                        selectionBoxState.startPoint != null &&
+                        selectionBoxState.endPoint != null) {
+                      // Draw selection box directly in canvas view coordinates
+                      return CustomPaint(
+                        size: Size.infinite, // Cover entire area
+                        painter: _SelectionBoxPainter(
+                          startPoint: selectionBoxState.startPoint!,
+                          endPoint: selectionBoxState.endPoint!,
+                          color: colorScheme.primary,
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
             ),
           ),

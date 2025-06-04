@@ -688,6 +688,114 @@ class PracticeEditController extends ChangeNotifier {
     // so we don't need to call notifyListeners() here
   }
 
+  /// 批量更新多个元素的属性
+  ///
+  /// 用于DragStateManager的批量更新操作，提高拖拽性能
+  /// [batchUpdates] - Map<elementId, properties>格式的批量更新数据
+  void batchUpdateElementProperties(
+      Map<String, Map<String, dynamic>> batchUpdates) {
+    if (batchUpdates.isEmpty) return;
+
+    if (_state.currentPageIndex >= _state.pages.length) {
+      debugPrint('【控制器】batchUpdateElementProperties: 当前页面索引无效，无法批量更新元素属性');
+      return;
+    }
+
+    debugPrint(
+        '【控制器】batchUpdateElementProperties: 开始批量更新 ${batchUpdates.length} 个元素');
+
+    final page = _state.pages[_state.currentPageIndex];
+    final elements = page['elements'] as List<dynamic>;
+
+    // 记录旧的属性用于撤销操作
+    final Map<String, Map<String, dynamic>> oldProperties = {};
+    final Map<String, Map<String, dynamic>> newProperties = {};
+    final List<String> updatedElementIds = [];
+
+    // 批量处理更新
+    for (final entry in batchUpdates.entries) {
+      final elementId = entry.key;
+      final properties = entry.value;
+
+      final elementIndex = elements.indexWhere((e) => e['id'] == elementId);
+      if (elementIndex >= 0) {
+        final element = elements[elementIndex] as Map<String, dynamic>;
+
+        // 记录旧属性
+        oldProperties[elementId] = Map<String, dynamic>.from(element);
+
+        // 更新属性
+        final newElement = {...element};
+        properties.forEach((key, value) {
+          if (key == 'content' && element.containsKey('content')) {
+            // 对于content对象，合并而不是替换
+            newElement['content'] = {
+              ...(element['content'] as Map<String, dynamic>),
+              ...(value as Map<String, dynamic>),
+            };
+          } else {
+            newElement[key] = value;
+          }
+        });
+
+        // 应用更新
+        elements[elementIndex] = newElement;
+        newProperties[elementId] = newElement;
+        updatedElementIds.add(elementId);
+
+        // 如果是当前选中的元素，更新selectedElement
+        if (_state.selectedElementIds.contains(elementId)) {
+          _state.selectedElement = newElement;
+        }
+      }
+    }
+    if (updatedElementIds.isNotEmpty) {
+      // 创建批量属性更新操作列表
+      final operations = <UndoableOperation>[];
+
+      for (final elementId in updatedElementIds) {
+        final oldProps = oldProperties[elementId]!;
+        final newProps = newProperties[elementId]!;
+
+        operations.add(ElementPropertyOperation(
+          elementId: elementId,
+          oldProperties: oldProps,
+          newProperties: newProps,
+          updateElement: (id, props) {
+            if (_state.currentPageIndex >= 0 &&
+                _state.currentPageIndex < _state.pages.length) {
+              final page = _state.pages[_state.currentPageIndex];
+              final elements = page['elements'] as List<dynamic>;
+              final elementIndex = elements.indexWhere((e) => e['id'] == id);
+
+              if (elementIndex >= 0) {
+                elements[elementIndex] = props;
+
+                // 如果是当前选中的元素，更新selectedElement
+                if (_state.selectedElementIds.contains(id)) {
+                  _state.selectedElement = props;
+                }
+              }
+            }
+          },
+        ));
+      }
+
+      // 创建批量操作
+      final batchOperation = BatchOperation(
+        operations: operations,
+        operationDescription: '批量更新${updatedElementIds.length}个元素',
+      );
+
+      _undoRedoManager.addOperation(batchOperation);
+      _state.hasUnsavedChanges = true;
+      notifyListeners();
+
+      debugPrint(
+          '【控制器】batchUpdateElementProperties: 批量更新完成，影响元素: $updatedElementIds');
+    }
+  }
+
   /// 从 RepaintBoundary 捕获图像
   Future<Uint8List?> captureFromRepaintBoundary(GlobalKey key) async {
     try {
@@ -2683,7 +2791,7 @@ class PracticeEditController extends ChangeNotifier {
       final oldProperties = Map<String, dynamic>.from(element);
 
       // 更新属性
-      final newProperties = {...element};
+      final newProperties = <String, dynamic>{...element};
       properties.forEach((key, value) {
         if (key == 'content' && element.containsKey('content')) {
           // 对于content对象，合并而不是替换

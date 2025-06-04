@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../helpers/element_utils.dart';
 
@@ -13,13 +14,12 @@ import '../helpers/element_utils.dart';
 /// - Element Dragging: Drag selected elements (even when in select mode)
 class CanvasGestureHandler {
   final PracticeEditController controller;
+  final DragStateManager dragStateManager;
   final Function(bool, Offset, Offset, Map<String, Offset>) onDragStart;
   final VoidCallback onDragUpdate;
   final VoidCallback onDragEnd;
   final double Function() getScaleFactor;
-
-  // Drag tracking
-  bool _isDragging = false;
+  // Drag tracking - use DragStateManager instead of local state
   Offset _dragStart = Offset.zero;
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
@@ -36,9 +36,9 @@ class CanvasGestureHandler {
 
   // 追踪画布平移的结束位置，用于区分点击和拖拽
   Offset? _panEndPosition;
-
   CanvasGestureHandler({
     required this.controller,
+    required this.dragStateManager,
     required this.onDragStart,
     required this.onDragUpdate,
     required this.onDragEnd,
@@ -104,17 +104,15 @@ class CanvasGestureHandler {
 
     // Note: No need to check controller.state.currentTool == 'select' here
     // If _isDragging is true, that means we started dragging elements
-    // (even in select mode) and should continue processing the drag end
-
-    // 添加日志跟踪
+    // (even in select mode) and should continue processing the drag end    // 添加日志跟踪
     debugPrint(
-        '【平移】handlePanEnd: 拖拽结束，速度=${details.velocity.pixelsPerSecond}, 是否正在拖拽元素=$_isDragging');
+        '【平移】handlePanEnd: 拖拽结束，速度=${details.velocity.pixelsPerSecond}, 是否正在拖拽元素=${dragStateManager.isDragging}');
 
     // If in preview mode, don't handle element dragging
     if (controller.state.isPreviewMode) return;
-
-    if (_isDragging) {
-      _isDragging = false;
+    if (dragStateManager.isDragging) {
+      // End the current drag operation through DragStateManager
+      dragStateManager.endDrag();
 
       // Lists to hold element IDs, old positions, and new positions for batch update
       final List<String> elementIds = [];
@@ -277,7 +275,6 @@ class CanvasGestureHandler {
           // If element and layer are not locked, set up for dragging
           if (!isLocked && !isLayerLocked) {
             // Set up dragging for selected elements instead of creating selection box
-            _isDragging = true;
             _dragStart = details.localPosition;
             _elementStartPositions.clear();
 
@@ -292,9 +289,17 @@ class CanvasGestureHandler {
                 );
               }
             }
+
+            // Start drag through DragStateManager
+            dragStateManager.startDrag(
+              elementIds: controller.state.selectedElementIds.toSet(),
+              startPosition: details.localPosition,
+              elementStartPositions: _elementStartPositions,
+            );
+
             // Notify drag started
-            onDragStart(
-                _isDragging, _dragStart, Offset(x, y), _elementStartPositions);
+            onDragStart(dragStateManager.isDragging, _dragStart, Offset(x, y),
+                _elementStartPositions);
             debugPrint(
                 '【拖拽】Starting drag on selected element in select mode - elementId: $id');
             return; // Exit early since we're now dragging elements
@@ -319,11 +324,9 @@ class CanvasGestureHandler {
     _dragStart = details.localPosition;
 
     // 检查是否点击在任何元素上（无论是否选中）
-    bool hitAnyElement = false;
-
-    // 如果在预览模式下，我们只需要记录起始位置用于平移
+    bool hitAnyElement = false; // 如果在预览模式下，我们只需要记录起始位置用于平移
     if (controller.state.isPreviewMode) {
-      _isDragging = false;
+      // Don't start element dragging in preview mode
 
       // 直接使用起始位置
       _elementStartPosition = Offset.zero;
@@ -375,11 +378,9 @@ class CanvasGestureHandler {
             if (layer != null) {
               isLayerLocked = layer['isLocked'] == true;
             }
-          }
-
-          // 如果元素和图层都未锁定，则开始拖拽
+          } // 如果元素和图层都未锁定，则开始拖拽
           if (!isLocked && !isLayerLocked) {
-            _isDragging = true;
+            _dragStart = details.localPosition;
             _elementStartPositions.clear();
 
             // 记录所有选中元素的起始位置
@@ -394,14 +395,21 @@ class CanvasGestureHandler {
               }
             }
 
-            onDragStart(
-                _isDragging, _dragStart, Offset(x, y), _elementStartPositions);
+            // Start drag through DragStateManager
+            dragStateManager.startDrag(
+              elementIds: controller.state.selectedElementIds.toSet(),
+              startPosition: details.localPosition,
+              elementStartPositions: _elementStartPositions,
+            );
+
+            onDragStart(dragStateManager.isDragging, _dragStart, Offset(x, y),
+                _elementStartPositions);
             return; // 找到了可拖拽的选中元素，直接返回
           }
         }
       }
     } // 如果没有点击在任何可拖拽的选中元素上，则准备平移画布
-    _isDragging = false;
+    // Don't start element dragging, prepare for canvas panning
 
     // 直接使用起始位置
     _elementStartPosition = Offset.zero;
@@ -415,7 +423,7 @@ class CanvasGestureHandler {
 
     // 添加日志跟踪
     debugPrint(
-        '【平移】handlePanStart: 准备平移画布，起始位置=$_dragStart, 预览模式=${controller.state.isPreviewMode}, 是否拖拽元素=$_isDragging');
+        '【平移】handlePanStart: 准备平移画布，起始位置=$_dragStart, 预览模式=${controller.state.isPreviewMode}, 是否拖拽元素=${dragStateManager.isDragging}');
     debugPrint(
         '【平移】handlePanStart: 记录平移开始时的选中元素: $_panStartSelectedElementIds');
 
@@ -468,7 +476,8 @@ class CanvasGestureHandler {
       onDragUpdate();
       return;
     } // 如果正在拖拽选中的元素
-    if (_isDragging && controller.state.selectedElementIds.isNotEmpty) {
+    if (dragStateManager.isDragging &&
+        controller.state.selectedElementIds.isNotEmpty) {
       // 计算拖拽偏移量并应用缩放因子的倒数来修正坐标变换
       // 确保水平和垂直方向使用相同的缩放计算方式
       final dx = (currentPosition.dx - _dragStart.dx);
@@ -477,48 +486,8 @@ class CanvasGestureHandler {
           '【拖拽】拖拽选中元素: 当前工具=${controller.state.currentTool}, 原始偏移=(${currentPosition.dx - _dragStart.dx}, ${currentPosition.dy - _dragStart.dy}), '
           '缩放因子=$scaleFactor, 反向缩放=$inverseScale, 调整后偏移=($dx, $dy)');
 
-      // 更新所有选中元素的位置
-      for (final elementId in controller.state.selectedElementIds) {
-        // 跳过锁定图层上的元素
-        final element = controller.state.currentPageElements.firstWhere(
-          (e) => e['id'] == elementId,
-          orElse: () => <String, dynamic>{},
-        );
-
-        if (element.isEmpty) continue;
-
-        // 跳过锁定的元素
-        if (element['locked'] == true) continue;
-
-        // 跳过锁定或隐藏图层上的元素
-        final layerId = element['layerId'] as String?;
-        if (layerId != null) {
-          final layer = controller.state.getLayerById(layerId);
-          if (layer != null) {
-            if (layer['isLocked'] == true || layer['isVisible'] == false) {
-              continue;
-            }
-          }
-        }
-
-        // 获取元素的起始位置
-        final startPosition = _elementStartPositions[elementId];
-        if (startPosition == null) continue;
-
-        // 计算新位置
-        double newX = startPosition.dx + dx;
-        double newY = startPosition.dy + dy;
-
-        // 使用平滑吸附 - 通过controller调用updateElementPropertiesDuringDragWithSmooth来处理
-        controller.updateElementPropertiesDuringDragWithSmooth(
-          elementId,
-          {
-            'x': newX,
-            'y': newY,
-          },
-          scaleFactor: scaleFactor,
-        );
-      }
+      // Update drag offset through DragStateManager instead of direct element updates
+      dragStateManager.updateDragOffset(Offset(dx, dy));
 
       onDragUpdate();
     } // 如果不是在拖拽元素，则平移画布
@@ -620,17 +589,15 @@ class CanvasGestureHandler {
     }
     if (!hitSelectedElement) {
       // Right click on blank area or non-selected element
-      // 只有在select模式下右键点击空白区域时才退出select模式，但不清除选中状态
-      if (controller.state.currentTool == 'select') {
-        debugPrint('【右键】handleSecondaryTapUp: 右键退出select模式，但保持选中状态');
-        // 这里可以添加退出select模式的逻辑，但不清除选中的元素
-        // controller.state.currentTool = ''; // 如果需要退出select模式
-      }
-      // 注释掉原来的清除选择逻辑
-      // controller.clearSelection();
-      _isDragging = false;
-      onDragStart(false, Offset.zero, Offset.zero, {});
+      // 只有在select模式下右键点击空白区域时才退出select模式，但不清除选中状态      if (controller.state.currentTool == 'select') {
+      debugPrint('【右键】handleSecondaryTapUp: 右键退出select模式，但保持选中状态');
+      // 这里可以添加退出select模式的逻辑，但不清除选中的元素
+      // controller.state.currentTool = ''; // 如果需要退出select模式
     }
+    // 注释掉原来的清除选择逻辑
+    // controller.clearSelection();
+    // Don't start element dragging
+    onDragStart(false, Offset.zero, Offset.zero, {});
   }
 
   /// Handle tap up event on canvas
@@ -705,12 +672,10 @@ class CanvasGestureHandler {
           }
 
           // 选择元素
-          controller.selectElement(id, isMultiSelect: isMultiSelect);
-
-          // 如果不是多选模式，或者元素之前没有被选中，准备拖拽
+          controller.selectElement(id,
+              isMultiSelect: isMultiSelect); // 如果不是多选模式，或者元素之前没有被选中，准备拖拽
           if (!isMultiSelect || !isCurrentlySelected) {
-            // 准备拖拽
-            _isDragging = true;
+            // Start drag through DragStateManager
             _dragStart = details.localPosition;
             _elementStartPosition = Offset(x, y);
             _elementStartPositions.clear();
@@ -729,6 +694,12 @@ class CanvasGestureHandler {
                 );
               }
             }
+
+            dragStateManager.startDrag(
+              elementIds: controller.state.selectedElementIds.toSet(),
+              startPosition: details.localPosition,
+              elementStartPositions: _elementStartPositions,
+            );
 
             // onDragStart(_isDragging, _dragStart, _elementStartPosition,
             //     _elementStartPositions);
@@ -831,8 +802,8 @@ class SelectionBoxState {
   final Offset? endPoint;
 
   SelectionBoxState({
-    required this.isActive,
-    required this.startPoint,
-    required this.endPoint,
+    this.isActive = false,
+    this.startPoint,
+    this.endPoint,
   });
 }
