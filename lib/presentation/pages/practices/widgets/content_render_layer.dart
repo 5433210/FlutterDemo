@@ -4,32 +4,57 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../widgets/practice/element_cache_manager.dart';
 import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/performance_monitor.dart';
+import '../../../widgets/practice/practice_edit_controller.dart';
 import 'content_render_controller.dart';
 import 'element_change_types.dart';
 import 'layers/viewport_culling_manager.dart';
+import '../helpers/element_utils.dart';
 
 /// Content rendering layer widget for isolated content rendering
 class ContentRenderLayer extends ConsumerStatefulWidget {
-  final List<Map<String, dynamic>> elements;
-  final List<Map<String, dynamic>> layers;
+  final List<Map<String, dynamic>>? elements;
+  final List<Map<String, dynamic>>? layers;
   final ContentRenderController renderController;
-  final bool isPreviewMode;
-  final Size pageSize;
-  final Color backgroundColor;
-  final Set<String> selectedElementIds;
+  final bool? isPreviewMode;
+  final Size? pageSize;
+  final Color? backgroundColor;
+  final Set<String>? selectedElementIds;
   final ViewportCullingManager? viewportCullingManager;
+  
+  // For LayerRenderManager integration
+  final PracticeEditController? controller;
 
   const ContentRenderLayer({
     super.key,
-    required this.elements,
-    required this.layers,
     required this.renderController,
-    required this.isPreviewMode,
-    required this.pageSize,
-    required this.backgroundColor,
-    required this.selectedElementIds,
+    this.elements,
+    this.layers,
+    this.isPreviewMode,
+    this.pageSize,
+    this.backgroundColor,
+    this.selectedElementIds,
     this.viewportCullingManager,
+    this.controller,
   });
+
+  // Legacy constructor with full parameters
+  const ContentRenderLayer.withFullParams({
+    super.key,
+    required List<Map<String, dynamic>> elements,
+    required List<Map<String, dynamic>> layers,
+    required this.renderController,
+    required bool isPreviewMode,
+    required Size pageSize,
+    required Color backgroundColor,
+    required Set<String> selectedElementIds,
+    this.viewportCullingManager,
+  }) : elements = elements,
+       layers = layers,
+       isPreviewMode = isPreviewMode,
+       pageSize = pageSize,
+       backgroundColor = backgroundColor,
+       selectedElementIds = selectedElementIds,
+       controller = null;
 
   @override
   ConsumerState<ContentRenderLayer> createState() => _ContentRenderLayerState();
@@ -46,17 +71,42 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Track performance for ContentRenderLayer rebuilds
     _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
 
+    // Get data from controller if not provided directly
+    final elements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+    final layers = widget.layers ?? widget.controller?.state.layers ?? [];
+    final isPreviewMode = widget.isPreviewMode ?? widget.controller?.state.isPreviewMode ?? false;
+    final selectedElementIds = widget.selectedElementIds ?? widget.controller?.state.selectedElementIds.toSet() ?? <String>{};
+    
+    // Calculate page size and background color if not provided
+    Size pageSize = widget.pageSize ?? const Size(800, 600);
+    Color backgroundColor = widget.backgroundColor ?? Colors.white;
+    
+    if (widget.controller != null && widget.pageSize == null) {
+      final currentPage = widget.controller!.state.currentPage;
+      if (currentPage != null) {
+        pageSize = ElementUtils.calculatePixelSize(currentPage);
+        
+        try {
+          final background = currentPage['background'] as Map<String, dynamic>?;
+          if (background != null && background['type'] == 'color') {
+            final colorStr = background['value'] as String? ?? '#FFFFFF';
+            backgroundColor = ElementUtils.parseColor(colorStr);
+          }
+        } catch (e) {
+          debugPrint('Error parsing background color: $e');
+        }
+      }
+    }
+
     print('🎨 ContentRenderLayer: build() called');
-    print(
-        '🎨 ContentRenderLayer: Elements to render: ${widget.elements.length}');
-    print(
-        '🎨 ContentRenderLayer: Selected elements: ${widget.selectedElementIds.length}');
-    print(
-        '🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
+    print('🎨 ContentRenderLayer: Elements to render: ${elements.length}');
+    print('🎨 ContentRenderLayer: Selected elements: ${selectedElementIds.length}');
+    print('🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
 
     // Sort elements by layer order
-    final sortedElements = _sortElementsByLayer(
-        widget.elements, widget.layers); // Apply viewport culling if available
+    final sortedElements = _sortElementsByLayer(elements, layers);
+    
+    // Apply viewport culling if available
     final visibleElements = widget.viewportCullingManager != null
         ? widget.viewportCullingManager!.cullElementsAdvanced(
             sortedElements,
@@ -90,18 +140,19 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // Trigger cache cleanup for efficient memory management
     _cacheManager.cleanupCache();
+    
     return RepaintBoundary(
       child: Container(
-        width: widget.pageSize.width,
-        height: widget.pageSize.height,
-        color: widget.backgroundColor,
+        width: pageSize.width,
+        height: pageSize.height,
+        color: backgroundColor,
         child: Stack(
           fit: StackFit.expand,
           clipBehavior: Clip.hardEdge,
           children: visibleElements.map((element) {
             // Skip hidden elements in preview mode
             final isHidden = element['hidden'] == true;
-            if (isHidden && widget.isPreviewMode) {
+            if (isHidden && isPreviewMode) {
               return const SizedBox.shrink();
             }
 
@@ -135,7 +186,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 child: Transform.rotate(
                   angle: elementRotation * 3.14159265359 / 180,
                   child: Opacity(
-                    opacity: isHidden && !widget.isPreviewMode
+                    opacity: isHidden && !isPreviewMode
                         ? 0.5
                         : elementOpacity,
                     child: SizedBox(
@@ -157,8 +208,12 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   void didUpdateWidget(ContentRenderLayer oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    // Get current and old elements
+    final oldElements = oldWidget.elements ?? oldWidget.controller?.state.currentPageElements ?? [];
+    final currentElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+    
     // Check for element additions/removals/modifications
-    _updateElementsCache(oldWidget.elements, widget.elements);
+    _updateElementsCache(oldElements, currentElements);
   }
 
   @override
@@ -184,14 +239,17 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Initialize selective rebuilding system
     widget.renderController.initializeSelectiveRebuilding(_cacheManager);
 
+    // Get initial elements
+    final initialElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+    
     // Initialize controller with current elements
-    widget.renderController.initializeElements(widget.elements);
+    widget.renderController.initializeElements(initialElements);
 
     // Listen to changes via stream only (more efficient than broad listener)
     widget.renderController.changeStream.listen(_handleElementChange);
 
     // Warm up the cache with visible elements
-    _warmupCache(widget.elements);
+    _warmupCache(initialElements);
   }
 
   /// Estimate memory size of an element in bytes
@@ -269,12 +327,15 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     CachePriority priority = CachePriority.medium;
 
     // Prioritize elements by type and visibility
-    if (widget.selectedElementIds.contains(elementId)) {
+    if (widget.selectedElementIds?.contains(elementId) == true) {
       // Selected elements get higher priority
       priority = CachePriority.high;
-    } else if (elementType == 'image') {
-      // Images are expensive to render, keep them cached
+    } else if (elementType == 'text') {
+      // Text elements get higher priority due to complex rendering
       priority = CachePriority.high;
+    } else if (elementType == 'image') {
+      // Images can be cached with medium priority
+      priority = CachePriority.medium;
     }
 
     // Store in cache with size information and priority
@@ -301,50 +362,56 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     return newWidget;
   }
 
-  /// Handle specific element changes
+  /// Handle element change notifications from the controller
   void _handleElementChange(ElementChangeInfo changeInfo) {
-    debugPrint(
-        'ContentRenderLayer: Handling element change - ${changeInfo.changeType} for ${changeInfo.elementId}');
+    if (mounted) {
+      debugPrint(
+          'ContentRenderLayer: Handling element change - ${changeInfo.changeType} for ${changeInfo.elementId}');
 
-    switch (changeInfo.changeType) {
-      case ElementChangeType.contentOnly:
-      case ElementChangeType.opacity:
-        // Only update the specific element widget
-        _cacheManager.markElementForUpdate(changeInfo.elementId);
-        break;
+      // Get current elements
+      final currentElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
 
-      case ElementChangeType.sizeOnly:
-      case ElementChangeType.positionOnly:
-      case ElementChangeType.sizeAndPosition:
-      case ElementChangeType.rotation:
-        // Update element and potentially affect layout
-        _cacheManager.markElementForUpdate(changeInfo.elementId);
-        break;
+             switch (changeInfo.changeType) {
+         case ElementChangeType.created:
+         case ElementChangeType.contentOnly:
+         case ElementChangeType.sizeOnly:
+         case ElementChangeType.positionOnly:
+         case ElementChangeType.sizeAndPosition:
+         case ElementChangeType.rotation:
+         case ElementChangeType.opacity:
+         case ElementChangeType.visibility:
+           // Update specific element in cache
+           _cacheManager.markElementForUpdate(changeInfo.elementId);
+           break;
 
-      case ElementChangeType.visibility:
-      case ElementChangeType.created:
-      case ElementChangeType.deleted:
-        // Full update needed
-        _cacheManager.markAllElementsForUpdate(widget.elements);
-        break;
+         case ElementChangeType.deleted:
+           // Full update needed
+           _cacheManager.markAllElementsForUpdate(currentElements);
+           break;
 
-      case ElementChangeType.multiple:
-        // Conservative approach - update everything
-        _cacheManager.markAllElementsForUpdate(widget.elements);
-        break;
+         case ElementChangeType.multiple:
+           // Conservative approach - update everything
+           _cacheManager.markAllElementsForUpdate(currentElements);
+           break;
+       }
+
+      // Trigger rebuild with new data
+      if (mounted) {
+        setState(() {});
+      }
     }
-
-    // Request rebuild to reflect changes
-    setState(() {});
   }
 
   /// Check if a layer is hidden
   bool _isLayerHidden(String layerId) {
-    final layer = widget.layers.firstWhere(
+    final layers = widget.layers;
+    if (layers == null) return false;
+    
+    final layer = layers.firstWhere(
       (l) => l['id'] == layerId,
       orElse: () => <String, dynamic>{},
     );
-    return layer.isNotEmpty && layer['isVisible'] == false;
+    return layer.isNotEmpty ? layer['isVisible'] == false : false;
   }
 
   /// Deep comparison of two maps
@@ -404,21 +471,21 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     switch (type) {
       case 'text':
         result = ElementRenderers.buildTextElement(elementCopy,
-            isPreviewMode: widget.isPreviewMode);
+            isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'image':
         result = ElementRenderers.buildImageElement(elementCopy,
-            isPreviewMode: widget.isPreviewMode);
+            isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'collection':
         result = ElementRenderers.buildCollectionElement(elementCopy,
-            ref: ref, isPreviewMode: widget.isPreviewMode);
+            ref: ref, isPreviewMode: widget.isPreviewMode == true);
         break;
       case 'group':
         result = ElementRenderers.buildGroupElement(elementCopy,
-            isSelected: widget.selectedElementIds.contains(elementId),
+            isSelected: widget.selectedElementIds?.contains(elementId) == true,
             ref: ref,
-            isPreviewMode: widget.isPreviewMode);
+            isPreviewMode: widget.isPreviewMode == true);
         break;
       default:
         print(

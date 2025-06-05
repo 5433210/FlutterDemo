@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:vector_math/vector_math_64.dart' show Vector3;
+
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
@@ -139,8 +139,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // 存储原始元素属性，用于撤销/重做
   Map<String, dynamic>? _originalElementProperties;
   bool _isResizing = false;
-
   bool _isRotating = false;
+  bool _hasInitializedView = false; // 防止重复初始化视图
+  String? _lastPageKey; // 跟踪页面变化，用于自动重置视图
   // Performance monitoring
   final perf.PerformanceMonitor _performanceMonitor = perf.PerformanceMonitor();
   @override
@@ -197,7 +198,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         // 用性能覆盖层包装画布
         return perf.PerformanceOverlay(
           showOverlay: DragConfig.showPerformanceOverlay,
-          child: _buildCanvas(currentPage, elements, colorScheme),
+          child: _buildPageContent(currentPage, elements, colorScheme),
         );
       },
     );
@@ -320,16 +321,20 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     _initializeGestureHandler();
     print('🏗️ Canvas: GestureHandler initialized');
 
+    // 临时禁用画布注册，避免潜在的循环调用问题
     // Register this canvas with the controller for reset view functionality
-    widget.controller.setEditCanvas(this);
+    // widget.controller.setEditCanvas(this);
 
     // Set the RepaintBoundary key in the controller for screenshot functionality
     widget.controller.setCanvasKey(_repaintBoundaryKey);
 
-    // Schedule automatic fit-to-screen on initial load
+    // 🔍 恢复初始化时的reset，用于对比两次调用
+    // Schedule initial reset view position on first load (只执行一次)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _fitPageToScreen();
+      if (mounted && !_hasInitializedView) {
+        _hasInitializedView = true;
+        resetCanvasPosition(); // 使用标准的Reset View Position逻辑
+        debugPrint('🔧【initState】首次加载，执行Reset View Position');
       }
     });
   }
@@ -362,7 +367,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   }
 
   /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
-  /// 新策略：有选中元素或在特殊模式时总是设置回调，在回调内部动态判断
+  /// 检查是否需要设置手势回调（更保守的策略）
   bool _shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
     // 如果在预览模式，不处理任何手势
     if (widget.controller.state.isPreviewMode) {
@@ -379,8 +384,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       return true;
     }
 
-    // 关键修复：如果有选中元素，总是设置pan回调
-    // 在回调内部根据点击位置动态决定是元素拖拽还是画布平移
+    // 只有在有选中元素时才可能需要处理元素拖拽
+    // 这里先返回true，在回调中再精确判断
     if (widget.controller.state.selectedElementIds.isNotEmpty) {
       return true;
     }
@@ -545,398 +550,26 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   /// Build background layer (grid, page background)
   Widget _buildBackgroundLayer(LayerConfig config) {
     final currentPage = widget.controller.state.currentPage;
-    if (currentPage == null || !config.shouldRender) {
-      return const SizedBox.shrink();
-    }
+    if (currentPage == null) return const SizedBox.shrink();
 
-    final pageSize = ElementUtils.calculatePixelSize(currentPage);
-    Color backgroundColor = Colors.white;
-
-    try {
-      final background = currentPage['background'] as Map<String, dynamic>?;
-      if (background != null && background['type'] == 'color') {
-        final colorStr = background['value'] as String? ?? '#FFFFFF';
-        backgroundColor = ElementUtils.parseColor(colorStr);
-      }
-    } catch (e) {
-      debugPrint('Error parsing background color: $e');
-    }
-
-    return RepaintBoundary(
-      child: Container(
-        width: pageSize.width,
-        height: pageSize.height,
-        color: backgroundColor,
-        child: widget.controller.state.gridVisible && !widget.isPreviewMode
-            ? CustomPaint(
-                size: pageSize,
-                painter: _GridPainter(
-                  gridSize: widget.controller.state.gridSize,
-                  gridColor: Theme.of(context)
-                      .colorScheme
-                      .outlineVariant
-                      .withAlpha(77),
-                ),
-              )
-            : null,
+    return Container(
+      decoration: BoxDecoration(
+        color: Color(currentPage['backgroundColor'] as int? ?? Colors.white.value),
       ),
+      child: widget.controller.state.gridVisible
+          ? CustomPaint(
+              painter: _GridPainter(
+                gridSize: widget.controller.state.gridSize,
+                gridColor: Theme.of(context).colorScheme.outline.withValues(alpha: .3),
+              ),
+              child: Container(),
+            )
+          : null,
     );
   }
 
-  /// Build the main canvas
-  Widget _buildCanvas(
-    Map<String, dynamic> currentPage,
-    List<Map<String, dynamic>> elements,
-    ColorScheme colorScheme,
-  ) {
-    print('📋 Canvas: _buildCanvas called with ${elements.length} elements');
-    print(
-        '📋 Canvas: _buildCanvas - elements.runtimeType = ${elements.runtimeType}');
-    if (elements.isNotEmpty) {
-      print('📋 Canvas: _buildCanvas - first element: ${elements.first}');
-    }
-
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) {
-        print('📋 Canvas: Drag target received drop event');
-        print('📋 Canvas: Element type: ${details.data}');
-        print('📋 Canvas: Drop position: ${details.offset}');
-
-        // Handle dropping new elements onto the canvas
-        final RenderBox renderBox = context.findRenderObject() as RenderBox;
-        final localPosition = renderBox.globalToLocal(details.offset);
-
-        print('📋 Canvas: Local position: $localPosition');
-
-        // Calculate page dimensions (applying DPI conversion)
-        final pageSize = ElementUtils.calculatePixelSize(currentPage);
-
-        // Ensure coordinates are within page boundaries
-        double x = localPosition.dx.clamp(0.0, pageSize.width);
-        double y = localPosition.dy.clamp(0.0, pageSize.height);
-
-        // Adjust for current zoom level
-        final scale = widget.transformationController.value.getMaxScaleOnAxis();
-        final translation =
-            widget.transformationController.value.getTranslation();
-        x = (x - translation.x) / scale;
-        y = (y - translation.y) / scale;
-
-        print('📋 Canvas: Final calculated position: ($x, $y)');
-        print('📋 Canvas: Page size: ${pageSize.width}x${pageSize.height}');
-        print('📋 Canvas: Current scale: $scale');
-
-        // Add element based on type
-        switch (details.data) {
-          case 'text':
-            print('📋 Canvas: Creating text element at ($x, $y)');
-            widget.controller.addTextElementAt(x, y);
-            break;
-          case 'image':
-            print('📋 Canvas: Creating image element at ($x, $y)');
-            widget.controller.addEmptyImageElementAt(x, y);
-            break;
-          case 'collection':
-            print('📋 Canvas: Creating collection element at ($x, $y)');
-            widget.controller.addEmptyCollectionElementAt(x, y);
-            break;
-        }
-
-        print('📋 Canvas: Drop handling completed');
-      },
-      builder: (context, candidateData, rejectedData) {
-        // Get current zoom level
-        final scale = widget.transformationController.value.getMaxScaleOnAxis();
-        final zoomPercentage = (scale * 100).toInt();
-        return Stack(
-          children: [
-            Container(
-              color: colorScheme.inverseSurface.withAlpha(
-                  26), // Canvas outer background - improved contrast in light theme
-
-              // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
-              child: RepaintBoundary(
-                key: const ValueKey('interactive_viewer_repaint_boundary'),
-                child: InteractiveViewer(
-                  boundaryMargin: const EdgeInsets.all(double.infinity),
-                  // 在元素拖拽时禁用InteractiveViewer的平移，避免手势冲突
-                  panEnabled: !(_isDragging || _dragStateManager.isDragging),
-                  scaleEnabled: true,
-                  minScale: 0.1,
-                  maxScale: 15.0,
-                  scaleFactor:
-                      600.0, // Increased scale factor to make zooming more gradual
-                  transformationController: widget.transformationController,
-                  onInteractionStart: (ScaleStartDetails details) {},
-                  onInteractionUpdate: (ScaleUpdateDetails details) {
-                    // No need for setState during scaling - zoom updates are handled via controller
-                    // The transformationController already triggers necessary repaints
-                  },
-                  onInteractionEnd: (ScaleEndDetails details) {
-                    // Update final zoom value through controller only
-                    final scale = widget.transformationController.value
-                        .getMaxScaleOnAxis();
-                    widget.controller.zoomTo(scale);
-                    // No setState needed - controller state changes trigger UI updates automatically
-                  },
-                  constrained: false, // Allow content to be unconstrained
-                  child: Listener(
-                    onPointerDown: (_) {
-                      // Add this empty listener to properly initialize mouse tracking
-                    },
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTapDown: (details) {
-                        debugPrint('🔍【onTapDown】检测点击位置');
-                        // 检查是否点击在选中元素上，如果是，准备拖拽
-                        // 直接设置变量，避免setState时序问题
-                        if (_shouldHandleSpecialGesture(DragStartDetails(localPosition: details.localPosition), elements)) {
-                          debugPrint('🔍【onTapDown】点击在选中元素上，准备拖拽');
-                          _isReadyForDrag = true;
-                        } else {
-                          _isReadyForDrag = false;
-                        }
-                      },
-                      onTapUp: (details) {
-                        // 重置拖拽准备状态
-                        _isReadyForDrag = false;
-                        _gestureHandler.handleTapUp(details, elements.cast<Map<String, dynamic>>());
-                      },
-                      // 处理右键点击事件，用于退出select模式
-                      onSecondaryTapDown: (details) =>
-                          _gestureHandler.handleSecondaryTapDown(details),
-                      onSecondaryTapUp: (details) =>
-                          _gestureHandler.handleSecondaryTapUp(
-                              details, elements.cast<Map<String, dynamic>>()),
-                      // 智能手势处理：有选中元素或特殊模式时设置回调
-                      onPanStart: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                        debugPrint('🔍【onPanStart】回调被调用 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-                        
-                        // 动态检查是否需要处理特殊手势（元素拖拽、选择框等）
-                        if (_shouldHandleSpecialGesture(details, elements) || widget.controller.state.currentTool == 'select') {
-                          debugPrint('🔍【onPanStart】需要特殊处理，调用SmartCanvasGestureHandler');
-                          _gestureHandler.handlePanStart(
-                              details, elements.cast<Map<String, dynamic>>());
-                        } else {
-                          debugPrint('🔍【onPanStart】点击空白区域，不处理，让InteractiveViewer处理画布平移');
-                          // 不调用手势处理器，让InteractiveViewer接管
-                        }
-                      } : null,
-                      onPanUpdate: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                        // 先处理选择框更新，这优先级最高
-                        if (widget.controller.state.currentTool == 'select' &&
-                            _gestureHandler.isSelectionBoxActive) {
-                          _gestureHandler.handlePanUpdate(details);
-                          _selectionBoxNotifier.value = SelectionBoxState(
-                            isActive: true,
-                            startPoint: _gestureHandler.selectionBoxStart,
-                            endPoint: _gestureHandler.selectionBoxEnd,
-                          );
-                          return;
-                        }
-
-                        // Handle element dragging - 检查DragStateManager的拖拽状态
-                        if (_isDragging || _dragStateManager.isDragging || 
-                            (_isReadyForDrag && widget.controller.state.selectedElementIds.isNotEmpty)) {
-                          _gestureHandler.handlePanUpdate(details);
-                          debugPrint('【元素拖拽】SmartCanvasGestureHandler正在处理元素拖拽');
-                          return;
-                        }
-                        
-                        // 如果不需要特殊处理，则不调用手势处理器，让InteractiveViewer处理
-                        debugPrint('🔍【onPanUpdate】不处理，让InteractiveViewer处理画布平移');
-                      } : null,
-                      onPanEnd: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                        // 检查是否需要处理手势结束
-                        bool shouldHandleEnd = _gestureHandler.isSelectionBoxActive || 
-                                             _isDragging || 
-                                             _dragStateManager.isDragging ||
-                                             _isReadyForDrag;
-
-                        // 重置拖拽准备状态
-                        _isReadyForDrag = false;
-
-                        // 只有在真正处理了手势的情况下才调用handlePanEnd
-                        if (shouldHandleEnd) {
-                          // 重置选择框状态
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                          _gestureHandler.handlePanEnd(details);
-                        }
-                      } : null,
-                      onPanCancel: _shouldHandleAnySpecialGesture(elements) ? () {
-                        // 检查是否需要处理手势取消
-                        bool shouldHandleCancel = _gestureHandler.isSelectionBoxActive || 
-                                                _isDragging || 
-                                                _dragStateManager.isDragging ||
-                                                _isReadyForDrag;
-
-                        // 重置拖拽准备状态
-                        _isReadyForDrag = false;
-
-                        // 只有在真正处理了手势的情况下才调用handlePanCancel
-                        if (shouldHandleCancel) {
-                          // 重置选择框状态
-                          if (widget.controller.state.currentTool == 'select' &&
-                              _gestureHandler.isSelectionBoxActive) {
-                            _selectionBoxNotifier.value = SelectionBoxState();
-                          }
-                          _gestureHandler.handlePanCancel();
-                        }
-                      } : null,
-                      child: _buildPageContent(currentPage, elements, colorScheme),
-                    ),
-                  ),
-                ),
-
-                // Status bar showing zoom level (only visible in edit mode)
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                color: colorScheme.surface
-                    .withAlpha(217), // 217 is approximately 85% of 255
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 4.0,
-                  runSpacing: 4.0,
-                  children: [
-                    // Debug indicator showing current tool
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colorScheme.tertiaryContainer,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '当前工具: ${widget.controller.state.currentTool}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colorScheme.onTertiaryContainer,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Selection mode indicator
-                    if (widget.controller.state.currentTool == 'select' &&
-                        !widget.isPreviewMode)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.select_all,
-                              size: 16,
-                              color: colorScheme.onPrimaryContainer,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '选择模式', // Direct text since the localization key might not exist
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    // Reset position button
-                    Tooltip(
-                      message:
-                          AppLocalizations.of(context).canvasResetViewTooltip,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _resetCanvasPosition,
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 2),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 120),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.center_focus_strong,
-                                    size: 14,
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      AppLocalizations.of(context)
-                                          .canvasResetView,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: colorScheme.onSurfaceVariant,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Zoom indicator
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 80),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.zoom_in,
-                            size: 16,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '$zoomPercentage%',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: colorScheme.onSurfaceVariant,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  /// Build content layer (elements)
+  /// Build content layer (elements rendering)
   Widget _buildContentLayer(LayerConfig config) {
-    if (!config.shouldRender) {
-      return const SizedBox.shrink();
-    }
-
     final currentPage = widget.controller.state.currentPage;
     final elements = widget.controller.state.currentPageElements;
 
@@ -956,7 +589,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     } catch (e) {
       debugPrint('Error parsing background color: $e');
     }
-    return ContentRenderLayer(
+    
+    return ContentRenderLayer.withFullParams(
       elements: elements,
       layers: widget.controller.state.layers,
       renderController: _contentRenderController,
@@ -964,7 +598,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       pageSize: pageSize,
       backgroundColor: backgroundColor,
       selectedElementIds: widget.controller.state.selectedElementIds.toSet(),
-      viewportCullingManager: _layerRenderManager.viewportCullingManager,
     );
   }
 
@@ -1159,31 +792,353 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     print(
         '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
     debugPrint(
-        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}'); // Calculate page dimensions
+        '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+    
+    // Calculate page dimensions for layout purposes
     final pageSize = ElementUtils.calculatePixelSize(page);
 
-    return SizedBox(
-      width: pageSize.width,
-      height: pageSize.height,
-      child: Stack(
-        fit: StackFit.expand, // Use expand to fill the container
-        clipBehavior:
-            Clip.none, // Allow control points to extend beyond page boundaries
-        children: [
-          // Use LayerRenderManager to build coordinated layer stack
-          RepaintBoundary(
-            key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
-            child: _layerRenderManager.buildLayerStack(
-              layerOrder: [
-                RenderLayerType.staticBackground,
-                RenderLayerType.content,
-                RenderLayerType.dragPreview,
-                RenderLayerType.interaction,
-              ],
+    // 🔧 检测页面尺寸变化并自动重置视图
+    final pageKey = '${page['width']}_${page['height']}_${page['orientation']}_${page['dpi']}';
+    if (_lastPageKey != null && _lastPageKey != pageKey) {
+      debugPrint('🔧【页面变化检测】页面尺寸改变: $_lastPageKey -> $pageKey');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _fitPageToScreen();
+          debugPrint('🔧【页面变化检测】自动重置视图位置');
+        }
+      });
+    }
+    _lastPageKey = pageKey;
+
+    // 🔥 关键修复：移除每次build时的自动变换设置
+    // 不再在build方法中强制设置transformationController和调用zoomTo
+    // 这些操作现在只在真正需要时进行（如初始化、重置按钮）
+    
+    debugPrint('🔧【_buildPageContent】保持当前变换状态，不强制重置');
+
+    // Get current zoom level for status bar (calculated dynamically each time)  
+    final currentZoomScale = widget.transformationController.value.getMaxScaleOnAxis();
+    final zoomPercentage = (currentZoomScale * 100).toInt();
+
+    return Stack(
+      children: [
+        Container(
+          color: colorScheme.inverseSurface.withAlpha(26), // Canvas outer background
+          // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
+          child: RepaintBoundary(
+            key: const ValueKey('interactive_viewer_repaint_boundary'),
+            child: InteractiveViewer(
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              // 在元素拖拽时禁用InteractiveViewer的平移，避免手势冲突
+              panEnabled: !(_isDragging || _dragStateManager.isDragging),
+              scaleEnabled: true,
+              minScale: 0.1,
+              maxScale: 15.0,
+              scaleFactor: 600.0, // Increased scale factor to make zooming more gradual
+              transformationController: widget.transformationController,
+              onInteractionStart: (ScaleStartDetails details) {},
+              onInteractionUpdate: (ScaleUpdateDetails details) {
+                // Status bar uses real-time calculation, no setState needed during update
+              },
+              onInteractionEnd: (ScaleEndDetails details) {
+                // Update final zoom value through controller
+                final scale = widget.transformationController.value.getMaxScaleOnAxis();
+                widget.controller.zoomTo(scale);
+                // Status bar uses real-time calculation, no explicit setState needed
+              },
+              constrained: false, // Allow content to be unconstrained
+              child: Listener(
+                onPointerDown: (_) {
+                  // Add this empty listener to properly initialize mouse tracking
+                },
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTapDown: (details) {
+                    debugPrint('🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
+                    // 检查是否点击在选中元素上，如果是，准备拖拽
+                    // 直接设置变量，避免setState时序问题
+                    if (_shouldHandleSpecialGesture(DragStartDetails(localPosition: details.localPosition), elements)) {
+                      debugPrint('🔥【onTapDown】点击在选中元素上，准备拖拽');
+                      _isReadyForDrag = true;
+                    } else {
+                      debugPrint('🔥【onTapDown】点击在空白区域');
+                      _isReadyForDrag = false;
+                    }
+                  },
+                  onTapUp: (details) {
+                    // 重置拖拽准备状态
+                    _isReadyForDrag = false;
+                    _gestureHandler.handleTapUp(details, elements.cast<Map<String, dynamic>>());
+                  },
+                  // 处理右键点击事件，用于退出select模式
+                  onSecondaryTapDown: (details) =>
+                      _gestureHandler.handleSecondaryTapDown(details),
+                  onSecondaryTapUp: (details) =>
+                      _gestureHandler.handleSecondaryTapUp(
+                          details, elements.cast<Map<String, dynamic>>()),
+                  // 智能手势处理：只在需要时设置回调
+                  onPanStart: _shouldHandleAnySpecialGesture(elements) ? (details) {
+                    debugPrint('🔍【onPanStart】回调被调用 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+                    
+                    // 动态检查是否需要处理特殊手势（元素拖拽、选择框等）
+                    if (_shouldHandleSpecialGesture(details, elements)) {
+                      debugPrint('🔍【onPanStart】需要特殊处理，调用SmartCanvasGestureHandler');
+                      _gestureHandler.handlePanStart(
+                          details, elements.cast<Map<String, dynamic>>());
+                    } else if (widget.controller.state.currentTool == 'select') {
+                      debugPrint('🔍【onPanStart】select模式，处理选择框');
+                      _gestureHandler.handlePanStart(
+                          details, elements.cast<Map<String, dynamic>>());
+                    } else {
+                      debugPrint('🔍【onPanStart】点击空白区域，不处理，让InteractiveViewer处理画布平移');
+                      // 不调用手势处理器，让InteractiveViewer接管
+                    }
+                  } : null,
+                  onPanUpdate: _shouldHandleAnySpecialGesture(elements) ? (details) {
+                    // 先处理选择框更新，这优先级最高
+                    if (widget.controller.state.currentTool == 'select' &&
+                        _gestureHandler.isSelectionBoxActive) {
+                      _gestureHandler.handlePanUpdate(details);
+                      _selectionBoxNotifier.value = SelectionBoxState(
+                        isActive: true,
+                        startPoint: _gestureHandler.selectionBoxStart,
+                        endPoint: _gestureHandler.selectionBoxEnd,
+                      );
+                      return;
+                    }
+
+                    // Handle element dragging - 检查DragStateManager的拖拽状态
+                    if (_isDragging || _dragStateManager.isDragging || 
+                        (_isReadyForDrag && widget.controller.state.selectedElementIds.isNotEmpty)) {
+                      _gestureHandler.handlePanUpdate(details);
+                      debugPrint('【元素拖拽】SmartCanvasGestureHandler正在处理元素拖拽');
+                      return;
+                    }
+                    
+                    // 如果不需要特殊处理，则不调用手势处理器，让InteractiveViewer处理
+                    debugPrint('🔍【onPanUpdate】不处理，让InteractiveViewer处理画布平移');
+                  } : null,
+                  onPanEnd: _shouldHandleAnySpecialGesture(elements) ? (details) {
+                    // 检查是否需要处理手势结束
+                    bool shouldHandleEnd = _gestureHandler.isSelectionBoxActive || 
+                                         _isDragging || 
+                                         _dragStateManager.isDragging ||
+                                         _isReadyForDrag;
+
+                    // 重置拖拽准备状态
+                    _isReadyForDrag = false;
+
+                    // 只有在真正处理了手势的情况下才调用handlePanEnd
+                    if (shouldHandleEnd) {
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                      _gestureHandler.handlePanEnd(details);
+                    }
+                  } : null,
+                  onPanCancel: _shouldHandleAnySpecialGesture(elements) ? () {
+                    // 检查是否需要处理手势取消
+                    bool shouldHandleCancel = _gestureHandler.isSelectionBoxActive || 
+                                            _isDragging || 
+                                            _dragStateManager.isDragging ||
+                                            _isReadyForDrag;
+
+                    // 重置拖拽准备状态
+                    _isReadyForDrag = false;
+
+                    // 只有在真正处理了手势的情况下才调用handlePanCancel
+                    if (shouldHandleCancel) {
+                      // 重置选择框状态
+                      if (widget.controller.state.currentTool == 'select' &&
+                          _gestureHandler.isSelectionBoxActive) {
+                        _selectionBoxNotifier.value = SelectionBoxState();
+                      }
+                      _gestureHandler.handlePanCancel();
+                    }
+                  } : null,
+                                    child: Container(
+                    width: pageSize.width,
+                    height: pageSize.height,
+                    // 临时调试：添加红色边框，看看页面实际渲染区域
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.red, width: 2),
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        // 添加调试信息，检查页面容器的实际渲染尺寸
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            final RenderBox? containerBox = context.findRenderObject() as RenderBox?;
+                            if (containerBox != null) {
+                              final containerSize = containerBox.size;
+                              debugPrint('🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
+                              
+                              // 获取容器在屏幕中的位置
+                              final containerOffset = containerBox.localToGlobal(Offset.zero);
+                              debugPrint('🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
+                            }
+                          }
+                                                 });
+                                                   return Stack(
+                          fit: StackFit.expand, // Use expand to fill the container
+                          clipBehavior:
+                              Clip.none, // Allow control points to extend beyond page boundaries
+                          children: [
+                            // Use LayerRenderManager to build coordinated layer stack
+                            RepaintBoundary(
+                              key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
+                              child: _layerRenderManager.buildLayerStack(
+                                layerOrder: [
+                                  RenderLayerType.staticBackground,
+                                  RenderLayerType.content,
+                                  RenderLayerType.dragPreview,
+                                  RenderLayerType.interaction,
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+        // Status bar showing zoom level and tools (only visible in edit mode)
+        if (!widget.isPreviewMode)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+              color: colorScheme.surface
+                  .withAlpha(217), // 217 is approximately 85% of 255
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 4.0,
+                runSpacing: 4.0,
+                children: [
+                  // Debug indicator showing current tool
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: colorScheme.tertiaryContainer,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '当前工具: ${widget.controller.state.currentTool}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onTertiaryContainer,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Selection mode indicator
+                  if (widget.controller.state.currentTool == 'select')
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.select_all,
+                            size: 16,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '选择模式',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // Reset position button
+                  Tooltip(
+                    message: AppLocalizations.of(context).canvasResetViewTooltip,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _resetCanvasPosition,
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 120),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.center_focus_strong,
+                                  size: 14,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    AppLocalizations.of(context).canvasResetView,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Zoom indicator
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 80),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.zoom_in,
+                          size: 16,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '${(widget.transformationController.value.getMaxScaleOnAxis() * 100).toInt()}%',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -1194,6 +1149,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   /// Fit the page content to screen with proper scale and centering
   void _fitPageToScreen() {
+    debugPrint('🔧【_fitPageToScreen】重置视图位置');
+    
     // Ensure we have a current page
     final currentPage = widget.controller.state.currentPage;
     if (currentPage == null) return;
@@ -1205,8 +1162,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     final Size viewportSize = renderBox.size;
 
     // Get the page size (canvas content bounds)
-    final Size pageSize = ElementUtils.calculatePixelSize(
-        currentPage); // Add some padding around the page (5% on each side for better content visibility)
+    final Size pageSize = ElementUtils.calculatePixelSize(currentPage);
+    debugPrint('🔧【Reset View】页面信息: currentPage = ${currentPage['width']}x${currentPage['height']}, 计算出的pageSize = ${pageSize.width}x${pageSize.height}');
+    
+    // Add some padding around the page (5% on each side for better content visibility)
     const double paddingFactor =
         0.95; // Use 95% of viewport for content, 5% for padding - maximizes content display
     final double availableWidth = viewportSize.width * paddingFactor;
@@ -1224,6 +1183,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     final double dx = (viewportSize.width - scaledPageWidth) / 2;
     final double dy = (viewportSize.height - scaledPageHeight) / 2;
 
+    // 确保从干净的状态开始，重置任何现有的变换
+    // Reset to identity first to avoid accumulating transformations
+    widget.transformationController.value = Matrix4.identity();
+    
     // Create the transformation matrix
     final Matrix4 matrix = Matrix4.identity()
       ..translate(dx, dy)
@@ -1231,22 +1194,41 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // Apply the transformation
     widget.transformationController.value = matrix;
+    
+    debugPrint('🔧【Reset View】应用变换矩阵: ${matrix.toString().split('\n')[0]}...');
 
     // Notify the controller that zoom has changed
     widget.controller.zoomTo(scale);
 
+    // Verify the transformation was applied correctly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final appliedMatrix = widget.transformationController.value;
+        final appliedScale = appliedMatrix.getMaxScaleOnAxis();
+        final appliedTranslation = appliedMatrix.getTranslation();
+        debugPrint('🔧【Reset View】验证变换应用结果: appliedScale=${appliedScale.toStringAsFixed(3)}, appliedTranslation=(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})');
+        
+        if ((appliedScale - scale).abs() > 0.001 || 
+            (appliedTranslation.x - dx).abs() > 1 || 
+            (appliedTranslation.y - dy).abs() > 1) {
+          debugPrint('⚠️【Reset View】变换应用不正确！期望 scale=${scale.toStringAsFixed(3)}, translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
+        } else {
+          debugPrint('✅【Reset View】变换应用正确');
+        }
+      }
+    });
+
     // Update UI
     // setState(() {});
-    // debugPrint('Canvas fitted to screen: '
-    //     'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
-    //     'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
-    //     'paddingFactor=$paddingFactor, '
-    //     'availableSize=${availableWidth.toStringAsFixed(1)}x${availableHeight.toStringAsFixed(1)}, '
-    //     'scale=${scale.toStringAsFixed(3)}, '
-    //     'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
+    debugPrint('🔧【Reset View】计算结果: '
+        'pageSize=${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}, '
+        'viewportSize=${viewportSize.width.toStringAsFixed(1)}x${viewportSize.height.toStringAsFixed(1)}, '
+        'paddingFactor=$paddingFactor, '
+        'availableSize=${availableWidth.toStringAsFixed(1)}x${availableHeight.toStringAsFixed(1)}, '
+        'scale=${scale.toStringAsFixed(3)}, '
+        'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
 
-    // debugPrint(
-    // 'Reset view: Maximized canvas content display with ${((1 - paddingFactor) * 100).toStringAsFixed(1)}% padding');
+    debugPrint('🔧【Reset View】预期效果: 让整个页面在可视区域内居中显示，scale=${scale.toStringAsFixed(3)}');
   }
 
   /// 处理控制点拖拽结束事件
@@ -1784,7 +1766,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
   }
 
-  /// Build widget for specific layer type
+
+
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
     _fitPageToScreen();

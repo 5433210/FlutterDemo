@@ -735,8 +735,29 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
             controller: _controller,
             page: _controller.state.currentPage,
             onPagePropertiesChanged: (properties) {
+              debugPrint('🔧【页面属性变化】收到属性更新: $properties');
               if (_controller.state.currentPageIndex >= 0) {
+                // Check if view-affecting properties are changing
+                final currentPage = _controller.state.currentPage;
+                final shouldResetView = currentPage != null && (
+                  properties.containsKey('orientation') ||
+                  properties.containsKey('width') ||
+                  properties.containsKey('height') ||
+                  properties.containsKey('dpi')
+                );
+                
+                debugPrint('🔧【页面属性变化】shouldResetView: $shouldResetView, properties keys: ${properties.keys.toList()}');
+                
                 _controller.updatePageProperties(properties);
+                
+                // Auto reset view position after page size/orientation changes
+                if (shouldResetView) {
+                  debugPrint('🔧【页面属性变化】准备自动重置视图位置');
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _controller.resetViewPosition();
+                    debugPrint('🔧【页面属性变化】自动重置视图位置 - 完成');
+                  });
+                }
               }
             },
           );
@@ -1691,8 +1712,7 @@ class _M3PracticeEditPageState extends ConsumerState<M3PracticeEditPage>
         // Load success, update UI
         if (mounted) {
           setState(() {
-            // Reset zoom and pan
-            _transformationController.value = Matrix4.identity();
+            // No need to reset transformation here, resetViewPosition() will handle it
           });
 
           // Show success notification

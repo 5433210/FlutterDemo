@@ -7,7 +7,10 @@ class ElementUtils {
     // Get page size (millimeters)
     final width = (page['width'] as num?)?.toDouble() ?? 210.0;
     final height = (page['height'] as num?)?.toDouble() ?? 297.0;
+    final orientation = page['orientation'] as String? ?? 'portrait';
     final dpi = (page['dpi'] as num?)?.toInt() ?? 300;
+
+    debugPrint('🔧【calculatePixelSize】页面参数: width=$width, height=$height, orientation=$orientation, dpi=$dpi');
 
     // Convert mm to inches, 1 inch = 25.4mm
     final widthInches = width / 25.4;
@@ -17,6 +20,8 @@ class ElementUtils {
     final widthPixels = (widthInches * dpi).round().toDouble();
     final heightPixels = (heightInches * dpi).round().toDouble();
 
+    debugPrint('🔧【calculatePixelSize】计算结果: ${widthPixels}x$heightPixels pixels');
+    
     return Size(widthPixels, heightPixels);
   }
 
