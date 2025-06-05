@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:charasgem/application/services/practice/practice_service.dart';
 import 'package:charasgem/application/services/storage/practice_storage_service.dart';
-import 'package:charasgem/domain/models/practice/practice_element.dart';
 import 'package:charasgem/domain/repositories/practice_repository.dart';
 import 'package:charasgem/infrastructure/storage/storage_interface.dart';
 import 'package:charasgem/presentation/pages/practices/widgets/m3_practice_edit_canvas.dart';
@@ -231,25 +230,6 @@ void main() {
       await BaselineManager.saveBaselines(newBaselines);
     });
   });
-}
-
-/// Generates test elements for performance testing using existing TextElement type
-List<PracticeElement> _generateTestElements(int count) {
-  final elements = <PracticeElement>[];
-
-  for (int i = 0; i < count; i++) {
-    elements.add(TextElement(
-      id: 'element_$i',
-      text: 'Test Element $i',
-      x: 50.0 + i * 25.0,
-      y: 50.0 + (i % 20) * 20.0,
-      width: 100.0,
-      height: 30.0,
-      layerId: 'default_layer',
-    ));
-  }
-
-  return elements;
 }
 
 /// Measures interactive performance with focus on user interaction responsiveness

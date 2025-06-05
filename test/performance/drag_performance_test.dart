@@ -2,9 +2,11 @@ import 'package:charasgem/application/services/practice/practice_service.dart';
 import 'package:charasgem/application/services/storage/practice_storage_service.dart';
 import 'package:charasgem/domain/repositories/practice_repository.dart';
 import 'package:charasgem/infrastructure/storage/storage_interface.dart';
+import 'package:charasgem/l10n/app_localizations.dart';
 import 'package:charasgem/presentation/pages/practices/widgets/m3_practice_edit_canvas.dart';
 import 'package:charasgem/presentation/widgets/practice/practice_edit_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -16,10 +18,19 @@ void main() {
       controller = PracticeEditController(MockPracticeService());
       dragStateManager = DragStateManager();
     });
-
     testWidgets('Drag Performance with Light Element Load',
         (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('zh'),
+        ],
         home: Scaffold(
           body: M3PracticeEditCanvas(
             controller: controller,
@@ -46,10 +57,19 @@ void main() {
       expect(dragTime, lessThan(100),
           reason: 'Drag with light load should complete within 100ms');
     });
-
     testWidgets('Drag Performance with Medium Element Load',
         (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('zh'),
+        ],
         home: Scaffold(
           body: M3PracticeEditCanvas(
             controller: controller,
@@ -76,10 +96,19 @@ void main() {
       expect(dragTime, lessThan(150),
           reason: 'Drag with medium load should complete within 150ms');
     });
-
     testWidgets('Drag Performance with Heavy Element Load',
         (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('zh'),
+        ],
         home: Scaffold(
           body: M3PracticeEditCanvas(
             controller: controller,
@@ -108,9 +137,18 @@ void main() {
       expect(dragTime, lessThan(500),
           reason: 'Drag with heavy load should complete within 500ms');
     });
-
     testWidgets('Multi-finger Drag Performance', (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('en'),
+          Locale('zh'),
+        ],
         home: Scaffold(
           body: M3PracticeEditCanvas(
             controller: controller,

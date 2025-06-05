@@ -1,0 +1,68 @@
+[
+  {
+    "testName": "light_load_test",
+    "elementCount": 50,
+    "averageFrameTime": 0.16079999999999994,
+    "averageResponseTime": 1.20215,
+    "memoryUsageMB": 75.0,
+    "dragLatency": 0.9322000000000001,
+    "renderTime": 0.04853333333333334,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:01.802498"
+  },
+  {
+    "testName": "medium_load_test",
+    "elementCount": 150,
+    "averageFrameTime": 0.09471999999999997,
+    "averageResponseTime": 0.3931500000000001,
+    "memoryUsageMB": 125.0,
+    "dragLatency": 0.6651,
+    "renderTime": 0.09273333333333332,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:01.970597"
+  },
+  {
+    "testName": "heavy_load_test",
+    "elementCount": 300,
+    "averageFrameTime": 0.11303999999999995,
+    "averageResponseTime": 0.4296499999999999,
+    "memoryUsageMB": 200.0,
+    "dragLatency": 0.8040999999999998,
+    "renderTime": 0.0444,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:02.059817"
+  },
+  {
+    "testName": "maximum_load_test",
+    "elementCount": 500,
+    "averageFrameTime": 0.06387999999999996,
+    "averageResponseTime": 0.4433000000000001,
+    "memoryUsageMB": 300.0,
+    "dragLatency": 0.6858000000000001,
+    "renderTime": 0.04273333333333334,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:02.141860"
+  },
+  {
+    "testName": "interactive_performance_test",
+    "elementCount": 100,
+    "averageFrameTime": 0.042,
+    "averageResponseTime": 0.6260333333333329,
+    "memoryUsageMB": 80.0,
+    "dragLatency": 0.7203999999999996,
+    "renderTime": 0.042,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:02.254217"
+  },
+  {
+    "testName": "memory_usage_test",
+    "elementCount": 200,
+    "averageFrameTime": 0.03,
+    "averageResponseTime": 8.254,
+    "memoryUsageMB": 180.0,
+    "dragLatency": 8.254,
+    "renderTime": 0.03,
+    "version": "1.0.0",
+    "recordedAt": "2025-06-05T15:04:02.332955"
+  }
+]

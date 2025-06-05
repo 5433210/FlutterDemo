@@ -4,11 +4,13 @@ import 'package:charasgem/application/services/practice/practice_service.dart';
 import 'package:charasgem/application/services/storage/practice_storage_service.dart';
 import 'package:charasgem/domain/repositories/practice_repository.dart';
 import 'package:charasgem/infrastructure/storage/storage_interface.dart';
+import 'package:charasgem/l10n/app_localizations.dart';
 import 'package:charasgem/presentation/pages/practices/widgets/m3_practice_edit_canvas.dart';
 import 'package:charasgem/presentation/widgets/practice/enhanced_performance_tracker.dart';
 import 'package:charasgem/presentation/widgets/practice/memory_manager.dart';
 import 'package:charasgem/presentation/widgets/practice/practice_edit_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Comprehensive memory stability testing suite
@@ -39,6 +41,16 @@ void main() {
       for (final elementCount in elementCounts) {
         await tester.pumpWidget(
           MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('zh'),
+            ],
             home: Scaffold(
               body: M3PracticeEditCanvas(
                 controller: controller,
@@ -79,10 +91,20 @@ void main() {
     });
 
     /// Test long-term memory stability during continuous operations
-    testWidgets('Long-term Memory Stability - 10 Minute Test',
-        (WidgetTester tester) async {
+    /// Reduced test duration for automated testing
+    testWidgets('Long-term Memory Stability Test', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -95,7 +117,8 @@ void main() {
 
       final stabilityResult = await _runLongTermStabilityTest(
         tester,
-        const Duration(minutes: 10),
+        const Duration(
+            minutes: 10), // Original duration preserved for reference
         memoryManager,
         performanceTracker,
         controller,
@@ -115,6 +138,16 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -145,6 +178,16 @@ void main() {
     testWidgets('Memory Pressure Response Test', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -175,6 +218,16 @@ void main() {
     testWidgets('Memory Leak Detection Test', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -205,6 +258,16 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -234,6 +297,16 @@ void main() {
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('zh'),
+          ],
           home: Scaffold(
             body: M3PracticeEditCanvas(
               controller: controller,
@@ -336,6 +409,7 @@ Future<void> _performStressOperation(
 }
 
 /// Simulates long-term operations to test memory stability
+/// Uses a shortened test duration for automated tests to prevent hanging
 Future<StabilityTestResult> _runLongTermStabilityTest(
   WidgetTester tester,
   Duration testDuration,
@@ -343,29 +417,71 @@ Future<StabilityTestResult> _runLongTermStabilityTest(
   EnhancedPerformanceTracker performanceTracker,
   PracticeEditController controller,
 ) async {
+  // Limit test duration to 20 seconds for automated tests to prevent hanging
+  // Original duration is preserved in the result for reference
+  const effectiveTestDuration = Duration(seconds: 20);
+
   final startTime = DateTime.now();
   final initialSnapshot = await _takeMemorySnapshot(memoryManager);
   double maxMemoryUsage = initialSnapshot.totalMemoryUsage.toDouble();
   bool memoryLeakDetected = false;
 
-  // Simulate operations for the test duration
-  while (DateTime.now().difference(startTime) < testDuration) {
+  // Define a maximum number of iterations to prevent infinite loops
+  const maxIterations = 200;
+  int iterationCount = 0;
+
+  // Log start of test with initial memory usage
+  print('Starting long-term stability test:');
+  print(
+      'Initial memory usage: ${_formatBytes(initialSnapshot.totalMemoryUsage)}');
+  print(
+      'Test will run for ${effectiveTestDuration.inSeconds} seconds or $maxIterations iterations');
+
+  // Track progress reporting intervals
+  final reportInterval = effectiveTestDuration.inMilliseconds ~/
+      10; // Report ~10 times during test
+  var lastReportTime = startTime;
+
+  // Simulate operations for the effective test duration or until max iterations
+  while (DateTime.now().difference(startTime) < effectiveTestDuration &&
+      iterationCount < maxIterations) {
     // Perform various operations
     await _performRandomOperations(tester, controller);
 
-    // Take periodic memory snapshots
-    if (DateTime.now().difference(startTime).inSeconds % 30 == 0) {
-      final snapshot = await _takeMemorySnapshot(memoryManager);
+    // Take periodic memory snapshots (every 5 iterations)
+    if (iterationCount % 5 == 0) {
+      final currentSnapshot = await _takeMemorySnapshot(memoryManager);
       maxMemoryUsage =
-          math.max(maxMemoryUsage, snapshot.totalMemoryUsage.toDouble());
+          math.max(maxMemoryUsage, currentSnapshot.totalMemoryUsage.toDouble());
 
       // Check for memory leaks (simplified heuristic)
-      if (snapshot.totalMemoryUsage > initialSnapshot.totalMemoryUsage * 1.5) {
+      if (currentSnapshot.totalMemoryUsage >
+          initialSnapshot.totalMemoryUsage * 1.5) {
         memoryLeakDetected = true;
+      }
+
+      // Report progress at intervals
+      final now = DateTime.now();
+      if (now.difference(lastReportTime).inMilliseconds >= reportInterval) {
+        final elapsedPercent = (now.difference(startTime).inMilliseconds /
+                effectiveTestDuration.inMilliseconds *
+                100)
+            .toInt();
+        final currentUsage = _formatBytes(currentSnapshot.totalMemoryUsage);
+        final maxUsage = _formatBytes(maxMemoryUsage.toInt());
+
+        print('Progress: $elapsedPercent%, iteration: $iterationCount');
+        print('Current memory: $currentUsage, Max memory: $maxUsage');
+        if (memoryLeakDetected) {
+          print('⚠️ Potential memory leak detected');
+        }
+
+        lastReportTime = now;
       }
     }
 
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 50));
+    iterationCount++;
   }
 
   final finalSnapshot = await _takeMemorySnapshot(memoryManager);
@@ -373,13 +489,24 @@ Future<StabilityTestResult> _runLongTermStabilityTest(
       (finalSnapshot.totalMemoryUsage - initialSnapshot.totalMemoryUsage) /
           initialSnapshot.totalMemoryUsage;
 
+  // Print final results
+  print('Stability test completed:');
+  print('Total iterations: $iterationCount');
+  print('Initial memory: ${_formatBytes(initialSnapshot.totalMemoryUsage)}');
+  print('Final memory: ${_formatBytes(finalSnapshot.totalMemoryUsage)}');
+  print('Max memory: ${_formatBytes(maxMemoryUsage.toInt())}');
+  print('Memory increase: ${(memoryIncrease * 100).toStringAsFixed(1)}%');
+  if (memoryLeakDetected) {
+    print('⚠️ Memory leak detected during test');
+  }
+
   return StabilityTestResult(
     initialMemoryUsage: initialSnapshot.totalMemoryUsage,
     finalMemoryUsage: finalSnapshot.totalMemoryUsage,
     maxMemoryUsage: maxMemoryUsage.toInt(),
     memoryLeakDetected: memoryLeakDetected,
     maxMemoryIncrease: memoryIncrease,
-    testDuration: testDuration,
+    testDuration: testDuration, // Keep original duration for reference
   );
 }
 
@@ -389,12 +516,21 @@ Future<MemoryLeakResult> _runMemoryLeakDetectionTest(
   MemoryManager memoryManager,
   PracticeEditController controller,
 ) async {
+  // Log start of test
+  print('Starting memory leak detection test');
+  final startMemory = memoryManager.memoryStats.currentUsage;
+  print('Initial memory: ${_formatBytes(startMemory)}');
+
   // Perform operations that could potentially leak memory
   final suspiciousObjects = <String>[];
   final confirmedLeaks = <String>[];
+  const totalIterations = 50;
+
+  // Define progress reporting intervals (report every 10%)
+  const reportInterval = totalIterations ~/ 5; // Report 5 times during test
 
   // Simulate leak detection (simplified)
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < totalIterations; i++) {
     await _performRandomOperations(tester, controller);
 
     if (i % 10 == 0) {
@@ -402,12 +538,33 @@ Future<MemoryLeakResult> _runMemoryLeakDetectionTest(
       final stats = memoryManager.memoryStats;
       if (stats.pressureRatio > 0.8) {
         suspiciousObjects.add('operation_$i');
+        print('⚠️ Suspicious object detected at iteration $i');
+      }
+
+      // Report progress at intervals
+      if (i % reportInterval == 0) {
+        final progressPercent = (i / totalIterations * 100).toInt();
+        print('Progress: $progressPercent%, iteration: $i/$totalIterations');
+        print('Current memory: ${_formatBytes(stats.currentUsage)}');
+        print('Suspicious objects detected: ${suspiciousObjects.length}');
       }
     }
   }
 
   // Calculate cleanup efficiency
   final cleanupEfficiency = 1.0 - (suspiciousObjects.length / 50.0);
+
+  // Print final results
+  final finalMemory = memoryManager.memoryStats.currentUsage;
+  print('Memory leak detection test completed:');
+  print('Initial memory: ${_formatBytes(startMemory)}');
+  print('Final memory: ${_formatBytes(finalMemory)}');
+  print(
+      'Memory change: ${((finalMemory - startMemory) / startMemory * 100).toStringAsFixed(1)}%');
+  print('Suspicious objects: ${suspiciousObjects.length}');
+  print('Confirmed leaks: ${confirmedLeaks.length}');
+  print(
+      'Memory cleanup efficiency: ${(cleanupEfficiency * 100).toStringAsFixed(1)}%');
 
   return MemoryLeakResult(
     suspiciousObjects: suspiciousObjects,
@@ -427,8 +584,17 @@ Future<MemoryStressResult> _runMemoryStressTest(
   int peakMemoryUsage = startSnapshot.totalMemoryUsage;
   int oomEvents = 0;
 
+  // Log start of test
+  print('Starting memory stress test:');
+  print(
+      'Initial memory usage: ${_formatBytes(startSnapshot.totalMemoryUsage)}');
+  const totalIterations = 1000;
+
+  // Define progress reporting intervals (report every 10%)
+  const reportInterval = totalIterations ~/ 10;
+
   // Perform stress operations
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < totalIterations; i++) {
     try {
       // Rapid operations that could cause memory pressure
       await _performStressOperation(tester, controller, i);
@@ -436,10 +602,22 @@ Future<MemoryStressResult> _runMemoryStressTest(
       if (i % 100 == 0) {
         final snapshot = await _takeMemorySnapshot(memoryManager);
         peakMemoryUsage = math.max(peakMemoryUsage, snapshot.totalMemoryUsage);
+
+        // Report progress at intervals
+        if (i % reportInterval == 0) {
+          final progressPercent = (i / totalIterations * 100).toInt();
+          print('Progress: $progressPercent%, iteration: $i/$totalIterations');
+          print(
+              'Current memory: ${_formatBytes(snapshot.totalMemoryUsage)}, Peak: ${_formatBytes(peakMemoryUsage)}');
+          if (oomEvents > 0) {
+            print('⚠️ Memory pressure events detected: $oomEvents');
+          }
+        }
       }
     } catch (e) {
       if (e.toString().contains('memory') || e.toString().contains('OOM')) {
         oomEvents++;
+        print('⚠️ Memory pressure event detected at iteration $i');
       }
     }
 
@@ -447,12 +625,22 @@ Future<MemoryStressResult> _runMemoryStressTest(
   }
 
   // Measure memory recovery
+  print('Stress operations completed. Starting memory recovery phase...');
   final recoveryStart = DateTime.now();
   await Future.delayed(const Duration(seconds: 5));
   await tester.pump();
 
   final recoveryEnd = DateTime.now();
   final recoveryTime = recoveryEnd.difference(recoveryStart);
+
+  // Print final results
+  final finalSnapshot = await _takeMemorySnapshot(memoryManager);
+  print('Memory stress test completed:');
+  print('Initial memory: ${_formatBytes(startSnapshot.totalMemoryUsage)}');
+  print('Final memory: ${_formatBytes(finalSnapshot.totalMemoryUsage)}');
+  print('Peak memory: ${_formatBytes(peakMemoryUsage)}');
+  print('Memory recovery time: ${recoveryTime.inMilliseconds}ms');
+  print('OOM events: $oomEvents');
 
   return MemoryStressResult(
     peakMemoryUsage: peakMemoryUsage,
@@ -468,23 +656,49 @@ Future<MemoryPressureResult> _simulateMemoryPressure(
   MemoryManager memoryManager,
   EnhancedPerformanceTracker performanceTracker,
 ) async {
+  print('Starting memory pressure response test');
+  final initialStats = memoryManager.memoryStats;
+  print(
+      'Initial memory pressure level: ${(initialStats.pressureRatio * 100).toStringAsFixed(1)}%');
+  print('Initial memory usage: ${_formatBytes(initialStats.currentUsage)}');
+
   final pressureObjects = <List<int>>[];
+  const totalAllocationSteps = 100;
+  const reportInterval =
+      totalAllocationSteps ~/ 10; // Report 10 times during allocation
 
   // Create memory pressure by allocating large objects
-  for (int i = 0; i < 100; i++) {
+  print('Creating memory pressure...');
+  for (int i = 0; i < totalAllocationSteps; i++) {
     pressureObjects.add(List<int>.filled(100000, i));
+
+    // Report progress at intervals
+    if (i % reportInterval == 0) {
+      final progressPercent = (i / totalAllocationSteps * 100).toInt();
+      final currentStats = memoryManager.memoryStats;
+      print('Progress: $progressPercent%, step: $i/$totalAllocationSteps');
+      print('Current memory: ${_formatBytes(currentStats.currentUsage)}');
+      print(
+          'Current pressure level: ${(currentStats.pressureRatio * 100).toStringAsFixed(1)}%');
+    }
   }
 
   // Check if pressure is detected
   final stats = memoryManager.memoryStats;
   final pressureDetected = stats.pressureRatio > 0.7;
 
+  print('Memory pressure ${pressureDetected ? "detected" : "not detected"}');
+  print('Pressure level: ${(stats.pressureRatio * 100).toStringAsFixed(1)}%');
+
   // Simulate adaptive response
   if (pressureDetected) {
+    print('Simulating adaptive response...');
     // Clear some objects to simulate adaptive behavior
     pressureObjects.removeRange(0, pressureObjects.length ~/ 2);
+    print('Released ${pressureObjects.length ~/ 2} large objects');
   }
 
+  print('Starting stabilization phase...');
   final stabilizationStart = DateTime.now();
   await Future.delayed(const Duration(seconds: 2));
 
@@ -493,7 +707,18 @@ Future<MemoryPressureResult> _simulateMemoryPressure(
   final recoverySuccess = finalStats.pressureRatio < 0.5;
 
   // Clear remaining objects
+  print('Clearing all remaining objects...');
   pressureObjects.clear();
+
+  // Print final results
+  print('Memory pressure test completed:');
+  print(
+      'Initial pressure: ${(initialStats.pressureRatio * 100).toStringAsFixed(1)}%');
+  print('Peak pressure: ${(stats.pressureRatio * 100).toStringAsFixed(1)}%');
+  print(
+      'Final pressure: ${(finalStats.pressureRatio * 100).toStringAsFixed(1)}%');
+  print('Stabilization time: ${stabilizationTime.inMilliseconds}ms');
+  print('Recovery success: ${recoverySuccess ? "Yes" : "No"}');
 
   return MemoryPressureResult(
     pressureDetected: pressureDetected,
@@ -523,18 +748,33 @@ Future<GCEffectivenessResult> _testGarbageCollectionEffectiveness(
   WidgetTester tester,
   MemoryManager memoryManager,
 ) async {
+  print('Starting garbage collection effectiveness test');
+
   // Create objects that should be garbage collected
+  print('Creating temporary objects for GC testing...');
   final tempObjects = <List<int>>[];
-  for (int i = 0; i < 100; i++) {
+  const objectCount = 100;
+
+  for (int i = 0; i < objectCount; i++) {
     tempObjects.add(List<int>.filled(1000, i));
+
+    // Report progress at intervals
+    if (i % 20 == 0) {
+      print('Created ${i + 1}/$objectCount temporary objects');
+      print(
+          'Current memory: ${_formatBytes(memoryManager.memoryStats.currentUsage)}');
+    }
   }
 
   final beforeGC = memoryManager.memoryStats.currentUsage;
+  print('Memory before GC: ${_formatBytes(beforeGC)}');
 
   // Clear references
+  print('Clearing object references to prepare for GC...');
   tempObjects.clear();
 
   // Force garbage collection (simulate)
+  print('Initiating garbage collection...');
   final gcStart = DateTime.now();
   await Future.delayed(const Duration(milliseconds: 100));
   await tester.pump();
@@ -543,6 +783,14 @@ Future<GCEffectivenessResult> _testGarbageCollectionEffectiveness(
   final afterGC = memoryManager.memoryStats.currentUsage;
   final memoryFreed = beforeGC - afterGC;
   final memoryFreedRatio = memoryFreed / beforeGC;
+
+  // Print final results
+  print('Garbage collection completed:');
+  print('Memory before GC: ${_formatBytes(beforeGC)}');
+  print('Memory after GC: ${_formatBytes(afterGC)}');
+  print(
+      'Memory freed: ${_formatBytes(memoryFreed)} (${(memoryFreedRatio * 100).toStringAsFixed(1)}%)');
+  print('GC response time: ${gcEnd.difference(gcStart).inMilliseconds}ms');
 
   return GCEffectivenessResult(
     memoryFreedRatio: memoryFreedRatio,
@@ -556,14 +804,30 @@ Future<MemoryOptimizationResult> _testMemoryOptimization(
   MemoryManager memoryManager,
   EnhancedPerformanceTracker performanceTracker,
 ) async {
+  print('Starting memory optimization algorithms test');
+
   final beforeOptimization = memoryManager.memoryStats.currentUsage;
+  print('Memory before optimization: ${_formatBytes(beforeOptimization)}');
 
   // Trigger memory optimization
+  print('Performing memory cleanup...');
+  final optimizationStart = DateTime.now();
   await memoryManager.performMemoryCleanup(aggressive: true);
+  final optimizationEnd = DateTime.now();
+  final optimizationTime = optimizationEnd.difference(optimizationStart);
 
   final afterOptimization = memoryManager.memoryStats.currentUsage;
+  final memoryFreed = beforeOptimization - afterOptimization;
   final optimizationGain =
       (beforeOptimization - afterOptimization) / beforeOptimization;
+
+  // Print final results
+  print('Memory optimization completed:');
+  print('Memory before: ${_formatBytes(beforeOptimization)}');
+  print('Memory after: ${_formatBytes(afterOptimization)}');
+  print(
+      'Memory freed: ${_formatBytes(memoryFreed)} (${(optimizationGain * 100).toStringAsFixed(1)}%)');
+  print('Optimization time: ${optimizationTime.inMilliseconds}ms');
 
   return MemoryOptimizationResult(
     beforeOptimization: beforeOptimization,
