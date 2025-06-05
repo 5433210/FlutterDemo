@@ -7,9 +7,9 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/practice_edit_controller.dart';
+import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
 import '../helpers/element_utils.dart';
 import 'canvas_control_points.dart';
-import 'canvas_gesture_handler.dart';
 import 'canvas_structure_listener.dart';
 import 'content_render_controller.dart';
 import 'content_render_layer.dart';
@@ -103,9 +103,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
-
   // Canvas gesture handler
-  late CanvasGestureHandler _gestureHandler;
+  late SmartCanvasGestureHandler _gestureHandler;
 
   // Content render controller for dual-layer architecture
   late ContentRenderController _contentRenderController;
@@ -1444,7 +1443,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
   /// 初始化手势处理器
   void _initializeGestureHandler() {
-    _gestureHandler = CanvasGestureHandler(
+    _gestureHandler = SmartCanvasGestureHandler(
       controller: widget.controller,
       dragStateManager: _dragStateManager,
       onDragStart:
