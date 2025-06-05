@@ -314,8 +314,8 @@ class DragStateManager extends ChangeNotifier {
     // 更新预览位置
     _updatePreviewPositions();
 
-    // 批量更新实际位置（通过定时器实现节流）
-    _scheduleBatchUpdate();
+    // 立即处理批量更新，不使用定时器
+    _processBatchUpdate();
 
     notifyListeners();
 

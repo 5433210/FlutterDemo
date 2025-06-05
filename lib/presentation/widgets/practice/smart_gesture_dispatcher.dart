@@ -329,10 +329,14 @@ class SmartGestureDispatcher {
 
     // Static tap detection
     if (distance < 5.0 && velocity < 50.0) {
+      final tapType = await _determineTapType(tracker, context);
+      final hitTarget = await _performHitTest(tracker.currentPosition, context);
+      
       return _SmartGestureType.tap(
         confidence: 0.95,
         position: tracker.currentPosition,
-        tapType: await _determineTapType(tracker, context),
+        tapType: tapType,
+        elementId: hitTarget.elementId,
       );
     }
 
@@ -491,19 +495,32 @@ class SmartGestureDispatcher {
     PointerEvent event,
     GestureContext context,
   ) async {
+    if (gesture.tapData == null) {
+      return GestureDispatchResult.unhandled(reason: 'Tap data is null');
+    }
+
     final tapData = gesture.tapData!;
 
     switch (tapData.tapType) {
       case _TapType.elementSelect:
+        if (tapData.elementId == null) {
+          return GestureDispatchResult.unhandled(reason: 'Element ID is null');
+        }
         return await context.selectElement(tapData.elementId!);
 
       case _TapType.elementDeselect:
+        if (tapData.elementId == null) {
+          return GestureDispatchResult.unhandled(reason: 'Element ID is null');
+        }
         return await context.deselectElement(tapData.elementId!);
 
       case _TapType.clearSelection:
         return await context.clearSelection();
 
       case _TapType.contextMenu:
+        if (gesture.position == null) {
+          return GestureDispatchResult.unhandled(reason: 'Position is null');
+        }
         return await context.showContextMenu(gesture.position!);
 
       default:
@@ -941,13 +958,17 @@ class _SmartGestureType {
     required Offset position,
     required _TapType tapType,
     String? elementId,
-  }) =>
-      _SmartGestureType._(
-        type: _GestureTypeEnum.tap,
-        confidence: confidence,
-        position: position,
-        tapData: _TapData(tapType: tapType, elementId: elementId),
-      );
+  }) {
+    return _SmartGestureType._(
+      type: _GestureTypeEnum.tap,
+      confidence: confidence,
+      position: position,
+      tapData: _TapData(
+        tapType: tapType,
+        elementId: elementId,
+      ),
+    );
+  }
 
   factory _SmartGestureType.unknown() => _SmartGestureType._(
         type: _GestureTypeEnum.unknown,

@@ -42,11 +42,13 @@ class SmartCanvasGestureHandler implements GestureContext {
   Offset _elementStartPosition = Offset.zero;
   final Map<String, Offset> _elementStartPositions = {};
   bool _isSelectionBoxActive = false;
+  bool _isPanningEmptyArea = false;
+  bool _isPanStartHandling = false;
   Offset? _selectionBoxStart;
   Offset? _selectionBoxEnd;
   List<String> _panStartSelectedElementIds = [];
-  bool _isPanningEmptyArea = false;
   Offset? _panEndPosition;
+  bool _isDragging = false;
 
   SmartCanvasGestureHandler({
     required this.controller,
@@ -218,7 +220,47 @@ class SmartCanvasGestureHandler implements GestureContext {
     _responseStopwatch.start();
 
     try {
-      // Create synthetic pointer event for dispatcher
+      // 对于潜在的拖拽操作，直接使用legacy处理避免gesture dispatcher误判
+      // 检查是否可能是元素拖拽
+      bool isPotentialElementDrag = false;
+      if (controller.state.selectedElementIds.isNotEmpty) {
+        for (int i = elements.length - 1; i >= 0; i--) {
+          final element = elements[i];
+          final id = element['id'] as String;
+          final x = (element['x'] as num).toDouble();
+          final y = (element['y'] as num).toDouble();
+          final width = (element['width'] as num).toDouble();
+          final height = (element['height'] as num).toDouble();
+
+          // Check if element is hidden or locked
+          if (element['hidden'] == true) continue;
+          final layerId = element['layerId'] as String?;
+          if (layerId != null) {
+            final layer = controller.state.getLayerById(layerId);
+            if (layer != null && layer['isVisible'] == false) continue;
+          }
+
+          // Check if clicking inside selected element
+          final bool isInside = details.localPosition.dx >= x &&
+              details.localPosition.dx <= x + width &&
+              details.localPosition.dy >= y &&
+              details.localPosition.dy <= y + height;
+
+          if (isInside && controller.state.selectedElementIds.contains(id)) {
+            isPotentialElementDrag = true;
+            break;
+          }
+        }
+      }
+
+      // 如果是潜在的元素拖拽或选择框操作，直接使用legacy处理
+      if (isPotentialElementDrag || controller.state.currentTool == 'select') {
+        debugPrint('🔧【handlePanStart】检测到潜在拖拽或选择框，直接使用legacy处理');
+        await _handleLegacyPanStart(details, elements);
+        return;
+      }
+
+      // 其他情况使用新的gesture dispatcher
       final pointerEvent = _createSyntheticPointerEvent(
         PointerDownEvent,
         details.localPosition,
@@ -464,6 +506,8 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _finalizeElementDrag() {
+    debugPrint('【SmartGestureHandler】结束元素拖拽');
+    _isDragging = false;
     dragStateManager.endDrag();
 
     final List<String> elementIds = [];
@@ -556,21 +600,48 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _handleCanvasPanUpdate(Offset currentPosition, double inverseScale) {
-    final rawDx = currentPosition.dx - _dragStart.dx;
-    final rawDy = currentPosition.dy - _dragStart.dy;
-    final dx = rawDx * inverseScale;
-    final dy = rawDy * inverseScale;
-
-    _elementStartPosition = Offset(dx, dy);
+    // 画布平移由InteractiveViewer处理，这里不做任何操作
+    debugPrint('【SmartCanvasGestureHandler】画布平移更新被忽略，由InteractiveViewer处理');
     _panEndPosition = currentPosition;
-    onDragUpdate();
+    // 不调用onDragUpdate，让InteractiveViewer处理
   }
 
   void _handleElementDragUpdate(Offset currentPosition) {
     final dx = currentPosition.dx - _dragStart.dx;
     final dy = currentPosition.dy - _dragStart.dy;
 
-    dragStateManager.updateDragOffset(Offset(dx, dy));
+    // 获取缩放因子并调整拖拽偏移
+    // 注意：当画布放大时，用户的手势应该对应更大的元素移动
+    // 因此不需要除以缩放因子，直接使用原始偏移量即可
+    final scaleFactor = getScaleFactor();
+    final adjustedDx = dx; // 移除缩放调整，直接使用原始偏移
+    final adjustedDy = dy; // 移除缩放调整，直接使用原始偏移
+
+    // 更新拖拽状态
+    dragStateManager.updateDragOffset(Offset(adjustedDx, adjustedDy));
+    _isDragging = true;
+
+    // 使用批量更新机制更新元素位置
+    final updates = <String, Map<String, dynamic>>{};
+    for (final selectedId in controller.state.selectedElementIds) {
+      final start = _elementStartPositions[selectedId];
+      if (start != null) {
+        updates[selectedId] = {
+          'x': start.dx + adjustedDx,
+          'y': start.dy + adjustedDy,
+        };
+      }
+    }
+
+    // 批量更新元素位置，使用拖拽优化选项
+    if (updates.isNotEmpty) {
+      controller.batchUpdateElementProperties(
+        updates,
+        options: BatchUpdateOptions.forDragOperation(),
+      );
+    }
+
+    debugPrint('【SmartGestureHandler】拖拽更新: dx=$adjustedDx, dy=$adjustedDy, scale=$scaleFactor (不调整缩放)');
     onDragUpdate();
   }
 
@@ -579,6 +650,8 @@ class SmartCanvasGestureHandler implements GestureContext {
     final isCurrentlySelected =
         controller.state.selectedElementIds.contains(id);
     final isLocked = element['locked'] == true;
+
+    debugPrint('【SmartGestureHandler】处理元素选择: $id, 当前已选中: $isCurrentlySelected, 多选: $isMultiSelect');
 
     final layerId = element['layerId'] as String?;
     bool isLayerLocked = false;
@@ -590,17 +663,28 @@ class SmartCanvasGestureHandler implements GestureContext {
     }
 
     if (isLocked || isLayerLocked) {
+      debugPrint('【SmartGestureHandler】元素被锁定，选择元素: $id');
       controller.state.selectedLayerId = null;
       controller.selectElement(id, isMultiSelect: isMultiSelect);
     } else {
       controller.state.selectedLayerId = null;
 
-      if (isCurrentlySelected && !isMultiSelect) {
+      if (isCurrentlySelected && isMultiSelect) {
+        // 在多选模式下，点击已选中元素会从选择中移除
+        debugPrint('【SmartGestureHandler】多选模式，取消选择元素: $id');
+        controller.selectElement(id, isMultiSelect: true);
+      } else if (isCurrentlySelected && !isMultiSelect) {
+        // 在单选模式下，点击已选中元素会取消选择（反选）
+        debugPrint('【SmartGestureHandler】单选模式，反选元素: $id');
         controller.clearSelection();
       } else {
+        // 选择新元素
+        debugPrint('【SmartGestureHandler】选择新元素: $id');
         controller.selectElement(id, isMultiSelect: isMultiSelect);
       }
     }
+    
+    debugPrint('【SmartGestureHandler】选择处理完成，当前选中: ${controller.state.selectedElementIds}');
   }
 
   Future<GestureDispatchResult> _handleFastCanvasPan(
@@ -628,6 +712,13 @@ class SmartCanvasGestureHandler implements GestureContext {
   Future<void> _handleLegacyPanEnd(DragEndDetails details) async {
     if (dragStateManager.isDragging) {
       _finalizeElementDrag();
+    } else if (_currentMode == _GestureMode.selectionBox) {
+      // 结束选择框操作
+      _isSelectionBoxActive = false;
+      _currentMode = _GestureMode.idle;
+    } else if (_currentMode == _GestureMode.idle) {
+      // idle模式：不做任何操作
+      debugPrint('【SmartCanvasGestureHandler】idle模式结束，无需处理');
     } else {
       _finalizeCanvasPan();
     }
@@ -638,72 +729,77 @@ class SmartCanvasGestureHandler implements GestureContext {
     debugPrint(
         'handlePanStart - currentTool: ${controller.state.currentTool}, isPreviewMode: ${controller.state.isPreviewMode}');
 
+    _isPanStartHandling = true; // 标记正在处理PanStart
     _dragStart = details.localPosition;
     _currentMode = _GestureMode.pan;
 
-    // Check if we're in select mode
-    if (controller.state.currentTool == 'select' &&
-        !controller.state.isPreviewMode) {
-      bool hitSelectedElement = false;
+    try {
+      // 如果不在预览模式，检查手势类型
+      if (!controller.state.isPreviewMode) {
+        
+        // 1. 首先检查是否点击在已选中的元素上（元素拖拽 - 在任何工具模式下都可以）
+        for (int i = elements.length - 1; i >= 0; i--) {
+          final element = elements[i];
+          final id = element['id'] as String;
+          final x = (element['x'] as num).toDouble();
+          final y = (element['y'] as num).toDouble();
+          final width = (element['width'] as num).toDouble();
+          final height = (element['height'] as num).toDouble();
 
-      // Check for hits on selected elements
-      for (int i = elements.length - 1; i >= 0; i--) {
-        final element = elements[i];
-        final id = element['id'] as String;
-        final x = (element['x'] as num).toDouble();
-        final y = (element['y'] as num).toDouble();
-        final width = (element['width'] as num).toDouble();
-        final height = (element['height'] as num).toDouble();
+          // Check if element is hidden
+          if (element['hidden'] == true) continue;
 
-        // Check if element is hidden
-        if (element['hidden'] == true) continue;
-
-        // Check if layer is hidden
-        final layerId = element['layerId'] as String?;
-        bool isLayerHidden = false;
-        if (layerId != null) {
-          final layer = controller.state.getLayerById(layerId);
-          if (layer != null) {
-            isLayerHidden = layer['isVisible'] == false;
-          }
-        }
-        if (isLayerHidden) continue;
-
-        // Check if clicking inside element
-        final bool isInside = details.localPosition.dx >= x &&
-            details.localPosition.dx <= x + width &&
-            details.localPosition.dy >= y &&
-            details.localPosition.dy <= y + height;
-
-        if (isInside && controller.state.selectedElementIds.contains(id)) {
-          hitSelectedElement = true;
-
-          // Check if element is locked
-          final isLocked = element['locked'] == true;
-          bool isLayerLocked = false;
+          // Check if layer is hidden
+          final layerId = element['layerId'] as String?;
+          bool isLayerHidden = false;
           if (layerId != null) {
             final layer = controller.state.getLayerById(layerId);
             if (layer != null) {
-              isLayerLocked = layer['isLocked'] == true;
+              isLayerHidden = layer['isVisible'] == false;
             }
           }
+          if (isLayerHidden) continue;
 
-          if (!isLocked && !isLayerLocked) {
-            _setupElementDragging(elements);
-            return;
+          // Check if clicking inside element
+          final bool isInside = details.localPosition.dx >= x &&
+              details.localPosition.dx <= x + width &&
+              details.localPosition.dy >= y &&
+              details.localPosition.dy <= y + height;
+
+          if (isInside && controller.state.selectedElementIds.contains(id)) {
+            // Check if element is locked
+            final isLocked = element['locked'] == true;
+            bool isLayerLocked = false;
+            if (layerId != null) {
+              final layer = controller.state.getLayerById(layerId);
+              if (layer != null) {
+                isLayerLocked = layer['isLocked'] == true;
+              }
+            }
+
+            if (!isLocked && !isLayerLocked) {
+              debugPrint('【元素拖拽】开始拖拽已选中元素: $id (工具: ${controller.state.currentTool})');
+              _setupElementDragging(elements);
+              return;
+            }
+            break;
           }
-          break;
+        }
+
+        // 2. 如果在select模式下，开始选择框（框选模式）
+        if (controller.state.currentTool == 'select') {
+          debugPrint('【选择框】开始选择框操作（框选模式）');
+          _startSelectionBox(details.localPosition);
+          return;
         }
       }
 
-      // If didn't hit selected element, start selection box
-      if (!hitSelectedElement) {
-        _startSelectionBox(details.localPosition);
-        return;
-      }
+      // 3. 其他情况进行画布平移
+      debugPrint('【画布平移】开始画布平移');
+      _setupCanvasPanning(elements);
+    } finally {
+      _isPanStartHandling = false; // 清除PanStart处理标记
     }
-
-    _setupCanvasPanning(elements);
   }
 
   Future<void> _handleLegacyPanUpdate(DragUpdateDetails details) async {
@@ -718,16 +814,46 @@ class SmartCanvasGestureHandler implements GestureContext {
 
     if (dragStateManager.isDragging) {
       _handleElementDragUpdate(currentPosition);
+    } else if (_currentMode == _GestureMode.selectionBox) {
+      // 处理选择框更新
+      _selectionBoxEnd = currentPosition;
+      onDragUpdate();
+    } else if (_currentMode == _GestureMode.idle) {
+      // idle模式：完全不处理，让InteractiveViewer处理画布平移
+      debugPrint('【SmartCanvasGestureHandler】idle模式，不拦截手势');
+      return;
     } else {
-      _handleCanvasPanUpdate(currentPosition, inverseScale);
+      // 其他模式的画布平移由InteractiveViewer处理
+      debugPrint('【SmartCanvasGestureHandler】画布平移由InteractiveViewer处理');
     }
   }
 
   Future<void> _handleLegacyTapUp(
       TapUpDetails details, List<Map<String, dynamic>> elements) async {
+    
+    // 如果正在处理PanStart事件，跳过TapUp处理，避免时序冲突
+    if (_isPanStartHandling) {
+      debugPrint('【SmartGestureHandler】正在处理PanStart，跳过TapUp处理');
+      return;
+    }
+
+    // 如果当前模式不是idle，说明已经进入了特殊手势处理模式，跳过TapUp
+    if (_currentMode != _GestureMode.idle) {
+      debugPrint('【SmartGestureHandler】当前模式: $_currentMode，跳过TapUp处理');
+      return;
+    }
+
+    // 如果正在拖拽，不处理tapUp事件，避免干扰拖拽操作
+    if (_isDragging || dragStateManager.isDragging) {
+      debugPrint('【SmartGestureHandler】正在拖拽，跳过TapUp处理');
+      return;
+    }
+
     bool hitElement = false;
     final isMultiSelect = HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isShiftPressed;
+
+    debugPrint('【SmartGestureHandler】TapUp - 开始处理点击事件，当前选中: ${controller.state.selectedElementIds}');
 
     // Check elements from top to bottom
     for (int i = elements.length - 1; i >= 0; i--) {
@@ -756,12 +882,14 @@ class SmartCanvasGestureHandler implements GestureContext {
 
       if (isInside) {
         hitElement = true;
+        debugPrint('【SmartGestureHandler】TapUp - 点击到元素: $id');
         _handleElementSelection(id, element, isMultiSelect);
         break;
       }
     }
 
     if (!hitElement && !isMultiSelect) {
+      debugPrint('【SmartGestureHandler】TapUp - 点击空白区域，清除选择');
       controller.clearSelection();
     }
   }
@@ -920,14 +1048,15 @@ class SmartCanvasGestureHandler implements GestureContext {
   }
 
   void _setupCanvasPanning(List<Map<String, dynamic>> elements) {
-    _elementStartPosition = Offset.zero;
-    _panStartSelectedElementIds =
-        List.from(controller.state.selectedElementIds);
-    _currentMode = _GestureMode.canvasPan;
-    onDragStart(false, _dragStart, _elementStartPosition, {});
+    // 画布平移应该由InteractiveViewer处理，这里完全不处理
+    debugPrint('【SmartCanvasGestureHandler】不拦截手势，让InteractiveViewer处理画布平移');
+    _currentMode = _GestureMode.idle; // 设置为idle，表示不处理任何手势
+    // 重要：不设置任何拖拽状态，让GestureDetector的手势穿透到InteractiveViewer
   }
 
   void _setupElementDragging(List<Map<String, dynamic>> elements) {
+    // 立即设置拖拽状态，防止时序问题
+    _isDragging = true;
     _elementStartPositions.clear();
 
     for (final selectedId in controller.state.selectedElementIds) {
@@ -947,6 +1076,7 @@ class SmartCanvasGestureHandler implements GestureContext {
       elementStartPositions: _elementStartPositions,
     );
 
+    debugPrint('【SmartCanvasGestureHandler】开始元素拖拽，选中元素: ${controller.state.selectedElementIds}');
     onDragStart(
         true, _dragStart, _elementStartPosition, _elementStartPositions);
     _currentMode = _GestureMode.elementDrag;

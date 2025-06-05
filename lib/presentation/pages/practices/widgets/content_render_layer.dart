@@ -70,15 +70,20 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
       print('🎯 Viewport Culling: $cullingMetrics');
 
       // Configure culling strategy based on element count and performance
-      if (sortedElements.length > 1000) {
+      if (sortedElements.length > 500) { // 降低阈值，更早启用优化
         widget.viewportCullingManager!.configureCulling(
           strategy: CullingStrategy.aggressive,
           enableFastCulling: true,
         );
-      } else if (sortedElements.length > 500) {
+      } else if (sortedElements.length > 200) { // 降低阈值
         widget.viewportCullingManager!.configureCulling(
           strategy: CullingStrategy.adaptive,
           enableFastCulling: true,
+        );
+      } else if (sortedElements.length > 50) { // 添加新阈值
+        widget.viewportCullingManager!.configureCulling(
+          strategy: CullingStrategy.conservative,
+          enableFastCulling: false,
         );
       }
     }
@@ -170,10 +175,10 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Initialize advanced cache manager with appropriate strategy
     _cacheManager = ElementCacheManager(
       strategy: CacheStrategy.priorityBased,
-      // For higher performance, increase cache size but monitor memory usage
-      maxSize: 500,
-      // 50MB memory threshold - adjust based on target devices
-      memoryThreshold: 50 * 1024 * 1024,
+      // Balanced cache size for better memory management
+      maxSize: 200, // 降低到200个元素，避免内存压力
+      // 25MB memory threshold - more conservative for mobile devices
+      memoryThreshold: 25 * 1024 * 1024,
     );
 
     // Initialize selective rebuilding system

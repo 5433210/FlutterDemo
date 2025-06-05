@@ -42,10 +42,10 @@ class BatchUpdateOptions {
   /// 创建用于拖拽操作的配置
   factory BatchUpdateOptions.forDragOperation() {
     return const BatchUpdateOptions(
-      enableDelayedCommit: true,
+      enableDelayedCommit: false, // 改为立即提交，确保拖拽时及时更新
       commitDelayMs: 16,
       recordUndoOperation: false, // 拖拽过程中不记录撤销操作
-      notifyListeners: false, // 使用StateChangeDispatcher代替
+      notifyListeners: true, // 确保UI及时更新选中状态
       maxBatchSize: 100,
     );
   }
