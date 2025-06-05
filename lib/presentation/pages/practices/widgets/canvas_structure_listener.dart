@@ -69,6 +69,9 @@ class CanvasStructureListener {
     if (_isDisposed) return;
 
     _isDisposed = true;
+    
+    // 移除监听器
+    _controller.removeListener(_handleControllerChange);
 
     // 取消所有订阅
     for (final subscription in _subscriptions.values) {
@@ -81,7 +84,7 @@ class CanvasStructureListener {
     _performanceStats.clear();
     _layerChanges.dispose();
 
-    debugPrint('📡 CanvasStructureListener: 已释放资源');
+    debugPrint('📟 CanvasStructureListener: 已释放资源');
   }
 
   /// 获取指定层级的性能统计
@@ -191,20 +194,17 @@ class CanvasStructureListener {
 
   /// 开始监听控制器变化
   void _startListening() {
-    // 监听页面变化
-    _subscriptions['pages'] = _controller.addListener(() {
-      _handlePagesChange();
-    }) as StreamSubscription;
+    // 直接注册所有监听器为同一个回调函数
+    // ChangeNotifier的addListener返回void，不是StreamSubscription
+    _controller.addListener(_handleControllerChange);
+  }
 
-    // 监听工具变化
-    _subscriptions['tools'] = _controller.addListener(() {
-      _handleToolChange();
-    }) as StreamSubscription;
-
-    // 监听选择变化
-    _subscriptions['selection'] = _controller.addListener(() {
-      _handleSelectionChange();
-    }) as StreamSubscription;
+  /// 处理控制器变化的统一回调
+  void _handleControllerChange() {
+    // 根据需要调用不同的处理函数
+    _handlePagesChange();
+    _handleToolChange();
+    _handleSelectionChange();
   }
 
   /// 更新层级变化
