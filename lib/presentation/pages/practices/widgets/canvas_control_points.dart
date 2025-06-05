@@ -421,24 +421,13 @@ class _CanvasControlPointsState extends State<CanvasControlPoints> {
             },
             onPanUpdate: (details) {
               try {
-                // 计算相对于元素中心的位置，用于处理缩放
-                final RenderBox renderBox =
-                    context.findRenderObject() as RenderBox;
-                final matrix = renderBox.getTransformTo(null);
-                final scale = matrix.getMaxScaleOnAxis();
-
-                // 根据缩放比例调整delta
+                // 使用缓存的缩放比例，避免频繁重新计算matrix
+                // 注意：现在canvas已经在_handleControlPointUpdate中处理scale，
+                // 所以这里可以直接传递原始delta，减少重复计算
                 final adjustedDelta = Offset(
-                  details.delta.dx * scale,
-                  details.delta.dy * scale,
+                  details.delta.dx,
+                  details.delta.dy,
                 );
-
-                debugPrint(
-                    '控制点 $index 拖拽更新: 原始delta=${details.delta}, 缩放比例=$scale, 调整后delta=$adjustedDelta');
-
-                // // 更新累积偏移量
-                // _accumulatedDeltas[index] =
-                //     _accumulatedDeltas[index]! + adjustedDelta;
 
                 // 确保立即处理控制点更新
                 widget.onControlPointUpdate(index, adjustedDelta);
