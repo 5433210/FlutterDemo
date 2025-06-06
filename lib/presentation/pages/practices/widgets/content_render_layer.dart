@@ -5,10 +5,10 @@ import '../../../widgets/practice/element_cache_manager.dart';
 import '../../../widgets/practice/element_renderers.dart';
 import '../../../widgets/practice/performance_monitor.dart';
 import '../../../widgets/practice/practice_edit_controller.dart';
+import '../helpers/element_utils.dart';
 import 'content_render_controller.dart';
 import 'element_change_types.dart';
 import 'layers/viewport_culling_manager.dart';
-import '../helpers/element_utils.dart';
 
 /// Content rendering layer widget for isolated content rendering
 class ContentRenderLayer extends ConsumerStatefulWidget {
@@ -20,7 +20,7 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
   final Color? backgroundColor;
   final Set<String>? selectedElementIds;
   final ViewportCullingManager? viewportCullingManager;
-  
+
   // For LayerRenderManager integration
   final PracticeEditController? controller;
 
@@ -48,13 +48,13 @@ class ContentRenderLayer extends ConsumerStatefulWidget {
     required Color backgroundColor,
     required Set<String> selectedElementIds,
     this.viewportCullingManager,
-  }) : elements = elements,
-       layers = layers,
-       isPreviewMode = isPreviewMode,
-       pageSize = pageSize,
-       backgroundColor = backgroundColor,
-       selectedElementIds = selectedElementIds,
-       controller = null;
+  })  : elements = elements,
+        layers = layers,
+        isPreviewMode = isPreviewMode,
+        pageSize = pageSize,
+        backgroundColor = backgroundColor,
+        selectedElementIds = selectedElementIds,
+        controller = null;
 
   @override
   ConsumerState<ContentRenderLayer> createState() => _ContentRenderLayerState();
@@ -71,21 +71,87 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Track performance for ContentRenderLayer rebuilds
     _performanceMonitor.trackWidgetRebuild('ContentRenderLayer');
 
+    return ListenableBuilder(
+      listenable: widget.renderController,
+      builder: (context, child) {
+        debugPrint('🔄 ContentRenderLayer: 响应ContentRenderController变化重建');
+        return _buildContent(context);
+      },
+    );
+  }
+
+  @override
+  void didUpdateWidget(ContentRenderLayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Get current and old elements
+    final oldElements = oldWidget.elements ??
+        oldWidget.controller?.state.currentPageElements ??
+        [];
+    final currentElements =
+        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+
+    // Check for element additions/removals/modifications
+    _updateElementsCache(oldElements, currentElements);
+  }
+
+  @override
+  void dispose() {
+    // Perform cleanup
+    _cacheManager.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize advanced cache manager with appropriate strategy
+    _cacheManager = ElementCacheManager(
+      strategy: CacheStrategy.priorityBased,
+      // Balanced cache size for better memory management
+      maxSize: 200, // 降低到200个元素，避免内存压力
+      // 25MB memory threshold - more conservative for mobile devices
+      memoryThreshold: 25 * 1024 * 1024,
+    );
+
+    // Initialize selective rebuilding system
+    widget.renderController.initializeSelectiveRebuilding(_cacheManager);
+
+    // Get initial elements
+    final initialElements =
+        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+
+    // Initialize controller with current elements
+    widget.renderController.initializeElements(initialElements);
+
+    // Listen to changes via stream only (more efficient than broad listener)
+    widget.renderController.changeStream.listen(_handleElementChange);
+
+    // Warm up the cache with visible elements
+    _warmupCache(initialElements);
+  }
+
+  Widget _buildContent(BuildContext context) {
     // Get data from controller if not provided directly
-    final elements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+    final elements =
+        widget.elements ?? widget.controller?.state.currentPageElements ?? [];
     final layers = widget.layers ?? widget.controller?.state.layers ?? [];
-    final isPreviewMode = widget.isPreviewMode ?? widget.controller?.state.isPreviewMode ?? false;
-    final selectedElementIds = widget.selectedElementIds ?? widget.controller?.state.selectedElementIds.toSet() ?? <String>{};
-    
+    final isPreviewMode =
+        widget.isPreviewMode ?? widget.controller?.state.isPreviewMode ?? false;
+    final selectedElementIds = widget.selectedElementIds ??
+        widget.controller?.state.selectedElementIds.toSet() ??
+        <String>{};
+
     // Calculate page size and background color if not provided
     Size pageSize = widget.pageSize ?? const Size(800, 600);
     Color backgroundColor = widget.backgroundColor ?? Colors.white;
-    
+
     if (widget.controller != null && widget.pageSize == null) {
       final currentPage = widget.controller!.state.currentPage;
       if (currentPage != null) {
         pageSize = ElementUtils.calculatePixelSize(currentPage);
-        
+
         try {
           final background = currentPage['background'] as Map<String, dynamic>?;
           if (background != null && background['type'] == 'color') {
@@ -97,15 +163,16 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         }
       }
     }
-
-    print('🎨 ContentRenderLayer: build() called');
-    print('🎨 ContentRenderLayer: Elements to render: ${elements.length}');
-    print('🎨 ContentRenderLayer: Selected elements: ${selectedElementIds.length}');
-    print('🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
+    debugPrint('🎨 ContentRenderLayer: build() called');
+    debugPrint('🎨 ContentRenderLayer: Elements to render: ${elements.length}');
+    debugPrint(
+        '🎨 ContentRenderLayer: Selected elements: ${selectedElementIds.length}');
+    debugPrint(
+        '🎨 ContentRenderLayer: Cache metrics: ${_cacheManager.metrics.getReport()}');
 
     // Sort elements by layer order
     final sortedElements = _sortElementsByLayer(elements, layers);
-    
+
     // Apply viewport culling if available
     final visibleElements = widget.viewportCullingManager != null
         ? widget.viewportCullingManager!.cullElementsAdvanced(
@@ -117,20 +184,23 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
     // Log culling metrics
     if (widget.viewportCullingManager != null) {
       final cullingMetrics = widget.viewportCullingManager!.getMetrics();
-      print('🎯 Viewport Culling: $cullingMetrics');
+      debugPrint('🎯 Viewport Culling: $cullingMetrics');
 
       // Configure culling strategy based on element count and performance
-      if (sortedElements.length > 500) { // 降低阈值，更早启用优化
+      if (sortedElements.length > 500) {
+        // 降低阈值，更早启用优化
         widget.viewportCullingManager!.configureCulling(
           strategy: CullingStrategy.aggressive,
           enableFastCulling: true,
         );
-      } else if (sortedElements.length > 200) { // 降低阈值
+      } else if (sortedElements.length > 200) {
+        // 降低阈值
         widget.viewportCullingManager!.configureCulling(
           strategy: CullingStrategy.adaptive,
           enableFastCulling: true,
         );
-      } else if (sortedElements.length > 50) { // 添加新阈值
+      } else if (sortedElements.length > 50) {
+        // 添加新阈值
         widget.viewportCullingManager!.configureCulling(
           strategy: CullingStrategy.conservative,
           enableFastCulling: false,
@@ -140,7 +210,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
 
     // Trigger cache cleanup for efficient memory management
     _cacheManager.cleanupCache();
-    
+
     return RepaintBoundary(
       child: Container(
         width: pageSize.width,
@@ -186,9 +256,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
                 child: Transform.rotate(
                   angle: elementRotation * 3.14159265359 / 180,
                   child: Opacity(
-                    opacity: isHidden && !isPreviewMode
-                        ? 0.5
-                        : elementOpacity,
+                    opacity: isHidden && !isPreviewMode ? 0.5 : elementOpacity,
                     child: SizedBox(
                       width: elementWidth,
                       height: elementHeight,
@@ -202,54 +270,6 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
         ),
       ),
     );
-  }
-
-  @override
-  void didUpdateWidget(ContentRenderLayer oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // Get current and old elements
-    final oldElements = oldWidget.elements ?? oldWidget.controller?.state.currentPageElements ?? [];
-    final currentElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
-    
-    // Check for element additions/removals/modifications
-    _updateElementsCache(oldElements, currentElements);
-  }
-
-  @override
-  void dispose() {
-    // Perform cleanup
-    _cacheManager.dispose();
-    super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Initialize advanced cache manager with appropriate strategy
-    _cacheManager = ElementCacheManager(
-      strategy: CacheStrategy.priorityBased,
-      // Balanced cache size for better memory management
-      maxSize: 200, // 降低到200个元素，避免内存压力
-      // 25MB memory threshold - more conservative for mobile devices
-      memoryThreshold: 25 * 1024 * 1024,
-    );
-
-    // Initialize selective rebuilding system
-    widget.renderController.initializeSelectiveRebuilding(_cacheManager);
-
-    // Get initial elements
-    final initialElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
-    
-    // Initialize controller with current elements
-    widget.renderController.initializeElements(initialElements);
-
-    // Listen to changes via stream only (more efficient than broad listener)
-    widget.renderController.changeStream.listen(_handleElementChange);
-
-    // Warm up the cache with visible elements
-    _warmupCache(initialElements);
   }
 
   /// Estimate memory size of an element in bytes
@@ -369,31 +389,32 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
           'ContentRenderLayer: Handling element change - ${changeInfo.changeType} for ${changeInfo.elementId}');
 
       // Get current elements
-      final currentElements = widget.elements ?? widget.controller?.state.currentPageElements ?? [];
+      final currentElements =
+          widget.elements ?? widget.controller?.state.currentPageElements ?? [];
 
-             switch (changeInfo.changeType) {
-         case ElementChangeType.created:
-         case ElementChangeType.contentOnly:
-         case ElementChangeType.sizeOnly:
-         case ElementChangeType.positionOnly:
-         case ElementChangeType.sizeAndPosition:
-         case ElementChangeType.rotation:
-         case ElementChangeType.opacity:
-         case ElementChangeType.visibility:
-           // Update specific element in cache
-           _cacheManager.markElementForUpdate(changeInfo.elementId);
-           break;
+      switch (changeInfo.changeType) {
+        case ElementChangeType.created:
+        case ElementChangeType.contentOnly:
+        case ElementChangeType.sizeOnly:
+        case ElementChangeType.positionOnly:
+        case ElementChangeType.sizeAndPosition:
+        case ElementChangeType.rotation:
+        case ElementChangeType.opacity:
+        case ElementChangeType.visibility:
+          // Update specific element in cache
+          _cacheManager.markElementForUpdate(changeInfo.elementId);
+          break;
 
-         case ElementChangeType.deleted:
-           // Full update needed
-           _cacheManager.markAllElementsForUpdate(currentElements);
-           break;
+        case ElementChangeType.deleted:
+          // Full update needed
+          _cacheManager.markAllElementsForUpdate(currentElements);
+          break;
 
-         case ElementChangeType.multiple:
-           // Conservative approach - update everything
-           _cacheManager.markAllElementsForUpdate(currentElements);
-           break;
-       }
+        case ElementChangeType.multiple:
+          // Conservative approach - update everything
+          _cacheManager.markAllElementsForUpdate(currentElements);
+          break;
+      }
 
       // Trigger rebuild with new data
       if (mounted) {
@@ -406,7 +427,7 @@ class _ContentRenderLayerState extends ConsumerState<ContentRenderLayer> {
   bool _isLayerHidden(String layerId) {
     final layers = widget.layers;
     if (layers == null) return false;
-    
+
     final layer = layers.firstWhere(
       (l) => l['id'] == layerId,
       orElse: () => <String, dynamic>{},

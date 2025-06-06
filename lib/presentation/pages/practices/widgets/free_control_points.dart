@@ -14,6 +14,11 @@ class FreeControlPoints extends StatefulWidget {
   final double rotation;
   final double initialScale;
 
+  // 添加回调函数，使其能够与控制器集成
+  final Function(int, Offset)? onControlPointUpdate;
+  final Function(int)? onControlPointDragStart;
+  final Function(int)? onControlPointDragEnd;
+
   const FreeControlPoints({
     Key? key,
     required this.elementId,
@@ -23,6 +28,9 @@ class FreeControlPoints extends StatefulWidget {
     required this.height,
     required this.rotation,
     this.initialScale = 1.0,
+    this.onControlPointUpdate,
+    this.onControlPointDragStart,
+    this.onControlPointDragEnd,
   }) : super(key: key);
 
   @override
@@ -121,6 +129,9 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
                 // 旋转控制点 - 初始化旋转状态
                 _initializeRotationState();
               }
+
+              // 触发拖拽开始回调
+              widget.onControlPointDragStart?.call(index);
             },
             onPanUpdate: (details) {
               // 根据控制点类型应用约束移动
@@ -130,9 +141,16 @@ class _FreeControlPointsState extends State<FreeControlPoints> {
 
               debugPrint(
                   '🧪 测试控制点 $index 移动到: ${_controlPointPositions[index]}');
+
+              // 触发控制点更新回调
+              widget.onControlPointUpdate
+                  ?.call(index, _controlPointPositions[index]!);
             },
             onPanEnd: (details) {
               debugPrint('🧪 测试控制点 $index ($controlPointName) 结束拖拽');
+
+              // 触发拖拽结束回调
+              widget.onControlPointDragEnd?.call(index);
             },
             child: Center(
               child: Container(

@@ -60,6 +60,8 @@ class ContentRenderController extends ChangeNotifier {
     _changeStreamController.close();
     _dirtyTracker.dispose();
     _rebuildManager?.dispose();
+    // 移除拖拽状态监听器
+    _dragStateManager?.removeListener(_onDragStateChanged);
     super.dispose();
   }
 
@@ -263,8 +265,16 @@ class ContentRenderController extends ChangeNotifier {
 
   /// 设置拖拽状态管理器
   void setDragStateManager(DragStateManager dragStateManager) {
+    // 移除旧的监听器
+    _dragStateManager?.removeListener(_onDragStateChanged);
+
     _dragStateManager = dragStateManager;
-    print('🎯 ContentRenderController: DragStateManager connected');
+
+    // 添加新的监听器
+    _dragStateManager?.addListener(_onDragStateChanged);
+
+    debugPrint(
+        '🎯 ContentRenderController: DragStateManager connected with listener');
   }
 
   /// Check if an element should be rebuilt
@@ -273,14 +283,44 @@ class ContentRenderController extends ChangeNotifier {
   }
 
   /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
+
+  /// 检查元素是否应该跳过渲染（由于拖拽预览层已处理）
   bool shouldSkipElementRendering(String elementId) {
+    // 添加调试信息
+    final isDragStateManagerActive = _dragStateManager != null;
+    final isDragging = _dragStateManager?.isDragging ?? false;
+    final isElementDragging =
+        _dragStateManager?.isElementDragging(elementId) ?? false;
+    final enableDragPreview = DragConfig.enableDragPreview;
+    final isDragPreviewActive = _dragStateManager?.isDragPreviewActive ?? false;
+
+    debugPrint(
+        '🔍 ContentRenderController: shouldSkipElementRendering($elementId)');
+    debugPrint('   dragStateManager: $isDragStateManagerActive');
+    debugPrint('   isDragging: $isDragging');
+    debugPrint('   isDragPreviewActive: $isDragPreviewActive');
+    debugPrint('   isElementDragging: $isElementDragging');
+    debugPrint('   enableDragPreview: $enableDragPreview');
+
     // 如果启用了拖拽预览层且元素正在被拖拽，可以跳过主渲染层中的渲染
-    if (_dragStateManager != null &&
-        _dragStateManager!.isDragging &&
-        _dragStateManager!.isElementDragging(elementId) &&
-        DragConfig.enableDragPreview) {
+    if (isDragStateManagerActive &&
+        isDragging &&
+        isDragPreviewActive &&
+        isElementDragging &&
+        enableDragPreview) {
+      debugPrint('🎯 ContentRenderController: ✅ 跳过元素 $elementId 渲染 (拖拽中)');
       return true;
     }
+
+    debugPrint('🎯 ContentRenderController: ❌ 不跳过元素 $elementId 渲染');
     return false;
+  }
+
+  void agStateChanged() {
+    debugPrint('🔄 ContentRenderController: 拖拽状态变化，触发重建');
+    debugPrint('   isDragging: ${_dragStateManager?.isDragging}');
+    debugPrint(
+        '   draggingElementIds: ${_dragStateManager?.draggingElementIds}');
+    notifyListeners();
   }
 }

@@ -2,19 +2,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-
 import '../../../../l10n/app_localizations.dart';
 import '../../../widgets/practice/drag_state_manager.dart';
 import '../../../widgets/practice/performance_monitor.dart' as perf;
 import '../../../widgets/practice/practice_edit_controller.dart';
 import '../../../widgets/practice/smart_canvas_gesture_handler.dart';
 import '../helpers/element_utils.dart';
-import 'canvas_control_points.dart';
 import 'canvas_structure_listener.dart';
 import 'content_render_controller.dart';
 import 'content_render_layer.dart';
 import 'drag_operation_manager.dart';
 import 'drag_preview_layer.dart';
+import 'free_control_points.dart';
 import 'layers/layer_render_manager.dart';
 import 'layers/layer_types.dart';
 import 'state_change_dispatcher.dart';
@@ -97,16 +96,11 @@ class _GridPainter extends CustomPainter {
 
 class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
   // Drag state variables
-  bool _isDragging = false;
-  // ignore: unused_field
+  bool _isDragging = false; // ignore: unused_field
   Offset _dragStart = Offset.zero;
   // ignore: unused_field
   Offset _elementStartPosition = Offset.zero;
-  final Map<String, Offset> _elementStartPositions = {};
-  
-  // 手势处理标记：用于控制InteractiveViewer和GestureDetector的竞争
-  bool _shouldIgnoreGestureDetector = false;
-  
+
   // 拖拽准备状态：使用普通变量避免setState时序问题
   bool _isReadyForDrag = false;
   // Canvas gesture handler
@@ -227,16 +221,16 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     try {
       // 阶段1: 初始化核心组件
       _initializeCoreComponents();
-      
+
       // 阶段2: 初始化混合优化策略组件
       _initializeOptimizationComponents();
-      
+
       // 阶段3: 建立组件间连接
       _setupComponentConnections();
-      
+
       // 阶段4: 初始化UI和手势处理
       _initializeUIComponents();
-      
+
       print('🏗️ Canvas: 分层+元素级混合优化策略组件初始化完成');
     } catch (e, stackTrace) {
       debugPrint('❌ Canvas: 初始化失败 - $e');
@@ -244,214 +238,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       // 回退到基础模式
       _fallbackToBasicMode();
     }
-  }
-
-  /// 初始化核心组件
-  void _initializeCoreComponents() {
-    // Initialize content render controller for dual-layer architecture
-    _contentRenderController = ContentRenderController();
-    print('🏗️ Canvas: ContentRenderController initialized');
-
-    // Initialize drag state manager for optimized drag handling
-    _dragStateManager = DragStateManager();
-    print('🏗️ Canvas: DragStateManager initialized');
-
-    // Initialize layer render manager for coordinated layer rendering
-    _layerRenderManager = LayerRenderManager();
-    print('🏗️ Canvas: LayerRenderManager initialized');
-  }
-
-  /// 初始化优化策略组件
-  void _initializeOptimizationComponents() {
-    // Initialize canvas structure listener for smart layer-specific routing
-    _structureListener = CanvasStructureListener(widget.controller);
-    print('🏗️ Canvas: CanvasStructureListener initialized');
-
-    // Initialize state change dispatcher for unified state management
-    _stateDispatcher = StateChangeDispatcher(widget.controller, _structureListener);
-
-    // Set the state dispatcher in the controller for layered state management
-    widget.controller.setStateDispatcher(_stateDispatcher);
-    print('🏗️ Canvas: StateChangeDispatcher initialized and connected to controller');
-
-    // Initialize drag operation manager for 3-phase drag system
-    _dragOperationManager = DragOperationManager(
-      widget.controller,
-      _dragStateManager,
-      _stateDispatcher,
-    );
-    print('🏗️ Canvas: DragOperationManager initialized');
-
-    // Register layers with the layer render manager
-    _initializeLayers();
-    print('🏗️ Canvas: Layers registered with LayerRenderManager');
-  }
-
-  /// 建立组件间连接
-  void _setupComponentConnections() {
-    // 将拖拽状态管理器与性能监控系统关联
-    _performanceMonitor.setDragStateManager(_dragStateManager);
-    print('🏗️ Canvas: Connected DragStateManager with PerformanceMonitor');
-
-    // 将拖拽状态管理器与内容渲染控制器关联
-    _contentRenderController.setDragStateManager(_dragStateManager);
-    print('🏗️ Canvas: Connected DragStateManager with ContentRenderController');
-
-    // 设置结构监听器的层级处理器
-    _setupStructureListenerHandlers();
-    print('🏗️ Canvas: Structure listener handlers configured');
-
-    // Set up drag state manager callbacks
-    _dragStateManager.setUpdateCallbacks(
-      onBatchUpdate: (batchUpdates) {
-        widget.controller.batchUpdateElementProperties(
-          batchUpdates,
-          options: BatchUpdateOptions.forDragOperation(),
-        );
-      },
-    );
-  }
-
-  /// 初始化UI组件
-  void _initializeUIComponents() {
-    // Initialize RepaintBoundary key - always create a new key for screenshot functionality
-    _repaintBoundaryKey = GlobalKey();
-
-    // 初始化手势处理器 (需要在所有其他组件初始化后)
-    _initializeGestureHandler();
-    print('🏗️ Canvas: GestureHandler initialized');
-
-    // 临时禁用画布注册，避免潜在的循环调用问题
-    // Register this canvas with the controller for reset view functionality
-    // widget.controller.setEditCanvas(this);
-
-    // Set the RepaintBoundary key in the controller for screenshot functionality
-    widget.controller.setCanvasKey(_repaintBoundaryKey);
-
-    // 🔍 恢复初始化时的reset，用于对比两次调用
-    // Schedule initial reset view position on first load (只执行一次)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && !_hasInitializedView) {
-        _hasInitializedView = true;
-        resetCanvasPosition(); // 使用标准的Reset View Position逻辑
-        debugPrint('🔧【initState】首次加载，执行Reset View Position');
-      }
-    });
-  }
-
-  /// 回退到基础模式（禁用优化功能）
-  void _fallbackToBasicMode() {
-    try {
-      // 只初始化最基础的组件
-      _contentRenderController = ContentRenderController();
-      _dragStateManager = DragStateManager();
-      _layerRenderManager = LayerRenderManager();
-      _repaintBoundaryKey = GlobalKey();
-      
-      // 注册简化的层级
-      _layerRenderManager.registerLayer(
-        type: RenderLayerType.content,
-        config: const LayerConfig(
-          type: RenderLayerType.content,
-          priority: LayerPriority.high,
-          enableCaching: false, // 禁用缓存避免潜在问题
-          useRepaintBoundary: true,
-        ),
-        builder: (config) => _buildLayerWidget(RenderLayerType.content, config),
-      );
-      
-      print('🔧 Canvas: 已切换到基础模式');
-    } catch (e) {
-      debugPrint('❌ Canvas: 基础模式初始化也失败 - $e');
-    }
-  }
-
-  /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
-  /// 检查是否需要设置手势回调（更保守的策略）
-  bool _shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
-    // 如果在预览模式，不处理任何手势
-    if (widget.controller.state.isPreviewMode) {
-      return false;
-    }
-
-    // 如果在select模式下，需要处理选择框
-    if (widget.controller.state.currentTool == 'select') {
-      return true;
-    }
-
-    // 如果正在进行拖拽操作，需要处理
-    if (_isDragging || _dragStateManager.isDragging) {
-      return true;
-    }
-
-    // 只有在有选中元素时才可能需要处理元素拖拽
-    // 这里先返回true，在回调中再精确判断
-    if (widget.controller.state.selectedElementIds.isNotEmpty) {
-      return true;
-    }
-
-    // 其他情况让InteractiveViewer完全接管
-    return false;
-  }
-
-  /// 检查是否需要处理特殊手势（元素拖拽、选择框）
-  bool _shouldHandleSpecialGesture(DragStartDetails details, List<Map<String, dynamic>> elements) {
-    debugPrint('🔍【_shouldHandleSpecialGesture】开始检查 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-    
-    // 如果在预览模式，不处理任何手势
-    if (widget.controller.state.isPreviewMode) {
-      debugPrint('🔍【_shouldHandleSpecialGesture】预览模式，不处理手势');
-      return false;
-    }
-
-    // 1. 首先检查是否点击在已选中的元素上（元素拖拽 - 在任何工具模式下都可以）
-    for (int i = elements.length - 1; i >= 0; i--) {
-      final element = elements[i];
-      final id = element['id'] as String;
-      final x = (element['x'] as num).toDouble();
-      final y = (element['y'] as num).toDouble();
-      final width = (element['width'] as num).toDouble();
-      final height = (element['height'] as num).toDouble();
-
-      // Check if element is hidden
-      if (element['hidden'] == true) continue;
-
-      // Check if layer is hidden
-      final layerId = element['layerId'] as String?;
-      bool isLayerHidden = false;
-      if (layerId != null) {
-        final layer = widget.controller.state.getLayerById(layerId);
-        if (layer != null) {
-          isLayerHidden = layer['isVisible'] == false;
-        }
-      }
-      if (isLayerHidden) continue;
-
-      // Check if clicking inside element
-      final bool isInside = details.localPosition.dx >= x &&
-          details.localPosition.dx <= x + width &&
-          details.localPosition.dy >= y &&
-          details.localPosition.dy <= y + height;
-
-      if (isInside && widget.controller.state.selectedElementIds.contains(id)) {
-        // 点击在已选中的元素上，需要处理元素拖拽（任何工具模式下都可以）
-        debugPrint('【手势检测】点击在已选中元素上，需要处理元素拖拽: $id (工具: ${widget.controller.state.currentTool})');
-        debugPrint('🔍【_shouldHandleSpecialGesture】检测到元素拖拽需求 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-        return true;
-      }
-    }
-
-    // 2. 如果在select模式下，处理选择框（框选模式）
-    if (widget.controller.state.currentTool == 'select') {
-      debugPrint('【手势检测】在select模式下，需要处理选择框（框选模式）');
-      debugPrint('🔍【_shouldHandleSpecialGesture】检测到选择框需求');
-      return true;
-    }
-
-    // 3. 其他情况不处理，让InteractiveViewer处理画布平移
-    debugPrint('【手势检测】让InteractiveViewer处理画布平移');
-    debugPrint('🔍【_shouldHandleSpecialGesture】无特殊手势需求');
-    return false;
   }
 
   void on(String elementId, Offset delta) {
@@ -496,6 +282,30 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       DragConfig.showPerformanceOverlay = !DragConfig.showPerformanceOverlay;
       debugPrint('性能覆盖层显示: ${DragConfig.showPerformanceOverlay ? '开启' : '关闭'}');
     });
+  }
+
+  /// 应用网格吸附到属性
+  Map<String, double> _applyGridSnapToProperties(
+      Map<String, double> properties) {
+    final gridSize = widget.controller.state.gridSize;
+    final snappedProperties = <String, double>{};
+
+    if (properties.containsKey('x')) {
+      snappedProperties['x'] = (properties['x']! / gridSize).round() * gridSize;
+    }
+    if (properties.containsKey('y')) {
+      snappedProperties['y'] = (properties['y']! / gridSize).round() * gridSize;
+    }
+    if (properties.containsKey('width')) {
+      snappedProperties['width'] =
+          (properties['width']! / gridSize).round() * gridSize;
+    }
+    if (properties.containsKey('height')) {
+      snappedProperties['height'] =
+          (properties['height']! / gridSize).round() * gridSize;
+    }
+
+    return snappedProperties;
   }
 
   /// 为所有选中的元素应用网格吸附  /// 为选中的元素应用网格吸附（只在拖拽结束时调用）
@@ -554,13 +364,15 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Color(currentPage['backgroundColor'] as int? ?? Colors.white.value),
+        color:
+            Color(currentPage['backgroundColor'] as int? ?? Colors.white.value),
       ),
       child: widget.controller.state.gridVisible
           ? CustomPaint(
               painter: _GridPainter(
                 gridSize: widget.controller.state.gridSize,
-                gridColor: Theme.of(context).colorScheme.outline.withValues(alpha: .3),
+                gridColor:
+                    Theme.of(context).colorScheme.outline.withValues(alpha: .3),
               ),
               child: Container(),
             )
@@ -589,7 +401,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     } catch (e) {
       debugPrint('Error parsing background color: $e');
     }
-    
+
     return ContentRenderLayer.withFullParams(
       elements: elements,
       layers: widget.controller.state.layers,
@@ -645,7 +457,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                     // 获取当前缩放值
                     final scale = widget.transformationController.value
                         .getMaxScaleOnAxis();
-                    return CanvasControlPoints(
+                    return FreeControlPoints(
                       key: ValueKey(
                           'control_points_${elementId}_${scale.toStringAsFixed(2)}'),
                       elementId: elementId,
@@ -793,12 +605,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         '🔍 Canvas: Selected elements count: ${widget.controller.state.selectedElementIds.length}');
     debugPrint(
         '🔍 构建页面内容 - 选中元素数: ${widget.controller.state.selectedElementIds.length}');
-    
+
     // Calculate page dimensions for layout purposes
     final pageSize = ElementUtils.calculatePixelSize(page);
 
     // 🔧 检测页面尺寸变化并自动重置视图
-    final pageKey = '${page['width']}_${page['height']}_${page['orientation']}_${page['dpi']}';
+    final pageKey =
+        '${page['width']}_${page['height']}_${page['orientation']}_${page['dpi']}';
     if (_lastPageKey != null && _lastPageKey != pageKey) {
       debugPrint('🔧【页面变化检测】页面尺寸改变: $_lastPageKey -> $pageKey');
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -813,17 +626,17 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     // 🔥 关键修复：移除每次build时的自动变换设置
     // 不再在build方法中强制设置transformationController和调用zoomTo
     // 这些操作现在只在真正需要时进行（如初始化、重置按钮）
-    
     debugPrint('🔧【_buildPageContent】保持当前变换状态，不强制重置');
 
-    // Get current zoom level for status bar (calculated dynamically each time)  
-    final currentZoomScale = widget.transformationController.value.getMaxScaleOnAxis();
-    final zoomPercentage = (currentZoomScale * 100).toInt();
+    // Get current zoom level for status bar (calculated dynamically each time)
+    final currentZoomScale =
+        widget.transformationController.value.getMaxScaleOnAxis();
 
     return Stack(
       children: [
         Container(
-          color: colorScheme.inverseSurface.withAlpha(26), // Canvas outer background
+          color: colorScheme.inverseSurface
+              .withAlpha(26), // Canvas outer background
           // 使用RepaintBoundary包装InteractiveViewer，防止缩放和平移触发整个画布重建
           child: RepaintBoundary(
             key: const ValueKey('interactive_viewer_repaint_boundary'),
@@ -834,7 +647,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
               scaleEnabled: true,
               minScale: 0.1,
               maxScale: 15.0,
-              scaleFactor: 600.0, // Increased scale factor to make zooming more gradual
+              scaleFactor:
+                  600.0, // Increased scale factor to make zooming more gradual
               transformationController: widget.transformationController,
               onInteractionStart: (ScaleStartDetails details) {},
               onInteractionUpdate: (ScaleUpdateDetails details) {
@@ -842,7 +656,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
               },
               onInteractionEnd: (ScaleEndDetails details) {
                 // Update final zoom value through controller
-                final scale = widget.transformationController.value.getMaxScaleOnAxis();
+                final scale =
+                    widget.transformationController.value.getMaxScaleOnAxis();
                 widget.controller.zoomTo(scale);
                 // Status bar uses real-time calculation, no explicit setState needed
               },
@@ -854,10 +669,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                 child: GestureDetector(
                   behavior: HitTestBehavior.translucent,
                   onTapDown: (details) {
-                    debugPrint('🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
+                    debugPrint(
+                        '🔥【onTapDown】检测点击位置 - 坐标: ${details.localPosition}');
                     // 检查是否点击在选中元素上，如果是，准备拖拽
                     // 直接设置变量，避免setState时序问题
-                    if (_shouldHandleSpecialGesture(DragStartDetails(localPosition: details.localPosition), elements)) {
+                    if (_shouldHandleSpecialGesture(
+                        DragStartDetails(localPosition: details.localPosition),
+                        elements)) {
                       debugPrint('🔥【onTapDown】点击在选中元素上，准备拖拽');
                       _isReadyForDrag = true;
                     } else {
@@ -868,7 +686,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                   onTapUp: (details) {
                     // 重置拖拽准备状态
                     _isReadyForDrag = false;
-                    _gestureHandler.handleTapUp(details, elements.cast<Map<String, dynamic>>());
+                    _gestureHandler.handleTapUp(
+                        details, elements.cast<Map<String, dynamic>>());
                   },
                   // 处理右键点击事件，用于退出select模式
                   onSecondaryTapDown: (details) =>
@@ -877,88 +696,109 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                       _gestureHandler.handleSecondaryTapUp(
                           details, elements.cast<Map<String, dynamic>>()),
                   // 智能手势处理：只在需要时设置回调
-                  onPanStart: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                    debugPrint('🔍【onPanStart】回调被调用 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-                    
-                    // 动态检查是否需要处理特殊手势（元素拖拽、选择框等）
-                    if (_shouldHandleSpecialGesture(details, elements)) {
-                      debugPrint('🔍【onPanStart】需要特殊处理，调用SmartCanvasGestureHandler');
-                      _gestureHandler.handlePanStart(
-                          details, elements.cast<Map<String, dynamic>>());
-                    } else if (widget.controller.state.currentTool == 'select') {
-                      debugPrint('🔍【onPanStart】select模式，处理选择框');
-                      _gestureHandler.handlePanStart(
-                          details, elements.cast<Map<String, dynamic>>());
-                    } else {
-                      debugPrint('🔍【onPanStart】点击空白区域，不处理，让InteractiveViewer处理画布平移');
-                      // 不调用手势处理器，让InteractiveViewer接管
-                    }
-                  } : null,
-                  onPanUpdate: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                    // 先处理选择框更新，这优先级最高
-                    if (widget.controller.state.currentTool == 'select' &&
-                        _gestureHandler.isSelectionBoxActive) {
-                      _gestureHandler.handlePanUpdate(details);
-                      _selectionBoxNotifier.value = SelectionBoxState(
-                        isActive: true,
-                        startPoint: _gestureHandler.selectionBoxStart,
-                        endPoint: _gestureHandler.selectionBoxEnd,
-                      );
-                      return;
-                    }
+                  onPanStart: _shouldHandleAnySpecialGesture(elements)
+                      ? (details) {
+                          debugPrint(
+                              '🔍【onPanStart】回调被调用 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
 
-                    // Handle element dragging - 检查DragStateManager的拖拽状态
-                    if (_isDragging || _dragStateManager.isDragging || 
-                        (_isReadyForDrag && widget.controller.state.selectedElementIds.isNotEmpty)) {
-                      _gestureHandler.handlePanUpdate(details);
-                      debugPrint('【元素拖拽】SmartCanvasGestureHandler正在处理元素拖拽');
-                      return;
-                    }
-                    
-                    // 如果不需要特殊处理，则不调用手势处理器，让InteractiveViewer处理
-                    debugPrint('🔍【onPanUpdate】不处理，让InteractiveViewer处理画布平移');
-                  } : null,
-                  onPanEnd: _shouldHandleAnySpecialGesture(elements) ? (details) {
-                    // 检查是否需要处理手势结束
-                    bool shouldHandleEnd = _gestureHandler.isSelectionBoxActive || 
-                                         _isDragging || 
-                                         _dragStateManager.isDragging ||
-                                         _isReadyForDrag;
+                          // 动态检查是否需要处理特殊手势（元素拖拽、选择框等）
+                          if (_shouldHandleSpecialGesture(details, elements)) {
+                            debugPrint(
+                                '🔍【onPanStart】需要特殊处理，调用SmartCanvasGestureHandler');
+                            _gestureHandler.handlePanStart(
+                                details, elements.cast<Map<String, dynamic>>());
+                          } else if (widget.controller.state.currentTool ==
+                              'select') {
+                            debugPrint('🔍【onPanStart】select模式，处理选择框');
+                            _gestureHandler.handlePanStart(
+                                details, elements.cast<Map<String, dynamic>>());
+                          } else {
+                            debugPrint(
+                                '🔍【onPanStart】点击空白区域，不处理，让InteractiveViewer处理画布平移');
+                            // 不调用手势处理器，让InteractiveViewer接管
+                          }
+                        }
+                      : null,
+                  onPanUpdate: _shouldHandleAnySpecialGesture(elements)
+                      ? (details) {
+                          // 先处理选择框更新，这优先级最高
+                          if (widget.controller.state.currentTool == 'select' &&
+                              _gestureHandler.isSelectionBoxActive) {
+                            _gestureHandler.handlePanUpdate(details);
+                            _selectionBoxNotifier.value = SelectionBoxState(
+                              isActive: true,
+                              startPoint: _gestureHandler.selectionBoxStart,
+                              endPoint: _gestureHandler.selectionBoxEnd,
+                            );
+                            return;
+                          }
 
-                    // 重置拖拽准备状态
-                    _isReadyForDrag = false;
+                          // Handle element dragging - 检查DragStateManager的拖拽状态
+                          if (_isDragging ||
+                              _dragStateManager.isDragging ||
+                              (_isReadyForDrag &&
+                                  widget.controller.state.selectedElementIds
+                                      .isNotEmpty)) {
+                            _gestureHandler.handlePanUpdate(details);
+                            debugPrint(
+                                '【元素拖拽】SmartCanvasGestureHandler正在处理元素拖拽');
+                            return;
+                          }
 
-                    // 只有在真正处理了手势的情况下才调用handlePanEnd
-                    if (shouldHandleEnd) {
-                      // 重置选择框状态
-                      if (widget.controller.state.currentTool == 'select' &&
-                          _gestureHandler.isSelectionBoxActive) {
-                        _selectionBoxNotifier.value = SelectionBoxState();
-                      }
-                      _gestureHandler.handlePanEnd(details);
-                    }
-                  } : null,
-                  onPanCancel: _shouldHandleAnySpecialGesture(elements) ? () {
-                    // 检查是否需要处理手势取消
-                    bool shouldHandleCancel = _gestureHandler.isSelectionBoxActive || 
-                                            _isDragging || 
-                                            _dragStateManager.isDragging ||
-                                            _isReadyForDrag;
+                          // 如果不需要特殊处理，则不调用手势处理器，让InteractiveViewer处理
+                          debugPrint(
+                              '🔍【onPanUpdate】不处理，让InteractiveViewer处理画布平移');
+                        }
+                      : null,
+                  onPanEnd: _shouldHandleAnySpecialGesture(elements)
+                      ? (details) {
+                          // 检查是否需要处理手势结束
+                          bool shouldHandleEnd =
+                              _gestureHandler.isSelectionBoxActive ||
+                                  _isDragging ||
+                                  _dragStateManager.isDragging ||
+                                  _isReadyForDrag;
 
-                    // 重置拖拽准备状态
-                    _isReadyForDrag = false;
+                          // 重置拖拽准备状态
+                          _isReadyForDrag = false;
 
-                    // 只有在真正处理了手势的情况下才调用handlePanCancel
-                    if (shouldHandleCancel) {
-                      // 重置选择框状态
-                      if (widget.controller.state.currentTool == 'select' &&
-                          _gestureHandler.isSelectionBoxActive) {
-                        _selectionBoxNotifier.value = SelectionBoxState();
-                      }
-                      _gestureHandler.handlePanCancel();
-                    }
-                  } : null,
-                                    child: Container(
+                          // 只有在真正处理了手势的情况下才调用handlePanEnd
+                          if (shouldHandleEnd) {
+                            // 重置选择框状态
+                            if (widget.controller.state.currentTool ==
+                                    'select' &&
+                                _gestureHandler.isSelectionBoxActive) {
+                              _selectionBoxNotifier.value = SelectionBoxState();
+                            }
+                            _gestureHandler.handlePanEnd(details);
+                          }
+                        }
+                      : null,
+                  onPanCancel: _shouldHandleAnySpecialGesture(elements)
+                      ? () {
+                          // 检查是否需要处理手势取消
+                          bool shouldHandleCancel =
+                              _gestureHandler.isSelectionBoxActive ||
+                                  _isDragging ||
+                                  _dragStateManager.isDragging ||
+                                  _isReadyForDrag;
+
+                          // 重置拖拽准备状态
+                          _isReadyForDrag = false;
+
+                          // 只有在真正处理了手势的情况下才调用handlePanCancel
+                          if (shouldHandleCancel) {
+                            // 重置选择框状态
+                            if (widget.controller.state.currentTool ==
+                                    'select' &&
+                                _gestureHandler.isSelectionBoxActive) {
+                              _selectionBoxNotifier.value = SelectionBoxState();
+                            }
+                            _gestureHandler.handlePanCancel();
+                          }
+                        }
+                      : null,
+                  child: Container(
                     width: pageSize.width,
                     height: pageSize.height,
                     // 临时调试：添加红色边框，看看页面实际渲染区域
@@ -970,25 +810,31 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                         // 添加调试信息，检查页面容器的实际渲染尺寸
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) {
-                            final RenderBox? containerBox = context.findRenderObject() as RenderBox?;
+                            final RenderBox? containerBox =
+                                context.findRenderObject() as RenderBox?;
                             if (containerBox != null) {
                               final containerSize = containerBox.size;
-                              debugPrint('🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
-                              
+                              debugPrint(
+                                  '🔧【页面容器】实际渲染尺寸: ${containerSize.width.toStringAsFixed(1)}x${containerSize.height.toStringAsFixed(1)}, 期望尺寸: ${pageSize.width.toStringAsFixed(1)}x${pageSize.height.toStringAsFixed(1)}');
+
                               // 获取容器在屏幕中的位置
-                              final containerOffset = containerBox.localToGlobal(Offset.zero);
-                              debugPrint('🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
+                              final containerOffset =
+                                  containerBox.localToGlobal(Offset.zero);
+                              debugPrint(
+                                  '🔧【页面容器】屏幕位置: (${containerOffset.dx.toStringAsFixed(1)}, ${containerOffset.dy.toStringAsFixed(1)})');
                             }
                           }
-                                                 });
-                                                   return Stack(
-                          fit: StackFit.expand, // Use expand to fill the container
-                          clipBehavior:
-                              Clip.none, // Allow control points to extend beyond page boundaries
+                        });
+                        return Stack(
+                          fit: StackFit
+                              .expand, // Use expand to fill the container
+                          clipBehavior: Clip
+                              .none, // Allow control points to extend beyond page boundaries
                           children: [
                             // Use LayerRenderManager to build coordinated layer stack
                             RepaintBoundary(
-                              key: _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
+                              key:
+                                  _repaintBoundaryKey, // Use dedicated key for RepaintBoundary
                               child: _layerRenderManager.buildLayerStack(
                                 layerOrder: [
                                   RenderLayerType.staticBackground,
@@ -1025,8 +871,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                 children: [
                   // Debug indicator showing current tool
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
                       color: colorScheme.tertiaryContainer,
                       borderRadius: BorderRadius.circular(4),
@@ -1070,7 +916,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                     ),
                   // Reset position button
                   Tooltip(
-                    message: AppLocalizations.of(context).canvasResetViewTooltip,
+                    message:
+                        AppLocalizations.of(context).canvasResetViewTooltip,
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -1092,7 +939,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    AppLocalizations.of(context).canvasResetView,
+                                    AppLocalizations.of(context)
+                                        .canvasResetView,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: colorScheme.onSurfaceVariant,
@@ -1147,10 +995,105 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     return const SizedBox.shrink();
   }
 
+  /// 计算最终元素属性 - 用于Commit阶段
+  Map<String, double> _calculateFinalElementProperties(
+      Map<String, double> elementProperties) {
+    final finalProperties = Map<String, double>.from(elementProperties);
+
+    // 应用网格吸附（如果启用）
+    if (widget.controller.state.snapEnabled) {
+      final snappedProperties = _applyGridSnapToProperties(finalProperties);
+      finalProperties.addAll(snappedProperties);
+    }
+
+    // 确保最小尺寸
+    finalProperties['width'] = math.max(finalProperties['width'] ?? 10.0, 10.0);
+    finalProperties['height'] =
+        math.max(finalProperties['height'] ?? 10.0, 10.0);
+
+    return finalProperties;
+  }
+
+  /// 创建撤销操作 - 用于Commit阶段
+  void _createUndoOperation(String elementId,
+      Map<String, dynamic> oldProperties, Map<String, dynamic> newProperties) {
+    // 检查是否有实际变化
+    bool hasChanges = false;
+    for (final key in newProperties.keys) {
+      if (oldProperties[key] != newProperties[key]) {
+        hasChanges = true;
+        break;
+      }
+    }
+
+    if (!hasChanges) {
+      return; // 没有变化，不需要创建撤销操作
+    }
+
+    // 根据变化类型创建对应的撤销操作
+    if (newProperties.containsKey('rotation') &&
+        oldProperties.containsKey('rotation')) {
+      // 旋转操作
+      widget.controller.createElementRotationOperation(
+        elementIds: [elementId],
+        oldRotations: [(oldProperties['rotation'] as num).toDouble()],
+        newRotations: [(newProperties['rotation'] as num).toDouble()],
+      );
+    } else if (newProperties.keys
+        .any((key) => ['x', 'y', 'width', 'height'].contains(key))) {
+      // 调整大小/位置操作
+      final oldSize = {
+        'x': (oldProperties['x'] as num).toDouble(),
+        'y': (oldProperties['y'] as num).toDouble(),
+        'width': (oldProperties['width'] as num).toDouble(),
+        'height': (oldProperties['height'] as num).toDouble(),
+      };
+      final newSize = {
+        'x': (newProperties['x'] as num).toDouble(),
+        'y': (newProperties['y'] as num).toDouble(),
+        'width': (newProperties['width'] as num).toDouble(),
+        'height': (newProperties['height'] as num).toDouble(),
+      };
+
+      widget.controller.createElementResizeOperation(
+        elementIds: [elementId],
+        oldSizes: [oldSize],
+        newSizes: [newSize],
+      );
+    }
+  }
+
+  /// 回退到基础模式（禁用优化功能）
+  void _fallbackToBasicMode() {
+    try {
+      // 只初始化最基础的组件
+      _contentRenderController = ContentRenderController();
+      _dragStateManager = DragStateManager();
+      _layerRenderManager = LayerRenderManager();
+      _repaintBoundaryKey = GlobalKey();
+
+      // 注册简化的层级
+      _layerRenderManager.registerLayer(
+        type: RenderLayerType.content,
+        config: const LayerConfig(
+          type: RenderLayerType.content,
+          priority: LayerPriority.high,
+          enableCaching: false, // 禁用缓存避免潜在问题
+          useRepaintBoundary: true,
+        ),
+        builder: (config) => _buildLayerWidget(RenderLayerType.content, config),
+      );
+
+      print('🔧 Canvas: 已切换到基础模式');
+    } catch (e) {
+      debugPrint('❌ Canvas: 基础模式初始化也失败 - $e');
+    }
+  }
+
   /// Fit the page content to screen with proper scale and centering
   void _fitPageToScreen() {
     debugPrint('🔧【_fitPageToScreen】重置视图位置');
-    
+
     // Ensure we have a current page
     final currentPage = widget.controller.state.currentPage;
     if (currentPage == null) return;
@@ -1163,8 +1106,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // Get the page size (canvas content bounds)
     final Size pageSize = ElementUtils.calculatePixelSize(currentPage);
-    debugPrint('🔧【Reset View】页面信息: currentPage = ${currentPage['width']}x${currentPage['height']}, 计算出的pageSize = ${pageSize.width}x${pageSize.height}');
-    
+    debugPrint(
+        '🔧【Reset View】页面信息: currentPage = ${currentPage['width']}x${currentPage['height']}, 计算出的pageSize = ${pageSize.width}x${pageSize.height}');
+
     // Add some padding around the page (5% on each side for better content visibility)
     const double paddingFactor =
         0.95; // Use 95% of viewport for content, 5% for padding - maximizes content display
@@ -1186,7 +1130,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     // 确保从干净的状态开始，重置任何现有的变换
     // Reset to identity first to avoid accumulating transformations
     widget.transformationController.value = Matrix4.identity();
-    
+
     // Create the transformation matrix
     final Matrix4 matrix = Matrix4.identity()
       ..translate(dx, dy)
@@ -1194,7 +1138,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
 
     // Apply the transformation
     widget.transformationController.value = matrix;
-    
+
     debugPrint('🔧【Reset View】应用变换矩阵: ${matrix.toString().split('\n')[0]}...');
 
     // Notify the controller that zoom has changed
@@ -1206,12 +1150,14 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         final appliedMatrix = widget.transformationController.value;
         final appliedScale = appliedMatrix.getMaxScaleOnAxis();
         final appliedTranslation = appliedMatrix.getTranslation();
-        debugPrint('🔧【Reset View】验证变换应用结果: appliedScale=${appliedScale.toStringAsFixed(3)}, appliedTranslation=(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})');
-        
-        if ((appliedScale - scale).abs() > 0.001 || 
-            (appliedTranslation.x - dx).abs() > 1 || 
+        debugPrint(
+            '🔧【Reset View】验证变换应用结果: appliedScale=${appliedScale.toStringAsFixed(3)}, appliedTranslation=(${appliedTranslation.x.toStringAsFixed(1)}, ${appliedTranslation.y.toStringAsFixed(1)})');
+
+        if ((appliedScale - scale).abs() > 0.001 ||
+            (appliedTranslation.x - dx).abs() > 1 ||
             (appliedTranslation.y - dy).abs() > 1) {
-          debugPrint('⚠️【Reset View】变换应用不正确！期望 scale=${scale.toStringAsFixed(3)}, translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
+          debugPrint(
+              '⚠️【Reset View】变换应用不正确！期望 scale=${scale.toStringAsFixed(3)}, translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
         } else {
           debugPrint('✅【Reset View】变换应用正确');
         }
@@ -1228,12 +1174,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         'scale=${scale.toStringAsFixed(3)}, '
         'translation=(${dx.toStringAsFixed(1)}, ${dy.toStringAsFixed(1)})');
 
-    debugPrint('🔧【Reset View】预期效果: 让整个页面在可视区域内居中显示，scale=${scale.toStringAsFixed(3)}');
+    debugPrint(
+        '🔧【Reset View】预期效果: 让整个页面在可视区域内居中显示，scale=${scale.toStringAsFixed(3)}');
   }
 
-  /// 处理控制点拖拽结束事件
+  /// 处理控制点拖拽结束事件 - 实现Commit阶段
   void _handleControlPointDragEnd(int controlPointIndex) {
-    debugPrint('控制点 $controlPointIndex 拖拽结束');
+    debugPrint('✅ 控制点 $controlPointIndex 拖拽结束 - 启动Commit阶段');
 
     if (widget.controller.state.selectedElementIds.isEmpty ||
         _originalElementProperties == null) {
@@ -1252,105 +1199,88 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       return;
     }
 
-    // 处理旋转控制点
-    if (_isRotating) {
-      debugPrint('旋转控制点拖拽结束');
+    // Phase 3: Commit - 结束拖拽状态管理器并提交最终更改
+    _dragStateManager.endDrag(shouldCommitChanges: true);
 
-      // 获取原始旋转值和当前旋转值
-      final oldRotation =
-          (_originalElementProperties!['rotation'] as num?)?.toDouble() ?? 0.0;
-      final newRotation = (element['rotation'] as num?)?.toDouble() ?? 0.0;
+    try {
+      // 处理旋转控制点
+      if (_isRotating) {
+        debugPrint('✅ Commit阶段: 处理旋转操作');
 
-      // 如果旋转值有变化，创建旋转操作
-      if (oldRotation != newRotation) {
-        widget.controller.createElementRotationOperation(
-          elementIds: [elementId],
-          oldRotations: [oldRotation],
-          newRotations: [newRotation],
-        );
+        // 计算最终属性并应用网格吸附
+        final currentProperties = <String, double>{
+          'rotation': (element['rotation'] as num?)?.toDouble() ?? 0.0,
+        };
+        final finalProperties =
+            _calculateFinalElementProperties(currentProperties);
+
+        // 应用最终旋转值
+        element['rotation'] = finalProperties['rotation'];
+
+        // 创建撤销操作
+        _createUndoOperation(elementId, _originalElementProperties!, element);
+
+        _isRotating = false;
+        _originalElementProperties = null;
+        debugPrint('✅ Commit阶段: 旋转操作完成');
+        return;
       }
 
-      _isRotating = false;
-      _originalElementProperties = null;
-      return;
-    }
+      // 处理调整大小控制点
+      if (_isResizing) {
+        debugPrint('✅ Commit阶段: 处理调整大小操作');
 
-    // 处理调整大小控制点
-    if (_isResizing) {
-      // 创建旧尺寸对象
-      final oldSize = {
-        'x': (_originalElementProperties!['x'] as num).toDouble(),
-        'y': (_originalElementProperties!['y'] as num).toDouble(),
-        'width': (_originalElementProperties!['width'] as num).toDouble(),
-        'height': (_originalElementProperties!['height'] as num).toDouble(),
-      };
+        // 计算最终属性并应用网格吸附
+        final currentProperties = <String, double>{
+          'x': (element['x'] as num).toDouble(),
+          'y': (element['y'] as num).toDouble(),
+          'width': (element['width'] as num).toDouble(),
+          'height': (element['height'] as num).toDouble(),
+        };
+        final finalProperties =
+            _calculateFinalElementProperties(currentProperties);
 
-      // 创建新尺寸对象
-      final newSize = {
-        'x': (element['x'] as num).toDouble(),
-        'y': (element['y'] as num).toDouble(),
-        'width': (element['width'] as num).toDouble(),
-        'height': (element['height'] as num).toDouble(),
-      };
+        // 应用最终位置和尺寸
+        element['x'] = finalProperties['x'];
+        element['y'] = finalProperties['y'];
+        element['width'] = finalProperties['width'];
+        element['height'] = finalProperties['height'];
 
-      // 只有在尺寸或位置有变化时才创建操作
-      if (oldSize['x'] != newSize['x'] ||
-          oldSize['y'] != newSize['y'] ||
-          oldSize['width'] != newSize['width'] ||
-          oldSize['height'] != newSize['height']) {
-        // 只有在启用了网格吸附的情况下才进行网格吸附
-        if (widget.controller.state.snapEnabled) {
-          final gridSize = widget.controller.state.gridSize;
+        debugPrint(
+            '✅ Commit阶段: 最终属性已应用 - 位置:(${finalProperties['x']}, ${finalProperties['y']}), 尺寸:(${finalProperties['width']}, ${finalProperties['height']})');
 
-          // 计算吸附后的位置和尺寸（向最近的网格线吸附）
-          final snappedX = (newSize['x']! / gridSize).round() * gridSize;
-          final snappedY = (newSize['y']! / gridSize).round() * gridSize;
-          final snappedWidth =
-              (newSize['width']! / gridSize).round() * gridSize;
-          final snappedHeight =
-              (newSize['height']! / gridSize).round() * gridSize;
-
-          // 确保尺寸不小于最小值
-          final finalWidth = math.max(snappedWidth, 10.0);
-          final finalHeight = math.max(snappedHeight, 10.0);
-
-          // 更新为吸附后的值
-          newSize['x'] = snappedX;
-          newSize['y'] = snappedY;
-          newSize['width'] = finalWidth;
-          newSize['height'] = finalHeight;
-
-          // 直接应用网格吸附更新
-          element['x'] = snappedX;
-          element['y'] = snappedY;
-          element['width'] = finalWidth;
-          element['height'] = finalHeight;
-
-          debugPrint(
-              '网格吸附: 元素 $elementId 位置从 (${oldSize['x']}, ${oldSize['y']}) 吸附到 ($snappedX, $snappedY)');
-          debugPrint(
-              '网格吸附: 元素 $elementId 尺寸从 (${oldSize['width']}, ${oldSize['height']}) 吸附到 ($finalWidth, $finalHeight)');
-        }
-
-        // 创建调整大小操作
-        widget.controller.createElementResizeOperation(
-          elementIds: [elementId],
-          oldSizes: [oldSize],
-          newSizes: [newSize],
-        );
+        // 创建撤销操作
+        _createUndoOperation(elementId, _originalElementProperties!, element);
 
         // 确保UI更新
         widget.controller.notifyListeners();
-      }
 
+        _isResizing = false;
+        _originalElementProperties = null;
+        debugPrint('✅ Commit阶段: 调整大小操作完成');
+      }
+    } catch (e) {
+      debugPrint('❌ Commit阶段错误: $e');
+      // 发生错误时恢复原始状态
+      if (_originalElementProperties != null) {
+        for (final key in _originalElementProperties!.keys) {
+          element[key] = _originalElementProperties![key];
+        }
+        widget.controller.notifyListeners();
+      }
+    } finally {
+      // 确保清理状态
+      _isRotating = false;
       _isResizing = false;
       _originalElementProperties = null;
     }
+
+    debugPrint('✅ Commit阶段完成: 三阶段拖拽系统处理完毕');
   }
 
-  /// 处理控制点拖拽开始事件
+  /// 处理控制点拖拽开始事件 - 实现Preview阶段
   void _handleControlPointDragStart(int controlPointIndex) {
-    debugPrint('控制点 $controlPointIndex 拖拽开始');
+    debugPrint('🎯 控制点 $controlPointIndex 拖拽开始 - 启动Preview阶段');
 
     if (widget.controller.state.selectedElementIds.isEmpty) {
       return;
@@ -1375,17 +1305,29 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     _isRotating = (controlPointIndex == 8);
     _isResizing = !_isRotating;
 
-    debugPrint('保存元素 $elementId 的原始属性: $_originalElementProperties');
+    // Phase 1: Preview - 启动拖拽状态管理器并创建预览快照
+    final elementPosition = Offset(
+      (element['x'] as num).toDouble(),
+      (element['y'] as num).toDouble(),
+    );
+
+    _dragStateManager.startDrag(
+      elementIds: {elementId},
+      startPosition: elementPosition,
+      elementStartPositions: {elementId: elementPosition},
+    );
+
+    debugPrint('🎯 Preview阶段完成: 元素 $elementId 快照已创建，原始属性已保存');
   }
 
-  /// Handle control point updates
+  /// Handle control point updates - 实现Live阶段
   void _handleControlPointUpdate(int controlPointIndex, Offset delta) {
+    debugPrint('🔄 控制点 $controlPointIndex 更新中 - Live阶段');
+
     // 获取当前缩放比例
     final scale = widget.transformationController.value.getMaxScaleOnAxis();
 
     // 调整增量，考虑当前缩放比例
-    // 注意：在高缩放比例下，小的物理移动会导致很小的逻辑移动，
-    // 而在低缩放比例下，相同的物理移动会导致较大的逻辑移动
     final adjustedDelta = Offset(delta.dx / scale, delta.dy / scale);
     delta = adjustedDelta;
 
@@ -1402,12 +1344,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
     if (element.isEmpty) {
       return;
-    } // Recreate the SnapManager with current settings
-    // _snapManager.updateSettings(
-    //   gridSize: widget.controller.state.gridSize,
-    //   enabled: widget.controller.state.snapEnabled,
-    //   snapThreshold: 10.0,
-    // );
+    }
 
     // Check if element's layer is locked
     final layerId = element['layerId'] as String?;
@@ -1423,7 +1360,10 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     }
 
     try {
-      // Process control point update immediately
+      // Phase 2: Live - 更新拖拽偏移量和实时元素属性
+      _dragStateManager.updateDragOffset(delta);
+
+      // Process control point update for live feedback
       if (controlPointIndex == 8) {
         // Rotation control point
         _handleRotation(elementId, delta);
@@ -1431,6 +1371,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         // Resize control point
         _handleResize(elementId, controlPointIndex, delta);
       }
+
+      debugPrint('🔄 Live阶段: 元素 $elementId 属性实时更新完成');
     } catch (e) {
       debugPrint('Control point update failed: $e');
     }
@@ -1583,6 +1525,21 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         .updateElementProperties(elementId, {'rotation': newRotation});
   } // Removed unused _handleTransformationChange method
 
+  /// 初始化核心组件
+  void _initializeCoreComponents() {
+    // Initialize content render controller for dual-layer architecture
+    _contentRenderController = ContentRenderController();
+    print('🏗️ Canvas: ContentRenderController initialized');
+
+    // Initialize drag state manager for optimized drag handling
+    _dragStateManager = DragStateManager();
+    print('🏗️ Canvas: DragStateManager initialized');
+
+    // Initialize layer render manager for coordinated layer rendering
+    _layerRenderManager = LayerRenderManager();
+    print('🏗️ Canvas: LayerRenderManager initialized');
+  }
+
   /// 初始化手势处理器
   void _initializeGestureHandler() {
     _gestureHandler = SmartCanvasGestureHandler(
@@ -1590,21 +1547,24 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
       dragStateManager: _dragStateManager,
       onDragStart:
           (isDragging, dragStart, elementPosition, elementPositions) async {
-        debugPrint('🎯【OnDragStart】开始 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-        
+        debugPrint(
+            '🎯【OnDragStart】开始 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+
         setState(() {
           _isDragging = isDragging;
           _dragStart = dragStart;
           _elementStartPosition = elementPosition;
         });
 
-        debugPrint('🎯【OnDragStart】setState后 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+        debugPrint(
+            '🎯【OnDragStart】setState后 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
 
         // 使用新的DragOperationManager处理拖拽开始
         if (isDragging &&
             widget.controller.state.selectedElementIds.isNotEmpty) {
-          debugPrint('🎯【OnDragStart】启动DragOperationManager前 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
-          
+          debugPrint(
+              '🎯【OnDragStart】启动DragOperationManager前 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+
           final success = await _dragOperationManager.startDragOperation(
             DragStartInfo(
               elementIds: widget.controller.state.selectedElementIds.toList(),
@@ -1612,7 +1572,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
             ),
           );
 
-          debugPrint('🎯【OnDragStart】DragOperationManager启动后 - 成功: $success, 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+          debugPrint(
+              '🎯【OnDragStart】DragOperationManager启动后 - 成功: $success, 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
 
           if (success) {
             debugPrint('🎯 拖拽操作成功启动');
@@ -1635,10 +1596,12 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
             }
           }
         } else {
-          debugPrint('🎯【OnDragStart】跳过DragOperationManager - isDragging: $isDragging, 选中元素数: ${widget.controller.state.selectedElementIds.length}');
+          debugPrint(
+              '🎯【OnDragStart】跳过DragOperationManager - isDragging: $isDragging, 选中元素数: ${widget.controller.state.selectedElementIds.length}');
         }
-        
-        debugPrint('🎯【OnDragStart】结束 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+
+        debugPrint(
+            '🎯【OnDragStart】结束 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
       },
       onDragUpdate: () {
         // 如果是选择框更新，使用ValueNotifier而不是setState
@@ -1766,11 +1729,90 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
     );
   }
 
+  /// 初始化优化策略组件
+  void _initializeOptimizationComponents() {
+    // Initialize canvas structure listener for smart layer-specific routing
+    _structureListener = CanvasStructureListener(widget.controller);
+    print('🏗️ Canvas: CanvasStructureListener initialized');
 
+    // Initialize state change dispatcher for unified state management
+    _stateDispatcher =
+        StateChangeDispatcher(widget.controller, _structureListener);
+
+    // Set the state dispatcher in the controller for layered state management
+    widget.controller.setStateDispatcher(_stateDispatcher);
+    print(
+        '🏗️ Canvas: StateChangeDispatcher initialized and connected to controller');
+
+    // Initialize drag operation manager for 3-phase drag system
+    _dragOperationManager = DragOperationManager(
+      widget.controller,
+      _dragStateManager,
+      _stateDispatcher,
+    );
+    print('🏗️ Canvas: DragOperationManager initialized');
+
+    // Register layers with the layer render manager
+    _initializeLayers();
+    print('🏗️ Canvas: Layers registered with LayerRenderManager');
+  }
+
+  /// 初始化UI组件
+  void _initializeUIComponents() {
+    // Initialize RepaintBoundary key - always create a new key for screenshot functionality
+    _repaintBoundaryKey = GlobalKey();
+
+    // 初始化手势处理器 (需要在所有其他组件初始化后)
+    _initializeGestureHandler();
+    print('🏗️ Canvas: GestureHandler initialized');
+
+    // 临时禁用画布注册，避免潜在的循环调用问题
+    // Register this canvas with the controller for reset view functionality
+    // widget.controller.setEditCanvas(this);
+
+    // Set the RepaintBoundary key in the controller for screenshot functionality
+    widget.controller.setCanvasKey(_repaintBoundaryKey);
+
+    // 🔍 恢复初始化时的reset，用于对比两次调用
+    // Schedule initial reset view position on first load (只执行一次)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_hasInitializedView) {
+        _hasInitializedView = true;
+        resetCanvasPosition(); // 使用标准的Reset View Position逻辑
+        debugPrint('🔧【initState】首次加载，执行Reset View Position');
+      }
+    });
+  }
 
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
     _fitPageToScreen();
+  }
+
+  /// 建立组件间连接
+  void _setupComponentConnections() {
+    // 将拖拽状态管理器与性能监控系统关联
+    _performanceMonitor.setDragStateManager(_dragStateManager);
+    print('🏗️ Canvas: Connected DragStateManager with PerformanceMonitor');
+
+    // 将拖拽状态管理器与内容渲染控制器关联
+    _contentRenderController.setDragStateManager(_dragStateManager);
+    print(
+        '🏗️ Canvas: Connected DragStateManager with ContentRenderController');
+
+    // 设置结构监听器的层级处理器
+    _setupStructureListenerHandlers();
+    print('🏗️ Canvas: Structure listener handlers configured');
+
+    // Set up drag state manager callbacks
+    _dragStateManager.setUpdateCallbacks(
+      onBatchUpdate: (batchUpdates) {
+        widget.controller.batchUpdateElementProperties(
+          batchUpdates,
+          options: BatchUpdateOptions.forDragOperation(),
+        );
+      },
+    );
   }
 
   /// 设置结构监听器的层级处理器
@@ -1823,6 +1865,98 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas> {
         }
       }
     });
+  }
+
+  /// 检查是否可能需要处理任何特殊手势（用于决定是否设置pan手势回调）
+  /// 检查是否需要设置手势回调（更保守的策略）
+  bool _shouldHandleAnySpecialGesture(List<Map<String, dynamic>> elements) {
+    // 如果在预览模式，不处理任何手势
+    if (widget.controller.state.isPreviewMode) {
+      return false;
+    }
+
+    // 如果在select模式下，需要处理选择框
+    if (widget.controller.state.currentTool == 'select') {
+      return true;
+    }
+
+    // 如果正在进行拖拽操作，需要处理
+    if (_isDragging || _dragStateManager.isDragging) {
+      return true;
+    }
+
+    // 只有在有选中元素时才可能需要处理元素拖拽
+    // 这里先返回true，在回调中再精确判断
+    if (widget.controller.state.selectedElementIds.isNotEmpty) {
+      return true;
+    }
+
+    // 其他情况让InteractiveViewer完全接管
+    return false;
+  }
+
+  /// 检查是否需要处理特殊手势（元素拖拽、选择框）
+  bool _shouldHandleSpecialGesture(
+      DragStartDetails details, List<Map<String, dynamic>> elements) {
+    debugPrint(
+        '🔍【_shouldHandleSpecialGesture】开始检查 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+
+    // 如果在预览模式，不处理任何手势
+    if (widget.controller.state.isPreviewMode) {
+      debugPrint('🔍【_shouldHandleSpecialGesture】预览模式，不处理手势');
+      return false;
+    }
+
+    // 1. 首先检查是否点击在已选中的元素上（元素拖拽 - 在任何工具模式下都可以）
+    for (int i = elements.length - 1; i >= 0; i--) {
+      final element = elements[i];
+      final id = element['id'] as String;
+      final x = (element['x'] as num).toDouble();
+      final y = (element['y'] as num).toDouble();
+      final width = (element['width'] as num).toDouble();
+      final height = (element['height'] as num).toDouble();
+
+      // Check if element is hidden
+      if (element['hidden'] == true) continue;
+
+      // Check if layer is hidden
+      final layerId = element['layerId'] as String?;
+      bool isLayerHidden = false;
+      if (layerId != null) {
+        final layer = widget.controller.state.getLayerById(layerId);
+        if (layer != null) {
+          isLayerHidden = layer['isVisible'] == false;
+        }
+      }
+      if (isLayerHidden) continue;
+
+      // Check if clicking inside element
+      final bool isInside = details.localPosition.dx >= x &&
+          details.localPosition.dx <= x + width &&
+          details.localPosition.dy >= y &&
+          details.localPosition.dy <= y + height;
+
+      if (isInside && widget.controller.state.selectedElementIds.contains(id)) {
+        // 点击在已选中的元素上，需要处理元素拖拽（任何工具模式下都可以）
+        debugPrint(
+            '【手势检测】点击在已选中元素上，需要处理元素拖拽: $id (工具: ${widget.controller.state.currentTool})');
+        debugPrint(
+            '🔍【_shouldHandleSpecialGesture】检测到元素拖拽需求 - 当前选中元素: ${widget.controller.state.selectedElementIds.length}');
+        return true;
+      }
+    }
+
+    // 2. 如果在select模式下，处理选择框（框选模式）
+    if (widget.controller.state.currentTool == 'select') {
+      debugPrint('【手势检测】在select模式下，需要处理选择框（框选模式）');
+      debugPrint('🔍【_shouldHandleSpecialGesture】检测到选择框需求');
+      return true;
+    }
+
+    // 3. 其他情况不处理，让InteractiveViewer处理画布平移
+    debugPrint('【手势检测】让InteractiveViewer处理画布平移');
+    debugPrint('🔍【_shouldHandleSpecialGesture】无特殊手势需求');
+    return false;
   }
 }
 
