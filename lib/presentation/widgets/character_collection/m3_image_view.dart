@@ -87,7 +87,9 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     final toolMode = ref.watch(toolModeProvider);
     final characterCollection = ref.watch(characterCollectionProvider);
     final regions = characterCollection.regions;
-    // No need to access selectedIds and modifiedIds directly as they're now part of region properties
+    // Extract selected region IDs for multi-selection visual feedback
+    final selectedIds =
+        regions.where((r) => r.isSelected).map((r) => r.id).toList();
 
     // 处理工具模式变化
     final lastToolMode = _isInSelectionMode ? Tool.select : Tool.pan;
@@ -214,6 +216,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                     imageState,
                     regions,
                     viewportSize,
+                    selectedIds,
                   ),
                   _buildSelectionToolLayer(),
                   _buildUILayer(),
@@ -585,6 +588,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
     WorkImageState imageState,
     List<CharacterRegion> regions,
     Size viewportSize,
+    List<String> selectedIds,
   ) {
     final toolMode = ref.watch(toolModeProvider);
     final isPanMode = toolMode == Tool.pan;
@@ -643,6 +647,7 @@ class _ImageViewState extends ConsumerState<M3ImageView>
                           adjustingRegionId: _adjustingRegionId,
                           currentTool: toolMode,
                           isAdjusting: characterCollection.isAdjusting,
+                          selectedIds: selectedIds,
                         ),
                       ),
                     ),

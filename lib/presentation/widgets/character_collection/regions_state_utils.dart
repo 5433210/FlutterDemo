@@ -7,11 +7,12 @@ import '../../providers/character/tool_mode_provider.dart';
 /// 提供获取区域状态和对应颜色的方法
 class RegionStateUtils {
   /// 获取区域边框颜色
-  /// 根据区域状态、保存状态和悬停状态确定边框颜色
+  /// 根据区域状态、保存状态、悬停状态和多选状态确定边框颜色
   static Color getBorderColor({
     required CharacterRegionState state,
     required bool isSaved,
     bool isHovered = false,
+    bool isMultiSelected = false,
   }) {
     // 根据状态和保存状态确定颜色
     Color result;
@@ -21,7 +22,10 @@ class RegionStateUtils {
         result = const Color(CharacterRegionColorScheme.adjusting);
         break;
       case CharacterRegionState.selected:
-        result = const Color(CharacterRegionColorScheme.selected);
+        // 如果是多选状态，使用多选专用颜色
+        result = isMultiSelected
+            ? const Color(CharacterRegionColorScheme.multiSelected)
+            : const Color(CharacterRegionColorScheme.selected);
         break;
       case CharacterRegionState.normal:
         result = isSaved
@@ -30,31 +34,42 @@ class RegionStateUtils {
         break;
     }
 
-    // // 添加调试日志，特别关注红色边框场景
-    // if (state == CharacterRegionState.adjusting ||
-    //     (result.value == CharacterRegionColorScheme.selected)) {
-    //   AppLogger.debug('边框颜色计算', data: {
-    //     'state': state.toString(),
-    //     'isSaved': isSaved,
-    //     'colorHex': '#${result.value.toRadixString(16)}',
-    //   });
-    // }
-
     return result;
   }
 
+  /// 获取区域边框宽度
+  /// 根据区域状态和多选状态确定边框宽度
+  static double getBorderWidth({
+    required CharacterRegionState state,
+    bool isMultiSelected = false,
+  }) {
+    switch (state) {
+      case CharacterRegionState.adjusting:
+        return CharacterRegionColorScheme.adjustingBorderWidth;
+      case CharacterRegionState.selected:
+        // 如果是多选状态，使用多选专用边框宽度
+        return isMultiSelected
+            ? CharacterRegionColorScheme.multiSelectedBorderWidth
+            : CharacterRegionColorScheme.selectedBorderWidth;
+      case CharacterRegionState.normal:
+        return CharacterRegionColorScheme.normalBorderWidth;
+    }
+  }
+
   /// 获取区域填充颜色
-  /// 根据区域状态、保存状态和悬停状态确定填充颜色
+  /// 根据区域状态、保存状态、悬停状态和多选状态确定填充颜色
   static Color getFillColor({
     required CharacterRegionState state,
     required bool isSaved,
     bool isHovered = false,
+    bool isMultiSelected = false,
   }) {
     // 基础颜色
     final baseColor = getBorderColor(
       state: state,
       isSaved: isSaved,
       isHovered: isHovered,
+      isMultiSelected: isMultiSelected,
     );
 
     // 透明度
@@ -64,7 +79,10 @@ class RegionStateUtils {
         opacity = CharacterRegionColorScheme.adjustingOpacity;
         break;
       case CharacterRegionState.selected:
-        opacity = CharacterRegionColorScheme.selectedOpacity;
+        // 如果是多选状态，使用多选专用透明度
+        opacity = isMultiSelected
+            ? CharacterRegionColorScheme.multiSelectedOpacity
+            : CharacterRegionColorScheme.selectedOpacity;
         break;
       case CharacterRegionState.normal:
         opacity = isSaved
@@ -75,7 +93,7 @@ class RegionStateUtils {
 
     // 悬停状态增加透明度
     if (isHovered) {
-      opacity = opacity * 1.5;
+      opacity = opacity * 1.2; // 减少倍数以避免过度饱和
     }
 
     return baseColor.withValues(alpha: opacity);

@@ -13,6 +13,7 @@ class RegionsPainter extends CustomPainter {
   final String? adjustingRegionId; // 当前正在调整的区域ID
   final Tool currentTool; // 当前工具模式
   final bool isAdjusting; // 是否处于调整状态
+  final List<String> selectedIds; // 添加选中的区域ID列表以支持多选
 
   const RegionsPainter({
     required this.regions,
@@ -21,6 +22,7 @@ class RegionsPainter extends CustomPainter {
     this.adjustingRegionId, // 接收调整中的区域ID
     required this.currentTool, // 当前工具模式
     this.isAdjusting = false, // 是否处于调整状态
+    this.selectedIds = const [], // 默认为空列表
   });
 
   @override
@@ -45,9 +47,7 @@ class RegionsPainter extends CustomPainter {
           // 检查是否在可见区域内
           if (!viewportRect.overlaps(viewportBounds)) {
             continue; // 跳过不可见的区域
-          }
-
-          // 确定区域状态 - using region.isSelected property
+          } // 确定区域状态 - using region.isSelected property
           final isSelected =
               region.isSelected; // Use object property instead of selectedIds
           final isHovered = region.id == hoveredId;
@@ -55,6 +55,9 @@ class RegionsPainter extends CustomPainter {
               isAdjusting && region.id == adjustingRegionId;
           final isSaved =
               !region.isModified; // Use object property instead of modifiedIds
+
+          // 检查是否为多选状态
+          final isMultiSelected = selectedIds.length > 1 && isSelected;
 
           // 获取区域状态
           final regionState = RegionStateUtils.getRegionState(
@@ -73,6 +76,7 @@ class RegionsPainter extends CustomPainter {
             isSelected,
             isHovered,
             isSaved,
+            isMultiSelected,
           );
         } catch (e, stack) {
           debugPrint('区域绘制失败: ${region.id}, error: $e\n$stack');
@@ -90,7 +94,8 @@ class RegionsPainter extends CustomPainter {
         oldDelegate.hoveredId != hoveredId ||
         oldDelegate.currentTool != currentTool ||
         oldDelegate.adjustingRegionId != adjustingRegionId ||
-        oldDelegate.isAdjusting != isAdjusting;
+        oldDelegate.isAdjusting != isAdjusting ||
+        oldDelegate.selectedIds != selectedIds;
   }
 
   void _drawHandles(Canvas canvas, Rect rect, bool isActive) {
@@ -197,28 +202,44 @@ class RegionsPainter extends CustomPainter {
     bool isSelected,
     bool isHovered,
     bool isSaved,
+    bool isMultiSelected,
   ) {
-    // 使用RegionStateUtils获取颜色
+    // 使用RegionStateUtils获取颜色和边框宽度
     final Color borderColor = RegionStateUtils.getBorderColor(
       state: regionState,
       isSaved: isSaved,
       isHovered: isHovered,
+      isMultiSelected: isMultiSelected,
     );
 
     final Color fillColor = RegionStateUtils.getFillColor(
       state: regionState,
       isSaved: isSaved,
       isHovered: isHovered,
+      isMultiSelected: isMultiSelected,
+    );
+
+    final double borderWidth = RegionStateUtils.getBorderWidth(
+      state: regionState,
+      isMultiSelected: isMultiSelected,
     );
 
     final fillPaint = Paint()
       ..color = fillColor
       ..style = PaintingStyle.fill;
-
     final borderPaint = Paint()
       ..color = borderColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = isSelected ? 2.0 : 1.5;
+      ..strokeWidth = borderWidth;
+
+    // 为选中状态添加阴影效果以增强视觉反馈
+    Paint? shadowPaint;
+    if (isSelected || isMultiSelected) {
+      shadowPaint = Paint()
+        ..color = borderColor.withValues(alpha: 0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = borderWidth + 2.0;
+    }
 
     // 如果区域有旋转，需要应用旋转变换
     if (region.rotation != 0) {
@@ -226,20 +247,23 @@ class RegionsPainter extends CustomPainter {
       canvas.save();
       canvas.translate(center.dx, center.dy);
       canvas.rotate(region.rotation);
-      canvas.translate(-center.dx, -center.dy);
+      canvas.translate(-center.dx, -center.dy); // 绘制所有元素并应用旋转
+      // 1. 绘制阴影（如果存在）
+      if (shadowPaint != null) {
+        canvas.drawRect(viewportRect, shadowPaint);
+      }
 
-      // 绘制所有元素并应用旋转
-      // 1. 绘制填充
+      // 2. 绘制填充
       canvas.drawRect(viewportRect, fillPaint);
 
-      // 2. 绘制边框
+      // 3. 绘制边框
       canvas.drawRect(viewportRect, borderPaint);
 
-      // 3. 绘制文字
+      // 4. 绘制文字
       _drawRegionText(
           canvas, viewportRect, region, index, isSelected, borderColor);
 
-      // 4. 如果处于Select模式并且是选中状态，绘制控制点
+      // 5. 如果处于Select模式并且是选中状态，绘制控制点
       if (isSelected && currentTool == Tool.select) {
         _drawHandles(canvas, viewportRect, true);
       }
@@ -247,17 +271,22 @@ class RegionsPainter extends CustomPainter {
       canvas.restore();
     } else {
       // 无旋转 - 直接绘制
-      // 1. 绘制填充
+      // 1. 绘制阴影（如果存在）
+      if (shadowPaint != null) {
+        canvas.drawRect(viewportRect, shadowPaint);
+      }
+
+      // 2. 绘制填充
       canvas.drawRect(viewportRect, fillPaint);
 
-      // 2. 绘制边框
+      // 3. 绘制边框
       canvas.drawRect(viewportRect, borderPaint);
 
-      // 3. 绘制文字
+      // 4. 绘制文字
       _drawRegionText(
           canvas, viewportRect, region, index, isSelected, borderColor);
 
-      // 4. 如果处于Select模式并且是选中状态，绘制控制点
+      // 5. 如果处于Select模式并且是选中状态，绘制控制点
       if (isSelected && currentTool == Tool.select) {
         _drawHandles(canvas, viewportRect, true);
       }
