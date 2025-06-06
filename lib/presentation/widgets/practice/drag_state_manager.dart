@@ -50,9 +50,10 @@ class DragStateManager extends ChangeNotifier {
 
   // 实时拖拽位置（用于预览层）
   final Map<String, Offset> _previewPositions = <String, Offset>{};
-  
+
   // 🔧 新增：完整的元素预览属性（支持resize和rotate）
-  final Map<String, Map<String, dynamic>> _previewProperties = <String, Map<String, dynamic>>{};
+  final Map<String, Map<String, dynamic>> _previewProperties =
+      <String, Map<String, dynamic>>{};
 
   // 批量更新相关
   Timer? _batchUpdateTimer;
@@ -366,7 +367,8 @@ class DragStateManager extends ChangeNotifier {
   }
 
   /// 🔧 新增：更新元素的完整预览属性（支持resize和rotate）
-  void updateElementPreviewProperties(String elementId, Map<String, dynamic> properties) {
+  void updateElementPreviewProperties(
+      String elementId, Map<String, dynamic> properties) {
     if (!_isDragging || !_draggingElementIds.contains(elementId)) return;
 
     final now = DateTime.now();
@@ -390,7 +392,7 @@ class DragStateManager extends ChangeNotifier {
 
     // 更新元素的完整预览属性
     _previewProperties[elementId] = Map<String, dynamic>.from(properties);
-    
+
     // 同时更新预览位置，保持兼容性
     final x = (properties['x'] as num?)?.toDouble();
     final y = (properties['y'] as num?)?.toDouble();
@@ -404,6 +406,45 @@ class DragStateManager extends ChangeNotifier {
     notifyListeners();
 
     debugPrint('📊 DragStateManager: 更新元素 $elementId 完整属性: $properties');
+  }
+
+  /// 🔧 新增：仅更新性能监控统计，不触发通知（用于Live阶段）
+  void updatePerformanceStatsOnly() {
+    if (!_isDragging) return;
+
+    final now = DateTime.now();
+
+    // 计算每次更新的时间间隔
+    if (_lastUpdateTime != null) {
+      final updateTime = now.difference(_lastUpdateTime!).inMilliseconds;
+      _updateTimes.add(updateTime.toDouble());
+
+      // 计算帧率 (FPS = 1000ms / 每帧时间)
+      if (updateTime > 0) {
+        final fps = (1000 / updateTime).round();
+        _frameRates.add(fps);
+      }
+
+      // 计算平均更新时间
+      _avgUpdateTime = _updateTimes.fold(0.0, (sum, time) => sum + time) /
+          _updateTimes.length;
+    }
+
+    _lastUpdateTime = now;
+    _updateCount++;
+
+    // 注意：这里不调用 notifyListeners()，仅更新性能统计
+    // 这样可以在Live阶段记录性能数据而不影响UI重建
+
+    // 调试信息
+    if (DragConfig.debugMode && _updateCount % 10 == 0) {
+      debugPrint('🔍[RESIZE_FIX] DragStateManager - 性能数据 (仅统计):');
+      debugPrint('🔍[RESIZE_FIX]    更新次数: $_updateCount');
+      debugPrint(
+          '🔍[RESIZE_FIX]    平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
+      debugPrint(
+          '🔍[RESIZE_FIX]    当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
+    }
   }
 
   /// 提交最终位置
@@ -465,56 +506,21 @@ class DragStateManager extends ChangeNotifier {
   /// 更新预览位置
   void _updatePreviewPositions() {
     // 🔍[RESIZE_FIX] 调试预览位置计算
-    debugPrint('🔍[RESIZE_FIX] DragStateManager._updatePreviewPositions() - 当前拖拽偏移: $_currentDragOffset');
-    
+    debugPrint(
+        '🔍[RESIZE_FIX] DragStateManager._updatePreviewPositions() - 当前拖拽偏移: $_currentDragOffset');
+
     for (final elementId in _draggingElementIds) {
       final startPos = _elementStartPositions[elementId];
       if (startPos != null) {
         final newPreviewPos = startPos + _currentDragOffset;
         _previewPositions[elementId] = newPreviewPos;
-        
+
         // 🔍[RESIZE_FIX] 调试每个元素的位置计算
-        debugPrint('🔍[RESIZE_FIX]    元素 $elementId: 起始位置=$startPos, 新预览位置=$newPreviewPos');
+        debugPrint(
+            '🔍[RESIZE_FIX]    元素 $elementId: 起始位置=$startPos, 新预览位置=$newPreviewPos');
       } else {
         debugPrint('🔍[RESIZE_FIX]    元素 $elementId: ❌ 没有起始位置');
       }
-    }
-  }
-
-  /// 🔧 新增：仅更新性能监控统计，不触发通知（用于Live阶段）
-  void updatePerformanceStatsOnly() {
-    if (!_isDragging) return;
-
-    final now = DateTime.now();
-
-    // 计算每次更新的时间间隔
-    if (_lastUpdateTime != null) {
-      final updateTime = now.difference(_lastUpdateTime!).inMilliseconds;
-      _updateTimes.add(updateTime.toDouble());
-
-      // 计算帧率 (FPS = 1000ms / 每帧时间)
-      if (updateTime > 0) {
-        final fps = (1000 / updateTime).round();
-        _frameRates.add(fps);
-      }
-
-      // 计算平均更新时间
-      _avgUpdateTime = _updateTimes.fold(0.0, (sum, time) => sum + time) /
-          _updateTimes.length;
-    }
-
-    _lastUpdateTime = now;
-    _updateCount++;
-
-    // 注意：这里不调用 notifyListeners()，仅更新性能统计
-    // 这样可以在Live阶段记录性能数据而不影响UI重建
-
-    // 调试信息
-    if (DragConfig.debugMode && _updateCount % 10 == 0) {
-      debugPrint('🔍[RESIZE_FIX] DragStateManager - 性能数据 (仅统计):');
-      debugPrint('🔍[RESIZE_FIX]    更新次数: $_updateCount');
-      debugPrint('🔍[RESIZE_FIX]    平均更新时间: ${_avgUpdateTime.toStringAsFixed(2)}ms');
-      debugPrint('🔍[RESIZE_FIX]    当前帧率: ${_frameRates.isNotEmpty ? _frameRates.last : 0} FPS');
     }
   }
 }

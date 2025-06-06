@@ -207,7 +207,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   void dispose() {
     // 🔧 移除DragStateManager监听器
     _dragStateManager.removeListener(_onDragStateManagerChanged);
-    
+
     _selectionBoxNotifier.dispose();
     _contentRenderController.dispose();
     _dragStateManager.dispose();
@@ -466,28 +466,42 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                     final scale = widget.transformationController.value
                         .getMaxScaleOnAxis();
                     // 🔧 修复：在元素拖拽过程中，使用DragStateManager的预览位置更新控制点
-                    final isElementBeingDragged = _dragStateManager.isDragging && _dragStateManager.isElementDragging(elementId);
-                    
+                    final isElementBeingDragged =
+                        _dragStateManager.isDragging &&
+                            _dragStateManager.isElementDragging(elementId);
+
                     double displayX = x;
                     double displayY = y;
                     double displayWidth = width;
                     double displayHeight = height;
                     double displayRotation = rotation;
-                    
+
                     if (isElementBeingDragged) {
                       // 获取预览属性，如果有的话
-                      final previewProperties = _dragStateManager.getElementPreviewProperties(elementId);
+                      final previewProperties = _dragStateManager
+                          .getElementPreviewProperties(elementId);
                       if (previewProperties != null) {
                         // 使用完整的预览属性（支持resize/rotate）
-                        displayX = (previewProperties['x'] as num?)?.toDouble() ?? x;
-                        displayY = (previewProperties['y'] as num?)?.toDouble() ?? y;
-                        displayWidth = (previewProperties['width'] as num?)?.toDouble() ?? width;
-                        displayHeight = (previewProperties['height'] as num?)?.toDouble() ?? height;
-                        displayRotation = (previewProperties['rotation'] as num?)?.toDouble() ?? rotation;
-                        debugPrint('🔧 控制点使用完整预览属性: 位置=($displayX, $displayY), 尺寸=${displayWidth}x$displayHeight, 旋转=$displayRotation');
+                        displayX =
+                            (previewProperties['x'] as num?)?.toDouble() ?? x;
+                        displayY =
+                            (previewProperties['y'] as num?)?.toDouble() ?? y;
+                        displayWidth =
+                            (previewProperties['width'] as num?)?.toDouble() ??
+                                width;
+                        displayHeight =
+                            (previewProperties['height'] as num?)?.toDouble() ??
+                                height;
+                        displayRotation =
+                            (previewProperties['rotation'] as num?)
+                                    ?.toDouble() ??
+                                rotation;
+                        debugPrint(
+                            '🔧 控制点使用完整预览属性: 位置=($displayX, $displayY), 尺寸=${displayWidth}x$displayHeight, 旋转=$displayRotation');
                       } else {
                         // 回退到位置预览
-                        final previewPosition = _dragStateManager.getElementPreviewPosition(elementId);
+                        final previewPosition = _dragStateManager
+                            .getElementPreviewPosition(elementId);
                         if (previewPosition != null) {
                           displayX = previewPosition.dx;
                           displayY = previewPosition.dy;
@@ -495,7 +509,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                         }
                       }
                     }
-                    
+
                     return FreeControlPoints(
                       key: ValueKey(
                           'control_points_${elementId}_${scale.toStringAsFixed(2)}_${displayX.toInt()}_${displayY.toInt()}'),
@@ -736,18 +750,22 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
                 onTapUp: (details) {
                   // 重置拖拽准备状态
                   _isReadyForDrag = false;
-                  
+
                   // 🔍[RESIZE_FIX] 调试点击和选择过程
-                  debugPrint('🔍[RESIZE_FIX] onTapUp被调用: position=${details.localPosition}');
-                  debugPrint('🔍[RESIZE_FIX] 当前选中元素数: ${widget.controller.state.selectedElementIds.length}');
-                  
+                  debugPrint(
+                      '🔍[RESIZE_FIX] onTapUp被调用: position=${details.localPosition}');
+                  debugPrint(
+                      '🔍[RESIZE_FIX] 当前选中元素数: ${widget.controller.state.selectedElementIds.length}');
+
                   _gestureHandler.handleTapUp(
                       details, elements.cast<Map<String, dynamic>>());
-                      
+
                   // 🔍[RESIZE_FIX] 选择处理后的状态
-                  debugPrint('🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
+                  debugPrint(
+                      '🔍[RESIZE_FIX] handleTapUp后选中元素数: ${widget.controller.state.selectedElementIds.length}');
                   if (widget.controller.state.selectedElementIds.isNotEmpty) {
-                    debugPrint('🔍[RESIZE_FIX] 选中的元素IDs: ${widget.controller.state.selectedElementIds}');
+                    debugPrint(
+                        '🔍[RESIZE_FIX] 选中的元素IDs: ${widget.controller.state.selectedElementIds}');
                   }
                 },
                 // 处理右键点击事件，用于退出select模式
@@ -1465,14 +1483,13 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
   /// 🔧 控制点主导架构：处理控制点拖拽结束并接收最终状态
   void _handleControlPointDragEndWithState(
       int controlPointIndex, Map<String, double> finalState) {
-    
     // 🔧 特殊处理：-2表示Live阶段的实时更新，-1表示平移操作
     if (controlPointIndex == -2) {
       debugPrint('🎯 控制点Live阶段实时更新: $finalState');
       _handleControlPointLiveUpdate(finalState);
       return;
     }
-    
+
     debugPrint('🎯 控制点主导架构：收到控制点最终状态 $controlPointIndex: $finalState');
 
     if (widget.controller.state.selectedElementIds.isEmpty) {
@@ -1482,7 +1499,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     final elementId = widget.controller.state.selectedElementIds.first;
 
     // 获取原始元素，保留所有非几何属性
-    final originalElement = widget.controller.state.currentPageElements.firstWhere(
+    final originalElement =
+        widget.controller.state.currentPageElements.firstWhere(
       (e) => e['id'] == elementId,
       orElse: () => <String, dynamic>{},
     );
@@ -1493,7 +1511,8 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     }
 
     // 🔧 核心：构建控制点主导的完整元素预览属性
-    final controlPointDrivenProperties = Map<String, dynamic>.from(originalElement);
+    final controlPointDrivenProperties =
+        Map<String, dynamic>.from(originalElement);
     controlPointDrivenProperties.addAll({
       'x': finalState['x'] ?? originalElement['x'],
       'y': finalState['y'] ?? originalElement['y'],
@@ -1505,31 +1524,31 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     debugPrint('🎯 控制点主导的完整属性: $controlPointDrivenProperties');
 
     // 🔧 关键：将控制点状态推送给DragStateManager，让DragPreviewLayer跟随
-    if (_dragStateManager.isDragging && _dragStateManager.isElementDragging(elementId)) {
-      
+    if (_dragStateManager.isDragging &&
+        _dragStateManager.isElementDragging(elementId)) {
       debugPrint('🎯 推送控制点状态到DragStateManager，实现统一预览');
-      _dragStateManager.updateElementPreviewProperties(elementId, controlPointDrivenProperties);
-      
+      _dragStateManager.updateElementPreviewProperties(
+          elementId, controlPointDrivenProperties);
+
       debugPrint('🎯 ✅ DragPreviewLayer现在显示控制点主导的预览效果');
-      
     } else {
       debugPrint('🎯 DragStateManager未在拖拽状态，启动拖拽系统');
-      
+
       // 启动拖拽系统以支持预览
       final elementPosition = Offset(
-        (finalState['x'] ?? originalElement['x'] as num).toDouble(),
-        (finalState['y'] ?? originalElement['y'] as num).toDouble()
-      );
-      
+          (finalState['x'] ?? originalElement['x'] as num).toDouble(),
+          (finalState['y'] ?? originalElement['y'] as num).toDouble());
+
       _dragStateManager.startDrag(
         elementIds: {elementId},
         startPosition: elementPosition,
         elementStartPositions: {elementId: elementPosition},
         elementStartProperties: {elementId: controlPointDrivenProperties},
       );
-      
+
       // 立即更新预览属性
-      _dragStateManager.updateElementPreviewProperties(elementId, controlPointDrivenProperties);
+      _dragStateManager.updateElementPreviewProperties(
+          elementId, controlPointDrivenProperties);
       debugPrint('🎯 已启动拖拽系统并设置控制点主导的预览');
     }
 
@@ -1537,43 +1556,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     _freeControlPointsFinalState = finalState;
 
     debugPrint('🎯 ✅ 控制点主导架构：所有操作（平移/缩放/旋转）现在统一由控制点驱动');
-  }
-
-  /// 🔧 控制点主导架构：处理Live阶段的实时状态更新
-  void _handleControlPointLiveUpdate(Map<String, double> liveState) {
-    if (widget.controller.state.selectedElementIds.isEmpty) {
-      return;
-    }
-
-    final elementId = widget.controller.state.selectedElementIds.first;
-    
-    // 获取原始元素，保留所有非几何属性
-    final originalElement = widget.controller.state.currentPageElements.firstWhere(
-      (e) => e['id'] == elementId,
-      orElse: () => <String, dynamic>{},
-    );
-
-    if (originalElement.isEmpty) {
-      return;
-    }
-
-    // 构建Live阶段的预览属性
-    final livePreviewProperties = Map<String, dynamic>.from(originalElement);
-    livePreviewProperties.addAll({
-      'x': liveState['x'] ?? originalElement['x'],
-      'y': liveState['y'] ?? originalElement['y'],
-      'width': liveState['width'] ?? originalElement['width'],
-      'height': liveState['height'] ?? originalElement['height'],
-      'rotation': liveState['rotation'] ?? originalElement['rotation'],
-    });
-
-    // 🔧 核心：实时更新DragStateManager，让DragPreviewLayer跟随控制点
-    if (_dragStateManager.isDragging && _dragStateManager.isElementDragging(elementId)) {
-      _dragStateManager.updateElementPreviewProperties(elementId, livePreviewProperties);
-      debugPrint('🎯 Live阶段：DragPreviewLayer已更新，跟随控制点实时变化');
-    } else {
-      debugPrint('🎯 Live阶段：DragStateManager未激活，跳过预览更新');
-    }
   }
 
   /// 处理控制点拖拽开始事件 - 实现Preview阶段
@@ -1622,6 +1604,46 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     debugPrint('🎯 Preview阶段完成: 元素 $elementId 快照已创建，原始属性已保存');
   }
 
+  /// 🔧 控制点主导架构：处理Live阶段的实时状态更新
+  void _handleControlPointLiveUpdate(Map<String, double> liveState) {
+    if (widget.controller.state.selectedElementIds.isEmpty) {
+      return;
+    }
+
+    final elementId = widget.controller.state.selectedElementIds.first;
+
+    // 获取原始元素，保留所有非几何属性
+    final originalElement =
+        widget.controller.state.currentPageElements.firstWhere(
+      (e) => e['id'] == elementId,
+      orElse: () => <String, dynamic>{},
+    );
+
+    if (originalElement.isEmpty) {
+      return;
+    }
+
+    // 构建Live阶段的预览属性
+    final livePreviewProperties = Map<String, dynamic>.from(originalElement);
+    livePreviewProperties.addAll({
+      'x': liveState['x'] ?? originalElement['x'],
+      'y': liveState['y'] ?? originalElement['y'],
+      'width': liveState['width'] ?? originalElement['width'],
+      'height': liveState['height'] ?? originalElement['height'],
+      'rotation': liveState['rotation'] ?? originalElement['rotation'],
+    });
+
+    // 🔧 核心：实时更新DragStateManager，让DragPreviewLayer跟随控制点
+    if (_dragStateManager.isDragging &&
+        _dragStateManager.isElementDragging(elementId)) {
+      _dragStateManager.updateElementPreviewProperties(
+          elementId, livePreviewProperties);
+      debugPrint('🎯 Live阶段：DragPreviewLayer已更新，跟随控制点实时变化');
+    } else {
+      debugPrint('🎯 Live阶段：DragStateManager未激活，跳过预览更新');
+    }
+  }
+
   /// Handle control point updates - 实现Live阶段
   /// 🔧 新架构：接收控制点状态并推送给DragStateManager
   void _handleControlPointUpdate(int controlPointIndex, Offset delta) {
@@ -1639,7 +1661,7 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
       // 在Live阶段，我们主要关注性能监控
       _dragStateManager.updatePerformanceStatsOnly();
       debugPrint('🎯 已更新DragStateManager性能统计');
-      
+
       // 🔧 如果需要实时预览，可以在这里获取控制点的getCurrentElementProperties
       // 但为了性能，我们在onPanUpdate中直接调用_pushStateToCanvasAndPreview
     }
@@ -2100,6 +2122,9 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
     });
   }
 
+  /// 处理DragStateManager状态变化
+  void _onDragStateManagerChanged() {}
+
   /// Reset canvas position to fit the page content within the viewport
   void _resetCanvasPosition() {
     _fitPageToScreen();
@@ -2133,17 +2158,6 @@ class _M3PracticeEditCanvasState extends State<M3PracticeEditCanvas>
         );
       },
     );
-  }
-
-  /// 处理DragStateManager状态变化
-  void _onDragStateManagerChanged() {
-    // 当DragStateManager状态变化时，重建Canvas以更新控制点位置
-    if (mounted) {
-      debugPrint('🔧 Canvas响应DragStateManager变化，重建UI以更新控制点位置');
-      setState(() {
-        // 触发重建，让控制点能够使用最新的预览位置
-      });
-    }
   }
 
   /// 设置结构监听器的层级处理器
